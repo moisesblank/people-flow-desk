@@ -415,6 +415,14 @@ export type Database = {
         | "transporte"
         | "lazer"
         | "outros"
+        | "feira"
+        | "compras_casa"
+        | "compras_bruna"
+        | "compras_moises"
+        | "cachorro"
+        | "carro"
+        | "gasolina"
+        | "lanches"
       sector_type:
         | "Coordenação"
         | "Suporte"
@@ -562,6 +570,14 @@ export const Constants = {
         "transporte",
         "lazer",
         "outros",
+        "feira",
+        "compras_casa",
+        "compras_bruna",
+        "compras_moises",
+        "cachorro",
+        "carro",
+        "gasolina",
+        "lanches",
       ],
       sector_type: [
         "Coordenação",
