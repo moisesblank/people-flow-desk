@@ -1,5 +1,13 @@
-import { Edit2, Trash2, Mail, Briefcase, Building2, Calendar } from "lucide-react";
+import { Edit2, Trash2, Mail, Briefcase, Building2, Calendar, MoreVertical } from "lucide-react";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { StatusBadge } from "./StatusBadge";
 import type { Employee } from "@/types/employee";
 import { format } from "date-fns";
@@ -9,6 +17,7 @@ interface EmployeeCardProps {
   employee: Employee;
   onEdit: (employee: Employee) => void;
   onDelete: (employee: Employee) => void;
+  index?: number;
 }
 
 function formatCurrency(cents: number): string {
@@ -18,67 +27,121 @@ function formatCurrency(cents: number): string {
   }).format(cents / 100);
 }
 
-export function EmployeeCard({ employee, onEdit, onDelete }: EmployeeCardProps) {
+function getInitials(name: string): string {
+  return name
+    .split(" ")
+    .slice(0, 2)
+    .map((n) => n[0])
+    .join("")
+    .toUpperCase();
+}
+
+function getAvatarGradient(name: string): string {
+  const gradients = [
+    "from-rose-500 to-pink-600",
+    "from-violet-500 to-purple-600",
+    "from-blue-500 to-cyan-600",
+    "from-emerald-500 to-teal-600",
+    "from-amber-500 to-orange-600",
+    "from-red-500 to-rose-600",
+  ];
+  const index = name.charCodeAt(0) % gradients.length;
+  return gradients[index];
+}
+
+export function EmployeeCard({ employee, onEdit, onDelete, index = 0 }: EmployeeCardProps) {
   return (
-    <div className="employee-card fade-in">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/20 text-primary font-semibold text-lg">
-              {employee.nome.charAt(0).toUpperCase()}
-            </div>
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.95 }}
+      transition={{ 
+        duration: 0.4, 
+        delay: index * 0.05,
+        ease: [0.16, 1, 0.3, 1]
+      }}
+      layout
+      className="employee-card group"
+    >
+      <div className="flex items-start gap-4">
+        {/* Avatar */}
+        <motion.div 
+          className={`flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br ${getAvatarGradient(employee.nome)} text-white font-bold text-lg shadow-lg`}
+          whileHover={{ scale: 1.05, rotate: 3 }}
+          transition={{ type: "spring", stiffness: 400 }}
+        >
+          {getInitials(employee.nome)}
+        </motion.div>
+
+        {/* Info */}
+        <div className="flex-1 min-w-0 space-y-3">
+          <div className="flex items-start justify-between gap-2">
             <div className="min-w-0">
-              <h3 className="text-lg font-semibold text-foreground truncate">
+              <h3 className="text-lg font-semibold text-foreground truncate group-hover:text-primary transition-colors">
                 {employee.nome}
               </h3>
-              <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                <Briefcase className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-2 text-sm text-muted-foreground mt-0.5">
+                <Briefcase className="h-3.5 w-3.5 shrink-0" />
                 <span className="truncate">{employee.funcao}</span>
               </div>
             </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <StatusBadge status={employee.status} />
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-all"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-40 bg-popover border-border">
+                  <DropdownMenuItem onClick={() => onEdit(employee)} className="gap-2 cursor-pointer">
+                    <Edit2 className="h-4 w-4" />
+                    Editar
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => onDelete(employee)} 
+                    className="gap-2 cursor-pointer text-destructive focus:text-destructive"
+                  >
+                    <Trash2 className="h-4 w-4" />
+                    Excluir
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Building2 className="h-4 w-4 shrink-0" />
+          {/* Details Grid */}
+          <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Building2 className="h-4 w-4 shrink-0 text-muted-foreground/70" />
               <span className="truncate">{employee.setor}</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Mail className="h-4 w-4 shrink-0" />
+            <div className="flex items-center gap-2 text-sm text-muted-foreground">
+              <Calendar className="h-4 w-4 shrink-0 text-muted-foreground/70" />
+              <span>{format(new Date(employee.dataAdmissao), "dd MMM yyyy", { locale: ptBR })}</span>
+            </div>
+            <div className="flex items-center gap-2 text-sm text-muted-foreground col-span-2">
+              <Mail className="h-4 w-4 shrink-0 text-muted-foreground/70" />
               <span className="truncate">{employee.email}</span>
             </div>
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Calendar className="h-4 w-4 shrink-0" />
-              <span>{format(new Date(employee.dataAdmissao), "dd/MM/yyyy", { locale: ptBR })}</span>
-            </div>
-            <div className="text-foreground font-semibold">
-              {formatCurrency(employee.salario)}
-            </div>
           </div>
-        </div>
 
-        <div className="flex flex-col items-end gap-3">
-          <StatusBadge status={employee.status} />
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-secondary"
-              onClick={() => onEdit(employee)}
-            >
-              <Edit2 className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-8 w-8 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
-              onClick={() => onDelete(employee)}
-            >
-              <Trash2 className="h-4 w-4" />
-            </Button>
+          {/* Salary */}
+          <div className="pt-3 border-t border-border/50 flex items-center justify-between">
+            <span className="text-xs text-muted-foreground uppercase tracking-wide">Salário</span>
+            <span className="text-lg font-bold text-foreground tabular-nums">
+              {formatCurrency(employee.salario)}
+            </span>
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }
