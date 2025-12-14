@@ -17,6 +17,8 @@ import Entradas from "./pages/Entradas";
 import Afiliados from "./pages/Afiliados";
 import Alunos from "./pages/Alunos";
 import Relatorios from "./pages/Relatorios";
+import Configuracoes from "./pages/Configuracoes";
+import GestaoEquipe from "./pages/GestaoEquipe";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -109,6 +111,26 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <Relatorios />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/configuracoes"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Configuracoes />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/gestao-equipe"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <GestaoEquipe />
                   </AppLayout>
                 </ProtectedRoute>
               }

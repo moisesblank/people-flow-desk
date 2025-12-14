@@ -8,8 +8,8 @@ import {
   GraduationCap, 
   FileText,
   LogOut,
-  ChevronLeft,
-  ChevronRight
+  Settings,
+  UserCog
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -27,13 +27,13 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarTrigger,
   useSidebar,
 } from "@/components/ui/sidebar";
 
 const mainMenuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
+  { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog },
 ];
 
 const financeMenuItems = [
@@ -46,6 +46,7 @@ const businessMenuItems = [
   { title: "Afiliados", url: "/afiliados", icon: Handshake },
   { title: "Alunos", url: "/alunos", icon: GraduationCap },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
+  { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
 export function AppSidebar() {
