@@ -18,7 +18,27 @@ interface Expense {
   categoria: string;
 }
 
-const EXPENSE_CATEGORIES = ["comida", "casa", "pessoal", "transporte", "lazer", "outros"];
+const EXPENSE_CATEGORIES = [
+  { value: "feira", label: "🛒 Feira" },
+  { value: "compras_casa", label: "🏠 Compras para Casa" },
+  { value: "compras_bruna", label: "👩 Compras Bruna" },
+  { value: "compras_moises", label: "👨 Compras Moisés" },
+  { value: "cachorro", label: "🐕 Cachorro" },
+  { value: "carro", label: "🚗 Carro" },
+  { value: "gasolina", label: "⛽ Gasolina" },
+  { value: "lanches", label: "🍔 Lanches" },
+  { value: "comida", label: "🍽️ Comida" },
+  { value: "casa", label: "🏡 Casa" },
+  { value: "pessoal", label: "👤 Pessoal" },
+  { value: "transporte", label: "🚌 Transporte" },
+  { value: "lazer", label: "🎮 Lazer" },
+  { value: "outros", label: "📦 Outros" },
+];
+
+const getCategoryLabel = (value: string) => {
+  const cat = EXPENSE_CATEGORIES.find(c => c.value === value);
+  return cat?.label || value;
+};
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("pt-BR", {
@@ -35,7 +55,7 @@ export default function FinancasPessoais() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"fixed" | "extra">("fixed");
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [formData, setFormData] = useState({ nome: "", valor: "", categoria: "outros" });
+  const [formData, setFormData] = useState({ nome: "", valor: "", categoria: "feira" });
 
   const fetchExpenses = async () => {
     try {
@@ -83,7 +103,7 @@ export default function FinancasPessoais() {
     setEditingExpense(expense || null);
     setFormData(expense 
       ? { nome: expense.nome, valor: String(expense.valor / 100), categoria: expense.categoria }
-      : { nome: "", valor: "", categoria: "outros" }
+      : { nome: "", valor: "", categoria: "feira" }
     );
     setIsModalOpen(true);
   };
@@ -194,7 +214,7 @@ export default function FinancasPessoais() {
                 {fixedExpenses.map((expense) => (
                   <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
                     <td className="p-4 text-foreground">{expense.nome}</td>
-                    <td className="p-4 text-muted-foreground capitalize">{expense.categoria}</td>
+                    <td className="p-4 text-muted-foreground">{getCategoryLabel(expense.categoria)}</td>
                     <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-2">
@@ -238,7 +258,7 @@ export default function FinancasPessoais() {
                 {extraExpenses.map((expense) => (
                   <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
                     <td className="p-4 text-foreground">{expense.nome}</td>
-                    <td className="p-4 text-muted-foreground capitalize">{expense.categoria}</td>
+                    <td className="p-4 text-muted-foreground">{getCategoryLabel(expense.categoria)}</td>
                     <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-2">
@@ -293,7 +313,7 @@ export default function FinancasPessoais() {
                   </SelectTrigger>
                   <SelectContent>
                     {EXPENSE_CATEGORIES.map(cat => (
-                      <SelectItem key={cat} value={cat} className="capitalize">{cat}</SelectItem>
+                      <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
