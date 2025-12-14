@@ -14,16 +14,418 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      affiliates: {
+        Row: {
+          comissao_total: number | null
+          created_at: string | null
+          email: string | null
+          hotmart_id: string | null
+          id: number
+          nome: string
+          total_vendas: number | null
+        }
+        Insert: {
+          comissao_total?: number | null
+          created_at?: string | null
+          email?: string | null
+          hotmart_id?: string | null
+          id?: number
+          nome: string
+          total_vendas?: number | null
+        }
+        Update: {
+          comissao_total?: number | null
+          created_at?: string | null
+          email?: string | null
+          hotmart_id?: string | null
+          id?: number
+          nome?: string
+          total_vendas?: number | null
+        }
+        Relationships: []
+      }
+      company_extra_expenses: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          created_by: string | null
+          data: string | null
+          id: number
+          nome: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data?: string | null
+          id?: number
+          nome: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data?: string | null
+          id?: number
+          nome?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      company_fixed_expenses: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          created_by: string | null
+          id: number
+          nome: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          nome: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          nome?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      employees: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          data_admissao: string | null
+          email: string | null
+          funcao: string
+          horario_trabalho: string | null
+          id: number
+          nome: string
+          responsabilidades: string | null
+          salario: number
+          setor: Database["public"]["Enums"]["sector_type"] | null
+          status: Database["public"]["Enums"]["employee_status"] | null
+          telefone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          funcao: string
+          horario_trabalho?: string | null
+          id?: number
+          nome: string
+          responsabilidades?: string | null
+          salario?: number
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          funcao?: string
+          horario_trabalho?: string | null
+          id?: number
+          nome?: string
+          responsabilidades?: string | null
+          salario?: number
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      income: {
+        Row: {
+          banco: string | null
+          created_at: string | null
+          created_by: string | null
+          fonte: string
+          id: number
+          mes_referencia: string | null
+          valor: number
+        }
+        Insert: {
+          banco?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fonte: string
+          id?: number
+          mes_referencia?: string | null
+          valor?: number
+        }
+        Update: {
+          banco?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          fonte?: string
+          id?: number
+          mes_referencia?: string | null
+          valor?: number
+        }
+        Relationships: []
+      }
+      personal_extra_expenses: {
+        Row: {
+          categoria: Database["public"]["Enums"]["expense_category"] | null
+          created_at: string | null
+          data: string | null
+          fonte: string | null
+          id: number
+          nome: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria?: Database["public"]["Enums"]["expense_category"] | null
+          created_at?: string | null
+          data?: string | null
+          fonte?: string | null
+          id?: number
+          nome: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          categoria?: Database["public"]["Enums"]["expense_category"] | null
+          created_at?: string | null
+          data?: string | null
+          fonte?: string | null
+          id?: number
+          nome?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      personal_fixed_expenses: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          id: number
+          nome: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          id?: number
+          nome: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          id?: number
+          nome?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          id: string
+          nome: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          id: string
+          nome: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          nome?: string
+        }
+        Relationships: []
+      }
+      sales: {
+        Row: {
+          affiliate_id: number | null
+          comprador_email: string | null
+          comprador_nome: string | null
+          created_at: string | null
+          hotmart_transaction_id: string | null
+          id: number
+          produto: string | null
+          status: string | null
+          valor: number
+        }
+        Insert: {
+          affiliate_id?: number | null
+          comprador_email?: string | null
+          comprador_nome?: string | null
+          created_at?: string | null
+          hotmart_transaction_id?: string | null
+          id?: number
+          produto?: string | null
+          status?: string | null
+          valor?: number
+        }
+        Update: {
+          affiliate_id?: number | null
+          comprador_email?: string | null
+          comprador_nome?: string | null
+          created_at?: string | null
+          hotmart_transaction_id?: string | null
+          id?: number
+          produto?: string | null
+          status?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sales_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      students: {
+        Row: {
+          created_at: string | null
+          curso: string | null
+          email: string | null
+          id: number
+          nome: string
+          status: string | null
+          wordpress_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          curso?: string | null
+          email?: string | null
+          id?: number
+          nome: string
+          status?: string | null
+          wordpress_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          curso?: string | null
+          email?: string | null
+          id?: number
+          nome?: string
+          status?: string | null
+          wordpress_id?: string | null
+        }
+        Relationships: []
+      }
+      taxes: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          created_by: string | null
+          id: number
+          mes_referencia: string | null
+          nome: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          mes_referencia?: string | null
+          nome: string
+          valor?: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          id?: number
+          mes_referencia?: string | null
+          nome?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
+      is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "owner" | "admin" | "employee"
+      employee_status: "ativo" | "ferias" | "afastado" | "inativo"
+      expense_category:
+        | "comida"
+        | "casa"
+        | "pessoal"
+        | "transporte"
+        | "lazer"
+        | "outros"
+      sector_type:
+        | "Coordenação"
+        | "Suporte"
+        | "Monitoria"
+        | "Afiliados"
+        | "Marketing"
+        | "Administrativo"
+        | "Financeiro"
+        | "Vendas"
+        | "Design"
+        | "Gestão"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +552,29 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["owner", "admin", "employee"],
+      employee_status: ["ativo", "ferias", "afastado", "inativo"],
+      expense_category: [
+        "comida",
+        "casa",
+        "pessoal",
+        "transporte",
+        "lazer",
+        "outros",
+      ],
+      sector_type: [
+        "Coordenação",
+        "Suporte",
+        "Monitoria",
+        "Afiliados",
+        "Marketing",
+        "Administrativo",
+        "Financeiro",
+        "Vendas",
+        "Design",
+        "Gestão",
+      ],
+    },
   },
 } as const
