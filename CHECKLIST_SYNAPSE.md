@@ -1,5 +1,5 @@
-# 📋 CHECKLIST MESTRE DO PROJETO SYNAPSE
-## Curso - Química - Moisés Medeiros
+# 📋 CHECKLIST MESTRE - CURSO MOISÉS MEDEIROS
+## Sistema de Gestão Educacional - Curso de Química
 ## Versão: 2.1 | Data: 15 de Dezembro de 2025
 
 ---

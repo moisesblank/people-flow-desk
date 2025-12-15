@@ -52,8 +52,8 @@ export function AppLayout({ children }: AppLayoutProps) {
     if (!hasSeenWelcome && user) {
       addNotification({
         type: "success",
-        title: "Bem-vindo ao Synapse! 🚀",
-        message: "Seu sistema de gestão empresarial está pronto para uso.",
+        title: "Bem-vindo! 🚀",
+        message: "Seu painel de gestão está pronto para uso.",
       });
       sessionStorage.setItem('hasSeenWelcome', 'true');
     }

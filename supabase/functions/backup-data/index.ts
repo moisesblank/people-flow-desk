@@ -1,6 +1,6 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - DATA BACKUP SYSTEM
-// Sistema de Backup Automatizado
+// CURSO MOISÉS MEDEIROS v5.0 - SISTEMA DE BACKUP
+// Backup Automatizado de Dados
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -159,7 +159,7 @@ serve(async (req) => {
       total_records: totalRecords,
       tables: backupResults,
       metadata: {
-        generated_by: 'Synapse Backup System v5.0',
+        generated_by: 'Curso Moisés Medeiros - Backup v5.0',
         user_id: user.id,
         user_email: user.email,
       },

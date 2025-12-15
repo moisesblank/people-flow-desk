@@ -1,5 +1,5 @@
-# 🧠 PROJETO SYNAPSE - DOCUMENTAÇÃO COMPLETA
-## Curso - Química - Moisés Medeiros
+# 🧠 CURSO MOISÉS MEDEIROS - DOCUMENTAÇÃO COMPLETA
+## Sistema de Gestão Educacional - Curso de Química
 ## Versão 2.0 | Atualizado em: 15/12/2025
 
 ---
@@ -18,7 +18,7 @@
 
 ## 🎯 VISÃO GERAL
 
-O **Projeto Synapse** é o sistema de gestão digital que unifica as duas empresas de Moisés Medeiros e sua vida pessoal em um ecossistema coeso, inteligente e em tempo real.
+O **Curso Moisés Medeiros** é o sistema de gestão digital que unifica as duas empresas de Moisés Medeiros e sua vida pessoal em um ecossistema coeso, inteligente e em tempo real.
 
 ### Empresas Gerenciadas
 
