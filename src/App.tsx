@@ -35,6 +35,7 @@ const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
 const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
 const Cursos = lazy(() => import("./pages/Cursos"));
 const CursoDetalhe = lazy(() => import("./pages/CursoDetalhe"));
+const Aula = lazy(() => import("./pages/Aula"));
 const Marketing = lazy(() => import("./pages/Marketing"));
 const Lancamento = lazy(() => import("./pages/Lancamento"));
 const Metricas = lazy(() => import("./pages/Metricas"));
@@ -101,6 +102,7 @@ const App = () => (
               <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
               <Route path="/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
               <Route path="/cursos/:courseId" element={<ProtectedPage><CursoDetalhe /></ProtectedPage>} />
+              <Route path="/cursos/:courseId/aula/:lessonId" element={<ProtectedPage><Aula /></ProtectedPage>} />
               <Route path="/marketing" element={<ProtectedPage><Marketing /></ProtectedPage>} />
               <Route path="/lancamento" element={<ProtectedPage><Lancamento /></ProtectedPage>} />
               <Route path="/metricas" element={<ProtectedPage><Metricas /></ProtectedPage>} />
