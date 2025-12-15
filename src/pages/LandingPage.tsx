@@ -414,11 +414,14 @@ export default function LandingPage() {
                 </EditableLink>
               </div>
 
-              {/* Stats */}
+              {/* Stats - Usando valores do banco ou defaults */}
               <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-primary/20">
                 <div className="text-center lg:text-left">
                   <p className="text-3xl md:text-4xl font-bold text-primary">
-                    <AnimatedCounter target={parseInt(getValue("hero_stat_1_value", "12847")) || 12847} suffix="+" />
+                    <AnimatedCounter 
+                      target={parseInt(getValue("hero_stat_1_value", "")) || 12847} 
+                      suffix="+" 
+                    />
                   </p>
                   <EditableText
                     value={getValue("hero_stat_1_label", "Alunos Ativos")}
@@ -431,7 +434,10 @@ export default function LandingPage() {
                 </div>
                 <div className="text-center lg:text-left">
                   <p className="text-3xl md:text-4xl font-bold text-stats-blue">
-                    <AnimatedCounter target={parseInt(getValue("hero_stat_2_value", "4892")) || 4892} suffix="+" />
+                    <AnimatedCounter 
+                      target={parseInt(getValue("hero_stat_2_value", "")) || 4892} 
+                      suffix="+" 
+                    />
                   </p>
                   <EditableText
                     value={getValue("hero_stat_2_label", "Aprovados 2024")}
@@ -444,7 +450,10 @@ export default function LandingPage() {
                 </div>
                 <div className="text-center lg:text-left">
                   <p className="text-3xl md:text-4xl font-bold text-stats-green">
-                    <AnimatedCounter target={parseInt(getValue("hero_stat_3_value", "98")) || 98} suffix="%" />
+                    <AnimatedCounter 
+                      target={parseInt(getValue("hero_stat_3_value", "")) || 98} 
+                      suffix="%" 
+                    />
                   </p>
                   <EditableText
                     value={getValue("hero_stat_3_label", "Satisfação")}

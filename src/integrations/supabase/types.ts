@@ -60,8 +60,13 @@ export type Database = {
           email: string | null
           hotmart_id: string | null
           id: number
+          link_afiliado: string | null
           nome: string
+          status: string | null
+          taxa_comissao: number | null
+          telefone: string | null
           total_vendas: number | null
+          user_id: string | null
         }
         Insert: {
           comissao_total?: number | null
@@ -69,8 +74,13 @@ export type Database = {
           email?: string | null
           hotmart_id?: string | null
           id?: number
+          link_afiliado?: string | null
           nome: string
+          status?: string | null
+          taxa_comissao?: number | null
+          telefone?: string | null
           total_vendas?: number | null
+          user_id?: string | null
         }
         Update: {
           comissao_total?: number | null
@@ -78,8 +88,13 @@ export type Database = {
           email?: string | null
           hotmart_id?: string | null
           id?: number
+          link_afiliado?: string | null
           nome?: string
+          status?: string | null
+          taxa_comissao?: number | null
+          telefone?: string | null
           total_vendas?: number | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -741,6 +756,66 @@ export type Database = {
           updated_by?: string | null
         }
         Relationships: []
+      }
+      employee_documents: {
+        Row: {
+          categoria: string
+          created_at: string | null
+          created_by: string | null
+          employee_id: number
+          id: string
+          mime_type: string | null
+          nome: string
+          observacoes: string | null
+          path: string
+          tamanho: number | null
+          tipo: string
+          url: string
+        }
+        Insert: {
+          categoria?: string
+          created_at?: string | null
+          created_by?: string | null
+          employee_id: number
+          id?: string
+          mime_type?: string | null
+          nome: string
+          observacoes?: string | null
+          path: string
+          tamanho?: number | null
+          tipo?: string
+          url: string
+        }
+        Update: {
+          categoria?: string
+          created_at?: string | null
+          created_by?: string | null
+          employee_id?: number
+          id?: string
+          mime_type?: string | null
+          nome?: string
+          observacoes?: string | null
+          path?: string
+          tamanho?: number | null
+          tipo?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employees: {
         Row: {
