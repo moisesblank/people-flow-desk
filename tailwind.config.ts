@@ -77,6 +77,7 @@ export default {
           purple: "hsl(var(--stats-purple))",
           gold: "hsl(var(--stats-gold))",
           cyan: "hsl(var(--stats-cyan))",
+          wine: "hsl(var(--stats-wine))",
         },
         glow: {
           red: "hsl(var(--glow-red))",
@@ -85,6 +86,7 @@ export default {
           purple: "hsl(var(--glow-purple))",
           gold: "hsl(var(--glow-gold))",
           cyan: "hsl(var(--glow-cyan))",
+          wine: "hsl(var(--glow-wine))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
@@ -115,6 +117,8 @@ export default {
         'glow': '0 0 40px hsl(var(--primary) / 0.3)',
         'glow-sm': '0 0 20px hsl(var(--primary) / 0.2)',
         'glow-lg': '0 0 60px hsl(var(--primary) / 0.4)',
+        'spider': '0 0 30px hsl(345 85% 50% / 0.3), 0 0 60px hsl(220 70% 50% / 0.15)',
+        'wine': '0 0 40px hsl(345 80% 40% / 0.3)',
       },
       keyframes: {
         "accordion-down": {
@@ -153,6 +157,10 @@ export default {
           from: { backgroundPosition: "-200% 0" },
           to: { backgroundPosition: "200% 0" },
         },
+        "web-swing": {
+          "0%, 100%": { transform: "rotate(-5deg)" },
+          "50%": { transform: "rotate(5deg)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -164,11 +172,14 @@ export default {
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "float": "float 3s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
+        "web-swing": "web-swing 3s ease-in-out infinite",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
         'gradient-primary': 'linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-hover)))',
-        'gradient-hero': 'linear-gradient(180deg, hsl(220 14% 10%) 0%, hsl(220 14% 20%) 100%)',
+        'gradient-hero': 'linear-gradient(180deg, hsl(220 40% 6%) 0%, hsl(220 35% 12%) 100%)',
+        'gradient-spider': 'linear-gradient(135deg, hsl(345 85% 45%) 0%, hsl(220 70% 45%) 100%)',
+        'gradient-wine': 'linear-gradient(135deg, hsl(345 80% 40%) 0%, hsl(345 80% 30%) 100%)',
       },
     },
   },
