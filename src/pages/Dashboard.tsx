@@ -1,12 +1,13 @@
 // ============================================
-// MOISÉS MEDEIROS v8.0 - DASHBOARD PRINCIPAL
-// Spider-Man Theme: Vermelho Vinho + Azul
+// MOISÉS MEDEIROS v9.0 - DASHBOARD PRINCIPAL
+// SYNAPSE v14.0 + UPGRADE v10 - MELHORADO
 // Central de Comando - Business Intelligence
-// Elementos de Química + Insights de IA
+// UX Focada na Organização e Produtividade
 // ============================================
 
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { 
   Users, 
   Wallet, 
@@ -34,20 +35,16 @@ import {
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { CategoryPieChart } from "@/components/dashboard/CategoryPieChart";
-import { FinancialGoalsWidget } from "@/components/dashboard/FinancialGoalsWidget";
 import { BudgetAlerts } from "@/components/dashboard/BudgetAlerts";
-import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { RealtimePulse } from "@/components/dashboard/RealtimePulse";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
 import { WeeklyInsights } from "@/components/dashboard/WeeklyInsights";
-import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScore";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { SynapseStatusWidget } from "@/components/dashboard/SynapseStatusWidget";
-import { FinancialInsights } from "@/components/dashboard/FinancialInsights";
-import { ChemistryStats, ElementsGrid, ReactionProgress } from "@/components/dashboard/ChemistryStats";
-import { AnimatedAtom, ChemistryTip, LabEquipmentIcons } from "@/components/chemistry/ChemistryVisuals";
+import { ChemistryStats, ElementsGrid } from "@/components/dashboard/ChemistryStats";
+import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
@@ -59,6 +56,14 @@ import { TimeTrackingWidget } from "@/components/dashboard/TimeTrackingWidget";
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { AutomationRules } from "@/components/dashboard/AutomationRules";
+// NEW: Componentes de UX melhorados
+import { WelcomeHero } from "@/components/dashboard/WelcomeHero";
+import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
+import { FinancialOverview } from "@/components/dashboard/FinancialOverview";
+import { TodayAgenda } from "@/components/dashboard/TodayAgenda";
+import { GoalsProgress } from "@/components/dashboard/GoalsProgress";
+import { TeamSummary } from "@/components/dashboard/TeamSummary";
+import { SmartTips } from "@/components/dashboard/SmartTips";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -101,11 +106,12 @@ function LiveClock() {
 }
 
 export default function Dashboard() {
+  const navigate = useNavigate();
   const { user, role } = useAuth();
   const { data: stats, isLoading, error } = useDashboardStats();
   const [showAITutor, setShowAITutor] = useState(false);
+  const [activeTab, setActiveTab] = useState("overview");
   const { isOpen: showTour, completeTour, resetTour } = useTour("dashboard");
-
   const processedData = useMemo(() => {
     if (!stats) return null;
 
@@ -282,68 +288,53 @@ export default function Dashboard() {
     );
   }
 
+  const lucroLiquidoValue = stats ? stats.income - stats.personalExpenses - stats.companyExpenses : 0;
+  const totalExpensesValue = stats ? stats.personalExpenses + stats.companyExpenses : 0;
+
   return (
-    <div className="p-4 md:p-8 lg:p-12">
-      <div className="mx-auto max-w-7xl">
-        {/* Header - Curso Moisés Medeiros */}
-        <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
-        >
-          <div className="flex items-start justify-between">
-            <div className="space-y-2">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="flex items-center gap-3"
-              >
-                <motion.div
-                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20"
-                  animate={{ 
-                    boxShadow: [
-                      "0 0 10px hsl(var(--primary) / 0.2)",
-                      "0 0 20px hsl(var(--primary) / 0.4)",
-                      "0 0 10px hsl(var(--primary) / 0.2)"
-                    ]
-                  }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                >
-                  <GraduationCap className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold tracking-wider text-primary">CURSO - MOISÉS MEDEIROS</span>
-                </motion.div>
-                <span className="text-xs text-muted-foreground">Sistema de Gestão Empresarial</span>
-              </motion.div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                Central de Comando
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-xl">
-                Visão geral do seu negócio • Tempo real • Integrações ativas
-              </p>
-            </div>
-            <div className="flex items-center gap-3">
-              <LiveClock />
-              <motion.div
-                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[hsl(var(--stats-green))]/10 border border-[hsl(var(--stats-green))]/20"
-                animate={{ scale: [1, 1.02, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
-              >
-                <Zap className="h-4 w-4 text-[hsl(var(--stats-green))]" />
-                <span className="text-xs font-medium text-[hsl(var(--stats-green))]">ONLINE</span>
-              </motion.div>
-              <ExportButton
-                label="Exportar Dados"
-                options={[
-                  { label: "Resumo Geral (CSV)", action: () => console.log("Export summary") },
-                ]}
-              />
-            </div>
-          </div>
-        </motion.header>
+    <div className="p-4 md:p-6 lg:p-8">
+      <div className="mx-auto max-w-7xl space-y-6">
+        
+        {/* NOVO: Welcome Hero com orientação contextual */}
+        <WelcomeHero
+          pendingTasks={stats?.pendingTasks || 0}
+          completedToday={stats?.tasksData?.filter((t: any) => t.is_completed)?.length || 0}
+          pendingPayments={stats?.pendingPayments || 0}
+          profit={lucroLiquidoValue}
+        />
+
+        {/* NOVO: Smart Tips - Dicas contextuais */}
+        <SmartTips
+          income={stats?.income || 0}
+          expenses={totalExpensesValue}
+          pendingTasks={stats?.pendingTasks || 0}
+          pendingPayments={stats?.pendingPayments || 0}
+          onNavigate={(path) => navigate(path)}
+        />
+
+        {/* NOVO: Ações Rápidas */}
+        <QuickActionsGrid />
+
+        {/* NOVO: Grid Principal - Finanças + Agenda + Metas */}
+        <section className="grid gap-6 lg:grid-cols-3">
+          <FinancialOverview
+            income={stats?.income || 0}
+            expenses={totalExpensesValue}
+            personalExpenses={stats?.personalExpenses || 0}
+            companyExpenses={stats?.companyExpenses || 0}
+            pendingPayments={stats?.pendingPayments || 0}
+          />
+          <TodayAgenda tasks={stats?.tasksData || []} />
+          <GoalsProgress
+            income={stats?.income || 0}
+            students={stats?.students || 0}
+            completedTasks={stats?.tasksData?.filter((t: any) => t.is_completed)?.length || 0}
+            totalTasks={stats?.tasksData?.length || 0}
+          />
+        </section>
 
         {/* Stats Grid */}
-        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Funcionários"
             value={stats.employees}
