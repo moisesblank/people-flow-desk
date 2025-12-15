@@ -491,6 +491,54 @@ export type Database = {
         }
         Relationships: []
       }
+      permission_audit_logs: {
+        Row: {
+          action: string
+          changed_by: string
+          changed_by_email: string | null
+          changed_by_name: string | null
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_role: string | null
+          old_role: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string
+          user_name: string | null
+        }
+        Insert: {
+          action: string
+          changed_by: string
+          changed_by_email?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_role?: string | null
+          old_role?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id: string
+          user_name?: string | null
+        }
+        Update: {
+          action?: string
+          changed_by?: string
+          changed_by_email?: string | null
+          changed_by_name?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_role?: string | null
+          old_role?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string
+          user_name?: string | null
+        }
+        Relationships: []
+      }
       personal_extra_expenses: {
         Row: {
           categoria: Database["public"]["Enums"]["expense_category"] | null
