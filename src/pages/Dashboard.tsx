@@ -14,7 +14,9 @@ import {
   CreditCard,
   Globe,
   CheckSquare,
-  Download
+  Download,
+  Brain,
+  Zap
 } from "lucide-react";
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -23,6 +25,8 @@ import { FinancialGoals } from "@/components/dashboard/FinancialGoals";
 import { BudgetAlerts } from "@/components/dashboard/BudgetAlerts";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
+import { SynapsePulse } from "@/components/dashboard/SynapsePulse";
+import { SynapseCommandCenter } from "@/components/dashboard/SynapseCommandCenter";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { useAuth } from "@/hooks/useAuth";
@@ -225,7 +229,7 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
+        {/* SYNAPSE Header */}
         <motion.header 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -237,24 +241,47 @@ export default function Dashboard() {
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="flex items-center gap-2 text-primary"
+                className="flex items-center gap-3"
               >
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-medium tracking-wide uppercase">Visão Geral</span>
+                <motion.div
+                  className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20"
+                  animate={{ 
+                    boxShadow: [
+                      "0 0 10px hsl(var(--primary) / 0.2)",
+                      "0 0 20px hsl(var(--primary) / 0.4)",
+                      "0 0 10px hsl(var(--primary) / 0.2)"
+                    ]
+                  }}
+                  transition={{ repeat: Infinity, duration: 2 }}
+                >
+                  <Brain className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-bold tracking-wider text-primary">SYNAPSE</span>
+                </motion.div>
+                <span className="text-xs text-muted-foreground">Sistema Nervoso Digital</span>
               </motion.div>
               <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                Dashboard
+                Command Center
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl">
-                Acompanhe todos os indicadores da sua empresa em tempo real.
+                Centro de comando unificado • Tempo real • Integrações ativas
               </p>
             </div>
-            <ExportButton
-              label="Exportar Dados"
-              options={[
-                { label: "Resumo Geral (CSV)", action: () => console.log("Export summary") },
-              ]}
-            />
+            <div className="flex items-center gap-3">
+              <motion.div
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[hsl(var(--stats-green))]/10 border border-[hsl(var(--stats-green))]/20"
+                animate={{ scale: [1, 1.02, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              >
+                <Zap className="h-4 w-4 text-[hsl(var(--stats-green))]" />
+                <span className="text-xs font-medium text-[hsl(var(--stats-green))]">LIVE</span>
+              </motion.div>
+              <ExportButton
+                label="Exportar Dados"
+                options={[
+                  { label: "Resumo Geral (CSV)", action: () => console.log("Export summary") },
+                ]}
+              />
+            </div>
           </div>
         </motion.header>
 
@@ -301,11 +328,19 @@ export default function Dashboard() {
           <CategoryPieChart data={processedData?.categoryData || []} title="Gastos por Categoria" />
         </section>
 
-        {/* Goals and Alerts */}
-        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
-          <FinancialGoals goals={financialGoals} />
+        {/* SYNAPSE Pulse - Real-time Data */}
+        <section className="grid gap-6 lg:grid-cols-3 mb-8">
+          <SynapsePulse />
+          <SynapseCommandCenter />
+          <div className="space-y-6">
+            <FinancialGoals goals={financialGoals} />
+            <QuickActions />
+          </div>
+        </section>
+
+        {/* Alerts */}
+        <section className="mb-8">
           <BudgetAlerts alerts={processedData?.budgetAlerts || []} />
-          <QuickActions />
         </section>
 
         {/* Secondary Stats */}
