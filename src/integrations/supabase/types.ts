@@ -305,6 +305,48 @@ export type Database = {
         }
         Relationships: []
       }
+      bank_accounts: {
+        Row: {
+          account_type: string | null
+          bank_name: string | null
+          color: string | null
+          created_at: string | null
+          created_by: string | null
+          current_balance: number | null
+          id: string
+          initial_balance: number | null
+          is_active: boolean | null
+          is_personal: boolean | null
+          name: string
+        }
+        Insert: {
+          account_type?: string | null
+          bank_name?: string | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_balance?: number | null
+          id?: string
+          initial_balance?: number | null
+          is_active?: boolean | null
+          is_personal?: boolean | null
+          name: string
+        }
+        Update: {
+          account_type?: string | null
+          bank_name?: string | null
+          color?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          current_balance?: number | null
+          id?: string
+          initial_balance?: number | null
+          is_active?: boolean | null
+          is_personal?: boolean | null
+          name?: string
+        }
+        Relationships: []
+      }
       branding_settings: {
         Row: {
           company_name: string | null
@@ -1051,6 +1093,92 @@ export type Database = {
           },
         ]
       }
+      equipment: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          last_maintenance: string | null
+          location: string | null
+          model: string | null
+          name: string
+          next_maintenance: string | null
+          notes: string | null
+          serial_number: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          last_maintenance?: string | null
+          location?: string | null
+          model?: string | null
+          name: string
+          next_maintenance?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          last_maintenance?: string | null
+          location?: string | null
+          model?: string | null
+          name?: string
+          next_maintenance?: string | null
+          notes?: string | null
+          serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      financial_categories: {
+        Row: {
+          color: string | null
+          created_at: string | null
+          icon: string | null
+          id: string
+          is_personal: boolean | null
+          name: string
+          parent_id: string | null
+          type: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_personal?: boolean | null
+          name: string
+          parent_id?: string | null
+          type: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          is_personal?: boolean | null
+          name?: string
+          parent_id?: string | null
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "financial_categories_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       financial_goals: {
         Row: {
           category: string
@@ -1647,6 +1775,36 @@ export type Database = {
         }
         Relationships: []
       }
+      personal_expenses_v2: {
+        Row: {
+          amount: number
+          category: string | null
+          created_at: string | null
+          date: string | null
+          description: string
+          id: string
+          notes: string | null
+        }
+        Insert: {
+          amount: number
+          category?: string | null
+          created_at?: string | null
+          date?: string | null
+          description: string
+          id?: string
+          notes?: string | null
+        }
+        Update: {
+          amount?: number
+          category?: string | null
+          created_at?: string | null
+          date?: string | null
+          description?: string
+          id?: string
+          notes?: string | null
+        }
+        Relationships: []
+      }
       personal_extra_expenses: {
         Row: {
           categoria: Database["public"]["Enums"]["expense_category"] | null
@@ -1704,6 +1862,92 @@ export type Database = {
           nome?: string
           user_id?: string
           valor?: number
+        }
+        Relationships: []
+      }
+      pet_vaccines: {
+        Row: {
+          applied_date: string | null
+          created_at: string | null
+          id: string
+          name: string
+          next_date: string | null
+          notes: string | null
+          pet_id: string | null
+          vet_name: string | null
+        }
+        Insert: {
+          applied_date?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          next_date?: string | null
+          notes?: string | null
+          pet_id?: string | null
+          vet_name?: string | null
+        }
+        Update: {
+          applied_date?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          next_date?: string | null
+          notes?: string | null
+          pet_id?: string | null
+          vet_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pet_vaccines_pet_id_fkey"
+            columns: ["pet_id"]
+            isOneToOne: false
+            referencedRelation: "pets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      pets: {
+        Row: {
+          avatar_url: string | null
+          birth_date: string | null
+          breed: string | null
+          created_at: string | null
+          id: string
+          name: string
+          notes: string | null
+          species: string | null
+          updated_at: string | null
+          vet_name: string | null
+          vet_phone: string | null
+          weight: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          species?: string | null
+          updated_at?: string | null
+          vet_name?: string | null
+          vet_phone?: string | null
+          weight?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          birth_date?: string | null
+          breed?: string | null
+          created_at?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          species?: string | null
+          updated_at?: string | null
+          vet_name?: string | null
+          vet_phone?: string | null
+          weight?: number | null
         }
         Relationships: []
       }
@@ -2027,6 +2271,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      reagents: {
+        Row: {
+          cas_number: string | null
+          created_at: string | null
+          created_by: string | null
+          expiry_date: string | null
+          formula: string | null
+          id: string
+          is_hazardous: boolean | null
+          location: string | null
+          min_quantity: number | null
+          name: string
+          quantity: number | null
+          safety_notes: string | null
+          supplier: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          cas_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expiry_date?: string | null
+          formula?: string | null
+          id?: string
+          is_hazardous?: boolean | null
+          location?: string | null
+          min_quantity?: number | null
+          name: string
+          quantity?: number | null
+          safety_notes?: string | null
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          cas_number?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          expiry_date?: string | null
+          formula?: string | null
+          id?: string
+          is_hazardous?: boolean | null
+          location?: string | null
+          min_quantity?: number | null
+          name?: string
+          quantity?: number | null
+          safety_notes?: string | null
+          supplier?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       sales: {
         Row: {
@@ -2360,6 +2658,73 @@ export type Database = {
         }
         Relationships: []
       }
+      tasks: {
+        Row: {
+          assigned_to: number | null
+          assigned_to_user: string | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          priority: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: number | null
+          assigned_to_user?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: number | null
+          assigned_to_user?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          priority?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tasks_assigned_to_fkey"
+            columns: ["assigned_to"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       taxes: {
         Row: {
           categoria: string | null
@@ -2661,6 +3026,139 @@ export type Database = {
           },
         ]
       }
+      time_tracking: {
+        Row: {
+          break_end: string | null
+          break_start: string | null
+          clock_in: string
+          clock_out: string | null
+          created_at: string | null
+          employee_id: number | null
+          id: string
+          notes: string | null
+          user_id: string | null
+        }
+        Insert: {
+          break_end?: string | null
+          break_start?: string | null
+          clock_in: string
+          clock_out?: string | null
+          created_at?: string | null
+          employee_id?: number | null
+          id?: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          break_end?: string | null
+          break_start?: string | null
+          clock_in?: string
+          clock_out?: string | null
+          created_at?: string | null
+          employee_id?: number | null
+          id?: string
+          notes?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_tracking_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_tracking_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_tracking_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      transactions: {
+        Row: {
+          account_id: string | null
+          amount: number
+          attachment_url: string | null
+          category_id: string | null
+          created_at: string | null
+          created_by: string | null
+          description: string
+          due_date: string | null
+          id: string
+          is_personal: boolean | null
+          is_recurring: boolean | null
+          notes: string | null
+          paid_date: string | null
+          recurrence_type: string | null
+          status: string | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          amount: number
+          attachment_url?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description: string
+          due_date?: string | null
+          id?: string
+          is_personal?: boolean | null
+          is_recurring?: boolean | null
+          notes?: string | null
+          paid_date?: string | null
+          recurrence_type?: string | null
+          status?: string | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          amount?: number
+          attachment_url?: string | null
+          category_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          description?: string
+          due_date?: string | null
+          id?: string
+          is_personal?: boolean | null
+          is_recurring?: boolean | null
+          notes?: string | null
+          paid_date?: string | null
+          recurrence_type?: string | null
+          status?: string | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transactions_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transactions_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "financial_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -2903,6 +3401,101 @@ export type Database = {
           os?: string | null
           user_agent?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      vehicle_maintenance: {
+        Row: {
+          cost: number | null
+          created_at: string | null
+          description: string | null
+          id: string
+          km_at_service: number | null
+          next_km: number | null
+          next_service_date: string | null
+          notes: string | null
+          service_date: string | null
+          type: string
+          vehicle_id: string | null
+        }
+        Insert: {
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          km_at_service?: number | null
+          next_km?: number | null
+          next_service_date?: string | null
+          notes?: string | null
+          service_date?: string | null
+          type: string
+          vehicle_id?: string | null
+        }
+        Update: {
+          cost?: number | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          km_at_service?: number | null
+          next_km?: number | null
+          next_service_date?: string | null
+          notes?: string | null
+          service_date?: string | null
+          type?: string
+          vehicle_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "vehicle_maintenance_vehicle_id_fkey"
+            columns: ["vehicle_id"]
+            isOneToOne: false
+            referencedRelation: "vehicles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      vehicles: {
+        Row: {
+          avatar_url: string | null
+          brand: string | null
+          color: string | null
+          created_at: string | null
+          current_km: number | null
+          fuel_type: string | null
+          id: string
+          model: string | null
+          name: string
+          plate: string | null
+          updated_at: string | null
+          year: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          brand?: string | null
+          color?: string | null
+          created_at?: string | null
+          current_km?: number | null
+          fuel_type?: string | null
+          id?: string
+          model?: string | null
+          name: string
+          plate?: string | null
+          updated_at?: string | null
+          year?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          brand?: string | null
+          color?: string | null
+          created_at?: string | null
+          current_km?: number | null
+          fuel_type?: string | null
+          id?: string
+          model?: string | null
+          name?: string
+          plate?: string | null
+          updated_at?: string | null
+          year?: number | null
         }
         Relationships: []
       }
@@ -3198,6 +3791,8 @@ export type Database = {
       can_edit_content: { Args: { _user_id?: string }; Returns: boolean }
       can_use_god_mode: { Args: { _user_id?: string }; Returns: boolean }
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
+      can_view_financial: { Args: { _user_id: string }; Returns: boolean }
+      can_view_personal: { Args: { _user_id: string }; Returns: boolean }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       get_all_users_last_access: {
         Args: never
@@ -3216,6 +3811,10 @@ export type Database = {
       get_masked_salary: {
         Args: { emp_salary: number; emp_user_id: string }
         Returns: number
+      }
+      get_user_role: {
+        Args: { _user_id: string }
+        Returns: Database["public"]["Enums"]["app_role"]
       }
       has_role: {
         Args: {

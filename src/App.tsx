@@ -53,6 +53,8 @@ const PontoEletronico = lazy(() => import("./pages/PontoEletronico"));
 const DashboardExecutivo = lazy(() => import("./pages/DashboardExecutivo"));
 const Monitoramento = lazy(() => import("./pages/Monitoramento"));
 const Simulados = lazy(() => import("./pages/Simulados"));
+const Laboratorio = lazy(() => import("./pages/Laboratorio"));
+const VidaPessoal = lazy(() => import("./pages/VidaPessoal"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -148,6 +150,8 @@ function AppContent() {
           <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
           <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
           <Route path="/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
+          <Route path="/laboratorio" element={<ProtectedPage><Laboratorio /></ProtectedPage>} />
+          <Route path="/vida-pessoal" element={<ProtectedPage><VidaPessoal /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
