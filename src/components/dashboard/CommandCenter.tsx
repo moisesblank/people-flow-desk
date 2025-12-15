@@ -23,7 +23,7 @@ interface SystemMetric {
   icon: any;
 }
 
-export function SynapseCommandCenter() {
+export function CommandCenter() {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const systemMetrics: SystemMetric[] = [
@@ -80,12 +80,12 @@ export function SynapseCommandCenter() {
           </motion.div>
           <div>
             <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              CURSO - MOISÉS MEDEIROS
+              Moisés Medeiros
               <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-[hsl(var(--stats-green))]/20 text-[hsl(var(--stats-green))]">
                 v5.0
               </span>
             </h3>
-            <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
+            <p className="text-xs text-muted-foreground">Curso de Química</p>
           </div>
         </div>
         
