@@ -1,5 +1,6 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - AUTH PAGE
+// MOISES MEDEIROS v7.0 - AUTH PAGE
+// Spider-Man Theme: Vermelho Vinho + Azul + Preto
 // Pilar 1: Segurança Zero Confiança
 // Pilar 2: Acessibilidade WCAG 2.1 AA
 // ============================================
@@ -19,7 +20,8 @@ import {
   Trophy, 
   ArrowLeft,
   Shield,
-  CheckCircle2
+  CheckCircle2,
+  Atom
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -134,10 +136,10 @@ export default function Auth() {
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Premium Gold Background */}
+    <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden dark">
+      {/* Spider-Man Theme Background */}
       <div 
-        className="fixed inset-0 bg-gradient-to-br from-background via-background to-primary/5"
+        className="fixed inset-0 hero-gradient"
         aria-hidden="true"
       />
 
@@ -149,18 +151,18 @@ export default function Auth() {
         Pular para o formulário
       </a>
 
-      {/* Background decoration - Gold Premium Theme */}
+      {/* Background decoration - Spider-Man Theme */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {/* Gold glow top */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-primary/10 via-transparent to-transparent opacity-60" />
-        {/* Green glow right */}
-        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-radial from-success/5 via-transparent to-transparent opacity-50" />
-        {/* Gold glow bottom */}
-        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-gradient-radial from-primary/8 via-transparent to-transparent opacity-40" />
+        {/* Primary glow (vermelho vinho) */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-primary/15 via-transparent to-transparent opacity-60" />
+        {/* Secondary glow (azul) */}
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-radial from-secondary/10 via-transparent to-transparent opacity-50" />
+        {/* Bottom glow */}
+        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-gradient-radial from-primary/10 via-transparent to-transparent opacity-40" />
         
-        {/* Animated orbs */}
+        {/* Animated orbs - Spider-Man colors */}
         <motion.div
-          className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full bg-primary/5 blur-3xl"
+          className="absolute top-1/4 right-1/4 w-64 h-64 rounded-full bg-primary/10 blur-3xl"
           animate={{ 
             scale: [1, 1.3, 1],
             opacity: [0.3, 0.5, 0.3]
@@ -168,7 +170,7 @@ export default function Auth() {
           transition={{ repeat: Infinity, duration: 6 }}
         />
         <motion.div
-          className="absolute bottom-1/4 left-1/4 w-48 h-48 rounded-full bg-stats-blue/5 blur-3xl"
+          className="absolute bottom-1/4 left-1/4 w-48 h-48 rounded-full bg-secondary/15 blur-3xl"
           animate={{ 
             scale: [1, 1.2, 1],
             opacity: [0.2, 0.4, 0.2]
@@ -192,22 +194,22 @@ export default function Auth() {
         animate={{ opacity: 1, y: 0 }}
         className="relative z-10 w-full max-w-md"
       >
-        <div className="wine-card rounded-3xl p-8 shadow-2xl border border-primary/20">
-          {/* Logo/Brand - Heroic Style */}
+        <div className="spider-card rounded-3xl p-8 shadow-2xl border border-primary/30">
+          {/* Logo/Brand - Spider-Man Style */}
           <header className="text-center mb-8">
             <motion.div 
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
-              className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl brand-gradient mb-4 shadow-xl shadow-primary/30"
+              className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl brand-gradient mb-4 shadow-xl spider-glow"
               aria-hidden="true"
             >
-              <GraduationCap className="h-10 w-10 text-primary-foreground" />
+              <Atom className="h-10 w-10 text-primary-foreground" />
               <motion.div
-                className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-stats-gold flex items-center justify-center"
+                className="absolute -top-1 -right-1 w-6 h-6 rounded-full bg-secondary flex items-center justify-center border-2 border-background"
                 animate={{ scale: [1, 1.1, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}
               >
-                <Trophy className="h-3 w-3 text-background" />
+                <Trophy className="h-3 w-3 text-white" />
               </motion.div>
             </motion.div>
             <h1 className="text-2xl font-bold text-foreground hero-title">
@@ -215,8 +217,8 @@ export default function Auth() {
             </h1>
             <p className="text-muted-foreground mt-2">Sistema de Gestão</p>
             
-            {/* Security badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stats-green/10 border border-stats-green/20 mt-3">
+            {/* Security badge - Spider-Man colors */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stats-green/10 border border-stats-green/30 mt-3">
               <Shield className="w-3.5 h-3.5 text-stats-green" aria-hidden="true" />
               <span className="text-xs text-stats-green font-medium">Conexão Segura</span>
             </div>

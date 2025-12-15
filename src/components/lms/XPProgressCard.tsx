@@ -14,12 +14,12 @@ interface XPProgressCardProps {
 
 const levelColors = {
   1: 'from-slate-400 to-slate-600',
-  5: 'from-emerald-400 to-emerald-600',
-  10: 'from-blue-400 to-blue-600',
-  15: 'from-purple-400 to-purple-600',
-  20: 'from-amber-400 to-amber-600',
-  30: 'from-rose-400 to-rose-600',
-  50: 'from-amber-300 via-amber-500 to-amber-700',
+  5: 'from-stats-green to-emerald-600',
+  10: 'from-stats-blue to-blue-700',
+  15: 'from-stats-purple to-purple-700',
+  20: 'from-stats-gold to-amber-600',
+  30: 'from-primary to-primary-hover',
+  50: 'from-primary via-primary-hover to-secondary',
 };
 
 function getLevelColor(level: number): string {

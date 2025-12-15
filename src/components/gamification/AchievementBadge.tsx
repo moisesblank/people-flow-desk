@@ -1,6 +1,6 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - ACHIEVEMENT BADGE
-// Pilar 8: Gamificação Completa
+// MOISES MEDEIROS v7.0 - ACHIEVEMENT BADGE
+// Spider-Man Theme - Gamificação Completa
 // ============================================
 
 import { motion } from "framer-motion";

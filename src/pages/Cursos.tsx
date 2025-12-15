@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v5.0 - Cursos
-// Curso de Química - Portal de Aprendizado
+// MOISÉS MEDEIROS v7.0 - Cursos
+// Spider-Man Theme - Portal de Aprendizado
 // ============================================
 
 import { useState } from 'react';
@@ -97,14 +97,14 @@ export default function Cursos() {
 
         {/* XP Summary */}
         {gamification && (
-          <div className="flex items-center gap-4 p-4 bg-muted/50 rounded-lg">
+          <div className="flex items-center gap-4 p-4 bg-primary/10 rounded-lg border border-primary/20">
             <div className="flex items-center gap-2">
-              <Trophy className="h-5 w-5 text-amber-500" />
-              <span className="font-bold">{gamification.total_xp} XP</span>
+              <Trophy className="h-5 w-5 text-primary" />
+              <span className="font-bold text-primary">{gamification.total_xp} XP</span>
             </div>
             <div className="flex items-center gap-2">
-              <Flame className="h-5 w-5 text-orange-500" />
-              <span>{gamification.current_streak} dias</span>
+              <Flame className="h-5 w-5 text-stats-gold" />
+              <span className="text-stats-gold">{gamification.current_streak} dias</span>
             </div>
           </div>
         )}

@@ -1,6 +1,7 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - AI TUTOR (PILAR 7)
+// MOISES MEDEIROS v7.0 - AI TUTOR (PILAR 7)
 // Tutor Virtual com IA para auxílio educacional
+// Spider-Man Theme Edition
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -25,19 +26,21 @@ serve(async (req) => {
 
     // System prompts baseados no modo
     const systemPrompts: Record<string, string> = {
-      tutor: `Você é o Tutor Moisés Medeiros, um assistente educacional especializado em preparação para concursos públicos e vestibulares.
+      tutor: `Você é o Tutor IA do Professor Moisés Medeiros, um assistente educacional especializado em Química para vestibulares de Medicina.
 
 CONTEXTO DA AULA ATUAL:
 ${lessonContext || "Nenhum contexto de aula fornecido."}
 
 DIRETRIZES:
 - Responda de forma clara, didática e encorajadora
-- Use exemplos práticos quando possível
+- Você é especialista em Química (Orgânica, Inorgânica, Físico-Química, Bioquímica)
+- Use exemplos práticos relacionados à Medicina quando possível
 - Se a dúvida for sobre um tema específico da aula, referencie o conteúdo
-- Para questões fora do escopo, redirecione gentilmente para o tema
+- Para questões fora do escopo de Química, redirecione gentilmente
 - Sugira exercícios práticos quando apropriado
 - Mantenha respostas concisas mas completas
-- Use linguagem acessível e motivadora`,
+- Use linguagem acessível e motivadora
+- Lembre que o objetivo final é aprovação em Medicina`,
 
       redacao: `Você é um corretor especializado de redações para concursos e vestibulares.
 

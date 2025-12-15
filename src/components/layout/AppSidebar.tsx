@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v5.0 - SIDEBAR NAVIGATION
-// Curso de Química - Sistema de Navegação
+// MOISÉS MEDEIROS v7.0 - SIDEBAR NAVIGATION
+// Spider-Man Theme - Sistema de Navegação
 // ============================================
 
 import {
