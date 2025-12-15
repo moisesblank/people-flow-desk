@@ -44,6 +44,90 @@ export type Database = {
         }
         Relationships: []
       }
+      arquivos: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          modulo: string
+          nome: string
+          referencia_id: string | null
+          tamanho: number | null
+          tipo: string
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modulo: string
+          nome: string
+          referencia_id?: string | null
+          tamanho?: number | null
+          tipo: string
+          url: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          modulo?: string
+          nome?: string
+          referencia_id?: string | null
+          tamanho?: number | null
+          tipo?: string
+          url?: string
+        }
+        Relationships: []
+      }
+      calendar_tasks: {
+        Row: {
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_completed: boolean
+          priority: string | null
+          reminder_email: string | null
+          reminder_enabled: boolean
+          task_date: string
+          task_time: string | null
+          title: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_completed?: boolean
+          priority?: string | null
+          reminder_email?: string | null
+          reminder_enabled?: boolean
+          task_date: string
+          task_time?: string | null
+          title: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_completed?: boolean
+          priority?: string | null
+          reminder_email?: string | null
+          reminder_enabled?: boolean
+          task_date?: string
+          task_time?: string | null
+          title?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       company_extra_expenses: {
         Row: {
           categoria: string | null
@@ -97,6 +181,57 @@ export type Database = {
           created_by?: string | null
           id?: number
           nome?: string
+          valor?: number
+        }
+        Relationships: []
+      }
+      contabilidade: {
+        Row: {
+          ano_referencia: number | null
+          categoria: string | null
+          created_at: string
+          created_by: string | null
+          data_referencia: string
+          descricao: string
+          documento_url: string | null
+          id: string
+          mes_referencia: string | null
+          observacoes: string | null
+          subtopico: string | null
+          tipo: string
+          topico: string
+          valor: number
+        }
+        Insert: {
+          ano_referencia?: number | null
+          categoria?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_referencia?: string
+          descricao: string
+          documento_url?: string | null
+          id?: string
+          mes_referencia?: string | null
+          observacoes?: string | null
+          subtopico?: string | null
+          tipo: string
+          topico: string
+          valor?: number
+        }
+        Update: {
+          ano_referencia?: number | null
+          categoria?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_referencia?: string
+          descricao?: string
+          documento_url?: string | null
+          id?: string
+          mes_referencia?: string | null
+          observacoes?: string | null
+          subtopico?: string | null
+          tipo?: string
+          topico?: string
           valor?: number
         }
         Relationships: []
@@ -185,6 +320,102 @@ export type Database = {
         }
         Relationships: []
       }
+      metricas_marketing: {
+        Row: {
+          cac: number
+          created_at: string
+          created_by: string | null
+          custo_aquisicao: number
+          id: string
+          investimento_marketing: number
+          ltv: number
+          mes_referencia: string
+          novos_clientes: number
+          observacoes: string | null
+          receita_gerada: number
+          roi_percentual: number
+        }
+        Insert: {
+          cac?: number
+          created_at?: string
+          created_by?: string | null
+          custo_aquisicao?: number
+          id?: string
+          investimento_marketing?: number
+          ltv?: number
+          mes_referencia: string
+          novos_clientes?: number
+          observacoes?: string | null
+          receita_gerada?: number
+          roi_percentual?: number
+        }
+        Update: {
+          cac?: number
+          created_at?: string
+          created_by?: string | null
+          custo_aquisicao?: number
+          id?: string
+          investimento_marketing?: number
+          ltv?: number
+          mes_referencia?: string
+          novos_clientes?: number
+          observacoes?: string | null
+          receita_gerada?: number
+          roi_percentual?: number
+        }
+        Relationships: []
+      }
+      payments: {
+        Row: {
+          comprovante_url: string | null
+          created_at: string
+          created_by: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          id: string
+          metodo_pagamento: string | null
+          observacoes: string | null
+          recorrente: boolean
+          status: string
+          tipo: string
+          user_id: string
+          valor: number
+        }
+        Insert: {
+          comprovante_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          id?: string
+          metodo_pagamento?: string | null
+          observacoes?: string | null
+          recorrente?: boolean
+          status?: string
+          tipo: string
+          user_id: string
+          valor?: number
+        }
+        Update: {
+          comprovante_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          id?: string
+          metodo_pagamento?: string | null
+          observacoes?: string | null
+          recorrente?: boolean
+          status?: string
+          tipo?: string
+          user_id?: string
+          valor?: number
+        }
+        Relationships: []
+      }
       personal_extra_expenses: {
         Row: {
           categoria: Database["public"]["Enums"]["expense_category"] | null
@@ -242,6 +473,42 @@ export type Database = {
           nome?: string
           user_id?: string
           valor?: number
+        }
+        Relationships: []
+      }
+      professor_checklists: {
+        Row: {
+          created_at: string
+          id: string
+          itens: Json
+          observacoes: string | null
+          professor_id: string
+          semana_inicio: string
+          status: string
+          titulo: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          itens?: Json
+          observacoes?: string | null
+          professor_id: string
+          semana_inicio: string
+          status?: string
+          titulo: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          itens?: Json
+          observacoes?: string | null
+          professor_id?: string
+          semana_inicio?: string
+          status?: string
+          titulo?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -388,6 +655,51 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      website_pendencias: {
+        Row: {
+          area: string
+          arquivos: Json | null
+          created_at: string
+          created_by: string | null
+          data_conclusao: string | null
+          data_limite: string | null
+          descricao: string | null
+          id: string
+          prioridade: string
+          responsavel: string | null
+          status: string
+          titulo: string
+        }
+        Insert: {
+          area: string
+          arquivos?: Json | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          prioridade?: string
+          responsavel?: string | null
+          status?: string
+          titulo: string
+        }
+        Update: {
+          area?: string
+          arquivos?: Json | null
+          created_at?: string
+          created_by?: string | null
+          data_conclusao?: string | null
+          data_limite?: string | null
+          descricao?: string | null
+          id?: string
+          prioridade?: string
+          responsavel?: string | null
+          status?: string
+          titulo?: string
         }
         Relationships: []
       }

@@ -10,7 +10,11 @@ import {
   LogOut,
   Settings,
   UserCog,
-  BookOpen
+  BookOpen,
+  Calendar,
+  CreditCard,
+  Calculator,
+  Globe
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -33,6 +37,7 @@ import {
 
 const mainMenuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
   { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog },
 ];
@@ -41,11 +46,14 @@ const financeMenuItems = [
   { title: "Finanças Pessoais", url: "/financas-pessoais", icon: Wallet },
   { title: "Finanças Empresa", url: "/financas-empresa", icon: Building2 },
   { title: "Entradas", url: "/entradas", icon: TrendingUp },
+  { title: "Pagamentos", url: "/pagamentos", icon: CreditCard },
+  { title: "Contabilidade", url: "/contabilidade", icon: Calculator },
 ];
 
 const businessMenuItems = [
   { title: "Afiliados", url: "/afiliados", icon: Handshake },
   { title: "Alunos", url: "/alunos", icon: GraduationCap },
+  { title: "Gestão Site", url: "/gestao-site", icon: Globe },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
   { title: "Guia", url: "/guia", icon: BookOpen },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
