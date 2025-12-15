@@ -19,6 +19,7 @@ import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 const quickNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -216,7 +217,16 @@ export function GodModePanel() {
                     <div className="grid grid-cols-4 gap-2">
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-9 w-9">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-9 w-9"
+                            onClick={() => {
+                              toast.info('Modo Texto', {
+                                description: 'Clique em qualquer texto na página para editar'
+                              });
+                            }}
+                          >
                             <Type className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
@@ -225,7 +235,16 @@ export function GodModePanel() {
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-9 w-9">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-9 w-9"
+                            onClick={() => {
+                              toast.info('Modo Imagem', {
+                                description: 'Clique em qualquer imagem na página para substituir'
+                              });
+                            }}
+                          >
                             <Image className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
@@ -234,16 +253,26 @@ export function GodModePanel() {
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-9 w-9">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-9 w-9"
+                            onClick={() => navigate('/configuracoes?tab=appearance')}
+                          >
                             <Palette className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>
-                        <TooltipContent>Cores</TooltipContent>
+                        <TooltipContent>Cores e Temas</TooltipContent>
                       </Tooltip>
 
                       <Tooltip>
                         <TooltipTrigger asChild>
-                          <Button variant="outline" size="icon" className="h-9 w-9">
+                          <Button 
+                            variant="outline" 
+                            size="icon" 
+                            className="h-9 w-9"
+                            onClick={() => navigate('/monitoramento')}
+                          >
                             <History className="w-4 h-4" />
                           </Button>
                         </TooltipTrigger>

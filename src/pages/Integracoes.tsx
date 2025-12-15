@@ -67,10 +67,10 @@ const integrationMeta: Record<string, { icon: string; color: string; description
     color: "from-orange-500/20 to-orange-600/10",
     description: "Receba vendas e assinaturas em tempo real" 
   },
-  asaas: { 
-    icon: "💳", 
+  wordpress: { 
+    icon: "🌐", 
     color: "from-blue-500/20 to-blue-600/10",
-    description: "Pagamentos, cobranças e faturas" 
+    description: "Sincronize posts e páginas do seu site" 
   },
   "google analytics": { 
     icon: "📊", 
@@ -525,7 +525,7 @@ export default function Integracoes() {
             <div className="p-3 rounded-xl bg-[hsl(var(--stats-blue))]/10">
               <ExternalLink className="h-6 w-6 text-[hsl(var(--stats-blue))]" />
             </div>
-            <div>
+            <div className="flex-1">
               <h2 className="text-xl font-semibold text-foreground mb-3">
                 Como Configurar Integrações
               </h2>
@@ -535,18 +535,19 @@ export default function Integracoes() {
                   <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                     <li>Acesse Hotmart → Ferramentas → Webhooks</li>
                     <li>Clique em "Adicionar Webhook"</li>
-                    <li>Cole a URL: <code className="text-xs bg-secondary px-1 rounded">{webhookUrl}?source=hotmart</code></li>
+                    <li>Cole a URL: <code className="text-xs bg-secondary px-1 rounded break-all">{webhookUrl}?source=hotmart</code></li>
+                    <li>Adicione o Header: <code className="text-xs bg-secondary px-1 rounded">x-hotmart-hottok</code> com seu token</li>
                     <li>Selecione eventos: PURCHASE_APPROVED, PURCHASE_REFUNDED</li>
                     <li>Salve e pronto!</li>
                   </ol>
                 </div>
                 <div>
-                  <h3 className="font-medium text-foreground mb-2">💳 Asaas</h3>
+                  <h3 className="font-medium text-foreground mb-2">🌐 WordPress</h3>
                   <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                    <li>Acesse Asaas → Integrações → Webhooks</li>
-                    <li>Adicione um novo webhook</li>
-                    <li>Cole a URL: <code className="text-xs bg-secondary px-1 rounded">{webhookUrl}?source=asaas</code></li>
-                    <li>Selecione: PAYMENT_RECEIVED, PAYMENT_CONFIRMED</li>
+                    <li>Instale plugin "WP Webhooks" no WordPress</li>
+                    <li>Vá em WP Webhooks → Outgoing</li>
+                    <li>Cole a URL: <code className="text-xs bg-secondary px-1 rounded break-all">{webhookUrl}?source=wordpress</code></li>
+                    <li>Selecione eventos: Post Published, Post Updated</li>
                     <li>Ative e salve!</li>
                   </ol>
                 </div>
