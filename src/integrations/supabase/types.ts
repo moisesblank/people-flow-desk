@@ -1797,6 +1797,237 @@ export type Database = {
         }
         Relationships: []
       }
+      quiz_answers: {
+        Row: {
+          answered_at: string | null
+          attempt_id: string
+          id: string
+          is_correct: boolean | null
+          points_earned: number | null
+          question_id: string
+          user_answer: string | null
+        }
+        Insert: {
+          answered_at?: string | null
+          attempt_id: string
+          id?: string
+          is_correct?: boolean | null
+          points_earned?: number | null
+          question_id: string
+          user_answer?: string | null
+        }
+        Update: {
+          answered_at?: string | null
+          attempt_id?: string
+          id?: string
+          is_correct?: boolean | null
+          points_earned?: number | null
+          question_id?: string
+          user_answer?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_answers_attempt_id_fkey"
+            columns: ["attempt_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_attempts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_answers_question_id_fkey"
+            columns: ["question_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_attempts: {
+        Row: {
+          answers: Json | null
+          completed_at: string | null
+          id: string
+          max_score: number | null
+          passed: boolean | null
+          percentage: number | null
+          quiz_id: string
+          score: number | null
+          started_at: string | null
+          time_spent_seconds: number | null
+          user_id: string
+        }
+        Insert: {
+          answers?: Json | null
+          completed_at?: string | null
+          id?: string
+          max_score?: number | null
+          passed?: boolean | null
+          percentage?: number | null
+          quiz_id: string
+          score?: number | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+          user_id: string
+        }
+        Update: {
+          answers?: Json | null
+          completed_at?: string | null
+          id?: string
+          max_score?: number | null
+          passed?: boolean | null
+          percentage?: number | null
+          quiz_id?: string
+          score?: number | null
+          started_at?: string | null
+          time_spent_seconds?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_attempts_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quiz_questions: {
+        Row: {
+          correct_answer: string | null
+          created_at: string | null
+          difficulty: string | null
+          explanation: string | null
+          id: string
+          options: Json | null
+          points: number | null
+          position: number | null
+          question_text: string
+          question_type: string | null
+          quiz_id: string
+          topic: string | null
+        }
+        Insert: {
+          correct_answer?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          points?: number | null
+          position?: number | null
+          question_text: string
+          question_type?: string | null
+          quiz_id: string
+          topic?: string | null
+        }
+        Update: {
+          correct_answer?: string | null
+          created_at?: string | null
+          difficulty?: string | null
+          explanation?: string | null
+          id?: string
+          options?: Json | null
+          points?: number | null
+          position?: number | null
+          question_text?: string
+          question_type?: string | null
+          quiz_id?: string
+          topic?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quiz_questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quizzes: {
+        Row: {
+          course_id: string | null
+          created_at: string | null
+          description: string | null
+          id: string
+          is_published: boolean | null
+          max_attempts: number | null
+          module_id: string | null
+          passing_score: number | null
+          quiz_type: string | null
+          show_correct_answers: boolean | null
+          shuffle_questions: boolean | null
+          time_limit_minutes: number | null
+          title: string
+          updated_at: string | null
+          xp_reward: number | null
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          max_attempts?: number | null
+          module_id?: string | null
+          passing_score?: number | null
+          quiz_type?: string | null
+          show_correct_answers?: boolean | null
+          shuffle_questions?: boolean | null
+          time_limit_minutes?: number | null
+          title: string
+          updated_at?: string | null
+          xp_reward?: number | null
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          max_attempts?: number | null
+          module_id?: string | null
+          passing_score?: number | null
+          quiz_type?: string | null
+          show_correct_answers?: boolean | null
+          shuffle_questions?: boolean | null
+          time_limit_minutes?: number | null
+          title?: string
+          updated_at?: string | null
+          xp_reward?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quizzes_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quizzes_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sales: {
         Row: {
           affiliate_id: number | null
