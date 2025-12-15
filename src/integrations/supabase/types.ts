@@ -531,6 +531,42 @@ export type Database = {
         }
         Relationships: []
       }
+      content_history: {
+        Row: {
+          changed_at: string | null
+          changed_by: string | null
+          content_key: string
+          id: string
+          ip_address: string | null
+          new_value: string
+          old_value: string | null
+          user_agent: string | null
+          version: number
+        }
+        Insert: {
+          changed_at?: string | null
+          changed_by?: string | null
+          content_key: string
+          id?: string
+          ip_address?: string | null
+          new_value: string
+          old_value?: string | null
+          user_agent?: string | null
+          version?: number
+        }
+        Update: {
+          changed_at?: string | null
+          changed_by?: string | null
+          content_key?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: string
+          old_value?: string | null
+          user_agent?: string | null
+          version?: number
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           average_rating: number | null
@@ -2761,6 +2797,9 @@ export type Database = {
         }
         Returns: number
       }
+      can_edit_content: { Args: { _user_id?: string }; Returns: boolean }
+      can_use_god_mode: { Args: { _user_id?: string }; Returns: boolean }
+      can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       get_masked_salary: {
         Args: { emp_salary: number; emp_user_id: string }
@@ -2774,6 +2813,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
+      is_owner: { Args: { _user_id?: string }; Returns: boolean }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
