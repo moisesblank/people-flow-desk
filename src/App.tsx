@@ -29,6 +29,7 @@ const GestaoSite = lazy(() => import("./pages/GestaoSite"));
 const AreaProfessor = lazy(() => import("./pages/AreaProfessor"));
 const PortalAluno = lazy(() => import("./pages/PortalAluno"));
 const Integracoes = lazy(() => import("./pages/Integracoes"));
+const LandingPage = lazy(() => import("./pages/LandingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -55,8 +56,9 @@ const App = () => (
         <Sonner />
         <BrowserRouter>
           <Suspense fallback={<PageLoader />}>
-            <Routes>
+          <Routes>
               {/* Public routes */}
+              <Route path="/site" element={<LandingPage />} />
               <Route path="/auth" element={<Auth />} />
               
               {/* Protected routes with layout */}

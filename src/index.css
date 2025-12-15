@@ -3,37 +3,40 @@
 @tailwind utilities;
 
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Clash+Display:wght@400;500;600;700&display=swap');
 
 @layer base {
   :root {
-    --background: 240 10% 4%;
+    /* Ultra Premium Dark Theme - Azul Profundo + Dourado */
+    --background: 216 39% 7%;
     --foreground: 0 0% 98%;
 
-    --card: 240 6% 8%;
+    --card: 216 35% 10%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 240 6% 8%;
+    --popover: 216 35% 10%;
     --popover-foreground: 0 0% 98%;
 
-    /* Bordô Moisés Medeiros #7D1128 = 348 70% 29% */
-    --primary: 348 70% 29%;
-    --primary-foreground: 0 0% 100%;
+    /* Dourado Premium #D4AF37 = 45 73% 52% */
+    --primary: 45 73% 52%;
+    --primary-foreground: 216 39% 7%;
 
-    --secondary: 240 5% 14%;
+    --secondary: 216 30% 15%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 240 5% 14%;
-    --muted-foreground: 240 5% 55%;
+    --muted: 216 25% 18%;
+    --muted-foreground: 216 15% 55%;
 
-    --accent: 348 70% 25%;
+    /* Bordô Accent para CTAs secundários */
+    --accent: 348 70% 35%;
     --accent-foreground: 0 0% 98%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 240 6% 15%;
-    --input: 240 6% 15%;
-    --ring: 348 70% 29%;
+    --border: 216 25% 18%;
+    --input: 216 25% 18%;
+    --ring: 45 73% 52%;
 
     --radius: 0.875rem;
 
@@ -43,35 +46,35 @@
     --status-away: 38 92% 50%;
     --status-inactive: 240 5% 45%;
 
-    /* Stats colors */
-    --stats-red: 348 70% 35%;
+    /* Stats colors - Premium Palette */
+    --stats-red: 348 70% 45%;
     --stats-green: 152 76% 47%;
     --stats-blue: 212 96% 60%;
     --stats-purple: 262 83% 58%;
-    --stats-gold: 45 93% 47%;
+    --stats-gold: 45 73% 52%;
 
     /* Glow colors */
-    --glow-red: 348 70% 35%;
+    --glow-red: 348 70% 45%;
     --glow-green: 152 76% 47%;
     --glow-blue: 212 96% 60%;
     --glow-purple: 262 83% 58%;
-    --glow-gold: 45 93% 47%;
+    --glow-gold: 45 73% 52%;
 
-    --sidebar-background: 240 10% 6%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 348 70% 29%;
-    --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 348 70% 29%;
+    --sidebar-background: 216 39% 5%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 45 73% 52%;
+    --sidebar-primary-foreground: 216 39% 7%;
+    --sidebar-accent: 216 30% 15%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-border: 216 25% 18%;
+    --sidebar-ring: 45 73% 52%;
 
     /* Chart colors */
-    --chart-1: 348 70% 35%;
+    --chart-1: 45 73% 52%;
     --chart-2: 152 76% 47%;
     --chart-3: 212 96% 60%;
-    --chart-4: 262 83% 58%;
-    --chart-5: 45 93% 47%;
+    --chart-4: 348 70% 45%;
+    --chart-5: 262 83% 58%;
   }
 }
 
@@ -250,12 +253,55 @@
   }
 
   .brand-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(348 70% 20%) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(45 73% 35%) 100%);
   }
 
   .brand-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(348 70% 45%) 100%);
+    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(45 73% 65%) 100%);
+  }
+
+  .gold-gradient {
+    background: linear-gradient(135deg, hsl(45 73% 52%) 0%, hsl(45 73% 35%) 100%);
+  }
+
+  .gold-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(45 73% 65%) 0%, hsl(45 73% 45%) 100%);
+  }
+
+  .hero-gradient {
+    background: radial-gradient(ellipse at top, hsl(216 39% 12%) 0%, hsl(216 39% 7%) 70%);
+  }
+
+  .premium-card {
+    @apply relative overflow-hidden rounded-2xl;
+    background: linear-gradient(145deg, hsl(216 35% 12%) 0%, hsl(216 35% 8%) 100%);
+    border: 1px solid hsl(45 73% 52% / 0.1);
+  }
+
+  .premium-card::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-500;
+    background: linear-gradient(145deg, hsl(45 73% 52% / 0.05) 0%, transparent 50%);
+  }
+
+  .premium-card:hover::before {
+    @apply opacity-100;
+  }
+
+  .premium-card:hover {
+    border-color: hsl(45 73% 52% / 0.3);
+    box-shadow: 0 0 40px -10px hsl(45 73% 52% / 0.2);
+  }
+
+  .counter-glow {
+    text-shadow: 0 0 40px hsl(45 73% 52% / 0.5);
+  }
+
+  .hero-title {
+    font-family: 'Clash Display', 'Plus Jakarta Sans', sans-serif;
+    letter-spacing: -0.02em;
   }
 
   /* Smooth page transitions */
