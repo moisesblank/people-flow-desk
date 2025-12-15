@@ -30,7 +30,7 @@
 
 ## 🎯 VISÃO GERAL DO PROJETO
 
-O **Projeto Synapse** é o sistema de gestão digital que unifica as duas empresas e a vida pessoal de Moisés Medeiros.
+O **Curso de Química Moisés Medeiros** é o sistema de gestão digital que unifica as duas empresas e a vida pessoal de Moisés Medeiros.
 
 ### Empresas Gerenciadas:
 | Razão Social | CNPJ | Status |
@@ -44,8 +44,8 @@ O **Projeto Synapse** é o sistema de gestão digital que unifica as duas empres
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│                    PROJETO SYNAPSE v2.1                      │
-│              🦸 Tema Heroico Premium 🦸                      │
+│             CURSO DE QUÍMICA v5.0 - MOISÉS MEDEIROS          │
+│              🎓 Sistema de Gestão Premium 🎓                 │
 ├──────────────────────────────────────────────────────────────┤
 │                                                              │
 │   ██████████████████████████████████████░░░░  92%           │

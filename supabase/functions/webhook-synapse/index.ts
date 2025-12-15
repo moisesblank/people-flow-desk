@@ -129,12 +129,12 @@ async function logAuditEvent(
 // Security: Verify Hotmart webhook signature
 function verifyHotmartSignature(request: Request, hottok: string | null): boolean {
   if (!HOTMART_HOTTOK) {
-    console.warn("[SYNAPSE] HOTMART_HOTTOK not configured - skipping signature verification");
+    console.warn("[CURSO-QUIMICA] HOTMART_HOTTOK not configured - skipping signature verification");
     return true; // Allow if not configured (for initial setup)
   }
   
   if (!hottok) {
-    console.error("[SYNAPSE] Missing x-hotmart-hottok header");
+    console.error("[CURSO-QUIMICA] Missing x-hotmart-hottok header");
     return false;
   }
   
@@ -146,7 +146,7 @@ async function logSecurityEvent(eventType: string, details: Record<string, any>)
   try {
     await supabase.from("integration_events").insert({
       event_type: `security_${eventType}`,
-      source: "webhook-synapse",
+      source: "webhook-curso-quimica",
       source_id: `security_${Date.now()}`,
       payload: {
         ...details,
@@ -154,7 +154,7 @@ async function logSecurityEvent(eventType: string, details: Record<string, any>)
       },
     });
   } catch (error) {
-    console.error("[SYNAPSE] Failed to log security event:", error);
+    console.error("[CURSO-QUIMICA] Failed to log security event:", error);
   }
 }
 
@@ -283,7 +283,7 @@ async function processWebhook(payload: WebhookPayload, source: string, ipAddress
     });
 
   if (eventError) {
-    console.error("[SYNAPSE] Error saving event:", eventError);
+    console.error("[CURSO-QUIMICA] Error saving event:", eventError);
   }
 
   // Upsert transaction
@@ -297,7 +297,7 @@ async function processWebhook(payload: WebhookPayload, source: string, ipAddress
     .single();
 
   if (txError) {
-    console.error("[SYNAPSE] Error saving transaction:", txError);
+    console.error("[CURSO-QUIMICA] Error saving transaction:", txError);
     throw txError;
   }
 
@@ -316,7 +316,7 @@ async function processWebhook(payload: WebhookPayload, source: string, ipAddress
   });
 
   // Security: Log only transaction ID, not details
-  console.log("[SYNAPSE] Transaction saved with ID:", transaction?.id);
+  console.log("[CURSO-QUIMICA] Transaction saved with ID:", transaction?.id);
 
   // Update daily metrics
   await updateDailyMetrics(transactionData);

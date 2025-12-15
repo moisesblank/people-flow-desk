@@ -1,5 +1,6 @@
 // ============================================
-// SYNAPSE v5.0 - Hook de Ponto Eletrônico
+// MOISÉS MEDEIROS v5.0 - Hook de Ponto Eletrônico
+// Curso de Química - Sistema de Gestão
 // ============================================
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";

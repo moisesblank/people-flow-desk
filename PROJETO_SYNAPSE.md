@@ -329,6 +329,6 @@ Eu resolvo para você!
 
 ---
 
-*PROJETO SYNAPSE v2.0 - Curso - Química*
-*Desenvolvido para Moisés Medeiros*
+*CURSO DE QUÍMICA v5.0 - Sistema de Gestão*
+*Desenvolvido por e para Moisés Medeiros*
 *© 2025 - Todos os direitos reservados*
