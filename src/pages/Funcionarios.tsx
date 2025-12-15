@@ -61,8 +61,9 @@ export default function Funcionarios() {
 
   const fetchEmployees = useCallback(async () => {
     try {
+      // Usa a view employees_safe que mascara salários para não-admins
       const { data, error } = await supabase
-        .from("employees")
+        .from("employees_safe")
         .select("*")
         .order("nome");
 
