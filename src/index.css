@@ -3,23 +3,24 @@
 @tailwind utilities;
 
 /* ============================================
-   MOISÉS MEDEIROS CURSO - Design System v6.0
-   Premium Gold + Dark Theme
+   MOISÉS MEDEIROS CURSO - Design System v7.0
+   Spider-Man Theme: Vermelho Vinho + Azul + Preto
+   Premium Dark Theme
    ============================================ */
 
 @layer base {
   :root {
-    /* Cores Principais - HSL OBRIGATÓRIO */
-    --primary: 43 74% 49%;           /* Gold #D4A017 */
+    /* Cores Principais - SPIDER-MAN THEME */
+    --primary: 345 80% 35%;              /* Vermelho Vinho #8B1538 */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 43 74% 42%;
-    --primary-glow: 43 74% 60%;
+    --primary-hover: 345 80% 30%;
+    --primary-glow: 345 80% 45%;
     
-    --secondary: 220 14% 20%;        /* Dark Gray */
+    --secondary: 220 60% 25%;            /* Azul Spider-Man */
     --secondary-foreground: 0 0% 98%;
     
-    --accent: 43 100% 50%;           /* Bright Gold */
-    --accent-foreground: 220 14% 10%;
+    --accent: 345 90% 40%;               /* Vermelho Vibrante */
+    --accent-foreground: 0 0% 100%;
     
     --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
@@ -30,97 +31,114 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Background & Surfaces */
+    /* Background & Surfaces - Light */
     --background: 0 0% 100%;
-    --foreground: 220 14% 10%;
+    --foreground: 220 40% 10%;
     
     --card: 0 0% 100%;
-    --card-foreground: 220 14% 10%;
+    --card-foreground: 220 40% 10%;
     --card-hover: 220 14% 98%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 220 14% 10%;
+    --popover-foreground: 220 40% 10%;
     
     --muted: 220 14% 96%;
     --muted-foreground: 220 14% 46%;
     
     --border: 220 14% 90%;
     --input: 220 14% 90%;
-    --ring: 43 74% 49%;
+    --ring: 345 80% 35%;
     
     /* Status colors */
     --status-active: 142 71% 45%;
-    --status-vacation: 200 100% 55%;
+    --status-vacation: 220 60% 50%;
     --status-away: 38 92% 50%;
     --status-inactive: 220 14% 46%;
     
-    /* Stats colors */
-    --stats-red: 0 84% 60%;
+    /* Stats colors - Spider-Man Palette */
+    --stats-red: 345 80% 40%;            /* Vermelho Vinho */
     --stats-green: 142 71% 45%;
-    --stats-blue: 200 100% 55%;
+    --stats-blue: 220 70% 50%;           /* Azul Spider */
     --stats-purple: 270 80% 55%;
     --stats-gold: 43 74% 49%;
-    --stats-cyan: 180 100% 50%;
+    --stats-cyan: 180 100% 40%;
+    --stats-wine: 345 80% 35%;           /* Vermelho Vinho */
     
-    /* Glow colors */
-    --glow-red: 0 84% 60%;
+    /* Glow colors - Spider-Man */
+    --glow-red: 345 80% 50%;
     --glow-green: 142 71% 45%;
-    --glow-blue: 200 100% 60%;
+    --glow-blue: 220 70% 55%;
     --glow-purple: 270 80% 60%;
     --glow-gold: 43 74% 60%;
-    --glow-cyan: 180 100% 55%;
+    --glow-cyan: 180 100% 45%;
+    --glow-wine: 345 80% 45%;
     
     /* Sidebar */
     --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 14% 10%;
-    --sidebar-primary: 43 74% 49%;
+    --sidebar-foreground: 220 40% 10%;
+    --sidebar-primary: 345 80% 35%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 43 74% 49%;
+    --sidebar-accent: 345 80% 35%;
     --sidebar-accent-foreground: 0 0% 100%;
     --sidebar-border: 220 14% 90%;
-    --sidebar-ring: 43 74% 49%;
+    --sidebar-ring: 345 80% 35%;
     
-    /* Chart colors */
-    --chart-1: 43 74% 49%;
-    --chart-2: 142 71% 45%;
-    --chart-3: 200 100% 55%;
+    /* Chart colors - Spider-Man */
+    --chart-1: 345 80% 40%;              /* Vermelho Vinho */
+    --chart-2: 220 70% 50%;              /* Azul Spider */
+    --chart-3: 142 71% 45%;
     --chart-4: 270 80% 55%;
-    --chart-5: 0 84% 60%;
+    --chart-5: 43 74% 49%;
     
     /* Radius */
     --radius: 0.75rem;
   }
 
   .dark {
-    /* Background & Surfaces - Dark */
-    --background: 220 14% 8%;
+    /* Background & Surfaces - Dark Spider-Man */
+    --background: 220 40% 6%;            /* Preto Azulado */
     --foreground: 0 0% 98%;
     
-    --card: 220 14% 12%;
+    --card: 220 35% 10%;
     --card-foreground: 0 0% 98%;
-    --card-hover: 220 14% 16%;
+    --card-hover: 220 35% 14%;
     
-    --popover: 220 14% 12%;
+    --popover: 220 35% 10%;
     --popover-foreground: 0 0% 98%;
     
-    --muted: 220 14% 18%;
+    --muted: 220 30% 15%;
     --muted-foreground: 220 14% 65%;
     
-    --border: 220 14% 20%;
-    --input: 220 14% 20%;
+    --border: 220 30% 18%;
+    --input: 220 30% 18%;
     
-    /* Primary adjusted for dark */
-    --primary: 43 74% 55%;
-    --primary-hover: 43 74% 60%;
+    /* Primary adjusted for dark - Vermelho Vinho Vibrante */
+    --primary: 345 85% 50%;
+    --primary-hover: 345 85% 55%;
+    --primary-glow: 345 85% 60%;
     
-    /* Secondary */
-    --secondary: 220 14% 18%;
+    /* Secondary - Azul Spider-Man */
+    --secondary: 220 60% 35%;
     --secondary-foreground: 0 0% 98%;
     
+    /* Accent */
+    --accent: 345 90% 55%;
+    
+    /* Stats - Mais vibrantes no dark */
+    --stats-red: 345 85% 55%;
+    --stats-blue: 220 80% 60%;
+    --stats-wine: 345 85% 50%;
+    
+    /* Glows - Mais intensos no dark */
+    --glow-red: 345 85% 55%;
+    --glow-blue: 220 80% 60%;
+    --glow-wine: 345 85% 55%;
+    
     /* Sidebar - Dark */
-    --sidebar-background: 220 14% 6%;
+    --sidebar-background: 220 40% 5%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-border: 220 14% 15%;
+    --sidebar-border: 220 30% 15%;
+    --sidebar-primary: 345 85% 50%;
   }
 }
 
@@ -141,7 +159,7 @@
     scroll-behavior: smooth;
   }
 
-  /* Custom Scrollbar */
+  /* Custom Scrollbar - Spider-Man Theme */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
@@ -152,12 +170,12 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    background: hsl(var(--muted-foreground) / 0.3);
+    background: hsl(var(--primary) / 0.4);
     border-radius: 4px;
   }
 
   ::-webkit-scrollbar-thumb:hover {
-    background: hsl(var(--muted-foreground) / 0.5);
+    background: hsl(var(--primary) / 0.6);
   }
 
   /* Reduced Motion */
@@ -189,18 +207,22 @@
   }
 
   /* ============================================
-     GRADIENTS
+     GRADIENTS - SPIDER-MAN THEME
      ============================================ */
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-hover)) 100%);
   }
 
   .gradient-hero {
-    background: linear-gradient(180deg, hsl(220 14% 10%) 0%, hsl(220 14% 20%) 100%);
+    background: linear-gradient(180deg, hsl(220 40% 6%) 0%, hsl(220 35% 12%) 100%);
   }
 
-  .gradient-gold {
-    background: linear-gradient(135deg, hsl(43 74% 55%) 0%, hsl(43 74% 40%) 100%);
+  .gradient-wine {
+    background: linear-gradient(135deg, hsl(345 80% 40%) 0%, hsl(345 80% 30%) 100%);
+  }
+
+  .gradient-spider {
+    background: linear-gradient(135deg, hsl(345 85% 45%) 0%, hsl(220 70% 45%) 100%);
   }
 
   .gradient-text {
@@ -210,8 +232,27 @@
     background-clip: text;
   }
 
+  .brand-gradient {
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--secondary)) 100%);
+  }
+
+  .brand-text {
+    background: linear-gradient(135deg, hsl(345 85% 55%) 0%, hsl(220 80% 60%) 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .hero-gradient {
+    background: linear-gradient(180deg, 
+      hsl(220 40% 6%) 0%, 
+      hsl(220 35% 10%) 50%, 
+      hsl(345 30% 8%) 100%
+    );
+  }
+
   /* ============================================
-     SHADOWS & GLOWS
+     SHADOWS & GLOWS - SPIDER-MAN
      ============================================ */
   .shadow-glow {
     box-shadow: 0 0 40px hsl(var(--primary) / 0.3);
@@ -225,6 +266,10 @@
     box-shadow: 0 0 60px hsl(var(--primary) / 0.4);
   }
 
+  .glow-wine {
+    box-shadow: 0 0 60px -15px hsl(var(--glow-wine) / 0.5);
+  }
+
   .glow-gold {
     box-shadow: 0 0 60px -15px hsl(var(--glow-gold) / 0.4);
   }
@@ -234,7 +279,7 @@
   }
 
   .glow-blue {
-    box-shadow: 0 0 60px -15px hsl(var(--glow-blue) / 0.4);
+    box-shadow: 0 0 60px -15px hsl(var(--glow-blue) / 0.5);
   }
 
   .glow-purple {
@@ -246,6 +291,18 @@
       0 0 5px hsl(var(--primary)),
       0 0 20px hsl(var(--primary) / 0.4),
       0 0 40px hsl(var(--primary) / 0.2);
+  }
+
+  .spider-glow {
+    box-shadow: 
+      0 0 30px hsl(345 85% 50% / 0.4),
+      0 0 60px hsl(220 70% 50% / 0.2);
+  }
+
+  .heroic-glow {
+    box-shadow: 
+      0 4px 20px -5px hsl(var(--primary) / 0.5),
+      0 0 40px -10px hsl(var(--primary) / 0.3);
   }
 
   /* ============================================
@@ -291,6 +348,11 @@
     50% { transform: translateY(-5px); }
   }
 
+  @keyframes web-swing {
+    0%, 100% { transform: rotate(-5deg); }
+    50% { transform: rotate(5deg); }
+  }
+
   .animate-fade-in { animation: fade-in 0.5s ease-out; }
   .animate-fade-up { animation: fade-up 0.6s ease-out; }
   .animate-scale-in { animation: scale-in 0.3s ease-out; }
@@ -299,9 +361,10 @@
   .animate-float { animation: float 3s ease-in-out infinite; }
   .animate-spin-slow { animation: spin-slow 8s linear infinite; }
   .animate-bounce-soft { animation: bounce-soft 2s ease-in-out infinite; }
+  .animate-web-swing { animation: web-swing 3s ease-in-out infinite; }
 
   /* ============================================
-     STAT CARDS
+     STAT CARDS - SPIDER-MAN THEME
      ============================================ */
   .stat-card {
     @apply relative overflow-hidden rounded-2xl p-6 transition-all duration-500;
@@ -318,6 +381,10 @@
 
   .stat-card:hover {
     transform: translateY(-2px);
+  }
+
+  .stat-wine::before {
+    background: radial-gradient(ellipse at top left, hsl(var(--stats-wine)) 0%, transparent 70%);
   }
 
   .stat-gold::before {
@@ -337,7 +404,7 @@
   }
 
   /* ============================================
-     PREMIUM CARDS
+     PREMIUM CARDS - SPIDER-MAN
      ============================================ */
   .premium-card {
     @apply relative overflow-hidden rounded-2xl bg-card border border-border transition-all duration-500;
@@ -358,6 +425,26 @@
     box-shadow: 0 0 50px -15px hsl(var(--primary) / 0.3);
   }
 
+  .wine-card {
+    @apply relative overflow-hidden rounded-3xl bg-card/80 backdrop-blur-xl border border-primary/20;
+    box-shadow: 
+      0 25px 50px -12px hsl(var(--primary) / 0.25),
+      inset 0 1px 0 hsl(0 0% 100% / 0.05);
+  }
+
+  .spider-card {
+    @apply relative overflow-hidden rounded-2xl border transition-all duration-500;
+    background: linear-gradient(145deg, hsl(var(--card)) 0%, hsl(var(--card) / 0.8) 100%);
+    border-color: hsl(var(--primary) / 0.2);
+  }
+
+  .spider-card:hover {
+    border-color: hsl(var(--primary) / 0.4);
+    box-shadow: 
+      0 0 40px -10px hsl(var(--primary) / 0.3),
+      0 0 60px -20px hsl(var(--secondary) / 0.2);
+  }
+
   /* ============================================
      FOCUS & ACCESSIBILITY
      ============================================ */
@@ -374,7 +461,7 @@
 
   .hover-lift:hover {
     transform: translateY(-4px);
-    box-shadow: 0 20px 40px -15px hsl(var(--primary) / 0.15);
+    box-shadow: 0 20px 40px -15px hsl(var(--primary) / 0.2);
   }
 
   .hover-scale {
@@ -419,7 +506,7 @@
      XP & GAMIFICATION
      ============================================ */
   .xp-glow {
-    box-shadow: 0 0 20px hsl(var(--stats-gold) / 0.4);
+    box-shadow: 0 0 20px hsl(var(--stats-wine) / 0.4);
   }
 
   @keyframes badge-shine {
@@ -431,11 +518,16 @@
     background: linear-gradient(
       90deg, 
       transparent 0%, 
-      hsl(var(--stats-gold) / 0.3) 50%, 
+      hsl(var(--stats-wine) / 0.3) 50%, 
       transparent 100%
     );
     background-size: 200% 100%;
     animation: badge-shine 3s infinite;
+  }
+
+  /* Counter glow effect */
+  .counter-glow {
+    text-shadow: 0 0 20px currentColor;
   }
 
   /* ============================================
@@ -468,6 +560,15 @@
     );
     background-size: 200% 100%;
     animation: shimmer 1.5s ease-in-out infinite;
+  }
+
+  /* Web pattern background */
+  .web-pattern {
+    background-image: 
+      radial-gradient(circle at 50% 50%, hsl(var(--primary) / 0.03) 0%, transparent 50%),
+      linear-gradient(hsl(var(--primary) / 0.02) 1px, transparent 1px),
+      linear-gradient(90deg, hsl(var(--primary) / 0.02) 1px, transparent 1px);
+    background-size: 100px 100px, 20px 20px, 20px 20px;
   }
 }
 
