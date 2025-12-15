@@ -1,3 +1,9 @@
+// ============================================
+// MOISÉS MEDEIROS v5.0 - INTEGRAÇÕES
+// Curso de Química - Hub de Webhooks
+// Pilar: Data Intelligence & Automação
+// ============================================
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 

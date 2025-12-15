@@ -1,4 +1,9 @@
-import { 
+// ============================================
+// MOISÉS MEDEIROS v5.0 - SIDEBAR NAVIGATION
+// Curso de Química - Sistema de Navegação
+// ============================================
+
+import {
   LayoutDashboard, 
   Users, 
   Wallet, 

@@ -1,3 +1,9 @@
+// ============================================
+// MOISÉS MEDEIROS v5.0 - DASHBOARD PRINCIPAL
+// Curso de Química - Central de Comando
+// Pilar: Business Intelligence & KPIs
+// ============================================
+
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 

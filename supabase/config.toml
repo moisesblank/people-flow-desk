@@ -1,10 +1,13 @@
 project_id = "fyikfsasudgzsjmumdlw"
 
-[functions.webhook-synapse]
+[functions.webhook-curso-quimica]
 verify_jwt = false
 
 [functions.ai-tutor]
 verify_jwt = false
 
 [functions.send-report]
+verify_jwt = true
+
+[functions.backup-data]
 verify_jwt = true

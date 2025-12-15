@@ -1,6 +1,6 @@
-# 🧠 CURSO MOISÉS MEDEIROS - DOCUMENTAÇÃO COMPLETA
+# 🧬 MOISÉS MEDEIROS - DOCUMENTAÇÃO COMPLETA
 ## Sistema de Gestão Educacional - Curso de Química
-## Versão 2.0 | Atualizado em: 15/12/2025
+## Versão 5.0 | Atualizado em: 15/12/2025
 
 ---
 
@@ -18,7 +18,7 @@
 
 ## 🎯 VISÃO GERAL
 
-O **Curso Moisés Medeiros** é o sistema de gestão digital que unifica as duas empresas de Moisés Medeiros e sua vida pessoal em um ecossistema coeso, inteligente e em tempo real.
+O **Sistema Moisés Medeiros** é a plataforma de gestão digital que unifica as operações do Curso de Química e a gestão empresarial em um ecossistema coeso, inteligente e em tempo real.
 
 ### Empresas Gerenciadas
 
@@ -156,7 +156,7 @@ graph TB
 ### URL do Webhook (ÚNICA)
 
 ```
-https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse
+https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica
 ```
 
 ### Como Configurar Cada Plataforma
@@ -167,7 +167,7 @@ https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse
 2. Clique em **"Adicionar Webhook"**
 3. Cole a URL:
    ```
-   https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse?source=hotmart
+   https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica?source=hotmart
    ```
 4. Selecione os eventos:
    - ✅ `PURCHASE_APPROVED` (venda aprovada)
@@ -181,7 +181,7 @@ https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse
 2. Clique em **"Adicionar"**
 3. Cole a URL:
    ```
-   https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse?source=asaas
+   https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica?source=asaas
    ```
 4. Selecione os eventos:
    - ✅ `PAYMENT_RECEIVED`
@@ -194,7 +194,7 @@ https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse
 1. Crie um cenário no Make
 2. Use o módulo **HTTP → Make a request**
 3. Configure:
-   - URL: `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse?source=make`
+   - URL: `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica?source=make`
    - Método: `POST`
    - Headers: `Content-Type: application/json`
    - Body: JSON com seus dados
@@ -206,7 +206,7 @@ https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse
 3. Escolha **POST**
 4. Configure a URL:
    ```
-   https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse?source=zapier
+   https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica?source=zapier
    ```
 
 ### Formato do Payload (Genérico)

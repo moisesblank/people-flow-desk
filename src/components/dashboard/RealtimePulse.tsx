@@ -1,3 +1,9 @@
+// ============================================
+// MOISÉS MEDEIROS v5.0 - REALTIME PULSE
+// Dashboard em Tempo Real - Curso de Química
+// Pilar: Data Intelligence & Live Updates
+// ============================================
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
