@@ -533,7 +533,7 @@ export default function Auth() {
         
         {/* Powered by */}
         <p className="text-center text-xs text-muted-foreground/50 mt-4">
-          Moisés Medeiros v5.0 • Sistema Nervoso Digital
+          Moisés Medeiros v5.0 • Curso - Química
         </p>
       </motion.div>
     </div>
