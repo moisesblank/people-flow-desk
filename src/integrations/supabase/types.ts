@@ -848,6 +848,13 @@ export type Database = {
             foreignKeyName: "employee_documents_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_documents_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees_safe"
             referencedColumns: ["id"]
           },
@@ -2113,6 +2120,13 @@ export type Database = {
             foreignKeyName: "time_clock_absences_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_absences_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees_safe"
             referencedColumns: ["id"]
           },
@@ -2185,6 +2199,13 @@ export type Database = {
             foreignKeyName: "time_clock_entries_employee_id_fkey"
             columns: ["employee_id"]
             isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
             referencedRelation: "employees_safe"
             referencedColumns: ["id"]
           },
@@ -2236,6 +2257,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_reports_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_public"
             referencedColumns: ["id"]
           },
           {
@@ -2296,6 +2324,13 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: true
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_settings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees_public"
             referencedColumns: ["id"]
           },
           {
@@ -2713,6 +2748,36 @@ export type Database = {
       }
     }
     Views: {
+      employees_public: {
+        Row: {
+          created_at: string | null
+          email: string | null
+          funcao: string | null
+          id: number | null
+          nome: string | null
+          setor: Database["public"]["Enums"]["sector_type"] | null
+          status: Database["public"]["Enums"]["employee_status"] | null
+        }
+        Insert: {
+          created_at?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: number | null
+          nome?: string | null
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+        }
+        Update: {
+          created_at?: string | null
+          email?: string | null
+          funcao?: string | null
+          id?: number | null
+          nome?: string | null
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+        }
+        Relationships: []
+      }
       employees_safe: {
         Row: {
           created_at: string | null
