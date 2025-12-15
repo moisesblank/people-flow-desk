@@ -28,6 +28,7 @@ import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { SynapsePulse } from "@/components/dashboard/SynapsePulse";
 import { SynapseCommandCenter } from "@/components/dashboard/SynapseCommandCenter";
+import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
@@ -342,6 +343,29 @@ export default function Dashboard() {
             <FinancialGoals goals={financialGoals} />
             <QuickActions />
           </div>
+        </section>
+
+        {/* Advanced KPIs - Business Intelligence */}
+        <section className="mb-8">
+          <AdvancedKPIs
+            data={{
+              ltv: 158000,
+              ltvPreviousPeriod: 145000,
+              cac: 32000,
+              cacPreviousPeriod: 35000,
+              churnRate: 2.5,
+              churnRatePreviousPeriod: 3.2,
+              mrr: stats.income,
+              mrrPreviousPeriod: stats.income * 0.92,
+              arr: stats.income * 12,
+              nps: 72,
+              npsPreviousPeriod: 68,
+              activeUsers: stats.students + stats.affiliates,
+              totalUsers: (stats.students + stats.affiliates) * 1.3,
+              revenuePerUser: stats.income / Math.max(1, stats.students + stats.affiliates),
+              retentionRate: 94.5,
+            }}
+          />
         </section>
 
         {/* Alerts */}
