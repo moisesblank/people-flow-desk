@@ -1,5 +1,5 @@
 # 📋 CHECKLIST MESTRE DO PROJETO SYNAPSE
-## Sistema Nervoso Digital - Moisés Medeiros
+## Curso - Química - Moisés Medeiros
 ## Versão: 2.1 | Data: 15 de Dezembro de 2025
 
 ---
@@ -30,7 +30,7 @@
 
 ## 🎯 VISÃO GERAL DO PROJETO
 
-O **Projeto Synapse** é o sistema nervoso central digital que unifica as duas empresas e a vida pessoal de Moisés Medeiros.
+O **Projeto Synapse** é o sistema de gestão digital que unifica as duas empresas e a vida pessoal de Moisés Medeiros.
 
 ### Empresas Gerenciadas:
 | Razão Social | CNPJ | Status |
@@ -290,6 +290,6 @@ graph TB
 
 ---
 
-*PROJETO SYNAPSE v2.1 - Sistema Nervoso Digital*
+*PROJETO SYNAPSE v2.1 - Curso - Química*
 *Tema Heroico: Vermelho Vinho + Azul + Amarelo*
 *Atualizado em: 15/12/2025*

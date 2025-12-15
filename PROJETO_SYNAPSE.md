@@ -1,5 +1,5 @@
 # 🧠 PROJETO SYNAPSE - DOCUMENTAÇÃO COMPLETA
-## Sistema Nervoso Digital - Moisés Medeiros
+## Curso - Química - Moisés Medeiros
 ## Versão 2.0 | Atualizado em: 15/12/2025
 
 ---
@@ -18,7 +18,7 @@
 
 ## 🎯 VISÃO GERAL
 
-O **Projeto Synapse** é o sistema nervoso central digital que unifica as duas empresas de Moisés Medeiros e sua vida pessoal em um ecossistema coeso, inteligente e em tempo real.
+O **Projeto Synapse** é o sistema de gestão digital que unifica as duas empresas de Moisés Medeiros e sua vida pessoal em um ecossistema coeso, inteligente e em tempo real.
 
 ### Empresas Gerenciadas
 
@@ -329,6 +329,6 @@ Eu resolvo para você!
 
 ---
 
-*PROJETO SYNAPSE v2.0 - Sistema Nervoso Digital*
+*PROJETO SYNAPSE v2.0 - Curso - Química*
 *Desenvolvido para Moisés Medeiros*
 *© 2025 - Todos os direitos reservados*
