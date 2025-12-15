@@ -8,6 +8,7 @@ import { GodModeProvider } from "@/contexts/GodModeContext";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GodModePanel } from "@/components/editor/GodModePanel";
+import { VisualEditMode } from "@/components/editor/VisualEditMode";
 import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { Suspense, lazy, useState, useEffect } from "react";
@@ -100,6 +101,7 @@ function AppContent() {
     <>
       <SessionTracker />
       <GodModePanel />
+      <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
       <Suspense fallback={<PageLoader />}>
         <Routes>
