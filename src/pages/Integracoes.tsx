@@ -1,7 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - INTEGRAÇÕES
-// Spider-Man Theme - Hub de Webhooks + GitHub
-// Pilar: Data Intelligence & Automação
+// MOISÉS MEDEIROS v10.0 - INTEGRAÇÕES
+// FASE 10: Novas Integrações Stripe + WhatsApp
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -30,7 +29,9 @@ import {
   Lock,
   Unlock,
   TrendingUp,
-  AlertTriangle
+  AlertTriangle,
+  CreditCard,
+  MessageCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +42,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { WhatsAppShare } from "@/components/integrations/WhatsAppShare";
+import { StripeIntegration } from "@/components/integrations/StripeIntegration";
 
 interface Integration {
   id: string;
@@ -354,11 +357,61 @@ export default function Integracoes() {
           </div>
         </motion.section>
 
+        {/* NEW: Payment & Communication Integrations */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.18 }}
+          className="grid gap-6 md:grid-cols-2 mb-8"
+        >
+          {/* Stripe Integration */}
+          <StripeIntegration 
+            isConnected={false}
+            onConnect={() => {
+              toast.info("Configurar Stripe", {
+                description: "Use a integração Stripe nas configurações do projeto Lovable.",
+              });
+            }}
+          />
+
+          {/* WhatsApp Integration */}
+          <div className="glass-card rounded-xl p-6 bg-gradient-to-br from-[#25D366]/10 to-[#128C7E]/10 border border-[#25D366]/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-[#25D366]/20">
+                  <MessageCircle className="h-5 w-5 text-[#25D366]" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">WhatsApp Business</h3>
+                  <p className="text-xs text-muted-foreground">Comunicação direta</p>
+                </div>
+              </div>
+              <Badge className="bg-[hsl(var(--stats-green))] text-white">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Disponível
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mb-4">
+              Envie mensagens, notificações e compartilhe relatórios diretamente no WhatsApp.
+            </p>
+            <div className="flex gap-2">
+              <WhatsAppShare 
+                title="Testar WhatsApp" 
+                defaultMessage="Olá! Esta é uma mensagem de teste do sistema Moisés Medeiros." 
+              />
+              <Button variant="outline" size="sm">
+                <Settings className="h-4 w-4 mr-2" />
+                Configurar
+              </Button>
+            </div>
+          </div>
+        </motion.section>
+
         {/* Webhook URL Card */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.15 }}
+          transition={{ delay: 0.2 }}
           className="glass-card rounded-2xl p-6 mb-8"
         >
           <div className="flex items-center gap-4 mb-4">
