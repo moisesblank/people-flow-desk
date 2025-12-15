@@ -174,6 +174,7 @@ export default function Funcionarios() {
       const dbSetor = Object.entries(sectorMapping).find(([, v]) => v === data.setor)?.[0] || data.setor;
 
       if (data.id) {
+        // Update employee basic info
         const { error } = await supabase
           .from("employees")
           .update({
@@ -181,7 +182,6 @@ export default function Funcionarios() {
             funcao: data.funcao,
             setor: dbSetor as any,
             email: data.email,
-            salario: data.salario,
             data_admissao: data.dataAdmissao || null,
             status: data.status as any,
           })
@@ -189,24 +189,55 @@ export default function Funcionarios() {
 
         if (error) throw error;
 
+        // Update salary in separate table (owner only)
+        if (data.salario !== null && data.salario !== undefined) {
+          const { error: compError } = await supabase
+            .from("employee_compensation")
+            .upsert({
+              employee_id: data.id,
+              salario: data.salario,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'employee_id' });
+
+          if (compError) {
+            console.warn("Could not update salary (owner only):", compError.message);
+          }
+        }
+
         toast.success("Funcionário atualizado!", {
           description: `${data.nome} foi atualizado com sucesso.`,
         });
       } else {
-        const { error } = await supabase
+        // Insert new employee
+        const { data: newEmp, error } = await supabase
           .from("employees")
           .insert({
             nome: data.nome,
             funcao: data.funcao,
             setor: dbSetor as any,
             email: data.email,
-            salario: data.salario,
             data_admissao: data.dataAdmissao || null,
             status: data.status as any,
             created_by: user?.id,
-          });
+          })
+          .select("id")
+          .single();
 
         if (error) throw error;
+
+        // Insert salary in separate table (owner only)
+        if (newEmp && data.salario !== null && data.salario !== undefined) {
+          const { error: compError } = await supabase
+            .from("employee_compensation")
+            .insert({
+              employee_id: newEmp.id,
+              salario: data.salario,
+            });
+
+          if (compError) {
+            console.warn("Could not insert salary (owner only):", compError.message);
+          }
+        }
 
         toast.success("Funcionário cadastrado!", {
           description: `${data.nome} foi adicionado à equipe.`,
