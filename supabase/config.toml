@@ -2,3 +2,6 @@ project_id = "fyikfsasudgzsjmumdlw"
 
 [functions.webhook-synapse]
 verify_jwt = false
+
+[functions.ai-tutor]
+verify_jwt = false
