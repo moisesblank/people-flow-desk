@@ -34,6 +34,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
+import { GoogleCalendarSync } from "@/components/calendar/GoogleCalendarSync";
+import { TaskStats } from "@/components/calendar/TaskStats";
 import calendarHeroImage from "@/assets/calendar-chemistry-hero.jpg";
 import { 
   format, 
@@ -349,7 +351,7 @@ export default function Calendario() {
           </div>
         </motion.div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-4">
           {/* Calendar Grid */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}

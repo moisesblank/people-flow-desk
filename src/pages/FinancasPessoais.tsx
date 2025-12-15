@@ -18,6 +18,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
 import { ChemistryTip, AnimatedAtom } from "@/components/chemistry/ChemistryVisuals";
+import { FinancialProjections } from "@/components/finance/FinancialProjections";
+import { SpendingAnalytics } from "@/components/finance/SpendingAnalytics";
 import financeHeroImage from "@/assets/finance-chemistry-hero.jpg";
 
 interface Expense {
@@ -250,7 +252,7 @@ export default function FinancasPessoais() {
           />
         </section>
 
-        {/* Chart + Fixed Expenses Grid */}
+        {/* Chart + Fixed Expenses + Projections Grid */}
         <section className="mb-10 grid gap-6 lg:grid-cols-3">
           {/* Pie Chart */}
           {stats.pieData.length > 0 && (
@@ -337,6 +339,19 @@ export default function FinancasPessoais() {
               </table>
             </div>
           </div>
+        </section>
+
+        {/* Projeções e Analytics */}
+        <section className="mb-10 grid gap-6 lg:grid-cols-2">
+          <FinancialProjections 
+            totalFixed={stats.totalFixed} 
+            totalExtra={stats.totalExtra} 
+            type="personal" 
+          />
+          <SpendingAnalytics 
+            categories={stats.pieData} 
+            total={stats.total} 
+          />
         </section>
 
         {/* Extra Expenses */}
