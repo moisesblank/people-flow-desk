@@ -19,7 +19,9 @@ import {
   UserCheck,
   Brain,
   Link2,
-  Shield
+  Shield,
+  Trophy,
+  PlayCircle
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -41,7 +43,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainMenuItems = [
-  { title: "Central de Comando", url: "/", icon: Brain },
+  { title: "Command Center", url: "/", icon: Brain },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
@@ -58,6 +60,7 @@ const financeMenuItems = [
 ];
 
 const businessMenuItems = [
+  { title: "Cursos", url: "/cursos", icon: PlayCircle },
   { title: "Afiliados", url: "/afiliados", icon: Handshake },
   { title: "Alunos", url: "/alunos", icon: GraduationCap },
   { title: "Portal Aluno", url: "/portal-aluno", icon: UserCheck },
@@ -93,8 +96,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">Curso - Moisés Medeiros</span>
-              <span className="text-xs text-muted-foreground">Gestão Empresarial v5.0</span>
+              <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
+              <span className="text-xs text-muted-foreground">Curso de Química v5.0</span>
             </div>
           )}
         </div>

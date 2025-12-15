@@ -44,7 +44,7 @@ function formatTime(date: string): string {
   });
 }
 
-export function SynapsePulse() {
+export function RealtimePulse() {
   const [stats, setStats] = useState<SynapseStats>({
     todayRevenue: 0,
     todaySales: 0,

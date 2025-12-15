@@ -33,6 +33,8 @@ const Permissoes = lazy(() => import("./pages/Permissoes"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
 const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
+const Cursos = lazy(() => import("./pages/Cursos"));
+const CursoDetalhe = lazy(() => import("./pages/CursoDetalhe"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -86,6 +88,8 @@ const App = () => (
               <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
               <Route path="/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
               <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
+              <Route path="/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
+              <Route path="/cursos/:id" element={<ProtectedPage><CursoDetalhe /></ProtectedPage>} />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />

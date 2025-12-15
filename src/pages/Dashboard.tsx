@@ -26,8 +26,8 @@ import { FinancialGoalsWidget } from "@/components/dashboard/FinancialGoalsWidge
 import { BudgetAlerts } from "@/components/dashboard/BudgetAlerts";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
-import { SynapsePulse } from "@/components/dashboard/SynapsePulse";
-import { SynapseCommandCenter } from "@/components/dashboard/SynapseCommandCenter";
+import { RealtimePulse } from "@/components/dashboard/RealtimePulse";
+import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
@@ -330,10 +330,10 @@ export default function Dashboard() {
           <CategoryPieChart data={processedData?.categoryData || []} title="Gastos por Categoria" />
         </section>
 
-        {/* Synapse Pulse - Real-time Data */}
+        {/* Real-time Data */}
         <section className="grid gap-6 lg:grid-cols-3 mb-8">
-          <SynapsePulse />
-          <SynapseCommandCenter />
+          <RealtimePulse />
+          <CommandCenter />
           <div className="space-y-6">
             <FinancialGoalsWidget />
             <QuickActions />

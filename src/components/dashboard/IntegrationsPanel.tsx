@@ -35,7 +35,7 @@ const integrationIcons: Record<string, string> = {
   "make.com": "⚡",
 };
 
-export function SynapseIntegrations() {
+export function IntegrationsPanel() {
   const [integrations, setIntegrations] = useState<Integration[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [webhookUrl, setWebhookUrl] = useState("");
