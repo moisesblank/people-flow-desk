@@ -28,7 +28,12 @@ import {
   FolderOpen,
   PenTool,
   Monitor,
-  MapPin
+  MapPin,
+  Code,
+  User,
+  Gamepad2,
+  Car,
+  ShoppingCart
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -87,6 +92,14 @@ const businessMenuItems = [
   { title: "Gestão Site", url: "/gestao-site", icon: Globe },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
   { title: "Guia", url: "/guia", icon: BookOpen },
+];
+
+const siteMenuItems = [
+  { title: "Site/Programador", url: "/site-programador", icon: Code },
+];
+
+const pessoalMenuItems = [
+  { title: "Pessoal", url: "/pessoal", icon: User },
 ];
 
 const adminMenuItems = [
@@ -242,6 +255,62 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {businessMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className="flex items-center gap-3"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Site/Programador Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Desenvolvimento</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {siteMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className="flex items-center gap-3"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Pessoal Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Vida Pessoal</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {pessoalMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild

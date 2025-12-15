@@ -35,6 +35,15 @@ const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
 const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
 const Cursos = lazy(() => import("./pages/Cursos"));
 const CursoDetalhe = lazy(() => import("./pages/CursoDetalhe"));
+const Marketing = lazy(() => import("./pages/Marketing"));
+const Lancamento = lazy(() => import("./pages/Lancamento"));
+const Metricas = lazy(() => import("./pages/Metricas"));
+const Arquivos = lazy(() => import("./pages/Arquivos"));
+const PlanejamentoAula = lazy(() => import("./pages/PlanejamentoAula"));
+const TurmasOnline = lazy(() => import("./pages/TurmasOnline"));
+const TurmasPresenciais = lazy(() => import("./pages/TurmasPresenciais"));
+const SiteProgramador = lazy(() => import("./pages/SiteProgramador"));
+const Pessoal = lazy(() => import("./pages/Pessoal"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -90,6 +99,15 @@ const App = () => (
               <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
               <Route path="/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
               <Route path="/cursos/:id" element={<ProtectedPage><CursoDetalhe /></ProtectedPage>} />
+              <Route path="/marketing" element={<ProtectedPage><Marketing /></ProtectedPage>} />
+              <Route path="/lancamento" element={<ProtectedPage><Lancamento /></ProtectedPage>} />
+              <Route path="/metricas" element={<ProtectedPage><Metricas /></ProtectedPage>} />
+              <Route path="/arquivos" element={<ProtectedPage><Arquivos /></ProtectedPage>} />
+              <Route path="/planejamento-aula" element={<ProtectedPage><PlanejamentoAula /></ProtectedPage>} />
+              <Route path="/turmas-online" element={<ProtectedPage><TurmasOnline /></ProtectedPage>} />
+              <Route path="/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
+              <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
+              <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />
