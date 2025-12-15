@@ -135,13 +135,11 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
-      {/* Chemistry Background Image */}
+      {/* Premium Gold Background */}
       <div 
-        className="fixed inset-0 bg-cover bg-center opacity-15"
-        style={{ backgroundImage: `url(${heroChemistryBanner})` }}
+        className="fixed inset-0 bg-gradient-to-br from-background via-background to-primary/5"
         aria-hidden="true"
       />
-      <div className="fixed inset-0 bg-gradient-to-br from-background via-background/95 to-background" aria-hidden="true" />
 
       {/* Skip to main content - Acessibilidade */}
       <a 
@@ -151,14 +149,14 @@ export default function Auth() {
         Pular para o formulário
       </a>
 
-      {/* Background decoration - Heroic Theme */}
+      {/* Background decoration - Gold Premium Theme */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
-        {/* Vinho glow top */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-primary/15 via-transparent to-transparent opacity-60" />
-        {/* Blue glow right */}
-        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-radial from-stats-blue/10 via-transparent to-transparent opacity-50" />
+        {/* Gold glow top */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-primary/10 via-transparent to-transparent opacity-60" />
+        {/* Green glow right */}
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] bg-gradient-radial from-success/5 via-transparent to-transparent opacity-50" />
         {/* Gold glow bottom */}
-        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-gradient-radial from-stats-gold/8 via-transparent to-transparent opacity-40" />
+        <div className="absolute bottom-0 left-0 w-[600px] h-[400px] bg-gradient-radial from-primary/8 via-transparent to-transparent opacity-40" />
         
         {/* Animated orbs */}
         <motion.div
