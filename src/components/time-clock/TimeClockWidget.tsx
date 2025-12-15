@@ -283,9 +283,10 @@ export function TimeClockWidget() {
                 <Loader2 className="h-5 w-5 animate-spin mr-2" />
               ) : (
                 <>
-                  {entryTypeLabels[nextEntryType].icon && (
-                    <entryTypeLabels[nextEntryType].icon className="h-5 w-5 mr-2" />
-                  )}
+                  {(() => {
+                    const IconComponent = entryTypeLabels[nextEntryType].icon;
+                    return IconComponent ? <IconComponent className="h-5 w-5 mr-2" /> : null;
+                  })()}
                 </>
               )}
               Registrar {entryTypeLabels[nextEntryType].label}
