@@ -945,7 +945,60 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      employees_safe: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          data_admissao: string | null
+          email: string | null
+          funcao: string | null
+          horario_trabalho: string | null
+          id: number | null
+          nome: string | null
+          responsabilidades: string | null
+          salario: number | null
+          setor: Database["public"]["Enums"]["sector_type"] | null
+          status: Database["public"]["Enums"]["employee_status"] | null
+          telefone: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          funcao?: string | null
+          horario_trabalho?: string | null
+          id?: number | null
+          nome?: string | null
+          responsabilidades?: string | null
+          salario?: never
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: string | null
+          funcao?: string | null
+          horario_trabalho?: string | null
+          id?: number | null
+          nome?: string | null
+          responsabilidades?: string | null
+          salario?: never
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          telefone?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
