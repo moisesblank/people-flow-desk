@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Settings as SettingsIcon, 
@@ -10,25 +10,28 @@ import {
   Download,
   Upload,
   Activity,
-  Eye,
   Moon,
-  Sun,
   Image as ImageIcon,
-  Save
+  Save,
+  FileJson,
+  Table,
+  Loader2,
+  CheckCircle2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
+import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { Badge } from "@/components/ui/badge";
 
 export default function Configuracoes() {
-  const { toast } = useToast();
-  const { role } = useAuth();
+  const { role, user } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
+  const [backupProgress, setBackupProgress] = useState<string | null>(null);
   const [settings, setSettings] = useState({
     companyName: "Moisés Medeiros",
     companyEmail: "contato@moisesmedeiros.com",
@@ -40,24 +43,65 @@ export default function Configuracoes() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
-      // Simulated save
       await new Promise(resolve => setTimeout(resolve, 1000));
-      toast({
-        title: "Configurações salvas",
-        description: "Suas preferências foram atualizadas com sucesso.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro ao salvar",
-        description: "Não foi possível salvar as configurações.",
-        variant: "destructive",
-      });
+      toast.success("Configurações salvas com sucesso!");
+    } catch {
+      toast.error("Erro ao salvar configurações");
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleExportData = async () => {
+  const handleExportData = async (format: 'json' | 'csv' = 'json') => {
+    setIsLoading(true);
+    setBackupProgress("Iniciando backup...");
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error("Você precisa estar logado");
+      }
+
+      setBackupProgress("Coletando dados...");
+
+      // Call the backup edge function
+      const response = await supabase.functions.invoke('backup-data', {
+        body: { format, tables: 'all' },
+      });
+
+      if (response.error) {
+        throw response.error;
+      }
+
+      const data = response.data;
+
+      if (!data.success) {
+        throw new Error(data.error || "Erro no backup");
+      }
+
+      setBackupProgress("Gerando arquivo...");
+
+      // Download the backup
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `synapse-backup-${new Date().toISOString().split("T")[0]}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      toast.success(`Backup realizado! ${data.total_records} registros exportados.`);
+    } catch (error) {
+      console.error("Backup error:", error);
+      toast.error(error instanceof Error ? error.message : "Erro no backup");
+    } finally {
+      setIsLoading(false);
+      setBackupProgress(null);
+    }
+  };
+
+  const handleQuickExport = async () => {
     setIsLoading(true);
     try {
       const [employees, income, expenses, affiliates, students] = await Promise.all([
@@ -68,33 +112,26 @@ export default function Configuracoes() {
         supabase.from("students").select("*"),
       ]);
 
-      const data = {
+      const results = {
         exportedAt: new Date().toISOString(),
-        employees: employees.data,
-        income: income.data,
-        expenses: expenses.data,
-        affiliates: affiliates.data,
-        students: students.data,
+        employees: employees.data || [],
+        income: income.data || [],
+        personal_extra_expenses: expenses.data || [],
+        affiliates: affiliates.data || [],
+        students: students.data || [],
       };
 
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const blob = new Blob([JSON.stringify(results, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `backup-${new Date().toISOString().split("T")[0]}.json`;
+      a.download = `backup-rapido-${new Date().toISOString().split("T")[0]}.json`;
       a.click();
       URL.revokeObjectURL(url);
 
-      toast({
-        title: "Backup realizado",
-        description: "Seus dados foram exportados com sucesso.",
-      });
-    } catch (error) {
-      toast({
-        title: "Erro no backup",
-        description: "Não foi possível exportar os dados.",
-        variant: "destructive",
-      });
+      toast.success("Backup rápido realizado!");
+    } catch {
+      toast.error("Erro no backup rápido");
     } finally {
       setIsLoading(false);
     }
@@ -312,39 +349,71 @@ export default function Configuracoes() {
               <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
                 <Database className="h-5 w-5 text-primary" />
                 Backup e Restauração
+                {role && ['owner', 'admin'].includes(role) && (
+                  <Badge variant="outline" className="ml-2">Acesso Completo</Badge>
+                )}
               </h3>
+
+              {backupProgress && (
+                <div className="p-4 rounded-xl bg-primary/10 border border-primary/20 flex items-center gap-3">
+                  <Loader2 className="h-5 w-5 text-primary animate-spin" />
+                  <span className="text-sm text-foreground">{backupProgress}</span>
+                </div>
+              )}
 
               <div className="grid gap-4 md:grid-cols-2">
                 <div className="p-6 rounded-xl bg-secondary/30 text-center">
-                  <Download className="h-10 w-10 text-[hsl(var(--stats-green))] mx-auto mb-3" />
-                  <h4 className="font-semibold text-foreground mb-2">Exportar Dados</h4>
+                  <FileJson className="h-10 w-10 text-[hsl(var(--stats-green))] mx-auto mb-3" />
+                  <h4 className="font-semibold text-foreground mb-2">Backup Completo</h4>
                   <p className="text-xs text-muted-foreground mb-4">
-                    Faça download de todos os seus dados em formato JSON
+                    Exporta todos os dados do sistema via Edge Function segura
                   </p>
-                  <Button onClick={handleExportData} disabled={isLoading} variant="outline" className="w-full">
-                    {isLoading ? "Exportando..." : "Exportar Backup"}
+                  <Button 
+                    onClick={() => handleExportData('json')} 
+                    disabled={isLoading || !['owner', 'admin'].includes(role || '')} 
+                    className="w-full"
+                  >
+                    {isLoading ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Download className="h-4 w-4 mr-2" />}
+                    {isLoading ? "Exportando..." : "Backup Completo"}
                   </Button>
                 </div>
 
                 <div className="p-6 rounded-xl bg-secondary/30 text-center">
-                  <Upload className="h-10 w-10 text-[hsl(var(--stats-blue))] mx-auto mb-3" />
-                  <h4 className="font-semibold text-foreground mb-2">Restaurar Dados</h4>
+                  <Table className="h-10 w-10 text-[hsl(var(--stats-blue))] mx-auto mb-3" />
+                  <h4 className="font-semibold text-foreground mb-2">Backup Rápido</h4>
                   <p className="text-xs text-muted-foreground mb-4">
-                    Restaure dados de um backup anterior
+                    Exporta tabelas principais diretamente
                   </p>
-                  <Button variant="outline" className="w-full" disabled>
-                    Em breve
+                  <Button 
+                    onClick={handleQuickExport} 
+                    disabled={isLoading} 
+                    variant="outline" 
+                    className="w-full"
+                  >
+                    {isLoading ? "Exportando..." : "Backup Rápido"}
                   </Button>
                 </div>
+              </div>
+
+              <div className="p-6 rounded-xl bg-secondary/30 text-center">
+                <Upload className="h-10 w-10 text-[hsl(var(--stats-gold))] mx-auto mb-3" />
+                <h4 className="font-semibold text-foreground mb-2">Restaurar Dados</h4>
+                <p className="text-xs text-muted-foreground mb-4">
+                  Restaure dados de um backup anterior (em breve)
+                </p>
+                <Button variant="outline" className="w-full" disabled>
+                  Em breve
+                </Button>
               </div>
 
               <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
                 <div className="flex items-start gap-3">
                   <Activity className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-medium text-foreground">Logs de Atividades</h4>
+                    <h4 className="font-medium text-foreground">Logs de Auditoria</h4>
                     <p className="text-xs text-muted-foreground mt-1">
-                      O sistema registra automaticamente todas as ações importantes para auditoria e segurança.
+                      Todos os backups são registrados automaticamente para segurança e auditoria.
+                      {user?.email && <span className="block mt-1">Usuário: {user.email}</span>}
                     </p>
                   </div>
                 </div>
