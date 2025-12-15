@@ -2,6 +2,7 @@
 // MOISÉS MEDEIROS v7.0 - MARKETING
 // Spider-Man Theme - Métricas e Campanhas
 // Elementos de Química Integrados
+// Funil de Vendas e Automações
 // ============================================
 
 import { useState } from "react";
@@ -26,10 +27,13 @@ import {
   Calendar,
   FlaskConical,
   Atom,
-  Zap
+  Zap,
+  Workflow
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { AnimatedAtom, ChemistryTip, BubblingFlask } from "@/components/chemistry/ChemistryVisuals";
+import { SalesFunnel } from "@/components/marketing/SalesFunnel";
+import { AutomationFlow } from "@/components/marketing/AutomationFlow";
 import marketingHeroImage from "@/assets/marketing-chemistry-hero.jpg";
 import professorImage from "@/assets/professor-moises.jpg";
 
@@ -131,8 +135,10 @@ export default function Marketing() {
 
       {/* Tabs */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 p-1">
+        <TabsList className="bg-muted/50 p-1 flex-wrap">
           <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+          <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
+          <TabsTrigger value="automations">Automações</TabsTrigger>
           <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
           <TabsTrigger value="social">Redes Sociais</TabsTrigger>
           <TabsTrigger value="email">E-mail Marketing</TabsTrigger>
@@ -177,6 +183,95 @@ export default function Marketing() {
                 </Card>
               </motion.div>
             ))}
+          </div>
+        </TabsContent>
+
+        {/* Nova Tab: Funil de Vendas */}
+        <TabsContent value="funnel" className="space-y-6">
+          <div className="grid lg:grid-cols-2 gap-6">
+            <SalesFunnel />
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <BarChart3 className="h-5 w-5 text-primary" />
+                  Análise do Funil
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="space-y-3">
+                  {[
+                    { stage: "Visitante → Lead", rate: "18.9%", benchmark: "15%", status: "above" },
+                    { stage: "Lead → Interessado", rate: "28.2%", benchmark: "25%", status: "above" },
+                    { stage: "Interessado → Carrinho", rate: "37.1%", benchmark: "40%", status: "below" },
+                    { stage: "Carrinho → Compra", rate: "40.0%", benchmark: "35%", status: "above" },
+                  ].map((item, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
+                      <span className="text-sm text-foreground">{item.stage}</span>
+                      <div className="flex items-center gap-2">
+                        <Badge 
+                          variant="secondary" 
+                          className={item.status === "above" ? "bg-emerald-500/10 text-emerald-600" : "bg-amber-500/10 text-amber-600"}
+                        >
+                          {item.rate}
+                        </Badge>
+                        <span className="text-xs text-muted-foreground">vs {item.benchmark}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                
+                <div className="p-4 rounded-xl bg-primary/5 border border-primary/20">
+                  <h4 className="font-medium text-foreground mb-2">💡 Oportunidades</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Melhorar conversão Interessado → Carrinho com remarketing</li>
+                    <li>• Implementar chat ao vivo na página de checkout</li>
+                    <li>• Oferecer parcelamento mais atrativo</li>
+                  </ul>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
+
+        {/* Nova Tab: Automações */}
+        <TabsContent value="automations" className="space-y-6">
+          <div className="grid lg:grid-cols-2 gap-6">
+            <AutomationFlow />
+            <Card className="border-border/50">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Workflow className="h-5 w-5 text-primary" />
+                  Performance das Automações
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { label: "Total Disparados", value: "2.190", trend: "+28%" },
+                    { label: "Taxa Média", value: "61.3%", trend: "+5%" },
+                    { label: "Vendas Recuperadas", value: "R$ 45.800", trend: "+42%" },
+                    { label: "ROI Automações", value: "892%", trend: "+156%" },
+                  ].map((stat, idx) => (
+                    <div key={idx} className="p-3 rounded-lg bg-secondary/30">
+                      <p className="text-2xl font-bold text-foreground">{stat.value}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="text-xs text-muted-foreground">{stat.label}</p>
+                        <Badge variant="secondary" className="text-[10px] bg-emerald-500/10 text-emerald-600">
+                          {stat.trend}
+                        </Badge>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="p-4 rounded-xl bg-emerald-500/5 border border-emerald-500/20">
+                  <h4 className="font-medium text-emerald-600 mb-2">🎯 Destaque do Mês</h4>
+                  <p className="text-sm text-muted-foreground">
+                    A automação de <strong>Carrinho Abandonado</strong> recuperou 89 vendas, gerando <strong>R$ 218.050</strong> em receita adicional.
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </TabsContent>
 
