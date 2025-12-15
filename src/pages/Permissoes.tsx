@@ -243,7 +243,7 @@ export default function Permissoes() {
           .from("user_roles")
           .upsert(
             { user_id: userId, role: newRole },
-            { onConflict: "user_id" }
+            { onConflict: "user_id", ignoreDuplicates: false }
           );
 
         if (error) throw error;
