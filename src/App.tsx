@@ -24,6 +24,8 @@ import Calendario from "./pages/Calendario";
 import Pagamentos from "./pages/Pagamentos";
 import Contabilidade from "./pages/Contabilidade";
 import GestaoSite from "./pages/GestaoSite";
+import AreaProfessor from "./pages/AreaProfessor";
+import PortalAluno from "./pages/PortalAluno";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -154,6 +156,8 @@ const App = () => (
             <Route path="/pagamentos" element={<ProtectedRoute><AppLayout><Pagamentos /></AppLayout></ProtectedRoute>} />
             <Route path="/contabilidade" element={<ProtectedRoute><AppLayout><Contabilidade /></AppLayout></ProtectedRoute>} />
             <Route path="/gestao-site" element={<ProtectedRoute><AppLayout><GestaoSite /></AppLayout></ProtectedRoute>} />
+            <Route path="/area-professor" element={<ProtectedRoute><AppLayout><AreaProfessor /></AppLayout></ProtectedRoute>} />
+            <Route path="/portal-aluno" element={<ProtectedRoute><AppLayout><PortalAluno /></AppLayout></ProtectedRoute>} />
             
             {/* Catch all */}
             <Route path="*" element={<NotFound />} />

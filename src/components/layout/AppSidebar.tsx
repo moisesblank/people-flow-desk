@@ -14,7 +14,9 @@ import {
   Calendar,
   CreditCard,
   Calculator,
-  Globe
+  Globe,
+  ClipboardCheck,
+  UserCheck
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -39,6 +41,7 @@ const mainMenuItems = [
   { title: "Dashboard", url: "/", icon: LayoutDashboard },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
+  { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck },
   { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog },
 ];
 
@@ -53,6 +56,7 @@ const financeMenuItems = [
 const businessMenuItems = [
   { title: "Afiliados", url: "/afiliados", icon: Handshake },
   { title: "Alunos", url: "/alunos", icon: GraduationCap },
+  { title: "Portal Aluno", url: "/portal-aluno", icon: UserCheck },
   { title: "Gestão Site", url: "/gestao-site", icon: Globe },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
   { title: "Guia", url: "/guia", icon: BookOpen },
