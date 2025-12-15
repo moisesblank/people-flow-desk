@@ -20,7 +20,8 @@ interface EmployeeCardProps {
   index?: number;
 }
 
-function formatCurrency(cents: number): string {
+function formatCurrency(cents: number | null): string {
+  if (cents === null) return "••••••";
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -136,7 +137,7 @@ export function EmployeeCard({ employee, onEdit, onDelete, index = 0 }: Employee
           {/* Salary */}
           <div className="pt-3 border-t border-border/50 flex items-center justify-between">
             <span className="text-xs text-muted-foreground uppercase tracking-wide">Salário</span>
-            <span className="text-lg font-bold text-foreground tabular-nums">
+            <span className={`text-lg font-bold tabular-nums ${employee.salario === null ? "text-muted-foreground" : "text-foreground"}`}>
               {formatCurrency(employee.salario)}
             </span>
           </div>

@@ -20,12 +20,13 @@ interface Employee {
   funcao: string;
   setor: Sector;
   email: string;
-  salario: number;
+  salario: number | null; // null quando mascarado para não-admins
   dataAdmissao: string;
   status: EmployeeStatus;
 }
 
-function formatCurrency(cents: number): string {
+function formatCurrency(cents: number | null): string {
+  if (cents === null) return "••••••";
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
@@ -122,14 +123,25 @@ export default function Funcionarios() {
     setSectorFilter("all");
   }, []);
 
+  // Verifica se o usuário pode ver salários (pelo menos um salário não é null)
+  const canViewSalaries = useMemo(() => {
+    return employees.some((e) => e.salario !== null);
+  }, [employees]);
+
   const stats = useMemo(() => {
     const total = employees.length;
     const ativos = employees.filter((e) => e.status === "ativo").length;
-    const folhaPagamento = employees.reduce((acc, e) => acc + e.salario, 0);
-    const salarioMedio = total > 0 ? Math.round(folhaPagamento / total) : 0;
+    
+    // Só calcula folha se pode ver salários
+    const folhaPagamento = canViewSalaries 
+      ? employees.reduce((acc, e) => acc + (e.salario || 0), 0)
+      : null;
+    const salarioMedio = canViewSalaries && total > 0 && folhaPagamento !== null
+      ? Math.round(folhaPagamento / total) 
+      : null;
 
     return { total, ativos, folhaPagamento, salarioMedio };
-  }, [employees]);
+  }, [employees, canViewSalaries]);
 
   const handleNewEmployee = () => {
     setSelectedEmployee(null);
@@ -305,6 +317,7 @@ export default function Funcionarios() {
                 icon={DollarSign}
                 variant="blue"
                 delay={2}
+                hiddenText="Restrito"
               />
               <StatCard
                 title="Salário Médio"
@@ -313,6 +326,7 @@ export default function Funcionarios() {
                 icon={TrendingUp}
                 variant="purple"
                 delay={3}
+                hiddenText="Restrito"
               />
             </>
           )}
