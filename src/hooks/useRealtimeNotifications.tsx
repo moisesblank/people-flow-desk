@@ -20,7 +20,7 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
     addNotification({
       type: "success",
       title: "Nova Venda Realizada! 🎉",
-      message: `Venda de R$ ${(sale.amount / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - ${sale.customer_name || 'Cliente não identificado'}`,
+      message: `Venda de R$ ${(sale.valor / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - ${sale.fonte || 'Nova entrada registrada'}`,
       actionUrl: "/entradas",
       actionLabel: "Ver detalhes",
     });
@@ -31,7 +31,7 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
     addNotification({
       type: "info",
       title: "Novo Aluno Matriculado! 📚",
-      message: `${student.nome} se matriculou no curso ${student.curso || 'não especificado'}`,
+      message: `${student.nome} se matriculou no sistema`,
       actionUrl: "/alunos",
       actionLabel: "Ver aluno",
     });
@@ -76,18 +76,42 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
     }
   }, [addNotification, user?.id]);
 
+  const handleNewEnrollment = useCallback((payload: any) => {
+    const enrollment = payload.new;
+    addNotification({
+      type: "success",
+      title: "Nova Matrícula! 🎓",
+      message: `Nova matrícula registrada no sistema`,
+      actionUrl: "/alunos",
+      actionLabel: "Ver matrícula",
+    });
+  }, [addNotification]);
+
+  const handleLowStock = useCallback((payload: any) => {
+    const reagent = payload.new;
+    if (reagent.current_stock < reagent.minimum_stock) {
+      addNotification({
+        type: "error",
+        title: "Estoque Baixo! ⚠️",
+        message: `${reagent.name} está abaixo do estoque mínimo`,
+        actionUrl: "/laboratorio",
+        actionLabel: "Ver laboratório",
+      });
+    }
+  }, [addNotification]);
+
   useEffect(() => {
     if (!user?.id) return;
 
     // Subscribe to realtime changes
     const channel = supabase
-      .channel('realtime-notifications')
+      .channel('realtime-notifications-v2')
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
-          table: 'synapse_transactions',
+          table: 'income',
         },
         handleNewSale
       )
@@ -127,10 +151,28 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
         },
         handleRoleChange
       )
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'enrollments',
+        },
+        handleNewEnrollment
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'reagents',
+        },
+        handleLowStock
+      )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, handleNewSale, handleNewStudent, handleNewPayment, handleTaskReminder, handleRoleChange]);
+  }, [user?.id, handleNewSale, handleNewStudent, handleNewPayment, handleTaskReminder, handleRoleChange, handleNewEnrollment, handleLowStock]);
 }

@@ -57,6 +57,8 @@ import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding
 import { TasksOverviewWidget } from "@/components/dashboard/TasksOverviewWidget";
 import { TimeTrackingWidget } from "@/components/dashboard/TimeTrackingWidget";
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
+import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
+import { AutomationRules } from "@/components/dashboard/AutomationRules";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -629,6 +631,12 @@ export default function Dashboard() {
           <TasksOverviewWidget />
           <TimeTrackingWidget />
           <LabStatusWidget />
+        </section>
+
+        {/* Analytics Avançado + Automações */}
+        <section className="grid gap-6 lg:grid-cols-2 mb-8">
+          <AdvancedAnalytics />
+          <AutomationRules />
         </section>
 
         {/* Chemistry Stats Section */}
