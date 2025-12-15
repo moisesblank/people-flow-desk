@@ -1,5 +1,11 @@
+// ============================================
+// SYNAPSE v14.0 - KEYBOARD SHORTCUTS
+// Atalhos de teclado globais do sistema
+// ============================================
+
 import { useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 
 interface ShortcutConfig {
   key: string;
@@ -8,20 +14,35 @@ interface ShortcutConfig {
   alt?: boolean;
   action: () => void;
   description: string;
+  category: "navigation" | "action" | "system";
 }
 
-const defaultShortcuts: Omit<ShortcutConfig, "action">[] = [
-  { key: "d", ctrl: true, shift: true, description: "Ir para Dashboard" },
-  { key: "c", ctrl: true, shift: true, description: "Ir para Calendário" },
-  { key: "f", ctrl: true, shift: true, description: "Ir para Funcionários" },
-  { key: "p", ctrl: true, shift: true, description: "Ir para Pagamentos" },
-  { key: "k", ctrl: true, description: "Abrir busca global" },
-  { key: "Escape", description: "Fechar modais" },
+export const KEYBOARD_SHORTCUTS = [
+  // Sistema
+  { key: "E", ctrl: true, shift: true, description: "Ativar/Desativar Modo Deus", category: "system" as const },
+  { key: "K", ctrl: true, description: "Abrir busca global", category: "system" as const },
+  { key: "K", ctrl: true, shift: true, description: "Abrir Command Center", category: "system" as const },
+  { key: "Escape", description: "Fechar modais/painéis", category: "system" as const },
+  
+  // Navegação
+  { key: "D", ctrl: true, shift: true, description: "Ir para Dashboard", category: "navigation" as const },
+  { key: "C", ctrl: true, shift: true, description: "Ir para Calendário", category: "navigation" as const },
+  { key: "F", ctrl: true, shift: true, description: "Ir para Funcionários", category: "navigation" as const },
+  { key: "P", ctrl: true, shift: true, description: "Ir para Pagamentos", category: "navigation" as const },
+  { key: "M", ctrl: true, shift: true, description: "Ir para Monitoramento", category: "navigation" as const },
+  { key: "S", ctrl: true, shift: true, description: "Ir para Simulados", category: "navigation" as const },
+  { key: "R", ctrl: true, shift: true, description: "Ir para Relatórios", category: "navigation" as const },
+  
+  // Ações
+  { key: "N", ctrl: true, shift: true, description: "Nova tarefa", category: "action" as const },
+  { key: "B", ctrl: true, shift: true, description: "Backup rápido", category: "action" as const },
 ];
 
 export function useKeyboardShortcuts(
   onSearch?: () => void,
-  onEscape?: () => void
+  onEscape?: () => void,
+  onCommandCenter?: () => void,
+  onNewTask?: () => void
 ) {
   const navigate = useNavigate();
 
@@ -31,9 +52,16 @@ export function useKeyboardShortcuts(
       const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
 
       // Ctrl + K - Global search (works even in inputs)
-      if (event.ctrlKey && event.key === "k") {
+      if (event.ctrlKey && !event.shiftKey && event.key.toLowerCase() === "k") {
         event.preventDefault();
         onSearch?.();
+        return;
+      }
+
+      // Ctrl + Shift + K - Command Center
+      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "k") {
+        event.preventDefault();
+        onCommandCenter?.();
         return;
       }
 
@@ -46,35 +74,51 @@ export function useKeyboardShortcuts(
       // Skip other shortcuts if in input
       if (isInput) return;
 
-      // Ctrl + Shift + D - Dashboard
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "d") {
+      // Ctrl + Shift combinations for navigation
+      if (event.ctrlKey && event.shiftKey) {
         event.preventDefault();
-        navigate("/");
-        return;
-      }
+        const key = event.key.toLowerCase();
 
-      // Ctrl + Shift + C - Calendar
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "c") {
-        event.preventDefault();
-        navigate("/calendario");
-        return;
-      }
-
-      // Ctrl + Shift + F - Employees
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "f") {
-        event.preventDefault();
-        navigate("/funcionarios");
-        return;
-      }
-
-      // Ctrl + Shift + P - Payments
-      if (event.ctrlKey && event.shiftKey && event.key.toLowerCase() === "p") {
-        event.preventDefault();
-        navigate("/pagamentos");
-        return;
+        switch (key) {
+          case "d":
+            navigate("/dashboard");
+            toast.info("📊 Dashboard", { duration: 1500 });
+            break;
+          case "c":
+            navigate("/calendario");
+            toast.info("📅 Calendário", { duration: 1500 });
+            break;
+          case "f":
+            navigate("/funcionarios");
+            toast.info("👥 Funcionários", { duration: 1500 });
+            break;
+          case "p":
+            navigate("/pagamentos");
+            toast.info("💳 Pagamentos", { duration: 1500 });
+            break;
+          case "m":
+            navigate("/monitoramento");
+            toast.info("📡 Monitoramento", { duration: 1500 });
+            break;
+          case "s":
+            navigate("/simulados");
+            toast.info("🧠 Simulados", { duration: 1500 });
+            break;
+          case "r":
+            navigate("/relatorios");
+            toast.info("📈 Relatórios", { duration: 1500 });
+            break;
+          case "n":
+            onNewTask?.();
+            break;
+          case "b":
+            navigate("/configuracoes?tab=backup");
+            toast.info("💾 Backup", { duration: 1500 });
+            break;
+        }
       }
     },
-    [navigate, onSearch, onEscape]
+    [navigate, onSearch, onEscape, onCommandCenter, onNewTask]
   );
 
   useEffect(() => {
@@ -82,5 +126,28 @@ export function useKeyboardShortcuts(
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [handleKeyDown]);
 
-  return { shortcuts: defaultShortcuts };
+  return { shortcuts: KEYBOARD_SHORTCUTS };
 }
+
+// Hook para mostrar overlay de atalhos (? key)
+export function useShortcutsOverlay() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "?" && !e.ctrlKey && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA") {
+          setIsOpen(prev => !prev);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  return { isOpen, setIsOpen };
+}
+
+import { useState } from "react";
