@@ -1,6 +1,6 @@
 # 🧬 MOISÉS MEDEIROS - DOCUMENTAÇÃO COMPLETA
 ## Sistema de Gestão Educacional - Curso de Química
-## Versão 5.0 | Atualizado em: 15/12/2025
+## Versão 8.0 FINAL | Atualizado em: 15/12/2025
 
 ---
 
