@@ -3,7 +3,7 @@
 // Atalhos de teclado globais do sistema
 // ============================================
 
-import { useEffect, useCallback } from "react";
+import { useEffect, useCallback, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -150,4 +150,4 @@ export function useShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-import { useState } from "react";
+
