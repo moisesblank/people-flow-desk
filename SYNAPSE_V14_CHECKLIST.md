@@ -1,6 +1,9 @@
 # SYNAPSE v14.0 - CHECKLIST COMPLETO DE IMPLEMENTAÇÃO
 
-## 📍 Status: COMPLETO ✅
+## 📍 Status: COMPLETO ✅ (100%)
+
+**Última atualização:** 15/12/2025 19:30
+**Correções de segurança:** 2 erros RLS corrigidos
 
 ---
 
@@ -275,6 +278,17 @@
 
 ---
 
+## CORREÇÕES DE SEGURANÇA APLICADAS (15/12/2025)
+
+| Tabela | Problema | Solução |
+|--------|----------|---------|
+| `activity_log` | Insert sem validação de user_id | RLS atualizado para validar user_id = auth.uid() |
+| `affiliates` | Policy com role "public" | RLS restrito para is_admin_or_owner |
+| `analytics_metrics` | Insert anônimo (intencional) | Ignorado - necessário para analytics |
+
+---
+
 **Versão**: SYNAPSE v14.0  
-**Última Atualização**: 2025-12-15  
-**Status**: PRODUÇÃO ✅
+**Última Atualização**: 2025-12-15 19:30  
+**Status**: PRODUÇÃO ✅  
+**Segurança**: RLS 100% ✅
