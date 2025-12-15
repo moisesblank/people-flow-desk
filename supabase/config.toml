@@ -11,3 +11,12 @@ verify_jwt = true
 
 [functions.backup-data]
 verify_jwt = true
+
+[functions.send-notification-email]
+verify_jwt = false
+
+[functions.youtube-api]
+verify_jwt = false
+
+[functions.google-calendar]
+verify_jwt = true
