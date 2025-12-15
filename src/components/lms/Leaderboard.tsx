@@ -4,7 +4,7 @@
 // ============================================
 
 import { motion } from 'framer-motion';
-import { Trophy, Medal, Crown, Flame, User, Zap } from 'lucide-react';
+import { Trophy, Medal, Crown, Flame, User, Zap, Star, TrendingUp } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -70,16 +70,18 @@ export function Leaderboard({ limit = 10, showTitle = true, compact = false }: L
   }
 
   return (
-    <Card>
+    <Card className="spider-card overflow-hidden">
       {showTitle && (
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Trophy className="h-5 w-5 text-amber-500" />
-            Ranking de XP
+        <CardHeader className="pb-4 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10">
+          <CardTitle className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-gradient-spider shadow-spider">
+              <Trophy className="h-5 w-5 text-white" />
+            </div>
+            <span className="brand-text font-display text-xl">Ranking de XP</span>
           </CardTitle>
         </CardHeader>
       )}
-      <CardContent className={compact ? 'p-3' : ''}>
+      <CardContent className={compact ? 'p-3' : 'p-4'}>
         <div className="space-y-2">
           {leaderboard?.map((entry, index) => {
             const rank = index + 1;
@@ -158,11 +160,22 @@ export function Leaderboard({ limit = 10, showTitle = true, compact = false }: L
           })}
 
           {(!leaderboard || leaderboard.length === 0) && (
-            <div className="text-center py-8 text-muted-foreground">
-              <Trophy className="h-12 w-12 mx-auto mb-3 opacity-50" />
-              <p>Nenhum participante ainda</p>
-              <p className="text-sm">Complete aulas para aparecer no ranking!</p>
-            </div>
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="text-center py-12 text-muted-foreground"
+            >
+              <div className="relative inline-block mb-4">
+                <div className="absolute inset-0 bg-gradient-spider blur-2xl opacity-30 animate-pulse" />
+                <Trophy className="h-16 w-16 relative text-primary/50" />
+              </div>
+              <p className="font-medium text-lg">Nenhum participante ainda</p>
+              <p className="text-sm mt-1">Complete aulas para aparecer no ranking!</p>
+              <div className="mt-4 flex items-center justify-center gap-2 text-xs">
+                <Star className="h-4 w-4 text-stats-gold" />
+                <span>Ganhe XP e conquiste o topo!</span>
+              </div>
+            </motion.div>
           )}
         </div>
       </CardContent>

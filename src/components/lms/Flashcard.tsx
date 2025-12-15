@@ -111,13 +111,15 @@ export function Flashcard({ cards, onComplete }: FlashcardProps) {
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="glass-card rounded-2xl p-8 text-center space-y-6"
+        className="spider-card rounded-2xl p-8 text-center space-y-6"
       >
         <motion.div
           animate={{ rotate: [0, 10, -10, 0] }}
           transition={{ repeat: 3, duration: 0.5 }}
+          className="relative inline-block"
         >
-          <Sparkles className="h-16 w-16 mx-auto text-primary" />
+          <div className="absolute inset-0 bg-gradient-spider blur-2xl opacity-40" />
+          <Sparkles className="h-16 w-16 mx-auto text-primary relative" />
         </motion.div>
         
         <div>

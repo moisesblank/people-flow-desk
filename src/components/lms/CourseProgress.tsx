@@ -63,7 +63,7 @@ export function CourseProgress({
           {overallProgress === 100 && (
             <Button
               onClick={onCertificateClick}
-              className="gap-2 bg-gradient-to-r from-primary to-purple-600"
+              className="gap-2 bg-gradient-spider shadow-spider hover:shadow-wine transition-shadow"
             >
               <Award className="h-4 w-4" />
               Certificado
