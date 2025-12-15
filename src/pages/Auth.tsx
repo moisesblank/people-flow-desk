@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import professorPhoto from "@/assets/professor-moises.jpg";
+import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
 import { EditableText } from "@/components/editor/EditableText";
 import { EditableImage } from "@/components/editor/EditableImage";
@@ -582,18 +583,20 @@ export default function Auth() {
           animate={{ opacity: 1, x: 0 }}
           className="w-full max-w-md relative z-10"
         >
-          {/* Mobile Logo */}
-          <div className="lg:hidden text-center mb-8">
+          {/* Logo */}
+          <div className="text-center mb-8">
             <motion.div
-              initial={{ scale: 0.8 }}
-              animate={{ scale: 1 }}
-              className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-[#DC143C] mb-4 shadow-xl shadow-primary/30"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ duration: 0.5 }}
+              className="flex justify-center mb-4"
             >
-              <Atom className="h-8 w-8 text-white" />
+              <img 
+                src={logoMoises} 
+                alt="Moisés Medeiros - Curso de Química" 
+                className="h-24 md:h-28 w-auto drop-shadow-2xl"
+              />
             </motion.div>
-            <h1 className="text-2xl font-bold text-white">
-              Prof. <span className="text-primary">Moisés</span>
-            </h1>
           </div>
 
           {/* Card */}
@@ -614,11 +617,16 @@ export default function Auth() {
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
               >
-                <div className="flex items-center justify-center gap-2 mb-3">
-                  <Fingerprint className="h-5 w-5 text-primary" />
-                  <h2 className="text-2xl font-bold text-white">
+                <div className="flex flex-col items-center justify-center gap-2 mb-3">
+                  <div className="flex items-center gap-2">
+                    <Fingerprint className="h-5 w-5 text-primary" />
+                    <span className="text-xs text-primary/80 uppercase tracking-widest font-medium">
+                      {isLogin ? "Acesso Seguro" : "Novo Cadastro"}
+                    </span>
+                  </div>
+                  <h2 className="text-lg md:text-xl font-bold text-white text-center leading-tight">
                     <EditableText
-                      value={getValue(isLogin ? "auth_login_title" : "auth_signup_title", isLogin ? "Acesso Seguro" : "Nova Conta")}
+                      value={getValue(isLogin ? "auth_login_title" : "auth_signup_title", isLogin ? "GESTÃO CURSO QUÍMICA MOISÉS MEDEIROS" : "Criar Nova Conta")}
                       onSave={(v) => updateValue(isLogin ? "auth_login_title" : "auth_signup_title", v)}
                       isEditMode={isEditMode}
                       canEdit={canEdit}
