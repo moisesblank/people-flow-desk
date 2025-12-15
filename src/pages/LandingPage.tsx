@@ -38,6 +38,11 @@ import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import professorPhoto from "@/assets/professor-moises.jpg";
 import heroChemistryBanner from "@/assets/hero-chemistry-banner.jpg";
+import { useEditableContent } from "@/hooks/useEditableContent";
+import { EditableText } from "@/components/editor/EditableText";
+import { EditableImage } from "@/components/editor/EditableImage";
+import { EditableLink } from "@/components/editor/EditableLink";
+import { EditModeToggle } from "@/components/editor/EditModeToggle";
 
 // ============================================
 // ANIMATED COUNTER COMPONENT
@@ -162,6 +167,16 @@ const features = [
 export default function LandingPage() {
   const [currentTestimonial, setCurrentTestimonial] = useState(0);
   const [isScrolled, setIsScrolled] = useState(false);
+  
+  // Sistema de edição inline
+  const { 
+    isEditMode, 
+    canEdit, 
+    toggleEditMode, 
+    getValue, 
+    updateValue, 
+    uploadImage 
+  } = useEditableContent("landing");
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -180,6 +195,12 @@ export default function LandingPage() {
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden dark">
+      {/* Botão de Modo Edição (só aparece para owner) */}
+      <EditModeToggle 
+        isEditMode={isEditMode} 
+        canEdit={canEdit} 
+        onToggle={toggleEditMode} 
+      />
       {/* ============================================
           NAVIGATION
           ============================================ */}
@@ -200,8 +221,22 @@ export default function LandingPage() {
                 <span className="text-primary-foreground font-bold text-lg">M</span>
               </div>
               <div>
-                <p className="font-bold text-foreground hero-title">Prof. Moisés</p>
-                <p className="text-xs text-muted-foreground">Química para Medicina</p>
+                <EditableText
+                  value={getValue("nav_brand", "Prof. Moisés")}
+                  onSave={(v) => updateValue("nav_brand", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                  className="font-bold text-foreground hero-title"
+                  as="p"
+                />
+                <EditableText
+                  value={getValue("nav_subtitle", "Química para Medicina")}
+                  onSave={(v) => updateValue("nav_subtitle", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                  className="text-xs text-muted-foreground"
+                  as="p"
+                />
               </div>
             </div>
 
@@ -292,64 +327,133 @@ export default function LandingPage() {
                 className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-primary/10 border border-primary/30 mb-6"
               >
                 <Trophy className="h-4 w-4 text-primary" />
-                <span className="text-sm font-medium text-primary">#1 em Aprovações em Medicina</span>
+                <EditableText
+                  value={getValue("hero_badge", "#1 em Aprovações em Medicina")}
+                  onSave={(v) => updateValue("hero_badge", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                  className="text-sm font-medium text-primary"
+                />
               </motion.div>
 
               {/* Title */}
               <h1 className="hero-title text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-tight mb-6">
-                O Professor que{" "}
-                <span className="brand-text">Mais Aprova</span>
-                {" "}em Medicina no Brasil
+                <EditableText
+                  value={getValue("hero_title_1", "O Professor que")}
+                  onSave={(v) => updateValue("hero_title_1", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                />{" "}
+                <span className="brand-text">
+                  <EditableText
+                    value={getValue("hero_title_highlight", "Mais Aprova")}
+                    onSave={(v) => updateValue("hero_title_highlight", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
+                </span>{" "}
+                <EditableText
+                  value={getValue("hero_title_2", "em Medicina no Brasil")}
+                  onSave={(v) => updateValue("hero_title_2", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                />
               </h1>
 
               {/* Subtitle */}
-              <p className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8">
-                Química de alto nível com metodologia exclusiva. 
-                <strong className="text-foreground"> Milhares de alunos aprovados</strong> nas melhores faculdades de Medicina do país.
-              </p>
+              <div className="text-lg md:text-xl text-muted-foreground max-w-xl mx-auto lg:mx-0 mb-8">
+                <EditableText
+                  value={getValue("hero_subtitle", "Química de alto nível com metodologia exclusiva. Milhares de alunos aprovados nas melhores faculdades de Medicina do país.")}
+                  onSave={(v) => updateValue("hero_subtitle", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                  multiline
+                />
+              </div>
 
               {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <a href="https://app.moisesmedeiros.com.br" target="_blank" rel="noopener noreferrer">
+                <EditableLink
+                  href={getValue("cta_area_aluno", "https://app.moisesmedeiros.com.br")}
+                  onSave={(v) => updateValue("cta_area_aluno", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                >
                   <Button 
                     size="lg" 
                     className="w-full sm:w-auto bg-primary hover:bg-primary-hover text-primary-foreground gap-2 rounded-xl h-14 px-8 text-lg heroic-glow press-effect"
                   >
-                    Começar Agora
+                    <EditableText
+                      value={getValue("hero_cta_primary", "Começar Agora")}
+                      onSave={(v) => updateValue("hero_cta_primary", v)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                    />
                     <ArrowRight className="h-5 w-5" />
                   </Button>
-                </a>
-                <a href="https://app.moisesmedeiros.com.br/black-friday-2025" target="_blank" rel="noopener noreferrer">
+                </EditableLink>
+                <EditableLink
+                  href={getValue("cta_black_friday", "https://app.moisesmedeiros.com.br/black-friday-2025")}
+                  onSave={(v) => updateValue("cta_black_friday", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                >
                   <Button 
                     size="lg" 
                     variant="outline" 
                     className="w-full sm:w-auto border-secondary bg-secondary/20 hover:bg-secondary/30 text-foreground gap-2 rounded-xl h-14 px-8 text-lg"
                   >
                     <Zap className="h-5 w-5 text-stats-blue" />
-                    Black Friday 2025
+                    <EditableText
+                      value={getValue("hero_cta_secondary", "Black Friday 2025")}
+                      onSave={(v) => updateValue("hero_cta_secondary", v)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                    />
                   </Button>
-                </a>
+                </EditableLink>
               </div>
 
               {/* Stats */}
               <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-primary/20">
                 <div className="text-center lg:text-left">
                   <p className="text-3xl md:text-4xl font-bold text-primary">
-                    <AnimatedCounter target={12847} suffix="+" />
+                    <AnimatedCounter target={parseInt(getValue("hero_stat_1_value", "12847")) || 12847} suffix="+" />
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">Alunos Ativos</p>
+                  <EditableText
+                    value={getValue("hero_stat_1_label", "Alunos Ativos")}
+                    onSave={(v) => updateValue("hero_stat_1_label", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                    className="text-sm text-muted-foreground mt-1"
+                    as="p"
+                  />
                 </div>
                 <div className="text-center lg:text-left">
                   <p className="text-3xl md:text-4xl font-bold text-stats-blue">
-                    <AnimatedCounter target={4892} suffix="+" />
+                    <AnimatedCounter target={parseInt(getValue("hero_stat_2_value", "4892")) || 4892} suffix="+" />
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">Aprovados 2024</p>
+                  <EditableText
+                    value={getValue("hero_stat_2_label", "Aprovados 2024")}
+                    onSave={(v) => updateValue("hero_stat_2_label", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                    className="text-sm text-muted-foreground mt-1"
+                    as="p"
+                  />
                 </div>
                 <div className="text-center lg:text-left">
                   <p className="text-3xl md:text-4xl font-bold text-stats-green">
-                    <AnimatedCounter target={98} suffix="%" />
+                    <AnimatedCounter target={parseInt(getValue("hero_stat_3_value", "98")) || 98} suffix="%" />
                   </p>
-                  <p className="text-sm text-muted-foreground mt-1">Satisfação</p>
+                  <EditableText
+                    value={getValue("hero_stat_3_label", "Satisfação")}
+                    onSave={(v) => updateValue("hero_stat_3_label", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                    className="text-sm text-muted-foreground mt-1"
+                    as="p"
+                  />
                 </div>
               </div>
             </motion.div>
@@ -384,16 +488,40 @@ export default function LandingPage() {
                   </div>
 
                   <div className="text-center">
-                    <h3 className="text-2xl font-bold text-foreground hero-title mb-1">Prof. Moisés Medeiros</h3>
-                    <p className="text-muted-foreground mb-4">Especialista em Química para Medicina</p>
+                    <EditableText
+                      value={getValue("professor_name", "Prof. Moisés Medeiros")}
+                      onSave={(v) => updateValue("professor_name", v)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                      className="text-2xl font-bold text-foreground hero-title mb-1"
+                      as="h3"
+                    />
+                    <EditableText
+                      value={getValue("professor_title", "Especialista em Química para Medicina")}
+                      onSave={(v) => updateValue("professor_title", v)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                      className="text-muted-foreground mb-4"
+                      as="p"
+                    />
                     
                     {/* Badges */}
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
                       <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium border border-primary/30">
-                        +15 anos de experiência
+                        <EditableText
+                          value={getValue("professor_badge_1", "+15 anos de experiência")}
+                          onSave={(v) => updateValue("professor_badge_1", v)}
+                          isEditMode={isEditMode}
+                          canEdit={canEdit}
+                        />
                       </span>
                       <span className="px-3 py-1 rounded-full bg-secondary/30 text-stats-blue text-xs font-medium border border-secondary/40">
-                        Método exclusivo
+                        <EditableText
+                          value={getValue("professor_badge_2", "Método exclusivo")}
+                          onSave={(v) => updateValue("professor_badge_2", v)}
+                          isEditMode={isEditMode}
+                          canEdit={canEdit}
+                        />
                       </span>
                     </div>
 
@@ -408,7 +536,13 @@ export default function LandingPage() {
                         animate={{ scale: [1, 1.3, 1] }}
                         transition={{ repeat: Infinity, duration: 1 }}
                       />
-                      <span className="text-sm font-medium text-primary">Próxima aula: Quarta 19h</span>
+                      <EditableText
+                        value={getValue("professor_live", "Próxima aula: Quarta 19h")}
+                        onSave={(v) => updateValue("professor_live", v)}
+                        isEditMode={isEditMode}
+                        canEdit={canEdit}
+                        className="text-sm font-medium text-primary"
+                      />
                     </motion.div>
                   </div>
                 </div>
