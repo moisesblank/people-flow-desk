@@ -2697,7 +2697,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          created_by?: string | null
+          created_by?: never
           data_admissao?: string | null
           email?: never
           funcao?: string | null
@@ -2714,7 +2714,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          created_by?: string | null
+          created_by?: never
           data_admissao?: string | null
           email?: never
           funcao?: string | null
