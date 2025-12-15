@@ -95,6 +95,16 @@
     
     /* Radius */
     --radius: 0.75rem;
+    
+    /* God Mode */
+    --god-mode-purple: 280 80% 50%;
+    --god-mode-pink: 328 100% 54%;
+    
+    /* Status de Usuários */
+    --status-online: 142 76% 36%;
+    --status-offline: 0 0% 40%;
+    --status-recent: 158 64% 40%;
+    --status-away: 38 92% 50%;
   }
 
   .dark {
@@ -142,6 +152,10 @@
     --sidebar-foreground: 0 0% 95%;
     --sidebar-border: 220 30% 15%;
     --sidebar-primary: 345 85% 50%;
+    
+    /* God Mode - Dark */
+    --god-mode-purple: 280 80% 60%;
+    --god-mode-pink: 328 100% 60%;
   }
 }
 
