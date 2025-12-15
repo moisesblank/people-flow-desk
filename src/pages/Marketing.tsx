@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - MARKETING
 // Spider-Man Theme - Métricas e Campanhas
+// Elementos de Química Integrados
 // ============================================
 
 import { useState } from "react";
@@ -22,9 +23,14 @@ import {
   Mail,
   Plus,
   BarChart3,
-  Calendar
+  Calendar,
+  FlaskConical,
+  Atom,
+  Zap
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { AnimatedAtom, ChemistryTip, BubblingFlask } from "@/components/chemistry/ChemistryVisuals";
+import marketingHeroImage from "@/assets/marketing-chemistry-hero.jpg";
 import professorImage from "@/assets/professor-moises.jpg";
 
 const campaignData = [
@@ -43,15 +49,20 @@ export default function Marketing() {
   const [activeTab, setActiveTab] = useState("overview");
 
   return (
-    <div className="space-y-6">
-      {/* Hero Section */}
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative rounded-2xl overflow-hidden bg-gradient-to-r from-primary/10 via-primary/5 to-secondary/10 border border-border/50"
+    <div className="space-y-6 p-4 md:p-8">
+      {/* Hero Banner com Imagem */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden"
       >
-        <div className="absolute inset-0 bg-grid-pattern opacity-5" />
-        <div className="relative flex items-center justify-between p-8">
+        <img 
+          src={marketingHeroImage} 
+          alt="Marketing Digital - Química do Crescimento" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+        <div className="absolute inset-0 flex items-center justify-between p-8">
           <div className="space-y-4">
             <div className="flex items-center gap-3">
               <div className="p-3 rounded-xl bg-primary/20">
@@ -59,26 +70,27 @@ export default function Marketing() {
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-foreground">Central de Marketing</h1>
-                <p className="text-muted-foreground">Moisés Medeiros - Curso de Química</p>
+                <p className="text-muted-foreground">A fórmula do crescimento digital</p>
               </div>
             </div>
             <div className="flex gap-4">
-              <Button className="brand-gradient">
-                <Plus className="h-4 w-4 mr-2" />
+              <Button className="brand-gradient gap-2">
+                <Plus className="h-4 w-4" />
                 Nova Campanha
               </Button>
-              <Button variant="outline">
-                <BarChart3 className="h-4 w-4 mr-2" />
+              <Button variant="outline" className="gap-2">
+                <BarChart3 className="h-4 w-4" />
                 Relatório Completo
               </Button>
             </div>
           </div>
-          <div className="hidden lg:block">
+          <div className="hidden lg:flex items-center gap-4">
             <img 
               src={professorImage} 
               alt="Prof. Moisés Medeiros" 
-              className="w-32 h-32 rounded-full object-cover border-4 border-primary/30 shadow-xl"
+              className="w-24 h-24 rounded-full object-cover border-4 border-primary/30 shadow-xl"
             />
+            <AnimatedAtom size={60} />
           </div>
         </div>
       </motion.div>

@@ -1,11 +1,12 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - ALUNOS
 // Spider-Man Theme - Gestão de Estudantes
+// Elementos de Química Integrados
 // ============================================
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Sparkles, Trash2, Edit2 } from "lucide-react";
+import { Plus, GraduationCap, Sparkles, Trash2, Edit2, Users, Award, TrendingUp, FlaskConical, Atom } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AnimatedAtom, MiniPeriodicTable, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
+import studentsHeroImage from "@/assets/students-chemistry-hero.jpg";
 
 interface Student {
   id: number;
@@ -115,36 +118,51 @@ export default function Alunos() {
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+        {/* Hero Banner */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-8"
         >
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <motion.div className="flex items-center gap-2 text-primary">
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-medium tracking-wide uppercase">Plataforma</span>
-              </motion.div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                Alunos
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-xl">
-                Gerencie os alunos da sua plataforma WordPress.
+          <img 
+            src={studentsHeroImage} 
+            alt="Alunos - Futuros Cientistas" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+          <div className="absolute inset-0 flex items-center justify-between p-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <FlaskConical className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium text-primary uppercase tracking-wider">Plataforma</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Alunos</h1>
+              <p className="text-muted-foreground max-w-md">
+                Formando os cientistas e médicos do futuro
               </p>
             </div>
-            <Button onClick={() => openModal()} size="lg" className="gap-2">
-              <Plus className="h-5 w-5" /> Novo Aluno
-            </Button>
+            <div className="hidden lg:flex items-center gap-4">
+              <AnimatedAtom size={70} />
+              <Button onClick={() => openModal()} size="lg" className="gap-2">
+                <Plus className="h-5 w-5" /> Novo Aluno
+              </Button>
+            </div>
           </div>
-        </motion.header>
+        </motion.div>
+
+        {/* Mobile Button */}
+        <div className="lg:hidden mb-6">
+          <Button onClick={() => openModal()} size="lg" className="w-full gap-2">
+            <Plus className="h-5 w-5" /> Novo Aluno
+          </Button>
+        </div>
 
         {/* Stats */}
-        <section className="mb-10 grid gap-4 sm:grid-cols-3">
-          <StatCard title="Total Alunos" value={students.length} icon={GraduationCap} variant="blue" delay={0} />
+        <section className="mb-10 grid gap-4 sm:grid-cols-4">
+          <StatCard title="Total Alunos" value={students.length} icon={Users} variant="blue" delay={0} />
           <StatCard title="Ativos" value={ativos} icon={GraduationCap} variant="green" delay={1} />
-          <StatCard title="Concluídos" value={concluidos} icon={GraduationCap} variant="purple" delay={2} />
+          <StatCard title="Concluídos" value={concluidos} icon={Award} variant="purple" delay={2} />
+          <StatCard title="Taxa Aprovação" value={students.length > 0 ? Math.round((concluidos / students.length) * 100) : 0} formatFn={(v) => `${v}%`} icon={TrendingUp} variant="red" delay={3} />
         </section>
 
         {/* Table */}

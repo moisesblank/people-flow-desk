@@ -1,10 +1,11 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - FUNCIONÁRIOS
 // Spider-Man Theme - Gestão de Equipe
+// Elementos de Química Integrados
 // ============================================
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, Users, UserCheck, DollarSign, TrendingUp, Sparkles } from "lucide-react";
+import { Plus, Users, UserCheck, DollarSign, TrendingUp, Sparkles, FlaskConical, Atom } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/employees/StatCard";
@@ -17,6 +18,8 @@ import { SkeletonCard, StatsSkeletonCard } from "@/components/employees/Skeleton
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
+import teamHeroImage from "@/assets/team-chemistry-hero.jpg";
 import type { EmployeeStatus, Sector } from "@/types/employee";
 
 interface Employee {
@@ -251,47 +254,54 @@ export default function Funcionarios() {
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+        {/* Hero Banner */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-8"
         >
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <motion.div 
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 }}
-                className="flex items-center gap-2 text-primary"
-              >
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-medium tracking-wide uppercase">Painel de Gestão</span>
-              </motion.div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                Funcionários
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-xl">
-                Gerencie sua equipe de forma simples, rápida e eficiente.
+          <img 
+            src={teamHeroImage} 
+            alt="Gestão de Equipe - Química do Trabalho" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+          <div className="absolute inset-0 flex items-center justify-between p-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <FlaskConical className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium text-primary uppercase tracking-wider">Painel de Gestão</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Funcionários</h1>
+              <p className="text-muted-foreground max-w-md">
+                A química perfeita entre talento e resultados
               </p>
             </div>
-            
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ delay: 0.2 }}
-            >
+            <div className="hidden lg:flex items-center gap-4">
+              <AnimatedAtom size={70} />
               <Button
                 onClick={handleNewEmployee}
                 size="lg"
-                className="bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 gap-2 px-6 h-12 rounded-xl pulse-ring"
+                className="bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 gap-2 px-6 h-12 rounded-xl"
               >
                 <Plus className="h-5 w-5" />
                 Novo Funcionário
               </Button>
-            </motion.div>
+            </div>
           </div>
-        </motion.header>
+        </motion.div>
+
+        {/* Mobile Button */}
+        <div className="lg:hidden mb-6">
+          <Button
+            onClick={handleNewEmployee}
+            size="lg"
+            className="w-full bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 gap-2 h-12 rounded-xl"
+          >
+            <Plus className="h-5 w-5" />
+            Novo Funcionário
+          </Button>
+        </div>
 
         {/* Stats Grid */}
         <section className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">

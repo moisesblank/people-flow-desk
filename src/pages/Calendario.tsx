@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - CALENDÁRIO
 // Spider-Man Theme - Gestão de Tarefas
+// Elementos de Química Integrados
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
@@ -16,7 +17,9 @@ import {
   AlertCircle,
   Filter,
   Trash2,
-  Edit2
+  Edit2,
+  FlaskConical,
+  Atom
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +33,8 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
+import calendarHeroImage from "@/assets/calendar-chemistry-hero.jpg";
 import { 
   format, 
   addMonths, 

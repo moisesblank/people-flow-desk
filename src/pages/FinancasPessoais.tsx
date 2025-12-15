@@ -1,11 +1,12 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - FINANÇAS PESSOAIS
 // Spider-Man Theme - Gestão Financeira Pessoal
+// Elementos de Química Integrados
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Wallet, Sparkles, Trash2, Edit2 } from "lucide-react";
+import { Plus, Wallet, Sparkles, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,7 +16,9 @@ import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
+import { ChemistryTip, AnimatedAtom } from "@/components/chemistry/ChemistryVisuals";
+import financeHeroImage from "@/assets/finance-chemistry-hero.jpg";
 
 interface Expense {
   id: number;
@@ -203,33 +206,48 @@ export default function FinancasPessoais() {
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+        {/* Hero Banner */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="relative w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-8"
         >
-          <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-            <div className="space-y-2">
-              <motion.div className="flex items-center gap-2 text-primary">
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-medium tracking-wide uppercase">Controle Pessoal</span>
-              </motion.div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                Finanças Pessoais
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-xl">
-                Gerencie seus gastos pessoais fixos e extras.
+          <img 
+            src={financeHeroImage} 
+            alt="Finanças Pessoais - Química do Dinheiro" 
+            className="w-full h-full object-cover"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
+          <div className="absolute inset-0 flex items-center justify-between p-8">
+            <div>
+              <div className="flex items-center gap-2 mb-2">
+                <FlaskConical className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium text-primary uppercase tracking-wider">Controle Pessoal</span>
+              </div>
+              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Finanças Pessoais</h1>
+              <p className="text-muted-foreground max-w-md">
+                A química do dinheiro: transforme gastos em investimentos
               </p>
             </div>
+            <div className="hidden lg:block">
+              <AnimatedAtom size={80} />
+            </div>
           </div>
-        </motion.header>
+        </motion.div>
 
         {/* Stats */}
-        <section className="mb-10 grid gap-4 sm:grid-cols-3">
+        <section className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Gastos Fixos" value={stats.totalFixed} formatFn={formatCurrency} icon={Wallet} variant="red" delay={0} />
-          <StatCard title="Gastos Extras" value={stats.totalExtra} formatFn={formatCurrency} icon={Wallet} variant="purple" delay={1} />
-          <StatCard title="Total Mensal" value={stats.total} formatFn={formatCurrency} icon={Wallet} variant="blue" delay={2} />
+          <StatCard title="Gastos Extras" value={stats.totalExtra} formatFn={formatCurrency} icon={TrendingDown} variant="purple" delay={1} />
+          <StatCard title="Total Mensal" value={stats.total} formatFn={formatCurrency} icon={Target} variant="blue" delay={2} />
+          <StatCard 
+            title="Economia Potencial" 
+            value={Math.round(stats.total * 0.15)} 
+            formatFn={formatCurrency} 
+            icon={PiggyBank} 
+            variant="green" 
+            delay={3} 
+          />
         </section>
 
         {/* Chart + Fixed Expenses Grid */}
