@@ -1,7 +1,12 @@
-import { LucideIcon } from "lucide-react";
+import { LucideIcon, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 import { AnimatedCounter } from "./AnimatedCounter";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface StatCardProps {
   title: string;
@@ -11,6 +16,7 @@ interface StatCardProps {
   variant: "red" | "green" | "blue" | "purple";
   delay?: number;
   hiddenText?: string; // Texto a mostrar quando value é null
+  hiddenTooltip?: string; // Tooltip quando valor é restrito
 }
 
 const variantStyles = {
@@ -43,9 +49,11 @@ export function StatCard({
   icon: Icon, 
   variant,
   delay = 0,
-  hiddenText = "••••••"
+  hiddenText = "••••••",
+  hiddenTooltip = "Informação restrita. Apenas administradores podem visualizar."
 }: StatCardProps) {
   const styles = variantStyles[variant];
+  const isHidden = value === null;
 
   return (
     <motion.div
@@ -66,12 +74,23 @@ export function StatCard({
           <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
             {title}
           </p>
-          <p className={cn(
-            "text-4xl font-bold tracking-tight",
-            value === null ? "text-muted-foreground" : "text-foreground"
-          )}>
-            {value === null ? hiddenText : <AnimatedCounter value={value} formatFn={formatFn} />}
-          </p>
+          {isHidden ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <p className="text-4xl font-bold tracking-tight text-muted-foreground flex items-center gap-2 cursor-help">
+                  <Lock className="h-5 w-5" />
+                  {hiddenText}
+                </p>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>{hiddenTooltip}</p>
+              </TooltipContent>
+            </Tooltip>
+          ) : (
+            <p className="text-4xl font-bold tracking-tight text-foreground">
+              <AnimatedCounter value={value} formatFn={formatFn} />
+            </p>
+          )}
         </div>
         <motion.div 
           className={cn("rounded-2xl p-4 transition-all duration-300", styles.icon)}
