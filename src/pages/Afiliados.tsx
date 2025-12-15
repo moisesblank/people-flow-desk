@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - AFILIADOS
+// Spider-Man Theme - Gestão de Parceiros
+// ============================================
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, Handshake, Sparkles, Trash2, Edit2 } from "lucide-react";

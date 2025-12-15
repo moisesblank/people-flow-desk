@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - FUNCIONÁRIOS
+// Spider-Man Theme - Gestão de Equipe
+// ============================================
+
 import { useState, useMemo, useCallback, useEffect } from "react";
 import { Plus, Users, UserCheck, DollarSign, TrendingUp, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";

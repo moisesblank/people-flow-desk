@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - CONTABILIDADE
+// Spider-Man Theme - Documentos Fiscais
+// ============================================
+
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { 

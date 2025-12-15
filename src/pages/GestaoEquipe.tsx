@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - GESTÃO DE EQUIPE
+// Spider-Man Theme - Ponto e Jornada
+// ============================================
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
