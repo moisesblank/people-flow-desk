@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 
   Users, 
@@ -17,7 +17,8 @@ import {
   Download,
   Brain,
   Zap,
-  Bot
+  Bot,
+  Clock
 } from "lucide-react";
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -44,6 +45,33 @@ function formatCurrency(cents: number): string {
     style: "currency",
     currency: "BRL",
   }).format(cents / 100);
+}
+
+function LiveClock() {
+  const [time, setTime] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <motion.div 
+      className="flex items-center gap-2 px-4 py-2 rounded-xl bg-muted/50 border border-border/50"
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+    >
+      <Clock className="h-4 w-4 text-primary" />
+      <div className="flex flex-col items-end">
+        <span className="text-lg font-mono font-bold text-foreground">
+          {time.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" })}
+        </span>
+        <span className="text-xs text-muted-foreground">
+          {time.toLocaleDateString("pt-BR", { weekday: "short", day: "2-digit", month: "short" })}
+        </span>
+      </div>
+    </motion.div>
+  );
 }
 
 export default function Dashboard() {
@@ -269,6 +297,7 @@ export default function Dashboard() {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <LiveClock />
               <motion.div
                 className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[hsl(var(--stats-green))]/10 border border-[hsl(var(--stats-green))]/20"
                 animate={{ scale: [1, 1.02, 1] }}
