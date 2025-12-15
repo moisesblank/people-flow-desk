@@ -13,7 +13,6 @@ const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
 // Security: Get webhook secrets from environment
 const HOTMART_HOTTOK = Deno.env.get("HOTMART_HOTTOK");
-const ASAAS_WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
 
 interface WebhookPayload {
   source?: string;
@@ -60,21 +59,6 @@ function verifyHotmartSignature(request: Request, hottok: string | null): boolea
   return hottok === HOTMART_HOTTOK;
 }
 
-// Security: Verify Asaas webhook token
-function verifyAsaasSignature(request: Request): boolean {
-  if (!ASAAS_WEBHOOK_TOKEN) {
-    console.warn("[SYNAPSE] ASAAS_WEBHOOK_TOKEN not configured - skipping verification");
-    return true;
-  }
-  
-  const token = request.headers.get("asaas-access-token") || request.headers.get("x-asaas-access-token");
-  if (!token) {
-    console.error("[SYNAPSE] Missing Asaas access token header");
-    return false;
-  }
-  
-  return token === ASAAS_WEBHOOK_TOKEN;
-}
 
 // Security: Log security events
 async function logSecurityEvent(eventType: string, details: Record<string, any>) {
@@ -336,20 +320,6 @@ const handler = async (req: Request): Promise<Response> => {
     // Auto-detect from payload
     if (payload.hottok || payload.prod_name) {
       source = "hotmart";
-    } else if (payload.payment && payload.event?.startsWith("PAYMENT_")) {
-      source = "asaas";
-      // Verify Asaas signature
-      if (!verifyAsaasSignature(req)) {
-        await logSecurityEvent("invalid_signature", {
-          source: "asaas",
-          ip: clientIP,
-          reason: "Invalid or missing access token",
-        });
-        return new Response(
-          JSON.stringify({ success: false, error: "Invalid webhook signature" }),
-          { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
-        );
-      }
     }
 
     const transaction = await processWebhook(payload, source);
