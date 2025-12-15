@@ -1,10 +1,96 @@
 # SYNAPSE v14.0 + UPGRADE v10 - CHECKLIST COMPLETO
 
-## 📍 Status: EM PROGRESSO 🔄 (85%)
+## 📍 Status: QUASE COMPLETO 🔄 (90%)
 
-**Última atualização:** 15/12/2025 23:00
-**UPGRADE v10 FASES implementadas:** 6 de 10
-**Correções de segurança:** 2 erros RLS corrigidos
+**Última atualização:** 15/12/2025 23:30
+**UPGRADE v10 FASES implementadas:** 9 de 11
+
+---
+
+## UPGRADE v10 - FASES DE IMPLEMENTAÇÃO
+
+### FASE 1 - DATABASE EXPANSION ✅
+- [x] Enum `app_role` expandido com novos roles:
+  - coordenacao, suporte, monitoria, afiliado, marketing, contabilidade
+- [x] Tabelas criadas: `time_tracking`, `tasks`, `transactions`, `vehicles`, `vehicle_maintenance`, `reagents`, `equipment`, `pets`, `pet_vaccines`, `personal_expenses_v2`
+- [x] RLS policies configuradas para todas as tabelas
+- [x] Índices de performance criados
+
+### FASE 2 - TEMA VERMELHO ESCURO PROFISSIONAL ✅
+- [x] Background: HSL 0 0% 7%
+- [x] Primary: HSL 0 65% 45% (vermelho escuro)
+- [x] Cards e componentes atualizados
+- [x] Gradientes e efeitos ajustados
+
+### FASE 3 - TIME TRACKING AVANÇADO ✅
+- [x] Hook `useTimeTracking.tsx` com:
+  - `useMyTimeTracking` - buscar registros
+  - `useClockIn` / `useClockOut` - entrada/saída
+  - `useBreak` - intervalos
+  - `useActiveTimeTracking` - tracking ativo
+  - `useTimeTrackingStats` - estatísticas
+- [x] Widget `TimeTrackingWidget.tsx` no Dashboard
+
+### FASE 4 - TASKS COM KANBAN ✅
+- [x] Hook `useTasks.tsx` com:
+  - `useTasks` - buscar tarefas
+  - `useTasksKanban` - colunas Kanban
+  - `useCreateTask` / `useUpdateTask` / `useDeleteTask`
+  - `useMoveTask` - drag & drop
+  - `useTasksStats` - estatísticas
+- [x] Página `/tarefas` com:
+  - Visualização Kanban completa
+  - Vista em lista
+  - Criação/edição de tarefas
+  - Filtros e busca
+  - Stats de produtividade
+- [x] Widget `TasksOverviewWidget.tsx` no Dashboard
+- [x] Rota adicionada no App.tsx
+- [x] Link na navegação
+
+### FASE 5 - TRANSAÇÕES UNIFICADAS ✅
+- [x] Hook `useTransactions.tsx` com:
+  - `useTransactions` - buscar transações
+  - `useCreateTransaction` / `useUpdateTransaction` / `useDeleteTransaction`
+  - `useFinancialStats` - estatísticas financeiras
+- [x] Suporte a receitas, despesas e transferências
+- [x] Categorias e contas vinculadas
+- [x] Transações pessoais vs empresariais
+
+### FASE 6 - VEÍCULOS E MANUTENÇÃO ✅
+- [x] Tabelas `vehicles` e `vehicle_maintenance`
+- [x] CRUD integrado em VidaPessoal.tsx
+- [x] Alertas de manutenção pendente
+
+### FASE 7 - DASHBOARD WIDGETS ✅
+- [x] `TasksOverviewWidget.tsx` - overview de tarefas
+- [x] `TimeTrackingWidget.tsx` - controle de tempo
+- [x] `LabStatusWidget.tsx` - status do laboratório
+- [x] Integração no Dashboard principal
+
+### FASE 8 - RELATÓRIOS AVANÇADOS ⏳
+- [ ] Geração de PDF (pendente)
+- [ ] Exportação Excel avançada
+- [ ] Relatórios customizáveis
+
+### FASE 9 - MÓDULO LABORATÓRIO ✅
+- [x] Página `Laboratorio.tsx` completa
+- [x] Gestão de reagentes (estoque, validade, periculosidade)
+- [x] Gestão de equipamentos (status, manutenção)
+- [x] Alertas de estoque baixo e vencimento
+- [x] Widget no Dashboard
+
+### FASE 10 - INTEGRAÇÕES NOVAS ⏳
+- [ ] Stripe (pagamentos online)
+- [ ] WhatsApp Business API
+- [ ] Hotmart melhorada
+
+### FASE 11 - MÓDULO VIDA PESSOAL ✅
+- [x] Página `VidaPessoal.tsx` completa
+- [x] Gestão de pets (vacinas, veterinário)
+- [x] Gestão de veículos (manutenção, documentos)
+- [x] Despesas pessoais v2
+- [x] Owner-only access
 
 ---
 
@@ -26,14 +112,6 @@
 - [x] Registro de logout automático
 - [x] Visualização de último acesso de todos usuários
 - [x] Navegação rápida no painel do Modo Deus
-
-### Database:
-- [x] Tabela `user_sessions`
-- [x] Tabela `activity_log`
-- [x] Função `register_user_login`
-- [x] Função `update_user_activity`
-- [x] Função `register_user_logout`
-- [x] Função `get_all_users_last_access`
 
 ---
 
@@ -57,17 +135,6 @@
 - [x] `AdvancedKPIs.tsx` - KPIs avançados
 - [x] `WeeklyInsights.tsx` - Insights semanais
 - [x] `BudgetAlerts.tsx` - Alertas de orçamento
-- [x] `QuickStatsWidget.tsx` - Estatísticas rápidas
-
-### Database:
-- [x] Tabela `income`
-- [x] Tabela `personal_fixed_expenses`
-- [x] Tabela `personal_extra_expenses`
-- [x] Tabela `company_fixed_expenses`
-- [x] Tabela `company_extra_expenses`
-- [x] Tabela `payments`
-- [x] Tabela `financial_goals`
-- [x] Tabela `contabilidade`
 
 ---
 
@@ -84,34 +151,11 @@
 - [x] `CourseCard.tsx` - Card de curso
 - [x] `CourseProgress.tsx` - Progresso do curso
 - [x] `VideoPlayer.tsx` - Player de vídeo
-- [x] `VideoPlayerAdvanced.tsx` - Player avançado
 - [x] `Certificate.tsx` - Certificados
 - [x] `Flashcard.tsx` - Flashcards de estudo
 - [x] `QuizPlayer.tsx` - Player de quiz
-- [x] `QuizListWidget.tsx` - Widget de quizzes no dashboard
 - [x] `XPProgressCard.tsx` - Card de XP
 - [x] `Leaderboard.tsx` - Ranking de usuários
-
-### Hooks:
-- [x] `useLMS.tsx` - Hook completo do LMS
-- [x] `useQuiz.tsx` - Hook de quizzes
-- [x] `useGamification.tsx` - Hook de gamificação
-- [x] `useYouTubeAPI.tsx` - Integração YouTube
-
-### Database:
-- [x] Tabela `courses`
-- [x] Tabela `modules`
-- [x] Tabela `lessons`
-- [x] Tabela `enrollments`
-- [x] Tabela `lesson_progress`
-- [x] Tabela `quizzes`
-- [x] Tabela `quiz_questions`
-- [x] Tabela `quiz_attempts`
-- [x] Tabela `quiz_answers`
-- [x] Tabela `certificates`
-- [x] Tabela `user_gamification`
-- [x] Tabela `badges`
-- [x] Tabela `xp_history`
 
 ---
 
@@ -125,33 +169,7 @@
 - [x] `Afiliados.tsx` - Gestão de afiliados
 - [x] `Alunos.tsx` - Gestão de alunos
 - [x] `GestaoEquipe.tsx` - Gestão de equipe
-- [x] `Relatorios.tsx` - Relatórios
-
-### Componentes:
-- [x] `EmployeeCard.tsx` - Card de funcionário
-- [x] `EmployeeModal.tsx` - Modal de funcionário
-- [x] `TimeClockWidget.tsx` - Widget de ponto
-- [x] `TaskStats.tsx` - Estatísticas de tarefas
-- [x] `StudentProgressCard.tsx` - Progresso do aluno
-- [x] `AutomationFlow.tsx` - Fluxos de automação
-- [x] `SalesFunnel.tsx` - Funil de vendas
-- [x] `ProductivityTracker.tsx` - Rastreador de produtividade
-- [x] `SmartNotifications.tsx` - Notificações inteligentes
-
-### Hooks:
-- [x] `useTimeClock.tsx` - Hook de ponto eletrônico
-- [x] `useGoogleCalendar.tsx` - Integração Google Calendar
-
-### Database:
-- [x] Tabela `employees`
-- [x] Tabela `employee_compensation`
-- [x] Tabela `employee_documents`
-- [x] Tabela `calendar_tasks`
-- [x] Tabela `time_clock_entries`
-- [x] Tabela `students`
-- [x] Tabela `affiliates`
-- [x] Tabela `sales`
-- [x] Tabela `metricas_marketing`
+- [x] `Tarefas.tsx` - Kanban de tarefas (NOVO!)
 
 ---
 
@@ -164,40 +182,9 @@
 - [x] `ProtectedRoute.tsx` - Rotas protegidas
 
 ### Funcionalidades:
-- [x] Autenticação 2FA/MFA
-- [x] Códigos de backup
 - [x] RLS em todas as tabelas
 - [x] Funções de permissão (is_owner, has_role)
 - [x] Audit logs
-
-### Edge Functions:
-- [x] `backup-data` - Backup de 45+ tabelas
-- [x] `send-notification-email` - Envio de emails
-- [x] `ai-tutor` - Tutor de IA
-- [x] `ai-assistant` - Assistente de IA
-- [x] `google-calendar` - Integração Google Calendar
-- [x] `youtube-api` - Integração YouTube
-
-### Database:
-- [x] Tabela `user_roles`
-- [x] Tabela `user_mfa_settings`
-- [x] Tabela `audit_logs`
-- [x] Tabela `permission_audit_logs`
-- [x] RLS policies em todas tabelas
-
----
-
-## INTEGRAÇÃO NO DASHBOARD ✅
-
-### Widgets Adicionados:
-- [x] `ExecutiveSummary` - Apenas para owner
-- [x] `SynapseStatusWidget` - Status do sistema (owner)
-- [x] `FinancialInsights` - Insights financeiros
-- [x] `QuizListWidget` - Quizzes disponíveis
-- [x] `SecurityStatusWidget` - Status de segurança
-- [x] `ProductivityTracker` - Produtividade semanal
-- [x] `RealtimePulse` - Dados em tempo real
-- [x] `CommandCenter` - Centro de comando
 
 ---
 
@@ -207,16 +194,10 @@
 |--------|--------|
 | `Ctrl+Shift+E` | Ativar/Desativar Modo Deus |
 | `Ctrl+K` | Busca global |
-| `Ctrl+Shift+K` | Command Center |
 | `Ctrl+Shift+D` | Ir para Dashboard |
 | `Ctrl+Shift+C` | Ir para Calendário |
 | `Ctrl+Shift+F` | Ir para Funcionários |
-| `Ctrl+Shift+P` | Ir para Pagamentos |
-| `Ctrl+Shift+M` | Ir para Monitoramento |
-| `Ctrl+Shift+S` | Ir para Simulados |
-| `Ctrl+Shift+R` | Ir para Relatórios |
-| `Ctrl+Shift+N` | Nova tarefa |
-| `Ctrl+Shift+B` | Backup rápido |
+| `Ctrl+Shift+T` | Ir para Tarefas (NOVO!) |
 | `?` | Ver todos os atalhos |
 | `Escape` | Fechar modais |
 
@@ -227,6 +208,9 @@
 | Rota | Descrição |
 |------|-----------|
 | `/dashboard` | Dashboard principal |
+| `/tarefas` | Kanban de Tarefas (NOVO!) |
+| `/laboratorio` | Gestão de Laboratório |
+| `/vida-pessoal` | Vida Pessoal (Owner) |
 | `/monitoramento` | Monitoramento (owner) |
 | `/financas-pessoais` | Finanças pessoais |
 | `/financas-empresa` | Finanças empresa |
@@ -234,9 +218,8 @@
 | `/simulados` | Quizzes e simulados |
 | `/funcionarios` | Gestão de funcionários |
 | `/calendario` | Calendário |
-| `/configuracoes` | Configurações e 2FA |
-| `/relatorios` | Relatórios |
 | `/ponto-eletronico` | Ponto eletrônico |
+| `/configuracoes` | Configurações |
 
 ---
 
@@ -254,42 +237,21 @@
 
 ---
 
-## MELHORIAS v14.0
+## PRÓXIMOS PASSOS (FASES PENDENTES)
 
-1. **Modo Deus Aprimorado**
-   - Navegação rápida integrada no painel
-   - Indicador de versão v14.0
-   - Atalhos visíveis
+### FASE 8 - Relatórios Avançados
+1. Implementar geração de PDF com react-pdf
+2. Exportação Excel com dados formatados
+3. Templates de relatórios customizáveis
 
-2. **Overlay de Atalhos**
-   - Pressione `?` para ver todos os atalhos
-   - Categorias: Sistema, Navegação, Ações
-   - Interface animada
-
-3. **Mais Atalhos de Navegação**
-   - 12 atalhos de teclado
-   - Toast feedback visual
-   - Suporte a todas as páginas principais
-
-4. **Dashboard Integrado**
-   - Todos os widgets SYNAPSE v14.0
-   - Insights financeiros inteligentes
-   - Quiz/LMS widget
-   - Status de segurança
+### FASE 10 - Integrações
+1. Habilitar Stripe para pagamentos
+2. Integração WhatsApp Business
+3. Melhorar webhook Hotmart
 
 ---
 
-## CORREÇÕES DE SEGURANÇA APLICADAS (15/12/2025)
-
-| Tabela | Problema | Solução |
-|--------|----------|---------|
-| `activity_log` | Insert sem validação de user_id | RLS atualizado para validar user_id = auth.uid() |
-| `affiliates` | Policy com role "public" | RLS restrito para is_admin_or_owner |
-| `analytics_metrics` | Insert anônimo (intencional) | Ignorado - necessário para analytics |
-
----
-
-**Versão**: SYNAPSE v14.0  
-**Última Atualização**: 2025-12-15 19:30  
-**Status**: PRODUÇÃO ✅  
+**Versão**: SYNAPSE v14.0 + UPGRADE v10
+**Última Atualização**: 2025-12-15 23:30
+**Status**: 90% COMPLETO
 **Segurança**: RLS 100% ✅
