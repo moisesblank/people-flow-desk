@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v5.0 - Ponto Eletrônico
-// Curso de Química - Gestão de Funcionários
+// MOISÉS MEDEIROS v7.0 - PONTO ELETRÔNICO
+// Spider-Man Theme - Gestão de Jornada
 // ============================================
 
 import { useState } from "react";

@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - FINANÇAS PESSOAIS
+// Spider-Man Theme - Gestão Financeira Pessoal
+// ============================================
+
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Plus, Wallet, Sparkles, Trash2, Edit2 } from "lucide-react";

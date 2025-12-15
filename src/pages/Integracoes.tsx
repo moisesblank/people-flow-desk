@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v5.0 - INTEGRAÇÕES
-// Curso de Química - Hub de Webhooks
+// MOISÉS MEDEIROS v7.0 - INTEGRAÇÕES
+// Spider-Man Theme - Hub de Webhooks
 // Pilar: Data Intelligence & Automação
 // ============================================
 

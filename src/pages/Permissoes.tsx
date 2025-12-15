@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - PERMISSÕES
+// Spider-Man Theme - Controle de Acesso RBAC
+// ============================================
+
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Shield, Users, Crown, User, Search, Loader2, AlertTriangle, Info, History, Clock, ArrowRight } from "lucide-react";

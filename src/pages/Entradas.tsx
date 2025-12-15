@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - ENTRADAS
+// Spider-Man Theme - Receitas e Impostos
+// ============================================
+
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Plus, TrendingUp, Sparkles, Trash2, Edit2 } from "lucide-react";

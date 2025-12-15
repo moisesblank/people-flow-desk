@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - CONFIGURAÇÕES
+// Spider-Man Theme - Preferências do Sistema
+// ============================================
+
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 

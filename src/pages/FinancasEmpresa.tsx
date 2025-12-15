@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - FINANÇAS EMPRESA
+// Spider-Man Theme - Gestão Financeira Corporativa
+// ============================================
+
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { Plus, Building2, Sparkles, Trash2, Edit2 } from "lucide-react";

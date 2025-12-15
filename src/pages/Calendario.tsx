@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - CALENDÁRIO
+// Spider-Man Theme - Gestão de Tarefas
+// ============================================
+
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { 

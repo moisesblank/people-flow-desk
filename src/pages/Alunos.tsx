@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - ALUNOS
+// Spider-Man Theme - Gestão de Estudantes
+// ============================================
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Plus, GraduationCap, Sparkles, Trash2, Edit2 } from "lucide-react";

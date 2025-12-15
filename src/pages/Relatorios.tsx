@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - RELATÓRIOS
+// Spider-Man Theme - Business Intelligence
+// ============================================
+
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { 

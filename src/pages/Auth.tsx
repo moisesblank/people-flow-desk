@@ -540,9 +540,9 @@ export default function Auth() {
           </p>
         </div>
         
-        {/* Powered by */}
+        {/* Powered by - Spider-Man v7.0 */}
         <p className="text-center text-xs text-muted-foreground/50 mt-4">
-          Moisés Medeiros v5.0 • Curso - Química
+          🕷️ Moisés Medeiros v7.0 • Curso de Química
         </p>
       </motion.div>
     </div>
