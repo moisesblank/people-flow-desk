@@ -58,7 +58,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainMenuItems = [
-  { title: "Command Center", url: "/", icon: Brain },
+  { title: "Central de Comando", url: "/", icon: Brain },
   { title: "Dashboard Executivo", url: "/dashboard-executivo", icon: Gauge },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },

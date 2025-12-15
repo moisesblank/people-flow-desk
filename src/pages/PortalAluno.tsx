@@ -466,7 +466,7 @@ export default function PortalAluno() {
           <TabsContent value="courses" className="space-y-6 mt-6">
             <div className="grid gap-6 lg:grid-cols-2">
               <CourseProgress
-                courseName="Curso de Marketing Digital"
+                courseName="Curso de Química - Moisés Medeiros"
                 modules={demoModules}
                 overallProgress={33}
                 onLessonClick={(lessonId) => toast.info(`Abrindo aula ${lessonId}`)}

@@ -23,7 +23,7 @@ interface Transaction {
   created_at: string;
 }
 
-interface SynapseStats {
+interface DashboardStats {
   todayRevenue: number;
   todaySales: number;
   recentTransactions: Transaction[];
@@ -45,7 +45,7 @@ function formatTime(date: string): string {
 }
 
 export function RealtimePulse() {
-  const [stats, setStats] = useState<SynapseStats>({
+  const [stats, setStats] = useState<DashboardStats>({
     todayRevenue: 0,
     todaySales: 0,
     recentTransactions: [],
@@ -111,7 +111,7 @@ export function RealtimePulse() {
         isConnected: true,
       });
     } catch (error) {
-      console.error("Error fetching synapse stats:", error);
+      console.error("Error fetching dashboard stats:", error);
       setStats(prev => ({ ...prev, isConnected: false }));
     }
   };

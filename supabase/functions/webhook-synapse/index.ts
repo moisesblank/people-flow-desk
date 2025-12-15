@@ -91,7 +91,7 @@ async function checkRateLimit(source: string, ipAddress: string): Promise<{ allo
       return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - 1 };
     }
   } catch (error) {
-    console.error("[SYNAPSE] Rate limit check error:", error);
+    console.error("[CURSO-QUIMICA] Rate limit check error:", error);
     // Fail open to avoid blocking legitimate requests
     return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
   }
@@ -122,7 +122,7 @@ async function logAuditEvent(
       metadata: details.metadata,
     });
   } catch (error) {
-    console.error("[SYNAPSE] Failed to log audit event:", error);
+    console.error("[CURSO-QUIMICA] Failed to log audit event:", error);
   }
 }
 
@@ -252,8 +252,8 @@ function mapAsaasStatus(event: string): string {
 
 async function processWebhook(payload: WebhookPayload, source: string, ipAddress: string, userAgent: string) {
   // Security: Log sanitized payload only
-  console.log(`[SYNAPSE] Processing webhook from: ${source}`);
-  console.log(`[SYNAPSE] Payload (sanitized):`, JSON.stringify(sanitizePayloadForLog(payload)));
+  console.log(`[CURSO-QUIMICA] Processing webhook from: ${source}`);
+  console.log(`[CURSO-QUIMICA] Payload (sanitized):`, JSON.stringify(sanitizePayloadForLog(payload)));
 
   let transactionData;
   
@@ -474,7 +474,7 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error("[SYNAPSE] Webhook error:", error.message);
+    console.error("[CURSO-QUIMICA] Webhook error:", error.message);
     
     // Security: Log errors to audit
     await logAuditEvent("webhook_error", {

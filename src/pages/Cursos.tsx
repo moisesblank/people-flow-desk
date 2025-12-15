@@ -1,7 +1,12 @@
+// ============================================
+// MOISÉS MEDEIROS v5.0 - Cursos
+// Curso de Química - Portal de Aprendizado
+// ============================================
+
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Filter, BookOpen, GraduationCap, Trophy, Flame } from 'lucide-react';
+import { Search, Filter, BookOpen, GraduationCap, Trophy, Flame, Sparkles } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -11,6 +16,7 @@ import { useGamification } from '@/hooks/useGamification';
 import CourseCard from '@/components/lms/CourseCard';
 import XPProgressCard from '@/components/lms/XPProgressCard';
 import Leaderboard from '@/components/lms/Leaderboard';
+import heroImage from '@/assets/dashboard-chemistry-hero.jpg';
 
 export default function Cursos() {
   const navigate = useNavigate();
@@ -47,6 +53,32 @@ export default function Cursos() {
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-8">
+      {/* Hero Banner */}
+      <motion.div
+        initial={{ opacity: 0, scale: 0.98 }}
+        animate={{ opacity: 1, scale: 1 }}
+        className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden mb-8"
+      >
+        <img 
+          src={heroImage} 
+          alt="Curso de Química - Moisés Medeiros" 
+          className="w-full h-full object-cover"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
+        <div className="absolute inset-0 flex items-center p-8">
+          <div>
+            <div className="flex items-center gap-2 mb-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              <span className="text-sm font-medium text-primary uppercase tracking-wider">Curso de Química</span>
+            </div>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Moisés Medeiros</h2>
+            <p className="text-muted-foreground max-w-md">
+              Domine a química e conquiste sua aprovação em medicina
+            </p>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Header */}
       <motion.div
         initial={{ opacity: 0, y: -20 }}

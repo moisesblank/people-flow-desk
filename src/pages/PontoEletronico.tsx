@@ -1,5 +1,6 @@
 // ============================================
-// SYNAPSE v5.0 - Página de Ponto Eletrônico
+// MOISÉS MEDEIROS v5.0 - Ponto Eletrônico
+// Curso de Química - Gestão de Funcionários
 // ============================================
 
 import { useState } from "react";
