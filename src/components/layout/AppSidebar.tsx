@@ -3,6 +3,7 @@
 // Sistema de Navegação com suporte a Owner Mode
 // ============================================
 
+import { useState, useEffect } from "react";
 import {
   LayoutDashboard, 
   Users, 
@@ -51,8 +52,9 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Sidebar,
   SidebarContent,
@@ -66,6 +68,14 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar";
+
+// Imagens para os grupos do sidebar
+import dashboardImg from "@/assets/dashboard-chemistry-hero.jpg";
+import marketingImg from "@/assets/marketing-module-cover.jpg";
+import calendarImg from "@/assets/calendar-module-cover.jpg";
+import financeImg from "@/assets/finance-module-cover.jpg";
+import studentsImg from "@/assets/students-module-cover.jpg";
+import teamImg from "@/assets/team-module-cover.jpg";
 
 const mainMenuItems = [
   { title: "Central de Comando", url: "/", icon: Brain },
@@ -134,10 +144,48 @@ export function AppSidebar() {
   const location = useLocation();
   const { user, signOut } = useAuth();
   const { isOwner } = useAdminCheck();
+  const [userName, setUserName] = useState<string | null>(null);
+  const [userAvatar, setUserAvatar] = useState<string | null>(null);
+
+  // Buscar nome do usuário do perfil
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      if (!user?.id) return;
+      
+      // Primeiro tenta do user_metadata
+      const metaName = user.user_metadata?.nome;
+      if (metaName) {
+        setUserName(metaName);
+      }
+      
+      // Depois busca do profiles para ter dados atualizados
+      const { data } = await supabase
+        .from('profiles')
+        .select('nome, avatar_url')
+        .eq('id', user.id)
+        .single();
+      
+      if (data?.nome) {
+        setUserName(data.nome);
+      }
+      if (data?.avatar_url) {
+        setUserAvatar(data.avatar_url);
+      }
+    };
+    
+    fetchUserProfile();
+  }, [user?.id, user?.user_metadata?.nome]);
 
   const isActive = (path: string) => location.pathname === path;
 
-  const getInitials = (email: string | undefined) => {
+  const getInitials = (name: string | undefined | null, email: string | undefined) => {
+    if (name) {
+      const parts = name.split(' ');
+      if (parts.length >= 2) {
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+      return name.substring(0, 2).toUpperCase();
+    }
     if (!email) return "MM";
     return email.substring(0, 2).toUpperCase();
   };
@@ -145,14 +193,24 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-sidebar-border">
       <SidebarHeader className="p-4">
-        <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
-          <div className="flex items-center justify-center w-10 h-10 rounded-xl brand-gradient shrink-0">
-            <span className="text-sm font-bold text-primary-foreground">MM</span>
+        <div className={`flex flex-col gap-2 ${collapsed ? "items-center" : ""}`}>
+          <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
+            <div className="flex items-center justify-center w-10 h-10 rounded-xl brand-gradient shrink-0">
+              <span className="text-sm font-bold text-primary-foreground">MM</span>
+            </div>
+            {!collapsed && (
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
+                <span className="text-xs text-muted-foreground">Curso de Química v7.0</span>
+              </div>
+            )}
           </div>
-          {!collapsed && (
-            <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
-              <span className="text-xs text-muted-foreground">Curso de Química v7.0</span>
+          {/* Nome do usuário logado em destaque */}
+          {!collapsed && userName && (
+            <div className="mt-1 px-1">
+              <span className="text-sm font-bold text-red-400 tracking-wide">
+                {userName}
+              </span>
             </div>
           )}
         </div>
@@ -161,7 +219,19 @@ export function AppSidebar() {
       <SidebarContent className="px-2">
         {/* Main Menu */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Principal</SidebarGroupLabel>
+          {!collapsed && (
+            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+              <img 
+                src={dashboardImg} 
+                alt="Principal" 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-transparent flex items-center px-3">
+                <span className="text-sm font-bold text-white drop-shadow-lg">Principal</span>
+              </div>
+            </div>
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {mainMenuItems.map((item) => (
@@ -189,7 +259,19 @@ export function AppSidebar() {
 
         {/* Marketing Menu */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Marketing & Lançamento</SidebarGroupLabel>
+          {!collapsed && (
+            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+              <img 
+                src={marketingImg} 
+                alt="Marketing" 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-600/80 to-transparent flex items-center px-3">
+                <span className="text-sm font-bold text-white drop-shadow-lg">Marketing & Lançamento</span>
+              </div>
+            </div>
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Marketing & Lançamento</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {marketingMenuItems.map((item) => (
@@ -217,7 +299,19 @@ export function AppSidebar() {
 
         {/* Class Menu */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Aulas & Turmas</SidebarGroupLabel>
+          {!collapsed && (
+            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+              <img 
+                src={calendarImg} 
+                alt="Aulas" 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-transparent flex items-center px-3">
+                <span className="text-sm font-bold text-white drop-shadow-lg">Aulas & Turmas</span>
+              </div>
+            </div>
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Aulas & Turmas</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {classMenuItems.map((item) => (
@@ -245,7 +339,19 @@ export function AppSidebar() {
 
         {/* Finance Menu */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Finanças</SidebarGroupLabel>
+          {!collapsed && (
+            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+              <img 
+                src={financeImg} 
+                alt="Finanças" 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-green-600/80 to-transparent flex items-center px-3">
+                <span className="text-sm font-bold text-white drop-shadow-lg">Finanças</span>
+              </div>
+            </div>
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Finanças</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {financeMenuItems.map((item) => (
@@ -273,7 +379,19 @@ export function AppSidebar() {
 
         {/* Business Menu */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Negócios</SidebarGroupLabel>
+          {!collapsed && (
+            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+              <img 
+                src={studentsImg} 
+                alt="Negócios" 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/80 to-transparent flex items-center px-3">
+                <span className="text-sm font-bold text-white drop-shadow-lg">Negócios</span>
+              </div>
+            </div>
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Negócios</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {businessMenuItems.map((item) => (
@@ -432,14 +550,15 @@ export function AppSidebar() {
       <SidebarFooter className="p-4 border-t border-sidebar-border">
         <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
           <Avatar className="h-9 w-9 shrink-0">
+            {userAvatar && <AvatarImage src={userAvatar} alt={userName || "Avatar"} />}
             <AvatarFallback className="bg-primary/20 text-primary text-xs">
-              {getInitials(user?.email)}
+              {getInitials(userName, user?.email)}
             </AvatarFallback>
           </Avatar>
           {!collapsed && (
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-sidebar-foreground truncate">
-                {user?.email?.split("@")[0]}
+                {userName || user?.email?.split("@")[0]}
               </p>
               <p className="text-xs text-muted-foreground truncate">
                 {user?.email}
