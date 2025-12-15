@@ -320,6 +320,39 @@ export type Database = {
         }
         Relationships: []
       }
+      integration_events: {
+        Row: {
+          created_at: string
+          event_type: string
+          id: string
+          payload: Json
+          processed: boolean
+          processed_at: string | null
+          source: string
+          source_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_type: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          source: string
+          source_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_type?: string
+          id?: string
+          payload?: Json
+          processed?: boolean
+          processed_at?: string | null
+          source?: string
+          source_id?: string | null
+        }
+        Relationships: []
+      }
       metricas_marketing: {
         Row: {
           cac: number
@@ -607,6 +640,141 @@ export type Database = {
           nome?: string
           status?: string | null
           wordpress_id?: string | null
+        }
+        Relationships: []
+      }
+      synapse_integrations: {
+        Row: {
+          config: Json | null
+          created_at: string
+          error_message: string | null
+          id: string
+          is_active: boolean
+          last_sync: string | null
+          name: string
+          sync_status: string | null
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_active?: boolean
+          last_sync?: string | null
+          name: string
+          sync_status?: string | null
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          is_active?: boolean
+          last_sync?: string | null
+          name?: string
+          sync_status?: string | null
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      synapse_metrics: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          metric_name: string
+          metric_unit: string | null
+          metric_value: number
+          period: string | null
+          reference_date: string
+          updated_at: string
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_name: string
+          metric_unit?: string | null
+          metric_value?: number
+          period?: string | null
+          reference_date?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          metric_name?: string
+          metric_unit?: string | null
+          metric_value?: number
+          period?: string | null
+          reference_date?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      synapse_transactions: {
+        Row: {
+          affiliate_code: string | null
+          amount: number
+          cnpj_origem: string | null
+          created_at: string
+          currency: string | null
+          customer_email: string | null
+          customer_name: string | null
+          external_id: string | null
+          id: string
+          metadata: Json | null
+          product_id: string | null
+          product_name: string | null
+          source: string
+          status: string
+          transaction_type: string
+          updated_at: string
+        }
+        Insert: {
+          affiliate_code?: string | null
+          amount?: number
+          cnpj_origem?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          product_name?: string | null
+          source: string
+          status?: string
+          transaction_type?: string
+          updated_at?: string
+        }
+        Update: {
+          affiliate_code?: string | null
+          amount?: number
+          cnpj_origem?: string | null
+          created_at?: string
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          external_id?: string | null
+          id?: string
+          metadata?: Json | null
+          product_id?: string | null
+          product_name?: string | null
+          source?: string
+          status?: string
+          transaction_type?: string
+          updated_at?: string
         }
         Relationships: []
       }

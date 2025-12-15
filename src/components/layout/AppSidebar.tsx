@@ -16,7 +16,9 @@ import {
   Calculator,
   Globe,
   ClipboardCheck,
-  UserCheck
+  UserCheck,
+  Brain,
+  Link2
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -38,7 +40,8 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainMenuItems = [
-  { title: "Dashboard", url: "/", icon: LayoutDashboard },
+  { title: "Command Center", url: "/", icon: Brain },
+  { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
   { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck },

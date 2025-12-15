@@ -28,6 +28,7 @@ const Contabilidade = lazy(() => import("./pages/Contabilidade"));
 const GestaoSite = lazy(() => import("./pages/GestaoSite"));
 const AreaProfessor = lazy(() => import("./pages/AreaProfessor"));
 const PortalAluno = lazy(() => import("./pages/PortalAluno"));
+const Integracoes = lazy(() => import("./pages/Integracoes"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -76,6 +77,7 @@ const App = () => (
               <Route path="/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
               <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
               <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
+              <Route path="/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />
