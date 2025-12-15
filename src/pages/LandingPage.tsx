@@ -517,7 +517,7 @@ export default function LandingPage() {
                   <ExternalLink className="h-5 w-5" />
                 </Button>
               </a>
-              <a href="https://wa.me/5500000000000?text=Olá! Quero saber mais sobre os cursos" target="_blank" rel="noopener noreferrer">
+              <a href="https://wa.me/5511999999999?text=Olá! Quero saber mais sobre os cursos do Professor Moisés" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto gap-2 rounded-xl h-14 px-10 text-lg">
                   <MessageCircle className="h-5 w-5" />
                   Fale Conosco
@@ -564,13 +564,13 @@ export default function LandingPage() {
             <div>
               <h4 className="font-semibold text-foreground mb-4">Redes Sociais</h4>
               <div className="flex gap-3">
-                <a href="https://instagram.com" target="_blank" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors">
+                <a href="https://instagram.com/profmoisesmedeiros" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors" aria-label="Instagram do Professor Moisés">
                   <Instagram className="h-5 w-5 text-muted-foreground" />
                 </a>
-                <a href="https://youtube.com" target="_blank" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors">
+                <a href="https://youtube.com/@profmoisesmedeiros" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors" aria-label="YouTube do Professor Moisés">
                   <Youtube className="h-5 w-5 text-muted-foreground" />
                 </a>
-                <a href="https://wa.me/5500000000000" target="_blank" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors">
+                <a href="https://wa.me/5511999999999" target="_blank" rel="noopener noreferrer" className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center hover:bg-secondary/80 transition-colors" aria-label="WhatsApp do Professor Moisés">
                   <MessageCircle className="h-5 w-5 text-muted-foreground" />
                 </a>
               </div>
@@ -578,11 +578,18 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-border/30 mt-8 pt-8 flex flex-col md:flex-row items-center justify-between gap-4">
-            <p className="text-sm text-muted-foreground">
-              © 2025 Prof. Moisés Medeiros. Todos os direitos reservados.
-            </p>
+            <div className="flex flex-col sm:flex-row items-center gap-4">
+              <p className="text-sm text-muted-foreground">
+                © 2025 Prof. Moisés Medeiros. Todos os direitos reservados.
+              </p>
+              <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                <a href="/termos" className="hover:text-foreground transition-colors">Termos de Uso</a>
+                <span>•</span>
+                <a href="/privacidade" className="hover:text-foreground transition-colors">Política de Privacidade</a>
+              </div>
+            </div>
             <p className="text-xs text-muted-foreground">
-              Desenvolvido com ❤️ por Projeto Synapse
+              Desenvolvido com ❤️ por Moisés Medeiros
             </p>
           </div>
         </div>
