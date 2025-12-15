@@ -915,7 +915,7 @@ export default function Auth() {
 
           {/* Footer */}
           <p className="text-center text-xs text-gray-600 mt-6">
-            © 2024 Prof. Moisés Medeiros. Todos os direitos reservados.
+            © 2025 Prof. Moisés Medeiros. Todos os direitos reservados.
           </p>
         </motion.div>
       </div>
