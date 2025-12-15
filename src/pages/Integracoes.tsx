@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - INTEGRAÇÕES
-// Spider-Man Theme - Hub de Webhooks
+// MOISÉS MEDEIROS v9.0 - INTEGRAÇÕES
+// Spider-Man Theme - Hub de Webhooks + GitHub
 // Pilar: Data Intelligence & Automação
 // ============================================
 
@@ -22,7 +22,15 @@ import {
   Database,
   Activity,
   Server,
-  Globe
+  Globe,
+  Github,
+  Cloud,
+  Cpu,
+  HardDrive,
+  Lock,
+  Unlock,
+  TrendingUp,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -30,6 +38,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -82,6 +91,21 @@ const integrationMeta: Record<string, { icon: string; color: string; description
     icon: "⚡", 
     color: "from-purple-500/20 to-purple-600/10",
     description: "Automações e workflows personalizados" 
+  },
+  github: { 
+    icon: "🐙", 
+    color: "from-gray-500/20 to-gray-600/10",
+    description: "Sincronização de código e versionamento" 
+  },
+  "lovable cloud": { 
+    icon: "☁️", 
+    color: "from-pink-500/20 to-pink-600/10",
+    description: "Backend e banco de dados gerenciado" 
+  },
+  "lovable ai": { 
+    icon: "🤖", 
+    color: "from-violet-500/20 to-violet-600/10",
+    description: "Inteligência artificial integrada" 
   },
 };
 
@@ -233,11 +257,108 @@ export default function Integracoes() {
           </div>
         </motion.header>
 
-        {/* Webhook URL Card */}
+        {/* Platform Status Cards */}
         <motion.section
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.1 }}
+          className="grid gap-4 md:grid-cols-3 mb-8"
+        >
+          {/* Lovable Cloud Status */}
+          <div className="glass-card rounded-xl p-5 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-pink-500/20">
+                  <Cloud className="h-5 w-5 text-pink-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Lovable Cloud</h3>
+                  <p className="text-xs text-muted-foreground">Backend & Database</p>
+                </div>
+              </div>
+              <Badge className="bg-[hsl(var(--stats-green))] text-white">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Ativo
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Uso do mês</span>
+                <span className="text-foreground font-medium">$0,02 / $25</span>
+              </div>
+              <Progress value={0.08} className="h-1.5" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Database className="h-3 w-3" />
+                <span>PostgreSQL • Edge Functions • Storage</span>
+              </div>
+            </div>
+          </div>
+
+          {/* GitHub Status */}
+          <div className="glass-card rounded-xl p-5 bg-gradient-to-br from-gray-500/10 to-slate-500/10 border border-gray-500/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-gray-500/20">
+                  <Github className="h-5 w-5 text-gray-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">GitHub</h3>
+                  <p className="text-xs text-muted-foreground">@moisesblank</p>
+                </div>
+              </div>
+              <Badge className="bg-[hsl(var(--stats-green))] text-white">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Conectado
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Lock className="h-3 w-3" />
+                <span>Repositório privado sincronizado</span>
+              </div>
+              <div className="flex items-center gap-2 text-xs text-[hsl(var(--stats-green))]">
+                <TrendingUp className="h-3 w-3" />
+                <span>Sync bidirecional ativo</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Lovable AI Status */}
+          <div className="glass-card rounded-xl p-5 bg-gradient-to-br from-violet-500/10 to-indigo-500/10 border border-violet-500/20">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-violet-500/20">
+                  <Cpu className="h-5 w-5 text-violet-400" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-foreground">Lovable AI</h3>
+                  <p className="text-xs text-muted-foreground">Gemini 2.5 Flash</p>
+                </div>
+              </div>
+              <Badge className="bg-[hsl(var(--stats-green))] text-white">
+                <CheckCircle className="h-3 w-3 mr-1" />
+                Ativo
+              </Badge>
+            </div>
+            <div className="space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-muted-foreground">Uso IA</span>
+                <span className="text-foreground font-medium">$0 / $1</span>
+              </div>
+              <Progress value={0} className="h-1.5" />
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Sparkles className="h-3 w-3" />
+                <span>Tutor IA • Assistente • Automações</span>
+              </div>
+            </div>
+          </div>
+        </motion.section>
+
+        {/* Webhook URL Card */}
+        <motion.section
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
           className="glass-card rounded-2xl p-6 mb-8"
         >
           <div className="flex items-center gap-4 mb-4">
