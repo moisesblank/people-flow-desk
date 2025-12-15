@@ -16,7 +16,10 @@ import {
   FileJson,
   Table,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  RotateCcw,
+  HelpCircle,
+  Trash2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,9 +30,22 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
+import { useOnboarding } from "@/components/onboarding/OnboardingManager";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 
 export default function Configuracoes() {
   const { role, user } = useAuth();
+  const { resetTour, hasCompleted: tourCompleted } = useOnboarding("dashboard");
   const [isLoading, setIsLoading] = useState(false);
   const [backupProgress, setBackupProgress] = useState<string | null>(null);
   const [settings, setSettings] = useState({
@@ -161,7 +177,7 @@ export default function Configuracoes() {
         </motion.header>
 
         <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 bg-secondary/50">
+          <TabsList className="grid w-full grid-cols-5 bg-secondary/50">
             <TabsTrigger value="general" className="gap-2">
               <SettingsIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Geral</span>
@@ -173,6 +189,10 @@ export default function Configuracoes() {
             <TabsTrigger value="notifications" className="gap-2">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notificações</span>
+            </TabsTrigger>
+            <TabsTrigger value="help" className="gap-2">
+              <HelpCircle className="h-4 w-4" />
+              <span className="hidden sm:inline">Ajuda</span>
             </TabsTrigger>
             <TabsTrigger value="backup" className="gap-2">
               <Database className="h-4 w-4" />
@@ -336,6 +356,122 @@ export default function Configuracoes() {
                 <Save className="h-4 w-4 mr-2" />
                 Salvar Preferências
               </Button>
+            </motion.div>
+          </TabsContent>
+
+          {/* Help & Onboarding */}
+          <TabsContent value="help">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card rounded-2xl p-6 space-y-6"
+            >
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <HelpCircle className="h-5 w-5 text-primary" />
+                Ajuda e Onboarding
+              </h3>
+
+              <div className="space-y-4">
+                {/* Tour Reset */}
+                <div className="p-6 rounded-xl bg-secondary/30">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-primary/10">
+                      <RotateCcw className="h-6 w-6 text-primary" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">Tour Guiado</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Veja novamente o tour de introdução ao sistema para conhecer todas as funcionalidades.
+                      </p>
+                      <div className="flex items-center gap-3">
+                        <Button 
+                          onClick={resetTour}
+                          variant="outline"
+                          className="gap-2"
+                        >
+                          <RotateCcw className="h-4 w-4" />
+                          Reiniciar Tour
+                        </Button>
+                        {tourCompleted && (
+                          <Badge variant="outline" className="text-stats-green border-stats-green/50">
+                            <CheckCircle2 className="h-3 w-3 mr-1" />
+                            Concluído
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Documentation Link */}
+                <div className="p-6 rounded-xl bg-secondary/30">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-stats-blue/10">
+                      <Sparkles className="h-6 w-6 text-stats-blue" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1">Central de Ajuda</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Acesse a documentação completa e tutoriais sobre o sistema.
+                      </p>
+                      <Button 
+                        variant="outline"
+                        onClick={() => window.location.href = '/guia'}
+                        className="gap-2"
+                      >
+                        <HelpCircle className="h-4 w-4" />
+                        Ver Documentação
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Clear All Data (Danger Zone) */}
+                <div className="p-6 rounded-xl bg-destructive/5 border border-destructive/20">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-destructive/10">
+                      <Trash2 className="h-6 w-6 text-destructive" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-destructive mb-1">Zona de Perigo</h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Limpar todos os dados locais (cache, preferências). Isso não afeta seus dados no servidor.
+                      </p>
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button variant="destructive" className="gap-2">
+                            <Trash2 className="h-4 w-4" />
+                            Limpar Dados Locais
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Confirmar Limpeza</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              Isso vai limpar todos os dados locais do navegador (cache, preferências de tour, etc).
+                              Seus dados salvos no servidor não serão afetados.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => {
+                                localStorage.clear();
+                                sessionStorage.clear();
+                                toast.success("Dados locais limpos! A página será recarregada.");
+                                setTimeout(() => window.location.reload(), 1000);
+                              }}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Confirmar
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </div>
+              </div>
             </motion.div>
           </TabsContent>
 

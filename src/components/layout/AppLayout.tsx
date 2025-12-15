@@ -1,12 +1,13 @@
 import { ReactNode, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Command, Bell, User } from "lucide-react";
+import { Search, Command } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Button } from "@/components/ui/button";
-import { NotificationCenter, useNotifications } from "@/components/ui/notification-center";
+import { NotificationCenter } from "@/components/ui/notification-center";
+import { useNotificationsDatabase } from "@/hooks/useNotificationsDatabase";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -34,6 +35,7 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   useKeyboardShortcuts(openSearch, closeSearch);
 
+  // Use database-backed notifications
   const {
     notifications,
     addNotification,
@@ -41,9 +43,9 @@ export function AppLayout({ children }: AppLayoutProps) {
     markAllAsRead,
     deleteNotification,
     clearAll,
-  } = useNotifications();
+  } = useNotificationsDatabase();
 
-  // Enable realtime notifications
+  // Enable realtime notifications from other tables
   useRealtimeNotifications({ addNotification });
 
   // Add welcome notification on first load
@@ -80,6 +82,7 @@ export function AppLayout({ children }: AppLayoutProps) {
             <Button
               variant="ghost"
               onClick={openSearch}
+              data-search-button
               className="flex-1 max-w-md justify-start gap-2 text-muted-foreground hover:text-foreground bg-secondary/50 hover:bg-secondary"
             >
               <Search className="h-4 w-4" />
@@ -97,13 +100,15 @@ export function AppLayout({ children }: AppLayoutProps) {
             <div className="flex-1" />
 
             {/* Notification Center */}
-            <NotificationCenter
-              notifications={notifications}
-              onMarkAsRead={markAsRead}
-              onMarkAllAsRead={markAllAsRead}
-              onDelete={deleteNotification}
-              onClearAll={clearAll}
-            />
+            <div data-notification-center>
+              <NotificationCenter
+                notifications={notifications}
+                onMarkAsRead={markAsRead}
+                onMarkAllAsRead={markAllAsRead}
+                onDelete={deleteNotification}
+                onClearAll={clearAll}
+              />
+            </div>
 
             {/* User Menu */}
             <DropdownMenu>

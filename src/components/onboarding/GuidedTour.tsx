@@ -1,21 +1,22 @@
 // ============================================
 // MOISES MEDEIROS v5.0 - GUIDED TOUR
-// Pilar 11: Documentação e Onboarding
+// Pilar 11: Documentação e Onboarding Inteligente
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, ChevronLeft, ChevronRight, Sparkles, Check } from "lucide-react";
+import { X, ChevronLeft, ChevronRight, Sparkles, Check, Lightbulb } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 
-interface TourStep {
+export interface TourStep {
   id: string;
   title: string;
   description: string;
   target?: string; // CSS selector para o elemento alvo
   position?: "top" | "bottom" | "left" | "right";
   action?: () => void;
+  tip?: string; // Dica adicional
 }
 
 interface GuidedTourProps {
@@ -155,14 +156,27 @@ export function GuidedTour({ steps, isOpen, onComplete, onSkip }: GuidedTourProp
                 size="icon"
                 className="h-8 w-8 shrink-0"
                 onClick={handleSkip}
+                aria-label="Pular tour"
               >
                 <X className="h-4 w-4" />
               </Button>
             </div>
 
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-sm text-muted-foreground mb-4">
               {step.description}
             </p>
+
+            {/* Tip section */}
+            {step.tip && (
+              <motion.div
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-start gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20 mb-4"
+              >
+                <Lightbulb className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                <p className="text-xs text-primary/80">{step.tip}</p>
+              </motion.div>
+            )}
 
             {/* Navigation */}
             <div className="flex items-center justify-between">
