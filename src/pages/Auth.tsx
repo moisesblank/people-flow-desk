@@ -1,22 +1,34 @@
+// ============================================
+// MOISES MEDEIROS v5.0 - AUTH PAGE
+// Pilar 1: Segurança Zero Confiança
+// Pilar 2: Acessibilidade WCAG 2.1 AA
+// ============================================
+
 import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { Mail, Lock, User, Loader2, Eye, EyeOff, Sparkles, GraduationCap, Trophy, ArrowLeft } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { 
+  Mail, 
+  Lock, 
+  User, 
+  Loader2, 
+  Eye, 
+  EyeOff, 
+  Sparkles, 
+  GraduationCap, 
+  Trophy, 
+  ArrowLeft,
+  Shield,
+  CheckCircle2
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { z } from "zod";
-
-const loginSchema = z.object({
-  email: z.string().trim().email("Email inválido").max(255),
-  password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres").max(100),
-});
-
-const signupSchema = loginSchema.extend({
-  nome: z.string().trim().min(2, "Nome deve ter pelo menos 2 caracteres").max(100),
-});
+import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
+import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -26,6 +38,7 @@ export default function Auth() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [acceptTerms, setAcceptTerms] = useState(false);
   
   const [formData, setFormData] = useState({
     nome: "",
@@ -48,10 +61,17 @@ export default function Auth() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrors({});
+    
+    // Validar termos no cadastro
+    if (!isLogin && !acceptTerms) {
+      toast.error("Você precisa aceitar os termos de uso e política de privacidade");
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
-      const schema = isLogin ? loginSchema : signupSchema;
+      const schema = isLogin ? simpleLoginSchema : simpleSignupSchema;
       const result = schema.safeParse(formData);
       
       if (!result.success) {
@@ -71,6 +91,8 @@ export default function Auth() {
         if (error) {
           if (error.message.includes("Invalid login credentials")) {
             toast.error("Email ou senha incorretos");
+          } else if (error.message.includes("Email not confirmed")) {
+            toast.error("Por favor, confirme seu email antes de fazer login");
           } else {
             toast.error(error.message);
           }
@@ -83,13 +105,15 @@ export default function Auth() {
         if (error) {
           if (error.message.includes("already registered")) {
             toast.error("Este email já está cadastrado");
+          } else if (error.message.includes("Password")) {
+            toast.error("Senha não atende aos requisitos de segurança");
           } else {
             toast.error(error.message);
           }
           setIsLoading(false);
           return;
         }
-        toast.success("Conta criada com sucesso!");
+        toast.success("Conta criada com sucesso! Verifique seu email.");
       }
     } catch (err) {
       toast.error("Erro ao processar solicitação");
@@ -100,16 +124,25 @@ export default function Auth() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      <div className="min-h-screen bg-background flex items-center justify-center" role="status" aria-label="Carregando">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" aria-hidden="true" />
+        <span className="sr-only">Carregando autenticação...</span>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Skip to main content - Acessibilidade */}
+      <a 
+        href="#auth-form" 
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded-lg"
+      >
+        Pular para o formulário
+      </a>
+
       {/* Background decoration - Heroic Theme */}
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+      <div className="fixed inset-0 overflow-hidden pointer-events-none" aria-hidden="true">
         {/* Vinho glow top */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-gradient-radial from-primary/15 via-transparent to-transparent opacity-60" />
         {/* Blue glow right */}
@@ -139,9 +172,10 @@ export default function Auth() {
       {/* Back to site link */}
       <Link 
         to="/site" 
-        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors"
+        className="absolute top-6 left-6 z-20 flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 focus-visible:ring-offset-background rounded-lg p-1"
+        aria-label="Voltar ao site principal"
       >
-        <ArrowLeft className="h-4 w-4" />
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
         <span className="text-sm">Voltar ao site</span>
       </Link>
 
@@ -152,11 +186,12 @@ export default function Auth() {
       >
         <div className="wine-card rounded-3xl p-8 shadow-2xl border border-primary/20">
           {/* Logo/Brand - Heroic Style */}
-          <div className="text-center mb-8">
+          <header className="text-center mb-8">
             <motion.div 
               initial={{ scale: 0.9 }}
               animate={{ scale: 1 }}
               className="relative inline-flex items-center justify-center w-20 h-20 rounded-2xl brand-gradient mb-4 shadow-xl shadow-primary/30"
+              aria-hidden="true"
             >
               <GraduationCap className="h-10 w-10 text-primary-foreground" />
               <motion.div
@@ -172,18 +207,21 @@ export default function Auth() {
             </h1>
             <p className="text-muted-foreground mt-2">Sistema de Gestão</p>
             
-            {/* Heroic badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20 mt-3">
-              <div className="w-2 h-2 rounded-full bg-stats-green animate-pulse" />
-              <span className="text-xs text-primary font-medium">Sistema Ativo</span>
+            {/* Security badge */}
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-stats-green/10 border border-stats-green/20 mt-3">
+              <Shield className="w-3.5 h-3.5 text-stats-green" aria-hidden="true" />
+              <span className="text-xs text-stats-green font-medium">Conexão Segura</span>
             </div>
-          </div>
+          </header>
 
-          {/* Tabs - Heroic Style */}
-          <div className="flex gap-2 p-1.5 bg-secondary/50 rounded-xl mb-6 border border-border/30">
+          {/* Tabs - Heroic Style with ARIA */}
+          <div className="flex gap-2 p-1.5 bg-secondary/50 rounded-xl mb-6 border border-border/30" role="tablist" aria-label="Tipo de acesso">
             <button
+              role="tab"
+              aria-selected={isLogin}
+              aria-controls="auth-form"
               onClick={() => setIsLogin(true)}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 isLogin 
                   ? "bg-primary text-primary-foreground shadow-lg heroic-glow" 
                   : "text-muted-foreground hover:text-foreground"
@@ -192,8 +230,11 @@ export default function Auth() {
               Entrar
             </button>
             <button
+              role="tab"
+              aria-selected={!isLogin}
+              aria-controls="auth-form"
               onClick={() => setIsLogin(false)}
-              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+              className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-primary ${
                 !isLogin 
                   ? "bg-primary text-primary-foreground shadow-lg heroic-glow" 
                   : "text-muted-foreground hover:text-foreground"
@@ -204,34 +245,50 @@ export default function Auth() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {!isLogin && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-              >
-                <Label htmlFor="nome" className="text-sm text-foreground font-medium">Nome Completo</Label>
-                <div className="relative mt-1.5">
-                  <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="nome"
-                    name="nome"
-                    type="text"
-                    value={formData.nome}
-                    onChange={handleChange}
-                    placeholder="Seu nome"
-                    className="pl-10 h-12 rounded-xl bg-secondary/50 border-border/50 focus:border-primary/50 focus:ring-primary/20"
-                  />
-                </div>
-                {errors.nome && <p className="text-xs text-destructive mt-1">{errors.nome}</p>}
-              </motion.div>
-            )}
+          <form id="auth-form" onSubmit={handleSubmit} className="space-y-4" role="tabpanel" aria-label={isLogin ? "Formulário de login" : "Formulário de cadastro"}>
+            <AnimatePresence mode="wait">
+              {!isLogin && (
+                <motion.div
+                  key="nome-field"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  <Label htmlFor="nome" className="text-sm text-foreground font-medium">
+                    Nome Completo <span className="text-destructive" aria-hidden="true">*</span>
+                  </Label>
+                  <div className="relative mt-1.5">
+                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+                    <Input
+                      id="nome"
+                      name="nome"
+                      type="text"
+                      value={formData.nome}
+                      onChange={handleChange}
+                      placeholder="Seu nome completo"
+                      autoComplete="name"
+                      aria-required="true"
+                      aria-invalid={!!errors.nome}
+                      aria-describedby={errors.nome ? "nome-error" : undefined}
+                      className="pl-10 h-12 rounded-xl bg-secondary/50 border-border/50 focus:border-primary/50 focus:ring-primary/20"
+                    />
+                  </div>
+                  {errors.nome && (
+                    <p id="nome-error" className="text-xs text-destructive mt-1" role="alert">
+                      {errors.nome}
+                    </p>
+                  )}
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <div>
-              <Label htmlFor="email" className="text-sm text-foreground font-medium">Email</Label>
+              <Label htmlFor="email" className="text-sm text-foreground font-medium">
+                Email <span className="text-destructive" aria-hidden="true">*</span>
+              </Label>
               <div className="relative mt-1.5">
-                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   id="email"
                   name="email"
@@ -239,16 +296,26 @@ export default function Auth() {
                   value={formData.email}
                   onChange={handleChange}
                   placeholder="seu@email.com"
+                  autoComplete="email"
+                  aria-required="true"
+                  aria-invalid={!!errors.email}
+                  aria-describedby={errors.email ? "email-error" : undefined}
                   className="pl-10 h-12 rounded-xl bg-secondary/50 border-border/50 focus:border-primary/50 focus:ring-primary/20"
                 />
               </div>
-              {errors.email && <p className="text-xs text-destructive mt-1">{errors.email}</p>}
+              {errors.email && (
+                <p id="email-error" className="text-xs text-destructive mt-1" role="alert">
+                  {errors.email}
+                </p>
+              )}
             </div>
 
             <div>
-              <Label htmlFor="password" className="text-sm text-foreground font-medium">Senha</Label>
+              <Label htmlFor="password" className="text-sm text-foreground font-medium">
+                Senha <span className="text-destructive" aria-hidden="true">*</span>
+              </Label>
               <div className="relative mt-1.5">
-                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
                 <Input
                   id="password"
                   name="password"
@@ -256,60 +323,137 @@ export default function Auth() {
                   value={formData.password}
                   onChange={handleChange}
                   placeholder="••••••••"
+                  autoComplete={isLogin ? "current-password" : "new-password"}
+                  aria-required="true"
+                  aria-invalid={!!errors.password}
+                  aria-describedby={errors.password ? "password-error" : "password-requirements"}
                   className="pl-10 pr-10 h-12 rounded-xl bg-secondary/50 border-border/50 focus:border-primary/50 focus:ring-primary/20"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                  aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
-              {errors.password && <p className="text-xs text-destructive mt-1">{errors.password}</p>}
+              {errors.password && (
+                <p id="password-error" className="text-xs text-destructive mt-1" role="alert">
+                  {errors.password}
+                </p>
+              )}
+              
+              {/* Password Strength Meter - apenas no cadastro */}
+              {!isLogin && formData.password && (
+                <div className="mt-3">
+                  <PasswordStrengthMeter password={formData.password} showRequirements={true} />
+                </div>
+              )}
             </div>
+
+            {/* Terms acceptance - apenas no cadastro */}
+            <AnimatePresence mode="wait">
+              {!isLogin && (
+                <motion.div
+                  key="terms-field"
+                  initial={{ opacity: 0, height: 0 }}
+                  animate={{ opacity: 1, height: "auto" }}
+                  exit={{ opacity: 0, height: 0 }}
+                  className="flex items-start gap-3 pt-2"
+                >
+                  <Checkbox
+                    id="acceptTerms"
+                    checked={acceptTerms}
+                    onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                    aria-describedby="terms-description"
+                    className="mt-0.5"
+                  />
+                  <Label 
+                    htmlFor="acceptTerms" 
+                    id="terms-description"
+                    className="text-xs text-muted-foreground leading-relaxed cursor-pointer"
+                  >
+                    Eu li e concordo com os{" "}
+                    <Link to="/termos" className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded" target="_blank">
+                      Termos de Uso
+                    </Link>{" "}
+                    e a{" "}
+                    <Link to="/privacidade" className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded" target="_blank">
+                      Política de Privacidade
+                    </Link>
+                  </Label>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             <Button
               type="submit"
-              disabled={isLoading}
-              className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/25 heroic-glow"
+              disabled={isLoading || (!isLogin && !acceptTerms)}
+              className="w-full h-12 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold shadow-xl shadow-primary/25 heroic-glow disabled:opacity-50 disabled:cursor-not-allowed"
+              aria-busy={isLoading}
             >
               {isLoading ? (
-                <Loader2 className="h-5 w-5 animate-spin" />
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin mr-2" aria-hidden="true" />
+                  <span>Processando...</span>
+                </>
               ) : (
                 <>
-                  <Sparkles className="h-4 w-4 mr-2" />
+                  <Sparkles className="h-4 w-4 mr-2" aria-hidden="true" />
                   {isLogin ? "Entrar no Sistema" : "Criar Minha Conta"}
                 </>
               )}
             </Button>
+
+            {/* Forgot password link - apenas no login */}
+            {isLogin && (
+              <p className="text-center text-sm text-muted-foreground">
+                <button
+                  type="button"
+                  className="text-primary hover:underline focus:outline-none focus-visible:ring-2 focus-visible:ring-primary rounded"
+                  onClick={() => toast.info("Funcionalidade em desenvolvimento")}
+                >
+                  Esqueci minha senha
+                </button>
+              </p>
+            )}
           </form>
 
-          {/* Heroic Stats */}
+          {/* Security Features */}
           <div className="grid grid-cols-3 gap-3 mt-6 pt-6 border-t border-border/30">
             <div className="text-center">
-              <p className="text-lg font-bold text-primary">17</p>
-              <p className="text-xs text-muted-foreground">Módulos</p>
+              <div className="flex justify-center mb-1">
+                <Shield className="h-4 w-4 text-primary" aria-hidden="true" />
+              </div>
+              <p className="text-xs text-muted-foreground">SSL/TLS</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-bold text-stats-blue">100%</p>
-              <p className="text-xs text-muted-foreground">Seguro</p>
+              <div className="flex justify-center mb-1">
+                <Lock className="h-4 w-4 text-stats-blue" aria-hidden="true" />
+              </div>
+              <p className="text-xs text-muted-foreground">Criptografia</p>
             </div>
             <div className="text-center">
-              <p className="text-lg font-bold text-stats-gold">24/7</p>
-              <p className="text-xs text-muted-foreground">Online</p>
+              <div className="flex justify-center mb-1">
+                <CheckCircle2 className="h-4 w-4 text-stats-green" aria-hidden="true" />
+              </div>
+              <p className="text-xs text-muted-foreground">LGPD</p>
             </div>
           </div>
 
           {/* Footer */}
           <p className="text-center text-xs text-muted-foreground mt-6">
-            Ao continuar, você concorda com nossos termos de uso e política de privacidade.
+            Seus dados estão protegidos de acordo com a{" "}
+            <Link to="/privacidade" className="text-primary hover:underline">
+              Lei Geral de Proteção de Dados
+            </Link>
           </p>
         </div>
         
         {/* Powered by */}
         <p className="text-center text-xs text-muted-foreground/50 mt-4">
-          Projeto Synapse v2.1 • Sistema Nervoso Digital
+          Moisés Medeiros v5.0 • Sistema Nervoso Digital
         </p>
       </motion.div>
     </div>

@@ -31,6 +31,8 @@ const PortalAluno = lazy(() => import("./pages/PortalAluno"));
 const Integracoes = lazy(() => import("./pages/Integracoes"));
 const Permissoes = lazy(() => import("./pages/Permissoes"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
+const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -61,6 +63,8 @@ const App = () => (
               {/* Public routes */}
               <Route path="/site" element={<LandingPage />} />
               <Route path="/auth" element={<Auth />} />
+              <Route path="/termos" element={<TermosDeUso />} />
+              <Route path="/privacidade" element={<PoliticaPrivacidade />} />
               
               {/* Protected routes with layout */}
               <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
