@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - SIDEBAR NAVIGATION
-// Spider-Man Theme - Sistema de Navegação
+// SYNAPSE v14.0 - SIDEBAR NAVIGATION
+// Sistema de Navegação com suporte a Owner Mode
 // ============================================
 
 import {
@@ -41,13 +41,18 @@ import {
   ShoppingCart,
   Clock,
   Gauge,
-  MessageSquare
+  MessageSquare,
+  Activity,
+  Zap,
+  Eye
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
   SidebarContent,
@@ -117,11 +122,17 @@ const adminMenuItems = [
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
+// Menu exclusivo do OWNER
+const ownerMenuItems = [
+  { title: "Monitoramento", url: "/monitoramento", icon: Activity, badge: "DEUS" },
+];
+
 export function AppSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, signOut } = useAuth();
+  const { isOwner } = useAdminCheck();
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -370,6 +381,51 @@ export function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Owner-Only Menu - MODO DEUS */}
+        {isOwner && (
+          <SidebarGroup>
+            <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+              <span className="flex items-center gap-2">
+                <Zap className="w-3 h-3 text-purple-500" />
+                MODO DEUS
+              </span>
+            </SidebarGroupLabel>
+            <SidebarGroupContent>
+              <SidebarMenu>
+                {ownerMenuItems.map((item) => (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild
+                      isActive={isActive(item.url)}
+                      tooltip={item.title}
+                      className="group"
+                    >
+                      <NavLink 
+                        to={item.url} 
+                        end 
+                        className="flex items-center gap-3 relative"
+                        activeClassName="bg-gradient-to-r from-purple-500/20 to-pink-500/20 text-purple-400 font-medium"
+                      >
+                        <item.icon className="h-4 w-4 shrink-0 text-purple-500" />
+                        {!collapsed && (
+                          <>
+                            <span>{item.title}</span>
+                            {item.badge && (
+                              <Badge className="ml-auto text-[10px] px-1.5 py-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
+                                {item.badge}
+                              </Badge>
+                            )}
+                          </>
+                        )}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ))}
+              </SidebarMenu>
+            </SidebarGroupContent>
+          </SidebarGroup>
+        )}
       </SidebarContent>
 
       <SidebarFooter className="p-4 border-t border-sidebar-border">

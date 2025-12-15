@@ -53,6 +53,48 @@ export type Database = {
         }
         Relationships: []
       }
+      activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          ip_address: string | null
+          new_value: Json | null
+          old_value: Json | null
+          record_id: string | null
+          table_name: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          ip_address?: string | null
+          new_value?: Json | null
+          old_value?: Json | null
+          record_id?: string | null
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       affiliates: {
         Row: {
           comissao_total: number | null
@@ -1708,7 +1750,9 @@ export type Database = {
           created_at: string | null
           email: string | null
           id: string
+          is_online: boolean | null
           last_activity_at: string | null
+          last_login_at: string | null
           level: number | null
           nome: string
           phone: string | null
@@ -1723,7 +1767,9 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id: string
+          is_online?: boolean | null
           last_activity_at?: string | null
+          last_login_at?: string | null
           level?: number | null
           nome: string
           phone?: string | null
@@ -1738,7 +1784,9 @@ export type Database = {
           created_at?: string | null
           email?: string | null
           id?: string
+          is_online?: boolean | null
           last_activity_at?: string | null
+          last_login_at?: string | null
           level?: number | null
           nome?: string
           phone?: string | null
@@ -2585,6 +2633,48 @@ export type Database = {
         }
         Relationships: []
       }
+      user_sessions: {
+        Row: {
+          browser: string | null
+          device_type: string | null
+          id: string
+          ip_address: string | null
+          is_active: boolean | null
+          last_activity_at: string | null
+          login_at: string
+          logout_at: string | null
+          os: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          login_at?: string
+          logout_at?: string | null
+          os?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          device_type?: string | null
+          id?: string
+          ip_address?: string | null
+          is_active?: boolean | null
+          last_activity_at?: string | null
+          login_at?: string
+          logout_at?: string | null
+          os?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       webhook_rate_limits: {
         Row: {
           created_at: string
@@ -2878,6 +2968,20 @@ export type Database = {
       can_use_god_mode: { Args: { _user_id?: string }; Returns: boolean }
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      get_all_users_last_access: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          email: string
+          full_name: string
+          id: string
+          is_online: boolean
+          last_activity_at: string
+          last_login_at: string
+          status_atividade: string
+          ultima_sessao: Json
+        }[]
+      }
       get_masked_salary: {
         Args: { emp_salary: number; emp_user_id: string }
         Returns: number
@@ -2891,6 +2995,28 @@ export type Database = {
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id?: string }; Returns: boolean }
+      log_activity: {
+        Args: {
+          _action: string
+          _new_value?: Json
+          _old_value?: Json
+          _record_id?: string
+          _table_name?: string
+        }
+        Returns: string
+      }
+      register_user_login: {
+        Args: {
+          _browser?: string
+          _device_type?: string
+          _ip_address?: string
+          _os?: string
+          _user_agent?: string
+        }
+        Returns: string
+      }
+      register_user_logout: { Args: never; Returns: undefined }
+      update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
