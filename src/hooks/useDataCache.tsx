@@ -91,11 +91,11 @@ export function useDashboardStats() {
   }, { staleTime: 2 * 60 * 1000 }); // 2 minutes
 }
 
-// Employees hook with caching
+// Employees hook with caching (usa view segura que mascara salários)
 export function useEmployees() {
   return useDataFetch(CACHE_KEYS.employees, async () => {
     const { data, error } = await supabase
-      .from("employees")
+      .from("employees_safe")
       .select("*")
       .order("created_at", { ascending: false });
     
