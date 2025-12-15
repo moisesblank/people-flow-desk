@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v8.0 - AUTH PAGE
 // Design Premium: Glassmorphism + Química Visual
+// TOTALMENTE EDITÁVEL PELO OWNER
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -35,18 +36,14 @@ import { useAuth } from "@/hooks/useAuth";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import professorPhoto from "@/assets/professor-moises.jpg";
+import { useEditableContent } from "@/hooks/useEditableContent";
+import { EditableText } from "@/components/editor/EditableText";
+import { EditableImage } from "@/components/editor/EditableImage";
+import { EditModeToggle } from "@/components/editor/EditModeToggle";
+import { EditableSection } from "@/components/editor/EditableSection";
 
-// Floating Chemistry Elements
-function FloatingElements() {
-  const elements = [
-    { symbol: "H", name: "Hidrogênio", color: "from-blue-500/20 to-cyan-500/20" },
-    { symbol: "O", name: "Oxigênio", color: "from-red-500/20 to-orange-500/20" },
-    { symbol: "C", name: "Carbono", color: "from-gray-500/20 to-slate-500/20" },
-    { symbol: "N", name: "Nitrogênio", color: "from-purple-500/20 to-violet-500/20" },
-    { symbol: "Fe", name: "Ferro", color: "from-amber-500/20 to-yellow-500/20" },
-    { symbol: "Au", name: "Ouro", color: "from-yellow-400/20 to-amber-400/20" },
-  ];
-
+// Floating Chemistry Elements - Editável
+function FloatingElements({ elements }: { elements: { symbol: string; color: string }[] }) {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {elements.map((el, i) => (
@@ -107,14 +104,16 @@ function DNAHelix() {
   );
 }
 
-// Stats Counter
-function StatsBar() {
-  const stats = [
-    { value: "12.847+", label: "Alunos", icon: GraduationCap },
-    { value: "4.892+", label: "Aprovados", icon: Trophy },
-    { value: "98%", label: "Satisfação", icon: Star },
-  ];
+// Stats Counter Editável
+interface StatsBarProps {
+  stats: { value: string; label: string; icon: typeof GraduationCap }[];
+  isEditMode: boolean;
+  canEdit: boolean;
+  getValue: (key: string, fallback: string) => string;
+  updateValue: (key: string, value: string) => void;
+}
 
+function StatsBar({ stats, isEditMode, canEdit, getValue, updateValue }: StatsBarProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -124,7 +123,7 @@ function StatsBar() {
     >
       {stats.map((stat, i) => (
         <motion.div
-          key={stat.label}
+          key={i}
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 0.6 + i * 0.1 }}
@@ -132,8 +131,22 @@ function StatsBar() {
         >
           <stat.icon className="h-4 w-4 text-primary" />
           <div>
-            <p className="text-sm font-bold text-foreground">{stat.value}</p>
-            <p className="text-[10px] text-muted-foreground">{stat.label}</p>
+            <EditableText
+              value={getValue(`auth_stat_${i}_value`, stat.value)}
+              onSave={(v) => updateValue(`auth_stat_${i}_value`, v)}
+              isEditMode={isEditMode}
+              canEdit={canEdit}
+              className="text-sm font-bold text-foreground"
+              as="p"
+            />
+            <EditableText
+              value={getValue(`auth_stat_${i}_label`, stat.label)}
+              onSave={(v) => updateValue(`auth_stat_${i}_label`, v)}
+              isEditMode={isEditMode}
+              canEdit={canEdit}
+              className="text-[10px] text-muted-foreground"
+              as="p"
+            />
           </div>
         </motion.div>
       ))}
@@ -144,6 +157,33 @@ function StatsBar() {
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp, isLoading: authLoading } = useAuth();
+  
+  // Sistema de edição inline
+  const { 
+    isEditMode, 
+    canEdit, 
+    toggleEditMode, 
+    getValue, 
+    updateValue, 
+    uploadImage 
+  } = useEditableContent("auth");
+  
+  // Elementos químicos editáveis
+  const floatingElements = [
+    { symbol: getValue("element_1", "H"), color: "from-blue-500/20 to-cyan-500/20" },
+    { symbol: getValue("element_2", "O"), color: "from-red-500/20 to-orange-500/20" },
+    { symbol: getValue("element_3", "C"), color: "from-gray-500/20 to-slate-500/20" },
+    { symbol: getValue("element_4", "N"), color: "from-purple-500/20 to-violet-500/20" },
+    { symbol: getValue("element_5", "Fe"), color: "from-amber-500/20 to-yellow-500/20" },
+    { symbol: getValue("element_6", "Au"), color: "from-yellow-400/20 to-amber-400/20" },
+  ];
+
+  // Stats editáveis
+  const stats = [
+    { value: "12.847+", label: "Alunos", icon: GraduationCap },
+    { value: "4.892+", label: "Aprovados", icon: Trophy },
+    { value: "98%", label: "Satisfação", icon: Star },
+  ];
   
   const [isLogin, setIsLogin] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
@@ -244,9 +284,16 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex dark relative overflow-hidden">
+      {/* Botão de Modo Edição */}
+      <EditModeToggle 
+        isEditMode={isEditMode} 
+        canEdit={canEdit} 
+        onToggle={toggleEditMode} 
+      />
+      
       {/* Left Panel - Visual Side */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative bg-gradient-to-br from-primary/5 via-background to-secondary/5">
-        <FloatingElements />
+        <FloatingElements elements={floatingElements} />
         <DNAHelix />
         
         {/* Main Content */}
@@ -272,7 +319,7 @@ export default function Auth() {
             </div>
           </motion.div>
 
-          {/* Title */}
+          {/* Title - Editável */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -280,14 +327,32 @@ export default function Auth() {
             className="text-center mb-8"
           >
             <h1 className="text-4xl xl:text-5xl font-bold text-foreground mb-3">
-              Prof. <span className="brand-text">Moisés Medeiros</span>
+              <EditableText
+                value={getValue("auth_title_prefix", "Prof.")}
+                onSave={(v) => updateValue("auth_title_prefix", v)}
+                isEditMode={isEditMode}
+                canEdit={canEdit}
+              />{" "}
+              <span className="brand-text">
+                <EditableText
+                  value={getValue("auth_title_name", "Moisés Medeiros")}
+                  onSave={(v) => updateValue("auth_title_name", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                />
+              </span>
             </h1>
-            <p className="text-xl text-muted-foreground">
-              O professor que mais aprova em Medicina
-            </p>
+            <EditableText
+              value={getValue("auth_subtitle", "O professor que mais aprova em Medicina")}
+              onSave={(v) => updateValue("auth_subtitle", v)}
+              isEditMode={isEditMode}
+              canEdit={canEdit}
+              className="text-xl text-muted-foreground"
+              as="p"
+            />
           </motion.div>
 
-          {/* Professor Photo */}
+          {/* Professor Photo - Editável */}
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
@@ -295,13 +360,17 @@ export default function Auth() {
             className="relative mb-8"
           >
             <div className="absolute inset-0 bg-gradient-to-r from-primary/30 to-secondary/30 rounded-full blur-2xl scale-110" />
-            <div className="relative w-48 h-48 rounded-full overflow-hidden border-4 border-primary/40 shadow-2xl">
-              <img 
-                src={professorPhoto} 
-                alt="Professor Moisés" 
-                className="w-full h-full object-cover object-top"
-              />
-            </div>
+            <EditableImage
+              src={getValue("auth_professor_photo", professorPhoto)}
+              alt="Professor Moisés"
+              onUpload={async (file) => {
+                return await uploadImage("auth_professor_photo", file);
+              }}
+              isEditMode={isEditMode}
+              canEdit={canEdit}
+              className="w-full h-full object-cover object-top"
+              containerClassName="relative w-48 h-48 rounded-full overflow-hidden border-4 border-primary/40 shadow-2xl"
+            />
             <motion.div
               className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-primary text-primary-foreground text-sm font-medium shadow-lg"
               animate={{ y: [0, -5, 0] }}
@@ -309,12 +378,17 @@ export default function Auth() {
             >
               <span className="flex items-center gap-1">
                 <Zap className="h-3 w-3" />
-                +15 anos de experiência
+                <EditableText
+                  value={getValue("auth_experience_badge", "+15 anos de experiência")}
+                  onSave={(v) => updateValue("auth_experience_badge", v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                />
               </span>
             </motion.div>
           </motion.div>
 
-          {/* Features */}
+          {/* Features - Editáveis */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -322,12 +396,12 @@ export default function Auth() {
             className="grid grid-cols-3 gap-4 max-w-lg"
           >
             {[
-              { icon: FlaskConical, label: "Química Completa" },
-              { icon: GraduationCap, label: "Metodologia Exclusiva" },
-              { icon: Trophy, label: "Resultados Comprovados" },
+              { icon: FlaskConical, key: "feature_1", defaultLabel: "Química Completa" },
+              { icon: GraduationCap, key: "feature_2", defaultLabel: "Metodologia Exclusiva" },
+              { icon: Trophy, key: "feature_3", defaultLabel: "Resultados Comprovados" },
             ].map((item, i) => (
               <motion.div
-                key={item.label}
+                key={item.key}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.5 + i * 0.1 }}
@@ -336,12 +410,25 @@ export default function Auth() {
                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
                   <item.icon className="h-6 w-6 text-primary" />
                 </div>
-                <span className="text-xs font-medium text-center text-muted-foreground">{item.label}</span>
+                <EditableText
+                  value={getValue(`auth_${item.key}`, item.defaultLabel)}
+                  onSave={(v) => updateValue(`auth_${item.key}`, v)}
+                  isEditMode={isEditMode}
+                  canEdit={canEdit}
+                  className="text-xs font-medium text-center text-muted-foreground"
+                  as="span"
+                />
               </motion.div>
             ))}
           </motion.div>
 
-          <StatsBar />
+          <StatsBar 
+            stats={stats} 
+            isEditMode={isEditMode} 
+            canEdit={canEdit} 
+            getValue={getValue} 
+            updateValue={updateValue} 
+          />
         </div>
 
         {/* Decorative gradient line */}
