@@ -5,7 +5,7 @@ import {
   Sparkles, 
   Download, 
   BarChart3, 
-  PieChart, 
+  PieChart as PieChartIcon, 
   TrendingUp,
   Users,
   Wallet,
@@ -20,7 +20,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, Legend, AreaChart, Area } from "recharts";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("pt-BR", {
@@ -312,7 +312,7 @@ export default function Relatorios() {
             <div className="glass-card rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-3">
                 <div className={`p-2 rounded-lg ${reportData.lucroLiquido >= 0 ? "bg-[hsl(var(--stats-green))]/10" : "bg-destructive/10"}`}>
-                  <PieChart className={`h-5 w-5 ${reportData.lucroLiquido >= 0 ? "text-[hsl(var(--stats-green))]" : "text-destructive"}`} />
+                  <PieChartIcon className={`h-5 w-5 ${reportData.lucroLiquido >= 0 ? "text-[hsl(var(--stats-green))]" : "text-destructive"}`} />
                 </div>
                 <span className="text-sm text-muted-foreground">Lucro Líquido</span>
               </div>
@@ -323,45 +323,140 @@ export default function Relatorios() {
           </motion.section>
         )}
 
-        {/* Category Chart */}
-        {categoryData.length > 0 && (
+        {/* Charts Section */}
+        <section className="grid gap-6 lg:grid-cols-2 mb-8">
+          {/* Category Bar Chart */}
+          {categoryData.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="glass-card rounded-2xl p-6"
+            >
+              <h3 className="text-lg font-semibold text-foreground mb-6">Gastos por Categoria</h3>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={categoryData} layout="vertical" margin={{ left: 80 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
+                    <XAxis 
+                      type="number" 
+                      stroke="hsl(240, 5%, 55%)"
+                      tickFormatter={(value) => formatCurrency(value)}
+                    />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      stroke="hsl(240, 5%, 55%)"
+                      width={75}
+                      tick={{ fontSize: 11 }}
+                    />
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(240, 6%, 8%)",
+                        border: "1px solid hsl(240, 6%, 15%)",
+                        borderRadius: "12px",
+                      }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
+                    <Bar dataKey="value" radius={[0, 8, 8, 0]}>
+                      {categoryData.map((_, index) => (
+                        <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Pie Chart - Expense Distribution */}
+          {reportData && (
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.35 }}
+              className="glass-card rounded-2xl p-6"
+            >
+              <h3 className="text-lg font-semibold text-foreground mb-6">Distribuição de Despesas</h3>
+              <div className="h-[300px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={[
+                        { name: "Pessoais Fixas", value: reportData.personalFixed, color: "#ef4444" },
+                        { name: "Pessoais Extras", value: reportData.personalExtra, color: "#f97316" },
+                        { name: "Empresa Fixas", value: reportData.companyFixed, color: "#8b5cf6" },
+                        { name: "Empresa Extras", value: reportData.companyExtra, color: "#3b82f6" },
+                      ].filter(d => d.value > 0)}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={60}
+                      outerRadius={100}
+                      paddingAngle={3}
+                      dataKey="value"
+                    >
+                      {[
+                        { name: "Pessoais Fixas", value: reportData.personalFixed, color: "#ef4444" },
+                        { name: "Pessoais Extras", value: reportData.personalExtra, color: "#f97316" },
+                        { name: "Empresa Fixas", value: reportData.companyFixed, color: "#8b5cf6" },
+                        { name: "Empresa Extras", value: reportData.companyExtra, color: "#3b82f6" },
+                      ].filter(d => d.value > 0).map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(240, 6%, 8%)",
+                        border: "1px solid hsl(240, 6%, 15%)",
+                        borderRadius: "12px",
+                      }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px' }}
+                      formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          )}
+        </section>
+
+        {/* Financial Health Indicator */}
+        {reportData && (
           <motion.section
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
+            transition={{ delay: 0.4 }}
             className="glass-card rounded-2xl p-6 mb-8"
           >
-            <h3 className="text-lg font-semibold text-foreground mb-6">Gastos por Categoria</h3>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={categoryData} layout="vertical" margin={{ left: 100 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
-                  <XAxis 
-                    type="number" 
-                    stroke="hsl(240, 5%, 55%)"
-                    tickFormatter={(value) => formatCurrency(value)}
-                  />
-                  <YAxis 
-                    type="category" 
-                    dataKey="name" 
-                    stroke="hsl(240, 5%, 55%)"
-                    width={90}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(240, 6%, 8%)",
-                      border: "1px solid hsl(240, 6%, 15%)",
-                      borderRadius: "12px",
-                    }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
-                  <Bar dataKey="value" radius={[0, 8, 8, 0]}>
-                    {categoryData.map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={barColors[index % barColors.length]} />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <h3 className="text-lg font-semibold text-foreground mb-6">Saúde Financeira</h3>
+            <div className="grid gap-4 md:grid-cols-4">
+              <div className="p-4 rounded-xl bg-secondary/30">
+                <p className="text-xs text-muted-foreground mb-1">Taxa de Economia</p>
+                <p className={`text-2xl font-bold ${reportData.lucroLiquido > 0 ? "text-[hsl(var(--stats-green))]" : "text-destructive"}`}>
+                  {reportData.income > 0 ? ((reportData.lucroLiquido / reportData.income) * 100).toFixed(1) : 0}%
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-secondary/30">
+                <p className="text-xs text-muted-foreground mb-1">Gastos Pessoais</p>
+                <p className="text-2xl font-bold text-[hsl(var(--stats-red))]">
+                  {reportData.income > 0 ? ((reportData.personalExpenses / reportData.income) * 100).toFixed(1) : 0}%
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-secondary/30">
+                <p className="text-xs text-muted-foreground mb-1">Gastos Empresa</p>
+                <p className="text-2xl font-bold text-[hsl(var(--stats-purple))]">
+                  {reportData.income > 0 ? ((reportData.companyExpenses / reportData.income) * 100).toFixed(1) : 0}%
+                </p>
+              </div>
+              <div className="p-4 rounded-xl bg-secondary/30">
+                <p className="text-xs text-muted-foreground mb-1">Funcionários</p>
+                <p className="text-2xl font-bold text-[hsl(var(--stats-blue))]">
+                  {reportData.employees.length}
+                </p>
+              </div>
             </div>
           </motion.section>
         )}

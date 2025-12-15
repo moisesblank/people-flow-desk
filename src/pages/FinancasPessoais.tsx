@@ -10,6 +10,7 @@ import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 
 interface Expense {
   id: number;
@@ -95,7 +96,41 @@ export default function FinancasPessoais() {
   const stats = useMemo(() => {
     const totalFixed = fixedExpenses.reduce((acc, e) => acc + e.valor, 0);
     const totalExtra = extraExpenses.reduce((acc, e) => acc + e.valor, 0);
-    return { totalFixed, totalExtra, total: totalFixed + totalExtra };
+    
+    // Process category data for pie chart
+    const categoryMap: Record<string, number> = {};
+    [...fixedExpenses, ...extraExpenses].forEach((expense) => {
+      const cat = expense.categoria || "outros";
+      categoryMap[cat] = (categoryMap[cat] || 0) + expense.valor;
+    });
+    
+    const categoryColors: Record<string, string> = {
+      feira: "#22c55e",
+      compras_casa: "#3b82f6",
+      compras_bruna: "#ec4899",
+      compras_moises: "#8b5cf6",
+      cachorro: "#eab308",
+      carro: "#06b6d4",
+      gasolina: "#f97316",
+      lanches: "#ef4444",
+      comida: "#84cc16",
+      casa: "#14b8a6",
+      pessoal: "#a855f7",
+      transporte: "#0ea5e9",
+      lazer: "#f43f5e",
+      outros: "#6b7280",
+    };
+    
+    const pieData = Object.entries(categoryMap)
+      .filter(([_, value]) => value > 0)
+      .map(([key, value]) => ({
+        name: getCategoryLabel(key),
+        value,
+        color: categoryColors[key] || "#6b7280",
+      }))
+      .sort((a, b) => b.value - a.value);
+    
+    return { totalFixed, totalExtra, total: totalFixed + totalExtra, pieData };
   }, [fixedExpenses, extraExpenses]);
 
   const openModal = (type: "fixed" | "extra", expense?: Expense) => {
@@ -192,47 +227,92 @@ export default function FinancasPessoais() {
           <StatCard title="Total Mensal" value={stats.total} formatFn={formatCurrency} icon={Wallet} variant="blue" delay={2} />
         </section>
 
-        {/* Fixed Expenses */}
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Gastos Fixos</h2>
-            <Button onClick={() => openModal("fixed")} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" /> Adicionar
-            </Button>
-          </div>
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-secondary/50">
-                <tr>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fixedExpenses.map((expense) => (
-                  <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-4 text-foreground">{expense.nome}</td>
-                    <td className="p-4 text-muted-foreground">{getCategoryLabel(expense.categoria)}</td>
-                    <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openModal("fixed", expense)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete("fixed", expense.id)} className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
+        {/* Chart + Fixed Expenses Grid */}
+        <section className="mb-10 grid gap-6 lg:grid-cols-3">
+          {/* Pie Chart */}
+          {stats.pieData.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-card rounded-2xl p-6"
+            >
+              <h3 className="text-lg font-semibold text-foreground mb-4">Gastos por Categoria</h3>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={stats.pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {stats.pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(240, 6%, 10%)",
+                        border: "1px solid hsl(240, 6%, 20%)",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px' }}
+                      formatter={(value) => <span className="text-muted-foreground text-xs">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Fixed Expenses */}
+          <div className={stats.pieData.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-semibold text-foreground">Gastos Fixos</h2>
+              <Button onClick={() => openModal("fixed")} size="sm" className="gap-2">
+                <Plus className="h-4 w-4" /> Adicionar
+              </Button>
+            </div>
+            <div className="glass-card rounded-2xl overflow-hidden">
+              <table className="w-full">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
+                    <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
+                    <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
+                    <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
                   </tr>
-                ))}
-                {fixedExpenses.length === 0 && (
-                  <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto fixo cadastrado</td></tr>
-                )}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {fixedExpenses.map((expense) => (
+                    <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
+                      <td className="p-4 text-foreground">{expense.nome}</td>
+                      <td className="p-4 text-muted-foreground">{getCategoryLabel(expense.categoria)}</td>
+                      <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button variant="ghost" size="icon" onClick={() => openModal("fixed", expense)}>
+                            <Edit2 className="h-4 w-4" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete("fixed", expense.id)} className="text-destructive hover:text-destructive">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {fixedExpenses.length === 0 && (
+                    <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto fixo cadastrado</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </section>
 

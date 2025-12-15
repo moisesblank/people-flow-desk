@@ -236,7 +236,7 @@ export default function Dashboard() {
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* SYNAPSE Header */}
+        {/* Header - Curso Moisés Medeiros */}
         <motion.header 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -261,16 +261,16 @@ export default function Dashboard() {
                   }}
                   transition={{ repeat: Infinity, duration: 2 }}
                 >
-                  <Brain className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold tracking-wider text-primary">SYNAPSE</span>
+                  <GraduationCap className="h-4 w-4 text-primary" />
+                  <span className="text-xs font-bold tracking-wider text-primary">CURSO - MOISÉS MEDEIROS</span>
                 </motion.div>
-                <span className="text-xs text-muted-foreground">Sistema Nervoso Digital</span>
+                <span className="text-xs text-muted-foreground">Sistema de Gestão Empresarial</span>
               </motion.div>
               <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                Command Center
+                Central de Comando
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl">
-                Centro de comando unificado • Tempo real • Integrações ativas
+                Visão geral do seu negócio • Tempo real • Integrações ativas
               </p>
             </div>
             <div className="flex items-center gap-3">
@@ -280,7 +280,7 @@ export default function Dashboard() {
                 transition={{ repeat: Infinity, duration: 2 }}
               >
                 <Zap className="h-4 w-4 text-[hsl(var(--stats-green))]" />
-                <span className="text-xs font-medium text-[hsl(var(--stats-green))]">LIVE</span>
+                <span className="text-xs font-medium text-[hsl(var(--stats-green))]">ONLINE</span>
               </motion.div>
               <ExportButton
                 label="Exportar Dados"

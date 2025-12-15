@@ -171,7 +171,7 @@ export default function Integracoes() {
           event: "test.webhook",
           source: "manual_test",
           data: {
-            message: "Teste de conexão do SYNAPSE",
+            message: "Teste de conexão do sistema",
             timestamp: new Date().toISOString()
           }
         }
@@ -203,14 +203,14 @@ export default function Integracoes() {
               >
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
                   <Brain className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold tracking-wider text-primary">SYNAPSE</span>
+                  <span className="text-xs font-bold tracking-wider text-primary">CURSO - MOISÉS MEDEIROS</span>
                 </div>
               </motion.div>
               <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
                 Integrações
               </h1>
               <p className="text-lg text-muted-foreground max-w-xl">
-                Configure webhooks e conecte suas ferramentas ao sistema nervoso digital.
+                Configure webhooks e conecte suas ferramentas ao sistema de gestão.
               </p>
             </div>
             

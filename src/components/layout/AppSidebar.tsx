@@ -41,7 +41,7 @@ import {
 } from "@/components/ui/sidebar";
 
 const mainMenuItems = [
-  { title: "Command Center", url: "/", icon: Brain },
+  { title: "Central de Comando", url: "/", icon: Brain },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
@@ -93,8 +93,8 @@ export function AppSidebar() {
           </div>
           {!collapsed && (
             <div className="flex flex-col">
-              <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
-              <span className="text-xs text-muted-foreground">Gestão Empresarial</span>
+              <span className="text-sm font-semibold text-sidebar-foreground">Curso - Moisés Medeiros</span>
+              <span className="text-xs text-muted-foreground">Gestão Empresarial v5.0</span>
             </div>
           )}
         </div>

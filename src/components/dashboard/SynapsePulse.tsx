@@ -163,7 +163,7 @@ export function SynapsePulse() {
           </div>
           <div>
             <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              Synapse Pulse
+              Vendas em Tempo Real
               <motion.span
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}

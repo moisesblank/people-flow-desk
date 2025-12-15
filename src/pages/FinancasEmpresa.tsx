@@ -9,6 +9,7 @@ import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 
 interface Expense {
   id: number;
@@ -72,7 +73,26 @@ export default function FinancasEmpresa() {
   const stats = useMemo(() => {
     const totalFixed = fixedExpenses.reduce((acc, e) => acc + e.valor, 0);
     const totalExtra = extraExpenses.reduce((acc, e) => acc + e.valor, 0);
-    return { totalFixed, totalExtra, total: totalFixed + totalExtra };
+    
+    // Process category data for charts
+    const categoryMap: Record<string, number> = {};
+    [...fixedExpenses, ...extraExpenses].forEach((expense) => {
+      const cat = expense.categoria || "Outros";
+      categoryMap[cat] = (categoryMap[cat] || 0) + expense.valor;
+    });
+    
+    const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#06b6d4"];
+    
+    const pieData = Object.entries(categoryMap)
+      .filter(([_, value]) => value > 0)
+      .map(([key, value], index) => ({
+        name: key,
+        value,
+        color: colors[index % colors.length],
+      }))
+      .sort((a, b) => b.value - a.value);
+    
+    return { totalFixed, totalExtra, total: totalFixed + totalExtra, pieData };
   }, [fixedExpenses, extraExpenses]);
 
   const openModal = (type: "fixed" | "extra", expense?: Expense) => {
@@ -163,6 +183,95 @@ export default function FinancasEmpresa() {
           <StatCard title="Gastos Fixos" value={stats.totalFixed} formatFn={formatCurrency} icon={Building2} variant="red" delay={0} />
           <StatCard title="Gastos Extras" value={stats.totalExtra} formatFn={formatCurrency} icon={Building2} variant="purple" delay={1} />
           <StatCard title="Total Mensal" value={stats.total} formatFn={formatCurrency} icon={Building2} variant="blue" delay={2} />
+        </section>
+
+        {/* Charts Row */}
+        <section className="mb-10 grid gap-6 lg:grid-cols-2">
+          {/* Pie Chart */}
+          {stats.pieData.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="glass-card rounded-2xl p-6"
+            >
+              <h3 className="text-lg font-semibold text-foreground mb-4">Distribuição por Categoria</h3>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={stats.pieData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={90}
+                      paddingAngle={2}
+                      dataKey="value"
+                    >
+                      {stats.pieData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip
+                      contentStyle={{
+                        backgroundColor: "hsl(240, 6%, 10%)",
+                        border: "1px solid hsl(240, 6%, 20%)",
+                        borderRadius: "8px",
+                      }}
+                      formatter={(value: number) => formatCurrency(value)}
+                    />
+                    <Legend 
+                      wrapperStyle={{ fontSize: '12px' }}
+                      formatter={(value) => <span className="text-muted-foreground text-xs">{value}</span>}
+                    />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </motion.div>
+          )}
+
+          {/* Bar Chart - Fixed vs Extra */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.1 }}
+            className="glass-card rounded-2xl p-6"
+          >
+            <h3 className="text-lg font-semibold text-foreground mb-4">Fixos vs Extras</h3>
+            <div className="h-[280px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart 
+                  data={[
+                    { name: "Gastos Fixos", value: stats.totalFixed, fill: "#ef4444" },
+                    { name: "Gastos Extras", value: stats.totalExtra, fill: "#8b5cf6" },
+                  ]}
+                  layout="vertical"
+                  margin={{ left: 90, right: 20 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
+                  <XAxis 
+                    type="number" 
+                    stroke="hsl(240, 5%, 55%)"
+                    tickFormatter={(value) => formatCurrency(value)}
+                  />
+                  <YAxis 
+                    type="category" 
+                    dataKey="name" 
+                    stroke="hsl(240, 5%, 55%)"
+                    width={85}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(240, 6%, 10%)",
+                      border: "1px solid hsl(240, 6%, 20%)",
+                      borderRadius: "8px",
+                    }}
+                    formatter={(value: number) => formatCurrency(value)}
+                  />
+                  <Bar dataKey="value" radius={[0, 8, 8, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
         </section>
 
         {/* Fixed Expenses */}
