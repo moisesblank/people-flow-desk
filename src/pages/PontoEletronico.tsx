@@ -94,19 +94,38 @@ export default function PontoEletronico() {
   const availableMonths = Array.from({ length: 6 }, (_, i) => subMonths(new Date(), i));
 
   return (
-    <div className="p-4 md:p-8 lg:p-12 space-y-8">
+    <div className="p-4 md:p-8 lg:p-12 space-y-8 gradient-mesh min-h-screen">
+      {/* Cyber Grid Overlay */}
+      <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
+      
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">
-            Ponto Eletrônico
+          <div className="flex items-center gap-3 mb-2">
+            <motion.div
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-stats-green/10 border border-stats-green/30"
+              animate={{
+                boxShadow: [
+                  "0 0 10px hsl(var(--stats-green) / 0.2)",
+                  "0 0 25px hsl(var(--stats-green) / 0.4)",
+                  "0 0 10px hsl(var(--stats-green) / 0.2)",
+                ],
+              }}
+              transition={{ repeat: Infinity, duration: 2 }}
+            >
+              <Clock className="h-4 w-4 text-stats-green" />
+              <span className="text-xs font-bold text-stats-green tracking-widest uppercase">PONTO ELETRÔNICO</span>
+            </motion.div>
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground font-display tracking-tight">
+            Controle de Jornada
           </h1>
           <p className="text-muted-foreground mt-1">
-            Controle de jornada com geolocalização e relatórios
+            Geolocalização e relatórios em tempo real
           </p>
         </div>
         <div className="flex items-center gap-3">
@@ -114,7 +133,7 @@ export default function PontoEletronico() {
             value={format(selectedMonth, "yyyy-MM")}
             onValueChange={(v) => setSelectedMonth(new Date(v + "-01"))}
           >
-            <SelectTrigger className="w-[180px]">
+            <SelectTrigger className="w-[180px] bg-card/50 border-border/50 backdrop-blur-sm">
               <Calendar className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
@@ -126,7 +145,7 @@ export default function PontoEletronico() {
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline">
+          <Button variant="outline" className="border-border/50 hover:border-accent hover:text-accent">
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>

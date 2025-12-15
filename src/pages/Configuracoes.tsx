@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { 
   Settings as SettingsIcon, 
   Sparkles, 
@@ -19,7 +19,18 @@ import {
   CheckCircle2,
   RotateCcw,
   HelpCircle,
-  Trash2
+  Trash2,
+  Fingerprint,
+  Smartphone,
+  Key,
+  QrCode,
+  Eye,
+  EyeOff,
+  Copy,
+  RefreshCw,
+  X,
+  Lock,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,6 +42,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { useOnboarding } from "@/components/onboarding/OnboardingManager";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,9 +58,14 @@ import {
 
 export default function Configuracoes() {
   const { role, user } = useAuth();
+  const queryClient = useQueryClient();
   const { resetTour, hasCompleted: tourCompleted } = useOnboarding("dashboard");
   const [isLoading, setIsLoading] = useState(false);
   const [backupProgress, setBackupProgress] = useState<string | null>(null);
+  const [showBackupCodes, setShowBackupCodes] = useState(false);
+  const [mfaStep, setMfaStep] = useState<'initial' | 'setup' | 'verify'>('initial');
+  const [verificationCode, setVerificationCode] = useState('');
+  
   const [settings, setSettings] = useState({
     companyName: "Moisés Medeiros",
     companyEmail: "contato@moisesmedeiros.com",
@@ -55,6 +73,86 @@ export default function Configuracoes() {
     enableEmailAlerts: true,
     darkMode: true,
   });
+
+  // Fetch MFA settings
+  const { data: mfaSettings } = useQuery({
+    queryKey: ['mfa-settings', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('user_mfa_settings')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle();
+      
+      if (error && error.code !== 'PGRST116') throw error;
+      return data;
+    },
+    enabled: !!user?.id
+  });
+
+  // Generate backup codes
+  const generateBackupCodes = () => {
+    const codes = [];
+    for (let i = 0; i < 10; i++) {
+      codes.push(
+        Math.random().toString(36).substring(2, 6).toUpperCase() + '-' +
+        Math.random().toString(36).substring(2, 6).toUpperCase()
+      );
+    }
+    return codes;
+  };
+
+  // Enable MFA mutation
+  const enableMfaMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error('Usuário não encontrado');
+      const backupCodes = generateBackupCodes();
+      const { error } = await supabase
+        .from('user_mfa_settings')
+        .upsert({
+          user_id: user.id,
+          mfa_enabled: true,
+          mfa_type: 'totp',
+          backup_codes: backupCodes,
+          updated_at: new Date().toISOString()
+        });
+      if (error) throw error;
+      return { backupCodes };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mfa-settings'] });
+      toast.success("2FA Ativado com sucesso!");
+      setMfaStep('initial');
+      setVerificationCode('');
+    },
+    onError: () => {
+      toast.error("Erro ao ativar 2FA");
+    }
+  });
+
+  // Disable MFA mutation  
+  const disableMfaMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) throw new Error('Usuário não encontrado');
+      const { error } = await supabase
+        .from('user_mfa_settings')
+        .update({ mfa_enabled: false, updated_at: new Date().toISOString() })
+        .eq('user_id', user.id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mfa-settings'] });
+      toast.success("2FA Desativado");
+    }
+  });
+
+  const handleCopyCode = (code: string) => {
+    navigator.clipboard.writeText(code);
+    toast.success("Código copiado!");
+  };
+
+  const backupCodes = (mfaSettings?.backup_codes as string[]) || [];
 
   const handleSave = async () => {
     setIsLoading(true);
@@ -176,29 +274,261 @@ export default function Configuracoes() {
           </div>
         </motion.header>
 
-        <Tabs defaultValue="general" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 bg-secondary/50">
-            <TabsTrigger value="general" className="gap-2">
+        <Tabs defaultValue="security" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-6 bg-card/50 border border-border/50 backdrop-blur-sm">
+            <TabsTrigger value="general" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <SettingsIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Geral</span>
             </TabsTrigger>
-            <TabsTrigger value="appearance" className="gap-2">
+            <TabsTrigger value="security" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+              <Shield className="h-4 w-4" />
+              <span className="hidden sm:inline">Segurança</span>
+            </TabsTrigger>
+            <TabsTrigger value="appearance" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Palette className="h-4 w-4" />
               <span className="hidden sm:inline">Aparência</span>
             </TabsTrigger>
-            <TabsTrigger value="notifications" className="gap-2">
+            <TabsTrigger value="notifications" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notificações</span>
             </TabsTrigger>
-            <TabsTrigger value="help" className="gap-2">
+            <TabsTrigger value="help" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <HelpCircle className="h-4 w-4" />
               <span className="hidden sm:inline">Ajuda</span>
             </TabsTrigger>
-            <TabsTrigger value="backup" className="gap-2">
+            <TabsTrigger value="backup" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <Database className="h-4 w-4" />
               <span className="hidden sm:inline">Backup</span>
             </TabsTrigger>
           </TabsList>
+
+          {/* Security Tab - 2FA/MFA */}
+          <TabsContent value="security">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
+            >
+              {/* 2FA Section */}
+              <div className="cyber-card p-6 overflow-hidden">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 rounded-xl bg-primary/20 border border-primary/30">
+                      <Fingerprint className="w-7 h-7 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-semibold flex items-center gap-2">
+                        Autenticação de Dois Fatores (2FA)
+                        {mfaSettings?.mfa_enabled && (
+                          <Badge className="bg-stats-green/20 text-stats-green border-stats-green/30">
+                            <CheckCircle2 className="w-3 h-3 mr-1" />
+                            Ativo
+                          </Badge>
+                        )}
+                      </h3>
+                      <p className="text-sm text-muted-foreground">
+                        Adicione uma camada extra de segurança à sua conta
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <AnimatePresence mode="wait">
+                  {!mfaSettings?.mfa_enabled ? (
+                    <motion.div
+                      key="setup"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-4"
+                    >
+                      {mfaStep === 'initial' && (
+                        <>
+                          <div className="flex items-start gap-4 p-4 rounded-xl bg-stats-gold/10 border border-stats-gold/30">
+                            <AlertTriangle className="w-5 h-5 text-stats-gold mt-0.5 shrink-0" />
+                            <div>
+                              <p className="text-sm font-medium text-stats-gold">Por que usar 2FA?</p>
+                              <p className="text-sm text-muted-foreground">
+                                Protege sua conta mesmo que sua senha seja comprometida. Você precisará do celular para fazer login.
+                              </p>
+                            </div>
+                          </div>
+
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <button
+                              onClick={() => setMfaStep('setup')}
+                              className="p-5 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group"
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <QrCode className="w-6 h-6 text-primary group-hover:scale-110 transition-transform" />
+                                <span className="font-medium">Aplicativo Autenticador</span>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                Google Authenticator, Authy ou similar
+                              </p>
+                            </button>
+
+                            <button
+                              className="p-5 rounded-xl border border-border opacity-50 cursor-not-allowed text-left"
+                              disabled
+                            >
+                              <div className="flex items-center gap-3 mb-2">
+                                <Smartphone className="w-6 h-6 text-muted-foreground" />
+                                <span className="font-medium">SMS</span>
+                                <Badge variant="outline" className="text-xs">Em breve</Badge>
+                              </div>
+                              <p className="text-sm text-muted-foreground">
+                                Receba códigos por mensagem de texto
+                              </p>
+                            </button>
+                          </div>
+                        </>
+                      )}
+
+                      {mfaStep === 'setup' && (
+                        <div className="space-y-6">
+                          <div className="flex flex-col items-center p-8 rounded-xl bg-card/50 border border-dashed border-border">
+                            <div className="w-48 h-48 bg-white rounded-xl flex items-center justify-center mb-4 shadow-lg">
+                              <QrCode className="w-32 h-32 text-gray-800" />
+                            </div>
+                            <p className="text-sm text-muted-foreground text-center">
+                              Escaneie este código QR com seu aplicativo autenticador
+                            </p>
+                          </div>
+
+                          <div className="space-y-2">
+                            <Label>Código de verificação</Label>
+                            <div className="flex gap-3">
+                              <Input 
+                                placeholder="000000"
+                                value={verificationCode}
+                                onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
+                                maxLength={6}
+                                className="font-mono text-center text-xl tracking-[0.5em] bg-card/50"
+                              />
+                              <Button 
+                                onClick={() => enableMfaMutation.mutate()}
+                                disabled={verificationCode.length !== 6 || enableMfaMutation.isPending}
+                                className="cyber-button"
+                              >
+                                {enableMfaMutation.isPending ? (
+                                  <RefreshCw className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <CheckCircle2 className="w-4 h-4" />
+                                )}
+                                Verificar
+                              </Button>
+                            </div>
+                          </div>
+
+                          <Button variant="ghost" onClick={() => setMfaStep('initial')} className="w-full">
+                            <X className="w-4 h-4 mr-2" />
+                            Cancelar
+                          </Button>
+                        </div>
+                      )}
+                    </motion.div>
+                  ) : (
+                    <motion.div
+                      key="enabled"
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="space-y-6"
+                    >
+                      <div className="flex items-center gap-3 p-4 rounded-xl bg-stats-green/10 border border-stats-green/30">
+                        <CheckCircle2 className="w-5 h-5 text-stats-green" />
+                        <div>
+                          <p className="font-medium text-stats-green">2FA está ativo</p>
+                          <p className="text-sm text-muted-foreground">Sua conta está protegida</p>
+                        </div>
+                      </div>
+
+                      <div className="space-y-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <h4 className="font-medium">Códigos de Backup</h4>
+                            <p className="text-sm text-muted-foreground">Use se perder acesso ao autenticador</p>
+                          </div>
+                          <Button variant="outline" size="sm" onClick={() => setShowBackupCodes(!showBackupCodes)}>
+                            {showBackupCodes ? <EyeOff className="w-4 h-4 mr-2" /> : <Eye className="w-4 h-4 mr-2" />}
+                            {showBackupCodes ? 'Ocultar' : 'Mostrar'}
+                          </Button>
+                        </div>
+
+                        <AnimatePresence>
+                          {showBackupCodes && backupCodes.length > 0 && (
+                            <motion.div
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: 'auto' }}
+                              exit={{ opacity: 0, height: 0 }}
+                              className="grid grid-cols-2 md:grid-cols-5 gap-2"
+                            >
+                              {backupCodes.map((code, index) => (
+                                <button
+                                  key={index}
+                                  onClick={() => handleCopyCode(code)}
+                                  className="p-2 rounded-lg bg-muted/50 border border-border font-mono text-sm hover:bg-muted transition-colors flex items-center justify-between group"
+                                >
+                                  <span>{code}</span>
+                                  <Copy className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                </button>
+                              ))}
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      <Separator />
+
+                      <Button 
+                        variant="destructive" 
+                        onClick={() => disableMfaMutation.mutate()}
+                        disabled={disableMfaMutation.isPending}
+                      >
+                        {disableMfaMutation.isPending ? <RefreshCw className="w-4 h-4 mr-2 animate-spin" /> : <X className="w-4 h-4 mr-2" />}
+                        Desativar 2FA
+                      </Button>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              {/* Password Section */}
+              <div className="cyber-card p-6">
+                <div className="flex items-center gap-4 mb-6">
+                  <div className="p-3 rounded-xl bg-stats-blue/20 border border-stats-blue/30">
+                    <Lock className="w-6 h-6 text-stats-blue" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-semibold">Alterar Senha</h3>
+                    <p className="text-sm text-muted-foreground">Atualize sua senha regularmente</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Senha Atual</Label>
+                    <Input type="password" placeholder="••••••••" className="bg-card/50" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Nova Senha</Label>
+                      <Input type="password" placeholder="••••••••" className="bg-card/50" />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Confirmar Nova Senha</Label>
+                      <Input type="password" placeholder="••••••••" className="bg-card/50" />
+                    </div>
+                  </div>
+                  <Button className="cyber-button">
+                    <Key className="w-4 h-4 mr-2" />
+                    Atualizar Senha
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          </TabsContent>
 
           {/* General Settings */}
           <TabsContent value="general">

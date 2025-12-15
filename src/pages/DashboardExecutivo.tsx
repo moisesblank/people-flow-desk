@@ -1,10 +1,11 @@
 // ============================================
 // SYNAPSE v5.0 - Dashboard Executivo
 // Business Intelligence & KPIs Avançados
+// Design Futurista Cyber
 // ============================================
 
-import { useState, useMemo } from "react";
-import { motion } from "framer-motion";
+import { useState, useMemo, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   TrendingUp,
   TrendingDown,
@@ -24,6 +25,11 @@ import {
   Settings,
   Brain,
   Sparkles,
+  Cpu,
+  Wifi,
+  Shield,
+  Clock,
+  Eye,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -63,14 +69,15 @@ import { useDashboardStats } from "@/hooks/useDataCache";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-// Cores do design system
+// Cores do design system CYBER
 const COLORS = {
-  primary: "hsl(345, 60%, 45%)",
-  green: "hsl(152, 76%, 47%)",
-  blue: "hsl(212, 96%, 60%)",
-  gold: "hsl(45, 93%, 47%)",
-  purple: "hsl(262, 83%, 58%)",
-  red: "hsl(0, 84%, 60%)",
+  primary: "hsl(348, 75%, 42%)",
+  green: "hsl(145, 85%, 45%)",
+  blue: "hsl(200, 100%, 55%)",
+  gold: "hsl(50, 100%, 55%)",
+  purple: "hsl(270, 80%, 55%)",
+  red: "hsl(0, 80%, 50%)",
+  cyan: "hsl(180, 100%, 50%)",
 };
 
 function formatCurrency(cents: number): string {
@@ -113,20 +120,33 @@ function AdvancedKPICard({
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      whileHover={{ scale: 1.02 }}
-      className="glass-card rounded-2xl p-6 relative overflow-hidden group"
+      whileHover={{ scale: 1.02, y: -4 }}
+      className="cyber-card p-6 relative overflow-hidden group"
     >
+      {/* Neon border glow on hover */}
+      <motion.div
+        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+        style={{ 
+          boxShadow: `inset 0 0 30px ${color}20, 0 0 20px ${color}10`,
+        }}
+      />
+      
+      {/* Scan line effect */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none">
+        <div className="absolute inset-0 bg-gradient-to-b from-transparent via-accent/10 to-transparent animate-pulse" />
+      </div>
+
       {/* Background glow */}
       <div
-        className="absolute inset-0 opacity-5 group-hover:opacity-10 transition-opacity"
+        className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity"
         style={{ background: `radial-gradient(circle at top right, ${color}, transparent 70%)` }}
       />
 
       <div className="relative z-10">
         <div className="flex items-start justify-between mb-4">
           <div
-            className="w-12 h-12 rounded-xl flex items-center justify-center"
-            style={{ backgroundColor: `${color}20` }}
+            className="w-12 h-12 rounded-xl flex items-center justify-center border border-border/50"
+            style={{ backgroundColor: `${color}15`, boxShadow: `0 0 20px ${color}20` }}
           >
             <Icon className="h-6 w-6" style={{ color }} />
           </div>
@@ -134,8 +154,8 @@ function AdvancedKPICard({
             <Badge
               variant="outline"
               className={`${
-                change >= 0 ? "text-stats-green border-stats-green/30" : "text-destructive border-destructive/30"
-              }`}
+                change >= 0 ? "text-stats-green border-stats-green/50 bg-stats-green/10" : "text-destructive border-destructive/50 bg-destructive/10"
+              } font-mono`}
             >
               {change >= 0 ? <ArrowUpRight className="h-3 w-3 mr-1" /> : <ArrowDownRight className="h-3 w-3 mr-1" />}
               {formatPercent(change)}
@@ -143,8 +163,8 @@ function AdvancedKPICard({
           )}
         </div>
 
-        <p className="text-sm text-muted-foreground mb-1">{title}</p>
-        <p className="text-3xl font-bold text-foreground mb-2">{formatFn(value)}</p>
+        <p className="text-sm text-muted-foreground mb-1 font-medium tracking-wide uppercase">{title}</p>
+        <p className="text-3xl font-bold text-foreground mb-2 font-cyber tracking-wider">{formatFn(value)}</p>
 
         {description && <p className="text-xs text-muted-foreground mb-3">{description}</p>}
 
@@ -152,12 +172,25 @@ function AdvancedKPICard({
           <div className="space-y-1">
             <div className="flex justify-between text-xs">
               <span className="text-muted-foreground">Meta</span>
-              <span className="font-medium">{progress.toFixed(0)}%</span>
+              <span className="font-medium font-mono">{progress.toFixed(0)}%</span>
             </div>
-            <Progress value={Math.min(progress, 100)} className="h-1.5" />
+            <div className="relative h-1.5 rounded-full bg-muted overflow-hidden">
+              <motion.div 
+                className="absolute inset-y-0 left-0 rounded-full"
+                style={{ backgroundColor: color }}
+                initial={{ width: 0 }}
+                animate={{ width: `${Math.min(progress, 100)}%` }}
+                transition={{ duration: 1, ease: "easeOut" }}
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-shimmer" />
+            </div>
           </div>
         )}
       </div>
+      
+      {/* Corner decorations */}
+      <div className="absolute top-2 right-2 w-2 h-2 border-t border-r border-accent/30" />
+      <div className="absolute bottom-2 left-2 w-2 h-2 border-b border-l border-accent/30" />
     </motion.div>
   );
 }
@@ -267,39 +300,54 @@ export default function DashboardExecutivo() {
   const margemLucro = stats.income > 0 ? (lucroLiquido / stats.income) * 100 : 0;
 
   return (
-    <div className="p-4 md:p-8 lg:p-12 space-y-8">
+    <div className="p-4 md:p-8 lg:p-12 space-y-8 gradient-mesh min-h-screen">
+      {/* Cyber Grid Overlay */}
+      <div className="fixed inset-0 cyber-grid pointer-events-none opacity-30" />
+      
       {/* Header */}
       <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center md:justify-between gap-4"
+        className="relative flex flex-col md:flex-row md:items-center md:justify-between gap-4"
       >
         <div>
           <div className="flex items-center gap-3 mb-2">
             <motion.div
-              className="flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20"
+              className="flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/10 border border-accent/30"
               animate={{
                 boxShadow: [
-                  "0 0 10px hsl(var(--primary) / 0.2)",
-                  "0 0 20px hsl(var(--primary) / 0.4)",
-                  "0 0 10px hsl(var(--primary) / 0.2)",
+                  "0 0 10px hsl(var(--accent) / 0.2)",
+                  "0 0 30px hsl(var(--accent) / 0.4)",
+                  "0 0 10px hsl(var(--accent) / 0.2)",
                 ],
               }}
               transition={{ repeat: Infinity, duration: 2 }}
             >
-              <Brain className="h-4 w-4 text-primary" />
-              <span className="text-xs font-bold text-primary">BUSINESS INTELLIGENCE</span>
+              <Cpu className="h-4 w-4 text-accent" />
+              <span className="text-xs font-bold text-accent tracking-widest uppercase">SYNAPSE BI</span>
             </motion.div>
+            
+            {/* Live indicator */}
+            <div className="flex items-center gap-2">
+              <span className="relative flex h-2 w-2">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-stats-green opacity-75" />
+                <span className="relative inline-flex rounded-full h-2 w-2 bg-stats-green" />
+              </span>
+              <span className="text-xs text-stats-green font-medium uppercase tracking-widest">Live</span>
+            </div>
           </div>
-          <h1 className="text-3xl md:text-4xl font-bold text-foreground">Dashboard Executivo</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-3xl md:text-4xl font-bold text-foreground font-display tracking-tight">
+            Dashboard Executivo
+          </h1>
+          <p className="text-muted-foreground mt-1 flex items-center gap-2">
+            <Eye className="h-4 w-4" />
             Análise avançada de performance e KPIs estratégicos
           </p>
         </div>
 
         <div className="flex items-center gap-3">
           <Select value={period} onValueChange={setPeriod}>
-            <SelectTrigger className="w-[140px]">
+            <SelectTrigger className="w-[140px] bg-card/50 border-border/50 backdrop-blur-sm">
               <Calendar className="h-4 w-4 mr-2" />
               <SelectValue />
             </SelectTrigger>
@@ -310,11 +358,11 @@ export default function DashboardExecutivo() {
               <SelectItem value="year">Último Ano</SelectItem>
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing}>
+          <Button variant="outline" onClick={handleRefresh} disabled={isRefreshing} className="border-border/50 hover:border-accent hover:text-accent">
             <RefreshCw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
             Atualizar
           </Button>
-          <Button variant="outline">
+          <Button className="cyber-button bg-primary hover:bg-primary/90">
             <Download className="h-4 w-4 mr-2" />
             Exportar
           </Button>
