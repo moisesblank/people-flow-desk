@@ -22,11 +22,19 @@ import {
   Filter,
   Download,
   Eye,
-  UserPlus
+  UserPlus,
+  Bot,
+  Play,
+  Award
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CourseProgress } from "@/components/lms/CourseProgress";
+import { Certificate } from "@/components/lms/Certificate";
+import { VideoPlayer } from "@/components/lms/VideoPlayer";
+import { Flashcard } from "@/components/lms/Flashcard";
+import { AITutor } from "@/components/ai/AITutor";
 
 interface Student {
   id: number;
@@ -44,6 +52,46 @@ export default function PortalAluno() {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [courseFilter, setCourseFilter] = useState("all");
+  const [activeTab, setActiveTab] = useState("students");
+  const [showAITutor, setShowAITutor] = useState(false);
+  const [showCertificate, setShowCertificate] = useState(false);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+
+  // Demo LMS data
+  const demoModules = [
+    {
+      id: "1",
+      title: "Introdução ao Curso",
+      lessons: [
+        { id: "1-1", title: "Boas-vindas", duration: "5:00", isCompleted: true, isLocked: false },
+        { id: "1-2", title: "Como usar a plataforma", duration: "10:00", isCompleted: true, isLocked: false },
+        { id: "1-3", title: "Materiais de apoio", duration: "8:00", isCompleted: false, isLocked: false, isCurrent: true },
+      ],
+    },
+    {
+      id: "2", 
+      title: "Fundamentos",
+      lessons: [
+        { id: "2-1", title: "Conceitos básicos", duration: "15:00", isCompleted: false, isLocked: false },
+        { id: "2-2", title: "Exercícios práticos", duration: "20:00", isCompleted: false, isLocked: true },
+        { id: "2-3", title: "Avaliação do módulo", duration: "30:00", isCompleted: false, isLocked: true },
+      ],
+    },
+    {
+      id: "3",
+      title: "Avançado",
+      lessons: [
+        { id: "3-1", title: "Técnicas avançadas", duration: "25:00", isCompleted: false, isLocked: true },
+        { id: "3-2", title: "Projeto final", duration: "45:00", isCompleted: false, isLocked: true },
+      ],
+    },
+  ];
+
+  const demoFlashcards = [
+    { id: "1", frente: "O que é ROI?", verso: "Return on Investment - Retorno sobre Investimento. Mede a rentabilidade de um investimento.", dificuldade: "facil" as const },
+    { id: "2", frente: "O que significa CAC?", verso: "Custo de Aquisição de Cliente. O valor gasto para conquistar um novo cliente.", dificuldade: "medio" as const },
+    { id: "3", frente: "O que é LTV?", verso: "Lifetime Value - Valor do tempo de vida do cliente. Receita total esperada de um cliente.", dificuldade: "medio" as const },
+  ];
 
   useEffect(() => {
     fetchStudents();
@@ -139,7 +187,7 @@ export default function PortalAluno() {
               Portal do Aluno
             </h1>
             <p className="text-muted-foreground mt-1">
-              Gerencie todos os alunos matriculados nos cursos
+              Plataforma LMS completa com gestão de alunos e cursos
             </p>
           </div>
           
@@ -154,6 +202,30 @@ export default function PortalAluno() {
             </Button>
           </div>
         </div>
+
+        {/* Tabs LMS */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
+            <TabsTrigger value="students" className="gap-2">
+              <Users className="h-4 w-4" />
+              <span className="hidden sm:inline">Alunos</span>
+            </TabsTrigger>
+            <TabsTrigger value="courses" className="gap-2">
+              <BookOpen className="h-4 w-4" />
+              <span className="hidden sm:inline">Cursos</span>
+            </TabsTrigger>
+            <TabsTrigger value="flashcards" className="gap-2">
+              <Play className="h-4 w-4" />
+              <span className="hidden sm:inline">Flashcards</span>
+            </TabsTrigger>
+            <TabsTrigger value="certificates" className="gap-2">
+              <Award className="h-4 w-4" />
+              <span className="hidden sm:inline">Certificados</span>
+            </TabsTrigger>
+          </TabsList>
+
+          {/* Tab: Alunos */}
+          <TabsContent value="students" className="space-y-6 mt-6">
 
         {/* Stats Cards */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -388,7 +460,97 @@ export default function PortalAluno() {
             </CardContent>
           </Card>
         )}
+          </TabsContent>
+
+          {/* Tab: Cursos */}
+          <TabsContent value="courses" className="space-y-6 mt-6">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <CourseProgress
+                courseName="Curso de Marketing Digital"
+                modules={demoModules}
+                overallProgress={33}
+                onLessonClick={(lessonId) => toast.info(`Abrindo aula ${lessonId}`)}
+                onCertificateClick={() => setShowCertificate(true)}
+              />
+              
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Play className="h-5 w-5 text-primary" />
+                    Player de Vídeo
+                  </CardTitle>
+                  <CardDescription>
+                    Assista às aulas com recursos de anotações
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <VideoPlayer
+                    src="https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4"
+                    title="Aula 1: Boas-vindas"
+                    duration="5:00"
+                    onComplete={() => toast.success("Aula concluída!")}
+                    onProgress={(progress) => console.log(`Progresso: ${progress}%`)}
+                  />
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
+          {/* Tab: Flashcards */}
+          <TabsContent value="flashcards" className="mt-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Flashcards de Estudo</CardTitle>
+                <CardDescription>
+                  Revise os conceitos principais com cartões interativos
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Flashcard
+                  cards={demoFlashcards}
+                  onComplete={(results) => toast.success(`Concluído! Acertos: ${results.correct}, Erros: ${results.incorrect}`)}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Tab: Certificados */}
+          <TabsContent value="certificates" className="mt-6">
+            <Certificate
+              studentName="Aluno Exemplo"
+              courseName="Curso de Marketing Digital"
+              completionDate={new Date().toISOString()}
+              totalHours={40}
+              instructorName="Prof. Moisés Medeiros"
+              certificateId="CERT-2024-001234"
+            />
+          </TabsContent>
+        </Tabs>
       </div>
+
+      {/* AI Tutor Floating Button */}
+      {!showAITutor && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="fixed bottom-6 right-6 z-40"
+        >
+          <Button
+            size="lg"
+            className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+            onClick={() => setShowAITutor(true)}
+          >
+            <Bot className="h-6 w-6" />
+          </Button>
+        </motion.div>
+      )}
+
+      {/* AI Tutor */}
+      <AITutor
+        lessonContext="Portal do Aluno - Plataforma LMS"
+        isOpen={showAITutor}
+        onClose={() => setShowAITutor(false)}
+      />
     </div>
   );
 }
