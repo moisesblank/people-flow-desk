@@ -31,6 +31,9 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
     
+    --info: 199 89% 48%;
+    --info-foreground: 0 0% 100%;
+    
     /* Background & Surfaces - Light */
     --background: 0 0% 100%;
     --foreground: 220 40% 10%;
@@ -570,6 +573,85 @@
       linear-gradient(90deg, hsl(var(--primary) / 0.02) 1px, transparent 1px);
     background-size: 100px 100px, 20px 20px, 20px 20px;
   }
+
+  /* ============================================
+     PREMIUM EDITOR MODE
+     ============================================ */
+  .editor-mode-active {
+    @apply ring-2 ring-primary/50 ring-offset-2 ring-offset-background;
+  }
+
+  .editable-hover:hover {
+    @apply outline outline-2 outline-dashed outline-primary/40 outline-offset-2;
+  }
+
+  /* Skip Link para Acessibilidade */
+  .skip-link {
+    @apply sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-primary focus:text-primary-foreground focus:rounded;
+  }
+
+  /* Container helpers */
+  .container-app {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  .container-narrow {
+    @apply max-w-3xl mx-auto px-4 sm:px-6;
+  }
+
+  .container-wide {
+    @apply max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8;
+  }
+
+  /* Section Spacing */
+  .section-padding {
+    @apply py-16 md:py-24 lg:py-32;
+  }
+
+  .section-padding-sm {
+    @apply py-8 md:py-12 lg:py-16;
+  }
+
+  /* Badge Status Variants */
+  .badge-success {
+    @apply bg-success/10 text-success border-success/20;
+  }
+  .badge-warning {
+    @apply bg-warning/10 text-warning border-warning/20;
+  }
+  .badge-destructive {
+    @apply bg-destructive/10 text-destructive border-destructive/20;
+  }
+  .badge-info {
+    @apply bg-blue-500/10 text-blue-500 border-blue-500/20;
+  }
+
+  /* Card Hover Effects */
+  .card-hover {
+    @apply transition-all duration-300;
+  }
+  .card-hover:hover {
+    @apply -translate-y-1 shadow-lg;
+  }
+
+  .card-interactive {
+    @apply transition-all duration-200 cursor-pointer;
+  }
+  .card-interactive:hover {
+    @apply scale-[1.02] shadow-md;
+  }
+
+  /* Link com Underline Animado */
+  .link-underline {
+    @apply relative;
+  }
+  .link-underline::after {
+    content: '';
+    @apply absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300;
+  }
+  .link-underline:hover::after {
+    @apply w-full;
+  }
 }
 
 /* ============================================
@@ -597,4 +679,40 @@
   opacity: 0;
   transform: translateY(-10px);
   transition: opacity 200ms ease-in, transform 200ms ease-in;
+}
+
+/* ============================================
+   ELEMENTOR-LIKE EDITOR STYLES
+   ============================================ */
+.edit-mode-indicator {
+  @apply fixed bottom-4 right-4 z-50 px-4 py-2 rounded-full bg-primary text-primary-foreground font-medium shadow-xl;
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Editable element indicators */
+[data-editable="true"] {
+  @apply relative;
+}
+
+[data-editable="true"]::after {
+  content: '';
+  @apply absolute inset-0 pointer-events-none rounded opacity-0 transition-opacity duration-200;
+  border: 2px dashed hsl(var(--primary) / 0.3);
+}
+
+[data-editable="true"]:hover::after {
+  @apply opacity-100;
+}
+
+/* Editor Panel Styles */
+.editor-panel {
+  @apply fixed right-4 top-20 w-80 bg-card border border-border rounded-2xl shadow-2xl z-50 overflow-hidden;
+}
+
+.editor-panel-header {
+  @apply p-4 border-b border-border bg-muted/50;
+}
+
+.editor-panel-content {
+  @apply p-4 max-h-[60vh] overflow-y-auto;
 }
