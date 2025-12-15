@@ -140,7 +140,7 @@ export function AppSidebar() {
           {!collapsed && (
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">Moisés Medeiros</span>
-              <span className="text-xs text-muted-foreground">Curso de Química v5.0</span>
+              <span className="text-xs text-muted-foreground">Curso de Química v7.0</span>
             </div>
           )}
         </div>
