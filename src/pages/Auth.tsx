@@ -481,30 +481,45 @@ export default function Auth() {
                 animate={{ opacity: 1, y: 0 }}
               >
                 <h2 className="text-2xl font-bold text-foreground mb-2">
-                  {isLogin ? "Bem-vindo de volta!" : "Crie sua conta"}
+                  <EditableText
+                    value={getValue(isLogin ? "auth_login_title" : "auth_signup_title", isLogin ? "Bem-vindo de volta!" : "Crie sua conta")}
+                    onSave={(v) => updateValue(isLogin ? "auth_login_title" : "auth_signup_title", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  {isLogin 
-                    ? "Entre para acessar o sistema de gestão" 
-                    : "Comece sua jornada de aprovação"
-                  }
+                  <EditableText
+                    value={getValue(isLogin ? "auth_login_subtitle" : "auth_signup_subtitle", isLogin ? "Entre para acessar o sistema de gestão" : "Comece sua jornada de aprovação")}
+                    onSave={(v) => updateValue(isLogin ? "auth_login_subtitle" : "auth_signup_subtitle", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
                 </p>
               </motion.div>
             </div>
 
-            {/* Tabs */}
+            {/* Tabs - Editáveis */}
             <div className="flex gap-1 p-1 bg-muted/50 rounded-xl mb-6">
-              {["Entrar", "Criar Conta"].map((tab, i) => (
+              {[
+                { key: "auth_tab_login", default: "Entrar", isActive: isLogin },
+                { key: "auth_tab_signup", default: "Criar Conta", isActive: !isLogin }
+              ].map((tab, i) => (
                 <button
-                  key={tab}
+                  key={tab.key}
                   onClick={() => setIsLogin(i === 0)}
                   className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-                    (i === 0 ? isLogin : !isLogin)
+                    tab.isActive
                       ? "bg-primary text-primary-foreground shadow-lg" 
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {tab}
+                  <EditableText
+                    value={getValue(tab.key, tab.default)}
+                    onSave={(v) => updateValue(tab.key, v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
                 </button>
               ))}
             </div>
@@ -521,7 +536,12 @@ export default function Auth() {
                     transition={{ duration: 0.2 }}
                   >
                     <Label htmlFor="nome" className="text-sm font-medium">
-                      Nome Completo
+                      <EditableText
+                        value={getValue("auth_label_name", "Nome Completo")}
+                        onSave={(v) => updateValue("auth_label_name", v)}
+                        isEditMode={isEditMode}
+                        canEdit={canEdit}
+                      />
                     </Label>
                     <div className={`relative mt-1.5 transition-all ${focusedField === 'nome' ? 'scale-[1.02]' : ''}`}>
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -533,7 +553,7 @@ export default function Auth() {
                         onChange={handleChange}
                         onFocus={() => setFocusedField('nome')}
                         onBlur={() => setFocusedField(null)}
-                        placeholder="Seu nome completo"
+                        placeholder={getValue("auth_placeholder_name", "Seu nome completo")}
                         className="pl-11 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                       />
                     </div>
@@ -546,7 +566,12 @@ export default function Auth() {
 
               <div>
                 <Label htmlFor="email" className="text-sm font-medium">
-                  Email
+                  <EditableText
+                    value={getValue("auth_label_email", "Email")}
+                    onSave={(v) => updateValue("auth_label_email", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
                 </Label>
                 <div className={`relative mt-1.5 transition-all ${focusedField === 'email' ? 'scale-[1.02]' : ''}`}>
                   <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -558,7 +583,7 @@ export default function Auth() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('email')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="seu@email.com"
+                    placeholder={getValue("auth_placeholder_email", "seu@email.com")}
                     autoComplete="email"
                     className="pl-11 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
@@ -570,7 +595,12 @@ export default function Auth() {
 
               <div>
                 <Label htmlFor="password" className="text-sm font-medium">
-                  Senha
+                  <EditableText
+                    value={getValue("auth_label_password", "Senha")}
+                    onSave={(v) => updateValue("auth_label_password", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
                 </Label>
                 <div className={`relative mt-1.5 transition-all ${focusedField === 'password' ? 'scale-[1.02]' : ''}`}>
                   <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -582,7 +612,7 @@ export default function Auth() {
                     onChange={handleChange}
                     onFocus={() => setFocusedField('password')}
                     onBlur={() => setFocusedField(null)}
-                    placeholder="••••••••"
+                    placeholder={getValue("auth_placeholder_password", "••••••••")}
                     autoComplete={isLogin ? "current-password" : "new-password"}
                     className="pl-11 pr-11 h-12 rounded-xl bg-background/50 border-border/50 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
                   />
@@ -621,13 +651,33 @@ export default function Auth() {
                       className="mt-0.5"
                     />
                     <Label htmlFor="acceptTerms" className="text-xs text-muted-foreground leading-relaxed cursor-pointer">
-                      Eu li e concordo com os{" "}
+                      <EditableText
+                        value={getValue("auth_terms_text", "Eu li e concordo com os")}
+                        onSave={(v) => updateValue("auth_terms_text", v)}
+                        isEditMode={isEditMode}
+                        canEdit={canEdit}
+                      />{" "}
                       <Link to="/termos" className="text-primary hover:underline" target="_blank">
-                        Termos de Uso
+                        <EditableText
+                          value={getValue("auth_terms_link", "Termos de Uso")}
+                          onSave={(v) => updateValue("auth_terms_link", v)}
+                          isEditMode={isEditMode}
+                          canEdit={canEdit}
+                        />
                       </Link>{" "}
-                      e a{" "}
+                      <EditableText
+                        value={getValue("auth_terms_and", "e a")}
+                        onSave={(v) => updateValue("auth_terms_and", v)}
+                        isEditMode={isEditMode}
+                        canEdit={canEdit}
+                      />{" "}
                       <Link to="/privacidade" className="text-primary hover:underline" target="_blank">
-                        Política de Privacidade
+                        <EditableText
+                          value={getValue("auth_privacy_link", "Política de Privacidade")}
+                          onSave={(v) => updateValue("auth_privacy_link", v)}
+                          isEditMode={isEditMode}
+                          canEdit={canEdit}
+                        />
                       </Link>
                     </Label>
                   </motion.div>
@@ -643,25 +693,42 @@ export default function Auth() {
                   <Loader2 className="h-5 w-5 animate-spin" />
                 ) : (
                   <span className="flex items-center gap-2">
-                    {isLogin ? "Entrar" : "Criar Conta"}
+                    <EditableText
+                      value={getValue(isLogin ? "auth_btn_login" : "auth_btn_signup", isLogin ? "Entrar" : "Criar Conta")}
+                      onSave={(v) => updateValue(isLogin ? "auth_btn_login" : "auth_btn_signup", v)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                    />
                     <ArrowRight className="h-4 w-4" />
                   </span>
                 )}
               </Button>
             </form>
 
-            {/* Security Badge */}
+            {/* Security Badge - Editável */}
             <div className="mt-6 flex justify-center">
               <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-muted/50 border border-border/50">
                 <Shield className="h-4 w-4 text-stats-green" />
-                <span className="text-xs text-muted-foreground">Conexão 100% segura</span>
+                <span className="text-xs text-muted-foreground">
+                  <EditableText
+                    value={getValue("auth_security_badge", "Conexão 100% segura")}
+                    onSave={(v) => updateValue("auth_security_badge", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
+                </span>
               </div>
             </div>
           </div>
 
-          {/* Footer */}
+          {/* Footer - Editável */}
           <p className="text-center text-xs text-muted-foreground mt-6">
-            © 2024 Prof. Moisés Medeiros. Todos os direitos reservados.
+            <EditableText
+              value={getValue("auth_footer", "© 2024 Prof. Moisés Medeiros. Todos os direitos reservados.")}
+              onSave={(v) => updateValue("auth_footer", v)}
+              isEditMode={isEditMode}
+              canEdit={canEdit}
+            />
           </p>
         </motion.div>
       </div>
