@@ -80,12 +80,12 @@ export function SynapseCommandCenter() {
           </motion.div>
           <div>
             <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
-              SYNAPSE
+              CURSO - MOISÉS MEDEIROS
               <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-[hsl(var(--stats-green))]/20 text-[hsl(var(--stats-green))]">
-                v1.0
+                v5.0
               </span>
             </h3>
-            <p className="text-xs text-muted-foreground">Centro de Comando Digital</p>
+            <p className="text-xs text-muted-foreground">Sistema de Gestão</p>
           </div>
         </div>
         
@@ -136,7 +136,7 @@ export function SynapseCommandCenter() {
       >
         <div className="flex items-center gap-3 mb-3">
           <Terminal className="h-4 w-4 text-primary" />
-          <span className="text-sm font-medium text-foreground">Arquitetura Synapse</span>
+          <span className="text-sm font-medium text-foreground">Arquitetura do Sistema</span>
         </div>
         
         <div className="grid grid-cols-3 gap-4 text-center">

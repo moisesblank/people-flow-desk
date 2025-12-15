@@ -106,7 +106,7 @@ export function SynapseIntegrations() {
             <Link2 className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <h3 className="text-lg font-semibold text-foreground">Integrações Synapse</h3>
+            <h3 className="text-lg font-semibold text-foreground">Integrações Externas</h3>
             <p className="text-xs text-muted-foreground">Configure suas fontes de dados</p>
           </div>
         </div>
