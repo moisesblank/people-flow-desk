@@ -793,6 +793,49 @@ export type Database = {
         }
         Relationships: []
       }
+      employee_compensation: {
+        Row: {
+          created_at: string
+          employee_id: number
+          salario: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          employee_id: number
+          salario?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          employee_id?: number
+          salario?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "employee_compensation_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_compensation_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "employee_compensation_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       employee_documents: {
         Row: {
           categoria: string
@@ -871,7 +914,6 @@ export type Database = {
           id: number
           nome: string
           responsabilidades: string | null
-          salario: number
           setor: Database["public"]["Enums"]["sector_type"] | null
           status: Database["public"]["Enums"]["employee_status"] | null
           telefone: string | null
@@ -888,7 +930,6 @@ export type Database = {
           id?: number
           nome: string
           responsabilidades?: string | null
-          salario?: number
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
           telefone?: string | null
@@ -905,7 +946,6 @@ export type Database = {
           id?: number
           nome?: string
           responsabilidades?: string | null
-          salario?: number
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
           telefone?: string | null
@@ -2795,40 +2835,6 @@ export type Database = {
           telefone: string | null
           updated_at: string | null
           user_id: string | null
-        }
-        Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          data_admissao?: string | null
-          email?: string | null
-          funcao?: string | null
-          horario_trabalho?: string | null
-          id?: number | null
-          nome?: string | null
-          responsabilidades?: string | null
-          salario?: never
-          setor?: Database["public"]["Enums"]["sector_type"] | null
-          status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string | null
-          created_by?: string | null
-          data_admissao?: string | null
-          email?: string | null
-          funcao?: string | null
-          horario_trabalho?: string | null
-          id?: number | null
-          nome?: string | null
-          responsabilidades?: string | null
-          salario?: never
-          setor?: Database["public"]["Enums"]["sector_type"] | null
-          status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: string | null
-          updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
