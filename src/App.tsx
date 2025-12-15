@@ -51,6 +51,7 @@ const Pessoal = lazy(() => import("./pages/Pessoal"));
 const PontoEletronico = lazy(() => import("./pages/PontoEletronico"));
 const DashboardExecutivo = lazy(() => import("./pages/DashboardExecutivo"));
 const Monitoramento = lazy(() => import("./pages/Monitoramento"));
+const Simulados = lazy(() => import("./pages/Simulados"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -122,6 +123,7 @@ const App = () => (
                 <Route path="/ponto-eletronico" element={<ProtectedPage><PontoEletronico /></ProtectedPage>} />
                 <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
                 <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
+                <Route path="/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
                 
                 {/* Catch all */}
                 <Route path="*" element={<NotFound />} />
