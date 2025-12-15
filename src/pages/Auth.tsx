@@ -194,14 +194,14 @@ function CircuitLines() {
 // Stats Display
 function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) {
   return (
-    <div className="grid grid-cols-3 gap-6 mt-8 w-full max-w-md">
+    <div className="flex flex-wrap justify-center gap-4 mt-8 w-full">
       {stats.map((stat, i) => (
         <motion.div
           key={i}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.8 + i * 0.1 }}
-          className="text-center p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm"
+          className="text-center px-6 py-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm min-w-[120px]"
           whileHover={{ 
             borderColor: 'rgba(139, 0, 0, 0.5)',
             backgroundColor: 'rgba(139, 0, 0, 0.1)'
@@ -220,7 +220,7 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
           >
             {stat.value}
           </motion.div>
-          <div className="text-xs text-muted-foreground uppercase tracking-wider mt-1">
+          <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">
             {stat.label}
           </div>
         </motion.div>
