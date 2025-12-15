@@ -1,3 +1,9 @@
+// ============================================
+// MOISÉS MEDEIROS v5.0 - LANDING PAGE
+// Curso de Química - Página de Vendas
+// Design: Futurista Premium + Conversão
+// ============================================
+
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 

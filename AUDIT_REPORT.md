@@ -85,9 +85,9 @@
 
 | Integração | URL do Webhook | Status |
 |------------|----------------|--------|
-| Hotmart | `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse?source=hotmart` | 🟡 Aguardando configuração |
-| Asaas | `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse?source=asaas` | 🟡 Aguardando configuração |
-| Make.com | `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-synapse?source=make` | 🟡 Aguardando configuração |
+| Hotmart | `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica?source=hotmart` | 🟡 Aguardando configuração |
+| Asaas | `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica?source=asaas` | 🟡 Aguardando configuração |
+| Make.com | `https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/webhook-curso-quimica?source=make` | 🟡 Aguardando configuração |
 
 ---
 
@@ -167,8 +167,8 @@ O domínio precisa ser configurado no **Cloudflare** e no **Lovable**:
 
 ```
 ┌──────────────────────────────────────────────────────────────────────┐
-│                          PROJETO SYNAPSE                              │
-│                        Curso - Química                                │
+│                      MOISÉS MEDEIROS v5.0                          │
+│                       Curso de Química                              │
 └──────────────────────────────────────────────────────────────────────┘
                                     │
         ┌───────────────────────────┼───────────────────────────┐
