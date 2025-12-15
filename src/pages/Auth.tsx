@@ -31,7 +31,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
-import professorPhoto from "@/assets/professor-moises.jpg";
+import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
 import { EditableText } from "@/components/editor/EditableText";
@@ -416,7 +416,7 @@ export default function Auth() {
               />
               
               {/* Hexagonal Frame */}
-              <div className="relative w-40 h-40 flex items-center justify-center">
+              <div className="relative w-56 h-56 flex items-center justify-center">
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
                   <motion.polygon
                     points="50,2 95,25 95,75 50,98 5,75 5,25"
@@ -439,15 +439,15 @@ export default function Auth() {
                 
                 {/* Professor Photo */}
                 <EditableImage
-                  src={getValue("auth_professor_photo", professorPhoto)}
+                  src={professorPhoto}
                   alt="Professor Moisés"
                   onUpload={async (file) => {
                     return await uploadImage("auth_professor_photo", file);
                   }}
                   isEditMode={isEditMode}
                   canEdit={canEdit}
-                  className="w-full h-full object-cover object-top"
-                  containerClassName="w-32 h-32 rounded-full overflow-hidden border-2 border-primary/50"
+                  className="w-full h-full object-cover object-center"
+                  containerClassName="w-48 h-48 rounded-full overflow-hidden border-3 border-primary/60 shadow-xl shadow-primary/20"
                 />
               </div>
               
