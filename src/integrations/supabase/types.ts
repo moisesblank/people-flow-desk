@@ -2791,7 +2791,6 @@ export type Database = {
       employees_public: {
         Row: {
           created_at: string | null
-          email: string | null
           funcao: string | null
           id: number | null
           nome: string | null
@@ -2800,7 +2799,6 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          email?: string | null
           funcao?: string | null
           id?: number | null
           nome?: string | null
@@ -2809,7 +2807,6 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
-          email?: string | null
           funcao?: string | null
           id?: number | null
           nome?: string | null
