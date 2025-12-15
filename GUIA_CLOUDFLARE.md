@@ -151,4 +151,4 @@ Se algo não funcionar:
 
 ---
 
-*Documento gerado pelo Projeto Synapse*
+*Documento gerado pelo Curso Moisés Medeiros*

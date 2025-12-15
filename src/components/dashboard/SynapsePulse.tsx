@@ -58,7 +58,7 @@ export function SynapsePulse() {
     
     // Subscribe to realtime updates
     const channel = supabase
-      .channel("synapse-realtime")
+      .channel("dashboard-realtime")
       .on(
         "postgres_changes",
         {

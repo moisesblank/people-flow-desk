@@ -44,6 +44,54 @@ export type Database = {
         }
         Relationships: []
       }
+      analytics_metrics: {
+        Row: {
+          browser: string | null
+          country: string | null
+          created_at: string
+          device_type: string | null
+          duration_ms: number | null
+          id: string
+          metadata: Json | null
+          metric_type: string
+          page_path: string | null
+          referrer: string | null
+          session_id: string | null
+          user_agent: string | null
+          visitor_id: string | null
+        }
+        Insert: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          page_path?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Update: {
+          browser?: string | null
+          country?: string | null
+          created_at?: string
+          device_type?: string | null
+          duration_ms?: number | null
+          id?: string
+          metadata?: Json | null
+          metric_type?: string
+          page_path?: string | null
+          referrer?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          visitor_id?: string | null
+        }
+        Relationships: []
+      }
       arquivos: {
         Row: {
           created_at: string
@@ -275,6 +323,48 @@ export type Database = {
           tipo?: string
           topico?: string
           valor?: number
+        }
+        Relationships: []
+      }
+      custom_rules: {
+        Row: {
+          actions: Json | null
+          conditions: Json | null
+          created_at: string
+          created_by: string | null
+          id: string
+          is_active: boolean
+          priority: number | null
+          rule_name: string
+          rule_type: string
+          trigger_event: string | null
+          updated_at: string
+        }
+        Insert: {
+          actions?: Json | null
+          conditions?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number | null
+          rule_name: string
+          rule_type?: string
+          trigger_event?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actions?: Json | null
+          conditions?: Json | null
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          is_active?: boolean
+          priority?: number | null
+          rule_name?: string
+          rule_type?: string
+          trigger_event?: string | null
+          updated_at?: string
         }
         Relationships: []
       }
@@ -948,6 +1038,42 @@ export type Database = {
           status?: string
           transaction_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_settings: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_public: boolean
+          setting_key: string
+          setting_type: string
+          setting_value: Json
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          setting_key: string
+          setting_type?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_public?: boolean
+          setting_key?: string
+          setting_type?: string
+          setting_value?: Json
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
