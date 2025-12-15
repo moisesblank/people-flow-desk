@@ -2798,9 +2798,9 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
-          created_by?: never
+          created_by?: string | null
           data_admissao?: string | null
-          email?: never
+          email?: string | null
           funcao?: string | null
           horario_trabalho?: string | null
           id?: number | null
@@ -2809,15 +2809,15 @@ export type Database = {
           salario?: never
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: never
+          telefone?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           created_at?: string | null
-          created_by?: never
+          created_by?: string | null
           data_admissao?: string | null
-          email?: never
+          email?: string | null
           funcao?: string | null
           horario_trabalho?: string | null
           id?: number | null
@@ -2826,7 +2826,7 @@ export type Database = {
           salario?: never
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: never
+          telefone?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
