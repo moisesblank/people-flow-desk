@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import professorPhoto from "@/assets/professor-moises.jpg";
 
 // Animated counter component
 function AnimatedCounter({ target, duration = 2000, suffix = "" }: { target: number; duration?: number; suffix?: string }) {
@@ -226,11 +227,15 @@ export default function LandingPage() {
                 
                 {/* Card */}
                 <div className="relative wine-card p-8 md:p-10">
-                  {/* Professor Avatar Placeholder */}
-                  <div className="relative mx-auto w-48 h-48 md:w-56 md:h-56 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border-4 border-primary/30 flex items-center justify-center mb-6">
-                    <GraduationCap className="h-20 w-20 text-primary" />
+                  {/* Professor Photo */}
+                  <div className="relative mx-auto w-56 h-56 md:w-64 md:h-64 rounded-2xl overflow-hidden border-4 border-primary/30 mb-6 shadow-2xl shadow-primary/20">
+                    <img 
+                      src={professorPhoto} 
+                      alt="Professor Moisés Medeiros" 
+                      className="w-full h-full object-cover object-top"
+                    />
                     <motion.div
-                      className="absolute -bottom-2 -right-2 bg-stats-green rounded-full p-3"
+                      className="absolute -bottom-2 -right-2 bg-stats-green rounded-full p-3 shadow-lg"
                       animate={{ scale: [1, 1.1, 1] }}
                       transition={{ repeat: Infinity, duration: 2 }}
                     >
