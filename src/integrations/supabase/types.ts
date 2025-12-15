@@ -3251,7 +3251,16 @@ export type Database = {
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
-      app_role: "owner" | "admin" | "employee"
+      app_role:
+        | "owner"
+        | "admin"
+        | "employee"
+        | "coordenacao"
+        | "suporte"
+        | "monitoria"
+        | "afiliado"
+        | "marketing"
+        | "contabilidade"
       employee_status: "ativo" | "ferias" | "afastado" | "inativo"
       expense_category:
         | "comida"
@@ -3406,7 +3415,17 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["owner", "admin", "employee"],
+      app_role: [
+        "owner",
+        "admin",
+        "employee",
+        "coordenacao",
+        "suporte",
+        "monitoria",
+        "afiliado",
+        "marketing",
+        "contabilidade",
+      ],
       employee_status: ["ativo", "ferias", "afastado", "inativo"],
       expense_category: [
         "comida",
