@@ -1,8 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - DASHBOARD PRINCIPAL
+// MOISÉS MEDEIROS v8.0 - DASHBOARD PRINCIPAL
 // Spider-Man Theme: Vermelho Vinho + Azul
 // Central de Comando - Business Intelligence
-// Elementos de Química Integrados
+// Elementos de Química + Insights de IA
 // ============================================
 
 import { useMemo, useState, useEffect } from "react";
@@ -27,7 +27,9 @@ import {
   Bot,
   Clock,
   FlaskConical,
-  Atom
+  Atom,
+  LayoutDashboard,
+  ArrowUpRight
 } from "lucide-react";
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -39,6 +41,8 @@ import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { RealtimePulse } from "@/components/dashboard/RealtimePulse";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
+import { WeeklyInsights } from "@/components/dashboard/WeeklyInsights";
+import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScore";
 import { ChemistryStats, ElementsGrid, ReactionProgress } from "@/components/dashboard/ChemistryStats";
 import { AnimatedAtom, ChemistryTip, LabEquipmentIcons } from "@/components/chemistry/ChemistryVisuals";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
@@ -46,6 +50,7 @@ import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
 import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding/GuidedTour";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardStats } from "@/hooks/useDataCache";
 import { format, subMonths } from "date-fns";
@@ -368,6 +373,19 @@ export default function Dashboard() {
             <RevenueChart data={processedData?.monthlyData || []} />
           </div>
           <CategoryPieChart data={processedData?.categoryData || []} title="Gastos por Categoria" />
+        </section>
+
+        {/* Weekly Insights + Financial Health */}
+        <section className="grid gap-6 lg:grid-cols-2 mb-8">
+          <WeeklyInsights />
+          <FinancialHealthScore
+            income={stats.income}
+            expenses={stats.personalExpenses + stats.companyExpenses}
+            savings={Math.max(0, stats.income - stats.personalExpenses - stats.companyExpenses)}
+            debts={0}
+            emergencyFund={stats.income * 3}
+            monthlyGoal={stats.income * 0.2}
+          />
         </section>
 
         {/* Real-time Data */}
