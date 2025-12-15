@@ -44,11 +44,15 @@ import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
 import { WeeklyInsights } from "@/components/dashboard/WeeklyInsights";
 import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScore";
 import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
+import { SynapseStatusWidget } from "@/components/dashboard/SynapseStatusWidget";
+import { FinancialInsights } from "@/components/dashboard/FinancialInsights";
 import { ChemistryStats, ElementsGrid, ReactionProgress } from "@/components/dashboard/ChemistryStats";
 import { AnimatedAtom, ChemistryTip, LabEquipmentIcons } from "@/components/chemistry/ChemistryVisuals";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
+import { QuizListWidget } from "@/components/lms/QuizListWidget";
+import { SecurityStatusWidget } from "@/components/security/SecurityStatusWidget";
 import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding/GuidedTour";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -413,6 +417,27 @@ export default function Dashboard() {
           <div className="space-y-6">
             <FinancialGoalsWidget />
             <QuickActions />
+          </div>
+        </section>
+
+        {/* SYNAPSE v14.0 Widgets */}
+        <section className="grid gap-6 lg:grid-cols-3 mb-8">
+          {/* Financial Insights */}
+          <FinancialInsights
+            totalIncome={stats.income}
+            totalExpenses={stats.personalExpenses + stats.companyExpenses}
+            personalExpenses={stats.personalExpenses}
+            companyExpenses={stats.companyExpenses}
+            pendingPayments={stats.pendingPayments}
+          />
+          
+          {/* Quiz/LMS Widget */}
+          <QuizListWidget />
+          
+          {/* Security & System Status */}
+          <div className="space-y-6">
+            {role === 'owner' && <SynapseStatusWidget />}
+            <SecurityStatusWidget />
           </div>
         </section>
 
