@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, User, Briefcase, Building2, DollarSign, Mail, Loader2, Send } from "lucide-react";
+import { CalendarIcon, User, Briefcase, Building2, DollarSign, Mail, Loader2, Send, Lock, Eye, EyeOff } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -46,6 +46,7 @@ const formSchema = z.object({
   funcao: z.string().min(1, "Função é obrigatória"),
   setor: z.string().min(1, "Setor é obrigatório"),
   email: z.string().email("Email inválido").or(z.literal("")),
+  senha: z.string().min(6, "Mínimo 6 caracteres").or(z.literal("")),
   salario: z.string().min(1, "Salário é obrigatório"),
   dataAdmissao: z.date().optional(),
   status: z.enum(["ativo", "ferias", "afastado", "inativo"]),
@@ -70,6 +71,7 @@ export function EmployeeModal({
 }: EmployeeModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [isSendingInvite, setIsSendingInvite] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -78,6 +80,7 @@ export function EmployeeModal({
       funcao: "",
       setor: "",
       email: "",
+      senha: "",
       salario: "",
       dataAdmissao: undefined,
       status: "ativo",
@@ -97,6 +100,7 @@ export function EmployeeModal({
         funcao: employee.funcao,
         setor: employee.setor,
         email: employee.email,
+        senha: "",
         // Se salário é null (mascarado), mantém vazio para forçar preenchimento
         salario: employee.salario !== null 
           ? (employee.salario / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })
@@ -110,6 +114,7 @@ export function EmployeeModal({
         funcao: "",
         setor: "",
         email: "",
+        senha: "",
         salario: "",
         dataAdmissao: new Date(),
         status: "ativo",
@@ -139,6 +144,7 @@ export function EmployeeModal({
   async function handleSendInvite() {
     const email = form.getValues("email");
     const nome = form.getValues("nome");
+    const senha = form.getValues("senha");
     
     if (!email) {
       toast.error("Email é obrigatório para enviar convite");
@@ -148,16 +154,21 @@ export function EmployeeModal({
       toast.error("Nome é obrigatório para enviar convite");
       return;
     }
+    if (!senha || senha.length < 6) {
+      toast.error("Senha é obrigatória para criar acesso", {
+        description: "Mínimo de 6 caracteres"
+      });
+      return;
+    }
 
     setIsSendingInvite(true);
     
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      
       const response = await supabase.functions.invoke("invite-employee", {
         body: {
           email,
           nome,
+          senha,
           funcao: form.getValues("funcao"),
           employee_id: employee?.id,
         },
@@ -167,12 +178,19 @@ export function EmployeeModal({
         throw new Error(response.error.message);
       }
 
-      toast.success("Convite enviado!", {
-        description: `Email de acesso enviado para ${email}`
+      if (response.data?.error) {
+        throw new Error(response.data.error);
+      }
+
+      toast.success("Acesso criado com sucesso!", {
+        description: `${nome} agora pode acessar o sistema com o email ${email}`
       });
+      
+      // Limpar o campo de senha após sucesso
+      form.setValue("senha", "");
     } catch (error: any) {
       console.error("Error sending invite:", error);
-      toast.error("Erro ao enviar convite", {
+      toast.error("Erro ao criar acesso", {
         description: error.message || "Tente novamente mais tarde"
       });
     } finally {
@@ -347,7 +365,7 @@ export function EmployeeModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-2 text-muted-foreground">
                       <Mail className="h-3.5 w-3.5" />
-                      Email
+                      Email (para acesso)
                     </FormLabel>
                     <FormControl>
                       <Input
@@ -356,6 +374,37 @@ export function EmployeeModal({
                         className="h-12 bg-secondary/30 border-border/50 rounded-xl"
                         {...field}
                       />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              <FormField
+                control={form.control}
+                name="senha"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-2 text-muted-foreground">
+                      <Lock className="h-3.5 w-3.5" />
+                      Senha (para criar acesso)
+                    </FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Mínimo 6 caracteres"
+                          className="h-12 pr-10 bg-secondary/30 border-border/50 rounded-xl"
+                          {...field}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -391,7 +440,7 @@ export function EmployeeModal({
             {/* Footer */}
             <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t border-border/50">
               <div className="flex gap-2">
-                {employee && form.getValues("email") && (
+                {form.watch("email") && form.watch("senha") && (
                   <Button
                     type="button"
                     variant="outline"
@@ -404,7 +453,7 @@ export function EmployeeModal({
                     ) : (
                       <Send className="h-4 w-4" />
                     )}
-                    Enviar Convite
+                    Criar Acesso
                   </Button>
                 )}
               </div>
