@@ -12,6 +12,7 @@ import { useNotificationsDatabase } from "@/hooks/useNotificationsDatabase";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { SystemHealthIndicator } from "@/components/dashboard/SystemHealthIndicator";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -98,6 +99,9 @@ export function AppLayout({ children }: AppLayoutProps) {
                 </kbd>
               </div>
             </Button>
+            
+            {/* System Health */}
+            <SystemHealthIndicator />
             
             <div className="flex-1" />
 
