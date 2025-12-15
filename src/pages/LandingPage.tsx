@@ -166,7 +166,7 @@ export default function LandingPage() {
               {/* Title */}
               <h1 className="hero-title text-4xl md:text-5xl lg:text-6xl xl:text-7xl font-bold text-foreground leading-tight mb-6">
                 O Professor que{" "}
-                <span className="gold-text">Mais Aprova</span>
+                <span className="brand-text">Mais Aprova</span>
                 {" "}em Medicina no Brasil
               </h1>
 
@@ -176,16 +176,15 @@ export default function LandingPage() {
                 Milhares de alunos aprovados nas melhores faculdades de Medicina do país.
               </p>
 
-              {/* CTA Buttons */}
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
                 <a href="https://app.moisesmedeiros.com.br" target="_blank" rel="noopener noreferrer">
-                  <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-xl h-14 px-8 text-lg shadow-xl shadow-primary/25">
+                  <Button size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary/90 text-primary-foreground gap-2 rounded-xl h-14 px-8 text-lg shadow-xl shadow-primary/25 heroic-glow">
                     Começar Agora
                     <ArrowRight className="h-5 w-5" />
                   </Button>
                 </a>
                 <a href="https://app.moisesmedeiros.com.br/black-friday-2025" target="_blank" rel="noopener noreferrer">
-                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-accent text-accent-foreground bg-accent/10 hover:bg-accent/20 gap-2 rounded-xl h-14 px-8 text-lg">
+                  <Button size="lg" variant="outline" className="w-full sm:w-auto border-stats-blue text-stats-blue bg-stats-blue/10 hover:bg-stats-blue/20 gap-2 rounded-xl h-14 px-8 text-lg">
                     <Zap className="h-5 w-5" />
                     Black Friday 2025
                   </Button>
@@ -193,7 +192,7 @@ export default function LandingPage() {
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-border/30">
+              <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-primary/20">
                 <div className="text-center lg:text-left">
                   <p className="text-3xl md:text-4xl font-bold text-primary">
                     <AnimatedCounter target={12847} suffix="+" />
@@ -201,13 +200,13 @@ export default function LandingPage() {
                   <p className="text-sm text-muted-foreground mt-1">Alunos Ativos</p>
                 </div>
                 <div className="text-center lg:text-left">
-                  <p className="text-3xl md:text-4xl font-bold text-stats-green">
+                  <p className="text-3xl md:text-4xl font-bold text-stats-blue">
                     <AnimatedCounter target={4892} suffix="+" />
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">Aprovados 2024</p>
                 </div>
                 <div className="text-center lg:text-left">
-                  <p className="text-3xl md:text-4xl font-bold text-stats-blue">
+                  <p className="text-3xl md:text-4xl font-bold text-stats-gold">
                     <AnimatedCounter target={98} suffix="%" />
                   </p>
                   <p className="text-sm text-muted-foreground mt-1">Satisfação</p>
@@ -215,7 +214,6 @@ export default function LandingPage() {
               </div>
             </motion.div>
 
-            {/* Right Content - Professor Card */}
             <motion.div
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
@@ -223,11 +221,11 @@ export default function LandingPage() {
               className="relative"
             >
               <div className="relative">
-                {/* Glow Effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-stats-blue/20 rounded-3xl blur-2xl" />
+                {/* Glow Effect - Vermelho Vinho + Azul */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-primary/30 to-stats-blue/20 rounded-3xl blur-2xl" />
                 
                 {/* Card */}
-                <div className="relative premium-card p-8 md:p-10">
+                <div className="relative wine-card p-8 md:p-10">
                   {/* Professor Avatar Placeholder */}
                   <div className="relative mx-auto w-48 h-48 md:w-56 md:h-56 rounded-full bg-gradient-to-br from-primary/30 to-primary/10 border-4 border-primary/30 flex items-center justify-center mb-6">
                     <GraduationCap className="h-20 w-20 text-primary" />
@@ -246,10 +244,10 @@ export default function LandingPage() {
                     
                     {/* Badges */}
                     <div className="flex flex-wrap justify-center gap-2 mb-6">
-                      <span className="px-3 py-1 rounded-full bg-primary/10 text-primary text-xs font-medium">
+                      <span className="px-3 py-1 rounded-full bg-primary/20 text-primary text-xs font-medium border border-primary/30">
                         +15 anos de experiência
                       </span>
-                      <span className="px-3 py-1 rounded-full bg-stats-green/10 text-stats-green text-xs font-medium">
+                      <span className="px-3 py-1 rounded-full bg-stats-blue/20 text-stats-blue text-xs font-medium border border-stats-blue/30">
                         Método exclusivo
                       </span>
                     </div>
@@ -303,7 +301,7 @@ export default function LandingPage() {
                   <span className="text-sm font-medium text-primary uppercase tracking-wider">Destaque</span>
                 </div>
                 <h2 className="hero-title text-3xl md:text-4xl font-bold text-foreground mb-4">
-                  Revisão <span className="gold-text">RAIO X</span>
+                  Revisão <span className="brand-text">RAIO X</span>
                 </h2>
                 <p className="text-lg text-muted-foreground mb-6">
                   7 semanas intensivas de revisão completa de Química para vestibulares de Medicina. 
@@ -318,7 +316,7 @@ export default function LandingPage() {
                   </div>
                   <div className="h-3 rounded-full bg-secondary overflow-hidden">
                     <motion.div
-                      className="h-full rounded-full gold-gradient"
+                      className="h-full rounded-full brand-gradient"
                       initial={{ width: 0 }}
                       whileInView={{ width: "43%" }}
                       viewport={{ once: true }}
@@ -371,7 +369,7 @@ export default function LandingPage() {
             className="text-center mb-12"
           >
             <h2 className="hero-title text-3xl md:text-4xl font-bold text-foreground mb-4">
-              Cronograma <span className="gold-text">da Semana</span>
+              Cronograma <span className="blue-text">da Semana</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Acompanhe as aulas ao vivo e não perca nenhum conteúdo importante
@@ -502,7 +500,7 @@ export default function LandingPage() {
             viewport={{ once: true }}
           >
             <h2 className="hero-title text-3xl md:text-5xl font-bold text-foreground mb-6">
-              Pronto para <span className="gold-text">Transformar</span> seu Futuro?
+              Pronto para <span className="brand-text">Transformar</span> seu Futuro?
             </h2>
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
               Junte-se a milhares de alunos que conquistaram a aprovação em Medicina com a metodologia do Professor Moisés.

@@ -7,74 +7,78 @@
 
 @layer base {
   :root {
-    /* Ultra Premium Dark Theme - Azul Profundo + Dourado */
-    --background: 216 39% 7%;
+    /* 🦸 TEMA HEROICO - Vermelho Vinho + Azul + Amarelo */
+    /* Inspirado: Logo do Curso + Spider-Man + Superman */
+    
+    --background: 240 15% 6%;
     --foreground: 0 0% 98%;
 
-    --card: 216 35% 10%;
+    --card: 240 12% 9%;
     --card-foreground: 0 0% 98%;
 
-    --popover: 216 35% 10%;
+    --popover: 240 12% 9%;
     --popover-foreground: 0 0% 98%;
 
-    /* Dourado Premium #D4AF37 = 45 73% 52% */
-    --primary: 45 73% 52%;
-    --primary-foreground: 216 39% 7%;
+    /* 🍷 Vermelho Vinho / Bordô - COR PRINCIPAL #7D1128 */
+    --primary: 348 72% 28%;
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 216 30% 15%;
+    /* Azul Heroico (Spider-Man/Superman) */
+    --secondary: 220 70% 15%;
     --secondary-foreground: 0 0% 98%;
 
-    --muted: 216 25% 18%;
-    --muted-foreground: 216 15% 55%;
+    --muted: 240 10% 16%;
+    --muted-foreground: 240 8% 55%;
 
-    /* Bordô Accent para CTAs secundários */
-    --accent: 348 70% 35%;
-    --accent-foreground: 0 0% 98%;
+    /* Azul Accent (Spider-Man eyes / Superman cape) */
+    --accent: 212 100% 47%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 98%;
 
-    --border: 216 25% 18%;
-    --input: 216 25% 18%;
-    --ring: 45 73% 52%;
+    --border: 240 10% 18%;
+    --input: 240 10% 18%;
+    --ring: 348 72% 28%;
 
     --radius: 0.875rem;
 
     /* Status colors */
     --status-active: 152 76% 47%;
-    --status-vacation: 212 96% 60%;
-    --status-away: 38 92% 50%;
+    --status-vacation: 212 100% 55%;
+    --status-away: 45 100% 50%;
     --status-inactive: 240 5% 45%;
 
-    /* Stats colors - Premium Palette */
-    --stats-red: 348 70% 45%;
+    /* Stats colors - Heroic Palette */
+    --stats-red: 348 72% 38%;
     --stats-green: 152 76% 47%;
-    --stats-blue: 212 96% 60%;
-    --stats-purple: 262 83% 58%;
-    --stats-gold: 45 73% 52%;
+    --stats-blue: 212 100% 55%;
+    --stats-purple: 280 70% 50%;
+    --stats-gold: 45 100% 50%;
 
     /* Glow colors */
-    --glow-red: 348 70% 45%;
+    --glow-red: 348 72% 38%;
     --glow-green: 152 76% 47%;
-    --glow-blue: 212 96% 60%;
-    --glow-purple: 262 83% 58%;
-    --glow-gold: 45 73% 52%;
+    --glow-blue: 212 100% 55%;
+    --glow-purple: 280 70% 50%;
+    --glow-gold: 45 100% 50%;
 
-    --sidebar-background: 216 39% 5%;
+    /* Sidebar - Vermelho Vinho */
+    --sidebar-background: 348 50% 6%;
     --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 45 73% 52%;
-    --sidebar-primary-foreground: 216 39% 7%;
-    --sidebar-accent: 216 30% 15%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 216 25% 18%;
-    --sidebar-ring: 45 73% 52%;
+    --sidebar-primary: 348 72% 28%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 212 100% 47%;
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: 348 30% 15%;
+    --sidebar-ring: 348 72% 28%;
 
-    /* Chart colors */
-    --chart-1: 45 73% 52%;
-    --chart-2: 152 76% 47%;
-    --chart-3: 212 96% 60%;
-    --chart-4: 348 70% 45%;
-    --chart-5: 262 83% 58%;
+    /* Chart colors - Heroic */
+    --chart-1: 348 72% 38%;
+    --chart-2: 212 100% 55%;
+    --chart-3: 45 100% 50%;
+    --chart-4: 152 76% 47%;
+    --chart-5: 280 70% 50%;
   }
 }
 
@@ -252,38 +256,52 @@
     @apply border-primary/50 ring-2 ring-primary/20 bg-secondary/80;
   }
 
+  /* 🍷 BRAND GRADIENTS - Vermelho Vinho + Azul Heroico */
   .brand-gradient {
-    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(45 73% 35%) 100%);
+    background: linear-gradient(135deg, hsl(348 72% 28%) 0%, hsl(348 72% 20%) 100%);
   }
 
   .brand-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(45 73% 65%) 100%);
+    background-image: linear-gradient(135deg, hsl(348 72% 45%) 0%, hsl(348 72% 28%) 100%);
   }
 
+  /* ⚡ GOLD/YELLOW Accent (Superman style) */
   .gold-gradient {
-    background: linear-gradient(135deg, hsl(45 73% 52%) 0%, hsl(45 73% 35%) 100%);
+    background: linear-gradient(135deg, hsl(45 100% 50%) 0%, hsl(45 100% 40%) 100%);
   }
 
   .gold-text {
     @apply bg-clip-text text-transparent;
-    background-image: linear-gradient(135deg, hsl(45 73% 65%) 0%, hsl(45 73% 45%) 100%);
+    background-image: linear-gradient(135deg, hsl(45 100% 55%) 0%, hsl(45 100% 45%) 100%);
   }
 
+  /* 🔵 BLUE Accent (Spider-Man/Superman style) */
+  .blue-gradient {
+    background: linear-gradient(135deg, hsl(212 100% 55%) 0%, hsl(212 100% 40%) 100%);
+  }
+
+  .blue-text {
+    @apply bg-clip-text text-transparent;
+    background-image: linear-gradient(135deg, hsl(212 100% 60%) 0%, hsl(212 100% 45%) 100%);
+  }
+
+  /* 🦸 HERO GRADIENT - Background dramático */
   .hero-gradient {
-    background: radial-gradient(ellipse at top, hsl(216 39% 12%) 0%, hsl(216 39% 7%) 70%);
+    background: radial-gradient(ellipse at top, hsl(348 50% 10%) 0%, hsl(240 15% 6%) 70%);
   }
 
+  /* 🎴 PREMIUM CARD - Bordô elegante */
   .premium-card {
     @apply relative overflow-hidden rounded-2xl;
-    background: linear-gradient(145deg, hsl(216 35% 12%) 0%, hsl(216 35% 8%) 100%);
-    border: 1px solid hsl(45 73% 52% / 0.1);
+    background: linear-gradient(145deg, hsl(240 12% 11%) 0%, hsl(240 12% 7%) 100%);
+    border: 1px solid hsl(348 72% 28% / 0.2);
   }
 
   .premium-card::before {
     content: '';
     @apply absolute inset-0 opacity-0 transition-opacity duration-500;
-    background: linear-gradient(145deg, hsl(45 73% 52% / 0.05) 0%, transparent 50%);
+    background: linear-gradient(145deg, hsl(348 72% 28% / 0.08) 0%, transparent 50%);
   }
 
   .premium-card:hover::before {
@@ -291,17 +309,42 @@
   }
 
   .premium-card:hover {
-    border-color: hsl(45 73% 52% / 0.3);
-    box-shadow: 0 0 40px -10px hsl(45 73% 52% / 0.2);
+    border-color: hsl(348 72% 28% / 0.4);
+    box-shadow: 0 0 50px -15px hsl(348 72% 28% / 0.3);
   }
 
+  /* 🔴 WINE CARD - Cards com bordô */
+  .wine-card {
+    @apply relative overflow-hidden rounded-2xl;
+    background: linear-gradient(145deg, hsl(348 40% 10%) 0%, hsl(348 40% 6%) 100%);
+    border: 1px solid hsl(348 72% 28% / 0.3);
+  }
+
+  .wine-card:hover {
+    border-color: hsl(348 72% 28% / 0.5);
+    box-shadow: 0 0 60px -15px hsl(348 72% 28% / 0.4);
+  }
+
+  /* ✨ COUNTER GLOW - Efeito nos números */
   .counter-glow {
-    text-shadow: 0 0 40px hsl(45 73% 52% / 0.5);
+    text-shadow: 0 0 40px hsl(348 72% 45% / 0.5);
   }
 
+  /* 🏆 HERO TITLE - Tipografia impactante */
   .hero-title {
     font-family: 'Clash Display', 'Plus Jakarta Sans', sans-serif;
     letter-spacing: -0.02em;
+  }
+
+  /* 🦸 HEROIC ACCENT - Efeito Spider-Man/Superman */
+  .heroic-border {
+    border-image: linear-gradient(135deg, hsl(348 72% 28%), hsl(212 100% 47%), hsl(45 100% 50%)) 1;
+  }
+
+  .heroic-glow {
+    box-shadow: 
+      0 0 30px -10px hsl(348 72% 28% / 0.4),
+      0 0 60px -20px hsl(212 100% 47% / 0.3);
   }
 
   /* Smooth page transitions */
