@@ -2836,17 +2836,26 @@ export type Database = {
         Row: {
           avatar_url: string | null
           id: string | null
+          level: number | null
           nome: string | null
+          streak_days: number | null
+          xp_total: number | null
         }
         Insert: {
           avatar_url?: string | null
           id?: string | null
+          level?: number | null
           nome?: string | null
+          streak_days?: number | null
+          xp_total?: number | null
         }
         Update: {
           avatar_url?: string | null
           id?: string | null
+          level?: number | null
           nome?: string | null
+          streak_days?: number | null
+          xp_total?: number | null
         }
         Relationships: []
       }
