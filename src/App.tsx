@@ -20,6 +20,10 @@ import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import GestaoEquipe from "./pages/GestaoEquipe";
 import Guia from "./pages/Guia";
+import Calendario from "./pages/Calendario";
+import Pagamentos from "./pages/Pagamentos";
+import Contabilidade from "./pages/Contabilidade";
+import GestaoSite from "./pages/GestaoSite";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -146,6 +150,10 @@ const App = () => (
                 </ProtectedRoute>
               }
             />
+            <Route path="/calendario" element={<ProtectedRoute><AppLayout><Calendario /></AppLayout></ProtectedRoute>} />
+            <Route path="/pagamentos" element={<ProtectedRoute><AppLayout><Pagamentos /></AppLayout></ProtectedRoute>} />
+            <Route path="/contabilidade" element={<ProtectedRoute><AppLayout><Contabilidade /></AppLayout></ProtectedRoute>} />
+            <Route path="/gestao-site" element={<ProtectedRoute><AppLayout><GestaoSite /></AppLayout></ProtectedRoute>} />
             
             {/* Catch all */}
             <Route path="*" element={<NotFound />} />
