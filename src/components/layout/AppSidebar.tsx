@@ -21,7 +21,14 @@ import {
   Link2,
   Shield,
   Trophy,
-  PlayCircle
+  PlayCircle,
+  Megaphone,
+  Rocket,
+  BarChart3,
+  FolderOpen,
+  PenTool,
+  Monitor,
+  MapPin
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -49,6 +56,19 @@ const mainMenuItems = [
   { title: "Funcionários", url: "/funcionarios", icon: Users },
   { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck },
   { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog },
+];
+
+const marketingMenuItems = [
+  { title: "Marketing", url: "/marketing", icon: Megaphone },
+  { title: "Lançamento", url: "/lancamento", icon: Rocket },
+  { title: "Métricas", url: "/metricas", icon: BarChart3 },
+  { title: "Arquivos Importantes", url: "/arquivos", icon: FolderOpen },
+];
+
+const classMenuItems = [
+  { title: "Planejamento de Aula", url: "/planejamento-aula", icon: PenTool },
+  { title: "Turmas Online", url: "/turmas-online", icon: Monitor },
+  { title: "Turmas Presenciais", url: "/turmas-presenciais", icon: MapPin },
 ];
 
 const financeMenuItems = [
@@ -110,6 +130,62 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {mainMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className="flex items-center gap-3"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Marketing Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Marketing & Lançamento</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {marketingMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className="flex items-center gap-3"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Class Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Aulas & Turmas</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {classMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild
