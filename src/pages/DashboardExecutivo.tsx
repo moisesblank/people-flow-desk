@@ -1,6 +1,6 @@
 // ============================================
-// SYNAPSE v5.0 - Dashboard Executivo
-// Business Intelligence & KPIs Avançados
+// MOISÉS MEDEIROS v5.0 - Dashboard Executivo
+// Curso de Química - Business Intelligence
 // Design Futurista Cyber
 // ============================================
 
@@ -324,7 +324,7 @@ export default function DashboardExecutivo() {
               transition={{ repeat: Infinity, duration: 2 }}
             >
               <Cpu className="h-4 w-4 text-accent" />
-              <span className="text-xs font-bold text-accent tracking-widest uppercase">SYNAPSE BI</span>
+              <span className="text-xs font-bold text-accent tracking-widest uppercase">CURSO DE QUÍMICA</span>
             </motion.div>
             
             {/* Live indicator */}
