@@ -1,11 +1,11 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - CERTIFICATE GENERATOR
-// Pilar 9: Plataforma LMS
+// MOISÉS MEDEIROS v7.0 - CERTIFICATE GENERATOR
+// Spider-Man Theme - Certificados com design premium
 // ============================================
 
 import { useRef } from "react";
 import { motion } from "framer-motion";
-import { Download, Award, Share2, CheckCircle } from "lucide-react";
+import { Download, Award, Share2, CheckCircle, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/hooks/use-toast";
 
@@ -56,25 +56,34 @@ export function Certificate({
 
   return (
     <div className="space-y-6">
-      {/* Certificado Visual */}
+      {/* Certificado Visual - Spider-Man Theme */}
       <motion.div
         ref={certificateRef}
         initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="relative bg-gradient-to-br from-slate-50 to-slate-100 dark:from-slate-900 dark:to-slate-800 rounded-3xl p-8 md:p-12 border-4 border-primary/20 shadow-2xl overflow-hidden"
+        className="relative bg-gradient-to-br from-background via-background to-primary/5 dark:from-slate-900 dark:to-slate-800 rounded-3xl p-8 md:p-12 border-4 border-primary/30 shadow-2xl overflow-hidden"
       >
+        {/* Spider-Man Web Pattern */}
+        <div className="absolute inset-0 opacity-5">
+          <div className="absolute top-0 left-0 w-full h-full" 
+               style={{ 
+                 backgroundImage: 'radial-gradient(circle, hsl(var(--primary)) 1px, transparent 1px)',
+                 backgroundSize: '30px 30px'
+               }} 
+          />
+        </div>
         {/* Decorative Elements */}
-        <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-primary/10 to-transparent rounded-full -translate-x-1/2 -translate-y-1/2" />
-        <div className="absolute bottom-0 right-0 w-60 h-60 bg-gradient-to-tl from-primary/10 to-transparent rounded-full translate-x-1/3 translate-y-1/3" />
+        <div className="absolute top-0 left-0 w-40 h-40 bg-gradient-to-br from-primary/20 to-transparent rounded-full -translate-x-1/2 -translate-y-1/2" />
+        <div className="absolute bottom-0 right-0 w-60 h-60 bg-gradient-to-tl from-spider-blue/20 to-transparent rounded-full translate-x-1/3 translate-y-1/3" />
         
         {/* Border Pattern */}
         <div className="absolute inset-4 border-2 border-primary/10 rounded-2xl pointer-events-none" />
 
         <div className="relative text-center space-y-6">
-          {/* Logo/Badge */}
+          {/* Logo/Badge - Spider-Man Style */}
           <div className="flex justify-center">
             <motion.div 
-              className="p-4 rounded-full bg-gradient-to-br from-primary to-purple-600 shadow-lg"
+              className="p-4 rounded-full bg-gradient-spider shadow-lg relative"
               animate={{ 
                 boxShadow: [
                   "0 0 20px hsl(var(--primary) / 0.3)",
@@ -85,18 +94,25 @@ export function Certificate({
               transition={{ repeat: Infinity, duration: 2 }}
             >
               <Award className="h-10 w-10 text-white" />
+              <motion.div
+                className="absolute -top-1 -right-1"
+                animate={{ rotate: [0, 15, -15, 0] }}
+                transition={{ repeat: Infinity, duration: 3 }}
+              >
+                <Sparkles className="h-5 w-5 text-stats-gold" />
+              </motion.div>
             </motion.div>
           </div>
 
           {/* Header */}
           <div>
-            <p className="text-xs uppercase tracking-[0.3em] text-muted-foreground mb-2">
+            <p className="text-xs uppercase tracking-[0.3em] text-primary mb-2">
               Certificado de Conclusão
             </p>
-            <h1 className="text-3xl md:text-4xl font-bold text-foreground">
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-spider-blue to-primary bg-clip-text text-transparent">
               Moisés Medeiros
             </h1>
-            <p className="text-sm text-muted-foreground mt-1">Plataforma Educacional</p>
+            <p className="text-sm text-muted-foreground mt-1">Curso de Química para Vestibulares</p>
           </div>
 
           {/* Divider */}

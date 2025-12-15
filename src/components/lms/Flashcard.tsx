@@ -1,13 +1,13 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - FLASHCARD COMPONENT
-// Pilar 7: IA + Pilar 9: LMS
+// MOISÉS MEDEIROS v7.0 - FLASHCARD COMPONENT
+// Spider-Man Theme - Cards de Estudo Interativos
 // ============================================
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   RotateCcw, 
-  ChevronLeft, 
+  ChevronLeft,
   ChevronRight, 
   Check, 
   X,

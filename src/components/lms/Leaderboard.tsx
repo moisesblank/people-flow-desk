@@ -1,5 +1,10 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - LEADERBOARD
+// Spider-Man Theme - Ranking de XP
+// ============================================
+
 import { motion } from 'framer-motion';
-import { Trophy, Medal, Crown, Flame, User } from 'lucide-react';
+import { Trophy, Medal, Crown, Flame, User, Zap } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -13,13 +18,14 @@ interface LeaderboardProps {
   compact?: boolean;
 }
 
+// Spider-Man themed rank styles
 const rankStyles = {
   1: {
     icon: Crown,
-    bg: 'bg-gradient-to-r from-amber-500/20 to-yellow-500/20',
-    border: 'border-amber-500/50',
-    text: 'text-amber-500',
-    badge: 'bg-amber-500 text-amber-950',
+    bg: 'bg-gradient-to-r from-stats-gold/20 to-amber-500/20',
+    border: 'border-stats-gold/50',
+    text: 'text-stats-gold',
+    badge: 'bg-gradient-to-r from-stats-gold to-amber-500 text-black',
   },
   2: {
     icon: Medal,
@@ -30,10 +36,10 @@ const rankStyles = {
   },
   3: {
     icon: Trophy,
-    bg: 'bg-gradient-to-r from-amber-700/20 to-orange-700/20',
-    border: 'border-amber-700/50',
-    text: 'text-amber-700',
-    badge: 'bg-amber-700 text-white',
+    bg: 'bg-gradient-to-r from-primary/20 to-spider-blue/20',
+    border: 'border-primary/50',
+    text: 'text-primary',
+    badge: 'bg-gradient-spider text-white',
   },
 };
 
