@@ -210,9 +210,73 @@ export function calculatePasswordStrength(password: string): {
   if (/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) score += 1;
   if (!/(.)\1{2,}/.test(password)) score += 1; // Sem 3+ caracteres repetidos
 
-  if (score <= 2) return { score, label: "Muito fraca", color: "bg-red-500" };
-  if (score <= 4) return { score, label: "Fraca", color: "bg-orange-500" };
-  if (score <= 6) return { score, label: "Moderada", color: "bg-yellow-500" };
-  if (score <= 7) return { score, label: "Forte", color: "bg-green-500" };
-  return { score, label: "Muito forte", color: "bg-emerald-500" };
+  if (score <= 2) return { score, label: "Muito fraca", color: "bg-destructive" };
+  if (score <= 4) return { score, label: "Fraca", color: "bg-warning" };
+  if (score <= 6) return { score, label: "Moderada", color: "bg-stats-gold" };
+  if (score <= 7) return { score, label: "Forte", color: "bg-success" };
+  return { score, label: "Muito forte", color: "bg-stats-green" };
+}
+
+// ============================================
+// GAMIFICATION CONSTANTS
+// ============================================
+
+export const LEVEL_THRESHOLDS = [
+  { level: 1, xp: 0, title: 'Iniciante', badge: '🌱' },
+  { level: 2, xp: 100, title: 'Aprendiz', badge: '📚' },
+  { level: 3, xp: 300, title: 'Estudante', badge: '✏️' },
+  { level: 4, xp: 600, title: 'Dedicado', badge: '🎯' },
+  { level: 5, xp: 1000, title: 'Avançado', badge: '🚀' },
+  { level: 6, xp: 1500, title: 'Expert', badge: '💎' },
+  { level: 7, xp: 2200, title: 'Mestre', badge: '👑' },
+  { level: 8, xp: 3000, title: 'Lenda', badge: '🏆' },
+  { level: 9, xp: 4000, title: 'Elite', badge: '⭐' },
+  { level: 10, xp: 5500, title: 'Grandmaster', badge: '🌟' },
+] as const;
+
+export const STREAK_MULTIPLIERS = [
+  { days: 3, multiplier: 1.1 },
+  { days: 7, multiplier: 1.25 },
+  { days: 14, multiplier: 1.5 },
+  { days: 30, multiplier: 2.0 },
+] as const;
+
+// ============================================
+// GAMIFICATION HELPER FUNCTIONS
+// ============================================
+
+export type LevelInfo = typeof LEVEL_THRESHOLDS[number];
+
+export function getLevelInfo(xp: number) {
+  // Encontrar o maior nível que o usuário alcançou
+  let level: LevelInfo = LEVEL_THRESHOLDS[0];
+  for (const threshold of LEVEL_THRESHOLDS) {
+    if (xp >= threshold.xp) {
+      level = threshold;
+    }
+  }
+  
+  const nextLevel = LEVEL_THRESHOLDS.find((l) => l.xp > xp);
+  
+  const currentXp = xp - level.xp;
+  const xpForNextLevel = nextLevel ? nextLevel.xp - level.xp : 0;
+  const progress = nextLevel ? (currentXp / xpForNextLevel) * 100 : 100;
+  
+  return {
+    ...level,
+    currentXp,
+    xpForNextLevel,
+    progress,
+    nextLevel
+  };
+}
+
+export function getStreakMultiplier(streakDays: number): number {
+  let multiplier = 1;
+  for (const streak of STREAK_MULTIPLIERS) {
+    if (streakDays >= streak.days) {
+      multiplier = streak.multiplier;
+    }
+  }
+  return multiplier;
 }
