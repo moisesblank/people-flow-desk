@@ -9,7 +9,12 @@ import {
   Building2,
   GraduationCap,
   Handshake,
-  Sparkles
+  Sparkles,
+  Calendar,
+  CreditCard,
+  Globe,
+  CheckSquare,
+  AlertCircle
 } from "lucide-react";
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -39,11 +44,15 @@ export default function Dashboard() {
     income: 0,
     affiliates: 0,
     students: 0,
+    pendingTasks: 0,
+    pendingPayments: 0,
+    sitePendencias: 0,
   });
   const [monthlyData, setMonthlyData] = useState<any[]>([]);
   const [categoryData, setCategoryData] = useState<any[]>([]);
   const [recentTransactions, setRecentTransactions] = useState<any[]>([]);
   const [budgetAlerts, setBudgetAlerts] = useState<any[]>([]);
+  const [upcomingTasks, setUpcomingTasks] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -57,7 +66,10 @@ export default function Dashboard() {
           companyExtraRes,
           incomeRes,
           affiliatesRes,
-          studentsRes
+          studentsRes,
+          calendarTasksRes,
+          paymentsRes,
+          sitePendenciasRes
         ] = await Promise.all([
           supabase.from("employees").select("id", { count: "exact", head: true }),
           supabase.from("personal_fixed_expenses").select("valor"),
@@ -67,6 +79,9 @@ export default function Dashboard() {
           supabase.from("income").select("valor, fonte, created_at"),
           supabase.from("affiliates").select("id", { count: "exact", head: true }),
           supabase.from("students").select("id", { count: "exact", head: true }),
+          supabase.from("calendar_tasks").select("*").eq("is_completed", false),
+          supabase.from("payments").select("*").eq("status", "pendente"),
+          supabase.from("website_pendencias").select("*").neq("status", "concluido"),
         ]);
 
         const personalFixed = personalFixedRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
@@ -82,7 +97,19 @@ export default function Dashboard() {
           income: totalIncome,
           affiliates: affiliatesRes.count || 0,
           students: studentsRes.count || 0,
+          pendingTasks: calendarTasksRes.data?.length || 0,
+          pendingPayments: paymentsRes.data?.length || 0,
+          sitePendencias: sitePendenciasRes.data?.length || 0,
         });
+
+        // Set upcoming tasks for display
+        const tasks = calendarTasksRes.data?.slice(0, 5).map(task => ({
+          id: task.id,
+          title: task.title,
+          date: task.task_date,
+          priority: task.priority,
+        })) || [];
+        setUpcomingTasks(tasks);
 
         // Process category data for pie chart
         const categoryMap: { [key: string]: number } = {};
@@ -195,6 +222,24 @@ export default function Dashboard() {
             type: "danger",
             title: "Orçamento estourado!",
             message: "Você gastou mais do que recebeu neste mês.",
+          });
+        }
+
+        if ((paymentsRes.data?.length || 0) > 0) {
+          alerts.push({
+            id: "3",
+            type: "info",
+            title: `${paymentsRes.data?.length} pagamentos pendentes`,
+            message: "Confira seus pagamentos na área de Pagamentos.",
+          });
+        }
+
+        if ((sitePendenciasRes.data?.length || 0) > 0) {
+          alerts.push({
+            id: "4",
+            type: "warning",
+            title: `${sitePendenciasRes.data?.length} pendências do site`,
+            message: "Há tarefas pendentes na Gestão do Site.",
           });
         }
 
@@ -329,6 +374,60 @@ export default function Dashboard() {
             delay={7}
           />
         </section>
+
+        {/* Tasks & Pendências Stats */}
+        <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
+          <StatCard
+            title="Tarefas Pendentes"
+            value={stats.pendingTasks}
+            icon={CheckSquare}
+            variant="purple"
+            delay={8}
+          />
+          <StatCard
+            title="Pagamentos Pendentes"
+            value={stats.pendingPayments}
+            icon={CreditCard}
+            variant="red"
+            delay={9}
+          />
+          <StatCard
+            title="Pendências Site"
+            value={stats.sitePendencias}
+            icon={Globe}
+            variant="blue"
+            delay={10}
+          />
+        </section>
+
+        {/* Upcoming Tasks */}
+        {upcomingTasks.length > 0 && (
+          <motion.section
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.6 }}
+            className="glass-card rounded-3xl p-6 mb-8"
+          >
+            <div className="flex items-center gap-3 mb-4">
+              <Calendar className="h-5 w-5 text-primary" />
+              <h3 className="text-lg font-semibold">Próximas Tarefas</h3>
+            </div>
+            <div className="space-y-3">
+              {upcomingTasks.map((task: any) => (
+                <div key={task.id} className="flex items-center justify-between p-3 bg-secondary/30 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${
+                      task.priority === 'alta' ? 'bg-red-500' : 
+                      task.priority === 'media' ? 'bg-yellow-500' : 'bg-green-500'
+                    }`} />
+                    <span className="text-sm font-medium">{task.title}</span>
+                  </div>
+                  <span className="text-xs text-muted-foreground">{task.date}</span>
+                </div>
+              ))}
+            </div>
+          </motion.section>
+        )}
 
         {/* Recent Transactions and Welcome */}
         <section className="grid gap-6 lg:grid-cols-2">
