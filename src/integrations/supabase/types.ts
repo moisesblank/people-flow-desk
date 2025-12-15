@@ -170,6 +170,45 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          icon: string | null
+          id: string
+          name: string
+          rarity: string | null
+          requirement_type: string
+          requirement_value: number | null
+          xp_reward: number | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name: string
+          rarity?: string | null
+          requirement_type: string
+          requirement_value?: number | null
+          xp_reward?: number | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          icon?: string | null
+          id?: string
+          name?: string
+          rarity?: string | null
+          requirement_type?: string
+          requirement_value?: number | null
+          xp_reward?: number | null
+        }
+        Relationships: []
+      }
       calendar_tasks: {
         Row: {
           category: string | null
@@ -326,6 +365,62 @@ export type Database = {
         }
         Relationships: []
       }
+      courses: {
+        Row: {
+          category: string | null
+          created_at: string | null
+          description: string | null
+          difficulty_level: string | null
+          estimated_hours: number | null
+          id: string
+          instructor_id: string | null
+          is_published: boolean | null
+          price: number | null
+          thumbnail_url: string | null
+          title: string
+          total_xp: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_hours?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_published?: boolean | null
+          price?: number | null
+          thumbnail_url?: string | null
+          title: string
+          total_xp?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          estimated_hours?: number | null
+          id?: string
+          instructor_id?: string | null
+          is_published?: boolean | null
+          price?: number | null
+          thumbnail_url?: string | null
+          title?: string
+          total_xp?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       custom_rules: {
         Row: {
           actions: Json | null
@@ -421,6 +516,54 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      enrollments: {
+        Row: {
+          certificate_url: string | null
+          completed_at: string | null
+          course_id: string
+          enrolled_at: string | null
+          id: string
+          progress_percentage: number | null
+          status: string | null
+          user_id: string
+        }
+        Insert: {
+          certificate_url?: string | null
+          completed_at?: string | null
+          course_id: string
+          enrolled_at?: string | null
+          id?: string
+          progress_percentage?: number | null
+          status?: string | null
+          user_id: string
+        }
+        Update: {
+          certificate_url?: string | null
+          completed_at?: string | null
+          course_id?: string
+          enrolled_at?: string | null
+          id?: string
+          progress_percentage?: number | null
+          status?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrollments_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_goals: {
         Row: {
@@ -568,6 +711,110 @@ export type Database = {
         }
         Relationships: []
       }
+      lesson_progress: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          id: string
+          last_position_seconds: number | null
+          lesson_id: string
+          updated_at: string | null
+          user_id: string
+          watch_time_seconds: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          last_position_seconds?: number | null
+          lesson_id: string
+          updated_at?: string | null
+          user_id: string
+          watch_time_seconds?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          id?: string
+          last_position_seconds?: number | null
+          lesson_id?: string
+          updated_at?: string | null
+          user_id?: string
+          watch_time_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lessons: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          description: string | null
+          duration_minutes: number | null
+          id: string
+          is_free: boolean | null
+          module_id: string
+          position: number | null
+          title: string
+          updated_at: string | null
+          video_url: string | null
+          xp_reward: number | null
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_free?: boolean | null
+          module_id: string
+          position?: number | null
+          title: string
+          updated_at?: string | null
+          video_url?: string | null
+          xp_reward?: number | null
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          description?: string | null
+          duration_minutes?: number | null
+          id?: string
+          is_free?: boolean | null
+          module_id?: string
+          position?: number | null
+          title?: string
+          updated_at?: string | null
+          video_url?: string | null
+          xp_reward?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lessons_module_id_fkey"
+            columns: ["module_id"]
+            isOneToOne: false
+            referencedRelation: "modules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metricas_marketing: {
         Row: {
           cac: number
@@ -612,6 +859,100 @@ export type Database = {
           roi_percentual?: number
         }
         Relationships: []
+      }
+      modules: {
+        Row: {
+          course_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          position: number | null
+          title: string
+          updated_at: string | null
+          xp_reward: number | null
+        }
+        Insert: {
+          course_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          position?: number | null
+          title: string
+          updated_at?: string | null
+          xp_reward?: number | null
+        }
+        Update: {
+          course_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          position?: number | null
+          title?: string
+          updated_at?: string | null
+          xp_reward?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          created_at: string | null
+          currency: string | null
+          id: string
+          metadata: Json | null
+          payment_type: string
+          reference_id: string | null
+          reference_type: string | null
+          status: string | null
+          stripe_payment_intent_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_type: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          currency?: string | null
+          id?: string
+          metadata?: Json | null
+          payment_type?: string
+          reference_id?: string | null
+          reference_type?: string | null
+          status?: string | null
+          stripe_payment_intent_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {
@@ -906,6 +1247,56 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          cancel_at_period_end: boolean | null
+          created_at: string | null
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_type: string | null
+          status: string | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          cancel_at_period_end?: boolean | null
+          created_at?: string | null
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_type?: string | null
+          status?: string | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       synapse_integrations: {
         Row: {
           config: Json | null
@@ -1107,6 +1498,95 @@ export type Database = {
         }
         Relationships: []
       }
+      user_badges: {
+        Row: {
+          badge_id: string
+          earned_at: string | null
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          earned_at?: string | null
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          earned_at?: string | null
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_gamification: {
+        Row: {
+          badges_earned: number | null
+          courses_completed: number | null
+          created_at: string | null
+          current_level: number | null
+          current_streak: number | null
+          id: string
+          last_activity_date: string | null
+          lessons_completed: number | null
+          longest_streak: number | null
+          total_xp: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          badges_earned?: number | null
+          courses_completed?: number | null
+          created_at?: string | null
+          current_level?: number | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          lessons_completed?: number | null
+          longest_streak?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          badges_earned?: number | null
+          courses_completed?: number | null
+          created_at?: string | null
+          current_level?: number | null
+          current_streak?: number | null
+          id?: string
+          last_activity_date?: string | null
+          lessons_completed?: number | null
+          longest_streak?: number | null
+          total_xp?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_gamification_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           id: string
@@ -1200,6 +1680,44 @@ export type Database = {
         }
         Relationships: []
       }
+      xp_history: {
+        Row: {
+          amount: number
+          created_at: string | null
+          description: string | null
+          id: string
+          source: string
+          source_id: string | null
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          source: string
+          source_id?: string | null
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          source?: string
+          source_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "xp_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       employees_safe: {
@@ -1258,6 +1776,16 @@ export type Database = {
       }
     }
     Functions: {
+      add_user_xp: {
+        Args: {
+          p_amount: number
+          p_description?: string
+          p_source: string
+          p_source_id?: string
+          p_user_id: string
+        }
+        Returns: number
+      }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       get_masked_salary: {
         Args: { emp_salary: number; emp_user_id: string }
@@ -1271,6 +1799,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
+      update_user_streak: { Args: { p_user_id: string }; Returns: number }
     }
     Enums: {
       app_role: "owner" | "admin" | "employee"
