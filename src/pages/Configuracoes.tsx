@@ -48,6 +48,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { useOnboarding } from "@/components/onboarding/OnboardingManager";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { LogoUploader } from "@/components/settings/LogoUploader";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
@@ -612,19 +613,7 @@ export default function Configuracoes() {
                   <Switch checked={settings.darkMode} disabled />
                 </div>
 
-                <div className="p-4 rounded-xl bg-secondary/30">
-                  <div className="flex items-center gap-3 mb-4">
-                    <ImageIcon className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                      <Label>Logo da Empresa</Label>
-                      <p className="text-xs text-muted-foreground">Faça upload do seu logotipo</p>
-                    </div>
-                  </div>
-                  <Button variant="outline" className="w-full" disabled>
-                    <Upload className="h-4 w-4 mr-2" />
-                    Em breve
-                  </Button>
-                </div>
+                <LogoUploader />
 
                 <div className="p-4 rounded-xl bg-secondary/30">
                   <Label className="mb-2 block">Cor Principal</Label>

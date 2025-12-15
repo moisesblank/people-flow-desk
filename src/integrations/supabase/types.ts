@@ -248,6 +248,36 @@ export type Database = {
         }
         Relationships: []
       }
+      branding_settings: {
+        Row: {
+          company_name: string | null
+          id: string
+          logo_url: string | null
+          primary_color: string | null
+          secondary_color: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          company_name?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          company_name?: string | null
+          id?: string
+          logo_url?: string | null
+          primary_color?: string | null
+          secondary_color?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       calendar_tasks: {
         Row: {
           category: string | null
@@ -630,6 +660,48 @@ export type Database = {
           rule_name?: string
           rule_type?: string
           trigger_event?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      dev_tasks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          description: string | null
+          id: string
+          member_name: string
+          member_role: string | null
+          priority: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          member_name: string
+          member_role?: string | null
+          priority?: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          description?: string | null
+          id?: string
+          member_name?: string
+          member_role?: string | null
+          priority?: string
+          status?: string
+          title?: string
           updated_at?: string
         }
         Relationships: []
@@ -1554,6 +1626,36 @@ export type Database = {
           nome?: string
           status?: string | null
           wordpress_id?: string | null
+        }
+        Relationships: []
+      }
+      studio_checklist: {
+        Row: {
+          category: string
+          completed_at: string | null
+          completed_by: string | null
+          created_at: string
+          id: string
+          is_completed: boolean
+          task: string
+        }
+        Insert: {
+          category?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          task: string
+        }
+        Update: {
+          category?: string
+          completed_at?: string | null
+          completed_by?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean
+          task?: string
         }
         Relationships: []
       }
