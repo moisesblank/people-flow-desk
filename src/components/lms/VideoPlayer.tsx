@@ -1,13 +1,13 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - VIDEO PLAYER LMS
-// Pilar 9: Plataforma LMS - Player com notas
+// MOISÉS MEDEIROS v7.0 - VIDEO PLAYER LMS
+// Spider-Man Theme - Player com notas e XP
 // ============================================
 
 import { useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, 
-  Pause, 
+  Pause,
   Volume2, 
   VolumeX, 
   Maximize, 

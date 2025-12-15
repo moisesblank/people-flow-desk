@@ -1,10 +1,10 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - COURSE PROGRESS
-// Pilar 9: Plataforma LMS
+// MOISÉS MEDEIROS v7.0 - COURSE PROGRESS
+// Spider-Man Theme - Progresso do Curso
 // ============================================
 
 import { motion } from "framer-motion";
-import { CheckCircle2, Circle, Lock, Play, Clock, Award } from "lucide-react";
+import { CheckCircle2, Circle, Lock, Play, Clock, Award, Zap } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
