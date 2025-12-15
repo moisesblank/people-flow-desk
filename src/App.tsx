@@ -9,9 +9,9 @@ import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GodModePanel } from "@/components/editor/GodModePanel";
 import { SessionTracker } from "@/components/SessionTracker";
-import { Suspense, lazy } from "react";
+import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
+import { Suspense, lazy, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
-
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -70,6 +70,91 @@ const ProtectedPage = ({ children }: { children: React.ReactNode }) => (
   </ProtectedRoute>
 );
 
+// Global keyboard shortcuts overlay hook
+function useGlobalShortcutsOverlay() {
+  const [isOpen, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "?" && !e.ctrlKey && !e.shiftKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA" && !target.isContentEditable) {
+          e.preventDefault();
+          setIsOpen(prev => !prev);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  return { isOpen, setIsOpen };
+}
+
+// App wrapper with shortcuts overlay
+function AppContent() {
+  const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
+
+  return (
+    <>
+      <SessionTracker />
+      <GodModePanel />
+      <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <Suspense fallback={<PageLoader />}>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/site" element={<LandingPage />} />
+          <Route path="/auth" element={<Auth />} />
+          <Route path="/termos" element={<TermosDeUso />} />
+          <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+          
+          {/* Protected routes with layout */}
+          <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+          <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+          <Route path="/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
+          <Route path="/financas-pessoais" element={<ProtectedPage><FinancasPessoais /></ProtectedPage>} />
+          <Route path="/financas-empresa" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+          <Route path="/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
+          <Route path="/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
+          <Route path="/alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
+          <Route path="/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
+          <Route path="/configuracoes" element={<ProtectedPage><Configuracoes /></ProtectedPage>} />
+          <Route path="/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
+          <Route path="/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />
+          <Route path="/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
+          <Route path="/pagamentos" element={<ProtectedPage><Pagamentos /></ProtectedPage>} />
+          <Route path="/contabilidade" element={<ProtectedPage><Contabilidade /></ProtectedPage>} />
+          <Route path="/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
+          <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
+          <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
+          <Route path="/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
+          <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
+          <Route path="/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
+          <Route path="/cursos/:courseId" element={<ProtectedPage><CursoDetalhe /></ProtectedPage>} />
+          <Route path="/cursos/:courseId/aula/:lessonId" element={<ProtectedPage><Aula /></ProtectedPage>} />
+          <Route path="/marketing" element={<ProtectedPage><Marketing /></ProtectedPage>} />
+          <Route path="/lancamento" element={<ProtectedPage><Lancamento /></ProtectedPage>} />
+          <Route path="/metricas" element={<ProtectedPage><Metricas /></ProtectedPage>} />
+          <Route path="/arquivos" element={<ProtectedPage><Arquivos /></ProtectedPage>} />
+          <Route path="/planejamento-aula" element={<ProtectedPage><PlanejamentoAula /></ProtectedPage>} />
+          <Route path="/turmas-online" element={<ProtectedPage><TurmasOnline /></ProtectedPage>} />
+          <Route path="/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
+          <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
+          <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
+          <Route path="/ponto-eletronico" element={<ProtectedPage><PontoEletronico /></ProtectedPage>} />
+          <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
+          <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
+          <Route path="/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
+          
+          {/* Catch all */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+    </>
+  );
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
@@ -78,57 +163,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
-            <SessionTracker />
-            <GodModePanel />
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {/* Public routes */}
-                <Route path="/site" element={<LandingPage />} />
-                <Route path="/auth" element={<Auth />} />
-                <Route path="/termos" element={<TermosDeUso />} />
-                <Route path="/privacidade" element={<PoliticaPrivacidade />} />
-                
-                {/* Protected routes with layout */}
-                <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
-                <Route path="/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
-                <Route path="/financas-pessoais" element={<ProtectedPage><FinancasPessoais /></ProtectedPage>} />
-                <Route path="/financas-empresa" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
-                <Route path="/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
-                <Route path="/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
-                <Route path="/alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
-                <Route path="/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
-                <Route path="/configuracoes" element={<ProtectedPage><Configuracoes /></ProtectedPage>} />
-                <Route path="/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
-                <Route path="/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />
-                <Route path="/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
-                <Route path="/pagamentos" element={<ProtectedPage><Pagamentos /></ProtectedPage>} />
-                <Route path="/contabilidade" element={<ProtectedPage><Contabilidade /></ProtectedPage>} />
-                <Route path="/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
-                <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
-                <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
-                <Route path="/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
-                <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
-                <Route path="/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
-                <Route path="/cursos/:courseId" element={<ProtectedPage><CursoDetalhe /></ProtectedPage>} />
-                <Route path="/cursos/:courseId/aula/:lessonId" element={<ProtectedPage><Aula /></ProtectedPage>} />
-                <Route path="/marketing" element={<ProtectedPage><Marketing /></ProtectedPage>} />
-                <Route path="/lancamento" element={<ProtectedPage><Lancamento /></ProtectedPage>} />
-                <Route path="/metricas" element={<ProtectedPage><Metricas /></ProtectedPage>} />
-                <Route path="/arquivos" element={<ProtectedPage><Arquivos /></ProtectedPage>} />
-                <Route path="/planejamento-aula" element={<ProtectedPage><PlanejamentoAula /></ProtectedPage>} />
-                <Route path="/turmas-online" element={<ProtectedPage><TurmasOnline /></ProtectedPage>} />
-                <Route path="/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
-                <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
-                <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
-                <Route path="/ponto-eletronico" element={<ProtectedPage><PontoEletronico /></ProtectedPage>} />
-                <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
-                <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
-                <Route path="/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
-                
-                {/* Catch all */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </Suspense>
+            <AppContent />
           </BrowserRouter>
         </TooltipProvider>
       </GodModeProvider>
