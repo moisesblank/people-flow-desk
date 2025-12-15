@@ -16,6 +16,8 @@ import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { AnimatedAtom, MiniPeriodicTable, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
+import { StudentAnalytics } from "@/components/students/StudentAnalytics";
+import { StudentProgressCard } from "@/components/students/StudentProgressCard";
 import studentsHeroImage from "@/assets/students-chemistry-hero.jpg";
 
 interface Student {
@@ -163,6 +165,23 @@ export default function Alunos() {
           <StatCard title="Ativos" value={ativos} icon={GraduationCap} variant="green" delay={1} />
           <StatCard title="Concluídos" value={concluidos} icon={Award} variant="purple" delay={2} />
           <StatCard title="Taxa Aprovação" value={students.length > 0 ? Math.round((concluidos / students.length) * 100) : 0} formatFn={(v) => `${v}%`} icon={TrendingUp} variant="red" delay={3} />
+        </section>
+
+        {/* Analytics */}
+        <section className="mb-8">
+          <StudentAnalytics 
+            totalStudents={students.length}
+            activeStudents={ativos}
+            completedStudents={concluidos}
+            averageProgress={students.length > 0 ? 65 : 0}
+            averageXP={students.length > 0 ? 2450 : 0}
+            topPerformers={students.slice(0, 5).map((s, i) => ({
+              id: s.id.toString(),
+              name: s.nome,
+              xp: 3000 - (i * 200),
+              progress: 90 - (i * 5)
+            }))}
+          />
         </section>
 
         {/* Table */}

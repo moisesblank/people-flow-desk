@@ -1,6 +1,7 @@
 import { ReactNode, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Command } from "lucide-react";
+import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
@@ -27,6 +28,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const { user, signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -165,6 +167,14 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Global Search Modal */}
       <GlobalSearch isOpen={isSearchOpen} onClose={closeSearch} />
+
+      {/* AI Assistant - Global */}
+      <AIAssistantTrigger onClick={() => setIsAIAssistantOpen(true)} />
+      <AIAssistant 
+        isOpen={isAIAssistantOpen} 
+        onClose={() => setIsAIAssistantOpen(false)} 
+        context="dashboard"
+      />
     </SidebarProvider>
   );
 }

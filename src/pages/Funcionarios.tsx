@@ -19,6 +19,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
+import { TeamMetricsWidget } from "@/components/employees/TeamMetricsWidget";
 import teamHeroImage from "@/assets/team-chemistry-hero.jpg";
 import type { EmployeeStatus, Sector } from "@/types/employee";
 
@@ -345,6 +346,20 @@ export default function Funcionarios() {
               />
             </>
           )}
+        </section>
+
+        {/* Team Metrics */}
+        <section className="mb-8">
+          <TeamMetricsWidget 
+            totalEmployees={stats.total}
+            activeEmployees={stats.ativos}
+            onVacation={employees.filter(e => e.status === "ferias").length}
+            onLeave={employees.filter(e => e.status === "afastado").length}
+            topPerformers={employees.slice(0, 3).map((e, i) => ({
+              name: e.nome,
+              score: 95 - (i * 5)
+            }))}
+          />
         </section>
 
         {/* Search and Filters */}
