@@ -36,7 +36,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
-import professorPhoto from "@/assets/professor-moises.jpg";
+import professorPhoto from "@/assets/professor-moises-real.jpg";
 import heroChemistryBanner from "@/assets/hero-chemistry-banner.jpg";
 import { useEditableContent } from "@/hooks/useEditableContent";
 import { EditableText } from "@/components/editor/EditableText";
@@ -481,11 +481,11 @@ export default function LandingPage() {
                 {/* Card */}
                 <div className="relative wine-card p-8 md:p-10">
                   {/* Professor Photo */}
-                  <div className="relative mx-auto w-56 h-56 md:w-64 md:h-64 rounded-2xl overflow-hidden border-4 border-primary/40 mb-6 shadow-2xl shadow-primary/30">
+                  <div className="relative mx-auto w-72 h-72 md:w-80 md:h-80 rounded-2xl overflow-hidden border-4 border-primary/40 mb-6 shadow-2xl shadow-primary/30">
                     <img 
                       src={professorPhoto} 
                       alt="Professor Moisés Medeiros" 
-                      className="w-full h-full object-cover object-top"
+                      className="w-full h-full object-cover object-center scale-110"
                     />
                     <motion.div
                       className="absolute -bottom-2 -right-2 bg-stats-green rounded-full p-3 shadow-lg border-2 border-background"
