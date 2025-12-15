@@ -1,1 +1,4 @@
 project_id = "fyikfsasudgzsjmumdlw"
+
+[functions.webhook-synapse]
+verify_jwt = false

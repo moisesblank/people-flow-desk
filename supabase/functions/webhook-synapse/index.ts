@@ -3,7 +3,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-hotmart-hottok, x-webhook-source",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-hotmart-hottok, x-webhook-source, x-asaas-access-token",
 };
 
 // Initialize Supabase client
@@ -11,11 +11,86 @@ const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+// Security: Get webhook secrets from environment
+const HOTMART_HOTTOK = Deno.env.get("HOTMART_HOTTOK");
+const ASAAS_WEBHOOK_TOKEN = Deno.env.get("ASAAS_WEBHOOK_TOKEN");
+
 interface WebhookPayload {
   source?: string;
   event?: string;
   data?: any;
   [key: string]: any;
+}
+
+// Security: Sanitize payload for logging (remove PII)
+function sanitizePayloadForLog(payload: any): any {
+  const sensitiveFields = ['email', 'customer_email', 'buyer', 'subscriber', 'customer', 'phone', 'document', 'cpf', 'address'];
+  const sanitized = { ...payload };
+  
+  for (const field of sensitiveFields) {
+    if (sanitized[field]) {
+      if (typeof sanitized[field] === 'object') {
+        sanitized[field] = '[REDACTED]';
+      } else if (typeof sanitized[field] === 'string' && sanitized[field].includes('@')) {
+        sanitized[field] = '[EMAIL_REDACTED]';
+      }
+    }
+  }
+  
+  // Also sanitize nested data object
+  if (sanitized.data && typeof sanitized.data === 'object') {
+    sanitized.data = sanitizePayloadForLog(sanitized.data);
+  }
+  
+  return sanitized;
+}
+
+// Security: Verify Hotmart webhook signature
+function verifyHotmartSignature(request: Request, hottok: string | null): boolean {
+  if (!HOTMART_HOTTOK) {
+    console.warn("[SYNAPSE] HOTMART_HOTTOK not configured - skipping signature verification");
+    return true; // Allow if not configured (for initial setup)
+  }
+  
+  if (!hottok) {
+    console.error("[SYNAPSE] Missing x-hotmart-hottok header");
+    return false;
+  }
+  
+  return hottok === HOTMART_HOTTOK;
+}
+
+// Security: Verify Asaas webhook token
+function verifyAsaasSignature(request: Request): boolean {
+  if (!ASAAS_WEBHOOK_TOKEN) {
+    console.warn("[SYNAPSE] ASAAS_WEBHOOK_TOKEN not configured - skipping verification");
+    return true;
+  }
+  
+  const token = request.headers.get("asaas-access-token") || request.headers.get("x-asaas-access-token");
+  if (!token) {
+    console.error("[SYNAPSE] Missing Asaas access token header");
+    return false;
+  }
+  
+  return token === ASAAS_WEBHOOK_TOKEN;
+}
+
+// Security: Log security events
+async function logSecurityEvent(eventType: string, details: Record<string, any>) {
+  try {
+    await supabase.from("integration_events").insert({
+      event_type: `security_${eventType}`,
+      source: "webhook-synapse",
+      source_id: `security_${Date.now()}`,
+      payload: {
+        ...details,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  } catch (error) {
+    console.error("[SYNAPSE] Failed to log security event:", error);
+  }
 }
 
 // Parse Hotmart webhook
@@ -111,8 +186,9 @@ function mapAsaasStatus(event: string): string {
 }
 
 async function processWebhook(payload: WebhookPayload, source: string) {
+  // Security: Log sanitized payload only
   console.log(`[SYNAPSE] Processing webhook from: ${source}`);
-  console.log(`[SYNAPSE] Payload:`, JSON.stringify(payload));
+  console.log(`[SYNAPSE] Payload (sanitized):`, JSON.stringify(sanitizePayloadForLog(payload)));
 
   let transactionData;
   
@@ -131,7 +207,7 @@ async function processWebhook(payload: WebhookPayload, source: string) {
       transactionData.source = source || "unknown";
   }
 
-  // Save to integration_events (raw data)
+  // Save to integration_events (raw data - secured by RLS)
   const { error: eventError } = await supabase
     .from("integration_events")
     .insert({
@@ -160,7 +236,8 @@ async function processWebhook(payload: WebhookPayload, source: string) {
     throw txError;
   }
 
-  console.log("[SYNAPSE] Transaction saved:", transaction);
+  // Security: Log only transaction ID, not details
+  console.log("[SYNAPSE] Transaction saved with ID:", transaction?.id);
 
   // Update daily metrics
   await updateDailyMetrics(transactionData);
@@ -222,6 +299,9 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(null, { headers: corsHeaders });
   }
 
+  // Security: Get client IP for logging
+  const clientIP = req.headers.get("x-forwarded-for") || req.headers.get("cf-connecting-ip") || "unknown";
+
   try {
     // Determine source from headers or query params
     const url = new URL(req.url);
@@ -229,9 +309,26 @@ const handler = async (req: Request): Promise<Response> => {
                  req.headers.get("x-webhook-source") || 
                  "unknown";
 
+    const hottok = req.headers.get("x-hotmart-hottok");
+    
     // Auto-detect Hotmart
-    if (req.headers.get("x-hotmart-hottok")) {
+    if (hottok) {
       source = "hotmart";
+    }
+
+    // Security: Verify webhook signatures based on source
+    if (source === "hotmart") {
+      if (!verifyHotmartSignature(req, hottok)) {
+        await logSecurityEvent("invalid_signature", {
+          source: "hotmart",
+          ip: clientIP,
+          reason: "Invalid or missing hottok",
+        });
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid webhook signature" }),
+          { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     const payload: WebhookPayload = await req.json();
@@ -241,6 +338,18 @@ const handler = async (req: Request): Promise<Response> => {
       source = "hotmart";
     } else if (payload.payment && payload.event?.startsWith("PAYMENT_")) {
       source = "asaas";
+      // Verify Asaas signature
+      if (!verifyAsaasSignature(req)) {
+        await logSecurityEvent("invalid_signature", {
+          source: "asaas",
+          ip: clientIP,
+          reason: "Invalid or missing access token",
+        });
+        return new Response(
+          JSON.stringify({ success: false, error: "Invalid webhook signature" }),
+          { status: 401, headers: { "Content-Type": "application/json", ...corsHeaders } }
+        );
+      }
     }
 
     const transaction = await processWebhook(payload, source);
@@ -258,12 +367,18 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
   } catch (error: any) {
-    console.error("[SYNAPSE] Webhook error:", error);
+    console.error("[SYNAPSE] Webhook error:", error.message);
+    
+    // Security: Log errors without stack traces in response
+    await logSecurityEvent("webhook_error", {
+      ip: clientIP,
+      error: error.message,
+    });
     
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: error.message 
+        error: "Processing failed" // Don't expose internal error details
       }),
       { 
         status: 500, 

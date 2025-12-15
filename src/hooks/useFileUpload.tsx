@@ -17,6 +17,9 @@ interface UploadedFile {
   type: string;
 }
 
+// Security: Default signed URL expiration (1 hour in seconds)
+const DEFAULT_URL_EXPIRATION = 3600;
+
 export function useFileUpload(options: UploadOptions = {}) {
   const {
     bucket = 'documentos',
@@ -27,6 +30,21 @@ export function useFileUpload(options: UploadOptions = {}) {
 
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
+
+  // Security: Generate signed URL instead of public URL
+  const getSignedUrl = async (path: string, expiresIn: number = DEFAULT_URL_EXPIRATION): Promise<string | null> => {
+    try {
+      const { data, error } = await supabase.storage
+        .from(bucket)
+        .createSignedUrl(path, expiresIn);
+
+      if (error) throw error;
+      return data.signedUrl;
+    } catch (error: any) {
+      console.error('Error generating signed URL:', error);
+      return null;
+    }
+  };
 
   const uploadFile = async (file: File): Promise<UploadedFile | null> => {
     // Validate file size
@@ -58,15 +76,18 @@ export function useFileUpload(options: UploadOptions = {}) {
 
       if (error) throw error;
 
-      const { data: urlData } = supabase.storage
-        .from(bucket)
-        .getPublicUrl(data.path);
+      // Security: Use signed URL instead of public URL
+      const signedUrl = await getSignedUrl(data.path);
+      
+      if (!signedUrl) {
+        throw new Error('Failed to generate signed URL');
+      }
 
       setProgress(100);
 
       return {
         name: file.name,
-        url: urlData.publicUrl,
+        url: signedUrl,
         path: data.path,
         size: file.size,
         type: file.type
@@ -109,10 +130,17 @@ export function useFileUpload(options: UploadOptions = {}) {
     }
   };
 
+  // Security: Refresh signed URL when needed
+  const refreshUrl = async (path: string, expiresIn?: number): Promise<string | null> => {
+    return getSignedUrl(path, expiresIn);
+  };
+
   return {
     uploadFile,
     uploadMultiple,
     deleteFile,
+    refreshUrl,
+    getSignedUrl,
     uploading,
     progress
   };
