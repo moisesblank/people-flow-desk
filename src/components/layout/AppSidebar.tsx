@@ -45,7 +45,9 @@ import {
   MessageSquare,
   Activity,
   Zap,
-  Eye
+  Eye,
+  Heart,
+  FlaskConical
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -120,12 +122,19 @@ const businessMenuItems = [
   { title: "Guia", url: "/guia", icon: BookOpen },
 ];
 
+// NOVO: Menu Laboratório
+const laboratorioMenuItems = [
+  { title: "Laboratório", url: "/laboratorio", icon: Zap },
+];
+
 const siteMenuItems = [
   { title: "Site/Programador", url: "/site-programador", icon: Code },
 ];
 
+// ATUALIZADO: Menu Vida Pessoal (apenas owner)
 const pessoalMenuItems = [
   { title: "Pessoal", url: "/pessoal", icon: User },
+  { title: "Vida Pessoal", url: "/vida-pessoal", icon: Heart },
 ];
 
 const adminMenuItems = [
