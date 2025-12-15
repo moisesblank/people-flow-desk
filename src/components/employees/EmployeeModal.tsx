@@ -94,7 +94,10 @@ export function EmployeeModal({
         funcao: employee.funcao,
         setor: employee.setor,
         email: employee.email,
-        salario: (employee.salario / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 }),
+        // Se salário é null (mascarado), mantém vazio para forçar preenchimento
+        salario: employee.salario !== null 
+          ? (employee.salario / 100).toLocaleString("pt-BR", { minimumFractionDigits: 2 })
+          : "",
         dataAdmissao: employee.dataAdmissao ? new Date(employee.dataAdmissao) : undefined,
         status: employee.status,
       });

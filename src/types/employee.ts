@@ -14,7 +14,7 @@ export interface Employee {
   funcao: string;
   setor: Sector;
   email: string;
-  salario: number; // em centavos
+  salario: number | null; // em centavos, null quando mascarado para não-admins
   dataAdmissao: string;
   status: EmployeeStatus;
 }

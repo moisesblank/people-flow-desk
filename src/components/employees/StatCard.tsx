@@ -5,11 +5,12 @@ import { AnimatedCounter } from "./AnimatedCounter";
 
 interface StatCardProps {
   title: string;
-  value: number;
+  value: number | null;
   formatFn?: (value: number) => string;
   icon: LucideIcon;
   variant: "red" | "green" | "blue" | "purple";
   delay?: number;
+  hiddenText?: string; // Texto a mostrar quando value é null
 }
 
 const variantStyles = {
@@ -41,7 +42,8 @@ export function StatCard({
   formatFn = (v) => v.toString(),
   icon: Icon, 
   variant,
-  delay = 0 
+  delay = 0,
+  hiddenText = "••••••"
 }: StatCardProps) {
   const styles = variantStyles[variant];
 
@@ -64,8 +66,11 @@ export function StatCard({
           <p className="text-sm font-medium text-muted-foreground tracking-wide uppercase">
             {title}
           </p>
-          <p className="text-4xl font-bold text-foreground tracking-tight">
-            <AnimatedCounter value={value} formatFn={formatFn} />
+          <p className={cn(
+            "text-4xl font-bold tracking-tight",
+            value === null ? "text-muted-foreground" : "text-foreground"
+          )}>
+            {value === null ? hiddenText : <AnimatedCounter value={value} formatFn={formatFn} />}
           </p>
         </div>
         <motion.div 
