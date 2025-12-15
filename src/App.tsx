@@ -6,29 +6,45 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { Suspense, lazy } from "react";
+import { Loader2 } from "lucide-react";
 
-// Pages
-import Auth from "./pages/Auth";
-import Dashboard from "./pages/Dashboard";
-import Funcionarios from "./pages/Funcionarios";
-import FinancasPessoais from "./pages/FinancasPessoais";
-import FinancasEmpresa from "./pages/FinancasEmpresa";
-import Entradas from "./pages/Entradas";
-import Afiliados from "./pages/Afiliados";
-import Alunos from "./pages/Alunos";
-import Relatorios from "./pages/Relatorios";
-import Configuracoes from "./pages/Configuracoes";
-import GestaoEquipe from "./pages/GestaoEquipe";
-import Guia from "./pages/Guia";
-import Calendario from "./pages/Calendario";
-import Pagamentos from "./pages/Pagamentos";
-import Contabilidade from "./pages/Contabilidade";
-import GestaoSite from "./pages/GestaoSite";
-import AreaProfessor from "./pages/AreaProfessor";
-import PortalAluno from "./pages/PortalAluno";
-import NotFound from "./pages/NotFound";
+// Lazy load pages for better performance
+const Auth = lazy(() => import("./pages/Auth"));
+const Dashboard = lazy(() => import("./pages/Dashboard"));
+const Funcionarios = lazy(() => import("./pages/Funcionarios"));
+const FinancasPessoais = lazy(() => import("./pages/FinancasPessoais"));
+const FinancasEmpresa = lazy(() => import("./pages/FinancasEmpresa"));
+const Entradas = lazy(() => import("./pages/Entradas"));
+const Afiliados = lazy(() => import("./pages/Afiliados"));
+const Alunos = lazy(() => import("./pages/Alunos"));
+const Relatorios = lazy(() => import("./pages/Relatorios"));
+const Configuracoes = lazy(() => import("./pages/Configuracoes"));
+const GestaoEquipe = lazy(() => import("./pages/GestaoEquipe"));
+const Guia = lazy(() => import("./pages/Guia"));
+const Calendario = lazy(() => import("./pages/Calendario"));
+const Pagamentos = lazy(() => import("./pages/Pagamentos"));
+const Contabilidade = lazy(() => import("./pages/Contabilidade"));
+const GestaoSite = lazy(() => import("./pages/GestaoSite"));
+const AreaProfessor = lazy(() => import("./pages/AreaProfessor"));
+const PortalAluno = lazy(() => import("./pages/PortalAluno"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
+
+// Loading component
+const PageLoader = () => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+
+// Protected route wrapper component
+const ProtectedPage = ({ children }: { children: React.ReactNode }) => (
+  <ProtectedRoute>
+    <AppLayout>{children}</AppLayout>
+  </ProtectedRoute>
+);
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -37,131 +53,34 @@ const App = () => (
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/auth" element={<Auth />} />
-            
-            {/* Protected routes with layout */}
-            <Route
-              path="/"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Dashboard />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/funcionarios"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Funcionarios />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/financas-pessoais"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <FinancasPessoais />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/financas-empresa"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <FinancasEmpresa />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/entradas"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Entradas />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/afiliados"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Afiliados />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/alunos"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Alunos />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/relatorios"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Relatorios />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/configuracoes"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Configuracoes />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/gestao-equipe"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <GestaoEquipe />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/guia"
-              element={
-                <ProtectedRoute>
-                  <AppLayout>
-                    <Guia />
-                  </AppLayout>
-                </ProtectedRoute>
-              }
-            />
-            <Route path="/calendario" element={<ProtectedRoute><AppLayout><Calendario /></AppLayout></ProtectedRoute>} />
-            <Route path="/pagamentos" element={<ProtectedRoute><AppLayout><Pagamentos /></AppLayout></ProtectedRoute>} />
-            <Route path="/contabilidade" element={<ProtectedRoute><AppLayout><Contabilidade /></AppLayout></ProtectedRoute>} />
-            <Route path="/gestao-site" element={<ProtectedRoute><AppLayout><GestaoSite /></AppLayout></ProtectedRoute>} />
-            <Route path="/area-professor" element={<ProtectedRoute><AppLayout><AreaProfessor /></AppLayout></ProtectedRoute>} />
-            <Route path="/portal-aluno" element={<ProtectedRoute><AppLayout><PortalAluno /></AppLayout></ProtectedRoute>} />
-            
-            {/* Catch all */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/auth" element={<Auth />} />
+              
+              {/* Protected routes with layout */}
+              <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+              <Route path="/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
+              <Route path="/financas-pessoais" element={<ProtectedPage><FinancasPessoais /></ProtectedPage>} />
+              <Route path="/financas-empresa" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+              <Route path="/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
+              <Route path="/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
+              <Route path="/alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
+              <Route path="/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
+              <Route path="/configuracoes" element={<ProtectedPage><Configuracoes /></ProtectedPage>} />
+              <Route path="/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
+              <Route path="/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />
+              <Route path="/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
+              <Route path="/pagamentos" element={<ProtectedPage><Pagamentos /></ProtectedPage>} />
+              <Route path="/contabilidade" element={<ProtectedPage><Contabilidade /></ProtectedPage>} />
+              <Route path="/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
+              <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
+              <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
+              
+              {/* Catch all */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </AuthProvider>
