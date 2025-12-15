@@ -1,6 +1,6 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - XP PROGRESS
-// Pilar 8: Gamificação Completa
+// MOISES MEDEIROS v7.0 - XP PROGRESS
+// Spider-Man Theme - Gamificação Completa
 // ============================================
 
 import { motion } from "framer-motion";

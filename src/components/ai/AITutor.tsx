@@ -1,5 +1,6 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - AI TUTOR COMPONENT
+// MOISES MEDEIROS v7.0 - AI TUTOR COMPONENT
+// Spider-Man Theme: Vermelho Vinho + Azul
 // Pilar 7: Inteligência Artificial
 // ============================================
 
@@ -175,7 +176,7 @@ export function AITutor({ lessonContext, isOpen = true, onClose }: AITutorProps)
         height: isMinimized ? "auto" : "500px" 
       }}
       exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className="fixed bottom-4 right-4 w-96 bg-card border border-border rounded-2xl shadow-2xl overflow-hidden z-50"
+      className="fixed bottom-4 right-4 w-96 bg-card border border-primary/30 rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden z-50"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border bg-primary/5">

@@ -28,9 +28,9 @@ interface CourseCardProps {
 }
 
 const difficultyColors = {
-  iniciante: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20',
-  intermediario: 'bg-amber-500/10 text-amber-500 border-amber-500/20',
-  avancado: 'bg-red-500/10 text-red-500 border-red-500/20',
+  iniciante: 'bg-stats-green/10 text-stats-green border-stats-green/20',
+  intermediario: 'bg-stats-gold/10 text-stats-gold border-stats-gold/20',
+  avancado: 'bg-primary/10 text-primary border-primary/20',
 };
 
 export function CourseCard({
@@ -86,7 +86,7 @@ export function CourseCard({
               {difficulty_level}
             </Badge>
             {isFree && (
-              <Badge className="bg-emerald-500 text-white">
+              <Badge className="bg-stats-green text-white">
                 Gratuito
               </Badge>
             )}

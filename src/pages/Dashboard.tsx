@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v5.0 - DASHBOARD PRINCIPAL
-// Curso de Química - Central de Comando
-// Pilar: Business Intelligence & KPIs
+// MOISÉS MEDEIROS v7.0 - DASHBOARD PRINCIPAL
+// Spider-Man Theme: Vermelho Vinho + Azul
+// Central de Comando - Business Intelligence
 // ============================================
 
 import { useMemo, useState, useEffect } from "react";
