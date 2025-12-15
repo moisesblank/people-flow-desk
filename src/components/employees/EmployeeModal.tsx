@@ -1,10 +1,10 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { CalendarIcon, User, Briefcase, Building2, DollarSign, Mail, Loader2 } from "lucide-react";
+import { CalendarIcon, User, Briefcase, Building2, DollarSign, Mail, Loader2, Send } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 import {
@@ -37,6 +37,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import { SECTORS, STATUS_OPTIONS, type Employee, type Sector, type EmployeeStatus } from "@/types/employee";
 
 const formSchema = z.object({
@@ -67,6 +69,7 @@ export function EmployeeModal({
   isLoading,
 }: EmployeeModalProps) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const [isSendingInvite, setIsSendingInvite] = useState(false);
 
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
@@ -131,6 +134,50 @@ export function EmployeeModal({
         : format(new Date(), "yyyy-MM-dd"),
       status: data.status as EmployeeStatus,
     });
+  }
+
+  async function handleSendInvite() {
+    const email = form.getValues("email");
+    const nome = form.getValues("nome");
+    
+    if (!email) {
+      toast.error("Email é obrigatório para enviar convite");
+      return;
+    }
+    if (!nome) {
+      toast.error("Nome é obrigatório para enviar convite");
+      return;
+    }
+
+    setIsSendingInvite(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      const response = await supabase.functions.invoke("invite-employee", {
+        body: {
+          email,
+          nome,
+          funcao: form.getValues("funcao"),
+          employee_id: employee?.id,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message);
+      }
+
+      toast.success("Convite enviado!", {
+        description: `Email de acesso enviado para ${email}`
+      });
+    } catch (error: any) {
+      console.error("Error sending invite:", error);
+      toast.error("Erro ao enviar convite", {
+        description: error.message || "Tente novamente mais tarde"
+      });
+    } finally {
+      setIsSendingInvite(false);
+    }
   }
 
   return (
@@ -342,23 +389,43 @@ export function EmployeeModal({
             </div>
 
             {/* Footer */}
-            <div className="flex justify-end gap-3 pt-4 border-t border-border/50">
-              <Button
-                type="button"
-                variant="ghost"
-                onClick={() => onOpenChange(false)}
-                className="px-6 rounded-xl hover:bg-secondary"
-              >
-                Cancelar
-              </Button>
-              <Button
-                type="submit"
-                disabled={isLoading}
-                className="px-8 bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 gap-2"
-              >
-                {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                {isLoading ? "Salvando..." : "Salvar"}
-              </Button>
+            <div className="flex flex-col sm:flex-row justify-between gap-3 pt-4 border-t border-border/50">
+              <div className="flex gap-2">
+                {employee && form.getValues("email") && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleSendInvite}
+                    disabled={isSendingInvite}
+                    className="gap-2 rounded-xl border-[hsl(var(--stats-blue))]/50 text-[hsl(var(--stats-blue))] hover:bg-[hsl(var(--stats-blue))]/10"
+                  >
+                    {isSendingInvite ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <Send className="h-4 w-4" />
+                    )}
+                    Enviar Convite
+                  </Button>
+                )}
+              </div>
+              <div className="flex gap-3">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => onOpenChange(false)}
+                  className="px-6 rounded-xl hover:bg-secondary"
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isLoading}
+                  className="px-8 bg-primary hover:bg-primary/90 rounded-xl shadow-lg shadow-primary/20 gap-2"
+                >
+                  {isLoading && <Loader2 className="h-4 w-4 animate-spin" />}
+                  {isLoading ? "Salvando..." : "Salvar"}
+                </Button>
+              </div>
             </div>
           </form>
         </Form>
