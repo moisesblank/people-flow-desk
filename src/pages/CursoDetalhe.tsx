@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - CURSO DETALHE
+// Spider-Man Theme - Página de Curso Individual
+// ============================================
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { 
@@ -10,7 +15,9 @@ import {
   Trophy,
   Users,
   Star,
-  Zap
+  Zap,
+  Award,
+  GraduationCap
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,23 +29,23 @@ import { useCourse, useEnrollment, useEnroll, useCourseProgress } from '@/hooks/
 import { cn } from '@/lib/utils';
 
 export default function CursoDetalhe() {
-  const { id } = useParams<{ id: string }>();
+  const { courseId } = useParams<{ courseId: string }>();
   const navigate = useNavigate();
   
-  const { data: course, isLoading: isLoadingCourse } = useCourse(id);
-  const { data: enrollment, isLoading: isLoadingEnrollment } = useEnrollment(id);
-  const { data: progress } = useCourseProgress(id);
+  const { data: course, isLoading: isLoadingCourse } = useCourse(courseId);
+  const { data: enrollment, isLoading: isLoadingEnrollment } = useEnrollment(courseId);
+  const { data: progress } = useCourseProgress(courseId);
   const { mutate: enroll, isPending: isEnrolling } = useEnroll();
 
   const isEnrolled = !!enrollment;
   const isFree = course?.price === 0;
 
   const handleEnroll = () => {
-    if (id) enroll(id);
+    if (courseId) enroll(courseId);
   };
 
   const handleStartLesson = (lessonId: string) => {
-    navigate(`/cursos/${id}/aula/${lessonId}`);
+    navigate(`/cursos/${courseId}/aula/${lessonId}`);
   };
 
   if (isLoadingCourse) {
@@ -87,8 +94,8 @@ export default function CursoDetalhe() {
       >
         {/* Course Info */}
         <div className="lg:col-span-2 space-y-6">
-          {/* Thumbnail */}
-          <div className="relative aspect-video rounded-xl overflow-hidden bg-muted">
+          {/* Thumbnail - Spider-Man Theme */}
+          <div className="relative aspect-video rounded-xl overflow-hidden bg-muted border-2 border-primary/20">
             {course.thumbnail_url ? (
               <img
                 src={course.thumbnail_url}
@@ -96,15 +103,15 @@ export default function CursoDetalhe() {
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-primary/20 to-primary/5">
-                <BookOpen className="h-20 w-20 text-primary/50" />
+              <div className="w-full h-full flex items-center justify-center bg-gradient-spider">
+                <GraduationCap className="h-20 w-20 text-white/70" />
               </div>
             )}
             
-            {/* Badges */}
+            {/* Badges - Spider-Man Colors */}
             <div className="absolute top-4 left-4 flex gap-2">
-              <Badge variant="secondary">{course.difficulty_level}</Badge>
-              <Badge variant="secondary">{course.category}</Badge>
+              <Badge className="bg-primary/90 text-primary-foreground">{course.difficulty_level}</Badge>
+              <Badge className="bg-spider-blue/90 text-white">{course.category}</Badge>
             </div>
           </div>
 
@@ -212,17 +219,18 @@ export default function CursoDetalhe() {
 
         {/* Sidebar */}
         <div className="space-y-6">
-          {/* Enroll Card */}
-          <Card className="sticky top-6">
+          {/* Enroll Card - Spider-Man Theme */}
+          <Card className="sticky top-6 border-primary/20 overflow-hidden">
+            <div className="h-1 bg-gradient-spider" />
             <CardContent className="p-6 space-y-6">
               {/* Price */}
               <div className="text-center">
                 {isFree ? (
-                  <Badge className="text-lg px-4 py-1 bg-emerald-500 text-white">
+                  <Badge className="text-lg px-4 py-1 bg-gradient-to-r from-green-600 to-emerald-500 text-white">
                     Gratuito
                   </Badge>
                 ) : (
-                  <p className="text-3xl font-bold">R$ {course.price?.toFixed(2)}</p>
+                  <p className="text-3xl font-bold text-primary">R$ {course.price?.toFixed(2)}</p>
                 )}
               </div>
 
@@ -264,25 +272,25 @@ export default function CursoDetalhe() {
                 </Button>
               )}
 
-              {/* Course Stats */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t">
-                <div className="text-center">
-                  <BookOpen className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+              {/* Course Stats - Spider-Man Colors */}
+              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-primary/10">
+                <div className="text-center p-3 rounded-lg bg-primary/5">
+                  <BookOpen className="h-5 w-5 mx-auto mb-1 text-primary" />
                   <p className="text-lg font-bold">{totalLessons}</p>
                   <p className="text-xs text-muted-foreground">Aulas</p>
                 </div>
-                <div className="text-center">
-                  <Clock className="h-5 w-5 mx-auto mb-1 text-muted-foreground" />
+                <div className="text-center p-3 rounded-lg bg-spider-blue/5">
+                  <Clock className="h-5 w-5 mx-auto mb-1 text-spider-blue" />
                   <p className="text-lg font-bold">{course.estimated_hours || Math.round(totalDuration / 60)}h</p>
                   <p className="text-xs text-muted-foreground">Duração</p>
                 </div>
-                <div className="text-center">
-                  <Trophy className="h-5 w-5 mx-auto mb-1 text-amber-500" />
+                <div className="text-center p-3 rounded-lg bg-stats-gold/5">
+                  <Trophy className="h-5 w-5 mx-auto mb-1 text-stats-gold" />
                   <p className="text-lg font-bold">{course.total_xp}</p>
                   <p className="text-xs text-muted-foreground">XP Total</p>
                 </div>
-                <div className="text-center">
-                  <Star className="h-5 w-5 mx-auto mb-1 text-amber-500" />
+                <div className="text-center p-3 rounded-lg bg-green-500/5">
+                  <Award className="h-5 w-5 mx-auto mb-1 text-green-600" />
                   <p className="text-lg font-bold">{course.modules?.length || 0}</p>
                   <p className="text-xs text-muted-foreground">Módulos</p>
                 </div>

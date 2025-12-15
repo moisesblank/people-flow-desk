@@ -1,3 +1,8 @@
+// ============================================
+// MOISÉS MEDEIROS v7.0 - PORTAL DO ALUNO
+// Spider-Man Theme - Gestão de Alunos LMS
+// ============================================
+
 import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -25,7 +30,10 @@ import {
   UserPlus,
   Bot,
   Play,
-  Award
+  Award,
+  Zap,
+  Flame,
+  Trophy
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { format } from "date-fns";
@@ -179,31 +187,37 @@ export default function PortalAluno() {
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
-        {/* Header */}
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        {/* Header - Spider-Man Theme */}
+        <motion.div 
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 p-6 rounded-2xl bg-gradient-to-r from-primary/10 via-background to-spider-blue/10 border border-primary/20"
+        >
           <div>
             <h1 className="text-3xl font-bold flex items-center gap-3">
-              <GraduationCap className="h-8 w-8 text-primary" />
+              <div className="p-2 rounded-xl bg-gradient-spider">
+                <GraduationCap className="h-8 w-8 text-white" />
+              </div>
               Portal do Aluno
             </h1>
             <p className="text-muted-foreground mt-1">
-              Plataforma LMS completa com gestão de alunos e cursos
+              Plataforma LMS completa - Curso de Química v7.0
             </p>
           </div>
           
           <div className="flex gap-2">
-            <Button variant="outline" onClick={exportToCSV}>
+            <Button variant="outline" onClick={exportToCSV} className="border-primary/30 hover:bg-primary/10">
               <Download className="h-4 w-4 mr-2" />
               Exportar CSV
             </Button>
-            <Button>
+            <Button className="bg-gradient-spider hover:opacity-90">
               <UserPlus className="h-4 w-4 mr-2" />
               Novo Aluno
             </Button>
           </div>
-        </div>
+        </motion.div>
 
-        {/* Tabs LMS */}
+        {/* Tabs LMS - Spider-Man Theme */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
           <TabsList className="grid w-full grid-cols-4 lg:w-auto lg:inline-grid">
             <TabsTrigger value="students" className="gap-2">
