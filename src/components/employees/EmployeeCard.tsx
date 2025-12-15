@@ -1,4 +1,4 @@
-import { Edit2, Trash2, Mail, Briefcase, Building2, Calendar, MoreVertical } from "lucide-react";
+import { Edit2, Trash2, Mail, Briefcase, Building2, Calendar, MoreVertical, Lock } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -8,6 +8,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { StatusBadge } from "./StatusBadge";
 import type { Employee } from "@/types/employee";
 import { format } from "date-fns";
@@ -137,9 +142,23 @@ export function EmployeeCard({ employee, onEdit, onDelete, index = 0 }: Employee
           {/* Salary */}
           <div className="pt-3 border-t border-border/50 flex items-center justify-between">
             <span className="text-xs text-muted-foreground uppercase tracking-wide">Salário</span>
-            <span className={`text-lg font-bold tabular-nums ${employee.salario === null ? "text-muted-foreground" : "text-foreground"}`}>
-              {formatCurrency(employee.salario)}
-            </span>
+            {employee.salario === null ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="text-lg font-bold tabular-nums text-muted-foreground flex items-center gap-2 cursor-help">
+                    <Lock className="h-4 w-4" />
+                    {formatCurrency(employee.salario)}
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Informação restrita. Apenas administradores podem visualizar salários.</p>
+                </TooltipContent>
+              </Tooltip>
+            ) : (
+              <span className="text-lg font-bold tabular-nums text-foreground">
+                {formatCurrency(employee.salario)}
+              </span>
+            )}
           </div>
         </div>
       </div>

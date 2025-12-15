@@ -18,7 +18,8 @@ import {
   ClipboardCheck,
   UserCheck,
   Brain,
-  Link2
+  Link2,
+  Shield
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -63,6 +64,10 @@ const businessMenuItems = [
   { title: "Gestão Site", url: "/gestao-site", icon: Globe },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
   { title: "Guia", url: "/guia", icon: BookOpen },
+];
+
+const adminMenuItems = [
+  { title: "Permissões", url: "/permissoes", icon: Shield },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
@@ -158,6 +163,34 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {businessMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className="flex items-center gap-3"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Admin Menu */}
+        <SidebarGroup>
+          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Administração</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {adminMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild

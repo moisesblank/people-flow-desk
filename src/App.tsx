@@ -29,6 +29,7 @@ const GestaoSite = lazy(() => import("./pages/GestaoSite"));
 const AreaProfessor = lazy(() => import("./pages/AreaProfessor"));
 const PortalAluno = lazy(() => import("./pages/PortalAluno"));
 const Integracoes = lazy(() => import("./pages/Integracoes"));
+const Permissoes = lazy(() => import("./pages/Permissoes"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -80,6 +81,7 @@ const App = () => (
               <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
               <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
               <Route path="/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
+              <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />
