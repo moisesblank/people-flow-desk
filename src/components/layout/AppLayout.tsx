@@ -1,11 +1,24 @@
-import { ReactNode, useState, useCallback } from "react";
+import { ReactNode, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Command } from "lucide-react";
+import { Search, Command, Bell, User } from "lucide-react";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { AppSidebar } from "./AppSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Button } from "@/components/ui/button";
+import { NotificationCenter, useNotifications } from "@/components/ui/notification-center";
+import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
+import { useAuth } from "@/hooks/useAuth";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useNavigate } from "react-router-dom";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -13,11 +26,47 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
+  const { user, signOut } = useAuth();
+  const navigate = useNavigate();
 
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
 
   useKeyboardShortcuts(openSearch, closeSearch);
+
+  const {
+    notifications,
+    addNotification,
+    markAsRead,
+    markAllAsRead,
+    deleteNotification,
+    clearAll,
+  } = useNotifications();
+
+  // Enable realtime notifications
+  useRealtimeNotifications({ addNotification });
+
+  // Add welcome notification on first load
+  useEffect(() => {
+    const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
+    if (!hasSeenWelcome && user) {
+      addNotification({
+        type: "success",
+        title: "Bem-vindo ao Synapse! 🚀",
+        message: "Seu sistema de gestão empresarial está pronto para uso.",
+      });
+      sessionStorage.setItem('hasSeenWelcome', 'true');
+    }
+  }, [user, addNotification]);
+
+  const getInitials = (name: string) => {
+    return name
+      .split(" ")
+      .slice(0, 2)
+      .map((n) => n[0])
+      .join("")
+      .toUpperCase();
+  };
 
   return (
     <SidebarProvider>
@@ -46,6 +95,52 @@ export function AppLayout({ children }: AppLayoutProps) {
             </Button>
             
             <div className="flex-1" />
+
+            {/* Notification Center */}
+            <NotificationCenter
+              notifications={notifications}
+              onMarkAsRead={markAsRead}
+              onMarkAllAsRead={markAllAsRead}
+              onDelete={deleteNotification}
+              onClearAll={clearAll}
+            />
+
+            {/* User Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="rounded-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                      {user?.email ? getInitials(user.email.split('@')[0]) : 'U'}
+                    </AvatarFallback>
+                  </Avatar>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>
+                  <div className="flex flex-col">
+                    <span className="text-sm font-medium">Minha Conta</span>
+                    <span className="text-xs text-muted-foreground truncate">
+                      {user?.email}
+                    </span>
+                  </div>
+                </DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
+                  Configurações
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => navigate('/permissoes')}>
+                  Permissões
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem 
+                  onClick={() => signOut()}
+                  className="text-destructive focus:text-destructive"
+                >
+                  Sair
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </header>
           
           <AnimatePresence mode="wait">
