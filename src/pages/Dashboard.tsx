@@ -22,7 +22,7 @@ import {
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { CategoryPieChart } from "@/components/dashboard/CategoryPieChart";
-import { FinancialGoals } from "@/components/dashboard/FinancialGoals";
+import { FinancialGoalsWidget } from "@/components/dashboard/FinancialGoalsWidget";
 import { BudgetAlerts } from "@/components/dashboard/BudgetAlerts";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
@@ -198,11 +198,6 @@ export default function Dashboard() {
 
   const lucroLiquido = stats ? stats.income - stats.personalExpenses - stats.companyExpenses : 0;
 
-  const financialGoals = stats ? [
-    { id: "1", name: "Meta de Receita Mensal", current: stats.income, target: 10000000, type: "save" as const },
-    { id: "2", name: "Limite de Gastos Pessoais", current: stats.personalExpenses, target: 3000000, type: "limit" as const },
-    { id: "3", name: "Limite Gastos Empresa", current: stats.companyExpenses, target: 5000000, type: "limit" as const },
-  ] : [];
 
   if (isLoading) {
     return (
@@ -335,12 +330,12 @@ export default function Dashboard() {
           <CategoryPieChart data={processedData?.categoryData || []} title="Gastos por Categoria" />
         </section>
 
-        {/* SYNAPSE Pulse - Real-time Data */}
+        {/* Synapse Pulse - Real-time Data */}
         <section className="grid gap-6 lg:grid-cols-3 mb-8">
           <SynapsePulse />
           <SynapseCommandCenter />
           <div className="space-y-6">
-            <FinancialGoals goals={financialGoals} />
+            <FinancialGoalsWidget />
             <QuickActions />
           </div>
         </section>
