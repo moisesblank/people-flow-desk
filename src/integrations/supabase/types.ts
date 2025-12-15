@@ -1572,6 +1572,249 @@ export type Database = {
         }
         Relationships: []
       }
+      time_clock_absences: {
+        Row: {
+          absence_date: string
+          absence_type: string
+          approved: boolean | null
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          document_url: string | null
+          employee_id: number
+          id: string
+          justification: string | null
+        }
+        Insert: {
+          absence_date: string
+          absence_type: string
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          document_url?: string | null
+          employee_id: number
+          id?: string
+          justification?: string | null
+        }
+        Update: {
+          absence_date?: string
+          absence_type?: string
+          approved?: boolean | null
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          document_url?: string | null
+          employee_id?: number
+          id?: string
+          justification?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_clock_absences_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_absences_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_clock_entries: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          created_at: string
+          device_info: string | null
+          employee_id: number
+          entry_type: string
+          id: string
+          ip_address: string | null
+          is_manual: boolean | null
+          latitude: number | null
+          location_address: string | null
+          longitude: number | null
+          notes: string | null
+          photo_url: string | null
+          registered_at: string
+          user_id: string
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          device_info?: string | null
+          employee_id: number
+          entry_type: string
+          id?: string
+          ip_address?: string | null
+          is_manual?: boolean | null
+          latitude?: number | null
+          location_address?: string | null
+          longitude?: number | null
+          notes?: string | null
+          photo_url?: string | null
+          registered_at?: string
+          user_id: string
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          created_at?: string
+          device_info?: string | null
+          employee_id?: number
+          entry_type?: string
+          id?: string
+          ip_address?: string | null
+          is_manual?: boolean | null
+          latitude?: number | null
+          location_address?: string | null
+          longitude?: number | null
+          notes?: string | null
+          photo_url?: string | null
+          registered_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_clock_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_entries_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_clock_reports: {
+        Row: {
+          created_at: string
+          early_departure_minutes: number | null
+          employee_id: number
+          id: string
+          late_minutes: number | null
+          observations: string | null
+          overtime_minutes: number | null
+          report_date: string
+          status: string | null
+          total_worked_minutes: number | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          early_departure_minutes?: number | null
+          employee_id: number
+          id?: string
+          late_minutes?: number | null
+          observations?: string | null
+          overtime_minutes?: number | null
+          report_date: string
+          status?: string | null
+          total_worked_minutes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          early_departure_minutes?: number | null
+          employee_id?: number
+          id?: string
+          late_minutes?: number | null
+          observations?: string | null
+          overtime_minutes?: number | null
+          report_date?: string
+          status?: string | null
+          total_worked_minutes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_clock_reports_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_reports_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      time_clock_settings: {
+        Row: {
+          allowed_locations: Json | null
+          created_at: string
+          employee_id: number
+          id: string
+          lunch_end_time: string | null
+          lunch_start_time: string | null
+          require_location: boolean | null
+          require_photo: boolean | null
+          tolerance_minutes: number | null
+          updated_at: string
+          work_end_time: string | null
+          work_start_time: string | null
+        }
+        Insert: {
+          allowed_locations?: Json | null
+          created_at?: string
+          employee_id: number
+          id?: string
+          lunch_end_time?: string | null
+          lunch_start_time?: string | null
+          require_location?: boolean | null
+          require_photo?: boolean | null
+          tolerance_minutes?: number | null
+          updated_at?: string
+          work_end_time?: string | null
+          work_start_time?: string | null
+        }
+        Update: {
+          allowed_locations?: Json | null
+          created_at?: string
+          employee_id?: number
+          id?: string
+          lunch_end_time?: string | null
+          lunch_start_time?: string | null
+          require_location?: boolean | null
+          require_photo?: boolean | null
+          tolerance_minutes?: number | null
+          updated_at?: string
+          work_end_time?: string | null
+          work_start_time?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "time_clock_settings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "time_clock_settings_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: true
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           badge_id: string
@@ -1675,6 +1918,45 @@ export type Database = {
           },
         ]
       }
+      user_mfa_settings: {
+        Row: {
+          backup_codes: Json | null
+          created_at: string
+          id: string
+          last_verified_at: string | null
+          mfa_enabled: boolean | null
+          mfa_type: string | null
+          phone_number: string | null
+          totp_secret: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          backup_codes?: Json | null
+          created_at?: string
+          id?: string
+          last_verified_at?: string | null
+          mfa_enabled?: boolean | null
+          mfa_type?: string | null
+          phone_number?: string | null
+          totp_secret?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          backup_codes?: Json | null
+          created_at?: string
+          id?: string
+          last_verified_at?: string | null
+          mfa_enabled?: boolean | null
+          mfa_type?: string | null
+          phone_number?: string | null
+          totp_secret?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           id: string
@@ -1765,6 +2047,87 @@ export type Database = {
           responsavel?: string | null
           status?: string
           titulo?: string
+        }
+        Relationships: []
+      }
+      whatsapp_notifications: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          external_id: string | null
+          id: string
+          message_content: string
+          message_type: string
+          metadata: Json | null
+          phone_number: string
+          scheduled_at: string | null
+          sent_at: string | null
+          status: string | null
+          template_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          message_content: string
+          message_type: string
+          metadata?: Json | null
+          phone_number: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          external_id?: string | null
+          id?: string
+          message_content?: string
+          message_type?: string
+          metadata?: Json | null
+          phone_number?: string
+          scheduled_at?: string | null
+          sent_at?: string | null
+          status?: string | null
+          template_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      whatsapp_templates: {
+        Row: {
+          category: string
+          content: string
+          created_at: string
+          id: string
+          is_active: boolean | null
+          name: string
+          updated_at: string
+          variables: Json | null
+        }
+        Insert: {
+          category: string
+          content: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name: string
+          updated_at?: string
+          variables?: Json | null
+        }
+        Update: {
+          category?: string
+          content?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          updated_at?: string
+          variables?: Json | null
         }
         Relationships: []
       }
