@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - RELATÓRIOS
-// Spider-Man Theme - Business Intelligence
+// MOISÉS MEDEIROS v10.0 - RELATÓRIOS
+// FASE 8: Relatórios PDF Avançados
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -17,7 +17,12 @@ import {
   Building2,
   Calendar,
   FileSpreadsheet,
-  Loader2
+  Loader2,
+  FileDown,
+  ClipboardList,
+  Clock,
+  FlaskConical,
+  Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -26,6 +31,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, subMonths, startOfMonth, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, LineChart, Line, Legend, AreaChart, Area } from "recharts";
+import { 
+  generateFinancialPDF, 
+  generateEmployeesPDF, 
+  generateTasksPDF,
+  generateTimeTrackingPDF,
+  generateLabReportPDF,
+  generateComprehensiveReportPDF 
+} from "@/utils/pdfGenerator";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("pt-BR", {
@@ -143,7 +156,7 @@ export default function Relatorios() {
     }
   };
 
-  const exportToCSV = (type: "financeiro" | "funcionarios" | "vendas") => {
+  const exportToCSV = (type: string) => {
     if (!reportData) return;
 
     let csvContent = "";
@@ -164,12 +177,15 @@ export default function Relatorios() {
       reportData.employees.forEach((emp: any) => {
         csvContent += `${emp.nome},${emp.funcao},${emp.setor || "N/A"},${emp.status || "N/A"},${formatCurrency(emp.salario)}\n`;
       });
-    } else {
+    } else if (type === "vendas") {
       filename = `relatorio-afiliados-${selectedMonth}.csv`;
       csvContent = "Nome,Email,Total Vendas,Comissão Total\n";
       reportData.affiliates.forEach((aff: any) => {
         csvContent += `${aff.nome},${aff.email || "N/A"},${aff.total_vendas || 0},${formatCurrency(aff.comissao_total || 0)}\n`;
       });
+    } else {
+      toast({ title: "Aviso", description: "Exportação CSV não disponível para este relatório", variant: "default" });
+      return;
     }
 
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
@@ -186,6 +202,65 @@ export default function Relatorios() {
     });
   };
 
+  // PDF Export handlers
+  const exportToPDF = async (type: "financeiro" | "funcionarios" | "tarefas" | "ponto" | "laboratorio" | "executivo") => {
+    if (!reportData) {
+      toast({ title: "Erro", description: "Carregue os dados primeiro", variant: "destructive" });
+      return;
+    }
+
+    try {
+      switch (type) {
+        case "financeiro":
+          generateFinancialPDF({
+            income: reportData.income,
+            personalFixed: reportData.personalFixed,
+            personalExtra: reportData.personalExtra,
+            companyFixed: reportData.companyFixed,
+            companyExtra: reportData.companyExtra,
+            lucroLiquido: reportData.lucroLiquido,
+            month: selectedMonth,
+            categoryData: categoryData,
+          });
+          break;
+        case "funcionarios":
+          generateEmployeesPDF(reportData.employees);
+          break;
+        case "tarefas":
+          const { data: tasks } = await supabase.from("tasks").select("*");
+          generateTasksPDF(tasks || []);
+          break;
+        case "ponto":
+          const { data: timeRecords } = await supabase.from("time_tracking").select("*").order("clock_in", { ascending: false }).limit(100);
+          generateTimeTrackingPDF(timeRecords || []);
+          break;
+        case "laboratorio":
+          const [reagentsRes, equipmentRes] = await Promise.all([
+            supabase.from("reagents").select("*"),
+            supabase.from("equipment").select("*"),
+          ]);
+          generateLabReportPDF({
+            reagents: reagentsRes.data || [],
+            equipment: equipmentRes.data || [],
+          });
+          break;
+        case "executivo":
+          const { data: allTasks } = await supabase.from("tasks").select("*");
+          generateComprehensiveReportPDF({
+            financial: reportData,
+            employees: reportData.employees,
+            tasks: allTasks || [],
+            month: selectedMonth,
+          });
+          break;
+      }
+      toast({ title: "PDF Gerado!", description: `Relatório ${type} exportado com sucesso.` });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({ title: "Erro", description: "Falha ao gerar PDF", variant: "destructive" });
+    }
+  };
+
   const reports = [
     { 
       title: "Relatório Financeiro", 
@@ -194,6 +269,7 @@ export default function Relatorios() {
       type: "financeiro" as const,
       color: "text-[hsl(var(--stats-green))]",
       bg: "bg-[hsl(var(--stats-green))]/10",
+      hasPDF: true,
     },
     { 
       title: "Relatório de Funcionários", 
@@ -202,6 +278,7 @@ export default function Relatorios() {
       type: "funcionarios" as const,
       color: "text-[hsl(var(--stats-blue))]",
       bg: "bg-[hsl(var(--stats-blue))]/10",
+      hasPDF: true,
     },
     { 
       title: "Relatório de Afiliados", 
@@ -210,6 +287,43 @@ export default function Relatorios() {
       type: "vendas" as const,
       color: "text-[hsl(var(--stats-purple))]",
       bg: "bg-[hsl(var(--stats-purple))]/10",
+      hasPDF: false,
+    },
+    { 
+      title: "Relatório de Tarefas", 
+      description: "Kanban e produtividade", 
+      icon: ClipboardList,
+      type: "tarefas" as const,
+      color: "text-[hsl(var(--stats-yellow))]",
+      bg: "bg-[hsl(var(--stats-yellow))]/10",
+      hasPDF: true,
+    },
+    { 
+      title: "Relatório de Ponto", 
+      description: "Registros de entrada/saída", 
+      icon: Clock,
+      type: "ponto" as const,
+      color: "text-primary",
+      bg: "bg-primary/10",
+      hasPDF: true,
+    },
+    { 
+      title: "Relatório Laboratório", 
+      description: "Reagentes e equipamentos", 
+      icon: FlaskConical,
+      type: "laboratorio" as const,
+      color: "text-[hsl(var(--stats-cyan))]",
+      bg: "bg-[hsl(var(--stats-cyan))]/10",
+      hasPDF: true,
+    },
+    { 
+      title: "Relatório Executivo", 
+      description: "Visão completa do negócio", 
+      icon: Briefcase,
+      type: "executivo" as const,
+      color: "text-accent",
+      bg: "bg-accent/10",
+      hasPDF: true,
     },
   ];
 
@@ -467,13 +581,13 @@ export default function Relatorios() {
         )}
 
         {/* Reports Grid */}
-        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 mb-8">
+        <section className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
           {reports.map((report, index) => (
             <motion.div
               key={report.title}
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 + index * 0.1 }}
+              transition={{ delay: 0.4 + index * 0.05 }}
               className="glass-card rounded-2xl p-6 hover:border-primary/50 transition-all"
             >
               <div className="flex items-start justify-between mb-4">
@@ -483,16 +597,32 @@ export default function Relatorios() {
               </div>
               <h3 className="text-lg font-semibold text-foreground mb-2">{report.title}</h3>
               <p className="text-sm text-muted-foreground mb-6">{report.description}</p>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="w-full gap-2"
-                onClick={() => exportToCSV(report.type)}
-                disabled={!reportData}
-              >
-                <FileSpreadsheet className="h-4 w-4" />
-                Exportar CSV
-              </Button>
+              <div className="flex flex-col gap-2">
+                {report.hasPDF && (
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="w-full gap-2"
+                    onClick={() => exportToPDF(report.type as any)}
+                    disabled={!reportData}
+                  >
+                    <FileDown className="h-4 w-4" />
+                    Exportar PDF
+                  </Button>
+                )}
+                {["financeiro", "funcionarios", "vendas"].includes(report.type) && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full gap-2"
+                    onClick={() => exportToCSV(report.type)}
+                    disabled={!reportData}
+                  >
+                    <FileSpreadsheet className="h-4 w-4" />
+                    Exportar CSV
+                  </Button>
+                )}
+              </div>
             </motion.div>
           ))}
         </section>
