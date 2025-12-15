@@ -1,12 +1,13 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - Cursos
 // Spider-Man Theme - Portal de Aprendizado
+// Elementos de Química Integrados
 // ============================================
 
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { Search, Filter, BookOpen, GraduationCap, Trophy, Flame, Sparkles } from 'lucide-react';
+import { Search, Filter, BookOpen, GraduationCap, Trophy, Flame, Sparkles, FlaskConical, Atom, Beaker } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -16,6 +17,7 @@ import { useGamification } from '@/hooks/useGamification';
 import CourseCard from '@/components/lms/CourseCard';
 import XPProgressCard from '@/components/lms/XPProgressCard';
 import Leaderboard from '@/components/lms/Leaderboard';
+import { AnimatedAtom, BubblingFlask, MiniPeriodicTable, ChemistryTip, LabEquipmentIcons } from '@/components/chemistry/ChemistryVisuals';
 import heroImage from '@/assets/dashboard-chemistry-hero.jpg';
 
 export default function Cursos() {
@@ -53,7 +55,7 @@ export default function Cursos() {
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-8">
-      {/* Hero Banner */}
+      {/* Hero Banner com Química */}
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
@@ -65,16 +67,22 @@ export default function Cursos() {
           className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
-        <div className="absolute inset-0 flex items-center p-8">
+        <div className="absolute inset-0 flex items-center justify-between p-8">
           <div>
             <div className="flex items-center gap-2 mb-2">
-              <Sparkles className="h-5 w-5 text-primary" />
+              <FlaskConical className="h-5 w-5 text-primary" />
               <span className="text-sm font-medium text-primary uppercase tracking-wider">Curso de Química</span>
             </div>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Moisés Medeiros</h2>
             <p className="text-muted-foreground max-w-md">
               Domine a química e conquiste sua aprovação em medicina
             </p>
+            <div className="mt-4">
+              <LabEquipmentIcons />
+            </div>
+          </div>
+          <div className="hidden lg:block">
+            <AnimatedAtom size={100} />
           </div>
         </div>
       </motion.div>

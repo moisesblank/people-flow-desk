@@ -2,6 +2,7 @@
 // MOISÉS MEDEIROS v7.0 - DASHBOARD PRINCIPAL
 // Spider-Man Theme: Vermelho Vinho + Azul
 // Central de Comando - Business Intelligence
+// Elementos de Química Integrados
 // ============================================
 
 import { useMemo, useState, useEffect } from "react";
@@ -24,7 +25,9 @@ import {
   Brain,
   Zap,
   Bot,
-  Clock
+  Clock,
+  FlaskConical,
+  Atom
 } from "lucide-react";
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -36,6 +39,8 @@ import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { RealtimePulse } from "@/components/dashboard/RealtimePulse";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
+import { ChemistryStats, ElementsGrid, ReactionProgress } from "@/components/dashboard/ChemistryStats";
+import { AnimatedAtom, ChemistryTip, LabEquipmentIcons } from "@/components/chemistry/ChemistryVisuals";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
@@ -503,11 +508,22 @@ export default function Dashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="glass-card rounded-3xl p-8"
+            className="glass-card rounded-3xl p-8 relative overflow-hidden"
           >
-            <h2 className="text-xl font-semibold text-foreground mb-2">
-              Bem-vindo, {user?.email?.split("@")[0]}! 👋
-            </h2>
+            {/* Átomo decorativo */}
+            <div className="absolute top-4 right-4 opacity-20">
+              <AnimatedAtom size={60} />
+            </div>
+            
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <FlaskConical className="h-5 w-5 text-primary" />
+              </div>
+              <h2 className="text-xl font-semibold text-foreground">
+                Bem-vindo, {user?.email?.split("@")[0]}! 
+              </h2>
+            </div>
+            
             <p className="text-muted-foreground mb-6">
               {role === "owner" 
                 ? "Você tem acesso completo a todos os módulos do sistema."
@@ -517,7 +533,7 @@ export default function Dashboard() {
               }
             </p>
             
-            <div className="grid grid-cols-2 gap-4 mt-6">
+            <div className="grid grid-cols-2 gap-4">
               <div className="p-4 rounded-xl bg-secondary/30 hover-lift">
                 <p className="text-xs text-muted-foreground">Seu cargo</p>
                 <p className="text-lg font-semibold text-foreground capitalize mt-1">
@@ -526,11 +542,55 @@ export default function Dashboard() {
               </div>
               <div className="p-4 rounded-xl bg-secondary/30 hover-lift">
                 <p className="text-xs text-muted-foreground">Status</p>
-                <p className="text-lg font-semibold text-[hsl(var(--stats-green))] mt-1">
+                <p className="text-lg font-semibold text-[hsl(var(--stats-green))] mt-1 flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-[hsl(var(--stats-green))] animate-pulse" />
                   Online
                 </p>
               </div>
             </div>
+
+            {/* Dica de Química */}
+            <div className="mt-6">
+              <ChemistryTip
+                title="Dica do Professor"
+                content="A química está em tudo! Cada transação financeira é como uma reação química - precisa de equilíbrio."
+                icon={Atom}
+              />
+            </div>
+          </motion.div>
+        </section>
+
+        {/* Chemistry Stats Section */}
+        <section className="mb-8">
+          <ChemistryStats
+            data={{
+              totalAlunos: stats.students,
+              cursosAtivos: 5,
+              taxaAprovacao: 94,
+              horasAulas: 240,
+              modulosConcluidos: 42,
+              engajamento: 87
+            }}
+          />
+        </section>
+
+        {/* Elements Grid - Periodic Table Style */}
+        <section className="mb-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass-card rounded-3xl p-6"
+          >
+            <div className="flex items-center gap-3 mb-6">
+              <div className="p-2 rounded-xl bg-primary/10">
+                <Atom className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="font-semibold text-foreground">Indicadores Elementais</h3>
+                <p className="text-xs text-muted-foreground">Métricas no estilo tabela periódica</p>
+              </div>
+            </div>
+            <ElementsGrid />
           </motion.div>
         </section>
       </div>
