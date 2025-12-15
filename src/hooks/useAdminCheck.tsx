@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v5.0 - ADMIN CHECK HOOK
+// MOISÉS MEDEIROS v9.0 - ADMIN CHECK HOOK
 // Verificação de Permissões Owner/Admin
-// Segurança: Server-side via Supabase RLS
+// MODO DEUS: Exclusivo para moisesblank@gmail.com
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -18,7 +18,11 @@ interface AdminCheckResult {
   role: AppRole | null;
   isLoading: boolean;
   canEdit: boolean;
+  isGodMode: boolean;
+  userEmail: string | null;
 }
+
+const OWNER_EMAIL = "moisesblank@gmail.com";
 
 export function useAdminCheck(): AdminCheckResult {
   const { user } = useAuth();
@@ -38,7 +42,7 @@ export function useAdminCheck(): AdminCheckResult {
           .from("user_roles")
           .select("role")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (error) {
           console.error("Erro ao buscar role:", error);
@@ -57,13 +61,19 @@ export function useAdminCheck(): AdminCheckResult {
     fetchRole();
   }, [user]);
 
-  const isOwner = role === "owner";
+  const userEmail = user?.email || null;
+  
+  // Verificação dupla de owner (role + email exato)
+  const isOwner = role === "owner" && userEmail === OWNER_EMAIL;
   const isAdmin = role === "admin";
   const isAdminOrOwner = isOwner || isAdmin;
   const isEmployee = role === "employee";
   
+  // MODO DEUS: Verificação tripla (role + email + hardcoded)
+  const isGodMode = isOwner && userEmail === OWNER_EMAIL;
+  
   // Apenas owner pode editar campos críticos
-  const canEdit = isOwner;
+  const canEdit = isGodMode;
 
   return {
     isOwner,
@@ -72,6 +82,8 @@ export function useAdminCheck(): AdminCheckResult {
     isEmployee,
     role,
     isLoading,
-    canEdit
+    canEdit,
+    isGodMode,
+    userEmail
   };
 }
