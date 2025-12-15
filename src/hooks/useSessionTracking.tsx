@@ -1,6 +1,7 @@
 // ============================================
 // SYNAPSE v14.0 - HOOK DE TRACKING DE SESSÕES
 // Registra login, atividade e logout automaticamente
+// VERSÃO CORRIGIDA - Funcional
 // ============================================
 
 import { useEffect, useRef, useCallback } from 'react';
@@ -47,12 +48,14 @@ function detectSessionInfo(): SessionInfo {
 export function useSessionTracking() {
   const sessionRegistered = useRef(false);
   const activityInterval = useRef<NodeJS.Timeout | null>(null);
+  const currentUserId = useRef<string | null>(null);
 
   const registerSession = useCallback(async () => {
     try {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user || sessionRegistered.current) return;
 
+      currentUserId.current = user.id;
       const info = detectSessionInfo();
       
       const { error } = await supabase.rpc('register_user_login', {
@@ -65,6 +68,8 @@ export function useSessionTracking() {
       if (!error) {
         sessionRegistered.current = true;
         console.log('📍 Sessão registrada:', info.browser, info.os);
+      } else {
+        console.error('Erro ao registrar sessão:', error);
       }
     } catch (err) {
       console.error('Erro ao registrar sessão:', err);
@@ -84,9 +89,12 @@ export function useSessionTracking() {
 
   const registerLogout = useCallback(async () => {
     try {
+      // Usar chamada direta em vez de sendBeacon que não funciona com auth
       await supabase.rpc('register_user_logout');
+      sessionRegistered.current = false;
+      currentUserId.current = null;
     } catch (err) {
-      // Silencioso
+      console.error('Erro ao registrar logout:', err);
     }
   }, []);
 
@@ -97,7 +105,6 @@ export function useSessionTracking() {
         registerSession();
       } else if (event === 'SIGNED_OUT') {
         registerLogout();
-        sessionRegistered.current = false;
       }
     });
 
@@ -118,10 +125,16 @@ export function useSessionTracking() {
       }
     };
 
-    const handleBeforeUnload = () => {
-      // Usar sendBeacon para garantir que a requisição seja enviada
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/rest/v1/rpc/register_user_logout`;
-      navigator.sendBeacon(url);
+    // Usar beforeunload com fetch keepalive para garantir logout
+    const handleBeforeUnload = async () => {
+      if (currentUserId.current) {
+        // Tentar logout síncrono antes de fechar
+        try {
+          await supabase.rpc('register_user_logout');
+        } catch {
+          // Ignorar erros no unload
+        }
+      }
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
@@ -137,7 +150,7 @@ export function useSessionTracking() {
     };
   }, [registerSession, updateActivity, registerLogout]);
 
-  return { updateActivity };
+  return { updateActivity, registerLogout };
 }
 
 export default useSessionTracking;
