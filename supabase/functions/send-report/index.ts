@@ -185,7 +185,7 @@ serve(async (req) => {
     ` : ""}
     
     <div class="footer">
-      <p>Moisés Medeiros v5.0 • Sistema Nervoso Digital</p>
+      <p>Moisés Medeiros v5.0 • Curso - Química</p>
       <p>Este é um relatório automático gerado pelo sistema.</p>
     </div>
   </div>
