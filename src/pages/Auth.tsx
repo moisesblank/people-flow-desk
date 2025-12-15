@@ -416,13 +416,13 @@ export default function Auth() {
               />
               
               {/* Hexagonal Frame */}
-              <div className="relative w-56 h-56 flex items-center justify-center">
+              <div className="relative w-72 h-72 flex items-center justify-center">
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
                   <motion.polygon
                     points="50,2 95,25 95,75 50,98 5,75 5,25"
                     fill="none"
                     stroke="url(#hexGradient)"
-                    strokeWidth="1"
+                    strokeWidth="1.5"
                     animate={{
                       strokeDasharray: ['0,1000', '1000,0'],
                     }}
@@ -446,8 +446,8 @@ export default function Auth() {
                   }}
                   isEditMode={isEditMode}
                   canEdit={canEdit}
-                  className="w-full h-full object-cover object-center"
-                  containerClassName="w-48 h-48 rounded-full overflow-hidden border-3 border-primary/60 shadow-xl shadow-primary/20"
+                  className="w-full h-full object-cover [object-position:50%_15%]"
+                  containerClassName="w-60 h-60 rounded-full overflow-hidden border-4 border-primary/60 shadow-2xl shadow-primary/30"
                 />
               </div>
               
