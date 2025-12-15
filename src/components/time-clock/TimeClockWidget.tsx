@@ -1,5 +1,6 @@
 // ============================================
-// SYNAPSE v5.0 - Widget de Ponto Eletrônico
+// MOISÉS MEDEIROS v5.0 - Widget de Ponto Eletrônico
+// Curso de Química - Sistema de Gestão
 // ============================================
 
 import { useState, useEffect } from "react";

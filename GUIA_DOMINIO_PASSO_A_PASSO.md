@@ -225,4 +225,4 @@ Acesse: `/site` para ver a página pública do Professor Moisés Medeiros com:
 
 ---
 
-*Documento gerado pelo Projeto Synapse - Curso - Química*
+*Documento gerado pelo Sistema Curso de Química - Moisés Medeiros*

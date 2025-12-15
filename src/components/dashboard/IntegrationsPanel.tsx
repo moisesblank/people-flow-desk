@@ -63,7 +63,7 @@ export function IntegrationsPanel() {
 
   const generateWebhookUrl = () => {
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "fyikfsasudgzsjmumdlw";
-    const url = `https://${projectId}.supabase.co/functions/v1/webhook-synapse`;
+    const url = `https://${projectId}.supabase.co/functions/v1/webhook-curso-quimica`;
     setWebhookUrl(url);
   };
 

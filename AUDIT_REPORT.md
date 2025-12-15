@@ -1,5 +1,5 @@
-# 📊 RELATÓRIO FINAL DO PROJETO SYNAPSE
-## Data: 15 de Dezembro de 2025 | Versão 2.1
+# 📊 RELATÓRIO FINAL - CURSO DE QUÍMICA MOISÉS MEDEIROS
+## Data: 15 de Dezembro de 2025 | Versão 5.0
 
 ---
 
@@ -8,8 +8,8 @@
 ```
 ╔══════════════════════════════════════════════════════════════════════╗
 ║                                                                      ║
-║                    🦸 PROJETO SYNAPSE 🦸                             ║
-║                      Curso - Química                                 ║
+║             🎓 CURSO DE QUÍMICA - MOISÉS MEDEIROS 🎓                 ║
+║                      Sistema de Gestão v5.0                          ║
 ║                                                                      ║
 ║   ████████████████████████████████████████████░░░░  95% COMPLETO    ║
 ║                                                                      ║
