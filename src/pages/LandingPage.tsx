@@ -31,6 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import professorPhoto from "@/assets/professor-moises.jpg";
+import heroChemistryBanner from "@/assets/hero-chemistry-banner.jpg";
 
 // Animated counter component
 function AnimatedCounter({ target, duration = 2000, suffix = "" }: { target: number; duration?: number; suffix?: string }) {
@@ -136,6 +137,13 @@ export default function LandingPage() {
 
       {/* Hero Section */}
       <section className="relative min-h-screen flex items-center justify-center pt-20 hero-gradient overflow-hidden">
+        {/* Chemistry Background Image */}
+        <div 
+          className="absolute inset-0 bg-cover bg-center opacity-20"
+          style={{ backgroundImage: `url(${heroChemistryBanner})` }}
+        />
+        <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+        
         {/* Background Effects */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div className="absolute -top-1/2 -right-1/2 w-full h-full bg-gradient-radial from-primary/10 via-transparent to-transparent" />

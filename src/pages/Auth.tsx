@@ -30,6 +30,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Provider } from "@supabase/supabase-js";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
+import heroChemistryBanner from "@/assets/hero-chemistry-banner.jpg";
 
 export default function Auth() {
   const navigate = useNavigate();
@@ -134,6 +135,14 @@ export default function Auth() {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Chemistry Background Image */}
+      <div 
+        className="fixed inset-0 bg-cover bg-center opacity-15"
+        style={{ backgroundImage: `url(${heroChemistryBanner})` }}
+        aria-hidden="true"
+      />
+      <div className="fixed inset-0 bg-gradient-to-br from-background via-background/95 to-background" aria-hidden="true" />
+
       {/* Skip to main content - Acessibilidade */}
       <a 
         href="#auth-form" 
