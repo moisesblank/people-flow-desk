@@ -43,6 +43,7 @@ import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
 import { WeeklyInsights } from "@/components/dashboard/WeeklyInsights";
 import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScore";
+import { ExecutiveSummary } from "@/components/dashboard/ExecutiveSummary";
 import { ChemistryStats, ElementsGrid, ReactionProgress } from "@/components/dashboard/ChemistryStats";
 import { AnimatedAtom, ChemistryTip, LabEquipmentIcons } from "@/components/chemistry/ChemistryVisuals";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
@@ -366,6 +367,23 @@ export default function Dashboard() {
             delay={3}
           />
         </section>
+
+        {/* Executive Summary - Only for Owner */}
+        {role === 'owner' && (
+          <section className="mb-8">
+            <ExecutiveSummary
+              totalIncome={stats.income}
+              totalExpenses={stats.personalExpenses + stats.companyExpenses}
+              totalStudents={stats.students}
+              totalAffiliates={stats.affiliates}
+              monthlyGrowth={12.5}
+              conversionRate={8.3}
+              pendingPayments={stats.pendingPayments}
+              completedTasks={stats.tasksData?.filter((t: any) => t.is_completed).length || 0}
+              totalTasks={stats.tasksData?.length || 0}
+            />
+          </section>
+        )}
 
         {/* Charts Row */}
         <section className="grid gap-6 lg:grid-cols-3 mb-8">

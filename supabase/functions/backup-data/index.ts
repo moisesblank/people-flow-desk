@@ -1,5 +1,5 @@
 // ============================================
-// CURSO MOISÉS MEDEIROS v5.0 - SISTEMA DE BACKUP
+// SYNAPSE v14.0 - SISTEMA DE BACKUP COMPLETO
 // Backup Automatizado de Dados
 // ============================================
 
@@ -56,32 +56,70 @@ serve(async (req) => {
     const body = await req.json().catch(() => ({}));
     const { tables = 'all', format = 'json' } = body;
 
-    // Define tables to backup
+    // Define tables to backup - SYNAPSE v14.0 COMPLETE LIST
     const tablesToBackup = tables === 'all' 
       ? [
+          // Core Data
           'profiles',
+          'user_roles',
           'employees',
+          'employee_compensation',
+          'employee_documents',
+          // Students & LMS
           'students',
+          'courses',
+          'modules',
+          'lessons',
+          'enrollments',
+          'lesson_progress',
+          'lesson_notes',
+          'certificates',
+          // Gamification
+          'badges',
+          'achievements',
+          'user_gamification',
+          'user_badges',
+          'xp_history',
+          // Quizzes
+          'quizzes',
+          'quiz_questions',
+          'quiz_attempts',
+          'quiz_answers',
+          // Finance
           'affiliates',
           'sales',
           'income',
-          'taxes',
           'company_fixed_expenses',
           'company_extra_expenses',
           'personal_fixed_expenses',
           'personal_extra_expenses',
           'payments',
-          'calendar_tasks',
-          'synapse_transactions',
-          'synapse_integrations',
+          'payment_transactions',
+          'financial_goals',
           'contabilidade',
           'metricas_marketing',
-          'website_pendencias',
+          // Operations
+          'calendar_tasks',
+          'time_clock_entries',
+          'notifications',
+          // Integration
+          'integration_events',
+          'branding_settings',
+          // Content
+          'editable_content',
+          'content_history',
+          // Security
+          'user_sessions',
+          'user_mfa_settings',
+          'activity_log',
+          'audit_logs',
+          'permission_audit_logs',
         ]
       : Array.isArray(tables) ? tables : [tables];
 
     const backupResults: BackupResult[] = [];
     const backupDate = new Date().toISOString();
+    const startTime = Date.now();
 
     // Backup each table
     for (const table of tablesToBackup) {
@@ -89,7 +127,8 @@ serve(async (req) => {
         const { data, error } = await supabase
           .from(table)
           .select('*')
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .limit(10000);
 
         if (error) {
           console.error(`Error backing up ${table}:`, error);
@@ -106,6 +145,9 @@ serve(async (req) => {
       }
     }
 
+    const endTime = Date.now();
+    const duration = endTime - startTime;
+
     // Calculate totals
     const totalRecords = backupResults.reduce((sum, r) => sum + r.records, 0);
 
@@ -114,10 +156,13 @@ serve(async (req) => {
       action: 'data_backup',
       user_id: user.id,
       metadata: {
-        tables: tablesToBackup,
+        tables_count: tablesToBackup.length,
+        tables_backed_up: backupResults.length,
         total_records: totalRecords,
         backup_date: backupDate,
+        duration_ms: duration,
         format,
+        version: 'SYNAPSE v14.0',
       },
     });
 
@@ -144,6 +189,7 @@ serve(async (req) => {
         format: 'csv',
         total_tables: backupResults.length,
         total_records: totalRecords,
+        duration_ms: duration,
         csv_data: csvData,
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
@@ -157,11 +203,13 @@ serve(async (req) => {
       format: 'json',
       total_tables: backupResults.length,
       total_records: totalRecords,
+      duration_ms: duration,
       tables: backupResults,
       metadata: {
-        generated_by: 'Curso Moisés Medeiros - Backup v5.0',
+        generated_by: 'SYNAPSE v14.0 - Sistema de Backup Completo',
         user_id: user.id,
         user_email: user.email,
+        version: '14.0',
       },
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
