@@ -110,26 +110,54 @@ export function useQuiz(quizId: string | undefined) {
   });
 }
 
-// Hook para tentativas do usuário em um quiz
-export function useQuizAttempts(quizId: string | undefined) {
+// Hook para tentativas do usuário em um quiz específico
+export function useQuizAttempts(quizIdOrUserId: string | undefined, isUserId = false) {
+  const { user } = useAuth();
+  const userId = isUserId ? quizIdOrUserId : user?.id;
+  const quizId = isUserId ? undefined : quizIdOrUserId;
+
+  return useQuery({
+    queryKey: ['quiz-attempts', quizId, userId, isUserId],
+    queryFn: async () => {
+      if (!userId) return [];
+
+      let query = supabase
+        .from('quiz_attempts')
+        .select('*')
+        .eq('user_id', userId)
+        .order('started_at', { ascending: false });
+
+      if (quizId) {
+        query = query.eq('quiz_id', quizId);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+      return data as QuizAttempt[];
+    },
+    enabled: !!userId,
+  });
+}
+
+// Hook para todas as tentativas do usuário (para widget)
+export function useAllUserAttempts() {
   const { user } = useAuth();
 
   return useQuery({
-    queryKey: ['quiz-attempts', quizId, user?.id],
+    queryKey: ['all-quiz-attempts', user?.id],
     queryFn: async () => {
-      if (!quizId || !user?.id) return [];
+      if (!user?.id) return [];
 
       const { data, error } = await supabase
         .from('quiz_attempts')
         .select('*')
-        .eq('quiz_id', quizId)
         .eq('user_id', user.id)
         .order('started_at', { ascending: false });
 
       if (error) throw error;
       return data as QuizAttempt[];
     },
-    enabled: !!quizId && !!user?.id,
+    enabled: !!user?.id,
   });
 }
 
