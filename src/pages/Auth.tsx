@@ -231,7 +231,7 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
 
 export default function Auth() {
   const navigate = useNavigate();
-  const { user, signIn, signUp, isLoading: authLoading } = useAuth();
+  const { user, signIn, signUp, resetPassword, isLoading: authLoading } = useAuth();
   
   const { 
     isEditMode, 
@@ -249,11 +249,13 @@ export default function Auth() {
   ];
   
   const [isLogin, setIsLogin] = useState(true);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
   
   const [formData, setFormData] = useState({
     nome: "",
@@ -271,6 +273,34 @@ export default function Auth() {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
     setErrors(prev => ({ ...prev, [name]: "" }));
+  };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    setIsLoading(true);
+
+    try {
+      if (!formData.email || !formData.email.includes('@')) {
+        setErrors({ email: "Digite um email válido" });
+        setIsLoading(false);
+        return;
+      }
+
+      const { error } = await resetPassword(formData.email);
+      if (error) {
+        toast.error(error.message);
+        setIsLoading(false);
+        return;
+      }
+      
+      setResetEmailSent(true);
+      toast.success("Email de recuperação enviado!");
+    } catch {
+      toast.error("Erro ao enviar email de recuperação");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -606,33 +636,116 @@ export default function Auth() {
               </motion.div>
             </div>
 
-            {/* Tabs */}
-            <div className="flex gap-1 p-1 bg-white/5 rounded-xl mb-6 border border-white/5">
-              {[
-                { key: "auth_tab_login", default: "Entrar", isActive: isLogin },
-                { key: "auth_tab_signup", default: "Criar Conta", isActive: !isLogin }
-              ].map((tab, i) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setIsLogin(i === 0)}
-                  className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-                    tab.isActive
-                      ? "bg-gradient-to-r from-primary to-[#DC143C] text-white shadow-lg shadow-primary/30" 
-                      : "text-gray-400 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <EditableText
-                    value={getValue(tab.key, tab.default)}
-                    onSave={(v) => updateValue(tab.key, v)}
-                    isEditMode={isEditMode}
-                    canEdit={canEdit}
-                  />
-                </button>
-              ))}
-            </div>
-
-            {/* Form */}
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {/* Tabs - Hidden when forgot password */}
+            {!isForgotPassword && (
+              <div className="flex gap-1 p-1 bg-white/5 rounded-xl mb-6 border border-white/5">
+                {[
+                  { key: "auth_tab_login", default: "Entrar", isActive: isLogin },
+                  { key: "auth_tab_signup", default: "Criar Conta", isActive: !isLogin }
+                ].map((tab, i) => (
+                  <button
+                    key={tab.key}
+                    onClick={() => setIsLogin(i === 0)}
+                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
+                      tab.isActive
+                        ? "bg-gradient-to-r from-primary to-[#DC143C] text-white shadow-lg shadow-primary/30" 
+                        : "text-gray-400 hover:text-white hover:bg-white/5"
+                    }`}
+                  >
+                    <EditableText
+                      value={getValue(tab.key, tab.default)}
+                      onSave={(v) => updateValue(tab.key, v)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                    />
+                  </button>
+                ))}
+              </div>
+            )}
+            
+            {/* Forgot Password Mode */}
+            {isForgotPassword ? (
+              <div className="space-y-4">
+                {resetEmailSent ? (
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="text-center py-8"
+                  >
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <Mail className="h-8 w-8 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">Email Enviado!</h3>
+                    <p className="text-sm text-gray-400 mb-6">
+                      Verifique sua caixa de entrada e siga as instruções para redefinir sua senha.
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setIsForgotPassword(false);
+                        setResetEmailSent(false);
+                      }}
+                      className="bg-white/10 hover:bg-white/20 text-white"
+                    >
+                      Voltar para Login
+                    </Button>
+                  </motion.div>
+                ) : (
+                  <form onSubmit={handleForgotPassword} className="space-y-4">
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-1">Recuperar Senha</h3>
+                      <p className="text-sm text-gray-400">
+                        Digite seu email para receber o link de recuperação
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="reset-email" className="text-sm font-medium text-gray-300">
+                        Email
+                      </Label>
+                      <div className="relative mt-1.5">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <Input
+                          id="reset-email"
+                          name="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={handleChange}
+                          placeholder="seu@email.com"
+                          autoComplete="email"
+                          className="pl-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                        />
+                      </div>
+                      {errors.email && (
+                        <p className="text-xs text-red-400 mt-1">{errors.email}</p>
+                      )}
+                    </div>
+                    
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full h-12 rounded-xl bg-gradient-to-r from-primary via-[#B22222] to-primary text-white font-semibold shadow-xl shadow-primary/30 transition-all hover:scale-[1.02] hover:shadow-primary/50 active:scale-[0.98] disabled:opacity-50 border-0"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "Enviar Link de Recuperação"
+                      )}
+                    </Button>
+                    
+                    <button
+                      type="button"
+                      onClick={() => setIsForgotPassword(false)}
+                      className="w-full text-sm text-gray-400 hover:text-white transition-colors flex items-center justify-center gap-2"
+                    >
+                      <ArrowLeft className="h-4 w-4" />
+                      Voltar para Login
+                    </button>
+                  </form>
+                )}
+              </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-4">
               <AnimatePresence mode="wait">
                 {!isLogin && (
                   <motion.div
@@ -725,6 +838,16 @@ export default function Auth() {
                     <PasswordStrengthMeter password={formData.password} showRequirements={true} />
                   </div>
                 )}
+                
+                {isLogin && (
+                  <button
+                    type="button"
+                    onClick={() => setIsForgotPassword(true)}
+                    className="text-xs text-primary hover:text-primary/80 hover:underline mt-2 transition-colors"
+                  >
+                    Esqueceu sua senha?
+                  </button>
+                )}
               </div>
 
               <AnimatePresence mode="wait">
@@ -771,6 +894,7 @@ export default function Auth() {
                 )}
               </Button>
             </form>
+            )}
 
             {/* Security Badge */}
             <div className="mt-6 flex justify-center">
