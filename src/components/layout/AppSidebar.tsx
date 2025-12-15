@@ -82,6 +82,7 @@ import teamImg from "@/assets/team-module-cover.jpg";
 const mainMenuItems = [
   { title: "Central de Comando", url: "/", icon: Brain },
   { title: "Dashboard Executivo", url: "/dashboard-executivo", icon: Gauge },
+  { title: "Tarefas", url: "/tarefas", icon: ClipboardCheck },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },

@@ -624,6 +624,13 @@ export default function Dashboard() {
           </motion.div>
         </section>
 
+        {/* UPGRADE v10 - Widgets de Produtividade */}
+        <section className="grid gap-4 md:grid-cols-3 mb-8">
+          <TasksOverviewWidget />
+          <TimeTrackingWidget />
+          <LabStatusWidget />
+        </section>
+
         {/* Chemistry Stats Section */}
         <section className="mb-8">
           <ChemistryStats
