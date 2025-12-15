@@ -44,6 +44,8 @@ const TurmasOnline = lazy(() => import("./pages/TurmasOnline"));
 const TurmasPresenciais = lazy(() => import("./pages/TurmasPresenciais"));
 const SiteProgramador = lazy(() => import("./pages/SiteProgramador"));
 const Pessoal = lazy(() => import("./pages/Pessoal"));
+const PontoEletronico = lazy(() => import("./pages/PontoEletronico"));
+const DashboardExecutivo = lazy(() => import("./pages/DashboardExecutivo"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -108,6 +110,8 @@ const App = () => (
               <Route path="/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
               <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
               <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
+              <Route path="/ponto-eletronico" element={<ProtectedPage><PontoEletronico /></ProtectedPage>} />
+              <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
               
               {/* Catch all */}
               <Route path="*" element={<NotFound />} />

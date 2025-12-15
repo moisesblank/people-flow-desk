@@ -33,7 +33,10 @@ import {
   User,
   Gamepad2,
   Car,
-  ShoppingCart
+  ShoppingCart,
+  Clock,
+  Gauge,
+  MessageSquare
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -56,9 +59,11 @@ import {
 
 const mainMenuItems = [
   { title: "Command Center", url: "/", icon: Brain },
+  { title: "Dashboard Executivo", url: "/dashboard-executivo", icon: Gauge },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
+  { title: "Ponto Eletrônico", url: "/ponto-eletronico", icon: Clock },
   { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck },
   { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog },
 ];

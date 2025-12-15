@@ -16,6 +16,8 @@ export default {
       fontFamily: {
         sans: ['Plus Jakarta Sans', 'system-ui', 'sans-serif'],
         display: ['Clash Display', 'Plus Jakarta Sans', 'system-ui', 'sans-serif'],
+        cyber: ['Orbitron', 'Space Grotesk', 'system-ui', 'sans-serif'],
+        mono: ['Space Grotesk', 'monospace'],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -63,6 +65,7 @@ export default {
           blue: "hsl(var(--stats-blue))",
           purple: "hsl(var(--stats-purple))",
           gold: "hsl(var(--stats-gold))",
+          cyan: "hsl(var(--stats-cyan))",
         },
         glow: {
           red: "hsl(var(--glow-red))",
@@ -70,6 +73,7 @@ export default {
           blue: "hsl(var(--glow-blue))",
           purple: "hsl(var(--glow-purple))",
           gold: "hsl(var(--glow-gold))",
+          cyan: "hsl(var(--glow-cyan))",
         },
         sidebar: {
           DEFAULT: "hsl(var(--sidebar-background))",
