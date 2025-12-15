@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { 
   Users, 
@@ -16,7 +16,8 @@ import {
   CheckSquare,
   Download,
   Brain,
-  Zap
+  Zap,
+  Bot
 } from "lucide-react";
 import { StatCard } from "@/components/employees/StatCard";
 import { RevenueChart } from "@/components/dashboard/RevenueChart";
@@ -29,6 +30,9 @@ import { SynapsePulse } from "@/components/dashboard/SynapsePulse";
 import { SynapseCommandCenter } from "@/components/dashboard/SynapseCommandCenter";
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
+import { AITutor } from "@/components/ai/AITutor";
+import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding/GuidedTour";
+import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardStats } from "@/hooks/useDataCache";
 import { format, subMonths } from "date-fns";
@@ -44,6 +48,8 @@ function formatCurrency(cents: number): string {
 export default function Dashboard() {
   const { user, role } = useAuth();
   const { data: stats, isLoading, error } = useDashboardStats();
+  const [showAITutor, setShowAITutor] = useState(false);
+  const { isOpen: showTour, completeTour, resetTour } = useTour("dashboard");
 
   const processedData = useMemo(() => {
     if (!stats) return null;
@@ -474,6 +480,33 @@ export default function Dashboard() {
           </motion.div>
         </section>
       </div>
+
+      {/* AI Tutor Floating Button */}
+      {!showAITutor && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          className="fixed bottom-6 right-6 z-40"
+        >
+          <Button
+            size="lg"
+            className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
+            onClick={() => setShowAITutor(true)}
+          >
+            <Bot className="h-6 w-6" />
+          </Button>
+        </motion.div>
+      )}
+
+      {/* AI Tutor Component */}
+      <AITutor isOpen={showAITutor} onClose={() => setShowAITutor(false)} />
+
+      {/* Guided Tour */}
+      <GuidedTour 
+        steps={dashboardTourSteps} 
+        isOpen={showTour} 
+        onComplete={completeTour} 
+      />
     </div>
   );
 }
