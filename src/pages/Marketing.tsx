@@ -218,31 +218,226 @@ export default function Marketing() {
           ))}
         </TabsContent>
 
-        <TabsContent value="social">
-          <Card>
+        <TabsContent value="social" className="space-y-6">
+          {/* Calendário de Publicações */}
+          <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>Gestão de Redes Sociais</CardTitle>
-              <CardDescription>Agende e gerencie suas publicações</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Calendar className="h-5 w-5 text-primary" />
+                Calendário de Publicações
+              </CardTitle>
+              <CardDescription>Planeje e agende seu conteúdo nas redes sociais</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Calendar className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Calendário de publicações em desenvolvimento</p>
+              <div className="grid gap-4">
+                {/* Semana Atual */}
+                <div className="grid grid-cols-7 gap-2">
+                  {["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"].map((dia, i) => (
+                    <div key={dia} className="text-center">
+                      <p className="text-xs text-muted-foreground mb-2">{dia}</p>
+                      <div className={`p-3 rounded-lg border border-border/50 min-h-[100px] ${i === 2 ? 'bg-primary/10 border-primary/30' : 'hover:bg-muted/50'} transition-colors`}>
+                        {i === 0 && (
+                          <div className="space-y-1">
+                            <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-600 border-pink-500/20">IG</Badge>
+                            <p className="text-[10px] truncate">Dica Química</p>
+                          </div>
+                        )}
+                        {i === 2 && (
+                          <div className="space-y-1">
+                            <Badge variant="outline" className="text-[10px] bg-red-500/10 text-red-600 border-red-500/20">YT</Badge>
+                            <p className="text-[10px] truncate">Aula Orgânica</p>
+                          </div>
+                        )}
+                        {i === 4 && (
+                          <div className="space-y-1">
+                            <Badge variant="outline" className="text-[10px] bg-pink-500/10 text-pink-600 border-pink-500/20">IG</Badge>
+                            <p className="text-[10px] truncate">Reels + Story</p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Próximas Publicações */}
+                <div className="space-y-3 mt-4">
+                  <h4 className="font-medium text-sm">Próximas Publicações Agendadas</h4>
+                  {[
+                    { plataforma: "Instagram", tipo: "Carrossel", titulo: "5 Dicas de Química Orgânica", horario: "Hoje, 18:00", cor: "pink" },
+                    { plataforma: "YouTube", tipo: "Vídeo", titulo: "Aula 15 - Reações de Substituição", horario: "Amanhã, 10:00", cor: "red" },
+                    { plataforma: "Instagram", tipo: "Reels", titulo: "Macete: Tabela Periódica", horario: "Sexta, 14:00", cor: "pink" },
+                  ].map((pub, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border/30">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg bg-${pub.cor}-500/10`}>
+                          {pub.plataforma === "Instagram" ? <Instagram className={`h-4 w-4 text-${pub.cor}-500`} /> : <Youtube className="h-4 w-4 text-red-500" />}
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm">{pub.titulo}</p>
+                          <p className="text-xs text-muted-foreground">{pub.tipo} • {pub.horario}</p>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm">Editar</Button>
+                    </div>
+                  ))}
+                </div>
+
+                <Button className="w-full mt-4 brand-gradient">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Agendar Nova Publicação
+                </Button>
               </div>
             </CardContent>
           </Card>
+
+          {/* Performance por Plataforma */}
+          <div className="grid md:grid-cols-3 gap-4">
+            {socialMetrics.map((social, idx) => (
+              <Card key={idx} className="border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-3 mb-4">
+                    <div className={`p-2 rounded-lg bg-gradient-to-r ${social.color}`}>
+                      <social.icon className="h-5 w-5 text-white" />
+                    </div>
+                    <span className="font-semibold">{social.platform}</span>
+                  </div>
+                  <div className="space-y-3">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Posts este mês</span>
+                      <span className="font-bold">{12 + idx * 3}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Alcance total</span>
+                      <span className="font-bold">{(45 + idx * 15).toLocaleString()}K</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Interações</span>
+                      <span className="font-bold">{(3.2 + idx * 0.8).toFixed(1)}K</span>
+                    </div>
+                    <Progress value={70 + idx * 10} className="h-2 mt-2" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
         </TabsContent>
 
-        <TabsContent value="email">
-          <Card>
+        <TabsContent value="email" className="space-y-6">
+          {/* E-mail Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {[
+              { label: "Lista Total", value: "8.542", icon: Users, trend: "+234 este mês" },
+              { label: "Taxa de Abertura", value: "42.3%", icon: Eye, trend: "Média: 35%" },
+              { label: "Taxa de Clique", value: "12.8%", icon: MousePointer, trend: "Acima da média" },
+              { label: "Conversões", value: "156", icon: TrendingUp, trend: "+28% vs mês anterior" },
+            ].map((stat, idx) => (
+              <Card key={idx} className="border-border/50">
+                <CardContent className="p-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-lg bg-primary/10">
+                      <stat.icon className="h-4 w-4 text-primary" />
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{stat.label}</p>
+                      <p className="text-xl font-bold">{stat.value}</p>
+                      <p className="text-[10px] text-emerald-600">{stat.trend}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Campanhas de E-mail */}
+          <Card className="border-border/50">
             <CardHeader>
-              <CardTitle>E-mail Marketing</CardTitle>
-              <CardDescription>Campanhas e automações de e-mail</CardDescription>
+              <CardTitle className="flex items-center gap-2">
+                <Mail className="h-5 w-5 text-primary" />
+                Campanhas Recentes
+              </CardTitle>
+              <CardDescription>Histórico de e-mails enviados e seus resultados</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="text-center py-12 text-muted-foreground">
-                <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Integração com plataforma de e-mail em desenvolvimento</p>
+              <div className="space-y-3">
+                {[
+                  { nome: "Lançamento ENEM 2025", enviados: 8234, abertos: 3890, cliques: 1245, conversoes: 89, data: "12/12/2024" },
+                  { nome: "Black Friday - Última Chance", enviados: 7856, abertos: 4123, cliques: 1567, conversoes: 134, data: "29/11/2024" },
+                  { nome: "Newsletter Semanal #45", enviados: 8012, abertos: 3245, cliques: 890, conversoes: 45, data: "08/12/2024" },
+                  { nome: "Boas-vindas Novos Alunos", enviados: 234, abertos: 198, cliques: 156, conversoes: 23, data: "10/12/2024" },
+                ].map((campanha, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/30 hover:bg-muted/50 transition-colors">
+                    <div className="flex items-center gap-4">
+                      <div className="p-2 rounded-lg bg-primary/10">
+                        <Mail className="h-5 w-5 text-primary" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{campanha.nome}</p>
+                        <p className="text-xs text-muted-foreground">Enviado em {campanha.data}</p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-6 text-sm">
+                      <div className="text-center">
+                        <p className="font-bold">{campanha.enviados.toLocaleString()}</p>
+                        <p className="text-[10px] text-muted-foreground">Enviados</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-blue-500">{((campanha.abertos / campanha.enviados) * 100).toFixed(1)}%</p>
+                        <p className="text-[10px] text-muted-foreground">Abertos</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-amber-500">{((campanha.cliques / campanha.enviados) * 100).toFixed(1)}%</p>
+                        <p className="text-[10px] text-muted-foreground">Cliques</p>
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-emerald-500">{campanha.conversoes}</p>
+                        <p className="text-[10px] text-muted-foreground">Conversões</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="flex gap-3 mt-6">
+                <Button className="flex-1 brand-gradient">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Campanha
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  <BarChart3 className="h-4 w-4 mr-2" />
+                  Relatório Completo
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Automações */}
+          <Card className="border-border/50">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Zap className="h-5 w-5 text-amber-500" />
+                Automações Ativas
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid md:grid-cols-2 gap-4">
+                {[
+                  { nome: "Boas-vindas", trigger: "Novo cadastro", emails: 3, taxa: "84%" },
+                  { nome: "Carrinho Abandonado", trigger: "Checkout não finalizado", emails: 2, taxa: "12%" },
+                  { nome: "Reengajamento", trigger: "30 dias sem acesso", emails: 4, taxa: "23%" },
+                  { nome: "Aniversário", trigger: "Data de nascimento", emails: 1, taxa: "67%" },
+                ].map((auto, idx) => (
+                  <div key={idx} className="p-4 rounded-lg bg-muted/30 border border-border/30">
+                    <div className="flex items-center justify-between mb-2">
+                      <p className="font-medium">{auto.nome}</p>
+                      <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-500/20">Ativa</Badge>
+                    </div>
+                    <p className="text-xs text-muted-foreground mb-3">{auto.trigger}</p>
+                    <div className="flex justify-between text-xs">
+                      <span>{auto.emails} emails na sequência</span>
+                      <span className="font-medium text-primary">{auto.taxa} conversão</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </CardContent>
           </Card>

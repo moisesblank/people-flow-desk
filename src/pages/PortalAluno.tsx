@@ -65,40 +65,58 @@ export default function PortalAluno() {
   const [showCertificate, setShowCertificate] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
 
-  // Demo LMS data
-  const demoModules = [
+  // Módulos de Química - Conteúdo Real
+  const chemistryModules = [
     {
       id: "1",
-      title: "Introdução ao Curso",
+      title: "Módulo 1 - Estrutura Atômica",
       lessons: [
-        { id: "1-1", title: "Boas-vindas", duration: "5:00", isCompleted: true, isLocked: false },
-        { id: "1-2", title: "Como usar a plataforma", duration: "10:00", isCompleted: true, isLocked: false },
-        { id: "1-3", title: "Materiais de apoio", duration: "8:00", isCompleted: false, isLocked: false, isCurrent: true },
+        { id: "1-1", title: "Introdução ao Átomo", duration: "15:00", isCompleted: true, isLocked: false },
+        { id: "1-2", title: "Modelos Atômicos", duration: "25:00", isCompleted: true, isLocked: false },
+        { id: "1-3", title: "Distribuição Eletrônica", duration: "30:00", isCompleted: false, isLocked: false, isCurrent: true },
+        { id: "1-4", title: "Números Quânticos", duration: "20:00", isCompleted: false, isLocked: true },
       ],
     },
     {
       id: "2", 
-      title: "Fundamentos",
+      title: "Módulo 2 - Tabela Periódica",
       lessons: [
-        { id: "2-1", title: "Conceitos básicos", duration: "15:00", isCompleted: false, isLocked: false },
-        { id: "2-2", title: "Exercícios práticos", duration: "20:00", isCompleted: false, isLocked: true },
-        { id: "2-3", title: "Avaliação do módulo", duration: "30:00", isCompleted: false, isLocked: true },
+        { id: "2-1", title: "Organização da Tabela", duration: "20:00", isCompleted: false, isLocked: false },
+        { id: "2-2", title: "Propriedades Periódicas", duration: "35:00", isCompleted: false, isLocked: true },
+        { id: "2-3", title: "Exercícios de Fixação", duration: "25:00", isCompleted: false, isLocked: true },
       ],
     },
     {
       id: "3",
-      title: "Avançado",
+      title: "Módulo 3 - Ligações Químicas",
       lessons: [
-        { id: "3-1", title: "Técnicas avançadas", duration: "25:00", isCompleted: false, isLocked: true },
-        { id: "3-2", title: "Projeto final", duration: "45:00", isCompleted: false, isLocked: true },
+        { id: "3-1", title: "Ligação Iônica", duration: "30:00", isCompleted: false, isLocked: true },
+        { id: "3-2", title: "Ligação Covalente", duration: "35:00", isCompleted: false, isLocked: true },
+        { id: "3-3", title: "Ligação Metálica", duration: "20:00", isCompleted: false, isLocked: true },
+        { id: "3-4", title: "Geometria Molecular", duration: "40:00", isCompleted: false, isLocked: true },
+      ],
+    },
+    {
+      id: "4",
+      title: "Módulo 4 - Química Orgânica",
+      lessons: [
+        { id: "4-1", title: "Introdução à Química Orgânica", duration: "25:00", isCompleted: false, isLocked: true },
+        { id: "4-2", title: "Hidrocarbonetos", duration: "45:00", isCompleted: false, isLocked: true },
+        { id: "4-3", title: "Funções Orgânicas", duration: "50:00", isCompleted: false, isLocked: true },
+        { id: "4-4", title: "Isomeria", duration: "40:00", isCompleted: false, isLocked: true },
+        { id: "4-5", title: "Reações Orgânicas", duration: "55:00", isCompleted: false, isLocked: true },
       ],
     },
   ];
 
-  const demoFlashcards = [
-    { id: "1", frente: "O que é ROI?", verso: "Return on Investment - Retorno sobre Investimento. Mede a rentabilidade de um investimento.", dificuldade: "facil" as const },
-    { id: "2", frente: "O que significa CAC?", verso: "Custo de Aquisição de Cliente. O valor gasto para conquistar um novo cliente.", dificuldade: "medio" as const },
-    { id: "3", frente: "O que é LTV?", verso: "Lifetime Value - Valor do tempo de vida do cliente. Receita total esperada de um cliente.", dificuldade: "medio" as const },
+  // Flashcards de Química
+  const chemistryFlashcards = [
+    { id: "1", frente: "O que é número atômico (Z)?", verso: "É o número de prótons no núcleo de um átomo. Define qual elemento químico é.", dificuldade: "facil" as const },
+    { id: "2", frente: "Qual a diferença entre ligação iônica e covalente?", verso: "Iônica: transferência de elétrons (metal + não-metal). Covalente: compartilhamento de elétrons (não-metais).", dificuldade: "medio" as const },
+    { id: "3", frente: "O que é eletronegatividade?", verso: "Capacidade de um átomo atrair elétrons em uma ligação química. Flúor é o mais eletronegativo.", dificuldade: "medio" as const },
+    { id: "4", frente: "Como calcular o nox de um elemento?", verso: "Regras: H=+1, O=-2, metais alcalinos=+1, soma dos nox = carga total.", dificuldade: "dificil" as const },
+    { id: "5", frente: "O que é hibridização sp³?", verso: "Mistura de 1 orbital s + 3 orbitais p, formando 4 orbitais híbridos equivalentes com ângulo de 109,5°.", dificuldade: "dificil" as const },
+    { id: "6", frente: "Qual a fórmula da velocidade de reação?", verso: "v = k[A]^m[B]^n, onde k é a constante de velocidade e m,n são as ordens da reação.", dificuldade: "dificil" as const },
   ];
 
   useEffect(() => {
@@ -481,7 +499,7 @@ export default function PortalAluno() {
             <div className="grid gap-6 lg:grid-cols-2">
               <CourseProgress
                 courseName="Curso de Química - Moisés Medeiros"
-                modules={demoModules}
+                modules={chemistryModules}
                 overallProgress={33}
                 onLessonClick={(lessonId) => toast.info(`Abrindo aula ${lessonId}`)}
                 onCertificateClick={() => setShowCertificate(true)}
@@ -521,7 +539,7 @@ export default function PortalAluno() {
               </CardHeader>
               <CardContent>
                 <Flashcard
-                  cards={demoFlashcards}
+                  cards={chemistryFlashcards}
                   onComplete={(results) => toast.success(`Concluído! Acertos: ${results.correct}, Erros: ${results.incorrect}`)}
                 />
               </CardContent>
