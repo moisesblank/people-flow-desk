@@ -2699,7 +2699,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           data_admissao?: string | null
-          email?: string | null
+          email?: never
           funcao?: string | null
           horario_trabalho?: string | null
           id?: number | null
@@ -2708,7 +2708,7 @@ export type Database = {
           salario?: never
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: string | null
+          telefone?: never
           updated_at?: string | null
           user_id?: string | null
         }
@@ -2716,7 +2716,7 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           data_admissao?: string | null
-          email?: string | null
+          email?: never
           funcao?: string | null
           horario_trabalho?: string | null
           id?: number | null
@@ -2725,7 +2725,7 @@ export type Database = {
           salario?: never
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: string | null
+          telefone?: never
           updated_at?: string | null
           user_id?: string | null
         }
