@@ -19,6 +19,7 @@ import Alunos from "./pages/Alunos";
 import Relatorios from "./pages/Relatorios";
 import Configuracoes from "./pages/Configuracoes";
 import GestaoEquipe from "./pages/GestaoEquipe";
+import Guia from "./pages/Guia";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -131,6 +132,16 @@ const App = () => (
                 <ProtectedRoute>
                   <AppLayout>
                     <GestaoEquipe />
+                  </AppLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/guia"
+              element={
+                <ProtectedRoute>
+                  <AppLayout>
+                    <Guia />
                   </AppLayout>
                 </ProtectedRoute>
               }

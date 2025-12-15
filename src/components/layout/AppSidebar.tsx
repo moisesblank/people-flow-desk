@@ -9,7 +9,8 @@ import {
   FileText,
   LogOut,
   Settings,
-  UserCog
+  UserCog,
+  BookOpen
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -46,6 +47,7 @@ const businessMenuItems = [
   { title: "Afiliados", url: "/afiliados", icon: Handshake },
   { title: "Alunos", url: "/alunos", icon: GraduationCap },
   { title: "Relatórios", url: "/relatorios", icon: FileText },
+  { title: "Guia", url: "/guia", icon: BookOpen },
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
