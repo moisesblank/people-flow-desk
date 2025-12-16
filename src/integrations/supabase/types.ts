@@ -3159,6 +3159,39 @@ export type Database = {
           },
         ]
       }
+      two_factor_codes: {
+        Row: {
+          code: string
+          created_at: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          code: string
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          code?: string
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -3793,7 +3826,9 @@ export type Database = {
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       can_view_financial: { Args: { _user_id: string }; Returns: boolean }
       can_view_personal: { Args: { _user_id: string }; Returns: boolean }
+      cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      generate_2fa_code: { Args: never; Returns: string }
       get_all_users_last_access: {
         Args: never
         Returns: {
@@ -3848,6 +3883,7 @@ export type Database = {
       register_user_logout: { Args: never; Returns: undefined }
       update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
+      verify_2fa_code: { Args: { p_code: string }; Returns: boolean }
     }
     Enums: {
       app_role:
