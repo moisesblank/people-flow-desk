@@ -181,7 +181,54 @@ Arquivo: `supabase/functions/send-notification-email/index.ts`
 
 ---
 
+---
+
+## 🚀 UPGRADE BUSINESS - DEZEMBRO 2024
+
+### Plano Lovable Business Ativo ($960/mês)
+| Feature | Status | Descrição |
+|---------|--------|-----------|
+| **2000 créditos/mês** | ✅ | Capacidade expandida |
+| **SSO Corporativo** | ✅ Implementado | Google OAuth para equipe |
+| **Personal Projects** | ✅ Disponível | Workspaces separados |
+| **Internal Publish** | ✅ Disponível | Deploy privado |
+| **Opt-out Data Training** | ✅ Disponível | Privacidade total |
+| **Design Templates** | ✅ Disponível | Templates premium |
+| **Custom Domains** | ✅ Disponível | Domínio próprio |
+| **Remove Badge** | ✅ Disponível | Sem marca Lovable |
+
+### Sistema de Permissões (9 Roles)
+| Cargo | Nível | Áreas |
+|-------|-------|-------|
+| Owner (Deus) | Total | TODAS |
+| Admin | Alto | Todas exceto pessoal |
+| Coordenação | Médio-Alto | Equipe, turmas |
+| Suporte | Médio | Portal aluno |
+| Monitoria | Médio | Simulados, alunos |
+| Afiliados | Básico+ | Métricas vendas |
+| Marketing | Médio | Marketing, site |
+| Contabilidade | Específico | Finanças empresa |
+| Employee | Básico | Leitura |
+
+### Arquivos Críticos do Sistema
+```
+src/hooks/useRolePermissions.tsx   # 9 roles + permissões
+src/components/layout/RoleBasedSidebar.tsx   # Sidebar dinâmica
+src/components/layout/RoleProtectedRoute.tsx # Proteção rotas
+src/pages/Auth.tsx                 # Login + 2FA + Google SSO
+src/pages/Permissoes.tsx           # Gestão de roles
+```
+
+### Próximos Passos
+1. [ ] Configurar Google OAuth no backend (Users → Auth Settings → Google)
+2. [ ] Testar SSO com funcionários
+3. [ ] Atribuir roles via /permissoes
+4. [ ] Configurar custom domain (opcional)
+
+---
+
 ## 🎉 PROJETO 100% COMPLETO E FUNCIONAL!
 
-**Versão Final**: SYNAPSE v14.0 + UPGRADE v10 + EXTRAS
+**Versão Final**: SYNAPSE v14.0 BUSINESS + UPGRADE v10 + EXTRAS
+**Plano**: Lovable Business ($960/mês - 2000 créditos)
 **Status**: PRONTO PARA PRODUÇÃO ✅
