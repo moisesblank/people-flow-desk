@@ -6,6 +6,7 @@ import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/s
 import { RoleBasedSidebar } from "./RoleBasedSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { CalculatorButton } from "@/components/Calculator";
+import { PeriodicTableButton } from "@/components/PeriodicTable";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -106,6 +107,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
             {/* Calculator */}
             <CalculatorButton />
+            
+            {/* Periodic Table */}
+            <PeriodicTableButton />
             
             {/* System Health */}
             <SystemHealthIndicator />
