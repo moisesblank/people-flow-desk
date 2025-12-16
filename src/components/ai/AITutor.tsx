@@ -168,15 +168,15 @@ export function AITutor({ lessonContext, isOpen = true, onClose }: AITutorProps)
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20, scale: 0.95 }}
+      initial={{ opacity: 0, y: -20, scale: 0.95 }}
       animate={{ 
         opacity: 1, 
         y: 0, 
         scale: 1,
         height: isMinimized ? "auto" : "500px" 
       }}
-      exit={{ opacity: 0, y: 20, scale: 0.95 }}
-      className="fixed bottom-4 right-4 w-96 bg-card border border-primary/30 rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden z-50"
+      exit={{ opacity: 0, y: -20, scale: 0.95 }}
+      className="fixed top-36 right-6 w-96 bg-card border border-primary/30 rounded-2xl shadow-2xl shadow-primary/10 overflow-hidden z-40"
     >
       {/* Header */}
       <div className="flex items-center justify-between p-4 border-b border-border bg-primary/5">

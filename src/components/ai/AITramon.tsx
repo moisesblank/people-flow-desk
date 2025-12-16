@@ -266,14 +266,14 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
 
   return (
     <>
-      {/* Floating Trigger Button - SUPERIOR DIREITO */}
+      {/* Floating Trigger Button - CANTO SUPERIOR DIREITO */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed top-20 right-6 z-50"
+            className="fixed top-20 right-20 z-50"
           >
             <Button
               onClick={() => setIsOpen(true)}

@@ -670,27 +670,34 @@ export default function Dashboard() {
         </section>
       </div>
 
-      {/* AI Tutor Floating Button - Para todos (inferior direito) */}
-      {!showAITutor && (
-        <motion.div
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="fixed bottom-6 right-6 z-40"
-        >
-          <Button
-            size="lg"
-            className="h-14 w-14 rounded-full shadow-lg bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90"
-            onClick={() => setShowAITutor(true)}
+      {/* AI Floating Buttons - CANTO SUPERIOR DIREITO */}
+      <div className="fixed top-20 right-6 z-40 flex flex-col gap-3">
+        {/* AI Tutor Button */}
+        {!showAITutor && (
+          <motion.div
+            initial={{ scale: 0, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ delay: 0.2 }}
           >
-            <Bot className="h-6 w-6" />
-          </Button>
-        </motion.div>
-      )}
+            <Button
+              size="lg"
+              className="h-12 w-12 rounded-full shadow-lg bg-gradient-to-r from-blue-600 to-cyan-500 hover:from-blue-700 hover:to-cyan-600 relative group"
+              onClick={() => setShowAITutor(true)}
+              title="Tutor IA"
+            >
+              <Bot className="h-5 w-5" />
+              <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-card border border-border px-2 py-0.5 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+                Tutor IA
+              </span>
+            </Button>
+          </motion.div>
+        )}
+      </div>
 
-      {/* AI Tutor Component */}
+      {/* AI Tutor Component - Superior Direito */}
       <AITutor isOpen={showAITutor} onClose={() => setShowAITutor(false)} />
 
-      {/* TRAMON - Premium AI (Owner/Admin - superior direito) */}
+      {/* TRAMON - Premium AI (Owner/Admin - superior direito, acima do Tutor) */}
       {(role === 'owner' || role === 'admin') && <AITramon />}
 
       {/* Guided Tour */}
