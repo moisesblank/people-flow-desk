@@ -3249,6 +3249,83 @@ export type Database = {
           },
         ]
       }
+      tramon_actions: {
+        Row: {
+          action_data: Json
+          action_type: string
+          conversation_id: string | null
+          created_at: string
+          executed_at: string | null
+          id: string
+          result: Json | null
+          status: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_data?: Json
+          action_type: string
+          conversation_id?: string | null
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          result?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_data?: Json
+          action_type?: string
+          conversation_id?: string | null
+          created_at?: string
+          executed_at?: string | null
+          id?: string
+          result?: Json | null
+          status?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tramon_actions_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "tramon_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tramon_conversations: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          session_id: string
+          source: string | null
+          user_id: string | null
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          session_id?: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          session_id?: string
+          source?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           account_id: string | null

@@ -48,7 +48,7 @@ import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisu
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
-import { AITramon, AITramonTrigger } from "@/components/ai/AITramon";
+import { AITramon } from "@/components/ai/AITramon";
 import { QuizListWidget } from "@/components/lms/QuizListWidget";
 import { SecurityStatusWidget } from "@/components/security/SecurityStatusWidget";
 import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding/GuidedTour";
@@ -689,6 +689,9 @@ export default function Dashboard() {
 
       {/* AI Tutor Component */}
       <AITutor isOpen={showAITutor} onClose={() => setShowAITutor(false)} />
+
+      {/* TRAMON - Premium AI Assistant (Owner/Admin only) */}
+      <AITramon />
 
       {/* Guided Tour */}
       <GuidedTour 
