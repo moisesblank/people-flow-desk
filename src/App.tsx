@@ -56,6 +56,7 @@ const Simulados = lazy(() => import("./pages/Simulados"));
 const Laboratorio = lazy(() => import("./pages/Laboratorio"));
 const VidaPessoal = lazy(() => import("./pages/VidaPessoal"));
 const Tarefas = lazy(() => import("./pages/Tarefas"));
+const LeadsWhatsApp = lazy(() => import("./pages/LeadsWhatsApp"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -154,6 +155,7 @@ function AppContent() {
           <Route path="/laboratorio" element={<ProtectedPage><Laboratorio /></ProtectedPage>} />
           <Route path="/vida-pessoal" element={<ProtectedPage><VidaPessoal /></ProtectedPage>} />
           <Route path="/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
+          <Route path="/leads-whatsapp" element={<ProtectedPage><LeadsWhatsApp /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
