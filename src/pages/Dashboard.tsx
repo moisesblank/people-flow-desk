@@ -671,7 +671,7 @@ export default function Dashboard() {
       </div>
 
       {/* AI Floating Buttons - CANTO SUPERIOR DIREITO */}
-      <div className="fixed top-20 right-6 z-40 flex flex-col gap-3">
+      <div className="fixed top-4 right-20 z-40 flex items-center gap-2">
         {/* AI Tutor Button */}
         {!showAITutor && (
           <motion.div
@@ -686,7 +686,7 @@ export default function Dashboard() {
               title="Tutor IA"
             >
               <Bot className="h-5 w-5" />
-              <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-card border border-border px-2 py-0.5 rounded text-[10px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
+              <span className="absolute -bottom-7 left-1/2 -translate-x-1/2 bg-card border border-border px-2 py-0.5 rounded text-[9px] whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity">
                 Tutor IA
               </span>
             </Button>
@@ -697,7 +697,7 @@ export default function Dashboard() {
       {/* AI Tutor Component - Superior Direito */}
       <AITutor isOpen={showAITutor} onClose={() => setShowAITutor(false)} />
 
-      {/* TRAMON - Premium AI (Owner/Admin - superior direito, acima do Tutor) */}
+      {/* TRAMON - Premium AI (Owner/Admin - superior direito) */}
       {(role === 'owner' || role === 'admin') && <AITramon />}
 
       {/* Guided Tour */}
