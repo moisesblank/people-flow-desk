@@ -28,7 +28,7 @@ serve(async (req) => {
       const challenge = url.searchParams.get('hub.challenge');
 
       // Verify token should match what you set in Meta Business Suite
-      const VERIFY_TOKEN = Deno.env.get('WHATSAPP_VERIFY_TOKEN') || 'TRAMON_VERIFY_2024';
+      const VERIFY_TOKEN = Deno.env.get('WHATSAPP_VERIFY_TOKEN') || 'tramon_moises_2024';
 
       if (mode === 'subscribe' && token === VERIFY_TOKEN) {
         console.log('✅ Webhook verified!');
