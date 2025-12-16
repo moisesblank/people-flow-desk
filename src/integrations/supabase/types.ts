@@ -2448,6 +2448,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sensitive_operation_limits: {
+        Row: {
+          id: string
+          operation_type: string
+          request_count: number | null
+          user_id: string | null
+          window_start: string | null
+        }
+        Insert: {
+          id?: string
+          operation_type: string
+          request_count?: number | null
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Update: {
+          id?: string
+          operation_type?: string
+          request_count?: number | null
+          user_id?: string | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       social_media_history: {
         Row: {
           engagement_rate: number | null
@@ -3415,7 +3439,7 @@ export type Database = {
         Insert: {
           code: string
           created_at?: string | null
-          expires_at: string
+          expires_at?: string
           id?: string
           ip_address?: string | null
           user_agent?: string | null
@@ -4022,32 +4046,88 @@ export type Database = {
           updated_at: string | null
           user_id: string | null
         }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: never
+          funcao?: string | null
+          horario_trabalho?: string | null
+          id?: number | null
+          nome?: string | null
+          responsabilidades?: string | null
+          salario?: never
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          telefone?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          data_admissao?: string | null
+          email?: never
+          funcao?: string | null
+          horario_trabalho?: string | null
+          id?: number | null
+          nome?: string | null
+          responsabilidades?: string | null
+          salario?: never
+          setor?: Database["public"]["Enums"]["sector_type"] | null
+          status?: Database["public"]["Enums"]["employee_status"] | null
+          telefone?: never
+          updated_at?: string | null
+          user_id?: string | null
+        }
         Relationships: []
       }
       profiles_public: {
         Row: {
           avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          email: string | null
           id: string | null
+          is_online: boolean | null
           level: number | null
           nome: string | null
+          phone: string | null
           streak_days: number | null
           xp_total: number | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: never
           id?: string | null
+          is_online?: boolean | null
           level?: number | null
           nome?: string | null
+          phone?: never
           streak_days?: number | null
           xp_total?: number | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: never
           id?: string | null
+          is_online?: boolean | null
           level?: number | null
           nome?: string | null
+          phone?: never
           streak_days?: number | null
           xp_total?: number | null
+        }
+        Relationships: []
+      }
+      security_dashboard: {
+        Row: {
+          metric: string | null
+          value: number | null
         }
         Relationships: []
       }
@@ -4068,8 +4148,17 @@ export type Database = {
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       can_view_financial: { Args: { _user_id: string }; Returns: boolean }
       can_view_personal: { Args: { _user_id: string }; Returns: boolean }
+      check_rate_limit: {
+        Args: {
+          p_max_requests?: number
+          p_operation: string
+          p_window_minutes?: number
+        }
+        Returns: boolean
+      }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      cleanup_old_sensitive_data: { Args: never; Returns: undefined }
       generate_2fa_code: { Args: never; Returns: string }
       get_all_users_last_access: {
         Args: never
@@ -4111,6 +4200,14 @@ export type Database = {
           _table_name?: string
         }
         Returns: string
+      }
+      log_sensitive_data_access: {
+        Args: {
+          p_action: string
+          p_record_count?: number
+          p_table_name: string
+        }
+        Returns: undefined
       }
       register_user_login: {
         Args: {
