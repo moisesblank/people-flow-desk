@@ -12,6 +12,9 @@ verify_jwt = false
 [functions.ai-tramon]
 verify_jwt = false
 
+[functions.whatsapp-webhook]
+verify_jwt = false
+
 [functions.send-report]
 verify_jwt = true
 
