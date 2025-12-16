@@ -246,24 +246,65 @@ serve(async (req) => {
       console.log('📩 Webhook received:', JSON.stringify(body, null, 2));
 
       // Detectar se é payload do ManyChat ou WhatsApp direto
-      const isManyChat = body.user_id && body.user_name && body.user_phone;
-      
+      // ManyChat pode variar o formato: preferimos inferir por presença de telefone + identificador.
+      const isManyChat = Boolean(
+        body &&
+          typeof body === 'object' &&
+          (body.user_phone || body.subscriber_phone || body.phone) &&
+          (body.user_id || body.subscriber_id || body.user_name || body.name)
+      );
+
       let from: string;
       let messageText: string;
       let userName: string;
       let externalId: string | null = null;
       let source: string;
 
+      const pickFirstString = (...values: unknown[]) => {
+        for (const v of values) {
+          if (typeof v === 'string' && v.trim()) return v.trim();
+        }
+        return '';
+      };
+
+      const extractManyChatMessage = (payload: any) => {
+        const direct = pickFirstString(
+          payload?.message,
+          payload?.text,
+          payload?.customer_feedback,
+          payload?.fields?.customer_feedback,
+          payload?.custom_fields?.customer_feedback,
+          payload?.data?.customer_feedback
+        );
+        if (direct) return direct;
+
+        // Alguns fluxos mandam o campo como objeto { value: "..." }
+        const objVal =
+          payload?.fields?.customer_feedback?.value ??
+          payload?.custom_fields?.customer_feedback?.value ??
+          payload?.data?.customer_feedback?.value;
+        if (typeof objVal === 'string' && objVal.trim()) return objVal.trim();
+
+        return '';
+      };
+
       if (isManyChat) {
         // ==============================================================================
         // PAYLOAD DO MANYCHAT
         // ==============================================================================
         console.log('📱 ManyChat payload detected');
-        from = body.user_phone.replace(/\D/g, ''); // Remove non-digits
-        messageText = body.message || '';
-        userName = body.user_name || 'Lead WhatsApp';
-        externalId = body.user_id;
+        from = pickFirstString(body.user_phone, body.subscriber_phone, body.phone).replace(/\D/g, '');
+        messageText = extractManyChatMessage(body);
+        userName = pickFirstString(body.user_name, body.name, 'Lead WhatsApp') || 'Lead WhatsApp';
+        externalId = pickFirstString(body.user_id, body.subscriber_id) || null;
         source = 'whatsapp_manychat';
+
+        console.log('🧩 ManyChat extracted:', {
+          from,
+          userName,
+          externalId,
+          hasMessage: Boolean(messageText),
+        });
       } else {
         // ==============================================================================
         // PAYLOAD DO WHATSAPP CLOUD API (direto)
