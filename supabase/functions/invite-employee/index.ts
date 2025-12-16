@@ -178,79 +178,8 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send welcome email (optional - don't fail if it doesn't work)
+    // Send welcome email usando template padronizado (aprovado 16/12/2024)
     try {
-      const welcomeHtml = `
-        <!DOCTYPE html>
-        <html lang="pt-BR">
-        <head>
-          <meta charset="utf-8" />
-          <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-          <title>Bem-vindo(a) — Curso Moisés Medeiros</title>
-        </head>
-        <body style="margin:0;padding:0;background:#0a0a0f;color:#ffffff;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;">
-          <div style="max-width:680px;margin:0 auto;padding:24px;">
-            <div style="background:linear-gradient(180deg,#131318 0%,#0a0a0f 100%);border-radius:16px;padding:28px;border:1px solid #7D1128;">
-              <div style="text-align:center;margin-bottom:18px;">
-                <h1 style="margin:0;color:#E62B4A;font-size:22px;">Curso Moisés Medeiros</h1>
-                <p style="margin:6px 0 0 0;color:#9aa0a6;font-size:13px;">Acesso criado com sucesso</p>
-              </div>
-
-              <h2 style="margin:18px 0 10px 0;font-size:18px;color:#ffffff;">Olá, ${nome}!</h2>
-
-              <div style="color:#e6e6e6;line-height:1.7;font-size:14px;">
-                <p style="margin:0 0 12px 0;">Seja muito bem-vindo(a) à equipe do Curso Moisés Medeiros 👊📚</p>
-
-                <p style="margin:0 0 12px 0;">É uma satisfação enorme ter você conosco em um projeto que nasceu com um propósito muito claro: transformar estudo em aprovação e levar nossos alunos ao mais alto nível de desempenho acadêmico, especialmente em Medicina 🎯🩺</p>
-
-                <p style="margin:0 0 12px 0;">Aqui a gente trabalha com padrão elevado, foco em resultado, responsabilidade e compromisso real com aquilo que entrega. Nosso crescimento não é acaso — é fruto de método, consistência e pessoas que entendem que excelência não é discurso, é prática diária ⚙️🔥</p>
-
-                <p style="margin:0 0 12px 0;">Você passa a fazer parte de um time que valoriza organização, profissionalismo, ética e, acima de tudo, respeito aos alunos e à missão educacional que carregamos. Cada função aqui é estratégica e impacta diretamente milhares de estudantes espalhados pelo país 🌍📈</p>
-
-                <p style="margin:0 0 12px 0;"><strong>📌 Ponto importante desde já:</strong><br/>Cada membro da equipe será responsável por manter a planilha atualizada, conforme alinhamentos internos. Isso é essencial para a organização e o bom funcionamento do time.</p>
-
-                <p style="margin:0 0 12px 0;"><strong>🔐 Sobre acessos e login:</strong><br/>Os dados de acesso e orientações iniciais já foram encaminhados via WhatsApp pela Bruna, minha esposa, que cuida diretamente dessa parte operacional com vocês.</p>
-
-                <p style="margin:0 0 12px 0;">Fique à vontade para contribuir, sugerir, aprender e crescer junto com a gente 🤝🚀<br/>As próximas orientações e alinhamentos continuarão sendo passados pelos nossos canais oficiais.</p>
-
-                <p style="margin:0 0 12px 0;">Mais uma vez, seja bem-vindo(a).<br/>Vamos juntos manter — e elevar — o padrão. 💪🔥</p>
-
-                <p style="margin:18px 0 6px 0;">Prof. Moisés Medeiros Melo</p>
-                <p style="margin:0;color:#9aa0a6;font-size:12px;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
-
-                <hr style="border:none;border-top:1px solid #2a2a2f;margin:18px 0;" />
-
-                <p style="margin:0 0 10px 0;color:#cfcfcf;font-size:12px;">
-                  Telefone humanizado (WhatsApp): +55 83 9616-9222
-                  <span style="color:#666;"> | </span>
-                  <a href="https://wa.me/558396169222" style="color:#E62B4A;text-decoration:none;">clique aqui</a>
-                </p>
-                <p style="margin:0 0 10px 0;color:#cfcfcf;font-size:12px;">João Pessoa – PB | <a href="https://www.moisesmedeiros.com.br" style="color:#E62B4A;text-decoration:none;">www.moisesmedeiros.com.br</a></p>
-                <p style="margin:0 0 14px 0;color:#cfcfcf;font-size:12px;">falemcom@moisesmedeiros.com.br</p>
-
-                <p style="margin:0 0 8px 0;color:#9aa0a6;font-size:12px;">Siga nas redes:</p>
-                <ul style="margin:0 0 0 18px;padding:0;color:#cfcfcf;font-size:12px;line-height:1.7;">
-                  <li>Instagram: <a href="https://instagram.com/moises.profquimica" style="color:#E62B4A;text-decoration:none;">@moises.profquimica</a></li>
-                  <li>Canal no Telegram (gratuito): <a href="https://t.me/+KIur74un8Gg2ZWJh" style="color:#E62B4A;text-decoration:none;">https://t.me/+KIur74un8Gg2ZWJh</a></li>
-                  <li>YouTube: <a href="https://www.youtube.com/@moises.profquimica" style="color:#E62B4A;text-decoration:none;">moises.profquimica</a></li>
-                </ul>
-
-                <p style="margin:18px 0 0 0;color:#9aa0a6;font-size:12px;">Transformando conhecimento em aprovações reais. Capacitando pessoas a alcançarem seus sonhos na Química e na Medicina.</p>
-                <p style="margin:10px 0 0 0;color:#9aa0a6;font-size:12px;">Faça parte da maior comunidade de Química do Brasil.</p>
-                <p style="margin:10px 0 0 0;color:#9aa0a6;font-size:12px;">CURSO DE QUÍMICA QUE MAIS APROVA E COMPROVA EM UNIVERSIDADES PÚBLICAS DO BRASIL.</p>
-              </div>
-
-              <div style="text-align:center;margin-top:18px;">
-                <a href="https://gestao.moisesmedeiros.com.br/auth" style="display:inline-block;background:linear-gradient(135deg,#E62B4A,#7D1128);color:#fff;text-decoration:none;padding:12px 22px;border-radius:10px;font-weight:700;font-size:14px;">Acessar Sistema</a>
-              </div>
-
-              <p style="margin:18px 0 0 0;color:#666;font-size:11px;text-align:center;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `;
-
       const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
         method: "POST",
         headers: {
@@ -259,9 +188,8 @@ const handler = async (req: Request): Promise<Response> => {
         },
         body: JSON.stringify({
           to: email,
-          type: "custom",
-          subject: "Seja bem-vindo(a) à equipe — Curso Moisés Medeiros",
-          html: welcomeHtml,
+          type: "welcome",
+          data: { nome },
         }),
       });
 
