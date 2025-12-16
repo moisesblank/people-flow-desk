@@ -6,7 +6,12 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OWNER_PHONE = '5583991462045';
+// Números autorizados do Owner
+const AUTHORIZED_PHONES = [
+  '5583991462045',  // Número principal informado
+  '558398920105',   // Número que está enviando mensagens
+  '5583989201050',  // Variação com zero
+];
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 serve(async (req) => {
@@ -65,14 +70,18 @@ serve(async (req) => {
       console.log(`📱 Message from ${from}: ${messageText}`);
 
       // Check if sender is authorized (owner or admin)
-      const isOwner = from === OWNER_PHONE || from.includes('83991462045');
+      const isAuthorized = AUTHORIZED_PHONES.some(phone => 
+        from === phone || from.includes(phone.slice(-9)) || phone.includes(from.slice(-9))
+      );
       
-      if (!isOwner) {
+      if (!isAuthorized) {
         console.log('⚠️ Unauthorized sender:', from);
         return new Response(JSON.stringify({ status: 'unauthorized' }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         });
       }
+      
+      console.log('✅ Authorized sender:', from);
 
       // Get owner user_id
       const { data: ownerProfile } = await supabase

@@ -670,8 +670,8 @@ export default function Dashboard() {
         </section>
       </div>
 
-      {/* AI Tutor Floating Button - Apenas para NÃO admins */}
-      {!showAITutor && role !== 'owner' && role !== 'admin' && (
+      {/* AI Tutor Floating Button - Para todos (inferior direito) */}
+      {!showAITutor && (
         <motion.div
           initial={{ scale: 0 }}
           animate={{ scale: 1 }}
@@ -687,10 +687,10 @@ export default function Dashboard() {
         </motion.div>
       )}
 
-      {/* AI Tutor Component - Para todos */}
+      {/* AI Tutor Component */}
       <AITutor isOpen={showAITutor} onClose={() => setShowAITutor(false)} />
 
-      {/* TRAMON - Premium AI (Owner/Admin APENAS) */}
+      {/* TRAMON - Premium AI (Owner/Admin - superior direito) */}
       {(role === 'owner' || role === 'admin') && <AITramon />}
 
       {/* Guided Tour */}
