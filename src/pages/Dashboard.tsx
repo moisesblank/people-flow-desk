@@ -48,6 +48,7 @@ import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisu
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
+import { AITramon, AITramonTrigger } from "@/components/ai/AITramon";
 import { QuizListWidget } from "@/components/lms/QuizListWidget";
 import { SecurityStatusWidget } from "@/components/security/SecurityStatusWidget";
 import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding/GuidedTour";
@@ -114,6 +115,7 @@ export default function Dashboard() {
   const { user, role } = useAuth();
   const { data: stats, isLoading, error } = useDashboardStats();
   const [showAITutor, setShowAITutor] = useState(false);
+  const [showTramon, setShowTramon] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const { isOpen: showTour, completeTour, resetTour } = useTour("dashboard");
   const processedData = useMemo(() => {
