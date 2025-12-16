@@ -9,9 +9,9 @@ const corsHeaders = {
 
 interface EmailRequest {
   to: string;
-  subject: string;
+  subject?: string;
   html?: string;
-  type: "welcome" | "sale" | "reminder" | "custom";
+  type?: "welcome" | "sale" | "reminder" | "custom";
   data?: Record<string, any>;
 }
 
@@ -119,9 +119,15 @@ const handler = async (req: Request): Promise<Response> => {
 
     const { to, subject, html, type, data }: EmailRequest = await req.json();
 
-    console.log(`Sending ${type} email to: ${to}`);
+    const effectiveType: "welcome" | "sale" | "reminder" | "custom" =
+      (type as any) ?? (html ? "custom" : "custom");
 
-    const template = type !== "custom" ? getEmailTemplate(type, data) : { subject, html };
+    console.log(`Sending ${effectiveType} email to: ${to}`);
+
+    const template =
+      effectiveType === "custom"
+        ? { subject: subject || data?.subject || "Notificação do Sistema", html: html || data?.html || getEmailTemplate("custom", data).html }
+        : getEmailTemplate(effectiveType, data);
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -132,8 +138,8 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Prof. Moisés Medeiros <noreply@moisesmedeiros.com.br>",
         to: [to],
-        subject: template.subject || subject,
-        html: template.html || html,
+        subject: template.subject,
+        html: template.html,
       }),
     });
 

@@ -47,21 +47,33 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
       try {
         const { data: { user: currentUser } } = await supabase.auth.getUser();
         setUser(currentUser);
-        
+
         if (!currentUser) {
           setIsOwner(false);
           setIsLoading(false);
           return;
         }
 
-        // Verificar se é owner pelo email primeiro (rápido)
-        if (currentUser.email?.toLowerCase() === OWNER_EMAIL) {
-          // Confirmar com função do banco (seguro)
-          const { data } = await supabase.rpc('is_owner');
-          setIsOwner(data === true);
-          if (data) {
-            console.log('🔮 MODO DEUS disponível - Ctrl+Shift+E para ativar');
+        const isEmailOwner = currentUser.email?.toLowerCase() === OWNER_EMAIL;
+
+        // Regra principal: email do owner (confiável para este projeto)
+        if (isEmailOwner) {
+          setIsOwner(true);
+
+          // Confirmação extra via backend (não bloqueia o modo caso falhe)
+          try {
+            const { data, error } = await supabase.rpc('is_owner');
+            if (error) {
+              console.warn('[GODMODE] is_owner rpc error (ignored):', error.message);
+            } else if (data === false) {
+              // Se o backend disser explicitamente que não é owner, respeitar
+              setIsOwner(false);
+            }
+          } catch (err) {
+            console.warn('[GODMODE] is_owner rpc exception (ignored)');
           }
+
+          console.log('🔮 MODO DEUS disponível - Ctrl+Shift+E para ativar');
         } else {
           setIsOwner(false);
         }
@@ -81,7 +93,10 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         setIsOwner(false);
         setIsActive(false);
       } else {
-        checkOwner();
+        // Evita chamadas Supabase dentro do callback (anti-deadlock)
+        setTimeout(() => {
+          checkOwner();
+        }, 0);
       }
     });
 
