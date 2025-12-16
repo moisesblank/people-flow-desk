@@ -56,6 +56,10 @@ import { TimeTrackingWidget } from "@/components/dashboard/TimeTrackingWidget";
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { AutomationRules } from "@/components/dashboard/AutomationRules";
+import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScore";
+import { FinancialGoalsWidget } from "@/components/dashboard/FinancialGoalsWidget";
+import { FinancialInsights } from "@/components/dashboard/FinancialInsights";
+import { QuickActions } from "@/components/dashboard/QuickActions";
 // NEW: Componentes de UX melhorados
 import { WelcomeHero } from "@/components/dashboard/WelcomeHero";
 import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
