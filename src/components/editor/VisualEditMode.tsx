@@ -1,17 +1,20 @@
 // ============================================
 // SYNAPSE v14.0 - VISUAL EDIT MODE
 // Sistema de edição visual inline estilo Elementor
+// COM UPLOAD DE IMAGENS
 // ============================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGodMode } from '@/contexts/GodModeContext';
-import { X, Check, Type, Image, Link, Undo, Redo, Eye, EyeOff, Save } from 'lucide-react';
+import { X, Check, Type, Image, Link, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 interface EditableElement {
   element: HTMLElement;
@@ -21,11 +24,15 @@ interface EditableElement {
 }
 
 export function VisualEditMode() {
-  const { isActive, isOwner, updateContent, getContent } = useGodMode();
+  const { isActive, isOwner, updateContent } = useGodMode();
   const [selectedElement, setSelectedElement] = useState<EditableElement | null>(null);
   const [editValue, setEditValue] = useState('');
   const [isEditing, setIsEditing] = useState(false);
   const [hoveredElement, setHoveredElement] = useState<HTMLElement | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [imageTab, setImageTab] = useState<'upload' | 'url'>('upload');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Detectar elementos editáveis
   const detectEditableElements = useCallback(() => {
@@ -68,25 +75,29 @@ export function VisualEditMode() {
           key: editableKey || `inline_${Date.now()}`
         });
         setEditValue(value);
+        setPreviewImage(type === 'image' ? value : null);
         setIsEditing(true);
       } else {
-        // Se clicar em qualquer texto/imagem, perguntar se quer editar
+        // Se clicar em qualquer texto/imagem, permitir edição
         if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'A', 'IMG'].includes(target.tagName)) {
           const value = target.tagName === 'IMG' 
             ? (target as HTMLImageElement).src 
             : target.innerText || '';
           
-          if (value) {
+          if (value || target.tagName === 'IMG') {
             e.preventDefault();
             e.stopPropagation();
             
+            const elementType = target.tagName === 'IMG' ? 'image' : target.tagName === 'A' ? 'link' : 'text';
+            
             setSelectedElement({
               element: target,
-              type: target.tagName === 'IMG' ? 'image' : target.tagName === 'A' ? 'link' : 'text',
+              type: elementType,
               originalValue: value,
               key: `dynamic_${target.tagName.toLowerCase()}_${Date.now()}`
             });
             setEditValue(value);
+            setPreviewImage(elementType === 'image' ? value : null);
             setIsEditing(true);
           }
         }
@@ -143,6 +154,96 @@ export function VisualEditMode() {
     }
   }, [isActive, hoveredElement]);
 
+  // Upload de imagem para Supabase
+  const handleImageUpload = async (file: File) => {
+    if (!file) return;
+
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      toast.error('Arquivo inválido', { description: 'Selecione uma imagem' });
+      return;
+    }
+
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Arquivo muito grande', { description: 'Máximo 5MB' });
+      return;
+    }
+
+    setIsUploading(true);
+
+    try {
+      // Criar preview local
+      const localPreview = URL.createObjectURL(file);
+      setPreviewImage(localPreview);
+
+      // Gerar nome único
+      const timestamp = Date.now();
+      const ext = file.name.split('.').pop();
+      const fileName = `godmode/${timestamp}_${Math.random().toString(36).substring(7)}.${ext}`;
+
+      // Upload para Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('arquivos')
+        .upload(fileName, file, {
+          cacheControl: '3600',
+          upsert: false
+        });
+
+      if (error) {
+        // Se bucket não existe, tentar criar
+        if (error.message?.includes('not found')) {
+          toast.error('Bucket não configurado', {
+            description: 'Configure o storage no Supabase'
+          });
+        } else {
+          throw error;
+        }
+        return;
+      }
+
+      // Pegar URL pública
+      const { data: urlData } = supabase.storage
+        .from('arquivos')
+        .getPublicUrl(fileName);
+
+      const publicUrl = urlData.publicUrl;
+      setEditValue(publicUrl);
+      setPreviewImage(publicUrl);
+
+      toast.success('Imagem carregada!');
+    } catch (error: any) {
+      console.error('Erro upload:', error);
+      toast.error('Erro ao carregar imagem', {
+        description: error.message || 'Tente novamente'
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleImageUpload(file);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      handleImageUpload(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   const handleSave = async () => {
     if (!selectedElement) return;
 
@@ -151,23 +252,23 @@ export function VisualEditMode() {
       if (selectedElement.type === 'text') {
         selectedElement.element.innerText = editValue;
       } else if (selectedElement.type === 'image') {
-        (selectedElement.element as HTMLImageElement).src = editValue;
+        (selectedElement.element as HTMLImageElement).src = previewImage || editValue;
       } else if (selectedElement.type === 'link') {
         (selectedElement.element as HTMLAnchorElement).href = editValue;
       }
 
-      // Salvar no banco se tiver key
+      // Salvar no banco se tiver key persistente
       if (selectedElement.key.startsWith('inline_') || selectedElement.key.startsWith('dynamic_')) {
-        // Edição temporária apenas visual
         toast.success('Alteração aplicada!', {
-          description: 'Esta é uma edição visual temporária'
+          description: 'Edição visual aplicada com sucesso'
         });
       } else {
-        await updateContent(selectedElement.key, editValue, selectedElement.type);
+        await updateContent(selectedElement.key, previewImage || editValue, selectedElement.type);
       }
 
       setIsEditing(false);
       setSelectedElement(null);
+      setPreviewImage(null);
     } catch (error) {
       toast.error('Erro ao salvar');
     }
@@ -186,6 +287,10 @@ export function VisualEditMode() {
     }
     setIsEditing(false);
     setSelectedElement(null);
+    setPreviewImage(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
   };
 
   if (!isActive || !isOwner) return null;
@@ -200,7 +305,7 @@ export function VisualEditMode() {
           className="fixed bottom-24 left-1/2 -translate-x-1/2 z-[9999] visual-edit-panel"
         >
           <div 
-            className="bg-background/95 backdrop-blur-xl border border-primary/30 rounded-2xl shadow-2xl p-4 min-w-[400px] max-w-[600px]"
+            className="bg-background/95 backdrop-blur-xl border border-primary/30 rounded-2xl shadow-2xl p-4 min-w-[450px] max-w-[600px]"
             style={{
               boxShadow: '0 0 40px rgba(147, 51, 234, 0.3)'
             }}
@@ -230,29 +335,88 @@ export function VisualEditMode() {
                   className="min-h-[100px] bg-muted/50 border-border focus:border-primary"
                   autoFocus
                 />
+              ) : selectedElement.type === 'image' ? (
+                <div className="space-y-4">
+                  <Tabs value={imageTab} onValueChange={(v) => setImageTab(v as 'upload' | 'url')}>
+                    <TabsList className="grid w-full grid-cols-2">
+                      <TabsTrigger value="upload" className="flex items-center gap-2">
+                        <Upload className="w-4 h-4" />
+                        Upload
+                      </TabsTrigger>
+                      <TabsTrigger value="url" className="flex items-center gap-2">
+                        <Link className="w-4 h-4" />
+                        URL
+                      </TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="upload" className="mt-4">
+                      <div
+                        onDrop={handleDrop}
+                        onDragOver={handleDragOver}
+                        onClick={() => fileInputRef.current?.click()}
+                        className={cn(
+                          "border-2 border-dashed rounded-xl p-6 text-center cursor-pointer transition-all",
+                          "hover:border-primary hover:bg-primary/5",
+                          isUploading ? "border-primary bg-primary/5" : "border-border"
+                        )}
+                      >
+                        {isUploading ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                            <span className="text-sm text-muted-foreground">Carregando...</span>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center gap-2">
+                            <Upload className="w-8 h-8 text-muted-foreground" />
+                            <span className="text-sm font-medium">Arraste uma imagem ou clique aqui</span>
+                            <span className="text-xs text-muted-foreground">PNG, JPG, GIF até 5MB</span>
+                          </div>
+                        )}
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileChange}
+                          className="hidden"
+                        />
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="url" className="mt-4">
+                      <Input
+                        type="url"
+                        value={editValue}
+                        onChange={(e) => {
+                          setEditValue(e.target.value);
+                          setPreviewImage(e.target.value);
+                        }}
+                        placeholder="https://exemplo.com/imagem.jpg"
+                        className="bg-muted/50 border-border focus:border-primary"
+                      />
+                    </TabsContent>
+                  </Tabs>
+
+                  {/* Preview da imagem */}
+                  {previewImage && (
+                    <div className="rounded-lg overflow-hidden bg-muted/30 p-2">
+                      <img 
+                        src={previewImage} 
+                        alt="Preview" 
+                        className="max-h-40 mx-auto rounded object-contain"
+                        onError={() => setPreviewImage(null)}
+                      />
+                    </div>
+                  )}
+                </div>
               ) : (
                 <Input
-                  type={selectedElement.type === 'image' ? 'url' : 'url'}
+                  type="url"
                   value={editValue}
                   onChange={(e) => setEditValue(e.target.value)}
-                  placeholder={selectedElement.type === 'image' ? 'URL da imagem...' : 'URL do link...'}
+                  placeholder="URL do link..."
                   className="bg-muted/50 border-border focus:border-primary"
                   autoFocus
                 />
-              )}
-
-              {/* Preview para imagens */}
-              {selectedElement.type === 'image' && editValue && (
-                <div className="rounded-lg overflow-hidden bg-muted/30 p-2">
-                  <img 
-                    src={editValue} 
-                    alt="Preview" 
-                    className="max-h-32 mx-auto rounded object-contain"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                  />
-                </div>
               )}
             </div>
 
@@ -263,6 +427,7 @@ export function VisualEditMode() {
               </Button>
               <Button 
                 onClick={handleSave}
+                disabled={isUploading}
                 className="bg-primary hover:bg-primary/90"
               >
                 <Check className="w-4 h-4 mr-2" />
