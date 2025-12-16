@@ -1,11 +1,21 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - Two Factor Verification
-// Componente de verificação 2FA
+// MOISÉS MEDEIROS v10.0 - Two Factor Verification
+// Componente de verificação 2FA Ultra Seguro
 // ============================================
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Mail, RefreshCw, Lock, CheckCircle, AlertCircle, Timer } from "lucide-react";
+import { 
+  Shield, 
+  Mail, 
+  RefreshCw, 
+  Lock, 
+  CheckCircle, 
+  AlertCircle, 
+  Timer,
+  AlertTriangle,
+  ShieldAlert
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
@@ -31,6 +41,9 @@ export function TwoFactorVerification({
   const [isResending, setIsResending] = useState(false);
   const [countdown, setCountdown] = useState(0);
   const [error, setError] = useState("");
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
+  const [isLocked, setIsLocked] = useState(false);
+  const [lockoutTime, setLockoutTime] = useState(0);
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   // Enviar código ao montar
@@ -46,7 +59,18 @@ export function TwoFactorVerification({
     }
   }, [countdown]);
 
-  const sendCode = async () => {
+  // Countdown de lockout
+  useEffect(() => {
+    if (lockoutTime > 0) {
+      const timer = setTimeout(() => setLockoutTime(lockoutTime - 1), 1000);
+      return () => clearTimeout(timer);
+    } else if (isLocked && lockoutTime === 0) {
+      setIsLocked(false);
+      setAttemptsRemaining(5);
+    }
+  }, [lockoutTime, isLocked]);
+
+  const sendCode = useCallback(async () => {
     setIsResending(true);
     setError("");
 
@@ -57,35 +81,44 @@ export function TwoFactorVerification({
 
       if (error) throw error;
 
+      if (data?.error) {
+        if (data.retryAfter) {
+          toast.error("Muitas tentativas", {
+            description: "Aguarde 15 minutos para solicitar novo código"
+          });
+          return;
+        }
+        throw new Error(data.error);
+      }
+
       toast.success("Código enviado!", {
-        description: `Verifique sua caixa de entrada: ${email}`
+        description: `Verifique: ${email}`
       });
 
-      setCountdown(60); // 60 segundos para reenvio
+      setCountdown(60);
     } catch (err: any) {
       console.error("Erro ao enviar código:", err);
       toast.error("Erro ao enviar código", {
-        description: "Tente novamente em alguns segundos"
+        description: err.message || "Tente novamente em alguns segundos"
       });
     } finally {
       setIsResending(false);
     }
-  };
+  }, [email, userId, userName]);
 
   const handleInputChange = (index: number, value: string) => {
-    if (!/^\d*$/.test(value)) return; // Apenas números
+    if (!/^\d*$/.test(value)) return;
+    if (isLocked) return;
 
     const newCode = [...code];
-    newCode[index] = value.slice(-1); // Apenas último caractere
+    newCode[index] = value.slice(-1);
     setCode(newCode);
     setError("");
 
-    // Auto-focus próximo input
     if (value && index < 5) {
       inputRefs.current[index + 1]?.focus();
     }
 
-    // Auto-verificar quando completo
     if (newCode.every(digit => digit !== "") && newCode.join("").length === 6) {
       verifyCode(newCode.join(""));
     }
@@ -99,6 +132,8 @@ export function TwoFactorVerification({
 
   const handlePaste = (e: React.ClipboardEvent) => {
     e.preventDefault();
+    if (isLocked) return;
+    
     const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
     
     if (pastedData.length === 6) {
@@ -118,6 +153,20 @@ export function TwoFactorVerification({
       });
 
       if (error || !data?.valid) {
+        // Verificar se está bloqueado
+        if (data?.lockedUntil) {
+          setIsLocked(true);
+          setLockoutTime(data.remainingSeconds || 900);
+          setError("Conta temporariamente bloqueada por excesso de tentativas");
+          setCode(["", "", "", "", "", ""]);
+          return;
+        }
+
+        // Atualizar tentativas restantes
+        if (data?.attemptsRemaining !== undefined) {
+          setAttemptsRemaining(data.attemptsRemaining);
+        }
+
         setError(data?.error || "Código inválido");
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
@@ -138,6 +187,14 @@ export function TwoFactorVerification({
     }
   };
 
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
+
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -145,79 +202,129 @@ export function TwoFactorVerification({
       exit={{ opacity: 0, scale: 0.95 }}
       className="w-full max-w-md mx-auto"
     >
-      <div className="bg-card/50 backdrop-blur-xl border border-primary/20 rounded-2xl p-8 shadow-2xl">
+      <div className="bg-card/50 backdrop-blur-xl border border-primary/20 rounded-2xl p-8 shadow-2xl shadow-primary/10">
         {/* Header */}
         <div className="text-center mb-8">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
+            initial={{ scale: 0, rotate: -180 }}
+            animate={{ scale: 1, rotate: 0 }}
             transition={{ type: "spring", delay: 0.1 }}
-            className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+            className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center relative"
             style={{
-              background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
+              background: isLocked 
+                ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)"
+                : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
             }}
           >
-            <Shield className="w-10 h-10 text-white" />
+            {isLocked ? (
+              <ShieldAlert className="w-10 h-10 text-white" />
+            ) : (
+              <Shield className="w-10 h-10 text-white" />
+            )}
+            
+            {/* Animated ring */}
+            <motion.div
+              className="absolute inset-0 rounded-full border-2 border-primary/50"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
           </motion.div>
 
           <h2 className="text-2xl font-bold text-foreground mb-2">
-            Verificação em Duas Etapas
+            {isLocked ? "Conta Temporariamente Bloqueada" : "Verificação em Duas Etapas"}
           </h2>
           <p className="text-muted-foreground text-sm">
-            Enviamos um código de 6 dígitos para
+            {isLocked 
+              ? "Muitas tentativas incorretas detectadas"
+              : "Enviamos um código de 6 dígitos para"}
           </p>
-          <p className="text-primary font-medium flex items-center justify-center gap-2 mt-1">
-            <Mail className="w-4 h-4" />
-            {email}
-          </p>
+          {!isLocked && (
+            <p className="text-primary font-medium flex items-center justify-center gap-2 mt-1">
+              <Mail className="w-4 h-4" />
+              {maskedEmail}
+            </p>
+          )}
         </div>
+
+        {/* Lockout Timer */}
+        <AnimatePresence>
+          {isLocked && lockoutTime > 0 && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              className="mb-6"
+            >
+              <div className="flex flex-col items-center gap-3 p-4 rounded-lg bg-destructive/10 border border-destructive/30">
+                <AlertTriangle className="w-8 h-8 text-destructive" />
+                <p className="text-center text-sm text-muted-foreground">
+                  Por segurança, aguarde antes de tentar novamente
+                </p>
+                <div className="text-3xl font-bold text-destructive font-mono">
+                  {formatTime(lockoutTime)}
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Código Input */}
-        <div className="mb-6">
-          <label className="block text-sm font-medium text-muted-foreground mb-3 text-center">
-            Digite o código de verificação
-          </label>
-          
-          <div className="flex justify-center gap-2" onPaste={handlePaste}>
-            {code.map((digit, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.05 }}
-              >
-                <Input
-                  ref={(el) => (inputRefs.current[index] = el)}
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={1}
-                  value={digit}
-                  onChange={(e) => handleInputChange(index, e.target.value)}
-                  onKeyDown={(e) => handleKeyDown(index, e)}
-                  disabled={isLoading}
-                  className={`
-                    w-12 h-14 text-center text-2xl font-bold
-                    bg-background/50 border-2 rounded-xl
-                    transition-all duration-200
-                    focus:border-primary focus:ring-2 focus:ring-primary/30
-                    ${error ? "border-destructive" : "border-border"}
-                    ${digit ? "border-primary bg-primary/10" : ""}
-                  `}
-                />
-              </motion.div>
-            ))}
-          </div>
+        {!isLocked && (
+          <div className="mb-6">
+            <label className="block text-sm font-medium text-muted-foreground mb-3 text-center">
+              Digite o código de verificação
+            </label>
+            
+            <div className="flex justify-center gap-2" onPaste={handlePaste}>
+              {code.map((digit, index) => (
+                <motion.div
+                  key={index}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <Input
+                    ref={(el) => (inputRefs.current[index] = el)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleInputChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    disabled={isLoading || isLocked}
+                    className={`
+                      w-12 h-14 text-center text-2xl font-bold
+                      bg-background/50 border-2 rounded-xl
+                      transition-all duration-200
+                      focus:border-primary focus:ring-2 focus:ring-primary/30
+                      ${error ? "border-destructive shake" : "border-border"}
+                      ${digit ? "border-primary bg-primary/10" : ""}
+                      disabled:opacity-50
+                    `}
+                  />
+                </motion.div>
+              ))}
+            </div>
 
-          {/* Timer */}
-          <div className="flex items-center justify-center gap-2 mt-4 text-sm text-muted-foreground">
-            <Timer className="w-4 h-4" />
-            <span>O código expira em 10 minutos</span>
+            {/* Timer & Attempts Info */}
+            <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Timer className="w-4 h-4" />
+                Expira em 10 min
+              </span>
+              {attemptsRemaining !== null && attemptsRemaining < 5 && (
+                <span className="flex items-center gap-1 text-amber-500">
+                  <AlertTriangle className="w-4 h-4" />
+                  {attemptsRemaining} tentativas restantes
+                </span>
+              )}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Error */}
         <AnimatePresence>
-          {error && (
+          {error && !isLocked && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
@@ -255,21 +362,23 @@ export function TwoFactorVerification({
         </AnimatePresence>
 
         {/* Resend */}
-        <div className="text-center mb-6">
-          <p className="text-sm text-muted-foreground mb-2">
-            Não recebeu o código?
-          </p>
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={sendCode}
-            disabled={isResending || countdown > 0}
-            className="text-primary hover:text-primary/80"
-          >
-            <RefreshCw className={`w-4 h-4 mr-2 ${isResending ? "animate-spin" : ""}`} />
-            {countdown > 0 ? `Reenviar em ${countdown}s` : "Reenviar código"}
-          </Button>
-        </div>
+        {!isLocked && (
+          <div className="text-center mb-6">
+            <p className="text-sm text-muted-foreground mb-2">
+              Não recebeu o código?
+            </p>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={sendCode}
+              disabled={isResending || countdown > 0}
+              className="text-primary hover:text-primary/80"
+            >
+              <RefreshCw className={`w-4 h-4 mr-2 ${isResending ? "animate-spin" : ""}`} />
+              {countdown > 0 ? `Reenviar em ${countdown}s` : "Reenviar código"}
+            </Button>
+          </div>
+        )}
 
         {/* Cancel */}
         <Button
@@ -278,7 +387,7 @@ export function TwoFactorVerification({
           onClick={onCancel}
           disabled={isLoading}
         >
-          Cancelar e voltar ao login
+          {isLocked ? "Voltar ao login" : "Cancelar e voltar ao login"}
         </Button>
       </div>
 
@@ -295,7 +404,7 @@ export function TwoFactorVerification({
             <p className="font-medium text-foreground mb-1">Dica de segurança</p>
             <p>
               Nunca compartilhe seu código de verificação com ninguém. 
-              Nossa equipe jamais solicitará esse código.
+              Nossa equipe <strong>jamais</strong> solicitará esse código por telefone ou WhatsApp.
             </p>
           </div>
         </div>

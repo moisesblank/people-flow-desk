@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - Verify 2FA Code
-// Verifica código de autenticação de dois fatores
+// MOISÉS MEDEIROS v10.0 - Verify 2FA Code
+// Verificação segura com proteção brute-force
 // ============================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -16,6 +16,10 @@ interface Verify2FARequest {
   code: string;
 }
 
+// Proteção brute-force: máximo 5 tentativas em 15 minutos
+const MAX_ATTEMPTS = 5;
+const LOCKOUT_WINDOW = 15 * 60 * 1000; // 15 minutos
+
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -28,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     if (!userId || !code) {
       return new Response(
-        JSON.stringify({ valid: false, error: "userId e code são obrigatórios" }),
+        JSON.stringify({ valid: false, error: "userId e código são obrigatórios" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -36,7 +40,7 @@ const handler = async (req: Request): Promise<Response> => {
     // Validar formato do código (6 dígitos)
     if (!/^\d{6}$/.test(code)) {
       return new Response(
-        JSON.stringify({ valid: false, error: "Código inválido" }),
+        JSON.stringify({ valid: false, error: "Formato de código inválido" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -47,7 +51,52 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    // Buscar código válido
+    // ========================================
+    // PROTEÇÃO BRUTE-FORCE
+    // ========================================
+    const windowStart = new Date(Date.now() - LOCKOUT_WINDOW).toISOString();
+    
+    // Contar tentativas falhas recentes
+    const { data: failedAttempts } = await supabaseAdmin
+      .from("activity_log")
+      .select("id")
+      .eq("user_id", userId)
+      .eq("action", "2FA_FAILED")
+      .gte("created_at", windowStart);
+
+    if (failedAttempts && failedAttempts.length >= MAX_ATTEMPTS) {
+      console.log(`[2FA Verify] Usuário bloqueado por excesso de tentativas: ${userId}`);
+      
+      // Calcular tempo restante do bloqueio
+      const { data: lastAttempt } = await supabaseAdmin
+        .from("activity_log")
+        .select("created_at")
+        .eq("user_id", userId)
+        .eq("action", "2FA_FAILED")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .single();
+
+      const lockoutEnds = lastAttempt 
+        ? new Date(new Date(lastAttempt.created_at).getTime() + LOCKOUT_WINDOW)
+        : new Date(Date.now() + LOCKOUT_WINDOW);
+      
+      const remainingSeconds = Math.ceil((lockoutEnds.getTime() - Date.now()) / 1000);
+
+      return new Response(
+        JSON.stringify({ 
+          valid: false, 
+          error: "Muitas tentativas incorretas. Conta temporariamente bloqueada.",
+          lockedUntil: lockoutEnds.toISOString(),
+          remainingSeconds: Math.max(0, remainingSeconds)
+        }),
+        { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ========================================
+    // BUSCAR E VALIDAR CÓDIGO
+    // ========================================
     const { data: validCode, error: fetchError } = await supabaseAdmin
       .from("two_factor_codes")
       .select("*")
@@ -60,7 +109,20 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (fetchError || !validCode) {
-      console.log(`[2FA Verify] Código inválido ou expirado`);
+      console.log(`[2FA Verify] Código inválido ou expirado para user: ${userId}`);
+      
+      // Registrar tentativa falha
+      await supabaseAdmin
+        .from("activity_log")
+        .insert({
+          user_id: userId,
+          action: "2FA_FAILED",
+          new_value: { 
+            attempted_code: code.substring(0, 2) + "****", // Log parcial por segurança
+            timestamp: new Date().toISOString(),
+            ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+          }
+        });
       
       // Verificar se código existe mas expirou
       const { data: expiredCode } = await supabaseAdmin
@@ -71,19 +133,33 @@ const handler = async (req: Request): Promise<Response> => {
         .single();
 
       if (expiredCode) {
+        const expiredAt = new Date(expiredCode.expires_at);
         return new Response(
-          JSON.stringify({ valid: false, error: "Código expirado. Solicite um novo." }),
+          JSON.stringify({ 
+            valid: false, 
+            error: "Código expirado. Por favor, solicite um novo código.",
+            expiredAt: expiredCode.expires_at
+          }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
 
+      // Calcular tentativas restantes
+      const attemptsRemaining = MAX_ATTEMPTS - (failedAttempts?.length || 0) - 1;
+
       return new Response(
-        JSON.stringify({ valid: false, error: "Código inválido" }),
+        JSON.stringify({ 
+          valid: false, 
+          error: "Código incorreto. Verifique e tente novamente.",
+          attemptsRemaining: Math.max(0, attemptsRemaining)
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Marcar código como usado
+    // ========================================
+    // CÓDIGO VÁLIDO - MARCAR COMO USADO
+    // ========================================
     const { error: updateError } = await supabaseAdmin
       .from("two_factor_codes")
       .update({ verified: true })
@@ -93,26 +169,43 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("[2FA Verify] Erro ao atualizar código:", updateError);
     }
 
-    // Registrar login no activity log
+    // Registrar login bem-sucedido
     await supabaseAdmin
       .from("activity_log")
       .insert({
         user_id: userId,
         action: "2FA_VERIFIED",
-        new_value: { method: "email", verified_at: new Date().toISOString() }
+        new_value: { 
+          method: "email", 
+          verified_at: new Date().toISOString(),
+          ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown",
+          user_agent: req.headers.get("user-agent")?.substring(0, 100) || "unknown"
+        }
       });
 
-    console.log(`[2FA Verify] Código verificado com sucesso!`);
+    // Limpar tentativas falhas antigas
+    await supabaseAdmin
+      .from("activity_log")
+      .delete()
+      .eq("user_id", userId)
+      .eq("action", "2FA_FAILED")
+      .lt("created_at", windowStart);
+
+    console.log(`[2FA Verify] Código verificado com sucesso para user: ${userId}`);
 
     return new Response(
-      JSON.stringify({ valid: true, message: "Código verificado com sucesso" }),
+      JSON.stringify({ 
+        valid: true, 
+        message: "Verificação concluída com sucesso!",
+        verifiedAt: new Date().toISOString()
+      }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error: any) {
     console.error("[2FA Verify] Erro:", error);
     return new Response(
-      JSON.stringify({ valid: false, error: error.message || "Erro interno" }),
+      JSON.stringify({ valid: false, error: "Erro interno do servidor. Tente novamente." }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }
