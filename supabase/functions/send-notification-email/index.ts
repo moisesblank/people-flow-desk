@@ -15,92 +15,199 @@ interface EmailRequest {
   data?: Record<string, any>;
 }
 
+// ============================================
+// TEMPLATE PADRÃO - CURSO MOISÉS MEDEIROS
+// Aprovado em 16/12/2024
+// ============================================
+
+const getBaseTemplate = (titulo: string, conteudo: string, botaoTexto?: string, botaoUrl?: string) => `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>${titulo} — Curso Moisés Medeiros</title>
+</head>
+<body style="margin:0;padding:0;background:#0a0a0f;color:#ffffff;font-family:Segoe UI, Tahoma, Geneva, Verdana, sans-serif;">
+  <div style="max-width:680px;margin:0 auto;padding:24px;">
+    <div style="background:linear-gradient(180deg,#131318 0%,#0a0a0f 100%);border-radius:16px;padding:28px;border:1px solid #7D1128;">
+      <div style="text-align:center;margin-bottom:18px;">
+        <h1 style="margin:0;color:#E62B4A;font-size:22px;">Curso Moisés Medeiros</h1>
+        <p style="margin:6px 0 0 0;color:#9aa0a6;font-size:13px;">${titulo}</p>
+      </div>
+
+      <div style="color:#e6e6e6;line-height:1.7;font-size:14px;">
+        ${conteudo}
+      </div>
+
+      ${botaoTexto && botaoUrl ? `
+      <div style="text-align:center;margin-top:24px;">
+        <a href="${botaoUrl}" style="display:inline-block;background:linear-gradient(135deg,#E62B4A,#7D1128);color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:700;font-size:14px;">${botaoTexto}</a>
+      </div>
+      ` : ''}
+
+      <hr style="border:none;border-top:1px solid #2a2a2f;margin:24px 0 18px 0;" />
+
+      <div style="color:#9aa0a6;font-size:12px;line-height:1.6;">
+        <p style="margin:0 0 8px 0;"><strong>Prof. Moisés Medeiros Melo</strong></p>
+        <p style="margin:0 0 8px 0;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
+        <p style="margin:0 0 8px 0;">
+          WhatsApp: <a href="https://wa.me/558396169222" style="color:#E62B4A;text-decoration:none;">+55 83 9616-9222</a>
+        </p>
+        <p style="margin:0 0 8px 0;">
+          <a href="https://www.moisesmedeiros.com.br" style="color:#E62B4A;text-decoration:none;">www.moisesmedeiros.com.br</a> | 
+          falemcom@moisesmedeiros.com.br
+        </p>
+        <p style="margin:12px 0 0 0;">Siga nas redes:</p>
+        <p style="margin:4px 0 0 0;">
+          Instagram: <a href="https://instagram.com/moises.profquimica" style="color:#E62B4A;text-decoration:none;">@moises.profquimica</a> |
+          <a href="https://t.me/+KIur74un8Gg2ZWJh" style="color:#E62B4A;text-decoration:none;">Telegram</a> |
+          <a href="https://www.youtube.com/@moises.profquimica" style="color:#E62B4A;text-decoration:none;">YouTube</a>
+        </p>
+      </div>
+
+      <p style="margin:18px 0 0 0;color:#666;font-size:11px;text-align:center;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p>
+    </div>
+  </div>
+</body>
+</html>
+`;
+
 const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
   const templates: Record<string, { subject: string; html: string }> = {
+    // EMAIL DE BOAS-VINDAS À EQUIPE (quando cria acesso)
     welcome: {
-      subject: "Bem-vindo ao Curso de Química! 🧪",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #8B5CF6, #06B6D4); padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="color: white; margin: 0;">Bem-vindo, ${data.nome || 'Aluno'}! 🎉</h1>
-          </div>
-          <div style="padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px; color: #374151;">
-              Parabéns por se juntar à família de estudantes do Professor Moisés Medeiros!
-            </p>
-            <p style="font-size: 16px; color: #374151;">
-              Sua jornada rumo à aprovação começa agora. Acesse a plataforma e comece seus estudos.
-            </p>
-            <div style="text-align: center; margin: 30px 0;">
-              <a href="https://moisesmedeiros.com.br" style="background: #8B5CF6; color: white; padding: 15px 30px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                Acessar Plataforma
-              </a>
-            </div>
-            <p style="font-size: 14px; color: #6b7280; text-align: center;">
-              Dúvidas? Responda este email ou acesse nosso suporte.
-            </p>
-          </div>
-        </div>
-      `,
+      subject: "Seja bem-vindo(a) à equipe — Curso Moisés Medeiros 👊",
+      html: getBaseTemplate(
+        "Bem-vindo(a) à equipe!",
+        `
+        <h2 style="margin:0 0 16px 0;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Colaborador(a)'}!</h2>
+        
+        <p style="margin:0 0 12px 0;">Seja muito bem-vindo(a) à equipe do Curso Moisés Medeiros 👊📚</p>
+
+        <p style="margin:0 0 12px 0;">É uma satisfação enorme ter você conosco em um projeto que nasceu com um propósito muito claro: transformar estudo em aprovação e levar nossos alunos ao mais alto nível de desempenho acadêmico, especialmente em Medicina 🎯🩺</p>
+
+        <p style="margin:0 0 12px 0;">Aqui a gente trabalha com padrão elevado, foco em resultado, responsabilidade e compromisso real com aquilo que entrega. Nosso crescimento não é acaso — é fruto de método, consistência e pessoas que entendem que excelência não é discurso, é prática diária ⚙️🔥</p>
+
+        <p style="margin:0 0 12px 0;">Você passa a fazer parte de um time que valoriza organização, profissionalismo, ética e, acima de tudo, respeito aos alunos e à missão educacional que carregamos. Cada função aqui é estratégica e impacta diretamente milhares de estudantes espalhados pelo país 🌍📈</p>
+
+        <p style="margin:0 0 12px 0;"><strong>📌 Ponto importante desde já:</strong><br/>Cada membro da equipe será responsável por manter a planilha atualizada, conforme alinhamentos internos. Isso é essencial para a organização e o bom funcionamento do time.</p>
+
+        <p style="margin:0 0 12px 0;"><strong>🔐 Sobre acessos e login:</strong><br/>Os dados de acesso e orientações iniciais já foram encaminhados via WhatsApp pela Bruna, minha esposa, que cuida diretamente dessa parte operacional com vocês.</p>
+
+        <p style="margin:0 0 12px 0;">Fique à vontade para contribuir, sugerir, aprender e crescer junto com a gente 🤝🚀<br/>As próximas orientações e alinhamentos continuarão sendo passados pelos nossos canais oficiais.</p>
+
+        <p style="margin:0;">Mais uma vez, seja bem-vindo(a).<br/>Vamos juntos manter — e elevar — o padrão. 💪🔥</p>
+        `,
+        "Acessar Sistema",
+        "https://gestao.moisesmedeiros.com.br/auth"
+      ),
     },
+
+    // EMAIL DE RECUPERAÇÃO DE SENHA
+    password_reset: {
+      subject: "Recuperação de Senha — Curso Moisés Medeiros 🔐",
+      html: getBaseTemplate(
+        "Recuperação de Senha",
+        `
+        <h2 style="margin:0 0 16px 0;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Usuário'}!</h2>
+        
+        <p style="margin:0 0 12px 0;">Recebemos uma solicitação para redefinir a senha da sua conta no sistema de gestão do Curso Moisés Medeiros.</p>
+
+        <p style="margin:0 0 12px 0;">Se você fez essa solicitação, clique no botão abaixo para criar uma nova senha:</p>
+
+        ${data.reset_link ? `
+        <div style="text-align:center;margin:20px 0;">
+          <a href="${data.reset_link}" style="display:inline-block;background:linear-gradient(135deg,#E62B4A,#7D1128);color:#fff;text-decoration:none;padding:14px 28px;border-radius:10px;font-weight:700;font-size:14px;">Redefinir Minha Senha</a>
+        </div>
+        ` : ''}
+
+        <p style="margin:0 0 12px 0;color:#9aa0a6;font-size:13px;">⚠️ Este link expira em 1 hora por motivos de segurança.</p>
+
+        <p style="margin:0 0 12px 0;">Se você <strong>não solicitou</strong> a redefinição de senha, ignore este email. Sua senha permanecerá a mesma.</p>
+
+        <p style="margin:0;">Qualquer dúvida, entre em contato conosco pelo WhatsApp.</p>
+        `,
+        undefined,
+        undefined
+      ),
+    },
+
+    // EMAIL DE CONFIRMAÇÃO DE ALTERAÇÃO DE SENHA
+    password_changed: {
+      subject: "Sua senha foi alterada — Curso Moisés Medeiros ✅",
+      html: getBaseTemplate(
+        "Senha Alterada com Sucesso",
+        `
+        <h2 style="margin:0 0 16px 0;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Usuário'}!</h2>
+        
+        <p style="margin:0 0 12px 0;">Sua senha foi alterada com sucesso! ✅</p>
+
+        <p style="margin:0 0 12px 0;">Se você realizou essa alteração, pode ignorar este email.</p>
+
+        <p style="margin:0 0 12px 0;color:#ff6b6b;"><strong>⚠️ Se você NÃO alterou sua senha</strong>, entre em contato imediatamente com nossa equipe pelo WhatsApp para proteger sua conta.</p>
+
+        <p style="margin:0;">Mantenha sua senha segura e não a compartilhe com ninguém.</p>
+        `,
+        "Acessar Sistema",
+        "https://gestao.moisesmedeiros.com.br/auth"
+      ),
+    },
+
+    // EMAIL DE NOVA VENDA
     sale: {
-      subject: "Nova Venda Realizada! 💰",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #10B981, #3B82F6); padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="color: white; margin: 0;">Nova Venda! 🎯</h1>
-          </div>
-          <div style="padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px;">
-            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-              <h3 style="margin: 0 0 10px 0; color: #374151;">Detalhes da Venda:</h3>
-              <p style="margin: 5px 0; color: #6b7280;"><strong>Produto:</strong> ${data.produto || 'Curso'}</p>
-              <p style="margin: 5px 0; color: #6b7280;"><strong>Valor:</strong> R$ ${data.valor || '0,00'}</p>
-              <p style="margin: 5px 0; color: #6b7280;"><strong>Comprador:</strong> ${data.comprador || 'N/A'}</p>
-              <p style="margin: 5px 0; color: #6b7280;"><strong>Email:</strong> ${data.email || 'N/A'}</p>
-            </div>
-            <p style="font-size: 14px; color: #6b7280; text-align: center;">
-              Acesse o dashboard para mais detalhes.
-            </p>
-          </div>
+      subject: "Nova Venda Realizada! 💰🎯",
+      html: getBaseTemplate(
+        "Nova Venda Confirmada!",
+        `
+        <h2 style="margin:0 0 16px 0;font-size:18px;color:#ffffff;">Parabéns! Nova venda realizada 🎉</h2>
+        
+        <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:0 0 8px 0;"><strong>Produto:</strong> ${data.produto || 'Curso'}</p>
+          <p style="margin:0 0 8px 0;"><strong>Valor:</strong> R$ ${data.valor || '0,00'}</p>
+          <p style="margin:0 0 8px 0;"><strong>Comprador:</strong> ${data.comprador || 'N/A'}</p>
+          <p style="margin:0;"><strong>Email:</strong> ${data.email || 'N/A'}</p>
         </div>
-      `,
+
+        <p style="margin:0;">Acesse o dashboard para mais detalhes.</p>
+        `,
+        "Ver Dashboard",
+        "https://gestao.moisesmedeiros.com.br/dashboard"
+      ),
     },
+
+    // EMAIL DE LEMBRETE
     reminder: {
-      subject: "Lembrete: Você tem uma tarefa pendente! ⏰",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #F59E0B, #EF4444); padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="color: white; margin: 0;">Lembrete! ⏰</h1>
-          </div>
-          <div style="padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px;">
-            <div style="background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px;">
-              <h3 style="margin: 0 0 10px 0; color: #374151;">${data.titulo || 'Tarefa Pendente'}</h3>
-              <p style="margin: 5px 0; color: #6b7280;">${data.descricao || ''}</p>
-              <p style="margin: 15px 0 0 0; color: #EF4444; font-weight: bold;">
-                📅 Data: ${data.data || 'Hoje'} ${data.hora ? `às ${data.hora}` : ''}
-              </p>
-            </div>
-            <div style="text-align: center; margin: 20px 0;">
-              <a href="https://moisesmedeiros.com.br/calendario" style="background: #F59E0B; color: white; padding: 12px 25px; border-radius: 8px; text-decoration: none; font-weight: bold;">
-                Ver Calendário
-              </a>
-            </div>
-          </div>
+      subject: `Lembrete: ${data.titulo || 'Tarefa Pendente'} ⏰`,
+      html: getBaseTemplate(
+        "Lembrete Importante",
+        `
+        <h2 style="margin:0 0 16px 0;font-size:18px;color:#ffffff;">${data.titulo || 'Tarefa Pendente'}</h2>
+        
+        ${data.descricao ? `<p style="margin:0 0 12px 0;">${data.descricao}</p>` : ''}
+
+        <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
+          <p style="margin:0;color:#E62B4A;font-size:18px;font-weight:bold;">
+            📅 ${data.data || 'Hoje'} ${data.hora ? `às ${data.hora}` : ''}
+          </p>
         </div>
-      `,
+
+        <p style="margin:0;">Não deixe para depois!</p>
+        `,
+        "Ver Calendário",
+        "https://gestao.moisesmedeiros.com.br/calendario"
+      ),
     },
+
+    // EMAIL CUSTOMIZADO (fallback)
     custom: {
-      subject: data.subject || "Notificação do Sistema",
-      html: data.html || `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <div style="background: linear-gradient(135deg, #8B5CF6, #06B6D4); padding: 30px; border-radius: 10px; text-align: center;">
-            <h1 style="color: white; margin: 0;">${data.titulo || 'Notificação'}</h1>
-          </div>
-          <div style="padding: 20px; background: #f9fafb; border-radius: 0 0 10px 10px;">
-            <p style="font-size: 16px; color: #374151;">${data.mensagem || ''}</p>
-          </div>
-        </div>
-      `,
+      subject: data.subject || "Notificação — Curso Moisés Medeiros",
+      html: data.html || getBaseTemplate(
+        data.titulo || "Notificação",
+        `<p style="margin:0;">${data.mensagem || 'Você tem uma nova notificação.'}</p>`,
+        undefined,
+        undefined
+      ),
     },
   };
 
