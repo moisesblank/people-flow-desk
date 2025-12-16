@@ -52,7 +52,7 @@ import { QuizListWidget } from "@/components/lms/QuizListWidget";
 import { SecurityStatusWidget } from "@/components/security/SecurityStatusWidget";
 import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding/GuidedTour";
 import { TasksOverviewWidget } from "@/components/dashboard/TasksOverviewWidget";
-import { TimeTrackingWidget } from "@/components/dashboard/TimeTrackingWidget";
+
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
 import { AutomationRules } from "@/components/dashboard/AutomationRules";
@@ -622,9 +622,8 @@ export default function Dashboard() {
         </section>
 
         {/* UPGRADE v10 - Widgets de Produtividade */}
-        <section className="grid gap-4 md:grid-cols-3 mb-8">
+        <section className="grid gap-4 md:grid-cols-2 mb-8">
           <TasksOverviewWidget />
-          <TimeTrackingWidget />
           <LabStatusWidget />
         </section>
 

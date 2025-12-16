@@ -35,7 +35,6 @@ import {
   generateFinancialPDF, 
   generateEmployeesPDF, 
   generateTasksPDF,
-  generateTimeTrackingPDF,
   generateLabReportPDF,
   generateComprehensiveReportPDF 
 } from "@/utils/pdfGenerator";
@@ -230,10 +229,6 @@ export default function Relatorios() {
           const { data: tasks } = await supabase.from("tasks").select("*");
           generateTasksPDF(tasks || []);
           break;
-        case "ponto":
-          const { data: timeRecords } = await supabase.from("time_tracking").select("*").order("clock_in", { ascending: false }).limit(100);
-          generateTimeTrackingPDF(timeRecords || []);
-          break;
         case "laboratorio":
           const [reagentsRes, equipmentRes] = await Promise.all([
             supabase.from("reagents").select("*"),
@@ -296,15 +291,6 @@ export default function Relatorios() {
       type: "tarefas" as const,
       color: "text-[hsl(var(--stats-yellow))]",
       bg: "bg-[hsl(var(--stats-yellow))]/10",
-      hasPDF: true,
-    },
-    { 
-      title: "Relatório de Ponto", 
-      description: "Registros de entrada/saída", 
-      icon: Clock,
-      type: "ponto" as const,
-      color: "text-primary",
-      bg: "bg-primary/10",
       hasPDF: true,
     },
     { 

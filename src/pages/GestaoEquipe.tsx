@@ -1,24 +1,18 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - GESTÃO DE EQUIPE
-// Spider-Man Theme - Ponto, Férias e Documentos
+// Spider-Man Theme - Férias e Documentos
 // Upload de PDFs e Gestão Completa
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  Clock, 
   Sparkles, 
   Calendar,
-  Timer,
-  UserCheck,
   FileText,
   Briefcase,
   AlertCircle,
   CheckCircle2,
-  XCircle,
-  PlayCircle,
-  PauseCircle,
   Plus,
   Upload,
   Download,
@@ -28,7 +22,8 @@ import {
   File,
   Loader2,
   Search,
-  Filter
+  Filter,
+  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -82,9 +77,7 @@ const MAX_FILE_SIZE_MB = 20;
 export default function GestaoEquipe() {
   const { toast: toastUI } = useToast();
   const [employees, setEmployees] = useState<Employee[]>([]);
-  const [selectedEmployee, setSelectedEmployee] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
-  const [currentTime, setCurrentTime] = useState(new Date());
   
   // Documents state
   const [documents, setDocuments] = useState<EmployeeDocument[]>([]);
@@ -118,8 +111,6 @@ export default function GestaoEquipe() {
 
   useEffect(() => {
     fetchEmployees();
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
   }, []);
 
   const fetchEmployees = async () => {
@@ -167,24 +158,6 @@ export default function GestaoEquipe() {
     fetchDocuments(selectedDocEmployee || undefined);
   }, [selectedDocEmployee, fetchDocuments]);
 
-  const handleClockIn = (type: "entry" | "lunch_start" | "lunch_end" | "exit") => {
-    if (!selectedEmployee) {
-      toastUI({
-        title: "Selecione um funcionário",
-        description: "Escolha o funcionário para registrar o ponto.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    const employee = employees.find(e => e.id.toString() === selectedEmployee);
-    const now = format(new Date(), "HH:mm");
-    
-    toastUI({
-      title: "Ponto registrado!",
-      description: `${employee?.nome} - ${type === "entry" ? "Entrada" : type === "lunch_start" ? "Saída Almoço" : type === "lunch_end" ? "Volta Almoço" : "Saída"}: ${now}`,
-    });
-  };
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -315,12 +288,8 @@ export default function GestaoEquipe() {
           ))}
         </section>
 
-        <Tabs defaultValue="ponto" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 bg-secondary/50">
-            <TabsTrigger value="ponto" className="gap-2">
-              <Clock className="h-4 w-4" />
-              <span className="hidden sm:inline">Controle de Ponto</span>
-            </TabsTrigger>
+        <Tabs defaultValue="ferias" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-2 bg-secondary/50">
             <TabsTrigger value="ferias" className="gap-2">
               <Calendar className="h-4 w-4" />
               <span className="hidden sm:inline">Férias/Afastamentos</span>
@@ -330,117 +299,6 @@ export default function GestaoEquipe() {
               <span className="hidden sm:inline">Documentos</span>
             </TabsTrigger>
           </TabsList>
-
-          {/* Time Clock */}
-          <TabsContent value="ponto">
-            <div className="grid gap-6 lg:grid-cols-2">
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="glass-card rounded-2xl p-6"
-              >
-                <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
-                  <Timer className="h-5 w-5 text-primary" />
-                  Registrar Ponto
-                </h3>
-
-                <div className="text-center mb-6">
-                  <p className="text-4xl font-bold text-foreground font-mono">
-                    {format(currentTime, "HH:mm:ss")}
-                  </p>
-                  <p className="text-sm text-muted-foreground mt-1">
-                    {format(currentTime, "EEEE, d 'de' MMMM 'de' yyyy", { locale: ptBR })}
-                  </p>
-                </div>
-
-                <div className="space-y-4">
-                  <div>
-                    <Label>Funcionário</Label>
-                    <Select value={selectedEmployee} onValueChange={setSelectedEmployee}>
-                      <SelectTrigger className="bg-secondary/50 mt-1">
-                        <SelectValue placeholder="Selecione o funcionário" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {employees.map((emp) => (
-                          <SelectItem key={emp.id} value={emp.id.toString()}>
-                            {emp.nome} - {emp.funcao}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      onClick={() => handleClockIn("entry")} 
-                      className="h-16 flex-col gap-1"
-                      variant="outline"
-                    >
-                      <PlayCircle className="h-5 w-5 text-[hsl(var(--stats-green))]" />
-                      <span className="text-xs">Entrada</span>
-                    </Button>
-                    <Button 
-                      onClick={() => handleClockIn("lunch_start")} 
-                      className="h-16 flex-col gap-1"
-                      variant="outline"
-                    >
-                      <PauseCircle className="h-5 w-5 text-[hsl(var(--stats-gold))]" />
-                      <span className="text-xs">Saída Almoço</span>
-                    </Button>
-                    <Button 
-                      onClick={() => handleClockIn("lunch_end")} 
-                      className="h-16 flex-col gap-1"
-                      variant="outline"
-                    >
-                      <PlayCircle className="h-5 w-5 text-[hsl(var(--stats-blue))]" />
-                      <span className="text-xs">Volta Almoço</span>
-                    </Button>
-                    <Button 
-                      onClick={() => handleClockIn("exit")} 
-                      className="h-16 flex-col gap-1"
-                      variant="outline"
-                    >
-                      <XCircle className="h-5 w-5 text-destructive" />
-                      <span className="text-xs">Saída</span>
-                    </Button>
-                  </div>
-                </div>
-              </motion.div>
-
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="glass-card rounded-2xl p-6"
-              >
-                <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
-                  <UserCheck className="h-5 w-5 text-primary" />
-                  Registros de Hoje
-                </h3>
-
-                <div className="space-y-3">
-                  {employees.filter(e => e.status === "ativo").slice(0, 5).map((emp, index) => (
-                    <motion.div
-                      key={emp.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.05 * index }}
-                      className="flex items-center justify-between p-3 rounded-xl bg-secondary/30"
-                    >
-                      <div>
-                        <p className="text-sm font-medium text-foreground">{emp.nome}</p>
-                        <p className="text-xs text-muted-foreground">{emp.funcao}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-xs text-[hsl(var(--stats-green))]">--:--</p>
-                        <p className="text-xs text-muted-foreground">Aguardando</p>
-                      </div>
-                    </motion.div>
-                  ))}
-                </div>
-              </motion.div>
-            </div>
-          </TabsContent>
 
           {/* Vacation/Leave */}
           <TabsContent value="ferias">

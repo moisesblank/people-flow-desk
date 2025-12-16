@@ -40,7 +40,7 @@ import {
   Gamepad2,
   Car,
   ShoppingCart,
-  Clock,
+  
   Gauge,
   MessageSquare,
   Activity,
@@ -89,7 +89,7 @@ const mainMenuItems = [
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
   { title: "Funcionários", url: "/funcionarios", icon: Users },
-  { title: "Ponto Eletrônico", url: "/ponto-eletronico", icon: Clock },
+  
   { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck },
   { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog },
 ];
