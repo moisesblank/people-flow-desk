@@ -3873,6 +3873,111 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_conversation_history: {
+        Row: {
+          ai_response: string
+          created_at: string
+          id: string
+          lead_id: string
+          metadata: Json | null
+          processed_by: string | null
+          response_time_ms: number | null
+          user_message: string
+        }
+        Insert: {
+          ai_response: string
+          created_at?: string
+          id?: string
+          lead_id: string
+          metadata?: Json | null
+          processed_by?: string | null
+          response_time_ms?: number | null
+          user_message: string
+        }
+        Update: {
+          ai_response?: string
+          created_at?: string
+          id?: string
+          lead_id?: string
+          metadata?: Json | null
+          processed_by?: string | null
+          response_time_ms?: number | null
+          user_message?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversation_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_conversation_history_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_leads_dashboard"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      whatsapp_leads: {
+        Row: {
+          assigned_to: string | null
+          contact_count: number
+          created_at: string
+          email: string | null
+          external_id: string | null
+          id: string
+          last_ai_response: string | null
+          last_contact: string
+          last_message: string | null
+          name: string
+          notes: string | null
+          phone: string
+          source: string
+          status: string
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          assigned_to?: string | null
+          contact_count?: number
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          last_ai_response?: string | null
+          last_contact?: string
+          last_message?: string | null
+          name: string
+          notes?: string | null
+          phone: string
+          source?: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          assigned_to?: string | null
+          contact_count?: number
+          created_at?: string
+          email?: string | null
+          external_id?: string | null
+          id?: string
+          last_ai_response?: string | null
+          last_contact?: string
+          last_message?: string | null
+          name?: string
+          notes?: string | null
+          phone?: string
+          source?: string
+          status?: string
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       whatsapp_notifications: {
         Row: {
           created_at: string
@@ -4131,6 +4236,69 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_leads_dashboard: {
+        Row: {
+          assigned_to: string | null
+          contact_count: number | null
+          created_at: string | null
+          email: string | null
+          external_id: string | null
+          id: string | null
+          last_ai_response: string | null
+          last_contact: string | null
+          last_interaction: string | null
+          last_message: string | null
+          name: string | null
+          notes: string | null
+          phone: string | null
+          source: string | null
+          status: string | null
+          tags: string[] | null
+          total_messages: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          assigned_to?: string | null
+          contact_count?: number | null
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string | null
+          last_ai_response?: string | null
+          last_contact?: string | null
+          last_interaction?: never
+          last_message?: string | null
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: string[] | null
+          total_messages?: never
+          updated_at?: string | null
+        }
+        Update: {
+          assigned_to?: string | null
+          contact_count?: number | null
+          created_at?: string | null
+          email?: string | null
+          external_id?: string | null
+          id?: string | null
+          last_ai_response?: string | null
+          last_contact?: string | null
+          last_interaction?: never
+          last_message?: string | null
+          name?: string | null
+          notes?: string | null
+          phone?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: string[] | null
+          total_messages?: never
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       add_user_xp: {
@@ -4222,6 +4390,17 @@ export type Database = {
       register_user_logout: { Args: never; Returns: undefined }
       update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
+      upsert_whatsapp_lead: {
+        Args: {
+          p_ai_response?: string
+          p_external_id?: string
+          p_message?: string
+          p_name: string
+          p_phone: string
+          p_source?: string
+        }
+        Returns: string
+      }
       verify_2fa_code: { Args: { p_code: string }; Returns: boolean }
     }
     Enums: {
