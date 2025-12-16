@@ -2,6 +2,7 @@
 // MOISÉS MEDEIROS v9.0 - AUTH PAGE
 // Design: Futurista Spider-Man / Vermelho Vinho
 // Estética: Cyber-Tech Profissional
+// COM VERIFICAÇÃO 2FA POR EMAIL
 // ============================================
 
 import { useState, useEffect, useRef } from "react";
@@ -37,6 +38,7 @@ import { useEditableContent } from "@/hooks/useEditableContent";
 import { EditableText } from "@/components/editor/EditableText";
 import { EditableImage } from "@/components/editor/EditableImage";
 import { EditModeToggle } from "@/components/editor/EditModeToggle";
+import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
 
 // Animated Cyber Grid Background
 function CyberGrid() {
@@ -258,6 +260,10 @@ export default function Auth() {
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [resetEmailSent, setResetEmailSent] = useState(false);
   
+  // Estado para 2FA
+  const [show2FA, setShow2FA] = useState(false);
+  const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string } | null>(null);
+  
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -332,17 +338,33 @@ export default function Auth() {
       }
 
       if (isLogin) {
-        const { error } = await signIn(formData.email, formData.password);
-        if (error) {
-          if (error.message.includes("Invalid login credentials")) {
+        const result = await signIn(formData.email, formData.password);
+        if (result.error) {
+          if (result.error.message.includes("Invalid login credentials")) {
             toast.error("Email ou senha incorretos");
           } else {
-            toast.error(error.message);
+            toast.error(result.error.message);
           }
           setIsLoading(false);
           return;
         }
-        toast.success("Bem-vindo de volta!");
+        
+        // Login bem sucedido - ativar 2FA
+        // Buscar usuário atual do supabase
+        const { supabase } = await import("@/integrations/supabase/client");
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (user) {
+          setPending2FAUser({
+            email: user.email || formData.email,
+            userId: user.id,
+            nome: user.user_metadata?.nome
+          });
+          setShow2FA(true);
+          toast.info("Verificação de segurança", {
+            description: "Enviamos um código para seu email"
+          });
+        }
       } else {
         const { error } = await signUp(formData.email, formData.password, formData.nome);
         if (error) {
@@ -372,6 +394,30 @@ export default function Auth() {
         >
           <Atom className="h-12 w-12 text-primary" />
         </motion.div>
+      </div>
+    );
+  }
+
+  // Renderizar tela de 2FA se necessário
+  if (show2FA && pending2FAUser) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
+        <SpiderWebPattern />
+        <CyberGrid />
+        <GlowingOrbs />
+        <TwoFactorVerification
+          email={pending2FAUser.email}
+          userId={pending2FAUser.userId}
+          userName={pending2FAUser.nome}
+          onVerified={() => {
+            toast.success("Bem-vindo de volta!");
+            navigate("/");
+          }}
+          onCancel={() => {
+            setShow2FA(false);
+            setPending2FAUser(null);
+          }}
+        />
       </div>
     );
   }
