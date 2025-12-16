@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { GodModeProvider } from "@/contexts/GodModeContext";
-import { ProtectedRoute } from "@/components/layout/ProtectedRoute";
+import { RoleProtectedRoute } from "@/components/layout/RoleProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { GodModePanel } from "@/components/editor/GodModePanel";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
@@ -13,6 +13,7 @@ import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
@@ -49,7 +50,6 @@ const TurmasOnline = lazy(() => import("./pages/TurmasOnline"));
 const TurmasPresenciais = lazy(() => import("./pages/TurmasPresenciais"));
 const SiteProgramador = lazy(() => import("./pages/SiteProgramador"));
 const Pessoal = lazy(() => import("./pages/Pessoal"));
-
 const DashboardExecutivo = lazy(() => import("./pages/DashboardExecutivo"));
 const Monitoramento = lazy(() => import("./pages/Monitoramento"));
 const Simulados = lazy(() => import("./pages/Simulados"));
@@ -67,11 +67,11 @@ const PageLoader = () => (
   </div>
 );
 
-// Protected route wrapper component
+// Protected route wrapper component with role-based access
 const ProtectedPage = ({ children }: { children: React.ReactNode }) => (
-  <ProtectedRoute>
+  <RoleProtectedRoute>
     <AppLayout>{children}</AppLayout>
-  </ProtectedRoute>
+  </RoleProtectedRoute>
 );
 
 // Global keyboard shortcuts overlay hook
