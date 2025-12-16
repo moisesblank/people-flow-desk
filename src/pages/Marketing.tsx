@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - MARKETING
+// MOISÉS MEDEIROS v10.0 - MARKETING
 // Spider-Man Theme - Métricas e Campanhas
-// Elementos de Química Integrados
+// Integração Real com Redes Sociais
 // Funil de Vendas e Automações
 // ============================================
 
@@ -18,9 +18,6 @@ import {
   Eye, 
   MousePointer, 
   Target,
-  Instagram,
-  Youtube,
-  Facebook,
   Mail,
   Plus,
   BarChart3,
@@ -28,12 +25,16 @@ import {
   FlaskConical,
   Atom,
   Zap,
-  Workflow
+  Workflow,
+  Instagram,
+  Youtube,
+  Video
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { AnimatedAtom, ChemistryTip, BubblingFlask } from "@/components/chemistry/ChemistryVisuals";
 import { SalesFunnel } from "@/components/marketing/SalesFunnel";
 import { AutomationFlow } from "@/components/marketing/AutomationFlow";
+import { SocialMediaStats } from "@/components/dashboard/SocialMediaStats";
 import marketingHeroImage from "@/assets/marketing-chemistry-hero.jpg";
 import professorImage from "@/assets/professor-moises.jpg";
 
@@ -41,12 +42,6 @@ const campaignData = [
   { id: 1, name: "Lançamento ENEM 2025", status: "ativo", budget: 15000, spent: 8500, leads: 1250, conversions: 89 },
   { id: 2, name: "Black Friday Química", status: "planejado", budget: 8000, spent: 0, leads: 0, conversions: 0 },
   { id: 3, name: "Remarketing Carrinho", status: "ativo", budget: 3000, spent: 1800, leads: 320, conversions: 45 },
-];
-
-const socialMetrics = [
-  { platform: "Instagram", icon: Instagram, followers: "125.4K", growth: "+12.5%", engagement: "4.8%", color: "from-pink-500 to-purple-600" },
-  { platform: "YouTube", icon: Youtube, followers: "89.2K", growth: "+8.3%", engagement: "6.2%", color: "from-red-500 to-red-600" },
-  { platform: "Facebook", icon: Facebook, followers: "45.1K", growth: "+3.1%", engagement: "2.1%", color: "from-blue-500 to-blue-700" },
 ];
 
 export default function Marketing() {
@@ -145,45 +140,8 @@ export default function Marketing() {
         </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
-          {/* Social Media Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {socialMetrics.map((social, index) => (
-              <motion.div
-                key={social.platform}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <Card className="overflow-hidden">
-                  <div className={`h-2 bg-gradient-to-r ${social.color}`} />
-                  <CardContent className="p-6">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className={`p-2 rounded-lg bg-gradient-to-r ${social.color}`}>
-                        <social.icon className="h-5 w-5 text-white" />
-                      </div>
-                      <span className="font-semibold">{social.platform}</span>
-                    </div>
-                    <div className="space-y-2">
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Seguidores</span>
-                        <span className="font-bold">{social.followers}</span>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Crescimento</span>
-                        <Badge variant="secondary" className="text-emerald-600 bg-emerald-500/10">
-                          {social.growth}
-                        </Badge>
-                      </div>
-                      <div className="flex justify-between">
-                        <span className="text-muted-foreground">Engajamento</span>
-                        <span className="font-medium">{social.engagement}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
+          {/* Social Media Cards - DADOS REAIS */}
+          <SocialMediaStats />
         </TabsContent>
 
         {/* Nova Tab: Funil de Vendas */}
@@ -385,36 +343,8 @@ export default function Marketing() {
             </CardContent>
           </Card>
 
-          {/* Performance por Plataforma */}
-          <div className="grid md:grid-cols-3 gap-4">
-            {socialMetrics.map((social, idx) => (
-              <Card key={idx} className="border-border/50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className={`p-2 rounded-lg bg-gradient-to-r ${social.color}`}>
-                      <social.icon className="h-5 w-5 text-white" />
-                    </div>
-                    <span className="font-semibold">{social.platform}</span>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Posts este mês</span>
-                      <span className="font-bold">{12 + idx * 3}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Alcance total</span>
-                      <span className="font-bold">{(45 + idx * 15).toLocaleString()}K</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Interações</span>
-                      <span className="font-bold">{(3.2 + idx * 0.8).toFixed(1)}K</span>
-                    </div>
-                    <Progress value={70 + idx * 10} className="h-2 mt-2" />
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* Performance por Plataforma - Usando novo componente */}
+          <SocialMediaStats />
         </TabsContent>
 
         <TabsContent value="email" className="space-y-6">

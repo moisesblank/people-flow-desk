@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.verify-2fa-code]
 verify_jwt = false
+
+[functions.social-media-stats]
+verify_jwt = false
