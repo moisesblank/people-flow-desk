@@ -1491,6 +1491,57 @@ export type Database = {
           },
         ]
       }
+      marketing_campaigns: {
+        Row: {
+          budget: number | null
+          conversions: number | null
+          created_at: string | null
+          created_by: string | null
+          end_date: string | null
+          id: string
+          leads: number | null
+          name: string
+          notes: string | null
+          platform: string | null
+          spent: number | null
+          start_date: string | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          budget?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          leads?: number | null
+          name: string
+          notes?: string | null
+          platform?: string | null
+          spent?: number | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          budget?: number | null
+          conversions?: number | null
+          created_at?: string | null
+          created_by?: string | null
+          end_date?: string | null
+          id?: string
+          leads?: number | null
+          name?: string
+          notes?: string | null
+          platform?: string | null
+          spent?: number | null
+          start_date?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       metricas_marketing: {
         Row: {
           cac: number
@@ -2369,6 +2420,33 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sales_funnel_data: {
+        Row: {
+          created_at: string | null
+          id: string
+          period: string | null
+          reference_date: string | null
+          stage: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          period?: string | null
+          reference_date?: string | null
+          stage: string
+          value?: number
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          period?: string | null
+          reference_date?: string | null
+          stage?: string
+          value?: number
+        }
+        Relationships: []
       }
       social_media_history: {
         Row: {
