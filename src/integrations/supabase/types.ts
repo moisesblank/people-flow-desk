@@ -2370,6 +2370,93 @@ export type Database = {
           },
         ]
       }
+      social_media_history: {
+        Row: {
+          engagement_rate: number | null
+          followers: number | null
+          id: string
+          platform: string
+          recorded_at: string
+          views_count: number | null
+        }
+        Insert: {
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          platform: string
+          recorded_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          engagement_rate?: number | null
+          followers?: number | null
+          id?: string
+          platform?: string
+          recorded_at?: string
+          views_count?: number | null
+        }
+        Relationships: []
+      }
+      social_media_metrics: {
+        Row: {
+          created_at: string
+          engagement_rate: number | null
+          extra_data: Json | null
+          followers: number | null
+          following: number | null
+          growth_rate: number | null
+          id: string
+          is_auto_fetch: boolean | null
+          last_fetched_at: string | null
+          platform: string
+          posts_count: number | null
+          profile_url: string | null
+          subscribers: number | null
+          updated_at: string
+          username: string | null
+          videos_count: number | null
+          views_count: number | null
+        }
+        Insert: {
+          created_at?: string
+          engagement_rate?: number | null
+          extra_data?: Json | null
+          followers?: number | null
+          following?: number | null
+          growth_rate?: number | null
+          id?: string
+          is_auto_fetch?: boolean | null
+          last_fetched_at?: string | null
+          platform: string
+          posts_count?: number | null
+          profile_url?: string | null
+          subscribers?: number | null
+          updated_at?: string
+          username?: string | null
+          videos_count?: number | null
+          views_count?: number | null
+        }
+        Update: {
+          created_at?: string
+          engagement_rate?: number | null
+          extra_data?: Json | null
+          followers?: number | null
+          following?: number | null
+          growth_rate?: number | null
+          id?: string
+          is_auto_fetch?: boolean | null
+          last_fetched_at?: string | null
+          platform?: string
+          posts_count?: number | null
+          profile_url?: string | null
+          subscribers?: number | null
+          updated_at?: string
+          username?: string | null
+          videos_count?: number | null
+          views_count?: number | null
+        }
+        Relationships: []
+      }
       students: {
         Row: {
           created_at: string | null
