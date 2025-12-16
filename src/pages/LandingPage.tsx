@@ -414,14 +414,16 @@ export default function LandingPage() {
                 </EditableLink>
               </div>
 
-              {/* Stats - Usando valores do banco ou defaults */}
+              {/* Stats - Valores fixos para garantir carregamento correto */}
               <div className="grid grid-cols-3 gap-6 mt-12 pt-8 border-t border-primary/20">
-                <div className="text-center lg:text-left">
+                <motion.div 
+                  className="text-center lg:text-left"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.6 }}
+                >
                   <p className="text-3xl md:text-4xl font-bold text-primary">
-                    <AnimatedCounter 
-                      target={parseInt(getValue("hero_stat_1_value", "")) || 12847} 
-                      suffix="+" 
-                    />
+                    <AnimatedCounter target={12847} suffix="+" />
                   </p>
                   <EditableText
                     value={getValue("hero_stat_1_label", "Alunos Ativos")}
@@ -431,13 +433,15 @@ export default function LandingPage() {
                     className="text-sm text-muted-foreground mt-1"
                     as="p"
                   />
-                </div>
-                <div className="text-center lg:text-left">
+                </motion.div>
+                <motion.div 
+                  className="text-center lg:text-left"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.7 }}
+                >
                   <p className="text-3xl md:text-4xl font-bold text-stats-blue">
-                    <AnimatedCounter 
-                      target={parseInt(getValue("hero_stat_2_value", "")) || 4892} 
-                      suffix="+" 
-                    />
+                    <AnimatedCounter target={4892} suffix="+" />
                   </p>
                   <EditableText
                     value={getValue("hero_stat_2_label", "Aprovados 2024")}
@@ -447,13 +451,15 @@ export default function LandingPage() {
                     className="text-sm text-muted-foreground mt-1"
                     as="p"
                   />
-                </div>
-                <div className="text-center lg:text-left">
+                </motion.div>
+                <motion.div 
+                  className="text-center lg:text-left"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.8 }}
+                >
                   <p className="text-3xl md:text-4xl font-bold text-stats-green">
-                    <AnimatedCounter 
-                      target={parseInt(getValue("hero_stat_3_value", "")) || 98} 
-                      suffix="%" 
-                    />
+                    <AnimatedCounter target={98} suffix="%" />
                   </p>
                   <EditableText
                     value={getValue("hero_stat_3_label", "Satisfação")}
@@ -463,7 +469,7 @@ export default function LandingPage() {
                     className="text-sm text-muted-foreground mt-1"
                     as="p"
                   />
-                </div>
+                </motion.div>
               </div>
             </motion.div>
 
