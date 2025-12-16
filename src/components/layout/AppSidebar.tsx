@@ -78,6 +78,9 @@ import calendarImg from "@/assets/calendar-module-cover.jpg";
 import financeImg from "@/assets/finance-module-cover.jpg";
 import studentsImg from "@/assets/students-module-cover.jpg";
 import teamImg from "@/assets/team-module-cover.jpg";
+import devImg from "@/assets/dev-module-cover.jpg";
+import personalLifeImg from "@/assets/personal-life-cover.jpg";
+import godModeImg from "@/assets/god-mode-cover.jpg";
 
 const mainMenuItems = [
   { title: "Central de Comando", url: "/", icon: Brain },
@@ -427,9 +430,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Site/Programador Menu */}
+        {/* Site/Programador Menu - DESENVOLVIMENTO */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Desenvolvimento</SidebarGroupLabel>
+          {!collapsed && (
+            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+              <img 
+                src={devImg} 
+                alt="Desenvolvimento" 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/80 to-transparent flex items-center px-3">
+                <span className="text-sm font-bold text-white drop-shadow-lg">Desenvolvimento</span>
+              </div>
+            </div>
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Desenvolvimento</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {siteMenuItems.map((item) => (
@@ -455,9 +470,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Pessoal Menu */}
+        {/* Pessoal Menu - VIDA PESSOAL */}
         <SidebarGroup>
-          <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>Vida Pessoal</SidebarGroupLabel>
+          {!collapsed && (
+            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+              <img 
+                src={personalLifeImg} 
+                alt="Vida Pessoal" 
+                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+              />
+              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/80 to-transparent flex items-center px-3">
+                <span className="text-sm font-bold text-white drop-shadow-lg">Vida Pessoal</span>
+              </div>
+            </div>
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Vida Pessoal</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {pessoalMenuItems.map((item) => (
@@ -514,7 +541,20 @@ export function AppSidebar() {
         {/* Owner-Only Menu - MODO DEUS */}
         {isOwner && (
           <SidebarGroup>
-            <SidebarGroupLabel className={collapsed ? "sr-only" : ""}>
+            {!collapsed && (
+              <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
+                <img 
+                  src={godModeImg} 
+                  alt="Modo Deus" 
+                  className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
+                />
+                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/80 via-purple-600/60 to-transparent flex items-center px-3">
+                  <Zap className="w-4 h-4 text-amber-300 mr-2 animate-pulse" />
+                  <span className="text-sm font-bold text-white drop-shadow-lg">MODO DEUS</span>
+                </div>
+              </div>
+            )}
+            <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>
               <span className="flex items-center gap-2">
                 <Zap className="w-3 h-3 text-purple-500" />
                 MODO DEUS
