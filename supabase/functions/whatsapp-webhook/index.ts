@@ -8,6 +8,7 @@ const corsHeaders = {
 
 // Números autorizados (Owner e Admin)
 const AUTHORIZED_PHONES = [
+  '5583998920105',  // Owner - Moisés
   '5583991462045',
   '558398920105',
   '5583989201050',
