@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Atom, X, ExternalLink, Beaker } from "lucide-react";
+import { Atom, X, ExternalLink, Beaker, FlaskConical, Zap, ArrowRight, Sparkles, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -9,6 +9,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -18,7 +19,7 @@ interface Element {
   symbol: string;
   name: string;
   namePt: string;
-  mass: number;
+  mass: number | string;
   category: string;
   phase: string;
   density?: number;
@@ -35,181 +36,244 @@ interface Element {
   period: number;
 }
 
-// Complete periodic table data (118 elements)
+// Complete periodic table data (118 elements) - Updated with your style
 const elements: Element[] = [
   // Period 1
-  { number: 1, symbol: "H", name: "Hydrogen", namePt: "Hidrogênio", mass: 1.008, category: "nonmetal", phase: "Gas", density: 0.00008988, melt: 14.01, boil: 20.28, electronegativity: 2.20, electronConfig: "1s¹", oxidationStates: "-1, +1", discoveredBy: "Henry Cavendish", yearDiscovered: 1766, appearance: "Gás incolor", summary: "O hidrogênio é o elemento químico mais simples e mais abundante do universo. Constitui cerca de 75% de toda a massa bariônica do universo.", group: 1, period: 1 },
-  { number: 2, symbol: "He", name: "Helium", namePt: "Hélio", mass: 4.0026, category: "noble-gas", phase: "Gas", density: 0.0001785, melt: 0.95, boil: 4.22, electronegativity: undefined, electronConfig: "1s²", oxidationStates: "0", discoveredBy: "Pierre Janssen", yearDiscovered: 1868, appearance: "Gás incolor", summary: "O hélio é o segundo elemento mais abundante do universo. É um gás nobre inerte, monoatômico e incolor.", group: 18, period: 1 },
+  { number: 1, symbol: "H", name: "Hydrogen", namePt: "hidrogênio", mass: 1, category: "nonmetal", phase: "Gas", density: 0.00008988, melt: 14.01, boil: 20.28, electronegativity: 2.20, electronConfig: "1s¹", oxidationStates: "-1, +1", discoveredBy: "Henry Cavendish", yearDiscovered: 1766, summary: "O hidrogênio é o elemento mais simples e abundante do universo.", group: 1, period: 1 },
+  { number: 2, symbol: "He", name: "Helium", namePt: "hélio", mass: 4, category: "noble-gas", phase: "Gas", density: 0.0001785, melt: 0.95, boil: 4.22, electronConfig: "1s²", oxidationStates: "0", discoveredBy: "Pierre Janssen", yearDiscovered: 1868, summary: "O hélio é o segundo elemento mais abundante do universo.", group: 18, period: 1 },
   
   // Period 2
-  { number: 3, symbol: "Li", name: "Lithium", namePt: "Lítio", mass: 6.94, category: "alkali-metal", phase: "Solid", density: 0.534, melt: 453.69, boil: 1560, electronegativity: 0.98, electronConfig: "[He] 2s¹", oxidationStates: "+1", discoveredBy: "Johan August Arfwedson", yearDiscovered: 1817, appearance: "Metal branco-prateado", summary: "O lítio é o metal mais leve. Usado em baterias, cerâmicas e medicamentos.", group: 1, period: 2 },
-  { number: 4, symbol: "Be", name: "Beryllium", namePt: "Berílio", mass: 9.0122, category: "alkaline-earth", phase: "Solid", density: 1.85, melt: 1560, boil: 2742, electronegativity: 1.57, electronConfig: "[He] 2s²", oxidationStates: "+2", discoveredBy: "Louis Nicolas Vauquelin", yearDiscovered: 1798, appearance: "Metal acinzentado", summary: "O berílio é um metal alcalino-terroso raro. Usado em ligas aeroespaciais.", group: 2, period: 2 },
-  { number: 5, symbol: "B", name: "Boron", namePt: "Boro", mass: 10.81, category: "metalloid", phase: "Solid", density: 2.34, melt: 2349, boil: 4200, electronegativity: 2.04, electronConfig: "[He] 2s² 2p¹", oxidationStates: "+3", discoveredBy: "Joseph Louis Gay-Lussac", yearDiscovered: 1808, appearance: "Sólido preto/marrom", summary: "O boro é um metaloide. Usado em fibra de vidro e detergentes.", group: 13, period: 2 },
-  { number: 6, symbol: "C", name: "Carbon", namePt: "Carbono", mass: 12.011, category: "nonmetal", phase: "Solid", density: 2.267, melt: 3823, boil: 4098, electronegativity: 2.55, electronConfig: "[He] 2s² 2p²", oxidationStates: "-4, -3, -2, -1, +1, +2, +3, +4", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Grafite/Diamante", summary: "O carbono é a base da vida orgânica. Forma mais compostos que qualquer outro elemento.", group: 14, period: 2 },
-  { number: 7, symbol: "N", name: "Nitrogen", namePt: "Nitrogênio", mass: 14.007, category: "nonmetal", phase: "Gas", density: 0.0012506, melt: 63.15, boil: 77.36, electronegativity: 3.04, electronConfig: "[He] 2s² 2p³", oxidationStates: "-3, -2, -1, +1, +2, +3, +4, +5", discoveredBy: "Daniel Rutherford", yearDiscovered: 1772, appearance: "Gás incolor", summary: "O nitrogênio compõe 78% da atmosfera terrestre. Essencial para proteínas e DNA.", group: 15, period: 2 },
-  { number: 8, symbol: "O", name: "Oxygen", namePt: "Oxigênio", mass: 15.999, category: "nonmetal", phase: "Gas", density: 0.001429, melt: 54.36, boil: 90.20, electronegativity: 3.44, electronConfig: "[He] 2s² 2p⁴", oxidationStates: "-2, -1, +1, +2", discoveredBy: "Carl Wilhelm Scheele", yearDiscovered: 1774, appearance: "Gás incolor", summary: "O oxigênio é essencial para a respiração. Compõe 21% da atmosfera terrestre.", group: 16, period: 2 },
-  { number: 9, symbol: "F", name: "Fluorine", namePt: "Flúor", mass: 18.998, category: "halogen", phase: "Gas", density: 0.001696, melt: 53.53, boil: 85.03, electronegativity: 3.98, electronConfig: "[He] 2s² 2p⁵", oxidationStates: "-1", discoveredBy: "Henri Moissan", yearDiscovered: 1886, appearance: "Gás amarelo pálido", summary: "O flúor é o elemento mais eletronegativo. Usado em pasta de dentes e refrigerantes.", group: 17, period: 2 },
-  { number: 10, symbol: "Ne", name: "Neon", namePt: "Neônio", mass: 20.180, category: "noble-gas", phase: "Gas", density: 0.0008999, melt: 24.56, boil: 27.07, electronegativity: undefined, electronConfig: "[He] 2s² 2p⁶", oxidationStates: "0", discoveredBy: "William Ramsay", yearDiscovered: 1898, appearance: "Gás incolor", summary: "O neônio é famoso por suas luzes de descarga alaranjadas. Gás nobre inerte.", group: 18, period: 2 },
+  { number: 3, symbol: "Li", name: "Lithium", namePt: "lítio", mass: 7, category: "alkali-metal", phase: "Solid", density: 0.534, melt: 453.69, boil: 1560, electronegativity: 0.98, electronConfig: "[He] 2s¹", oxidationStates: "+1", summary: "O lítio é o metal mais leve. Usado em baterias.", group: 1, period: 2 },
+  { number: 4, symbol: "Be", name: "Beryllium", namePt: "berílio", mass: 9, category: "alkaline-earth", phase: "Solid", density: 1.85, melt: 1560, boil: 2742, electronegativity: 1.57, electronConfig: "[He] 2s²", oxidationStates: "+2", summary: "O berílio é um metal alcalino-terroso raro.", group: 2, period: 2 },
+  { number: 5, symbol: "B", name: "Boron", namePt: "boro", mass: 11, category: "metalloid", phase: "Solid", density: 2.34, melt: 2349, boil: 4200, electronegativity: 2.04, electronConfig: "[He] 2s² 2p¹", oxidationStates: "+3", summary: "O boro é um metaloide usado em fibra de vidro.", group: 13, period: 2 },
+  { number: 6, symbol: "C", name: "Carbon", namePt: "carbono", mass: 12, category: "nonmetal", phase: "Solid", density: 2.267, melt: 3823, boil: 4098, electronegativity: 2.55, electronConfig: "[He] 2s² 2p²", oxidationStates: "-4, +4", summary: "O carbono é a base da vida orgânica.", group: 14, period: 2 },
+  { number: 7, symbol: "N", name: "Nitrogen", namePt: "nitrogênio", mass: 14, category: "nonmetal", phase: "Gas", density: 0.0012506, melt: 63.15, boil: 77.36, electronegativity: 3.04, electronConfig: "[He] 2s² 2p³", oxidationStates: "-3, +5", summary: "O nitrogênio compõe 78% da atmosfera.", group: 15, period: 2 },
+  { number: 8, symbol: "O", name: "Oxygen", namePt: "oxigênio", mass: 16, category: "nonmetal", phase: "Gas", density: 0.001429, melt: 54.36, boil: 90.20, electronegativity: 3.44, electronConfig: "[He] 2s² 2p⁴", oxidationStates: "-2", summary: "O oxigênio é essencial para a respiração.", group: 16, period: 2 },
+  { number: 9, symbol: "F", name: "Fluorine", namePt: "flúor", mass: 19, category: "halogen", phase: "Gas", density: 0.001696, melt: 53.53, boil: 85.03, electronegativity: 3.98, electronConfig: "[He] 2s² 2p⁵", oxidationStates: "-1", summary: "O flúor é o elemento mais eletronegativo.", group: 17, period: 2 },
+  { number: 10, symbol: "Ne", name: "Neon", namePt: "neônio", mass: 20, category: "noble-gas", phase: "Gas", density: 0.0008999, melt: 24.56, boil: 27.07, electronConfig: "[He] 2s² 2p⁶", oxidationStates: "0", summary: "O neônio é famoso por suas luzes.", group: 18, period: 2 },
   
   // Period 3
-  { number: 11, symbol: "Na", name: "Sodium", namePt: "Sódio", mass: 22.990, category: "alkali-metal", phase: "Solid", density: 0.971, melt: 370.87, boil: 1156, electronegativity: 0.93, electronConfig: "[Ne] 3s¹", oxidationStates: "+1", discoveredBy: "Humphry Davy", yearDiscovered: 1807, appearance: "Metal prateado", summary: "O sódio é essencial para a vida. Componente do sal de cozinha (NaCl).", group: 1, period: 3 },
-  { number: 12, symbol: "Mg", name: "Magnesium", namePt: "Magnésio", mass: 24.305, category: "alkaline-earth", phase: "Solid", density: 1.738, melt: 923, boil: 1363, electronegativity: 1.31, electronConfig: "[Ne] 3s²", oxidationStates: "+2", discoveredBy: "Joseph Black", yearDiscovered: 1755, appearance: "Metal cinza brilhante", summary: "O magnésio é essencial para a vida. Usado em ligas leves e pirotecnia.", group: 2, period: 3 },
-  { number: 13, symbol: "Al", name: "Aluminum", namePt: "Alumínio", mass: 26.982, category: "post-transition", phase: "Solid", density: 2.698, melt: 933.47, boil: 2792, electronegativity: 1.61, electronConfig: "[Ne] 3s² 3p¹", oxidationStates: "+3", discoveredBy: "Hans Christian Ørsted", yearDiscovered: 1825, appearance: "Metal prateado", summary: "O alumínio é o metal mais abundante na crosta terrestre. Leve e resistente à corrosão.", group: 13, period: 3 },
-  { number: 14, symbol: "Si", name: "Silicon", namePt: "Silício", mass: 28.085, category: "metalloid", phase: "Solid", density: 2.3296, melt: 1687, boil: 3538, electronegativity: 1.90, electronConfig: "[Ne] 3s² 3p²", oxidationStates: "-4, +2, +4", discoveredBy: "Jöns Jacob Berzelius", yearDiscovered: 1824, appearance: "Sólido cristalino cinza-azulado", summary: "O silício é a base da eletrônica moderna. Segundo elemento mais abundante na crosta.", group: 14, period: 3 },
-  { number: 15, symbol: "P", name: "Phosphorus", namePt: "Fósforo", mass: 30.974, category: "nonmetal", phase: "Solid", density: 1.82, melt: 317.30, boil: 553.65, electronegativity: 2.19, electronConfig: "[Ne] 3s² 3p³", oxidationStates: "-3, +3, +5", discoveredBy: "Hennig Brand", yearDiscovered: 1669, appearance: "Branco/Vermelho/Preto", summary: "O fósforo é essencial para a vida (DNA, ATP). Usado em fertilizantes.", group: 15, period: 3 },
-  { number: 16, symbol: "S", name: "Sulfur", namePt: "Enxofre", mass: 32.06, category: "nonmetal", phase: "Solid", density: 2.067, melt: 388.36, boil: 717.87, electronegativity: 2.58, electronConfig: "[Ne] 3s² 3p⁴", oxidationStates: "-2, +2, +4, +6", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Sólido amarelo", summary: "O enxofre é essencial para a vida. Usado em ácido sulfúrico e vulcanização.", group: 16, period: 3 },
-  { number: 17, symbol: "Cl", name: "Chlorine", namePt: "Cloro", mass: 35.45, category: "halogen", phase: "Gas", density: 0.003214, melt: 171.65, boil: 239.11, electronegativity: 3.16, electronConfig: "[Ne] 3s² 3p⁵", oxidationStates: "-1, +1, +3, +5, +7", discoveredBy: "Carl Wilhelm Scheele", yearDiscovered: 1774, appearance: "Gás amarelo-esverdeado", summary: "O cloro é usado na purificação de água e em produtos de limpeza.", group: 17, period: 3 },
-  { number: 18, symbol: "Ar", name: "Argon", namePt: "Argônio", mass: 39.948, category: "noble-gas", phase: "Gas", density: 0.0017837, melt: 83.80, boil: 87.30, electronegativity: undefined, electronConfig: "[Ne] 3s² 3p⁶", oxidationStates: "0", discoveredBy: "Lord Rayleigh", yearDiscovered: 1894, appearance: "Gás incolor", summary: "O argônio é o terceiro gás mais abundante na atmosfera (0,93%). Usado em soldas.", group: 18, period: 3 },
+  { number: 11, symbol: "Na", name: "Sodium", namePt: "sódio", mass: 23, category: "alkali-metal", phase: "Solid", density: 0.971, melt: 370.87, boil: 1156, electronegativity: 0.93, electronConfig: "[Ne] 3s¹", oxidationStates: "+1", summary: "O sódio é essencial para a vida. Componente do sal (NaCl).", group: 1, period: 3 },
+  { number: 12, symbol: "Mg", name: "Magnesium", namePt: "magnésio", mass: 24, category: "alkaline-earth", phase: "Solid", density: 1.738, melt: 923, boil: 1363, electronegativity: 1.31, electronConfig: "[Ne] 3s²", oxidationStates: "+2", summary: "O magnésio é essencial para a vida.", group: 2, period: 3 },
+  { number: 13, symbol: "Al", name: "Aluminum", namePt: "alumínio", mass: 27, category: "post-transition", phase: "Solid", density: 2.698, melt: 933.47, boil: 2792, electronegativity: 1.61, electronConfig: "[Ne] 3s² 3p¹", oxidationStates: "+3", summary: "O alumínio é o metal mais abundante na crosta terrestre.", group: 13, period: 3 },
+  { number: 14, symbol: "Si", name: "Silicon", namePt: "silício", mass: 28, category: "metalloid", phase: "Solid", density: 2.3296, melt: 1687, boil: 3538, electronegativity: 1.90, electronConfig: "[Ne] 3s² 3p²", oxidationStates: "+4, -4", summary: "O silício é a base da eletrônica moderna.", group: 14, period: 3 },
+  { number: 15, symbol: "P", name: "Phosphorus", namePt: "fósforo", mass: 31, category: "nonmetal", phase: "Solid", density: 1.82, melt: 317.30, boil: 553.65, electronegativity: 2.19, electronConfig: "[Ne] 3s² 3p³", oxidationStates: "-3, +3, +5", summary: "O fósforo é essencial para a vida (DNA, ATP).", group: 15, period: 3 },
+  { number: 16, symbol: "S", name: "Sulfur", namePt: "enxofre", mass: 32, category: "nonmetal", phase: "Solid", density: 2.067, melt: 388.36, boil: 717.87, electronegativity: 2.58, electronConfig: "[Ne] 3s² 3p⁴", oxidationStates: "-2, +4, +6", summary: "O enxofre é essencial para a vida.", group: 16, period: 3 },
+  { number: 17, symbol: "Cl", name: "Chlorine", namePt: "cloro", mass: 35.5, category: "halogen", phase: "Gas", density: 0.003214, melt: 171.65, boil: 239.11, electronegativity: 3.16, electronConfig: "[Ne] 3s² 3p⁵", oxidationStates: "-1, +1, +5, +7", summary: "O cloro é usado na purificação de água.", group: 17, period: 3 },
+  { number: 18, symbol: "Ar", name: "Argon", namePt: "argônio", mass: 40, category: "noble-gas", phase: "Gas", density: 0.0017837, melt: 83.80, boil: 87.30, electronConfig: "[Ne] 3s² 3p⁶", oxidationStates: "0", summary: "O argônio é o terceiro gás mais abundante na atmosfera.", group: 18, period: 3 },
   
   // Period 4
-  { number: 19, symbol: "K", name: "Potassium", namePt: "Potássio", mass: 39.098, category: "alkali-metal", phase: "Solid", density: 0.862, melt: 336.53, boil: 1032, electronegativity: 0.82, electronConfig: "[Ar] 4s¹", oxidationStates: "+1", discoveredBy: "Humphry Davy", yearDiscovered: 1807, appearance: "Metal prateado", summary: "O potássio é essencial para nervos e músculos. Usado em fertilizantes.", group: 1, period: 4 },
-  { number: 20, symbol: "Ca", name: "Calcium", namePt: "Cálcio", mass: 40.078, category: "alkaline-earth", phase: "Solid", density: 1.54, melt: 1115, boil: 1757, electronegativity: 1.00, electronConfig: "[Ar] 4s²", oxidationStates: "+2", discoveredBy: "Humphry Davy", yearDiscovered: 1808, appearance: "Metal cinza-prateado", summary: "O cálcio é essencial para ossos e dentes. Usado em construção (cal, gesso).", group: 2, period: 4 },
-  { number: 21, symbol: "Sc", name: "Scandium", namePt: "Escândio", mass: 44.956, category: "transition-metal", phase: "Solid", density: 2.989, melt: 1814, boil: 3109, electronegativity: 1.36, electronConfig: "[Ar] 3d¹ 4s²", oxidationStates: "+3", discoveredBy: "Lars Fredrik Nilson", yearDiscovered: 1879, appearance: "Metal prateado", summary: "O escândio é usado em ligas de alumínio para equipamentos esportivos.", group: 3, period: 4 },
-  { number: 22, symbol: "Ti", name: "Titanium", namePt: "Titânio", mass: 47.867, category: "transition-metal", phase: "Solid", density: 4.54, melt: 1941, boil: 3560, electronegativity: 1.54, electronConfig: "[Ar] 3d² 4s²", oxidationStates: "+2, +3, +4", discoveredBy: "William Gregor", yearDiscovered: 1791, appearance: "Metal prateado", summary: "O titânio é forte, leve e resistente à corrosão. Usado em aviões e implantes.", group: 4, period: 4 },
-  { number: 23, symbol: "V", name: "Vanadium", namePt: "Vanádio", mass: 50.942, category: "transition-metal", phase: "Solid", density: 6.11, melt: 2183, boil: 3680, electronegativity: 1.63, electronConfig: "[Ar] 3d³ 4s²", oxidationStates: "+2, +3, +4, +5", discoveredBy: "Andrés Manuel del Río", yearDiscovered: 1801, appearance: "Metal cinza-azulado", summary: "O vanádio é usado em ligas de aço e baterias de fluxo redox.", group: 5, period: 4 },
-  { number: 24, symbol: "Cr", name: "Chromium", namePt: "Cromo", mass: 51.996, category: "transition-metal", phase: "Solid", density: 7.15, melt: 2180, boil: 2944, electronegativity: 1.66, electronConfig: "[Ar] 3d⁵ 4s¹", oxidationStates: "+2, +3, +6", discoveredBy: "Louis Nicolas Vauquelin", yearDiscovered: 1797, appearance: "Metal prateado brilhante", summary: "O cromo é usado em aço inoxidável e cromagem. Confere brilho e resistência.", group: 6, period: 4 },
-  { number: 25, symbol: "Mn", name: "Manganese", namePt: "Manganês", mass: 54.938, category: "transition-metal", phase: "Solid", density: 7.44, melt: 1519, boil: 2334, electronegativity: 1.55, electronConfig: "[Ar] 3d⁵ 4s²", oxidationStates: "+2, +3, +4, +6, +7", discoveredBy: "Johan Gottlieb Gahn", yearDiscovered: 1774, appearance: "Metal cinza-prateado", summary: "O manganês é essencial para aço e baterias. Importante para enzimas.", group: 7, period: 4 },
-  { number: 26, symbol: "Fe", name: "Iron", namePt: "Ferro", mass: 55.845, category: "transition-metal", phase: "Solid", density: 7.874, melt: 1811, boil: 3134, electronegativity: 1.83, electronConfig: "[Ar] 3d⁶ 4s²", oxidationStates: "+2, +3", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal cinza brilhante", summary: "O ferro é o metal mais utilizado. Essencial para hemoglobina e aço.", group: 8, period: 4 },
-  { number: 27, symbol: "Co", name: "Cobalt", namePt: "Cobalto", mass: 58.933, category: "transition-metal", phase: "Solid", density: 8.86, melt: 1768, boil: 3200, electronegativity: 1.88, electronConfig: "[Ar] 3d⁷ 4s²", oxidationStates: "+2, +3", discoveredBy: "Georg Brandt", yearDiscovered: 1735, appearance: "Metal azul-prateado", summary: "O cobalto é usado em baterias de íon-lítio, ligas e pigmentos azuis.", group: 9, period: 4 },
-  { number: 28, symbol: "Ni", name: "Nickel", namePt: "Níquel", mass: 58.693, category: "transition-metal", phase: "Solid", density: 8.912, melt: 1728, boil: 3186, electronegativity: 1.91, electronConfig: "[Ar] 3d⁸ 4s²", oxidationStates: "+2, +3", discoveredBy: "Axel Fredrik Cronstedt", yearDiscovered: 1751, appearance: "Metal prateado brilhante", summary: "O níquel é usado em aço inoxidável, moedas e baterias recarregáveis.", group: 10, period: 4 },
-  { number: 29, symbol: "Cu", name: "Copper", namePt: "Cobre", mass: 63.546, category: "transition-metal", phase: "Solid", density: 8.96, melt: 1357.77, boil: 2835, electronegativity: 1.90, electronConfig: "[Ar] 3d¹⁰ 4s¹", oxidationStates: "+1, +2", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal avermelhado", summary: "O cobre é excelente condutor elétrico. Usado em fios, encanamentos e ligas.", group: 11, period: 4 },
-  { number: 30, symbol: "Zn", name: "Zinc", namePt: "Zinco", mass: 65.38, category: "transition-metal", phase: "Solid", density: 7.134, melt: 692.68, boil: 1180, electronegativity: 1.65, electronConfig: "[Ar] 3d¹⁰ 4s²", oxidationStates: "+2", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal branco-azulado", summary: "O zinco é usado em galvanização, pilhas e suplementos nutricionais.", group: 12, period: 4 },
-  { number: 31, symbol: "Ga", name: "Gallium", namePt: "Gálio", mass: 69.723, category: "post-transition", phase: "Solid", density: 5.907, melt: 302.91, boil: 2477, electronegativity: 1.81, electronConfig: "[Ar] 3d¹⁰ 4s² 4p¹", oxidationStates: "+3", discoveredBy: "Paul Emile Lecoq de Boisbaudran", yearDiscovered: 1875, appearance: "Metal prateado-azulado", summary: "O gálio derrete na mão (29,76°C). Usado em LEDs e semicondutores.", group: 13, period: 4 },
-  { number: 32, symbol: "Ge", name: "Germanium", namePt: "Germânio", mass: 72.630, category: "metalloid", phase: "Solid", density: 5.323, melt: 1211.40, boil: 3106, electronegativity: 2.01, electronConfig: "[Ar] 3d¹⁰ 4s² 4p²", oxidationStates: "+2, +4", discoveredBy: "Clemens Winkler", yearDiscovered: 1886, appearance: "Sólido cinza brilhante", summary: "O germânio é um semicondutor. Usado em transistores e fibra óptica.", group: 14, period: 4 },
-  { number: 33, symbol: "As", name: "Arsenic", namePt: "Arsênio", mass: 74.922, category: "metalloid", phase: "Solid", density: 5.776, melt: 1090, boil: 887, electronegativity: 2.18, electronConfig: "[Ar] 3d¹⁰ 4s² 4p³", oxidationStates: "-3, +3, +5", discoveredBy: "Albertus Magnus", yearDiscovered: 1250, appearance: "Sólido cinza metálico", summary: "O arsênio é um metaloide tóxico. Usado em pesticidas e semicondutores.", group: 15, period: 4 },
-  { number: 34, symbol: "Se", name: "Selenium", namePt: "Selênio", mass: 78.971, category: "nonmetal", phase: "Solid", density: 4.809, melt: 494, boil: 958, electronegativity: 2.55, electronConfig: "[Ar] 3d¹⁰ 4s² 4p⁴", oxidationStates: "-2, +4, +6", discoveredBy: "Jöns Jacob Berzelius", yearDiscovered: 1817, appearance: "Várias formas alotrópicas", summary: "O selênio é um micronutriente essencial. Usado em células solares e eletrônica.", group: 16, period: 4 },
-  { number: 35, symbol: "Br", name: "Bromine", namePt: "Bromo", mass: 79.904, category: "halogen", phase: "Liquid", density: 3.122, melt: 265.95, boil: 332, electronegativity: 2.96, electronConfig: "[Ar] 3d¹⁰ 4s² 4p⁵", oxidationStates: "-1, +1, +3, +5, +7", discoveredBy: "Antoine Jérôme Balard", yearDiscovered: 1826, appearance: "Líquido vermelho-marrom", summary: "O bromo é um dos dois elementos líquidos à temperatura ambiente. Usado em retardantes de chama.", group: 17, period: 4 },
-  { number: 36, symbol: "Kr", name: "Krypton", namePt: "Criptônio", mass: 83.798, category: "noble-gas", phase: "Gas", density: 0.003733, melt: 115.79, boil: 119.93, electronegativity: 3.00, electronConfig: "[Ar] 3d¹⁰ 4s² 4p⁶", oxidationStates: "0, +2", discoveredBy: "William Ramsay", yearDiscovered: 1898, appearance: "Gás incolor", summary: "O criptônio é um gás nobre. Usado em lâmpadas e lasers.", group: 18, period: 4 },
+  { number: 19, symbol: "K", name: "Potassium", namePt: "potássio", mass: 39, category: "alkali-metal", phase: "Solid", density: 0.862, melt: 336.53, boil: 1032, electronegativity: 0.82, electronConfig: "[Ar] 4s¹", oxidationStates: "+1", summary: "O potássio é essencial para nervos e músculos.", group: 1, period: 4 },
+  { number: 20, symbol: "Ca", name: "Calcium", namePt: "cálcio", mass: 40, category: "alkaline-earth", phase: "Solid", density: 1.54, melt: 1115, boil: 1757, electronegativity: 1.00, electronConfig: "[Ar] 4s²", oxidationStates: "+2", summary: "O cálcio é essencial para ossos e dentes.", group: 2, period: 4 },
+  { number: 21, symbol: "Sc", name: "Scandium", namePt: "escândio", mass: 45, category: "transition-metal", phase: "Solid", density: 2.989, melt: 1814, boil: 3109, electronegativity: 1.36, electronConfig: "[Ar] 3d¹ 4s²", oxidationStates: "+3", summary: "O escândio é usado em ligas de alumínio.", group: 3, period: 4 },
+  { number: 22, symbol: "Ti", name: "Titanium", namePt: "titânio", mass: 48, category: "transition-metal", phase: "Solid", density: 4.54, melt: 1941, boil: 3560, electronegativity: 1.54, electronConfig: "[Ar] 3d² 4s²", oxidationStates: "+4", summary: "O titânio é forte, leve e resistente à corrosão.", group: 4, period: 4 },
+  { number: 23, symbol: "V", name: "Vanadium", namePt: "vanádio", mass: 51, category: "transition-metal", phase: "Solid", density: 6.11, melt: 2183, boil: 3680, electronegativity: 1.63, electronConfig: "[Ar] 3d³ 4s²", oxidationStates: "+5", summary: "O vanádio é usado em ligas de aço.", group: 5, period: 4 },
+  { number: 24, symbol: "Cr", name: "Chromium", namePt: "cromo", mass: 52, category: "transition-metal", phase: "Solid", density: 7.15, melt: 2180, boil: 2944, electronegativity: 1.66, electronConfig: "[Ar] 3d⁵ 4s¹", oxidationStates: "+3, +6", summary: "O cromo é usado em aço inoxidável e cromagem.", group: 6, period: 4 },
+  { number: 25, symbol: "Mn", name: "Manganese", namePt: "manganês", mass: 55, category: "transition-metal", phase: "Solid", density: 7.44, melt: 1519, boil: 2334, electronegativity: 1.55, electronConfig: "[Ar] 3d⁵ 4s²", oxidationStates: "+2, +4, +7", summary: "O manganês é essencial para aço e baterias.", group: 7, period: 4 },
+  { number: 26, symbol: "Fe", name: "Iron", namePt: "ferro", mass: 56, category: "transition-metal", phase: "Solid", density: 7.874, melt: 1811, boil: 3134, electronegativity: 1.83, electronConfig: "[Ar] 3d⁶ 4s²", oxidationStates: "+2, +3", summary: "O ferro é o metal mais utilizado.", group: 8, period: 4 },
+  { number: 27, symbol: "Co", name: "Cobalt", namePt: "cobalto", mass: 59, category: "transition-metal", phase: "Solid", density: 8.86, melt: 1768, boil: 3200, electronegativity: 1.88, electronConfig: "[Ar] 3d⁷ 4s²", oxidationStates: "+2, +3", summary: "O cobalto é usado em baterias de íon-lítio.", group: 9, period: 4 },
+  { number: 28, symbol: "Ni", name: "Nickel", namePt: "níquel", mass: 59, category: "transition-metal", phase: "Solid", density: 8.912, melt: 1728, boil: 3186, electronegativity: 1.91, electronConfig: "[Ar] 3d⁸ 4s²", oxidationStates: "+2", summary: "O níquel é usado em aço inoxidável e moedas.", group: 10, period: 4 },
+  { number: 29, symbol: "Cu", name: "Copper", namePt: "cobre", mass: 63.5, category: "transition-metal", phase: "Solid", density: 8.96, melt: 1357.77, boil: 2835, electronegativity: 1.90, electronConfig: "[Ar] 3d¹⁰ 4s¹", oxidationStates: "+1, +2", summary: "O cobre é excelente condutor elétrico.", group: 11, period: 4 },
+  { number: 30, symbol: "Zn", name: "Zinc", namePt: "zinco", mass: 65, category: "transition-metal", phase: "Solid", density: 7.134, melt: 692.68, boil: 1180, electronegativity: 1.65, electronConfig: "[Ar] 3d¹⁰ 4s²", oxidationStates: "+2", summary: "O zinco é usado em galvanização e pilhas.", group: 12, period: 4 },
+  { number: 31, symbol: "Ga", name: "Gallium", namePt: "gálio", mass: 70, category: "post-transition", phase: "Solid", density: 5.907, melt: 302.91, boil: 2477, electronegativity: 1.81, electronConfig: "[Ar] 3d¹⁰ 4s² 4p¹", oxidationStates: "+3", summary: "O gálio derrete na mão (29,76°C).", group: 13, period: 4 },
+  { number: 32, symbol: "Ge", name: "Germanium", namePt: "germânio", mass: 73, category: "metalloid", phase: "Solid", density: 5.323, melt: 1211.40, boil: 3106, electronegativity: 2.01, electronConfig: "[Ar] 3d¹⁰ 4s² 4p²", oxidationStates: "+4", summary: "O germânio é um semicondutor.", group: 14, period: 4 },
+  { number: 33, symbol: "As", name: "Arsenic", namePt: "arsênio", mass: 75, category: "metalloid", phase: "Solid", density: 5.776, melt: 1090, boil: 887, electronegativity: 2.18, electronConfig: "[Ar] 3d¹⁰ 4s² 4p³", oxidationStates: "-3, +3, +5", summary: "O arsênio é um metaloide tóxico.", group: 15, period: 4 },
+  { number: 34, symbol: "Se", name: "Selenium", namePt: "selênio", mass: 78, category: "nonmetal", phase: "Solid", density: 4.809, melt: 494, boil: 958, electronegativity: 2.55, electronConfig: "[Ar] 3d¹⁰ 4s² 4p⁴", oxidationStates: "-2, +4, +6", summary: "O selênio é um micronutriente essencial.", group: 16, period: 4 },
+  { number: 35, symbol: "Br", name: "Bromine", namePt: "bromo", mass: 80, category: "halogen", phase: "Liquid", density: 3.122, melt: 265.95, boil: 332, electronegativity: 2.96, electronConfig: "[Ar] 3d¹⁰ 4s² 4p⁵", oxidationStates: "-1, +1, +5", summary: "O bromo é líquido à temperatura ambiente.", group: 17, period: 4 },
+  { number: 36, symbol: "Kr", name: "Krypton", namePt: "criptônio", mass: 84, category: "noble-gas", phase: "Gas", density: 0.003733, melt: 115.79, boil: 119.93, electronConfig: "[Ar] 3d¹⁰ 4s² 4p⁶", oxidationStates: "0", summary: "O criptônio é um gás nobre.", group: 18, period: 4 },
   
   // Period 5
-  { number: 37, symbol: "Rb", name: "Rubidium", namePt: "Rubídio", mass: 85.468, category: "alkali-metal", phase: "Solid", density: 1.532, melt: 312.46, boil: 961, electronegativity: 0.82, electronConfig: "[Kr] 5s¹", oxidationStates: "+1", discoveredBy: "Robert Bunsen", yearDiscovered: 1861, appearance: "Metal prateado", summary: "O rubídio é altamente reativo. Usado em células fotoelétricas e relógios atômicos.", group: 1, period: 5 },
-  { number: 38, symbol: "Sr", name: "Strontium", namePt: "Estrôncio", mass: 87.62, category: "alkaline-earth", phase: "Solid", density: 2.64, melt: 1050, boil: 1655, electronegativity: 0.95, electronConfig: "[Kr] 5s²", oxidationStates: "+2", discoveredBy: "William Cruickshank", yearDiscovered: 1790, appearance: "Metal prateado-amarelado", summary: "O estrôncio produz chama vermelha em fogos de artifício.", group: 2, period: 5 },
-  { number: 39, symbol: "Y", name: "Yttrium", namePt: "Ítrio", mass: 88.906, category: "transition-metal", phase: "Solid", density: 4.469, melt: 1799, boil: 3609, electronegativity: 1.22, electronConfig: "[Kr] 4d¹ 5s²", oxidationStates: "+3", discoveredBy: "Johan Gadolin", yearDiscovered: 1794, appearance: "Metal prateado", summary: "O ítrio é usado em LEDs, lasers e supercondutores.", group: 3, period: 5 },
-  { number: 40, symbol: "Zr", name: "Zirconium", namePt: "Zircônio", mass: 91.224, category: "transition-metal", phase: "Solid", density: 6.506, melt: 2128, boil: 4682, electronegativity: 1.33, electronConfig: "[Kr] 4d² 5s²", oxidationStates: "+4", discoveredBy: "Martin Heinrich Klaproth", yearDiscovered: 1789, appearance: "Metal cinza-prateado", summary: "O zircônio é resistente à corrosão. Usado em reatores nucleares.", group: 4, period: 5 },
-  { number: 41, symbol: "Nb", name: "Niobium", namePt: "Nióbio", mass: 92.906, category: "transition-metal", phase: "Solid", density: 8.57, melt: 2750, boil: 5017, electronegativity: 1.6, electronConfig: "[Kr] 4d⁴ 5s¹", oxidationStates: "+3, +5", discoveredBy: "Charles Hatchett", yearDiscovered: 1801, appearance: "Metal cinza brilhante", summary: "O Brasil é o maior produtor de nióbio. Usado em aços especiais e supercondutores.", group: 5, period: 5 },
-  { number: 42, symbol: "Mo", name: "Molybdenum", namePt: "Molibdênio", mass: 95.95, category: "transition-metal", phase: "Solid", density: 10.22, melt: 2896, boil: 4912, electronegativity: 2.16, electronConfig: "[Kr] 4d⁵ 5s¹", oxidationStates: "+2, +3, +4, +5, +6", discoveredBy: "Carl Wilhelm Scheele", yearDiscovered: 1778, appearance: "Metal cinza-prateado", summary: "O molibdênio tem alto ponto de fusão. Usado em ligas e catalisadores.", group: 6, period: 5 },
-  { number: 43, symbol: "Tc", name: "Technetium", namePt: "Tecnécio", mass: 98, category: "transition-metal", phase: "Solid", density: 11.5, melt: 2430, boil: 4538, electronegativity: 1.9, electronConfig: "[Kr] 4d⁵ 5s²", oxidationStates: "+4, +7", discoveredBy: "Emilio Segrè", yearDiscovered: 1937, appearance: "Metal cinza-prateado", summary: "O tecnécio foi o primeiro elemento produzido artificialmente. Usado em medicina nuclear.", group: 7, period: 5 },
-  { number: 44, symbol: "Ru", name: "Ruthenium", namePt: "Rutênio", mass: 101.07, category: "transition-metal", phase: "Solid", density: 12.37, melt: 2607, boil: 4423, electronegativity: 2.2, electronConfig: "[Kr] 4d⁷ 5s¹", oxidationStates: "+2, +3, +4, +6, +8", discoveredBy: "Karl Ernst Claus", yearDiscovered: 1844, appearance: "Metal branco-prateado", summary: "O rutênio é um metal do grupo da platina. Usado em catalisadores e eletrônica.", group: 8, period: 5 },
-  { number: 45, symbol: "Rh", name: "Rhodium", namePt: "Ródio", mass: 102.91, category: "transition-metal", phase: "Solid", density: 12.41, melt: 2237, boil: 3968, electronegativity: 2.28, electronConfig: "[Kr] 4d⁸ 5s¹", oxidationStates: "+3", discoveredBy: "William Hyde Wollaston", yearDiscovered: 1803, appearance: "Metal branco-prateado", summary: "O ródio é o metal mais caro. Usado em conversores catalíticos e joias.", group: 9, period: 5 },
-  { number: 46, symbol: "Pd", name: "Palladium", namePt: "Paládio", mass: 106.42, category: "transition-metal", phase: "Solid", density: 12.02, melt: 1828.05, boil: 3236, electronegativity: 2.20, electronConfig: "[Kr] 4d¹⁰", oxidationStates: "+2, +4", discoveredBy: "William Hyde Wollaston", yearDiscovered: 1803, appearance: "Metal branco-prateado", summary: "O paládio absorve hidrogênio. Usado em conversores catalíticos e joias.", group: 10, period: 5 },
-  { number: 47, symbol: "Ag", name: "Silver", namePt: "Prata", mass: 107.87, category: "transition-metal", phase: "Solid", density: 10.501, melt: 1234.93, boil: 2435, electronegativity: 1.93, electronConfig: "[Kr] 4d¹⁰ 5s¹", oxidationStates: "+1", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal branco brilhante", summary: "A prata é o melhor condutor de eletricidade. Usada em joias, moedas e eletrônica.", group: 11, period: 5 },
-  { number: 48, symbol: "Cd", name: "Cadmium", namePt: "Cádmio", mass: 112.41, category: "transition-metal", phase: "Solid", density: 8.69, melt: 594.22, boil: 1040, electronegativity: 1.69, electronConfig: "[Kr] 4d¹⁰ 5s²", oxidationStates: "+2", discoveredBy: "Karl Samuel Leberecht Hermann", yearDiscovered: 1817, appearance: "Metal prateado-azulado", summary: "O cádmio é tóxico. Usado em baterias Ni-Cd e pigmentos.", group: 12, period: 5 },
-  { number: 49, symbol: "In", name: "Indium", namePt: "Índio", mass: 114.82, category: "post-transition", phase: "Solid", density: 7.31, melt: 429.75, boil: 2345, electronegativity: 1.78, electronConfig: "[Kr] 4d¹⁰ 5s² 5p¹", oxidationStates: "+3", discoveredBy: "Ferdinand Reich", yearDiscovered: 1863, appearance: "Metal prateado brilhante", summary: "O índio é muito macio. Usado em telas de LCD e semicondutores.", group: 13, period: 5 },
-  { number: 50, symbol: "Sn", name: "Tin", namePt: "Estanho", mass: 118.71, category: "post-transition", phase: "Solid", density: 7.287, melt: 505.08, boil: 2875, electronegativity: 1.96, electronConfig: "[Kr] 4d¹⁰ 5s² 5p²", oxidationStates: "+2, +4", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal prateado", summary: "O estanho é usado em soldas e revestimentos. Liga bronze = cobre + estanho.", group: 14, period: 5 },
-  { number: 51, symbol: "Sb", name: "Antimony", namePt: "Antimônio", mass: 121.76, category: "metalloid", phase: "Solid", density: 6.685, melt: 903.78, boil: 1860, electronegativity: 2.05, electronConfig: "[Kr] 4d¹⁰ 5s² 5p³", oxidationStates: "-3, +3, +5", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Sólido prateado brilhante", summary: "O antimônio é usado em ligas e retardantes de chama.", group: 15, period: 5 },
-  { number: 52, symbol: "Te", name: "Tellurium", namePt: "Telúrio", mass: 127.60, category: "metalloid", phase: "Solid", density: 6.232, melt: 722.66, boil: 1261, electronegativity: 2.1, electronConfig: "[Kr] 4d¹⁰ 5s² 5p⁴", oxidationStates: "-2, +4, +6", discoveredBy: "Franz-Joseph Müller von Reichenstein", yearDiscovered: 1783, appearance: "Sólido cinza-prateado", summary: "O telúrio é usado em células solares e ligas.", group: 16, period: 5 },
-  { number: 53, symbol: "I", name: "Iodine", namePt: "Iodo", mass: 126.90, category: "halogen", phase: "Solid", density: 4.93, melt: 386.85, boil: 457.55, electronegativity: 2.66, electronConfig: "[Kr] 4d¹⁰ 5s² 5p⁵", oxidationStates: "-1, +1, +5, +7", discoveredBy: "Bernard Courtois", yearDiscovered: 1811, appearance: "Sólido violeta-escuro", summary: "O iodo é essencial para a tireoide. Usado em medicina e desinfetantes.", group: 17, period: 5 },
-  { number: 54, symbol: "Xe", name: "Xenon", namePt: "Xenônio", mass: 131.29, category: "noble-gas", phase: "Gas", density: 0.005887, melt: 161.36, boil: 165.03, electronegativity: 2.60, electronConfig: "[Kr] 4d¹⁰ 5s² 5p⁶", oxidationStates: "0, +2, +4, +6, +8", discoveredBy: "William Ramsay", yearDiscovered: 1898, appearance: "Gás incolor", summary: "O xenônio pode formar compostos (raro para gás nobre). Usado em lâmpadas e anestesia.", group: 18, period: 5 },
+  { number: 37, symbol: "Rb", name: "Rubidium", namePt: "rubídio", mass: 85.5, category: "alkali-metal", phase: "Solid", electronegativity: 0.82, electronConfig: "[Kr] 5s¹", oxidationStates: "+1", summary: "O rubídio é altamente reativo.", group: 1, period: 5 },
+  { number: 38, symbol: "Sr", name: "Strontium", namePt: "estrôncio", mass: 88, category: "alkaline-earth", phase: "Solid", electronegativity: 0.95, electronConfig: "[Kr] 5s²", oxidationStates: "+2", summary: "O estrôncio produz chama vermelha.", group: 2, period: 5 },
+  { number: 39, symbol: "Y", name: "Yttrium", namePt: "ítrio", mass: 89, category: "transition-metal", phase: "Solid", electronegativity: 1.22, electronConfig: "[Kr] 4d¹ 5s²", oxidationStates: "+3", summary: "O ítrio é usado em LEDs e lasers.", group: 3, period: 5 },
+  { number: 40, symbol: "Zr", name: "Zirconium", namePt: "zircônio", mass: 91, category: "transition-metal", phase: "Solid", electronegativity: 1.33, electronConfig: "[Kr] 4d² 5s²", oxidationStates: "+4", summary: "O zircônio é resistente à corrosão.", group: 4, period: 5 },
+  { number: 41, symbol: "Nb", name: "Niobium", namePt: "nióbio", mass: 93, category: "transition-metal", phase: "Solid", electronegativity: 1.6, electronConfig: "[Kr] 4d⁴ 5s¹", oxidationStates: "+5", summary: "O Brasil é o maior produtor de nióbio.", group: 5, period: 5 },
+  { number: 42, symbol: "Mo", name: "Molybdenum", namePt: "molibdênio", mass: 96, category: "transition-metal", phase: "Solid", electronegativity: 2.16, electronConfig: "[Kr] 4d⁵ 5s¹", oxidationStates: "+6", summary: "O molibdênio é usado em ligas de aço.", group: 6, period: 5 },
+  { number: 43, symbol: "Tc", name: "Technetium", namePt: "tecnécio", mass: "[98]", category: "transition-metal", phase: "Solid", electronegativity: 1.9, electronConfig: "[Kr] 4d⁵ 5s²", oxidationStates: "+7", summary: "O tecnécio é radioativo.", group: 7, period: 5 },
+  { number: 44, symbol: "Ru", name: "Ruthenium", namePt: "rutênio", mass: 101, category: "transition-metal", phase: "Solid", electronegativity: 2.2, electronConfig: "[Kr] 4d⁷ 5s¹", oxidationStates: "+3, +4", summary: "O rutênio é usado em catalisadores.", group: 8, period: 5 },
+  { number: 45, symbol: "Rh", name: "Rhodium", namePt: "ródio", mass: 103, category: "transition-metal", phase: "Solid", electronegativity: 2.28, electronConfig: "[Kr] 4d⁸ 5s¹", oxidationStates: "+3", summary: "O ródio é usado em catalisadores automotivos.", group: 9, period: 5 },
+  { number: 46, symbol: "Pd", name: "Palladium", namePt: "paládio", mass: 106.5, category: "transition-metal", phase: "Solid", electronegativity: 2.20, electronConfig: "[Kr] 4d¹⁰", oxidationStates: "+2, +4", summary: "O paládio é usado em catalisadores.", group: 10, period: 5 },
+  { number: 47, symbol: "Ag", name: "Silver", namePt: "prata", mass: 108, category: "transition-metal", phase: "Solid", electronegativity: 1.93, electronConfig: "[Kr] 4d¹⁰ 5s¹", oxidationStates: "+1", summary: "A prata é o melhor condutor de eletricidade.", group: 11, period: 5 },
+  { number: 48, symbol: "Cd", name: "Cadmium", namePt: "cádmio", mass: 112.5, category: "transition-metal", phase: "Solid", electronegativity: 1.69, electronConfig: "[Kr] 4d¹⁰ 5s²", oxidationStates: "+2", summary: "O cádmio é usado em baterias.", group: 12, period: 5 },
+  { number: 49, symbol: "In", name: "Indium", namePt: "índio", mass: 115, category: "post-transition", phase: "Solid", electronegativity: 1.78, electronConfig: "[Kr] 4d¹⁰ 5s² 5p¹", oxidationStates: "+3", summary: "O índio é usado em telas touchscreen.", group: 13, period: 5 },
+  { number: 50, symbol: "Sn", name: "Tin", namePt: "estanho", mass: 119, category: "post-transition", phase: "Solid", electronegativity: 1.96, electronConfig: "[Kr] 4d¹⁰ 5s² 5p²", oxidationStates: "+2, +4", summary: "O estanho é usado em soldas.", group: 14, period: 5 },
+  { number: 51, symbol: "Sb", name: "Antimony", namePt: "antimônio", mass: 122, category: "metalloid", phase: "Solid", electronegativity: 2.05, electronConfig: "[Kr] 4d¹⁰ 5s² 5p³", oxidationStates: "-3, +3, +5", summary: "O antimônio é usado em ligas e retardantes.", group: 15, period: 5 },
+  { number: 52, symbol: "Te", name: "Tellurium", namePt: "telúrio", mass: 128, category: "metalloid", phase: "Solid", electronegativity: 2.1, electronConfig: "[Kr] 4d¹⁰ 5s² 5p⁴", oxidationStates: "-2, +4, +6", summary: "O telúrio é usado em células solares.", group: 16, period: 5 },
+  { number: 53, symbol: "I", name: "Iodine", namePt: "iodo", mass: 127, category: "halogen", phase: "Solid", electronegativity: 2.66, electronConfig: "[Kr] 4d¹⁰ 5s² 5p⁵", oxidationStates: "-1, +1, +5, +7", summary: "O iodo é essencial para a tireoide.", group: 17, period: 5 },
+  { number: 54, symbol: "Xe", name: "Xenon", namePt: "xenônio", mass: 132, category: "noble-gas", phase: "Gas", electronConfig: "[Kr] 4d¹⁰ 5s² 5p⁶", oxidationStates: "0, +2, +4, +6", summary: "O xenônio forma compostos mesmo sendo gás nobre.", group: 18, period: 5 },
   
   // Period 6
-  { number: 55, symbol: "Cs", name: "Cesium", namePt: "Césio", mass: 132.91, category: "alkali-metal", phase: "Solid", density: 1.873, melt: 301.59, boil: 944, electronegativity: 0.79, electronConfig: "[Xe] 6s¹", oxidationStates: "+1", discoveredBy: "Robert Bunsen", yearDiscovered: 1860, appearance: "Metal dourado-prateado", summary: "O césio define o segundo no SI (relógio atômico). Reage violentamente com água.", group: 1, period: 6 },
-  { number: 56, symbol: "Ba", name: "Barium", namePt: "Bário", mass: 137.33, category: "alkaline-earth", phase: "Solid", density: 3.594, melt: 1000, boil: 2170, electronegativity: 0.89, electronConfig: "[Xe] 6s²", oxidationStates: "+2", discoveredBy: "Carl Wilhelm Scheele", yearDiscovered: 1772, appearance: "Metal prateado", summary: "O bário produz chama verde. Usado em raios-X (sulfato de bário).", group: 2, period: 6 },
-  
-  // Lanthanides (57-71)
-  { number: 57, symbol: "La", name: "Lanthanum", namePt: "Lantânio", mass: 138.91, category: "lanthanide", phase: "Solid", density: 6.145, melt: 1193, boil: 3737, electronegativity: 1.1, electronConfig: "[Xe] 5d¹ 6s²", oxidationStates: "+3", discoveredBy: "Carl Gustaf Mosander", yearDiscovered: 1839, appearance: "Metal prateado", summary: "O lantânio dá nome à série dos lantanídeos. Usado em catalisadores e baterias.", group: 3, period: 6 },
-  { number: 58, symbol: "Ce", name: "Cerium", namePt: "Cério", mass: 140.12, category: "lanthanide", phase: "Solid", density: 6.77, melt: 1068, boil: 3716, electronegativity: 1.12, electronConfig: "[Xe] 4f¹ 5d¹ 6s²", oxidationStates: "+3, +4", discoveredBy: "Jöns Jacob Berzelius", yearDiscovered: 1803, appearance: "Metal prateado", summary: "O cério é o lantanídeo mais abundante. Usado em polimento de vidro e catalisadores.", group: 3, period: 6 },
-  { number: 59, symbol: "Pr", name: "Praseodymium", namePt: "Praseodímio", mass: 140.91, category: "lanthanide", phase: "Solid", density: 6.773, melt: 1208, boil: 3793, electronegativity: 1.13, electronConfig: "[Xe] 4f³ 6s²", oxidationStates: "+3, +4", discoveredBy: "Carl Auer von Welsbach", yearDiscovered: 1885, appearance: "Metal prateado", summary: "O praseodímio é usado em ímãs, ligas e vidros coloridos.", group: 3, period: 6 },
-  { number: 60, symbol: "Nd", name: "Neodymium", namePt: "Neodímio", mass: 144.24, category: "lanthanide", phase: "Solid", density: 7.007, melt: 1297, boil: 3347, electronegativity: 1.14, electronConfig: "[Xe] 4f⁴ 6s²", oxidationStates: "+3", discoveredBy: "Carl Auer von Welsbach", yearDiscovered: 1885, appearance: "Metal prateado", summary: "O neodímio forma ímãs muito fortes (Nd₂Fe₁₄B). Usado em motores elétricos.", group: 3, period: 6 },
-  { number: 61, symbol: "Pm", name: "Promethium", namePt: "Promécio", mass: 145, category: "lanthanide", phase: "Solid", density: 7.26, melt: 1315, boil: 3273, electronegativity: 1.13, electronConfig: "[Xe] 4f⁵ 6s²", oxidationStates: "+3", discoveredBy: "Charles D. Coryell", yearDiscovered: 1945, appearance: "Metal prateado", summary: "O promécio é radioativo. Todos os isótopos são instáveis.", group: 3, period: 6 },
-  { number: 62, symbol: "Sm", name: "Samarium", namePt: "Samário", mass: 150.36, category: "lanthanide", phase: "Solid", density: 7.52, melt: 1345, boil: 2067, electronegativity: 1.17, electronConfig: "[Xe] 4f⁶ 6s²", oxidationStates: "+2, +3", discoveredBy: "Paul Émile Lecoq de Boisbaudran", yearDiscovered: 1879, appearance: "Metal prateado", summary: "O samário é usado em ímãs (SmCo₅) e reatores nucleares.", group: 3, period: 6 },
-  { number: 63, symbol: "Eu", name: "Europium", namePt: "Európio", mass: 151.96, category: "lanthanide", phase: "Solid", density: 5.243, melt: 1099, boil: 1802, electronegativity: 1.2, electronConfig: "[Xe] 4f⁷ 6s²", oxidationStates: "+2, +3", discoveredBy: "Eugène-Anatole Demarçay", yearDiscovered: 1901, appearance: "Metal prateado", summary: "O európio produz fósforos vermelhos em TVs e cédulas de segurança.", group: 3, period: 6 },
-  { number: 64, symbol: "Gd", name: "Gadolinium", namePt: "Gadolínio", mass: 157.25, category: "lanthanide", phase: "Solid", density: 7.895, melt: 1585, boil: 3546, electronegativity: 1.2, electronConfig: "[Xe] 4f⁷ 5d¹ 6s²", oxidationStates: "+3", discoveredBy: "Jean Charles Galissard de Marignac", yearDiscovered: 1880, appearance: "Metal prateado", summary: "O gadolínio é usado em contraste para ressonância magnética.", group: 3, period: 6 },
-  { number: 65, symbol: "Tb", name: "Terbium", namePt: "Térbio", mass: 158.93, category: "lanthanide", phase: "Solid", density: 8.229, melt: 1629, boil: 3503, electronegativity: 1.2, electronConfig: "[Xe] 4f⁹ 6s²", oxidationStates: "+3, +4", discoveredBy: "Carl Gustaf Mosander", yearDiscovered: 1843, appearance: "Metal prateado", summary: "O térbio produz fósforos verdes. Usado em dispositivos de estado sólido.", group: 3, period: 6 },
-  { number: 66, symbol: "Dy", name: "Dysprosium", namePt: "Disprósio", mass: 162.50, category: "lanthanide", phase: "Solid", density: 8.55, melt: 1680, boil: 2840, electronegativity: 1.22, electronConfig: "[Xe] 4f¹⁰ 6s²", oxidationStates: "+3", discoveredBy: "Paul Émile Lecoq de Boisbaudran", yearDiscovered: 1886, appearance: "Metal prateado", summary: "O disprósio é usado em ímãs de neodímio e lasers.", group: 3, period: 6 },
-  { number: 67, symbol: "Ho", name: "Holmium", namePt: "Hólmio", mass: 164.93, category: "lanthanide", phase: "Solid", density: 8.795, melt: 1734, boil: 2993, electronegativity: 1.23, electronConfig: "[Xe] 4f¹¹ 6s²", oxidationStates: "+3", discoveredBy: "Jacques-Louis Soret", yearDiscovered: 1878, appearance: "Metal prateado", summary: "O hólmio tem o maior momento magnético. Usado em lasers médicos.", group: 3, period: 6 },
-  { number: 68, symbol: "Er", name: "Erbium", namePt: "Érbio", mass: 167.26, category: "lanthanide", phase: "Solid", density: 9.066, melt: 1802, boil: 3141, electronegativity: 1.24, electronConfig: "[Xe] 4f¹² 6s²", oxidationStates: "+3", discoveredBy: "Carl Gustaf Mosander", yearDiscovered: 1843, appearance: "Metal prateado", summary: "O érbio dá cor rosa ao vidro. Usado em amplificadores de fibra óptica.", group: 3, period: 6 },
-  { number: 69, symbol: "Tm", name: "Thulium", namePt: "Túlio", mass: 168.93, category: "lanthanide", phase: "Solid", density: 9.321, melt: 1818, boil: 2223, electronegativity: 1.25, electronConfig: "[Xe] 4f¹³ 6s²", oxidationStates: "+2, +3", discoveredBy: "Per Teodor Cleve", yearDiscovered: 1879, appearance: "Metal prateado", summary: "O túlio é o lantanídeo mais raro. Usado em aparelhos de raios-X portáteis.", group: 3, period: 6 },
-  { number: 70, symbol: "Yb", name: "Ytterbium", namePt: "Itérbio", mass: 173.05, category: "lanthanide", phase: "Solid", density: 6.965, melt: 1097, boil: 1469, electronegativity: 1.1, electronConfig: "[Xe] 4f¹⁴ 6s²", oxidationStates: "+2, +3", discoveredBy: "Jean Charles Galissard de Marignac", yearDiscovered: 1878, appearance: "Metal prateado", summary: "O itérbio é usado em relógios atômicos e lasers.", group: 3, period: 6 },
-  { number: 71, symbol: "Lu", name: "Lutetium", namePt: "Lutécio", mass: 174.97, category: "lanthanide", phase: "Solid", density: 9.84, melt: 1925, boil: 3675, electronegativity: 1.27, electronConfig: "[Xe] 4f¹⁴ 5d¹ 6s²", oxidationStates: "+3", discoveredBy: "Georges Urbain", yearDiscovered: 1907, appearance: "Metal prateado", summary: "O lutécio é o lantanídeo mais denso e duro. Usado em catalisadores.", group: 3, period: 6 },
-  
-  // Continue Period 6
-  { number: 72, symbol: "Hf", name: "Hafnium", namePt: "Háfnio", mass: 178.49, category: "transition-metal", phase: "Solid", density: 13.31, melt: 2506, boil: 4876, electronegativity: 1.3, electronConfig: "[Xe] 4f¹⁴ 5d² 6s²", oxidationStates: "+4", discoveredBy: "Dirk Coster", yearDiscovered: 1923, appearance: "Metal cinza-prateado", summary: "O háfnio é semelhante ao zircônio. Usado em barras de controle nuclear.", group: 4, period: 6 },
-  { number: 73, symbol: "Ta", name: "Tantalum", namePt: "Tântalo", mass: 180.95, category: "transition-metal", phase: "Solid", density: 16.654, melt: 3290, boil: 5731, electronegativity: 1.5, electronConfig: "[Xe] 4f¹⁴ 5d³ 6s²", oxidationStates: "+5", discoveredBy: "Anders Gustaf Ekeberg", yearDiscovered: 1802, appearance: "Metal cinza-azulado", summary: "O tântalo é muito resistente à corrosão. Usado em capacitores e implantes.", group: 5, period: 6 },
-  { number: 74, symbol: "W", name: "Tungsten", namePt: "Tungstênio", mass: 183.84, category: "transition-metal", phase: "Solid", density: 19.25, melt: 3695, boil: 5828, electronegativity: 2.36, electronConfig: "[Xe] 4f¹⁴ 5d⁴ 6s²", oxidationStates: "+2, +3, +4, +5, +6", discoveredBy: "Juan José Elhuyar", yearDiscovered: 1783, appearance: "Metal cinza-aço", summary: "O tungstênio tem o maior ponto de fusão (3422°C). Usado em filamentos e ferramentas.", group: 6, period: 6 },
-  { number: 75, symbol: "Re", name: "Rhenium", namePt: "Rênio", mass: 186.21, category: "transition-metal", phase: "Solid", density: 21.02, melt: 3459, boil: 5869, electronegativity: 1.9, electronConfig: "[Xe] 4f¹⁴ 5d⁵ 6s²", oxidationStates: "+4, +6, +7", discoveredBy: "Masataka Ogawa", yearDiscovered: 1925, appearance: "Metal cinza-prateado", summary: "O rênio foi o último elemento estável descoberto. Usado em superligas.", group: 7, period: 6 },
-  { number: 76, symbol: "Os", name: "Osmium", namePt: "Ósmio", mass: 190.23, category: "transition-metal", phase: "Solid", density: 22.59, melt: 3306, boil: 5285, electronegativity: 2.2, electronConfig: "[Xe] 4f¹⁴ 5d⁶ 6s²", oxidationStates: "+3, +4, +8", discoveredBy: "Smithson Tennant", yearDiscovered: 1803, appearance: "Metal azul-prateado", summary: "O ósmio é o elemento mais denso (22,59 g/cm³). OsO₄ é muito tóxico.", group: 8, period: 6 },
-  { number: 77, symbol: "Ir", name: "Iridium", namePt: "Irídio", mass: 192.22, category: "transition-metal", phase: "Solid", density: 22.56, melt: 2719, boil: 4701, electronegativity: 2.20, electronConfig: "[Xe] 4f¹⁴ 5d⁷ 6s²", oxidationStates: "+3, +4", discoveredBy: "Smithson Tennant", yearDiscovered: 1803, appearance: "Metal branco-prateado", summary: "O irídio é o segundo elemento mais denso. Muito resistente à corrosão.", group: 9, period: 6 },
-  { number: 78, symbol: "Pt", name: "Platinum", namePt: "Platina", mass: 195.08, category: "transition-metal", phase: "Solid", density: 21.45, melt: 2041.4, boil: 4098, electronegativity: 2.28, electronConfig: "[Xe] 4f¹⁴ 5d⁹ 6s¹", oxidationStates: "+2, +4", discoveredBy: "Antonio de Ulloa", yearDiscovered: 1735, appearance: "Metal branco-prateado", summary: "A platina é um metal precioso. Usada em joias, catalisadores e laboratórios.", group: 10, period: 6 },
-  { number: 79, symbol: "Au", name: "Gold", namePt: "Ouro", mass: 196.97, category: "transition-metal", phase: "Solid", density: 19.282, melt: 1337.33, boil: 3129, electronegativity: 2.54, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s¹", oxidationStates: "+1, +3", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal amarelo brilhante", summary: "O ouro é altamente valorizado. Excelente condutor, não oxida. Símbolo de riqueza.", group: 11, period: 6 },
-  { number: 80, symbol: "Hg", name: "Mercury", namePt: "Mercúrio", mass: 200.59, category: "transition-metal", phase: "Liquid", density: 13.5336, melt: 234.32, boil: 629.88, electronegativity: 2.00, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s²", oxidationStates: "+1, +2", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal líquido prateado", summary: "O mercúrio é líquido à temperatura ambiente. Tóxico. Usado em termômetros antigos.", group: 12, period: 6 },
-  { number: 81, symbol: "Tl", name: "Thallium", namePt: "Tálio", mass: 204.38, category: "post-transition", phase: "Solid", density: 11.85, melt: 577, boil: 1746, electronegativity: 1.62, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹", oxidationStates: "+1, +3", discoveredBy: "William Crookes", yearDiscovered: 1861, appearance: "Metal cinza-prateado", summary: "O tálio é muito tóxico. Usado em semicondutores e células fotoelétricas.", group: 13, period: 6 },
-  { number: 82, symbol: "Pb", name: "Lead", namePt: "Chumbo", mass: 207.2, category: "post-transition", phase: "Solid", density: 11.342, melt: 600.61, boil: 2022, electronegativity: 1.87, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²", oxidationStates: "+2, +4", discoveredBy: "Conhecido desde a antiguidade", yearDiscovered: "Antiguidade", appearance: "Metal cinza-azulado", summary: "O chumbo é denso e macio. Tóxico. Usado em baterias e blindagem contra radiação.", group: 14, period: 6 },
-  { number: 83, symbol: "Bi", name: "Bismuth", namePt: "Bismuto", mass: 208.98, category: "post-transition", phase: "Solid", density: 9.807, melt: 544.55, boil: 1837, electronegativity: 2.02, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³", oxidationStates: "+3, +5", discoveredBy: "Claude François Geoffroy", yearDiscovered: 1753, appearance: "Metal branco-rosado", summary: "O bismuto forma cristais iridescentes. Usado em medicamentos e ligas de baixo ponto de fusão.", group: 15, period: 6 },
-  { number: 84, symbol: "Po", name: "Polonium", namePt: "Polônio", mass: 209, category: "metalloid", phase: "Solid", density: 9.32, melt: 527, boil: 1235, electronegativity: 2.0, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴", oxidationStates: "+2, +4", discoveredBy: "Marie Curie", yearDiscovered: 1898, appearance: "Metal prateado", summary: "O polônio é altamente radioativo e raro. Descoberto por Marie Curie.", group: 16, period: 6 },
-  { number: 85, symbol: "At", name: "Astatine", namePt: "Astato", mass: 210, category: "halogen", phase: "Solid", density: 7, melt: 575, boil: 610, electronegativity: 2.2, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵", oxidationStates: "-1, +1, +3, +5, +7", discoveredBy: "Dale R. Corson", yearDiscovered: 1940, appearance: "Provavelmente metálico", summary: "O astato é o halogênio mais raro. Altamente radioativo.", group: 17, period: 6 },
-  { number: 86, symbol: "Rn", name: "Radon", namePt: "Radônio", mass: 222, category: "noble-gas", phase: "Gas", density: 0.00973, melt: 202, boil: 211.45, electronegativity: 2.2, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶", oxidationStates: "0, +2", discoveredBy: "Friedrich Ernst Dorn", yearDiscovered: 1900, appearance: "Gás incolor", summary: "O radônio é radioativo e denso. Gás nobre que emana do solo em algumas regiões.", group: 18, period: 6 },
+  { number: 55, symbol: "Cs", name: "Cesium", namePt: "césio", mass: 133, category: "alkali-metal", phase: "Solid", electronegativity: 0.79, electronConfig: "[Xe] 6s¹", oxidationStates: "+1", summary: "O césio é usado em relógios atômicos.", group: 1, period: 6 },
+  { number: 56, symbol: "Ba", name: "Barium", namePt: "bário", mass: 137, category: "alkaline-earth", phase: "Solid", electronegativity: 0.89, electronConfig: "[Xe] 6s²", oxidationStates: "+2", summary: "O bário produz chama verde.", group: 2, period: 6 },
+  // Lanthanides 57-71
+  { number: 57, symbol: "La", name: "Lanthanum", namePt: "lantânio", mass: 138.91, category: "lanthanide", phase: "Solid", electronegativity: 1.1, electronConfig: "[Xe] 5d¹ 6s²", oxidationStates: "+3", summary: "O lantânio dá nome à série dos lantanídeos.", group: 3, period: 6 },
+  { number: 58, symbol: "Ce", name: "Cerium", namePt: "cério", mass: 140.12, category: "lanthanide", phase: "Solid", electronegativity: 1.12, electronConfig: "[Xe] 4f¹ 5d¹ 6s²", oxidationStates: "+3, +4", summary: "O cério é o lantanídeo mais abundante.", group: 3, period: 6 },
+  { number: 59, symbol: "Pr", name: "Praseodymium", namePt: "praseodímio", mass: 140.91, category: "lanthanide", phase: "Solid", electronegativity: 1.13, electronConfig: "[Xe] 4f³ 6s²", oxidationStates: "+3", summary: "O praseodímio é usado em imãs.", group: 3, period: 6 },
+  { number: 60, symbol: "Nd", name: "Neodymium", namePt: "neodímio", mass: 144.24, category: "lanthanide", phase: "Solid", electronegativity: 1.14, electronConfig: "[Xe] 4f⁴ 6s²", oxidationStates: "+3", summary: "O neodímio é usado em imãs fortes.", group: 3, period: 6 },
+  { number: 61, symbol: "Pm", name: "Promethium", namePt: "promécio", mass: "[145]", category: "lanthanide", phase: "Solid", electronConfig: "[Xe] 4f⁵ 6s²", oxidationStates: "+3", summary: "O promécio é radioativo.", group: 3, period: 6 },
+  { number: 62, symbol: "Sm", name: "Samarium", namePt: "samário", mass: "150.36(2)", category: "lanthanide", phase: "Solid", electronegativity: 1.17, electronConfig: "[Xe] 4f⁶ 6s²", oxidationStates: "+2, +3", summary: "O samário é usado em imãs.", group: 3, period: 6 },
+  { number: 63, symbol: "Eu", name: "Europium", namePt: "európio", mass: "151.96", category: "lanthanide", phase: "Solid", electronegativity: 1.2, electronConfig: "[Xe] 4f⁷ 6s²", oxidationStates: "+2, +3", summary: "O európio é usado em LEDs.", group: 3, period: 6 },
+  { number: 64, symbol: "Gd", name: "Gadolinium", namePt: "gadolínio", mass: "157.25(3)", category: "lanthanide", phase: "Solid", electronegativity: 1.2, electronConfig: "[Xe] 4f⁷ 5d¹ 6s²", oxidationStates: "+3", summary: "O gadolínio é usado em ressonância magnética.", group: 3, period: 6 },
+  { number: 65, symbol: "Tb", name: "Terbium", namePt: "térbio", mass: 158.93, category: "lanthanide", phase: "Solid", electronConfig: "[Xe] 4f⁹ 6s²", oxidationStates: "+3", summary: "O térbio é usado em lasers.", group: 3, period: 6 },
+  { number: 66, symbol: "Dy", name: "Dysprosium", namePt: "disprósio", mass: 162.50, category: "lanthanide", phase: "Solid", electronegativity: 1.22, electronConfig: "[Xe] 4f¹⁰ 6s²", oxidationStates: "+3", summary: "O disprósio é usado em imãs de alta performance.", group: 3, period: 6 },
+  { number: 67, symbol: "Ho", name: "Holmium", namePt: "hólmio", mass: 164.93, category: "lanthanide", phase: "Solid", electronegativity: 1.23, electronConfig: "[Xe] 4f¹¹ 6s²", oxidationStates: "+3", summary: "O hólmio tem o maior momento magnético.", group: 3, period: 6 },
+  { number: 68, symbol: "Er", name: "Erbium", namePt: "érbio", mass: 167.26, category: "lanthanide", phase: "Solid", electronegativity: 1.24, electronConfig: "[Xe] 4f¹² 6s²", oxidationStates: "+3", summary: "O érbio é usado em fibra óptica.", group: 3, period: 6 },
+  { number: 69, symbol: "Tm", name: "Thulium", namePt: "túlio", mass: 168.93, category: "lanthanide", phase: "Solid", electronegativity: 1.25, electronConfig: "[Xe] 4f¹³ 6s²", oxidationStates: "+3", summary: "O túlio é o lantanídeo mais raro.", group: 3, period: 6 },
+  { number: 70, symbol: "Yb", name: "Ytterbium", namePt: "itérbio", mass: 173.05, category: "lanthanide", phase: "Solid", electronConfig: "[Xe] 4f¹⁴ 6s²", oxidationStates: "+2, +3", summary: "O itérbio é usado em metalurgia.", group: 3, period: 6 },
+  { number: 71, symbol: "Lu", name: "Lutetium", namePt: "lutécio", mass: 174.97, category: "lanthanide", phase: "Solid", electronegativity: 1.27, electronConfig: "[Xe] 4f¹⁴ 5d¹ 6s²", oxidationStates: "+3", summary: "O lutécio é o último lantanídeo.", group: 3, period: 6 },
+  // Continue period 6
+  { number: 72, symbol: "Hf", name: "Hafnium", namePt: "háfnio", mass: 178.5, category: "transition-metal", phase: "Solid", electronegativity: 1.3, electronConfig: "[Xe] 4f¹⁴ 5d² 6s²", oxidationStates: "+4", summary: "O háfnio é usado em reatores nucleares.", group: 4, period: 6 },
+  { number: 73, symbol: "Ta", name: "Tantalum", namePt: "tântalo", mass: 181, category: "transition-metal", phase: "Solid", electronegativity: 1.5, electronConfig: "[Xe] 4f¹⁴ 5d³ 6s²", oxidationStates: "+5", summary: "O tântalo é usado em capacitores eletrônicos.", group: 5, period: 6 },
+  { number: 74, symbol: "W", name: "Tungsten", namePt: "tungstênio", mass: 184, category: "transition-metal", phase: "Solid", electronegativity: 2.36, electronConfig: "[Xe] 4f¹⁴ 5d⁴ 6s²", oxidationStates: "+6", summary: "O tungstênio tem o maior ponto de fusão.", group: 6, period: 6 },
+  { number: 75, symbol: "Re", name: "Rhenium", namePt: "rênio", mass: 186, category: "transition-metal", phase: "Solid", electronegativity: 1.9, electronConfig: "[Xe] 4f¹⁴ 5d⁵ 6s²", oxidationStates: "+7", summary: "O rênio é usado em turbinas de avião.", group: 7, period: 6 },
+  { number: 76, symbol: "Os", name: "Osmium", namePt: "ósmio", mass: 190, category: "transition-metal", phase: "Solid", electronegativity: 2.2, electronConfig: "[Xe] 4f¹⁴ 5d⁶ 6s²", oxidationStates: "+4, +8", summary: "O ósmio é o elemento mais denso.", group: 8, period: 6 },
+  { number: 77, symbol: "Ir", name: "Iridium", namePt: "irídio", mass: 192, category: "transition-metal", phase: "Solid", electronegativity: 2.2, electronConfig: "[Xe] 4f¹⁴ 5d⁷ 6s²", oxidationStates: "+3, +4", summary: "O irídio é usado em velas de ignição.", group: 9, period: 6 },
+  { number: 78, symbol: "Pt", name: "Platinum", namePt: "platina", mass: 195, category: "transition-metal", phase: "Solid", electronegativity: 2.28, electronConfig: "[Xe] 4f¹⁴ 5d⁹ 6s¹", oxidationStates: "+2, +4", summary: "A platina é usada em joias e catalisadores.", group: 10, period: 6 },
+  { number: 79, symbol: "Au", name: "Gold", namePt: "ouro", mass: 197, category: "transition-metal", phase: "Solid", electronegativity: 2.54, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s¹", oxidationStates: "+1, +3", summary: "O ouro é usado em joias e eletrônica.", group: 11, period: 6 },
+  { number: 80, symbol: "Hg", name: "Mercury", namePt: "mercúrio", mass: 200.5, category: "transition-metal", phase: "Liquid", electronegativity: 2.0, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s²", oxidationStates: "+1, +2", summary: "O mercúrio é líquido à temperatura ambiente.", group: 12, period: 6 },
+  { number: 81, symbol: "Tl", name: "Thallium", namePt: "tálio", mass: 204, category: "post-transition", phase: "Solid", electronegativity: 1.62, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p¹", oxidationStates: "+1, +3", summary: "O tálio é extremamente tóxico.", group: 13, period: 6 },
+  { number: 82, symbol: "Pb", name: "Lead", namePt: "chumbo", mass: 207, category: "post-transition", phase: "Solid", electronegativity: 2.33, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²", oxidationStates: "+2, +4", summary: "O chumbo é usado em baterias.", group: 14, period: 6 },
+  { number: 83, symbol: "Bi", name: "Bismuth", namePt: "bismuto", mass: 209, category: "post-transition", phase: "Solid", electronegativity: 2.02, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p³", oxidationStates: "+3, +5", summary: "O bismuto forma cristais coloridos.", group: 15, period: 6 },
+  { number: 84, symbol: "Po", name: "Polonium", namePt: "polônio", mass: "[209]", category: "metalloid", phase: "Solid", electronegativity: 2.0, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁴", oxidationStates: "+2, +4", summary: "O polônio é altamente radioativo.", group: 16, period: 6 },
+  { number: 85, symbol: "At", name: "Astatine", namePt: "astato", mass: "[210]", category: "halogen", phase: "Solid", electronegativity: 2.2, electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁵", oxidationStates: "-1, +1", summary: "O astato é o halogênio mais raro.", group: 17, period: 6 },
+  { number: 86, symbol: "Rn", name: "Radon", namePt: "radônio", mass: "[222]", category: "noble-gas", phase: "Gas", electronConfig: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p⁶", oxidationStates: "0", summary: "O radônio é um gás radioativo.", group: 18, period: 6 },
   
   // Period 7
-  { number: 87, symbol: "Fr", name: "Francium", namePt: "Frâncio", mass: 223, category: "alkali-metal", phase: "Solid", density: 1.87, melt: 300, boil: 950, electronegativity: 0.7, electronConfig: "[Rn] 7s¹", oxidationStates: "+1", discoveredBy: "Marguerite Perey", yearDiscovered: 1939, appearance: "Desconhecido (radioativo)", summary: "O frâncio é o elemento mais raro na natureza. Altamente radioativo.", group: 1, period: 7 },
-  { number: 88, symbol: "Ra", name: "Radium", namePt: "Rádio", mass: 226, category: "alkaline-earth", phase: "Solid", density: 5.5, melt: 973, boil: 2010, electronegativity: 0.9, electronConfig: "[Rn] 7s²", oxidationStates: "+2", discoveredBy: "Marie Curie", yearDiscovered: 1898, appearance: "Metal branco brilhante", summary: "O rádio foi descoberto por Marie e Pierre Curie. Brilha no escuro.", group: 2, period: 7 },
-  
-  // Actinides (89-103)
-  { number: 89, symbol: "Ac", name: "Actinium", namePt: "Actínio", mass: 227, category: "actinide", phase: "Solid", density: 10.07, melt: 1323, boil: 3471, electronegativity: 1.1, electronConfig: "[Rn] 6d¹ 7s²", oxidationStates: "+3", discoveredBy: "Friedrich Oskar Giesel", yearDiscovered: 1899, appearance: "Metal prateado", summary: "O actínio dá nome à série dos actinídeos. Altamente radioativo.", group: 3, period: 7 },
-  { number: 90, symbol: "Th", name: "Thorium", namePt: "Tório", mass: 232.04, category: "actinide", phase: "Solid", density: 11.72, melt: 2023, boil: 5061, electronegativity: 1.3, electronConfig: "[Rn] 6d² 7s²", oxidationStates: "+4", discoveredBy: "Jöns Jacob Berzelius", yearDiscovered: 1829, appearance: "Metal prateado", summary: "O tório pode ser usado como combustível nuclear. Mais abundante que urânio.", group: 3, period: 7 },
-  { number: 91, symbol: "Pa", name: "Protactinium", namePt: "Protactínio", mass: 231.04, category: "actinide", phase: "Solid", density: 15.37, melt: 1841, boil: 4300, electronegativity: 1.5, electronConfig: "[Rn] 5f² 6d¹ 7s²", oxidationStates: "+4, +5", discoveredBy: "Kasimir Fajans", yearDiscovered: 1913, appearance: "Metal prateado", summary: "O protactínio é raro e radioativo. Precursor do actínio.", group: 3, period: 7 },
-  { number: 92, symbol: "U", name: "Uranium", namePt: "Urânio", mass: 238.03, category: "actinide", phase: "Solid", density: 18.95, melt: 1405.3, boil: 4404, electronegativity: 1.38, electronConfig: "[Rn] 5f³ 6d¹ 7s²", oxidationStates: "+3, +4, +5, +6", discoveredBy: "Martin Heinrich Klaproth", yearDiscovered: 1789, appearance: "Metal cinza-prateado", summary: "O urânio é o principal combustível nuclear. U-235 é físsil.", group: 3, period: 7 },
-  { number: 93, symbol: "Np", name: "Neptunium", namePt: "Netúnio", mass: 237, category: "actinide", phase: "Solid", density: 20.45, melt: 917, boil: 4175, electronegativity: 1.36, electronConfig: "[Rn] 5f⁴ 6d¹ 7s²", oxidationStates: "+3, +4, +5, +6, +7", discoveredBy: "Edwin McMillan", yearDiscovered: 1940, appearance: "Metal prateado", summary: "O netúnio foi o primeiro elemento transurânico sintetizado.", group: 3, period: 7 },
-  { number: 94, symbol: "Pu", name: "Plutonium", namePt: "Plutônio", mass: 244, category: "actinide", phase: "Solid", density: 19.84, melt: 912.5, boil: 3505, electronegativity: 1.28, electronConfig: "[Rn] 5f⁶ 7s²", oxidationStates: "+3, +4, +5, +6, +7", discoveredBy: "Glenn T. Seaborg", yearDiscovered: 1940, appearance: "Metal prateado", summary: "O plutônio é usado em armas nucleares e sondas espaciais.", group: 3, period: 7 },
-  { number: 95, symbol: "Am", name: "Americium", namePt: "Amerício", mass: 243, category: "actinide", phase: "Solid", density: 13.69, melt: 1449, boil: 2880, electronegativity: 1.3, electronConfig: "[Rn] 5f⁷ 7s²", oxidationStates: "+3, +4, +5, +6", discoveredBy: "Glenn T. Seaborg", yearDiscovered: 1944, appearance: "Metal prateado", summary: "O amerício é usado em detectores de fumaça domésticos.", group: 3, period: 7 },
-  { number: 96, symbol: "Cm", name: "Curium", namePt: "Cúrio", mass: 247, category: "actinide", phase: "Solid", density: 13.51, melt: 1613, boil: 3383, electronegativity: 1.3, electronConfig: "[Rn] 5f⁷ 6d¹ 7s²", oxidationStates: "+3, +4", discoveredBy: "Glenn T. Seaborg", yearDiscovered: 1944, appearance: "Metal prateado", summary: "O cúrio foi nomeado em homenagem a Marie e Pierre Curie.", group: 3, period: 7 },
-  { number: 97, symbol: "Bk", name: "Berkelium", namePt: "Berquélio", mass: 247, category: "actinide", phase: "Solid", density: 14.79, melt: 1259, boil: 2900, electronegativity: 1.3, electronConfig: "[Rn] 5f⁹ 7s²", oxidationStates: "+3, +4", discoveredBy: "Lawrence Berkeley National Laboratory", yearDiscovered: 1949, appearance: "Metal prateado", summary: "O berquélio foi nomeado em homenagem a Berkeley, Califórnia.", group: 3, period: 7 },
-  { number: 98, symbol: "Cf", name: "Californium", namePt: "Califórnio", mass: 251, category: "actinide", phase: "Solid", density: 15.1, melt: 1173, boil: 1743, electronegativity: 1.3, electronConfig: "[Rn] 5f¹⁰ 7s²", oxidationStates: "+2, +3, +4", discoveredBy: "Lawrence Berkeley National Laboratory", yearDiscovered: 1950, appearance: "Metal prateado", summary: "O califórnio emite nêutrons. Usado em análise de materiais.", group: 3, period: 7 },
-  { number: 99, symbol: "Es", name: "Einsteinium", namePt: "Einstênio", mass: 252, category: "actinide", phase: "Solid", density: 8.84, melt: 1133, boil: 1269, electronegativity: 1.3, electronConfig: "[Rn] 5f¹¹ 7s²", oxidationStates: "+2, +3", discoveredBy: "Lawrence Berkeley National Laboratory", yearDiscovered: 1952, appearance: "Desconhecido", summary: "O einstênio foi descoberto nos destroços da primeira bomba H.", group: 3, period: 7 },
-  { number: 100, symbol: "Fm", name: "Fermium", namePt: "Férmio", mass: 257, category: "actinide", phase: "Solid", density: 9.7, melt: 1800, boil: undefined, electronegativity: 1.3, electronConfig: "[Rn] 5f¹² 7s²", oxidationStates: "+2, +3", discoveredBy: "Lawrence Berkeley National Laboratory", yearDiscovered: 1952, appearance: "Desconhecido", summary: "O férmio foi nomeado em homenagem a Enrico Fermi.", group: 3, period: 7 },
-  { number: 101, symbol: "Md", name: "Mendelevium", namePt: "Mendelévio", mass: 258, category: "actinide", phase: "Solid", density: 10.3, melt: 1100, boil: undefined, electronegativity: 1.3, electronConfig: "[Rn] 5f¹³ 7s²", oxidationStates: "+2, +3", discoveredBy: "Lawrence Berkeley National Laboratory", yearDiscovered: 1955, appearance: "Desconhecido", summary: "O mendelévio foi nomeado em homenagem a Dmitri Mendeleev.", group: 3, period: 7 },
-  { number: 102, symbol: "No", name: "Nobelium", namePt: "Nobélio", mass: 259, category: "actinide", phase: "Solid", density: 9.9, melt: 1100, boil: undefined, electronegativity: 1.3, electronConfig: "[Rn] 5f¹⁴ 7s²", oxidationStates: "+2, +3", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 1958, appearance: "Desconhecido", summary: "O nobélio foi nomeado em homenagem a Alfred Nobel.", group: 3, period: 7 },
-  { number: 103, symbol: "Lr", name: "Lawrencium", namePt: "Laurêncio", mass: 262, category: "actinide", phase: "Solid", density: 15.6, melt: 1900, boil: undefined, electronegativity: 1.3, electronConfig: "[Rn] 5f¹⁴ 7s² 7p¹", oxidationStates: "+3", discoveredBy: "Lawrence Berkeley National Laboratory", yearDiscovered: 1961, appearance: "Desconhecido", summary: "O laurêncio foi nomeado em homenagem a Ernest Lawrence.", group: 3, period: 7 },
-  
-  // Continue Period 7 (transactinides)
-  { number: 104, symbol: "Rf", name: "Rutherfordium", namePt: "Rutherfórdio", mass: 267, category: "transition-metal", phase: "Solid", density: 23.2, melt: 2400, boil: 5800, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d² 7s²", oxidationStates: "+4", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 1964, appearance: "Desconhecido", summary: "O rutherfórdio foi nomeado em homenagem a Ernest Rutherford.", group: 4, period: 7 },
-  { number: 105, symbol: "Db", name: "Dubnium", namePt: "Dúbnio", mass: 268, category: "transition-metal", phase: "Solid", density: 29.3, melt: undefined, boil: undefined, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d³ 7s²", oxidationStates: "+5", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 1967, appearance: "Desconhecido", summary: "O dúbnio foi nomeado em homenagem a Dubna, Rússia.", group: 5, period: 7 },
-  { number: 106, symbol: "Sg", name: "Seaborgium", namePt: "Seabórgio", mass: 269, category: "transition-metal", phase: "Solid", density: 35, melt: undefined, boil: undefined, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d⁴ 7s²", oxidationStates: "+6", discoveredBy: "Lawrence Berkeley National Laboratory", yearDiscovered: 1974, appearance: "Desconhecido", summary: "O seabórgio foi nomeado em homenagem a Glenn T. Seaborg.", group: 6, period: 7 },
-  { number: 107, symbol: "Bh", name: "Bohrium", namePt: "Bóhrio", mass: 270, category: "transition-metal", phase: "Solid", density: 37.1, melt: undefined, boil: undefined, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d⁵ 7s²", oxidationStates: "+7", discoveredBy: "Gesellschaft für Schwerionenforschung", yearDiscovered: 1981, appearance: "Desconhecido", summary: "O bóhrio foi nomeado em homenagem a Niels Bohr.", group: 7, period: 7 },
-  { number: 108, symbol: "Hs", name: "Hassium", namePt: "Hássio", mass: 277, category: "transition-metal", phase: "Solid", density: 40.7, melt: undefined, boil: undefined, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d⁶ 7s²", oxidationStates: "+8", discoveredBy: "Gesellschaft für Schwerionenforschung", yearDiscovered: 1984, appearance: "Desconhecido", summary: "O hássio foi nomeado em homenagem a Hesse, Alemanha.", group: 8, period: 7 },
-  { number: 109, symbol: "Mt", name: "Meitnerium", namePt: "Meitnério", mass: 278, category: "transition-metal", phase: "Solid", density: 37.4, melt: undefined, boil: undefined, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d⁷ 7s²", oxidationStates: "+9", discoveredBy: "Gesellschaft für Schwerionenforschung", yearDiscovered: 1982, appearance: "Desconhecido", summary: "O meitnério foi nomeado em homenagem a Lise Meitner.", group: 9, period: 7 },
-  { number: 110, symbol: "Ds", name: "Darmstadtium", namePt: "Darmstádio", mass: 281, category: "transition-metal", phase: "Solid", density: 34.8, melt: undefined, boil: undefined, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d⁸ 7s²", oxidationStates: "+8", discoveredBy: "Gesellschaft für Schwerionenforschung", yearDiscovered: 1994, appearance: "Desconhecido", summary: "O darmstádio foi nomeado em homenagem a Darmstadt, Alemanha.", group: 10, period: 7 },
-  { number: 111, symbol: "Rg", name: "Roentgenium", namePt: "Roentgênio", mass: 282, category: "transition-metal", phase: "Solid", density: 28.7, melt: undefined, boil: undefined, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d⁹ 7s²", oxidationStates: "+3", discoveredBy: "Gesellschaft für Schwerionenforschung", yearDiscovered: 1994, appearance: "Desconhecido", summary: "O roentgênio foi nomeado em homenagem a Wilhelm Röntgen.", group: 11, period: 7 },
-  { number: 112, symbol: "Cn", name: "Copernicium", namePt: "Copernício", mass: 285, category: "transition-metal", phase: "Liquid", density: 23.7, melt: undefined, boil: 357, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s²", oxidationStates: "+2", discoveredBy: "Gesellschaft für Schwerionenforschung", yearDiscovered: 1996, appearance: "Desconhecido", summary: "O copernício foi nomeado em homenagem a Nicolau Copérnico.", group: 12, period: 7 },
-  { number: 113, symbol: "Nh", name: "Nihonium", namePt: "Nihônio", mass: 286, category: "post-transition", phase: "Solid", density: 16, melt: 700, boil: 1400, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹", oxidationStates: "+1, +3", discoveredBy: "RIKEN", yearDiscovered: 2004, appearance: "Desconhecido", summary: "O nihônio foi nomeado em homenagem ao Japão (Nihon).", group: 13, period: 7 },
-  { number: 114, symbol: "Fl", name: "Flerovium", namePt: "Fleróvio", mass: 289, category: "post-transition", phase: "Solid", density: 14, melt: undefined, boil: 210, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²", oxidationStates: "+2, +4", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 1998, appearance: "Desconhecido", summary: "O fleróvio foi nomeado em homenagem a Georgy Flyorov.", group: 14, period: 7 },
-  { number: 115, symbol: "Mc", name: "Moscovium", namePt: "Moscóvio", mass: 290, category: "post-transition", phase: "Solid", density: 13.5, melt: 700, boil: 1400, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³", oxidationStates: "+1, +3", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 2003, appearance: "Desconhecido", summary: "O moscóvio foi nomeado em homenagem a Moscou.", group: 15, period: 7 },
-  { number: 116, symbol: "Lv", name: "Livermorium", namePt: "Livermório", mass: 293, category: "post-transition", phase: "Solid", density: 12.9, melt: 709, boil: 1085, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴", oxidationStates: "+2, +4", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 2000, appearance: "Desconhecido", summary: "O livermório foi nomeado em homenagem ao Laboratório Lawrence Livermore.", group: 16, period: 7 },
-  { number: 117, symbol: "Ts", name: "Tennessine", namePt: "Tennesso", mass: 294, category: "halogen", phase: "Solid", density: 7.2, melt: 723, boil: 883, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵", oxidationStates: "-1, +1, +3, +5", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 2010, appearance: "Desconhecido", summary: "O tennesso foi nomeado em homenagem ao Tennessee, EUA.", group: 17, period: 7 },
-  { number: 118, symbol: "Og", name: "Oganesson", namePt: "Oganessônio", mass: 294, category: "noble-gas", phase: "Solid", density: 4.9, melt: undefined, boil: 350, electronegativity: undefined, electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶", oxidationStates: "0, +2, +4", discoveredBy: "Joint Institute for Nuclear Research", yearDiscovered: 2002, appearance: "Desconhecido", summary: "O oganessônio foi nomeado em homenagem a Yuri Oganessian. É o elemento mais pesado conhecido.", group: 18, period: 7 },
+  { number: 87, symbol: "Fr", name: "Francium", namePt: "frâncio", mass: "[223]", category: "alkali-metal", phase: "Solid", electronegativity: 0.7, electronConfig: "[Rn] 7s¹", oxidationStates: "+1", summary: "O frâncio é o metal alcalino mais raro.", group: 1, period: 7 },
+  { number: 88, symbol: "Ra", name: "Radium", namePt: "rádio", mass: "[226]", category: "alkaline-earth", phase: "Solid", electronegativity: 0.9, electronConfig: "[Rn] 7s²", oxidationStates: "+2", summary: "O rádio foi descoberto por Marie Curie.", group: 2, period: 7 },
+  // Actinides 89-103
+  { number: 89, symbol: "Ac", name: "Actinium", namePt: "actínio", mass: "[227]", category: "actinide", phase: "Solid", electronegativity: 1.1, electronConfig: "[Rn] 6d¹ 7s²", oxidationStates: "+3", summary: "O actínio dá nome à série dos actinídeos.", group: 3, period: 7 },
+  { number: 90, symbol: "Th", name: "Thorium", namePt: "tório", mass: 232.04, category: "actinide", phase: "Solid", electronegativity: 1.3, electronConfig: "[Rn] 6d² 7s²", oxidationStates: "+4", summary: "O tório pode ser usado como combustível nuclear.", group: 3, period: 7 },
+  { number: 91, symbol: "Pa", name: "Protactinium", namePt: "protactínio", mass: 231.04, category: "actinide", phase: "Solid", electronegativity: 1.5, electronConfig: "[Rn] 5f² 6d¹ 7s²", oxidationStates: "+5", summary: "O protactínio é muito raro.", group: 3, period: 7 },
+  { number: 92, symbol: "U", name: "Uranium", namePt: "urânio", mass: 238.03, category: "actinide", phase: "Solid", electronegativity: 1.38, electronConfig: "[Rn] 5f³ 6d¹ 7s²", oxidationStates: "+4, +6", summary: "O urânio é usado em reatores nucleares.", group: 3, period: 7 },
+  { number: 93, symbol: "Np", name: "Neptunium", namePt: "netúnio", mass: "[237]", category: "actinide", phase: "Solid", electronegativity: 1.36, electronConfig: "[Rn] 5f⁴ 6d¹ 7s²", oxidationStates: "+5", summary: "O netúnio é um subproduto de reatores.", group: 3, period: 7 },
+  { number: 94, symbol: "Pu", name: "Plutonium", namePt: "plutônio", mass: "[244]", category: "actinide", phase: "Solid", electronegativity: 1.28, electronConfig: "[Rn] 5f⁶ 7s²", oxidationStates: "+4, +6", summary: "O plutônio é usado em armas nucleares.", group: 3, period: 7 },
+  { number: 95, symbol: "Am", name: "Americium", namePt: "amerício", mass: "[243]", category: "actinide", phase: "Solid", electronegativity: 1.3, electronConfig: "[Rn] 5f⁷ 7s²", oxidationStates: "+3", summary: "O amerício é usado em detectores de fumaça.", group: 3, period: 7 },
+  { number: 96, symbol: "Cm", name: "Curium", namePt: "cúrio", mass: "[247]", category: "actinide", phase: "Solid", electronegativity: 1.3, electronConfig: "[Rn] 5f⁷ 6d¹ 7s²", oxidationStates: "+3", summary: "O cúrio foi nomeado em homenagem a Marie Curie.", group: 3, period: 7 },
+  { number: 97, symbol: "Bk", name: "Berkelium", namePt: "berquélio", mass: "[247]", category: "actinide", phase: "Solid", electronegativity: 1.3, electronConfig: "[Rn] 5f⁹ 7s²", oxidationStates: "+3, +4", summary: "O berquélio foi produzido em Berkeley.", group: 3, period: 7 },
+  { number: 98, symbol: "Cf", name: "Californium", namePt: "califórnio", mass: "[251]", category: "actinide", phase: "Solid", electronegativity: 1.3, electronConfig: "[Rn] 5f¹⁰ 7s²", oxidationStates: "+3", summary: "O califórnio é usado em análise de minérios.", group: 3, period: 7 },
+  { number: 99, symbol: "Es", name: "Einsteinium", namePt: "einstênio", mass: "[252]", category: "actinide", phase: "Solid", electronConfig: "[Rn] 5f¹¹ 7s²", oxidationStates: "+3", summary: "O einstênio foi descoberto em testes nucleares.", group: 3, period: 7 },
+  { number: 100, symbol: "Fm", name: "Fermium", namePt: "férmio", mass: "[257]", category: "actinide", phase: "Solid", electronConfig: "[Rn] 5f¹² 7s²", oxidationStates: "+3", summary: "O férmio foi nomeado em homenagem a Enrico Fermi.", group: 3, period: 7 },
+  { number: 101, symbol: "Md", name: "Mendelevium", namePt: "mendelévio", mass: "[258]", category: "actinide", phase: "Solid", electronConfig: "[Rn] 5f¹³ 7s²", oxidationStates: "+3", summary: "O mendelévio foi nomeado em homenagem a Mendeleev.", group: 3, period: 7 },
+  { number: 102, symbol: "No", name: "Nobelium", namePt: "nobélio", mass: "[259]", category: "actinide", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 7s²", oxidationStates: "+2, +3", summary: "O nobélio foi nomeado em homenagem a Alfred Nobel.", group: 3, period: 7 },
+  { number: 103, symbol: "Lr", name: "Lawrencium", namePt: "laurêncio", mass: "[262]", category: "actinide", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 7s² 7p¹", oxidationStates: "+3", summary: "O laurêncio é o último actinídeo.", group: 3, period: 7 },
+  // Continue period 7
+  { number: 104, symbol: "Rf", name: "Rutherfordium", namePt: "rutherfórdio", mass: "[261]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d² 7s²", oxidationStates: "+4", summary: "O rutherfórdio é um elemento sintético.", group: 4, period: 7 },
+  { number: 105, symbol: "Db", name: "Dubnium", namePt: "dúbnio", mass: "[262]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d³ 7s²", oxidationStates: "+5", summary: "O dúbnio foi nomeado em homenagem a Dubna.", group: 5, period: 7 },
+  { number: 106, symbol: "Sg", name: "Seaborgium", namePt: "seabórgio", mass: "[269]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d⁴ 7s²", oxidationStates: "+6", summary: "O seabórgio foi nomeado em homenagem a Glenn Seaborg.", group: 6, period: 7 },
+  { number: 107, symbol: "Bh", name: "Bohrium", namePt: "bóhrio", mass: "[270]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d⁵ 7s²", oxidationStates: "+7", summary: "O bóhrio foi nomeado em homenagem a Niels Bohr.", group: 7, period: 7 },
+  { number: 108, symbol: "Hs", name: "Hassium", namePt: "hássio", mass: "[269]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d⁶ 7s²", oxidationStates: "+8", summary: "O hássio foi nomeado em homenagem a Hesse.", group: 8, period: 7 },
+  { number: 109, symbol: "Mt", name: "Meitnerium", namePt: "meitnério", mass: "[278]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d⁷ 7s²", oxidationStates: "+9", summary: "O meitnério foi nomeado em homenagem a Lise Meitner.", group: 9, period: 7 },
+  { number: 110, symbol: "Ds", name: "Darmstadtium", namePt: "darmstádtio", mass: "[281]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d⁸ 7s²", oxidationStates: "+8", summary: "O darmstádtio foi criado em Darmstadt.", group: 10, period: 7 },
+  { number: 111, symbol: "Rg", name: "Roentgenium", namePt: "roentgênio", mass: "[281]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d⁹ 7s²", oxidationStates: "+3", summary: "O roentgênio foi nomeado em homenagem a Röntgen.", group: 11, period: 7 },
+  { number: 112, symbol: "Cn", name: "Copernicium", namePt: "copernício", mass: "[285]", category: "transition-metal", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s²", oxidationStates: "+2", summary: "O copernício foi nomeado em homenagem a Copérnico.", group: 12, period: 7 },
+  { number: 113, symbol: "Nh", name: "Nihonium", namePt: "nihônio", mass: "[286]", category: "post-transition", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p¹", oxidationStates: "+1", summary: "O nihônio foi descoberto no Japão.", group: 13, period: 7 },
+  { number: 114, symbol: "Fl", name: "Flerovium", namePt: "fleróvio", mass: "[289]", category: "post-transition", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p²", oxidationStates: "+2", summary: "O fleróvio é um elemento sintético.", group: 14, period: 7 },
+  { number: 115, symbol: "Mc", name: "Moscovium", namePt: "moscóvio", mass: "[288]", category: "post-transition", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p³", oxidationStates: "+1, +3", summary: "O moscóvio foi nomeado em homenagem a Moscou.", group: 15, period: 7 },
+  { number: 116, symbol: "Lv", name: "Livermorium", namePt: "livermório", mass: "[293]", category: "post-transition", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁴", oxidationStates: "+2, +4", summary: "O livermório foi nomeado em homenagem a Livermore.", group: 16, period: 7 },
+  { number: 117, symbol: "Ts", name: "Tennessine", namePt: "tenessino", mass: "[294]", category: "halogen", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁵", oxidationStates: "-1, +1", summary: "O tenessino foi descoberto no Tennessee.", group: 17, period: 7 },
+  { number: 118, symbol: "Og", name: "Oganesson", namePt: "oganessônio", mass: "[294]", category: "noble-gas", phase: "Solid", electronConfig: "[Rn] 5f¹⁴ 6d¹⁰ 7s² 7p⁶", oxidationStates: "0", summary: "O oganessônio é o elemento mais pesado conhecido.", group: 18, period: 7 },
 ];
 
-// Category colors
-const categoryColors: Record<string, { bg: string; border: string; text: string }> = {
-  "alkali-metal": { bg: "bg-red-500/30", border: "border-red-500", text: "text-red-400" },
-  "alkaline-earth": { bg: "bg-orange-500/30", border: "border-orange-500", text: "text-orange-400" },
-  "transition-metal": { bg: "bg-yellow-500/30", border: "border-yellow-500", text: "text-yellow-400" },
-  "post-transition": { bg: "bg-green-500/30", border: "border-green-500", text: "text-green-400" },
-  "metalloid": { bg: "bg-teal-500/30", border: "border-teal-500", text: "text-teal-400" },
-  "nonmetal": { bg: "bg-cyan-500/30", border: "border-cyan-500", text: "text-cyan-400" },
-  "halogen": { bg: "bg-blue-500/30", border: "border-blue-500", text: "text-blue-400" },
-  "noble-gas": { bg: "bg-purple-500/30", border: "border-purple-500", text: "text-purple-400" },
-  "lanthanide": { bg: "bg-pink-500/30", border: "border-pink-500", text: "text-pink-400" },
-  "actinide": { bg: "bg-rose-500/30", border: "border-rose-500", text: "text-rose-400" },
+// Color scheme based on your images - matching Moises Medeiros style
+const categoryColors: Record<string, { bg: string; text: string; border: string }> = {
+  "alkali-metal": { bg: "bg-teal-500/90", text: "text-white", border: "border-teal-600" },
+  "alkaline-earth": { bg: "bg-teal-400/90", text: "text-white", border: "border-teal-500" },
+  "transition-metal": { bg: "bg-sky-400/90", text: "text-white", border: "border-sky-500" },
+  "post-transition": { bg: "bg-teal-300/90", text: "text-slate-800", border: "border-teal-400" },
+  "metalloid": { bg: "bg-amber-300/90", text: "text-slate-800", border: "border-amber-400" },
+  "nonmetal": { bg: "bg-rose-300/90", text: "text-slate-800", border: "border-rose-400" },
+  "halogen": { bg: "bg-rose-400/90", text: "text-white", border: "border-rose-500" },
+  "noble-gas": { bg: "bg-violet-400/90", text: "text-white", border: "border-violet-500" },
+  "lanthanide": { bg: "bg-pink-400/90", text: "text-white", border: "border-pink-500" },
+  "actinide": { bg: "bg-rose-500/90", text: "text-white", border: "border-rose-600" },
 };
 
 const categoryNamesPt: Record<string, string> = {
-  "alkali-metal": "Metal Alcalino",
-  "alkaline-earth": "Metal Alcalino-Terroso",
-  "transition-metal": "Metal de Transição",
-  "post-transition": "Metal de Pós-Transição",
-  "metalloid": "Metaloide",
-  "nonmetal": "Não-Metal",
-  "halogen": "Halogênio",
-  "noble-gas": "Gás Nobre",
-  "lanthanide": "Lantanídeo",
-  "actinide": "Actinídeo",
+  "alkali-metal": "Metais Alcalinos",
+  "alkaline-earth": "Metais Alcalino-Terrosos",
+  "transition-metal": "Metais de Transição",
+  "post-transition": "Metais Representativos",
+  "metalloid": "Semi-metais",
+  "nonmetal": "Não-metais",
+  "halogen": "Halogênios",
+  "noble-gas": "Gases Nobres",
+  "lanthanide": "Lantanídeos",
+  "actinide": "Actinídeos",
 };
 
-const phaseIcons: Record<string, string> = {
-  "Solid": "�ite",
-  "Liquid": "💧",
-  "Gas": "💨",
+// Anions data from your second image
+const anionsData = {
+  halogenios: [
+    { formula: "F⁻", name: "Fluoreto" },
+    { formula: "Cl⁻", name: "Cloreto" },
+    { formula: "Br⁻", name: "Brometo" },
+    { formula: "I⁻", name: "Iodeto" },
+    { formula: "ClO⁻", name: "Hipoclorito" },
+    { formula: "ClO₂⁻", name: "Clorito" },
+    { formula: "ClO₃⁻", name: "Clorato" },
+    { formula: "ClO₄⁻", name: "Perclorato" },
+    { formula: "BrO⁻", name: "Hipobromito" },
+    { formula: "BrO₃⁻", name: "Bromato" },
+    { formula: "IO⁻", name: "Hipoiodito" },
+    { formula: "IO₃⁻", name: "Iodato" },
+    { formula: "IO₄⁻", name: "Periodato" },
+  ],
+  carbono: [
+    { formula: "CN⁻", name: "Cianeto" },
+    { formula: "CNO⁻", name: "Cianato" },
+    { formula: "CNS⁻", name: "Tiocianato" },
+    { formula: "C₂H₃O₂⁻", name: "Acetato" },
+    { formula: "CO₃²⁻", name: "Carbonato" },
+    { formula: "HCO⁻", name: "Formiato" },
+    { formula: "C₂O₄²⁻", name: "Oxalato" },
+    { formula: "[Fe(CN)₆]³⁻", name: "Ferricianeto" },
+    { formula: "[Fe(CN)₆]⁴⁻", name: "Ferrocianeto" },
+    { formula: "C⁴⁻", name: "Carbeto / Metaneto" },
+    { formula: "C₂²⁻", name: "Carbeto / Acetileto" },
+  ],
+  nitrogenio: [
+    { formula: "NO₂⁻", name: "Nitrito" },
+    { formula: "NO₃⁻", name: "Nitrato" },
+    { formula: "N₃⁻", name: "Azoteto / Azida" },
+    { formula: "N³⁻", name: "Nitreto" },
+  ],
+  fosforo: [
+    { formula: "PO₃³⁻", name: "Metafosfato" },
+    { formula: "H₂PO₂⁻", name: "Hipofosfito" },
+    { formula: "HPO₃²⁻", name: "Fosfito" },
+    { formula: "PO₄³⁻", name: "Ortofosfato" },
+    { formula: "P³⁻", name: "Fosfeto" },
+    { formula: "P₂O₇⁴⁻", name: "Pirofosfato" },
+    { formula: "P₂O⁴⁻", name: "Hipofosfato" },
+  ],
+  enxofre: [
+    { formula: "S²⁻", name: "Sulfeto" },
+    { formula: "SO₄²⁻", name: "Sulfato" },
+    { formula: "SO₃²⁻", name: "Sulfito" },
+    { formula: "S₂O₃²⁻", name: "Tiossulfato" },
+    { formula: "S₂O₄²⁻", name: "Hipossulfito" },
+    { formula: "S₂O₈²⁻", name: "Persulfato" },
+    { formula: "S₄O₆²⁻", name: "Tetrationato" },
+  ],
 };
+
+const nomenclaturas = [
+  { formula: "H₂SO₄", name: "Ácido Sulfúrico", suffix: "ICO" },
+  { formula: "H₂SO₃", name: "Ácido Sulfuroso", suffix: "OSO" },
+  { formula: "H₂CO₃", name: "Ácido Carbônico", suffix: "ICO" },
+  { formula: "HNO₃", name: "Ácido Nítrico", suffix: "ICO" },
+  { formula: "CaCO₃", name: "Carbonato de Cálcio", suffix: "" },
+  { formula: "NaHCO₃", name: "Bicarbonato de Sódio", suffix: "" },
+];
+
+const cationsVariaveis = [
+  "Cu +1 e Cu +2",
+  "Au +1 e Au +3",
+  "Fe +2 e Fe +3",
+  "Sn +2 e Sn +4",
+  "Pb +2 e Pb +4",
+];
 
 export function PeriodicTableButton() {
   const [isOpen, setIsOpen] = useState(false);
@@ -226,16 +290,16 @@ export function PeriodicTableButton() {
           <Atom className="h-5 w-5 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[98vw] w-[1400px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-gradient-to-br from-background via-background to-background/95 border-primary/30">
-        <DialogHeader className="px-4 py-2 border-b border-border/50 bg-gradient-to-r from-primary/10 via-transparent to-accent/10">
-          <DialogTitle className="flex items-center gap-2 text-lg">
-            <div className="p-1.5 rounded-lg bg-primary/20 animate-pulse">
-              <Atom className="h-5 w-5 text-primary" />
+      <DialogContent className="max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-50 dark:bg-slate-900 border-primary/30">
+        <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
+          <DialogTitle className="flex items-center gap-3 text-lg text-white">
+            <div className="p-2 rounded-xl bg-white/20 backdrop-blur">
+              <Atom className="h-6 w-6" />
             </div>
-            <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent font-bold">
-              Tabela Periódica dos Elementos
-            </span>
-            <span className="text-xs text-muted-foreground ml-2">IUPAC 2024</span>
+            <div className="flex flex-col">
+              <span className="font-bold text-xl">CLASSIFICAÇÃO PERIÓDICA DOS ELEMENTOS</span>
+              <span className="text-xs text-white/80 font-normal">Moisés Medeiros • Curso de Química • IUPAC 2024</span>
+            </div>
           </DialogTitle>
         </DialogHeader>
         <PeriodicTableContent />
@@ -246,268 +310,699 @@ export function PeriodicTableButton() {
 
 function PeriodicTableContent() {
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
-  const [hoveredCategory, setHoveredCategory] = useState<string | null>(null);
-
-  const getGridPosition = (element: Element) => {
-    // Handle lanthanides and actinides separately
-    if (element.category === "lanthanide") {
-      return { gridColumn: element.number - 54, gridRow: 9 };
-    }
-    if (element.category === "actinide") {
-      return { gridColumn: element.number - 86, gridRow: 10 };
-    }
-    return { gridColumn: element.group, gridRow: element.period };
-  };
+  const [activeTab, setActiveTab] = useState("tabela");
 
   const ElementCell = ({ element }: { element: Element }) => {
     const colors = categoryColors[element.category] || categoryColors["nonmetal"];
-    const isHovered = hoveredCategory === element.category;
     const isSelected = selectedElement?.number === element.number;
 
     return (
       <motion.button
-        initial={{ opacity: 0, scale: 0.8 }}
+        initial={{ opacity: 0, scale: 0.9 }}
         animate={{ opacity: 1, scale: 1 }}
-        transition={{ delay: element.number * 0.003 }}
-        whileHover={{ scale: 1.15, zIndex: 50 }}
+        transition={{ delay: element.number * 0.002 }}
+        whileHover={{ scale: 1.1, zIndex: 50 }}
         whileTap={{ scale: 0.95 }}
         onClick={() => setSelectedElement(element)}
-        onMouseEnter={() => setHoveredCategory(element.category)}
-        onMouseLeave={() => setHoveredCategory(null)}
         className={cn(
-          "relative w-[52px] h-[52px] rounded-lg border-2 transition-all duration-200 flex flex-col items-center justify-center p-0.5 cursor-pointer",
+          "relative w-[54px] h-[54px] rounded border-2 transition-all duration-150 flex flex-col items-center justify-center cursor-pointer shadow-sm hover:shadow-lg",
           colors.bg,
           colors.border,
-          isHovered && "ring-2 ring-white/30",
-          isSelected && "ring-2 ring-primary shadow-lg shadow-primary/50"
+          isSelected && "ring-2 ring-offset-2 ring-primary shadow-xl scale-105"
         )}
-        style={getGridPosition(element)}
         title={`${element.namePt} (${element.name})`}
       >
-        <span className="text-[9px] text-muted-foreground absolute top-0.5 left-1">{element.number}</span>
-        <span className={cn("text-lg font-bold", colors.text)}>{element.symbol}</span>
-        <span className="text-[8px] text-muted-foreground truncate w-full text-center leading-tight">{element.namePt}</span>
-        <span className="text-[7px] text-muted-foreground/70">{element.mass.toFixed(2)}</span>
+        <span className="text-[9px] font-semibold absolute top-0.5 left-1 opacity-80">{element.number}</span>
+        <span className={cn("text-xl font-black leading-none", colors.text)}>{element.symbol}</span>
+        <span className={cn("text-[8px] font-medium truncate w-full text-center leading-tight capitalize", colors.text === "text-white" ? "text-white/90" : "text-slate-700")}>
+          {element.namePt}
+        </span>
+        <span className={cn("text-[7px] opacity-70", colors.text === "text-white" ? "text-white/80" : "text-slate-600")}>
+          {typeof element.mass === 'number' ? element.mass : element.mass}
+        </span>
       </motion.button>
     );
   };
 
   return (
-    <div className="flex flex-col h-full">
-      <ScrollArea className="flex-1 p-4">
-        <div className="flex gap-4">
-          {/* Periodic Table Grid */}
-          <div className="flex-1 min-w-0">
-            {/* Main Table */}
-            <div 
-              className="grid gap-0.5 mb-4"
-              style={{ 
-                gridTemplateColumns: "repeat(18, 52px)",
-                gridTemplateRows: "repeat(7, 52px)"
-              }}
-            >
-              {elements.filter(e => e.category !== "lanthanide" && e.category !== "actinide").map(element => (
-                <ElementCell key={element.number} element={element} />
-              ))}
-              
-              {/* Lanthanide/Actinide placeholder */}
-              <div 
-                className="col-span-1 row-span-1 flex items-center justify-center text-xs text-muted-foreground"
-                style={{ gridColumn: 3, gridRow: 6 }}
-              >
-                <span className="text-pink-400">57-71</span>
-              </div>
-              <div 
-                className="col-span-1 row-span-1 flex items-center justify-center text-xs text-muted-foreground"
-                style={{ gridColumn: 3, gridRow: 7 }}
-              >
-                <span className="text-rose-400">89-103</span>
-              </div>
-            </div>
+    <Tabs value={activeTab} onValueChange={setActiveTab} className="flex flex-col h-full">
+      <TabsList className="w-full justify-start rounded-none border-b bg-background px-4 py-0 h-12">
+        <TabsTrigger value="tabela" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
+          <Atom className="h-4 w-4" />
+          Tabela Periódica
+        </TabsTrigger>
+        <TabsTrigger value="anions" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
+          <FlaskConical className="h-4 w-4" />
+          Tabela de Ânions
+        </TabsTrigger>
+        <TabsTrigger value="propriedades" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
+          <Zap className="h-4 w-4" />
+          Propriedades Periódicas
+        </TabsTrigger>
+        <TabsTrigger value="diagrama" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
+          <ArrowRight className="h-4 w-4" />
+          Diagrama de Linus Pauling
+        </TabsTrigger>
+      </TabsList>
 
-            {/* Lanthanides */}
-            <div className="mb-2">
-              <div className="text-xs text-pink-400 mb-1 ml-2">Lantanídeos</div>
-              <div className="grid gap-0.5" style={{ gridTemplateColumns: "repeat(15, 52px)" }}>
-                {elements.filter(e => e.category === "lanthanide").map(element => (
-                  <ElementCell key={element.number} element={element} />
+      <TabsContent value="tabela" className="flex-1 m-0">
+        <ScrollArea className="h-[calc(95vh-120px)]">
+          <div className="p-4 flex gap-4">
+            {/* Main Periodic Table */}
+            <div className="flex-1">
+              {/* Group numbers */}
+              <div className="flex gap-0.5 mb-1 ml-[55px]">
+                {Array.from({ length: 18 }, (_, i) => (
+                  <div key={i} className="w-[54px] text-center text-xs font-bold text-muted-foreground">
+                    {i + 1}
+                  </div>
                 ))}
               </div>
-            </div>
 
-            {/* Actinides */}
-            <div>
-              <div className="text-xs text-rose-400 mb-1 ml-2">Actinídeos</div>
-              <div className="grid gap-0.5" style={{ gridTemplateColumns: "repeat(15, 52px)" }}>
-                {elements.filter(e => e.category === "actinide").map(element => (
-                  <ElementCell key={element.number} element={element} />
-                ))}
-              </div>
-            </div>
+              {/* Main Table with Period numbers */}
+              <div className="flex">
+                <div className="flex flex-col gap-0.5 mr-1">
+                  {Array.from({ length: 7 }, (_, i) => (
+                    <div key={i} className="h-[54px] w-[50px] flex items-center justify-center text-xs font-bold text-muted-foreground">
+                      {i + 1}
+                    </div>
+                  ))}
+                </div>
 
-            {/* Legend */}
-            <div className="mt-4 flex flex-wrap gap-2">
-              {Object.entries(categoryColors).map(([category, colors]) => (
-                <div
-                  key={category}
-                  className={cn(
-                    "flex items-center gap-1.5 px-2 py-1 rounded-md border transition-all cursor-pointer",
-                    colors.bg,
-                    colors.border,
-                    hoveredCategory === category && "ring-2 ring-white/30 scale-105"
-                  )}
-                  onMouseEnter={() => setHoveredCategory(category)}
-                  onMouseLeave={() => setHoveredCategory(null)}
+                <div 
+                  className="grid gap-0.5"
+                  style={{ 
+                    gridTemplateColumns: "repeat(18, 54px)",
+                    gridTemplateRows: "repeat(7, 54px)"
+                  }}
                 >
-                  <span className={cn("text-xs font-medium", colors.text)}>
-                    {categoryNamesPt[category]}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Element Details Panel */}
-          <AnimatePresence mode="wait">
-            {selectedElement && (
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 50 }}
-                className="w-[320px] bg-secondary/30 rounded-xl border border-border/50 p-4 flex-shrink-0"
-              >
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <div className={cn(
-                      "text-6xl font-bold",
-                      categoryColors[selectedElement.category]?.text
-                    )}>
-                      {selectedElement.symbol}
+                  {elements.filter(e => e.category !== "lanthanide" && e.category !== "actinide").map(element => (
+                    <div key={element.number} style={{ gridColumn: element.group, gridRow: element.period }}>
+                      <ElementCell element={element} />
                     </div>
-                    <div className="text-xl font-semibold mt-1">{selectedElement.namePt}</div>
-                    <div className="text-sm text-muted-foreground">{selectedElement.name}</div>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => setSelectedElement(null)}
-                    className="h-8 w-8"
+                  ))}
+                  
+                  {/* Lanthanide/Actinide references */}
+                  <div 
+                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-pink-200 dark:bg-pink-900/50 rounded border-2 border-pink-400"
+                    style={{ gridColumn: 3, gridRow: 6 }}
                   >
-                    <X className="h-4 w-4" />
-                  </Button>
+                    <span className="text-pink-600 dark:text-pink-300">57 a 71</span>
+                  </div>
+                  <div 
+                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-rose-200 dark:bg-rose-900/50 rounded border-2 border-rose-400"
+                    style={{ gridColumn: 3, gridRow: 7 }}
+                  >
+                    <span className="text-rose-600 dark:text-rose-300">89 a 103</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Transition elements label */}
+              <div className="flex items-center justify-center mt-4 mb-2">
+                <div className="flex items-center gap-2 px-4 py-1 bg-sky-100 dark:bg-sky-900/30 rounded-full border border-sky-300">
+                  <div className="h-px w-8 bg-sky-400" />
+                  <span className="text-sm font-bold text-sky-700 dark:text-sky-300">ELEMENTOS DE TRANSIÇÃO</span>
+                  <div className="h-px w-8 bg-sky-400" />
+                </div>
+              </div>
+
+              {/* Lanthanides */}
+              <div className="mt-4 ml-[55px]">
+                <div className="text-xs font-bold text-pink-600 dark:text-pink-400 mb-1">Lantanídeos (57-71)</div>
+                <div className="flex gap-0.5">
+                  {elements.filter(e => e.category === "lanthanide").map(element => (
+                    <ElementCell key={element.number} element={element} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Actinides */}
+              <div className="mt-2 ml-[55px]">
+                <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-1">Actinídeos (89-103)</div>
+                <div className="flex gap-0.5">
+                  {elements.filter(e => e.category === "actinide").map(element => (
+                    <ElementCell key={element.number} element={element} />
+                  ))}
+                </div>
+              </div>
+
+              {/* Legend */}
+              <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-lg border shadow-sm">
+                <div className="flex flex-wrap gap-3 justify-center">
+                  {Object.entries(categoryColors).map(([category, colors]) => (
+                    <div
+                      key={category}
+                      className={cn(
+                        "flex items-center gap-2 px-3 py-1.5 rounded-full border-2 transition-all",
+                        colors.bg,
+                        colors.border
+                      )}
+                    >
+                      <span className={cn("text-xs font-semibold", colors.text)}>
+                        {categoryNamesPt[category]}
+                      </span>
+                    </div>
+                  ))}
                 </div>
 
-                <div className={cn(
-                  "inline-flex items-center px-2 py-1 rounded-md text-xs mb-4",
-                  categoryColors[selectedElement.category]?.bg,
-                  categoryColors[selectedElement.category]?.border,
-                  "border"
-                )}>
-                  {categoryNamesPt[selectedElement.category]}
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-background/50 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground">Número Atômico</div>
-                    <div className="text-lg font-bold text-primary">{selectedElement.number}</div>
-                  </div>
-                  <div className="bg-background/50 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground">Massa Atômica</div>
-                    <div className="text-lg font-bold">{selectedElement.mass.toFixed(4)}</div>
-                  </div>
-                  <div className="bg-background/50 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground">Estado Físico (25°C)</div>
-                    <div className="text-lg font-bold flex items-center gap-1">
-                      {selectedElement.phase === "Solid" && "�ite"}
-                      {selectedElement.phase === "Liquid" && "💧"}
-                      {selectedElement.phase === "Gas" && "💨"}
-                      <span className="text-sm">{selectedElement.phase === "Solid" ? "Sólido" : selectedElement.phase === "Liquid" ? "Líquido" : "Gás"}</span>
+                {/* Element key */}
+                <div className="mt-4 flex items-center justify-center gap-8">
+                  <div className="flex items-center gap-4 p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                    <div className="w-16 h-16 bg-teal-500 rounded border-2 border-teal-600 flex flex-col items-center justify-center text-white relative">
+                      <span className="text-[8px] font-bold absolute top-0.5 left-1">3</span>
+                      <span className="text-2xl font-black">Li</span>
+                      <span className="text-[7px]">lítio</span>
+                      <span className="text-[6px]">7</span>
+                    </div>
+                    <div className="text-xs space-y-1">
+                      <div className="flex items-center gap-2"><span className="font-bold">3</span> — número atômico</div>
+                      <div className="flex items-center gap-2"><span className="font-bold">Li</span> — símbolo químico</div>
+                      <div className="flex items-center gap-2"><span className="font-bold">lítio</span> — nome</div>
+                      <div className="flex items-center gap-2"><span className="font-bold">7</span> — peso atômico</div>
                     </div>
                   </div>
-                  {selectedElement.electronegativity && (
-                    <div className="bg-background/50 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Eletronegatividade</div>
-                      <div className="text-lg font-bold">{selectedElement.electronegativity}</div>
-                    </div>
-                  )}
                 </div>
+              </div>
+            </div>
 
-                <div className="space-y-3">
-                  <div className="bg-background/50 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground mb-1">Configuração Eletrônica</div>
-                    <div className="text-sm font-mono">{selectedElement.electronConfig}</div>
+            {/* Element Details Panel */}
+            <AnimatePresence mode="wait">
+              {selectedElement ? (
+                <motion.div
+                  initial={{ opacity: 0, x: 50 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: 50 }}
+                  className="w-[340px] bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-4 flex-shrink-0 h-fit sticky top-4"
+                >
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <div className={cn(
+                        "text-7xl font-black",
+                        categoryColors[selectedElement.category]?.text === "text-white" 
+                          ? "text-primary" 
+                          : categoryColors[selectedElement.category]?.text?.replace("text-", "text-")
+                      )}>
+                        {selectedElement.symbol}
+                      </div>
+                      <div className="text-2xl font-bold mt-1 capitalize">{selectedElement.namePt}</div>
+                      <div className="text-sm text-muted-foreground">{selectedElement.name}</div>
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSelectedElement(null)}
+                      className="h-8 w-8"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
 
-                  <div className="bg-background/50 rounded-lg p-2">
-                    <div className="text-xs text-muted-foreground mb-1">Estados de Oxidação</div>
-                    <div className="text-sm font-mono">{selectedElement.oxidationStates}</div>
+                  <div className={cn(
+                    "inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold mb-4",
+                    categoryColors[selectedElement.category]?.bg,
+                    categoryColors[selectedElement.category]?.text,
+                    "border-2",
+                    categoryColors[selectedElement.category]?.border
+                  )}>
+                    {categoryNamesPt[selectedElement.category]}
                   </div>
 
-                  {(selectedElement.melt || selectedElement.boil) && (
+                  <div className="grid grid-cols-2 gap-3 mb-4">
+                    <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-3 border border-primary/20">
+                      <div className="text-xs text-muted-foreground">Número Atômico</div>
+                      <div className="text-2xl font-black text-primary">{selectedElement.number}</div>
+                    </div>
+                    <div className="bg-gradient-to-br from-accent/10 to-accent/5 rounded-lg p-3 border border-accent/20">
+                      <div className="text-xs text-muted-foreground">Massa Atômica</div>
+                      <div className="text-2xl font-black">{selectedElement.mass}</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="bg-secondary/50 rounded-lg p-3">
+                      <div className="text-xs text-muted-foreground mb-1">Configuração Eletrônica</div>
+                      <div className="text-sm font-mono font-bold">{selectedElement.electronConfig}</div>
+                    </div>
+
+                    <div className="bg-secondary/50 rounded-lg p-3">
+                      <div className="text-xs text-muted-foreground mb-1">Estados de Oxidação</div>
+                      <div className="text-sm font-mono font-bold">{selectedElement.oxidationStates}</div>
+                    </div>
+
+                    {selectedElement.electronegativity && (
+                      <div className="bg-secondary/50 rounded-lg p-3">
+                        <div className="text-xs text-muted-foreground">Eletronegatividade (Pauling)</div>
+                        <div className="text-lg font-bold">{selectedElement.electronegativity}</div>
+                      </div>
+                    )}
+
                     <div className="grid grid-cols-2 gap-2">
                       {selectedElement.melt && (
-                        <div className="bg-background/50 rounded-lg p-2">
-                          <div className="text-xs text-muted-foreground">Ponto de Fusão</div>
-                          <div className="text-sm font-bold">{selectedElement.melt} K</div>
-                          <div className="text-xs text-muted-foreground">({(selectedElement.melt - 273.15).toFixed(1)}°C)</div>
+                        <div className="bg-orange-500/10 rounded-lg p-2 border border-orange-500/20">
+                          <div className="text-xs text-muted-foreground">P. Fusão</div>
+                          <div className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                            {(selectedElement.melt - 273.15).toFixed(0)}°C
+                          </div>
                         </div>
                       )}
                       {selectedElement.boil && (
-                        <div className="bg-background/50 rounded-lg p-2">
-                          <div className="text-xs text-muted-foreground">Ponto de Ebulição</div>
-                          <div className="text-sm font-bold">{selectedElement.boil} K</div>
-                          <div className="text-xs text-muted-foreground">({(selectedElement.boil - 273.15).toFixed(1)}°C)</div>
+                        <div className="bg-red-500/10 rounded-lg p-2 border border-red-500/20">
+                          <div className="text-xs text-muted-foreground">P. Ebulição</div>
+                          <div className="text-sm font-bold text-red-600 dark:text-red-400">
+                            {(selectedElement.boil - 273.15).toFixed(0)}°C
+                          </div>
                         </div>
                       )}
                     </div>
-                  )}
 
-                  {selectedElement.density && (
-                    <div className="bg-background/50 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Densidade</div>
-                      <div className="text-sm font-bold">{selectedElement.density} g/cm³</div>
+                    <div className="bg-gradient-to-br from-primary/5 to-accent/5 rounded-lg p-3 border border-primary/10">
+                      <div className="text-xs text-muted-foreground mb-1">Sobre o elemento</div>
+                      <div className="text-sm leading-relaxed">{selectedElement.summary}</div>
                     </div>
-                  )}
 
-                  {selectedElement.discoveredBy && (
-                    <div className="bg-background/50 rounded-lg p-2">
-                      <div className="text-xs text-muted-foreground">Descoberto por</div>
-                      <div className="text-sm">{selectedElement.discoveredBy}</div>
-                      <div className="text-xs text-muted-foreground">({selectedElement.yearDiscovered})</div>
-                    </div>
-                  )}
-
-                  <div className="bg-gradient-to-br from-primary/10 to-accent/10 rounded-lg p-3 border border-primary/20">
-                    <div className="text-xs text-muted-foreground mb-1">Sobre</div>
-                    <div className="text-sm leading-relaxed">{selectedElement.summary}</div>
+                    <a
+                      href={`https://pubchem.ncbi.nlm.nih.gov/element/${selectedElement.number}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 w-full py-2.5 px-3 rounded-lg bg-primary hover:bg-primary/90 text-primary-foreground text-sm font-semibold transition-colors"
+                    >
+                      <ExternalLink className="h-4 w-4" />
+                      Ver mais no PubChem
+                    </a>
                   </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="w-[340px] bg-gradient-to-br from-primary/5 to-accent/5 rounded-xl border-2 border-dashed border-primary/20 p-6 flex flex-col items-center justify-center text-center flex-shrink-0 h-[400px]"
+                >
+                  <div className="p-4 rounded-full bg-primary/10 mb-4">
+                    <Sparkles className="h-12 w-12 text-primary/50" />
+                  </div>
+                  <h3 className="font-bold text-lg text-foreground">Selecione um Elemento</h3>
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Clique em qualquer elemento da tabela para ver suas propriedades detalhadas
+                  </p>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </ScrollArea>
+      </TabsContent>
 
-                  <a
-                    href={`https://pubchem.ncbi.nlm.nih.gov/element/${selectedElement.number}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex items-center justify-center gap-2 w-full py-2 px-3 rounded-lg bg-primary/20 hover:bg-primary/30 text-primary text-sm transition-colors"
-                  >
-                    <ExternalLink className="h-4 w-4" />
-                    Ver no PubChem
-                  </a>
+      <TabsContent value="anions" className="flex-1 m-0">
+        <ScrollArea className="h-[calc(95vh-120px)]">
+          <div className="p-6">
+            <h2 className="text-2xl font-black text-center mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              TABELA DE ÂNIONS
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Halogenios */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-violet-600 to-purple-600 px-4 py-3">
+                  <h3 className="text-white font-bold text-lg">HALOGÊNIOS</h3>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
+                <div className="p-4 space-y-2">
+                  {anionsData.halogenios.map((anion, i) => (
+                    <div key={i} className="flex justify-between items-center py-1.5 px-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors">
+                      <span className="font-mono font-bold text-primary">{anion.formula}</span>
+                      <span className="text-sm">{anion.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
 
-          {/* Empty state when no element selected */}
-          {!selectedElement && (
-            <div className="w-[320px] bg-secondary/20 rounded-xl border border-dashed border-border/50 p-6 flex flex-col items-center justify-center text-center flex-shrink-0">
-              <Beaker className="h-16 w-16 text-muted-foreground/30 mb-4" />
-              <h3 className="font-semibold text-muted-foreground">Selecione um Elemento</h3>
-              <p className="text-sm text-muted-foreground/70 mt-2">
-                Clique em qualquer elemento da tabela para ver suas propriedades detalhadas
-              </p>
+              {/* Carbono */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-slate-700 to-slate-800 px-4 py-3">
+                  <h3 className="text-white font-bold text-lg">CARBONO</h3>
+                </div>
+                <div className="p-4 space-y-2">
+                  {anionsData.carbono.map((anion, i) => (
+                    <div key={i} className="flex justify-between items-center py-1.5 px-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors">
+                      <span className="font-mono font-bold text-primary">{anion.formula}</span>
+                      <span className="text-sm">{anion.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Nitrogenio */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-blue-600 to-blue-700 px-4 py-3">
+                  <h3 className="text-white font-bold text-lg">NITROGÊNIO</h3>
+                </div>
+                <div className="p-4 space-y-2">
+                  {anionsData.nitrogenio.map((anion, i) => (
+                    <div key={i} className="flex justify-between items-center py-1.5 px-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors">
+                      <span className="font-mono font-bold text-primary">{anion.formula}</span>
+                      <span className="text-sm">{anion.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Fosforo */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-amber-600 to-orange-600 px-4 py-3">
+                  <h3 className="text-white font-bold text-lg">FÓSFORO</h3>
+                </div>
+                <div className="p-4 space-y-2">
+                  {anionsData.fosforo.map((anion, i) => (
+                    <div key={i} className="flex justify-between items-center py-1.5 px-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors">
+                      <span className="font-mono font-bold text-primary">{anion.formula}</span>
+                      <span className="text-sm">{anion.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Enxofre */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-yellow-500 to-yellow-600 px-4 py-3">
+                  <h3 className="text-white font-bold text-lg">ENXOFRE</h3>
+                </div>
+                <div className="p-4 space-y-2">
+                  {anionsData.enxofre.map((anion, i) => (
+                    <div key={i} className="flex justify-between items-center py-1.5 px-3 bg-secondary/50 rounded-lg hover:bg-secondary transition-colors">
+                      <span className="font-mono font-bold text-primary">{anion.formula}</span>
+                      <span className="text-sm">{anion.name}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Cations Variáveis e Nomenclaturas */}
+              <div className="space-y-4">
+                {/* Cations Variáveis */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-red-600 to-rose-600 px-4 py-3">
+                    <h3 className="text-white font-bold text-lg">CÁTIONS VARIÁVEIS</h3>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    {cationsVariaveis.map((cation, i) => (
+                      <div key={i} className="py-1.5 px-3 bg-secondary/50 rounded-lg text-sm font-medium">
+                        {cation}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Nomenclaturas */}
+                <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg overflow-hidden">
+                  <div className="bg-gradient-to-r from-teal-600 to-emerald-600 px-4 py-3">
+                    <h3 className="text-white font-bold text-lg">PRINCIPAIS NOMENCLATURAS</h3>
+                  </div>
+                  <div className="p-4 space-y-2">
+                    {nomenclaturas.map((item, i) => (
+                      <div key={i} className="py-2 px-3 bg-secondary/50 rounded-lg">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono font-bold text-primary">{item.formula}</span>
+                          <span className="text-sm">=</span>
+                          <span className="text-sm font-medium">
+                            {item.name.split(item.suffix).map((part, j) => (
+                              <span key={j}>
+                                {part}
+                                {j === 0 && item.suffix && <span className="text-red-500 font-bold">{item.suffix}</span>}
+                              </span>
+                            ))}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
             </div>
-          )}
-        </div>
-      </ScrollArea>
-    </div>
+          </div>
+        </ScrollArea>
+      </TabsContent>
+
+      <TabsContent value="propriedades" className="flex-1 m-0">
+        <ScrollArea className="h-[calc(95vh-120px)]">
+          <div className="p-6">
+            <h2 className="text-2xl font-black text-center mb-6 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              PROPRIEDADES PERIÓDICAS
+            </h2>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Eletronegatividade */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-xl bg-violet-500/20">
+                    <Zap className="h-6 w-6 text-violet-600" />
+                  </div>
+                  <h3 className="text-lg font-bold">Eletronegatividade</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Tendência a ganhar elétrons. Caráter não metálico.
+                </p>
+                <div className="bg-gradient-to-r from-violet-100 to-violet-200 dark:from-violet-900/30 dark:to-violet-800/30 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">↑ Aumenta</span>
+                    <ArrowRight className="h-4 w-4" />
+                  </div>
+                  <div className="text-center my-2">
+                    <span className="text-3xl font-black text-violet-600">F</span>
+                    <div className="text-xs text-muted-foreground">Maior: Flúor</div>
+                  </div>
+                  <div className="text-xs text-center text-muted-foreground">
+                    Gases nobres não entram
+                  </div>
+                </div>
+              </div>
+
+              {/* Eletropositividade */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-xl bg-teal-500/20">
+                    <Zap className="h-6 w-6 text-teal-600" />
+                  </div>
+                  <h3 className="text-lg font-bold">Eletropositividade</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Tendência a perder elétrons. Caráter metálico.
+                </p>
+                <div className="bg-gradient-to-r from-teal-100 to-teal-200 dark:from-teal-900/30 dark:to-teal-800/30 rounded-lg p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium">↓ Aumenta</span>
+                    <ArrowRight className="h-4 w-4 rotate-90" />
+                  </div>
+                  <div className="text-center my-2">
+                    <span className="text-3xl font-black text-teal-600">Fr</span>
+                    <div className="text-xs text-muted-foreground">Maior: Frâncio</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Raio Atômico */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-xl bg-amber-500/20">
+                    <Atom className="h-6 w-6 text-amber-600" />
+                  </div>
+                  <h3 className="text-lg font-bold">Raio Atômico</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Tamanho do átomo. Distância do núcleo à última camada.
+                </p>
+                <div className="bg-gradient-to-r from-amber-100 to-amber-200 dark:from-amber-900/30 dark:to-amber-800/30 rounded-lg p-4">
+                  <div className="text-center my-2">
+                    <span className="text-3xl font-black text-amber-600">Cs</span>
+                    <div className="text-xs text-muted-foreground">Maior: Césio</div>
+                  </div>
+                  <div className="text-xs text-center text-muted-foreground">
+                    ↓ Aumenta na família, ← Aumenta no período
+                  </div>
+                </div>
+              </div>
+
+              {/* Potencial de Ionização */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-xl bg-rose-500/20">
+                    <Sparkles className="h-6 w-6 text-rose-600" />
+                  </div>
+                  <h3 className="text-lg font-bold">Potencial de Ionização</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Energia necessária para remover um elétron.
+                </p>
+                <div className="bg-gradient-to-r from-rose-100 to-rose-200 dark:from-rose-900/30 dark:to-rose-800/30 rounded-lg p-4">
+                  <div className="text-center my-2">
+                    <span className="text-3xl font-black text-rose-600">He</span>
+                    <div className="text-xs text-muted-foreground">Maior PI: Hélio</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Afinidade Eletrônica */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-xl bg-sky-500/20">
+                    <FlaskConical className="h-6 w-6 text-sky-600" />
+                  </div>
+                  <h3 className="text-lg font-bold">Afinidade Eletrônica</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Energia liberada ao receber um elétron.
+                </p>
+                <div className="bg-gradient-to-r from-sky-100 to-sky-200 dark:from-sky-900/30 dark:to-sky-800/30 rounded-lg p-4">
+                  <div className="text-center my-2">
+                    <span className="text-3xl font-black text-sky-600">Cl</span>
+                    <div className="text-xs text-muted-foreground">Maior afinidade: Cloro</div>
+                  </div>
+                  <div className="text-xs text-center text-muted-foreground">
+                    Gases nobres não entram
+                  </div>
+                </div>
+              </div>
+
+              {/* Densidade */}
+              <div className="bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="p-3 rounded-xl bg-indigo-500/20">
+                    <Info className="h-6 w-6 text-indigo-600" />
+                  </div>
+                  <h3 className="text-lg font-bold">Densidade</h3>
+                </div>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Relação massa/volume (d = m/v)
+                </p>
+                <div className="bg-gradient-to-r from-indigo-100 to-indigo-200 dark:from-indigo-900/30 dark:to-indigo-800/30 rounded-lg p-4">
+                  <div className="text-center my-2">
+                    <span className="text-3xl font-black text-indigo-600">Os</span>
+                    <div className="text-xs text-muted-foreground">Maior: Ósmio (22,6 g/cm³)</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+      </TabsContent>
+
+      <TabsContent value="diagrama" className="flex-1 m-0">
+        <ScrollArea className="h-[calc(95vh-120px)]">
+          <div className="p-6">
+            <h2 className="text-2xl font-black text-center mb-2 bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+              DIAGRAMA DE LINUS PAULING
+            </h2>
+            <p className="text-center text-muted-foreground mb-6">
+              Distribuição Eletrônica em Subníveis de Energia
+            </p>
+            
+            <div className="max-w-4xl mx-auto bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-8">
+              {/* Pauling Diagram */}
+              <div className="relative">
+                {/* Grid representation */}
+                <div className="grid grid-cols-7 gap-4">
+                  {/* Headers */}
+                  <div className="text-center font-bold text-sm text-muted-foreground">n</div>
+                  <div className="text-center font-bold text-primary">s</div>
+                  <div className="text-center font-bold text-sky-500">p</div>
+                  <div className="text-center font-bold text-amber-500">d</div>
+                  <div className="text-center font-bold text-rose-500">f</div>
+                  <div className="col-span-2 text-center font-bold text-sm text-muted-foreground">Elétrons</div>
+
+                  {/* Row 1 */}
+                  <div className="text-center font-bold">1</div>
+                  <div className="bg-primary/20 rounded-lg p-2 text-center font-mono font-bold text-primary">1s²</div>
+                  <div></div>
+                  <div></div>
+                  <div></div>
+                  <div className="col-span-2 text-center text-sm">2</div>
+
+                  {/* Row 2 */}
+                  <div className="text-center font-bold">2</div>
+                  <div className="bg-primary/20 rounded-lg p-2 text-center font-mono font-bold text-primary">2s²</div>
+                  <div className="bg-sky-500/20 rounded-lg p-2 text-center font-mono font-bold text-sky-600">2p⁶</div>
+                  <div></div>
+                  <div></div>
+                  <div className="col-span-2 text-center text-sm">8</div>
+
+                  {/* Row 3 */}
+                  <div className="text-center font-bold">3</div>
+                  <div className="bg-primary/20 rounded-lg p-2 text-center font-mono font-bold text-primary">3s²</div>
+                  <div className="bg-sky-500/20 rounded-lg p-2 text-center font-mono font-bold text-sky-600">3p⁶</div>
+                  <div className="bg-amber-500/20 rounded-lg p-2 text-center font-mono font-bold text-amber-600">3d¹⁰</div>
+                  <div></div>
+                  <div className="col-span-2 text-center text-sm">18</div>
+
+                  {/* Row 4 */}
+                  <div className="text-center font-bold">4</div>
+                  <div className="bg-primary/20 rounded-lg p-2 text-center font-mono font-bold text-primary">4s²</div>
+                  <div className="bg-sky-500/20 rounded-lg p-2 text-center font-mono font-bold text-sky-600">4p⁶</div>
+                  <div className="bg-amber-500/20 rounded-lg p-2 text-center font-mono font-bold text-amber-600">4d¹⁰</div>
+                  <div className="bg-rose-500/20 rounded-lg p-2 text-center font-mono font-bold text-rose-600">4f¹⁴</div>
+                  <div className="col-span-2 text-center text-sm">32</div>
+
+                  {/* Row 5 */}
+                  <div className="text-center font-bold">5</div>
+                  <div className="bg-primary/20 rounded-lg p-2 text-center font-mono font-bold text-primary">5s²</div>
+                  <div className="bg-sky-500/20 rounded-lg p-2 text-center font-mono font-bold text-sky-600">5p⁶</div>
+                  <div className="bg-amber-500/20 rounded-lg p-2 text-center font-mono font-bold text-amber-600">5d¹⁰</div>
+                  <div className="bg-rose-500/20 rounded-lg p-2 text-center font-mono font-bold text-rose-600">5f¹⁴</div>
+                  <div className="col-span-2 text-center text-sm">32</div>
+
+                  {/* Row 6 */}
+                  <div className="text-center font-bold">6</div>
+                  <div className="bg-primary/20 rounded-lg p-2 text-center font-mono font-bold text-primary">6s²</div>
+                  <div className="bg-sky-500/20 rounded-lg p-2 text-center font-mono font-bold text-sky-600">6p⁶</div>
+                  <div className="bg-amber-500/20 rounded-lg p-2 text-center font-mono font-bold text-amber-600">6d¹⁰</div>
+                  <div></div>
+                  <div className="col-span-2 text-center text-sm">32</div>
+
+                  {/* Row 7 */}
+                  <div className="text-center font-bold">7</div>
+                  <div className="bg-primary/20 rounded-lg p-2 text-center font-mono font-bold text-primary">7s²</div>
+                  <div className="bg-sky-500/20 rounded-lg p-2 text-center font-mono font-bold text-sky-600">7p⁶</div>
+                  <div></div>
+                  <div></div>
+                  <div className="col-span-2 text-center text-sm">8</div>
+                </div>
+
+                {/* Arrow indication */}
+                <div className="mt-8 p-4 bg-gradient-to-r from-primary/10 to-accent/10 rounded-lg border border-primary/20">
+                  <h4 className="font-bold mb-2">Ordem de preenchimento (Regra de Aufbau):</h4>
+                  <div className="font-mono text-sm leading-relaxed">
+                    1s² → 2s² → 2p⁶ → 3s² → 3p⁶ → 4s² → 3d¹⁰ → 4p⁶ → 5s² → 4d¹⁰ → 5p⁶ → 6s² → 4f¹⁴ → 5d¹⁰ → 6p⁶ → 7s² → 5f¹⁴ → 6d¹⁰ → 7p⁶
+                  </div>
+                </div>
+
+                {/* Legend */}
+                <div className="mt-6 flex flex-wrap justify-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-primary/30"></div>
+                    <span className="text-sm font-medium">s (2 elétrons)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-sky-500/30"></div>
+                    <span className="text-sm font-medium">p (6 elétrons)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-amber-500/30"></div>
+                    <span className="text-sm font-medium">d (10 elétrons)</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-4 h-4 rounded bg-rose-500/30"></div>
+                    <span className="text-sm font-medium">f (14 elétrons)</span>
+                  </div>
+                </div>
+
+                {/* Info box */}
+                <div className="mt-6 p-4 bg-secondary/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">
+                    <strong>Nota:</strong> Na vida real, o preenchimento passa do 7º nível. Este diagrama representa a ordem energética crescente dos subníveis, não necessariamente a ordem numérica das camadas.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </ScrollArea>
+      </TabsContent>
+    </Tabs>
   );
 }
