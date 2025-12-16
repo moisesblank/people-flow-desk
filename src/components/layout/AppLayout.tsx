@@ -1,16 +1,18 @@
 import { ReactNode, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Command } from "lucide-react";
+import { Search, Command, Crown } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
-import { AppSidebar } from "./AppSidebar";
+import { RoleBasedSidebar } from "./RoleBasedSidebar";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { NotificationCenter } from "@/components/ui/notification-center";
 import { useNotificationsDatabase } from "@/hooks/useNotificationsDatabase";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useAuth } from "@/hooks/useAuth";
+import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SystemHealthIndicator } from "@/components/dashboard/SystemHealthIndicator";
 import {
@@ -31,6 +33,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const { user, signOut } = useAuth();
+  const { roleLabel, roleColor, isGodMode } = useRolePermissions();
   const navigate = useNavigate();
 
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
@@ -76,7 +79,7 @@ export function AppLayout({ children }: AppLayoutProps) {
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <AppSidebar />
+        <RoleBasedSidebar />
         <SidebarInset className="flex-1">
           <header className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40">
             <SidebarTrigger className="-ml-1" />
@@ -129,11 +132,15 @@ export function AppLayout({ children }: AppLayoutProps) {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuLabel>
-                  <div className="flex flex-col">
+                  <div className="flex flex-col gap-1">
                     <span className="text-sm font-medium">Minha Conta</span>
                     <span className="text-xs text-muted-foreground truncate">
                       {user?.email}
                     </span>
+                    <Badge className={`${roleColor} text-[10px] px-2 py-0 w-fit mt-1`}>
+                      {isGodMode && <Crown className="w-2 h-2 mr-1" />}
+                      {roleLabel}
+                    </Badge>
                   </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
