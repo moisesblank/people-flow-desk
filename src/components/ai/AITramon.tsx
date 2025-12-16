@@ -266,18 +266,18 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
 
   return (
     <>
-      {/* Floating Trigger Button */}
+      {/* Floating Trigger Button - SUPERIOR DIREITO */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-50"
+            className="fixed top-20 right-6 z-50"
           >
             <Button
               onClick={() => setIsOpen(true)}
-              className="h-16 w-16 rounded-full bg-gradient-to-br from-primary via-purple-600 to-primary shadow-2xl hover:shadow-primary/50 transition-all duration-300 group relative overflow-hidden"
+              className="h-14 w-14 rounded-full bg-gradient-to-br from-primary via-purple-600 to-primary shadow-2xl hover:shadow-primary/50 transition-all duration-300 group relative overflow-hidden"
             >
               <motion.div
                 className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent"
@@ -285,21 +285,21 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
                 transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
               />
               <div className="relative">
-                <Crown className="h-7 w-7 text-primary-foreground group-hover:scale-110 transition-transform" />
+                <Crown className="h-6 w-6 text-primary-foreground group-hover:scale-110 transition-transform" />
                 <motion.div
-                  className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-background"
+                  className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-green-400 rounded-full border-2 border-background"
                   animate={{ scale: [1, 1.3, 1] }}
                   transition={{ repeat: Infinity, duration: 2 }}
                 />
               </div>
             </Button>
             <motion.span 
-              className="absolute -top-10 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-600 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-lg"
-              initial={{ opacity: 0, y: 10 }}
+              className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-600 text-white px-2 py-1 rounded-full text-[10px] font-bold whitespace-nowrap shadow-lg"
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
             >
-              🔮 TRAMON AI
+              🔮 TRAMON
             </motion.span>
           </motion.div>
         )}
