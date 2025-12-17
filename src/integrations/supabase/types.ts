@@ -3689,6 +3689,78 @@ export type Database = {
         }
         Relationships: []
       }
+      universal_attachments: {
+        Row: {
+          ai_insights: Json | null
+          ai_summary: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          entity_id: string
+          entity_type: string
+          extracted_content: string | null
+          extraction_date: string | null
+          extraction_model: string | null
+          extraction_status: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          storage_path: string
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          ai_insights?: Json | null
+          ai_summary?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          entity_id: string
+          entity_type: string
+          extracted_content?: string | null
+          extraction_date?: string | null
+          extraction_model?: string | null
+          extraction_status?: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id?: string
+          storage_path: string
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          ai_insights?: Json | null
+          ai_summary?: string | null
+          category?: string | null
+          created_at?: string | null
+          description?: string | null
+          entity_id?: string
+          entity_type?: string
+          extracted_content?: string | null
+          extraction_date?: string | null
+          extraction_model?: string | null
+          extraction_status?: string | null
+          file_name?: string
+          file_size?: number
+          file_type?: string
+          file_url?: string
+          id?: string
+          storage_path?: string
+          tags?: string[] | null
+          title?: string | null
+          updated_at?: string | null
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -4703,6 +4775,10 @@ export type Database = {
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      count_entity_attachments: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: number
+      }
       generate_2fa_code: { Args: never; Returns: string }
       get_all_users_last_access: {
         Args: never
@@ -4717,6 +4793,38 @@ export type Database = {
           status_atividade: string
           ultima_sessao: Json
         }[]
+      }
+      get_entity_attachments: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: {
+          ai_insights: Json | null
+          ai_summary: string | null
+          category: string | null
+          created_at: string | null
+          description: string | null
+          entity_id: string
+          entity_type: string
+          extracted_content: string | null
+          extraction_date: string | null
+          extraction_model: string | null
+          extraction_status: string | null
+          file_name: string
+          file_size: number
+          file_type: string
+          file_url: string
+          id: string
+          storage_path: string
+          tags: string[] | null
+          title: string | null
+          updated_at: string | null
+          uploaded_by: string | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "universal_attachments"
+          isOneToOne: false
+          isSetofReturn: true
+        }
       }
       get_masked_salary: {
         Args: { emp_salary: number; emp_user_id: string }

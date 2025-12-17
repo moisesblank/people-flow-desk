@@ -2,6 +2,7 @@
 // MOISÉS MEDEIROS v7.0 - CALENDÁRIO
 // Spider-Man Theme - Gestão de Tarefas
 // Elementos de Química Integrados
+// + Sistema Universal de Anexos
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
@@ -19,7 +20,8 @@ import {
   Trash2,
   Edit2,
   FlaskConical,
-  Atom
+  Atom,
+  Paperclip
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -36,8 +38,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
 import { GoogleCalendarSync } from "@/components/calendar/GoogleCalendarSync";
 import { TaskStats } from "@/components/calendar/TaskStats";
+import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
+import { AttachmentIndicator } from "@/components/attachments/AttachmentIndicator";
 import calendarHeroImage from "@/assets/calendar-chemistry-hero.jpg";
-import { 
+import {
   format, 
   addMonths, 
   subMonths, 
@@ -583,6 +587,18 @@ export default function Calendario() {
                 />
                 <Label htmlFor="reminder" className="text-sm">Ativar lembrete por email</Label>
               </div>
+
+              {/* Seção de Anexos - só aparece se tarefa já existe */}
+              {editingTask?.id && (
+                <div className="border-t border-border pt-4">
+                  <UniversalAttachments
+                    entityType="calendar_task"
+                    entityId={editingTask.id}
+                    title="Anexos"
+                    showAIExtraction
+                  />
+                </div>
+              )}
 
               <Button onClick={handleSave} className="w-full">
                 {editingTask ? "Salvar Alterações" : "Criar Tarefa"}

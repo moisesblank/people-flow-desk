@@ -18,7 +18,7 @@ serve(async (req) => {
   }
 
   try {
-    const { documentId, fileUrl, fileName, fileType } = await req.json();
+    const { documentId, fileUrl, fileName, fileType, source = 'general_documents' } = await req.json();
 
     if (!documentId || !fileUrl) {
       return new Response(
@@ -40,9 +40,12 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Determinar tabela baseado na fonte
+    const tableName = source === 'universal_attachments' ? 'universal_attachments' : 'general_documents';
+
     // Atualizar status para "processing"
     await supabase
-      .from('general_documents')
+      .from(tableName)
       .update({ extraction_status: 'processing' })
       .eq('id', documentId);
 
@@ -153,7 +156,7 @@ Se não conseguir acessar ou processar o arquivo, informe claramente.`
       
       if (aiResponse.status === 429) {
         await supabase
-          .from('general_documents')
+          .from(tableName)
           .update({ extraction_status: 'rate_limited' })
           .eq('id', documentId);
         return new Response(
@@ -164,7 +167,7 @@ Se não conseguir acessar ou processar o arquivo, informe claramente.`
       
       if (aiResponse.status === 402) {
         await supabase
-          .from('general_documents')
+          .from(tableName)
           .update({ extraction_status: 'credits_required' })
           .eq('id', documentId);
         return new Response(
@@ -182,14 +185,41 @@ Se não conseguir acessar ou processar o arquivo, informe claramente.`
     console.log('Extração concluída, salvando...');
 
     // Salvar conteúdo extraído
+    const updateData: Record<string, any> = {
+      extracted_content: extractedContent,
+      extraction_status: 'completed',
+      extraction_date: new Date().toISOString(),
+      extraction_model: isImage ? 'gemini-2.5-pro' : 'gemini-2.5-flash'
+    };
+
+    // Para universal_attachments, também gerar resumo AI
+    if (tableName === 'universal_attachments') {
+      // Gerar resumo curto
+      const summaryResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash-lite',
+          messages: [
+            { role: "system", content: "Você é um assistente que cria resumos concisos. Responda em português brasileiro." },
+            { role: "user", content: `Crie um resumo de no máximo 2 frases do seguinte conteúdo extraído:\n\n${extractedContent.substring(0, 2000)}` }
+          ],
+          max_tokens: 200,
+        }),
+      });
+
+      if (summaryResponse.ok) {
+        const summaryData = await summaryResponse.json();
+        updateData.ai_summary = summaryData.choices?.[0]?.message?.content || '';
+      }
+    }
+
     const { error: updateError } = await supabase
-      .from('general_documents')
-      .update({
-        extracted_content: extractedContent,
-        extraction_status: 'completed',
-        extraction_date: new Date().toISOString(),
-        extraction_model: isImage ? 'gemini-2.5-pro' : 'gemini-2.5-flash'
-      })
+      .from(tableName)
+      .update(updateData)
       .eq('id', documentId);
 
     if (updateError) {
