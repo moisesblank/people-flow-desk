@@ -1,12 +1,12 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - ALUNOS
+// MOISÉS MEDEIROS v8.0 - ALUNOS
 // Spider-Man Theme - Gestão de Estudantes
-// Elementos de Química Integrados
+// Elementos de Química Integrados + Anexos Automáticos
 // ============================================
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Sparkles, Trash2, Edit2, Users, Award, TrendingUp, FlaskConical, Atom } from "lucide-react";
+import { Plus, GraduationCap, Sparkles, Trash2, Edit2, Users, Award, TrendingUp, FlaskConical, Atom, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,6 +18,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AnimatedAtom, MiniPeriodicTable, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
 import { StudentAnalytics } from "@/components/students/StudentAnalytics";
 import { StudentProgressCard } from "@/components/students/StudentProgressCard";
+import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
 import studentsHeroImage from "@/assets/students-chemistry-hero.jpg";
 
 interface Student {
@@ -215,6 +216,13 @@ export default function Alunos() {
                     </td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-2">
+                        <AttachmentButton
+                          entityType="student"
+                          entityId={student.id}
+                          entityLabel={student.nome}
+                          variant="ghost"
+                          size="icon"
+                        />
                         <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>

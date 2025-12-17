@@ -2703,6 +2703,57 @@ export type Database = {
         }
         Relationships: []
       }
+      smart_checklists: {
+        Row: {
+          ai_suggested: boolean | null
+          category: string | null
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string | null
+          created_by: string | null
+          due_date: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          order_index: number | null
+          priority: string | null
+          text: string
+          updated_at: string | null
+        }
+        Insert: {
+          ai_suggested?: boolean | null
+          category?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          order_index?: number | null
+          priority?: string | null
+          text: string
+          updated_at?: string | null
+        }
+        Update: {
+          ai_suggested?: boolean | null
+          category?: string | null
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          due_date?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          order_index?: number | null
+          priority?: string | null
+          text?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       social_media_history: {
         Row: {
           engagement_rate: number | null

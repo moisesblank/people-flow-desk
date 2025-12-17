@@ -4,23 +4,16 @@
 // ============================================
 
 import { useState, useEffect } from 'react';
-import { motion, AnimatePresence, Reorder } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   CheckCircle2,
   Circle,
   Plus,
   Trash2,
-  GripVertical,
   Sparkles,
-  Clock,
-  AlertCircle,
   Calendar,
-  Tag,
   MoreVertical,
-  Edit2,
   Loader2,
-  Brain,
-  Zap,
   CheckSquare,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -86,7 +79,6 @@ export function SmartChecklist({
   entityType,
   entityId,
   showAISuggestions = true,
-  categories = [],
   onProgressChange,
   className,
 }: SmartChecklistProps) {
@@ -96,7 +88,6 @@ export function SmartChecklist({
   const [isLoading, setIsLoading] = useState(true);
   const [isGeneratingAI, setIsGeneratingAI] = useState(false);
   const [filter, setFilter] = useState<'all' | 'pending' | 'completed'>('all');
-  const [editingId, setEditingId] = useState<string | null>(null);
 
   // Calcular progresso
   const progress = items.length > 0 
@@ -120,7 +111,7 @@ export function SmartChecklist({
 
     try {
       const { data, error } = await supabase
-        .from('smart_checklists')
+        .from('smart_checklists' as any)
         .select('*')
         .eq('entity_type', entityType)
         .eq('entity_id', entityId)
@@ -128,7 +119,7 @@ export function SmartChecklist({
 
       if (error) throw error;
 
-      setItems(data?.map(item => ({
+      setItems((data || []).map((item: any) => ({
         id: item.id,
         text: item.text,
         completed: item.completed || false,
@@ -137,7 +128,7 @@ export function SmartChecklist({
         category: item.category,
         aiSuggested: item.ai_suggested || false,
         order: item.order_index || 0,
-      })) || []);
+      })));
     } catch (error) {
       console.error('Error fetching checklist:', error);
     } finally {
@@ -161,7 +152,7 @@ export function SmartChecklist({
 
     try {
       const { data, error } = await supabase
-        .from('smart_checklists')
+        .from('smart_checklists' as any)
         .insert({
           entity_type: entityType,
           entity_id: entityId,
@@ -177,7 +168,7 @@ export function SmartChecklist({
       if (error) throw error;
 
       setItems(prev => prev.map(item => 
-        item.id === newItem.id ? { ...item, id: data.id } : item
+        item.id === newItem.id ? { ...item, id: (data as any).id } : item
       ));
     } catch (error) {
       console.error('Error adding item:', error);
@@ -197,7 +188,7 @@ export function SmartChecklist({
 
     try {
       await supabase
-        .from('smart_checklists')
+        .from('smart_checklists' as any)
         .update({ completed: newCompleted, completed_at: newCompleted ? new Date().toISOString() : null })
         .eq('id', id);
     } catch (error) {
@@ -212,7 +203,7 @@ export function SmartChecklist({
     setItems(prev => prev.filter(i => i.id !== id));
 
     try {
-      await supabase.from('smart_checklists').delete().eq('id', id);
+      await supabase.from('smart_checklists' as any).delete().eq('id', id);
     } catch (error) {
       console.error('Error deleting item:', error);
       fetchChecklist();
@@ -225,7 +216,7 @@ export function SmartChecklist({
     ));
 
     try {
-      await supabase.from('smart_checklists').update({ priority }).eq('id', id);
+      await supabase.from('smart_checklists' as any).update({ priority }).eq('id', id);
     } catch (error) {
       console.error('Error updating priority:', error);
     }
@@ -263,7 +254,7 @@ export function SmartChecklist({
         // Salvar sugestões no banco
         for (const item of newItems) {
           const { data: saved } = await supabase
-            .from('smart_checklists')
+            .from('smart_checklists' as any)
             .insert({
               entity_type: entityType,
               entity_id: entityId,
@@ -278,7 +269,7 @@ export function SmartChecklist({
             .single();
 
           if (saved) {
-            item.id = saved.id;
+            item.id = (saved as any).id;
           }
         }
 

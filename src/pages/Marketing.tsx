@@ -1,8 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - MARKETING
+// MOISÉS MEDEIROS v11.0 - MARKETING
 // Spider-Man Theme - Métricas e Campanhas
 // Integração Real com Redes Sociais
-// Funil de Vendas e Automações
+// Funil de Vendas, Automações e Anexos
 // ============================================
 
 import { useState } from "react";
@@ -28,13 +28,16 @@ import {
   Workflow,
   Instagram,
   Youtube,
-  Video
+  Video,
+  Paperclip
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { AnimatedAtom, ChemistryTip, BubblingFlask } from "@/components/chemistry/ChemistryVisuals";
 import { SalesFunnel } from "@/components/marketing/SalesFunnel";
 import { AutomationFlow } from "@/components/marketing/AutomationFlow";
 import { SocialMediaStats } from "@/components/dashboard/SocialMediaStats";
+import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
+import { SmartChecklist } from "@/components/checklists/SmartChecklist";
 import marketingHeroImage from "@/assets/marketing-chemistry-hero.jpg";
 import professorImage from "@/assets/professor-moises.jpg";
 
@@ -245,7 +248,16 @@ export default function Marketing() {
                       {campaign.status}
                     </Badge>
                   </div>
-                  <Button variant="outline" size="sm">Ver Detalhes</Button>
+                  <div className="flex items-center gap-2">
+                    <AttachmentButton
+                      entityType="campaign"
+                      entityId={campaign.id}
+                      entityLabel={campaign.name}
+                      variant="ghost"
+                      size="icon"
+                    />
+                    <Button variant="outline" size="sm">Ver Detalhes</Button>
+                  </div>
                 </div>
                 <div className="grid grid-cols-4 gap-4 text-sm">
                   <div>

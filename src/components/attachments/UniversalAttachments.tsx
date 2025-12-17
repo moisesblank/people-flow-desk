@@ -52,7 +52,7 @@ import { toast } from 'sonner';
 import { useUniversalAttachments, EntityType, Attachment } from '@/hooks/useUniversalAttachments';
 import { cn } from '@/lib/utils';
 
-interface UniversalAttachmentsProps {
+export interface UniversalAttachmentsProps {
   entityType: EntityType;
   entityId: string;
   title?: string;
@@ -61,6 +61,7 @@ interface UniversalAttachmentsProps {
   compact?: boolean;
   className?: string;
   onAttachmentChange?: (count: number) => void;
+  onUpdate?: () => void;
 }
 
 // Ícones por tipo de arquivo
@@ -98,7 +99,8 @@ export function UniversalAttachments({
   showAIExtraction = true,
   compact = false,
   className,
-  onAttachmentChange
+  onAttachmentChange,
+  onUpdate
 }: UniversalAttachmentsProps) {
   const {
     attachments,
