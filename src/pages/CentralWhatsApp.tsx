@@ -79,6 +79,7 @@ const CentralWhatsApp = () => {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [showTaskDialog, setShowTaskDialog] = useState(false);
   const [showFinanceDialog, setShowFinanceDialog] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const queryClient = useQueryClient();
 
@@ -244,6 +245,53 @@ const CentralWhatsApp = () => {
       setShowFinanceDialog(false);
     }
   });
+
+  // ==============================================================================
+  // ENVIAR MENSAGEM
+  // ==============================================================================
+  const handleSendMessage = async () => {
+    if (!messageInput.trim() || !selectedConversation || !selectedConv) return;
+    
+    setSendingMessage(true);
+    try {
+      // Salvar mensagem no banco (outbound)
+      const { error: insertError } = await supabase.from('whatsapp_messages').insert({
+        conversation_id: selectedConversation,
+        direction: 'outbound',
+        message_id: `manual_${Date.now()}`,
+        message_type: 'text',
+        message_text: messageInput.trim(),
+        from_phone: 'system',
+        to_phone: selectedConv.phone,
+        handled_by: 'manual_panel',
+        timestamp: new Date().toISOString()
+      });
+      
+      if (insertError) throw insertError;
+      
+      // Atualizar conversa
+      await supabase.from('whatsapp_conversations').update({
+        last_message_at: new Date().toISOString()
+      }).eq('id', selectedConversation);
+      
+      // Limpar input e atualizar queries
+      setMessageInput('');
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-messages'] });
+      queryClient.invalidateQueries({ queryKey: ['whatsapp-conversations'] });
+      
+      toast.success('Mensagem salva!', {
+        description: 'Nota: O envio real via WhatsApp API requer configuração adicional.'
+      });
+      
+      // Scroll para nova mensagem
+      setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 100);
+    } catch (error: any) {
+      console.error('Erro ao enviar:', error);
+      toast.error('Erro ao enviar mensagem', { description: error.message });
+    } finally {
+      setSendingMessage(false);
+    }
+  };
 
   // ==============================================================================
   // HELPERS
@@ -662,18 +710,32 @@ const CentralWhatsApp = () => {
                   </div>
                 </ScrollArea>
 
-                {/* Input de mensagem (apenas visual por enquanto) */}
+{/* Input de mensagem */}
                 <div className="p-3 border-t bg-card">
                   <div className="flex gap-2 items-end max-w-3xl mx-auto">
                     <Textarea
-                      placeholder="Digite uma mensagem... (enviado via painel em breve)"
+                      placeholder="Digite uma mensagem..."
                       value={messageInput}
                       onChange={(e) => setMessageInput(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleSendMessage();
+                        }
+                      }}
                       className="resize-none min-h-[44px] max-h-32"
                       rows={1}
                     />
-                    <Button className="shrink-0 bg-green-500 hover:bg-green-600">
-                      <Send className="h-4 w-4" />
+                    <Button 
+                      className="shrink-0 bg-green-500 hover:bg-green-600"
+                      onClick={handleSendMessage}
+                      disabled={!messageInput.trim() || sendingMessage}
+                    >
+                      {sendingMessage ? (
+                        <RefreshCw className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                 </div>
