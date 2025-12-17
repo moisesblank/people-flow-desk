@@ -1,6 +1,7 @@
 // ============================================
-// 🔮 TRAMON v5.0 - SUPERINTELIGÊNCIA GLOBAL
-// EXECUTIVE AI + MODO PROGRAMADOR EXCLUSIVO
+// 🔮 TRAMON v6.0 ULTRA - FUSÃO DEFINITIVA
+// SUPERINTELIGÊNCIA + ASSESSOR INTELIGENTE
+// Combina: v5.0 + AJUDA11 (Meu Assessor)
 // Modelo: Gemini 2.5 Pro (Multimodal + Vision)
 // ============================================
 
@@ -32,13 +33,83 @@ const ASSESSORES = {
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
+// ========================================
+// 🧠 CACHE INTELIGENTE (OTIMIZAÇÃO)
+// ========================================
+const cacheInterpretacoes = new Map<string, any>();
+const CACHE_TTL = 3600000; // 1 hora
+
+function getCacheKey(texto: string): string {
+  return texto.toLowerCase().trim().substring(0, 100);
+}
+
+// ========================================
+// 📦 CATEGORIZAÇÃO AUTOMÁTICA
+// ========================================
+const CATEGORIAS_DESPESAS: Record<string, string[]> = {
+  "Alimentação": ["comida", "restaurante", "lanche", "almoço", "jantar", "supermercado", "mercado", "padaria", "café", "pizza", "hamburguer", "delivery", "ifood"],
+  "Transporte": ["gasolina", "uber", "taxi", "ônibus", "combustível", "pedágio", "estacionamento", "carro", "moto", "99", "passagem"],
+  "Saúde": ["médico", "farmácia", "remédio", "consulta", "exame", "hospital", "dentista", "psicólogo", "academia", "plano de saúde"],
+  "Educação": ["curso", "livro", "material escolar", "mensalidade", "faculdade", "escola", "apostila", "caneta", "caderno"],
+  "Moradia": ["aluguel", "condomínio", "água", "luz", "energia", "internet", "gás", "iptu", "conserto", "reforma"],
+  "Lazer": ["cinema", "show", "viagem", "entretenimento", "netflix", "spotify", "jogo", "festa", "bar", "balada"],
+  "Vestuário": ["roupa", "sapato", "tênis", "camisa", "calça", "vestido", "bermuda", "chinelo"],
+  "Tecnologia": ["celular", "computador", "notebook", "tablet", "eletrônico", "software", "app"],
+};
+
+function categorizarDespesa(descricao: string): string {
+  const textoLower = descricao.toLowerCase();
+  for (const [categoria, palavras] of Object.entries(CATEGORIAS_DESPESAS)) {
+    if (palavras.some(p => textoLower.includes(p))) {
+      return categoria;
+    }
+  }
+  return "Outros";
+}
+
+// ========================================
+// 📅 PROCESSAMENTO DE DATAS
+// ========================================
+function processarData(dataStr: string | undefined): string {
+  if (!dataStr) return new Date().toISOString();
+  
+  const texto = dataStr.toLowerCase().trim();
+  const agora = new Date();
+  
+  if (texto === "hoje" || texto === "now") {
+    return agora.toISOString();
+  }
+  if (texto === "amanhã" || texto === "amanha") {
+    agora.setDate(agora.getDate() + 1);
+    return agora.toISOString();
+  }
+  if (texto === "ontem") {
+    agora.setDate(agora.getDate() - 1);
+    return agora.toISOString();
+  }
+  
+  // Formato DD/MM/YYYY
+  const partes = texto.split("/");
+  if (partes.length === 3) {
+    const [dia, mes, ano] = partes;
+    return new Date(`${ano}-${mes}-${dia}`).toISOString();
+  }
+  
+  return new Date().toISOString();
+}
+
+// ========================================
+// 🎯 HANDLER PRINCIPAL
+// ========================================
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const startTime = Date.now();
+
   try {
-    const { messages, context, userId, image, isProgrammerMode, currentPage } = await req.json();
+    const { messages, context, userId, image, isProgrammerMode, currentPage, tipo, audioUrl } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -46,6 +117,8 @@ serve(async (req) => {
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY not configured");
     }
+
+    const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
     // ========================================
     // 🔐 VERIFICAÇÃO DE ACESSO PREMIUM
@@ -56,8 +129,6 @@ serve(async (req) => {
     let userName = "";
 
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userId) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
-      
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
@@ -78,7 +149,7 @@ serve(async (req) => {
       const isOwner = userEmail === OWNER_EMAIL;
       hasAccess = isOwner || userRole === "owner" || userRole === "admin" || userRole === "coordenacao";
       
-      console.log(`[TRAMON v5] User: ${userEmail}, Role: ${userRole}, Access: ${hasAccess}, HasImage: ${!!image}, ProgrammerMode: ${isProgrammerMode}, isOwner: ${isOwner}`);
+      console.log(`[TRAMON v6] User: ${userEmail}, Role: ${userRole}, Access: ${hasAccess}, HasImage: ${!!image}, ProgrammerMode: ${isProgrammerMode}`);
     }
 
     if (!hasAccess) {
@@ -92,330 +163,57 @@ serve(async (req) => {
     }
 
     // ========================================
-    // 📊 COLETA DE DADOS ULTRA COMPLETOS EM TEMPO REAL
+    // 📊 COLETA DE DADOS EM TEMPO REAL
     // ========================================
-    let systemData: any = {
-      financial: { 
-        totalIncome: 0, totalExpenses: 0, profit: 0, monthlyGrowth: 0, 
-        runway: 0, fixedExpenses: 0, extraExpenses: 0, cashFlow: 0, pendingPayments: 0,
-        incomeBySource: {}, expensesByCategory: {}, recentTransactions: []
-      },
-      students: { 
-        active: 0, total: 0, retention: 0, newThisMonth: 0, 
-        churnRate: 0, avgProgress: 0, vips: 0, atRisk: 0,
-        topStudents: [], recentEnrollments: [], progressDistribution: {}
-      },
-      employees: { 
-        active: 0, total: 0, byRole: {}, bySector: {}, 
-        recentHires: [], performance: {}
-      },
-      tasks: { 
-        pending: 0, highPriority: 0, completed: 0, overdue: 0, 
-        completionRate: 0, todayTasks: 0, weekTasks: 0,
-        byPriority: {}, byUser: {}, recentCompleted: [], urgent: []
-      },
-      marketing: { 
-        cac: 0, ltv: 0, roi: 0, ltvCacRatio: 0, campaigns: 0, activeCampaigns: 0, totalLeads: 0,
-        conversionRate: 0, campaignDetails: [], channelPerformance: {}
-      },
-      courses: { 
-        total: 0, published: 0, averageRating: 0, totalStudents: 0, topCourse: '',
-        courseDetails: [], moduleCompletion: {}, lessonEngagement: {}
-      },
-      system: { 
-        lastBackup: null, activeUsers: 0, errors: 0, uptime: 99.9, version: 'v15.0 SYNAPSE',
-        recentActivity: [], integrations: {}, healthScore: 100
-      },
-      affiliates: { 
-        total: 0, active: 0, totalCommission: 0,
-        topAffiliates: [], pendingCommissions: 0
-      },
-      whatsapp: {
-        totalConversations: 0, unread: 0, recentMessages: [], leads: 0
-      },
-      calendar: {
-        todayEvents: [], weekEvents: [], upcomingDeadlines: []
-      }
-    };
+    let systemData: any = await coletarDadosSistema(supabase);
+
+    // ========================================
+    // 🎤 PRÉ-PROCESSAMENTO (ÁUDIO → TEXTO)
+    // ========================================
+    let textoProcessado = "";
+    const ultimaMensagem = messages?.[messages.length - 1]?.content || "";
     
-    if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
-      const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    if (tipo === "audio" && audioUrl) {
+      console.log("[TRAMON v6] Processando áudio...");
+      // Áudio será transcrito pelo frontend ou podemos usar Whisper via Lovable AI
+      textoProcessado = ultimaMensagem;
+    } else {
+      textoProcessado = ultimaMensagem;
+    }
+
+    // ========================================
+    // 🧠 DETECÇÃO DE COMANDO CRUD
+    // ========================================
+    const comandoCRUD = detectarComandoCRUD(textoProcessado);
+    
+    if (comandoCRUD && !isProgrammerMode) {
+      console.log("[TRAMON v6] Comando CRUD detectado:", comandoCRUD);
       
-      try {
-        const today = new Date();
-        const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-        const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
-        const sevenDaysFromNow = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
-        const todayStr = today.toISOString().split('T')[0];
-        
-        // Buscar todos os dados em paralelo para máxima performance
-        const [
-          incomeResult, fixedExpResult, extraExpResult, studentsResult, 
-          employeesResult, tasksResult, coursesResult, marketingResult,
-          enrollmentsResult, campaignsResult, profilesResult, affiliatesResult, 
-          paymentsResult, lessonsResult, modulesResult, whatsappResult,
-          calendarResult, notificationsResult, auditResult, gastosResult,
-          entradasResult, contabilidadeResult
-        ] = await Promise.all([
-          supabase.from('income').select('*').order('created_at', { ascending: false }).limit(100),
-          supabase.from('company_fixed_expenses').select('*'),
-          supabase.from('company_extra_expenses').select('*').order('data', { ascending: false }).limit(50),
-          supabase.from('students').select('*'),
-          supabase.from('employees').select('*'),
-          supabase.from('calendar_tasks').select('*').order('task_date', { ascending: true }),
-          supabase.from('courses').select('*'),
-          supabase.from('metricas_marketing').select('*').order('mes_referencia', { ascending: false }).limit(6),
-          supabase.from('enrollments').select('*'),
-          supabase.from('marketing_campaigns').select('*'),
-          supabase.from('profiles').select('*'),
-          supabase.from('affiliates').select('*'),
-          supabase.from('payments').select('*'),
-          supabase.from('lessons').select('*'),
-          supabase.from('modules').select('*'),
-          supabase.from('whatsapp_conversations').select('*').order('last_message_at', { ascending: false }).limit(20),
-          supabase.from('calendar_tasks').select('*').gte('task_date', todayStr).lte('task_date', sevenDaysFromNow),
-          supabase.from('notifications').select('*').eq('read', false).limit(10),
-          supabase.from('audit_logs').select('*').order('created_at', { ascending: false }).limit(20),
-          supabase.from('gastos').select('*').order('data', { ascending: false }).limit(50),
-          supabase.from('entradas').select('*').order('data', { ascending: false }).limit(50),
-          supabase.from('contabilidade').select('*').order('data_referencia', { ascending: false }).limit(30),
-        ]);
-
-        // Processar dados financeiros detalhados
-        const income = incomeResult.data || [];
-        const gastos = gastosResult.data || [];
-        const entradas = entradasResult.data || [];
-        
-        const currentMonthIncome = income.filter(i => new Date(i.created_at) >= new Date(thirtyDaysAgo)).reduce((sum, i) => sum + (i.valor || 0), 0);
-        const lastMonthIncome = income.filter(i => new Date(i.created_at) >= new Date(sixtyDaysAgo) && new Date(i.created_at) < new Date(thirtyDaysAgo)).reduce((sum, i) => sum + (i.valor || 0), 0);
-        
-        const fixedExpenses = (fixedExpResult.data || []).reduce((sum, e) => sum + (e.valor || 0), 0);
-        const extraExpenses = (extraExpResult.data || []).filter(e => new Date(e.data || '') >= new Date(thirtyDaysAgo)).reduce((sum, e) => sum + (e.valor || 0), 0);
-        const totalExpenses = fixedExpenses + extraExpenses;
-        const profit = currentMonthIncome - totalExpenses;
-        
-        // Agrupar receitas por fonte
-        const incomeBySource: Record<string, number> = {};
-        income.forEach(i => {
-          const fonte = i.fonte || 'Outros';
-          incomeBySource[fonte] = (incomeBySource[fonte] || 0) + (i.valor || 0);
-        });
-        
-        // Agrupar despesas por categoria
-        const expensesByCategory: Record<string, number> = {};
-        (fixedExpResult.data || []).forEach(e => {
-          const cat = e.categoria || 'Fixos';
-          expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (e.valor || 0);
-        });
-        gastos.forEach(g => {
-          const cat = g.categoria || 'Outros';
-          expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (g.valor || 0);
-        });
-        
-        const payments = paymentsResult.data || [];
-        const pendingPayments = payments.filter(p => p.status === 'pendente' || p.status === 'atrasado').reduce((sum, p) => sum + (p.valor || 0), 0);
-        
-        // Transações recentes
-        const recentTransactions = [
-          ...entradas.slice(0, 5).map(e => ({ tipo: 'entrada', valor: e.valor, descricao: e.descricao, data: e.data })),
-          ...gastos.slice(0, 5).map(g => ({ tipo: 'saida', valor: g.valor, descricao: g.descricao, data: g.data }))
-        ].sort((a, b) => new Date(b.data || 0).getTime() - new Date(a.data || 0).getTime()).slice(0, 10);
-        
-        systemData.financial = {
-          totalIncome: currentMonthIncome,
-          totalExpenses,
-          profit,
-          monthlyGrowth: lastMonthIncome > 0 ? ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0,
-          runway: totalExpenses > 0 ? Math.round((profit > 0 ? profit * 12 : currentMonthIncome) / totalExpenses) : 0,
-          fixedExpenses,
-          extraExpenses,
-          cashFlow: currentMonthIncome - totalExpenses,
-          pendingPayments,
-          incomeBySource,
-          expensesByCategory,
-          recentTransactions
-        };
-
-        // Processar alunos detalhados
-        const students = studentsResult.data || [];
-        const activeStudents = students.filter(s => s.status === 'ativo');
-        const newStudents = students.filter(s => new Date(s.created_at) >= new Date(thirtyDaysAgo));
-        const enrollments = enrollmentsResult.data || [];
-        const avgProgress = enrollments.length > 0 ? enrollments.reduce((sum, e) => sum + (e.progress_percentage || 0), 0) / enrollments.length : 0;
-        
-        // Top alunos por progresso
-        const topStudents = students
-          .filter(s => s.status === 'ativo')
-          .sort((a, b) => (b.progresso || 0) - (a.progresso || 0))
-          .slice(0, 5)
-          .map(s => ({ nome: s.nome, progresso: s.progresso, email: s.email }));
-        
-        // Distribuição de progresso
-        const progressDistribution = {
-          '0-25%': students.filter(s => (s.progresso || 0) <= 25).length,
-          '26-50%': students.filter(s => (s.progresso || 0) > 25 && (s.progresso || 0) <= 50).length,
-          '51-75%': students.filter(s => (s.progresso || 0) > 50 && (s.progresso || 0) <= 75).length,
-          '76-100%': students.filter(s => (s.progresso || 0) > 75).length
-        };
-        
-        systemData.students = {
-          active: activeStudents.length,
-          total: students.length,
-          retention: students.length > 0 ? (activeStudents.length / students.length) * 100 : 0,
-          newThisMonth: newStudents.length,
-          churnRate: students.length > 0 ? ((students.length - activeStudents.length) / students.length) * 100 : 0,
-          avgProgress,
-          vips: students.filter(s => (s.progresso || 0) > 70).length,
-          atRisk: students.filter(s => s.status === 'ativo' && (s.progresso || 0) < 20).length,
-          topStudents,
-          progressDistribution,
-          recentEnrollments: newStudents.slice(0, 5).map(s => ({ nome: s.nome, data: s.created_at }))
-        };
-
-        // Processar funcionários detalhados
-        const employees = employeesResult.data || [];
-        const byRole: Record<string, number> = {};
-        const bySector: Record<string, number> = {};
-        employees.forEach(e => {
-          byRole[e.funcao || 'outros'] = (byRole[e.funcao || 'outros'] || 0) + 1;
-          bySector[e.setor || 'outros'] = (bySector[e.setor || 'outros'] || 0) + 1;
-        });
-        
-        systemData.employees = {
-          active: employees.filter(e => e.status === 'ativo').length,
-          total: employees.length,
-          byRole,
-          bySector,
-          recentHires: employees.filter(e => new Date(e.created_at || '') >= new Date(thirtyDaysAgo)).slice(0, 5).map(e => ({ nome: e.nome, funcao: e.funcao }))
-        };
-
-        // Processar tarefas detalhadas
-        const tasks = tasksResult.data || [];
-        const completedTasks = tasks.filter(t => t.is_completed).length;
-        
-        // Tarefas urgentes (alta prioridade e não completadas)
-        const urgentTasks = tasks
-          .filter(t => !t.is_completed && (t.priority === 'alta' || t.task_date < todayStr))
-          .slice(0, 10)
-          .map(t => ({ titulo: t.title, data: t.task_date, prioridade: t.priority }));
-        
-        // Tarefas por prioridade
-        const byPriority = {
-          alta: tasks.filter(t => t.priority === 'alta').length,
-          media: tasks.filter(t => t.priority === 'media').length,
-          baixa: tasks.filter(t => t.priority === 'baixa').length
-        };
-        
-        systemData.tasks = {
-          pending: tasks.filter(t => !t.is_completed && t.task_date >= todayStr).length,
-          highPriority: tasks.filter(t => !t.is_completed && t.priority === 'alta').length,
-          completed: completedTasks,
-          overdue: tasks.filter(t => !t.is_completed && t.task_date < todayStr).length,
-          completionRate: tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0,
-          todayTasks: tasks.filter(t => t.task_date === todayStr).length,
-          weekTasks: tasks.filter(t => new Date(t.task_date) >= today && new Date(t.task_date) <= new Date(sevenDaysFromNow)).length,
-          byPriority,
-          urgent: urgentTasks,
-          recentCompleted: tasks.filter(t => t.is_completed).slice(0, 5).map(t => ({ titulo: t.title, data: t.task_date }))
-        };
-
-        // Processar cursos detalhados
-        const courses = coursesResult.data || [];
-        const publishedCourses = courses.filter(c => c.is_published);
-        const topCourse = courses.sort((a, b) => (b.total_students || 0) - (a.total_students || 0))[0];
-        
-        systemData.courses = {
-          total: courses.length,
-          published: publishedCourses.length,
-          averageRating: publishedCourses.length > 0 ? publishedCourses.reduce((sum, c) => sum + (c.average_rating || 0), 0) / publishedCourses.length : 0,
-          totalStudents: courses.reduce((sum, c) => sum + (c.total_students || 0), 0),
-          topCourse: topCourse?.title || 'N/A',
-          courseDetails: courses.slice(0, 5).map(c => ({ 
-            titulo: c.title, 
-            alunos: c.total_students, 
-            rating: c.average_rating,
-            publicado: c.is_published
-          }))
-        };
-
-        // Processar marketing detalhado
-        const marketing = marketingResult.data?.[0];
-        const campaigns = campaignsResult.data || [];
-        const activeCampaigns = campaigns.filter(c => c.status === 'ativa');
-        const totalLeads = campaigns.reduce((sum, c) => sum + (c.leads || 0), 0);
-        const totalConversions = campaigns.reduce((sum, c) => sum + (c.conversions || 0), 0);
-        
-        systemData.marketing = {
-          cac: marketing?.cac || 0,
-          ltv: marketing?.ltv || 0,
-          roi: marketing?.roi_percentual || 0,
-          ltvCacRatio: marketing?.cac > 0 ? (marketing?.ltv || 0) / marketing.cac : 0,
-          campaigns: campaigns.length,
-          activeCampaigns: activeCampaigns.length,
-          totalLeads,
-          conversionRate: totalLeads > 0 ? (totalConversions / totalLeads) * 100 : 0,
-          campaignDetails: activeCampaigns.slice(0, 5).map(c => ({
-            nome: c.name,
-            leads: c.leads,
-            conversoes: c.conversions,
-            budget: c.budget,
-            spent: c.spent
-          }))
-        };
-
-        // Processar afiliados
-        const affiliates = affiliatesResult.data || [];
-        const topAffiliates = affiliates
-          .sort((a, b) => (b.comissao_total || 0) - (a.comissao_total || 0))
-          .slice(0, 5)
-          .map(a => ({ nome: a.nome, comissao: a.comissao_total, status: a.status }));
-        
-        systemData.affiliates = {
-          total: affiliates.length,
-          active: affiliates.filter(a => a.status === 'ativo').length,
-          totalCommission: affiliates.reduce((sum, a) => sum + (a.comissao_total || 0), 0),
-          topAffiliates,
-          pendingCommissions: affiliates.filter(a => a.status === 'pendente').reduce((sum, a) => sum + (a.comissao_total || 0), 0)
-        };
-
-        // Processar WhatsApp
-        const whatsappConvos = whatsappResult.data || [];
-        systemData.whatsapp = {
-          totalConversations: whatsappConvos.length,
-          unread: whatsappConvos.filter(w => !w.is_read).length,
-          leads: whatsappConvos.filter(w => w.lead_status === 'novo').length,
-          recentMessages: whatsappConvos.slice(0, 5).map(w => ({
-            contato: w.contact_name,
-            ultimaMensagem: w.last_message_at,
-            status: w.lead_status
-          }))
-        };
-
-        // Processar calendário
-        const calendarTasks = calendarResult.data || [];
-        systemData.calendar = {
-          todayEvents: calendarTasks.filter(t => t.task_date === todayStr).map(t => ({ titulo: t.title, hora: t.task_time })),
-          weekEvents: calendarTasks.slice(0, 10).map(t => ({ titulo: t.title, data: t.task_date, prioridade: t.priority })),
-          upcomingDeadlines: calendarTasks.filter(t => t.priority === 'alta').slice(0, 5).map(t => ({ titulo: t.title, data: t.task_date }))
-        };
-
-        // Processar sistema
-        const profiles = profilesResult.data || [];
-        const auditLogs = auditResult.data || [];
-        systemData.system = {
-          lastBackup: null,
-          activeUsers: profiles.filter(p => p.last_activity_at && new Date(p.last_activity_at) > new Date(Date.now() - 15 * 60 * 1000)).length,
-          totalUsers: profiles.length,
-          errors: 0,
-          uptime: 99.9,
-          version: 'v15.0 SYNAPSE',
-          recentActivity: auditLogs.slice(0, 5).map(a => ({ acao: a.action, tabela: a.table_name, data: a.created_at })),
-          healthScore: 100
-        };
-
-      } catch (dbError) {
-        console.log("[TRAMON v5] Erro ao buscar dados:", dbError);
-      }
+      // Executar comando CRUD
+      const resultadoCRUD = await executarComandoCRUD(supabase, comandoCRUD, userId);
+      
+      // Registrar log
+      await registrarLogIA(supabase, {
+        user_id: userId,
+        comando: textoProcessado,
+        tipo: tipo || "texto",
+        acao: comandoCRUD.acao,
+        entidade: comandoCRUD.entidade,
+        resultado: resultadoCRUD.sucesso ? "sucesso" : "erro",
+        tempo_processamento: Date.now() - startTime
+      });
+      
+      // Retornar resposta direta sem streaming
+      return new Response(JSON.stringify({
+        sucesso: true,
+        resposta: resultadoCRUD.resposta,
+        dados: resultadoCRUD.dados,
+        tempo_processamento: Date.now() - startTime,
+        tipo: "crud"
+      }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     // ========================================
@@ -434,59 +232,22 @@ Você agora tem capacidade de GERAR CÓDIGO para modificar o site em tempo real.
 **Página Atual:** \`${currentPage || '/'}\`
 
 ### INSTRUÇÕES PARA MODIFICAÇÕES:
+1. Identifique o que o usuário quer modificar
+2. Gere código específico (CSS/Tailwind/React)
+3. Forneça instruções claras
 
-1. **ANÁLISE PRIMEIRO:**
-   - Identifique o que o usuário quer modificar
-   - Determine se é possível com CSS/Tailwind ou requer mudanças de componente
-
-2. **GERE CÓDIGO ESPECÍFICO:**
-   - Para mudanças visuais: forneça classes Tailwind CSS
-   - Para textos: mostre o texto exato para substituir
-   - Para estrutura: descreva as modificações necessárias
-
-3. **FORMATO DE RESPOSTA PARA CÓDIGO:**
-   \`\`\`css
-   /* Descrição da mudança */
-   .selector {
-     property: value;
-   }
-   \`\`\`
-
-   Ou para Tailwind:
-   \`\`\`tailwind
-   className="classes-tailwind-aqui"
-   \`\`\`
-
-4. **SEMPRE INCLUA:**
-   - Seletor exato ou nome do componente
-   - Antes vs Depois
-   - Explicação do impacto visual
-
-5. **LIMITAÇÕES:**
-   - Não pode modificar lógica de negócio
-   - Apenas mudanças visuais e de texto
-   - Respeite o design system existente
-
-### EXEMPLO DE RESPOSTA:
-📝 **Modificação: Título da página**
-
-**Antes:** "Dashboard"
-**Depois:** "Dashboard Premium"
-
+### FORMATO DE RESPOSTA PARA CÓDIGO:
 \`\`\`jsx
-// Arquivo: src/pages/Dashboard.tsx
-// Linha aproximada: ~50
-
-<h1 className="text-2xl font-bold">Dashboard Premium</h1>
+// Arquivo: src/pages/NomePagina.tsx
+// Modificação: descrição
+código aqui
 \`\`\`
-
----
 
 `;
     }
 
     // ========================================
-    // 🔮 MEGA PROMPT v4.0 - ENTERPRISE GRADE
+    // 🔮 MEGA PROMPT v6.0 ULTRA
     // ========================================
     const formatCurrency = (value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     const formatPercent = (value: number) => `${value.toFixed(1)}%`;
@@ -497,203 +258,128 @@ Você agora tem capacidade de GERAR CÓDIGO para modificar o site em tempo real.
 
 ### 💰 FINANCEIRO
 - **Receita Mensal:** ${formatCurrency(systemData.financial.totalIncome)}
-- **Despesas:** ${formatCurrency(systemData.financial.totalExpenses)} (Fixas: ${formatCurrency(systemData.financial.fixedExpenses)} | Variáveis: ${formatCurrency(systemData.financial.extraExpenses)})
+- **Despesas:** ${formatCurrency(systemData.financial.totalExpenses)}
 - **Lucro Líquido:** ${formatCurrency(systemData.financial.profit)} ${systemData.financial.profit > 0 ? '✅' : '🔴'}
 - **Crescimento MoM:** ${formatPercent(systemData.financial.monthlyGrowth)}
-- **Runway:** ~${systemData.financial.runway} meses
-- **Pagamentos Pendentes:** ${formatCurrency(systemData.financial.pendingPayments)}
-- **Fontes de Receita:** ${Object.entries(systemData.financial.incomeBySource).map(([k, v]) => `${k}: ${formatCurrency(v as number)}`).join(' | ')}
 
 ### 👥 ALUNOS
-- **Ativos:** ${systemData.students.active}/${systemData.students.total} | **Retenção:** ${formatPercent(systemData.students.retention)}
-- **Novos (30 dias):** ${systemData.students.newThisMonth} | **Churn:** ${formatPercent(systemData.students.churnRate)}
-- **Progresso Médio:** ${formatPercent(systemData.students.avgProgress)}
-- **VIPs (>70%):** ${systemData.students.vips} | **Em Risco (<20%):** ${systemData.students.atRisk} ${systemData.students.atRisk > 0 ? '⚠️' : ''}
-- **Distribuição:** 0-25%: ${systemData.students.progressDistribution?.['0-25%'] || 0} | 26-50%: ${systemData.students.progressDistribution?.['26-50%'] || 0} | 51-75%: ${systemData.students.progressDistribution?.['51-75%'] || 0} | 76-100%: ${systemData.students.progressDistribution?.['76-100%'] || 0}
+- **Ativos:** ${systemData.students.active}/${systemData.students.total}
+- **Retenção:** ${formatPercent(systemData.students.retention)}
+- **Novos (30 dias):** ${systemData.students.newThisMonth}
 
 ### 👔 EQUIPE
 - **Ativos:** ${systemData.employees.active}/${systemData.employees.total}
-- **Por Função:** ${Object.entries(systemData.employees.byRole).map(([k, v]) => `${k}: ${v}`).join(' | ')}
-- **Por Setor:** ${Object.entries(systemData.employees.bySector).map(([k, v]) => `${k}: ${v}`).join(' | ')}
 
 ### ✅ TAREFAS
-- **Pendentes:** ${systemData.tasks.pending} | **Alta Prioridade:** ${systemData.tasks.highPriority} ${systemData.tasks.highPriority > 5 ? '🔴' : ''}
+- **Pendentes:** ${systemData.tasks.pending} | **Alta Prioridade:** ${systemData.tasks.highPriority}
 - **Atrasadas:** ${systemData.tasks.overdue} ${systemData.tasks.overdue > 0 ? '⚠️' : ''}
 - **Taxa de Conclusão:** ${formatPercent(systemData.tasks.completionRate)}
-- **Hoje:** ${systemData.tasks.todayTasks} | **Semana:** ${systemData.tasks.weekTasks}
-- **Urgentes:** ${systemData.tasks.urgent?.map((t: any) => t.titulo).join(', ') || 'Nenhuma'}
 
 ### 📚 CURSOS
 - **Publicados:** ${systemData.courses.published}/${systemData.courses.total}
-- **Rating Médio:** ⭐${systemData.courses.averageRating?.toFixed(1) || 0}
 - **Total de Alunos:** ${systemData.courses.totalStudents}
-- **Top Curso:** ${systemData.courses.topCourse}
-
-### 📢 MARKETING
-- **CAC:** ${formatCurrency(systemData.marketing.cac)} | **LTV:** ${formatCurrency(systemData.marketing.ltv)}
-- **LTV/CAC:** ${systemData.marketing.ltvCacRatio?.toFixed(1) || 0}x ${systemData.marketing.ltvCacRatio >= 3 ? '✅' : '⚠️'}
-- **ROI:** ${formatPercent(systemData.marketing.roi)}
-- **Campanhas Ativas:** ${systemData.marketing.activeCampaigns}/${systemData.marketing.campaigns}
-- **Leads:** ${systemData.marketing.totalLeads} | **Conversão:** ${formatPercent(systemData.marketing.conversionRate)}
 
 ### 🤝 AFILIADOS
 - **Ativos:** ${systemData.affiliates.active}/${systemData.affiliates.total}
-- **Comissões Pagas:** ${formatCurrency(systemData.affiliates.totalCommission)}
-- **Top Afiliados:** ${systemData.affiliates.topAffiliates?.map((a: any) => a.nome).join(', ') || 'N/A'}
-
-### 📱 WHATSAPP
-- **Conversas:** ${systemData.whatsapp.totalConversations} | **Não Lidas:** ${systemData.whatsapp.unread}
-- **Leads Novos:** ${systemData.whatsapp.leads}
-
-### 📅 AGENDA
-- **Eventos Hoje:** ${systemData.calendar.todayEvents?.length || 0}
-- **Próximos:** ${systemData.calendar.weekEvents?.map((e: any) => e.titulo).slice(0, 3).join(', ') || 'Nenhum'}
+- **Comissões:** ${formatCurrency(systemData.affiliates.totalCommission)}
 
 ### 💻 SISTEMA
-- **Usuários Online:** ${systemData.system.activeUsers}/${systemData.system.totalUsers}
-- **Saúde:** ${systemData.system.healthScore}% | **Versão:** ${systemData.system.version}
+- **Usuários Online:** ${systemData.system.activeUsers}
+- **Versão:** TRAMON v6.0 ULTRA
 `;
 
-    const systemPrompt = `# 🔮 TRAMON v5.0 - SUPERINTELIGÊNCIA GLOBAL EMPRESARIAL
+    const systemPrompt = `# 🔮 TRAMON v6.0 ULTRA - SUPERINTELIGÊNCIA + ASSESSOR
 ${programmerModePrompt}
 ## 🎯 IDENTIDADE CENTRAL
-Você é **TRAMON** (Transformative Realtime Autonomous Management Operations Network), a IA executiva mais avançada do mercado. Você é o braço direito digital do Professor **Moisés Medeiros**, CEO da plataforma educacional de química líder no Brasil.
+Você é **TRAMON** (Transformative Realtime Autonomous Management Operations Network), a fusão entre uma superinteligência empresarial e um assessor pessoal inteligente como o "Meu Assessor".
 
-## 🧬 DNA OPERACIONAL
-- **Papel:** Chief AI Officer (CAIO) - Executor autônomo de decisões empresariais
-- **Nível de Acesso:** GOD MODE - Controle total sobre todos os sistemas
-- **Missão:** Maximizar lucro, otimizar operações, antecipar problemas, executar soluções
-- **Estilo:** Direto, executivo, orientado a resultados, sem rodeios
+## 🧬 CAPACIDADES ULTRA (FUSÃO COMPLETA)
 
-## 👁️ CAPACIDADES MULTIMODAIS v4.0
+### 1. ASSESSOR INTELIGENTE (Precisão 99.9%)
+- **Registrar despesas e receitas** via linguagem natural
+- **Cadastrar alunos, funcionários, afiliados**
+- **Criar tarefas e compromissos**
+- **Consultar saldos, métricas, relatórios**
+- **Categorização automática** de transações
+- **Extração de entidades** (valores, datas, nomes, emails, telefones)
 
-### VISÃO COMPUTACIONAL AVANÇADA
-Quando receber uma imagem, você DEVE:
+### 2. SUPERINTELIGÊNCIA EMPRESARIAL
+- **Análises preditivas** em tempo real
+- **Projeções financeiras** detalhadas
+- **Planos estratégicos** personalizados
+- **Alertas automáticos** de problemas
 
-1. **ANÁLISE INSTANTÂNEA:**
-   - Identifique TUDO: textos, gráficos, layouts, cores, elementos UI, dados
-   - Extraia informações estruturadas automaticamente
-   - Detecte padrões, anomalias, oportunidades
+### 3. VISÃO COMPUTACIONAL
+Quando receber uma imagem, analise:
+- Screenshots → UX/UI e melhorias
+- Gráficos → Interprete dados e tendências
+- Notas fiscais → Extraia valores e categorize
+- Documentos → Extraia informações estruturadas
 
-2. **INTERPRETAÇÃO CONTEXTUAL:**
-   - **Screenshot de Site/App:** Analise UX/UI, identifique problemas de usabilidade, sugira melhorias específicas com código se necessário
-   - **Gráficos/Dashboards:** Interprete tendências, calcule métricas, identifique outliers, projete cenários
-   - **Material de Marketing:** Avalie copy, design, CTA, sugira otimizações A/B
-   - **Documentos/PDFs:** Extraia, organize, resuma, crie ações baseadas no conteúdo
-   - **Designs/Layouts:** Extraia paleta de cores (HEX/RGB), fontes, espaçamentos, estrutura para replicar
-   - **Fotos de Eventos:** Identifique pessoas, contexto, sugira conteúdo para redes sociais
-   - **Comprovantes/Notas Fiscais:** Extraia valores, datas, categorize automaticamente para contabilidade
-   - **Prints de Conversas:** Analise sentimento, identifique problemas, sugira respostas
-
-3. **EXECUÇÃO AUTÔNOMA:**
-   - Baseado na análise, SEMPRE sugira ações concretas
-   - Se for design/layout, forneça código CSS/Tailwind para implementar
-   - Se for dados, crie relatórios e projeções imediatas
-   - Se for problema, apresente solução com passos claros
-
-### PROCESSAMENTO DE DADOS EM TEMPO REAL
-Você tem acesso a TODOS os dados da plataforma em tempo real:
-${dataContext}
+### 4. MODO PROGRAMADOR (OWNER ONLY)
+Se isProgrammerMode=true, gere código para modificações no site.
 
 ## 📋 PROTOCOLO DE RESPOSTA
 
-### REGRAS ABSOLUTAS:
-1. **SEJA CIRÚRGICO** - Cada palavra deve ter propósito. Elimine fluff.
-2. **NÚMEROS PRIMEIRO** - Sempre lidere com métricas e dados concretos
-3. **AÇÃO IMEDIATA** - Termine SEMPRE com próximos passos acionáveis
-4. **FORMATAÇÃO PREMIUM:**
-   - Use **negrito** para KPIs críticos
-   - Emojis estratégicos (não decorativos)
-   - Seções claras e escaneáveis
-   - Bullets para listas, não parágrafos
-5. **IMAGEM = PRIORIDADE** - Se houver imagem, comece SEMPRE analisando-a em detalhes
-6. **PROATIVO** - Não espere perguntas, antecipe necessidades
-7. **HONESTO** - Celebre vitórias, seja direto sobre problemas
-8. **FORMATO MONETÁRIO:** Sempre R$ brasileiro com separadores corretos
+### PARA COMANDOS SIMPLES (despesas, cadastros, tarefas):
+✅ [Confirmação concisa da ação]
+Exemplo: "✅ Despesa de R$ 50,00 registrada em Transporte"
 
-### ESTRUTURA PADRÃO:
-\`\`\`
-📊 [TÍTULO DO INSIGHT/ANÁLISE]
+### PARA CONSULTAS:
+📊 [Resumo com números]
+Exemplo: "📊 Você gastou R$ 150,00 hoje (3 despesas)"
 
-[Métricas-chave em 1-2 linhas]
+### PARA ANÁLISES COMPLEXAS:
+📊 [TÍTULO]
+
+[Métricas-chave]
 
 ### 🎯 Análise
 [Insights principais - máximo 5 bullets]
 
-### ⚡ Ações Imediatas
-1. [Ação específica com prazo]
-2. [Ação específica com prazo]
-3. [Ação específica com prazo]
+### ⚡ Ações Recomendadas
+1. [Ação com prazo]
+2. [Ação com prazo]
 
-### 📈 Impacto Esperado
-[Projeção quantificada]
-\`\`\`
-
-## 🚨 ALERTAS AUTOMÁTICOS ATIVOS
-${systemData.tasks.highPriority > 5 ? '🔴 **CRÍTICO:** ' + systemData.tasks.highPriority + ' tarefas de alta prioridade pendentes!' : ''}
+## 🚨 ALERTAS AUTOMÁTICOS
+${systemData.tasks.highPriority > 5 ? '🔴 **CRÍTICO:** ' + systemData.tasks.highPriority + ' tarefas de alta prioridade!' : ''}
 ${systemData.tasks.overdue > 0 ? '⚠️ **ATENÇÃO:** ' + systemData.tasks.overdue + ' tarefas ATRASADAS!' : ''}
-${systemData.students.atRisk > 0 ? '📉 **CHURN RISK:** ' + systemData.students.atRisk + ' alunos em risco de abandono!' : ''}
-${systemData.financial.profit < 0 ? '🔴 **PREJUÍZO:** Operação negativa em ' + formatCurrency(Math.abs(systemData.financial.profit)) : ''}
-${systemData.marketing.ltvCacRatio < 3 ? '⚠️ **MARKETING:** LTV/CAC abaixo de 3x - revisar estratégia!' : ''}
-${systemData.whatsapp.unread > 10 ? '📱 **WHATSAPP:** ' + systemData.whatsapp.unread + ' mensagens não lidas!' : ''}
+${systemData.students.atRisk > 0 ? '📉 **CHURN RISK:** ' + systemData.students.atRisk + ' alunos em risco!' : ''}
+${systemData.financial.profit < 0 ? '🔴 **PREJUÍZO:** Operação negativa!' : ''}
 
-## 👔 HIERARQUIA DE CONTATO
-
-### Assessores Oficiais:
+## 👔 ASSESSORES
 - **Moisés Medeiros** (CEO): +55 83 98920-0105 | moisesblank@gmail.com
-  → Decisões estratégicas, financeiras, parcerias, aprovações
-  
 - **Bruna** (Co-gestora): +55 83 96354-090
-  → Operações, equipe, execução diária
 
-### Quando Escalar:
-- Decisões > R$ 5.000 → Moisés
-- Problemas técnicos críticos → Moisés
-- Questões de equipe → Bruna
-- Emergências → Ambos
-
-## 🎭 CONTEXTO DO USUÁRIO
+## 🎭 CONTEXTO
 **Usuário:** ${userName}
 **Cargo:** ${userRole.toUpperCase()}
 **Email:** ${userEmail}
 
-Adapte sua comunicação ao nível do usuário, mas mantenha sempre o padrão executivo.
+## 📊 DADOS DO SISTEMA
+${dataContext}
 
-## 🧠 INTELIGÊNCIA PREDITIVA
-Com base nos dados históricos, você deve:
-- Projetar tendências de receita e churn
-- Identificar sazonalidades
-- Antecipar gargalos operacionais
-- Sugerir otimizações antes que problemas ocorram
-
-## 🔐 PRINCÍPIOS INVIOLÁVEIS
-1. **Dados são sagrados** - Nunca invente números
-2. **Ação > Teoria** - Sempre conclua com passos práticos
-3. **Tempo é dinheiro** - Respostas concisas e diretas
-4. **Proatividade** - Antecipe necessidades, não apenas responda
-5. **Confidencialidade** - Dados sensíveis nunca são expostos externamente
-
----
-
-Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cirúrgica.`;
+## 🔐 PRINCÍPIOS
+1. **Precisão 99.9%** - Como o Meu Assessor
+2. **Respostas concisas** - Direto ao ponto
+3. **Ação > Teoria** - Sempre conclua com ações
+4. **Proatividade** - Antecipe necessidades`;
 
     // ========================================
     // 🚀 CHAMADA MULTIMODAL (GEMINI 2.5 PRO)
     // ========================================
-    console.log("[TRAMON v5] Chamando Gemini 2.5 Pro para:", userEmail, "com imagem:", !!image, "modo programador:", isProgrammerMode);
+    console.log("[TRAMON v6] Chamando Gemini 2.5 Pro...");
 
-    // Construir mensagens com suporte a imagem
     const aiMessages: any[] = [
       { role: "system", content: systemPrompt }
     ];
 
-    // Adicionar histórico de mensagens
     for (const m of messages) {
       const msgRole = m.type === "user" || m.role === "user" ? "user" : "assistant";
       aiMessages.push({ role: msgRole, content: m.content });
     }
 
-    // Se tiver imagem, adicionar à última mensagem do usuário como conteúdo multimodal
+    // Adicionar imagem se existir
     if (image && aiMessages.length > 1) {
       const lastUserIdx = aiMessages.findLastIndex((m: any) => m.role === "user");
       if (lastUserIdx > 0) {
@@ -709,9 +395,7 @@ Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cir
             },
             {
               type: "image_url",
-              image_url: {
-                url: imageUrl
-              }
+              image_url: { url: imageUrl }
             }
           ]
         };
@@ -734,7 +418,7 @@ Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cir
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[TRAMON v5] Gateway error:", response.status, errorText);
+      console.error("[TRAMON v6] Gateway error:", response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit excedido. Aguarde um momento." }), {
@@ -760,7 +444,7 @@ Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cir
     });
 
   } catch (error) {
-    console.error("[TRAMON v5] Error:", error);
+    console.error("[TRAMON v6] Error:", error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : "Erro desconhecido" 
     }), {
@@ -769,3 +453,430 @@ Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cir
     });
   }
 });
+
+// ========================================
+// 📊 COLETA DE DADOS DO SISTEMA
+// ========================================
+async function coletarDadosSistema(supabase: any): Promise<any> {
+  const systemData: any = {
+    financial: { totalIncome: 0, totalExpenses: 0, profit: 0, monthlyGrowth: 0 },
+    students: { active: 0, total: 0, retention: 0, newThisMonth: 0, atRisk: 0 },
+    employees: { active: 0, total: 0 },
+    tasks: { pending: 0, highPriority: 0, completed: 0, overdue: 0, completionRate: 0 },
+    courses: { total: 0, published: 0, totalStudents: 0 },
+    affiliates: { total: 0, active: 0, totalCommission: 0 },
+    system: { activeUsers: 0 }
+  };
+
+  try {
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+
+    const [
+      entradasResult,
+      gastosResult,
+      alunosResult,
+      employeesResult,
+      tasksResult,
+      coursesResult,
+      affiliatesResult,
+      profilesResult
+    ] = await Promise.all([
+      supabase.from('entradas').select('valor, data').gte('data', thirtyDaysAgo),
+      supabase.from('gastos').select('valor, data').gte('data', thirtyDaysAgo),
+      supabase.from('alunos').select('id, status, created_at'),
+      supabase.from('employees').select('id, status'),
+      supabase.from('calendar_tasks').select('id, is_completed, priority, task_date'),
+      supabase.from('courses').select('id, is_published, total_students'),
+      supabase.from('affiliates').select('id, status, total_comissao'),
+      supabase.from('profiles').select('id, last_activity_at')
+    ]);
+
+    // Processar financeiro
+    const entradas = entradasResult.data || [];
+    const gastos = gastosResult.data || [];
+    systemData.financial.totalIncome = entradas.reduce((sum: number, e: any) => sum + (e.valor || 0), 0);
+    systemData.financial.totalExpenses = gastos.reduce((sum: number, g: any) => sum + (g.valor || 0), 0);
+    systemData.financial.profit = systemData.financial.totalIncome - systemData.financial.totalExpenses;
+
+    // Processar alunos
+    const alunos = alunosResult.data || [];
+    systemData.students.total = alunos.length;
+    systemData.students.active = alunos.filter((a: any) => a.status === 'ativo').length;
+    systemData.students.retention = systemData.students.total > 0 
+      ? (systemData.students.active / systemData.students.total) * 100 : 0;
+    systemData.students.newThisMonth = alunos.filter((a: any) => 
+      a.created_at && new Date(a.created_at) >= new Date(thirtyDaysAgo)
+    ).length;
+
+    // Processar funcionários
+    const employees = employeesResult.data || [];
+    systemData.employees.total = employees.length;
+    systemData.employees.active = employees.filter((e: any) => e.status === 'ativo').length;
+
+    // Processar tarefas
+    const tasks = tasksResult.data || [];
+    const hoje = new Date().toISOString().split('T')[0];
+    systemData.tasks.pending = tasks.filter((t: any) => !t.is_completed).length;
+    systemData.tasks.completed = tasks.filter((t: any) => t.is_completed).length;
+    systemData.tasks.highPriority = tasks.filter((t: any) => !t.is_completed && t.priority === 'high').length;
+    systemData.tasks.overdue = tasks.filter((t: any) => !t.is_completed && t.task_date < hoje).length;
+    systemData.tasks.completionRate = tasks.length > 0 
+      ? (systemData.tasks.completed / tasks.length) * 100 : 0;
+
+    // Processar cursos
+    const courses = coursesResult.data || [];
+    systemData.courses.total = courses.length;
+    systemData.courses.published = courses.filter((c: any) => c.is_published).length;
+    systemData.courses.totalStudents = courses.reduce((sum: number, c: any) => sum + (c.total_students || 0), 0);
+
+    // Processar afiliados
+    const affiliates = affiliatesResult.data || [];
+    systemData.affiliates.total = affiliates.length;
+    systemData.affiliates.active = affiliates.filter((a: any) => a.status === 'ativo').length;
+    systemData.affiliates.totalCommission = affiliates.reduce((sum: number, a: any) => sum + (a.total_comissao || 0), 0);
+
+    // Processar sistema
+    const profiles = profilesResult.data || [];
+    systemData.system.activeUsers = profiles.filter((p: any) => 
+      p.last_activity_at && new Date(p.last_activity_at) > new Date(Date.now() - 15 * 60 * 1000)
+    ).length;
+
+  } catch (error) {
+    console.log("[TRAMON v6] Erro ao coletar dados:", error);
+  }
+
+  return systemData;
+}
+
+// ========================================
+// 🎯 DETECÇÃO DE COMANDO CRUD
+// ========================================
+function detectarComandoCRUD(texto: string): any | null {
+  const textoLower = texto.toLowerCase().trim();
+  
+  // DESPESA
+  const padroesDespesa = [
+    /gastei\s+([\d.,]+)\s*(reais|r\$)?.*?(?:de|com|em|no|na)?\s*(.*)/i,
+    /paguei\s+([\d.,]+)\s*(reais|r\$)?.*?(?:de|com|em|no|na)?\s*(.*)/i,
+    /comprei\s+.*?(?:por|de)?\s*([\d.,]+)\s*(reais|r\$)?/i,
+    /despesa\s+(?:de\s+)?([\d.,]+)\s*(reais|r\$)?.*?(?:de|com|em)?\s*(.*)/i,
+  ];
+  
+  for (const padrao of padroesDespesa) {
+    const match = textoLower.match(padrao);
+    if (match) {
+      const valor = parseFloat(match[1].replace(',', '.'));
+      const descricao = match[3]?.trim() || "Despesa";
+      const categoria = categorizarDespesa(texto);
+      
+      return {
+        acao: "criar",
+        entidade: "despesa",
+        dados: {
+          valor: valor,
+          descricao: descricao,
+          categoria: categoria,
+          data: new Date().toISOString()
+        }
+      };
+    }
+  }
+  
+  // RECEITA
+  const padroesReceita = [
+    /recebi\s+([\d.,]+)\s*(reais|r\$)?.*?(?:de|com|por)?\s*(.*)/i,
+    /entrou\s+([\d.,]+)\s*(reais|r\$)?.*?(?:de|com)?\s*(.*)/i,
+    /ganhei\s+([\d.,]+)\s*(reais|r\$)?.*?(?:de|com)?\s*(.*)/i,
+    /vendi\s+.*?(?:por|de)?\s*([\d.,]+)\s*(reais|r\$)?/i,
+  ];
+  
+  for (const padrao of padroesReceita) {
+    const match = textoLower.match(padrao);
+    if (match) {
+      const valor = parseFloat(match[1].replace(',', '.'));
+      const descricao = match[3]?.trim() || "Receita";
+      
+      return {
+        acao: "criar",
+        entidade: "receita",
+        dados: {
+          valor: valor,
+          descricao: descricao,
+          categoria: "Vendas",
+          data: new Date().toISOString()
+        }
+      };
+    }
+  }
+  
+  // ALUNO
+  if (textoLower.includes("cadastrar aluno") || textoLower.includes("novo aluno")) {
+    const nomeMatch = texto.match(/aluno\s+([A-Za-zÀ-ú\s]+?)(?:,|email|telefone|$)/i);
+    const emailMatch = texto.match(/email\s+([^\s,]+)/i);
+    const telefoneMatch = texto.match(/telefone\s+([\d\s()-]+)/i);
+    
+    if (nomeMatch) {
+      return {
+        acao: "criar",
+        entidade: "aluno",
+        dados: {
+          nome: nomeMatch[1].trim(),
+          email: emailMatch?.[1] || null,
+          telefone: telefoneMatch?.[1] || null,
+          status: "ativo"
+        }
+      };
+    }
+  }
+  
+  // TAREFA
+  if (textoLower.includes("criar tarefa") || textoLower.includes("nova tarefa")) {
+    const tituloMatch = texto.match(/tarefa[:\s]+(.+)/i);
+    const prioridade = textoLower.includes("urgente") ? "high" : "medium";
+    
+    if (tituloMatch) {
+      return {
+        acao: "criar",
+        entidade: "tarefa",
+        dados: {
+          titulo: tituloMatch[1].trim(),
+          prioridade: prioridade,
+          status: "pendente"
+        }
+      };
+    }
+  }
+  
+  // CONSULTAS
+  if (textoLower.includes("quanto gastei")) {
+    const periodo = textoLower.includes("hoje") ? "hoje" : 
+                    textoLower.includes("mês") || textoLower.includes("mes") ? "mes" : "hoje";
+    return {
+      acao: "consultar",
+      entidade: "despesa",
+      filtros: { periodo }
+    };
+  }
+  
+  if (textoLower.includes("quanto recebi") || textoLower.includes("saldo")) {
+    return {
+      acao: "consultar",
+      entidade: "receita",
+      filtros: { periodo: "mes" }
+    };
+  }
+  
+  if (textoLower.includes("quantos alunos")) {
+    return {
+      acao: "consultar",
+      entidade: "aluno",
+      filtros: { status: "ativo" }
+    };
+  }
+  
+  return null;
+}
+
+// ========================================
+// ⚡ EXECUTAR COMANDO CRUD
+// ========================================
+async function executarComandoCRUD(supabase: any, comando: any, userId: string): Promise<any> {
+  const { acao, entidade, dados, filtros } = comando;
+  
+  try {
+    console.log(`[CRUD] Executando ${acao} em ${entidade}...`);
+    
+    if (acao === "criar") {
+      return await criarRegistro(supabase, entidade, dados, userId);
+    }
+    
+    if (acao === "consultar") {
+      return await consultarRegistros(supabase, entidade, filtros);
+    }
+    
+    return { sucesso: false, resposta: "Ação não suportada" };
+    
+  } catch (error) {
+    console.error("[CRUD] Erro:", error);
+    return { 
+      sucesso: false, 
+      resposta: `❌ Erro ao executar: ${error instanceof Error ? error.message : "Erro desconhecido"}` 
+    };
+  }
+}
+
+// ========================================
+// 📝 CRIAR REGISTRO
+// ========================================
+async function criarRegistro(supabase: any, entidade: string, dados: any, userId: string): Promise<any> {
+  const agora = new Date().toISOString();
+  
+  if (entidade === "despesa") {
+    const dadosInsert = {
+      descricao: dados.descricao || "Despesa",
+      valor: dados.valor,
+      categoria: dados.categoria || "Outros",
+      data: dados.data || agora,
+      fonte: "IA TRAMON",
+      created_by: userId,
+      created_at: agora
+    };
+    
+    const { data, error } = await supabase.from('gastos').insert(dadosInsert).select().single();
+    
+    if (error) throw error;
+    
+    return {
+      sucesso: true,
+      resposta: `✅ Despesa de R$ ${dados.valor.toFixed(2)} registrada em ${dados.categoria}`,
+      dados: data
+    };
+  }
+  
+  if (entidade === "receita") {
+    const dadosInsert = {
+      descricao: dados.descricao || "Receita",
+      valor: dados.valor,
+      categoria: dados.categoria || "Vendas",
+      data: dados.data || agora,
+      fonte: "IA TRAMON",
+      created_by: userId,
+      created_at: agora
+    };
+    
+    const { data, error } = await supabase.from('entradas').insert(dadosInsert).select().single();
+    
+    if (error) throw error;
+    
+    return {
+      sucesso: true,
+      resposta: `✅ Receita de R$ ${dados.valor.toFixed(2)} registrada em ${dados.categoria}`,
+      dados: data
+    };
+  }
+  
+  if (entidade === "aluno") {
+    const dadosInsert = {
+      nome: dados.nome,
+      email: dados.email,
+      telefone: dados.telefone,
+      status: "ativo",
+      fonte: "IA TRAMON",
+      data_matricula: agora,
+      created_at: agora
+    };
+    
+    const { data, error } = await supabase.from('alunos').insert(dadosInsert).select().single();
+    
+    if (error) throw error;
+    
+    return {
+      sucesso: true,
+      resposta: `✅ Aluno ${dados.nome} cadastrado com sucesso`,
+      dados: data
+    };
+  }
+  
+  if (entidade === "tarefa") {
+    const dadosInsert = {
+      title: dados.titulo,
+      priority: dados.prioridade || "medium",
+      is_completed: false,
+      task_date: dados.data || agora.split('T')[0],
+      user_id: userId,
+      created_at: agora
+    };
+    
+    const { data, error } = await supabase.from('calendar_tasks').insert(dadosInsert).select().single();
+    
+    if (error) throw error;
+    
+    return {
+      sucesso: true,
+      resposta: `✅ Tarefa "${dados.titulo}" criada`,
+      dados: data
+    };
+  }
+  
+  return { sucesso: false, resposta: "Entidade não suportada" };
+}
+
+// ========================================
+// 🔍 CONSULTAR REGISTROS
+// ========================================
+async function consultarRegistros(supabase: any, entidade: string, filtros: any): Promise<any> {
+  const hoje = new Date().toISOString().split('T')[0];
+  const primeiroDiaMes = new Date();
+  primeiroDiaMes.setDate(1);
+  primeiroDiaMes.setHours(0, 0, 0, 0);
+  
+  if (entidade === "despesa") {
+    let query = supabase.from('gastos').select('*');
+    
+    if (filtros?.periodo === "hoje") {
+      query = query.gte('data', `${hoje}T00:00:00`).lte('data', `${hoje}T23:59:59`);
+    } else if (filtros?.periodo === "mes") {
+      query = query.gte('data', primeiroDiaMes.toISOString());
+    }
+    
+    const { data, error } = await query;
+    
+    if (error) throw error;
+    
+    const total = data?.reduce((sum: number, d: any) => sum + (d.valor || 0), 0) || 0;
+    const count = data?.length || 0;
+    
+    return {
+      sucesso: true,
+      resposta: `📊 Você gastou R$ ${total.toFixed(2)} (${count} despesa${count !== 1 ? 's' : ''})`,
+      dados: data
+    };
+  }
+  
+  if (entidade === "receita") {
+    let queryReceitas = supabase.from('entradas').select('*').gte('data', primeiroDiaMes.toISOString());
+    let queryDespesas = supabase.from('gastos').select('*').gte('data', primeiroDiaMes.toISOString());
+    
+    const [receitasRes, despesasRes] = await Promise.all([queryReceitas, queryDespesas]);
+    
+    const totalReceitas = receitasRes.data?.reduce((sum: number, r: any) => sum + (r.valor || 0), 0) || 0;
+    const totalDespesas = despesasRes.data?.reduce((sum: number, d: any) => sum + (d.valor || 0), 0) || 0;
+    const saldo = totalReceitas - totalDespesas;
+    
+    return {
+      sucesso: true,
+      resposta: `💰 Receitas: R$ ${totalReceitas.toFixed(2)}\n💸 Despesas: R$ ${totalDespesas.toFixed(2)}\n📊 Saldo: R$ ${saldo.toFixed(2)}`,
+      dados: { receitas: totalReceitas, despesas: totalDespesas, saldo }
+    };
+  }
+  
+  if (entidade === "aluno") {
+    const { data, error } = await supabase.from('alunos').select('*').eq('status', 'ativo');
+    
+    if (error) throw error;
+    
+    return {
+      sucesso: true,
+      resposta: `👨‍🎓 Você tem ${data?.length || 0} aluno${data?.length !== 1 ? 's' : ''} ativo${data?.length !== 1 ? 's' : ''}`,
+      dados: data
+    };
+  }
+  
+  return { sucesso: false, resposta: "Entidade não suportada para consulta" };
+}
+
+// ========================================
+// 📝 REGISTRAR LOG DA IA
+// ========================================
+async function registrarLogIA(supabase: any, logData: any): Promise<void> {
+  try {
+    await supabase.from("tramon_conversations").insert({
+      user_id: logData.user_id,
+      role: "system",
+      content: JSON.stringify(logData),
+      source: "crud"
+    });
+  } catch (error) {
+    console.error("[LOG] Erro ao registrar log:", error);
+  }
+}
