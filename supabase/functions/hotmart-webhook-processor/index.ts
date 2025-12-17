@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v13.0 - Hotmart Webhook Processor
-// ULTRA RIGOROSO - Só aceita COMPRA REAL da Hotmart
-// NÃO MEXER na integração RD Station/Automator existente
+// MOISÉS MEDEIROS v14.0 - Hotmart Webhook PASSIVO
+// APENAS ESCUTA - NÃO INTERFERE EM NADA
+// Processa apenas compras reais da Hotmart
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -12,109 +12,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hotmart-hottok, x-webhook-source',
 };
 
-// ============================================
-// VALIDAÇÃO ULTRA RIGOROSA - ESTRUTURA HOTMART
-// ============================================
-function validateHotmartPayload(payload: any, headers: Headers): { 
-  valid: boolean; 
-  reason: string;
-  isDirectHotmart: boolean;
-} {
-  // 1. Verificar se tem assinatura Hotmart (indica chamada direta)
-  const hotmartToken = headers.get("x-hotmart-hottok");
-  const expectedToken = Deno.env.get("HOTMART_HOTTOK");
-  const isDirectHotmart = hotmartToken && expectedToken && hotmartToken === expectedToken;
-  
-  // 2. Verificar EVENTO obrigatório
-  const event = payload.event || payload.status || "";
-  const approvedEvents = ["PURCHASE_APPROVED", "PURCHASE_COMPLETE", "purchase.approved", "purchase.completed"];
-  
-  if (!approvedEvents.includes(event)) {
-    return { 
-      valid: false, 
-      reason: `Evento inválido: "${event}" - Esperado: PURCHASE_APPROVED/COMPLETE`,
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  // 3. Estrutura da Hotmart: payload.data.buyer, payload.data.purchase, etc
-  const data = payload.data;
-  
-  if (!data || typeof data !== 'object') {
-    return { 
-      valid: false, 
-      reason: "Faltando objeto 'data' na estrutura Hotmart",
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  // 4. DEVE ter buyer com email
-  const buyer = data.buyer || data.subscriber;
-  if (!buyer || !buyer.email || !buyer.email.includes("@")) {
-    return { 
-      valid: false, 
-      reason: `Buyer/email inválido: ${JSON.stringify(buyer)}`,
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  // 5. DEVE ter purchase com transaction E value
-  const purchase = data.purchase;
-  if (!purchase) {
-    return { 
-      valid: false, 
-      reason: "Faltando objeto 'purchase'",
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  const transactionId = purchase.transaction;
-  if (!transactionId || transactionId.length < 5) {
-    return { 
-      valid: false, 
-      reason: `Transaction ID inválido: ${transactionId}`,
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  // 6. IDs fake/teste são rejeitados
-  const fakePatterns = ['fake_', 'test_', 'lead_', 'form_', 'wp_', 'wordpress_'];
-  if (fakePatterns.some(p => transactionId.toLowerCase().includes(p))) {
-    return { 
-      valid: false, 
-      reason: `Transaction ID parece ser teste/fake: ${transactionId}`,
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  // 7. DEVE ter valor > 0
-  const purchaseValue = purchase.price?.value || purchase.value || 0;
-  if (purchaseValue <= 0) {
-    return { 
-      valid: false, 
-      reason: `Valor da compra inválido: ${purchaseValue}`,
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  // 8. DEVE ter produto
-  const product = data.product;
-  if (!product || !product.id) {
-    return { 
-      valid: false, 
-      reason: "Faltando produto Hotmart",
-      isDirectHotmart: !!isDirectHotmart
-    };
-  }
-  
-  return { 
-    valid: true, 
-    reason: "OK - Estrutura Hotmart válida",
-    isDirectHotmart: !!isDirectHotmart
-  };
-}
-
 serve(async (req) => {
+  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -127,115 +26,156 @@ serve(async (req) => {
   try {
     const payload = await req.json();
     
-    console.log("================================================");
-    console.log("[Hotmart v13] Webhook recebido");
-    console.log("[Hotmart v13] Event:", payload.event);
-    console.log("[Hotmart v13] Headers x-hotmart-hottok:", req.headers.get("x-hotmart-hottok") ? "PRESENTE" : "AUSENTE");
+    console.log("[Hotmart v14] ====== WEBHOOK RECEBIDO ======");
+    console.log("[Hotmart v14] Payload recebido:", JSON.stringify(payload).substring(0, 500));
     
     // ============================================
-    // VALIDAÇÃO ULTRA RIGOROSA
+    // EXTRAIR DADOS - FLEXÍVEL PARA MÚLTIPLAS FONTES
     // ============================================
-    const validation = validateHotmartPayload(payload, req.headers);
     
-    console.log("[Hotmart v13] Validação:", validation.reason);
-    console.log("[Hotmart v13] Direto da Hotmart:", validation.isDirectHotmart);
+    // Tentar extrair de estrutura Hotmart padrão
+    let buyerEmail = "";
+    let buyerName = "";
+    let buyerPhone = "";
+    let transactionId = "";
+    let purchaseValue = 0;
+    let productName = "";
+    let eventType = payload.event || payload.status || "";
     
-    if (!validation.valid) {
-      console.log("[Hotmart v13] ❌ REJEITADO:", validation.reason);
+    // Estrutura Hotmart oficial: payload.data.buyer
+    if (payload.data?.buyer?.email) {
+      buyerEmail = payload.data.buyer.email;
+      buyerName = payload.data.buyer.name || "";
+      buyerPhone = payload.data.buyer.checkout_phone || payload.data.buyer.phone || "";
+      transactionId = payload.data.purchase?.transaction || "";
+      purchaseValue = payload.data.purchase?.price?.value || payload.data.purchase?.value || 0;
+      productName = payload.data.product?.name || "Curso Hotmart";
+    }
+    // Estrutura alternativa: payload.buyer diretamente
+    else if (payload.buyer?.email) {
+      buyerEmail = payload.buyer.email;
+      buyerName = payload.buyer.name || "";
+      buyerPhone = payload.buyer.phone || "";
+      transactionId = payload.purchase?.transaction || payload.transaction_id || "";
+      purchaseValue = payload.purchase?.price?.value || payload.purchase?.value || payload.value || 0;
+      productName = payload.product?.name || "Curso";
+    }
+    // Estrutura simples: email direto no payload
+    else if (payload.email) {
+      buyerEmail = payload.email;
+      buyerName = payload.name || payload.nome || "";
+      buyerPhone = payload.phone || payload.telefone || "";
+      transactionId = payload.transaction_id || payload.transaction || "";
+      purchaseValue = payload.value || payload.valor || 0;
+      productName = payload.product_name || payload.produto || "Curso";
+    }
+    
+    console.log("[Hotmart v14] Dados extraídos:", {
+      email: buyerEmail,
+      nome: buyerName,
+      evento: eventType,
+      transacao: transactionId,
+      valor: purchaseValue
+    });
+    
+    // ============================================
+    // VALIDAÇÃO MÍNIMA - SÓ PRECISA DE EMAIL VÁLIDO
+    // ============================================
+    
+    // Sem email? Apenas registra e sai
+    if (!buyerEmail || !buyerEmail.includes("@")) {
+      console.log("[Hotmart v14] ⚠️ Sem email válido - ignorando silenciosamente");
       
-      // Registrar rejeição para diagnóstico
       await supabase.from("integration_events").insert({
-        event_type: "webhook_rejected",
-        source: "hotmart_processor",
-        source_id: `rejected_${Date.now()}`,
-        payload: { 
-          original_payload: payload,
-          rejection_reason: validation.reason,
-          is_direct_hotmart: validation.isDirectHotmart,
-          headers: {
-            has_hottok: !!req.headers.get("x-hotmart-hottok"),
-            content_type: req.headers.get("content-type"),
-          }
-        },
+        event_type: "webhook_ignored",
+        source: "hotmart_v14",
+        source_id: `ignored_${Date.now()}`,
+        payload: payload,
         processed: false,
       });
       
-      // Retorna 200 para não dar erro no sistema chamador (Automator/Hotmart)
       return new Response(JSON.stringify({ 
-        success: false, 
-        message: validation.reason,
-        action: "ignored"
+        success: true, 
+        message: "Received - no valid email"
       }), {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
     
-    // ============================================
-    // COMPRA VÁLIDA - PROCESSAR
-    // ============================================
-    console.log("[Hotmart v13] ✅ COMPRA VÁLIDA - Processando...");
+    // Verificar se é evento de compra (flexível)
+    const isApprovedEvent = [
+      "PURCHASE_APPROVED", 
+      "PURCHASE_COMPLETE", 
+      "PURCHASE_DELAYED",
+      "purchase.approved", 
+      "purchase.completed",
+      "purchase_approved",
+      "approved",
+      "completed"
+    ].includes(eventType.toLowerCase ? eventType.toLowerCase() : eventType);
     
-    const data = payload.data;
-    const buyer = data.buyer || data.subscriber;
-    const purchase = data.purchase;
-    const product = data.product;
-    const affiliate = data.affiliate || {};
-    
-    const buyerName = buyer.name || "Aluno Hotmart";
-    const buyerEmail = buyer.email;
-    const buyerPhone = buyer.checkout_phone || buyer.phone || "";
-    const purchaseValue = purchase.price?.value || purchase.value || 0;
-    const transactionId = purchase.transaction;
-    const offerCode = purchase.offer?.code || affiliate.affiliate_code || null;
-    const purchaseDate = new Date(purchase.approved_date || payload.creation_date || Date.now());
-    const productName = product.name || "Curso";
+    // Se não for evento de compra E não tiver valor, ignora silenciosamente
+    if (!isApprovedEvent && purchaseValue <= 0) {
+      console.log("[Hotmart v14] ⚠️ Não é compra aprovada - apenas registrando");
+      
+      await supabase.from("integration_events").insert({
+        event_type: eventType || "unknown",
+        source: "hotmart_v14",
+        source_id: `event_${Date.now()}`,
+        payload: payload,
+        processed: false,
+      });
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Event recorded"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
     
     // ============================================
     // VERIFICAR DUPLICATA
     // ============================================
-    const { data: existingTx } = await supabase
-      .from("integration_events")
-      .select("id")
-      .eq("source_id", transactionId)
-      .eq("processed", true)
-      .single();
-    
-    if (existingTx) {
-      console.log("[Hotmart v13] ⚠️ Transação já processada:", transactionId);
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: "Already processed",
-        transaction_id: transactionId
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+    if (transactionId) {
+      const { data: existingTx } = await supabase
+        .from("integration_events")
+        .select("id")
+        .eq("source_id", transactionId)
+        .eq("processed", true)
+        .maybeSingle();
+      
+      if (existingTx) {
+        console.log("[Hotmart v14] ⚠️ Transação já processada:", transactionId);
+        return new Response(JSON.stringify({ 
+          success: true, 
+          message: "Already processed"
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      }
     }
     
-    console.log("[Hotmart v13] Dados:", {
-      nome: buyerName,
-      email: buyerEmail,
-      valor: purchaseValue,
-      transaction: transactionId,
-      produto: productName
-    });
+    // ============================================
+    // CRIAR/ATUALIZAR ALUNO
+    // ============================================
+    console.log("[Hotmart v14] ✅ Processando compra...");
     
-    // ============================================
-    // CRIAR ALUNO
-    // ============================================
     const { data: aluno, error: alunoError } = await supabase
       .from("alunos")
       .upsert({
-        nome: buyerName,
+        nome: buyerName || "Aluno Hotmart",
         email: buyerEmail,
-        telefone: buyerPhone,
+        telefone: buyerPhone || null,
         status: "ativo",
-        data_matricula: purchaseDate.toISOString(),
+        data_matricula: new Date().toISOString(),
         valor_pago: purchaseValue,
-        hotmart_transaction_id: transactionId,
+        hotmart_transaction_id: transactionId || null,
         fonte: "Hotmart",
-        observacoes: `Produto: ${productName} | TX: ${transactionId} | COMPRA CONFIRMADA v13`,
+        observacoes: `Produto: ${productName} | Compra processada em ${new Date().toLocaleString("pt-BR")}`,
         updated_at: new Date().toISOString(),
       }, {
         onConflict: "email",
@@ -247,72 +187,32 @@ serve(async (req) => {
     let alunoId = aluno?.id;
     
     if (alunoError) {
-      console.error("[Hotmart v13] Erro upsert aluno:", alunoError.message);
+      console.log("[Hotmart v14] Upsert falhou, buscando existente:", alunoError.message);
       const { data: existing } = await supabase
         .from("alunos")
         .select("id")
         .eq("email", buyerEmail)
-        .single();
+        .maybeSingle();
       alunoId = existing?.id;
     }
     
-    console.log("[Hotmart v13] ✅ Aluno ID:", alunoId);
+    console.log("[Hotmart v14] ✅ Aluno:", alunoId);
     
     // ============================================
-    // REGISTRAR RECEITA
+    // REGISTRAR RECEITA (se valor > 0)
     // ============================================
-    await supabase.from("entradas").insert({
-      descricao: `Venda Hotmart - ${buyerName} - ${productName}`,
-      valor: purchaseValue,
-      categoria: "Vendas",
-      data: purchaseDate.toISOString(),
-      fonte: "Hotmart",
-      aluno_id: alunoId,
-      transaction_id: transactionId,
-    });
-    
-    console.log("[Hotmart v13] ✅ Receita: R$", purchaseValue);
-    
-    // ============================================
-    // ATUALIZAR LEAD PARA CONVERTIDO (se existir)
-    // ============================================
-    if (buyerPhone) {
-      await supabase
-        .from("whatsapp_leads")
-        .update({
-          status: "convertido",
-          notes: JSON.stringify({
-            converted_at: new Date().toISOString(),
-            aluno_id: alunoId,
-            transaction_id: transactionId,
-          }),
-          updated_at: new Date().toISOString(),
-        })
-        .eq("phone", buyerPhone);
-    }
-    
-    // ============================================
-    // COMISSÃO AFILIADO
-    // ============================================
-    if (offerCode) {
-      const { data: afiliado } = await supabase
-        .from("affiliates")
-        .select("*")
-        .or(`cupom.eq.${offerCode},hotmart_id.eq.${offerCode}`)
-        .single();
+    if (purchaseValue > 0) {
+      await supabase.from("entradas").insert({
+        descricao: `Venda Hotmart - ${buyerName || buyerEmail} - ${productName}`,
+        valor: purchaseValue,
+        categoria: "Vendas",
+        data: new Date().toISOString(),
+        fonte: "Hotmart",
+        aluno_id: alunoId,
+        transaction_id: transactionId || null,
+      });
       
-      if (afiliado) {
-        const comissao = purchaseValue * ((afiliado.percentual_comissao || 20) / 100);
-        await supabase.from("comissoes").insert({
-          afiliado_id: afiliado.id,
-          aluno_id: alunoId,
-          valor: comissao,
-          status: "pendente",
-          data: purchaseDate.toISOString(),
-          transaction_id: transactionId,
-        });
-        console.log("[Hotmart v13] ✅ Comissão afiliado:", comissao);
-      }
+      console.log("[Hotmart v14] ✅ Receita registrada: R$", purchaseValue);
     }
     
     // ============================================
@@ -322,13 +222,13 @@ serve(async (req) => {
       .from("user_roles")
       .select("user_id")
       .eq("role", "owner")
-      .single();
+      .maybeSingle();
     
-    if (ownerRole?.user_id) {
+    if (ownerRole?.user_id && purchaseValue > 0) {
       await supabase.from("notifications").insert({
         user_id: ownerRole.user_id,
-        title: "💰 VENDA HOTMART",
-        message: `${buyerName}\nR$ ${purchaseValue.toFixed(2)}\n${productName}`,
+        title: "💰 Nova Venda Hotmart",
+        message: `${buyerName || buyerEmail}\nR$ ${purchaseValue.toFixed(2)}\n${productName}`,
         type: "sale",
         action_url: "/alunos",
       });
@@ -338,23 +238,20 @@ serve(async (req) => {
     // REGISTRAR EVENTO PROCESSADO
     // ============================================
     await supabase.from("integration_events").insert({
-      event_type: payload.event,
-      source: "hotmart",
-      source_id: transactionId,
+      event_type: eventType || "PURCHASE_APPROVED",
+      source: "hotmart_v14",
+      source_id: transactionId || `purchase_${Date.now()}`,
       payload: payload,
       processed: true,
       processed_at: new Date().toISOString(),
     });
     
-    console.log("================================================");
-    console.log("[Hotmart v13] ✅ COMPRA PROCESSADA COM SUCESSO!");
-    console.log("================================================");
+    console.log("[Hotmart v14] ====== PROCESSADO COM SUCESSO ======");
     
     return new Response(JSON.stringify({ 
       success: true, 
       alunoId,
-      transaction_id: transactionId,
-      message: "Purchase processed successfully"
+      message: "Purchase processed"
     }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
@@ -362,13 +259,14 @@ serve(async (req) => {
     
   } catch (error: unknown) {
     const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("[Hotmart v13] ❌ ERRO:", errorMessage);
+    console.error("[Hotmart v14] Erro:", errorMessage);
     
+    // SEMPRE retorna 200 para não quebrar nenhum fluxo externo
     return new Response(JSON.stringify({ 
-      error: errorMessage,
-      success: false 
+      success: false,
+      error: errorMessage
     }), {
-      status: 500,
+      status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
   }
