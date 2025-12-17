@@ -56,7 +56,7 @@ export function GodModePanel() {
             }}
           >
             <Zap className="w-4 h-4 animate-pulse" />
-            MODO DEUS ATIVO
+            MODO MASTER ATIVO
             <span className="text-xs opacity-70 ml-2">Ctrl+Shift+E para sair</span>
           </motion.div>
         )}
@@ -90,7 +90,7 @@ export function GodModePanel() {
             <Zap className="w-4 h-4 text-primary" />
             {!isMinimized && (
               <>
-                <span className="text-sm font-semibold text-white">MODO DEUS</span>
+                <span className="text-sm font-semibold text-white">MODO MASTER</span>
                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-primary/20 border-primary/30 text-primary">
                   v14.0
                 </Badge>

@@ -153,7 +153,7 @@ export function ExecutiveDashboard() {
             <div>
               <h1 className="text-2xl font-bold brand-text">Dashboard Executivo</h1>
               <p className="text-sm text-muted-foreground">
-                MODO DEUS • Visão completa do sistema
+                MODO MASTER • Visão completa do sistema
               </p>
             </div>
           </div>

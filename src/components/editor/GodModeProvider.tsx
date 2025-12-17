@@ -1,6 +1,6 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - GOD MODE PROVIDER
-// Context provider para o MODO DEUS completo
+// Context provider para o MODO MASTER completo
 // Exclusivo para Owner: moisesblank@gmail.com
 // ============================================
 

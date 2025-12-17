@@ -154,7 +154,7 @@ const adminMenuItems = [
 
 // Menu exclusivo do OWNER
 const ownerMenuItems = [
-  { title: "Monitoramento", url: "/monitoramento", icon: Activity, badge: "DEUS" },
+  { title: "Monitoramento", url: "/monitoramento", icon: Activity, badge: "MASTER" },
 ];
 
 export function AppSidebar() {
