@@ -50,3 +50,21 @@ verify_jwt = true
 
 [functions.ocr-receipt]
 verify_jwt = true
+
+[functions.hotmart-webhook-processor]
+verify_jwt = false
+
+[functions.instagram-sync]
+verify_jwt = false
+
+[functions.facebook-ads-sync]
+verify_jwt = false
+
+[functions.send-email]
+verify_jwt = false
+
+[functions.generate-weekly-report]
+verify_jwt = false
+
+[functions.notify-owner]
+verify_jwt = false

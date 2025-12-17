@@ -133,48 +133,128 @@ export type Database = {
       }
       affiliates: {
         Row: {
+          agencia: string | null
+          banco: string | null
           comissao_total: number | null
+          conta: string | null
           created_at: string | null
+          cupom: string | null
           email: string | null
           hotmart_id: string | null
           id: number
           link_afiliado: string | null
           nome: string
+          parceiro_aluno: boolean | null
+          percentual_comissao: number | null
+          pix: string | null
           status: string | null
           taxa_comissao: number | null
           telefone: string | null
           total_vendas: number | null
           user_id: string | null
+          whatsapp: string | null
         }
         Insert: {
+          agencia?: string | null
+          banco?: string | null
           comissao_total?: number | null
+          conta?: string | null
           created_at?: string | null
+          cupom?: string | null
           email?: string | null
           hotmart_id?: string | null
           id?: number
           link_afiliado?: string | null
           nome: string
+          parceiro_aluno?: boolean | null
+          percentual_comissao?: number | null
+          pix?: string | null
           status?: string | null
           taxa_comissao?: number | null
           telefone?: string | null
           total_vendas?: number | null
           user_id?: string | null
+          whatsapp?: string | null
         }
         Update: {
+          agencia?: string | null
+          banco?: string | null
           comissao_total?: number | null
+          conta?: string | null
           created_at?: string | null
+          cupom?: string | null
           email?: string | null
           hotmart_id?: string | null
           id?: number
           link_afiliado?: string | null
           nome?: string
+          parceiro_aluno?: boolean | null
+          percentual_comissao?: number | null
+          pix?: string | null
           status?: string | null
           taxa_comissao?: number | null
           telefone?: string | null
           total_vendas?: number | null
           user_id?: string | null
+          whatsapp?: string | null
         }
         Relationships: []
+      }
+      alunos: {
+        Row: {
+          created_at: string | null
+          curso_id: string | null
+          data_matricula: string | null
+          email: string
+          fonte: string | null
+          hotmart_transaction_id: string | null
+          id: string
+          nome: string
+          observacoes: string | null
+          status: string | null
+          telefone: string | null
+          updated_at: string | null
+          valor_pago: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          curso_id?: string | null
+          data_matricula?: string | null
+          email: string
+          fonte?: string | null
+          hotmart_transaction_id?: string | null
+          id?: string
+          nome: string
+          observacoes?: string | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          valor_pago?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          curso_id?: string | null
+          data_matricula?: string | null
+          email?: string
+          fonte?: string | null
+          hotmart_transaction_id?: string | null
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          valor_pago?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alunos_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       analytics_metrics: {
         Row: {
@@ -581,6 +661,60 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comissoes: {
+        Row: {
+          afiliado_id: number | null
+          aluno_id: string | null
+          created_at: string | null
+          data: string | null
+          descricao: string | null
+          id: string
+          pago_em: string | null
+          status: string | null
+          transaction_id: string | null
+          valor: number
+        }
+        Insert: {
+          afiliado_id?: number | null
+          aluno_id?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          pago_em?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          valor: number
+        }
+        Update: {
+          afiliado_id?: number | null
+          aluno_id?: string | null
+          created_at?: string | null
+          data?: string | null
+          descricao?: string | null
+          id?: string
+          pago_em?: string | null
+          status?: string | null
+          transaction_id?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comissoes_afiliado_id_fkey"
+            columns: ["afiliado_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
         ]
@@ -1309,6 +1443,56 @@ export type Database = {
           },
         ]
       }
+      entradas: {
+        Row: {
+          aluno_id: string | null
+          categoria: string | null
+          created_at: string | null
+          created_by: string | null
+          data: string | null
+          descricao: string
+          fonte: string | null
+          id: string
+          transaction_id: string | null
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          aluno_id?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data?: string | null
+          descricao: string
+          fonte?: string | null
+          id?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          aluno_id?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data?: string | null
+          descricao?: string
+          fonte?: string | null
+          id?: string
+          transaction_id?: string | null
+          updated_at?: string | null
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "entradas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           created_at: string | null
@@ -1349,6 +1533,63 @@ export type Database = {
           next_maintenance?: string | null
           notes?: string | null
           serial_number?: string | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      facebook_ads_metrics: {
+        Row: {
+          alcance: number | null
+          campanha_id: string
+          campanha_nome: string | null
+          cliques: number | null
+          conversoes: number | null
+          cpc: number | null
+          cpm: number | null
+          ctr: number | null
+          data: string
+          id: string
+          impressoes: number | null
+          investimento: number | null
+          receita: number | null
+          roi: number | null
+          status: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          alcance?: number | null
+          campanha_id: string
+          campanha_nome?: string | null
+          cliques?: number | null
+          conversoes?: number | null
+          cpc?: number | null
+          cpm?: number | null
+          ctr?: number | null
+          data: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          receita?: number | null
+          roi?: number | null
+          status?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          alcance?: number | null
+          campanha_id?: string
+          campanha_nome?: string | null
+          cliques?: number | null
+          conversoes?: number | null
+          cpc?: number | null
+          cpm?: number | null
+          ctr?: number | null
+          data?: string
+          id?: string
+          impressoes?: number | null
+          investimento?: number | null
+          receita?: number | null
+          roi?: number | null
           status?: string | null
           updated_at?: string | null
         }
@@ -1443,6 +1684,48 @@ export type Database = {
           title?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      gastos: {
+        Row: {
+          categoria: string | null
+          comprovante_url: string | null
+          created_at: string | null
+          created_by: string | null
+          data: string | null
+          descricao: string
+          fonte: string | null
+          fornecedor: string | null
+          id: string
+          updated_at: string | null
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          comprovante_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data?: string | null
+          descricao: string
+          fonte?: string | null
+          fornecedor?: string | null
+          id?: string
+          updated_at?: string | null
+          valor: number
+        }
+        Update: {
+          categoria?: string | null
+          comprovante_url?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data?: string | null
+          descricao?: string
+          fonte?: string | null
+          fornecedor?: string | null
+          id?: string
+          updated_at?: string | null
+          valor?: number
         }
         Relationships: []
       }
@@ -1562,6 +1845,45 @@ export type Database = {
           id?: number
           mes_referencia?: string | null
           valor?: number
+        }
+        Relationships: []
+      }
+      instagram_metrics: {
+        Row: {
+          alcance: number | null
+          created_at: string | null
+          data: string
+          engajamento_rate: number | null
+          id: string
+          impressoes: number | null
+          novos_seguidores: number | null
+          posts_count: number | null
+          seguidores: number | null
+          visualizacoes_perfil: number | null
+        }
+        Insert: {
+          alcance?: number | null
+          created_at?: string | null
+          data: string
+          engajamento_rate?: number | null
+          id?: string
+          impressoes?: number | null
+          novos_seguidores?: number | null
+          posts_count?: number | null
+          seguidores?: number | null
+          visualizacoes_perfil?: number | null
+        }
+        Update: {
+          alcance?: number | null
+          created_at?: string | null
+          data?: string
+          engajamento_rate?: number | null
+          id?: string
+          impressoes?: number | null
+          novos_seguidores?: number | null
+          posts_count?: number | null
+          seguidores?: number | null
+          visualizacoes_perfil?: number | null
         }
         Relationships: []
       }
@@ -3219,6 +3541,54 @@ export type Database = {
           setting_value?: Json
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      tarefas: {
+        Row: {
+          concluido_em: string | null
+          created_at: string | null
+          created_by: string | null
+          descricao: string | null
+          fonte: string | null
+          id: string
+          lead_id: string | null
+          prazo: string | null
+          prioridade: string | null
+          responsavel: string | null
+          status: string | null
+          titulo: string
+          updated_at: string | null
+        }
+        Insert: {
+          concluido_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          fonte?: string | null
+          id?: string
+          lead_id?: string | null
+          prazo?: string | null
+          prioridade?: string | null
+          responsavel?: string | null
+          status?: string | null
+          titulo: string
+          updated_at?: string | null
+        }
+        Update: {
+          concluido_em?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          fonte?: string | null
+          id?: string
+          lead_id?: string | null
+          prazo?: string | null
+          prioridade?: string | null
+          responsavel?: string | null
+          status?: string | null
+          titulo?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
