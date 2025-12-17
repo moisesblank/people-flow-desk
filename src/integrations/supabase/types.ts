@@ -5649,8 +5649,7 @@ export type Database = {
       }
       employees_public: {
         Row: {
-          data_admissao: string | null
-          email: string | null
+          created_at: string | null
           funcao: string | null
           horario_trabalho: string | null
           id: number | null
@@ -5659,8 +5658,7 @@ export type Database = {
           status: Database["public"]["Enums"]["employee_status"] | null
         }
         Insert: {
-          data_admissao?: string | null
-          email?: string | null
+          created_at?: string | null
           funcao?: string | null
           horario_trabalho?: string | null
           id?: number | null
@@ -5669,8 +5667,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["employee_status"] | null
         }
         Update: {
-          data_admissao?: string | null
-          email?: string | null
+          created_at?: string | null
           funcao?: string | null
           horario_trabalho?: string | null
           id?: number | null
@@ -5682,6 +5679,7 @@ export type Database = {
       }
       employees_safe: {
         Row: {
+          created_at: string | null
           data_admissao: string | null
           email: string | null
           funcao: string | null
@@ -5693,6 +5691,7 @@ export type Database = {
           setor: Database["public"]["Enums"]["sector_type"] | null
           status: Database["public"]["Enums"]["employee_status"] | null
           telefone: string | null
+          updated_at: string | null
         }
         Relationships: []
       }
@@ -5729,27 +5728,60 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_activity_summary: {
+        Row: {
+          action: string | null
+          data: string | null
+          total: number | null
+          usuarios_unicos: number | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null
+          bio: string | null
+          created_at: string | null
+          email: string | null
           id: string | null
           is_online: boolean | null
           last_activity_at: string | null
+          last_login_at: string | null
+          level: number | null
           nome: string | null
+          phone: string | null
+          streak_days: number | null
+          xp_total: number | null
         }
         Insert: {
           avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: never
           id?: string | null
           is_online?: boolean | null
-          last_activity_at?: string | null
+          last_activity_at?: never
+          last_login_at?: never
+          level?: number | null
           nome?: string | null
+          phone?: never
+          streak_days?: number | null
+          xp_total?: number | null
         }
         Update: {
           avatar_url?: string | null
+          bio?: string | null
+          created_at?: string | null
+          email?: never
           id?: string | null
           is_online?: boolean | null
-          last_activity_at?: string | null
+          last_activity_at?: never
+          last_login_at?: never
+          level?: number | null
           nome?: string | null
+          phone?: never
+          streak_days?: number | null
+          xp_total?: number | null
         }
         Relationships: []
       }
@@ -5923,6 +5955,8 @@ export type Database = {
         }
         Returns: undefined
       }
+      mask_email: { Args: { p_email: string }; Returns: string }
+      mask_phone: { Args: { p_phone: string }; Returns: string }
       register_user_login: {
         Args: {
           _browser?: string
