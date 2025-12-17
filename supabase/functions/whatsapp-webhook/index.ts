@@ -79,21 +79,82 @@ const getMediaInfo = (message: any) => {
 // ==============================================================================
 // PROCESSAMENTO INTELIGENTE DE LINGUAGEM NATURAL
 // ==============================================================================
+
+// Função para converter "mil" e "milhão" para números
+const parseValueWithMultiplier = (text: string): number | null => {
+  // Remove R$ e espaços extras
+  let cleaned = text.toLowerCase().replace(/r\$\s*/g, '').trim();
+  
+  // Padrão: "13 mil", "1.5 mil", "2 milhões"
+  const milMatch = cleaned.match(/(\d+(?:[.,]\d+)?)\s*mil/i);
+  if (milMatch) {
+    return parseFloat(milMatch[1].replace(',', '.')) * 1000;
+  }
+  
+  const milhaoMatch = cleaned.match(/(\d+(?:[.,]\d+)?)\s*milh[õo]/i);
+  if (milhaoMatch) {
+    return parseFloat(milhaoMatch[1].replace(',', '.')) * 1000000;
+  }
+  
+  // Número simples
+  const simpleMatch = cleaned.match(/(\d+(?:[.,]\d+)?)/);
+  if (simpleMatch) {
+    return parseFloat(simpleMatch[1].replace(',', '.'));
+  }
+  
+  return null;
+};
+
 const parseNaturalLanguage = (text: string) => {
   const lowerText = text.toLowerCase().trim();
   
-  // Padrões de finanças - Gastos
-  const gastoPatterns = [
-    /(?:paguei|gastei|comprei|pago)\s+(?:r\$?\s*)?(\d+(?:[.,]\d+)?)\s*(?:reais?)?\s*(?:de|em|no|na)?\s*(.+)/i,
-    /(?:r\$?\s*)?(\d+(?:[.,]\d+)?)\s*(?:reais?)?\s*(?:de|em|no|na|pra|para)\s*(.+)/i,
+  // ==============================================================================
+  // PADRÕES DE GASTOS (expandidos)
+  // ==============================================================================
+  const gastoKeywords = [
+    'paguei', 'gastei', 'comprei', 'pago', 'gastar', 'gastando', 
+    'acabei de gastar', 'acabei de pagar', 'acabei de comprar',
+    'vou gastar', 'vou pagar', 'vou comprar',
+    'gasto de', 'compra de', 'pagamento de'
   ];
   
-  for (const pattern of gastoPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      const valor = parseFloat(match[1].replace(',', '.'));
-      const descricao = match[2].trim();
-      if (valor > 0 && descricao) {
+  const hasGastoKeyword = gastoKeywords.some(k => lowerText.includes(k));
+  
+  if (hasGastoKeyword) {
+    // Tentar extrair valor com "mil" ou "milhão"
+    const valor = parseValueWithMultiplier(text);
+    
+    if (valor && valor > 0) {
+      // Extrair descrição - tudo após o valor
+      let descricao = '';
+      
+      // Padrões de extração de descrição
+      const descPatterns = [
+        /(?:em|de|com|no|na|pra|para)\s+(?:uma?\s+)?(.+?)$/i,
+        /(?:reais?|mil|milhão|milhões)\s+(?:em|de|com|no|na|pra|para)?\s*(.+?)$/i,
+      ];
+      
+      for (const pattern of descPatterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+          descricao = match[1].trim();
+          // Limpar palavras finais irrelevantes
+          descricao = descricao.replace(/\s*(reais?|mil|milhão|milhões)$/i, '').trim();
+          break;
+        }
+      }
+      
+      // Se não encontrou descrição, pegar última parte do texto
+      if (!descricao) {
+        const words = text.split(/\s+/);
+        const lastThree = words.slice(-3).join(' ');
+        if (lastThree && !/\d/.test(lastThree)) {
+          descricao = lastThree;
+        }
+      }
+      
+      if (descricao && descricao.length > 1) {
+        console.log(`🧠 Gasto detectado: R$ ${valor} - ${descricao}`);
         return {
           type: 'finance',
           action: 'expense',
@@ -105,17 +166,47 @@ const parseNaturalLanguage = (text: string) => {
     }
   }
   
-  // Padrões de finanças - Receitas
-  const receitaPatterns = [
-    /(?:recebi|ganhei|entrou)\s+(?:r\$?\s*)?(\d+(?:[.,]\d+)?)\s*(?:reais?)?\s*(?:de|do|da)?\s*(.+)/i,
+  // ==============================================================================
+  // PADRÕES DE RECEITAS (expandidos)
+  // ==============================================================================
+  const receitaKeywords = [
+    'recebi', 'ganhei', 'entrou', 'recebendo', 'receber',
+    'caiu', 'deposito', 'depósito', 'pagamento recebido',
+    'cliente pagou', 'aluno pagou'
   ];
   
-  for (const pattern of receitaPatterns) {
-    const match = text.match(pattern);
-    if (match) {
-      const valor = parseFloat(match[1].replace(',', '.'));
-      const descricao = match[2].trim();
-      if (valor > 0 && descricao) {
+  const hasReceitaKeyword = receitaKeywords.some(k => lowerText.includes(k));
+  
+  if (hasReceitaKeyword) {
+    const valor = parseValueWithMultiplier(text);
+    
+    if (valor && valor > 0) {
+      let descricao = '';
+      
+      const descPatterns = [
+        /(?:de|do|da|por|pelo|pela)\s+(.+?)$/i,
+        /(?:reais?|mil|milhão|milhões)\s+(?:de|do|da|por)?\s*(.+?)$/i,
+      ];
+      
+      for (const pattern of descPatterns) {
+        const match = text.match(pattern);
+        if (match && match[1]) {
+          descricao = match[1].trim();
+          descricao = descricao.replace(/\s*(reais?|mil|milhão|milhões)$/i, '').trim();
+          break;
+        }
+      }
+      
+      if (!descricao) {
+        const words = text.split(/\s+/);
+        const lastThree = words.slice(-3).join(' ');
+        if (lastThree && !/\d/.test(lastThree)) {
+          descricao = lastThree;
+        }
+      }
+      
+      if (descricao && descricao.length > 1) {
+        console.log(`🧠 Receita detectada: R$ ${valor} - ${descricao}`);
         return {
           type: 'finance',
           action: 'income',
@@ -127,8 +218,11 @@ const parseNaturalLanguage = (text: string) => {
     }
   }
   
-  // Perguntas sobre gastos
-  if (lowerText.includes('quanto gastei') || lowerText.includes('quanto paguei')) {
+  // ==============================================================================
+  // CONSULTAS DE GASTOS
+  // ==============================================================================
+  if (lowerText.includes('quanto gastei') || lowerText.includes('quanto paguei') || 
+      lowerText.includes('meus gastos') || lowerText.includes('minhas despesas')) {
     const hoje = lowerText.includes('hoje');
     const mes = lowerText.includes('mês') || lowerText.includes('mes');
     const semana = lowerText.includes('semana');
@@ -140,8 +234,12 @@ const parseNaturalLanguage = (text: string) => {
     };
   }
   
-  // Perguntas sobre saldo
-  if (lowerText.includes('saldo') || lowerText.includes('como estou') || lowerText.includes('como está')) {
+  // ==============================================================================
+  // CONSULTAS DE SALDO
+  // ==============================================================================
+  if (lowerText.includes('saldo') || lowerText.includes('como estou') || 
+      lowerText.includes('como está') || lowerText.includes('balanço') ||
+      lowerText.includes('resumo financeiro')) {
     return {
       type: 'query',
       action: 'balance',
@@ -149,10 +247,13 @@ const parseNaturalLanguage = (text: string) => {
     };
   }
   
-  // Padrões de tarefas/compromissos
+  // ==============================================================================
+  // PADRÕES DE TAREFAS (expandidos)
+  // ==============================================================================
   const tarefaPatterns = [
-    /(?:lembrete?|lembra|adiciona|cria|marca)\s*(?:de|que|tarefa|compromisso)?\s*[:.]?\s*(.+)/i,
+    /(?:lembrete?|lembra|adiciona|cria|marca|anota)\s*(?:de|que|tarefa|compromisso)?\s*[:.]?\s*(.+)/i,
     /(?:tenho|preciso)\s+(?:de\s+)?(.+)\s+(?:amanhã|hoje|segunda|terça|quarta|quinta|sexta|sábado|domingo)/i,
+    /(?:não esquecer|não esquece|não esqueça)\s*(?:de)?\s*(.+)/i,
   ];
   
   for (const pattern of tarefaPatterns) {
@@ -167,8 +268,11 @@ const parseNaturalLanguage = (text: string) => {
     }
   }
   
-  // Perguntas sobre lembretes/tarefas
-  if (lowerText.includes('lembrete') && (lowerText.includes('quais') || lowerText.includes('tenho'))) {
+  // ==============================================================================
+  // CONSULTAS DE TAREFAS
+  // ==============================================================================
+  if ((lowerText.includes('lembrete') || lowerText.includes('tarefa')) && 
+      (lowerText.includes('quais') || lowerText.includes('tenho') || lowerText.includes('lista'))) {
     return {
       type: 'query',
       action: 'tasks_list',
@@ -749,18 +853,42 @@ serve(async (req) => {
 
       if (isManyChat) {
         // ==============================================================================
-        // PAYLOAD MANYCHAT
+        // PAYLOAD MANYCHAT - EXTRAÇÃO ROBUSTA
         // ==============================================================================
         console.log('📱 ManyChat payload detected');
         
-        fromPhone = normalizePhone(
-          body.user_phone || body.subscriber_phone || body.phone || body.whatsapp_phone || ''
-        );
+        // Tentar múltiplos campos de telefone
+        const phoneFields = [
+          body.user_phone,
+          body.subscriber_phone, 
+          body.phone,
+          body.whatsapp_phone,
+          body.wa_phone,
+          body.celular,
+          body.mobile_phone
+        ];
+        
+        fromPhone = '';
+        for (const field of phoneFields) {
+          if (field && typeof field === 'string' && field.replace(/\D/g, '').length >= 8) {
+            fromPhone = normalizePhone(field);
+            break;
+          }
+        }
+        
+        // Se ainda não tem telefone, usar user_id como identificador alternativo
+        const manyChatUserId = body.user_id || body.subscriber_id || '';
+        if (!fromPhone && manyChatUserId) {
+          // Usar ID do ManyChat como identificador temporário
+          fromPhone = `mc_${manyChatUserId}`;
+          console.log('📱 Using ManyChat ID as phone fallback:', fromPhone);
+        }
+        
         messageText = body.user_message || body.last_input_text || body.message || body.text || body.last_text_input || '';
         userName = body.user_name || body.full_name || body.name || body.first_name || 'Lead WhatsApp';
-        messageId = `mc_${body.user_id || body.subscriber_id || Date.now()}_${Date.now()}`;
+        messageId = `mc_${manyChatUserId || Date.now()}_${Date.now()}`;
         
-        console.log(`📲 ManyChat data extracted: phone=${fromPhone}, name=${userName}, message=${messageText}`);
+        console.log(`📲 ManyChat data: phone=${fromPhone}, name=${userName}, userId=${manyChatUserId}, message=${messageText}`);
         
       } else {
         // ==============================================================================
