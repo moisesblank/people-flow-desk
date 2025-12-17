@@ -108,6 +108,11 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
     const messageText = text || input;
     if (!messageText.trim() || isLoading || !user) return;
 
+    // Detectar palavras-chave de ativação
+    const activationKeywords = ["meu assessor", "assessor", "tramon", "olá tramon"];
+    const normalizedInput = messageText.toLowerCase().trim();
+    const isActivationKeyword = activationKeywords.some(kw => normalizedInput === kw || normalizedInput.includes(kw));
+
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
@@ -117,6 +122,30 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
 
     setMessages(prev => [...prev, userMessage]);
     setInput("");
+
+    // Se for keyword de ativação, responder imediatamente sem chamar API
+    if (isActivationKeyword && messages.length <= 1) {
+      const activationResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "assistant",
+        content: `🔮 **Olá, ${user?.email?.split('@')[0] || 'Mestre'}!**
+
+Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empresarial exclusiva.
+
+**O que posso fazer por você agora?**
+
+• 📊 Análise completa do seu negócio
+• 💰 Projeções financeiras detalhadas
+• 🎯 Planos estratégicos personalizados
+• 📈 Relatórios em tempo real
+
+**Selecione uma ação rápida acima** ou me pergunte qualquer coisa!`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, activationResponse]);
+      return;
+    }
+
     setIsLoading(true);
 
     try {
