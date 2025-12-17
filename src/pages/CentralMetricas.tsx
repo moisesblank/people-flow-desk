@@ -4,7 +4,7 @@
 // ============================================
 
 import { Helmet } from "react-helmet";
-import { IntegratedMetricsDashboard } from "@/components/dashboard/IntegratedMetricsDashboard";
+import IntegratedMetricsDashboard from "@/components/dashboard/IntegratedMetricsDashboard";
 
 export default function CentralMetricas() {
   return (
