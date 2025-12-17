@@ -1,8 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v11.0 - MARKETING
-// Spider-Man Theme - Métricas e Campanhas
-// Integração Real com Redes Sociais
-// Funil de Vendas, Automações e Anexos
+// EMPRESARIAL 2090 - MARKETING NEURAL
+// Cyberpunk Edition - AJUDA15
 // ============================================
 
 import { useState } from "react";
@@ -11,6 +9,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { FuturisticCard } from "@/components/ui/futuristic-card";
+import { CyberBackground } from "@/components/ui/cyber-background";
 import { 
   Megaphone, 
   TrendingUp, 
@@ -29,7 +30,9 @@ import {
   Instagram,
   Youtube,
   Video,
-  Paperclip
+  Paperclip,
+  DollarSign,
+  Percent
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { AnimatedAtom, ChemistryTip, BubblingFlask } from "@/components/chemistry/ChemistryVisuals";
@@ -50,97 +53,73 @@ const campaignData = [
 export default function Marketing() {
   const [activeTab, setActiveTab] = useState("overview");
 
+  // Calculate totals
+  const totalBudget = campaignData.reduce((acc, c) => acc + c.budget, 0);
+  const totalSpent = campaignData.reduce((acc, c) => acc + c.spent, 0);
+  const totalLeads = campaignData.reduce((acc, c) => acc + c.leads, 0);
+  const totalConversions = campaignData.reduce((acc, c) => acc + c.conversions, 0);
+
   return (
-    <div className="space-y-6 p-4 md:p-8">
-      {/* Hero Banner com Imagem */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.98 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden"
-      >
-        <img 
-          src={marketingHeroImage} 
-          alt="Marketing Digital - Química do Crescimento" 
-          className="w-full h-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
-        <div className="absolute inset-0 flex items-center justify-between p-8">
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 rounded-xl bg-primary/20">
-                <Megaphone className="h-8 w-8 text-primary" />
-              </div>
-              <div>
-                <h1 className="text-3xl font-bold text-foreground">Central de Marketing</h1>
-                <p className="text-muted-foreground">A fórmula do crescimento digital</p>
-              </div>
-            </div>
-            <div className="flex gap-4">
-              <Button className="brand-gradient gap-2">
-                <Plus className="h-4 w-4" />
+    <div className="relative min-h-screen">
+      <CyberBackground variant="grid" />
+      
+      <div className="relative z-10 p-4 md:p-8 lg:p-12">
+        <div className="mx-auto max-w-7xl space-y-6">
+          {/* Futuristic Header */}
+          <FuturisticPageHeader
+            title="Central de Marketing"
+            subtitle="Neural Marketing Engine - Otimização por IA"
+            icon={Megaphone}
+            badge="GROWTH MATRIX"
+            accentColor="purple"
+            stats={[
+              { label: "Investimento", value: `R$ ${(totalBudget / 1000).toFixed(0)}K`, icon: DollarSign },
+              { label: "Leads", value: totalLeads.toLocaleString(), icon: Users },
+              { label: "Conversões", value: totalConversions, icon: Target },
+              { label: "ROI", value: "340%", icon: Percent },
+            ]}
+            action={
+              <Button className="bg-gradient-to-r from-pink-500 to-purple-600 hover:from-pink-400 hover:to-purple-500 text-white shadow-lg shadow-pink-500/25">
+                <Plus className="h-4 w-4 mr-2" />
                 Nova Campanha
               </Button>
-              <Button variant="outline" className="gap-2">
-                <BarChart3 className="h-4 w-4" />
-                Relatório Completo
-              </Button>
-            </div>
-          </div>
-          <div className="hidden lg:flex items-center gap-4">
-            <img 
-              src={professorImage} 
-              alt="Prof. Moisés Medeiros" 
-              className="w-24 h-24 rounded-full object-cover border-4 border-primary/30 shadow-xl"
-            />
-            <AnimatedAtom size={60} />
-          </div>
-        </div>
-      </motion.div>
+            }
+          />
 
-      {/* KPIs */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[
-          { label: "Investimento Total", value: "R$ 26.000", icon: Target, trend: "+15%", color: "text-primary" },
-          { label: "Leads Gerados", value: "1.570", icon: Users, trend: "+28%", color: "text-emerald-500" },
-          { label: "Conversões", value: "134", icon: MousePointer, trend: "+22%", color: "text-blue-500" },
-          { label: "ROI Médio", value: "340%", icon: TrendingUp, trend: "+45%", color: "text-amber-500" },
-        ].map((kpi, index) => (
-          <motion.div
-            key={kpi.label}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-          >
-            <Card className="border-border/50 hover:border-primary/30 transition-all hover:shadow-lg">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                    <p className="text-2xl font-bold mt-1">{kpi.value}</p>
-                    <Badge variant="secondary" className="mt-2 text-emerald-600 bg-emerald-500/10">
-                      {kpi.trend}
-                    </Badge>
-                  </div>
-                  <div className={`p-3 rounded-xl bg-muted ${kpi.color}`}>
-                    <kpi.icon className="h-6 w-6" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        ))}
-      </div>
+          {/* KPIs Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <FuturisticCard accentColor="purple" className="p-4 text-center">
+              <Target className="h-6 w-6 text-pink-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-pink-400">R$ {(totalBudget / 1000).toFixed(0)}K</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Investimento</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="green" className="p-4 text-center">
+              <Users className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-emerald-400">{totalLeads.toLocaleString()}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Leads</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="blue" className="p-4 text-center">
+              <MousePointer className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-blue-400">{totalConversions}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Conversões</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="gold" className="p-4 text-center">
+              <TrendingUp className="h-6 w-6 text-yellow-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-yellow-400">340%</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">ROI</div>
+            </FuturisticCard>
+          </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="bg-muted/50 p-1 flex-wrap">
-          <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-          <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
-          <TabsTrigger value="automations">Automações</TabsTrigger>
-          <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
-          <TabsTrigger value="social">Redes Sociais</TabsTrigger>
-          <TabsTrigger value="email">E-mail Marketing</TabsTrigger>
-        </TabsList>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+            <TabsList className="bg-muted/50 p-1 flex-wrap">
+              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+              <TabsTrigger value="funnel">Funil de Vendas</TabsTrigger>
+              <TabsTrigger value="automations">Automações</TabsTrigger>
+              <TabsTrigger value="campaigns">Campanhas</TabsTrigger>
+              <TabsTrigger value="social">Redes Sociais</TabsTrigger>
+              <TabsTrigger value="email">E-mail Marketing</TabsTrigger>
+            </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
           {/* Social Media Cards - DADOS REAIS */}
@@ -480,6 +459,8 @@ export default function Marketing() {
           </Card>
         </TabsContent>
       </Tabs>
+        </div>
+      </div>
     </div>
   );
 }
