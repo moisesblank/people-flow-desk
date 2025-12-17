@@ -68,7 +68,6 @@ import { FinancialGoalsWidget } from "@/components/dashboard/FinancialGoalsWidge
 import { FinancialInsights } from "@/components/dashboard/FinancialInsights";
 import { QuickActions } from "@/components/dashboard/QuickActions";
 // FUTURISTIC 2050 - Componentes visuais avançados
-import { WelcomeHero } from "@/components/dashboard/WelcomeHero";
 import { FuturisticHero } from "@/components/dashboard/FuturisticHero";
 import { CyberStatCard } from "@/components/dashboard/CyberStatCard";
 import { HolographicChart } from "@/components/dashboard/HolographicChart";
