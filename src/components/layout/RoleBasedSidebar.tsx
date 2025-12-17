@@ -10,7 +10,7 @@ import {
   Calendar, CreditCard, Calculator, Globe, ClipboardCheck, UserCheck,
   Brain, Link2, Shield, PlayCircle, Megaphone, Rocket, BarChart3,
   FolderOpen, PenTool, Monitor, MapPin, Code, User, Heart, FlaskConical,
-  Gauge, Activity, Zap, Crown, Sparkles
+  Gauge, Activity, Zap, Crown, Sparkles, MessageSquareText, Stethoscope
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -162,6 +162,8 @@ const menuGroups: MenuGroup[] = [
     color: "from-purple-600/80 via-pink-600/80",
     items: [
       { title: "Monitoramento", url: "/monitoramento", icon: Activity, area: "monitoramento", badge: "DEUS" },
+      { title: "Central WhatsApp", url: "/central-whatsapp", icon: MessageSquareText, area: "central-whatsapp", badge: "LIVE" },
+      { title: "Diagnóstico WhatsApp", url: "/diagnostico-whatsapp", icon: Stethoscope, area: "diagnostico-whatsapp" },
     ],
   },
 ];

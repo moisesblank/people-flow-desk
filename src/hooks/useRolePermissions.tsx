@@ -57,7 +57,9 @@ export type SystemArea =
   | "vida-pessoal"
   | "permissoes"
   | "configuracoes"
-  | "monitoramento";
+  | "monitoramento"
+  | "central-whatsapp"
+  | "diagnostico-whatsapp";
 
 // Mapeamento de URLs para áreas
 const URL_TO_AREA: Record<string, SystemArea> = {
@@ -96,6 +98,8 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/permissoes": "permissoes",
   "/configuracoes": "configuracoes",
   "/monitoramento": "monitoramento",
+  "/central-whatsapp": "central-whatsapp",
+  "/diagnostico-whatsapp": "diagnostico-whatsapp",
 };
 
 // ============================================
@@ -110,7 +114,7 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "financas-pessoais", "financas-empresa", "entradas", "pagamentos", "contabilidade",
     "cursos", "simulados", "afiliados", "alunos", "portal-aluno", "gestao-site",
     "relatorios", "guia", "laboratorio", "site-programador", "pessoal", "vida-pessoal",
-    "permissoes", "configuracoes", "monitoramento"
+    "permissoes", "configuracoes", "monitoramento", "central-whatsapp", "diagnostico-whatsapp"
   ],
 
   // ADMIN - Igual owner mas sem vida pessoal e monitoramento
@@ -121,7 +125,7 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "financas-empresa", "entradas", "pagamentos", "contabilidade",
     "cursos", "simulados", "afiliados", "alunos", "portal-aluno", "gestao-site",
     "relatorios", "guia", "laboratorio", "site-programador",
-    "permissoes", "configuracoes"
+    "permissoes", "configuracoes", "central-whatsapp", "diagnostico-whatsapp"
   ],
 
   // COORDENAÇÃO - Gestão de equipe, turmas, professores
