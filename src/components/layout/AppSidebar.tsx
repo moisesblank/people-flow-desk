@@ -1,9 +1,11 @@
 // ============================================
-// SYNAPSE v14.0 - SIDEBAR NAVIGATION
-// Sistema de Navegação com suporte a Owner Mode
+// SYNAPSE v15.0 - SIDEBAR NAVIGATION 2090
+// Sistema de Navegação Ultra-Futurístico
+// Visual Cyberpunk com Animações Avançadas
 // ============================================
 
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, 
   Users, 
@@ -40,14 +42,15 @@ import {
   Gamepad2,
   Car,
   ShoppingCart,
-  
   Gauge,
   MessageSquare,
   Activity,
   Zap,
   Eye,
   Heart,
-  FlaskConical
+  FlaskConical,
+  Sparkles,
+  Crown
 } from "lucide-react";
 import { useLocation } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -57,6 +60,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
+import { SidebarGroupBanner } from "@/components/ui/sidebar-group-banner";
 import {
   Sidebar,
   SidebarContent,
@@ -235,16 +239,12 @@ export function AppSidebar() {
         {/* Main Menu */}
         <SidebarGroup>
           {!collapsed && (
-            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-              <img 
-                src={dashboardImg} 
-                alt="Principal" 
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/80 to-transparent flex items-center px-3">
-                <span className="text-sm font-bold text-white drop-shadow-lg">Principal</span>
-              </div>
-            </div>
+            <SidebarGroupBanner
+              title="Principal"
+              image={dashboardImg}
+              icon={<Brain className="h-4 w-4 text-white" />}
+              accentColor="primary"
+            />
           )}
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Principal</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -275,16 +275,12 @@ export function AppSidebar() {
         {/* Marketing Menu */}
         <SidebarGroup>
           {!collapsed && (
-            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-              <img 
-                src={marketingImg} 
-                alt="Marketing" 
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-orange-600/80 to-transparent flex items-center px-3">
-                <span className="text-sm font-bold text-white drop-shadow-lg">Marketing & Lançamento</span>
-              </div>
-            </div>
+            <SidebarGroupBanner
+              title="Marketing & Lançamento"
+              image={marketingImg}
+              icon={<Rocket className="h-4 w-4 text-white" />}
+              accentColor="orange"
+            />
           )}
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Marketing & Lançamento</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -315,16 +311,12 @@ export function AppSidebar() {
         {/* Class Menu */}
         <SidebarGroup>
           {!collapsed && (
-            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-              <img 
-                src={calendarImg} 
-                alt="Aulas" 
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-blue-600/80 to-transparent flex items-center px-3">
-                <span className="text-sm font-bold text-white drop-shadow-lg">Aulas & Turmas</span>
-              </div>
-            </div>
+            <SidebarGroupBanner
+              title="Aulas & Turmas"
+              image={calendarImg}
+              icon={<GraduationCap className="h-4 w-4 text-white" />}
+              accentColor="blue"
+            />
           )}
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Aulas & Turmas</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -355,16 +347,12 @@ export function AppSidebar() {
         {/* Finance Menu */}
         <SidebarGroup>
           {!collapsed && (
-            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-              <img 
-                src={financeImg} 
-                alt="Finanças" 
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-green-600/80 to-transparent flex items-center px-3">
-                <span className="text-sm font-bold text-white drop-shadow-lg">Finanças</span>
-              </div>
-            </div>
+            <SidebarGroupBanner
+              title="Finanças"
+              image={financeImg}
+              icon={<Wallet className="h-4 w-4 text-white" />}
+              accentColor="green"
+            />
           )}
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Finanças</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -395,16 +383,12 @@ export function AppSidebar() {
         {/* Business Menu */}
         <SidebarGroup>
           {!collapsed && (
-            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-              <img 
-                src={studentsImg} 
-                alt="Negócios" 
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-purple-600/80 to-transparent flex items-center px-3">
-                <span className="text-sm font-bold text-white drop-shadow-lg">Negócios</span>
-              </div>
-            </div>
+            <SidebarGroupBanner
+              title="Negócios"
+              image={studentsImg}
+              icon={<TrendingUp className="h-4 w-4 text-white" />}
+              accentColor="purple"
+            />
           )}
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Negócios</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -435,16 +419,12 @@ export function AppSidebar() {
         {/* Site/Programador Menu - DESENVOLVIMENTO */}
         <SidebarGroup>
           {!collapsed && (
-            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-              <img 
-                src={devImg} 
-                alt="Desenvolvimento" 
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-cyan-600/80 to-transparent flex items-center px-3">
-                <span className="text-sm font-bold text-white drop-shadow-lg">Desenvolvimento</span>
-              </div>
-            </div>
+            <SidebarGroupBanner
+              title="Desenvolvimento"
+              image={devImg}
+              icon={<Code className="h-4 w-4 text-white" />}
+              accentColor="cyan"
+            />
           )}
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Desenvolvimento</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -475,16 +455,12 @@ export function AppSidebar() {
         {/* Pessoal Menu - VIDA PESSOAL */}
         <SidebarGroup>
           {!collapsed && (
-            <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-              <img 
-                src={personalLifeImg} 
-                alt="Vida Pessoal" 
-                className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-              />
-              <div className="absolute inset-0 bg-gradient-to-r from-rose-500/80 to-transparent flex items-center px-3">
-                <span className="text-sm font-bold text-white drop-shadow-lg">Vida Pessoal</span>
-              </div>
-            </div>
+            <SidebarGroupBanner
+              title="Vida Pessoal"
+              image={personalLifeImg}
+              icon={<Heart className="h-4 w-4 text-white" />}
+              accentColor="pink"
+            />
           )}
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Vida Pessoal</SidebarGroupLabel>
           <SidebarGroupContent>
@@ -544,17 +520,12 @@ export function AppSidebar() {
         {isOwner && (
           <SidebarGroup>
             {!collapsed && (
-              <div className="relative mb-2 rounded-lg overflow-hidden h-16 group">
-                <img 
-                  src={godModeImg} 
-                  alt="Modo Deus" 
-                  className="w-full h-full object-cover opacity-70 group-hover:opacity-90 transition-opacity"
-                />
-                <div className="absolute inset-0 bg-gradient-to-r from-amber-500/80 via-purple-600/60 to-transparent flex items-center px-3">
-                  <Zap className="w-4 h-4 text-amber-300 mr-2 animate-pulse" />
-                  <span className="text-sm font-bold text-white drop-shadow-lg">MODO DEUS</span>
-                </div>
-              </div>
+              <SidebarGroupBanner
+                title="MODO DEUS"
+                image={godModeImg}
+                icon={<Crown className="h-4 w-4 text-amber-300" />}
+                accentColor="gold"
+              />
             )}
             <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>
               <span className="flex items-center gap-2">
