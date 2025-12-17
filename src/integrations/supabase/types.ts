@@ -5971,6 +5971,18 @@ export type Database = {
         Args: { emp_salary: number; emp_user_id: string }
         Returns: number
       }
+      get_quiz_questions_for_student: {
+        Args: { p_quiz_id: string }
+        Returns: {
+          id: string
+          options: Json
+          points: number
+          question_position: number
+          question_text: string
+          question_type: string
+          quiz_id: string
+        }[]
+      }
       get_safe_profile: {
         Args: { p_user_id: string }
         Returns: {
