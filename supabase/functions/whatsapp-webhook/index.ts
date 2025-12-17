@@ -8,10 +8,10 @@ const corsHeaders = {
 
 // Números autorizados (Owner e Admin)
 const AUTHORIZED_PHONES = [
-  '5583998920105',  // Owner - Moisés
-  '5583991462045',
-  '558398920105',
-  '5583989201050',
+  '5583998920105',  // Owner - Moisés (principal)
+  '558398920105',   // Owner - Moisés (alternativo)
+  '5583996354090',  // Admin - Bruna Milena
+  '558396354090',   // Admin - Bruna Milena (alternativo)
 ];
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
