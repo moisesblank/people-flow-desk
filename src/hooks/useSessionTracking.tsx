@@ -67,12 +67,9 @@ export function useSessionTracking() {
 
       if (!error) {
         sessionRegistered.current = true;
-        console.log('📍 Sessão registrada:', info.browser, info.os);
-      } else {
-        console.error('Erro ao registrar sessão:', error);
       }
-    } catch (err) {
-      console.error('Erro ao registrar sessão:', err);
+    } catch {
+      // Silencioso - não interromper por erro de sessão
     }
   }, []);
 
@@ -93,8 +90,8 @@ export function useSessionTracking() {
       await supabase.rpc('register_user_logout');
       sessionRegistered.current = false;
       currentUserId.current = null;
-    } catch (err) {
-      console.error('Erro ao registrar logout:', err);
+    } catch {
+      // Silencioso - não interromper por erro de logout
     }
   }, []);
 

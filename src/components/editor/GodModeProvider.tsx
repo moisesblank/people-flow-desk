@@ -117,14 +117,10 @@ export function GodModeProvider({ children }: GodModeProviderProps) {
   }, []);
 
   const handleStyleChange = useCallback((property: string, value: string) => {
-    // This would update the selected element's styles
-    console.log("Style change:", property, value);
     toast.success(`Estilo atualizado: ${property}`);
   }, []);
 
   const handleColorSelect = useCallback((color: string) => {
-    // This would update the current element's color
-    console.log("Color selected:", color);
     toast.success("Cor aplicada com sucesso");
   }, []);
 

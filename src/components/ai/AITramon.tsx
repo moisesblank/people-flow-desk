@@ -216,12 +216,11 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
           { user_id: user.id, role: 'user', content: messageText, source: 'web' },
           { user_id: user.id, role: 'assistant', content: assistantContent, source: 'web' }
         ]);
-      } catch (e) {
-        console.log('Failed to save conversation:', e);
+      } catch {
+        // Silencioso - falha ao salvar conversa não interrompe o fluxo
       }
 
-    } catch (error) {
-      console.error("TRAMON error:", error);
+    } catch {
       toast.error("Não foi possível conectar ao TRAMON. Tente novamente.");
       setMessages(prev => prev.slice(0, -1));
     } finally {

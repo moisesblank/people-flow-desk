@@ -72,8 +72,7 @@ export function RealtimePulse() {
           schema: "public",
           table: "synapse_transactions",
         },
-        (payload) => {
-          console.log("New transaction:", payload);
+        () => {
           setPulse(true);
           setTimeout(() => setPulse(false), 1000);
           fetchStats();
