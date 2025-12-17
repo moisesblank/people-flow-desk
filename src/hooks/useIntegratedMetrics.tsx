@@ -96,6 +96,67 @@ export interface WordPressMetrics {
   traffic_sources: unknown[];
 }
 
+export interface GoogleAnalyticsMetrics {
+  id: string;
+  date: string;
+  sessions: number;
+  users: number;
+  new_users: number;
+  page_views: number;
+  pages_per_session: number;
+  avg_session_duration: number;
+  bounce_rate: number;
+  organic_search: number;
+  direct: number;
+  social: number;
+  referral: number;
+  paid_search: number;
+  top_pages: Array<{ page: string; views: number }>;
+  devices: Array<{ device: string; sessions: number }>;
+  locations: Array<{ country: string; sessions: number }>;
+}
+
+export interface WooCommerceOrder {
+  id: string;
+  order_id: string;
+  order_number: string | null;
+  status: string;
+  currency: string;
+  total: number;
+  subtotal: number;
+  discount_total: number;
+  shipping_total: number;
+  tax_total: number;
+  payment_method: string | null;
+  payment_method_title: string | null;
+  customer_email: string | null;
+  customer_name: string | null;
+  customer_phone: string | null;
+  billing_city: string | null;
+  billing_state: string | null;
+  billing_country: string | null;
+  items_count: number;
+  products: Array<{ name: string; quantity: number; total: string; product_id: number }>;
+  date_created: string;
+  date_paid: string | null;
+  created_at: string;
+}
+
+export interface WooCommerceDailyMetrics {
+  id: string;
+  date: string;
+  total_orders: number;
+  total_revenue: number;
+  average_order_value: number;
+  items_sold: number;
+  new_customers: number;
+  returning_customers: number;
+  abandoned_carts: number;
+  conversion_rate: number;
+  top_products: Array<{ name: string; quantity: number }>;
+  payment_methods: Array<{ method: string; count: number }>;
+}
+
 export interface IntegratedData {
   youtube: YouTubeMetrics | null;
   instagram: InstagramMetrics | null;
@@ -105,6 +166,13 @@ export interface IntegratedData {
   wordpress: {
     metrics: WordPressMetrics | null;
     recentEvents: WordPressEvent[];
+  };
+  googleAnalytics: GoogleAnalyticsMetrics | null;
+  woocommerce: {
+    metrics: WooCommerceDailyMetrics | null;
+    recentOrders: WooCommerceOrder[];
+    todayRevenue: number;
+    todayOrders: number;
   };
   totals: {
     totalFollowers: number;
@@ -235,29 +303,153 @@ const DEMO_DATA: IntegratedData = {
         user_name: "João Silva",
         user_ip: "189.40.xxx.xxx",
         page_url: "https://app.moisesmedeiros.com.br/registro",
-        created_at: new Date(Date.now() - 15 * 60000).toISOString()
+        created_at: new Date(Date.now() - 5 * 60000).toISOString()
       },
       {
         id: "demo-event-2",
-        event_type: "user_login",
-        event_data: {},
+        event_type: "woocommerce_order",
+        event_data: { order_id: "12345", total: 497, items: 1 },
         user_email: "maria@exemplo.com",
         user_name: "Maria Santos",
         user_ip: "177.20.xxx.xxx",
-        page_url: "https://app.moisesmedeiros.com.br/login",
-        created_at: new Date(Date.now() - 30 * 60000).toISOString()
+        page_url: "https://app.moisesmedeiros.com.br/checkout",
+        created_at: new Date(Date.now() - 12 * 60000).toISOString()
       },
       {
         id: "demo-event-3",
-        event_type: "user_registered",
+        event_type: "user_login",
         event_data: {},
         user_email: "pedro@exemplo.com",
         user_name: "Pedro Costa",
         user_ip: "200.150.xxx.xxx",
-        page_url: "https://app.moisesmedeiros.com.br/registro",
-        created_at: new Date(Date.now() - 45 * 60000).toISOString()
+        page_url: "https://app.moisesmedeiros.com.br/login",
+        created_at: new Date(Date.now() - 20 * 60000).toISOString()
+      },
+      {
+        id: "demo-event-4",
+        event_type: "woocommerce_order",
+        event_data: { order_id: "12346", total: 997, items: 2 },
+        user_email: "ana@exemplo.com",
+        user_name: "Ana Oliveira",
+        user_ip: "201.50.xxx.xxx",
+        page_url: "https://app.moisesmedeiros.com.br/checkout",
+        created_at: new Date(Date.now() - 35 * 60000).toISOString()
       }
     ]
+  },
+  googleAnalytics: {
+    id: "demo-ga",
+    date: new Date().toISOString().split('T')[0],
+    sessions: 4521,
+    users: 3245,
+    new_users: 1234,
+    page_views: 15678,
+    pages_per_session: 3.47,
+    avg_session_duration: 185,
+    bounce_rate: 38.5,
+    organic_search: 1456,
+    direct: 987,
+    social: 654,
+    referral: 432,
+    paid_search: 216,
+    top_pages: [
+      { page: "/cursos/quimica-enem", views: 2345 },
+      { page: "/", views: 1987 },
+      { page: "/cursos/vestibular", views: 1543 },
+      { page: "/sobre", views: 876 },
+      { page: "/contato", views: 543 }
+    ],
+    devices: [
+      { device: "mobile", sessions: 2543 },
+      { device: "desktop", sessions: 1654 },
+      { device: "tablet", sessions: 324 }
+    ],
+    locations: [
+      { country: "Brasil", sessions: 4123 },
+      { country: "Portugal", sessions: 234 },
+      { country: "EUA", sessions: 98 }
+    ]
+  },
+  woocommerce: {
+    metrics: {
+      id: "demo-woo",
+      date: new Date().toISOString().split('T')[0],
+      total_orders: 23,
+      total_revenue: 11447.00,
+      average_order_value: 497.70,
+      items_sold: 31,
+      new_customers: 18,
+      returning_customers: 5,
+      abandoned_carts: 12,
+      conversion_rate: 3.8,
+      top_products: [
+        { name: "Curso Completo ENEM", quantity: 15 },
+        { name: "Módulo Química Orgânica", quantity: 8 },
+        { name: "Kit Vestibular 2025", quantity: 8 }
+      ],
+      payment_methods: [
+        { method: "PIX", count: 14 },
+        { method: "Cartão de Crédito", count: 7 },
+        { method: "Boleto", count: 2 }
+      ]
+    },
+    recentOrders: [
+      {
+        id: "demo-order-1",
+        order_id: "12345",
+        order_number: "#12345",
+        status: "completed",
+        currency: "BRL",
+        total: 497,
+        subtotal: 497,
+        discount_total: 0,
+        shipping_total: 0,
+        tax_total: 0,
+        payment_method: "pix",
+        payment_method_title: "PIX",
+        customer_email: "maria@exemplo.com",
+        customer_name: "Maria Santos",
+        customer_phone: "(11) 99999-9999",
+        billing_city: "São Paulo",
+        billing_state: "SP",
+        billing_country: "BR",
+        items_count: 1,
+        products: [{ name: "Curso Completo ENEM", quantity: 1, total: "497", product_id: 1 }],
+        date_created: new Date(Date.now() - 12 * 60000).toISOString(),
+        date_paid: new Date(Date.now() - 12 * 60000).toISOString(),
+        created_at: new Date(Date.now() - 12 * 60000).toISOString()
+      },
+      {
+        id: "demo-order-2",
+        order_id: "12346",
+        order_number: "#12346",
+        status: "completed",
+        currency: "BRL",
+        total: 997,
+        subtotal: 997,
+        discount_total: 0,
+        shipping_total: 0,
+        tax_total: 0,
+        payment_method: "credit_card",
+        payment_method_title: "Cartão de Crédito",
+        customer_email: "ana@exemplo.com",
+        customer_name: "Ana Oliveira",
+        customer_phone: "(21) 98888-8888",
+        billing_city: "Rio de Janeiro",
+        billing_state: "RJ",
+        billing_country: "BR",
+        items_count: 2,
+        products: [
+          { name: "Curso Completo ENEM", quantity: 1, total: "497", product_id: 1 },
+          { name: "Módulo Química Orgânica", quantity: 1, total: "500", product_id: 2 }
+        ],
+        date_created: new Date(Date.now() - 35 * 60000).toISOString(),
+        date_paid: new Date(Date.now() - 35 * 60000).toISOString(),
+        created_at: new Date(Date.now() - 35 * 60000).toISOString()
+      }
+    ],
+    todayRevenue: 5994.00,
+    todayOrders: 12
   },
   totals: {
     totalFollowers: 260981,
@@ -289,7 +481,10 @@ export function useIntegratedMetrics() {
           entradasResult,
           comissoesResult,
           wpMetricsResult,
-          wpEventsResult
+          wpEventsResult,
+          gaMetricsResult,
+          wooMetricsResult,
+          wooOrdersResult
         ] = await Promise.all([
           supabase
             .from("youtube_metrics")
@@ -331,7 +526,22 @@ export function useIntegratedMetrics() {
             .from("wordpress_events")
             .select("*")
             .order("created_at", { ascending: false })
-            .limit(20)
+            .limit(30),
+          supabase
+            .from("google_analytics_metrics")
+            .select("*")
+            .order("date", { ascending: false })
+            .limit(1),
+          supabase
+            .from("woocommerce_daily_metrics")
+            .select("*")
+            .eq("date", today)
+            .single(),
+          supabase
+            .from("woocommerce_orders")
+            .select("*")
+            .order("date_created", { ascending: false })
+            .limit(10)
         ]);
 
         const youtube = youtubeResult.data?.[0] || null;
@@ -343,9 +553,12 @@ export function useIntegratedMetrics() {
         const comissoes = comissoesResult.data || [];
         const wpMetrics = wpMetricsResult.data?.[0] || null;
         const wpEvents = wpEventsResult.data || [];
+        const gaMetrics = gaMetricsResult.data?.[0] || null;
+        const wooMetrics = wooMetricsResult.data || null;
+        const wooOrders = wooOrdersResult.data || [];
 
         // Check if we have any real data
-        const hasRealData = youtube || instagram || facebookAds.length > 0 || tiktok || alunos.length > 0;
+        const hasRealData = youtube || instagram || facebookAds.length > 0 || tiktok || alunos.length > 0 || gaMetrics || wooOrders.length > 0;
         
         if (!hasRealData) {
           setUseDemo(true);
@@ -396,6 +609,12 @@ export function useIntegratedMetrics() {
           ? roiValues.reduce((sum, fb) => sum + (fb.roi || 0), 0) / roiValues.length 
           : 0;
 
+        // Calculate WooCommerce today metrics
+        const todayOrders = wooOrders.filter(o => 
+          o.date_created && new Date(o.date_created).toISOString().split('T')[0] === today
+        );
+        const todayRevenue = todayOrders.reduce((sum, o) => sum + (Number(o.total) || 0), 0);
+
         return {
           youtube,
           instagram,
@@ -406,13 +625,20 @@ export function useIntegratedMetrics() {
             metrics: wpMetrics as WordPressMetrics | null,
             recentEvents: wpEvents as WordPressEvent[]
           },
+          googleAnalytics: gaMetrics as unknown as GoogleAnalyticsMetrics | null,
+          woocommerce: {
+            metrics: wooMetrics as unknown as WooCommerceDailyMetrics | null,
+            recentOrders: wooOrders as unknown as WooCommerceOrder[],
+            todayRevenue,
+            todayOrders: todayOrders.length
+          },
           totals: {
             totalFollowers,
             totalReach,
             totalEngagement,
             totalInvestment,
             totalROI,
-            totalRevenue: hotmart.totalReceita
+            totalRevenue: hotmart.totalReceita + todayRevenue
           }
         };
       } catch (err) {
@@ -421,8 +647,8 @@ export function useIntegratedMetrics() {
         return DEMO_DATA;
       }
     },
-    refetchInterval: 60000, // Refresh every minute
-    staleTime: 30000,
+    refetchInterval: 30000, // Refresh every 30 seconds for more real-time feel
+    staleTime: 15000,
     retry: 1
   });
 
@@ -459,6 +685,18 @@ export function useIntegratedMetrics() {
         }),
       supabase.channel('wordpress-metrics-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'wordpress_metrics' }, () => {
+          refetch();
+        }),
+      supabase.channel('google-analytics-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'google_analytics_metrics' }, () => {
+          refetch();
+        }),
+      supabase.channel('woocommerce-orders-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'woocommerce_orders' }, () => {
+          refetch();
+        }),
+      supabase.channel('woocommerce-metrics-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'woocommerce_daily_metrics' }, () => {
           refetch();
         })
     ];
@@ -540,14 +778,8 @@ export function useIntegratedMetrics() {
       syncFacebookAds(),
       syncTikTok()
     ]);
-    
-    const errors = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.error));
-    if (errors.length > 0) {
-      console.warn(`${errors.length} sync operations had issues`);
-    }
-    
     await refetch();
-    return { success: errors.length === 0, errors };
+    return results;
   }, [syncYouTube, syncInstagram, syncFacebookAds, syncTikTok, refetch]);
 
   return {
