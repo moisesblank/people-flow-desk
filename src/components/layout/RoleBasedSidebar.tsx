@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/sidebar";
 import { motion, AnimatePresence } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { StorageAndBackupWidget } from "./StorageAndBackupWidget";
 
 // Imagens
 import dashboardImg from "@/assets/dashboard-chemistry-hero.jpg";
@@ -321,8 +322,11 @@ export function RoleBasedSidebar() {
         </AnimatePresence>
       </SidebarContent>
 
-      <SidebarFooter className="p-4">
-        <div className={`flex items-center gap-3 ${collapsed ? "justify-center" : ""}`}>
+      <SidebarFooter className="p-2">
+        {/* Storage & Backup Widget */}
+        <StorageAndBackupWidget collapsed={collapsed} />
+        
+        <div className={`flex items-center gap-3 p-2 ${collapsed ? "justify-center" : ""}`}>
           <Avatar className="h-10 w-10 border-2 border-primary/30">
             {userAvatar ? (
               <AvatarImage src={userAvatar} alt={userName || 'User'} />
