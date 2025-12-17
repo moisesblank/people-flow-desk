@@ -5911,6 +5911,7 @@ export type Database = {
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      comprehensive_security_cleanup: { Args: never; Returns: undefined }
       count_entity_attachments: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: number
