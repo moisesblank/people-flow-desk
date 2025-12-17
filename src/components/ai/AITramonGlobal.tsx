@@ -464,49 +464,77 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
         className="hidden"
       />
 
-      {/* Floating Trigger Button - CENTRALIZADO INFERIOR */}
+      {/* Floating Trigger Button - CENTRALIZADO INFERIOR COM CINZA BRILHANTE */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100]"
+            className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100]"
           >
             <motion.button
               onClick={() => setIsOpen(true)}
-              className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-slate-400 via-slate-300 to-zinc-400 shadow-2xl shadow-slate-400/50 flex items-center justify-center group overflow-hidden border border-white/30"
-              whileHover={{ scale: 1.05 }}
+              className="relative h-18 w-18 rounded-2xl bg-gradient-to-br from-gray-200 via-silver-100 to-gray-300 shadow-2xl shadow-gray-400/60 flex items-center justify-center group overflow-hidden border-2 border-white/60"
+              style={{ 
+                background: 'linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 25%, #d4d4d4 50%, #e8e8e8 75%, #f0f0f0 100%)',
+                boxShadow: '0 8px 32px rgba(180, 180, 180, 0.6), 0 0 20px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
+              }}
+              whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Animated shimmer effect */}
+              {/* Animated shimmer effect - mais brilhante */}
               <motion.div
-                className="absolute inset-0 bg-gradient-to-t from-white/40 to-transparent"
+                className="absolute inset-0 bg-gradient-to-t from-white/60 via-white/30 to-transparent"
                 animate={{ y: ['100%', '-100%'] }}
-                transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
+                transition={{ repeat: Infinity, duration: 1.5, ease: 'linear' }}
               />
               
-              {/* Glow effect - cinza brilhante */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-slate-300/60 to-zinc-300/60 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              {/* Glow effect - cinza brilhante intenso */}
+              <motion.div 
+                className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{
+                  background: 'radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(200,200,200,0.4) 50%, transparent 70%)',
+                  filter: 'blur(8px)'
+                }}
+              />
               
-              <Sparkles className="h-7 w-7 text-slate-700 relative z-10 group-hover:scale-110 transition-transform" />
+              <Sparkles className="h-8 w-8 text-gray-600 relative z-10 group-hover:scale-110 transition-transform drop-shadow-lg" />
               
               {/* Online indicator */}
               <motion.div
-                className="absolute -top-1 -right-1 h-4 w-4 bg-green-400 rounded-full border-2 border-white shadow-lg"
-                animate={{ scale: [1, 1.2, 1] }}
-                transition={{ repeat: Infinity, duration: 2 }}
+                className="absolute -top-1 -right-1 h-4 w-4 bg-emerald-400 rounded-full border-2 border-white shadow-lg"
+                animate={{ scale: [1, 1.3, 1], opacity: [1, 0.7, 1] }}
+                transition={{ repeat: Infinity, duration: 1.5 }}
+              />
+
+              {/* Sparkle particles */}
+              <motion.div
+                className="absolute top-1 left-1 h-1.5 w-1.5 bg-white rounded-full"
+                animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 2, delay: 0 }}
+              />
+              <motion.div
+                className="absolute bottom-2 right-2 h-1 w-1 bg-white rounded-full"
+                animate={{ opacity: [0, 1, 0], scale: [0.5, 1, 0.5] }}
+                transition={{ repeat: Infinity, duration: 2, delay: 0.5 }}
               />
             </motion.button>
             
-            {/* Label - cinza brilhante */}
+            {/* Label - cinza brilhante premium */}
             <motion.span 
-              className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-slate-500 to-zinc-500 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-lg border border-white/20"
+              className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-xl border border-white/40"
+              style={{
+                background: 'linear-gradient(135deg, #6b6b6b 0%, #8a8a8a 50%, #6b6b6b 100%)',
+                color: 'white',
+                textShadow: '0 1px 2px rgba(0,0,0,0.3)',
+                boxShadow: '0 4px 16px rgba(100, 100, 100, 0.4)'
+              }}
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              TRAMON v8 ✨
+              ✨ TRAMON v8 ✨
             </motion.span>
           </motion.div>
         )}
