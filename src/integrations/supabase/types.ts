@@ -5222,6 +5222,90 @@ export type Database = {
         }
         Relationships: []
       }
+      wordpress_events: {
+        Row: {
+          created_at: string
+          event_data: Json | null
+          event_type: string
+          id: string
+          page_url: string | null
+          referrer: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_ip: string | null
+          user_name: string | null
+        }
+        Insert: {
+          created_at?: string
+          event_data?: Json | null
+          event_type: string
+          id?: string
+          page_url?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_ip?: string | null
+          user_name?: string | null
+        }
+        Update: {
+          created_at?: string
+          event_data?: Json | null
+          event_type?: string
+          id?: string
+          page_url?: string | null
+          referrer?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_ip?: string | null
+          user_name?: string | null
+        }
+        Relationships: []
+      }
+      wordpress_metrics: {
+        Row: {
+          active_users: number | null
+          avg_session_duration: number | null
+          bounce_rate: number | null
+          date: string
+          id: string
+          new_registrations: number | null
+          page_views: number | null
+          top_pages: Json | null
+          total_users: number | null
+          traffic_sources: Json | null
+          unique_visitors: number | null
+          updated_at: string
+        }
+        Insert: {
+          active_users?: number | null
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          date?: string
+          id?: string
+          new_registrations?: number | null
+          page_views?: number | null
+          top_pages?: Json | null
+          total_users?: number | null
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Update: {
+          active_users?: number | null
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          date?: string
+          id?: string
+          new_registrations?: number | null
+          page_views?: number | null
+          top_pages?: Json | null
+          total_users?: number | null
+          traffic_sources?: Json | null
+          unique_visitors?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       xp_history: {
         Row: {
           amount: number

@@ -71,12 +71,41 @@ export interface HotmartMetrics {
   receitaHoje: number;
 }
 
+export interface WordPressEvent {
+  id: string;
+  event_type: string;
+  event_data: Record<string, unknown>;
+  user_email: string | null;
+  user_name: string | null;
+  user_ip: string | null;
+  page_url: string | null;
+  created_at: string;
+}
+
+export interface WordPressMetrics {
+  id: string;
+  date: string;
+  total_users: number;
+  new_registrations: number;
+  active_users: number;
+  page_views: number;
+  unique_visitors: number;
+  bounce_rate: number;
+  avg_session_duration: number;
+  top_pages: unknown[];
+  traffic_sources: unknown[];
+}
+
 export interface IntegratedData {
   youtube: YouTubeMetrics | null;
   instagram: InstagramMetrics | null;
   facebookAds: FacebookAdsMetrics[];
   tiktok: TikTokMetrics | null;
   hotmart: HotmartMetrics;
+  wordpress: {
+    metrics: WordPressMetrics | null;
+    recentEvents: WordPressEvent[];
+  };
   totals: {
     totalFollowers: number;
     totalReach: number;
@@ -183,6 +212,53 @@ const DEMO_DATA: IntegratedData = {
     vendasHoje: 12,
     receitaHoje: 5994.00
   },
+  wordpress: {
+    metrics: {
+      id: "demo-wp",
+      date: new Date().toISOString().split('T')[0],
+      total_users: 2456,
+      new_registrations: 34,
+      active_users: 189,
+      page_views: 12456,
+      unique_visitors: 3421,
+      bounce_rate: 42.5,
+      avg_session_duration: 245,
+      top_pages: [],
+      traffic_sources: []
+    },
+    recentEvents: [
+      {
+        id: "demo-event-1",
+        event_type: "user_registered",
+        event_data: {},
+        user_email: "aluno@exemplo.com",
+        user_name: "João Silva",
+        user_ip: "189.40.xxx.xxx",
+        page_url: "https://app.moisesmedeiros.com.br/registro",
+        created_at: new Date(Date.now() - 15 * 60000).toISOString()
+      },
+      {
+        id: "demo-event-2",
+        event_type: "user_login",
+        event_data: {},
+        user_email: "maria@exemplo.com",
+        user_name: "Maria Santos",
+        user_ip: "177.20.xxx.xxx",
+        page_url: "https://app.moisesmedeiros.com.br/login",
+        created_at: new Date(Date.now() - 30 * 60000).toISOString()
+      },
+      {
+        id: "demo-event-3",
+        event_type: "user_registered",
+        event_data: {},
+        user_email: "pedro@exemplo.com",
+        user_name: "Pedro Costa",
+        user_ip: "200.150.xxx.xxx",
+        page_url: "https://app.moisesmedeiros.com.br/registro",
+        created_at: new Date(Date.now() - 45 * 60000).toISOString()
+      }
+    ]
+  },
   totals: {
     totalFollowers: 260981,
     totalReach: 168900,
@@ -211,7 +287,9 @@ export function useIntegratedMetrics() {
           tiktokResult,
           alunosResult,
           entradasResult,
-          comissoesResult
+          comissoesResult,
+          wpMetricsResult,
+          wpEventsResult
         ] = await Promise.all([
           supabase
             .from("youtube_metrics")
@@ -243,7 +321,17 @@ export function useIntegratedMetrics() {
             .gte("data", thirtyDaysAgo),
           supabase
             .from("comissoes")
-            .select("valor, status")
+            .select("valor, status"),
+          supabase
+            .from("wordpress_metrics")
+            .select("*")
+            .order("date", { ascending: false })
+            .limit(1),
+          supabase
+            .from("wordpress_events")
+            .select("*")
+            .order("created_at", { ascending: false })
+            .limit(20)
         ]);
 
         const youtube = youtubeResult.data?.[0] || null;
@@ -253,6 +341,8 @@ export function useIntegratedMetrics() {
         const alunos = alunosResult.data || [];
         const entradas = entradasResult.data || [];
         const comissoes = comissoesResult.data || [];
+        const wpMetrics = wpMetricsResult.data?.[0] || null;
+        const wpEvents = wpEventsResult.data || [];
 
         // Check if we have any real data
         const hasRealData = youtube || instagram || facebookAds.length > 0 || tiktok || alunos.length > 0;
@@ -312,6 +402,10 @@ export function useIntegratedMetrics() {
           facebookAds,
           tiktok,
           hotmart,
+          wordpress: {
+            metrics: wpMetrics as WordPressMetrics | null,
+            recentEvents: wpEvents as WordPressEvent[]
+          },
           totals: {
             totalFollowers,
             totalReach,
@@ -357,6 +451,14 @@ export function useIntegratedMetrics() {
         }),
       supabase.channel('alunos-realtime')
         .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => {
+          refetch();
+        }),
+      supabase.channel('wordpress-events-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'wordpress_events' }, () => {
+          refetch();
+        }),
+      supabase.channel('wordpress-metrics-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'wordpress_metrics' }, () => {
           refetch();
         })
     ];
