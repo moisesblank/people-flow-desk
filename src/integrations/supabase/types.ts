@@ -1409,6 +1409,10 @@ export type Database = {
           category: string | null
           created_at: string | null
           description: string | null
+          extracted_content: string | null
+          extraction_date: string | null
+          extraction_model: string | null
+          extraction_status: string | null
           file_name: string
           file_size: number | null
           file_type: string
@@ -1423,6 +1427,10 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          extracted_content?: string | null
+          extraction_date?: string | null
+          extraction_model?: string | null
+          extraction_status?: string | null
           file_name: string
           file_size?: number | null
           file_type: string
@@ -1437,6 +1445,10 @@ export type Database = {
           category?: string | null
           created_at?: string | null
           description?: string | null
+          extracted_content?: string | null
+          extraction_date?: string | null
+          extraction_model?: string | null
+          extraction_status?: string | null
           file_name?: string
           file_size?: number | null
           file_type?: string
