@@ -1,6 +1,6 @@
 // ============================================
-// UPGRADE v10 - FASE 7: WIDGET DO LABORATÓRIO
-// Status de reagentes e equipamentos
+// UPGRADE v10 - WIDGET DO LABORATÓRIO v2.0
+// Status de reagentes e equipamentos - CLICÁVEL
 // ============================================
 
 import { motion } from "framer-motion";
@@ -15,12 +15,16 @@ import {
   ArrowRight,
   Thermometer,
   Package,
+  ChevronRight,
+  Plus,
 } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export function LabStatusWidget() {
+  const navigate = useNavigate();
+  
   // Buscar reagentes com estoque baixo
   const { data: reagentsData } = useQuery({
     queryKey: ["reagents-stats"],
@@ -89,7 +93,10 @@ export function LabStatusWidget() {
       <Card className="glass-card border-border/50 hover:border-primary/30 transition-all">
         <CardHeader className="pb-2">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg flex items-center gap-2">
+            <CardTitle 
+              className="text-lg flex items-center gap-2 cursor-pointer hover:text-primary transition-colors"
+              onClick={() => navigate("/laboratorio")}
+            >
               <FlaskConical className="h-5 w-5 text-primary" />
               Laboratório
             </CardTitle>
@@ -102,11 +109,14 @@ export function LabStatusWidget() {
           </div>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Alertas */}
+          {/* Alertas - CLICÁVEIS */}
           {hasAlerts && (
-            <div className="flex items-start gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20">
+            <div 
+              className="flex items-start gap-2 p-2 rounded-lg bg-destructive/10 border border-destructive/20 cursor-pointer hover:bg-destructive/20 transition-colors"
+              onClick={() => navigate("/laboratorio")}
+            >
               <AlertTriangle className="h-4 w-4 text-destructive mt-0.5" />
-              <div className="text-sm text-destructive space-y-1">
+              <div className="text-sm text-destructive space-y-1 flex-1">
                 {(reagentsData?.lowStock || 0) > 0 && (
                   <div>{reagentsData?.lowStock} reagente(s) com estoque baixo</div>
                 )}
@@ -120,27 +130,41 @@ export function LabStatusWidget() {
                   </div>
                 )}
               </div>
+              <ChevronRight className="h-4 w-4 text-destructive mt-0.5" />
             </div>
           )}
 
-          {/* Reagentes */}
+          {/* Reagentes - CLICÁVEIS */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:text-stats-blue transition-colors"
+              onClick={() => navigate("/laboratorio?tab=reagents")}
+            >
               <Beaker className="h-4 w-4 text-stats-blue" />
               <span className="text-sm font-medium">Reagentes</span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground ml-auto" />
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="text-center p-2 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold">{reagentsData?.total || 0}</div>
+              <div 
+                className="text-center p-2 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors group"
+                onClick={() => navigate("/laboratorio?tab=reagents")}
+              >
+                <div className="text-xl font-bold group-hover:text-primary transition-colors">{reagentsData?.total || 0}</div>
                 <div className="text-xs text-muted-foreground">Total</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-stats-gold/10">
+              <div 
+                className="text-center p-2 rounded-lg bg-stats-gold/10 cursor-pointer hover:bg-stats-gold/20 transition-colors group"
+                onClick={() => navigate("/laboratorio?tab=reagents&filter=low")}
+              >
                 <div className="text-xl font-bold text-stats-gold">
                   {reagentsData?.lowStock || 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Baixo</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-destructive/10">
+              <div 
+                className="text-center p-2 rounded-lg bg-destructive/10 cursor-pointer hover:bg-destructive/20 transition-colors group"
+                onClick={() => navigate("/laboratorio?tab=reagents&filter=hazardous")}
+              >
                 <div className="text-xl font-bold text-destructive">
                   {reagentsData?.hazardous || 0}
                 </div>
@@ -149,27 +173,40 @@ export function LabStatusWidget() {
             </div>
           </div>
 
-          {/* Equipamentos */}
+          {/* Equipamentos - CLICÁVEIS */}
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div 
+              className="flex items-center gap-2 cursor-pointer hover:text-stats-purple transition-colors"
+              onClick={() => navigate("/laboratorio?tab=equipment")}
+            >
               <Thermometer className="h-4 w-4 text-stats-purple" />
               <span className="text-sm font-medium">Equipamentos</span>
+              <ChevronRight className="h-3 w-3 text-muted-foreground ml-auto" />
             </div>
             <div className="grid grid-cols-3 gap-2">
-              <div className="text-center p-2 rounded-lg bg-stats-green/10">
+              <div 
+                className="text-center p-2 rounded-lg bg-stats-green/10 cursor-pointer hover:bg-stats-green/20 transition-colors group"
+                onClick={() => navigate("/laboratorio?tab=equipment&filter=available")}
+              >
                 <div className="text-xl font-bold text-stats-green">
                   {equipmentData?.available || 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Disponíveis</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-stats-gold/10">
+              <div 
+                className="text-center p-2 rounded-lg bg-stats-gold/10 cursor-pointer hover:bg-stats-gold/20 transition-colors group"
+                onClick={() => navigate("/laboratorio?tab=equipment&filter=maintenance")}
+              >
                 <div className="text-xl font-bold text-stats-gold">
                   {equipmentData?.maintenance || 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Manutenção</div>
               </div>
-              <div className="text-center p-2 rounded-lg bg-muted/50">
-                <div className="text-xl font-bold">
+              <div 
+                className="text-center p-2 rounded-lg bg-muted/50 cursor-pointer hover:bg-muted transition-colors group"
+                onClick={() => navigate("/laboratorio?tab=equipment")}
+              >
+                <div className="text-xl font-bold group-hover:text-primary transition-colors">
                   {equipmentData?.total || 0}
                 </div>
                 <div className="text-xs text-muted-foreground">Total</div>
@@ -177,15 +214,39 @@ export function LabStatusWidget() {
             </div>
           </div>
 
-          {/* Status badges */}
-          <div className="flex gap-2 pt-2">
+          {/* Status badges - CLICÁVEIS */}
+          <div className="flex gap-2 pt-2 flex-wrap">
             <Badge
               variant="outline"
-              className="bg-stats-green/10 text-stats-green border-0"
+              className="bg-stats-green/10 text-stats-green border-0 cursor-pointer hover:bg-stats-green/20 transition-colors"
+              onClick={() => navigate("/laboratorio?tab=equipment&filter=available")}
             >
               <Package className="h-3 w-3 mr-1" />
               {equipmentData?.available || 0} equipamentos prontos
             </Badge>
+            {(reagentsData?.expiringSoon || 0) > 0 && (
+              <Badge
+                variant="outline"
+                className="bg-stats-gold/10 text-stats-gold border-0 cursor-pointer hover:bg-stats-gold/20 transition-colors"
+                onClick={() => navigate("/laboratorio?tab=reagents&filter=expiring")}
+              >
+                <AlertTriangle className="h-3 w-3 mr-1" />
+                {reagentsData?.expiringSoon} vencendo
+              </Badge>
+            )}
+          </div>
+
+          {/* Ação rápida */}
+          <div className="pt-2 border-t border-border/50">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              className="w-full gap-2 text-xs"
+              onClick={() => navigate("/laboratorio")}
+            >
+              <Plus className="h-3 w-3" />
+              Adicionar Item
+            </Button>
           </div>
         </CardContent>
       </Card>

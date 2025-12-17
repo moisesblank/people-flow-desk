@@ -1,6 +1,6 @@
 // ============================================
-// EMPRESARIAL 2.0 - AUTOMAÇÕES INTELIGENTES
-// Controle de automações e fluxos de trabalho
+// EMPRESARIAL 2.0 - AUTOMAÇÕES INTELIGENTES v2.0
+// Controle de automações - CLICÁVEL
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -22,6 +22,8 @@ import {
   MoreHorizontal,
   Workflow,
   Bot,
+  ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -37,6 +39,7 @@ import {
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate, Link } from "react-router-dom";
 
 interface Automation {
   id: string;
@@ -172,6 +175,7 @@ const defaultAutomations: Automation[] = [
 ];
 
 export function SmartAutomationsWidget() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [automations, setAutomations] = useState<Automation[]>(defaultAutomations);
 
@@ -204,7 +208,10 @@ export function SmartAutomationsWidget() {
     <Card className="glass-card overflow-hidden">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <div 
+            className="flex items-center gap-2 cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => navigate("/configuracoes")}
+          >
             <div className="p-2 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20">
               <Bot className="h-5 w-5 text-cyan-500" />
             </div>
@@ -215,7 +222,7 @@ export function SmartAutomationsWidget() {
               </p>
             </div>
           </div>
-          <Badge variant="outline" className="text-[10px]">
+          <Badge variant="outline" className="text-[10px] cursor-pointer hover:bg-muted" onClick={() => navigate("/configuracoes")}>
             <Zap className="h-3 w-3 mr-1 text-amber-500" />
             {totalRuns} execuções
           </Badge>
@@ -312,7 +319,7 @@ export function SmartAutomationsWidget() {
 
         {/* Quick Add */}
         <div className="p-3 border-t border-border/50">
-          <Button variant="outline" className="w-full text-xs" size="sm">
+          <Button variant="outline" className="w-full text-xs" size="sm" onClick={() => navigate("/configuracoes")}>
             <Plus className="h-3 w-3 mr-1" />
             Nova Automação
           </Button>

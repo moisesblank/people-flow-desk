@@ -1,6 +1,6 @@
 // ============================================
-// EMPRESARIAL 2.0 - MÉTRICAS PREDITIVAS
-// Análise preditiva com tendências e projeções
+// EMPRESARIAL 2.0 - MÉTRICAS PREDITIVAS v2.0
+// Análise preditiva com tendências - CLICÁVEL
 // ============================================
 
 import { useState, useMemo } from "react";
@@ -19,11 +19,15 @@ import {
   Users,
   Calendar,
   AlertTriangle,
+  ChevronRight,
+  ArrowRight,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useNavigate } from "react-router-dom";
 
 interface PredictiveMetric {
   id: string;
@@ -37,6 +41,7 @@ interface PredictiveMetric {
   unit: "currency" | "number" | "percentage";
   icon: typeof TrendingUp;
   color: string;
+  href: string;
 }
 
 interface PredictiveMetricsWidgetProps {
@@ -54,6 +59,7 @@ export function PredictiveMetricsWidget({
   tasks,
   completedTasks,
 }: PredictiveMetricsWidgetProps) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("overview");
 
   const metrics = useMemo<PredictiveMetric[]>(() => {
@@ -79,6 +85,7 @@ export function PredictiveMetricsWidget({
         unit: "currency",
         icon: DollarSign,
         color: "hsl(var(--stats-green))",
+        href: "/entradas",
       },
       {
         id: "profit",
@@ -92,6 +99,7 @@ export function PredictiveMetricsWidget({
         unit: "percentage",
         icon: TrendingUp,
         color: profit >= 0 ? "hsl(var(--stats-green))" : "hsl(var(--destructive))",
+        href: "/dashboard-executivo",
       },
       {
         id: "students",
@@ -105,6 +113,7 @@ export function PredictiveMetricsWidget({
         unit: "number",
         icon: Users,
         color: "hsl(var(--stats-blue))",
+        href: "/alunos",
       },
       {
         id: "productivity",
@@ -118,6 +127,7 @@ export function PredictiveMetricsWidget({
         unit: "percentage",
         icon: Calendar,
         color: "hsl(var(--stats-gold))",
+        href: "/tarefas",
       },
     ];
   }, [income, expenses, students, tasks, completedTasks]);
@@ -216,17 +226,18 @@ export function PredictiveMetricsWidget({
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: index * 0.1 }}
-                  className="p-3 rounded-xl bg-muted/30 border border-border/50"
+                  onClick={() => navigate(metric.href)}
+                  className="p-3 rounded-xl bg-muted/30 border border-border/50 cursor-pointer hover:bg-muted/50 hover:border-primary/30 transition-all group"
                 >
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center gap-2">
                       <div 
-                        className="p-1.5 rounded-lg"
+                        className="p-1.5 rounded-lg group-hover:scale-110 transition-transform"
                         style={{ backgroundColor: `${metric.color}20` }}
                       >
                         <Icon className="h-4 w-4" style={{ color: metric.color }} />
                       </div>
-                      <span className="text-sm font-medium">{metric.label}</span>
+                      <span className="text-sm font-medium group-hover:text-primary transition-colors">{metric.label}</span>
                     </div>
                     <div className="flex items-center gap-1">
                       {growth >= 0 ? (
@@ -239,6 +250,7 @@ export function PredictiveMetricsWidget({
                       }`}>
                         {growth >= 0 ? "+" : ""}{growth.toFixed(1)}%
                       </span>
+                      <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>
                   </div>
 

@@ -1,6 +1,6 @@
 // ============================================
-// WELCOME HERO - Boas-vindas Personalizadas
-// Orientação clara para o usuário
+// WELCOME HERO - Boas-vindas Personalizadas v2.0
+// Todos os elementos clicáveis e interativos
 // ============================================
 
 import { motion } from "framer-motion";
@@ -15,7 +15,8 @@ import {
   CheckCircle2,
   AlertTriangle,
   Sparkles,
-  Brain
+  Brain,
+  ChevronRight
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
@@ -123,57 +124,85 @@ export function WelcomeHero({ pendingTasks, completedToday, pendingPayments, pro
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 0.2 }}
-              className="text-muted-foreground"
+              className="text-muted-foreground cursor-pointer hover:text-foreground transition-colors"
+              onClick={() => navigate("/calendario")}
             >
               {new Date().toLocaleDateString("pt-BR", { 
                 weekday: "long", 
                 day: "numeric", 
                 month: "long" 
               })}
+              <ChevronRight className="inline h-4 w-4 ml-1" />
             </motion.p>
           </div>
 
-          {/* Quick Stats Pills */}
+          {/* Quick Stats Pills - TODOS CLICÁVEIS */}
           <motion.div 
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
             className="flex flex-wrap gap-2"
           >
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--stats-green))]/10 border border-[hsl(var(--stats-green))]/20">
+            {/* Concluídas hoje - clicável */}
+            <div 
+              className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--stats-green))]/10 border border-[hsl(var(--stats-green))]/20 cursor-pointer hover:bg-[hsl(var(--stats-green))]/20 hover:border-[hsl(var(--stats-green))]/40 transition-all group"
+              onClick={() => navigate("/tarefas")}
+            >
               <CheckCircle2 className="h-4 w-4 text-[hsl(var(--stats-green))]" />
               <span className="text-sm font-medium text-[hsl(var(--stats-green))]">
                 {completedToday} concluídas hoje
               </span>
+              <ChevronRight className="h-3 w-3 text-[hsl(var(--stats-green))] opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
+            
+            {/* Pendentes - clicável */}
             {pendingTasks > 0 && (
-              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--stats-blue))]/10 border border-[hsl(var(--stats-blue))]/20">
+              <div 
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--stats-blue))]/10 border border-[hsl(var(--stats-blue))]/20 cursor-pointer hover:bg-[hsl(var(--stats-blue))]/20 hover:border-[hsl(var(--stats-blue))]/40 transition-all group"
+                onClick={() => navigate("/tarefas")}
+              >
                 <Target className="h-4 w-4 text-[hsl(var(--stats-blue))]" />
                 <span className="text-sm font-medium text-[hsl(var(--stats-blue))]">
                   {pendingTasks} pendentes
                 </span>
+                <ChevronRight className="h-3 w-3 text-[hsl(var(--stats-blue))] opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            )}
+
+            {/* Pagamentos pendentes - clicável */}
+            {pendingPayments > 0 && (
+              <div 
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[hsl(var(--stats-gold))]/10 border border-[hsl(var(--stats-gold))]/20 cursor-pointer hover:bg-[hsl(var(--stats-gold))]/20 hover:border-[hsl(var(--stats-gold))]/40 transition-all group"
+                onClick={() => navigate("/pagamentos")}
+              >
+                <AlertTriangle className="h-4 w-4 text-[hsl(var(--stats-gold))]" />
+                <span className="text-sm font-medium text-[hsl(var(--stats-gold))]">
+                  {pendingPayments} pagamentos
+                </span>
+                <ChevronRight className="h-3 w-3 text-[hsl(var(--stats-gold))] opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
             )}
           </motion.div>
         </div>
 
-        {/* Daily Focus Card */}
+        {/* Daily Focus Card - CLICÁVEL */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-background/50 border border-border/50"
+          className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 rounded-2xl bg-background/50 border border-border/50 cursor-pointer hover:bg-background/70 hover:border-primary/30 transition-all group"
+          onClick={focus.action}
         >
           <div className="flex items-center gap-4">
-            <div className={`p-3 rounded-xl bg-background ${focus.color}`}>
+            <div className={`p-3 rounded-xl bg-background ${focus.color} group-hover:scale-105 transition-transform`}>
               <FocusIcon className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="font-semibold text-foreground">{focus.title}</h3>
+              <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">{focus.title}</h3>
               <p className="text-sm text-muted-foreground">{focus.message}</p>
             </div>
           </div>
-          <Button onClick={focus.action} variant="outline" className="gap-2 shrink-0">
+          <Button onClick={(e) => { e.stopPropagation(); focus.action(); }} variant="outline" className="gap-2 shrink-0 group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
             <Rocket className="h-4 w-4" />
             {focus.actionLabel}
           </Button>
