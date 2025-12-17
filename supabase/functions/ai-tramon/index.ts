@@ -50,9 +50,9 @@ serve(async (req) => {
       userEmail = userData?.user?.email || "";
       userRole = roleData?.role || "employee";
       
-      // Verificar acesso: owner ou admin
+      // Verificar acesso: owner, admin ou coordenacao
       const OWNER_EMAIL = "moisesblank@gmail.com";
-      hasAccess = userEmail === OWNER_EMAIL || userRole === "owner" || userRole === "admin";
+      hasAccess = userEmail === OWNER_EMAIL || userRole === "owner" || userRole === "admin" || userRole === "coordenacao";
       
       console.log(`[TRAMON] User: ${userEmail}, Role: ${userRole}, Access: ${hasAccess}`);
     }

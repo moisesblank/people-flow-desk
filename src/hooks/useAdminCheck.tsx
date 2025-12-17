@@ -8,18 +8,20 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export type AppRole = "owner" | "admin" | "employee";
+export type AppRole = "owner" | "admin" | "employee" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
 
 interface AdminCheckResult {
   isOwner: boolean;
   isAdmin: boolean;
   isAdminOrOwner: boolean;
+  isCoordinator: boolean;
   isEmployee: boolean;
   role: AppRole | null;
   isLoading: boolean;
   canEdit: boolean;
   isGodMode: boolean;
   userEmail: string | null;
+  canAccessTramon: boolean;
 }
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
@@ -66,6 +68,7 @@ export function useAdminCheck(): AdminCheckResult {
   // Verificação dupla de owner (role + email exato)
   const isOwner = role === "owner" && userEmail === OWNER_EMAIL;
   const isAdmin = role === "admin";
+  const isCoordinator = role === "coordenacao";
   const isAdminOrOwner = isOwner || isAdmin;
   const isEmployee = role === "employee";
   
@@ -74,16 +77,21 @@ export function useAdminCheck(): AdminCheckResult {
   
   // Apenas owner pode editar campos críticos
   const canEdit = isGodMode;
+  
+  // TRAMON: Owner, Admin ou Coordenação
+  const canAccessTramon = isOwner || isAdmin || isCoordinator;
 
   return {
     isOwner,
     isAdmin,
     isAdminOrOwner,
+    isCoordinator,
     isEmployee,
     role,
     isLoading,
     canEdit,
     isGodMode,
-    userEmail
+    userEmail,
+    canAccessTramon
   };
 }
