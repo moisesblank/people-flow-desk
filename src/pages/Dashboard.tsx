@@ -72,6 +72,12 @@ import { TodayAgenda } from "@/components/dashboard/TodayAgenda";
 import { GoalsProgress } from "@/components/dashboard/GoalsProgress";
 import { TeamSummary } from "@/components/dashboard/TeamSummary";
 import { SmartTips } from "@/components/dashboard/SmartTips";
+// EMPRESARIAL 2.0 - Novos componentes avançados
+import { CriticalAlertsWidget } from "@/components/dashboard/CriticalAlertsWidget";
+import { PredictiveMetricsWidget } from "@/components/dashboard/PredictiveMetricsWidget";
+import { SmartAutomationsWidget } from "@/components/dashboard/SmartAutomationsWidget";
+import { AdvancedGamificationWidget } from "@/components/gamification/AdvancedGamificationWidget";
+import { WhatsAppCommandWidget } from "@/components/whatsapp/WhatsAppCommandWidget";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -654,10 +660,29 @@ export default function Dashboard() {
           </motion.div>
         </section>
 
+        {/* EMPRESARIAL 2.0 - Widgets Avançados */}
+        <section className="grid gap-4 lg:grid-cols-3 mb-8">
+          <CriticalAlertsWidget />
+          <PredictiveMetricsWidget
+            income={stats.income}
+            expenses={totalExpensesValue}
+            students={stats.students}
+            tasks={stats.tasksData?.length || 0}
+            completedTasks={stats.tasksData?.filter((t: any) => t.is_completed)?.length || 0}
+          />
+          <SmartAutomationsWidget />
+        </section>
+
         {/* UPGRADE v10 - Widgets de Produtividade */}
         <section className="grid gap-4 md:grid-cols-2 mb-8">
           <TasksOverviewWidget />
           <LabStatusWidget />
+        </section>
+
+        {/* Gamificação + Comandos WhatsApp */}
+        <section className="grid gap-6 lg:grid-cols-2 mb-8">
+          <AdvancedGamificationWidget />
+          <WhatsAppCommandWidget />
         </section>
 
         {/* Analytics Avançado + Automações */}
