@@ -77,3 +77,6 @@ verify_jwt = false
 
 [functions.wordpress-webhook]
 verify_jwt = false
+
+[functions.google-analytics-sync]
+verify_jwt = false
