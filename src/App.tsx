@@ -11,6 +11,7 @@ import { GodModePanel } from "@/components/editor/GodModePanel";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
 import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
+import { AITramonGlobal } from "@/components/ai/AITramonGlobal";
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -113,6 +114,10 @@ function AppContent() {
       <GodModePanel />
       <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      
+      {/* AI TRAMON GLOBAL - APARECE EM TODAS AS PÁGINAS */}
+      <AITramonGlobal />
+      
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public routes */}
