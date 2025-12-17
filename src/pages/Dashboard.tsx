@@ -62,6 +62,7 @@ import { WhatsAppFinanceWidget } from "@/components/whatsapp/WhatsAppFinanceWidg
 
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
+import { IntegrationsHubWidget } from "@/components/dashboard/IntegrationsHubWidget";
 import { AutomationRules } from "@/components/dashboard/AutomationRules";
 import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScore";
 import { FinancialGoalsWidget } from "@/components/dashboard/FinancialGoalsWidget";
@@ -89,6 +90,9 @@ import { AdvancedGamificationWidget } from "@/components/gamification/AdvancedGa
 import { WhatsAppCommandWidget } from "@/components/whatsapp/WhatsAppCommandWidget";
 import { MultiCNPJManager } from "@/components/finance/MultiCNPJManager";
 import { RoleManagementWidget } from "@/components/dashboard/RoleManagementWidget";
+import { SystemPulseWidget } from "@/components/dashboard/SystemPulseWidget";
+import { HolographicDataCard } from "@/components/dashboard/HolographicDataCard";
+import { NeuralNetworkBackground } from "@/components/dashboard/NeuralNetworkBackground";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -512,6 +516,11 @@ export default function Dashboard() {
           </div>
         </section>
 
+        {/* NOVO: System Pulse - Monitoramento em Tempo Real */}
+        <section className="mb-8">
+          <SystemPulseWidget className="w-full" />
+        </section>
+
         {/* Advanced KPIs - Business Intelligence */}
         <section className="mb-8">
           <AdvancedKPIs
@@ -738,6 +747,11 @@ export default function Dashboard() {
         <section className="grid gap-6 lg:grid-cols-2 mb-8">
           <AdvancedAnalytics />
           <AutomationRules />
+        </section>
+
+        {/* NOVO: Hub de Integrações */}
+        <section className="mb-8">
+          <IntegrationsHubWidget />
         </section>
 
         {/* EMPRESARIAL 2.0 - Gestão Multi-CNPJ (Apenas Owner) */}
