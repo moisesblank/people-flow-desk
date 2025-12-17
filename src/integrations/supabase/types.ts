@@ -4593,25 +4593,17 @@ export type Database = {
       }
       employees_safe: {
         Row: {
+          data_admissao: string | null
+          email: string | null
           funcao: string | null
+          horario_trabalho: string | null
           id: number | null
           nome: string | null
+          responsabilidades: string | null
+          salario: number | null
           setor: Database["public"]["Enums"]["sector_type"] | null
           status: Database["public"]["Enums"]["employee_status"] | null
-        }
-        Insert: {
-          funcao?: string | null
-          id?: number | null
-          nome?: string | null
-          setor?: Database["public"]["Enums"]["sector_type"] | null
-          status?: Database["public"]["Enums"]["employee_status"] | null
-        }
-        Update: {
-          funcao?: string | null
-          id?: number | null
-          nome?: string | null
-          setor?: Database["public"]["Enums"]["sector_type"] | null
-          status?: Database["public"]["Enums"]["employee_status"] | null
+          telefone: string | null
         }
         Relationships: []
       }

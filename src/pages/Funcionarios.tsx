@@ -71,21 +71,30 @@ export default function Funcionarios() {
 
   const fetchEmployees = useCallback(async () => {
     try {
-      // Usa a view employees_safe que mascara salários para não-admins
+      // Busca direto da tabela employees com join para salário
       const { data, error } = await supabase
-        .from("employees_safe")
-        .select("*")
+        .from("employees")
+        .select(`
+          id,
+          nome,
+          funcao,
+          setor,
+          status,
+          email,
+          data_admissao,
+          employee_compensation(salario)
+        `)
         .order("nome");
 
       if (error) throw error;
 
-      const mappedEmployees: Employee[] = (data || []).map(emp => ({
+      const mappedEmployees: Employee[] = (data || []).map((emp: any) => ({
         id: emp.id,
         nome: emp.nome,
         funcao: emp.funcao,
         setor: sectorMapping[emp.setor || ""] || "Administrativo",
         email: emp.email || "",
-        salario: emp.salario,
+        salario: emp.employee_compensation?.[0]?.salario || null,
         dataAdmissao: emp.data_admissao || "",
         status: (emp.status as EmployeeStatus) || "ativo",
       }));
