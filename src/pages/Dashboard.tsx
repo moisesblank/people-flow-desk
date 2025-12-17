@@ -75,6 +75,8 @@ import { TodayAgenda } from "@/components/dashboard/TodayAgenda";
 import { GoalsProgress } from "@/components/dashboard/GoalsProgress";
 import { TeamSummary } from "@/components/dashboard/TeamSummary";
 import { SmartTips } from "@/components/dashboard/SmartTips";
+import { AIInsightsWidget } from "@/components/dashboard/AIInsightsWidget";
+import { LiveMetricsBar } from "@/components/dashboard/LiveMetricsBar";
 // EMPRESARIAL 2.0 - Novos componentes avançados
 import { CriticalAlertsWidget } from "@/components/dashboard/CriticalAlertsWidget";
 import { PredictiveMetricsWidget } from "@/components/dashboard/PredictiveMetricsWidget";
@@ -322,7 +324,10 @@ export default function Dashboard() {
     <div className="p-4 md:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         
-        {/* NOVO: Welcome Hero com orientação contextual */}
+        {/* NOVO: Barra de métricas em tempo real */}
+        <LiveMetricsBar />
+        
+        {/* NOVO: Welcome Hero com orientação contextual e imagem */}
         <WelcomeHero
           pendingTasks={stats?.pendingTasks || 0}
           completedToday={stats?.tasksData?.filter((t: any) => t.is_completed)?.length || 0}
