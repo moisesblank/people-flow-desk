@@ -243,7 +243,19 @@ async function notifyWebhookMKT(
   try {
     logger.info(`WebHook_MKT: Iniciando notificação (${eventType})`);
 
-    const mktPayload = {
+    // Hard safety: NUNCA permitir Beta em eventos de cadastro/lead.
+    // O único evento permitido para Beta é compra_aprovada.
+    const safeMeta = { ...(meta || {}) } as Record<string, any>;
+    if (eventType !== "compra_aprovada") {
+      if (safeMeta.access_level?.toString().toLowerCase() === "beta" || safeMeta.group === "Beta") {
+        logger.warn("WebHook_MKT: Meta Beta bloqueada em evento não-permitido", { eventType });
+        safeMeta.access_level = "registered";
+        safeMeta.group = "Registered";
+        safeMeta._coerced_from_beta = true;
+      }
+    }
+
+    const mktPayload: Record<string, any> = {
       event: eventType,
       email: data.email,
       name: data.name || "",
@@ -254,36 +266,58 @@ async function notifyWebhookMKT(
       source: "gestao_moises_medeiros",
       platform: "gestao.moisesmedeiros.com.br",
       timestamp: getCurrentTimestamp(),
-      // IMPORTANTE: esses campos forçam o WordPress a distinguir LEAD (Registered) de ALUNO (Beta)
-      access_level: meta?.access_level,
-      group: meta?.group,
-      meta: meta || undefined,
+
+      // Compat: alguns plugins lêem no root, outros leem em meta
+      access_level: safeMeta?.access_level,
+      group: safeMeta?.group,
+
+      // Compat extra para plugins (se suportarem)
+      add_groups: safeMeta?.enforce?.add_groups,
+      remove_groups: safeMeta?.enforce?.remove_groups,
+
+      meta: Object.keys(safeMeta || {}).length ? safeMeta : undefined,
     };
 
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.WEBHOOK_MKT.TIMEOUT);
 
-    const response = await fetch(`${CONFIG.WEBHOOK_MKT.URL}?token=${encodeURIComponent(CONFIG.WEBHOOK_MKT.TOKEN)}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "Accept": "application/json",
-        // Enviamos múltiplas variações para evitar mismatch de header no plugin do site
-        "X-Site-Token": CONFIG.WEBHOOK_MKT.TOKEN,
-        "X-Webhook-Token": CONFIG.WEBHOOK_MKT.TOKEN,
-        "X-Auth-Token": CONFIG.WEBHOOK_MKT.TOKEN,
-        "Authorization": `Bearer ${CONFIG.WEBHOOK_MKT.TOKEN}`,
-      },
-      body: JSON.stringify(mktPayload),
-      signal: controller.signal,
-    });
+    const doRequest = async (mode: "primary" | "fallback") => {
+      const url = mode === "primary"
+        ? `${CONFIG.WEBHOOK_MKT.URL}?token=${encodeURIComponent(CONFIG.WEBHOOK_MKT.TOKEN)}`
+        : CONFIG.WEBHOOK_MKT.URL;
+
+      return await fetch(url, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+          // Enviamos múltiplas variações para evitar mismatch de header no plugin do site
+          "X-Site-Token": CONFIG.WEBHOOK_MKT.TOKEN,
+          "X-Webhook-Token": CONFIG.WEBHOOK_MKT.TOKEN,
+          "X-Auth-Token": CONFIG.WEBHOOK_MKT.TOKEN,
+          "x-webhook-secret": CONFIG.WEBHOOK_MKT.TOKEN,
+          "Authorization": `Bearer ${CONFIG.WEBHOOK_MKT.TOKEN}`,
+        },
+        body: JSON.stringify(mktPayload),
+        signal: controller.signal,
+      });
+    };
+
+    // 1) tentativa principal
+    let response = await doRequest("primary");
+
+    // 2) fallback apenas se for 401/403 (muito comum quando o site espera token em header específico)
+    if (!response.ok && (response.status === 401 || response.status === 403)) {
+      logger.warn("WebHook_MKT: 401/403; tentando fallback", { status: response.status });
+      response = await doRequest("fallback");
+    }
 
     clearTimeout(timeoutId);
 
     let responseBody = "";
     try {
       responseBody = await response.text();
-    } catch (e) {
+    } catch {
       responseBody = "Não foi possível ler resposta";
     }
 
@@ -300,13 +334,15 @@ async function notifyWebhookMKT(
           event: mktPayload.event,
           email: mktPayload.email,
           name: mktPayload.name,
-          phone: mktPayload.phone ? "***" : "", // evita vazar dados sensíveis
+          phone: mktPayload.phone ? "***" : "",
           value: mktPayload.value,
           product: mktPayload.product,
           transaction: mktPayload.transaction,
-          access_level: (mktPayload as any).access_level,
-          group: (mktPayload as any).group,
-          meta: (mktPayload as any).meta,
+          access_level: mktPayload.access_level,
+          group: mktPayload.group,
+          add_groups: mktPayload.add_groups,
+          remove_groups: mktPayload.remove_groups,
+          meta: mktPayload.meta,
           timestamp: mktPayload.timestamp,
         },
         response_status: response.status,
@@ -321,10 +357,25 @@ async function notifyWebhookMKT(
     if (response.ok) {
       logger.success(`WebHook_MKT: Notificação enviada (${response.status})`);
       return { success: true, message: "Enviado com sucesso" };
-    } else {
-      logger.warn(`WebHook_MKT: Resposta não-OK (${response.status})`);
-      return { success: false, message: `Status ${response.status}` };
     }
+
+    logger.warn(`WebHook_MKT: Resposta não-OK (${response.status})`);
+    // Se o site rejeitou, avisar owner para ação imediata (isso evita "Beta" por regras default)
+    await notifyOwner(
+      supabase,
+      "⚠️ WebHook_MKT rejeitado",
+      [
+        `Evento: ${eventType}`,
+        `Email: ${data.email}`,
+        `Status: ${response.status}`,
+        `Resposta: ${responseBody.substring(0, 500)}`,
+      ].join("\n"),
+      "warning",
+      "/integracoes",
+      logger
+    );
+
+    return { success: false, message: `Status ${response.status}` };
 
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
@@ -342,6 +393,15 @@ async function notifyWebhookMKT(
       },
       processed: false,
     });
+
+    await notifyOwner(
+      supabase,
+      "❌ Erro ao notificar WebHook_MKT",
+      [`Email: ${data.email}`, `Erro: ${errorMessage}`].join("\n"),
+      "error",
+      "/integracoes",
+      logger
+    );
 
     return { success: false, message: errorMessage };
   }
