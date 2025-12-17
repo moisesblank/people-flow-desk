@@ -1,5 +1,6 @@
 // ============================================
 // 🔮 TRAMON - IA PREMIUM EXCLUSIVA v2.0
+// PLANO EMPRESARIAL
 // Acesso: Owner + Admin APENAS
 // Modelo: GPT-5 + WhatsApp Integration
 // ============================================
@@ -20,20 +21,25 @@ import {
   Copy,
   Check,
   Trash2,
-  Lock,
   Zap,
   Shield,
   Phone,
-  MessageSquare,
   Calendar,
   BarChart3,
   ChevronUp,
   ChevronDown,
-  ExternalLink
+  ExternalLink,
+  FileText,
+  PieChart,
+  Lightbulb,
+  AlertTriangle,
+  UserCircle,
+  Building2,
+  BookOpen,
+  Settings
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -49,15 +55,38 @@ interface Message {
   source?: string;
 }
 
-const WHATSAPP_NUMBER = '5583991462045';
+// Assessores oficiais
+const ASSESSORES = {
+  moises: {
+    nome: "Moisés Medeiros",
+    telefones: ["5583989201 05", "5583998920105"],
+    whatsapp: "5583998920105",
+    cargo: "CEO / Proprietário"
+  },
+  bruna: {
+    nome: "Bruna",
+    telefones: ["5583963540 90", "5583996354090"],
+    whatsapp: "5583996354090",
+    cargo: "Co-gestora"
+  }
+};
 
+const WHATSAPP_TRAMON = '5583991462045';
+
+// Ações rápidas expandidas para plano empresarial
 const quickActions = [
-  { icon: TrendingUp, label: "Análise Executiva", prompt: "Faça uma análise executiva completa do meu negócio com todos os KPIs, tendências e recomendações estratégicas." },
-  { icon: DollarSign, label: "Projeção Financeira", prompt: "Crie uma projeção financeira para os próximos 6 meses com cenários otimista, realista e pessimista." },
-  { icon: Users, label: "Retenção de Alunos", prompt: "Desenvolva uma estratégia completa para reduzir churn e aumentar retenção de alunos." },
-  { icon: Target, label: "Plano 90 Dias", prompt: "Crie um plano de crescimento acelerado para os próximos 90 dias com metas e ações específicas." },
-  { icon: Calendar, label: "Agenda Hoje", prompt: "Mostre minhas tarefas de hoje e da semana, com prioridades e sugestões de organização." },
-  { icon: BarChart3, label: "Relatório Completo", prompt: "Gere um relatório executivo completo com métricas financeiras, alunos, marketing e produtividade." },
+  { icon: TrendingUp, label: "Análise Executiva", prompt: "Faça uma análise executiva completa do meu negócio com todos os KPIs, tendências e recomendações estratégicas.", category: "analise" },
+  { icon: DollarSign, label: "Projeção Financeira", prompt: "Crie uma projeção financeira para os próximos 6 meses com cenários otimista, realista e pessimista. Inclua fluxo de caixa e DRE.", category: "financeiro" },
+  { icon: Users, label: "Retenção Alunos", prompt: "Desenvolva uma estratégia completa para reduzir churn e aumentar retenção de alunos. Identifique os alunos em risco.", category: "alunos" },
+  { icon: Target, label: "Plano 90 Dias", prompt: "Crie um plano de crescimento acelerado para os próximos 90 dias com metas SMART e ações específicas por semana.", category: "estrategia" },
+  { icon: Calendar, label: "Agenda Hoje", prompt: "Mostre minhas tarefas de hoje e da semana, com prioridades, sugestões de organização e alertas de atrasos.", category: "tarefas" },
+  { icon: BarChart3, label: "Relatório Completo", prompt: "Gere um relatório executivo completo com métricas financeiras, alunos, marketing, equipe e produtividade.", category: "relatorio" },
+  { icon: PieChart, label: "Análise Marketing", prompt: "Analise o ROI das campanhas de marketing, CAC, LTV e sugira otimizações para melhorar conversão.", category: "marketing" },
+  { icon: Lightbulb, label: "Sugerir Automações", prompt: "Baseado nos dados do sistema, sugira automações que podem economizar tempo e aumentar eficiência.", category: "automacao" },
+  { icon: AlertTriangle, label: "Alertas Críticos", prompt: "Liste todos os alertas críticos do sistema: tarefas atrasadas, pagamentos pendentes, alunos em risco, problemas financeiros.", category: "alertas" },
+  { icon: UserCircle, label: "Meu Assessor", prompt: "meu assessor", category: "assessor" },
+  { icon: Building2, label: "Análise Multi-CNPJ", prompt: "Faça uma análise comparativa entre as duas empresas (MM CURSO DE QUÍMICA LTDA e CURSO QUÍMICA MOISES MEDEIROS).", category: "empresa" },
+  { icon: BookOpen, label: "Performance Cursos", prompt: "Analise a performance de todos os cursos: matrículas, progresso dos alunos, avaliações e sugestões de melhoria.", category: "cursos" },
 ];
 
 export function AITramon() {
@@ -70,6 +99,7 @@ export function AITramon() {
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [showAllActions, setShowAllActions] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
@@ -88,30 +118,41 @@ export function AITramon() {
         type: "assistant",
         content: `🔮 **Olá, ${user?.email?.split('@')[0] || 'Mestre'}!**
 
-Sou **TRAMON**, sua superinteligência empresarial exclusiva powered by **GPT-5**.
+Sou **TRAMON**, sua superinteligência empresarial exclusiva powered by **GPT-5** - Plano Empresarial.
 
 Tenho acesso completo aos dados do seu sistema em tempo real e posso:
 
 • 📊 **Análises preditivas** - Antecipo tendências e riscos
-• 💰 **Estratégias financeiras** - Modelagem de cenários e projeções
-• 🎯 **Planos de ação** - Roadmaps detalhados com métricas
+• 💰 **Projeções financeiras** - DRE, fluxo de caixa, cenários
+• 🎯 **Planos estratégicos** - Roadmaps com métricas SMART
 • 🧠 **Insights profundos** - Padrões que humanos não percebem
-• 📱 **WhatsApp** - Também disponível no +55 83 99146-2045
+• ⚡ **Automações inteligentes** - Sugestões para otimizar processos
+• 👥 **Gestão de alunos** - Predição de churn, segmentação
+• 📱 **Assessores** - Contato direto com Moisés ou Bruna
 
-**Selecione uma ação rápida abaixo ou me pergunte qualquer coisa.**`,
+**Diga "meu assessor"** para falar com Moisés ou Bruna.
+
+**Selecione uma ação rápida abaixo** ou me pergunte qualquer coisa!`,
         timestamp: new Date()
       }]);
     }
   }, [isOpen, user, messages.length, hasAccess]);
+
+  const detectAssessorKeyword = (text: string): boolean => {
+    const keywords = ["meu assessor", "assessor", "falar com assessor", "contato assessor", "ligar para"];
+    const normalized = text.toLowerCase().trim();
+    return keywords.some(kw => normalized.includes(kw));
+  };
 
   const handleSend = useCallback(async (text?: string) => {
     const messageText = text || input;
     if (!messageText.trim() || isLoading || !user) return;
 
     // Detectar palavras-chave de ativação
-    const activationKeywords = ["meu assessor", "assessor", "tramon", "olá tramon"];
+    const activationKeywords = ["tramon", "olá tramon", "oi tramon"];
     const normalizedInput = messageText.toLowerCase().trim();
-    const isActivationKeyword = activationKeywords.some(kw => normalizedInput === kw || normalizedInput.includes(kw));
+    const isActivationKeyword = activationKeywords.some(kw => normalizedInput === kw);
+    const isAssessorRequest = detectAssessorKeyword(messageText);
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -123,7 +164,7 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
     setMessages(prev => [...prev, userMessage]);
     setInput("");
 
-    // Se for keyword de ativação, responder imediatamente sem chamar API
+    // Se for keyword de ativação simples, responder imediatamente
     if (isActivationKeyword && messages.length <= 1) {
       const activationResponse: Message = {
         id: (Date.now() + 1).toString(),
@@ -138,11 +179,43 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
 • 💰 Projeções financeiras detalhadas
 • 🎯 Planos estratégicos personalizados
 • 📈 Relatórios em tempo real
+• 👥 Contato com assessores (Moisés ou Bruna)
 
 **Selecione uma ação rápida acima** ou me pergunte qualquer coisa!`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, activationResponse]);
+      return;
+    }
+
+    // Se for pedido de assessor, responder com os contatos
+    if (isAssessorRequest && !messageText.toLowerCase().includes("analise") && !messageText.toLowerCase().includes("relatório")) {
+      const assessorResponse: Message = {
+        id: (Date.now() + 1).toString(),
+        type: "assistant",
+        content: `📱 **Contato com Assessores**
+
+Aqui estão os contatos dos assessores oficiais:
+
+---
+
+👤 **Moisés Medeiros** - CEO / Proprietário
+📞 Telefones: +55 83 98920-105 / +55 83 99892-0105
+📧 Email: moisesblank@gmail.com
+💼 Para: Decisões estratégicas, financeiras, parcerias
+
+---
+
+👩 **Bruna** - Co-gestora
+📞 Telefones: +55 83 96354-090 / +55 83 99635-4090
+💼 Para: Operações, equipe, dia-a-dia
+
+---
+
+**Clique abaixo para entrar em contato:**`,
+        timestamp: new Date()
+      };
+      setMessages(prev => [...prev, assessorResponse]);
       return;
     }
 
@@ -278,7 +351,13 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
 
   const shareToWhatsApp = (message?: string) => {
     const text = message || messages.slice(-2).map(m => `${m.type === 'user' ? '👤' : '🤖'} ${m.content}`).join('\n\n');
-    const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
+    const url = `https://wa.me/${WHATSAPP_TRAMON}?text=${encodeURIComponent(text)}`;
+    window.open(url, '_blank');
+  };
+
+  const openAssessorWhatsApp = (assessor: 'moises' | 'bruna') => {
+    const data = ASSESSORES[assessor];
+    const url = `https://wa.me/${data.whatsapp}`;
     window.open(url, '_blank');
   };
 
@@ -292,9 +371,11 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
   if (roleLoading) return null;
   if (!hasAccess) return null;
 
+  const visibleActions = showAllActions ? quickActions : quickActions.slice(0, 6);
+
   return (
     <>
-      {/* Floating Trigger Button - CANTO SUPERIOR DIREITO */}
+      {/* Floating Trigger Button */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -356,7 +437,7 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
               className={`fixed z-50 bg-gradient-to-b from-card to-card/95 border border-primary/30 rounded-2xl shadow-2xl shadow-primary/20 flex flex-col overflow-hidden
                 ${isExpanded 
                   ? 'inset-4 md:inset-8' 
-                  : 'bottom-6 right-6 w-[420px] h-[650px] max-h-[85vh]'
+                  : 'bottom-6 right-6 w-[440px] h-[700px] max-h-[90vh]'
                 }`}
             >
               {/* Header Premium */}
@@ -386,6 +467,9 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
                         </h3>
                         <Badge className="bg-gradient-to-r from-primary to-purple-600 text-white text-[10px] px-1.5">
                           GPT-5
+                        </Badge>
+                        <Badge variant="outline" className="text-[9px] px-1 border-yellow-500/50 text-yellow-600">
+                          EMPRESARIAL
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
@@ -442,43 +526,55 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
                   </div>
                 </div>
 
-                {/* WhatsApp Badge */}
-                <div className="mt-3 flex items-center gap-2">
-                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30 text-xs">
-                    <Phone className="h-3 w-3 mr-1" />
-                    WhatsApp
+                {/* Assessores Badges */}
+                <div className="mt-3 flex items-center gap-2 flex-wrap">
+                  <Badge variant="outline" className="bg-blue-500/10 text-blue-600 border-blue-500/30 text-xs cursor-pointer hover:bg-blue-500/20" onClick={() => openAssessorWhatsApp('moises')}>
+                    <UserCircle className="h-3 w-3 mr-1" />
+                    Moisés (CEO)
                   </Badge>
-                  <span className="text-xs text-muted-foreground">+55 83 99146-2045</span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-5 text-[10px] text-green-600 hover:text-green-700 hover:bg-green-500/10 px-2 ml-auto"
-                    onClick={() => window.open(`https://wa.me/${WHATSAPP_NUMBER}`, '_blank')}
-                  >
-                    <ExternalLink className="h-3 w-3 mr-1" />
-                    Abrir
-                  </Button>
+                  <Badge variant="outline" className="bg-pink-500/10 text-pink-600 border-pink-500/30 text-xs cursor-pointer hover:bg-pink-500/20" onClick={() => openAssessorWhatsApp('bruna')}>
+                    <UserCircle className="h-3 w-3 mr-1" />
+                    Bruna (Co-gestora)
+                  </Badge>
+                  <Badge variant="outline" className="bg-green-500/10 text-green-600 border-green-500/30 text-xs cursor-pointer hover:bg-green-500/20" onClick={() => window.open(`https://wa.me/${WHATSAPP_TRAMON}`, '_blank')}>
+                    <Phone className="h-3 w-3 mr-1" />
+                    TRAMON WhatsApp
+                  </Badge>
                 </div>
               </div>
 
               {/* Quick Actions */}
               {messages.length <= 1 && (
                 <div className="p-3 border-b border-border/50 bg-muted/30">
-                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    Ações Rápidas
-                  </p>
+                  <div className="flex items-center justify-between mb-2">
+                    <p className="text-xs text-muted-foreground flex items-center gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      Ações Rápidas
+                    </p>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-5 text-[10px] text-muted-foreground hover:text-foreground"
+                      onClick={() => setShowAllActions(!showAllActions)}
+                    >
+                      {showAllActions ? "Ver menos" : `Ver todas (${quickActions.length})`}
+                    </Button>
+                  </div>
                   <div className="grid grid-cols-2 gap-2">
-                    {quickActions.map((action, i) => (
+                    {visibleActions.map((action, i) => (
                       <Button
                         key={i}
                         variant="outline"
                         size="sm"
-                        className="h-auto py-2 px-3 text-xs justify-start gap-2 bg-background/50 hover:bg-primary/10 hover:border-primary/30"
+                        className={`h-auto py-2 px-3 text-xs justify-start gap-2 bg-background/50 hover:bg-primary/10 hover:border-primary/30 ${
+                          action.category === 'assessor' ? 'border-green-500/30 bg-green-500/5' : ''
+                        }`}
                         onClick={() => handleSend(action.prompt)}
                         disabled={isLoading}
                       >
-                        <action.icon className="h-4 w-4 text-primary shrink-0" />
+                        <action.icon className={`h-4 w-4 shrink-0 ${
+                          action.category === 'assessor' ? 'text-green-500' : 'text-primary'
+                        }`} />
                         <span className="truncate">{action.label}</span>
                       </Button>
                     ))}
@@ -505,6 +601,9 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
                           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/30">
                             <Brain className="h-4 w-4 text-primary" />
                             <span className="text-xs font-medium text-primary">TRAMON</span>
+                            <Badge variant="outline" className="text-[9px] h-4 px-1 bg-purple-500/10 text-purple-600">
+                              GPT-5
+                            </Badge>
                             {message.source === 'whatsapp' && (
                               <Badge variant="outline" className="text-[10px] h-4 px-1 bg-green-500/10 text-green-600">
                                 <Phone className="h-2 w-2 mr-0.5" />
@@ -518,6 +617,30 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
                             i % 2 === 1 ? <strong key={i}>{part}</strong> : part
                           )}
                         </div>
+                        
+                        {/* Botões de assessor quando for mensagem de assessor */}
+                        {message.type === "assistant" && message.content.includes("Moisés Medeiros") && message.content.includes("Bruna") && (
+                          <div className="flex gap-2 mt-3 pt-2 border-t border-border/30">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs bg-blue-500/10 border-blue-500/30 text-blue-600 hover:bg-blue-500/20"
+                              onClick={() => openAssessorWhatsApp('moises')}
+                            >
+                              <Phone className="h-3 w-3 mr-1" />
+                              Moisés
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-xs bg-pink-500/10 border-pink-500/30 text-pink-600 hover:bg-pink-500/20"
+                              onClick={() => openAssessorWhatsApp('bruna')}
+                            >
+                              <Phone className="h-3 w-3 mr-1" />
+                              Bruna
+                            </Button>
+                          </div>
+                        )}
                         
                         <div className="flex items-center justify-between mt-3 pt-2 border-t border-border/20">
                           <p className="text-[10px] opacity-50">
@@ -581,7 +704,7 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="Pergunte qualquer coisa sobre seu negócio..."
+                    placeholder='Pergunte qualquer coisa... ou diga "meu assessor"'
                     className="min-h-[50px] max-h-32 resize-none bg-background border-primary/20 focus:border-primary/50"
                     disabled={isLoading}
                     rows={2}
@@ -601,7 +724,7 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
                 </div>
                 
                 <p className="text-[10px] text-muted-foreground text-center mt-2">
-                  🔮 TRAMON • GPT-5 Premium • Dados em tempo real • WhatsApp integrado
+                  🔮 TRAMON GPT-5 • Plano Empresarial • Dados em tempo real
                 </p>
               </div>
             </motion.div>
