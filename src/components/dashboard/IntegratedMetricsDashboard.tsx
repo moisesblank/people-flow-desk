@@ -792,6 +792,14 @@ export function IntegratedMetricsDashboard() {
             <ShoppingCart className="h-4 w-4 mr-2" />
             Vendas Hotmart
           </TabsTrigger>
+          <TabsTrigger 
+            value="site" 
+            className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary px-4 py-2"
+          >
+            <Globe className="h-4 w-4 mr-2" />
+            Meu Site
+            <Badge className="ml-2 bg-emerald-500/20 text-emerald-500 text-[10px] px-1.5">LIVE</Badge>
+          </TabsTrigger>
         </TabsList>
 
         {/* Overview Tab */}
@@ -1344,6 +1352,208 @@ export function IntegratedMetricsDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        {/* Site/WordPress Tab */}
+        <TabsContent value="site" className="space-y-6 mt-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <CyberMetricCard
+              title="Total Usuários"
+              value={data?.wordpress?.metrics?.total_users || 0}
+              icon={Users}
+              color="#9333ea"
+              isLive
+            />
+            <CyberMetricCard
+              title="Novos Cadastros"
+              value={data?.wordpress?.metrics?.new_registrations || 0}
+              icon={GraduationCap}
+              color="#22c55e"
+              isLive
+            />
+            <CyberMetricCard
+              title="Usuários Ativos"
+              value={data?.wordpress?.metrics?.active_users || 0}
+              icon={Activity}
+              color="#00d4ff"
+            />
+            <CyberMetricCard
+              title="Page Views"
+              value={data?.wordpress?.metrics?.page_views || 0}
+              icon={Eye}
+              color="#f59e0b"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            {/* Recent Events - Live Feed */}
+            <Card className="border-border/20 bg-gradient-to-br from-purple-500/10 via-card to-card backdrop-blur-xl border-l-4 border-l-purple-500">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <div className="p-2 rounded-lg bg-purple-500/20">
+                    <Activity className="h-5 w-5 text-purple-500" />
+                  </div>
+                  Eventos em Tempo Real
+                  <motion.div
+                    animate={{ opacity: [1, 0.5, 1] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                  >
+                    <Badge className="bg-purple-500/20 text-purple-500 border-purple-500/30 ml-2">
+                      <Radio className="h-3 w-3 mr-1" />
+                      LIVE
+                    </Badge>
+                  </motion.div>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
+                {data?.wordpress?.recentEvents && data.wordpress.recentEvents.length > 0 ? (
+                  data.wordpress.recentEvents.map((event, i) => (
+                    <motion.div
+                      key={event.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.05 }}
+                      className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all"
+                    >
+                      <div className={`p-2 rounded-lg ${
+                        event.event_type === 'user_registered' 
+                          ? 'bg-emerald-500/20' 
+                          : event.event_type === 'user_login'
+                          ? 'bg-blue-500/20'
+                          : 'bg-amber-500/20'
+                      }`}>
+                        {event.event_type === 'user_registered' ? (
+                          <GraduationCap className="h-4 w-4 text-emerald-500" />
+                        ) : event.event_type === 'user_login' ? (
+                          <Users className="h-4 w-4 text-blue-500" />
+                        ) : (
+                          <Eye className="h-4 w-4 text-amber-500" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-foreground truncate">
+                          {event.user_name || event.user_email || 'Visitante'}
+                        </p>
+                        <p className="text-xs text-muted-foreground">
+                          {event.event_type === 'user_registered' ? 'Novo cadastro' :
+                           event.event_type === 'user_login' ? 'Login' : 'Visualização'}
+                          {' • '}
+                          {new Date(event.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-[10px] shrink-0">
+                        {event.event_type === 'user_registered' ? 'NOVO' :
+                         event.event_type === 'user_login' ? 'LOGIN' : 'VIEW'}
+                      </Badge>
+                    </motion.div>
+                  ))
+                ) : (
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Globe className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p className="font-medium">Aguardando eventos...</p>
+                    <p className="text-sm mt-2">Configure o webhook no WordPress para receber dados em tempo real</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Setup Instructions */}
+            <Card className="border-border/20 bg-card/80 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Cpu className="h-5 w-5 text-primary" />
+                  Configuração do WordPress
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
+                  <p className="text-sm font-medium text-foreground mb-2">📡 URL do Webhook:</p>
+                  <code className="text-xs bg-background p-2 rounded block break-all text-primary">
+                    https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/wordpress-webhook
+                  </code>
+                </div>
+                
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
+                  <p className="text-sm font-medium text-foreground mb-2">🔐 Header de Segurança:</p>
+                  <code className="text-xs bg-background p-2 rounded block text-muted-foreground">
+                    x-webhook-secret: moisesmedeiros2024
+                  </code>
+                </div>
+
+                <div className="space-y-3 text-sm">
+                  <p className="font-semibold text-foreground">Passos para configurar:</p>
+                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
+                    <li>Instale o plugin <strong className="text-foreground">WP Webhooks</strong> no WordPress</li>
+                    <li>Vá em <strong className="text-foreground">Configurações → Webhooks</strong></li>
+                    <li>Adicione a URL acima como endpoint</li>
+                    <li>Configure para disparar em eventos de registro/login</li>
+                    <li>Adicione o header de segurança</li>
+                  </ol>
+                </div>
+
+                <div className="flex gap-2 pt-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => window.open('https://app.moisesmedeiros.com.br/wp-admin/admin.php?page=wp-webhooks', '_blank')}
+                  >
+                    <Globe className="h-4 w-4 mr-2" />
+                    Abrir WP Admin
+                  </Button>
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    className="flex-1"
+                    onClick={() => {
+                      navigator.clipboard.writeText('https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/wordpress-webhook');
+                      toast.success('URL copiada!');
+                    }}
+                  >
+                    Copiar URL
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Site Status */}
+          <Card className="border-border/20 bg-card/80 backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Database className="h-5 w-5 text-primary" />
+                Status do Site
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {[
+                  { name: "WordPress Site", url: "app.moisesmedeiros.com.br", status: "active", color: "#21759b" },
+                  { name: "Webhook Endpoint", url: "wordpress-webhook", status: "active", color: "#22c55e" },
+                  { name: "Google Analytics", url: "Conectado via Site Kit", status: "active", color: "#f9ab00" },
+                  { name: "WooCommerce", url: "Integrado", status: "active", color: "#7f54b3" }
+                ].map((item, i) => (
+                  <motion.div
+                    key={i}
+                    className="p-4 rounded-xl bg-secondary/30 border border-border/30"
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: i * 0.1 }}
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div 
+                        className="w-3 h-3 rounded-full"
+                        style={{ backgroundColor: item.color }}
+                      />
+                      <span className="text-sm font-medium">{item.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground truncate">{item.url}</p>
+                    <StatusBadge status={item.status as any} />
+                  </motion.div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
