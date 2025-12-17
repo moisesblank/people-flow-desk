@@ -1,5 +1,6 @@
 // ============================================
-// 🌟 TRAMON v7.0 OMEGA - UI REVOLUCIONÁRIA
+// 🌟 TRAMON v8.0 OMEGA ULTRA - UI REVOLUCIONÁRIA
+// INTEGRAÇÃO TOTAL: Hotmart + YouTube + Instagram + WhatsApp
 // GLASSMORPHISM + ANIMAÇÕES + QUICK INSIGHTS
 // ============================================
 
@@ -14,7 +15,8 @@ import {
   Mic, MicOff, Image as ImageIcon, Bot, User as UserIcon,
   Receipt, UserPlus, CheckSquare, Wallet, MessageCircle,
   Activity, PieChart, FileText, Clock, Star, ArrowRight,
-  Eye, EyeOff, Lightbulb, Rocket, Shield
+  Eye, EyeOff, Lightbulb, Rocket, Shield, Youtube, Instagram,
+  Handshake, Phone, Building
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -47,7 +49,7 @@ interface QuickInsight {
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 // ========================================
-// 🎯 AÇÕES RÁPIDAS
+// 🎯 AÇÕES RÁPIDAS v3.0
 // ========================================
 const quickActions = {
   crud: [
@@ -56,11 +58,21 @@ const quickActions = {
     { icon: UserPlus, label: "👤 Aluno", prompt: "Cadastrar aluno ", color: "from-blue-500/20 to-blue-600/20 border-blue-500/30" },
     { icon: CheckSquare, label: "📋 Tarefa", prompt: "Criar tarefa: ", color: "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30" },
   ],
+  cadastros: [
+    { icon: Building, label: "👔 Funcionário", prompt: "Cadastrar funcionário ", color: "from-indigo-500/20 to-indigo-600/20 border-indigo-500/30" },
+    { icon: Handshake, label: "🤝 Afiliado", prompt: "Cadastrar afiliado ", color: "from-pink-500/20 to-pink-600/20 border-pink-500/30" },
+  ],
   analise: [
     { icon: TrendingUp, label: "📊 Análise", prompt: "Faça uma análise executiva completa", color: "from-purple-500/20 to-purple-600/20 border-purple-500/30" },
     { icon: DollarSign, label: "💵 Saldo", prompt: "Qual o saldo do mês?", color: "from-emerald-500/20 to-emerald-600/20 border-emerald-500/30" },
     { icon: Calendar, label: "📅 Hoje", prompt: "Minhas tarefas de hoje", color: "from-cyan-500/20 to-cyan-600/20 border-cyan-500/30" },
     { icon: AlertTriangle, label: "🚨 Alertas", prompt: "Liste todos os alertas críticos", color: "from-orange-500/20 to-orange-600/20 border-orange-500/30" },
+  ],
+  integracoes: [
+    { icon: Youtube, label: "📺 YouTube", prompt: "Métricas do YouTube", color: "from-red-600/20 to-red-700/20 border-red-600/30" },
+    { icon: Instagram, label: "📸 Instagram", prompt: "Métricas do Instagram", color: "from-pink-600/20 to-purple-600/20 border-pink-600/30" },
+    { icon: Phone, label: "📱 WhatsApp", prompt: "Métricas do WhatsApp", color: "from-green-600/20 to-green-700/20 border-green-600/30" },
+    { icon: Zap, label: "🔥 Hotmart", prompt: "Métricas do Hotmart", color: "from-orange-600/20 to-orange-700/20 border-orange-600/30" },
   ]
 };
 
@@ -142,23 +154,24 @@ export function AITramonGlobal() {
       
       const welcomeMsg = `🌟 **${saudacao}, ${user?.email?.split('@')[0] || 'Mestre'}!**
 
-Sou **TRAMON v7.0 OMEGA** - sua superinteligência empresarial.
+Sou **TRAMON v8.0 OMEGA ULTRA** - sua superinteligência empresarial com integração total.
 
-**💬 Comandos por voz natural:**
+**💬 Comandos naturais:**
 • "Gastei 80 de gasolina" → Registra despesa
 • "Recebi 2000 do curso" → Registra receita
-• "Cadastrar aluno Maria" → Cadastra aluno
-• "Quanto gastei hoje?" → Consulta instantânea
+• "Cadastrar aluno/funcionário/afiliado" → Cadastra
+• "Quanto gastei hoje/mês?" → Consulta
 
-**📊 Análises avançadas:**
-• Relatórios executivos
-• Projeções financeiras
-• Alertas inteligentes
+**🔗 Integrações:**
+• "Métricas YouTube" → Inscritos, views
+• "Métricas Instagram" → Seguidores, engajamento
+• "Métricas WhatsApp" → Conversas, leads
+• "Métricas Hotmart" → Vendas, comissões
 
 **📸 Envie imagens** para análise automática!
-${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site em tempo real' : ''}
+${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
 
-**Use os botões abaixo ou digite livremente!**`;
+**Use os botões abaixo!**`;
 
       setMessages([{
         id: "welcome",
@@ -493,7 +506,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site em tempo re
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              TRAMON v7 🌟
+              TRAMON v8 🌟
             </motion.span>
           </motion.div>
         )}
@@ -531,9 +544,9 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site em tempo re
                     </div>
                     <div>
                       <h3 className="font-bold text-white flex items-center gap-2">
-                        TRAMON v7.0
+                        TRAMON v8.0
                         <Badge variant="outline" className="text-[10px] bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 border-purple-400/30 text-purple-300">
-                          OMEGA
+                          ULTRA
                         </Badge>
                       </h3>
                       <p className="text-xs text-purple-300/80">

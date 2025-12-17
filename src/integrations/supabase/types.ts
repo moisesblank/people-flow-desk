@@ -4289,6 +4289,42 @@ export type Database = {
         }
         Relationships: []
       }
+      tramon_logs: {
+        Row: {
+          acao: string | null
+          comando: string | null
+          created_at: string | null
+          entidade: string | null
+          id: string
+          resultado: string | null
+          tempo_processamento: number | null
+          tipo: string | null
+          user_id: string | null
+        }
+        Insert: {
+          acao?: string | null
+          comando?: string | null
+          created_at?: string | null
+          entidade?: string | null
+          id?: string
+          resultado?: string | null
+          tempo_processamento?: number | null
+          tipo?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          acao?: string | null
+          comando?: string | null
+          created_at?: string | null
+          entidade?: string | null
+          id?: string
+          resultado?: string | null
+          tempo_processamento?: number | null
+          tipo?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           account_id: string | null
