@@ -6,258 +6,419 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Usuários autorizados (Owner e Admin) - com nome e telefones
-const AUTHORIZED_USERS = [
-  { 
-    name: 'Moisés', 
-    phones: ['5583998920105', '558398920105'],
-    role: 'owner'
-  },
-  { 
-    name: 'Bruna', 
-    phones: ['5583996354090', '558396354090'],
-    role: 'admin'
-  }
+// ==============================================================================
+// CONFIGURAÇÃO DE ADMINISTRADORES
+// ==============================================================================
+const ADMIN_USERS = [
+  { name: 'Moises', phones: ['5583998920105', '558398920105'], role: 'owner' },
+  { name: 'Bruna', phones: ['5583996354090', '558396354090'], role: 'admin' }
 ];
 
-// Lista flat de telefones para verificação rápida
-const AUTHORIZED_PHONES = AUTHORIZED_USERS.flatMap(u => u.phones);
-const OWNER_EMAIL = 'moisesblank@gmail.com';
+const SESSION_TIMEOUT_HOURS = 8;
+const TRIGGER_KEYWORD = 'meu assessor';
+const END_SESSION_KEYWORD = 'encerrar assessor';
 
-// Função para identificar usuário autorizado
-const identifyAuthorizedUser = (phone: string, name: string) => {
-  // Primeiro tenta por telefone
-  for (const user of AUTHORIZED_USERS) {
-    for (const userPhone of user.phones) {
-      if (phone === userPhone || phone.includes(userPhone.slice(-9)) || userPhone.includes(phone.slice(-9))) {
-        return user;
+// ==============================================================================
+// FUNÇÕES AUXILIARES
+// ==============================================================================
+const identifyAdmin = (phone: string, name?: string) => {
+  const cleanPhone = phone.replace(/\D/g, '');
+  for (const admin of ADMIN_USERS) {
+    for (const adminPhone of admin.phones) {
+      if (cleanPhone === adminPhone || cleanPhone.endsWith(adminPhone.slice(-9)) || adminPhone.endsWith(cleanPhone.slice(-9))) {
+        return admin;
       }
     }
   }
-  
-  // Se não encontrou por telefone, tenta por nome
-  const nameLower = name.toLowerCase().trim();
-  for (const user of AUTHORIZED_USERS) {
-    if (nameLower.includes(user.name.toLowerCase()) || user.name.toLowerCase().includes(nameLower)) {
-      return user;
+  if (name) {
+    const nameLower = name.toLowerCase().trim();
+    for (const admin of ADMIN_USERS) {
+      if (nameLower.includes(admin.name.toLowerCase()) || admin.name.toLowerCase().includes(nameLower)) {
+        return admin;
+      }
     }
   }
-  
+  return null;
+};
+
+const normalizePhone = (phone: string) => phone.replace(/\D/g, '');
+
+const getMessageType = (message: any): string => {
+  if (message.text) return 'text';
+  if (message.image) return 'image';
+  if (message.audio) return 'audio';
+  if (message.video) return 'video';
+  if (message.document) return 'document';
+  if (message.sticker) return 'sticker';
+  if (message.interactive) return 'interactive';
+  if (message.location) return 'location';
+  if (message.contacts) return 'contacts';
+  return 'unknown';
+};
+
+const getMediaInfo = (message: any) => {
+  const types = ['image', 'audio', 'video', 'document', 'sticker'];
+  for (const type of types) {
+    if (message[type]) {
+      return {
+        type,
+        mediaId: message[type].id,
+        mimeType: message[type].mime_type,
+        sha256: message[type].sha256,
+        filename: message[type].filename,
+        caption: message[type].caption
+      };
+    }
+  }
   return null;
 };
 
 // ==============================================================================
-// PROMPT TRAMON - ASSESSOR DIGITAL GPT-5
+// PROMPT DO TRAMON - MODO EXECUTIVO
 // ==============================================================================
-const TRAMON_SYSTEM_PROMPT = `
-Você é **TRAMON**, a inteligência artificial oficial do **Curso Moisés Medeiros**, o ecossistema educacional de alta performance líder nacional em Química para ENEM e vestibulares, com foco em aprovação em Medicina e cursos altamente concorridos.
-
-## MÉTODO DO CURSO (seus valores)
-
-O Curso Moisés Medeiros é baseado em:
-- ✅ **Profundidade conceitual** - Química de verdade, não decoreba
-- ✅ **Didática estratégica** - Ensino que funciona para ENEM
-- ✅ **Organização** - Sistema completo, não aulas soltas
-- ✅ **Consistência** - Acompanhamento real do aluno
-- ✅ **Resultados** - Aprovações em Medicina e cursos top
-
-## SEU PAPEL
-
-Você é um **assessor digital inteligente, estratégico e humano**, especializado em:
-- 🎯 Orientar pessoas que buscam clareza, direção e tomada de decisão segura
-- 🧠 Organizar o raciocínio do usuário antes de qualquer direcionamento
-- 💡 Esclarecer dúvidas e reduzir inseguranças
-- 🎓 Indicar caminhos de forma clara, simples e responsável
-
-**SEU PAPEL NÃO É VENDER, MAS ASSESSORAR.**
-
-## PRINCÍPIOS OBRIGATÓRIOS
-
-✅ **Linguagem clara, humana e acessível** - Fale como um professor que se importa
-✅ **Postura consultiva e orientadora** - Você é um conselheiro, não um vendedor
-✅ **Tom acolhedor, seguro e profissional** - Transmita confiança sem arrogância
-✅ **Respostas objetivas, sem excesso de marketing** - Vá direto ao ponto
-✅ **Personalização total** - Cada resposta deve ser única para aquela pessoa
-
-## COMO CONDUZIR A CONVERSA
-
-**ETAPA 1: IDENTIFICAÇÃO (primeira mensagem)**
-- Identifique se o usuário já conhece o Curso Moisés Medeiros ou está chegando agora
-- Pergunte: "Você já conhece o Curso Moisés Medeiros ou está chegando agora?"
-
-**ETAPA 2: ENTENDIMENTO (escuta ativa)**
-- Entenda o motivo do contato:
-  - ❓ Dúvida sobre química?
-  - 🎯 Interesse em se preparar para ENEM/Medicina?
-  - 🤔 Comparando cursos?
-  - 😰 Insegurança sobre aprovação?
-  - 📚 Procurando material específico?
-
-**ETAPA 3: DIAGNÓSTICO (perguntas estratégicas)**
-
-Faça perguntas APENAS quando necessário:
-
-**Se o usuário quer se preparar para ENEM/Medicina:**
-- "Qual curso você quer fazer?" (para personalizar a resposta)
-- "Você está no ensino médio ou já terminou?" (para entender o contexto)
-- "Já estuda química ou está começando do zero?" (para recomendar o caminho certo)
-
-**Se o usuário tem dúvida de química:**
-- "Qual o assunto específico?" (para ajudar diretamente)
-- "É para ENEM, vestibular específico ou escola?" (para adequar a explicação)
-
-**Se o usuário está comparando cursos:**
-- "O que você mais valoriza em um curso de química?" (para destacar diferenciais)
-- "Já conhece outros cursos? O que achou deles?" (para entender objeções)
-
-**ETAPA 4: ORIENTAÇÃO (solução personalizada)**
-
-Com base nas respostas, oriente de forma clara:
-
-**Cenário 1: Usuário quer Medicina**
-"Entendi! Medicina é um dos cursos mais concorridos do Brasil, e Química costuma ser decisiva no ENEM.
-
-O Curso Moisés Medeiros foi criado EXATAMENTE para quem quer aprovação em Medicina. Nosso método é baseado em:
-
-1. Profundidade conceitual - Você entende química de verdade, não decora fórmulas
-2. Estratégia para ENEM - Foco nos assuntos que mais caem
-3. Acompanhamento real - Não é só aula, é mentoria
-
-Temos 4 turmas presenciais (Natal, João Pessoa, Campina Grande e Neo) e curso 100% online.
-
-Qual formato faz mais sentido para você?"
-
-**Cenário 2: Usuário tem dúvida de química**
-"Legal! Vou te ajudar com [assunto].
-
-[Explicação clara e didática do conceito, usando analogias se necessário]
-
-Isso faz sentido para você? Quer que eu aprofunde em algum ponto?"
-
-**Cenário 3: Usuário está comparando cursos**
-"Entendo! É importante comparar antes de decidir.
-
-O diferencial do Curso Moisés Medeiros é:
-
-1. Professor Moisés - 15 anos de experiência, especialista em ENEM
-2. Método comprovado - Centenas de aprovações em Medicina
-3. Acompanhamento real - Você não fica perdido
-4. Material completo - Teoria + exercícios + simulados
-
-O que você mais valoriza em um curso de química?"
-
-**ETAPA 5: DIRECIONAMENTO (próximos passos)**
-
-Direcione APENAS quando fizer sentido:
-
-**Se o usuário demonstrou interesse:**
-"Perfeito! Vou te passar o link para conhecer melhor:
-
-🔗 Site: https://moisesmedeiros.com.br
-📱 Instagram: @moises.profquimica
-
-Quer que eu te envie informações sobre valores e formas de pagamento?"
-
-**Se o usuário ainda tem dúvidas:**
-"Sem problemas! Estou aqui para esclarecer.
-
-O que mais você gostaria de saber?"
-
-**Se o usuário quer falar com humano:**
-"Claro! Vou transferir você para um dos nossos consultores educacionais.
-
-Ele vai te atender em até 2 horas (horário comercial).
-
-Enquanto isso, pode dar uma olhada no nosso Instagram: @moises.profquimica"
-
-## ADAPTAÇÃO AO PERFIL DO USUÁRIO
-
-**Se o usuário demonstrar:**
-- 😕 **Confusão** → Organize as informações de forma clara
-- ❓ **Dúvida** → Esclareça com exemplos práticos
-- 😰 **Insegurança** → Acolha e transmita confiança
-- 🎯 **Interesse** → Oriente sobre próximos passos
-- ⏰ **Pressa** → Seja direto e objetivo
-
-## LIMITES CLAROS (o que NUNCA fazer)
-
-❌ **NUNCA forçar vendas** - Você é consultor, não vendedor
-❌ **NUNCA criar urgência artificial** - "Só hoje!", "Últimas vagas!" → NÃO
-❌ **NUNCA prometer resultados irreais** - "Você vai passar em Medicina!" → NÃO
-❌ **NUNCA inventar informações** - Se não sabe, diga "Vou verificar e te respondo"
-❌ **NUNCA usar linguagem agressiva** - Seja sempre acolhedor
-
-## INFORMAÇÕES DO CURSO (use quando necessário)
-
-**PRODUTOS:**
-1. **Curso Online Completo** - Acesso vitalício, todas as aulas, material completo
-2. **Turmas Presenciais** - Natal, João Pessoa, Campina Grande, Neo
-3. **Mentoria Individual** - Acompanhamento 1:1 com Prof. Moisés
-4. **Material Didático** - Apostilas, listas, simulados
-
-**DIFERENCIAIS:**
-- ✅ Professor Moisés Medeiros - 15 anos de experiência
-- ✅ Método comprovado - Centenas de aprovações
-- ✅ Acompanhamento real - Não é só aula
-- ✅ Foco em ENEM e Medicina
-- ✅ Comunidade de alunos
-
-**CONTATOS:**
-- 🌐 Site: https://moisesmedeiros.com.br
-- 📱 Instagram: @moises.profquimica
-- 📧 Email: falecom@moisesmedeiros.com.br
-
-## RESULTADO ESPERADO
-
-Ao final da conversa, o usuário deve sentir que:
-- ✅ Foi ouvido e compreendido
-- ✅ Entendeu melhor sua situação
-- ✅ Teve clareza sobre as opções
-- ✅ Recebeu orientação honesta
-- ✅ Confia no Curso Moisés Medeiros
-`;
-
-// ==============================================================================
-// PROMPT DO ASSESSOR EXECUTIVO (para Owner/Admin via palavra-chave)
-// ==============================================================================
-const getExecutivePrompt = (userName: string, userRole: string) => `
+const getExecutivePrompt = (adminName: string, adminRole: string) => `
 Você é TRAMON, assistente executivo premium do Curso Moisés Medeiros.
 
-🎯 VOCÊ ESTÁ FALANDO COM: ${userName} (${userRole === 'owner' ? 'Dono' : 'Administradora'})
+🎯 VOCÊ ESTÁ FALANDO COM: ${adminName} (${adminRole === 'owner' ? 'Dono' : 'Administradora'})
 
 REGRAS CRÍTICAS:
-1. SEMPRE chame a pessoa pelo nome: "${userName}"
-2. Seja CONCISO - máximo 500 caracteres
+1. SEMPRE chame a pessoa pelo nome: "${adminName}"
+2. Seja CONCISO - máximo 500 caracteres por resposta
 3. Use emojis para clareza visual
 4. Responda de forma executiva e profissional
 5. SEMPRE vincule ações ao sistema de gestão
 
 🔗 SISTEMA DE GESTÃO: https://gestao.moisesmedeiros.com.br
-Quando mencionar tarefas, finanças, alunos ou qualquer dado do sistema, SEMPRE inclua o link.
 
-COMANDOS RÁPIDOS QUE VOCÊ ENTENDE:
-- "tarefas" ou "agenda" = listar tarefas → Link: https://gestao.moisesmedeiros.com.br/tarefas
-- "criar tarefa [texto]" = criar nova tarefa
-- "finanças" ou "dinheiro" = resumo financeiro → Link: https://gestao.moisesmedeiros.com.br/financas-empresa
-- "alunos" = status dos alunos → Link: https://gestao.moisesmedeiros.com.br/alunos
-- "funcionários" ou "equipe" = status da equipe → Link: https://gestao.moisesmedeiros.com.br/funcionarios
-- "relatório" = resumo executivo completo → Link: https://gestao.moisesmedeiros.com.br/dashboard
-- "leads" = status dos leads do WhatsApp → Link: https://gestao.moisesmedeiros.com.br/leads-whatsapp
-- "marketing" = métricas de marketing → Link: https://gestao.moisesmedeiros.com.br/marketing
+COMANDOS RÁPIDOS:
+- "tarefas" → https://gestao.moisesmedeiros.com.br/tarefas
+- "finanças" → https://gestao.moisesmedeiros.com.br/financas-empresa
+- "alunos" → https://gestao.moisesmedeiros.com.br/alunos
+- "equipe" → https://gestao.moisesmedeiros.com.br/funcionarios
+- "leads" → https://gestao.moisesmedeiros.com.br/central-whatsapp
+- "marketing" → https://gestao.moisesmedeiros.com.br/marketing
 
-EXEMPLO DE RESPOSTA:
-"Olá ${userName}! 👋
+COMANDOS ADMIN (/admin):
+- /admin tarefa titulo="X" desc="Y" prioridade=alta data=2025-12-16
+- /admin fin tipo=payable valor=1000 parte="Nome" desc="Descrição"
+- /admin crm stage=vip tags="tag1,tag2" note="nota"
+- /admin resumo hoje
+- /admin encerrar
 
-📋 Suas tarefas pendentes:
-• [lista de tarefas]
-
-🔗 Ver detalhes: https://gestao.moisesmedeiros.com.br/tarefas"
-
-IMPORTANTE: Nunca responda como se fosse o TRAMON público (que fala sobre o curso). Você é o assessor EXECUTIVO pessoal.
+Você é executivo, direto, e sempre sugere próximos passos.
 `;
 
+// ==============================================================================
+// PROMPT PÚBLICO DO TRAMON
+// ==============================================================================
+const TRAMON_PUBLIC_PROMPT = `
+Você é TRAMON, assessor digital inteligente do Curso Moisés Medeiros.
+
+Você assessora pessoas interessadas em Química para ENEM/Medicina.
+
+PRINCÍPIOS:
+- Linguagem clara e acolhedora
+- Postura consultiva (não vendedor)
+- Respostas objetivas
+- Personalização
+
+ETAPAS:
+1. Identificar se já conhece o curso
+2. Entender o motivo do contato
+3. Fazer perguntas estratégicas
+4. Orientar de forma personalizada
+5. Direcionar para próximos passos
+
+CONTATOS:
+- Site: https://moisesmedeiros.com.br
+- Instagram: @moises.profquimica
+
+Máximo 500 caracteres por resposta. Use emojis.
+`;
+
+// ==============================================================================
+// PARSER DE COMANDOS ADMIN
+// ==============================================================================
+const parseAdminCommand = (text: string) => {
+  if (!text.startsWith('/admin')) return null;
+  
+  const parts = text.slice(6).trim();
+  const commandMatch = parts.match(/^(\w+)/);
+  if (!commandMatch) return null;
+  
+  const command = commandMatch[1].toLowerCase();
+  const argsString = parts.slice(command.length).trim();
+  
+  // Parse key=value ou key="value with spaces"
+  const args: Record<string, string> = {};
+  const regex = /(\w+)=(?:"([^"]+)"|(\S+))/g;
+  let match;
+  while ((match = regex.exec(argsString)) !== null) {
+    args[match[1]] = match[2] || match[3];
+  }
+  
+  return { command, args, raw: argsString };
+};
+
+// ==============================================================================
+// EXECUTAR COMANDO ADMIN
+// ==============================================================================
+const executeAdminCommand = async (
+  supabase: any,
+  cmd: { command: string; args: Record<string, string>; raw: string },
+  adminName: string,
+  adminPhone: string,
+  conversationId: string
+) => {
+  const auditLog = async (action: string, payload: any, status = 'success', message = '') => {
+    await supabase.from('admin_audit_log').insert({
+      actor_phone: adminPhone,
+      actor_name: adminName,
+      action_type: action,
+      action_payload: payload,
+      result_status: status,
+      result_message: message
+    });
+  };
+
+  switch (cmd.command) {
+    case 'tarefa': {
+      const { titulo, desc, prioridade, data, owner } = cmd.args;
+      if (!titulo) return '❌ Faltou o título. Use: /admin tarefa titulo="Nome" desc="Descrição"';
+      
+      const { error } = await supabase.from('command_tasks').insert({
+        title: titulo,
+        description: desc || null,
+        priority: prioridade === 'alta' ? 'high' : prioridade === 'baixa' ? 'low' : 'med',
+        due_date: data || null,
+        owner: owner || adminName,
+        source: 'whatsapp_command',
+        related_conversation_id: conversationId,
+        created_by: adminName
+      });
+      
+      if (error) {
+        await auditLog('create_task', cmd.args, 'failed', error.message);
+        return `❌ Erro ao criar tarefa: ${error.message}`;
+      }
+      
+      await auditLog('create_task', cmd.args);
+      return `✅ Tarefa criada, ${adminName}!\n\n📋 ${titulo}\n${desc ? `📝 ${desc}\n` : ''}${data ? `📅 ${data}\n` : ''}\n🔗 Ver: https://gestao.moisesmedeiros.com.br/tarefas`;
+    }
+
+    case 'fin': {
+      const { tipo, valor, parte, desc, status } = cmd.args;
+      if (!valor) return '❌ Faltou o valor. Use: /admin fin tipo=payable valor=1000 parte="Nome"';
+      
+      const { error } = await supabase.from('command_finance').insert({
+        type: tipo || 'expense',
+        amount: parseFloat(valor),
+        counterparty: parte || null,
+        description: desc || null,
+        status: status || 'open',
+        source: 'whatsapp_command',
+        related_conversation_id: conversationId,
+        created_by: adminName
+      });
+      
+      if (error) {
+        await auditLog('create_finance', cmd.args, 'failed', error.message);
+        return `❌ Erro ao lançar finança: ${error.message}`;
+      }
+      
+      await auditLog('create_finance', cmd.args);
+      return `✅ Finança registrada, ${adminName}!\n\n💰 R$ ${parseFloat(valor).toLocaleString('pt-BR')}\n${parte ? `👤 ${parte}\n` : ''}${desc ? `📝 ${desc}\n` : ''}\n🔗 Ver: https://gestao.moisesmedeiros.com.br/financas-empresa`;
+    }
+
+    case 'crm': {
+      const { stage, tags, note } = cmd.args;
+      
+      const updates: any = {};
+      if (stage) updates.crm_stage = stage;
+      if (tags) updates.tags = tags.split(',').map((t: string) => t.trim());
+      if (note) updates.notes = note;
+      
+      const { error } = await supabase
+        .from('whatsapp_conversations')
+        .update(updates)
+        .eq('id', conversationId);
+      
+      if (error) {
+        await auditLog('update_crm', cmd.args, 'failed', error.message);
+        return `❌ Erro ao atualizar CRM: ${error.message}`;
+      }
+      
+      await auditLog('update_crm', cmd.args);
+      return `✅ CRM atualizado, ${adminName}!\n\n${stage ? `🎯 Estágio: ${stage}\n` : ''}${tags ? `🏷️ Tags: ${tags}\n` : ''}${note ? `📝 ${note}\n` : ''}\n🔗 Ver: https://gestao.moisesmedeiros.com.br/central-whatsapp`;
+    }
+
+    case 'resumo': {
+      const [
+        { data: tasks },
+        { data: finance },
+        { data: conversations }
+      ] = await Promise.all([
+        supabase.from('command_tasks').select('*').eq('status', 'todo').limit(5),
+        supabase.from('command_finance').select('*').eq('status', 'open').limit(5),
+        supabase.from('whatsapp_conversations').select('*').eq('crm_stage', 'vip').limit(5)
+      ]);
+      
+      const pendingTasks = tasks?.length || 0;
+      const openFinance = finance?.reduce((sum: number, f: any) => sum + (f.type === 'payable' ? f.amount : 0), 0) || 0;
+      const vipContacts = conversations?.length || 0;
+      
+      await auditLog('view_summary', { type: cmd.raw });
+      return `📊 Resumo, ${adminName}!\n\n📋 Tarefas pendentes: ${pendingTasks}\n💰 A pagar: R$ ${openFinance.toLocaleString('pt-BR')}\n⭐ Contatos VIP: ${vipContacts}\n\n🔗 Dashboard: https://gestao.moisesmedeiros.com.br/dashboard`;
+    }
+
+    case 'encerrar': {
+      await supabase
+        .from('whatsapp_conversations')
+        .update({ session_mode: 'ASSISTOR_OFF', session_started_at: null })
+        .eq('id', conversationId);
+      
+      await auditLog('end_session', {});
+      return `✅ Sessão encerrada, ${adminName}! Até logo! 👋`;
+    }
+
+    default:
+      return `❌ Comando não reconhecido: ${cmd.command}\n\nComandos disponíveis:\n• /admin tarefa\n• /admin fin\n• /admin crm\n• /admin resumo\n• /admin encerrar`;
+  }
+};
+
+// ==============================================================================
+// DOWNLOAD DE MÍDIA DO WHATSAPP
+// ==============================================================================
+const downloadMedia = async (mediaId: string, accessToken: string) => {
+  try {
+    // 1. Obter URL de download
+    const urlResponse = await fetch(`https://graph.facebook.com/v18.0/${mediaId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    
+    if (!urlResponse.ok) {
+      console.error('Failed to get media URL:', await urlResponse.text());
+      return null;
+    }
+    
+    const urlData = await urlResponse.json();
+    const downloadUrl = urlData.url;
+    
+    // 2. Baixar arquivo
+    const fileResponse = await fetch(downloadUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    
+    if (!fileResponse.ok) {
+      console.error('Failed to download media:', await fileResponse.text());
+      return null;
+    }
+    
+    const arrayBuffer = await fileResponse.arrayBuffer();
+    return {
+      data: new Uint8Array(arrayBuffer),
+      mimeType: urlData.mime_type,
+      fileSize: urlData.file_size
+    };
+  } catch (error) {
+    console.error('Error downloading media:', error);
+    return null;
+  }
+};
+
+// ==============================================================================
+// ENVIAR MENSAGEM VIA WHATSAPP CLOUD API
+// ==============================================================================
+const sendWhatsAppMessage = async (to: string, message: string) => {
+  const WHATSAPP_ACCESS_TOKEN = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+  const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
+  
+  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+    console.error('WhatsApp credentials not configured');
+    return false;
+  }
+  
+  try {
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to,
+          type: 'text',
+          text: { body: message }
+        })
+      }
+    );
+    
+    if (!response.ok) {
+      console.error('Failed to send WhatsApp message:', await response.text());
+      return false;
+    }
+    
+    return true;
+  } catch (error) {
+    console.error('Error sending WhatsApp message:', error);
+    return false;
+  }
+};
+
+// ==============================================================================
+// CHAMAR AI (LOVABLE GATEWAY)
+// ==============================================================================
+const callAI = async (systemPrompt: string, userMessage: string, conversationHistory: any[] = []) => {
+  const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+  
+  if (!LOVABLE_API_KEY) {
+    console.error('LOVABLE_API_KEY not configured');
+    return 'Desculpe, estou com problemas técnicos. Um consultor humano vai te atender em breve!';
+  }
+  
+  try {
+    const messages = [
+      { role: 'system', content: systemPrompt },
+      ...conversationHistory.slice(-10),
+      { role: 'user', content: userMessage }
+    ];
+    
+    const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-2.5-flash',
+        messages,
+        max_tokens: 500
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('AI API error:', response.status, errorText);
+      return 'Desculpe, estou com dificuldades técnicas. Tente novamente em instantes!';
+    }
+    
+    const data = await response.json();
+    return data.choices?.[0]?.message?.content || 'Não consegui processar sua mensagem.';
+  } catch (error) {
+    console.error('Error calling AI:', error);
+    return 'Erro ao processar. Por favor, tente novamente.';
+  }
+};
+
+// ==============================================================================
+// WEBHOOK PRINCIPAL
+// ==============================================================================
 serve(async (req) => {
-  // Handle CORS
+  const startTime = Date.now();
+  
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
@@ -268,7 +429,7 @@ serve(async (req) => {
 
   try {
     // ==============================================================================
-    // GET - Webhook verification (Meta)
+    // GET - Verificação do Webhook (Meta)
     // ==============================================================================
     if (req.method === 'GET') {
       const url = new URL(req.url);
@@ -280,6 +441,11 @@ serve(async (req) => {
 
       if (mode === 'subscribe' && token === VERIFY_TOKEN) {
         console.log('✅ Webhook verified!');
+        await supabase.from('webhook_diagnostics').insert({
+          event_type: 'verification',
+          status: 'success',
+          metadata: { mode, challenge: !!challenge }
+        });
         return new Response(challenge, { status: 200 });
       }
 
@@ -287,78 +453,55 @@ serve(async (req) => {
     }
 
     // ==============================================================================
-    // POST - Processar mensagens (WhatsApp direto ou ManyChat)
+    // POST - Processar Mensagens
     // ==============================================================================
     if (req.method === 'POST') {
       const body = await req.json();
+      const payloadSize = JSON.stringify(body).length;
+      
       console.log('📩 Webhook received:', JSON.stringify(body, null, 2));
 
-      // Detectar se é payload do ManyChat ou WhatsApp direto
-      // ManyChat pode variar o formato: preferimos inferir por presença de telefone + identificador.
+      // Registrar diagnóstico
+      await supabase.from('webhook_diagnostics').insert({
+        event_type: 'message_received',
+        status: 'processing',
+        payload_size: payloadSize,
+        metadata: { source: body.user_id ? 'manychat' : 'whatsapp_direct' }
+      });
+
+      // ==============================================================================
+      // DETECTAR FONTE (ManyChat ou WhatsApp Direto)
+      // ==============================================================================
       const isManyChat = Boolean(
-        body &&
-          typeof body === 'object' &&
-          (body.user_phone || body.subscriber_phone || body.phone) &&
-          (body.user_id || body.subscriber_id || body.user_name || body.name)
+        body?.user_phone || body?.subscriber_phone || body?.phone ||
+        body?.user_id || body?.subscriber_id
       );
 
-      let from: string;
+      let fromPhone: string;
       let messageText: string;
       let userName: string;
-      let externalId: string | null = null;
-      let source: string;
-
-      const pickFirstString = (...values: unknown[]) => {
-        for (const v of values) {
-          if (typeof v === 'string' && v.trim()) return v.trim();
-        }
-        return '';
-      };
-
-      const extractManyChatMessage = (payload: any) => {
-        // Primeiro tenta o campo user_message que é o padrão do ManyChat
-        const userMessage = pickFirstString(
-          payload?.user_message,
-          payload?.last_input_text,
-          payload?.message,
-          payload?.text,
-          payload?.customer_feedback,
-          payload?.fields?.customer_feedback,
-          payload?.custom_fields?.customer_feedback,
-          payload?.data?.customer_feedback
-        );
-        if (userMessage) return userMessage;
-
-        // Alguns fluxos mandam o campo como objeto { value: "..." }
-        const objVal =
-          payload?.fields?.customer_feedback?.value ??
-          payload?.custom_fields?.customer_feedback?.value ??
-          payload?.data?.customer_feedback?.value;
-        if (typeof objVal === 'string' && objVal.trim()) return objVal.trim();
-
-        return '';
-      };
+      let messageId: string;
+      let messageType: string = 'text';
+      let mediaInfo: any = null;
+      let rawPayload = body;
+      let toPhone: string = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID') || '';
 
       if (isManyChat) {
         // ==============================================================================
-        // PAYLOAD DO MANYCHAT
+        // PAYLOAD MANYCHAT
         // ==============================================================================
         console.log('📱 ManyChat payload detected');
-        from = pickFirstString(body.user_phone, body.subscriber_phone, body.phone).replace(/\D/g, '');
-        messageText = extractManyChatMessage(body);
-        userName = pickFirstString(body.user_name, body.name, 'Lead WhatsApp') || 'Lead WhatsApp';
-        externalId = pickFirstString(body.user_id, body.subscriber_id) || null;
-        source = 'whatsapp_manychat';
-
-        console.log('🧩 ManyChat extracted:', {
-          from,
-          userName,
-          externalId,
-          hasMessage: Boolean(messageText),
-        });
+        
+        fromPhone = normalizePhone(
+          body.user_phone || body.subscriber_phone || body.phone || ''
+        );
+        messageText = body.user_message || body.last_input_text || body.message || body.text || '';
+        userName = body.user_name || body.name || 'Lead WhatsApp';
+        messageId = `mc_${body.user_id || Date.now()}_${Date.now()}`;
+        
       } else {
         // ==============================================================================
-        // PAYLOAD DO WHATSAPP CLOUD API (direto)
+        // PAYLOAD WHATSAPP CLOUD API
         // ==============================================================================
         const entry = body.entry?.[0];
         const changes = entry?.changes?.[0];
@@ -366,292 +509,343 @@ serve(async (req) => {
         const messages = value?.messages;
 
         if (!messages || messages.length === 0) {
+          console.log('📭 No messages in payload');
           return new Response(JSON.stringify({ status: 'no_message' }), {
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' }
           });
         }
 
         const message = messages[0];
-        from = message.from;
-        messageText = message.text?.body || '';
+        fromPhone = normalizePhone(message.from);
+        messageText = message.text?.body || message.caption || '';
         userName = value?.contacts?.[0]?.profile?.name || 'Usuário WhatsApp';
-        source = 'whatsapp_direct';
+        messageId = message.id;
+        messageType = getMessageType(message);
+        mediaInfo = getMediaInfo(message);
+        toPhone = value?.metadata?.phone_number_id || '';
       }
 
-      console.log(`📱 Message from ${from} (${userName}): ${messageText}`);
+      console.log(`📱 Message from ${fromPhone} (${userName}): ${messageText}`);
+      console.log(`📎 Type: ${messageType}, HasMedia: ${!!mediaInfo}`);
 
       // ==============================================================================
-      // VERIFICAR SE É OWNER/ADMIN COM PALAVRA-CHAVE "meu assessor"
+      // IDENTIFICAR ADMIN
       // ==============================================================================
-      const authorizedUser = identifyAuthorizedUser(from, userName);
-      const isAuthorized = authorizedUser !== null;
+      const admin = identifyAdmin(fromPhone, userName);
+      const isAdmin = admin !== null;
       
-      const isAssessorKeyword = messageText.toLowerCase().includes('meu assessor');
-      const useExecutiveMode = isAuthorized && isAssessorKeyword;
-
-      console.log(`🔐 Authorized: ${isAuthorized}, User: ${authorizedUser?.name || 'none'}, Assessor Mode: ${useExecutiveMode}`);
+      console.log(`🔐 Admin: ${isAdmin ? admin.name : 'none'}`);
 
       // ==============================================================================
-      // CONFIGURAR IA (GPT-5) via Lovable Gateway
+      // OBTER OU CRIAR CONVERSA
       // ==============================================================================
-      const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
-      
-      if (!LOVABLE_API_KEY) {
-        console.error('❌ LOVABLE_API_KEY not configured');
-        return new Response(JSON.stringify({ 
-          success: false,
-          response: 'Desculpe, estou com problemas técnicos. Um consultor humano vai te atender em breve!' 
-        }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
+      let { data: conversation } = await supabase
+        .from('whatsapp_conversations')
+        .select('*')
+        .eq('phone', fromPhone)
+        .single();
 
-      let systemPrompt = TRAMON_SYSTEM_PROMPT;
-      let contextData = '';
-
-      // Se for modo executivo, buscar dados do sistema
-      if (useExecutiveMode) {
-        console.log('🎯 Executive mode activated - fetching system data');
+      if (!conversation) {
+        const { data: newConv, error } = await supabase
+          .from('whatsapp_conversations')
+          .insert({
+            phone: fromPhone,
+            display_name: userName,
+            owner_detected: isAdmin,
+            owner_name: admin?.name || null,
+            session_mode: 'ASSISTOR_OFF'
+          })
+          .select()
+          .single();
         
-        const [
-          { data: tasks },
-          { data: income },
-          { data: students },
-          { data: employees },
-          { data: leads },
-          { data: marketing }
-        ] = await Promise.all([
-          supabase.from('calendar_tasks').select('*').order('task_date', { ascending: true }).limit(10),
-          supabase.from('income').select('*').order('created_at', { ascending: false }).limit(10),
-          supabase.from('profiles').select('*').limit(50),
-          supabase.from('employees').select('*'),
-          supabase.from('whatsapp_leads').select('*').order('last_contact', { ascending: false }).limit(20),
-          supabase.from('marketing_campaigns').select('*').limit(10)
-        ]);
+        if (error) {
+          console.error('Error creating conversation:', error);
+        } else {
+          conversation = newConv;
+        }
+      }
 
-        // Calcular métricas
-        const totalIncome = income?.reduce((sum, i) => sum + (i.valor || 0), 0) || 0;
-        const pendingTasks = tasks?.filter(t => !t.is_completed).length || 0;
-        const newLeads = leads?.filter(l => l.status === 'novo').length || 0;
-        const activeEmployees = employees?.filter(e => e.status === 'ativo').length || 0;
+      const conversationId = conversation?.id;
 
-        contextData = `
-DADOS DO SISTEMA EM TEMPO REAL:
+      // ==============================================================================
+      // VERIFICAR TRIGGERS E SESSION MODE
+      // ==============================================================================
+      const lowerMessage = messageText.toLowerCase();
+      const hasTrigger = lowerMessage.includes(TRIGGER_KEYWORD);
+      const hasEndTrigger = lowerMessage.includes(END_SESSION_KEYWORD);
+      
+      let sessionMode = conversation?.session_mode || 'ASSISTOR_OFF';
+      
+      // Verificar timeout de sessão
+      if (sessionMode === 'ASSISTOR_ON' && conversation?.session_started_at) {
+        const sessionStart = new Date(conversation.session_started_at);
+        const hoursSinceStart = (Date.now() - sessionStart.getTime()) / (1000 * 60 * 60);
+        if (hoursSinceStart > SESSION_TIMEOUT_HOURS) {
+          sessionMode = 'ASSISTOR_OFF';
+          await supabase
+            .from('whatsapp_conversations')
+            .update({ session_mode: 'ASSISTOR_OFF', session_started_at: null })
+            .eq('id', conversationId);
+          console.log('⏰ Session timeout - mode set to OFF');
+        }
+      }
 
-📋 TAREFAS:
-- Total: ${tasks?.length || 0}
-- Pendentes: ${pendingTasks}
-- Próximas: ${JSON.stringify(tasks?.slice(0, 5).map(t => ({ titulo: t.title, data: t.task_date })) || [])}
+      // Ativar modo assessor se trigger detectado e é admin
+      if (hasTrigger && isAdmin && sessionMode === 'ASSISTOR_OFF') {
+        sessionMode = 'ASSISTOR_ON';
+        await supabase
+          .from('whatsapp_conversations')
+          .update({ 
+            session_mode: 'ASSISTOR_ON', 
+            session_started_at: new Date().toISOString() 
+          })
+          .eq('id', conversationId);
+        console.log('🎯 Session activated for', admin?.name);
+      }
 
-💰 FINANÇAS:
-- Receita Total: R$ ${totalIncome.toLocaleString('pt-BR')}
-- Últimas entradas: ${JSON.stringify(income?.slice(0, 3).map(i => ({ fonte: i.fonte, valor: i.valor })) || [])}
+      // Encerrar se comando de encerramento
+      if (hasEndTrigger && isAdmin && sessionMode === 'ASSISTOR_ON') {
+        sessionMode = 'ASSISTOR_OFF';
+        await supabase
+          .from('whatsapp_conversations')
+          .update({ session_mode: 'ASSISTOR_OFF', session_started_at: null })
+          .eq('id', conversationId);
+        console.log('👋 Session ended by', admin?.name);
+      }
 
-👥 EQUIPE:
-- Funcionários ativos: ${activeEmployees}
-- Total: ${employees?.length || 0}
+      console.log(`📊 Session Mode: ${sessionMode}`);
 
-🎯 LEADS WHATSAPP:
-- Novos: ${newLeads}
-- Total: ${leads?.length || 0}
-- Status: ${JSON.stringify(leads?.slice(0, 5).map(l => ({ nome: l.name, status: l.status })) || [])}
+      // ==============================================================================
+      // SALVAR MENSAGEM RECEBIDA
+      // ==============================================================================
+      const { data: savedMessage, error: msgError } = await supabase
+        .from('whatsapp_messages')
+        .insert({
+          conversation_id: conversationId,
+          direction: 'inbound',
+          message_id: messageId,
+          message_type: messageType,
+          message_text: messageText,
+          from_phone: fromPhone,
+          to_phone: toPhone,
+          timestamp: new Date().toISOString(),
+          handled_by: sessionMode === 'ASSISTOR_ON' ? 'chatgpt_tramon' : 'system_router',
+          trigger_detected: hasTrigger,
+          trigger_name: hasTrigger ? TRIGGER_KEYWORD : null,
+          raw_payload: rawPayload
+        })
+        .select()
+        .single();
 
-📊 MARKETING:
-- Campanhas: ${marketing?.length || 0}
-
-📱 Você está falando pelo WhatsApp com ${authorizedUser?.name} (${authorizedUser?.role}).
-        `.trim();
-
-        systemPrompt = getExecutivePrompt(authorizedUser?.name || userName, authorizedUser?.role || 'admin') + '\n\n' + contextData;
+      if (msgError) {
+        console.error('Error saving message:', msgError);
       }
 
       // ==============================================================================
-      // BUSCAR HISTÓRICO DE CONVERSA (para contexto)
+      // PROCESSAR ANEXOS (SE HOUVER)
       // ==============================================================================
-      let conversationHistory: Array<{ role: 'user' | 'assistant'; content: string }> = [];
-      
-      if (isManyChat && body.conversation_history) {
-        conversationHistory = body.conversation_history;
-      } else {
-        // Buscar últimas mensagens do lead
-        const { data: existingLead } = await supabase
-          .from('whatsapp_leads')
-          .select('id')
-          .eq('phone', from)
+      if (mediaInfo && !isManyChat) {
+        const WHATSAPP_ACCESS_TOKEN = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
+        
+        // Inserir registro de anexo (status pending)
+        const { data: attachment } = await supabase
+          .from('whatsapp_attachments')
+          .insert({
+            message_id: messageId,
+            conversation_id: conversationId,
+            attachment_type: mediaInfo.type,
+            mime_type: mediaInfo.mimeType,
+            sha256: mediaInfo.sha256,
+            filename: mediaInfo.filename,
+            caption: mediaInfo.caption,
+            download_status: 'downloading'
+          })
+          .select()
           .single();
 
-        if (existingLead) {
-          const { data: history } = await supabase
-            .from('whatsapp_conversation_history')
-            .select('user_message, ai_response')
-            .eq('lead_id', existingLead.id)
-            .order('created_at', { ascending: false })
-            .limit(5);
+        // Download e upload para storage
+        if (WHATSAPP_ACCESS_TOKEN && attachment) {
+          const mediaData = await downloadMedia(mediaInfo.mediaId, WHATSAPP_ACCESS_TOKEN);
+          
+          if (mediaData) {
+            const ext = mediaInfo.mimeType?.split('/')[1] || 'bin';
+            const storagePath = `${conversationId}/${messageId}.${ext}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('whatsapp-attachments')
+              .upload(storagePath, mediaData.data, {
+                contentType: mediaInfo.mimeType,
+                upsert: true
+              });
 
-          if (history) {
-            conversationHistory = history.reverse().flatMap(h => [
-              { role: 'user' as const, content: h.user_message },
-              { role: 'assistant' as const, content: h.ai_response }
-            ]);
+            if (uploadError) {
+              console.error('Upload error:', uploadError);
+              await supabase
+                .from('whatsapp_attachments')
+                .update({ download_status: 'failed', download_error: uploadError.message })
+                .eq('id', attachment.id);
+            } else {
+              const { data: publicUrl } = supabase.storage
+                .from('whatsapp-attachments')
+                .getPublicUrl(storagePath);
+
+              await supabase
+                .from('whatsapp_attachments')
+                .update({
+                  storage_path: storagePath,
+                  public_url: publicUrl.publicUrl,
+                  file_size: mediaData.fileSize,
+                  download_status: 'completed'
+                })
+                .eq('id', attachment.id);
+              
+              console.log('✅ Attachment saved:', storagePath);
+            }
+          } else {
+            await supabase
+              .from('whatsapp_attachments')
+              .update({ download_status: 'failed', download_error: 'Download failed' })
+              .eq('id', attachment.id);
           }
         }
       }
 
-      // Remover a palavra-chave "meu assessor" da mensagem para processamento
-      const cleanMessage = messageText.replace(/meu assessor/gi, '').trim() || 'Olá!';
+      // ==============================================================================
+      // ATUALIZAR CONVERSA
+      // ==============================================================================
+      await supabase
+        .from('whatsapp_conversations')
+        .update({
+          last_message_at: new Date().toISOString(),
+          unread_count: (conversation?.unread_count || 0) + 1,
+          display_name: userName,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', conversationId);
 
       // ==============================================================================
-      // CHAMAR GPT-5 VIA LOVABLE AI GATEWAY
+      // GERAR E ENVIAR RESPOSTA
       // ==============================================================================
-      const startTime = Date.now();
-      
-      const aiResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            ...conversationHistory,
-            { role: 'user', content: cleanMessage }
-          ],
-          temperature: 0.7,
-          max_tokens: 800,
-        }),
+      let aiResponse: string | null = null;
+
+      // Se modo assessor ativo E é admin
+      if (sessionMode === 'ASSISTOR_ON' && isAdmin) {
+        // Verificar se é comando /admin
+        const adminCmd = parseAdminCommand(messageText);
+        
+        if (adminCmd) {
+          aiResponse = await executeAdminCommand(
+            supabase, 
+            adminCmd, 
+            admin!.name, 
+            fromPhone, 
+            conversationId
+          );
+        } else {
+          // Buscar histórico para contexto
+          const { data: history } = await supabase
+            .from('whatsapp_messages')
+            .select('message_text, direction')
+            .eq('conversation_id', conversationId)
+            .order('timestamp', { ascending: false })
+            .limit(10);
+
+          const conversationHistory = (history || []).reverse().map((h: any) => ({
+            role: h.direction === 'inbound' ? 'user' : 'assistant',
+            content: h.message_text || ''
+          }));
+
+          // Buscar dados do sistema para contexto executivo
+          const [
+            { data: tasks },
+            { data: finance },
+            { data: leads }
+          ] = await Promise.all([
+            supabase.from('command_tasks').select('*').eq('status', 'todo').limit(5),
+            supabase.from('command_finance').select('*').eq('status', 'open').limit(5),
+            supabase.from('whatsapp_conversations').select('*').order('last_message_at', { ascending: false }).limit(5)
+          ]);
+
+          const contextData = `
+DADOS EM TEMPO REAL:
+📋 Tarefas pendentes: ${tasks?.length || 0}
+💰 Contas abertas: R$ ${finance?.reduce((s: number, f: any) => s + (f.type === 'payable' ? f.amount : 0), 0)?.toLocaleString('pt-BR') || '0'}
+📱 Últimos contatos: ${leads?.length || 0}
+          `.trim();
+
+          const fullPrompt = getExecutivePrompt(admin!.name, admin!.role) + '\n\n' + contextData;
+          aiResponse = await callAI(fullPrompt, messageText, conversationHistory);
+        }
+      } else if (!isManyChat) {
+        // Modo público - responder apenas se não for ManyChat
+        aiResponse = await callAI(TRAMON_PUBLIC_PROMPT, messageText);
+      }
+
+      // Enviar resposta se houver
+      if (aiResponse) {
+        const sent = await sendWhatsAppMessage(fromPhone, aiResponse);
+        
+        if (sent) {
+          // Salvar resposta enviada
+          await supabase.from('whatsapp_messages').insert({
+            conversation_id: conversationId,
+            direction: 'outbound',
+            message_id: `out_${Date.now()}`,
+            message_type: 'text',
+            message_text: aiResponse,
+            from_phone: toPhone,
+            to_phone: fromPhone,
+            timestamp: new Date().toISOString(),
+            handled_by: 'chatgpt_tramon'
+          });
+          
+          console.log('✅ Response sent and saved');
+        }
+      }
+
+      // Atualizar diagnóstico
+      const processingTime = Date.now() - startTime;
+      await supabase.from('webhook_diagnostics').insert({
+        event_type: 'message_processed',
+        status: 'completed',
+        processing_time_ms: processingTime,
+        metadata: {
+          from: fromPhone,
+          type: messageType,
+          sessionMode,
+          isAdmin,
+          hadResponse: !!aiResponse
+        }
       });
 
-      if (!aiResponse.ok) {
-        const errorText = await aiResponse.text();
-        console.error('❌ AI Gateway error:', aiResponse.status, errorText);
-        
-        if (aiResponse.status === 429) {
-          return new Response(JSON.stringify({ 
-            success: false,
-            response: 'Estou com muitas solicitações no momento. Tente novamente em alguns segundos!' 
-          }), {
-            status: 429,
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-          });
-        }
-        
-        return new Response(JSON.stringify({ 
-          success: false,
-          response: 'Desculpe, estou com problemas técnicos. Um consultor humano vai te atender em breve!' 
-        }), {
-          status: 500,
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-        });
-      }
-
-      const aiData = await aiResponse.json();
-      const aiReply = aiData.choices?.[0]?.message?.content || 
-        'Desculpe, não consegui processar sua mensagem. Um consultor humano vai te atender em breve!';
-      
-      const responseTime = Date.now() - startTime;
-      console.log(`✅ AI response generated in ${responseTime}ms`);
-
-      // ==============================================================================
-      // SALVAR LEAD E CONVERSA NO BANCO (exceto Owner/Admin em modo executivo)
-      // ==============================================================================
-      if (!useExecutiveMode) {
-        try {
-          // Usar a função upsert_whatsapp_lead
-          const { data: leadId, error: leadError } = await supabase.rpc('upsert_whatsapp_lead', {
-            p_phone: from,
-            p_name: userName,
-            p_external_id: externalId,
-            p_message: messageText,
-            p_ai_response: aiReply,
-            p_source: source
-          });
-
-          if (leadError) {
-            console.error('❌ Error saving lead:', leadError);
-          } else {
-            console.log(`✅ Lead saved/updated: ${leadId}`);
-          }
-        } catch (dbError) {
-          console.error('❌ Database error:', dbError);
-        }
-      } else {
-        // Salvar na tabela tramon_conversations para histórico do owner
-        const { data: ownerProfile } = await supabase
-          .from('profiles')
-          .select('id')
-          .eq('email', OWNER_EMAIL)
-          .single();
-
-        if (ownerProfile) {
-          await supabase.from('tramon_conversations').insert([
-            { user_id: ownerProfile.id, role: 'user', content: messageText, source: 'whatsapp' },
-            { user_id: ownerProfile.id, role: 'assistant', content: aiReply, source: 'whatsapp' }
-          ]);
-        }
-      }
-
-      // ==============================================================================
-      // ENVIAR RESPOSTA DE VOLTA PARA O WHATSAPP (se não for ManyChat)
-      // ==============================================================================
-      if (!isManyChat) {
-        const WHATSAPP_TOKEN = Deno.env.get('WHATSAPP_ACCESS_TOKEN');
-        const WHATSAPP_PHONE_ID = Deno.env.get('WHATSAPP_PHONE_NUMBER_ID');
-
-        if (WHATSAPP_TOKEN && WHATSAPP_PHONE_ID) {
-          try {
-            const sendResult = await fetch(`https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_ID}/messages`, {
-              method: 'POST',
-              headers: {
-                'Authorization': `Bearer ${WHATSAPP_TOKEN}`,
-                'Content-Type': 'application/json',
-              },
-              body: JSON.stringify({
-                messaging_product: 'whatsapp',
-                to: from,
-                type: 'text',
-                text: { body: aiReply }
-              }),
-            });
-            
-            if (sendResult.ok) {
-              console.log('✅ Response sent to WhatsApp');
-            } else {
-              const sendError = await sendResult.text();
-              console.error('❌ WhatsApp send error:', sendError);
-            }
-          } catch (sendError) {
-            console.error('❌ Error sending WhatsApp response:', sendError);
-          }
-        }
-      }
-
-      // ==============================================================================
-      // RETORNAR RESPOSTA (para ManyChat usar)
-      // ==============================================================================
       return new Response(JSON.stringify({ 
         success: true,
-        response: aiReply,
-        user_id: externalId || from,
-        response_time_ms: responseTime
+        response: aiResponse,
+        sessionMode,
+        processingTimeMs: processingTime
       }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
 
     return new Response('Method not allowed', { status: 405 });
-    
-  } catch (error: unknown) {
+
+  } catch (error) {
     console.error('❌ Webhook error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    
+    await supabase.from('webhook_diagnostics').insert({
+      event_type: 'error',
+      status: 'failed',
+      error_message: error instanceof Error ? error.message : 'Unknown error',
+      processing_time_ms: Date.now() - startTime
+    });
+
     return new Response(JSON.stringify({ 
-      success: false,
-      error: errorMessage,
-      response: 'Desculpe, estou com problemas técnicos. Um consultor humano vai te atender em breve!'
+      success: false, 
+      error: error instanceof Error ? error.message : 'Unknown error' 
     }), {
       status: 500,
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
     });
   }
 });
