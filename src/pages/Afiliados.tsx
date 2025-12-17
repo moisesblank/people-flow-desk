@@ -27,7 +27,8 @@ import {
   UserPlus,
   ExternalLink,
   BarChart3,
-  Percent
+  Percent,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { HotmartSyncWidget } from "@/components/affiliates/HotmartSyncWidget";
 
 interface Affiliate {
   id: number;
@@ -248,16 +250,22 @@ export default function Afiliados() {
           </div>
         </motion.header>
 
-        {/* Stats */}
-        <section className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <StatCard title="Total Afiliados" value={affiliates.length} icon={Users} variant="blue" delay={0} />
-          <StatCard title="Afiliados Ativos" value={activeAffiliates} icon={Handshake} variant="green" delay={1} />
-          <StatCard title="Total Vendas" value={totalVendas} icon={TrendingUp} variant="purple" delay={2} />
-          <StatCard title="Comissões Pagas" value={totalComissoes} formatFn={formatCurrency} icon={DollarSign} variant="red" delay={3} />
-        </section>
+
+        {/* Hotmart Integration Widget */}
+        <div className="mb-8 grid gap-6 lg:grid-cols-3">
+          <div className="lg:col-span-2">
+            <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <StatCard title="Total Afiliados" value={affiliates.length} icon={Users} variant="blue" delay={0} />
+              <StatCard title="Afiliados Ativos" value={activeAffiliates} icon={Handshake} variant="green" delay={1} />
+              <StatCard title="Total Vendas" value={totalVendas} icon={TrendingUp} variant="purple" delay={2} />
+              <StatCard title="Comissões Pagas" value={totalComissoes} formatFn={formatCurrency} icon={DollarSign} variant="red" delay={3} />
+            </section>
+          </div>
+          <HotmartSyncWidget />
+        </div>
 
         <Tabs defaultValue="lista" className="space-y-6">
-          <TabsList className="grid w-full max-w-md grid-cols-3">
+          <TabsList className="grid w-full max-w-lg grid-cols-4">
             <TabsTrigger value="lista" className="gap-2">
               <Users className="h-4 w-4" />
               Lista
@@ -265,6 +273,10 @@ export default function Afiliados() {
             <TabsTrigger value="performance" className="gap-2">
               <BarChart3 className="h-4 w-4" />
               Performance
+            </TabsTrigger>
+            <TabsTrigger value="hotmart" className="gap-2">
+              <Zap className="h-4 w-4" />
+              Hotmart
             </TabsTrigger>
             <TabsTrigger value="acessos" className="gap-2">
               <Shield className="h-4 w-4" />
@@ -443,6 +455,113 @@ export default function Afiliados() {
                         ? (totalVendas / affiliates.length).toFixed(1) 
                         : 0}
                     </span>
+                  </div>
+                </div>
+              </motion.div>
+            </div>
+          </TabsContent>
+
+          {/* Hotmart Integration */}
+          <TabsContent value="hotmart">
+            <div className="grid gap-6 lg:grid-cols-2">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="glass-card rounded-2xl p-6"
+              >
+                <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+                  <Zap className="h-5 w-5 text-orange-500" />
+                  Configuração do Webhook
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="p-4 rounded-xl bg-secondary/30">
+                    <Label className="text-xs text-muted-foreground">URL do Webhook</Label>
+                    <code className="block mt-2 text-sm break-all text-primary font-mono">
+                      {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-curso-quimica?source=hotmart`}
+                    </code>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3 w-full gap-2"
+                      onClick={() => {
+                        navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-curso-quimica?source=hotmart`);
+                        toast.success("URL copiada!");
+                      }}
+                    >
+                      <Copy className="h-4 w-4" />
+                      Copiar URL
+                    </Button>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-orange-500/10 border border-orange-500/20">
+                    <h4 className="font-medium text-foreground mb-2">Eventos suportados:</h4>
+                    <ul className="text-sm text-muted-foreground space-y-1">
+                      <li>• PURCHASE_APPROVED - Compra aprovada</li>
+                      <li>• PURCHASE_COMPLETE - Compra completa</li>
+                      <li>• PURCHASE_REFUNDED - Reembolso</li>
+                      <li>• PURCHASE_CANCELED - Cancelamento</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-4 rounded-xl bg-primary/10 border border-primary/20">
+                    <p className="text-sm text-muted-foreground">
+                      <strong>Dica:</strong> Configure o HOTTOK nas variáveis de ambiente para validar a autenticidade dos webhooks.
+                    </p>
+                  </div>
+                </div>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.1 }}
+                className="glass-card rounded-2xl p-6"
+              >
+                <h3 className="text-lg font-semibold text-foreground mb-6 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Como Funciona
+                </h3>
+                
+                <div className="space-y-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-primary">1</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Cadastre o Webhook</p>
+                      <p className="text-sm text-muted-foreground">No painel da Hotmart, adicione a URL acima como webhook</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-primary">2</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Selecione os Eventos</p>
+                      <p className="text-sm text-muted-foreground">Marque os eventos de compra que deseja receber</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
+                      <span className="text-sm font-bold text-primary">3</span>
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Receba Automaticamente</p>
+                      <p className="text-sm text-muted-foreground">Vendas e afiliados serão sincronizados em tempo real</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="w-8 h-8 rounded-full bg-[hsl(var(--stats-green))]/20 flex items-center justify-center shrink-0">
+                      <Check className="h-4 w-4 text-[hsl(var(--stats-green))]" />
+                    </div>
+                    <div>
+                      <p className="font-medium text-foreground">Pronto!</p>
+                      <p className="text-sm text-muted-foreground">Comissões e vendas aparecem automaticamente</p>
+                    </div>
                   </div>
                 </div>
               </motion.div>

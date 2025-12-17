@@ -1,6 +1,6 @@
 import { ReactNode, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Command, Crown } from "lucide-react";
+import { Search, Command, Crown, MessageSquare } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { RoleBasedSidebar } from "./RoleBasedSidebar";
@@ -17,6 +17,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SystemHealthIndicator } from "@/components/dashboard/SystemHealthIndicator";
+import { TeamChat } from "@/components/chat/TeamChat";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +36,7 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
+  const [isTeamChatOpen, setIsTeamChatOpen] = useState(false);
   const { user, signOut } = useAuth();
   const { roleLabel, roleColor, isGodMode } = useRolePermissions();
   const navigate = useNavigate();
@@ -113,6 +116,21 @@ export function AppLayout({ children }: AppLayoutProps) {
             
             {/* System Health */}
             <SystemHealthIndicator />
+            
+            {/* Team Chat Button */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setIsTeamChatOpen(true)}
+                  className="relative"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Chat da Equipe</TooltipContent>
+            </Tooltip>
             
             <div className="flex-1" />
 
@@ -194,6 +212,9 @@ export function AppLayout({ children }: AppLayoutProps) {
         onClose={() => setIsAIAssistantOpen(false)} 
         context="dashboard"
       />
+
+      {/* Team Chat */}
+      <TeamChat isOpen={isTeamChatOpen} onClose={() => setIsTeamChatOpen(false)} />
     </SidebarProvider>
   );
 }
