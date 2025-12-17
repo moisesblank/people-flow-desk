@@ -1,5 +1,5 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - MODO DEUS TOGGLE
+// MOISÉS MEDEIROS v9.0 - MODO MASTER TOGGLE
 // Botão flutuante com gradiente roxo/rosa
 // Exclusivo para Owner: moisesblank@gmail.com
 // ============================================

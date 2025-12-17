@@ -516,12 +516,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Owner-Only Menu - MODO DEUS */}
+        {/* Owner-Only Menu - MODO MASTER */}
         {isOwner && (
           <SidebarGroup>
             {!collapsed && (
               <SidebarGroupBanner
-                title="MODO DEUS"
+                title="MODO MASTER"
                 image={godModeImg}
                 icon={<Crown className="h-4 w-4 text-amber-300" />}
                 accentColor="gold"
@@ -530,7 +530,7 @@ export function AppSidebar() {
             <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>
               <span className="flex items-center gap-2">
                 <Zap className="w-3 h-3 text-purple-500" />
-                MODO DEUS
+                MODO MASTER
               </span>
             </SidebarGroupLabel>
             <SidebarGroupContent>

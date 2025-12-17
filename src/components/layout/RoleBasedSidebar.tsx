@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - ROLE-BASED SIDEBAR
 // Sidebar com menu filtrado por cargo
+// MODO MASTER para Owner
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";

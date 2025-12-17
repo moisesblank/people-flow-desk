@@ -1,6 +1,6 @@
 // ============================================
-// SYNAPSE v14.0 - GOD MODE PANEL
-// Painel flutuante do MODO DEUS
+// SYNAPSE v14.0 - MASTER MODE PANEL
+// Painel flutuante do MODO MASTER
 // Navegação rápida + Ferramentas de edição
 // ============================================
 

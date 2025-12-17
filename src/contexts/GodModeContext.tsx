@@ -1,6 +1,6 @@
 // ============================================
-// SYNAPSE v14.0 - GOD MODE CONTEXT
-// Context Provider para o MODO DEUS completo
+// SYNAPSE v14.0 - MASTER MODE CONTEXT
+// Context Provider para o MODO MASTER completo
 // Exclusivo para Owner: moisesblank@gmail.com
 // ============================================
 
