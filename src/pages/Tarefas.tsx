@@ -1,6 +1,7 @@
 // ============================================
 // EMPRESARIAL 2.0 - TAREFAS COM KANBAN AVANÇADO
 // Integração completa conforme AJUDA5
+// + Sistema Universal de Anexos
 // ============================================
 
 import { useState } from "react";
@@ -15,6 +16,7 @@ import {
   Zap,
   Settings2,
   Phone,
+  Paperclip,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -51,6 +53,8 @@ import {
   TaskStatus,
 } from "@/hooks/useTasks";
 import { KanbanAdvanced } from "@/components/tasks/KanbanAdvanced";
+import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
+import { AttachmentIndicator } from "@/components/attachments/AttachmentIndicator";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
@@ -167,6 +171,18 @@ function TaskForm({
           }
         />
       </div>
+
+      {/* Seção de Anexos - só aparece se tarefa já existe */}
+      {task?.id && (
+        <div className="border-t border-border pt-4">
+          <UniversalAttachments
+            entityType="task"
+            entityId={task.id}
+            title="Anexos da Tarefa"
+            showAIExtraction
+          />
+        </div>
+      )}
 
       <div className="flex justify-end gap-2 pt-4">
         <Button type="button" variant="outline" onClick={onClose}>
