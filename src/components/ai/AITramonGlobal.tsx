@@ -597,40 +597,40 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
             transition={{ type: "spring", damping: 25, stiffness: 300 }}
             className={`fixed z-[100] ${
               isExpanded 
-                ? 'inset-4 md:inset-8' 
-                : 'bottom-6 right-6 w-[420px] h-[680px] max-h-[85vh]'
+                ? 'inset-2 sm:inset-4 md:inset-6' 
+                : 'bottom-4 right-4 left-4 sm:left-auto sm:w-[400px] h-[70vh] max-h-[600px] sm:max-h-[680px]'
             }`}
           >
             <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl shadow-purple-500/20 border border-white/10 backdrop-blur-xl bg-gradient-to-br from-slate-900/95 via-purple-950/90 to-slate-900/95 flex flex-col">
               
               {/* Header */}
-              <div className="relative px-5 py-4 border-b border-white/10 bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-fuchsia-600/20">
+              <div className="relative px-4 py-3 border-b border-white/10 bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-fuchsia-600/20 flex-shrink-0">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="relative">
-                      <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
-                        <Brain className="h-6 w-6 text-white" />
+                      <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                        <Brain className="h-5 w-5 text-white" />
                       </div>
                       <motion.div
-                        className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-green-400 rounded-full border-2 border-slate-900"
+                        className="absolute -bottom-0.5 -right-0.5 h-3 w-3 bg-green-400 rounded-full border-2 border-slate-900"
                         animate={{ scale: [1, 1.2, 1] }}
                         transition={{ repeat: Infinity, duration: 2 }}
                       />
                     </div>
                     <div>
-                      <h3 className="font-bold text-white flex items-center gap-2">
+                      <h3 className="font-bold text-white text-sm flex items-center gap-2">
                         TRAMON v8.0
-                        <Badge variant="outline" className="text-[10px] bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 border-purple-400/30 text-purple-300">
+                        <Badge variant="outline" className="text-[9px] bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 border-purple-400/30 text-purple-300">
                           ULTRA
                         </Badge>
                       </h3>
-                      <p className="text-xs text-purple-300/80">
-                        {programmerMode ? "💻 Modo Programador" : "🧠 Superinteligência Ativa"}
+                      <p className="text-[11px] text-purple-300/80">
+                        {programmerMode ? "💻 Modo Programador" : "🧠 Superinteligência"}
                       </p>
                     </div>
                   </div>
                   
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1">
                     {programmerMode && isOwner && programmerCode && (
                       <Button
                         variant="ghost"
@@ -671,97 +671,99 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
 
                 {/* Quick Insights Bar */}
                 {quickInsights.length > 0 && !programmerMode && (
-                  <div className="flex gap-3 mt-3 pt-3 border-t border-white/5">
+                  <div className="flex gap-2 mt-2 pt-2 border-t border-white/5">
                     {quickInsights.map((insight, i) => (
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, y: 10 }}
                         animate={{ opacity: 1, y: 0 }}
                         transition={{ delay: i * 0.1 }}
-                        className="flex-1 bg-white/5 rounded-lg px-3 py-2 border border-white/5"
+                        className="flex-1 bg-white/5 rounded-lg px-2 py-1.5 border border-white/5"
                       >
-                        <div className="flex items-center gap-1.5">
-                          <insight.icon className={`h-3.5 w-3.5 ${insight.color}`} />
-                          <span className="text-[10px] text-white/50">{insight.label}</span>
+                        <div className="flex items-center gap-1">
+                          <insight.icon className={`h-3 w-3 ${insight.color}`} />
+                          <span className="text-[9px] text-white/50">{insight.label}</span>
                         </div>
-                        <p className={`text-sm font-semibold ${insight.color}`}>{insight.value}</p>
+                        <p className={`text-xs font-semibold ${insight.color}`}>{insight.value}</p>
                       </motion.div>
                     ))}
                   </div>
                 )}
               </div>
 
-              {/* Messages */}
-              <ScrollArea className="flex-1 h-[calc(100%-180px)]" ref={scrollRef}>
-                <div className="p-4 space-y-4">
-                  {messages.map((message, index) => (
-                    <motion.div
-                      key={message.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: index * 0.05 }}
-                      className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
-                    >
-                      <div className={`max-w-[85%] ${message.type === "user" ? "order-2" : "order-1"}`}>
-                        <div className={`rounded-2xl px-4 py-3 ${
-                          message.type === "user"
-                            ? "bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white"
-                            : "bg-white/5 border border-white/10 text-white/90"
-                        }`}>
-                          {message.image && (
-                            <img src={message.image} alt="Anexo" className="max-w-full rounded-lg mb-2" />
-                          )}
-                          <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
-                            {message.content.split('\n').map((line, i) => (
-                              <p key={i} className="mb-1 last:mb-0">
-                                {line.replace(/\*\*(.*?)\*\*/g, '**$1**')}
-                              </p>
-                            ))}
-                          </div>
-                          
-                          {message.tipoCrud && message.tempoProcessamento && (
-                            <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
-                              <Zap className="h-3 w-3 text-yellow-400" />
-                              <span className="text-[10px] text-white/50">{message.tempoProcessamento}ms</span>
-                            </div>
-                          )}
+              {/* Messages - usando div com overflow em vez de ScrollArea */}
+              <div 
+                ref={scrollRef}
+                className="flex-1 overflow-y-auto p-4 space-y-4"
+                style={{ minHeight: 0 }}
+              >
+                {messages.map((message, index) => (
+                  <motion.div
+                    key={message.id}
+                    initial={{ opacity: 0, y: 10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                  >
+                    <div className={`max-w-[85%] ${message.type === "user" ? "order-2" : "order-1"}`}>
+                      <div className={`rounded-2xl px-4 py-3 ${
+                        message.type === "user"
+                          ? "bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white"
+                          : "bg-white/5 border border-white/10 text-white/90"
+                      }`}>
+                        {message.image && (
+                          <img src={message.image} alt="Anexo" className="max-w-full rounded-lg mb-2" />
+                        )}
+                        <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap text-sm">
+                          {message.content.split('\n').map((line, i) => (
+                            <p key={i} className="mb-1 last:mb-0">
+                              {line.replace(/\*\*(.*?)\*\*/g, '**$1**')}
+                            </p>
+                          ))}
                         </div>
                         
-                        {message.type === "assistant" && message.id !== "welcome" && (
-                          <div className="flex gap-1 mt-1.5 ml-1">
-                            <button
-                              onClick={() => handleCopy(message.content)}
-                              className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/70 transition-colors"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
+                        {message.tipoCrud && message.tempoProcessamento && (
+                          <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
+                            <Zap className="h-3 w-3 text-yellow-400" />
+                            <span className="text-[10px] text-white/50">{message.tempoProcessamento}ms</span>
                           </div>
                         )}
                       </div>
-                    </motion.div>
-                  ))}
-                  
-                  {isLoading && (
-                    <motion.div
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="flex justify-start"
-                    >
-                      <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
-                        <div className="flex items-center gap-2">
-                          <motion.div
-                            animate={{ rotate: 360 }}
-                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                      
+                      {message.type === "assistant" && message.id !== "welcome" && (
+                        <div className="flex gap-1 mt-1 ml-1">
+                          <button
+                            onClick={() => handleCopy(message.content)}
+                            className="p-1 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/70 transition-colors"
                           >
-                            <Loader2 className="h-4 w-4 text-purple-400" />
-                          </motion.div>
-                          <span className="text-sm text-purple-300">Processando...</span>
+                            <Copy className="h-3 w-3" />
+                          </button>
                         </div>
+                      )}
+                    </div>
+                  </motion.div>
+                ))}
+                
+                {isLoading && (
+                  <motion.div
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="flex justify-start"
+                  >
+                    <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
+                      <div className="flex items-center gap-2">
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
+                        >
+                          <Loader2 className="h-4 w-4 text-purple-400" />
+                        </motion.div>
+                        <span className="text-sm text-purple-300">Processando...</span>
                       </div>
-                    </motion.div>
-                  )}
-                </div>
-              </ScrollArea>
+                    </div>
+                  </motion.div>
+                )}
+              </div>
 
               {/* Quick Actions */}
               {showQuickActions && messages.length <= 1 && (
@@ -852,8 +854,8 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
                     />
                     <Button
                       onClick={() => handleSend()}
-                      disabled={((!input.trim() && !selectedImage) || isLoading)}
-                      className="absolute right-1.5 bottom-1.5 h-8 w-8 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50"
+                      disabled={(!input.trim() && !selectedImage) || isLoading}
+                      className="absolute right-1.5 bottom-1.5 h-8 w-8 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {isLoading ? (
                         <Loader2 className="h-4 w-4 animate-spin" />
@@ -865,7 +867,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
                 </div>
                 
                 <p className="text-[10px] text-white/30 mt-2 text-center">
-                  TRAMON v7.0 OMEGA • Gemini 2.5 Pro • Precisão 99.9%
+                  TRAMON v8.0 ULTRA • Gemini 2.5 Pro • Integração Total
                 </p>
               </div>
             </div>
