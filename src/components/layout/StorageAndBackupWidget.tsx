@@ -1,10 +1,11 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - STORAGE & BACKUP WIDGET
 // Indicador de espaço e backup em tempo real
+// UPGRADE: Contador de tabelas e registros
 // ============================================
 
 import { useState, useEffect } from "react";
-import { HardDrive, Download, RefreshCw, Cloud, Loader2, CheckCircle2 } from "lucide-react";
+import { HardDrive, Download, RefreshCw, Cloud, Loader2, CheckCircle2, Database, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -17,6 +18,8 @@ interface StorageInfo {
   total: number;
   percentage: number;
   buckets: { name: string; size: number }[];
+  totalRecords?: number;
+  totalTables?: number;
 }
 
 interface BackupWidgetProps {
@@ -37,6 +40,13 @@ export function StorageAndBackupWidget({ collapsed = false }: BackupWidgetProps)
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
     return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
+  // Formatar número grande
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) return (num / 1000000).toFixed(1) + 'M';
+    if (num >= 1000) return (num / 1000).toFixed(1) + 'K';
+    return num.toString();
   };
 
   // Buscar informações de storage em tempo real
