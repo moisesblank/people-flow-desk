@@ -58,6 +58,7 @@ const VidaPessoal = lazy(() => import("./pages/VidaPessoal"));
 const Tarefas = lazy(() => import("./pages/Tarefas"));
 const LeadsWhatsApp = lazy(() => import("./pages/LeadsWhatsApp"));
 const CentralWhatsApp = lazy(() => import("./pages/CentralWhatsApp"));
+const WhatsAppLive = lazy(() => import("./pages/WhatsAppLive"));
 const DiagnosticoWhatsApp = lazy(() => import("./pages/DiagnosticoWhatsApp"));
 const DiagnosticoWebhooks = lazy(() => import("./pages/DiagnosticoWebhooks"));
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -163,6 +164,7 @@ function AppContent() {
           <Route path="/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
           <Route path="/leads-whatsapp" element={<ProtectedPage><LeadsWhatsApp /></ProtectedPage>} />
           <Route path="/central-whatsapp" element={<ProtectedPage><CentralWhatsApp /></ProtectedPage>} />
+          <Route path="/whatsapp-live" element={<ProtectedPage><WhatsAppLive /></ProtectedPage>} />
           <Route path="/diagnostico-whatsapp" element={<ProtectedPage><DiagnosticoWhatsApp /></ProtectedPage>} />
           <Route path="/diagnostico-webhooks" element={<ProtectedPage><DiagnosticoWebhooks /></ProtectedPage>} />
           <Route path="/central-metricas" element={<ProtectedPage><CentralMetricas /></ProtectedPage>} />

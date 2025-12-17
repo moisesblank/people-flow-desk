@@ -16,7 +16,7 @@ const HOTMART_HOTTOK = Deno.env.get("HOTMART_HOTTOK");
 
 // Rate limiting configuration
 const RATE_LIMIT_WINDOW_SECONDS = 60;
-const RATE_LIMIT_MAX_REQUESTS = 100; // 100 requests per minute per IP/source
+const RATE_LIMIT_MAX_REQUESTS = 100;
 
 interface WebhookPayload {
   source?: string;
@@ -40,7 +40,6 @@ function sanitizePayloadForLog(payload: any): any {
     }
   }
   
-  // Also sanitize nested data object
   if (sanitized.data && typeof sanitized.data === 'object') {
     sanitized.data = sanitizePayloadForLog(sanitized.data);
   }
@@ -53,7 +52,6 @@ async function checkRateLimit(source: string, ipAddress: string): Promise<{ allo
   const windowStart = new Date(Date.now() - RATE_LIMIT_WINDOW_SECONDS * 1000).toISOString();
   
   try {
-    // Get current request count
     const { data: existing } = await supabase
       .from("webhook_rate_limits")
       .select("*")
@@ -67,7 +65,6 @@ async function checkRateLimit(source: string, ipAddress: string): Promise<{ allo
         return { allowed: false, remaining: 0 };
       }
       
-      // Update count
       await supabase
         .from("webhook_rate_limits")
         .update({ 
@@ -78,7 +75,6 @@ async function checkRateLimit(source: string, ipAddress: string): Promise<{ allo
       
       return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS - existing.request_count - 1 };
     } else {
-      // Create new entry
       await supabase
         .from("webhook_rate_limits")
         .insert({
@@ -92,7 +88,6 @@ async function checkRateLimit(source: string, ipAddress: string): Promise<{ allo
     }
   } catch (error) {
     console.error("[CURSO-QUIMICA] Rate limit check error:", error);
-    // Fail open to avoid blocking legitimate requests
     return { allowed: true, remaining: RATE_LIMIT_MAX_REQUESTS };
   }
 }
@@ -130,7 +125,7 @@ async function logAuditEvent(
 function verifyHotmartSignature(request: Request, hottok: string | null): boolean {
   if (!HOTMART_HOTTOK) {
     console.warn("[CURSO-QUIMICA] HOTMART_HOTTOK not configured - skipping signature verification");
-    return true; // Allow if not configured (for initial setup)
+    return true;
   }
   
   if (!hottok) {
@@ -141,7 +136,7 @@ function verifyHotmartSignature(request: Request, hottok: string | null): boolea
   return hottok === HOTMART_HOTTOK;
 }
 
-// Security: Log security events to integration_events
+// Security: Log security events
 async function logSecurityEvent(eventType: string, details: Record<string, any>) {
   try {
     await supabase.from("integration_events").insert({
@@ -156,6 +151,115 @@ async function logSecurityEvent(eventType: string, details: Record<string, any>)
   } catch (error) {
     console.error("[CURSO-QUIMICA] Failed to log security event:", error);
   }
+}
+
+// =============================================================================
+// AJUDA15: CRIAR ALUNO E ENTRADA AUTOMATICAMENTE
+// =============================================================================
+async function createStudentAndRevenue(payload: any) {
+  const data = payload.data || payload;
+  
+  // Extrair dados do comprador
+  const buyerName = data.buyer?.name || data.subscriber?.name || "Nome não informado";
+  const buyerEmail = data.buyer?.email || data.subscriber?.email || "";
+  const buyerPhone = data.buyer?.checkout_phone || data.buyer?.phone || "";
+  const purchaseValue = data.purchase?.price?.value || data.price || 0;
+  const transactionId = data.purchase?.transaction || data.transaction || `hotmart_${Date.now()}`;
+  const offerCode = data.purchase?.offer?.code || data.affiliate?.affiliate_code || null;
+  const purchaseDate = new Date(data.purchase?.approved_date || payload.creation_date || new Date());
+  
+  console.log("[AJUDA15] Criando aluno e receita:", { buyerName, buyerEmail, purchaseValue, transactionId });
+  
+  let alunoId = null;
+  
+  // 1. CRIAR/ATUALIZAR ALUNO
+  if (buyerEmail) {
+    try {
+      const { data: aluno, error: alunoError } = await supabase
+        .from("alunos")
+        .upsert({
+          nome: buyerName,
+          email: buyerEmail,
+          telefone: buyerPhone,
+          status: "ativo",
+          data_matricula: purchaseDate.toISOString(),
+          valor_pago: purchaseValue,
+          hotmart_transaction_id: transactionId,
+          fonte: "Hotmart",
+          updated_at: new Date().toISOString(),
+        }, {
+          onConflict: "email",
+          ignoreDuplicates: false
+        })
+        .select()
+        .single();
+      
+      if (alunoError) {
+        console.error("[AJUDA15] Erro ao criar aluno:", alunoError);
+      } else {
+        alunoId = aluno?.id;
+        console.log("[AJUDA15] ✅ Aluno criado/atualizado:", alunoId);
+      }
+    } catch (err) {
+      console.error("[AJUDA15] Exceção ao criar aluno:", err);
+    }
+  }
+  
+  // 2. REGISTRAR RECEITA NA TABELA ENTRADAS
+  try {
+    const { error: receitaError } = await supabase
+      .from("entradas")
+      .insert({
+        descricao: `Venda Hotmart - ${buyerName}`,
+        valor: purchaseValue,
+        categoria: "Vendas",
+        data: purchaseDate.toISOString(),
+        fonte: "Hotmart",
+        aluno_id: alunoId,
+        transaction_id: transactionId,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    
+    if (receitaError) {
+      console.error("[AJUDA15] Erro ao criar receita:", receitaError);
+    } else {
+      console.log("[AJUDA15] ✅ Receita registrada: R$", purchaseValue);
+    }
+  } catch (err) {
+    console.error("[AJUDA15] Exceção ao criar receita:", err);
+  }
+  
+  // 3. CALCULAR COMISSÃO SE HOUVER CUPOM/AFILIADO
+  if (offerCode) {
+    try {
+      const { data: afiliado } = await supabase
+        .from("affiliates")
+        .select("*")
+        .eq("cupom", offerCode)
+        .single();
+      
+      if (afiliado) {
+        const comissao = purchaseValue * ((afiliado.percentual_comissao || 20) / 100);
+        
+        await supabase.from("comissoes").insert({
+          afiliado_id: afiliado.id,
+          aluno_id: alunoId,
+          valor: comissao,
+          status: "pendente",
+          data: purchaseDate.toISOString(),
+          transaction_id: transactionId,
+          created_at: new Date().toISOString(),
+        });
+        
+        console.log("[AJUDA15] ✅ Comissão registrada para afiliado:", afiliado.nome, "Valor:", comissao);
+      }
+    } catch (err) {
+      console.error("[AJUDA15] Erro ao processar comissão:", err);
+    }
+  }
+  
+  return { alunoId, purchaseValue };
 }
 
 // Parse Hotmart webhook
@@ -251,7 +355,6 @@ function mapAsaasStatus(event: string): string {
 }
 
 async function processWebhook(payload: WebhookPayload, source: string, ipAddress: string, userAgent: string) {
-  // Security: Log sanitized payload only
   console.log(`[CURSO-QUIMICA] Processing webhook from: ${source}`);
   console.log(`[CURSO-QUIMICA] Payload (sanitized):`, JSON.stringify(sanitizePayloadForLog(payload)));
 
@@ -272,7 +375,7 @@ async function processWebhook(payload: WebhookPayload, source: string, ipAddress
       transactionData.source = source || "unknown";
   }
 
-  // Save to integration_events (raw data - secured by RLS)
+  // Save to integration_events
   const { error: eventError } = await supabase
     .from("integration_events")
     .insert({
@@ -301,7 +404,18 @@ async function processWebhook(payload: WebhookPayload, source: string, ipAddress
     throw txError;
   }
 
-  // Security: Log audit event for transaction
+  // =============================================================================
+  // AJUDA15: SE FOR VENDA APROVADA, CRIAR ALUNO E RECEITA
+  // =============================================================================
+  const approvedEvents = ["PURCHASE_APPROVED", "PURCHASE_COMPLETE", "purchase.approved", "purchase.completed"];
+  const eventType = payload.event || payload.status || "";
+  
+  if (source.toLowerCase() === "hotmart" && approvedEvents.includes(eventType)) {
+    console.log("[AJUDA15] Venda aprovada detectada! Criando aluno e receita...");
+    await createStudentAndRevenue(payload);
+  }
+
+  // Log audit event
   await logAuditEvent("webhook_transaction_created", {
     table_name: "synapse_transactions",
     record_id: transaction?.id,
@@ -315,7 +429,6 @@ async function processWebhook(payload: WebhookPayload, source: string, ipAddress
     }
   });
 
-  // Security: Log only transaction ID, not details
   console.log("[CURSO-QUIMICA] Transaction saved with ID:", transaction?.id);
 
   // Update daily metrics
@@ -328,7 +441,6 @@ async function updateDailyMetrics(transaction: any) {
   const today = new Date().toISOString().split("T")[0];
   
   if (transaction.status === "approved") {
-    // Update revenue metric
     const { data: existingMetric } = await supabase
       .from("synapse_metrics")
       .select("*")
@@ -350,7 +462,6 @@ async function updateDailyMetrics(transaction: any) {
         reference_date: today,
       }, { onConflict: "metric_name,category,reference_date" });
 
-    // Update sales count
     const { data: salesMetric } = await supabase
       .from("synapse_metrics")
       .select("*")
@@ -373,19 +484,16 @@ async function updateDailyMetrics(transaction: any) {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Security: Get client IP and User-Agent for logging
   const clientIP = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || 
                    req.headers.get("cf-connecting-ip") || 
                    "unknown";
   const userAgent = req.headers.get("user-agent") || "unknown";
 
   try {
-    // Determine source from headers or query params
     const url = new URL(req.url);
     let source = url.searchParams.get("source") || 
                  req.headers.get("x-webhook-source") || 
@@ -393,12 +501,11 @@ const handler = async (req: Request): Promise<Response> => {
 
     const hottok = req.headers.get("x-hotmart-hottok");
     
-    // Auto-detect Hotmart
     if (hottok) {
       source = "hotmart";
     }
 
-    // Security: Rate limiting
+    // Rate limiting
     const rateLimit = await checkRateLimit(source, clientIP);
     if (!rateLimit.allowed) {
       await logAuditEvent("rate_limit_exceeded", {
@@ -426,7 +533,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Security: Verify webhook signatures based on source
+    // Verify webhook signatures
     if (source === "hotmart") {
       if (!verifyHotmartSignature(req, hottok)) {
         await logAuditEvent("invalid_webhook_signature", {
@@ -450,7 +557,6 @@ const handler = async (req: Request): Promise<Response> => {
 
     const payload: WebhookPayload = await req.json();
     
-    // Auto-detect from payload
     if (payload.hottok || payload.prod_name) {
       source = "hotmart";
     }
@@ -476,7 +582,6 @@ const handler = async (req: Request): Promise<Response> => {
   } catch (error: any) {
     console.error("[CURSO-QUIMICA] Webhook error:", error.message);
     
-    // Security: Log errors to audit
     await logAuditEvent("webhook_error", {
       ip_address: clientIP,
       user_agent: userAgent,
@@ -491,7 +596,7 @@ const handler = async (req: Request): Promise<Response> => {
     return new Response(
       JSON.stringify({ 
         success: false, 
-        error: "Processing failed" // Don't expose internal error details
+        error: "Processing failed"
       }),
       { 
         status: 500, 
