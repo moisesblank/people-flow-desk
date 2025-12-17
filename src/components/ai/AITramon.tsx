@@ -62,7 +62,7 @@ const quickActions = [
 
 export function AITramon() {
   const { user } = useAuth();
-  const { isOwner, isAdmin, isLoading: roleLoading } = useAdminCheck();
+  const { canAccessTramon, isLoading: roleLoading } = useAdminCheck();
   
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -73,7 +73,7 @@ export function AITramon() {
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
-  const hasAccess = isOwner || isAdmin;
+  const hasAccess = canAccessTramon;
 
   useEffect(() => {
     if (scrollRef.current) {

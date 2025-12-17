@@ -86,6 +86,7 @@ const mainMenuItems = [
   { title: "Central de Comando", url: "/", icon: Brain },
   { title: "Dashboard Executivo", url: "/dashboard-executivo", icon: Gauge },
   { title: "Tarefas", url: "/tarefas", icon: ClipboardCheck },
+  { title: "Documentos", url: "/documentos", icon: FolderOpen },
   { title: "Leads WhatsApp", url: "/leads-whatsapp", icon: MessageSquare },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
