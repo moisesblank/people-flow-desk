@@ -1,13 +1,14 @@
 // ============================================
 // MOISES MEDEIROS v10.0 - REALTIME NOTIFICATIONS
 // Sistema de Notificações em Tempo Real Avançado
-// EMPRESARIAL 2.0 - Integração Completa
+// EMPRESARIAL 2.0 - Integração Completa + Push
 // ============================================
 
 import { useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Notification } from "@/components/ui/notification-center";
+import { usePushNotifications } from "@/hooks/usePushNotifications";
 
 interface UseRealtimeNotificationsProps {
   addNotification: (notification: Omit<Notification, "id" | "timestamp" | "read">) => void;
@@ -15,17 +16,25 @@ interface UseRealtimeNotificationsProps {
 
 export function useRealtimeNotifications({ addNotification }: UseRealtimeNotificationsProps) {
   const { user } = useAuth();
+  const { notifySale, notifyTask, notifyPayment, notifyStudent, notifyWhatsApp, notifySystem } = usePushNotifications();
 
   const handleNewSale = useCallback((payload: any) => {
     const sale = payload.new;
+    const valor = sale.valor || 0;
+    const fonte = sale.fonte || 'Nova entrada registrada';
+    
+    // In-app notification
     addNotification({
       type: "success",
       title: "Nova Venda Realizada! 🎉",
-      message: `Venda de R$ ${(sale.valor / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - ${sale.fonte || 'Nova entrada registrada'}`,
+      message: `Venda de R$ ${(valor / 100).toLocaleString('pt-BR', { minimumFractionDigits: 2 })} - ${fonte}`,
       actionUrl: "/entradas",
       actionLabel: "Ver detalhes",
     });
-  }, [addNotification]);
+    
+    // Push notification
+    notifySale(valor, fonte);
+  }, [addNotification, notifySale]);
 
   const handleNewStudent = useCallback((payload: any) => {
     const student = payload.new;

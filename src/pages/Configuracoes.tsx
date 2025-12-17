@@ -49,6 +49,7 @@ import { Badge } from "@/components/ui/badge";
 import { useOnboarding } from "@/components/onboarding/OnboardingManager";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogoUploader } from "@/components/settings/LogoUploader";
+import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { Separator } from "@/components/ui/separator";
 import {
   AlertDialog,
@@ -680,6 +681,21 @@ export default function Configuracoes() {
                 <Save className="h-4 w-4 mr-2" />
                 Salvar Preferências
               </Button>
+            </motion.div>
+          </TabsContent>
+
+          {/* Notifications Tab */}
+          <TabsContent value="notifications">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="glass-card rounded-2xl p-6"
+            >
+              <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-6">
+                <Bell className="h-5 w-5 text-primary" />
+                Configurações de Notificações
+              </h3>
+              <NotificationSettings />
             </motion.div>
           </TabsContent>
 
