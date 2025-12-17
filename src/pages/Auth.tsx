@@ -1,8 +1,9 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - AUTH PAGE
+// MOISÉS MEDEIROS v10.0 - AUTH PAGE
 // Design: Futurista Spider-Man / Vermelho Vinho
 // Estética: Cyber-Tech Profissional
 // COM VERIFICAÇÃO 2FA POR EMAIL
+// UPGRADE: Feedback melhorado, mensagens claras
 // ============================================
 
 import { useState, useEffect, useRef } from "react";
@@ -341,9 +342,17 @@ export default function Auth() {
         const result = await signIn(formData.email, formData.password);
         if (result.error) {
           if (result.error.message.includes("Invalid login credentials")) {
-            toast.error("Email ou senha incorretos");
+            toast.error("Credenciais inválidas", {
+              description: "Verifique seu email e senha e tente novamente."
+            });
+          } else if (result.error.message.includes("Email not confirmed")) {
+            toast.warning("Email não confirmado", {
+              description: "Verifique sua caixa de entrada para confirmar seu email."
+            });
           } else {
-            toast.error(result.error.message);
+            toast.error("Erro no login", {
+              description: result.error.message
+            });
           }
           setIsLoading(false);
           return;
@@ -361,22 +370,34 @@ export default function Auth() {
             nome: user.user_metadata?.nome
           });
           setShow2FA(true);
-          toast.info("Verificação de segurança", {
-            description: "Enviamos um código para seu email"
+          toast.info("Verificação de Segurança 2FA", {
+            description: "Um código de 6 dígitos foi enviado para " + (user.email || formData.email)
           });
         }
       } else {
         const { error } = await signUp(formData.email, formData.password, formData.nome);
         if (error) {
           if (error.message.includes("already registered")) {
-            toast.error("Este email já está cadastrado");
+            toast.error("Email já cadastrado", {
+              description: "Tente fazer login ou use outro email."
+            });
+          } else if (error.message.includes("Password")) {
+            toast.error("Senha muito fraca", {
+              description: "Use no mínimo 6 caracteres."
+            });
           } else {
-            toast.error(error.message);
+            toast.error("Erro no cadastro", {
+              description: error.message
+            });
           }
           setIsLoading(false);
           return;
         }
-        toast.success("Conta criada com sucesso!");
+        toast.success("Conta criada com sucesso!", {
+          description: "Bem-vindo ao sistema! Você já pode acessar."
+        });
+        // Auto login após cadastro
+        await signIn(formData.email, formData.password);
       }
     } catch {
       toast.error("Erro ao processar solicitação");
