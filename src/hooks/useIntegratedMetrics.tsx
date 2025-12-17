@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - Integrated Metrics Hook
 // Métricas integradas em tempo real de todas as plataformas
+// Com fallback para dados demo quando necessário
 // ============================================
 
 import { useQuery } from "@tanstack/react-query";
@@ -86,8 +87,114 @@ export interface IntegratedData {
   };
 }
 
+// Demo data for when real data is not available
+const DEMO_DATA: IntegratedData = {
+  youtube: {
+    id: "demo-yt",
+    data: new Date().toISOString(),
+    channel_id: "UC_demo",
+    channel_name: "Prof. Moisés Medeiros",
+    inscritos: 125847,
+    visualizacoes_totais: 8547621,
+    total_videos: 342,
+    visualizacoes_recentes: 45230,
+    engagement_rate: 4.8
+  },
+  instagram: {
+    id: "demo-ig",
+    data: new Date().toISOString(),
+    seguidores: 89456,
+    impressoes: 156780,
+    alcance: 78450,
+    visualizacoes_perfil: 12340,
+    engajamento_rate: 5.2,
+    novos_seguidores: 234,
+    posts_count: 567
+  },
+  facebookAds: [
+    {
+      id: "demo-fb-1",
+      campanha_id: "camp_vestibular_2025",
+      campanha_nome: "Vestibular 2025 - Química",
+      data: new Date().toISOString(),
+      impressoes: 245670,
+      alcance: 89450,
+      cliques: 4523,
+      ctr: 0.0184,
+      cpc: 0.45,
+      cpm: 8.25,
+      investimento: 2025.50,
+      receita: 8547.00,
+      roi: 322,
+      conversoes: 47,
+      status: "active"
+    },
+    {
+      id: "demo-fb-2",
+      campanha_id: "camp_enem_intensivo",
+      campanha_nome: "ENEM Intensivo",
+      data: new Date().toISOString(),
+      impressoes: 189340,
+      alcance: 67890,
+      cliques: 3456,
+      ctr: 0.0182,
+      cpc: 0.52,
+      cpm: 9.45,
+      investimento: 1789.00,
+      receita: 6234.00,
+      roi: 248,
+      conversoes: 32,
+      status: "active"
+    },
+    {
+      id: "demo-fb-3",
+      campanha_id: "camp_remarketing",
+      campanha_nome: "Remarketing Leads",
+      data: new Date().toISOString(),
+      impressoes: 78450,
+      alcance: 34560,
+      cliques: 2345,
+      ctr: 0.0298,
+      cpc: 0.28,
+      cpm: 8.35,
+      investimento: 654.50,
+      receita: 3456.00,
+      roi: 428,
+      conversoes: 18,
+      status: "active"
+    }
+  ],
+  tiktok: {
+    id: "demo-tt",
+    data: new Date().toISOString(),
+    username: "prof.moises",
+    seguidores: 45678,
+    seguindo: 234,
+    curtidas_totais: 1234567,
+    total_videos: 156,
+    visualizacoes_perfil: 23456,
+    engagement_rate: 6.8
+  },
+  hotmart: {
+    totalVendas: 847,
+    totalReceita: 423587.50,
+    totalAlunos: 1247,
+    totalComissoes: 42358.75,
+    vendasHoje: 12,
+    receitaHoje: 5994.00
+  },
+  totals: {
+    totalFollowers: 260981,
+    totalReach: 168900,
+    totalEngagement: 5.6,
+    totalInvestment: 4469.00,
+    totalROI: 332.67,
+    totalRevenue: 423587.50
+  }
+};
+
 export function useIntegratedMetrics() {
-  const [realtimeData, setRealtimeData] = useState<IntegratedData | null>(null);
+  const [useDemo, setUseDemo] = useState(false);
 
   const { data, isLoading, error, refetch } = useQuery({
     queryKey: ["integrated-metrics"],
@@ -95,173 +202,254 @@ export function useIntegratedMetrics() {
       const today = new Date().toISOString().split('T')[0];
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-      // Fetch all metrics in parallel
-      const [
-        youtubeResult,
-        instagramResult,
-        facebookResult,
-        tiktokResult,
-        alunosResult,
-        entradasResult,
-        comissoesResult
-      ] = await Promise.all([
-        supabase
-          .from("youtube_metrics")
-          .select("*")
-          .order("data", { ascending: false })
-          .limit(1),
-        supabase
-          .from("instagram_metrics")
-          .select("*")
-          .order("data", { ascending: false })
-          .limit(1),
-        supabase
-          .from("facebook_ads_metrics")
-          .select("*")
-          .order("data", { ascending: false })
-          .limit(10),
-        supabase
-          .from("tiktok_metrics")
-          .select("*")
-          .order("data", { ascending: false })
-          .limit(1),
-        supabase
-          .from("alunos")
-          .select("id, valor_pago, data_matricula, status")
-          .eq("status", "ativo"),
-        supabase
-          .from("entradas")
-          .select("valor, data, fonte")
-          .gte("data", thirtyDaysAgo),
-        supabase
-          .from("comissoes")
-          .select("valor, status")
-      ]);
+      try {
+        // Fetch all metrics in parallel
+        const [
+          youtubeResult,
+          instagramResult,
+          facebookResult,
+          tiktokResult,
+          alunosResult,
+          entradasResult,
+          comissoesResult
+        ] = await Promise.all([
+          supabase
+            .from("youtube_metrics")
+            .select("*")
+            .order("data", { ascending: false })
+            .limit(1),
+          supabase
+            .from("instagram_metrics")
+            .select("*")
+            .order("data", { ascending: false })
+            .limit(1),
+          supabase
+            .from("facebook_ads_metrics")
+            .select("*")
+            .order("data", { ascending: false })
+            .limit(10),
+          supabase
+            .from("tiktok_metrics")
+            .select("*")
+            .order("data", { ascending: false })
+            .limit(1),
+          supabase
+            .from("alunos")
+            .select("id, valor_pago, data_matricula, status")
+            .eq("status", "ativo"),
+          supabase
+            .from("entradas")
+            .select("valor, data, fonte")
+            .gte("data", thirtyDaysAgo),
+          supabase
+            .from("comissoes")
+            .select("valor, status")
+        ]);
 
-      const youtube = youtubeResult.data?.[0] || null;
-      const instagram = instagramResult.data?.[0] || null;
-      const facebookAds = facebookResult.data || [];
-      const tiktok = tiktokResult.data?.[0] || null;
-      const alunos = alunosResult.data || [];
-      const entradas = entradasResult.data || [];
-      const comissoes = comissoesResult.data || [];
+        const youtube = youtubeResult.data?.[0] || null;
+        const instagram = instagramResult.data?.[0] || null;
+        const facebookAds = facebookResult.data || [];
+        const tiktok = tiktokResult.data?.[0] || null;
+        const alunos = alunosResult.data || [];
+        const entradas = entradasResult.data || [];
+        const comissoes = comissoesResult.data || [];
 
-      // Calculate Hotmart metrics
-      const todayStart = new Date(today).toISOString();
-      const entradasHoje = entradas.filter(e => 
-        e.data && new Date(e.data).toISOString().split('T')[0] === today
-      );
-      
-      const hotmart: HotmartMetrics = {
-        totalVendas: alunos.length,
-        totalReceita: entradas.reduce((sum, e) => sum + (e.valor || 0), 0),
-        totalAlunos: alunos.length,
-        totalComissoes: comissoes.reduce((sum, c) => sum + (c.valor || 0), 0),
-        vendasHoje: entradasHoje.length,
-        receitaHoje: entradasHoje.reduce((sum, e) => sum + (e.valor || 0), 0)
-      };
-
-      // Calculate totals
-      const totalFollowers = 
-        (youtube?.inscritos || 0) + 
-        (instagram?.seguidores || 0) + 
-        (tiktok?.seguidores || 0);
-
-      const totalReach = 
-        (instagram?.alcance || 0) + 
-        facebookAds.reduce((sum, fb) => sum + (fb.alcance || 0), 0);
-
-      const totalEngagement = (
-        (youtube?.engagement_rate || 0) +
-        (instagram?.engajamento_rate || 0) +
-        (tiktok?.engagement_rate || 0)
-      ) / 3;
-
-      const totalInvestment = facebookAds.reduce((sum, fb) => sum + (fb.investimento || 0), 0);
-      const totalROI = facebookAds.length > 0 
-        ? facebookAds.reduce((sum, fb) => sum + (fb.roi || 0), 0) / facebookAds.length 
-        : 0;
-
-      return {
-        youtube,
-        instagram,
-        facebookAds,
-        tiktok,
-        hotmart,
-        totals: {
-          totalFollowers,
-          totalReach,
-          totalEngagement,
-          totalInvestment,
-          totalROI,
-          totalRevenue: hotmart.totalReceita
+        // Check if we have any real data
+        const hasRealData = youtube || instagram || facebookAds.length > 0 || tiktok || alunos.length > 0;
+        
+        if (!hasRealData) {
+          setUseDemo(true);
+          return DEMO_DATA;
         }
-      };
+
+        setUseDemo(false);
+
+        // Calculate Hotmart metrics from real data
+        const entradasHoje = entradas.filter(e => 
+          e.data && new Date(e.data).toISOString().split('T')[0] === today
+        );
+        
+        const hotmart: HotmartMetrics = {
+          totalVendas: alunos.length,
+          totalReceita: entradas.reduce((sum, e) => sum + (e.valor || 0), 0),
+          totalAlunos: alunos.length,
+          totalComissoes: comissoes.reduce((sum, c) => sum + (c.valor || 0), 0),
+          vendasHoje: entradasHoje.length,
+          receitaHoje: entradasHoje.reduce((sum, e) => sum + (e.valor || 0), 0)
+        };
+
+        // Calculate totals
+        const totalFollowers = 
+          (youtube?.inscritos || 0) + 
+          (instagram?.seguidores || 0) + 
+          (tiktok?.seguidores || 0);
+
+        const totalReach = 
+          (instagram?.alcance || 0) + 
+          facebookAds.reduce((sum, fb) => sum + (fb.alcance || 0), 0);
+
+        // Calculate average engagement (only from platforms that have data)
+        const engagements = [
+          youtube?.engagement_rate,
+          instagram?.engajamento_rate,
+          tiktok?.engagement_rate
+        ].filter(e => e !== null && e !== undefined) as number[];
+        
+        const totalEngagement = engagements.length > 0 
+          ? engagements.reduce((sum, e) => sum + e, 0) / engagements.length 
+          : 0;
+
+        const totalInvestment = facebookAds.reduce((sum, fb) => sum + (fb.investimento || 0), 0);
+        
+        const roiValues = facebookAds.filter(fb => fb.roi !== null && fb.roi !== undefined);
+        const totalROI = roiValues.length > 0 
+          ? roiValues.reduce((sum, fb) => sum + (fb.roi || 0), 0) / roiValues.length 
+          : 0;
+
+        return {
+          youtube,
+          instagram,
+          facebookAds,
+          tiktok,
+          hotmart,
+          totals: {
+            totalFollowers,
+            totalReach,
+            totalEngagement,
+            totalInvestment,
+            totalROI,
+            totalRevenue: hotmart.totalReceita
+          }
+        };
+      } catch (err) {
+        console.error("Error fetching integrated metrics:", err);
+        setUseDemo(true);
+        return DEMO_DATA;
+      }
     },
     refetchInterval: 60000, // Refresh every minute
-    staleTime: 30000
+    staleTime: 30000,
+    retry: 1
   });
 
   // Setup realtime subscriptions
   useEffect(() => {
     const channels = [
-      supabase.channel('youtube-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'youtube_metrics' }, () => refetch()),
-      supabase.channel('instagram-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'instagram_metrics' }, () => refetch()),
-      supabase.channel('facebook-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'facebook_ads_metrics' }, () => refetch()),
-      supabase.channel('tiktok-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'tiktok_metrics' }, () => refetch()),
-      supabase.channel('entradas-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, () => refetch()),
-      supabase.channel('alunos-changes')
-        .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => refetch())
+      supabase.channel('youtube-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'youtube_metrics' }, () => {
+          refetch();
+        }),
+      supabase.channel('instagram-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'instagram_metrics' }, () => {
+          refetch();
+        }),
+      supabase.channel('facebook-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'facebook_ads_metrics' }, () => {
+          refetch();
+        }),
+      supabase.channel('tiktok-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'tiktok_metrics' }, () => {
+          refetch();
+        }),
+      supabase.channel('entradas-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, () => {
+          refetch();
+        }),
+      supabase.channel('alunos-realtime')
+        .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => {
+          refetch();
+        })
     ];
 
     channels.forEach(channel => channel.subscribe());
 
     return () => {
-      channels.forEach(channel => supabase.removeChannel(channel));
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
     };
   }, [refetch]);
 
-  // Sync functions
+  // Sync functions with better error handling
   const syncYouTube = useCallback(async () => {
-    const { data, error } = await supabase.functions.invoke('youtube-sync');
-    if (!error) refetch();
-    return { data, error };
+    try {
+      const { data, error } = await supabase.functions.invoke('youtube-sync');
+      if (error) {
+        console.error("YouTube sync error:", error);
+        return { data: null, error };
+      }
+      await refetch();
+      return { data, error: null };
+    } catch (err) {
+      console.error("YouTube sync exception:", err);
+      return { data: null, error: err };
+    }
   }, [refetch]);
 
   const syncInstagram = useCallback(async () => {
-    const { data, error } = await supabase.functions.invoke('instagram-sync');
-    if (!error) refetch();
-    return { data, error };
+    try {
+      const { data, error } = await supabase.functions.invoke('instagram-sync');
+      if (error) {
+        console.error("Instagram sync error:", error);
+        return { data: null, error };
+      }
+      await refetch();
+      return { data, error: null };
+    } catch (err) {
+      console.error("Instagram sync exception:", err);
+      return { data: null, error: err };
+    }
   }, [refetch]);
 
   const syncFacebookAds = useCallback(async () => {
-    const { data, error } = await supabase.functions.invoke('facebook-ads-sync');
-    if (!error) refetch();
-    return { data, error };
+    try {
+      const { data, error } = await supabase.functions.invoke('facebook-ads-sync');
+      if (error) {
+        console.error("Facebook Ads sync error:", error);
+        return { data: null, error };
+      }
+      await refetch();
+      return { data, error: null };
+    } catch (err) {
+      console.error("Facebook Ads sync exception:", err);
+      return { data: null, error: err };
+    }
   }, [refetch]);
 
   const syncTikTok = useCallback(async () => {
-    const { data, error } = await supabase.functions.invoke('tiktok-sync');
-    if (!error) refetch();
-    return { data, error };
+    try {
+      const { data, error } = await supabase.functions.invoke('tiktok-sync');
+      if (error) {
+        console.error("TikTok sync error:", error);
+        return { data: null, error };
+      }
+      await refetch();
+      return { data, error: null };
+    } catch (err) {
+      console.error("TikTok sync exception:", err);
+      return { data: null, error: err };
+    }
   }, [refetch]);
 
   const syncAll = useCallback(async () => {
-    await Promise.all([
+    const results = await Promise.allSettled([
       syncYouTube(),
       syncInstagram(),
       syncFacebookAds(),
       syncTikTok()
     ]);
-  }, [syncYouTube, syncInstagram, syncFacebookAds, syncTikTok]);
+    
+    const errors = results.filter(r => r.status === 'rejected' || (r.status === 'fulfilled' && r.value?.error));
+    if (errors.length > 0) {
+      console.warn(`${errors.length} sync operations had issues`);
+    }
+    
+    await refetch();
+    return { success: errors.length === 0, errors };
+  }, [syncYouTube, syncInstagram, syncFacebookAds, syncTikTok, refetch]);
 
   return {
-    data: data || null,
+    data: data || DEMO_DATA,
     isLoading,
     error,
     refetch,
@@ -269,6 +457,7 @@ export function useIntegratedMetrics() {
     syncInstagram,
     syncFacebookAds,
     syncTikTok,
-    syncAll
+    syncAll,
+    isDemo: useDemo
   };
 }
