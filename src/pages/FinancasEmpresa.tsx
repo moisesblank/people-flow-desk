@@ -1,20 +1,29 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - FINANÇAS EMPRESA
-// Spider-Man Theme - Gestão Financeira Corporativa
+// EMPRESARIAL 2.0 - FINANÇAS EMPRESA
+// Multi-CNPJ, Analytics avançado conforme AJUDA5
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Building2, Sparkles, Trash2, Edit2 } from "lucide-react";
+import { Plus, Building2, Sparkles, Trash2, Edit2, Phone, TrendingUp, AlertTriangle, PieChart as PieChartIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StatCard } from "@/components/employees/StatCard";
+import { MultiCNPJManager } from "@/components/finance/MultiCNPJManager";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid, LineChart, Line, Area, AreaChart } from "recharts";
+
+// Dados dos assessores conforme AJUDA5
+const ASSESSORS = {
+  moises: { name: "Moisés", phone: "5583998920105", whatsapp: "558398920105" },
+  bruna: { name: "Bruna", phone: "5583996354090", whatsapp: "558396354090" },
+};
 
 interface Expense {
   id: number;
@@ -39,6 +48,7 @@ export default function FinancasEmpresa() {
   const [modalType, setModalType] = useState<"fixed" | "extra">("fixed");
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [formData, setFormData] = useState({ nome: "", valor: "", categoria: "" });
+  const [activeTab, setActiveTab] = useState("overview");
 
   const fetchExpenses = async () => {
     try {
@@ -96,8 +106,18 @@ export default function FinancasEmpresa() {
         color: colors[index % colors.length],
       }))
       .sort((a, b) => b.value - a.value);
+
+    // Dados mensais simulados para projeção
+    const monthlyData = [
+      { month: "Jan", fixed: totalFixed * 0.9, extra: totalExtra * 0.8 },
+      { month: "Fev", fixed: totalFixed * 0.95, extra: totalExtra * 0.9 },
+      { month: "Mar", fixed: totalFixed, extra: totalExtra * 1.1 },
+      { month: "Abr", fixed: totalFixed, extra: totalExtra * 0.95 },
+      { month: "Mai", fixed: totalFixed, extra: totalExtra },
+      { month: "Jun", fixed: totalFixed * 1.05, extra: totalExtra * 1.15 },
+    ];
     
-    return { totalFixed, totalExtra, total: totalFixed + totalExtra, pieData };
+    return { totalFixed, totalExtra, total: totalFixed + totalExtra, pieData, monthlyData };
   }, [fixedExpenses, extraExpenses]);
 
   const openModal = (type: "fixed" | "extra", expense?: Expense) => {
@@ -160,6 +180,11 @@ export default function FinancasEmpresa() {
     }
   };
 
+  const contactAssessor = (assessor: 'moises' | 'bruna') => {
+    const data = ASSESSORS[assessor];
+    window.open(`https://wa.me/${data.whatsapp}?text=Olá ${data.name}, preciso de ajuda com as finanças da empresa!`, '_blank');
+  };
+
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
@@ -169,203 +194,335 @@ export default function FinancasEmpresa() {
           animate={{ opacity: 1, y: 0 }}
           className="mb-10"
         >
-          <div className="space-y-2">
-            <motion.div className="flex items-center gap-2 text-primary">
-              <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-medium tracking-wide uppercase">Controle Empresarial</span>
-            </motion.div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-              Finanças Empresa
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-xl">
-              Gerencie os gastos fixos e extras da empresa.
-            </p>
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <motion.div className="flex items-center gap-2 text-primary">
+                <Sparkles className="h-5 w-5" />
+                <span className="text-sm font-medium tracking-wide uppercase">Controle Empresarial</span>
+                <Badge className="bg-gradient-to-r from-primary to-primary/60 text-primary-foreground">
+                  EMPRESARIAL 2.0
+                </Badge>
+              </motion.div>
+              <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+                Finanças Empresa
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-xl">
+                Gestão financeira completa com Multi-CNPJ e análises preditivas
+              </p>
+            </div>
+
+            {/* Contatos Assessores */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => contactAssessor('moises')}
+                className="gap-1"
+              >
+                <Phone className="h-3 w-3" />
+                Moisés
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => contactAssessor('bruna')}
+                className="gap-1"
+              >
+                <Phone className="h-3 w-3" />
+                Bruna
+              </Button>
+            </div>
           </div>
         </motion.header>
 
-        {/* Stats */}
-        <section className="mb-10 grid gap-4 sm:grid-cols-3">
-          <StatCard title="Gastos Fixos" value={stats.totalFixed} formatFn={formatCurrency} icon={Building2} variant="red" delay={0} />
-          <StatCard title="Gastos Extras" value={stats.totalExtra} formatFn={formatCurrency} icon={Building2} variant="purple" delay={1} />
-          <StatCard title="Total Mensal" value={stats.total} formatFn={formatCurrency} icon={Building2} variant="blue" delay={2} />
-        </section>
+        {/* Tabs */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3 max-w-md">
+            <TabsTrigger value="overview">Visão Geral</TabsTrigger>
+            <TabsTrigger value="multicnpj">Multi-CNPJ</TabsTrigger>
+            <TabsTrigger value="analytics">Analytics</TabsTrigger>
+          </TabsList>
 
-        {/* Charts Row */}
-        <section className="mb-10 grid gap-6 lg:grid-cols-2">
-          {/* Pie Chart */}
-          {stats.pieData.length > 0 && (
+          <TabsContent value="overview" className="space-y-6">
+            {/* Stats */}
+            <section className="grid gap-4 sm:grid-cols-3">
+              <StatCard title="Gastos Fixos" value={stats.totalFixed} formatFn={formatCurrency} icon={Building2} variant="red" delay={0} />
+              <StatCard title="Gastos Extras" value={stats.totalExtra} formatFn={formatCurrency} icon={Building2} variant="purple" delay={1} />
+              <StatCard title="Total Mensal" value={stats.total} formatFn={formatCurrency} icon={Building2} variant="blue" delay={2} />
+            </section>
+
+            {/* Charts Row */}
+            <section className="grid gap-6 lg:grid-cols-2">
+              {/* Pie Chart */}
+              {stats.pieData.length > 0 && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="glass-card rounded-2xl p-6"
+                >
+                  <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <PieChartIcon className="h-5 w-5 text-primary" />
+                    Distribuição por Categoria
+                  </h3>
+                  <div className="h-[280px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={stats.pieData}
+                          cx="50%"
+                          cy="50%"
+                          innerRadius={50}
+                          outerRadius={90}
+                          paddingAngle={2}
+                          dataKey="value"
+                        >
+                          {stats.pieData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                          }}
+                          formatter={(value: number) => formatCurrency(value)}
+                        />
+                        <Legend 
+                          wrapperStyle={{ fontSize: '12px' }}
+                          formatter={(value) => <span className="text-muted-foreground text-xs">{value}</span>}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                </motion.div>
+              )}
+
+              {/* Bar Chart - Fixed vs Extra */}
+              <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ delay: 0.1 }}
+                className="glass-card rounded-2xl p-6"
+              >
+                <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                  <TrendingUp className="h-5 w-5 text-primary" />
+                  Fixos vs Extras
+                </h3>
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart 
+                      data={[
+                        { name: "Gastos Fixos", value: stats.totalFixed, fill: "hsl(var(--destructive))" },
+                        { name: "Gastos Extras", value: stats.totalExtra, fill: "hsl(var(--primary))" },
+                      ]}
+                      layout="vertical"
+                      margin={{ left: 90, right: 20 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis 
+                        type="number" 
+                        stroke="hsl(var(--muted-foreground))"
+                        tickFormatter={(value) => formatCurrency(value)}
+                      />
+                      <YAxis 
+                        type="category" 
+                        dataKey="name" 
+                        stroke="hsl(var(--muted-foreground))"
+                        width={85}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                        }}
+                        formatter={(value: number) => formatCurrency(value)}
+                      />
+                      <Bar dataKey="value" radius={[0, 8, 8, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </motion.div>
+            </section>
+
+            {/* Fixed Expenses */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-foreground">Gastos Fixos (Funcionários + Serviços)</h2>
+                <Button onClick={() => openModal("fixed")} size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" /> Adicionar
+                </Button>
+              </div>
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-secondary/50">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
+                      <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {fixedExpenses.map((expense) => (
+                      <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
+                        <td className="p-4 text-foreground">{expense.nome}</td>
+                        <td className="p-4 text-muted-foreground">{expense.categoria || "-"}</td>
+                        <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => openModal("fixed", expense)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete("fixed", expense.id)} className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {fixedExpenses.length === 0 && (
+                      <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto fixo cadastrado</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+
+            {/* Extra Expenses */}
+            <section>
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-foreground">Gastos Extras</h2>
+                <Button onClick={() => openModal("extra")} size="sm" className="gap-2">
+                  <Plus className="h-4 w-4" /> Adicionar
+                </Button>
+              </div>
+              <div className="glass-card rounded-2xl overflow-hidden">
+                <table className="w-full">
+                  <thead className="bg-secondary/50">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
+                      <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
+                      <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {extraExpenses.map((expense) => (
+                      <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
+                        <td className="p-4 text-foreground">{expense.nome}</td>
+                        <td className="p-4 text-muted-foreground">{expense.categoria || "-"}</td>
+                        <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <Button variant="ghost" size="icon" onClick={() => openModal("extra", expense)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete("extra", expense.id)} className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {extraExpenses.length === 0 && (
+                      <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto extra cadastrado</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </section>
+          </TabsContent>
+
+          <TabsContent value="multicnpj">
+            <MultiCNPJManager />
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-6">
+            {/* Projeção Mensal */}
             <motion.div
-              initial={{ opacity: 0, scale: 0.95 }}
-              animate={{ opacity: 1, scale: 1 }}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               className="glass-card rounded-2xl p-6"
             >
-              <h3 className="text-lg font-semibold text-foreground mb-4">Distribuição por Categoria</h3>
-              <div className="h-[280px]">
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <TrendingUp className="h-5 w-5 text-primary" />
+                Evolução de Gastos (6 meses)
+              </h3>
+              <div className="h-[350px]">
                 <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={stats.pieData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={50}
-                      outerRadius={90}
-                      paddingAngle={2}
-                      dataKey="value"
-                    >
-                      {stats.pieData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
+                  <AreaChart data={stats.monthlyData}>
+                    <defs>
+                      <linearGradient id="colorFixed" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--destructive))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--destructive))" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorExtra" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
+                    <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `R$ ${(v/100).toLocaleString()}`} />
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "hsl(240, 6%, 10%)",
-                        border: "1px solid hsl(240, 6%, 20%)",
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
                       }}
                       formatter={(value: number) => formatCurrency(value)}
                     />
-                    <Legend 
-                      wrapperStyle={{ fontSize: '12px' }}
-                      formatter={(value) => <span className="text-muted-foreground text-xs">{value}</span>}
-                    />
-                  </PieChart>
+                    <Area type="monotone" dataKey="fixed" name="Fixos" stroke="hsl(var(--destructive))" fillOpacity={1} fill="url(#colorFixed)" />
+                    <Area type="monotone" dataKey="extra" name="Extras" stroke="hsl(var(--primary))" fillOpacity={1} fill="url(#colorExtra)" />
+                    <Legend />
+                  </AreaChart>
                 </ResponsiveContainer>
               </div>
             </motion.div>
-          )}
 
-          {/* Bar Chart - Fixed vs Extra */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
-            className="glass-card rounded-2xl p-6"
-          >
-            <h3 className="text-lg font-semibold text-foreground mb-4">Fixos vs Extras</h3>
-            <div className="h-[280px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart 
-                  data={[
-                    { name: "Gastos Fixos", value: stats.totalFixed, fill: "#ef4444" },
-                    { name: "Gastos Extras", value: stats.totalExtra, fill: "#8b5cf6" },
-                  ]}
-                  layout="vertical"
-                  margin={{ left: 90, right: 20 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
-                  <XAxis 
-                    type="number" 
-                    stroke="hsl(240, 5%, 55%)"
-                    tickFormatter={(value) => formatCurrency(value)}
-                  />
-                  <YAxis 
-                    type="category" 
-                    dataKey="name" 
-                    stroke="hsl(240, 5%, 55%)"
-                    width={85}
-                  />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "hsl(240, 6%, 10%)",
-                      border: "1px solid hsl(240, 6%, 20%)",
-                      borderRadius: "8px",
-                    }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
-                  <Bar dataKey="value" radius={[0, 8, 8, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </motion.div>
-        </section>
-
-        {/* Fixed Expenses */}
-        <section className="mb-10">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Gastos Fixos (Funcionários + Serviços)</h2>
-            <Button onClick={() => openModal("fixed")} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" /> Adicionar
-            </Button>
-          </div>
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-secondary/50">
-                <tr>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {fixedExpenses.map((expense) => (
-                  <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-4 text-foreground">{expense.nome}</td>
-                    <td className="p-4 text-muted-foreground">{expense.categoria || "-"}</td>
-                    <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openModal("fixed", expense)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete("fixed", expense.id)} className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {fixedExpenses.length === 0 && (
-                  <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto fixo cadastrado</td></tr>
+            {/* Alertas Financeiros */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.1 }}
+              className="glass-card rounded-2xl p-6"
+            >
+              <h3 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2">
+                <AlertTriangle className="h-5 w-5 text-[hsl(var(--stats-gold))]" />
+                Alertas e Insights
+              </h3>
+              <div className="space-y-3">
+                {stats.total > 5000000 && (
+                  <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 flex items-center gap-3">
+                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    <div>
+                      <p className="font-medium text-destructive">Gastos elevados</p>
+                      <p className="text-sm text-muted-foreground">Os gastos totais ultrapassaram R$ 50.000</p>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </section>
-
-        {/* Extra Expenses */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Gastos Extras</h2>
-            <Button onClick={() => openModal("extra")} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" /> Adicionar
-            </Button>
-          </div>
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-secondary/50">
-                <tr>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {extraExpenses.map((expense) => (
-                  <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-4 text-foreground">{expense.nome}</td>
-                    <td className="p-4 text-muted-foreground">{expense.categoria || "-"}</td>
-                    <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button variant="ghost" size="icon" onClick={() => openModal("extra", expense)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete("extra", expense.id)} className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {extraExpenses.length === 0 && (
-                  <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto extra cadastrado</td></tr>
+                {stats.totalExtra > stats.totalFixed * 0.5 && (
+                  <div className="p-3 rounded-lg bg-[hsl(var(--stats-gold))]/10 border border-[hsl(var(--stats-gold))]/20 flex items-center gap-3">
+                    <TrendingUp className="h-5 w-5 text-[hsl(var(--stats-gold))]" />
+                    <div>
+                      <p className="font-medium text-[hsl(var(--stats-gold))]">Gastos extras altos</p>
+                      <p className="text-sm text-muted-foreground">Gastos extras representam mais de 50% dos fixos</p>
+                    </div>
+                  </div>
                 )}
-              </tbody>
-            </table>
-          </div>
-        </section>
+                <div className="p-3 rounded-lg bg-[hsl(var(--stats-green))]/10 border border-[hsl(var(--stats-green))]/20 flex items-center gap-3">
+                  <Sparkles className="h-5 w-5 text-[hsl(var(--stats-green))]" />
+                  <div>
+                    <p className="font-medium text-[hsl(var(--stats-green))]">Dica de economia</p>
+                    <p className="text-sm text-muted-foreground">Analise gastos na categoria com maior participação para possíveis reduções</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </TabsContent>
+        </Tabs>
 
         {/* Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>

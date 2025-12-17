@@ -1,6 +1,8 @@
 // ============================================
-// EMPRESARIAL 2.0 - COMANDOS WHATSAPP
+// EMPRESARIAL 2.0 - COMANDOS WHATSAPP COMPLETO
 // Central de comandos via WhatsApp
+// Assessores: Moisés (558398920105) e Bruna (558396354090)
+// Conforme documento AJUDA5
 // ============================================
 
 import { useState } from "react";
@@ -18,6 +20,14 @@ import {
   BarChart3,
   Bot,
   Sparkles,
+  Phone,
+  Users,
+  TrendingUp,
+  FileText,
+  Crown,
+  Bell,
+  Settings,
+  Rocket,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -29,7 +39,7 @@ interface WhatsAppCommand {
   command: string;
   description: string;
   example: string;
-  category: "finance" | "task" | "report" | "ai";
+  category: "finance" | "task" | "report" | "ai" | "system";
   icon: typeof MessageSquare;
 }
 
@@ -70,6 +80,27 @@ const commands: WhatsAppCommand[] = [
     category: "finance",
     icon: DollarSign,
   },
+  {
+    command: "/multicnpj",
+    description: "Status de todos os CNPJs",
+    example: "/multicnpj",
+    category: "finance",
+    icon: DollarSign,
+  },
+  {
+    command: "/pagar",
+    description: "Lista contas a pagar",
+    example: "/pagar",
+    category: "finance",
+    icon: DollarSign,
+  },
+  {
+    command: "/receber",
+    description: "Lista contas a receber",
+    example: "/receber",
+    category: "finance",
+    icon: DollarSign,
+  },
   // TAREFAS
   {
     command: "/tarefa",
@@ -106,6 +137,20 @@ const commands: WhatsAppCommand[] = [
     category: "task",
     icon: Calendar,
   },
+  {
+    command: "/semana",
+    description: "Agenda da semana",
+    example: "/semana",
+    category: "task",
+    icon: Calendar,
+  },
+  {
+    command: "/atribuir",
+    description: "Atribui tarefa a alguém",
+    example: "/atribuir 1 @bruna",
+    category: "task",
+    icon: Users,
+  },
   // RELATÓRIOS
   {
     command: "/resumo",
@@ -115,9 +160,9 @@ const commands: WhatsAppCommand[] = [
     icon: BarChart3,
   },
   {
-    command: "/semana",
-    description: "Relatório semanal",
-    example: "/semana",
+    command: "/relatorio",
+    description: "Relatório semanal executivo",
+    example: "/relatorio semana",
     category: "report",
     icon: BarChart3,
   },
@@ -133,7 +178,21 @@ const commands: WhatsAppCommand[] = [
     description: "KPIs principais do negócio",
     example: "/kpis",
     category: "report",
-    icon: BarChart3,
+    icon: TrendingUp,
+  },
+  {
+    command: "/alunos",
+    description: "Relatório de alunos",
+    example: "/alunos",
+    category: "report",
+    icon: Users,
+  },
+  {
+    command: "/marketing",
+    description: "Métricas de marketing",
+    example: "/marketing",
+    category: "report",
+    icon: Rocket,
   },
   // IA
   {
@@ -157,6 +216,42 @@ const commands: WhatsAppCommand[] = [
     category: "ai",
     icon: Bot,
   },
+  {
+    command: "/analise",
+    description: "Análise 360° do negócio",
+    example: "/analise",
+    category: "ai",
+    icon: Sparkles,
+  },
+  {
+    command: "/sugerir",
+    description: "Sugestões de automação",
+    example: "/sugerir",
+    category: "ai",
+    icon: Zap,
+  },
+  // SISTEMA
+  {
+    command: "/ajuda",
+    description: "Lista todos os comandos",
+    example: "/ajuda",
+    category: "system",
+    icon: FileText,
+  },
+  {
+    command: "/status",
+    description: "Status do sistema",
+    example: "/status",
+    category: "system",
+    icon: Settings,
+  },
+  {
+    command: "/alertas",
+    description: "Configura alertas",
+    example: "/alertas on",
+    category: "system",
+    icon: Bell,
+  },
 ];
 
 const categoryColors = {
@@ -164,6 +259,7 @@ const categoryColors = {
   task: "bg-[hsl(var(--stats-blue))]/10 text-[hsl(var(--stats-blue))] border-[hsl(var(--stats-blue))]/30",
   report: "bg-[hsl(var(--stats-gold))]/10 text-[hsl(var(--stats-gold))] border-[hsl(var(--stats-gold))]/30",
   ai: "bg-[hsl(var(--stats-purple))]/10 text-[hsl(var(--stats-purple))] border-[hsl(var(--stats-purple))]/30",
+  system: "bg-muted/50 text-muted-foreground border-border",
 };
 
 const categoryLabels = {
@@ -171,12 +267,25 @@ const categoryLabels = {
   task: "Tarefas",
   report: "Relatórios",
   ai: "IA",
+  system: "Sistema",
 };
 
-// WhatsApp numbers for assessors
+// WhatsApp numbers for assessors - AJUDA5
 const ASSESSORS = {
-  moises: { name: "Moisés", phone: "558398920105" },
-  bruna: { name: "Bruna", phone: "558396354090" },
+  moises: { 
+    name: "Moisés", 
+    role: "Owner/CEO", 
+    phone: "558398920105",
+    alternatePhone: "5583998920105",
+    avatar: "👨‍💼"
+  },
+  bruna: { 
+    name: "Bruna", 
+    role: "Administradora", 
+    phone: "558396354090",
+    alternatePhone: "5583996354090",
+    avatar: "👩‍💼"
+  },
 };
 
 export function WhatsAppCommandWidget() {
@@ -210,7 +319,12 @@ export function WhatsAppCommandWidget() {
               <MessageSquare className="h-5 w-5 text-green-500" />
             </div>
             <div>
-              <CardTitle className="text-lg">Comandos WhatsApp</CardTitle>
+              <CardTitle className="text-lg flex items-center gap-2">
+                Comandos WhatsApp
+                <Badge className="bg-gradient-to-r from-primary to-primary/60 text-primary-foreground text-[10px]">
+                  EMPRESARIAL 2.0
+                </Badge>
+              </CardTitle>
               <p className="text-xs text-muted-foreground">
                 Controle tudo pelo WhatsApp
               </p>
@@ -225,29 +339,47 @@ export function WhatsAppCommandWidget() {
 
       <CardContent className="p-0">
         {/* Quick Contact - Assessors */}
-        <div className="px-3 pb-2">
-          <p className="text-[10px] text-muted-foreground mb-2 uppercase font-medium">
-            Falar com Assessor
+        <div className="px-3 pb-3">
+          <p className="text-[10px] text-muted-foreground mb-2 uppercase font-medium flex items-center gap-1">
+            <Crown className="h-3 w-3 text-[hsl(var(--stats-gold))]" />
+            Contato Direto - Assessores
           </p>
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 text-xs h-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20"
-              onClick={() => openWhatsApp(ASSESSORS.moises.phone, "Olá Moisés!")}
+          <div className="grid grid-cols-2 gap-2">
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="p-2 rounded-xl border border-green-500/30 bg-green-500/5 cursor-pointer hover:bg-green-500/10 transition-all"
+              onClick={() => openWhatsApp(ASSESSORS.moises.phone, "Olá Moisés, preciso de ajuda!")}
             >
-              <MessageSquare className="h-3 w-3 mr-1" />
-              {ASSESSORS.moises.name}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              className="flex-1 text-xs h-8 bg-green-500/10 border-green-500/30 hover:bg-green-500/20"
-              onClick={() => openWhatsApp(ASSESSORS.bruna.phone, "Olá Bruna!")}
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{ASSESSORS.moises.avatar}</span>
+                <div>
+                  <p className="text-sm font-medium">{ASSESSORS.moises.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{ASSESSORS.moises.role}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mt-1 text-[10px] text-green-500">
+                <Phone className="h-3 w-3" />
+                <span>{ASSESSORS.moises.phone}</span>
+              </div>
+            </motion.div>
+            
+            <motion.div
+              whileHover={{ scale: 1.02 }}
+              className="p-2 rounded-xl border border-green-500/30 bg-green-500/5 cursor-pointer hover:bg-green-500/10 transition-all"
+              onClick={() => openWhatsApp(ASSESSORS.bruna.phone, "Olá Bruna, preciso de ajuda!")}
             >
-              <MessageSquare className="h-3 w-3 mr-1" />
-              {ASSESSORS.bruna.name}
-            </Button>
+              <div className="flex items-center gap-2">
+                <span className="text-xl">{ASSESSORS.bruna.avatar}</span>
+                <div>
+                  <p className="text-sm font-medium">{ASSESSORS.bruna.name}</p>
+                  <p className="text-[10px] text-muted-foreground">{ASSESSORS.bruna.role}</p>
+                </div>
+              </div>
+              <div className="flex items-center gap-1 mt-1 text-[10px] text-green-500">
+                <Phone className="h-3 w-3" />
+                <span>{ASSESSORS.bruna.phone}</span>
+              </div>
+            </motion.div>
           </div>
         </div>
 
@@ -286,7 +418,7 @@ export function WhatsAppCommandWidget() {
                   key={cmd.command}
                   initial={{ opacity: 0, x: -10 }}
                   animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.03 }}
+                  transition={{ delay: index * 0.02 }}
                   className="p-3 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-all"
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -336,12 +468,12 @@ export function WhatsAppCommandWidget() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-1 text-xs text-muted-foreground">
               <Sparkles className="h-3 w-3 text-primary" />
-              <span>Dica: Use /ai para perguntas complexas</span>
+              <span>Diga "meu assessor" para contato rápido</span>
             </div>
             <Button
               variant="outline"
               size="sm"
-              className="text-xs h-7"
+              className="text-xs h-7 bg-green-500/10 border-green-500/30 hover:bg-green-500/20"
               onClick={() => openWhatsApp(ASSESSORS.moises.phone)}
             >
               <ExternalLink className="h-3 w-3 mr-1" />

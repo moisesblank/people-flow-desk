@@ -1,6 +1,6 @@
 // ============================================
-// UPGRADE v10 - FASE 4: PÁGINA DE TAREFAS KANBAN
-// Gestão visual de tarefas com drag & drop
+// EMPRESARIAL 2.0 - TAREFAS COM KANBAN AVANÇADO
+// Integração completa conforme AJUDA5
 // ============================================
 
 import { useState } from "react";
@@ -8,19 +8,15 @@ import { motion } from "framer-motion";
 import {
   Plus,
   Search,
-  Filter,
   LayoutGrid,
   List,
   Calendar,
-  Clock,
-  AlertTriangle,
-  CheckCircle2,
-  MoreHorizontal,
-  Trash2,
-  Edit,
-  Flag,
+  BarChart3,
+  Zap,
+  Settings2,
+  Phone,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -32,12 +28,6 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Select,
   SelectContent,
@@ -59,164 +49,17 @@ import {
   TASK_PRIORITIES,
   Task,
   TaskStatus,
-  TaskPriority,
 } from "@/hooks/useTasks";
+import { KanbanAdvanced } from "@/components/tasks/KanbanAdvanced";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
-function TaskCard({
-  task,
-  onEdit,
-  onDelete,
-  onMove,
-}: {
-  task: Task;
-  onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
-  onMove: (id: string, status: TaskStatus) => void;
-}) {
-  const priorityConfig = TASK_PRIORITIES.find((p) => p.value === task.priority);
-  const isOverdue =
-    task.due_date &&
-    new Date(task.due_date) < new Date() &&
-    task.status !== "done";
-
-  return (
-    <motion.div
-      layout
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -10 }}
-      className="group"
-    >
-      <Card
-        className={`glass-card border-border/50 hover:border-primary/30 transition-all cursor-pointer ${
-          isOverdue ? "border-destructive/50" : ""
-        }`}
-      >
-        <CardContent className="p-3 space-y-2">
-          <div className="flex items-start justify-between">
-            <h4 className="font-medium text-sm line-clamp-2">{task.title}</h4>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={() => onEdit(task)}>
-                  <Edit className="h-4 w-4 mr-2" />
-                  Editar
-                </DropdownMenuItem>
-                {TASK_STATUSES.filter((s) => s.value !== task.status).map(
-                  (status) => (
-                    <DropdownMenuItem
-                      key={status.value}
-                      onClick={() => onMove(task.id, status.value)}
-                    >
-                      Mover para {status.label}
-                    </DropdownMenuItem>
-                  )
-                )}
-                <DropdownMenuItem
-                  className="text-destructive"
-                  onClick={() => onDelete(task.id)}
-                >
-                  <Trash2 className="h-4 w-4 mr-2" />
-                  Excluir
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-
-          {task.description && (
-            <p className="text-xs text-muted-foreground line-clamp-2">
-              {task.description}
-            </p>
-          )}
-
-          <div className="flex items-center justify-between pt-1">
-            <div className="flex items-center gap-2">
-              <Badge
-                variant="outline"
-                className={`text-xs ${priorityConfig?.color || ""}`}
-              >
-                <Flag className="h-3 w-3 mr-1" />
-                {priorityConfig?.label}
-              </Badge>
-            </div>
-
-            {task.due_date && (
-              <div
-                className={`flex items-center gap-1 text-xs ${
-                  isOverdue ? "text-destructive" : "text-muted-foreground"
-                }`}
-              >
-                {isOverdue && <AlertTriangle className="h-3 w-3" />}
-                <Calendar className="h-3 w-3" />
-                {format(new Date(task.due_date), "dd/MM", { locale: ptBR })}
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-    </motion.div>
-  );
-}
-
-function KanbanColumn({
-  status,
-  tasks,
-  onEdit,
-  onDelete,
-  onMove,
-}: {
-  status: (typeof TASK_STATUSES)[0];
-  tasks: Task[];
-  onEdit: (task: Task) => void;
-  onDelete: (id: string) => void;
-  onMove: (id: string, status: TaskStatus) => void;
-}) {
-  return (
-    <div className="flex-1 min-w-[280px] max-w-[320px]">
-      <div
-        className={`rounded-xl p-3 ${status.color} border border-border/30 h-full`}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="font-semibold text-sm flex items-center gap-2">
-            {status.label}
-            <Badge variant="secondary" className="text-xs">
-              {tasks.length}
-            </Badge>
-          </h3>
-        </div>
-
-        <div className="space-y-2 max-h-[calc(100vh-300px)] overflow-y-auto pr-1">
-          {tasks.map((task) => (
-            <TaskCard
-              key={task.id}
-              task={task}
-              onEdit={onEdit}
-              onDelete={onDelete}
-              onMove={onMove}
-            />
-          ))}
-
-          {tasks.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Nenhuma tarefa
-            </div>
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
+// Dados dos assessores conforme AJUDA5
+const ASSESSORS = {
+  moises: { name: "Moisés", phone: "5583998920105", whatsapp: "558398920105" },
+  bruna: { name: "Bruna", phone: "5583996354090", whatsapp: "558396354090" },
+};
 
 function TaskForm({
   task,
@@ -336,7 +179,7 @@ function TaskForm({
 }
 
 export default function Tarefas() {
-  const [view, setView] = useState<"kanban" | "list">("kanban");
+  const [view, setView] = useState<"kanban" | "advanced" | "list">("advanced");
   const [search, setSearch] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
@@ -352,6 +195,7 @@ export default function Tarefas() {
     createTask.mutate(data, {
       onSuccess: () => {
         setIsDialogOpen(false);
+        toast.success("Tarefa criada com sucesso!");
       },
     });
   };
@@ -363,6 +207,7 @@ export default function Tarefas() {
       {
         onSuccess: () => {
           setEditingTask(null);
+          toast.success("Tarefa atualizada!");
         },
       }
     );
@@ -378,15 +223,10 @@ export default function Tarefas() {
     moveTask.mutate({ id, status });
   };
 
-  // Filtrar tarefas por busca
-  const filteredColumns = columns.map((col) => ({
-    ...col,
-    tasks: col.tasks.filter(
-      (t) =>
-        t.title.toLowerCase().includes(search.toLowerCase()) ||
-        t.description?.toLowerCase().includes(search.toLowerCase())
-    ),
-  }));
+  const contactAssessor = (assessor: 'moises' | 'bruna') => {
+    const data = ASSESSORS[assessor];
+    window.open(`https://wa.me/${data.whatsapp}?text=Olá ${data.name}, preciso de ajuda com uma tarefa!`, '_blank');
+  };
 
   return (
     <div className="p-4 md:p-8 lg:p-12 space-y-6 gradient-mesh min-h-screen">
@@ -399,15 +239,42 @@ export default function Tarefas() {
         className="flex flex-col md:flex-row md:items-center justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-            Tarefas
-          </h1>
+          <div className="flex items-center gap-2">
+            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+              Tarefas
+            </h1>
+            <Badge className="bg-gradient-to-r from-primary to-primary/60 text-primary-foreground">
+              EMPRESARIAL 2.0
+            </Badge>
+          </div>
           <p className="text-muted-foreground">
-            Gerencie suas tarefas com visão Kanban
+            Gerencie suas tarefas com Kanban Avançado, subtarefas e automações
           </p>
         </div>
 
         <div className="flex items-center gap-3">
+          {/* Contato Assessores */}
+          <div className="flex items-center gap-1">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => contactAssessor('moises')}
+              className="gap-1"
+            >
+              <Phone className="h-3 w-3" />
+              Moisés
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => contactAssessor('bruna')}
+              className="gap-1"
+            >
+              <Phone className="h-3 w-3" />
+              Bruna
+            </Button>
+          </div>
+
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -420,9 +287,18 @@ export default function Tarefas() {
 
           <div className="flex items-center border border-border rounded-lg p-1">
             <Button
+              variant={view === "advanced" ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setView("advanced")}
+              title="Kanban Avançado"
+            >
+              <Zap className="h-4 w-4" />
+            </Button>
+            <Button
               variant={view === "kanban" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setView("kanban")}
+              title="Kanban Simples"
             >
               <LayoutGrid className="h-4 w-4" />
             </Button>
@@ -430,6 +306,7 @@ export default function Tarefas() {
               variant={view === "list" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => setView("list")}
+              title="Lista"
             >
               <List className="h-4 w-4" />
             </Button>
@@ -469,7 +346,7 @@ export default function Tarefas() {
         </Card>
         <Card className="glass-card">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-stats-blue">
+            <div className="text-2xl font-bold text-[hsl(var(--stats-blue))]">
               {stats.byStatus.in_progress}
             </div>
             <div className="text-xs text-muted-foreground">Em Progresso</div>
@@ -477,7 +354,7 @@ export default function Tarefas() {
         </Card>
         <Card className="glass-card">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-stats-green">
+            <div className="text-2xl font-bold text-[hsl(var(--stats-green))]">
               {stats.byStatus.done}
             </div>
             <div className="text-xs text-muted-foreground">Concluídas</div>
@@ -485,7 +362,7 @@ export default function Tarefas() {
         </Card>
         <Card className="glass-card">
           <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-stats-gold">
+            <div className="text-2xl font-bold text-[hsl(var(--stats-gold))]">
               {stats.byPriority.urgent + stats.byPriority.high}
             </div>
             <div className="text-xs text-muted-foreground">Prioridade Alta</div>
@@ -501,91 +378,166 @@ export default function Tarefas() {
         </Card>
       </motion.div>
 
-      {/* Kanban Board */}
+      {/* Views */}
+      {view === "advanced" && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="glass-card rounded-2xl p-4"
+        >
+          <KanbanAdvanced />
+        </motion.div>
+      )}
+
       {view === "kanban" && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           className="flex gap-4 overflow-x-auto pb-4"
         >
-          {filteredColumns.map((column) => (
-            <KanbanColumn
-              key={column.value}
-              status={column}
-              tasks={column.tasks}
-              onEdit={setEditingTask}
-              onDelete={handleDelete}
-              onMove={handleMove}
-            />
+          {columns.map((column) => (
+            <div key={column.value} className="flex-1 min-w-[280px] max-w-[320px]">
+              <div
+                className={`rounded-xl p-3 ${column.color} border border-border/30 h-full`}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-semibold text-sm flex items-center gap-2">
+                    {column.label}
+                    <Badge variant="secondary" className="text-xs">
+                      {column.tasks.length}
+                    </Badge>
+                  </h3>
+                </div>
+
+                <div className="space-y-2 max-h-[calc(100vh-400px)] overflow-y-auto pr-1">
+                  {column.tasks
+                    .filter((t) =>
+                      t.title.toLowerCase().includes(search.toLowerCase()) ||
+                      t.description?.toLowerCase().includes(search.toLowerCase())
+                    )
+                    .map((task) => (
+                      <Card
+                        key={task.id}
+                        className="glass-card border-border/50 hover:border-primary/30 transition-all cursor-pointer"
+                      >
+                        <CardContent className="p-3 space-y-2">
+                          <h4 className="font-medium text-sm line-clamp-2">
+                            {task.title}
+                          </h4>
+                          {task.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-2">
+                              {task.description}
+                            </p>
+                          )}
+                          <div className="flex items-center justify-between pt-1">
+                            <Badge
+                              variant="outline"
+                              className={`text-xs ${
+                                TASK_PRIORITIES.find((p) => p.value === task.priority)
+                                  ?.color || ""
+                              }`}
+                            >
+                              {TASK_PRIORITIES.find((p) => p.value === task.priority)
+                                ?.label}
+                            </Badge>
+                            {task.due_date && (
+                              <span className="text-xs text-muted-foreground flex items-center gap-1">
+                                <Calendar className="h-3 w-3" />
+                                {format(new Date(task.due_date), "dd/MM", {
+                                  locale: ptBR,
+                                })}
+                              </span>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+
+                  {column.tasks.length === 0 && (
+                    <div className="text-center py-8 text-muted-foreground text-sm">
+                      Nenhuma tarefa
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
           ))}
         </motion.div>
       )}
 
-      {/* List View */}
       {view === "list" && (
         <motion.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          className="space-y-2"
+          className="glass-card rounded-2xl overflow-hidden"
         >
-          {filteredColumns.flatMap((col) =>
-            col.tasks.map((task) => (
-              <Card key={task.id} className="glass-card">
-                <CardContent className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Badge
-                      variant="outline"
-                      className={
-                        TASK_STATUSES.find((s) => s.value === task.status)
-                          ?.color
-                      }
-                    >
-                      {
-                        TASK_STATUSES.find((s) => s.value === task.status)
-                          ?.label
-                      }
-                    </Badge>
-                    <div>
-                      <h4 className="font-medium">{task.title}</h4>
-                      {task.description && (
-                        <p className="text-sm text-muted-foreground line-clamp-1">
-                          {task.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Badge
-                      variant="outline"
-                      className={
-                        TASK_PRIORITIES.find((p) => p.value === task.priority)
-                          ?.color
-                      }
-                    >
-                      {
-                        TASK_PRIORITIES.find((p) => p.value === task.priority)
-                          ?.label
-                      }
-                    </Badge>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => setEditingTask(task)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => handleDelete(task.id)}
-                    >
-                      <Trash2 className="h-4 w-4 text-destructive" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
+          <table className="w-full">
+            <thead className="bg-secondary/50">
+              <tr>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Tarefa
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Status
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Prioridade
+                </th>
+                <th className="text-left p-4 text-sm font-medium text-muted-foreground">
+                  Data
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {columns
+                .flatMap((col) => col.tasks)
+                .filter(
+                  (t) =>
+                    t.title.toLowerCase().includes(search.toLowerCase()) ||
+                    t.description?.toLowerCase().includes(search.toLowerCase())
+                )
+                .map((task) => (
+                  <tr
+                    key={task.id}
+                    className="border-t border-border/50 hover:bg-secondary/30 transition-colors"
+                  >
+                    <td className="p-4">
+                      <div>
+                        <div className="font-medium">{task.title}</div>
+                        {task.description && (
+                          <div className="text-sm text-muted-foreground line-clamp-1">
+                            {task.description}
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="p-4">
+                      <Badge variant="outline">
+                        {TASK_STATUSES.find((s) => s.value === task.status)?.label}
+                      </Badge>
+                    </td>
+                    <td className="p-4">
+                      <Badge
+                        className={
+                          TASK_PRIORITIES.find((p) => p.value === task.priority)
+                            ?.color
+                        }
+                      >
+                        {TASK_PRIORITIES.find((p) => p.value === task.priority)
+                          ?.label}
+                      </Badge>
+                    </td>
+                    <td className="p-4 text-muted-foreground">
+                      {task.due_date
+                        ? format(new Date(task.due_date), "dd/MM/yyyy", {
+                            locale: ptBR,
+                          })
+                        : "-"}
+                    </td>
+                  </tr>
+                ))}
+            </tbody>
+          </table>
         </motion.div>
       )}
 
