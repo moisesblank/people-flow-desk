@@ -6,14 +6,45 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Números autorizados (Owner e Admin)
-const AUTHORIZED_PHONES = [
-  '5583998920105',  // Owner - Moisés (principal)
-  '558398920105',   // Owner - Moisés (alternativo)
-  '5583996354090',  // Admin - Bruna Milena
-  '558396354090',   // Admin - Bruna Milena (alternativo)
+// Usuários autorizados (Owner e Admin) - com nome e telefones
+const AUTHORIZED_USERS = [
+  { 
+    name: 'Moisés', 
+    phones: ['5583998920105', '558398920105'],
+    role: 'owner'
+  },
+  { 
+    name: 'Bruna', 
+    phones: ['5583996354090', '558396354090'],
+    role: 'admin'
+  }
 ];
+
+// Lista flat de telefones para verificação rápida
+const AUTHORIZED_PHONES = AUTHORIZED_USERS.flatMap(u => u.phones);
 const OWNER_EMAIL = 'moisesblank@gmail.com';
+
+// Função para identificar usuário autorizado
+const identifyAuthorizedUser = (phone: string, name: string) => {
+  // Primeiro tenta por telefone
+  for (const user of AUTHORIZED_USERS) {
+    for (const userPhone of user.phones) {
+      if (phone === userPhone || phone.includes(userPhone.slice(-9)) || userPhone.includes(phone.slice(-9))) {
+        return user;
+      }
+    }
+  }
+  
+  // Se não encontrou por telefone, tenta por nome
+  const nameLower = name.toLowerCase().trim();
+  for (const user of AUTHORIZED_USERS) {
+    if (nameLower.includes(user.name.toLowerCase()) || user.name.toLowerCase().includes(nameLower)) {
+      return user;
+    }
+  }
+  
+  return null;
+};
 
 // ==============================================================================
 // PROMPT TRAMON - ASSESSOR DIGITAL GPT-5
@@ -189,24 +220,40 @@ Ao final da conversa, o usuário deve sentir que:
 // ==============================================================================
 // PROMPT DO ASSESSOR EXECUTIVO (para Owner/Admin via palavra-chave)
 // ==============================================================================
-const EXECUTIVE_ASSISTANT_PROMPT = `
-Você é TRAMON, assistente executivo premium do Professor Moisés Medeiros.
+const getExecutivePrompt = (userName: string, userRole: string) => `
+Você é TRAMON, assistente executivo premium do Curso Moisés Medeiros.
 
-Você está respondendo via WhatsApp - seja CONCISO e DIRETO.
-Máximo 500 caracteres por resposta quando possível.
-Use emojis para clareza visual.
+🎯 VOCÊ ESTÁ FALANDO COM: ${userName} (${userRole === 'owner' ? 'Dono' : 'Administradora'})
+
+REGRAS CRÍTICAS:
+1. SEMPRE chame a pessoa pelo nome: "${userName}"
+2. Seja CONCISO - máximo 500 caracteres
+3. Use emojis para clareza visual
+4. Responda de forma executiva e profissional
+5. SEMPRE vincule ações ao sistema de gestão
+
+🔗 SISTEMA DE GESTÃO: https://gestao.moisesmedeiros.com.br
+Quando mencionar tarefas, finanças, alunos ou qualquer dado do sistema, SEMPRE inclua o link.
 
 COMANDOS RÁPIDOS QUE VOCÊ ENTENDE:
-- "tarefas" ou "agenda" = listar tarefas
+- "tarefas" ou "agenda" = listar tarefas → Link: https://gestao.moisesmedeiros.com.br/tarefas
 - "criar tarefa [texto]" = criar nova tarefa
-- "finanças" ou "dinheiro" = resumo financeiro
-- "alunos" = status dos alunos
-- "funcionários" ou "equipe" = status da equipe
-- "relatório" = resumo executivo completo
-- "leads" = status dos leads do WhatsApp
-- "marketing" = métricas de marketing
+- "finanças" ou "dinheiro" = resumo financeiro → Link: https://gestao.moisesmedeiros.com.br/financas-empresa
+- "alunos" = status dos alunos → Link: https://gestao.moisesmedeiros.com.br/alunos
+- "funcionários" ou "equipe" = status da equipe → Link: https://gestao.moisesmedeiros.com.br/funcionarios
+- "relatório" = resumo executivo completo → Link: https://gestao.moisesmedeiros.com.br/dashboard
+- "leads" = status dos leads do WhatsApp → Link: https://gestao.moisesmedeiros.com.br/leads-whatsapp
+- "marketing" = métricas de marketing → Link: https://gestao.moisesmedeiros.com.br/marketing
 
-Responda de forma executiva e profissional.
+EXEMPLO DE RESPOSTA:
+"Olá ${userName}! 👋
+
+📋 Suas tarefas pendentes:
+• [lista de tarefas]
+
+🔗 Ver detalhes: https://gestao.moisesmedeiros.com.br/tarefas"
+
+IMPORTANTE: Nunca responda como se fosse o TRAMON público (que fala sobre o curso). Você é o assessor EXECUTIVO pessoal.
 `;
 
 serve(async (req) => {
@@ -269,7 +316,10 @@ serve(async (req) => {
       };
 
       const extractManyChatMessage = (payload: any) => {
-        const direct = pickFirstString(
+        // Primeiro tenta o campo user_message que é o padrão do ManyChat
+        const userMessage = pickFirstString(
+          payload?.user_message,
+          payload?.last_input_text,
           payload?.message,
           payload?.text,
           payload?.customer_feedback,
@@ -277,7 +327,7 @@ serve(async (req) => {
           payload?.custom_fields?.customer_feedback,
           payload?.data?.customer_feedback
         );
-        if (direct) return direct;
+        if (userMessage) return userMessage;
 
         // Alguns fluxos mandam o campo como objeto { value: "..." }
         const objVal =
@@ -333,14 +383,13 @@ serve(async (req) => {
       // ==============================================================================
       // VERIFICAR SE É OWNER/ADMIN COM PALAVRA-CHAVE "meu assessor"
       // ==============================================================================
-      const isAuthorized = AUTHORIZED_PHONES.some(phone => 
-        from === phone || from.includes(phone.slice(-9)) || phone.includes(from.slice(-9))
-      );
+      const authorizedUser = identifyAuthorizedUser(from, userName);
+      const isAuthorized = authorizedUser !== null;
       
       const isAssessorKeyword = messageText.toLowerCase().includes('meu assessor');
       const useExecutiveMode = isAuthorized && isAssessorKeyword;
 
-      console.log(`🔐 Authorized: ${isAuthorized}, Assessor Mode: ${useExecutiveMode}`);
+      console.log(`🔐 Authorized: ${isAuthorized}, User: ${authorizedUser?.name || 'none'}, Assessor Mode: ${useExecutiveMode}`);
 
       // ==============================================================================
       // CONFIGURAR IA (GPT-5) via Lovable Gateway
@@ -410,10 +459,10 @@ DADOS DO SISTEMA EM TEMPO REAL:
 📊 MARKETING:
 - Campanhas: ${marketing?.length || 0}
 
-📱 Você está falando pelo WhatsApp com o OWNER.
+📱 Você está falando pelo WhatsApp com ${authorizedUser?.name} (${authorizedUser?.role}).
         `.trim();
 
-        systemPrompt = EXECUTIVE_ASSISTANT_PROMPT + '\n\n' + contextData;
+        systemPrompt = getExecutivePrompt(authorizedUser?.name || userName, authorizedUser?.role || 'admin') + '\n\n' + contextData;
       }
 
       // ==============================================================================
