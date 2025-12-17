@@ -1,8 +1,7 @@
 // ============================================
-// 🔮 TRAMON - IA PREMIUM EXCLUSIVA GPT-5
-// VERSÃO EMPRESARIAL 2.0
-// Acesso: Owner + Admin APENAS
-// Modelo: OpenAI GPT-5 (o mais poderoso)
+// 🔮 TRAMON v3.0 - SUPERINTELIGÊNCIA EMPRESARIAL
+// COM VISÃO COMPUTACIONAL E ANÁLISE DE IMAGENS
+// Modelo: Gemini 2.5 Pro (Multimodal)
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -37,7 +36,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, context, userId } = await req.json();
+    const { messages, context, userId, image } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -48,7 +47,6 @@ serve(async (req) => {
 
     // ========================================
     // 🔐 VERIFICAÇÃO DE ACESSO PREMIUM
-    // Apenas owner e admin podem usar
     // ========================================
     let hasAccess = false;
     let userRole = "unknown";
@@ -58,19 +56,16 @@ serve(async (req) => {
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY && userId) {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       
-      // Buscar role do usuário
       const { data: roleData } = await supabase
         .from('user_roles')
         .select('role')
         .eq('user_id', userId)
         .single();
       
-      // Buscar dados do usuário
       const { data: userData } = await supabase.auth.admin.getUserById(userId);
       userEmail = userData?.user?.email || "";
       userRole = roleData?.role || "employee";
       
-      // Buscar perfil
       const { data: profileData } = await supabase
         .from('profiles')
         .select('nome')
@@ -78,11 +73,10 @@ serve(async (req) => {
         .single();
       userName = profileData?.nome || userEmail.split('@')[0];
       
-      // Verificar acesso: owner, admin ou coordenacao
       const OWNER_EMAIL = "moisesblank@gmail.com";
       hasAccess = userEmail === OWNER_EMAIL || userRole === "owner" || userRole === "admin" || userRole === "coordenacao";
       
-      console.log(`[TRAMON] User: ${userEmail}, Role: ${userRole}, Access: ${hasAccess}`);
+      console.log(`[TRAMON v3] User: ${userEmail}, Role: ${userRole}, Access: ${hasAccess}, HasImage: ${!!image}`);
     }
 
     if (!hasAccess) {
@@ -100,69 +94,22 @@ serve(async (req) => {
     // ========================================
     let systemData = {
       financial: { 
-        totalIncome: 0, 
-        totalExpenses: 0, 
-        profit: 0, 
-        monthlyGrowth: 0, 
-        runway: 0,
-        fixedExpenses: 0,
-        extraExpenses: 0,
-        cashFlow: 0,
-        pendingPayments: 0
+        totalIncome: 0, totalExpenses: 0, profit: 0, monthlyGrowth: 0, 
+        runway: 0, fixedExpenses: 0, extraExpenses: 0, cashFlow: 0, pendingPayments: 0
       },
       students: { 
-        active: 0, 
-        total: 0, 
-        retention: 0, 
-        newThisMonth: 0, 
-        churnRate: 0, 
-        avgProgress: 0,
-        vips: 0,
-        atRisk: 0
+        active: 0, total: 0, retention: 0, newThisMonth: 0, 
+        churnRate: 0, avgProgress: 0, vips: 0, atRisk: 0
       },
-      employees: { 
-        active: 0, 
-        total: 0, 
-        byRole: {} as Record<string, number>,
-        bySector: {} as Record<string, number>
-      },
+      employees: { active: 0, total: 0, byRole: {}, bySector: {} },
       tasks: { 
-        pending: 0, 
-        highPriority: 0, 
-        completed: 0, 
-        overdue: 0, 
-        completionRate: 0,
-        todayTasks: 0,
-        weekTasks: 0
+        pending: 0, highPriority: 0, completed: 0, overdue: 0, 
+        completionRate: 0, todayTasks: 0, weekTasks: 0
       },
-      marketing: { 
-        cac: 0, 
-        ltv: 0, 
-        roi: 0, 
-        ltvCacRatio: 0, 
-        campaigns: 0,
-        activeCampaigns: 0,
-        totalLeads: 0
-      },
-      courses: { 
-        total: 0, 
-        published: 0, 
-        averageRating: 0, 
-        totalStudents: 0,
-        topCourse: ''
-      },
-      system: { 
-        lastBackup: null, 
-        activeUsers: 0, 
-        errors: 0,
-        uptime: 99.9,
-        version: 'v14.0'
-      },
-      affiliates: {
-        total: 0,
-        active: 0,
-        totalCommission: 0
-      }
+      marketing: { cac: 0, ltv: 0, roi: 0, ltvCacRatio: 0, campaigns: 0, activeCampaigns: 0, totalLeads: 0 },
+      courses: { total: 0, published: 0, averageRating: 0, totalStudents: 0, topCourse: '' },
+      system: { lastBackup: null, activeUsers: 0, errors: 0, uptime: 99.9, version: 'v15.0 SYNAPSE' },
+      affiliates: { total: 0, active: 0, totalCommission: 0 }
     };
     
     if (SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
@@ -176,21 +123,11 @@ serve(async (req) => {
         const todayStr = today.toISOString().split('T')[0];
         
         const [
-          incomeResult, 
-          fixedExpResult, 
-          extraExpResult, 
-          studentsResult, 
-          employeesResult, 
-          tasksResult, 
-          coursesResult, 
-          marketingResult,
-          enrollmentsResult,
-          campaignsResult,
-          profilesResult,
-          affiliatesResult,
-          paymentsResult
+          incomeResult, fixedExpResult, extraExpResult, studentsResult, 
+          employeesResult, tasksResult, coursesResult, marketingResult,
+          enrollmentsResult, campaignsResult, profilesResult, affiliatesResult, paymentsResult
         ] = await Promise.all([
-          supabase.from('income').select('valor, created_at, fonte, mes_referencia'),
+          supabase.from('income').select('valor, created_at, fonte'),
           supabase.from('company_fixed_expenses').select('valor, nome, categoria'),
           supabase.from('company_extra_expenses').select('valor, data, categoria, nome'),
           supabase.from('students').select('status, created_at, progresso, email'),
@@ -205,7 +142,7 @@ serve(async (req) => {
           supabase.from('payments').select('valor, status, data_vencimento, descricao, tipo'),
         ]);
 
-        // Processar financeiro avançado
+        // Processar dados financeiros
         const income = incomeResult.data || [];
         const currentMonthIncome = income.filter(i => new Date(i.created_at) >= new Date(thirtyDaysAgo)).reduce((sum, i) => sum + (i.valor || 0), 0);
         const lastMonthIncome = income.filter(i => new Date(i.created_at) >= new Date(sixtyDaysAgo) && new Date(i.created_at) < new Date(thirtyDaysAgo)).reduce((sum, i) => sum + (i.valor || 0), 0);
@@ -215,7 +152,6 @@ serve(async (req) => {
         const totalExpenses = fixedExpenses + extraExpenses;
         const profit = currentMonthIncome - totalExpenses;
         
-        // Pagamentos pendentes
         const payments = paymentsResult.data || [];
         const pendingPayments = payments.filter(p => p.status === 'pendente' || p.status === 'atrasado').reduce((sum, p) => sum + (p.valor || 0), 0);
         
@@ -231,14 +167,12 @@ serve(async (req) => {
           pendingPayments
         };
 
-        // Processar alunos com progresso e segmentação
+        // Processar alunos
         const students = studentsResult.data || [];
         const activeStudents = students.filter(s => s.status === 'ativo');
         const newStudents = students.filter(s => new Date(s.created_at) >= new Date(thirtyDaysAgo));
         const enrollments = enrollmentsResult.data || [];
         const avgProgress = enrollments.length > 0 ? enrollments.reduce((sum, e) => sum + (e.progress_percentage || 0), 0) / enrollments.length : 0;
-        const vipStudents = students.filter(s => (s.progresso || 0) > 70);
-        const atRiskStudents = students.filter(s => s.status === 'ativo' && (s.progresso || 0) < 20);
         
         systemData.students = {
           active: activeStudents.length,
@@ -247,19 +181,17 @@ serve(async (req) => {
           newThisMonth: newStudents.length,
           churnRate: students.length > 0 ? ((students.length - activeStudents.length) / students.length) * 100 : 0,
           avgProgress,
-          vips: vipStudents.length,
-          atRisk: atRiskStudents.length
+          vips: students.filter(s => (s.progresso || 0) > 70).length,
+          atRisk: students.filter(s => s.status === 'ativo' && (s.progresso || 0) < 20).length
         };
 
-        // Processar funcionários por setor e função
+        // Processar funcionários
         const employees = employeesResult.data || [];
         const byRole: Record<string, number> = {};
         const bySector: Record<string, number> = {};
         employees.forEach(e => {
-          const setor = e.setor || 'outros';
-          const funcao = e.funcao || 'outros';
-          byRole[funcao] = (byRole[funcao] || 0) + 1;
-          bySector[setor] = (bySector[setor] || 0) + 1;
+          byRole[e.funcao || 'outros'] = (byRole[e.funcao || 'outros'] || 0) + 1;
+          bySector[e.setor || 'outros'] = (bySector[e.setor || 'outros'] || 0) + 1;
         });
         
         systemData.employees = {
@@ -269,11 +201,9 @@ serve(async (req) => {
           bySector
         };
 
-        // Processar tarefas com mais detalhes
+        // Processar tarefas
         const tasks = tasksResult.data || [];
         const completedTasks = tasks.filter(t => t.is_completed).length;
-        const todayTasks = tasks.filter(t => t.task_date === todayStr);
-        const weekTasks = tasks.filter(t => new Date(t.task_date) >= today && new Date(t.task_date) <= new Date(sevenDaysFromNow));
         
         systemData.tasks = {
           pending: tasks.filter(t => !t.is_completed && t.task_date >= todayStr).length,
@@ -281,11 +211,11 @@ serve(async (req) => {
           completed: completedTasks,
           overdue: tasks.filter(t => !t.is_completed && t.task_date < todayStr).length,
           completionRate: tasks.length > 0 ? (completedTasks / tasks.length) * 100 : 0,
-          todayTasks: todayTasks.length,
-          weekTasks: weekTasks.length
+          todayTasks: tasks.filter(t => t.task_date === todayStr).length,
+          weekTasks: tasks.filter(t => new Date(t.task_date) >= today && new Date(t.task_date) <= new Date(sevenDaysFromNow)).length
         };
 
-        // Processar cursos com top curso
+        // Processar cursos
         const courses = coursesResult.data || [];
         const publishedCourses = courses.filter(c => c.is_published);
         const topCourse = courses.sort((a, b) => (b.total_students || 0) - (a.total_students || 0))[0];
@@ -301,16 +231,14 @@ serve(async (req) => {
         // Processar marketing
         const marketing = marketingResult.data?.[0];
         const campaigns = campaignsResult.data || [];
-        const activeCampaigns = campaigns.filter(c => c.status === 'ativa');
         if (marketing) {
-          const ltvCacRatio = marketing.cac > 0 ? marketing.ltv / marketing.cac : 0;
           systemData.marketing = {
             cac: marketing.cac || 0,
             ltv: marketing.ltv || 0,
             roi: marketing.roi_percentual || 0,
-            ltvCacRatio,
+            ltvCacRatio: marketing.cac > 0 ? marketing.ltv / marketing.cac : 0,
             campaigns: campaigns.length,
-            activeCampaigns: activeCampaigns.length,
+            activeCampaigns: campaigns.filter(c => c.status === 'ativa').length,
             totalLeads: campaigns.reduce((sum, c) => sum + (c.leads || 0), 0)
           };
         }
@@ -325,236 +253,157 @@ serve(async (req) => {
 
         // Processar sistema
         const profiles = profilesResult.data || [];
-        const recentlyActive = profiles.filter(p => {
-          const lastActivity = p.last_activity_at ? new Date(p.last_activity_at) : null;
-          return lastActivity && lastActivity > new Date(Date.now() - 15 * 60 * 1000);
-        });
-        
         systemData.system = {
           lastBackup: null,
-          activeUsers: recentlyActive.length,
+          activeUsers: profiles.filter(p => p.last_activity_at && new Date(p.last_activity_at) > new Date(Date.now() - 15 * 60 * 1000)).length,
           errors: 0,
           uptime: 99.9,
-          version: 'v14.0 SYNAPSE'
+          version: 'v15.0 SYNAPSE'
         };
 
       } catch (dbError) {
-        console.log("[TRAMON] Erro ao buscar dados:", dbError);
+        console.log("[TRAMON v3] Erro ao buscar dados:", dbError);
       }
     }
 
     // ========================================
-    // 🔮 PROMPT ULTRA AVANÇADO - TRAMON v2.0
-    // PLANO EMPRESARIAL
+    // 🔮 PROMPT ULTRA AVANÇADO v3.0
     // ========================================
     const formatCurrency = (value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
     const dataContext = `
-## 📊 DADOS DO SISTEMA EM TEMPO REAL (Últimos 30 dias)
+## 📊 DADOS EM TEMPO REAL (${new Date().toLocaleDateString('pt-BR')})
 
 ### 💰 FINANCEIRO
-- **Receita Total:** ${formatCurrency(systemData.financial.totalIncome)}
-- **Despesas Totais:** ${formatCurrency(systemData.financial.totalExpenses)}
-  - Fixas: ${formatCurrency(systemData.financial.fixedExpenses)}
-  - Extras: ${formatCurrency(systemData.financial.extraExpenses)}
-- **Lucro Líquido:** ${formatCurrency(systemData.financial.profit)} ${systemData.financial.profit > 0 ? '✅' : '⚠️'}
-- **Crescimento:** ${systemData.financial.monthlyGrowth >= 0 ? '📈' : '📉'} ${formatPercent(systemData.financial.monthlyGrowth)}
-- **Runway:** ~${systemData.financial.runway} meses
-- **Fluxo de Caixa:** ${formatCurrency(systemData.financial.cashFlow)}
-- **Pagamentos Pendentes:** ${formatCurrency(systemData.financial.pendingPayments)}
+- Receita: ${formatCurrency(systemData.financial.totalIncome)} | Despesas: ${formatCurrency(systemData.financial.totalExpenses)}
+- Lucro: ${formatCurrency(systemData.financial.profit)} ${systemData.financial.profit > 0 ? '✅' : '⚠️'}
+- Crescimento: ${formatPercent(systemData.financial.monthlyGrowth)} | Runway: ~${systemData.financial.runway} meses
 
 ### 👥 ALUNOS
-- **Ativos:** ${systemData.students.active}/${systemData.students.total}
-- **Retenção:** ${formatPercent(systemData.students.retention)}
-- **Novos (30d):** ${systemData.students.newThisMonth}
-- **Churn:** ${formatPercent(systemData.students.churnRate)}
-- **Progresso Médio:** ${formatPercent(systemData.students.avgProgress)}
-- **VIPs (>70% progresso):** ${systemData.students.vips}
-- **Em Risco:** ${systemData.students.atRisk} ⚠️
-
-### 👔 EQUIPE
-- **Total:** ${systemData.employees.active}/${systemData.employees.total} ativos
-- **Por Função:** ${JSON.stringify(systemData.employees.byRole)}
-- **Por Setor:** ${JSON.stringify(systemData.employees.bySector)}
+- Ativos: ${systemData.students.active}/${systemData.students.total} | Retenção: ${formatPercent(systemData.students.retention)}
+- Novos: ${systemData.students.newThisMonth} | Churn: ${formatPercent(systemData.students.churnRate)}
+- Em Risco: ${systemData.students.atRisk} | VIPs: ${systemData.students.vips}
 
 ### ✅ TAREFAS
-- **Pendentes:** ${systemData.tasks.pending}
-- **Alta Prioridade:** ${systemData.tasks.highPriority} ${systemData.tasks.highPriority > 5 ? '🚨' : ''}
-- **Atrasadas:** ${systemData.tasks.overdue} ${systemData.tasks.overdue > 0 ? '⚠️' : '✅'}
-- **Hoje:** ${systemData.tasks.todayTasks}
-- **Esta Semana:** ${systemData.tasks.weekTasks}
-- **Taxa de Conclusão:** ${formatPercent(systemData.tasks.completionRate)}
+- Pendentes: ${systemData.tasks.pending} | Alta Prioridade: ${systemData.tasks.highPriority}
+- Atrasadas: ${systemData.tasks.overdue} | Conclusão: ${formatPercent(systemData.tasks.completionRate)}
 
 ### 📚 CURSOS
-- **Publicados:** ${systemData.courses.published}/${systemData.courses.total}
-- **Avaliação Média:** ⭐ ${systemData.courses.averageRating.toFixed(1)}
-- **Total de Matrículas:** ${systemData.courses.totalStudents}
-- **Curso Top:** ${systemData.courses.topCourse}
+- Publicados: ${systemData.courses.published}/${systemData.courses.total}
+- Rating: ⭐${systemData.courses.averageRating.toFixed(1)} | Alunos: ${systemData.courses.totalStudents}
 
 ### 📢 MARKETING
-- **CAC:** ${formatCurrency(systemData.marketing.cac)}
-- **LTV:** ${formatCurrency(systemData.marketing.ltv)}
-- **ROI:** ${formatPercent(systemData.marketing.roi)}
-- **LTV/CAC:** ${systemData.marketing.ltvCacRatio.toFixed(1)}x ${systemData.marketing.ltvCacRatio >= 3 ? '✅' : '⚠️'}
-- **Campanhas Ativas:** ${systemData.marketing.activeCampaigns}/${systemData.marketing.campaigns}
-- **Total de Leads:** ${systemData.marketing.totalLeads}
-
-### 🤝 AFILIADOS
-- **Total:** ${systemData.affiliates.total}
-- **Ativos:** ${systemData.affiliates.active}
-- **Comissões Totais:** ${formatCurrency(systemData.affiliates.totalCommission)}
-
-### 🖥️ SISTEMA
-- **Usuários Online:** ${systemData.system.activeUsers}
-- **Uptime:** ${systemData.system.uptime}%
-- **Versão:** ${systemData.system.version}
+- CAC: ${formatCurrency(systemData.marketing.cac)} | LTV: ${formatCurrency(systemData.marketing.ltv)}
+- LTV/CAC: ${systemData.marketing.ltvCacRatio.toFixed(1)}x | ROI: ${formatPercent(systemData.marketing.roi)}
 `;
 
-    const systemPrompt = `# 🔮 TRAMON - SUPERINTELIGÊNCIA EMPRESARIAL GPT-5
-## VERSÃO EMPRESARIAL 2.0 - PLATAFORMA PROF. MOISÉS MEDEIROS
+    const systemPrompt = `# 🔮 TRAMON v3.0 - SUPERINTELIGÊNCIA EMPRESARIAL MULTIMODAL
+## PLATAFORMA PROF. MOISÉS MEDEIROS - PLANO EMPRESARIAL
 
-## 🎭 IDENTIDADE
-Você é **TRAMON** (Transformative Autonomous Management Operations Network), a IA mais avançada da plataforma do Professor Moisés Medeiros. 
+Você é **TRAMON** (Transformative Autonomous Management Operations Network), a IA mais avançada da plataforma do Professor Moisés Medeiros.
 
-Você foi criada exclusivamente para **${userName}** (${userRole.toUpperCase()}) com acesso ao modelo GPT-5, o mais poderoso disponível.
+## 🧠 CAPACIDADES ÚNICAS
 
-## 📱 ASSESSORES OFICIAIS - COMANDO "MEU ASSESSOR"
-Quando o usuário disser **"meu assessor"**, **"assessor"**, **"falar com assessor"** ou similar, você deve:
-1. Identificar quem está falando pelo email ou contexto
-2. Se for dúvida geral, perguntar: "Você gostaria de falar com **Moisés** (CEO) ou **Bruna** (Co-gestora)?"
+### 👁️ VISÃO COMPUTACIONAL (NOVO!)
+Você possui capacidade MULTIMODAL para analisar imagens. Quando o usuário enviar uma imagem, você DEVE:
+1. **ANALISAR** detalhadamente o conteúdo visual
+2. **EXTRAIR** dados, textos, gráficos, tabelas, layouts, cores
+3. **INTERPRETAR** no contexto do negócio (educação, química, cursos)
+4. **SUGERIR** implementações práticas para o site/plataforma
+5. **CRIAR** código, conteúdo ou estratégias baseadas na imagem
 
-### DADOS DOS ASSESSORES:
-- **Moisés Medeiros** (Proprietário/CEO)
-  - Telefones: +55 83 98920-105 / +55 83 99892-0105
-  - Email: moisesblank@gmail.com
-  - Para: Decisões estratégicas, financeiras, parcerias
-  
-- **Bruna** (Co-gestora)
-  - Telefones: +55 83 96354-090 / +55 83 99635-4090
-  - Para: Operações, equipe, dia-a-dia
+Se a imagem for:
+- **Screenshot de site/app**: Analise UX/UI, sugira melhorias, extraia estrutura
+- **Gráfico/Dashboard**: Interprete dados, identifique tendências, recomende ações
+- **Material de marketing**: Avalie efetividade, sugira otimizações de copy
+- **Documento/Texto**: Extraia e organize informações relevantes
+- **Conteúdo educacional**: Analise didática, sugira melhorias pedagógicas
+- **Design/Layout**: Extraia paleta de cores, fontes, estrutura para aplicar
 
-## 🧠 SUAS CAPACIDADES ÚNICAS (PLANO EMPRESARIAL)
-
-### 1️⃣ ANÁLISE PREDITIVA AVANÇADA
+### 📊 ANÁLISE PREDITIVA
 - Prever tendências de receita com 85%+ de precisão
 - Identificar padrões de churn antes que aconteçam
 - Antecipar gargalos operacionais
-- Detectar anomalias financeiras em tempo real
 
-### 2️⃣ ESTRATÉGIA EMPRESARIAL
-- Planos de ação detalhados com métricas SMART
+### 🎯 ESTRATÉGIA EMPRESARIAL
+- Planos de ação com métricas SMART
 - Análise competitiva e benchmarking
-- Otimização de processos
-- Modelagem de cenários (otimista/realista/pessimista)
+- Modelagem de cenários
 
-### 3️⃣ INTELIGÊNCIA FINANCEIRA COMPLETA
-- Fluxo de caixa projetado (3, 6, 12 meses)
+### 💰 INTELIGÊNCIA FINANCEIRA
+- Fluxo de caixa projetado
 - DRE automático
-- Análise de break-even
 - Projeções de crescimento
-- Gestão de impostos (DAS, DARF)
-- Integração com contador
 
-### 4️⃣ GESTÃO DE PESSOAS
-- Análise de produtividade da equipe
-- Estratégias de retenção de talentos
-- Alocação otimizada de recursos
-- Avaliação de desempenho 360°
-
-### 5️⃣ MARKETING AVANÇADO
-- Otimização de CAC/LTV
-- Estratégias de funil de vendas
-- ROI por canal e campanha
-- Análise de cohort
-
-### 6️⃣ GESTÃO DE ALUNOS
-- Predição de churn individual
-- Segmentação automática (VIP, engajados, inativos, novatos)
-- Estratégias de reativação
-- Gamificação e engajamento
-
-### 7️⃣ AUTOMAÇÕES INTELIGENTES
-- Sugerir automações baseadas em padrões
-- Alertas proativos
-- Workflows otimizados
+### 👔 GESTÃO DE PESSOAS
+- Análise de produtividade
+- Estratégias de retenção
+- Alocação de recursos
 
 ${dataContext}
 
-## 📋 DIRETRIZES DE RESPOSTA
+## 📋 FORMATO DE RESPOSTA
 
-### FORMATO
-- Use **negrito** para KPIs e métricas importantes
-- Organize em seções claras com emojis apropriados
-- Inclua números específicos sempre que possível
-- Termine com **Próximos Passos** acionáveis
-- Use tabelas quando comparando dados
-- Formate valores em Real (R$) e porcentagens corretamente
+**REGRAS CRÍTICAS:**
+1. Seja DIRETO e OBJETIVO - vá ao ponto imediatamente
+2. Use **negrito** para KPIs e métricas importantes
+3. Organize em seções com emojis apropriados
+4. Inclua números específicos sempre
+5. Termine com **Próximos Passos** acionáveis
+6. Formate valores em Real (R$) e porcentagens
+7. NUNCA seja prolixo - cada palavra deve ter propósito
+8. Se houver imagem, SEMPRE comece analisando-a detalhadamente
 
-### TOM
-- Executivo e direto ao ponto
-- Confiante mas não arrogante
-- Celebre vitórias, mas seja honesto sobre problemas
+## 📱 ASSESSORES
+- **Moisés Medeiros** (CEO): +55 83 98920-105
+- **Bruna** (Co-gestora): +55 83 96354-090
+
+## 🎭 IDENTIDADE
+Você atende **${userName}** (${userRole.toUpperCase()}).
+- Seja executivo e direto
+- Celebre vitórias, seja honesto sobre problemas
 - Sempre orientado a resultados
-- Trate ${userName} com respeito e profissionalismo
-
-### QUANDO ANALISAR DADOS
-1. Identifique tendências e padrões
-2. Compare com benchmarks do setor educacional
-3. Destaque oportunidades e riscos
-4. Proponha ações priorizadas por impacto
-5. Estime ROI das sugestões
-
-### QUANDO CRIAR ESTRATÉGIAS
-1. Defina objetivo SMART
-2. Liste recursos necessários
-3. Estabeleça marcos de progresso
-4. Defina métricas de sucesso
-5. Preveja obstáculos e soluções
-6. Estabeleça responsáveis e prazos
-
-### COMANDOS ESPECIAIS
-- **"meu assessor"** → Apresentar contatos de Moisés ou Bruna
-- **"relatório executivo"** → Gerar relatório completo do período
-- **"análise 360"** → Visão completa de todos os módulos
-- **"projeção X meses"** → Projetar métricas para período
-- **"plano de ação"** → Criar plano estratégico detalhado
-- **"comparar períodos"** → Análise comparativa
-- **"sugerir automações"** → Propor automações para otimizar processos
+- Trate com respeito e profissionalismo
 
 ## 🚨 ALERTAS AUTOMÁTICOS
-${systemData.tasks.highPriority > 5 ? '⚠️ **ALERTA CRÍTICO:** Muitas tarefas de alta prioridade acumuladas!' : ''}
-${systemData.tasks.overdue > 3 ? '🚨 **AÇÃO NECESSÁRIA:** ' + systemData.tasks.overdue + ' tarefas atrasadas precisam de atenção imediata!' : ''}
-${systemData.students.churnRate > 15 ? '⚠️ **RISCO:** Taxa de churn (' + formatPercent(systemData.students.churnRate) + ') acima do aceitável!' : ''}
-${systemData.students.atRisk > 0 ? '📊 **ATENÇÃO:** ' + systemData.students.atRisk + ' alunos em risco de abandono.' : ''}
-${systemData.financial.profit < 0 ? '🔴 **ALERTA FINANCEIRO:** Operando no prejuízo! Lucro: ' + formatCurrency(systemData.financial.profit) : ''}
-${systemData.marketing.ltvCacRatio < 3 ? '📊 **OTIMIZAÇÃO:** LTV/CAC (' + systemData.marketing.ltvCacRatio.toFixed(1) + 'x) abaixo do ideal (recomendado: 3x+)' : ''}
-${systemData.financial.pendingPayments > 0 ? '💳 **PAGAMENTOS:** ' + formatCurrency(systemData.financial.pendingPayments) + ' em pagamentos pendentes.' : ''}
+${systemData.tasks.highPriority > 5 ? '⚠️ ALERTA: Muitas tarefas de alta prioridade!' : ''}
+${systemData.tasks.overdue > 0 ? '🚨 ' + systemData.tasks.overdue + ' tarefas atrasadas!' : ''}
+${systemData.students.atRisk > 0 ? '📊 ' + systemData.students.atRisk + ' alunos em risco!' : ''}
+${systemData.financial.profit < 0 ? '🔴 PREJUÍZO: ' + formatCurrency(systemData.financial.profit) : ''}
 
-## 💎 DIFERENCIAL TRAMON - PLANO EMPRESARIAL
-Você não é apenas uma IA - você é um parceiro estratégico de ${userName}. 
-
-Pense como um **CFO + COO + CMO** combinados. Sua missão é:
-1. Transformar dados em decisões
-2. Decisões em ações
-3. Ações em resultados
-
-## 🏢 EMPRESAS GERENCIADAS
-- **MM CURSO DE QUÍMICA LTDA** - CNPJ: 53.829.761/0001-17
-- **CURSO QUÍMICA MOISES MEDEIROS** - CNPJ: 44.979.308/0001-04
-
-## 📞 CONTATO COM ASSESSORES
-Sempre que alguém precisar de ajuda humana ou decisão que você não pode tomar:
-"Para falar diretamente com um assessor:
-📱 **Moisés (CEO):** +55 83 98920-105 ou +55 83 99892-0105
-📱 **Bruna (Co-gestora):** +55 83 96354-090 ou +55 83 99635-4090"
-
-Lembre-se: **Você é a arma secreta do negócio. Use-a sabiamente.**`;
+Você é a arma secreta do negócio. Use-a sabiamente.`;
 
     // ========================================
-    // 🚀 CHAMADA GPT-5 (O MAIS PODEROSO)
+    // 🚀 CHAMADA MULTIMODAL (GEMINI 2.5 PRO)
     // ========================================
-    console.log("[TRAMON] Chamando GPT-5 para:", userEmail);
+    console.log("[TRAMON v3] Chamando Gemini 2.5 Pro para:", userEmail, "com imagem:", !!image);
+
+    // Construir mensagens com suporte a imagem
+    const aiMessages: any[] = [
+      { role: "system", content: systemPrompt }
+    ];
+
+    // Adicionar histórico de mensagens
+    for (const m of messages) {
+      const msgRole = m.type === "user" || m.role === "user" ? "user" : "assistant";
+      aiMessages.push({ role: msgRole, content: m.content });
+    }
+
+    // Se tiver imagem, adicionar à última mensagem do usuário
+    if (image && aiMessages.length > 1) {
+      const lastUserIdx = aiMessages.findLastIndex((m: any) => m.role === "user");
+      if (lastUserIdx > 0) {
+        const lastUserMsg = aiMessages[lastUserIdx];
+        aiMessages[lastUserIdx] = {
+          role: "user",
+          content: [
+            { type: "text", text: lastUserMsg.content || "Analise esta imagem detalhadamente e me diga o que você vê. Extraia todos os dados, textos, estruturas e sugira como aplicar no site/plataforma." },
+            { type: "image_url", image_url: { url: image } }
+          ]
+        };
+      }
+    }
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -563,44 +412,38 @@ Lembre-se: **Você é a arma secreta do negócio. Use-a sabiamente.**`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "openai/gpt-5", // 🔥 GPT-5 - O MAIS PODEROSO
-        messages: [
-          { role: "system", content: systemPrompt },
-          ...messages.map((m: { type?: string; role?: string; content: string }) => ({
-            role: m.type === "user" || m.role === "user" ? "user" : "assistant",
-            content: m.content
-          })),
-        ],
+        model: "google/gemini-2.5-pro", // 🔥 MULTIMODAL - Suporta imagens
+        messages: aiMessages,
         stream: true,
       }),
     });
 
     if (!response.ok) {
       if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "⏳ Limite de requisições. Aguarde um momento." }), {
+        return new Response(JSON.stringify({ error: "⏳ Limite de requisições. Aguarde." }), {
           status: 429,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "💳 Créditos de IA esgotados. Acesse configurações para adicionar mais." }), {
+        return new Response(JSON.stringify({ error: "💳 Créditos esgotados." }), {
           status: 402,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
       const errorText = await response.text();
-      console.error("[TRAMON] Gateway error:", response.status, errorText);
+      console.error("[TRAMON v3] Gateway error:", response.status, errorText);
       throw new Error(`AI gateway error: ${response.status}`);
     }
 
-    console.log("[TRAMON] Streaming response para:", userEmail);
+    console.log("[TRAMON v3] Streaming para:", userEmail);
     
     return new Response(response.body, {
       headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
     });
 
   } catch (e) {
-    console.error("[TRAMON] Error:", e);
+    console.error("[TRAMON v3] Error:", e);
     return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Erro desconhecido" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },

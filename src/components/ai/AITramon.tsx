@@ -1,8 +1,7 @@
 // ============================================
-// 🔮 TRAMON - IA PREMIUM EXCLUSIVA v2.0
-// PLANO EMPRESARIAL
-// Acesso: Owner + Admin APENAS
-// Modelo: GPT-5 + WhatsApp Integration
+// 🔮 TRAMON v3.0 - SUPERINTELIGÊNCIA EMPRESARIAL
+// COM VISÃO COMPUTACIONAL E ANÁLISE DE IMAGENS
+// Modelo: Gemini 2.5 Pro (Multimodal)
 // ============================================
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
@@ -36,7 +35,11 @@ import {
   UserCircle,
   Building2,
   BookOpen,
-  Settings
+  Settings,
+  Image as ImageIcon,
+  Camera,
+  Eye,
+  XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -53,6 +56,7 @@ interface Message {
   content: string;
   timestamp: Date;
   source?: string;
+  image?: string;
 }
 
 // Assessores oficiais
@@ -100,7 +104,10 @@ export function AITramon() {
   const [isLoading, setIsLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [showAllActions, setShowAllActions] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
   const hasAccess = canAccessTramon;
@@ -118,25 +125,66 @@ export function AITramon() {
         type: "assistant",
         content: `🔮 **Olá, ${user?.email?.split('@')[0] || 'Mestre'}!**
 
-Sou **TRAMON**, sua superinteligência empresarial exclusiva powered by **GPT-5** - Plano Empresarial.
+Sou **TRAMON v3.0**, sua superinteligência empresarial com **VISÃO COMPUTACIONAL**.
 
-Tenho acesso completo aos dados do seu sistema em tempo real e posso:
+**🆕 NOVO:** Agora posso **ANALISAR IMAGENS** em tempo real!
 
-• 📊 **Análises preditivas** - Antecipo tendências e riscos
-• 💰 **Projeções financeiras** - DRE, fluxo de caixa, cenários
-• 🎯 **Planos estratégicos** - Roadmaps com métricas SMART
-• 🧠 **Insights profundos** - Padrões que humanos não percebem
-• ⚡ **Automações inteligentes** - Sugestões para otimizar processos
-• 👥 **Gestão de alunos** - Predição de churn, segmentação
-• 📱 **Assessores** - Contato direto com Moisés ou Bruna
+📸 **Clique no ícone de câmera** para enviar:
+• Screenshots de sites para eu analisar UX/UI
+• Gráficos e dashboards para interpretar dados
+• Materiais de marketing para avaliar efetividade
+• Documentos para extrair informações
+• Designs para aplicar no seu site
+
+**Minhas capacidades:**
+• 📊 Análises preditivas em tempo real
+• 💰 Projeções financeiras detalhadas
+• 🎯 Planos estratégicos personalizados
+• 👁️ **Visão computacional avançada**
+• 📱 Contato direto com assessores
 
 **Diga "meu assessor"** para falar com Moisés ou Bruna.
 
-**Selecione uma ação rápida abaixo** ou me pergunte qualquer coisa!`,
+**Envie uma imagem ou pergunte qualquer coisa!**`,
         timestamp: new Date()
       }]);
     }
   }, [isOpen, user, messages.length, hasAccess]);
+
+  // Função de upload de imagem
+  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo
+    if (!file.type.startsWith('image/')) {
+      toast.error("Apenas imagens são permitidas");
+      return;
+    }
+
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 5MB");
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const base64 = event.target?.result as string;
+      setSelectedImage(base64);
+      setImagePreview(base64);
+      toast.success("Imagem carregada! Envie uma mensagem para analisá-la.");
+    };
+    reader.readAsDataURL(file);
+  }, []);
+
+  const removeImage = useCallback(() => {
+    setSelectedImage(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  }, []);
 
   const detectAssessorKeyword = (text: string): boolean => {
     const keywords = ["meu assessor", "assessor", "falar com assessor", "contato assessor", "ligar para"];
@@ -158,11 +206,16 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
       id: Date.now().toString(),
       type: "user",
       content: messageText,
-      timestamp: new Date()
+      timestamp: new Date(),
+      image: selectedImage || undefined
     };
 
     setMessages(prev => [...prev, userMessage]);
     setInput("");
+    
+    // Limpar imagem após enviar
+    const imageToSend = selectedImage;
+    removeImage();
 
     // Se for keyword de ativação simples, responder imediatamente
     if (isActivationKeyword && messages.length <= 1) {
@@ -171,7 +224,7 @@ Tenho acesso completo aos dados do seu sistema em tempo real e posso:
         type: "assistant",
         content: `🔮 **Olá, ${user?.email?.split('@')[0] || 'Mestre'}!**
 
-Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empresarial exclusiva.
+Estou aqui e pronto para ajudá-lo! Sou **TRAMON v3.0**, sua superinteligência com visão computacional.
 
 **O que posso fazer por você agora?**
 
@@ -179,9 +232,10 @@ Estou aqui e pronto para ajudá-lo! Sou **TRAMON**, sua superinteligência empre
 • 💰 Projeções financeiras detalhadas
 • 🎯 Planos estratégicos personalizados
 • 📈 Relatórios em tempo real
+• 👁️ **Analisar imagens** em tempo real
 • 👥 Contato com assessores (Moisés ou Bruna)
 
-**Selecione uma ação rápida acima** ou me pergunte qualquer coisa!`,
+**📸 Envie uma imagem** clicando no ícone de câmera ou **selecione uma ação rápida**!`,
         timestamp: new Date()
       };
       setMessages(prev => [...prev, activationResponse]);
@@ -234,7 +288,8 @@ Aqui estão os contatos dos assessores oficiais:
             content: m.content
           })),
           userId: user.id,
-          context: "executive"
+          context: "executive",
+          image: imageToSend // Enviar imagem se existir
         }),
       });
 
@@ -462,19 +517,20 @@ Aqui estão os contatos dos assessores oficiais:
                     </motion.div>
                     <div>
                       <div className="flex items-center gap-2">
-                        <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-purple-400 bg-clip-text text-transparent">
-                          TRAMON
+                        <h3 className="font-bold text-lg bg-gradient-to-r from-primary to-cyan-400 bg-clip-text text-transparent">
+                          TRAMON v3.0
                         </h3>
-                        <Badge className="bg-gradient-to-r from-primary to-purple-600 text-white text-[10px] px-1.5">
-                          GPT-5
+                        <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-[10px] px-1.5">
+                          Gemini Pro
                         </Badge>
-                        <Badge variant="outline" className="text-[9px] px-1 border-yellow-500/50 text-yellow-600">
-                          EMPRESARIAL
+                        <Badge variant="outline" className="text-[9px] px-1 border-purple-500/50 text-purple-600 flex items-center gap-0.5">
+                          <Eye className="h-2 w-2" />
+                          VISÃO
                         </Badge>
                       </div>
                       <p className="text-xs text-muted-foreground flex items-center gap-1">
-                        <Shield className="h-3 w-3" />
-                        Superinteligência Exclusiva
+                        <Camera className="h-3 w-3" />
+                        Visão Computacional Avançada
                       </p>
                     </div>
                   </div>
@@ -601,8 +657,12 @@ Aqui estão os contatos dos assessores oficiais:
                           <div className="flex items-center gap-2 mb-2 pb-2 border-b border-border/30">
                             <Brain className="h-4 w-4 text-primary" />
                             <span className="text-xs font-medium text-primary">TRAMON</span>
+                            <Badge variant="outline" className="text-[9px] h-4 px-1 bg-cyan-500/10 text-cyan-600">
+                              Gemini Pro
+                            </Badge>
                             <Badge variant="outline" className="text-[9px] h-4 px-1 bg-purple-500/10 text-purple-600">
-                              GPT-5
+                              <Eye className="h-2 w-2 mr-0.5" />
+                              Visão
                             </Badge>
                             {message.source === 'whatsapp' && (
                               <Badge variant="outline" className="text-[10px] h-4 px-1 bg-green-500/10 text-green-600">
@@ -612,6 +672,18 @@ Aqui estão os contatos dos assessores oficiais:
                             )}
                           </div>
                         )}
+                        
+                        {/* Mostrar imagem anexada */}
+                        {message.image && (
+                          <div className="mb-3">
+                            <img 
+                              src={message.image} 
+                              alt="Imagem enviada" 
+                              className="max-h-48 rounded-lg border border-white/20"
+                            />
+                          </div>
+                        )}
+                        
                         <div className="text-sm whitespace-pre-wrap leading-relaxed">
                           {message.content.split('**').map((part, i) => 
                             i % 2 === 1 ? <strong key={i}>{part}</strong> : part
@@ -690,28 +762,87 @@ Aqui estão os contatos dos assessores oficiais:
                         <Loader2 className="h-5 w-5 animate-spin text-primary" />
                       </div>
                       <div className="bg-secondary/50 border border-border/50 p-3 rounded-2xl">
-                        <span className="text-sm text-muted-foreground">Processando com GPT-5...</span>
+                        <span className="text-sm text-muted-foreground">
+                          {selectedImage ? "Analisando imagem com visão computacional..." : "Processando com Gemini 2.5 Pro..."}
+                        </span>
                       </div>
                     </motion.div>
                   )}
                 </div>
               </ScrollArea>
 
-              {/* Input Premium */}
+              {/* Input Premium com Upload de Imagem */}
               <div className="p-4 border-t border-border/50 bg-gradient-to-t from-muted/50 to-transparent">
+                {/* Preview da Imagem */}
+                <AnimatePresence>
+                  {imagePreview && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      className="mb-3 relative"
+                    >
+                      <div className="relative inline-block">
+                        <img 
+                          src={imagePreview} 
+                          alt="Preview" 
+                          className="max-h-32 rounded-lg border border-primary/30 shadow-lg"
+                        />
+                        <Button
+                          variant="destructive"
+                          size="icon"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full shadow-lg"
+                          onClick={removeImage}
+                        >
+                          <XCircle className="h-4 w-4" />
+                        </Button>
+                        <div className="absolute bottom-1 left-1 bg-background/90 px-2 py-0.5 rounded text-[10px] flex items-center gap-1">
+                          <Eye className="h-3 w-3 text-primary" />
+                          <span>Pronta para análise</span>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 <div className="flex gap-2">
+                  {/* Input de arquivo oculto */}
+                  <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    accept="image/*"
+                    className="hidden"
+                  />
+                  
+                  {/* Botão de Upload de Imagem */}
+                  <Button
+                    variant="outline"
+                    size="icon"
+                    className={`h-[50px] w-[50px] shrink-0 transition-all ${
+                      imagePreview 
+                        ? 'bg-primary/20 border-primary text-primary' 
+                        : 'border-primary/20 hover:border-primary/50 hover:bg-primary/10'
+                    }`}
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isLoading}
+                    title="Enviar imagem para análise"
+                  >
+                    <Camera className="h-5 w-5" />
+                  </Button>
+
                   <Textarea
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder='Pergunte qualquer coisa... ou diga "meu assessor"'
+                    placeholder={imagePreview ? 'Descreva o que quer que eu analise na imagem...' : 'Pergunte qualquer coisa... ou envie uma imagem 📸'}
                     className="min-h-[50px] max-h-32 resize-none bg-background border-primary/20 focus:border-primary/50"
                     disabled={isLoading}
                     rows={2}
                   />
                   <Button 
                     onClick={() => handleSend()} 
-                    disabled={!input.trim() || isLoading}
+                    disabled={(!input.trim() && !imagePreview) || isLoading}
                     size="icon"
                     className="h-[50px] w-[50px] bg-gradient-to-br from-primary to-purple-600 hover:from-primary/90 hover:to-purple-700 shadow-lg"
                   >
@@ -723,8 +854,9 @@ Aqui estão os contatos dos assessores oficiais:
                   </Button>
                 </div>
                 
-                <p className="text-[10px] text-muted-foreground text-center mt-2">
-                  🔮 TRAMON GPT-5 • Plano Empresarial • Dados em tempo real
+                <p className="text-[10px] text-muted-foreground text-center mt-2 flex items-center justify-center gap-1">
+                  <Eye className="h-3 w-3" />
+                  TRAMON v3.0 • Visão Computacional • Gemini 2.5 Pro
                 </p>
               </div>
             </motion.div>
