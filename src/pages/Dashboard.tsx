@@ -53,6 +53,9 @@ import { QuizListWidget } from "@/components/lms/QuizListWidget";
 import { SecurityStatusWidget } from "@/components/security/SecurityStatusWidget";
 import { GuidedTour, useTour, dashboardTourSteps } from "@/components/onboarding/GuidedTour";
 import { TasksOverviewWidget } from "@/components/dashboard/TasksOverviewWidget";
+import { WhatsAppStatsCard } from "@/components/whatsapp/WhatsAppStatsCard";
+import { WhatsAppTasksWidget } from "@/components/whatsapp/WhatsAppTasksWidget";
+import { WhatsAppFinanceWidget } from "@/components/whatsapp/WhatsAppFinanceWidget";
 
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
@@ -562,6 +565,17 @@ export default function Dashboard() {
             </div>
           </motion.section>
         )}
+
+        {/* WhatsApp Command Center Widget */}
+        <section className="mb-8">
+          <WhatsAppStatsCard />
+        </section>
+
+        {/* WhatsApp Tasks & Finance Widgets */}
+        <section className="grid gap-6 lg:grid-cols-2 mb-8">
+          <WhatsAppTasksWidget limit={5} showHeader={true} />
+          <WhatsAppFinanceWidget limit={8} showHeader={true} />
+        </section>
 
         {/* Recent Transactions and Welcome */}
         <section className="grid gap-6 lg:grid-cols-2">
