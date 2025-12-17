@@ -234,7 +234,8 @@ async function notifyWebhookMKT(
   },
   eventType: string,
   supabase: any,
-  logger: Logger
+  logger: Logger,
+  meta?: Record<string, any>
 ): Promise<{ success: boolean; message: string }> {
 
   const eventId = generateEventId("mkt");
@@ -253,6 +254,10 @@ async function notifyWebhookMKT(
       source: "gestao_moises_medeiros",
       platform: "gestao.moisesmedeiros.com.br",
       timestamp: getCurrentTimestamp(),
+      // IMPORTANTE: esses campos forçam o WordPress a distinguir LEAD (Registered) de ALUNO (Beta)
+      access_level: meta?.access_level,
+      group: meta?.group,
+      meta: meta || undefined,
     };
 
     const controller = new AbortController();
@@ -578,12 +583,14 @@ async function handleWordPressUserCreated(
   );
 
   // D) Notificar WebHook_MKT
-  // IMPORTANTE: este evento deve representar "registrado" (sem liberar acesso/aluno)
+  // CRÍTICO: aqui é APENAS REGISTRO (sem acesso). Nunca pode virar Beta.
+  // Trocamos o evento para não conflitar com gatilhos do WordPress e enviamos explicitamente o grupo desejado.
   const mktResult = await notifyWebhookMKT(
     { email: data.email, name: data.name, phone: data.phone },
-    "user_registered",
+    "lead_registered",
     supabase,
-    logger
+    logger,
+    { access_level: "registered", group: "Registered", origin: "cadastro_wordpress" }
   );
 
   // Registrar evento principal
@@ -848,6 +855,7 @@ async function handleHotmartPurchase(
   );
 
   // D) Notificar WebHook_MKT
+  // Aqui SIM é aluno (compra aprovada) → pode virar Beta/Ativo no WordPress.
   const mktResult = await notifyWebhookMKT(
     {
       email: data.email,
@@ -859,7 +867,8 @@ async function handleHotmartPurchase(
     },
     "compra_aprovada",
     supabase,
-    logger
+    logger,
+    { access_level: "beta", group: "Beta", origin: "hotmart_approved" }
   );
 
   // Registrar evento principal
