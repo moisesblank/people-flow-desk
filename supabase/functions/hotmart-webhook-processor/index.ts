@@ -1,9 +1,11 @@
 // ============================================
-// MOISÉS MEDEIROS v16.0 - Sistema Completo Integrado
-// A) WordPress cria usuário → Registra LEAD
-// B) Hotmart aprova compra → Cria ALUNO
-// C) RD Station → Registra envio de email
-// D) WebHook_MKT → Registra evento do site
+// MOISÉS MEDEIROS v17.0 - PRODUÇÃO FINAL
+// Sistema de Gestão Integrado - Zero Erros
+// ============================================
+// A) WordPress cria usuário → Registra LEAD (não cria aluno)
+// B) Hotmart aprova compra → Cria ALUNO e converte lead
+// C) RD Station → Notifica e registra envio de email
+// D) WebHook_MKT → Notifica site e registra evento
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -14,559 +16,1038 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hotmart-hottok, x-webhook-source, x-site-token',
 };
 
-// Configurações RD Station e WebHook_MKT
-const RD_STATION_API_KEY = "8b8f9f75b0596c30668b480a91a858c9";
-const RD_STATION_URL = "https://api.rd.services/platform/conversions";
-const WEBHOOK_MKT_URL = "https://app.moisesmedeiros.com.br/wp-json/webhook-mkt/v1/receive";
-const WEBHOOK_MKT_TOKEN = "28U4H9bCv5MHoRS3uJmodKx0u17pgCwn";
+// ============================================
+// CONFIGURAÇÕES - INTEGRAÇÕES EXTERNAS
+// ============================================
+const CONFIG = {
+  RD_STATION: {
+    API_KEY: "8b8f9f75b0596c30668b480a91a858c9",
+    BASE_URL: "https://api.rd.services/platform/conversions",
+    TIMEOUT: 10000,
+  },
+  WEBHOOK_MKT: {
+    URL: "https://app.moisesmedeiros.com.br/wp-json/webhook-mkt/v1/receive",
+    TOKEN: "28U4H9bCv5MHoRS3uJmodKx0u17pgCwn",
+    TIMEOUT: 10000,
+  },
+  EVENTS: {
+    APPROVED: ["PURCHASE_APPROVED", "PURCHASE_COMPLETE", "PURCHASE_DELAYED", "purchase.approved", "purchase.completed", "purchase_approved", "approved", "completed"],
+    USER_CREATED: ["user_created", "wordpress_user_created", "new_user"],
+  }
+};
 
 // ============================================
-// FUNÇÕES AUXILIARES DE INTEGRAÇÃO
+// UTILITÁRIOS
 // ============================================
 
-async function notifyRDStation(email: string, name: string, eventType: string, supabase: any): Promise<boolean> {
+function sanitizeString(str: any): string {
+  if (!str) return "";
+  return String(str).trim();
+}
+
+function sanitizeEmail(email: any): string {
+  const cleaned = sanitizeString(email).toLowerCase();
+  if (!cleaned || !cleaned.includes("@") || !cleaned.includes(".")) return "";
+  return cleaned;
+}
+
+function sanitizePhone(phone: any): string {
+  if (!phone) return "";
+  return String(phone).replace(/[^0-9+]/g, "");
+}
+
+function sanitizeNumber(num: any): number {
+  if (typeof num === "number") return num;
+  const parsed = parseFloat(String(num).replace(",", "."));
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+function generateEventId(prefix: string): string {
+  return `${prefix}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+}
+
+function getCurrentTimestamp(): string {
+  return new Date().toISOString();
+}
+
+// ============================================
+// LOGGER AVANÇADO
+// ============================================
+
+class Logger {
+  private prefix: string;
+  private startTime: number;
+
+  constructor(version: string) {
+    this.prefix = `[Gestão v${version}]`;
+    this.startTime = Date.now();
+  }
+
+  info(message: string, data?: any) {
+    const elapsed = Date.now() - this.startTime;
+    console.log(`${this.prefix} [${elapsed}ms] ℹ️ ${message}`, data ? JSON.stringify(data).substring(0, 500) : "");
+  }
+
+  success(message: string, data?: any) {
+    const elapsed = Date.now() - this.startTime;
+    console.log(`${this.prefix} [${elapsed}ms] ✅ ${message}`, data ? JSON.stringify(data).substring(0, 300) : "");
+  }
+
+  warn(message: string, data?: any) {
+    const elapsed = Date.now() - this.startTime;
+    console.warn(`${this.prefix} [${elapsed}ms] ⚠️ ${message}`, data ? JSON.stringify(data).substring(0, 300) : "");
+  }
+
+  error(message: string, error?: any) {
+    const elapsed = Date.now() - this.startTime;
+    console.error(`${this.prefix} [${elapsed}ms] ❌ ${message}`, error instanceof Error ? error.message : error);
+  }
+
+  separator(title: string) {
+    console.log(`\n${"=".repeat(50)}\n${this.prefix} ${title}\n${"=".repeat(50)}`);
+  }
+}
+
+// ============================================
+// NOTIFICADOR RD STATION (C)
+// ============================================
+
+async function notifyRDStation(
+  email: string, 
+  name: string, 
+  conversionIdentifier: string,
+  extraData: Record<string, any>,
+  supabase: any,
+  logger: Logger
+): Promise<{ success: boolean; message: string }> {
+  
+  const eventId = generateEventId("rd");
+  
   try {
-    console.log("[v16] 📧 Notificando RD Station...");
-    
+    logger.info(`RD Station: Iniciando notificação para ${email}`);
+
+    if (!email || !email.includes("@")) {
+      logger.warn("RD Station: Email inválido, pulando notificação");
+      return { success: false, message: "Email inválido" };
+    }
+
     const rdPayload = {
       event_type: "CONVERSION",
       event_family: "CDP",
       payload: {
-        conversion_identifier: eventType,
+        conversion_identifier: conversionIdentifier,
         email: email,
-        name: name,
+        name: name || "Lead",
         cf_origem: "Gestao_Moises_Medeiros",
-        cf_data_evento: new Date().toISOString(),
+        cf_data_evento: getCurrentTimestamp(),
+        cf_plataforma: "gestao.moisesmedeiros.com.br",
+        ...extraData,
       }
     };
-    
-    const response = await fetch(`${RD_STATION_URL}?api_key=${RD_STATION_API_KEY}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(rdPayload),
-    });
-    
-    const responseText = await response.text();
-    console.log("[v16] RD Station response:", response.status, responseText.substring(0, 200));
-    
-    // Registrar evento RD Station
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.RD_STATION.TIMEOUT);
+
+    const response = await fetch(
+      `${CONFIG.RD_STATION.BASE_URL}?api_key=${CONFIG.RD_STATION.API_KEY}`,
+      {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(rdPayload),
+        signal: controller.signal,
+      }
+    );
+
+    clearTimeout(timeoutId);
+
+    let responseBody = "";
+    try {
+      responseBody = await response.text();
+    } catch (e) {
+      responseBody = "Não foi possível ler resposta";
+    }
+
+    // Registrar evento no banco
     await supabase.from("integration_events").insert({
       event_type: "rd_station_notification",
       source: "rd_station",
-      source_id: `rd_${Date.now()}`,
+      source_id: eventId,
       payload: {
-        sent_to: "rd_station",
+        action: "NOTIFICACAO_ENVIADA",
         email: email,
-        event_type: eventType,
+        conversion_identifier: conversionIdentifier,
         response_status: response.status,
-        response_body: responseText.substring(0, 500),
-        sent_at: new Date().toISOString()
+        response_ok: response.ok,
+        response_body: responseBody.substring(0, 1000),
+        sent_at: getCurrentTimestamp(),
+        extra_data: extraData,
       },
       processed: response.ok,
-      processed_at: new Date().toISOString(),
+      processed_at: getCurrentTimestamp(),
     });
-    
-    return response.ok;
+
+    if (response.ok) {
+      logger.success(`RD Station: Notificação enviada com sucesso (${response.status})`);
+      return { success: true, message: "Enviado com sucesso" };
+    } else {
+      logger.warn(`RD Station: Resposta não-OK (${response.status})`, responseBody);
+      return { success: false, message: `Status ${response.status}` };
+    }
+
   } catch (error) {
-    console.error("[v16] Erro RD Station:", error);
-    return false;
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    logger.error("RD Station: Erro na notificação", error);
+
+    // Registrar falha
+    await supabase.from("integration_events").insert({
+      event_type: "rd_station_error",
+      source: "rd_station",
+      source_id: eventId,
+      payload: {
+        action: "ERRO_NOTIFICACAO",
+        email: email,
+        error: errorMessage,
+        timestamp: getCurrentTimestamp(),
+      },
+      processed: false,
+    });
+
+    return { success: false, message: errorMessage };
   }
 }
 
-async function notifyWebhookMKT(data: any, eventType: string, supabase: any): Promise<boolean> {
+// ============================================
+// NOTIFICADOR WEBHOOK_MKT (D)
+// ============================================
+
+async function notifyWebhookMKT(
+  data: {
+    email: string;
+    name: string;
+    phone?: string;
+    value?: number;
+    product?: string;
+    transaction?: string;
+  },
+  eventType: string,
+  supabase: any,
+  logger: Logger
+): Promise<{ success: boolean; message: string }> {
+
+  const eventId = generateEventId("mkt");
+
   try {
-    console.log("[v16] 🌐 Notificando WebHook_MKT do site...");
-    
+    logger.info(`WebHook_MKT: Iniciando notificação (${eventType})`);
+
     const mktPayload = {
       event: eventType,
       email: data.email,
-      name: data.name,
+      name: data.name || "",
       phone: data.phone || "",
+      value: data.value || 0,
+      product: data.product || "",
+      transaction: data.transaction || "",
       source: "gestao_moises_medeiros",
-      timestamp: new Date().toISOString(),
-      data: data,
+      platform: "gestao.moisesmedeiros.com.br",
+      timestamp: getCurrentTimestamp(),
     };
-    
-    const response = await fetch(WEBHOOK_MKT_URL, {
+
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), CONFIG.WEBHOOK_MKT.TIMEOUT);
+
+    const response = await fetch(CONFIG.WEBHOOK_MKT.URL, {
       method: "POST",
-      headers: { 
+      headers: {
         "Content-Type": "application/json",
-        "X-Site-Token": WEBHOOK_MKT_TOKEN,
-        "Authorization": `Bearer ${WEBHOOK_MKT_TOKEN}`,
+        "Accept": "application/json",
+        "X-Site-Token": CONFIG.WEBHOOK_MKT.TOKEN,
+        "Authorization": `Bearer ${CONFIG.WEBHOOK_MKT.TOKEN}`,
       },
       body: JSON.stringify(mktPayload),
+      signal: controller.signal,
     });
-    
-    const responseText = await response.text();
-    console.log("[v16] WebHook_MKT response:", response.status, responseText.substring(0, 200));
-    
-    // Registrar evento WebHook_MKT
+
+    clearTimeout(timeoutId);
+
+    let responseBody = "";
+    try {
+      responseBody = await response.text();
+    } catch (e) {
+      responseBody = "Não foi possível ler resposta";
+    }
+
+    // Registrar evento
     await supabase.from("integration_events").insert({
       event_type: "webhook_mkt_notification",
       source: "webhook_mkt_site",
-      source_id: `mkt_${Date.now()}`,
+      source_id: eventId,
       payload: {
-        sent_to: "webhook_mkt",
-        email: data.email,
+        action: "NOTIFICACAO_ENVIADA",
         event_type: eventType,
+        email: data.email,
         response_status: response.status,
-        response_body: responseText.substring(0, 500),
-        sent_at: new Date().toISOString()
+        response_ok: response.ok,
+        response_body: responseBody.substring(0, 1000),
+        sent_at: getCurrentTimestamp(),
       },
       processed: response.ok,
-      processed_at: new Date().toISOString(),
+      processed_at: getCurrentTimestamp(),
     });
-    
-    return response.ok;
+
+    if (response.ok) {
+      logger.success(`WebHook_MKT: Notificação enviada (${response.status})`);
+      return { success: true, message: "Enviado com sucesso" };
+    } else {
+      logger.warn(`WebHook_MKT: Resposta não-OK (${response.status})`);
+      return { success: false, message: `Status ${response.status}` };
+    }
+
   } catch (error) {
-    console.error("[v16] Erro WebHook_MKT:", error);
-    return false;
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    logger.error("WebHook_MKT: Erro na notificação", error);
+
+    await supabase.from("integration_events").insert({
+      event_type: "webhook_mkt_error",
+      source: "webhook_mkt_site",
+      source_id: eventId,
+      payload: {
+        action: "ERRO_NOTIFICACAO",
+        email: data.email,
+        error: errorMessage,
+        timestamp: getCurrentTimestamp(),
+      },
+      processed: false,
+    });
+
+    return { success: false, message: errorMessage };
   }
 }
 
+// ============================================
+// NOTIFICAR OWNER
+// ============================================
+
+async function notifyOwner(
+  supabase: any,
+  title: string,
+  message: string,
+  type: string,
+  actionUrl: string,
+  logger: Logger
+): Promise<void> {
+  try {
+    const { data: ownerRole } = await supabase
+      .from("user_roles")
+      .select("user_id")
+      .eq("role", "owner")
+      .maybeSingle();
+
+    if (ownerRole?.user_id) {
+      await supabase.from("notifications").insert({
+        user_id: ownerRole.user_id,
+        title: title,
+        message: message,
+        type: type,
+        action_url: actionUrl,
+      });
+      logger.info("Notificação enviada ao owner");
+    }
+  } catch (error) {
+    logger.warn("Erro ao notificar owner", error);
+  }
+}
+
+// ============================================
+// EXTRATORES DE DADOS
+// ============================================
+
+interface ExtractedData {
+  email: string;
+  name: string;
+  phone: string;
+  adminEmail: string;
+  transactionId: string;
+  purchaseValue: number;
+  productName: string;
+  isValid: boolean;
+  source: string;
+}
+
+function extractWordPressData(payload: any): ExtractedData {
+  return {
+    email: sanitizeEmail(payload.email || payload.user_email || payload.buyer?.email),
+    name: sanitizeString(payload.name || payload.display_name || payload.user_name || payload.buyer?.name),
+    phone: sanitizePhone(payload.phone || payload.telefone),
+    adminEmail: sanitizeEmail(payload.admin_email || payload.created_by || payload.admin) || "Sistema",
+    transactionId: "",
+    purchaseValue: 0,
+    productName: "",
+    isValid: true,
+    source: "wordpress",
+  };
+}
+
+function extractHotmartData(payload: any): ExtractedData {
+  // Estrutura oficial Hotmart: payload.data.buyer, payload.data.purchase, etc
+  if (payload.data?.buyer?.email) {
+    return {
+      email: sanitizeEmail(payload.data.buyer.email),
+      name: sanitizeString(payload.data.buyer.name),
+      phone: sanitizePhone(payload.data.buyer.checkout_phone || payload.data.buyer.phone),
+      adminEmail: "",
+      transactionId: sanitizeString(payload.data.purchase?.transaction),
+      purchaseValue: sanitizeNumber(payload.data.purchase?.price?.value || payload.data.purchase?.value),
+      productName: sanitizeString(payload.data.product?.name) || "Curso Hotmart",
+      isValid: true,
+      source: "hotmart_oficial",
+    };
+  }
+  
+  // Estrutura Automator/alternativa
+  if (payload.buyer?.email) {
+    return {
+      email: sanitizeEmail(payload.buyer.email),
+      name: sanitizeString(payload.buyer.name),
+      phone: sanitizePhone(payload.buyer.phone),
+      adminEmail: "",
+      transactionId: sanitizeString(payload.purchase?.transaction || payload.transaction_id),
+      purchaseValue: sanitizeNumber(payload.purchase?.price?.value || payload.value),
+      productName: sanitizeString(payload.product?.name) || "Curso",
+      isValid: true,
+      source: "hotmart_automator",
+    };
+  }
+  
+  // Estrutura simplificada
+  if (payload.email) {
+    return {
+      email: sanitizeEmail(payload.email),
+      name: sanitizeString(payload.name || payload.nome),
+      phone: sanitizePhone(payload.phone || payload.telefone),
+      adminEmail: "",
+      transactionId: sanitizeString(payload.transaction_id || payload.transaction),
+      purchaseValue: sanitizeNumber(payload.value || payload.valor),
+      productName: sanitizeString(payload.product_name || payload.produto) || "Curso",
+      isValid: true,
+      source: "hotmart_simples",
+    };
+  }
+
+  return {
+    email: "",
+    name: "",
+    phone: "",
+    adminEmail: "",
+    transactionId: "",
+    purchaseValue: 0,
+    productName: "",
+    isValid: false,
+    source: "desconhecido",
+  };
+}
+
+// ============================================
+// HANDLERS PRINCIPAIS
+// ============================================
+
+async function handleWordPressUserCreated(
+  payload: any,
+  supabase: any,
+  logger: Logger
+): Promise<Response> {
+  
+  logger.separator("PROCESSANDO LEAD WORDPRESS (A)");
+  
+  const data = extractWordPressData(payload);
+  const timestamp = getCurrentTimestamp();
+  const eventId = generateEventId("wp_lead");
+
+  logger.info("Dados extraídos", { 
+    email: data.email, 
+    name: data.name, 
+    admin: data.adminEmail 
+  });
+
+  // Validar email
+  if (!data.email) {
+    logger.error("Email inválido ou ausente");
+    
+    await supabase.from("integration_events").insert({
+      event_type: "wordpress_rejected",
+      source: "wordpress",
+      source_id: eventId,
+      payload: { reason: "email_invalido", original: payload },
+      processed: false,
+    });
+
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: "Email inválido",
+      code: "INVALID_EMAIL"
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  // Verificar lead existente
+  const { data: existingLead } = await supabase
+    .from("whatsapp_leads")
+    .select("id, status, email")
+    .eq("email", data.email)
+    .maybeSingle();
+
+  if (existingLead) {
+    logger.warn("Lead já existe", { id: existingLead.id, status: existingLead.status });
+    
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Lead já cadastrado",
+      lead_id: existingLead.id,
+      code: "LEAD_EXISTS"
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  // Criar lead (NÃO ALUNO!)
+  const leadData = {
+    name: data.name || "Lead WordPress",
+    email: data.email,
+    phone: data.phone || null,
+    source: "wordpress_user_created",
+    status: "aguardando_compra",
+    notes: JSON.stringify({
+      admin_criador: data.adminEmail,
+      data_criacao: timestamp,
+      hora_criacao: new Date().toLocaleTimeString("pt-BR"),
+      origem: "WordPress - Novo Usuário",
+      aguardando_hotmart: true,
+      versao_webhook: "v17",
+    }),
+    created_at: timestamp,
+    updated_at: timestamp,
+  };
+
+  const { data: newLead, error: leadError } = await supabase
+    .from("whatsapp_leads")
+    .insert(leadData)
+    .select()
+    .single();
+
+  if (leadError) {
+    logger.error("Erro ao criar lead", leadError);
+    
+    await supabase.from("integration_events").insert({
+      event_type: "wordpress_lead_error",
+      source: "wordpress",
+      source_id: eventId,
+      payload: { error: leadError.message, data: leadData },
+      processed: false,
+    });
+
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: "Erro ao criar lead",
+      code: "DATABASE_ERROR"
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  logger.success("Lead criado com sucesso", { id: newLead.id });
+
+  // C) Notificar RD Station
+  const rdResult = await notifyRDStation(
+    data.email,
+    data.name,
+    "lead_wordpress_criado",
+    { 
+      cf_admin_criador: data.adminEmail,
+      cf_tipo: "novo_lead",
+    },
+    supabase,
+    logger
+  );
+
+  // D) Notificar WebHook_MKT
+  const mktResult = await notifyWebhookMKT(
+    { email: data.email, name: data.name, phone: data.phone },
+    "lead_criado",
+    supabase,
+    logger
+  );
+
+  // Registrar evento principal
+  await supabase.from("integration_events").insert({
+    event_type: "wordpress_lead_created",
+    source: "wordpress",
+    source_id: eventId,
+    payload: {
+      lead_id: newLead.id,
+      email: data.email,
+      name: data.name,
+      admin_email: data.adminEmail,
+      created_at: timestamp,
+      integrations: {
+        rd_station: rdResult.success ? "OK" : rdResult.message,
+        webhook_mkt: mktResult.success ? "OK" : mktResult.message,
+      },
+      action: "LEAD_CRIADO_AGUARDANDO_COMPRA_HOTMART",
+    },
+    processed: true,
+    processed_at: timestamp,
+  });
+
+  // Notificar owner
+  await notifyOwner(
+    supabase,
+    "👤 Novo Lead WordPress",
+    [
+      `Email: ${data.email}`,
+      `Nome: ${data.name || "Não informado"}`,
+      `Admin: ${data.adminEmail}`,
+      `Data: ${new Date().toLocaleString("pt-BR")}`,
+      `RD Station: ${rdResult.success ? "✅" : "❌"}`,
+      `WebHook_MKT: ${mktResult.success ? "✅" : "❌"}`,
+      "",
+      "⏳ Aguardando compra na Hotmart",
+    ].join("\n"),
+    "info",
+    "/alunos",
+    logger
+  );
+
+  logger.separator("LEAD WORDPRESS PROCESSADO COM SUCESSO");
+
+  return new Response(JSON.stringify({ 
+    success: true, 
+    type: "lead_created",
+    code: "LEAD_CREATED",
+    lead_id: newLead.id,
+    message: "Lead registrado - aguardando compra Hotmart",
+    integrations: {
+      rd_station: rdResult.success,
+      webhook_mkt: mktResult.success,
+    },
+    data: {
+      email: data.email,
+      name: data.name,
+      admin: data.adminEmail,
+      created_at: timestamp,
+    }
+  }), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+}
+
+async function handleHotmartPurchase(
+  payload: any,
+  supabase: any,
+  logger: Logger
+): Promise<Response> {
+  
+  logger.separator("PROCESSANDO COMPRA HOTMART (B)");
+  
+  const data = extractHotmartData(payload);
+  const timestamp = getCurrentTimestamp();
+  const eventId = generateEventId("hotmart");
+
+  logger.info("Dados extraídos", {
+    email: data.email,
+    name: data.name,
+    value: data.purchaseValue,
+    transaction: data.transactionId,
+    source: data.source,
+  });
+
+  // Validar email
+  if (!data.email) {
+    logger.error("Email inválido na compra");
+    
+    await supabase.from("integration_events").insert({
+      event_type: "hotmart_rejected",
+      source: "hotmart",
+      source_id: eventId,
+      payload: { reason: "email_invalido", original: payload },
+      processed: false,
+    });
+
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: "Email inválido",
+      code: "INVALID_EMAIL"
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  // Verificar duplicata por transaction_id
+  if (data.transactionId) {
+    const { data: existingTx } = await supabase
+      .from("integration_events")
+      .select("id")
+      .eq("source_id", data.transactionId)
+      .eq("event_type", "hotmart_purchase_processed")
+      .maybeSingle();
+
+    if (existingTx) {
+      logger.warn("Transação já processada", { transaction: data.transactionId });
+      
+      return new Response(JSON.stringify({ 
+        success: true, 
+        message: "Transação já processada",
+        code: "ALREADY_PROCESSED"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+  }
+
+  // Buscar lead existente (WordPress)
+  const { data: existingLead } = await supabase
+    .from("whatsapp_leads")
+    .select("*")
+    .eq("email", data.email)
+    .maybeSingle();
+
+  let leadInfo: any = {};
+  if (existingLead?.notes) {
+    try {
+      leadInfo = JSON.parse(existingLead.notes);
+    } catch (e) {
+      leadInfo = {};
+    }
+  }
+
+  logger.info("Lead encontrado?", { 
+    found: !!existingLead, 
+    admin: leadInfo.admin_criador 
+  });
+
+  // CRIAR ALUNO (AGORA SIM!)
+  const alunoData = {
+    nome: data.name || existingLead?.name || "Aluno Hotmart",
+    email: data.email,
+    telefone: data.phone || existingLead?.phone || null,
+    status: "ativo",
+    data_matricula: timestamp,
+    valor_pago: data.purchaseValue,
+    hotmart_transaction_id: data.transactionId || null,
+    fonte: "Hotmart",
+    observacoes: [
+      `Produto: ${data.productName}`,
+      `Valor: R$ ${data.purchaseValue.toFixed(2)}`,
+      existingLead ? `Lead criado por: ${leadInfo.admin_criador || "Sistema"}` : "Compra direta",
+      existingLead ? `Lead em: ${leadInfo.data_criacao || "N/A"}` : null,
+      `TX: ${data.transactionId || "N/A"}`,
+      `Processado: ${new Date().toLocaleString("pt-BR")}`,
+      `Webhook: v17`,
+    ].filter(Boolean).join(" | "),
+    updated_at: timestamp,
+  };
+
+  const { data: aluno, error: alunoError } = await supabase
+    .from("alunos")
+    .upsert(alunoData, { onConflict: "email", ignoreDuplicates: false })
+    .select()
+    .single();
+
+  let alunoId = aluno?.id;
+
+  if (alunoError) {
+    logger.warn("Erro no upsert, buscando existente", alunoError.message);
+    const { data: existing } = await supabase
+      .from("alunos")
+      .select("id")
+      .eq("email", data.email)
+      .maybeSingle();
+    alunoId = existing?.id;
+  }
+
+  if (!alunoId) {
+    logger.error("Falha ao criar/encontrar aluno");
+    
+    return new Response(JSON.stringify({ 
+      success: false, 
+      error: "Erro ao criar aluno",
+      code: "DATABASE_ERROR"
+    }), {
+      status: 200,
+      headers: { "Content-Type": "application/json", ...corsHeaders },
+    });
+  }
+
+  logger.success("Aluno criado/atualizado", { id: alunoId });
+
+  // Atualizar lead para convertido
+  if (existingLead) {
+    await supabase
+      .from("whatsapp_leads")
+      .update({
+        status: "convertido",
+        notes: JSON.stringify({
+          ...leadInfo,
+          converted_at: timestamp,
+          aluno_id: alunoId,
+          transaction_id: data.transactionId,
+          valor_pago: data.purchaseValue,
+          produto: data.productName,
+        }),
+        updated_at: timestamp,
+      })
+      .eq("id", existingLead.id);
+
+    logger.success("Lead convertido para aluno");
+  }
+
+  // Registrar receita
+  if (data.purchaseValue > 0) {
+    const { error: entradaError } = await supabase.from("entradas").insert({
+      descricao: `Venda Hotmart - ${data.name || data.email} - ${data.productName}`,
+      valor: data.purchaseValue,
+      categoria: "Vendas",
+      data: timestamp,
+      fonte: "Hotmart",
+      aluno_id: alunoId,
+      transaction_id: data.transactionId || null,
+    });
+
+    if (entradaError) {
+      logger.warn("Erro ao registrar entrada", entradaError.message);
+    } else {
+      logger.success("Receita registrada", { valor: data.purchaseValue });
+    }
+  }
+
+  // C) Notificar RD Station - COMPRA APROVADA
+  const rdResult = await notifyRDStation(
+    data.email,
+    data.name,
+    "compra_hotmart_aprovada",
+    {
+      cf_valor: data.purchaseValue,
+      cf_produto: data.productName,
+      cf_transaction_id: data.transactionId,
+      cf_tipo: "compra_aprovada",
+    },
+    supabase,
+    logger
+  );
+
+  // D) Notificar WebHook_MKT
+  const mktResult = await notifyWebhookMKT(
+    {
+      email: data.email,
+      name: data.name,
+      phone: data.phone,
+      value: data.purchaseValue,
+      product: data.productName,
+      transaction: data.transactionId,
+    },
+    "compra_aprovada",
+    supabase,
+    logger
+  );
+
+  // Registrar evento principal
+  await supabase.from("integration_events").insert({
+    event_type: "hotmart_purchase_processed",
+    source: "hotmart",
+    source_id: data.transactionId || eventId,
+    payload: {
+      aluno_id: alunoId,
+      email: data.email,
+      name: data.name,
+      value: data.purchaseValue,
+      product: data.productName,
+      transaction: data.transactionId,
+      had_lead: !!existingLead,
+      lead_admin: leadInfo.admin_criador || null,
+      lead_created_at: leadInfo.data_criacao || null,
+      processed_at: timestamp,
+      integrations: {
+        rd_station: rdResult.success ? "OK" : rdResult.message,
+        webhook_mkt: mktResult.success ? "OK" : mktResult.message,
+      },
+      action: "ALUNO_CRIADO_COMPRA_APROVADA",
+    },
+    processed: true,
+    processed_at: timestamp,
+  });
+
+  // Notificar owner
+  await notifyOwner(
+    supabase,
+    "💰 VENDA HOTMART - ALUNO CRIADO!",
+    [
+      `📧 ${data.email}`,
+      `👤 ${data.name || "Nome não informado"}`,
+      `💵 R$ ${data.purchaseValue.toFixed(2)}`,
+      `📦 ${data.productName}`,
+      `🔗 TX: ${data.transactionId || "N/A"}`,
+      "",
+      existingLead 
+        ? `📋 Veio do lead criado por: ${leadInfo.admin_criador || "Sistema"}`
+        : "🆕 Compra direta (sem lead prévio)",
+      "",
+      `RD Station: ${rdResult.success ? "✅" : "❌"}`,
+      `WebHook_MKT: ${mktResult.success ? "✅" : "❌"}`,
+    ].join("\n"),
+    "sale",
+    "/alunos",
+    logger
+  );
+
+  logger.separator("COMPRA HOTMART PROCESSADA COM SUCESSO");
+
+  return new Response(JSON.stringify({ 
+    success: true, 
+    type: "purchase_approved",
+    code: "ALUNO_CREATED",
+    aluno_id: alunoId,
+    had_lead: !!existingLead,
+    lead_admin: leadInfo.admin_criador || null,
+    message: "Compra aprovada - Aluno criado com sucesso",
+    integrations: {
+      rd_station: rdResult.success,
+      webhook_mkt: mktResult.success,
+    },
+    data: {
+      email: data.email,
+      name: data.name,
+      value: data.purchaseValue,
+      product: data.productName,
+      transaction: data.transactionId,
+    }
+  }), {
+    status: 200,
+    headers: { "Content-Type": "application/json", ...corsHeaders },
+  });
+}
+
+// ============================================
+// HANDLER PRINCIPAL
+// ============================================
+
 serve(async (req) => {
-  if (req.method === 'OPTIONS') {
+  // CORS preflight
+  if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
+  const logger = new Logger("17");
+  
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
   try {
-    const payload = await req.json();
+    // Ler payload
+    let payload: any;
+    try {
+      payload = await req.json();
+    } catch (e) {
+      logger.error("Payload JSON inválido", e);
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Payload inválido",
+        code: "INVALID_JSON"
+      }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const webhookSource = req.headers.get("x-webhook-source") || payload.source || "";
-    
-    console.log("[v16] ====== WEBHOOK RECEBIDO ======");
-    console.log("[v16] Source:", webhookSource);
-    console.log("[v16] Payload:", JSON.stringify(payload).substring(0, 800));
+    const eventType = sanitizeString(payload.event || payload.status || payload.type || "");
+
+    logger.separator("WEBHOOK RECEBIDO");
+    logger.info("Source", webhookSource);
+    logger.info("Event", eventType);
+    logger.info("Payload preview", JSON.stringify(payload).substring(0, 600));
 
     // ============================================
-    // DETECTAR TIPO DE EVENTO
+    // DETECTAR E ROTEAR
     // ============================================
-    
-    const isWordPressUserCreated = 
-      webhookSource === "wordpress_automator" ||
-      webhookSource === "wordpress_user_created" ||
-      payload.event === "user_created" ||
-      payload.type === "user_created";
-    
+
+    // A) WordPress User Created
+    const isWordPressUser = 
+      webhookSource.includes("wordpress") ||
+      CONFIG.EVENTS.USER_CREATED.some(e => eventType.toLowerCase().includes(e));
+
+    // B) Hotmart Purchase
     const isHotmartPurchase = 
-      payload.event === "PURCHASE_APPROVED" ||
-      payload.event === "PURCHASE_COMPLETE" ||
-      payload.status === "approved" ||
-      (payload.data?.purchase?.transaction && payload.data?.buyer?.email);
-    
-    const isRDStationEvent = 
-      webhookSource === "rd_station" ||
-      payload.source === "rd_station" ||
-      payload.event_type === "CONVERSION";
-    
-    const isWebhookMKTEvent = 
-      webhookSource === "webhook_mkt" ||
-      payload.source === "webhook_mkt";
+      CONFIG.EVENTS.APPROVED.some(e => eventType.toLowerCase() === e.toLowerCase()) ||
+      (payload.data?.purchase?.transaction && payload.data?.buyer?.email) ||
+      (payload.buyer?.email && payload.purchase?.transaction);
 
-    // ============================================
-    // C) RD STATION - EVENTO DE EMAIL
-    // ============================================
-    
-    if (isRDStationEvent) {
-      console.log("[v16] 📧 Evento RD Station recebido");
-      
-      const email = payload.leads?.[0]?.email || payload.email || "";
-      const eventName = payload.event_type || payload.conversion_identifier || "rd_event";
-      
-      await supabase.from("integration_events").insert({
-        event_type: "rd_station_received",
-        source: "rd_station",
-        source_id: `rd_recv_${Date.now()}`,
-        payload: {
-          email: email,
-          event_name: eventName,
-          full_payload: payload,
-          received_at: new Date().toISOString(),
-          status: "EMAIL_ENVIADO"
-        },
-        processed: true,
-        processed_at: new Date().toISOString(),
-      });
-      
-      // Notificar owner
-      const { data: ownerRole } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "owner")
-        .maybeSingle();
-      
-      if (ownerRole?.user_id) {
-        await supabase.from("notifications").insert({
-          user_id: ownerRole.user_id,
-          title: "📧 Email RD Station Enviado",
-          message: `Para: ${email}\nEvento: ${eventName}`,
-          type: "info",
-          action_url: "/integracoes",
-        });
-      }
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        type: "rd_station_event",
-        message: "RD Station event registered"
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-    
-    // ============================================
-    // D) WEBHOOK_MKT - EVENTO DO SITE
-    // ============================================
-    
-    if (isWebhookMKTEvent) {
-      console.log("[v16] 🌐 Evento WebHook_MKT recebido");
-      
-      const email = payload.email || "";
-      const eventName = payload.event || "mkt_event";
-      
-      await supabase.from("integration_events").insert({
-        event_type: "webhook_mkt_received",
-        source: "webhook_mkt_site",
-        source_id: `mkt_recv_${Date.now()}`,
-        payload: {
-          email: email,
-          event_name: eventName,
-          full_payload: payload,
-          received_at: new Date().toISOString(),
-        },
-        processed: true,
-        processed_at: new Date().toISOString(),
-      });
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        type: "webhook_mkt_event",
-        message: "WebHook_MKT event registered"
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
+    logger.info("Detecção", { isWordPressUser, isHotmartPurchase });
 
-    // ============================================
-    // A) WORDPRESS - USUÁRIO CRIADO (APENAS LEAD)
-    // ============================================
-    
-    if (isWordPressUserCreated && !isHotmartPurchase) {
-      console.log("[v16] 📝 Processando LEAD do WordPress...");
-      
-      const userEmail = payload.email || payload.user_email || "";
-      const userName = payload.name || payload.display_name || payload.user_name || "";
-      const adminEmail = payload.admin_email || payload.created_by || payload.admin || "Sistema";
-      const createdAt = new Date().toISOString();
-      
-      if (!userEmail || !userEmail.includes("@")) {
-        return new Response(JSON.stringify({ success: false, message: "Email inválido" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // Verificar se lead já existe
-      const { data: existingLead } = await supabase
-        .from("whatsapp_leads")
-        .select("id, status")
-        .eq("email", userEmail)
-        .maybeSingle();
-      
-      if (existingLead) {
-        return new Response(JSON.stringify({ 
-          success: true, message: "Lead already exists", lead_id: existingLead.id
-        }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // CRIAR LEAD
-      const { data: newLead } = await supabase
-        .from("whatsapp_leads")
-        .insert({
-          name: userName || "Lead WordPress",
-          email: userEmail,
-          phone: payload.phone || null,
-          source: "wordpress_user_created",
-          status: "aguardando_compra",
-          notes: JSON.stringify({
-            admin_criador: adminEmail,
-            data_criacao: createdAt,
-            origem: "WordPress - Usuário Criado",
-            aguardando_hotmart: true
-          }),
-          created_at: createdAt,
-          updated_at: createdAt,
-        })
-        .select()
-        .single();
-      
-      // C) NOTIFICAR RD STATION
-      const rdSuccess = await notifyRDStation(userEmail, userName, "lead_wordpress_criado", supabase);
-      
-      // D) NOTIFICAR WEBHOOK_MKT DO SITE
-      const mktSuccess = await notifyWebhookMKT({ email: userEmail, name: userName }, "lead_criado", supabase);
-      
-      // Registrar evento completo
-      await supabase.from("integration_events").insert({
-        event_type: "wordpress_user_created",
-        source: "wordpress_automator",
-        source_id: `wp_user_${Date.now()}`,
-        payload: {
-          user_email: userEmail,
-          user_name: userName,
-          admin_email: adminEmail,
-          created_at: createdAt,
-          action: "LEAD_CRIADO",
-          integrations: {
-            rd_station: rdSuccess ? "NOTIFICADO" : "FALHOU",
-            webhook_mkt: mktSuccess ? "NOTIFICADO" : "FALHOU"
-          }
-        },
-        processed: true,
-        processed_at: createdAt,
-      });
-      
-      // Notificar owner
-      const { data: ownerRole } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "owner")
-        .maybeSingle();
-      
-      if (ownerRole?.user_id) {
-        await supabase.from("notifications").insert({
-          user_id: ownerRole.user_id,
-          title: "👤 Novo Lead WordPress",
-          message: `${userName || userEmail}\nAdmin: ${adminEmail}\nRD: ${rdSuccess ? '✅' : '❌'} | MKT: ${mktSuccess ? '✅' : '❌'}`,
-          type: "info",
-          action_url: "/alunos",
-        });
-      }
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        type: "lead_created",
-        lead_id: newLead?.id,
-        integrations: { rd_station: rdSuccess, webhook_mkt: mktSuccess }
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-    
-    // ============================================
-    // B) HOTMART - COMPRA APROVADA (CRIA ALUNO!)
-    // ============================================
-    
+    // Prioridade: Hotmart > WordPress
     if (isHotmartPurchase) {
-      console.log("[v16] 💰 Processando COMPRA Hotmart...");
-      
-      let buyerEmail = "";
-      let buyerName = "";
-      let buyerPhone = "";
-      let transactionId = "";
-      let purchaseValue = 0;
-      let productName = "";
-      
-      // Estrutura Hotmart oficial
-      if (payload.data?.buyer?.email) {
-        buyerEmail = payload.data.buyer.email;
-        buyerName = payload.data.buyer.name || "";
-        buyerPhone = payload.data.buyer.checkout_phone || payload.data.buyer.phone || "";
-        transactionId = payload.data.purchase?.transaction || "";
-        purchaseValue = payload.data.purchase?.price?.value || payload.data.purchase?.value || 0;
-        productName = payload.data.product?.name || "Curso Hotmart";
-      } else if (payload.buyer?.email) {
-        buyerEmail = payload.buyer.email;
-        buyerName = payload.buyer.name || "";
-        buyerPhone = payload.buyer.phone || "";
-        transactionId = payload.purchase?.transaction || payload.transaction_id || "";
-        purchaseValue = payload.purchase?.price?.value || payload.value || 0;
-        productName = payload.product?.name || "Curso";
-      } else if (payload.email) {
-        buyerEmail = payload.email;
-        buyerName = payload.name || "";
-        buyerPhone = payload.phone || "";
-        transactionId = payload.transaction_id || "";
-        purchaseValue = payload.value || payload.valor || 0;
-        productName = payload.product_name || "Curso";
-      }
-      
-      if (!buyerEmail || !buyerEmail.includes("@")) {
-        return new Response(JSON.stringify({ success: false, message: "Email inválido" }), {
-          status: 200,
-          headers: { "Content-Type": "application/json", ...corsHeaders },
-        });
-      }
-      
-      // Verificar duplicata
-      if (transactionId) {
-        const { data: existingTx } = await supabase
-          .from("integration_events")
-          .select("id")
-          .eq("source_id", transactionId)
-          .eq("event_type", "PURCHASE_APPROVED")
-          .maybeSingle();
-        
-        if (existingTx) {
-          return new Response(JSON.stringify({ success: true, message: "Already processed" }), {
-            status: 200,
-            headers: { "Content-Type": "application/json", ...corsHeaders },
-          });
-        }
-      }
-      
-      // Buscar lead existente
-      const { data: existingLead } = await supabase
-        .from("whatsapp_leads")
-        .select("*")
-        .eq("email", buyerEmail)
-        .maybeSingle();
-      
-      let leadInfo = existingLead?.notes ? JSON.parse(existingLead.notes) : {};
-      const purchaseDate = new Date().toISOString();
-      
-      // CRIAR ALUNO
-      const { data: aluno, error: alunoError } = await supabase
-        .from("alunos")
-        .upsert({
-          nome: buyerName || existingLead?.name || "Aluno Hotmart",
-          email: buyerEmail,
-          telefone: buyerPhone || existingLead?.phone || null,
-          status: "ativo",
-          data_matricula: purchaseDate,
-          valor_pago: purchaseValue,
-          hotmart_transaction_id: transactionId || null,
-          fonte: "Hotmart",
-          observacoes: [
-            `Produto: ${productName}`,
-            existingLead ? `Lead por: ${leadInfo?.admin_criador}` : null,
-            `TX: ${transactionId}`
-          ].filter(Boolean).join(' | '),
-          updated_at: purchaseDate,
-        }, { onConflict: "email", ignoreDuplicates: false })
-        .select()
-        .single();
-      
-      let alunoId = aluno?.id;
-      if (alunoError) {
-        const { data: existing } = await supabase
-          .from("alunos").select("id").eq("email", buyerEmail).maybeSingle();
-        alunoId = existing?.id;
-      }
-      
-      // Atualizar lead para convertido
-      if (existingLead) {
-        await supabase.from("whatsapp_leads").update({
-          status: "convertido",
-          notes: JSON.stringify({ ...leadInfo, converted_at: purchaseDate, aluno_id: alunoId }),
-          updated_at: purchaseDate,
-        }).eq("id", existingLead.id);
-      }
-      
-      // Registrar receita
-      if (purchaseValue > 0) {
-        await supabase.from("entradas").insert({
-          descricao: `Venda Hotmart - ${buyerName || buyerEmail} - ${productName}`,
-          valor: purchaseValue,
-          categoria: "Vendas",
-          data: purchaseDate,
-          fonte: "Hotmart",
-          aluno_id: alunoId,
-          transaction_id: transactionId || null,
-        });
-      }
-      
-      // C) NOTIFICAR RD STATION - COMPRA APROVADA
-      const rdSuccess = await notifyRDStation(buyerEmail, buyerName, "compra_hotmart_aprovada", supabase);
-      
-      // D) NOTIFICAR WEBHOOK_MKT DO SITE
-      const mktSuccess = await notifyWebhookMKT({ 
-        email: buyerEmail, 
-        name: buyerName,
-        phone: buyerPhone,
-        value: purchaseValue,
-        product: productName,
-        transaction: transactionId
-      }, "compra_aprovada", supabase);
-      
-      // Registrar evento
-      await supabase.from("integration_events").insert({
-        event_type: "PURCHASE_APPROVED",
-        source: "hotmart",
-        source_id: transactionId || `hotmart_${Date.now()}`,
-        payload: {
-          ...payload,
-          lead_info: leadInfo,
-          aluno_criado: true,
-          integrations: {
-            rd_station: rdSuccess ? "NOTIFICADO" : "FALHOU",
-            webhook_mkt: mktSuccess ? "NOTIFICADO" : "FALHOU"
-          }
-        },
-        processed: true,
-        processed_at: purchaseDate,
-      });
-      
-      // Notificar owner
-      const { data: ownerRole } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "owner")
-        .maybeSingle();
-      
-      if (ownerRole?.user_id) {
-        await supabase.from("notifications").insert({
-          user_id: ownerRole.user_id,
-          title: "💰 VENDA HOTMART!",
-          message: `${buyerName || buyerEmail}\nR$ ${purchaseValue.toFixed(2)}\n${productName}\nRD: ${rdSuccess ? '✅' : '❌'} | MKT: ${mktSuccess ? '✅' : '❌'}`,
-          type: "sale",
-          action_url: "/alunos",
-        });
-      }
-      
-      return new Response(JSON.stringify({ 
-        success: true, 
-        type: "purchase_approved",
-        aluno_id: alunoId,
-        integrations: { rd_station: rdSuccess, webhook_mkt: mktSuccess }
-      }), {
-        status: 200,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
+      return await handleHotmartPurchase(payload, supabase, logger);
     }
-    
+
+    if (isWordPressUser) {
+      return await handleWordPressUserCreated(payload, supabase, logger);
+    }
+
     // ============================================
-    // EVENTO DESCONHECIDO
+    // EVENTO DESCONHECIDO - REGISTRAR
     // ============================================
     
+    logger.warn("Evento não reconhecido, registrando para análise");
+
     await supabase.from("integration_events").insert({
-      event_type: payload.event || "unknown",
+      event_type: eventType || "unknown",
       source: webhookSource || "unknown",
-      source_id: `unknown_${Date.now()}`,
+      source_id: generateEventId("unknown"),
       payload: payload,
       processed: false,
     });
-    
-    return new Response(JSON.stringify({ success: true, message: "Event recorded" }), {
+
+    return new Response(JSON.stringify({ 
+      success: true, 
+      message: "Evento registrado para análise",
+      code: "EVENT_RECORDED"
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
-    
+
   } catch (error: unknown) {
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    console.error("[v16] Erro:", errorMessage);
-    
-    return new Response(JSON.stringify({ success: false, error: errorMessage }), {
+    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
+    logger.error("ERRO CRÍTICO", error);
+
+    // Registrar erro
+    try {
+      await supabase.from("integration_events").insert({
+        event_type: "webhook_critical_error",
+        source: "system",
+        source_id: generateEventId("error"),
+        payload: { error: errorMessage, stack: error instanceof Error ? error.stack : null },
+        processed: false,
+      });
+    } catch (e) {
+      logger.error("Falha ao registrar erro", e);
+    }
+
+    // SEMPRE retorna 200 para não quebrar integrações externas
+    return new Response(JSON.stringify({ 
+      success: false,
+      error: errorMessage,
+      code: "INTERNAL_ERROR"
+    }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });
