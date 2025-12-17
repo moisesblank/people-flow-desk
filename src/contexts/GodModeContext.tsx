@@ -141,11 +141,11 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     setIsActive(prev => {
       const newState = !prev;
       if (newState) {
-        toast.success('🔮 MODO DEUS ativado', {
+      toast.success('🔮 MODO MASTER ativado', {
           description: 'Clique em qualquer texto para editar'
         });
       } else {
-        toast.info('MODO DEUS desativado');
+        toast.info('MODO MASTER desativado');
       }
       return newState;
     });
@@ -154,14 +154,14 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   const activate = useCallback(() => {
     if (isOwner && !isActive) {
       setIsActive(true);
-      toast.success('🔮 MODO DEUS ativado');
+      toast.success('🔮 MODO MASTER ativado');
     }
   }, [isOwner, isActive]);
 
   const deactivate = useCallback(() => {
     if (isActive) {
       setIsActive(false);
-      toast.info('MODO DEUS desativado');
+      toast.info('MODO MASTER desativado');
     }
   }, [isActive]);
 

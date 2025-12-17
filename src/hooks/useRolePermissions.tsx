@@ -184,7 +184,7 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
 
 // Rótulos amigáveis para cada cargo
 export const ROLE_LABELS: Record<FullAppRole, string> = {
-  owner: "Proprietário (Deus)",
+  owner: "Proprietário (Master)",
   admin: "Administrador",
   coordenacao: "Coordenação",
   suporte: "Suporte",

@@ -147,7 +147,7 @@ export function SynapseStatusWidget() {
         <div className="pt-2 border-t border-border/50 flex items-center justify-between text-xs text-muted-foreground">
           <span className="flex items-center gap-1">
             <Zap className="w-3 h-3 text-primary" />
-            Modo Deus Disponível
+            Modo Master Disponível
           </span>
           <span>Ctrl+Shift+E</span>
         </div>

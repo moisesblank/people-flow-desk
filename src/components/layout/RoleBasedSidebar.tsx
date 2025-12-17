@@ -159,11 +159,11 @@ const menuGroups: MenuGroup[] = [
   },
   {
     id: "owner",
-    label: "Modo Deus",
+    label: "Modo Master",
     image: godModeImg,
     color: "from-purple-600/80 via-pink-600/80",
     items: [
-      { title: "Monitoramento", url: "/monitoramento", icon: Activity, area: "monitoramento", badge: "DEUS" },
+      { title: "Monitoramento", url: "/monitoramento", icon: Activity, area: "monitoramento", badge: "MASTER" },
       { title: "Central WhatsApp", url: "/central-whatsapp", icon: MessageSquareText, area: "central-whatsapp", badge: "LIVE" },
       { title: "Diagnóstico WhatsApp", url: "/diagnostico-whatsapp", icon: Stethoscope, area: "diagnostico-whatsapp" },
     ],

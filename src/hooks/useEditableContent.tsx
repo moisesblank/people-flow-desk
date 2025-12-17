@@ -1,6 +1,6 @@
 // ============================================
 // MOISÉS MEDEIROS v9.0 - EDITABLE CONTENT HOOK
-// Sistema de Edição MODO DEUS (Ctrl+Shift+E)
+// Sistema de Edição MODO MASTER (Ctrl+Shift+E)
 // Exclusivo para Owner: moisesblank@gmail.com
 // ============================================
 
@@ -50,7 +50,7 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
   // Verificar se é realmente o owner (verificação dupla)
   const isGodMode = isOwner && canEdit;
 
-  // Atalho secreto Ctrl+Shift+E para ativar MODO DEUS
+  // Atalho secreto Ctrl+Shift+E para ativar MODO MASTER
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
       if (e.ctrlKey && e.shiftKey && e.key === "E" && isGodMode) {
@@ -94,12 +94,12 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
       setIsEditMode((prev) => {
         const newMode = !prev;
         if (newMode) {
-          toast.info("🎮 MODO DEUS ATIVADO", {
+          toast.info("🎮 MODO MASTER ATIVADO", {
             description: "Clique em qualquer texto/imagem para editar. Ctrl+Shift+E para sair.",
             duration: 5000,
           });
         } else {
-          toast.success("MODO DEUS desativado", {
+          toast.success("MODO MASTER desativado", {
             description: "Alterações salvas automaticamente",
           });
         }
@@ -107,7 +107,7 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
       });
     } else {
       toast.error("Acesso negado", {
-        description: "MODO DEUS é exclusivo para o Owner",
+        description: "MODO MASTER é exclusivo para o Owner",
       });
     }
   }, [isGodMode]);

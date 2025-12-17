@@ -57,7 +57,7 @@ export function EditModeToggle({
                 className="flex items-center gap-2"
               >
                 <Crown className="h-5 w-5" />
-                <span className="font-bold tracking-wide">MODO DEUS</span>
+                <span className="font-bold tracking-wide">MODO MASTER</span>
                 <motion.div
                   animate={{ rotate: 360 }}
                   transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
@@ -74,7 +74,7 @@ export function EditModeToggle({
                 className="flex items-center gap-2"
               >
                 <Shield className="h-5 w-5" />
-                <span className="font-semibold">Ativar MODO DEUS</span>
+                <span className="font-semibold">Ativar MODO MASTER</span>
                 <Wand2 className="h-4 w-4" />
               </motion.div>
             )}
@@ -115,7 +115,7 @@ export function EditModeToggle({
                   <Crown className="h-5 w-5 text-yellow-300" />
                 </motion.div>
                 <div>
-                  <p className="font-bold text-sm">MODO DEUS ATIVO</p>
+                  <p className="font-bold text-sm">MODO MASTER ATIVO</p>
                   <p className="text-xs text-purple-200">Ctrl+Shift+E para sair</p>
                 </div>
               </div>

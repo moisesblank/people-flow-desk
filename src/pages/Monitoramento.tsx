@@ -177,7 +177,7 @@ export default function Monitoramento() {
                   transition={{ repeat: Infinity, duration: 2 }}
                 >
                   <Zap className="h-4 w-4 text-primary" />
-                  <span className="text-xs font-bold tracking-wider text-primary">MODO DEUS</span>
+                  <span className="text-xs font-bold tracking-wider text-primary">MODO MASTER</span>
                 </motion.div>
               </div>
               <h1 className="text-4xl md:text-5xl font-bold tracking-tight">

@@ -19,7 +19,7 @@ interface ShortcutConfig {
 
 export const KEYBOARD_SHORTCUTS = [
   // Sistema
-  { key: "E", ctrl: true, shift: true, description: "Ativar/Desativar Modo Deus", category: "system" as const },
+  { key: "E", ctrl: true, shift: true, description: "Ativar/Desativar Modo Master", category: "system" as const },
   { key: "K", ctrl: true, description: "Abrir busca global", category: "system" as const },
   { key: "K", ctrl: true, shift: true, description: "Abrir Command Center", category: "system" as const },
   { key: "Escape", description: "Fechar modais/painéis", category: "system" as const },

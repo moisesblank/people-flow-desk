@@ -85,7 +85,7 @@ export function StyleInspector({
                 </div>
                 <div>
                   <h3 className="font-bold text-sm">Style Inspector</h3>
-                  <p className="text-xs text-muted-foreground">MODO DEUS</p>
+                  <p className="text-xs text-muted-foreground">MODO MASTER</p>
                 </div>
               </div>
               <Button variant="ghost" size="icon" onClick={onClose} className="h-8 w-8">
