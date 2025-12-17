@@ -515,12 +515,14 @@ async function handleWordPressUserCreated(
   }
 
   // Criar lead (NÃO ALUNO!)
+  // IMPORTANTE: status precisa respeitar o constraint do banco (whatsapp_leads_status_check)
+  // Valores permitidos atualmente: novo | contatado | interessado | matriculado | perdido
   const leadData = {
     name: data.name || "Lead WordPress",
     email: data.email,
     phone: data.phone || null,
     source: "wordpress_user_created",
-    status: "aguardando_compra",
+    status: "novo",
     notes: JSON.stringify({
       admin_criador: data.adminEmail,
       data_criacao: timestamp,
@@ -576,9 +578,10 @@ async function handleWordPressUserCreated(
   );
 
   // D) Notificar WebHook_MKT
+  // IMPORTANTE: este evento deve representar "registrado" (sem liberar acesso/aluno)
   const mktResult = await notifyWebhookMKT(
     { email: data.email, name: data.name, phone: data.phone },
-    "lead_criado",
+    "user_registered",
     supabase,
     logger
   );
@@ -788,12 +791,13 @@ async function handleHotmartPurchase(
 
   logger.success("Aluno criado/atualizado", { id: alunoId });
 
-  // Atualizar lead para convertido
+  // Atualizar lead para matriculado
+  // IMPORTANTE: status precisa respeitar o constraint do banco
   if (existingLead) {
     await supabase
       .from("whatsapp_leads")
       .update({
-        status: "convertido",
+        status: "matriculado",
         notes: JSON.stringify({
           ...leadInfo,
           converted_at: timestamp,
