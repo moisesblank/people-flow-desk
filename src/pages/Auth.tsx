@@ -252,7 +252,7 @@ export default function Auth() {
     { value: "98%", label: "Satisfação" },
   ];
   
-  const [isLogin, setIsLogin] = useState(true);
+  const isLogin = true; // Somente login - cadastro desabilitado (owner cria contas)
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -375,29 +375,12 @@ export default function Auth() {
           });
         }
       } else {
-        const { error } = await signUp(formData.email, formData.password, formData.nome);
-        if (error) {
-          if (error.message.includes("already registered")) {
-            toast.error("Email já cadastrado", {
-              description: "Tente fazer login ou use outro email."
-            });
-          } else if (error.message.includes("Password")) {
-            toast.error("Senha muito fraca", {
-              description: "Use no mínimo 6 caracteres."
-            });
-          } else {
-            toast.error("Erro no cadastro", {
-              description: error.message
-            });
-          }
-          setIsLoading(false);
-          return;
-        }
-        toast.success("Conta criada com sucesso!", {
-          description: "Bem-vindo ao sistema! Você já pode acessar."
+        // Cadastro desabilitado - apenas owner pode criar contas
+        toast.error("Cadastro desabilitado", {
+          description: "Apenas o administrador pode criar novas contas."
         });
-        // Auto login após cadastro
-        await signIn(formData.email, formData.password);
+        setIsLoading(false);
+        return;
       }
     } catch {
       toast.error("Erro ao processar solicitação");
@@ -711,30 +694,20 @@ export default function Auth() {
               </motion.div>
             </div>
 
-            {/* Tabs - Hidden when forgot password */}
+            {/* Acesso Restrito Info */}
             {!isForgotPassword && (
-              <div className="flex gap-1 p-1 bg-white/5 rounded-xl mb-6 border border-white/5">
-                {[
-                  { key: "auth_tab_login", default: "Entrar", isActive: isLogin },
-                  { key: "auth_tab_signup", default: "Criar Conta", isActive: !isLogin }
-                ].map((tab, i) => (
-                  <button
-                    key={tab.key}
-                    onClick={() => setIsLogin(i === 0)}
-                    className={`flex-1 py-2.5 px-4 rounded-lg text-sm font-medium transition-all ${
-                      tab.isActive
-                        ? "bg-gradient-to-r from-primary to-[#DC143C] text-white shadow-lg shadow-primary/30" 
-                        : "text-gray-400 hover:text-white hover:bg-white/5"
-                    }`}
-                  >
-                    <EditableText
-                      value={getValue(tab.key, tab.default)}
-                      onSave={(v) => updateValue(tab.key, v)}
-                      isEditMode={isEditMode}
-                      canEdit={canEdit}
-                    />
-                  </button>
-                ))}
+              <div className="mb-6 p-4 rounded-xl bg-primary/10 border border-primary/20">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 rounded-lg bg-primary/20">
+                    <Shield className="h-5 w-5 text-primary" />
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-white">Acesso Restrito</p>
+                    <p className="text-xs text-gray-400">
+                      Apenas usuários pré-cadastrados podem acessar o sistema.
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
             
