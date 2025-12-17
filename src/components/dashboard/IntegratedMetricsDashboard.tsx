@@ -2,6 +2,7 @@
 // MOISÉS MEDEIROS v10.0 - ULTRA INTEGRATED METRICS DASHBOARD
 // Dashboard futurista com métricas em tempo real
 // Design cyberpunk com animações avançadas
+// COM AI INSIGHTS PANEL INTEGRADO
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -45,7 +46,8 @@ import {
   Timer,
   CheckCircle2,
   AlertCircle,
-  XCircle
+  XCircle,
+  Brain
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -53,6 +55,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useIntegratedMetrics } from "@/hooks/useIntegratedMetrics";
+import { AIInsightsPanel } from "./AIInsightsPanel";
 import {
   AreaChart,
   Area,
@@ -75,6 +78,7 @@ import {
   Line
 } from "recharts";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Animated Counter Component
 function AnimatedCounter({ value, duration = 1.5, decimals = 0, prefix = "", suffix = "" }: {
@@ -538,6 +542,39 @@ export function IntegratedMetricsDashboard() {
   const { data, isLoading, syncYouTube, syncInstagram, syncFacebookAds, syncTikTok, syncAll, refetch } = useIntegratedMetrics();
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
+  const [financialData, setFinancialData] = useState({ receita: 0, despesa: 0, saldo: 0 });
+  const [taskData, setTaskData] = useState({ pending: 0, overdue: 0 });
+
+  // Fetch financial and task data for AI insights
+  useEffect(() => {
+    const fetchInsightsData = async () => {
+      try {
+        const now = new Date();
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+        
+        // Fetch financial data
+        const [entradasResult, gastosResult, tasksResult] = await Promise.all([
+          supabase.from("entradas").select("valor").gte("data", firstDayOfMonth),
+          supabase.from("gastos").select("valor").gte("data", firstDayOfMonth),
+          supabase.from("calendar_tasks").select("*").eq("is_completed", false)
+        ]);
+
+        const receita = entradasResult.data?.reduce((sum, e) => sum + Number(e.valor || 0), 0) || 0;
+        const despesa = gastosResult.data?.reduce((sum, g) => sum + Number(g.valor || 0), 0) || 0;
+        setFinancialData({ receita, despesa, saldo: receita - despesa });
+
+        const pending = tasksResult.data?.length || 0;
+        const overdue = tasksResult.data?.filter(t => new Date(t.task_date) < now).length || 0;
+        setTaskData({ pending, overdue });
+      } catch (err) {
+        console.error("Error fetching insights data:", err);
+      }
+    };
+
+    fetchInsightsData();
+    const interval = setInterval(fetchInsightsData, 5 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
   const handleSync = async (platform: string, syncFn: () => Promise<any>) => {
     setIsSyncing(platform);
@@ -593,6 +630,12 @@ export function IntegratedMetricsDashboard() {
   const generateSparkline = useCallback((base: number) => {
     return Array.from({ length: 12 }, (_, i) => base * (0.8 + Math.random() * 0.4));
   }, []);
+
+  // Social data for insights
+  const socialData = useMemo(() => ({
+    totalFollowers: data?.totals.totalFollowers || 0,
+    totalEngagement: data?.totals.totalEngagement || 0
+  }), [data]);
 
   if (isLoading) {
     return (
@@ -761,6 +804,13 @@ export function IntegratedMetricsDashboard() {
         />
       </div>
 
+      {/* AI Insights Panel */}
+      <AIInsightsPanel 
+        financialData={financialData}
+        socialData={socialData}
+        taskData={taskData}
+      />
+
       {/* Tabs Navigation */}
       <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
         <TabsList className="bg-card/80 backdrop-blur-xl border border-border/30 p-1 h-auto flex-wrap">
@@ -793,6 +843,14 @@ export function IntegratedMetricsDashboard() {
             Vendas Hotmart
           </TabsTrigger>
           <TabsTrigger 
+            value="ai" 
+            className="data-[state=active]:bg-violet-500/20 data-[state=active]:text-violet-500 px-4 py-2"
+          >
+            <Brain className="h-4 w-4 mr-2" />
+            IA TRAMON
+            <Badge className="ml-2 bg-violet-500/20 text-violet-400 text-[10px] px-1.5">NOVO</Badge>
+          </TabsTrigger>
+          <TabsTrigger 
             value="site" 
             className="data-[state=active]:bg-primary/20 data-[state=active]:text-primary px-4 py-2"
           >
@@ -801,6 +859,94 @@ export function IntegratedMetricsDashboard() {
             <Badge className="ml-2 bg-emerald-500/20 text-emerald-500 text-[10px] px-1.5">LIVE</Badge>
           </TabsTrigger>
         </TabsList>
+
+        {/* AI TRAMON Tab */}
+        <TabsContent value="ai" className="space-y-6 mt-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
+            <Card className="border-border/20 bg-gradient-to-br from-violet-500/10 via-card to-fuchsia-500/5 backdrop-blur-xl">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-3">
+                  <motion.div
+                    className="p-3 rounded-2xl bg-gradient-to-br from-violet-500/30 to-fuchsia-500/30"
+                    animate={{ 
+                      boxShadow: [
+                        "0 0 20px rgba(139, 92, 246, 0.3)",
+                        "0 0 40px rgba(139, 92, 246, 0.5)",
+                        "0 0 20px rgba(139, 92, 246, 0.3)"
+                      ]
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Brain className="h-6 w-6 text-violet-400" />
+                  </motion.div>
+                  <div>
+                    <h2 className="text-xl font-bold">TRAMON IA v8.0 OMEGA ULTRA</h2>
+                    <p className="text-sm text-muted-foreground">Superinteligência integrada à sua plataforma</p>
+                  </div>
+                  <Badge className="bg-violet-500/20 text-violet-400 border-violet-500/30 ml-auto">
+                    <Sparkles className="h-3 w-3 mr-1" />
+                    ATIVO
+                  </Badge>
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="p-4 rounded-xl bg-violet-500/10 border border-violet-500/30">
+                    <h4 className="font-semibold text-violet-400 mb-2 flex items-center gap-2">
+                      <MessageCircle className="h-4 w-4" />
+                      Comandos de Voz
+                    </h4>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Fale naturalmente com o TRAMON para gerenciar tudo.
+                    </p>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      <li>"Gastei 150 de combustível"</li>
+                      <li>"Recebi 2000 de venda curso"</li>
+                      <li>"Qual o saldo do mês?"</li>
+                    </ul>
+                  </div>
+                  <div className="p-4 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/30">
+                    <h4 className="font-semibold text-fuchsia-400 mb-2 flex items-center gap-2">
+                      <BarChart3 className="h-4 w-4" />
+                      Análises em Tempo Real
+                    </h4>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Peça relatórios e análises de todas as plataformas.
+                    </p>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      <li>"Métricas do YouTube"</li>
+                      <li>"Como está o Instagram?"</li>
+                      <li>"Relatório financeiro"</li>
+                    </ul>
+                  </div>
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30">
+                    <h4 className="font-semibold text-emerald-400 mb-2 flex items-center gap-2">
+                      <Zap className="h-4 w-4" />
+                      Automações
+                    </h4>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Cadastre funcionários, alunos e mais com comandos.
+                    </p>
+                    <ul className="space-y-1 text-xs text-muted-foreground">
+                      <li>"Cadastrar aluno João"</li>
+                      <li>"Criar tarefa urgente"</li>
+                      <li>"Novo funcionário"</li>
+                    </ul>
+                  </div>
+                </div>
+                
+                <div className="p-4 rounded-xl bg-gradient-to-r from-violet-500/5 to-fuchsia-500/5 border border-violet-500/20">
+                  <p className="text-sm text-center text-muted-foreground">
+                    💡 <strong>Dica:</strong> Clique no ícone do TRAMON no canto inferior direito para começar a conversar!
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </TabsContent>
 
         {/* Overview Tab */}
         <TabsContent value="overview" className="space-y-6 mt-6">
