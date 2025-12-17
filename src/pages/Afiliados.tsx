@@ -49,7 +49,9 @@ import {
   Banknote,
   PiggyBank,
   ArrowUpRight,
-  ArrowDownRight
+  ArrowDownRight,
+  Send,
+  MessageSquare
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,6 +72,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format, formatDistanceToNow, startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { HotmartSyncWidget } from "@/components/affiliates/HotmartSyncWidget";
+import { AffiliateEmailComposer } from "@/components/affiliates/AffiliateEmailComposer";
 
 interface Affiliate {
   id: number;
@@ -156,6 +159,8 @@ export default function Afiliados() {
   const [statusFilter, setStatusFilter] = useState("todos");
   const [sortBy, setSortBy] = useState<"nome" | "vendas" | "comissao">("vendas");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [emailSelectedAffiliate, setEmailSelectedAffiliate] = useState<Affiliate | null>(null);
   
   const [formData, setFormData] = useState({
     nome: "",
@@ -448,9 +453,21 @@ export default function Afiliados() {
                   Sistema completo de gestão de parceiros, comissões e pagamentos.
                 </p>
               </div>
-              <Button onClick={() => openModal()} size="lg" className="gap-2">
-                <Plus className="h-5 w-5" /> Novo Afiliado
-              </Button>
+              <div className="flex gap-3">
+                <Button 
+                  variant="outline" 
+                  onClick={() => {
+                    setEmailSelectedAffiliate(null);
+                    setIsEmailModalOpen(true);
+                  }} 
+                  className="gap-2"
+                >
+                  <Mail className="h-4 w-4" /> Enviar Email
+                </Button>
+                <Button onClick={() => openModal()} size="lg" className="gap-2">
+                  <Plus className="h-5 w-5" /> Novo Afiliado
+                </Button>
+              </div>
             </div>
           </motion.header>
 
@@ -722,6 +739,20 @@ export default function Afiliados() {
                                     <Button variant="ghost" size="icon" onClick={() => openDetailModal(affiliate)} title="Ver Detalhes">
                                       <Eye className="h-4 w-4" />
                                     </Button>
+                                    {affiliate.email && (
+                                      <Button 
+                                        variant="ghost" 
+                                        size="icon" 
+                                        onClick={() => {
+                                          setEmailSelectedAffiliate(affiliate);
+                                          setIsEmailModalOpen(true);
+                                        }} 
+                                        title="Enviar Email"
+                                        className="text-primary hover:text-primary"
+                                      >
+                                        <Mail className="h-4 w-4" />
+                                      </Button>
+                                    )}
                                     <Button variant="ghost" size="icon" onClick={() => openModal(affiliate)} title="Editar">
                                       <Edit2 className="h-4 w-4" />
                                     </Button>
@@ -1348,6 +1379,21 @@ export default function Afiliados() {
                       {formatPhone(selectedAffiliate.whatsapp || selectedAffiliate.telefone || "")}
                     </p>
                   )}
+                  {selectedAffiliate.email && (
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="mt-3 gap-2"
+                      onClick={() => {
+                        setIsDetailModalOpen(false);
+                        setEmailSelectedAffiliate(selectedAffiliate);
+                        setIsEmailModalOpen(true);
+                      }}
+                    >
+                      <Mail className="h-4 w-4" />
+                      Enviar Email
+                    </Button>
+                  )}
                 </div>
               </div>
 
@@ -1564,6 +1610,17 @@ export default function Afiliados() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Email para Afiliados */}
+      <AffiliateEmailComposer
+        affiliates={affiliates}
+        isOpen={isEmailModalOpen}
+        onClose={() => {
+          setIsEmailModalOpen(false);
+          setEmailSelectedAffiliate(null);
+        }}
+        preselectedAffiliate={emailSelectedAffiliate}
+      />
     </>
   );
 }
