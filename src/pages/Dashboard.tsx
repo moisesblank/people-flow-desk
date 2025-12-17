@@ -39,7 +39,7 @@ import { RevenueChart } from "@/components/dashboard/RevenueChart";
 import { CategoryPieChart } from "@/components/dashboard/CategoryPieChart";
 import { BudgetAlerts } from "@/components/dashboard/BudgetAlerts";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
-import { RealtimePulse } from "@/components/dashboard/RealtimePulse";
+import { RealTimeMetricsBar } from "@/components/dashboard/RealTimeMetricsBar";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
 import { WeeklyInsights } from "@/components/dashboard/WeeklyInsights";
@@ -333,7 +333,7 @@ export default function Dashboard() {
       <div className="mx-auto max-w-7xl space-y-6">
         
         {/* NOVO: Barra de métricas em tempo real */}
-        <LiveMetricsBar />
+        <RealTimeMetricsBar />
         
         {/* FUTURISTIC 2050: Hero com visual cyberpunk */}
         <FuturisticHero
@@ -487,7 +487,7 @@ export default function Dashboard() {
 
         {/* Real-time Data */}
         <section className="grid gap-6 lg:grid-cols-3 mb-8">
-          <RealtimePulse />
+          <RealTimeMetricsBar />
           <CommandCenter />
           <div className="space-y-6">
             <FinancialGoalsWidget />
