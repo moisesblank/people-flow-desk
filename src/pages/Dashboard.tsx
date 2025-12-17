@@ -348,12 +348,14 @@ export default function Dashboard() {
           </div>
         </section>
 
-        {/* NOVO: Smart Tips - Dicas contextuais */}
+        {/* NOVO: Smart Tips - Dicas contextuais com IA */}
         <SmartTips
           income={stats?.income || 0}
           expenses={totalExpensesValue}
           pendingTasks={stats?.pendingTasks || 0}
           pendingPayments={stats?.pendingPayments || 0}
+          students={stats?.students || 0}
+          affiliates={stats?.affiliates || 0}
           onNavigate={(path) => navigate(path)}
         />
 
@@ -517,7 +519,7 @@ export default function Dashboard() {
           <BudgetAlerts alerts={processedData?.budgetAlerts || []} />
         </section>
 
-        {/* Secondary Stats */}
+        {/* Secondary Stats - TODOS CLICÁVEIS */}
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
           <StatCard
             title="Gastos Pessoais"
@@ -526,6 +528,7 @@ export default function Dashboard() {
             icon={Wallet}
             variant="purple"
             delay={4}
+            href="/financas-pessoais"
           />
           <StatCard
             title="Gastos Empresa"
@@ -534,6 +537,7 @@ export default function Dashboard() {
             icon={Building2}
             variant="blue"
             delay={5}
+            href="/financas-empresa"
           />
           <StatCard
             title="Afiliados"
@@ -541,6 +545,7 @@ export default function Dashboard() {
             icon={Handshake}
             variant="green"
             delay={6}
+            href="/afiliados"
           />
           <StatCard
             title="Alunos"
@@ -548,10 +553,11 @@ export default function Dashboard() {
             icon={GraduationCap}
             variant="red"
             delay={7}
+            href="/alunos"
           />
         </section>
 
-        {/* Tasks & Pendências Stats */}
+        {/* Tasks & Pendências Stats - TODOS CLICÁVEIS */}
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 mb-8">
           <StatCard
             title="Tarefas Pendentes"
@@ -559,6 +565,7 @@ export default function Dashboard() {
             icon={CheckSquare}
             variant="purple"
             delay={8}
+            href="/tarefas"
           />
           <StatCard
             title="Pagamentos Pendentes"
@@ -566,6 +573,7 @@ export default function Dashboard() {
             icon={CreditCard}
             variant="red"
             delay={9}
+            href="/pagamentos"
           />
           <StatCard
             title="Pendências Site"
@@ -573,6 +581,7 @@ export default function Dashboard() {
             icon={Globe}
             variant="blue"
             delay={10}
+            href="/gestao-site"
           />
         </section>
 
