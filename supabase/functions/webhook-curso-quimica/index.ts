@@ -154,9 +154,82 @@ async function logSecurityEvent(eventType: string, details: Record<string, any>)
 }
 
 // =============================================================================
-// AJUDA15: CRIAR ALUNO E ENTRADA AUTOMATICAMENTE
+// VALIDAÇÃO RIGOROSA DE COMPRA HOTMART
+// Só cria aluno se a compra for REALMENTE PAGA e CONFIRMADA
+// =============================================================================
+function isValidHotmartPurchase(payload: any): { valid: boolean; reason: string } {
+  const data = payload.data || payload;
+  const event = payload.event || payload.status || "";
+  
+  // 1. VERIFICAR SE É EVENTO DE COMPRA APROVADA REAL
+  const approvedEvents = ["PURCHASE_APPROVED", "PURCHASE_COMPLETE", "purchase.approved", "purchase.completed"];
+  if (!approvedEvents.includes(event)) {
+    return { valid: false, reason: `Evento não é de compra aprovada: ${event}` };
+  }
+  
+  // 2. VERIFICAR SE TEM TRANSACTION ID VÁLIDO DA HOTMART
+  const transactionId = data.purchase?.transaction || data.transaction;
+  if (!transactionId || transactionId.startsWith("fake_") || transactionId.startsWith("test_") || transactionId.startsWith("lead_")) {
+    return { valid: false, reason: `Transaction ID inválido ou de teste: ${transactionId}` };
+  }
+  
+  // 3. VERIFICAR SE TEM VALOR DE COMPRA > 0
+  const purchaseValue = data.purchase?.price?.value || data.price || 0;
+  if (purchaseValue <= 0) {
+    return { valid: false, reason: `Valor da compra é zero ou negativo: ${purchaseValue}` };
+  }
+  
+  // 4. VERIFICAR SE TEM EMAIL DO COMPRADOR
+  const buyerEmail = data.buyer?.email || data.subscriber?.email;
+  if (!buyerEmail || !buyerEmail.includes("@")) {
+    return { valid: false, reason: `Email do comprador inválido: ${buyerEmail}` };
+  }
+  
+  // 5. VERIFICAR SE TEM DADOS DO PRODUTO (prova que veio do checkout Hotmart)
+  const productId = data.product?.id || data.prod;
+  if (!productId) {
+    return { valid: false, reason: "Sem ID do produto - não é compra Hotmart válida" };
+  }
+  
+  // 6. VERIFICAR SE TEM HOTTOK ou marcadores Hotmart
+  // Se não tem identificadores Hotmart, pode ser formulário de lead
+  const hasHotmartMarkers = data.hottok || data.prod_name || data.product?.id || payload.hottok;
+  if (!hasHotmartMarkers) {
+    return { valid: false, reason: "Sem marcadores Hotmart - provavelmente formulário de lead" };
+  }
+  
+  return { valid: true, reason: "Compra válida" };
+}
+
+// =============================================================================
+// CRIAR ALUNO E ENTRADA - SÓ APÓS VALIDAÇÃO
 // =============================================================================
 async function createStudentAndRevenue(payload: any) {
+  // VALIDAÇÃO RIGOROSA ANTES DE CRIAR
+  const validation = isValidHotmartPurchase(payload);
+  
+  if (!validation.valid) {
+    console.log("[AJUDA15] ⚠️ COMPRA REJEITADA:", validation.reason);
+    console.log("[AJUDA15] Payload rejeitado (parcial):", JSON.stringify(payload).substring(0, 300));
+    
+    // Logar para análise mas NÃO criar aluno
+    await supabase.from("integration_events").insert({
+      event_type: `purchase_rejected`,
+      source: "hotmart",
+      source_id: `rejected_${Date.now()}`,
+      payload: {
+        ...sanitizePayloadForLog(payload),
+        rejection_reason: validation.reason,
+        rejected_at: new Date().toISOString(),
+      },
+      processed: false,
+    });
+    
+    return { alunoId: null, purchaseValue: 0, rejected: true, reason: validation.reason };
+  }
+  
+  console.log("[AJUDA15] ✅ VALIDAÇÃO PASSOU - Criando aluno e receita...");
+  
   const data = payload.data || payload;
   
   // Extrair dados do comprador
@@ -167,8 +240,22 @@ async function createStudentAndRevenue(payload: any) {
   const transactionId = data.purchase?.transaction || data.transaction || `hotmart_${Date.now()}`;
   const offerCode = data.purchase?.offer?.code || data.affiliate?.affiliate_code || null;
   const purchaseDate = new Date(data.purchase?.approved_date || payload.creation_date || new Date());
+  const productName = data.product?.name || data.prod_name || "Curso";
   
-  console.log("[AJUDA15] Criando aluno e receita:", { buyerName, buyerEmail, purchaseValue, transactionId });
+  console.log("[AJUDA15] Criando aluno com dados VALIDADOS:", { buyerName, buyerEmail, purchaseValue, transactionId });
+  
+  // VERIFICAR SE JÁ PROCESSAMOS ESTA TRANSAÇÃO (evitar duplicatas)
+  const { data: existingTransaction } = await supabase
+    .from("integration_events")
+    .select("id")
+    .eq("source_id", transactionId)
+    .eq("processed", true)
+    .single();
+  
+  if (existingTransaction) {
+    console.log("[AJUDA15] ⚠️ Transação já processada:", transactionId);
+    return { alunoId: null, purchaseValue: 0, rejected: true, reason: "Transação já processada" };
+  }
   
   let alunoId = null;
   
@@ -186,6 +273,7 @@ async function createStudentAndRevenue(payload: any) {
           valor_pago: purchaseValue,
           hotmart_transaction_id: transactionId,
           fonte: "Hotmart",
+          observacoes: `Produto: ${productName} | Transação: ${transactionId}`,
           updated_at: new Date().toISOString(),
         }, {
           onConflict: "email",
@@ -210,7 +298,7 @@ async function createStudentAndRevenue(payload: any) {
     const { error: receitaError } = await supabase
       .from("entradas")
       .insert({
-        descricao: `Venda Hotmart - ${buyerName}`,
+        descricao: `Venda Hotmart - ${buyerName} - ${productName}`,
         valor: purchaseValue,
         categoria: "Vendas",
         data: purchaseDate.toISOString(),
@@ -259,7 +347,7 @@ async function createStudentAndRevenue(payload: any) {
     }
   }
   
-  return { alunoId, purchaseValue };
+  return { alunoId, purchaseValue, rejected: false };
 }
 
 // Parse Hotmart webhook
@@ -405,14 +493,22 @@ async function processWebhook(payload: WebhookPayload, source: string, ipAddress
   }
 
   // =============================================================================
-  // AJUDA15: SE FOR VENDA APROVADA, CRIAR ALUNO E RECEITA
+  // AJUDA15: SE FOR VENDA APROVADA, VALIDAR E CRIAR ALUNO E RECEITA
+  // VALIDAÇÃO RIGOROSA: Só cria se passar todas as verificações
   // =============================================================================
   const approvedEvents = ["PURCHASE_APPROVED", "PURCHASE_COMPLETE", "purchase.approved", "purchase.completed"];
   const eventType = payload.event || payload.status || "";
   
   if (source.toLowerCase() === "hotmart" && approvedEvents.includes(eventType)) {
-    console.log("[AJUDA15] Venda aprovada detectada! Criando aluno e receita...");
-    await createStudentAndRevenue(payload);
+    console.log("[AJUDA15] Evento de venda detectado - iniciando VALIDAÇÃO RIGOROSA...");
+    const result = await createStudentAndRevenue(payload);
+    
+    if (result.rejected) {
+      console.log("[AJUDA15] ⚠️ CRIAÇÃO DE ALUNO BLOQUEADA:", result.reason);
+      console.log("[AJUDA15] Webhook processado mas aluno NÃO criado (provavelmente lead/cadastro)");
+    } else {
+      console.log("[AJUDA15] ✅ VENDA CONFIRMADA - Aluno criado com sucesso:", result.alunoId);
+    }
   }
 
   // Log audit event
