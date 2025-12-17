@@ -28,6 +28,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { AITramonGlobal } from "@/components/ai/AITramonGlobal";
 
 interface AppLayoutProps {
   children: ReactNode;
@@ -215,6 +216,9 @@ export function AppLayout({ children }: AppLayoutProps) {
 
       {/* Team Chat */}
       <TeamChat isOpen={isTeamChatOpen} onClose={() => setIsTeamChatOpen(false)} />
+
+      {/* AI TRAMON Global - SEMPRE VISÍVEL */}
+      <AITramonGlobal />
     </SidebarProvider>
   );
 }

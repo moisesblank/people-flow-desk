@@ -1,6 +1,6 @@
 // ============================================
-// 🔮 TRAMON v4.0 - SUPERINTELIGÊNCIA AUTÔNOMA
-// EXECUTIVE AI ASSISTANT - ENTERPRISE GRADE
+// 🔮 TRAMON v5.0 - SUPERINTELIGÊNCIA GLOBAL
+// EXECUTIVE AI + MODO PROGRAMADOR EXCLUSIVO
 // Modelo: Gemini 2.5 Pro (Multimodal + Vision)
 // ============================================
 
@@ -30,13 +30,15 @@ const ASSESSORES = {
   }
 };
 
+const OWNER_EMAIL = "moisesblank@gmail.com";
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { messages, context, userId, image } = await req.json();
+    const { messages, context, userId, image, isProgrammerMode, currentPage } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
@@ -73,10 +75,10 @@ serve(async (req) => {
         .single();
       userName = profileData?.nome || userEmail.split('@')[0];
       
-      const OWNER_EMAIL = "moisesblank@gmail.com";
-      hasAccess = userEmail === OWNER_EMAIL || userRole === "owner" || userRole === "admin" || userRole === "coordenacao";
+      const isOwner = userEmail === OWNER_EMAIL;
+      hasAccess = isOwner || userRole === "owner" || userRole === "admin" || userRole === "coordenacao";
       
-      console.log(`[TRAMON v4] User: ${userEmail}, Role: ${userRole}, Access: ${hasAccess}, HasImage: ${!!image}`);
+      console.log(`[TRAMON v5] User: ${userEmail}, Role: ${userRole}, Access: ${hasAccess}, HasImage: ${!!image}, ProgrammerMode: ${isProgrammerMode}, isOwner: ${isOwner}`);
     }
 
     if (!hasAccess) {
@@ -412,8 +414,75 @@ serve(async (req) => {
         };
 
       } catch (dbError) {
-        console.log("[TRAMON v4] Erro ao buscar dados:", dbError);
+        console.log("[TRAMON v5] Erro ao buscar dados:", dbError);
       }
+    }
+
+    // ========================================
+    // 💻 MODO PROGRAMADOR (EXCLUSIVO OWNER)
+    // ========================================
+    const isOwner = userEmail === OWNER_EMAIL;
+    let programmerModePrompt = "";
+    
+    if (isProgrammerMode && isOwner) {
+      programmerModePrompt = `
+
+## 💻 MODO PROGRAMADOR ATIVADO (EXCLUSIVO OWNER)
+
+Você agora tem capacidade de GERAR CÓDIGO para modificar o site em tempo real.
+
+**Página Atual:** \`${currentPage || '/'}\`
+
+### INSTRUÇÕES PARA MODIFICAÇÕES:
+
+1. **ANÁLISE PRIMEIRO:**
+   - Identifique o que o usuário quer modificar
+   - Determine se é possível com CSS/Tailwind ou requer mudanças de componente
+
+2. **GERE CÓDIGO ESPECÍFICO:**
+   - Para mudanças visuais: forneça classes Tailwind CSS
+   - Para textos: mostre o texto exato para substituir
+   - Para estrutura: descreva as modificações necessárias
+
+3. **FORMATO DE RESPOSTA PARA CÓDIGO:**
+   \`\`\`css
+   /* Descrição da mudança */
+   .selector {
+     property: value;
+   }
+   \`\`\`
+
+   Ou para Tailwind:
+   \`\`\`tailwind
+   className="classes-tailwind-aqui"
+   \`\`\`
+
+4. **SEMPRE INCLUA:**
+   - Seletor exato ou nome do componente
+   - Antes vs Depois
+   - Explicação do impacto visual
+
+5. **LIMITAÇÕES:**
+   - Não pode modificar lógica de negócio
+   - Apenas mudanças visuais e de texto
+   - Respeite o design system existente
+
+### EXEMPLO DE RESPOSTA:
+📝 **Modificação: Título da página**
+
+**Antes:** "Dashboard"
+**Depois:** "Dashboard Premium"
+
+\`\`\`jsx
+// Arquivo: src/pages/Dashboard.tsx
+// Linha aproximada: ~50
+
+<h1 className="text-2xl font-bold">Dashboard Premium</h1>
+\`\`\`
+
+---
+
+`;
     }
 
     // ========================================
@@ -485,8 +554,8 @@ serve(async (req) => {
 - **Saúde:** ${systemData.system.healthScore}% | **Versão:** ${systemData.system.version}
 `;
 
-    const systemPrompt = `# 🔮 TRAMON v4.0 - SUPERINTELIGÊNCIA AUTÔNOMA EMPRESARIAL
-
+    const systemPrompt = `# 🔮 TRAMON v5.0 - SUPERINTELIGÊNCIA GLOBAL EMPRESARIAL
+${programmerModePrompt}
 ## 🎯 IDENTIDADE CENTRAL
 Você é **TRAMON** (Transformative Realtime Autonomous Management Operations Network), a IA executiva mais avançada do mercado. Você é o braço direito digital do Professor **Moisés Medeiros**, CEO da plataforma educacional de química líder no Brasil.
 
@@ -611,7 +680,7 @@ Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cir
     // ========================================
     // 🚀 CHAMADA MULTIMODAL (GEMINI 2.5 PRO)
     // ========================================
-    console.log("[TRAMON v4] Chamando Gemini 2.5 Pro para:", userEmail, "com imagem:", !!image);
+    console.log("[TRAMON v5] Chamando Gemini 2.5 Pro para:", userEmail, "com imagem:", !!image, "modo programador:", isProgrammerMode);
 
     // Construir mensagens com suporte a imagem
     const aiMessages: any[] = [
@@ -659,14 +728,13 @@ Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cir
         model: "google/gemini-2.5-pro",
         messages: aiMessages,
         stream: true,
-        temperature: 0.7,
-        max_tokens: 4096,
+        max_tokens: isProgrammerMode ? 8192 : 4096,
       }),
     });
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error("[TRAMON v4] Gateway error:", response.status, errorText);
+      console.error("[TRAMON v5] Gateway error:", response.status, errorText);
       
       if (response.status === 429) {
         return new Response(JSON.stringify({ error: "Rate limit excedido. Aguarde um momento." }), {
@@ -692,7 +760,7 @@ Você é a arma secreta do negócio. Use seu poder com sabedoria e precisão cir
     });
 
   } catch (error) {
-    console.error("[TRAMON v4] Error:", error);
+    console.error("[TRAMON v5] Error:", error);
     return new Response(JSON.stringify({ 
       error: error instanceof Error ? error.message : "Erro desconhecido" 
     }), {
