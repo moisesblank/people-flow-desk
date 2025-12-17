@@ -1,6 +1,7 @@
 // ============================================
-// MOISES MEDEIROS v5.0 - REALTIME NOTIFICATIONS
-// Sistema de Notificações em Tempo Real
+// MOISES MEDEIROS v10.0 - REALTIME NOTIFICATIONS
+// Sistema de Notificações em Tempo Real Avançado
+// EMPRESARIAL 2.0 - Integração Completa
 // ============================================
 
 import { useEffect, useCallback } from "react";
@@ -100,79 +101,175 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
     }
   }, [addNotification]);
 
+  // Nova: WhatsApp Lead
+  const handleNewWhatsAppLead = useCallback((payload: any) => {
+    const lead = payload.new;
+    addNotification({
+      type: "success",
+      title: "Novo Lead WhatsApp! 📱",
+      message: `${lead.name || 'Novo contato'} enviou mensagem via WhatsApp`,
+      actionUrl: "/leads-whatsapp",
+      actionLabel: "Ver lead",
+    });
+  }, [addNotification]);
+
+  // Nova: Comando WhatsApp
+  const handleWhatsAppCommand = useCallback((payload: any) => {
+    const task = payload.new;
+    if (task.source === 'whatsapp') {
+      addNotification({
+        type: "info",
+        title: "Comando WhatsApp Processado ✅",
+        message: `Tarefa "${task.title}" criada via WhatsApp`,
+        actionUrl: "/tarefas",
+        actionLabel: "Ver tarefa",
+      });
+    }
+  }, [addNotification]);
+
+  // Nova: Finanças WhatsApp
+  const handleWhatsAppFinance = useCallback((payload: any) => {
+    const finance = payload.new;
+    if (finance.source === 'whatsapp') {
+      const tipo = finance.type === 'income' ? 'Receita' : 'Despesa';
+      addNotification({
+        type: finance.type === 'income' ? "success" : "warning",
+        title: `${tipo} via WhatsApp 💰`,
+        message: `${finance.description}: R$ ${finance.amount.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`,
+        actionUrl: "/financas-empresa",
+        actionLabel: "Ver finanças",
+      });
+    }
+  }, [addNotification]);
+
+  // Nova: XP Ganho
+  const handleXPGained = useCallback((payload: any) => {
+    const xp = payload.new;
+    addNotification({
+      type: "success",
+      title: "XP Conquistado! ⭐",
+      message: `+${xp.amount} XP - ${xp.description || xp.source}`,
+      actionUrl: "/dashboard",
+      actionLabel: "Ver progresso",
+    });
+  }, [addNotification]);
+
+  // Nova: Conquista Desbloqueada
+  const handleAchievementUnlocked = useCallback((payload: any) => {
+    const achievement = payload.new;
+    addNotification({
+      type: "success",
+      title: "Nova Conquista Desbloqueada! 🏆",
+      message: `Você desbloqueou: ${achievement.achievement_code}`,
+      actionUrl: "/dashboard",
+      actionLabel: "Ver conquistas",
+    });
+  }, [addNotification]);
+
+  // Nova: Automação Executada
+  const handleAutomationExecuted = useCallback((payload: any) => {
+    const rule = payload.new;
+    if (rule.is_active) {
+      addNotification({
+        type: "info",
+        title: "Automação Executada ⚡",
+        message: `Regra "${rule.rule_name}" foi executada com sucesso`,
+        actionUrl: "/dashboard",
+        actionLabel: "Ver automações",
+      });
+    }
+  }, [addNotification]);
+
   useEffect(() => {
     if (!user?.id) return;
 
     // Subscribe to realtime changes
     const channel = supabase
-      .channel('realtime-notifications-v2')
+      .channel('realtime-notifications-v3')
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'income',
-        },
+        { event: 'INSERT', schema: 'public', table: 'income' },
         handleNewSale
       )
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'students',
-        },
+        { event: 'INSERT', schema: 'public', table: 'students' },
         handleNewStudent
       )
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'payments',
-        },
+        { event: 'INSERT', schema: 'public', table: 'payments' },
         handleNewPayment
       )
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'calendar_tasks',
-        },
+        { event: 'UPDATE', schema: 'public', table: 'calendar_tasks' },
         handleTaskReminder
       )
       .on(
         'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'user_roles',
-        },
+        { event: '*', schema: 'public', table: 'user_roles' },
         handleRoleChange
       )
       .on(
         'postgres_changes',
-        {
-          event: 'INSERT',
-          schema: 'public',
-          table: 'enrollments',
-        },
+        { event: 'INSERT', schema: 'public', table: 'enrollments' },
         handleNewEnrollment
       )
       .on(
         'postgres_changes',
-        {
-          event: 'UPDATE',
-          schema: 'public',
-          table: 'reagents',
-        },
+        { event: 'UPDATE', schema: 'public', table: 'reagents' },
         handleLowStock
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'whatsapp_leads' },
+        handleNewWhatsAppLead
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'command_tasks' },
+        handleWhatsAppCommand
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'command_finance' },
+        handleWhatsAppFinance
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'xp_history' },
+        handleXPGained
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'user_achievements' },
+        handleAchievementUnlocked
+      )
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'custom_rules' },
+        handleAutomationExecuted
       )
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user?.id, handleNewSale, handleNewStudent, handleNewPayment, handleTaskReminder, handleRoleChange, handleNewEnrollment, handleLowStock]);
+  }, [
+    user?.id, 
+    handleNewSale, 
+    handleNewStudent, 
+    handleNewPayment, 
+    handleTaskReminder, 
+    handleRoleChange, 
+    handleNewEnrollment, 
+    handleLowStock,
+    handleNewWhatsAppLead,
+    handleWhatsAppCommand,
+    handleWhatsAppFinance,
+    handleXPGained,
+    handleAchievementUnlocked,
+    handleAutomationExecuted
+  ]);
 }
