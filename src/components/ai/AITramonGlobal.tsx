@@ -20,11 +20,12 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { ScrollArea } from "@/components/ui/scroll-area";
+
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useInvalidateCache } from "@/hooks/useDataCache";
 import { supabase } from "@/integrations/supabase/client";
 import { useLocation } from "react-router-dom";
 
@@ -97,12 +98,16 @@ export function AITramonGlobal() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
-  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
-  const audioChunksRef = useRef<Blob[]>([]);
+
+  // Speech-to-text (Web Speech API)
+  // Tipagem via `any` para compatibilidade entre browsers (webkitSpeechRecognition)
+  const speechRecognitionRef = useRef<any>(null);
+  const speechTranscriptRef = useRef<string>("");
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
   const hasAccess = canAccessTramon;
   const isOwner = user?.email === OWNER_EMAIL;
+  const { invalidateAll } = useInvalidateCache();
 
   // ========================================
   // 📊 CARREGAR QUICK INSIGHTS
@@ -215,33 +220,63 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
     if (fileInputRef.current) fileInputRef.current.value = '';
   }, []);
 
-  // Audio recording
+  // Audio recording (speech-to-text)
   const toggleRecording = useCallback(async () => {
+    const SpeechRecognitionCtor = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+
+    if (!SpeechRecognitionCtor) {
+      toast.error("Seu navegador não suporta ditado por voz");
+      return;
+    }
+
     if (isRecording) {
-      mediaRecorderRef.current?.stop();
-      setIsRecording(false);
-    } else {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        const mediaRecorder = new MediaRecorder(stream);
-        audioChunksRef.current = [];
-
-        mediaRecorder.ondataavailable = (event) => {
-          if (event.data.size > 0) audioChunksRef.current.push(event.data);
-        };
-
-        mediaRecorder.onstop = () => {
-          stream.getTracks().forEach(track => track.stop());
-          toast.info("🎙️ Áudio capturado!");
-        };
-
-        mediaRecorder.start();
-        mediaRecorderRef.current = mediaRecorder;
-        setIsRecording(true);
-        toast.info("🎙️ Gravando...");
-      } catch (error) {
-        toast.error("Erro ao acessar microfone");
+        speechRecognitionRef.current?.stop();
+      } finally {
+        setIsRecording(false);
+        toast.info("🎙️ Ditado finalizado — revise o texto e clique em enviar");
       }
+      return;
+    }
+
+    try {
+      speechTranscriptRef.current = "";
+      const recognition = new SpeechRecognitionCtor();
+      recognition.lang = "pt-BR";
+      recognition.interimResults = true;
+      recognition.continuous = true;
+
+      recognition.onresult = (event: any) => {
+        let finalText = "";
+        let interimText = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const result = event.results[i];
+          const text = result?.[0]?.transcript ?? "";
+          if (result.isFinal) finalText += text;
+          else interimText += text;
+        }
+        const merged = `${speechTranscriptRef.current} ${finalText}`.trim();
+        speechTranscriptRef.current = merged;
+        setInput(`${merged}${interimText ? " " + interimText.trim() : ""}`.trim());
+      };
+
+      recognition.onerror = (e: any) => {
+        console.error("SpeechRecognition error", e);
+        toast.error("Erro no ditado por voz");
+        setIsRecording(false);
+      };
+
+      recognition.onend = () => {
+        setIsRecording(false);
+      };
+
+      speechRecognitionRef.current = recognition;
+      recognition.start();
+      setIsRecording(true);
+      toast.info("🎙️ Ditado por voz ativado — fale agora");
+    } catch (error) {
+      console.error(error);
+      toast.error("Erro ao iniciar o ditado");
     }
   }, [isRecording]);
 
@@ -264,8 +299,8 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
 
   // Send message
   const handleSend = useCallback(async (text?: string) => {
-    const messageText = text || input;
-    if (!messageText.trim() || isLoading || !user) return;
+    const messageText = text ?? input;
+    if (((!messageText || !messageText.trim()) && !selectedImage) || isLoading || !user) return;
 
     // Check programmer mode (OWNER ONLY)
     if (isOwner && detectProgrammerMode(messageText)) {
@@ -288,7 +323,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
     const userMessage: Message = {
       id: Date.now().toString(),
       type: "user",
-      content: messageText,
+      content: (messageText && messageText.trim()) ? messageText : (selectedImage ? "📎 Imagem enviada para análise" : ""),
       timestamp: new Date(),
       image: selectedImage || undefined
     };
@@ -349,6 +384,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
           }]);
           
           if (data.sucesso) {
+            invalidateAll();
             toast.success(`✅ Executado em ${tempoProcessamento}ms`);
           }
           setIsLoading(false);
@@ -565,7 +601,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
                 : 'bottom-6 right-6 w-[420px] h-[680px] max-h-[85vh]'
             }`}
           >
-            <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl shadow-purple-500/20 border border-white/10 backdrop-blur-xl bg-gradient-to-br from-slate-900/95 via-purple-950/90 to-slate-900/95">
+            <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl shadow-purple-500/20 border border-white/10 backdrop-blur-xl bg-gradient-to-br from-slate-900/95 via-purple-950/90 to-slate-900/95 flex flex-col">
               
               {/* Header */}
               <div className="relative px-5 py-4 border-b border-white/10 bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-fuchsia-600/20">
@@ -816,7 +852,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
                     />
                     <Button
                       onClick={() => handleSend()}
-                      disabled={!input.trim() || isLoading}
+                      disabled={((!input.trim() && !selectedImage) || isLoading)}
                       className="absolute right-1.5 bottom-1.5 h-8 w-8 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50"
                     >
                       {isLoading ? (
