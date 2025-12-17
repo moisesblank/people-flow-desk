@@ -95,6 +95,42 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_audit_log: {
+        Row: {
+          action_payload: Json | null
+          action_type: string
+          actor_name: string | null
+          actor_phone: string
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          result_message: string | null
+          result_status: string | null
+        }
+        Insert: {
+          action_payload?: Json | null
+          action_type: string
+          actor_name?: string | null
+          actor_phone: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          result_message?: string | null
+          result_status?: string | null
+        }
+        Update: {
+          action_payload?: Json | null
+          action_type?: string
+          actor_name?: string | null
+          actor_phone?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          result_message?: string | null
+          result_status?: string | null
+        }
+        Relationships: []
+      }
       affiliates: {
         Row: {
           comissao_total: number | null
@@ -503,6 +539,141 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      command_finance: {
+        Row: {
+          amount: number
+          counterparty: string | null
+          created_at: string | null
+          created_by: string | null
+          currency: string | null
+          date: string | null
+          description: string | null
+          id: string
+          related_attachment_id: string | null
+          related_conversation_id: string | null
+          source: string | null
+          status: string | null
+          tags: Json | null
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          counterparty?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          related_attachment_id?: string | null
+          related_conversation_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: Json | null
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          counterparty?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          currency?: string | null
+          date?: string | null
+          description?: string | null
+          id?: string
+          related_attachment_id?: string | null
+          related_conversation_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: Json | null
+          type?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_finance_related_attachment_id_fkey"
+            columns: ["related_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "command_finance_related_conversation_id_fkey"
+            columns: ["related_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      command_tasks: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          due_date: string | null
+          id: string
+          owner: string | null
+          priority: string | null
+          related_attachment_id: string | null
+          related_conversation_id: string | null
+          source: string | null
+          status: string | null
+          tags: Json | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner?: string | null
+          priority?: string | null
+          related_attachment_id?: string | null
+          related_conversation_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: Json | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          owner?: string | null
+          priority?: string | null
+          related_attachment_id?: string | null
+          related_conversation_id?: string | null
+          source?: string | null
+          status?: string | null
+          tags?: Json | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_tasks_related_attachment_id_fkey"
+            columns: ["related_attachment_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_attachments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "command_tasks_related_conversation_id_fkey"
+            columns: ["related_conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -3798,6 +3969,39 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_diagnostics: {
+        Row: {
+          created_at: string | null
+          error_message: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          payload_size: number | null
+          processing_time_ms: number | null
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          payload_size?: number | null
+          processing_time_ms?: number | null
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          error_message?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          payload_size?: number | null
+          processing_time_ms?: number | null
+          status?: string | null
+        }
+        Relationships: []
+      }
       webhook_rate_limits: {
         Row: {
           created_at: string
@@ -3873,6 +4077,78 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_attachments: {
+        Row: {
+          attachment_type: string
+          caption: string | null
+          conversation_id: string | null
+          created_at: string | null
+          download_error: string | null
+          download_status: string | null
+          duration: number | null
+          file_size: number | null
+          filename: string | null
+          id: string
+          message_id: string | null
+          metadata: Json | null
+          mime_type: string | null
+          public_url: string | null
+          sha256: string | null
+          storage_path: string | null
+        }
+        Insert: {
+          attachment_type: string
+          caption?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          download_error?: string | null
+          download_status?: string | null
+          duration?: number | null
+          file_size?: number | null
+          filename?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          mime_type?: string | null
+          public_url?: string | null
+          sha256?: string | null
+          storage_path?: string | null
+        }
+        Update: {
+          attachment_type?: string
+          caption?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
+          download_error?: string | null
+          download_status?: string | null
+          duration?: number | null
+          file_size?: number | null
+          filename?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json | null
+          mime_type?: string | null
+          public_url?: string | null
+          sha256?: string | null
+          storage_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_attachments_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_attachments_message_id_fkey"
+            columns: ["message_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_messages"
+            referencedColumns: ["message_id"]
+          },
+        ]
+      }
       whatsapp_conversation_history: {
         Row: {
           ai_response: string
@@ -3920,6 +4196,60 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      whatsapp_conversations: {
+        Row: {
+          created_at: string | null
+          crm_stage: string | null
+          display_name: string | null
+          id: string
+          last_message_at: string | null
+          notes: string | null
+          owner_detected: boolean | null
+          owner_name: string | null
+          phone: string
+          session_mode: string | null
+          session_started_at: string | null
+          status: string | null
+          tags: Json | null
+          unread_count: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          crm_stage?: string | null
+          display_name?: string | null
+          id?: string
+          last_message_at?: string | null
+          notes?: string | null
+          owner_detected?: boolean | null
+          owner_name?: string | null
+          phone: string
+          session_mode?: string | null
+          session_started_at?: string | null
+          status?: string | null
+          tags?: Json | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          crm_stage?: string | null
+          display_name?: string | null
+          id?: string
+          last_message_at?: string | null
+          notes?: string | null
+          owner_detected?: boolean | null
+          owner_name?: string | null
+          phone?: string
+          session_mode?: string | null
+          session_started_at?: string | null
+          status?: string | null
+          tags?: Json | null
+          unread_count?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       whatsapp_leads: {
         Row: {
@@ -3977,6 +4307,68 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      whatsapp_messages: {
+        Row: {
+          conversation_id: string | null
+          created_at: string | null
+          direction: string
+          from_phone: string
+          handled_by: string | null
+          id: string
+          is_read: boolean | null
+          message_id: string
+          message_text: string | null
+          message_type: string | null
+          raw_payload: Json | null
+          timestamp: string | null
+          to_phone: string | null
+          trigger_detected: boolean | null
+          trigger_name: string | null
+        }
+        Insert: {
+          conversation_id?: string | null
+          created_at?: string | null
+          direction: string
+          from_phone: string
+          handled_by?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_id: string
+          message_text?: string | null
+          message_type?: string | null
+          raw_payload?: Json | null
+          timestamp?: string | null
+          to_phone?: string | null
+          trigger_detected?: boolean | null
+          trigger_name?: string | null
+        }
+        Update: {
+          conversation_id?: string | null
+          created_at?: string | null
+          direction?: string
+          from_phone?: string
+          handled_by?: string | null
+          id?: string
+          is_read?: boolean | null
+          message_id?: string
+          message_text?: string | null
+          message_type?: string | null
+          raw_payload?: Json | null
+          timestamp?: string | null
+          to_phone?: string | null
+          trigger_detected?: boolean | null
+          trigger_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_conversations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_notifications: {
         Row: {
