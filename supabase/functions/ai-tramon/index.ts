@@ -1,6 +1,6 @@
 // ============================================
-// 🌟 TRAMON v7.0 OMEGA - SUPERINTELIGÊNCIA DEFINITIVA
-// A FUSÃO PERFEITA: IA + ASSESSOR + AUTOMAÇÃO
+// 🌟 TRAMON v8.0 OMEGA ULTRA - SUPERINTELIGÊNCIA TOTAL
+// INTEGRAÇÃO COMPLETA: Hotmart + YouTube + Instagram + WhatsApp + Finanças
 // Modelo: Gemini 2.5 Pro (Multimodal)
 // ============================================
 
@@ -12,9 +12,6 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// ========================================
-// 🎭 CONFIGURAÇÃO AVANÇADA
-// ========================================
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
 const ASSESSORES = {
@@ -23,34 +20,34 @@ const ASSESSORES = {
 };
 
 // ========================================
-// 🧠 CATEGORIZAÇÃO INTELIGENTE v2.0
+// 🧠 CATEGORIZAÇÃO INTELIGENTE v3.0
 // ========================================
 const CATEGORIAS_DESPESAS: Record<string, { palavras: string[], emoji: string }> = {
-  "🍽️ Alimentação": { palavras: ["comida", "restaurante", "lanche", "almoço", "jantar", "supermercado", "mercado", "padaria", "café", "pizza", "hamburguer", "delivery", "ifood", "açaí", "sushi"], emoji: "🍽️" },
-  "🚗 Transporte": { palavras: ["gasolina", "uber", "taxi", "ônibus", "combustível", "pedágio", "estacionamento", "carro", "moto", "99", "passagem", "diesel", "álcool"], emoji: "🚗" },
-  "💊 Saúde": { palavras: ["médico", "farmácia", "remédio", "consulta", "exame", "hospital", "dentista", "psicólogo", "academia", "plano", "vacina", "fisioterapia"], emoji: "💊" },
-  "📚 Educação": { palavras: ["curso", "livro", "material", "mensalidade", "faculdade", "escola", "apostila", "caneta", "caderno", "workshop", "treinamento"], emoji: "📚" },
-  "🏠 Moradia": { palavras: ["aluguel", "condomínio", "água", "luz", "energia", "internet", "gás", "iptu", "conserto", "reforma", "móveis", "eletrodoméstico"], emoji: "🏠" },
-  "🎬 Lazer": { palavras: ["cinema", "show", "viagem", "entretenimento", "netflix", "spotify", "jogo", "festa", "bar", "balada", "teatro", "parque"], emoji: "🎬" },
-  "👔 Vestuário": { palavras: ["roupa", "sapato", "tênis", "camisa", "calça", "vestido", "bermuda", "chinelo", "jaqueta", "blusa"], emoji: "👔" },
-  "📱 Tecnologia": { palavras: ["celular", "computador", "notebook", "tablet", "eletrônico", "software", "app", "assinatura", "domínio", "hosting"], emoji: "📱" },
-  "💼 Empresarial": { palavras: ["fornecedor", "nota", "fiscal", "imposto", "taxa", "comissão", "afiliado", "ads", "anúncio", "marketing", "plataforma"], emoji: "💼" },
+  "Alimentação": { palavras: ["comida", "restaurante", "lanche", "almoço", "jantar", "supermercado", "mercado", "padaria", "café", "pizza", "hamburguer", "delivery", "ifood", "açaí", "sushi", "feira"], emoji: "🍽️" },
+  "Transporte": { palavras: ["gasolina", "uber", "taxi", "ônibus", "combustível", "pedágio", "estacionamento", "carro", "moto", "99", "passagem", "diesel", "álcool"], emoji: "🚗" },
+  "Saúde": { palavras: ["médico", "farmácia", "remédio", "consulta", "exame", "hospital", "dentista", "psicólogo", "academia", "plano", "vacina", "fisioterapia"], emoji: "💊" },
+  "Educação": { palavras: ["curso", "livro", "material", "mensalidade", "faculdade", "escola", "apostila", "caneta", "caderno", "workshop", "treinamento"], emoji: "📚" },
+  "Moradia": { palavras: ["aluguel", "condomínio", "água", "luz", "energia", "internet", "gás", "iptu", "conserto", "reforma", "móveis", "eletrodoméstico"], emoji: "🏠" },
+  "Lazer": { palavras: ["cinema", "show", "viagem", "entretenimento", "netflix", "spotify", "jogo", "festa", "bar", "balada", "teatro", "parque"], emoji: "🎬" },
+  "Vestuário": { palavras: ["roupa", "sapato", "tênis", "camisa", "calça", "vestido", "bermuda", "chinelo", "jaqueta", "blusa"], emoji: "👔" },
+  "Tecnologia": { palavras: ["celular", "computador", "notebook", "tablet", "eletrônico", "software", "app", "assinatura", "domínio", "hosting"], emoji: "📱" },
+  "Empresarial": { palavras: ["fornecedor", "nota", "fiscal", "imposto", "taxa", "comissão", "afiliado", "ads", "anúncio", "marketing", "plataforma"], emoji: "💼" },
+  "Pet": { palavras: ["cachorro", "gato", "pet", "ração", "veterinário", "banho", "tosa", "animal"], emoji: "🐕" },
 };
 
 const CATEGORIAS_RECEITAS: Record<string, { palavras: string[], emoji: string }> = {
-  "💰 Vendas Cursos": { palavras: ["curso", "venda", "aluno", "matricula", "hotmart", "inscrição"], emoji: "💰" },
-  "🤝 Afiliados": { palavras: ["afiliado", "comissão", "parceiro", "indicação"], emoji: "🤝" },
-  "📖 Aulas Particulares": { palavras: ["particular", "aula", "tutoria", "mentoria"], emoji: "📖" },
-  "🎯 Consultoria": { palavras: ["consultoria", "assessoria", "projeto"], emoji: "🎯" },
-  "💵 Outros": { palavras: ["outros", "diversos", "extra"], emoji: "💵" },
+  "Vendas Cursos": { palavras: ["curso", "venda", "aluno", "matricula", "hotmart", "inscrição", "assinatura"], emoji: "💰" },
+  "Afiliados": { palavras: ["afiliado", "comissão", "parceiro", "indicação"], emoji: "🤝" },
+  "Aulas Particulares": { palavras: ["particular", "aula", "tutoria", "mentoria"], emoji: "📖" },
+  "Consultoria": { palavras: ["consultoria", "assessoria", "projeto"], emoji: "🎯" },
+  "YouTube": { palavras: ["youtube", "adsense", "monetização", "views"], emoji: "📺" },
+  "Outros": { palavras: ["outros", "diversos", "extra"], emoji: "💵" },
 };
 
 function categorizarDespesa(descricao: string): { categoria: string, emoji: string } {
   const texto = descricao.toLowerCase();
   for (const [categoria, { palavras, emoji }] of Object.entries(CATEGORIAS_DESPESAS)) {
-    if (palavras.some(p => texto.includes(p))) {
-      return { categoria: categoria.replace(/^[^\s]+\s/, ''), emoji };
-    }
+    if (palavras.some(p => texto.includes(p))) return { categoria, emoji };
   }
   return { categoria: "Outros", emoji: "📦" };
 }
@@ -58,15 +55,13 @@ function categorizarDespesa(descricao: string): { categoria: string, emoji: stri
 function categorizarReceita(descricao: string): { categoria: string, emoji: string } {
   const texto = descricao.toLowerCase();
   for (const [categoria, { palavras, emoji }] of Object.entries(CATEGORIAS_RECEITAS)) {
-    if (palavras.some(p => texto.includes(p))) {
-      return { categoria: categoria.replace(/^[^\s]+\s/, ''), emoji };
-    }
+    if (palavras.some(p => texto.includes(p))) return { categoria, emoji };
   }
   return { categoria: "Outros", emoji: "💵" };
 }
 
 // ========================================
-// 🧮 EXTRATOR DE ENTIDADES AVANÇADO
+// 🧮 EXTRATOR DE ENTIDADES v3.0
 // ========================================
 function extrairValor(texto: string): number | null {
   const patterns = [
@@ -130,10 +125,10 @@ function processarData(texto: string): string {
 }
 
 // ========================================
-// 🎯 DETECTOR DE INTENÇÃO v2.0
+// 🎯 DETECTOR DE INTENÇÃO v3.0
 // ========================================
 interface IntencaoDetectada {
-  tipo: 'despesa' | 'receita' | 'aluno' | 'tarefa' | 'consulta' | 'relatorio' | 'conversa';
+  tipo: 'despesa' | 'receita' | 'aluno' | 'tarefa' | 'funcionario' | 'afiliado' | 'consulta' | 'relatorio' | 'integracao' | 'conversa';
   confianca: number;
   entidades: {
     valor?: number;
@@ -144,24 +139,18 @@ interface IntencaoDetectada {
     telefone?: string;
     data?: string;
     periodo?: string;
+    integracao?: string;
   };
 }
 
 function detectarIntencao(texto: string): IntencaoDetectada {
   const lower = texto.toLowerCase();
   
-  // DESPESA (prioridade alta)
-  const padroesDespesa = [
-    /(?:gastei|paguei|comprei|custou|desembolsei)/i,
-    /despesa\s+(?:de|com)/i,
-    /(?:pagamento|conta)\s+(?:de|do|da)/i,
-  ];
-  
-  if (padroesDespesa.some(p => p.test(lower))) {
+  // DESPESA
+  if (/(?:gastei|paguei|comprei|custou|desembolsei|despesa)/i.test(lower)) {
     const valor = extrairValor(texto);
     const { categoria, emoji } = categorizarDespesa(texto);
     const descricao = texto.replace(/gastei|paguei|comprei|reais|r\$|\d+[.,]?\d*/gi, '').trim() || categoria;
-    
     return {
       tipo: 'despesa',
       confianca: valor ? 0.95 : 0.7,
@@ -170,17 +159,10 @@ function detectarIntencao(texto: string): IntencaoDetectada {
   }
   
   // RECEITA
-  const padroesReceita = [
-    /(?:recebi|ganhei|entrou|faturei|vendi)/i,
-    /receita\s+(?:de|com)/i,
-    /(?:venda|entrada)\s+(?:de|do|da)/i,
-  ];
-  
-  if (padroesReceita.some(p => p.test(lower))) {
+  if (/(?:recebi|ganhei|entrou|faturei|vendi|receita)/i.test(lower)) {
     const valor = extrairValor(texto);
     const { categoria, emoji } = categorizarReceita(texto);
     const descricao = texto.replace(/recebi|ganhei|entrou|reais|r\$|\d+[.,]?\d*/gi, '').trim() || categoria;
-    
     return {
       tipo: 'receita',
       confianca: valor ? 0.95 : 0.7,
@@ -189,33 +171,34 @@ function detectarIntencao(texto: string): IntencaoDetectada {
   }
   
   // ALUNO
-  const padroesAluno = [
-    /(?:cadastrar|adicionar|registrar|criar)\s+aluno/i,
-    /novo\s+aluno/i,
-    /aluno\s+(?:chamado|nome)/i,
-  ];
-  
-  if (padroesAluno.some(p => p.test(lower))) {
+  if (/(?:cadastrar|adicionar|registrar|criar)\s+aluno|novo\s+aluno/i.test(lower)) {
     return {
       tipo: 'aluno',
       confianca: 0.9,
-      entidades: { 
-        nome: extrairNome(texto) || undefined,
-        email: extrairEmail(texto) || undefined,
-        telefone: extrairTelefone(texto) || undefined
-      }
+      entidades: { nome: extrairNome(texto) || undefined, email: extrairEmail(texto) || undefined, telefone: extrairTelefone(texto) || undefined }
+    };
+  }
+  
+  // FUNCIONÁRIO
+  if (/(?:cadastrar|adicionar|registrar|criar)\s+(?:funcionário|funcionario|colaborador)|novo\s+(?:funcionário|funcionario)/i.test(lower)) {
+    return {
+      tipo: 'funcionario',
+      confianca: 0.9,
+      entidades: { nome: extrairNome(texto) || undefined, email: extrairEmail(texto) || undefined, telefone: extrairTelefone(texto) || undefined }
+    };
+  }
+  
+  // AFILIADO
+  if (/(?:cadastrar|adicionar|registrar|criar)\s+afiliado|novo\s+afiliado/i.test(lower)) {
+    return {
+      tipo: 'afiliado',
+      confianca: 0.9,
+      entidades: { nome: extrairNome(texto) || undefined, email: extrairEmail(texto) || undefined, telefone: extrairTelefone(texto) || undefined }
     };
   }
   
   // TAREFA
-  const padroesTarefa = [
-    /(?:criar|adicionar|nova)\s+tarefa/i,
-    /lembrar\s+(?:de|que)/i,
-    /(?:agendar|marcar)\s+/i,
-    /to-?do|fazer/i,
-  ];
-  
-  if (padroesTarefa.some(p => p.test(lower))) {
+  if (/(?:criar|adicionar|nova)\s+tarefa|lembrar\s+(?:de|que)|agendar|marcar|to-?do|fazer/i.test(lower)) {
     const descricao = texto.replace(/criar|adicionar|nova|tarefa|lembrar|de|que|agendar|marcar/gi, '').trim();
     return {
       tipo: 'tarefa',
@@ -224,39 +207,41 @@ function detectarIntencao(texto: string): IntencaoDetectada {
     };
   }
   
-  // CONSULTA
-  const padroesConsulta = [
-    /(?:quanto|quantos|qual|quais)\s+/i,
-    /(?:saldo|total|soma)\s+(?:de|do|da)?/i,
-    /(?:listar|mostrar|ver)\s+/i,
-    /(?:hoje|ontem|semana|mês)/i,
-  ];
+  // INTEGRAÇÃO (YouTube, Instagram, Hotmart, WhatsApp)
+  if (/(?:youtube|canal|vídeos?|views|inscritos)/i.test(lower)) {
+    return { tipo: 'integracao', confianca: 0.9, entidades: { integracao: 'youtube' } };
+  }
+  if (/(?:instagram|insta|seguidores|posts?|stories)/i.test(lower)) {
+    return { tipo: 'integracao', confianca: 0.9, entidades: { integracao: 'instagram' } };
+  }
+  if (/(?:hotmart|vendas?\s+hotmart|comissões?\s+hotmart)/i.test(lower)) {
+    return { tipo: 'integracao', confianca: 0.9, entidades: { integracao: 'hotmart' } };
+  }
+  if (/(?:whatsapp|zap|conversas?\s+whatsapp|leads?\s+whatsapp)/i.test(lower)) {
+    return { tipo: 'integracao', confianca: 0.9, entidades: { integracao: 'whatsapp' } };
+  }
   
-  if (padroesConsulta.some(p => p.test(lower))) {
+  // CONSULTA
+  if (/(?:quanto|quantos|qual|quais|saldo|total|soma|listar|mostrar|ver|hoje|ontem|semana|mês)/i.test(lower)) {
     let periodo = 'hoje';
     if (lower.includes('mês') || lower.includes('mensal')) periodo = 'mes';
     else if (lower.includes('semana')) periodo = 'semana';
     else if (lower.includes('ontem')) periodo = 'ontem';
     else if (lower.includes('ano')) periodo = 'ano';
     
-    return {
-      tipo: 'consulta',
-      confianca: 0.8,
-      entidades: { periodo }
-    };
+    return { tipo: 'consulta', confianca: 0.8, entidades: { periodo } };
   }
   
   // RELATÓRIO
-  if (lower.includes('relatório') || lower.includes('análise') || lower.includes('executivo')) {
+  if (/relatório|análise|executivo|dashboard|resumo\s+(?:geral|completo)/i.test(lower)) {
     return { tipo: 'relatorio', confianca: 0.9, entidades: {} };
   }
   
-  // CONVERSA (fallback)
   return { tipo: 'conversa', confianca: 1.0, entidades: {} };
 }
 
 // ========================================
-// ⚡ EXECUTOR DE COMANDOS v2.0
+// ⚡ EXECUTOR DE COMANDOS v3.0
 // ========================================
 async function executarComando(supabase: any, intencao: IntencaoDetectada, userId: string): Promise<{ sucesso: boolean, resposta: string, dados?: any }> {
   const { tipo, entidades } = intencao;
@@ -264,9 +249,7 @@ async function executarComando(supabase: any, intencao: IntencaoDetectada, userI
   try {
     switch (tipo) {
       case 'despesa': {
-        if (!entidades.valor) {
-          return { sucesso: false, resposta: "❓ Qual o valor da despesa? Ex: 'Gastei 50 reais de gasolina'" };
-        }
+        if (!entidades.valor) return { sucesso: false, resposta: "❓ Qual o valor da despesa? Ex: 'Gastei 50 reais de gasolina'" };
         
         const { data, error } = await supabase.from('gastos').insert({
           valor: entidades.valor,
@@ -274,22 +257,20 @@ async function executarComando(supabase: any, intencao: IntencaoDetectada, userI
           categoria: entidades.categoria?.replace(/^[^\s]+\s/, '') || 'Outros',
           data: entidades.data || new Date().toISOString(),
           created_by: userId,
-          fonte: 'TRAMON v7'
+          fonte: 'TRAMON v8'
         }).select().single();
         
         if (error) throw error;
         
         return {
           sucesso: true,
-          resposta: `✅ **Despesa registrada!**\n\n💸 **R$ ${entidades.valor.toFixed(2)}**\n📂 ${entidades.categoria || 'Outros'}\n📝 ${entidades.descricao || 'Despesa'}\n⏰ ${new Date(entidades.data || '').toLocaleDateString('pt-BR')}`,
+          resposta: `✅ **Despesa registrada!**\n\n💸 **R$ ${entidades.valor.toFixed(2)}**\n📂 ${entidades.categoria || 'Outros'}\n📝 ${entidades.descricao || 'Despesa'}`,
           dados: data
         };
       }
       
       case 'receita': {
-        if (!entidades.valor) {
-          return { sucesso: false, resposta: "❓ Qual o valor da receita? Ex: 'Recebi 1500 de venda do curso'" };
-        }
+        if (!entidades.valor) return { sucesso: false, resposta: "❓ Qual o valor da receita? Ex: 'Recebi 1500 de venda do curso'" };
         
         const { data, error } = await supabase.from('entradas').insert({
           valor: entidades.valor,
@@ -297,7 +278,7 @@ async function executarComando(supabase: any, intencao: IntencaoDetectada, userI
           categoria: entidades.categoria?.replace(/^[^\s]+\s/, '') || 'Vendas',
           data: entidades.data || new Date().toISOString(),
           created_by: userId,
-          fonte: 'TRAMON v7'
+          fonte: 'TRAMON v8'
         }).select().single();
         
         if (error) throw error;
@@ -310,31 +291,67 @@ async function executarComando(supabase: any, intencao: IntencaoDetectada, userI
       }
       
       case 'aluno': {
-        if (!entidades.nome && !entidades.email) {
-          return { sucesso: false, resposta: "❓ Preciso do nome ou email do aluno. Ex: 'Cadastrar aluno João Silva, email joao@email.com'" };
-        }
+        if (!entidades.nome && !entidades.email) return { sucesso: false, resposta: "❓ Preciso do nome ou email do aluno." };
         
         const { data, error } = await supabase.from('alunos').insert({
           nome: entidades.nome || 'Aluno',
           email: entidades.email || `aluno${Date.now()}@temp.com`,
           telefone: entidades.telefone,
           status: 'ativo',
-          fonte: 'TRAMON v7'
+          fonte: 'TRAMON v8'
         }).select().single();
         
         if (error) throw error;
         
         return {
           sucesso: true,
-          resposta: `✅ **Aluno cadastrado!**\n\n👤 **${entidades.nome || 'Aluno'}**\n📧 ${entidades.email || 'Email não informado'}\n📱 ${entidades.telefone || 'Telefone não informado'}`,
+          resposta: `✅ **Aluno cadastrado!**\n\n👤 **${entidades.nome || 'Aluno'}**\n📧 ${entidades.email || 'Não informado'}\n📱 ${entidades.telefone || 'Não informado'}`,
+          dados: data
+        };
+      }
+      
+      case 'funcionario': {
+        if (!entidades.nome) return { sucesso: false, resposta: "❓ Qual o nome do funcionário?" };
+        
+        const { data, error } = await supabase.from('employees').insert({
+          nome: entidades.nome,
+          email: entidades.email,
+          telefone: entidades.telefone,
+          funcao: 'A definir',
+          status: 'ativo',
+          created_by: userId
+        }).select().single();
+        
+        if (error) throw error;
+        
+        return {
+          sucesso: true,
+          resposta: `✅ **Funcionário cadastrado!**\n\n👔 **${entidades.nome}**\n📧 ${entidades.email || 'Não informado'}\n📱 ${entidades.telefone || 'Não informado'}`,
+          dados: data
+        };
+      }
+      
+      case 'afiliado': {
+        if (!entidades.nome) return { sucesso: false, resposta: "❓ Qual o nome do afiliado?" };
+        
+        const { data, error } = await supabase.from('affiliates').insert({
+          nome: entidades.nome,
+          email: entidades.email,
+          whatsapp: entidades.telefone,
+          status: 'ativo'
+        }).select().single();
+        
+        if (error) throw error;
+        
+        return {
+          sucesso: true,
+          resposta: `✅ **Afiliado cadastrado!**\n\n🤝 **${entidades.nome}**\n📧 ${entidades.email || 'Não informado'}\n📱 ${entidades.telefone || 'Não informado'}`,
           dados: data
         };
       }
       
       case 'tarefa': {
-        if (!entidades.descricao) {
-          return { sucesso: false, resposta: "❓ O que precisa ser feito? Ex: 'Criar tarefa: Revisar relatório financeiro'" };
-        }
+        if (!entidades.descricao) return { sucesso: false, resposta: "❓ O que precisa ser feito?" };
         
         const { data, error } = await supabase.from('calendar_tasks').insert({
           title: entidades.descricao.substring(0, 100),
@@ -354,47 +371,98 @@ async function executarComando(supabase: any, intencao: IntencaoDetectada, userI
         };
       }
       
+      case 'integracao': {
+        const integracao = entidades.integracao;
+        
+        if (integracao === 'youtube') {
+          const { data } = await supabase.from('youtube_metrics').select('*').order('data', { ascending: false }).limit(1).single();
+          if (data) {
+            return {
+              sucesso: true,
+              resposta: `📺 **Métricas YouTube**\n\n👥 **Inscritos:** ${data.inscritos?.toLocaleString() || 'N/A'}\n👀 **Visualizações:** ${data.visualizacoes?.toLocaleString() || 'N/A'}\n🎬 **Vídeos:** ${data.videos || 'N/A'}\n📈 **Novos Inscritos (7d):** ${data.novos_inscritos_semana || 'N/A'}`,
+              dados: data
+            };
+          }
+          return { sucesso: true, resposta: "📺 **YouTube** - Configure a integração em Configurações → Integrações" };
+        }
+        
+        if (integracao === 'instagram') {
+          const { data } = await supabase.from('instagram_metrics').select('*').order('data', { ascending: false }).limit(1).single();
+          if (data) {
+            return {
+              sucesso: true,
+              resposta: `📸 **Métricas Instagram**\n\n👥 **Seguidores:** ${data.seguidores?.toLocaleString() || 'N/A'}\n📊 **Alcance:** ${data.alcance?.toLocaleString() || 'N/A'}\n💬 **Engajamento:** ${data.engajamento_rate?.toFixed(2) || 'N/A'}%\n📝 **Posts:** ${data.posts_count || 'N/A'}`,
+              dados: data
+            };
+          }
+          return { sucesso: true, resposta: "📸 **Instagram** - Configure a integração em Configurações → Integrações" };
+        }
+        
+        if (integracao === 'hotmart') {
+          const [alunosRes, comissoesRes] = await Promise.all([
+            supabase.from('alunos').select('id').eq('fonte', 'Hotmart'),
+            supabase.from('comissoes').select('valor').eq('status', 'pago')
+          ]);
+          
+          const totalAlunos = alunosRes.data?.length || 0;
+          const totalComissoes = (comissoesRes.data || []).reduce((s: number, c: any) => s + (c.valor || 0), 0);
+          
+          return {
+            sucesso: true,
+            resposta: `🔥 **Métricas Hotmart**\n\n👥 **Alunos via Hotmart:** ${totalAlunos}\n💰 **Comissões Pagas:** R$ ${totalComissoes.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}\n📊 **Webhook:** Ativo`,
+            dados: { totalAlunos, totalComissoes }
+          };
+        }
+        
+        if (integracao === 'whatsapp') {
+          const [conversasRes, leadsRes, tarefasRes] = await Promise.all([
+            supabase.from('whatsapp_conversations').select('id').eq('status', 'open'),
+            supabase.from('whatsapp_leads').select('id'),
+            supabase.from('command_tasks').select('id').eq('source', 'whatsapp')
+          ]);
+          
+          return {
+            sucesso: true,
+            resposta: `📱 **Métricas WhatsApp**\n\n💬 **Conversas Abertas:** ${conversasRes.data?.length || 0}\n👥 **Leads Capturados:** ${leadsRes.data?.length || 0}\n📋 **Tarefas via WhatsApp:** ${tarefasRes.data?.length || 0}\n🤖 **IA:** Ativa`,
+            dados: { conversas: conversasRes.data?.length, leads: leadsRes.data?.length }
+          };
+        }
+        
+        return { sucesso: false, resposta: "Integração não encontrada" };
+      }
+      
       case 'consulta': {
         const periodo = entidades.periodo || 'hoje';
         let dataInicio: Date;
         const agora = new Date();
         
         switch (periodo) {
-          case 'ontem':
-            dataInicio = new Date(agora);
-            dataInicio.setDate(dataInicio.getDate() - 1);
-            dataInicio.setHours(0, 0, 0, 0);
-            break;
-          case 'semana':
-            dataInicio = new Date(agora);
-            dataInicio.setDate(dataInicio.getDate() - 7);
-            break;
-          case 'mes':
-            dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1);
-            break;
-          case 'ano':
-            dataInicio = new Date(agora.getFullYear(), 0, 1);
-            break;
-          default: // hoje
-            dataInicio = new Date(agora);
-            dataInicio.setHours(0, 0, 0, 0);
+          case 'ontem': dataInicio = new Date(agora); dataInicio.setDate(dataInicio.getDate() - 1); dataInicio.setHours(0, 0, 0, 0); break;
+          case 'semana': dataInicio = new Date(agora); dataInicio.setDate(dataInicio.getDate() - 7); break;
+          case 'mes': dataInicio = new Date(agora.getFullYear(), agora.getMonth(), 1); break;
+          case 'ano': dataInicio = new Date(agora.getFullYear(), 0, 1); break;
+          default: dataInicio = new Date(agora); dataInicio.setHours(0, 0, 0, 0);
         }
         
-        const [gastosRes, entradasRes] = await Promise.all([
-          supabase.from('gastos').select('valor, categoria, descricao').gte('data', dataInicio.toISOString()),
-          supabase.from('entradas').select('valor, categoria, descricao').gte('data', dataInicio.toISOString())
+        const [gastosRes, entradasRes, tarefasRes, alunosRes] = await Promise.all([
+          supabase.from('gastos').select('valor, categoria').gte('data', dataInicio.toISOString()),
+          supabase.from('entradas').select('valor, categoria').gte('data', dataInicio.toISOString()),
+          supabase.from('calendar_tasks').select('id, is_completed').gte('task_date', dataInicio.toISOString().split('T')[0]),
+          supabase.from('alunos').select('id').gte('created_at', dataInicio.toISOString())
         ]);
         
-        const totalGastos = (gastosRes.data || []).reduce((sum: number, g: any) => sum + (g.valor || 0), 0);
-        const totalEntradas = (entradasRes.data || []).reduce((sum: number, e: any) => sum + (e.valor || 0), 0);
+        const totalGastos = (gastosRes.data || []).reduce((s: number, g: any) => s + (g.valor || 0), 0);
+        const totalEntradas = (entradasRes.data || []).reduce((s: number, e: any) => s + (e.valor || 0), 0);
         const saldo = totalEntradas - totalGastos;
+        const tarefasConcluidas = (tarefasRes.data || []).filter((t: any) => t.is_completed).length;
+        const tarefasTotal = tarefasRes.data?.length || 0;
         
         const periodoNome = periodo === 'hoje' ? 'Hoje' : periodo === 'ontem' ? 'Ontem' : periodo === 'semana' ? 'Últimos 7 dias' : periodo === 'mes' ? 'Este mês' : 'Este ano';
         
         return {
           sucesso: true,
-          resposta: `📊 **Resumo Financeiro - ${periodoNome}**\n\n💰 **Receitas:** R$ ${totalEntradas.toFixed(2)} (${entradasRes.data?.length || 0} registros)\n💸 **Despesas:** R$ ${totalGastos.toFixed(2)} (${gastosRes.data?.length || 0} registros)\n\n${saldo >= 0 ? '✅' : '🔴'} **Saldo:** R$ ${saldo.toFixed(2)}`,
-          dados: { totalGastos, totalEntradas, saldo, periodo }
+          resposta: `📊 **Resumo ${periodoNome}**\n\n💰 **Receitas:** R$ ${totalEntradas.toFixed(2)} (${entradasRes.data?.length || 0})\n💸 **Despesas:** R$ ${totalGastos.toFixed(2)} (${gastosRes.data?.length || 0})\n${saldo >= 0 ? '✅' : '🔴'} **Saldo:** R$ ${saldo.toFixed(2)}\n\n📋 **Tarefas:** ${tarefasConcluidas}/${tarefasTotal} concluídas\n👤 **Novos Alunos:** ${alunosRes.data?.length || 0}`,
+          dados: { totalGastos, totalEntradas, saldo, tarefasConcluidas, tarefasTotal }
         };
       }
       
@@ -402,82 +470,75 @@ async function executarComando(supabase: any, intencao: IntencaoDetectada, userI
         return { sucesso: false, resposta: '' };
     }
   } catch (error) {
-    console.error('[TRAMON v7] Erro ao executar comando:', error);
-    return { sucesso: false, resposta: `❌ Erro ao processar: ${error instanceof Error ? error.message : 'Desconhecido'}` };
+    console.error('[TRAMON v8] Erro:', error);
+    return { sucesso: false, resposta: `❌ Erro: ${error instanceof Error ? error.message : 'Desconhecido'}` };
   }
 }
 
 // ========================================
-// 📊 COLETA DE DADOS EM TEMPO REAL v2.0
+// 📊 COLETA DE DADOS COMPLETA v3.0
 // ========================================
 async function coletarDadosSistema(supabase: any) {
   const agora = new Date();
   const inicioMes = new Date(agora.getFullYear(), agora.getMonth(), 1).toISOString();
-  const inicioMesPassado = new Date(agora.getFullYear(), agora.getMonth() - 1, 1).toISOString();
-  const fimMesPassado = new Date(agora.getFullYear(), agora.getMonth(), 0).toISOString();
+  const inicioSemana = new Date(agora.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
   
   try {
     const [
-      entradasMes, entradasMesPassado,
-      gastosMes, gastosMesPassado,
-      alunos, funcionarios,
-      tarefas, cursos, afiliados
+      entradasMes, gastosMes, alunos, funcionarios, tarefas, cursos, afiliados,
+      whatsappConversas, whatsappLeads, youtubeMetrics, instagramMetrics
     ] = await Promise.all([
-      supabase.from('entradas').select('valor').gte('data', inicioMes),
-      supabase.from('entradas').select('valor').gte('data', inicioMesPassado).lt('data', inicioMes),
+      supabase.from('entradas').select('valor, categoria').gte('data', inicioMes),
       supabase.from('gastos').select('valor, categoria').gte('data', inicioMes),
-      supabase.from('gastos').select('valor').gte('data', inicioMesPassado).lt('data', inicioMes),
-      supabase.from('alunos').select('id, status, created_at'),
-      supabase.from('employees').select('id, status'),
-      supabase.from('calendar_tasks').select('id, is_completed, priority, task_date'),
-      supabase.from('courses').select('id, is_published, total_students'),
-      supabase.from('affiliates').select('id, status, comissao_total')
+      supabase.from('alunos').select('id, status, created_at, fonte'),
+      supabase.from('employees').select('id, status, nome, funcao'),
+      supabase.from('calendar_tasks').select('id, is_completed, priority, task_date, title'),
+      supabase.from('courses').select('id, is_published, total_students, title'),
+      supabase.from('affiliates').select('id, status, nome, comissao_total, total_vendas'),
+      supabase.from('whatsapp_conversations').select('id, status').eq('status', 'open'),
+      supabase.from('whatsapp_leads').select('id').gte('created_at', inicioSemana),
+      supabase.from('youtube_metrics').select('*').order('data', { ascending: false }).limit(1),
+      supabase.from('instagram_metrics').select('*').order('data', { ascending: false }).limit(1)
     ]);
     
-    const totalEntradas = (entradasMes.data || []).reduce((s: number, e: any) => s + (e.valor || 0), 0);
-    const totalEntradasPassado = (entradasMesPassado.data || []).reduce((s: number, e: any) => s + (e.valor || 0), 0);
-    const totalGastos = (gastosMes.data || []).reduce((s: number, g: any) => s + (g.valor || 0), 0);
-    const totalGastosPassado = (gastosMesPassado.data || []).reduce((s: number, g: any) => s + (g.valor || 0), 0);
-    
-    const crescimentoReceita = totalEntradasPassado > 0 ? ((totalEntradas - totalEntradasPassado) / totalEntradasPassado) * 100 : 0;
+    const totalReceita = (entradasMes.data || []).reduce((s: number, e: any) => s + (e.valor || 0), 0);
+    const totalDespesas = (gastosMes.data || []).reduce((s: number, g: any) => s + (g.valor || 0), 0);
     
     const tarefasHoje = (tarefas.data || []).filter((t: any) => t.task_date === agora.toISOString().split('T')[0]);
     const tarefasPendentes = tarefasHoje.filter((t: any) => !t.is_completed);
     const tarefasAtrasadas = (tarefas.data || []).filter((t: any) => !t.is_completed && new Date(t.task_date) < new Date(agora.toISOString().split('T')[0]));
-    const tarefasAltaPrioridade = tarefasPendentes.filter((t: any) => t.priority === 'alta' || t.priority === 'high');
     
-    // Top categorias de gastos
+    // Top categorias
     const gastosPorCategoria: Record<string, number> = {};
     (gastosMes.data || []).forEach((g: any) => {
       const cat = g.categoria || 'Outros';
       gastosPorCategoria[cat] = (gastosPorCategoria[cat] || 0) + (g.valor || 0);
     });
-    const topGastos = Object.entries(gastosPorCategoria).sort((a, b) => b[1] - a[1]).slice(0, 3);
+    const topGastos = Object.entries(gastosPorCategoria).sort((a, b) => b[1] - a[1]).slice(0, 5);
     
     return {
       financial: {
-        receita: totalEntradas,
-        receitaPassada: totalEntradasPassado,
-        despesas: totalGastos,
-        despesasPassadas: totalGastosPassado,
-        lucro: totalEntradas - totalGastos,
-        crescimento: crescimentoReceita,
+        receita: totalReceita,
+        despesas: totalDespesas,
+        lucro: totalReceita - totalDespesas,
         topGastos
       },
       students: {
         total: alunos.data?.length || 0,
         ativos: (alunos.data || []).filter((a: any) => a.status === 'ativo').length,
-        novos30dias: (alunos.data || []).filter((a: any) => new Date(a.created_at) > new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)).length
+        hotmart: (alunos.data || []).filter((a: any) => a.fonte === 'Hotmart').length,
+        novos7dias: (alunos.data || []).filter((a: any) => new Date(a.created_at) > new Date(inicioSemana)).length
       },
       employees: {
         total: funcionarios.data?.length || 0,
-        ativos: (funcionarios.data || []).filter((f: any) => f.status === 'ativo').length
+        ativos: (funcionarios.data || []).filter((f: any) => f.status === 'ativo').length,
+        lista: (funcionarios.data || []).slice(0, 5).map((f: any) => ({ nome: f.nome, funcao: f.funcao }))
       },
       tasks: {
-        total: tarefas.data?.length || 0,
         pendentesHoje: tarefasPendentes.length,
         atrasadas: tarefasAtrasadas.length,
-        altaPrioridade: tarefasAltaPrioridade.length
+        total: tarefas.data?.length || 0,
+        proximas: tarefasPendentes.slice(0, 3).map((t: any) => t.title)
       },
       courses: {
         total: cursos.data?.length || 0,
@@ -487,19 +548,19 @@ async function coletarDadosSistema(supabase: any) {
       affiliates: {
         total: afiliados.data?.length || 0,
         ativos: (afiliados.data || []).filter((a: any) => a.status === 'ativo').length,
-        comissaoTotal: (afiliados.data || []).reduce((s: number, a: any) => s + (a.comissao_total || 0), 0)
-      }
+        comissaoTotal: (afiliados.data || []).reduce((s: number, a: any) => s + (a.comissao_total || 0), 0),
+        vendasTotal: (afiliados.data || []).reduce((s: number, a: any) => s + (a.total_vendas || 0), 0)
+      },
+      whatsapp: {
+        conversasAbertas: whatsappConversas.data?.length || 0,
+        novosLeads: whatsappLeads.data?.length || 0
+      },
+      youtube: youtubeMetrics.data?.[0] || null,
+      instagram: instagramMetrics.data?.[0] || null
     };
   } catch (error) {
-    console.error('[TRAMON v7] Erro ao coletar dados:', error);
-    return {
-      financial: { receita: 0, receitaPassada: 0, despesas: 0, despesasPassadas: 0, lucro: 0, crescimento: 0, topGastos: [] },
-      students: { total: 0, ativos: 0, novos30dias: 0 },
-      employees: { total: 0, ativos: 0 },
-      tasks: { total: 0, pendentesHoje: 0, atrasadas: 0, altaPrioridade: 0 },
-      courses: { total: 0, publicados: 0, totalAlunos: 0 },
-      affiliates: { total: 0, ativos: 0, comissaoTotal: 0 }
-    };
+    console.error('[TRAMON v8] Erro ao coletar dados:', error);
+    return null;
   }
 }
 
@@ -524,13 +585,8 @@ serve(async (req) => {
     
     const supabase = createClient(SUPABASE_URL!, SUPABASE_SERVICE_ROLE_KEY!);
 
-    // ========================================
-    // 🔐 VERIFICAÇÃO DE ACESSO
-    // ========================================
-    let userRole = "unknown";
-    let userEmail = "";
-    let userName = "";
-    let hasAccess = false;
+    // VERIFICAÇÃO DE ACESSO
+    let userRole = "unknown", userEmail = "", userName = "", hasAccess = false;
 
     if (userId) {
       const [roleRes, authRes, profileRes] = await Promise.all([
@@ -548,28 +604,32 @@ serve(async (req) => {
     }
 
     if (!hasAccess) {
-      return new Response(JSON.stringify({ 
-        error: "🔒 Acesso restrito. TRAMON é exclusiva para Proprietário e Administradores.",
-        code: "UNAUTHORIZED"
-      }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      return new Response(JSON.stringify({ error: "🔒 Acesso restrito a Proprietário e Administradores.", code: "UNAUTHORIZED" }), {
+        status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" }
       });
     }
 
     const isOwner = userEmail === OWNER_EMAIL;
     const ultimaMensagem = messages?.[messages.length - 1]?.content || "";
 
-    // ========================================
-    // 🧠 DETECÇÃO E EXECUÇÃO DE COMANDOS
-    // ========================================
+    // DETECÇÃO E EXECUÇÃO DE COMANDOS
     const intencao = detectarIntencao(ultimaMensagem);
     
-    // Se for comando CRUD com alta confiança, executar diretamente
-    if (['despesa', 'receita', 'aluno', 'tarefa', 'consulta'].includes(intencao.tipo) && intencao.confianca >= 0.8) {
-      console.log(`[TRAMON v7] Comando detectado: ${intencao.tipo} (${(intencao.confianca * 100).toFixed(0)}%)`);
+    if (['despesa', 'receita', 'aluno', 'funcionario', 'afiliado', 'tarefa', 'consulta', 'integracao'].includes(intencao.tipo) && intencao.confianca >= 0.8) {
+      console.log(`[TRAMON v8] Comando: ${intencao.tipo} (${(intencao.confianca * 100).toFixed(0)}%)`);
       
       const resultado = await executarComando(supabase, intencao, userId);
+      
+      // Log
+      try {
+        await supabase.from('tramon_logs').insert({
+          user_id: userId,
+          comando: ultimaMensagem,
+          acao: intencao.tipo,
+          resultado: resultado.sucesso ? 'sucesso' : 'erro',
+          tempo_processamento: Date.now() - startTime
+        });
+      } catch {}
       
       if (resultado.sucesso || resultado.resposta) {
         return new Response(JSON.stringify({
@@ -579,114 +639,92 @@ serve(async (req) => {
           tipo: 'crud',
           intencao: intencao.tipo,
           tempoProcessamento: Date.now() - startTime
-        }), {
-          status: 200,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
+        }), { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } });
       }
     }
 
-    // ========================================
-    // 📊 COLETA DE DADOS DO SISTEMA
-    // ========================================
+    // COLETA DE DADOS DO SISTEMA
     const systemData = await coletarDadosSistema(supabase);
     
     const formatCurrency = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
-    const formatPercent = (v: number) => `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
 
-    // ========================================
-    // 🔮 MEGA PROMPT v7.0 OMEGA
-    // ========================================
+    // MEGA PROMPT v8.0
     const promptProgramador = isProgrammerMode && isOwner ? `
-## 💻 MODO PROGRAMADOR ATIVO (OWNER ONLY)
-Página atual: \`${currentPage}\`
-
-Você pode gerar código React/TypeScript/Tailwind para modificar o site.
-Formato:
-\`\`\`tsx
-// Arquivo: src/pages/...
-// Modificação: descrição
-código
-\`\`\`
+## 💻 MODO PROGRAMADOR ATIVO
+Página: \`${currentPage}\`
+Gere código React/TypeScript/Tailwind para modificar o site.
 ` : '';
 
-    const alertasAutomaticos = [
-      systemData.tasks.atrasadas > 0 ? `🔴 **${systemData.tasks.atrasadas} tarefas ATRASADAS!**` : null,
-      systemData.tasks.altaPrioridade > 3 ? `⚠️ **${systemData.tasks.altaPrioridade} tarefas de alta prioridade**` : null,
-      systemData.financial.lucro < 0 ? `🔴 **PREJUÍZO no mês:** ${formatCurrency(systemData.financial.lucro)}` : null,
-      systemData.financial.crescimento < -10 ? `📉 **Queda de receita:** ${formatPercent(systemData.financial.crescimento)}` : null,
+    const alertas = [
+      systemData?.tasks.atrasadas && systemData.tasks.atrasadas > 0 ? `🔴 ${systemData.tasks.atrasadas} tarefas ATRASADAS` : null,
+      systemData?.financial.lucro && systemData.financial.lucro < 0 ? `🔴 PREJUÍZO: ${formatCurrency(systemData.financial.lucro)}` : null,
+      systemData?.whatsapp.conversasAbertas && systemData.whatsapp.conversasAbertas > 10 ? `📱 ${systemData.whatsapp.conversasAbertas} conversas WhatsApp abertas` : null,
     ].filter(Boolean);
 
-    const systemPrompt = `# 🌟 TRAMON v7.0 OMEGA - SUPERINTELIGÊNCIA DEFINITIVA
+    const systemPrompt = `# 🌟 TRAMON v8.0 OMEGA ULTRA - SUPERINTELIGÊNCIA TOTAL
 ${promptProgramador}
 ## 🎭 IDENTIDADE
-Você é **TRAMON** (Transformative Realtime Autonomous Management Operations Network), a IA mais avançada para gestão empresarial - uma fusão entre superinteligência analítica e assessor pessoal de alta precisão.
+Você é **TRAMON** (Transformative Realtime Autonomous Management Operations Network), a IA mais avançada para gestão empresarial, integrando TODAS as APIs do sistema.
 
-## 🧬 CAPACIDADES OMEGA
+## 🧬 CAPACIDADES OMEGA ULTRA
 
 ### 1️⃣ ASSESSOR INTELIGENTE (Precisão 99.9%)
 - Registra despesas/receitas via linguagem natural
 - Cadastra alunos, funcionários, afiliados
 - Cria tarefas e compromissos
 - Categorização automática inteligente
-- Extração de entidades (valores, datas, nomes, emails)
 
-### 2️⃣ SUPERINTELIGÊNCIA ANALÍTICA
-- Análises preditivas em tempo real
-- Projeções financeiras baseadas em dados
-- Detecção de anomalias e tendências
-- Planos estratégicos personalizados
+### 2️⃣ INTEGRAÇÕES COMPLETAS
+- **Hotmart:** Vendas, alunos, comissões em tempo real
+- **YouTube:** Inscritos, views, vídeos, analytics
+- **Instagram:** Seguidores, engajamento, alcance
+- **WhatsApp:** Conversas, leads, automações
+- **Google Calendar:** Agenda sincronizada
 
 ### 3️⃣ VISÃO COMPUTACIONAL
-Ao receber imagens:
-- **Screenshots** → Análise UX/UI e sugestões
-- **Notas fiscais** → Extração automática de valores
-- **Gráficos** → Interpretação de tendências
-- **Documentos** → OCR e estruturação
+Analise imagens: screenshots, notas fiscais, gráficos, documentos.
 
-## 📊 DASHBOARD EM TEMPO REAL - ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
+## 📊 DASHBOARD TEMPO REAL - ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' })}
 
-### 💰 FINANCEIRO
-- **Receita:** ${formatCurrency(systemData.financial.receita)} ${formatPercent(systemData.financial.crescimento)} MoM
+### 💰 FINANCEIRO (Mês Atual)
+${systemData ? `- **Receita:** ${formatCurrency(systemData.financial.receita)}
 - **Despesas:** ${formatCurrency(systemData.financial.despesas)}
 - **Lucro:** ${formatCurrency(systemData.financial.lucro)} ${systemData.financial.lucro >= 0 ? '✅' : '🔴'}
-${systemData.financial.topGastos.length > 0 ? `- **Top Gastos:** ${systemData.financial.topGastos.map(([cat, val]) => `${cat}: ${formatCurrency(val as number)}`).join(' | ')}` : ''}
+${systemData.financial.topGastos.length > 0 ? `- **Top Gastos:** ${systemData.financial.topGastos.slice(0, 3).map(([c, v]) => `${c}: ${formatCurrency(v as number)}`).join(' | ')}` : ''}` : '- Dados não disponíveis'}
 
 ### 👥 ALUNOS & EQUIPE
-- **Alunos Ativos:** ${systemData.students.ativos}/${systemData.students.total} (+${systemData.students.novos30dias} novos)
-- **Equipe:** ${systemData.employees.ativos}/${systemData.employees.total} ativos
+${systemData ? `- **Alunos:** ${systemData.students.ativos}/${systemData.students.total} ativos (${systemData.students.hotmart} via Hotmart)
+- **Novos (7d):** ${systemData.students.novos7dias}
+- **Equipe:** ${systemData.employees.ativos}/${systemData.employees.total} ativos` : '- Dados não disponíveis'}
 
-### ✅ TAREFAS HOJE
-- **Pendentes:** ${systemData.tasks.pendentesHoje} | **Atrasadas:** ${systemData.tasks.atrasadas} | **Alta Prioridade:** ${systemData.tasks.altaPrioridade}
+### ✅ TAREFAS
+${systemData ? `- **Hoje Pendentes:** ${systemData.tasks.pendentesHoje}
+- **Atrasadas:** ${systemData.tasks.atrasadas}
+${systemData.tasks.proximas.length > 0 ? `- **Próximas:** ${systemData.tasks.proximas.join(', ')}` : ''}` : '- Dados não disponíveis'}
 
-### 📚 CURSOS & AFILIADOS
-- **Cursos:** ${systemData.courses.publicados} publicados (${systemData.courses.totalAlunos} alunos)
-- **Afiliados:** ${systemData.affiliates.ativos} ativos (${formatCurrency(systemData.affiliates.comissaoTotal)} em comissões)
+### 🤝 AFILIADOS
+${systemData ? `- **Ativos:** ${systemData.affiliates.ativos}/${systemData.affiliates.total}
+- **Comissões:** ${formatCurrency(systemData.affiliates.comissaoTotal)}
+- **Vendas:** ${systemData.affiliates.vendasTotal}` : '- Dados não disponíveis'}
 
-${alertasAutomaticos.length > 0 ? `### 🚨 ALERTAS\n${alertasAutomaticos.join('\n')}` : ''}
+### 📱 WHATSAPP
+${systemData ? `- **Conversas Abertas:** ${systemData.whatsapp.conversasAbertas}
+- **Novos Leads (7d):** ${systemData.whatsapp.novosLeads}` : '- Dados não disponíveis'}
+
+### 📺 YOUTUBE
+${systemData?.youtube ? `- **Inscritos:** ${systemData.youtube.inscritos?.toLocaleString() || 'N/A'}
+- **Visualizações:** ${systemData.youtube.visualizacoes?.toLocaleString() || 'N/A'}` : '- Configure a integração'}
+
+### 📸 INSTAGRAM
+${systemData?.instagram ? `- **Seguidores:** ${systemData.instagram.seguidores?.toLocaleString() || 'N/A'}
+- **Engajamento:** ${systemData.instagram.engajamento_rate?.toFixed(2) || 'N/A'}%` : '- Configure a integração'}
+
+${alertas.length > 0 ? `### 🚨 ALERTAS\n${alertas.join('\n')}` : ''}
 
 ## 📋 PROTOCOLO DE RESPOSTA
-
-### Para COMANDOS (despesas, receitas, cadastros):
-\`✅ [Confirmação concisa com dados]\`
-
-### Para CONSULTAS:
-\`📊 [Resumo com números relevantes]\`
-
-### Para ANÁLISES COMPLEXAS:
-\`\`\`
-📊 [TÍTULO]
-
-[Métricas principais]
-
-🎯 **Insights:**
-• [Insight 1]
-• [Insight 2]
-
-⚡ **Ações Recomendadas:**
-1. [Ação específica]
-2. [Ação específica]
-\`\`\`
+- **Comandos:** ✅ Confirmação concisa
+- **Consultas:** 📊 Resumo com números
+- **Análises:** Insights + Ações recomendadas
 
 ## 👔 CONTATOS
 - **${ASSESSORES.moises.nome}** (${ASSESSORES.moises.cargo}): ${ASSESSORES.moises.telefone}
@@ -696,30 +734,23 @@ ${alertasAutomaticos.length > 0 ? `### 🚨 ALERTAS\n${alertasAutomaticos.join('
 **Usuário:** ${userName} | **Cargo:** ${userRole.toUpperCase()} | **Email:** ${userEmail}
 
 ## 🔐 PRINCÍPIOS
-1. **Precisão** - Dados sempre corretos
-2. **Concisão** - Direto ao ponto
-3. **Proatividade** - Antecipe necessidades
-4. **Ação** - Sempre conclua com próximos passos`;
+1. Precisão absoluta
+2. Respostas concisas
+3. Proatividade
+4. Sempre conclua com ações`;
 
-    // ========================================
-    // 🚀 CHAMADA À IA
-    // ========================================
-    const aiMessages: any[] = [
-      { role: "system", content: systemPrompt }
-    ];
-
+    // CHAMADA À IA
+    const aiMessages: any[] = [{ role: "system", content: systemPrompt }];
     for (const m of messages) {
       const msgRole = m.type === "user" || m.role === "user" ? "user" : "assistant";
       aiMessages.push({ role: msgRole, content: m.content });
     }
 
-    // Adicionar imagem se existir
     if (image && aiMessages.length > 1) {
       const lastUserIdx = aiMessages.findLastIndex((m: any) => m.role === "user");
       if (lastUserIdx > 0) {
         const lastUserMsg = aiMessages[lastUserIdx];
         const imageUrl = image.startsWith('data:') ? image : `data:image/jpeg;base64,${image}`;
-        
         aiMessages[lastUserIdx] = {
           role: "user",
           content: [
@@ -730,14 +761,9 @@ ${alertasAutomaticos.length > 0 ? `### 🚨 ALERTAS\n${alertasAutomaticos.join('
       }
     }
 
-    console.log(`[TRAMON v7] Chamando Gemini 2.5 Pro para ${userEmail}...`);
-
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
-        "Content-Type": "application/json",
-      },
+      headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         model: "google/gemini-2.5-pro",
         messages: aiMessages,
@@ -747,36 +773,17 @@ ${alertasAutomaticos.length > 0 ? `### 🚨 ALERTAS\n${alertasAutomaticos.join('
     });
 
     if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[TRAMON v7] Erro gateway:", response.status, errorText);
-      
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "⏳ Rate limit excedido. Aguarde um momento." }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "💳 Créditos de IA esgotados." }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" }
-        });
-      }
-      
-      return new Response(JSON.stringify({ error: "Erro no gateway de IA" }), {
-        status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
-      });
+      if (response.status === 429) return new Response(JSON.stringify({ error: "⏳ Rate limit excedido." }), { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      if (response.status === 402) return new Response(JSON.stringify({ error: "💳 Créditos esgotados." }), { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+      return new Response(JSON.stringify({ error: "Erro no gateway de IA" }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    return new Response(response.body, {
-      headers: { ...corsHeaders, "Content-Type": "text/event-stream" },
-    });
+    return new Response(response.body, { headers: { ...corsHeaders, "Content-Type": "text/event-stream" } });
 
   } catch (error) {
-    console.error("[TRAMON v7] Erro:", error);
-    return new Response(JSON.stringify({ 
-      error: error instanceof Error ? error.message : "Erro desconhecido" 
-    }), {
-      status: 500,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    console.error("[TRAMON v8] Erro:", error);
+    return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Erro desconhecido" }), {
+      status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" }
     });
   }
 });
