@@ -5146,7 +5146,7 @@ export type Database = {
           last_message: string | null
           name: string
           notes: string | null
-          phone: string
+          phone: string | null
           source: string
           status: string
           tags: string[] | null
@@ -5164,7 +5164,7 @@ export type Database = {
           last_message?: string | null
           name: string
           notes?: string | null
-          phone: string
+          phone?: string | null
           source?: string
           status?: string
           tags?: string[] | null
@@ -5182,7 +5182,7 @@ export type Database = {
           last_message?: string | null
           name?: string
           notes?: string | null
-          phone?: string
+          phone?: string | null
           source?: string
           status?: string
           tags?: string[] | null
