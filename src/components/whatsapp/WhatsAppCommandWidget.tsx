@@ -34,6 +34,7 @@ interface WhatsAppCommand {
 }
 
 const commands: WhatsAppCommand[] = [
+  // FINANÇAS
   {
     command: "/saldo",
     description: "Consulta saldo atual de todas as contas",
@@ -56,6 +57,21 @@ const commands: WhatsAppCommand[] = [
     icon: DollarSign,
   },
   {
+    command: "/lucro",
+    description: "Mostra lucro do período atual",
+    example: "/lucro",
+    category: "finance",
+    icon: DollarSign,
+  },
+  {
+    command: "/fluxo",
+    description: "Previsão de fluxo de caixa",
+    example: "/fluxo 30dias",
+    category: "finance",
+    icon: DollarSign,
+  },
+  // TAREFAS
+  {
     command: "/tarefa",
     description: "Cria uma nova tarefa",
     example: "/tarefa Revisar relatório até sexta",
@@ -77,6 +93,21 @@ const commands: WhatsAppCommand[] = [
     icon: CheckCircle2,
   },
   {
+    command: "/urgentes",
+    description: "Lista tarefas urgentes",
+    example: "/urgentes",
+    category: "task",
+    icon: Clock,
+  },
+  {
+    command: "/hoje",
+    description: "Agenda de hoje",
+    example: "/hoje",
+    category: "task",
+    icon: Calendar,
+  },
+  // RELATÓRIOS
+  {
     command: "/resumo",
     description: "Relatório diário completo",
     example: "/resumo",
@@ -91,9 +122,38 @@ const commands: WhatsAppCommand[] = [
     icon: BarChart3,
   },
   {
+    command: "/mes",
+    description: "Relatório mensal executivo",
+    example: "/mes",
+    category: "report",
+    icon: BarChart3,
+  },
+  {
+    command: "/kpis",
+    description: "KPIs principais do negócio",
+    example: "/kpis",
+    category: "report",
+    icon: BarChart3,
+  },
+  // IA
+  {
     command: "/ai",
     description: "Pergunta para o assistente IA",
     example: "/ai Como posso reduzir custos?",
+    category: "ai",
+    icon: Bot,
+  },
+  {
+    command: "/tramon",
+    description: "Consulta TRAMON - IA Empresarial",
+    example: "/tramon análise financeira",
+    category: "ai",
+    icon: Bot,
+  },
+  {
+    command: "/previsao",
+    description: "Previsões com IA preditiva",
+    example: "/previsao vendas",
     category: "ai",
     icon: Bot,
   },
