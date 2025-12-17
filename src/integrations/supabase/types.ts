@@ -5684,7 +5684,6 @@ export type Database = {
       profiles_public: {
         Row: {
           avatar_url: string | null
-          email: string | null
           id: string | null
           is_online: boolean | null
           last_activity_at: string | null
@@ -5692,7 +5691,6 @@ export type Database = {
         }
         Insert: {
           avatar_url?: string | null
-          email?: string | null
           id?: string | null
           is_online?: boolean | null
           last_activity_at?: string | null
@@ -5700,7 +5698,6 @@ export type Database = {
         }
         Update: {
           avatar_url?: string | null
-          email?: string | null
           id?: string | null
           is_online?: boolean | null
           last_activity_at?: string | null
@@ -5775,6 +5772,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
+      cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
       count_entity_attachments: {
@@ -5827,6 +5825,10 @@ export type Database = {
           isOneToOne: false
           isSetofReturn: true
         }
+      }
+      get_masked_location: {
+        Args: { p_address: string; p_latitude: number; p_longitude: number }
+        Returns: Json
       }
       get_masked_salary: {
         Args: { emp_salary: number; emp_user_id: string }
