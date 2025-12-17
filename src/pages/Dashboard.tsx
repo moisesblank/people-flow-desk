@@ -312,6 +312,24 @@ export default function Dashboard() {
           profit={lucroLiquidoValue}
         />
 
+        {/* ===== CENTRAL WHATSAPP - DESTAQUE NO TOPO ===== */}
+        <section className="space-y-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-xl bg-green-500/20">
+              <Zap className="h-5 w-5 text-green-500" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold">Central de Comando WhatsApp</h2>
+              <p className="text-xs text-muted-foreground">Controle tudo pelo seu WhatsApp em tempo real</p>
+            </div>
+          </div>
+          <WhatsAppStatsCard />
+          <div className="grid gap-4 lg:grid-cols-2">
+            <WhatsAppTasksWidget limit={5} showHeader={true} />
+            <WhatsAppFinanceWidget limit={6} showHeader={true} />
+          </div>
+        </section>
+
         {/* NOVO: Smart Tips - Dicas contextuais */}
         <SmartTips
           income={stats?.income || 0}
@@ -566,15 +584,14 @@ export default function Dashboard() {
           </motion.section>
         )}
 
-        {/* WhatsApp Command Center Widget */}
+        {/* Team Summary */}
         <section className="mb-8">
-          <WhatsAppStatsCard />
-        </section>
-
-        {/* WhatsApp Tasks & Finance Widgets */}
-        <section className="grid gap-6 lg:grid-cols-2 mb-8">
-          <WhatsAppTasksWidget limit={5} showHeader={true} />
-          <WhatsAppFinanceWidget limit={8} showHeader={true} />
+          <TeamSummary 
+            totalEmployees={stats.employees}
+            activeEmployees={stats.employees}
+            onVacation={0}
+            onLeave={0}
+          />
         </section>
 
         {/* Recent Transactions and Welcome */}
