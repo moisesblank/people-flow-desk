@@ -1,11 +1,17 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - PERMISSÕES
-// Spider-Man Theme - Controle de Acesso RBAC
+// MOISÉS MEDEIROS v10.0 - PERMISSÕES
+// Spider-Man Theme - Controle de Acesso RBAC Completo
+// Cargos: Owner, Admin, Coordenação, Suporte, Monitoria,
+//         Afiliados, Marketing, Contabilidade, Administrativo
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Shield, Users, Crown, User, Search, Loader2, AlertTriangle, Info, History, Clock, ArrowRight } from "lucide-react";
+import { 
+  Shield, Users, Crown, User, Search, Loader2, AlertTriangle, Info, History, 
+  Clock, ArrowRight, UserCog, Headphones, GraduationCap, Users2, 
+  TrendingUp, Calculator, Briefcase 
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
@@ -46,7 +52,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
-type AppRole = "owner" | "admin" | "employee";
+type AppRole = "owner" | "admin" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade" | "employee";
 
 interface UserWithRole {
   id: string;
@@ -74,20 +80,56 @@ const ROLE_CONFIG: Record<AppRole, { label: string; icon: typeof Crown; color: s
   owner: {
     label: "Proprietário",
     icon: Crown,
-    color: "text-amber-500 bg-amber-500/10 border-amber-500/20",
+    color: "text-purple-500 bg-purple-500/10 border-purple-500/20",
     description: "Acesso total ao sistema. Pode gerenciar usuários, permissões e todas as configurações.",
   },
   admin: {
     label: "Administrador",
     icon: Shield,
     color: "text-blue-500 bg-blue-500/10 border-blue-500/20",
-    description: "Acesso administrativo. Pode ver salários, gerenciar funcionários e acessar relatórios financeiros.",
+    description: "Acesso administrativo completo, exceto áreas pessoais do owner.",
+  },
+  coordenacao: {
+    label: "Coordenação",
+    icon: UserCog,
+    color: "text-green-500 bg-green-500/10 border-green-500/20",
+    description: "Gerencia equipe, turmas e planejamento de aulas.",
+  },
+  suporte: {
+    label: "Suporte",
+    icon: Headphones,
+    color: "text-yellow-500 bg-yellow-500/10 border-yellow-500/20",
+    description: "Atendimento ao aluno e gestão do portal.",
+  },
+  monitoria: {
+    label: "Monitoria",
+    icon: GraduationCap,
+    color: "text-indigo-500 bg-indigo-500/10 border-indigo-500/20",
+    description: "Acompanhamento de alunos, turmas e simulados.",
+  },
+  afiliado: {
+    label: "Afiliados",
+    icon: Users2,
+    color: "text-pink-500 bg-pink-500/10 border-pink-500/20",
+    description: "Gestão de afiliados e métricas de vendas.",
+  },
+  marketing: {
+    label: "Marketing",
+    icon: TrendingUp,
+    color: "text-orange-500 bg-orange-500/10 border-orange-500/20",
+    description: "Marketing, lançamentos e gestão do site.",
+  },
+  contabilidade: {
+    label: "Contabilidade",
+    icon: Calculator,
+    color: "text-teal-500 bg-teal-500/10 border-teal-500/20",
+    description: "Acesso às finanças da empresa (visualização).",
   },
   employee: {
-    label: "Funcionário",
-    icon: User,
-    color: "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
-    description: "Acesso básico. Pode ver apenas seus próprios dados e tarefas atribuídas.",
+    label: "Administrativo",
+    icon: Briefcase,
+    color: "text-gray-500 bg-gray-500/10 border-gray-500/20",
+    description: "Acesso básico ao sistema (somente leitura em algumas áreas).",
   },
 };
 
@@ -279,6 +321,12 @@ export default function Permissoes() {
     total: users.length,
     owners: users.filter((u) => u.role === "owner").length,
     admins: users.filter((u) => u.role === "admin").length,
+    coordenacao: users.filter((u) => u.role === "coordenacao").length,
+    suporte: users.filter((u) => u.role === "suporte").length,
+    monitoria: users.filter((u) => u.role === "monitoria").length,
+    afiliados: users.filter((u) => u.role === "afiliado").length,
+    marketing: users.filter((u) => u.role === "marketing").length,
+    contabilidade: users.filter((u) => u.role === "contabilidade").length,
     employees: users.filter((u) => u.role === "employee").length,
     noRole: users.filter((u) => u.role === null).length,
   };
