@@ -3760,10 +3760,12 @@ export type Database = {
       }
       team_chat_messages: {
         Row: {
+          allowed_users: string[] | null
           attachments: Json | null
           content: string
           created_at: string
           id: string
+          is_private: boolean | null
           is_read: boolean | null
           message_type: string | null
           reply_to: string | null
@@ -3771,10 +3773,12 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          allowed_users?: string[] | null
           attachments?: Json | null
           content: string
           created_at?: string
           id?: string
+          is_private?: boolean | null
           is_read?: boolean | null
           message_type?: string | null
           reply_to?: string | null
@@ -3782,10 +3786,12 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          allowed_users?: string[] | null
           attachments?: Json | null
           content?: string
           created_at?: string
           id?: string
+          is_private?: boolean | null
           is_read?: boolean | null
           message_type?: string | null
           reply_to?: string | null
@@ -5883,6 +5889,10 @@ export type Database = {
         }
         Returns: number
       }
+      can_access_attachment: {
+        Args: { p_entity_id: string; p_entity_type: string }
+        Returns: boolean
+      }
       can_edit_content: { Args: { _user_id?: string }; Returns: boolean }
       can_manage_documents: { Args: { _user_id?: string }; Returns: boolean }
       can_use_god_mode: { Args: { _user_id?: string }; Returns: boolean }
@@ -6013,6 +6023,7 @@ export type Database = {
         Returns: string
       }
       register_user_logout: { Args: never; Returns: undefined }
+      security_cleanup_job: { Args: never; Returns: undefined }
       update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
       upsert_whatsapp_lead: {
