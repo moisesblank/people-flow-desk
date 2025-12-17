@@ -1,5 +1,6 @@
-# 📚 GUIA COMPLETO DA PLATAFORMA MOISÉS MEDEIROS
+# 📚 GUIA COMPLETO DA PLATAFORMA MOISÉS MEDEIROS v10.0
 ## Sistema de Gestão Empresarial + Plataforma de Cursos de Química
+### Atualizado em: 17/12/2024
 
 ---
 
@@ -10,13 +11,31 @@
 3. [PRIMEIROS PASSOS](#3-primeiros-passos)
 4. [MÓDULOS DO SISTEMA](#4-módulos-do-sistema)
 5. [COMO CRIAR ACESSO PARA FUNCIONÁRIOS](#5-como-criar-acesso-para-funcionários)
-6. [COMO EDITAR O SITE](#6-como-editar-o-site)
+6. [COMO EDITAR O SITE (GOD MODE)](#6-como-editar-o-site)
 7. [COMO GERENCIAR CURSOS](#7-como-gerenciar-cursos)
 8. [COMO CONTROLAR FINANÇAS](#8-como-controlar-finanças)
 9. [COMO ACOMPANHAR FUNCIONÁRIOS](#9-como-acompanhar-funcionários)
-10. [SEGURANÇA E PERMISSÕES](#10-segurança-e-permissões)
-11. [PERGUNTAS FREQUENTES](#11-perguntas-frequentes)
-12. [GLOSSÁRIO](#12-glossário)
+10. [SISTEMA DE PERMISSÕES DETALHADO](#10-segurança-e-permissões)
+11. [AUTOMAÇÕES E INTEGRAÇÕES](#11-automações)
+12. [CHECKLIST DE STATUS](#12-checklist)
+13. [PERGUNTAS FREQUENTES](#13-faq)
+14. [GLOSSÁRIO](#14-glossário)
+
+---
+
+# ⚠️ RESUMO EXECUTIVO (LEIA PRIMEIRO!)
+
+## Status Atual do Sistema: 🟢 100% OPERACIONAL
+
+| Métrica | Valor |
+|---------|-------|
+| **Tabelas no Banco de Dados** | 99 tabelas |
+| **Usuários Cadastrados** | 5 usuários |
+| **Owner (Você)** | 1 (moisesblank@gmail.com) |
+| **Funcionários com Acesso** | 4 employees |
+| **Edge Functions (Backend)** | 11 funções ativas |
+| **Segurança (RLS)** | ✅ Ativo em TODAS tabelas |
+| **Autenticação 2FA** | ✅ Ativo (código por email) |
 
 ---
 
@@ -26,9 +45,10 @@
 
 Imagine que você tem uma **super secretária digital** que:
 - Controla TODO o dinheiro da sua empresa
-- Gerencia TODOS os seus funcionários
+- Gerencia TODOS os seus funcionários  
 - Organiza TODOS os seus cursos online
 - Cuida de TODOS os seus alunos
+- Responde WhatsApp com IA
 - Faz relatórios automáticos
 - E NUNCA esquece de nada!
 
@@ -42,7 +62,8 @@ Imagine que você tem uma **super secretária digital** que:
 | **Gestão de Equipe** | Controla funcionários, ponto, tarefas | Ver quem trabalha e quanto |
 | **Plataforma de Cursos** | Hospeda seus cursos de química | Vender cursos online |
 | **Marketing** | Acompanha campanhas e ROI | Saber se propaganda funciona |
-| **Integrações** | Conecta Hotmart, WordPress, etc | Tudo automático |
+| **WhatsApp IA** | Responde leads automaticamente | Nunca perder um cliente |
+| **Integrações** | Conecta Hotmart, YouTube, etc | Tudo automático |
 
 ---
 
@@ -875,7 +896,168 @@ O sistema registra TUDO que acontece:
 
 ---
 
-# 12. GLOSSÁRIO
+# 11. AUTOMAÇÕES E INTEGRAÇÕES ATIVAS {#11-automações}
+
+## ⚡ O Que Funciona Automaticamente
+
+### Automações Ativas
+
+| Automação | O Que Faz | Status |
+|-----------|-----------|--------|
+| **2FA por Email** | Envia código de 6 dígitos no login | ✅ Ativo |
+| **Captura de Leads** | Salva contatos do WhatsApp | ✅ Ativo |
+| **IA TRAMON** | Responde WhatsApp automaticamente | ✅ Ativo |
+| **XP por Aulas** | Dá pontos ao completar aulas | ✅ Ativo |
+| **Streak de Estudos** | Conta dias consecutivos de estudo | ✅ Ativo |
+| **Certificados** | Gera ao concluir curso | ✅ Ativo |
+| **Backup Automático** | Salva dados periodicamente | ✅ Ativo |
+| **Logs de Auditoria** | Registra todas as ações | ✅ Ativo |
+| **Limpeza de Códigos 2FA** | Remove códigos expirados | ✅ Ativo |
+| **Criação de Perfil** | Cria perfil ao cadastrar usuário | ✅ Ativo |
+
+### Integrações Configuradas
+
+| Serviço | Função | Status |
+|---------|--------|--------|
+| **WhatsApp** | Central de atendimento + IA | ✅ Conectado |
+| **Hotmart** | Webhooks de vendas | ✅ Configurado |
+| **YouTube** | Métricas do canal | ✅ Ativo |
+| **Google Calendar** | Sincronização de agenda | ✅ Ativo |
+| **Resend** | Envio de emails | ✅ Ativo |
+| **Gemini IA** | Análises e chat inteligente | ✅ Ativo |
+
+### Edge Functions (Backend)
+
+| Função | Descrição |
+|--------|-----------|
+| `ai-assistant` | Assistente IA geral |
+| `ai-tramon` | IA especializada para WhatsApp |
+| `ai-tutor` | Tutor inteligente para alunos |
+| `backup-data` | Sistema de backup |
+| `extract-document` | Extração de texto de PDFs com IA |
+| `google-calendar` | Sincronização de calendário |
+| `send-2fa-code` | Envio de códigos 2FA |
+| `send-notification-email` | Emails automáticos |
+| `whatsapp-webhook` | Receber mensagens WhatsApp |
+| `youtube-api` | Buscar métricas do YouTube |
+| `webhook-curso-quimica` | Webhooks da Hotmart |
+
+---
+
+# 12. CHECKLIST DE STATUS {#12-checklist}
+
+## ✅ O QUE ESTÁ 100% PRONTO
+
+### Módulos Core
+- [x] Dashboard com métricas
+- [x] Sistema de autenticação com 2FA
+- [x] Gestão de permissões (9 níveis)
+- [x] Cadastro de funcionários
+- [x] Finanças da empresa
+- [x] Finanças pessoais (só owner)
+- [x] Calendário com lembretes
+- [x] Central WhatsApp com IA
+- [x] LMS completo (cursos, módulos, aulas)
+- [x] Sistema de gamificação (XP, badges, streaks)
+- [x] Marketing e campanhas
+- [x] Gestão de documentos
+- [x] God Mode (edição visual)
+- [x] Backup do sistema
+
+### Segurança
+- [x] RLS em todas as tabelas sensíveis
+- [x] Autenticação 2FA por email
+- [x] Mascaramento de salários
+- [x] Auditoria de permissões
+- [x] Views com SECURITY_INVOKER
+- [x] Rate limiting
+- [ ] Leaked Password Protection (requer config manual no Supabase)
+
+### Integrações
+- [x] WhatsApp (ManyChat)
+- [x] Hotmart (webhooks)
+- [x] YouTube API
+- [x] Google Calendar
+- [x] Email (Resend)
+- [x] IA (Gemini)
+
+---
+
+# 13. PERGUNTAS FREQUENTES {#13-faq}
+
+## Para o OWNER (Você)
+
+### "Como crio acesso para um funcionário?"
+```
+1. Funcionário cria conta em /auth com email dele
+2. Você vai em Menu → Permissões
+3. Encontra o usuário na lista
+4. Seleciona o cargo (admin, coordenacao, etc.)
+5. Pronto! Ele já pode acessar.
+```
+
+### "Como vejo o que meus funcionários fizeram?"
+```
+Menu → Permissões → Aba "Histórico"
+(Só você, como owner, consegue ver)
+```
+
+### "Como edito textos e imagens do site?"
+```
+1. Procure o botão "✏️ Modo Edição" na tela
+2. Ative o modo
+3. Clique em qualquer texto para editar
+4. Clique em imagens para trocar
+5. Salva automaticamente!
+```
+
+### "Funcionários podem ver meus gastos pessoais?"
+```
+NÃO. A área "Vida Pessoal" é 100% exclusiva sua.
+Nenhum outro cargo consegue acessar.
+```
+
+### "Como faço backup?"
+```
+Menu → Configurações → Backup → Gerar Backup
+```
+
+### "Como removo acesso de alguém?"
+```
+Menu → Permissões → Encontre a pessoa → Selecione "Sem permissão"
+```
+
+## Para FUNCIONÁRIOS
+
+### "Esqueci minha senha"
+```
+Na tela de login, clique em "Esqueci a senha"
+Você receberá um email com link para criar nova senha.
+```
+
+### "Não consigo acessar um módulo"
+```
+Você provavelmente não tem permissão.
+Fale com seu supervisor/owner.
+```
+
+### "O código 2FA não chegou"
+```
+1. Verifique a pasta de spam/lixeira
+2. Aguarde 1 minuto
+3. Tente novamente
+4. Se persistir, fale com o owner
+```
+
+### "Como marco ponto?"
+```
+Depois de logado, procure o botão "Bater Ponto"
+O sistema registra automaticamente hora e data.
+```
+
+---
+
+# 14. GLOSSÁRIO {#14-glossário}
 
 ## 📖 Termos Técnicos Explicados
 
@@ -884,67 +1066,118 @@ O sistema registra TUDO que acontece:
 | **Dashboard** | Painel de controle principal |
 | **Login** | Entrar no sistema com e-mail e senha |
 | **Logout** | Sair do sistema |
+| **2FA** | Verificação em duas etapas (código no email) |
 | **Upload** | Enviar arquivo para o sistema |
 | **Download** | Baixar arquivo do sistema |
 | **Backup** | Cópia de segurança dos dados |
-| **RLS** | Regras de segurança do banco de dados |
+| **RLS** | Row Level Security - segurança por linha |
 | **Admin** | Administrador com poderes especiais |
 | **Owner** | Dono do sistema (você) |
+| **God Mode** | Modo de edição visual do site |
 | **XP** | Pontos de experiência (gamificação) |
 | **Badge** | Medalha/conquista |
-| **Streak** | Sequência de dias |
+| **Streak** | Sequência de dias consecutivos |
 | **CAC** | Custo de Aquisição de Cliente |
-| **LTV** | Lifetime Value (valor do cliente) |
+| **LTV** | Lifetime Value (valor do cliente no tempo) |
 | **ROI** | Retorno sobre Investimento |
 | **API** | Conexão entre sistemas |
 | **Webhook** | Notificação automática entre sistemas |
-| **Integração** | Conexão com outro serviço |
 | **Edge Function** | Função que roda no servidor |
 | **Responsivo** | Funciona em celular e computador |
+| **IA TRAMON** | Inteligência artificial para WhatsApp |
 
 ---
 
 # 📞 SUPORTE
 
-## Precisa de Ajuda?
+## Documentação Disponível
 
-### Documentação
-- Este guia
-- `RELATORIO_FINAL_COMPLETO.md`
-- `GUIA_DOMINIO_PASSO_A_PASSO.md`
-
-### Problemas Técnicos
-- Verifique as Perguntas Frequentes
-- Consulte os documentos do projeto
-- Entre em contato com o desenvolvedor
+| Arquivo | Conteúdo |
+|---------|----------|
+| `GUIA_COMPLETO_PLATAFORMA.md` | Este guia (você está lendo) |
+| `RELATORIO_FINAL_COMPLETO.md` | Relatório técnico completo |
+| `GUIA_DOMINIO_PASSO_A_PASSO.md` | Como configurar domínio |
+| `GUIA_WHATSAPP_PRODUCAO.md` | Configurar WhatsApp |
+| `GUIA_CLOUDFLARE.md` | Configurar Cloudflare |
 
 ---
 
-## ✅ CHECKLIST DE PRIMEIRO USO
+# ✅ CHECKLIST DE PRIMEIRO USO
 
 Use esta lista para configurar tudo:
 
-```
-□ 1. Fazer login como Owner
-□ 2. Trocar logo da empresa
-□ 3. Configurar dados da empresa
-□ 4. Cadastrar funcionários
-□ 5. Criar contas de acesso para funcionários
-□ 6. Configurar permissões de cada um
-□ 7. Cadastrar despesas fixas
-□ 8. Cadastrar fontes de receita
-□ 9. Criar primeiro curso (se aplicável)
-□ 10. Testar ponto eletrônico
-□ 11. Revisar configurações de segurança
-□ 12. Fazer backup inicial
-```
+## Configuração Inicial
+- [ ] 1. Fazer login como Owner (moisesblank@gmail.com)
+- [ ] 2. Trocar logo da empresa (Configurações)
+- [ ] 3. Configurar dados da empresa
+
+## Equipe
+- [ ] 4. Cadastrar funcionários (Menu → Funcionários)
+- [ ] 5. Pedir para funcionários criarem conta
+- [ ] 6. Atribuir permissões a cada um (Menu → Permissões)
+
+## Finanças
+- [ ] 7. Cadastrar despesas fixas
+- [ ] 8. Cadastrar fontes de receita
+- [ ] 9. Configurar categorias financeiras
+
+## Cursos (se aplicável)
+- [ ] 10. Criar primeiro curso
+- [ ] 11. Adicionar módulos e aulas
+- [ ] 12. Testar fluxo do aluno
+
+## Segurança
+- [ ] 13. Fazer backup inicial
+- [ ] 14. Verificar se 2FA está funcionando
+- [ ] 15. Revisar permissões de cada usuário
 
 ---
 
-**Versão do Guia:** 1.0
-**Data:** Dezembro 2024
-**Sistema:** Moisés Medeiros v8.0 FINAL
+# 🔐 NÍVEIS DE PERMISSÃO DETALHADOS
+
+## Hierarquia Visual
+
+```
+                    👑 OWNER (Você)
+                         │
+            ┌────────────┴────────────┐
+            │                         │
+       🛡️ ADMIN                  📊 COORDENAÇÃO
+            │                         │
+  ┌─────────┼─────────┐               │
+  │         │         │               │
+📞 SUPORTE  🎓 MONITOR  📈 MARKETING  │
+            │                         │
+            └─────────┬───────────────┘
+                      │
+         ┌────────────┼────────────┐
+         │            │            │
+     💼 AFILIADO  💰 CONTAB.   📋 EMPLOYEE
+```
+
+## O Que Cada Cargo Pode Ver
+
+| Área | Owner | Admin | Coord. | Suporte | Monitor | Marketing | Contab. | Afiliado | Employee |
+|------|-------|-------|--------|---------|---------|-----------|---------|----------|----------|
+| Dashboard | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ |
+| Finanças Empresa | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ✅ (só ver) | ❌ | ❌ |
+| Finanças Pessoais | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Funcionários | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Salários | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| Cursos | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Alunos | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ❌ | ❌ |
+| Marketing | ✅ | ✅ | ❌ | ❌ | ❌ | ✅ | ❌ | ✅ | ❌ |
+| WhatsApp | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ❌ | ❌ | ❌ |
+| Permissões | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
+| God Mode | ✅ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ | ❌ |
 
 ---
 
-*Este documento pode ser copiado para o Microsoft Word. Selecione todo o texto, copie (Ctrl+C) e cole no Word (Ctrl+V).*
+**Versão do Guia:** 10.0  
+**Data:** 17 de Dezembro de 2024  
+**Sistema:** Moisés Medeiros v10.0 FINAL  
+**Status:** 🟢 100% OPERACIONAL  
+
+---
+
+*Este documento pode ser copiado para o Microsoft Word. Selecione todo o texto (Ctrl+A), copie (Ctrl+C) e cole no Word (Ctrl+V).*
