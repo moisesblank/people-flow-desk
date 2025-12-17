@@ -1,13 +1,14 @@
 // ============================================
 // RESUMO EXECUTIVO - DASHBOARD
-// Visão consolidada para o OWNER
+// Visão consolidada para o OWNER - CLICÁVEL
 // ============================================
 
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import { 
   TrendingUp, TrendingDown, DollarSign, Users, 
   GraduationCap, Target, ArrowUpRight, ArrowDownRight,
-  Wallet, CreditCard, BarChart3, Activity
+  Wallet, CreditCard, Activity, ChevronRight
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -44,6 +45,7 @@ export function ExecutiveSummary({
   completedTasks,
   totalTasks,
 }: ExecutiveSummaryProps) {
+  const navigate = useNavigate();
   const netProfit = totalIncome - totalExpenses;
   const profitMargin = totalIncome > 0 ? ((netProfit / totalIncome) * 100) : 0;
   const taskProgress = totalTasks > 0 ? (completedTasks / totalTasks) * 100 : 0;
@@ -56,6 +58,7 @@ export function ExecutiveSummary({
       trend: monthlyGrowth,
       color: 'text-green-500',
       bgColor: 'bg-green-500/10',
+      href: '/entradas',
     },
     {
       label: 'Despesas',
@@ -64,6 +67,7 @@ export function ExecutiveSummary({
       trend: -2.3,
       color: 'text-red-500',
       bgColor: 'bg-red-500/10',
+      href: '/financas-empresa',
     },
     {
       label: 'Lucro Líquido',
@@ -72,6 +76,7 @@ export function ExecutiveSummary({
       trend: profitMargin,
       color: netProfit >= 0 ? 'text-green-500' : 'text-red-500',
       bgColor: netProfit >= 0 ? 'bg-green-500/10' : 'bg-red-500/10',
+      href: '/relatorios',
     },
     {
       label: 'Alunos Ativos',
@@ -80,6 +85,7 @@ export function ExecutiveSummary({
       trend: 12.5,
       color: 'text-blue-500',
       bgColor: 'bg-blue-500/10',
+      href: '/alunos',
     },
     {
       label: 'Afiliados',
@@ -88,6 +94,7 @@ export function ExecutiveSummary({
       trend: 8.3,
       color: 'text-purple-500',
       bgColor: 'bg-purple-500/10',
+      href: '/afiliados',
     },
     {
       label: 'Taxa Conversão',
@@ -96,6 +103,7 @@ export function ExecutiveSummary({
       trend: 3.2,
       color: 'text-primary',
       bgColor: 'bg-primary/10',
+      href: '/metricas',
     },
   ];
 
@@ -117,7 +125,7 @@ export function ExecutiveSummary({
         </Badge>
       </div>
 
-      {/* Métricas Principais */}
+      {/* Métricas Principais - CLICÁVEIS */}
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {metrics.map((metric, idx) => (
           <motion.div
@@ -125,8 +133,13 @@ export function ExecutiveSummary({
             initial={{ opacity: 0, scale: 0.9 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: idx * 0.05 }}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
           >
-            <Card className="h-full">
+            <Card 
+              className="h-full cursor-pointer hover:border-primary/50 transition-all group"
+              onClick={() => navigate(metric.href)}
+            >
               <CardContent className="p-4">
                 <div className={cn("p-2 rounded-lg w-fit mb-3", metric.bgColor)}>
                   <metric.icon className={cn("h-4 w-4", metric.color)} />
@@ -146,92 +159,114 @@ export function ExecutiveSummary({
                     {Math.abs(metric.trend).toFixed(1)}%
                   </div>
                 </div>
+                {/* Indicador de clicável */}
+                <ChevronRight className="h-4 w-4 text-muted-foreground absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity" />
               </CardContent>
             </Card>
           </motion.div>
         ))}
       </div>
 
-      {/* Cards Secundários */}
+      {/* Cards Secundários - CLICÁVEIS */}
       <div className="grid md:grid-cols-2 gap-4">
         {/* Margem de Lucro */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Margem de Lucro
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-end justify-between">
-                <span className={cn(
-                  "text-4xl font-bold",
-                  profitMargin >= 30 ? "text-green-500" : 
-                  profitMargin >= 15 ? "text-yellow-500" : "text-red-500"
-                )}>
-                  {profitMargin.toFixed(1)}%
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  Meta: 30%
-                </span>
+        <motion.div
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+        >
+          <Card 
+            className="cursor-pointer hover:border-primary/50 transition-all"
+            onClick={() => navigate('/relatorios')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Margem de Lucro
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-end justify-between">
+                  <span className={cn(
+                    "text-4xl font-bold",
+                    profitMargin >= 30 ? "text-green-500" : 
+                    profitMargin >= 15 ? "text-yellow-500" : "text-red-500"
+                  )}>
+                    {profitMargin.toFixed(1)}%
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    Meta: 30%
+                  </span>
+                </div>
+                <Progress 
+                  value={Math.min(profitMargin, 100)} 
+                  className={cn(
+                    "h-3",
+                    profitMargin >= 30 && "[&>div]:bg-green-500"
+                  )}
+                />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>Receita: {formatCurrency(totalIncome)}</span>
+                  <span>Despesas: {formatCurrency(totalExpenses)}</span>
+                </div>
               </div>
-              <Progress 
-                value={Math.min(profitMargin, 100)} 
-                className={cn(
-                  "h-3",
-                  profitMargin >= 30 && "[&>div]:bg-green-500"
-                )}
-              />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>Receita: {formatCurrency(totalIncome)}</span>
-                <span>Despesas: {formatCurrency(totalExpenses)}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
         {/* Progresso de Tarefas */}
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">
-              Tarefas do Mês
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-end justify-between">
-                <span className="text-4xl font-bold">
-                  {completedTasks}/{totalTasks}
-                </span>
-                <span className="text-sm text-muted-foreground">
-                  {taskProgress.toFixed(0)}% concluído
-                </span>
+        <motion.div
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+        >
+          <Card 
+            className="cursor-pointer hover:border-primary/50 transition-all"
+            onClick={() => navigate('/tarefas')}
+          >
+            <CardHeader className="pb-2">
+              <CardTitle className="text-sm font-medium text-muted-foreground">
+                Tarefas do Mês
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-end justify-between">
+                  <span className="text-4xl font-bold">
+                    {completedTasks}/{totalTasks}
+                  </span>
+                  <span className="text-sm text-muted-foreground">
+                    {taskProgress.toFixed(0)}% concluído
+                  </span>
+                </div>
+                <Progress value={taskProgress} className="h-3" />
+                <div className="flex justify-between text-xs text-muted-foreground">
+                  <span>{completedTasks} concluídas</span>
+                  <span>{totalTasks - completedTasks} pendentes</span>
+                </div>
               </div>
-              <Progress value={taskProgress} className="h-3" />
-              <div className="flex justify-between text-xs text-muted-foreground">
-                <span>{completedTasks} concluídas</span>
-                <span>{totalTasks - completedTasks} pendentes</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
       </div>
 
-      {/* Alertas */}
+      {/* Alertas - CLICÁVEL */}
       {pendingPayments > 0 && (
-        <motion.div
+        <motion.button
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
-          className="p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 flex items-center gap-3"
+          whileHover={{ scale: 1.01 }}
+          whileTap={{ scale: 0.99 }}
+          onClick={() => navigate('/pagamentos')}
+          className="w-full p-4 rounded-xl bg-yellow-500/10 border border-yellow-500/20 hover:border-yellow-500/40 flex items-center gap-3 text-left transition-all group"
         >
           <CreditCard className="h-5 w-5 text-yellow-500" />
-          <div>
+          <div className="flex-1">
             <p className="font-medium text-yellow-600">Atenção: Pagamentos Pendentes</p>
             <p className="text-sm text-muted-foreground">
               Você tem {pendingPayments} pagamento(s) pendente(s) este mês
             </p>
           </div>
-        </motion.div>
+          <ChevronRight className="h-5 w-5 text-yellow-500 opacity-0 group-hover:opacity-100 transition-opacity" />
+        </motion.button>
       )}
     </motion.div>
   );

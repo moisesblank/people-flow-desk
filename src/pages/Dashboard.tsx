@@ -368,7 +368,7 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* Stats Grid */}
+        {/* Stats Grid - TODOS CLICÁVEIS */}
         <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Funcionários"
@@ -376,6 +376,7 @@ export default function Dashboard() {
             icon={Users}
             variant="red"
             delay={0}
+            href="/funcionarios"
           />
           <StatCard
             title="Entradas"
@@ -384,6 +385,7 @@ export default function Dashboard() {
             icon={TrendingUp}
             variant="green"
             delay={1}
+            href="/entradas"
           />
           <StatCard
             title="Saídas Totais"
@@ -392,6 +394,7 @@ export default function Dashboard() {
             icon={TrendingDown}
             variant="purple"
             delay={2}
+            href="/financas-empresa"
           />
           <StatCard
             title="Lucro Líquido"
@@ -400,6 +403,7 @@ export default function Dashboard() {
             icon={DollarSign}
             variant={lucroLiquido >= 0 ? "green" : "red"}
             delay={3}
+            href="/relatorios"
           />
         </section>
 

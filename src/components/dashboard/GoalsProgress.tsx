@@ -1,14 +1,13 @@
 // ============================================
 // GOALS PROGRESS - Metas e Objetivos
-// Acompanhamento visual de metas pessoais e profissionais
+// Acompanhamento visual de metas - CLICÁVEL
 // ============================================
 
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { 
   Target, 
-  TrendingUp, 
   DollarSign, 
-  Users, 
   GraduationCap,
   Trophy,
   ChevronRight,
@@ -16,7 +15,6 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProgressRing } from "./ProgressRing";
-import { useNavigate } from "react-router-dom";
 
 interface Goal {
   id: string;
@@ -26,6 +24,7 @@ interface Goal {
   icon: React.ElementType;
   color: string;
   unit?: string;
+  href: string;
 }
 
 interface GoalsProgressProps {
@@ -47,7 +46,7 @@ function formatCurrency(cents: number): string {
 
 export function GoalsProgress({
   income,
-  incomeTarget = income * 1.2, // 20% growth target
+  incomeTarget = income * 1.2,
   students,
   studentsTarget = Math.max(students + 10, 50),
   completedTasks,
@@ -64,6 +63,7 @@ export function GoalsProgress({
       icon: DollarSign,
       color: "hsl(var(--stats-green))",
       unit: "currency",
+      href: "/entradas",
     },
     {
       id: "students",
@@ -72,6 +72,7 @@ export function GoalsProgress({
       target: studentsTarget,
       icon: GraduationCap,
       color: "hsl(var(--stats-blue))",
+      href: "/alunos",
     },
     {
       id: "tasks",
@@ -80,6 +81,7 @@ export function GoalsProgress({
       target: totalTasks,
       icon: Target,
       color: "hsl(var(--stats-purple))",
+      href: "/tarefas",
     },
   ];
 
@@ -125,7 +127,7 @@ export function GoalsProgress({
         </ProgressRing>
       </div>
 
-      {/* Individual Goals */}
+      {/* Individual Goals - CLICÁVEIS */}
       <div className="space-y-4">
         {goals.map((goal, index) => {
           const Icon = goal.icon;
@@ -138,12 +140,15 @@ export function GoalsProgress({
             : goal.target;
 
           return (
-            <motion.div
+            <motion.button
               key={goal.id}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: index * 0.1 }}
-              className="p-4 rounded-xl bg-muted/30 border border-border/50"
+              whileHover={{ scale: 1.01 }}
+              whileTap={{ scale: 0.99 }}
+              onClick={() => navigate(goal.href)}
+              className="w-full p-4 rounded-xl bg-muted/30 border border-border/50 hover:border-primary/30 transition-all text-left group"
             >
               <div className="flex items-center gap-3 mb-2">
                 <div 
@@ -164,6 +169,7 @@ export function GoalsProgress({
                 >
                   {Math.min(progress, 100).toFixed(0)}%
                 </span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity" />
               </div>
               
               {/* Progress bar */}
@@ -176,7 +182,7 @@ export function GoalsProgress({
                   style={{ backgroundColor: goal.color }}
                 />
               </div>
-            </motion.div>
+            </motion.button>
           );
         })}
       </div>
