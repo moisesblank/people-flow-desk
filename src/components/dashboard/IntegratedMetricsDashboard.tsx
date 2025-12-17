@@ -1354,157 +1354,474 @@ export function IntegratedMetricsDashboard() {
           </div>
         </TabsContent>
 
-        {/* Site/WordPress Tab */}
+        {/* Site/WordPress Tab - SUPER MELHORADO */}
         <TabsContent value="site" className="space-y-6 mt-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <CyberMetricCard
-              title="Total Usuários"
-              value={data?.wordpress?.metrics?.total_users || 0}
-              icon={Users}
-              color="#9333ea"
-              isLive
-            />
-            <CyberMetricCard
-              title="Novos Cadastros"
-              value={data?.wordpress?.metrics?.new_registrations || 0}
-              icon={GraduationCap}
-              color="#22c55e"
-              isLive
-            />
-            <CyberMetricCard
-              title="Usuários Ativos"
-              value={data?.wordpress?.metrics?.active_users || 0}
-              icon={Activity}
-              color="#00d4ff"
-            />
-            <CyberMetricCard
-              title="Page Views"
-              value={data?.wordpress?.metrics?.page_views || 0}
-              icon={Eye}
-              color="#f59e0b"
-            />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Recent Events - Live Feed */}
-            <Card className="border-border/20 bg-gradient-to-br from-purple-500/10 via-card to-card backdrop-blur-xl border-l-4 border-l-purple-500">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <div className="p-2 rounded-lg bg-purple-500/20">
-                    <Activity className="h-5 w-5 text-purple-500" />
-                  </div>
-                  Eventos em Tempo Real
-                  <motion.div
-                    animate={{ opacity: [1, 0.5, 1] }}
-                    transition={{ duration: 1.5, repeat: Infinity }}
-                  >
-                    <Badge className="bg-purple-500/20 text-purple-500 border-purple-500/30 ml-2">
-                      <Radio className="h-3 w-3 mr-1" />
-                      LIVE
-                    </Badge>
-                  </motion.div>
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
-                {data?.wordpress?.recentEvents && data.wordpress.recentEvents.length > 0 ? (
-                  data.wordpress.recentEvents.map((event, i) => (
+          {/* Header Section */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-purple-600/20 via-card to-emerald-600/10 border border-purple-500/30 p-6"
+          >
+            <div className="absolute inset-0 opacity-10">
+              <div className="absolute inset-0" style={{
+                backgroundImage: `radial-gradient(circle at 3px 3px, currentColor 1px, transparent 0)`,
+                backgroundSize: '24px 24px'
+              }} />
+            </div>
+            
+            <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+              <div className="flex items-center gap-4">
+                <motion.div
+                  className="p-4 rounded-2xl bg-gradient-to-br from-purple-500/30 to-emerald-500/20"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Globe className="h-8 w-8 text-purple-400" />
+                </motion.div>
+                <div>
+                  <h2 className="text-2xl font-black text-foreground flex items-center gap-2">
+                    app.moisesmedeiros.com.br
                     <motion.div
-                      key={event.id}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: i * 0.05 }}
-                      className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all"
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
                     >
-                      <div className={`p-2 rounded-lg ${
-                        event.event_type === 'user_registered' 
-                          ? 'bg-emerald-500/20' 
-                          : event.event_type === 'user_login'
-                          ? 'bg-blue-500/20'
-                          : 'bg-amber-500/20'
-                      }`}>
-                        {event.event_type === 'user_registered' ? (
-                          <GraduationCap className="h-4 w-4 text-emerald-500" />
-                        ) : event.event_type === 'user_login' ? (
-                          <Users className="h-4 w-4 text-blue-500" />
-                        ) : (
-                          <Eye className="h-4 w-4 text-amber-500" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-foreground truncate">
-                          {event.user_name || event.user_email || 'Visitante'}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {event.event_type === 'user_registered' ? 'Novo cadastro' :
-                           event.event_type === 'user_login' ? 'Login' : 'Visualização'}
-                          {' • '}
-                          {new Date(event.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                        </p>
-                      </div>
-                      <Badge variant="outline" className="text-[10px] shrink-0">
-                        {event.event_type === 'user_registered' ? 'NOVO' :
-                         event.event_type === 'user_login' ? 'LOGIN' : 'VIEW'}
+                      <Badge className="bg-emerald-500/20 text-emerald-500 border-emerald-500/30">
+                        <Radio className="h-3 w-3 mr-1" />
+                        ONLINE
                       </Badge>
                     </motion.div>
-                  ))
-                ) : (
-                  <div className="text-center py-12 text-muted-foreground">
-                    <Globe className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                    <p className="font-medium">Aguardando eventos...</p>
-                    <p className="text-sm mt-2">Configure o webhook no WordPress para receber dados em tempo real</p>
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+                  </h2>
+                  <p className="text-muted-foreground">📊 Google Analytics • 🛒 WooCommerce • 👥 WordPress</p>
+                </div>
+              </div>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={() => window.open('https://app.moisesmedeiros.com.br/wp-admin', '_blank')}>
+                  <Cpu className="h-4 w-4 mr-2" />
+                  WP Admin
+                </Button>
+                <Button size="sm" className="bg-gradient-to-r from-purple-500 to-emerald-500">
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Atualizar Dados
+                </Button>
+              </div>
+            </div>
+          </motion.div>
 
-            {/* Setup Instructions */}
-            <Card className="border-border/20 bg-card/80 backdrop-blur-xl">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Cpu className="h-5 w-5 text-primary" />
-                  Configuração do WordPress
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+          {/* Google Analytics Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-amber-500/20">
+                <BarChart3 className="h-5 w-5 text-amber-500" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">📊 Google Analytics via Site Kit</h3>
+              <Badge variant="outline" className="ml-auto text-amber-500 border-amber-500/30">
+                Dados em Tempo Real
+              </Badge>
+            </div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <CyberMetricCard
+                title="Sessões"
+                value={data?.googleAnalytics?.sessions || 0}
+                icon={Activity}
+                color="#f59e0b"
+                isLive
+                delay={0}
+              />
+              <CyberMetricCard
+                title="Usuários"
+                value={data?.googleAnalytics?.users || 0}
+                icon={Users}
+                color="#22c55e"
+                isLive
+                delay={0.1}
+              />
+              <CyberMetricCard
+                title="Novos Usuários"
+                value={data?.googleAnalytics?.new_users || 0}
+                icon={GraduationCap}
+                color="#9333ea"
+                delay={0.2}
+              />
+              <CyberMetricCard
+                title="Page Views"
+                value={data?.googleAnalytics?.page_views || 0}
+                icon={Eye}
+                color="#00d4ff"
+                delay={0.3}
+              />
+              <CyberMetricCard
+                title="Bounce Rate"
+                value={data?.googleAnalytics?.bounce_rate || 0}
+                icon={TrendingDown}
+                color="#ef4444"
+                subtitle={`${(data?.googleAnalytics?.bounce_rate || 0).toFixed(1)}%`}
+                delay={0.4}
+              />
+              <CyberMetricCard
+                title="Tempo Médio"
+                value={Math.round((data?.googleAnalytics?.avg_session_duration || 0) / 60)}
+                icon={Clock}
+                color="#7c3aed"
+                subtitle="minutos"
+                delay={0.5}
+              />
+            </div>
+
+            {/* Traffic Sources */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <Card className="border-border/20 bg-gradient-to-br from-amber-500/5 via-card to-card backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Signal className="h-5 w-5 text-amber-500" />
+                    Fontes de Tráfego
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3">
+                  {[
+                    { label: "Busca Orgânica", value: data?.googleAnalytics?.organic_search || 0, color: "#22c55e", icon: "🔍" },
+                    { label: "Acesso Direto", value: data?.googleAnalytics?.direct || 0, color: "#3b82f6", icon: "🔗" },
+                    { label: "Redes Sociais", value: data?.googleAnalytics?.social || 0, color: "#ec4899", icon: "📱" },
+                    { label: "Referências", value: data?.googleAnalytics?.referral || 0, color: "#f59e0b", icon: "🔄" },
+                    { label: "Busca Paga", value: data?.googleAnalytics?.paid_search || 0, color: "#9333ea", icon: "💰" }
+                  ].map((source, i) => (
+                    <motion.div
+                      key={i}
+                      className="flex items-center justify-between p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg">{source.icon}</span>
+                        <span className="text-sm font-medium">{source.label}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Progress 
+                          value={Math.min(100, (source.value / Math.max(data?.googleAnalytics?.sessions || 1, 1)) * 100)} 
+                          className="w-20 h-2"
+                        />
+                        <span className="font-bold text-sm" style={{ color: source.color }}>
+                          {source.value.toLocaleString()}
+                        </span>
+                      </div>
+                    </motion.div>
+                  ))}
+                </CardContent>
+              </Card>
+
+              {/* Top Pages */}
+              <Card className="border-border/20 bg-gradient-to-br from-blue-500/5 via-card to-card backdrop-blur-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Eye className="h-5 w-5 text-blue-500" />
+                    Páginas Mais Acessadas
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {(data?.googleAnalytics?.top_pages || []).slice(0, 5).map((page, i) => (
+                    <motion.div
+                      key={i}
+                      className="flex items-center justify-between p-2 rounded-lg bg-secondary/20 hover:bg-secondary/40 transition-all"
+                      initial={{ opacity: 0, x: 20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.1 }}
+                    >
+                      <span className="text-sm text-muted-foreground truncate max-w-[200px]">{page.page}</span>
+                      <Badge variant="outline">{page.views.toLocaleString()} views</Badge>
+                    </motion.div>
+                  ))}
+                  {(!data?.googleAnalytics?.top_pages || data.googleAnalytics.top_pages.length === 0) && (
+                    <div className="text-center py-8 text-muted-foreground">
+                      <Eye className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p>Configure o Site Kit para ver as páginas mais acessadas</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* WooCommerce Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-purple-500/20">
+                <ShoppingCart className="h-5 w-5 text-purple-500" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">🛒 WooCommerce em Tempo Real</h3>
+              <motion.div
+                animate={{ opacity: [1, 0.5, 1] }}
+                transition={{ duration: 1.5, repeat: Infinity }}
+              >
+                <Badge className="ml-auto bg-emerald-500/20 text-emerald-500 border-emerald-500/30">
+                  <Radio className="h-3 w-3 mr-1" />
+                  VENDAS AO VIVO
+                </Badge>
+              </motion.div>
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              <CyberMetricCard
+                title="Pedidos Hoje"
+                value={data?.woocommerce?.todayOrders || 0}
+                icon={ShoppingCart}
+                color="#9333ea"
+                isLive
+                delay={0}
+              />
+              <CyberMetricCard
+                title="Receita Hoje"
+                value={data?.woocommerce?.todayRevenue || 0}
+                icon={DollarSign}
+                color="#22c55e"
+                isLive
+                delay={0.1}
+              />
+              <CyberMetricCard
+                title="Total Pedidos"
+                value={data?.woocommerce?.metrics?.total_orders || 0}
+                icon={Target}
+                color="#f59e0b"
+                delay={0.2}
+              />
+              <CyberMetricCard
+                title="Itens Vendidos"
+                value={data?.woocommerce?.metrics?.items_sold || 0}
+                icon={Award}
+                color="#00d4ff"
+                delay={0.3}
+              />
+              <CyberMetricCard
+                title="Ticket Médio"
+                value={data?.woocommerce?.metrics?.average_order_value || 0}
+                icon={Wallet}
+                color="#ec4899"
+                delay={0.4}
+              />
+              <CyberMetricCard
+                title="Conversão"
+                value={data?.woocommerce?.metrics?.conversion_rate || 0}
+                icon={TrendingUp}
+                color="#10b981"
+                subtitle="%"
+                delay={0.5}
+              />
+            </div>
+
+            {/* Recent Orders + Live Feed */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {/* Live Orders Feed */}
+              <Card className="border-border/20 bg-gradient-to-br from-purple-500/10 via-card to-emerald-500/5 backdrop-blur-xl border-l-4 border-l-purple-500">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-purple-500/20">
+                      <ShoppingCart className="h-5 w-5 text-purple-500" />
+                    </div>
+                    Pedidos Recentes
+                    <motion.div
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <Badge className="bg-purple-500/20 text-purple-500 border-purple-500/30 ml-2">
+                        <Radio className="h-3 w-3 mr-1" />
+                        LIVE
+                      </Badge>
+                    </motion.div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-3 max-h-[400px] overflow-y-auto">
+                  {data?.woocommerce?.recentOrders && data.woocommerce.recentOrders.length > 0 ? (
+                    data.woocommerce.recentOrders.map((order, i) => (
+                      <motion.div
+                        key={order.id}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        className="flex items-center gap-3 p-4 rounded-xl bg-gradient-to-r from-secondary/50 to-secondary/20 hover:from-secondary/70 hover:to-secondary/40 transition-all border border-border/20"
+                      >
+                        <div className="p-3 rounded-xl bg-emerald-500/20">
+                          <DollarSign className="h-5 w-5 text-emerald-500" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2">
+                            <p className="font-bold text-foreground">
+                              {formatCurrency(Number(order.total))}
+                            </p>
+                            <Badge 
+                              variant="outline" 
+                              className={`text-[10px] ${
+                                order.status === 'completed' ? 'text-emerald-500 border-emerald-500/30' :
+                                order.status === 'processing' ? 'text-blue-500 border-blue-500/30' :
+                                'text-amber-500 border-amber-500/30'
+                              }`}
+                            >
+                              {order.status === 'completed' ? '✅ Concluído' : 
+                               order.status === 'processing' ? '⏳ Processando' : '⏰ Pendente'}
+                            </Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground truncate">
+                            {order.customer_name || order.customer_email || 'Cliente'}
+                            {order.billing_city && ` • ${order.billing_city}/${order.billing_state}`}
+                          </p>
+                          <p className="text-xs text-muted-foreground/70 mt-1">
+                            {order.items_count} item(ns) • {order.payment_method_title || 'N/A'}
+                            {' • '}
+                            {new Date(order.date_created).toLocaleString('pt-BR', { 
+                              day: '2-digit', 
+                              month: 'short',
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </p>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <ShoppingCart className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p className="font-medium">Aguardando vendas...</p>
+                      <p className="text-sm mt-2">Configure o webhook WooCommerce para receber dados em tempo real</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* All Events Feed */}
+              <Card className="border-border/20 bg-gradient-to-br from-blue-500/10 via-card to-card backdrop-blur-xl border-l-4 border-l-blue-500">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <div className="p-2 rounded-lg bg-blue-500/20">
+                      <Activity className="h-5 w-5 text-blue-500" />
+                    </div>
+                    Feed de Eventos
+                    <motion.div
+                      animate={{ opacity: [1, 0.5, 1] }}
+                      transition={{ duration: 1.5, repeat: Infinity }}
+                    >
+                      <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30 ml-2">
+                        <Radio className="h-3 w-3 mr-1" />
+                        LIVE
+                      </Badge>
+                    </motion.div>
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
+                  {data?.wordpress?.recentEvents && data.wordpress.recentEvents.length > 0 ? (
+                    data.wordpress.recentEvents.map((event, i) => (
+                      <motion.div
+                        key={event.id}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all"
+                      >
+                        <div className={`p-2 rounded-lg ${
+                          event.event_type === 'user_registered' 
+                            ? 'bg-emerald-500/20' 
+                            : event.event_type === 'user_login'
+                            ? 'bg-blue-500/20'
+                            : event.event_type === 'woocommerce_order'
+                            ? 'bg-purple-500/20'
+                            : 'bg-amber-500/20'
+                        }`}>
+                          {event.event_type === 'user_registered' ? (
+                            <GraduationCap className="h-4 w-4 text-emerald-500" />
+                          ) : event.event_type === 'user_login' ? (
+                            <Users className="h-4 w-4 text-blue-500" />
+                          ) : event.event_type === 'woocommerce_order' ? (
+                            <ShoppingCart className="h-4 w-4 text-purple-500" />
+                          ) : (
+                            <Eye className="h-4 w-4 text-amber-500" />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">
+                            {event.user_name || event.user_email || 'Visitante'}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <p className="text-xs text-muted-foreground">
+                              {event.event_type === 'user_registered' ? '🎉 Novo cadastro' :
+                               event.event_type === 'user_login' ? '👋 Login' :
+                               event.event_type === 'woocommerce_order' ? `🛒 Compra R$ ${(event.event_data as any)?.total || 0}` : 
+                               '👁️ Visualização'}
+                            </p>
+                            <span className="text-[10px] text-muted-foreground/50">
+                              {new Date(event.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))
+                  ) : (
+                    <div className="text-center py-12 text-muted-foreground">
+                      <Activity className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                      <p className="font-medium">Aguardando eventos...</p>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+
+          {/* WordPress Users Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <div className="p-2 rounded-lg bg-blue-500/20">
+                <Users className="h-5 w-5 text-blue-500" />
+              </div>
+              <h3 className="text-lg font-bold text-foreground">👥 Usuários da Plataforma</h3>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              <CyberMetricCard
+                title="Total Usuários"
+                value={data?.wordpress?.metrics?.total_users || 0}
+                icon={Users}
+                color="#3b82f6"
+                isLive
+              />
+              <CyberMetricCard
+                title="Novos Cadastros"
+                value={data?.wordpress?.metrics?.new_registrations || 0}
+                icon={GraduationCap}
+                color="#22c55e"
+                isLive
+              />
+              <CyberMetricCard
+                title="Usuários Ativos"
+                value={data?.wordpress?.metrics?.active_users || 0}
+                icon={Activity}
+                color="#9333ea"
+              />
+              <CyberMetricCard
+                title="Page Views"
+                value={data?.wordpress?.metrics?.page_views || 0}
+                icon={Eye}
+                color="#f59e0b"
+              />
+            </div>
+          </div>
+
+          {/* Setup Instructions */}
+          <Card className="border-border/20 bg-gradient-to-br from-primary/5 via-card to-card backdrop-blur-xl">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Cpu className="h-5 w-5 text-primary" />
+                ⚙️ Configuração dos Webhooks
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
-                  <p className="text-sm font-medium text-foreground mb-2">📡 URL do Webhook:</p>
+                  <p className="text-sm font-bold text-foreground mb-2">📡 URL do Webhook:</p>
                   <code className="text-xs bg-background p-2 rounded block break-all text-primary">
                     https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/wordpress-webhook
                   </code>
-                </div>
-                
-                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
-                  <p className="text-sm font-medium text-foreground mb-2">🔐 Header de Segurança:</p>
-                  <code className="text-xs bg-background p-2 rounded block text-muted-foreground">
-                    x-webhook-secret: moisesmedeiros2024
-                  </code>
-                </div>
-
-                <div className="space-y-3 text-sm">
-                  <p className="font-semibold text-foreground">Passos para configurar:</p>
-                  <ol className="list-decimal list-inside space-y-2 text-muted-foreground">
-                    <li>Instale o plugin <strong className="text-foreground">WP Webhooks</strong> no WordPress</li>
-                    <li>Vá em <strong className="text-foreground">Configurações → Webhooks</strong></li>
-                    <li>Adicione a URL acima como endpoint</li>
-                    <li>Configure para disparar em eventos de registro/login</li>
-                    <li>Adicione o header de segurança</li>
-                  </ol>
-                </div>
-
-                <div className="flex gap-2 pt-2">
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="flex-1"
-                    onClick={() => window.open('https://app.moisesmedeiros.com.br/wp-admin/admin.php?page=wp-webhooks', '_blank')}
-                  >
-                    <Globe className="h-4 w-4 mr-2" />
-                    Abrir WP Admin
-                  </Button>
-                  <Button 
-                    variant="default" 
-                    size="sm" 
-                    className="flex-1"
+                    className="mt-2 w-full"
                     onClick={() => {
                       navigator.clipboard.writeText('https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/wordpress-webhook');
                       toast.success('URL copiada!');
@@ -1513,44 +1830,26 @@ export function IntegratedMetricsDashboard() {
                     Copiar URL
                   </Button>
                 </div>
-              </CardContent>
-            </Card>
-          </div>
+                
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
+                  <p className="text-sm font-bold text-foreground mb-2">🔐 Header de Segurança:</p>
+                  <code className="text-xs bg-background p-2 rounded block text-muted-foreground">
+                    x-webhook-secret: moisesmedeiros2024
+                  </code>
+                  <p className="text-xs text-muted-foreground mt-2">
+                    Adicione este header em todas as requisições
+                  </p>
+                </div>
 
-          {/* Site Status */}
-          <Card className="border-border/20 bg-card/80 backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Database className="h-5 w-5 text-primary" />
-                Status do Site
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {[
-                  { name: "WordPress Site", url: "app.moisesmedeiros.com.br", status: "active", color: "#21759b" },
-                  { name: "Webhook Endpoint", url: "wordpress-webhook", status: "active", color: "#22c55e" },
-                  { name: "Google Analytics", url: "Conectado via Site Kit", status: "active", color: "#f9ab00" },
-                  { name: "WooCommerce", url: "Integrado", status: "active", color: "#7f54b3" }
-                ].map((item, i) => (
-                  <motion.div
-                    key={i}
-                    className="p-4 rounded-xl bg-secondary/30 border border-border/30"
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: i * 0.1 }}
-                  >
-                    <div className="flex items-center gap-2 mb-2">
-                      <div 
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: item.color }}
-                      />
-                      <span className="text-sm font-medium">{item.name}</span>
-                    </div>
-                    <p className="text-xs text-muted-foreground truncate">{item.url}</p>
-                    <StatusBadge status={item.status as any} />
-                  </motion.div>
-                ))}
+                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
+                  <p className="text-sm font-bold text-foreground mb-2">🎯 Eventos Suportados:</p>
+                  <div className="space-y-1 text-xs text-muted-foreground">
+                    <p>• user_registered (novo cadastro)</p>
+                    <p>• user_login (login)</p>
+                    <p>• woocommerce_order (vendas)</p>
+                    <p>• google_analytics (métricas GA)</p>
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

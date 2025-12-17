@@ -1818,6 +1818,72 @@ export type Database = {
           },
         ]
       }
+      google_analytics_metrics: {
+        Row: {
+          avg_session_duration: number | null
+          bounce_rate: number | null
+          created_at: string | null
+          date: string
+          devices: Json | null
+          direct: number | null
+          id: string
+          locations: Json | null
+          new_users: number | null
+          organic_search: number | null
+          page_views: number | null
+          pages_per_session: number | null
+          paid_search: number | null
+          referral: number | null
+          sessions: number | null
+          social: number | null
+          top_pages: Json | null
+          updated_at: string | null
+          users: number | null
+        }
+        Insert: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          date?: string
+          devices?: Json | null
+          direct?: number | null
+          id?: string
+          locations?: Json | null
+          new_users?: number | null
+          organic_search?: number | null
+          page_views?: number | null
+          pages_per_session?: number | null
+          paid_search?: number | null
+          referral?: number | null
+          sessions?: number | null
+          social?: number | null
+          top_pages?: Json | null
+          updated_at?: string | null
+          users?: number | null
+        }
+        Update: {
+          avg_session_duration?: number | null
+          bounce_rate?: number | null
+          created_at?: string | null
+          date?: string
+          devices?: Json | null
+          direct?: number | null
+          id?: string
+          locations?: Json | null
+          new_users?: number | null
+          organic_search?: number | null
+          page_views?: number | null
+          pages_per_session?: number | null
+          paid_search?: number | null
+          referral?: number | null
+          sessions?: number | null
+          social?: number | null
+          top_pages?: Json | null
+          updated_at?: string | null
+          users?: number | null
+        }
+        Relationships: []
+      }
       income: {
         Row: {
           banco: string | null
@@ -5219,6 +5285,138 @@ export type Database = {
           name?: string
           updated_at?: string
           variables?: Json | null
+        }
+        Relationships: []
+      }
+      woocommerce_daily_metrics: {
+        Row: {
+          abandoned_carts: number | null
+          average_order_value: number | null
+          conversion_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          items_sold: number | null
+          new_customers: number | null
+          payment_methods: Json | null
+          returning_customers: number | null
+          top_products: Json | null
+          total_orders: number | null
+          total_revenue: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          abandoned_carts?: number | null
+          average_order_value?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          items_sold?: number | null
+          new_customers?: number | null
+          payment_methods?: Json | null
+          returning_customers?: number | null
+          top_products?: Json | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          abandoned_carts?: number | null
+          average_order_value?: number | null
+          conversion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          items_sold?: number | null
+          new_customers?: number | null
+          payment_methods?: Json | null
+          returning_customers?: number | null
+          top_products?: Json | null
+          total_orders?: number | null
+          total_revenue?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      woocommerce_orders: {
+        Row: {
+          billing_city: string | null
+          billing_country: string | null
+          billing_state: string | null
+          created_at: string | null
+          currency: string | null
+          customer_email: string | null
+          customer_name: string | null
+          customer_phone: string | null
+          date_created: string | null
+          date_paid: string | null
+          discount_total: number | null
+          id: string
+          items_count: number | null
+          order_id: string
+          order_number: string | null
+          payment_method: string | null
+          payment_method_title: string | null
+          products: Json | null
+          shipping_total: number | null
+          status: string | null
+          subtotal: number | null
+          tax_total: number | null
+          total: number
+          updated_at: string | null
+        }
+        Insert: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_state?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          date_created?: string | null
+          date_paid?: string | null
+          discount_total?: number | null
+          id?: string
+          items_count?: number | null
+          order_id: string
+          order_number?: string | null
+          payment_method?: string | null
+          payment_method_title?: string | null
+          products?: Json | null
+          shipping_total?: number | null
+          status?: string | null
+          subtotal?: number | null
+          tax_total?: number | null
+          total?: number
+          updated_at?: string | null
+        }
+        Update: {
+          billing_city?: string | null
+          billing_country?: string | null
+          billing_state?: string | null
+          created_at?: string | null
+          currency?: string | null
+          customer_email?: string | null
+          customer_name?: string | null
+          customer_phone?: string | null
+          date_created?: string | null
+          date_paid?: string | null
+          discount_total?: number | null
+          id?: string
+          items_count?: number | null
+          order_id?: string
+          order_number?: string | null
+          payment_method?: string | null
+          payment_method_title?: string | null
+          products?: Json | null
+          shipping_total?: number | null
+          status?: string | null
+          subtotal?: number | null
+          tax_total?: number | null
+          total?: number
+          updated_at?: string | null
         }
         Relationships: []
       }
