@@ -3733,6 +3733,87 @@ export type Database = {
           },
         ]
       }
+      tiktok_metrics: {
+        Row: {
+          created_at: string
+          curtidas_totais: number | null
+          data: string
+          engagement_rate: number | null
+          id: string
+          seguidores: number | null
+          seguindo: number | null
+          total_videos: number | null
+          username: string | null
+          visualizacoes_perfil: number | null
+        }
+        Insert: {
+          created_at?: string
+          curtidas_totais?: number | null
+          data?: string
+          engagement_rate?: number | null
+          id?: string
+          seguidores?: number | null
+          seguindo?: number | null
+          total_videos?: number | null
+          username?: string | null
+          visualizacoes_perfil?: number | null
+        }
+        Update: {
+          created_at?: string
+          curtidas_totais?: number | null
+          data?: string
+          engagement_rate?: number | null
+          id?: string
+          seguidores?: number | null
+          seguindo?: number | null
+          total_videos?: number | null
+          username?: string | null
+          visualizacoes_perfil?: number | null
+        }
+        Relationships: []
+      }
+      tiktok_videos: {
+        Row: {
+          comentarios: number | null
+          compartilhamentos: number | null
+          created_at: string
+          descricao: string | null
+          id: string
+          likes: number | null
+          publicado_em: string | null
+          updated_at: string
+          username: string | null
+          video_id: string
+          visualizacoes: number | null
+        }
+        Insert: {
+          comentarios?: number | null
+          compartilhamentos?: number | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          likes?: number | null
+          publicado_em?: string | null
+          updated_at?: string
+          username?: string | null
+          video_id: string
+          visualizacoes?: number | null
+        }
+        Update: {
+          comentarios?: number | null
+          compartilhamentos?: number | null
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          likes?: number | null
+          publicado_em?: string | null
+          updated_at?: string
+          username?: string | null
+          video_id?: string
+          visualizacoes?: number | null
+        }
+        Relationships: []
+      }
       time_clock_absences: {
         Row: {
           absence_date: string
@@ -5185,6 +5266,87 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      youtube_metrics: {
+        Row: {
+          channel_id: string | null
+          channel_name: string | null
+          created_at: string
+          data: string
+          engagement_rate: number | null
+          id: string
+          inscritos: number | null
+          total_videos: number | null
+          videos_recentes: number | null
+          visualizacoes_recentes: number | null
+          visualizacoes_totais: number | null
+        }
+        Insert: {
+          channel_id?: string | null
+          channel_name?: string | null
+          created_at?: string
+          data?: string
+          engagement_rate?: number | null
+          id?: string
+          inscritos?: number | null
+          total_videos?: number | null
+          videos_recentes?: number | null
+          visualizacoes_recentes?: number | null
+          visualizacoes_totais?: number | null
+        }
+        Update: {
+          channel_id?: string | null
+          channel_name?: string | null
+          created_at?: string
+          data?: string
+          engagement_rate?: number | null
+          id?: string
+          inscritos?: number | null
+          total_videos?: number | null
+          videos_recentes?: number | null
+          visualizacoes_recentes?: number | null
+          visualizacoes_totais?: number | null
+        }
+        Relationships: []
+      }
+      youtube_videos: {
+        Row: {
+          channel_id: string | null
+          comentarios: number | null
+          created_at: string
+          id: string
+          likes: number | null
+          publicado_em: string | null
+          titulo: string | null
+          updated_at: string
+          video_id: string
+          visualizacoes: number | null
+        }
+        Insert: {
+          channel_id?: string | null
+          comentarios?: number | null
+          created_at?: string
+          id?: string
+          likes?: number | null
+          publicado_em?: string | null
+          titulo?: string | null
+          updated_at?: string
+          video_id: string
+          visualizacoes?: number | null
+        }
+        Update: {
+          channel_id?: string | null
+          comentarios?: number | null
+          created_at?: string
+          id?: string
+          likes?: number | null
+          publicado_em?: string | null
+          titulo?: string | null
+          updated_at?: string
+          video_id?: string
+          visualizacoes?: number | null
+        }
+        Relationships: []
       }
     }
     Views: {

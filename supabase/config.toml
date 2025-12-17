@@ -68,3 +68,9 @@ verify_jwt = false
 
 [functions.notify-owner]
 verify_jwt = false
+
+[functions.youtube-sync]
+verify_jwt = false
+
+[functions.tiktok-sync]
+verify_jwt = false
