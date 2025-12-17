@@ -1,23 +1,22 @@
 // ============================================
 // TODAY AGENDA - Agenda do Dia
-// Visão clara do que precisa ser feito hoje
+// Visão clara do que precisa ser feito - CLICÁVEL
 // ============================================
 
 import { motion } from "framer-motion";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 import {
   Calendar,
   Clock,
   CheckCircle2,
-  Circle,
   AlertTriangle,
   ChevronRight,
   Plus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 
 interface Task {
@@ -46,19 +45,16 @@ export function TodayAgenda({ tasks, onToggleComplete }: TodayAgendaProps) {
       return isToday(taskDate) || (isBefore(taskDate, startOfDay(today)) && !task.is_completed);
     })
     .sort((a, b) => {
-      // Overdue first, then by time
       const aOverdue = isBefore(new Date(a.task_date), startOfDay(today));
       const bOverdue = isBefore(new Date(b.task_date), startOfDay(today));
       if (aOverdue && !bOverdue) return -1;
       if (!aOverdue && bOverdue) return 1;
       
-      // Then by priority
       const priorityOrder = { urgent: 0, high: 1, normal: 2, low: 3 };
       const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 2;
       const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 2;
       if (aPriority !== bPriority) return aPriority - bPriority;
       
-      // Then by time
       if (a.task_time && b.task_time) return a.task_time.localeCompare(b.task_time);
       return 0;
     });
@@ -106,19 +102,28 @@ export function TodayAgenda({ tasks, onToggleComplete }: TodayAgendaProps) {
         </Button>
       </div>
 
-      {/* Stats Pills */}
+      {/* Stats Pills - CLICÁVEIS */}
       <div className="flex flex-wrap gap-2 mb-4">
-        <div className="px-3 py-1 rounded-full bg-[hsl(var(--stats-green))]/10 text-[hsl(var(--stats-green))] text-xs font-medium">
+        <button
+          onClick={() => navigate("/tarefas")}
+          className="px-3 py-1 rounded-full bg-[hsl(var(--stats-green))]/10 text-[hsl(var(--stats-green))] text-xs font-medium hover:bg-[hsl(var(--stats-green))]/20 transition-colors"
+        >
           {completedCount} concluídas
-        </div>
-        <div className="px-3 py-1 rounded-full bg-[hsl(var(--stats-blue))]/10 text-[hsl(var(--stats-blue))] text-xs font-medium">
+        </button>
+        <button
+          onClick={() => navigate("/tarefas")}
+          className="px-3 py-1 rounded-full bg-[hsl(var(--stats-blue))]/10 text-[hsl(var(--stats-blue))] text-xs font-medium hover:bg-[hsl(var(--stats-blue))]/20 transition-colors"
+        >
           {pendingCount} pendentes
-        </div>
+        </button>
         {overdueCount > 0 && (
-          <div className="px-3 py-1 rounded-full bg-destructive/10 text-destructive text-xs font-medium flex items-center gap-1">
+          <button
+            onClick={() => navigate("/tarefas")}
+            className="px-3 py-1 rounded-full bg-destructive/10 text-destructive text-xs font-medium flex items-center gap-1 hover:bg-destructive/20 transition-colors"
+          >
             <AlertTriangle className="h-3 w-3" />
             {overdueCount} atrasadas
-          </div>
+          </button>
         )}
       </div>
 
@@ -147,17 +152,21 @@ export function TodayAgenda({ tasks, onToggleComplete }: TodayAgendaProps) {
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: index * 0.05 }}
                 className={cn(
-                  "group flex items-center gap-3 p-3 rounded-xl border transition-all",
+                  "group flex items-center gap-3 p-3 rounded-xl border transition-all cursor-pointer",
                   task.is_completed 
                     ? "bg-muted/30 border-border/30 opacity-60" 
                     : isOverdue
-                    ? "bg-destructive/5 border-destructive/30"
+                    ? "bg-destructive/5 border-destructive/30 hover:border-destructive/50"
                     : "bg-card/50 border-border/50 hover:border-primary/30"
                 )}
+                onClick={() => navigate("/tarefas")}
               >
                 <Checkbox
                   checked={task.is_completed}
-                  onCheckedChange={() => onToggleComplete?.(task.id)}
+                  onCheckedChange={() => {
+                    onToggleComplete?.(task.id);
+                  }}
+                  onClick={(e) => e.stopPropagation()}
                   className={cn(
                     "shrink-0",
                     getPriorityColor(task.priority)

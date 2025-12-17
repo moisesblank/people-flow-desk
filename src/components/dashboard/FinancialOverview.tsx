@@ -1,18 +1,19 @@
 // ============================================
 // FINANCIAL OVERVIEW - Resumo Financeiro Visual
-// Visão clara da saúde financeira
+// Visão clara da saúde financeira - CLICÁVEL
 // ============================================
 
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { 
   TrendingUp, 
   TrendingDown, 
   Wallet, 
-  PiggyBank,
   ArrowUpRight,
   ArrowDownRight,
   AlertTriangle,
-  CheckCircle2
+  CheckCircle2,
+  ChevronRight
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
@@ -38,6 +39,7 @@ export function FinancialOverview({
   companyExpenses,
   pendingPayments 
 }: FinancialOverviewProps) {
+  const navigate = useNavigate();
   const profit = income - expenses;
   const profitMargin = income > 0 ? (profit / income) * 100 : 0;
   const expenseRatio = income > 0 ? (expenses / income) * 100 : 0;
@@ -69,47 +71,62 @@ export function FinancialOverview({
         </div>
       </div>
 
-      {/* Main Values */}
+      {/* Main Values - CLICÁVEIS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Income */}
-        <div className="p-4 rounded-xl bg-[hsl(var(--stats-green))]/5 border border-[hsl(var(--stats-green))]/20">
+        {/* Income - Clicável */}
+        <motion.button
+          onClick={() => navigate("/entradas")}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="p-4 rounded-xl bg-[hsl(var(--stats-green))]/5 border border-[hsl(var(--stats-green))]/20 hover:border-[hsl(var(--stats-green))]/40 transition-all text-left group"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Receitas</span>
-            <ArrowUpRight className="h-4 w-4 text-[hsl(var(--stats-green))]" />
+            <ArrowUpRight className="h-4 w-4 text-[hsl(var(--stats-green))] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
           <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">
             {formatCurrency(income)}
           </p>
-        </div>
+        </motion.button>
 
-        {/* Expenses */}
-        <div className="p-4 rounded-xl bg-[hsl(var(--stats-purple))]/5 border border-[hsl(var(--stats-purple))]/20">
+        {/* Expenses - Clicável */}
+        <motion.button
+          onClick={() => navigate("/financas-empresa")}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className="p-4 rounded-xl bg-[hsl(var(--stats-purple))]/5 border border-[hsl(var(--stats-purple))]/20 hover:border-[hsl(var(--stats-purple))]/40 transition-all text-left group"
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Despesas</span>
-            <ArrowDownRight className="h-4 w-4 text-[hsl(var(--stats-purple))]" />
+            <ArrowDownRight className="h-4 w-4 text-[hsl(var(--stats-purple))] group-hover:translate-x-0.5 group-hover:translate-y-0.5 transition-transform" />
           </div>
           <p className="text-2xl font-bold text-[hsl(var(--stats-purple))]">
             {formatCurrency(expenses)}
           </p>
-        </div>
+        </motion.button>
 
-        {/* Profit */}
-        <div className={`p-4 rounded-xl ${
-          profit >= 0 
-            ? "bg-[hsl(var(--stats-green))]/5 border border-[hsl(var(--stats-green))]/20" 
-            : "bg-destructive/5 border border-destructive/20"
-        }`}>
+        {/* Profit - Clicável */}
+        <motion.button
+          onClick={() => navigate("/relatorios")}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+          className={`p-4 rounded-xl text-left group transition-all ${
+            profit >= 0 
+              ? "bg-[hsl(var(--stats-green))]/5 border border-[hsl(var(--stats-green))]/20 hover:border-[hsl(var(--stats-green))]/40" 
+              : "bg-destructive/5 border border-destructive/20 hover:border-destructive/40"
+          }`}
+        >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Lucro</span>
             {profit >= 0 
-              ? <TrendingUp className="h-4 w-4 text-[hsl(var(--stats-green))]" /> 
-              : <TrendingDown className="h-4 w-4 text-destructive" />
+              ? <TrendingUp className="h-4 w-4 text-[hsl(var(--stats-green))] group-hover:-translate-y-0.5 transition-transform" /> 
+              : <TrendingDown className="h-4 w-4 text-destructive group-hover:translate-y-0.5 transition-transform" />
             }
           </div>
           <p className={`text-2xl font-bold ${profit >= 0 ? "text-[hsl(var(--stats-green))]" : "text-destructive"}`}>
             {formatCurrency(profit)}
           </p>
-        </div>
+        </motion.button>
       </div>
 
       {/* Progress Bar */}
@@ -135,23 +152,41 @@ export function FinancialOverview({
         </div>
       </div>
 
-      {/* Breakdown */}
+      {/* Breakdown - CLICÁVEL */}
       <div className="mt-6 pt-6 border-t border-border/50">
         <h4 className="text-sm font-medium text-muted-foreground mb-3">Detalhamento</h4>
         <div className="grid grid-cols-2 gap-3">
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+          <motion.button
+            onClick={() => navigate("/financas-pessoais")}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+          >
             <span className="text-sm text-muted-foreground">Pessoal</span>
             <span className="text-sm font-medium text-foreground">{formatCurrency(personalExpenses)}</span>
-          </div>
-          <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30">
+          </motion.button>
+          <motion.button
+            onClick={() => navigate("/financas-empresa")}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors text-left"
+          >
             <span className="text-sm text-muted-foreground">Empresa</span>
             <span className="text-sm font-medium text-foreground">{formatCurrency(companyExpenses)}</span>
-          </div>
+          </motion.button>
           {pendingPayments > 0 && (
-            <div className="col-span-2 flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--stats-gold))]/10 border border-[hsl(var(--stats-gold))]/20">
+            <motion.button
+              onClick={() => navigate("/pagamentos")}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              className="col-span-2 flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--stats-gold))]/10 border border-[hsl(var(--stats-gold))]/20 hover:border-[hsl(var(--stats-gold))]/40 transition-all group"
+            >
               <span className="text-sm text-[hsl(var(--stats-gold))]">Pagamentos Pendentes</span>
-              <span className="text-sm font-medium text-[hsl(var(--stats-gold))]">{pendingPayments}</span>
-            </div>
+              <div className="flex items-center gap-2">
+                <span className="text-sm font-medium text-[hsl(var(--stats-gold))]">{pendingPayments}</span>
+                <ChevronRight className="h-4 w-4 text-[hsl(var(--stats-gold))] opacity-0 group-hover:opacity-100 transition-opacity" />
+              </div>
+            </motion.button>
           )}
         </div>
       </div>

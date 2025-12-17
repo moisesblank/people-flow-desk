@@ -1,5 +1,6 @@
-import { LucideIcon, Lock } from "lucide-react";
+import { LucideIcon, Lock, ChevronRight } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AnimatedCounter } from "./AnimatedCounter";
 import {
@@ -15,8 +16,10 @@ interface StatCardProps {
   icon: LucideIcon;
   variant: "red" | "green" | "blue" | "purple";
   delay?: number;
-  hiddenText?: string; // Texto a mostrar quando value é null
-  hiddenTooltip?: string; // Tooltip quando valor é restrito
+  hiddenText?: string;
+  hiddenTooltip?: string;
+  href?: string; // Rota para navegação
+  onClick?: () => void; // Função de clique personalizada
 }
 
 const variantStyles = {
@@ -50,10 +53,22 @@ export function StatCard({
   variant,
   delay = 0,
   hiddenText = "••••••",
-  hiddenTooltip = "Informação restrita. Apenas administradores podem visualizar."
+  hiddenTooltip = "Informação restrita. Apenas administradores podem visualizar.",
+  href,
+  onClick
 }: StatCardProps) {
+  const navigate = useNavigate();
   const styles = variantStyles[variant];
   const isHidden = value === null;
+  const isClickable = !!href || !!onClick;
+
+  const handleClick = () => {
+    if (onClick) {
+      onClick();
+    } else if (href) {
+      navigate(href);
+    }
+  };
 
   return (
     <motion.div
@@ -61,9 +76,11 @@ export function StatCard({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: delay * 0.1, ease: [0.16, 1, 0.3, 1] }}
       whileHover={{ scale: 1.02, y: -4 }}
+      onClick={isClickable ? handleClick : undefined}
       className={cn(
-        "stat-card glass-card border cursor-default group",
-        styles.card
+        "stat-card glass-card border group relative",
+        styles.card,
+        isClickable ? "cursor-pointer" : "cursor-default"
       )}
     >
       {/* Subtle indicator line */}
@@ -99,6 +116,13 @@ export function StatCard({
           <Icon className="h-6 w-6" strokeWidth={2} />
         </motion.div>
       </div>
+
+      {/* Indicador de clicável */}
+      {isClickable && (
+        <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity">
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        </div>
+      )}
 
       {/* Decorative gradient orb */}
       <div className="absolute -bottom-10 -right-10 w-32 h-32 rounded-full opacity-5 blur-2xl transition-opacity duration-500 group-hover:opacity-10"
