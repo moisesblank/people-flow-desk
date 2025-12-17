@@ -1,8 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - DASHBOARD PRINCIPAL
-// SYNAPSE v14.0 + UPGRADE v10 - MELHORADO
+// MOISÉS MEDEIROS v15.0 - DASHBOARD PRINCIPAL
+// SYNAPSE v15.0 + FUTURISTIC 2050 - AJUDA15
 // Central de Comando - Business Intelligence
-// UX Focada na Organização e Produtividade
+// Estética Cyberpunk com IA Integrada
 // ============================================
 
 import { useMemo, useState, useEffect } from "react";
@@ -67,8 +67,11 @@ import { FinancialHealthScore } from "@/components/dashboard/FinancialHealthScor
 import { FinancialGoalsWidget } from "@/components/dashboard/FinancialGoalsWidget";
 import { FinancialInsights } from "@/components/dashboard/FinancialInsights";
 import { QuickActions } from "@/components/dashboard/QuickActions";
-// NEW: Componentes de UX melhorados
+// FUTURISTIC 2050 - Componentes visuais avançados
 import { WelcomeHero } from "@/components/dashboard/WelcomeHero";
+import { FuturisticHero } from "@/components/dashboard/FuturisticHero";
+import { CyberStatCard } from "@/components/dashboard/CyberStatCard";
+import { HolographicChart } from "@/components/dashboard/HolographicChart";
 import { QuickActionsGrid } from "@/components/dashboard/QuickActionsGrid";
 import { FinancialOverview } from "@/components/dashboard/FinancialOverview";
 import { TodayAgenda } from "@/components/dashboard/TodayAgenda";
@@ -77,6 +80,8 @@ import { TeamSummary } from "@/components/dashboard/TeamSummary";
 import { SmartTips } from "@/components/dashboard/SmartTips";
 import { AIInsightsWidget } from "@/components/dashboard/AIInsightsWidget";
 import { LiveMetricsBar } from "@/components/dashboard/LiveMetricsBar";
+// AI Assistant Visual
+import { AIVisualAssistant } from "@/components/ai/AIVisualAssistant";
 // EMPRESARIAL 2.0 - Novos componentes avançados
 import { CriticalAlertsWidget } from "@/components/dashboard/CriticalAlertsWidget";
 import { PredictiveMetricsWidget } from "@/components/dashboard/PredictiveMetricsWidget";
@@ -327,12 +332,24 @@ export default function Dashboard() {
         {/* NOVO: Barra de métricas em tempo real */}
         <LiveMetricsBar />
         
-        {/* NOVO: Welcome Hero com orientação contextual e imagem */}
-        <WelcomeHero
+        {/* FUTURISTIC 2050: Hero com visual cyberpunk */}
+        <FuturisticHero
           pendingTasks={stats?.pendingTasks || 0}
           completedToday={stats?.tasksData?.filter((t: any) => t.is_completed)?.length || 0}
           pendingPayments={stats?.pendingPayments || 0}
           profit={lucroLiquidoValue}
+          students={stats?.students || 0}
+          affiliates={stats?.affiliates || 0}
+        />
+        
+        {/* AI Visual Assistant - Floating */}
+        <AIVisualAssistant 
+          context={{
+            pendingTasks: stats?.pendingTasks || 0,
+            profit: lucroLiquidoValue,
+            students: stats?.students || 0,
+            pendingPayments: stats?.pendingPayments || 0,
+          }}
         />
 
         {/* ===== CENTRAL WHATSAPP - DESTAQUE NO TOPO ===== */}
