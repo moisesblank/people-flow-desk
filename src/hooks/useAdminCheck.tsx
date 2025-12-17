@@ -1,7 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v9.0 - ADMIN CHECK HOOK
 // Verificação de Permissões Owner/Admin
-// MODO DEUS: Exclusivo para moisesblank@gmail.com
+// MODO MASTER: Exclusivo para moisesblank@gmail.com
 // ============================================
 
 import { useState, useEffect } from "react";

@@ -717,16 +717,16 @@
 }
 
 /* ============================================
-   🎮 MODO DEUS - VISUAL EDITOR STYLES
+   🎮 MODO MASTER - VISUAL EDITOR STYLES
    Exclusivo para Owner: moisesblank@gmail.com
    ============================================ */
 
-/* Gradiente especial do MODO DEUS */
+/* Gradiente especial do MODO MASTER */
 .god-mode-gradient {
   background: linear-gradient(135deg, #9333ea 0%, #ec4899 50%, #9333ea 100%);
 }
 
-/* Animação de pulso do MODO DEUS */
+/* Animação de pulso do MODO MASTER */
 @keyframes god-pulse {
   0%, 100% { 
     box-shadow: 0 0 30px rgba(147, 51, 234, 0.4), 0 0 60px rgba(236, 72, 153, 0.2); 
@@ -740,7 +740,7 @@
   animation: god-pulse 2s ease-in-out infinite;
 }
 
-/* Elemento editável no MODO DEUS */
+/* Elemento editável no MODO MASTER */
 .god-mode-editable {
   @apply relative transition-all duration-200;
 }
@@ -756,7 +756,7 @@
   @apply ring-4 ring-purple-500/20;
 }
 
-/* Painel flutuante do MODO DEUS */
+/* Painel flutuante do MODO MASTER */
 .god-mode-panel {
   @apply fixed z-[9999] p-4 rounded-xl shadow-2xl;
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.95), rgba(236, 72, 153, 0.95));
@@ -786,7 +786,7 @@
   box-shadow: 0 0 40px rgba(147, 51, 234, 0.5);
 }
 
-/* Overlay de upload de imagem no MODO DEUS */
+/* Overlay de upload de imagem no MODO MASTER */
 .god-mode-image-overlay {
   @apply absolute inset-0 flex items-center justify-center rounded-lg;
   background: linear-gradient(135deg, rgba(147, 51, 234, 0.8), rgba(236, 72, 153, 0.8));
