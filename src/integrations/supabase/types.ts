@@ -5924,6 +5924,15 @@ export type Database = {
         Args: { emp_salary: number; emp_user_id: string }
         Returns: number
       }
+      get_safe_profile: {
+        Args: { p_user_id: string }
+        Returns: {
+          avatar_url: string
+          id: string
+          is_online: boolean
+          nome: string
+        }[]
+      }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
