@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - FUNCIONÁRIOS
+// MOISÉS MEDEIROS v8.0 - FUNCIONÁRIOS
 // Spider-Man Theme - Gestão de Equipe
-// Elementos de Química Integrados
+// Elementos de Química Integrados + Anexos Automáticos
 // ============================================
 
 import { useState, useMemo, useCallback, useEffect } from "react";
@@ -20,6 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
 import { TeamMetricsWidget } from "@/components/employees/TeamMetricsWidget";
+import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
+import { SmartChecklist } from "@/components/checklists/SmartChecklist";
 import teamHeroImage from "@/assets/team-chemistry-hero.jpg";
 import type { EmployeeStatus, Sector } from "@/types/employee";
 

@@ -1,4 +1,4 @@
-import { Edit2, Trash2, Mail, Briefcase, Building2, Calendar, MoreVertical, Lock } from "lucide-react";
+import { Edit2, Trash2, Mail, Briefcase, Building2, Calendar, MoreVertical, Lock, Paperclip } from "lucide-react";
 import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import {
@@ -14,6 +14,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { StatusBadge } from "./StatusBadge";
+import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
 import type { Employee } from "@/types/employee";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -94,6 +95,15 @@ export function EmployeeCard({ employee, onEdit, onDelete, index = 0 }: Employee
 
             <div className="flex items-center gap-2 shrink-0">
               <StatusBadge status={employee.status} />
+              
+              {/* Botão de Anexos */}
+              <AttachmentButton
+                entityType="employee"
+                entityId={employee.id}
+                entityLabel={employee.nome}
+                variant="ghost"
+                size="icon"
+              />
               
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>

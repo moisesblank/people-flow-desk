@@ -48,6 +48,7 @@ import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisu
 import { LoadingState, StatsSkeleton } from "@/components/LoadingState";
 import { ExportButton } from "@/components/ExportButton";
 import { AITutor } from "@/components/ai/AITutor";
+import { RealtimeControlWidget } from "@/components/dashboard/RealtimeControlWidget";
 import { AITramon } from "@/components/ai/AITramon";
 import { QuizListWidget } from "@/components/lms/QuizListWidget";
 import { SecurityStatusWidget } from "@/components/security/SecurityStatusWidget";

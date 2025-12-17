@@ -1,12 +1,12 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - FINANÇAS PESSOAIS
+// MOISÉS MEDEIROS v8.0 - FINANÇAS PESSOAIS
 // Spider-Man Theme - Gestão Financeira Pessoal
-// Elementos de Química Integrados
+// Elementos de Química Integrados + Anexos Automáticos
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Wallet, Sparkles, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom } from "lucide-react";
+import { Plus, Wallet, Sparkles, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom, Paperclip } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,7 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, AreaChart, A
 import { ChemistryTip, AnimatedAtom } from "@/components/chemistry/ChemistryVisuals";
 import { FinancialProjections } from "@/components/finance/FinancialProjections";
 import { SpendingAnalytics } from "@/components/finance/SpendingAnalytics";
+import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
 import financeHeroImage from "@/assets/finance-chemistry-hero.jpg";
 
 interface Expense {
@@ -322,6 +323,13 @@ export default function FinancasPessoais() {
                       <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
                       <td className="p-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <AttachmentButton
+                            entityType="expense"
+                            entityId={expense.id}
+                            entityLabel={expense.nome}
+                            variant="ghost"
+                            size="icon"
+                          />
                           <Button variant="ghost" size="icon" onClick={() => openModal("fixed", expense)}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
@@ -380,6 +388,13 @@ export default function FinancasPessoais() {
                     <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
                     <td className="p-4 text-right">
                       <div className="flex justify-end gap-2">
+                        <AttachmentButton
+                          entityType="expense"
+                          entityId={expense.id}
+                          entityLabel={expense.nome}
+                          variant="ghost"
+                          size="icon"
+                        />
                         <Button variant="ghost" size="icon" onClick={() => openModal("extra", expense)}>
                           <Edit2 className="h-4 w-4" />
                         </Button>
