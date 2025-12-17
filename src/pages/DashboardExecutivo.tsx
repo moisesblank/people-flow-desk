@@ -30,6 +30,7 @@ import {
   Shield,
   Clock,
   Eye,
+  Globe,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -69,6 +70,7 @@ import { useDashboardStats } from "@/hooks/useDataCache";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CashFlowForecast } from "@/components/finance/CashFlowForecast";
+import { WordPressSiteMonitor } from "@/components/dashboard/WordPressSiteMonitor";
 
 // Cores do design system CYBER
 const COLORS = {
@@ -603,6 +605,24 @@ export default function DashboardExecutivo() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Meu Site - WordPress em Tempo Real */}
+      <motion.section
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-2 rounded-lg bg-primary/10">
+            <Globe className="h-5 w-5 text-primary" />
+          </div>
+          <div>
+            <h2 className="text-xl font-bold">Meu Site</h2>
+            <p className="text-sm text-muted-foreground">Monitoramento em tempo real do WordPress</p>
+          </div>
+        </div>
+        <WordPressSiteMonitor />
+      </motion.section>
 
       {/* Cash Flow Forecast */}
       <div className="grid gap-6 lg:grid-cols-2">
