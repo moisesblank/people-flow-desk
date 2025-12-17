@@ -1,18 +1,20 @@
 // ============================================
-// 🔮 TRAMON v6.0 ULTRA - COMPONENTE GLOBAL
-// SEMPRE VISÍVEL - ÁUDIO + IMAGEM + CRUD
+// 🌟 TRAMON v7.0 OMEGA - UI REVOLUCIONÁRIA
+// GLASSMORPHISM + ANIMAÇÕES + QUICK INSIGHTS
 // ============================================
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Crown, X, Send, Sparkles, Brain, TrendingUp, DollarSign, Users,
-  Target, Loader2, Copy, Trash2, Zap, Phone,
+  Target, Loader2, Copy, Trash2, Zap, 
   Calendar, BarChart3, ChevronUp, ChevronDown,
-  AlertTriangle, UserCircle, Settings, Camera,
-  XCircle, Code, RefreshCw, Terminal, Minimize2, Maximize2,
+  AlertTriangle, Settings, Camera,
+  XCircle, Code, RefreshCw, Minimize2, Maximize2,
   Mic, MicOff, Image as ImageIcon, Bot, User as UserIcon,
-  Receipt, UserPlus, CheckSquare, Wallet
+  Receipt, UserPlus, CheckSquare, Wallet, MessageCircle,
+  Activity, PieChart, FileText, Clock, Star, ArrowRight,
+  Eye, EyeOff, Lightbulb, Rocket, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -34,25 +36,33 @@ interface Message {
   tipoCrud?: boolean;
 }
 
+interface QuickInsight {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  trend?: 'up' | 'down' | 'neutral';
+  color: string;
+}
+
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
-// Ações rápidas CRUD
-const quickActionsCRUD = [
-  { icon: Receipt, label: "Registrar Despesa", prompt: "Gastei 50 reais de almoço", category: "despesa", color: "text-red-400" },
-  { icon: Wallet, label: "Registrar Receita", prompt: "Recebi 1500 reais de venda do curso", category: "receita", color: "text-green-400" },
-  { icon: UserPlus, label: "Cadastrar Aluno", prompt: "Cadastrar aluno João Silva, email joao@email.com", category: "aluno", color: "text-blue-400" },
-  { icon: CheckSquare, label: "Criar Tarefa", prompt: "Criar tarefa: Revisar relatório financeiro", category: "tarefa", color: "text-yellow-400" },
-];
-
-// Ações rápidas Análise
-const quickActionsAnalise = [
-  { icon: TrendingUp, label: "Análise Executiva", prompt: "Faça uma análise executiva completa do meu negócio", category: "analise" },
-  { icon: DollarSign, label: "Saldo do Mês", prompt: "Saldo do mês", category: "financeiro" },
-  { icon: Calendar, label: "Tarefas Hoje", prompt: "Minhas tarefas de hoje", category: "tarefas" },
-  { icon: AlertTriangle, label: "Alertas Críticos", prompt: "Liste todos os alertas críticos do sistema", category: "alertas" },
-  { icon: UserCircle, label: "Meu Assessor", prompt: "meu assessor", category: "assessor" },
-  { icon: BarChart3, label: "Relatório", prompt: "Gere um relatório executivo completo", category: "relatorio" },
-];
+// ========================================
+// 🎯 AÇÕES RÁPIDAS
+// ========================================
+const quickActions = {
+  crud: [
+    { icon: Receipt, label: "💸 Despesa", prompt: "Gastei 50 reais de ", color: "from-red-500/20 to-red-600/20 border-red-500/30" },
+    { icon: Wallet, label: "💰 Receita", prompt: "Recebi reais de ", color: "from-green-500/20 to-green-600/20 border-green-500/30" },
+    { icon: UserPlus, label: "👤 Aluno", prompt: "Cadastrar aluno ", color: "from-blue-500/20 to-blue-600/20 border-blue-500/30" },
+    { icon: CheckSquare, label: "📋 Tarefa", prompt: "Criar tarefa: ", color: "from-yellow-500/20 to-yellow-600/20 border-yellow-500/30" },
+  ],
+  analise: [
+    { icon: TrendingUp, label: "📊 Análise", prompt: "Faça uma análise executiva completa", color: "from-purple-500/20 to-purple-600/20 border-purple-500/30" },
+    { icon: DollarSign, label: "💵 Saldo", prompt: "Qual o saldo do mês?", color: "from-emerald-500/20 to-emerald-600/20 border-emerald-500/30" },
+    { icon: Calendar, label: "📅 Hoje", prompt: "Minhas tarefas de hoje", color: "from-cyan-500/20 to-cyan-600/20 border-cyan-500/30" },
+    { icon: AlertTriangle, label: "🚨 Alertas", prompt: "Liste todos os alertas críticos", color: "from-orange-500/20 to-orange-600/20 border-orange-500/30" },
+  ]
+};
 
 export function AITramonGlobal() {
   const { user } = useAuth();
@@ -61,7 +71,6 @@ export function AITramonGlobal() {
   
   const [isOpen, setIsOpen] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -70,16 +79,53 @@ export function AITramonGlobal() {
   const [programmerMode, setProgrammerMode] = useState(false);
   const [programmerCode, setProgrammerCode] = useState("");
   const [isRecording, setIsRecording] = useState(false);
-  const [activeTab, setActiveTab] = useState<'crud' | 'analise'>('crud');
+  const [showQuickActions, setShowQuickActions] = useState(true);
+  const [quickInsights, setQuickInsights] = useState<QuickInsight[]>([]);
   
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
   const hasAccess = canAccessTramon;
   const isOwner = user?.email === OWNER_EMAIL;
+
+  // ========================================
+  // 📊 CARREGAR QUICK INSIGHTS
+  // ========================================
+  useEffect(() => {
+    if (!isOpen || !hasAccess) return;
+    
+    const loadInsights = async () => {
+      try {
+        const hoje = new Date();
+        const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString();
+        
+        const [entradasRes, gastosRes, tarefasRes] = await Promise.all([
+          supabase.from('entradas').select('valor').gte('data', inicioMes),
+          supabase.from('gastos').select('valor').gte('data', inicioMes),
+          supabase.from('calendar_tasks').select('id, is_completed').eq('task_date', hoje.toISOString().split('T')[0])
+        ]);
+        
+        const receita = (entradasRes.data || []).reduce((s, e) => s + (e.valor || 0), 0);
+        const despesas = (gastosRes.data || []).reduce((s, g) => s + (g.valor || 0), 0);
+        const saldo = receita - despesas;
+        const tarefasPendentes = (tarefasRes.data || []).filter(t => !t.is_completed).length;
+        
+        setQuickInsights([
+          { icon: Wallet, label: "Saldo", value: `R$ ${saldo.toLocaleString('pt-BR')}`, trend: saldo >= 0 ? 'up' : 'down', color: saldo >= 0 ? 'text-green-400' : 'text-red-400' },
+          { icon: TrendingUp, label: "Receita", value: `R$ ${receita.toLocaleString('pt-BR')}`, trend: 'up', color: 'text-emerald-400' },
+          { icon: CheckSquare, label: "Tarefas", value: `${tarefasPendentes} pendentes`, trend: tarefasPendentes > 3 ? 'down' : 'neutral', color: tarefasPendentes > 3 ? 'text-yellow-400' : 'text-blue-400' },
+        ]);
+      } catch (error) {
+        console.error('Erro ao carregar insights:', error);
+      }
+    };
+    
+    loadInsights();
+  }, [isOpen, hasAccess]);
 
   // Scroll to bottom
   useEffect(() => {
@@ -91,27 +137,28 @@ export function AITramonGlobal() {
   // Welcome message
   useEffect(() => {
     if (isOpen && messages.length === 0 && hasAccess) {
-      const welcomeMsg = `🔮 **TRAMON v6.0 ULTRA** - Olá, ${user?.email?.split('@')[0] || 'Mestre'}!
+      const hora = new Date().getHours();
+      const saudacao = hora < 12 ? "Bom dia" : hora < 18 ? "Boa tarde" : "Boa noite";
+      
+      const welcomeMsg = `🌟 **${saudacao}, ${user?.email?.split('@')[0] || 'Mestre'}!**
 
-**ASSESSOR INTELIGENTE + SUPERINTELIGÊNCIA**
+Sou **TRAMON v7.0 OMEGA** - sua superinteligência empresarial.
 
-📝 **Comandos Rápidos:**
-• "Gastei 50 reais de gasolina" → Registra despesa
-• "Recebi 1500 de venda" → Registra receita  
-• "Cadastrar aluno João" → Cadastra aluno
-• "Criar tarefa: ..." → Cria tarefa
-• "Quanto gastei hoje?" → Consulta gastos
-• "Saldo do mês" → Mostra saldo
+**💬 Comandos por voz natural:**
+• "Gastei 80 de gasolina" → Registra despesa
+• "Recebi 2000 do curso" → Registra receita
+• "Cadastrar aluno Maria" → Cadastra aluno
+• "Quanto gastei hoje?" → Consulta instantânea
 
-📊 **Análises:**
+**📊 Análises avançadas:**
 • Relatórios executivos
 • Projeções financeiras
-• Alertas críticos
+• Alertas inteligentes
 
-📸 **Envie imagens** de notas fiscais para registro automático!
-${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
+**📸 Envie imagens** para análise automática!
+${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site em tempo real' : ''}
 
-**Use as ações rápidas abaixo ou digite!**`;
+**Use os botões abaixo ou digite livremente!**`;
 
       setMessages([{
         id: "welcome",
@@ -122,7 +169,9 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
     }
   }, [isOpen, user, messages.length, hasAccess, isOwner]);
 
-  // Image upload
+  // ========================================
+  // 📤 HANDLERS
+  // ========================================
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -142,7 +191,7 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
       const base64 = event.target?.result as string;
       setSelectedImage(base64);
       setImagePreview(base64);
-      toast.success("Imagem carregada!");
+      toast.success("📸 Imagem carregada!");
     };
     reader.readAsDataURL(file);
   }, []);
@@ -154,47 +203,39 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
   }, []);
 
   // Audio recording
-  const startRecording = useCallback(async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mediaRecorder = new MediaRecorder(stream);
-      audioChunksRef.current = [];
-
-      mediaRecorder.ondataavailable = (event) => {
-        if (event.data.size > 0) {
-          audioChunksRef.current.push(event.data);
-        }
-      };
-
-      mediaRecorder.onstop = async () => {
-        stream.getTracks().forEach(track => track.stop());
-        toast.info("🎙️ Áudio gravado! Processando...");
-        // Por enquanto, áudio será tratado como texto
-        // Em produção, enviar para transcrição
-      };
-
-      mediaRecorder.start();
-      mediaRecorderRef.current = mediaRecorder;
-      setIsRecording(true);
-      toast.info("🎙️ Gravando... Clique novamente para parar");
-    } catch (error) {
-      console.error("Erro ao iniciar gravação:", error);
-      toast.error("Erro ao acessar microfone");
-    }
-  }, []);
-
-  const stopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && isRecording) {
-      mediaRecorderRef.current.stop();
+  const toggleRecording = useCallback(async () => {
+    if (isRecording) {
+      mediaRecorderRef.current?.stop();
       setIsRecording(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mediaRecorder = new MediaRecorder(stream);
+        audioChunksRef.current = [];
+
+        mediaRecorder.ondataavailable = (event) => {
+          if (event.data.size > 0) audioChunksRef.current.push(event.data);
+        };
+
+        mediaRecorder.onstop = () => {
+          stream.getTracks().forEach(track => track.stop());
+          toast.info("🎙️ Áudio capturado!");
+        };
+
+        mediaRecorder.start();
+        mediaRecorderRef.current = mediaRecorder;
+        setIsRecording(true);
+        toast.info("🎙️ Gravando...");
+      } catch (error) {
+        toast.error("Erro ao acessar microfone");
+      }
     }
   }, [isRecording]);
 
   // Detect programmer mode
   const detectProgrammerMode = (text: string): boolean => {
-    const normalizedText = text.toLowerCase().trim();
-    return normalizedText.includes("ativar modo programador") || 
-           normalizedText.includes("modo programador");
+    const lower = text.toLowerCase().trim();
+    return lower.includes("ativar modo programador") || lower.includes("modo programador") || lower.includes("programmer mode");
   };
 
   // Apply code changes
@@ -216,39 +257,20 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
     // Check programmer mode (OWNER ONLY)
     if (isOwner && detectProgrammerMode(messageText)) {
       setProgrammerMode(true);
-      const userMessage: Message = {
-        id: Date.now().toString(),
-        type: "user",
-        content: messageText,
-        timestamp: new Date()
-      };
+      setShowQuickActions(false);
       
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "assistant",
-        content: `💻 **MODO PROGRAMADOR ATIVADO!**
-
-🔐 Acesso verificado: **${user.email}**
-📍 Página: \`${location.pathname}\`
-
-**Agora você pode:**
-• 🎨 Mudar cores, estilos, layout
-• 📝 Editar textos e títulos
-• ➕ Adicionar componentes
-• 🗑️ Remover elementos
-
-**Descreva a modificação desejada!**`,
-        timestamp: new Date()
-      };
-
-      setMessages(prev => [...prev, userMessage, assistantMessage]);
+      setMessages(prev => [...prev, 
+        { id: Date.now().toString(), type: "user", content: messageText, timestamp: new Date() },
+        { 
+          id: (Date.now() + 1).toString(), 
+          type: "assistant", 
+          content: `💻 **MODO PROGRAMADOR ATIVADO!**\n\n🔐 **Verificado:** ${user.email}\n📍 **Página:** \`${location.pathname}\`\n\n**Capacidades:**\n• 🎨 Alterar estilos e cores\n• 📝 Modificar textos\n• ➕ Adicionar componentes\n• 🗑️ Remover elementos\n\n**Descreva a modificação desejada!**`,
+          timestamp: new Date()
+        }
+      ]);
       setInput("");
       return;
     }
-
-    // Check assessor
-    const isAssessorRequest = messageText.toLowerCase().includes("assessor") && 
-                              !messageText.toLowerCase().includes("analise");
 
     const userMessage: Message = {
       id: Date.now().toString(),
@@ -260,28 +282,10 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
 
     setMessages(prev => [...prev, userMessage]);
     setInput("");
+    setShowQuickActions(false);
     
     const imageToSend = selectedImage;
     removeImage();
-
-    if (isAssessorRequest) {
-      const assessorResponse: Message = {
-        id: (Date.now() + 1).toString(),
-        type: "assistant",
-        content: `📱 **Contato com Assessores**
-
-👤 **Moisés Medeiros** - CEO
-📞 +55 83 98920-105
-💼 Decisões estratégicas, financeiras
-
-👩 **Bruna** - Co-gestora
-📞 +55 83 96354-090
-💼 Operações, equipe`,
-        timestamp: new Date()
-      };
-      setMessages(prev => [...prev, assessorResponse]);
-      return;
-    }
 
     setIsLoading(true);
     const startTime = Date.now();
@@ -306,71 +310,50 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
         }),
       });
 
-      if (!response.ok) {
-        // Check if it's a CRUD response (JSON)
-        const contentType = response.headers.get('content-type');
-        if (contentType?.includes('application/json')) {
-          const data = await response.json();
-          if (data.tipo === "crud") {
-            const tempoProcessamento = Date.now() - startTime;
-            const crudResponse: Message = {
-              id: (Date.now() + 1).toString(),
-              type: "assistant",
-              content: data.resposta,
-              timestamp: new Date(),
-              tempoProcessamento,
-              tipoCrud: true
-            };
-            setMessages(prev => [...prev, crudResponse]);
-            setIsLoading(false);
-            return;
-          }
+      const contentType = response.headers.get('content-type');
+      
+      // Handle CRUD response (JSON)
+      if (contentType?.includes('application/json')) {
+        const data = await response.json();
+        
+        if (data.error) {
+          if (response.status === 403) toast.error("🔒 Acesso negado");
+          else if (response.status === 429) toast.error("⏳ Limite de requisições");
+          else toast.error(data.error);
+          setIsLoading(false);
+          return;
+        }
+        
+        if (data.tipo === "crud" || data.resposta) {
+          const tempoProcessamento = Date.now() - startTime;
+          setMessages(prev => [...prev, {
+            id: (Date.now() + 1).toString(),
+            type: "assistant",
+            content: data.resposta,
+            timestamp: new Date(),
+            tempoProcessamento,
+            tipoCrud: true
+          }]);
           
-          if (response.status === 403) {
-            toast.error("🔒 Acesso negado");
-          } else if (response.status === 429) {
-            toast.error("⏳ Limite de requisições");
+          if (data.sucesso) {
+            toast.success(`✅ Executado em ${tempoProcessamento}ms`);
           }
           setIsLoading(false);
           return;
         }
-        throw new Error("Falha ao conectar");
       }
 
-      // Check if CRUD response
-      const contentType = response.headers.get('content-type');
-      if (contentType?.includes('application/json')) {
-        const data = await response.json();
-        const tempoProcessamento = Date.now() - startTime;
-        const crudResponse: Message = {
-          id: (Date.now() + 1).toString(),
-          type: "assistant",
-          content: data.resposta,
-          timestamp: new Date(),
-          tempoProcessamento,
-          tipoCrud: true
-        };
-        setMessages(prev => [...prev, crudResponse]);
-        toast.success(`✅ Comando executado em ${tempoProcessamento}ms`);
-        setIsLoading(false);
-        return;
-      }
+      if (!response.ok) throw new Error("Falha na conexão");
+      if (!response.body) throw new Error("Sem resposta");
 
       // Streaming response
-      if (!response.body) throw new Error("No response body");
-
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let textBuffer = "";
       let assistantContent = "";
 
       const assistantId = (Date.now() + 1).toString();
-      setMessages(prev => [...prev, { 
-        id: assistantId, 
-        type: "assistant", 
-        content: "", 
-        timestamp: new Date() 
-      }]);
+      setMessages(prev => [...prev, { id: assistantId, type: "assistant", content: "", timestamp: new Date() }]);
 
       while (true) {
         const { done, value } = await reader.read();
@@ -419,16 +402,8 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
         }
       }
 
-      // Save conversation
-      try {
-        await supabase.from('tramon_conversations').insert([
-          { user_id: user.id, role: 'user', content: messageText, source: 'web' },
-          { user_id: user.id, role: 'assistant', content: assistantContent, source: 'web' }
-        ]);
-      } catch { /* Silent */ }
-
     } catch (error) {
-      toast.error("Não foi possível conectar ao TRAMON");
+      toast.error("❌ Erro ao conectar");
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
@@ -437,14 +412,15 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
 
   const handleCopy = (content: string) => {
     navigator.clipboard.writeText(content);
-    toast.success("Copiado!");
+    toast.success("📋 Copiado!");
   };
 
   const handleClearChat = () => {
     setMessages([]);
     setProgrammerMode(false);
     setProgrammerCode("");
-    toast.success("Chat limpo");
+    setShowQuickActions(true);
+    toast.success("🗑️ Chat limpo");
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -454,9 +430,17 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
     }
   };
 
+  const handleQuickAction = (prompt: string) => {
+    setInput(prompt);
+    inputRef.current?.focus();
+  };
+
   if (roleLoading) return null;
   if (!hasAccess) return null;
 
+  // ========================================
+  // 🎨 RENDER
+  // ========================================
   return (
     <>
       <input
@@ -467,7 +451,7 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
         className="hidden"
       />
 
-      {/* Floating Trigger */}
+      {/* Floating Trigger Button */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
@@ -476,315 +460,328 @@ ${isOwner ? '\n💻 **"ativar modo programador"** para editar o site' : ''}
             exit={{ scale: 0, opacity: 0 }}
             className="fixed bottom-6 right-6 z-[100]"
           >
-            <Button
+            <motion.button
               onClick={() => setIsOpen(true)}
-              className="h-14 w-14 rounded-full bg-gradient-to-br from-primary via-purple-600 to-primary shadow-2xl hover:shadow-primary/50 transition-all duration-300 group relative overflow-hidden"
+              className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 shadow-2xl shadow-purple-500/40 flex items-center justify-center group overflow-hidden"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
             >
+              {/* Animated background */}
               <motion.div
                 className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent"
                 animate={{ y: ['100%', '-100%'] }}
                 transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
               />
-              <div className="relative">
-                <Crown className="h-6 w-6 text-primary-foreground group-hover:scale-110 transition-transform" />
-                <motion.div
-                  className="absolute -top-1 -right-1 h-3 w-3 bg-green-400 rounded-full border-2 border-background"
-                  animate={{ scale: [1, 1.3, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
-                />
-              </div>
-            </Button>
+              
+              {/* Glow effect */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-400/50 to-fuchsia-400/50 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              
+              <Sparkles className="h-7 w-7 text-white relative z-10 group-hover:scale-110 transition-transform" />
+              
+              {/* Online indicator */}
+              <motion.div
+                className="absolute -top-1 -right-1 h-4 w-4 bg-green-400 rounded-full border-2 border-background"
+                animate={{ scale: [1, 1.2, 1] }}
+                transition={{ repeat: Infinity, duration: 2 }}
+              />
+            </motion.button>
+            
+            {/* Label */}
             <motion.span 
-              className="absolute -top-2 left-1/2 -translate-x-1/2 bg-gradient-to-r from-primary to-purple-600 text-white px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-lg"
+              className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-lg"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.2 }}
             >
-              {isOwner && <Code className="w-3 h-3 inline mr-1" />}
-              TRAMON v6
+              TRAMON v7 🌟
             </motion.span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Chat Panel */}
+      {/* Chat Window */}
       <AnimatePresence>
         {isOpen && (
-          <>
-            {isExpanded && (
-              <motion.div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-                className="fixed inset-0 bg-background/80 backdrop-blur-sm z-[90]"
-                onClick={() => setIsExpanded(false)}
-              />
-            )}
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9, y: 50 }}
-              animate={{ 
-                opacity: 1, 
-                scale: 1, 
-                y: 0,
-                width: isMinimized ? 320 : (isExpanded ? '90vw' : 440),
-                height: isMinimized ? 60 : (isExpanded ? '90vh' : 650),
-                maxWidth: isExpanded ? 1200 : 440
-              }}
-              exit={{ opacity: 0, scale: 0.9, y: 50 }}
-              transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className={`fixed ${isExpanded ? 'inset-4 m-auto' : 'bottom-6 right-6'} z-[100] bg-card/95 backdrop-blur-xl rounded-2xl shadow-2xl border border-primary/20 flex flex-col overflow-hidden`}
-            >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.9, y: 20 }}
+            transition={{ type: "spring", damping: 25, stiffness: 300 }}
+            className={`fixed z-[100] ${
+              isExpanded 
+                ? 'inset-4 md:inset-8' 
+                : 'bottom-6 right-6 w-[420px] h-[680px] max-h-[85vh]'
+            }`}
+          >
+            <div className="relative h-full w-full rounded-3xl overflow-hidden shadow-2xl shadow-purple-500/20 border border-white/10 backdrop-blur-xl bg-gradient-to-br from-slate-900/95 via-purple-950/90 to-slate-900/95">
+              
               {/* Header */}
-              <div className="flex items-center justify-between p-3 border-b border-border bg-gradient-to-r from-primary/10 via-purple-500/10 to-primary/10">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Crown className="h-5 w-5 text-primary" />
-                    <motion.div
-                      className="absolute -top-0.5 -right-0.5 h-2 w-2 bg-green-400 rounded-full"
-                      animate={{ scale: [1, 1.5, 1] }}
-                      transition={{ repeat: Infinity, duration: 2 }}
-                    />
+              <div className="relative px-5 py-4 border-b border-white/10 bg-gradient-to-r from-violet-600/20 via-purple-600/20 to-fuchsia-600/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="relative">
+                      <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-violet-500 to-fuchsia-500 flex items-center justify-center shadow-lg shadow-purple-500/30">
+                        <Brain className="h-6 w-6 text-white" />
+                      </div>
+                      <motion.div
+                        className="absolute -bottom-0.5 -right-0.5 h-3.5 w-3.5 bg-green-400 rounded-full border-2 border-slate-900"
+                        animate={{ scale: [1, 1.2, 1] }}
+                        transition={{ repeat: Infinity, duration: 2 }}
+                      />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-white flex items-center gap-2">
+                        TRAMON v7.0
+                        <Badge variant="outline" className="text-[10px] bg-gradient-to-r from-violet-500/20 to-fuchsia-500/20 border-purple-400/30 text-purple-300">
+                          OMEGA
+                        </Badge>
+                      </h3>
+                      <p className="text-xs text-purple-300/80">
+                        {programmerMode ? "💻 Modo Programador" : "🧠 Superinteligência Ativa"}
+                      </p>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="text-sm font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-                      TRAMON v6.0 ULTRA
-                    </span>
-                    {!isMinimized && (
-                      <span className="text-[10px] text-muted-foreground">
-                        {programmerMode ? '💻 Modo Programador' : '🔮 Assessor + Superinteligência'}
-                      </span>
+                  
+                  <div className="flex items-center gap-1.5">
+                    {programmerMode && isOwner && programmerCode && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={applyCodeChanges}
+                        className="h-8 w-8 text-green-400 hover:text-green-300 hover:bg-green-500/20"
+                        title="Aplicar código"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </Button>
                     )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsExpanded(!isExpanded)}
+                      className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                    >
+                      {isExpanded ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={handleClearChat}
+                      className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setIsOpen(false)}
+                      className="h-8 w-8 text-white/60 hover:text-white hover:bg-white/10"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
-                  {programmerMode && isOwner && (
-                    <Badge variant="outline" className="ml-2 bg-green-500/20 text-green-400 border-green-500/50 text-[10px]">
-                      <Terminal className="w-3 h-3 mr-1" />
-                      DEV
-                    </Badge>
-                  )}
                 </div>
-                <div className="flex items-center gap-1">
-                  {!isMinimized && (
-                    <>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={handleClearChat}>
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsExpanded(!isExpanded)}>
-                        {isExpanded ? <Minimize2 className="h-3.5 w-3.5" /> : <Maximize2 className="h-3.5 w-3.5" />}
-                      </Button>
-                    </>
-                  )}
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsMinimized(!isMinimized)}>
-                    {isMinimized ? <ChevronUp className="h-3.5 w-3.5" /> : <ChevronDown className="h-3.5 w-3.5" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setIsOpen(false)}>
-                    <X className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+
+                {/* Quick Insights Bar */}
+                {quickInsights.length > 0 && !programmerMode && (
+                  <div className="flex gap-3 mt-3 pt-3 border-t border-white/5">
+                    {quickInsights.map((insight, i) => (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        className="flex-1 bg-white/5 rounded-lg px-3 py-2 border border-white/5"
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <insight.icon className={`h-3.5 w-3.5 ${insight.color}`} />
+                          <span className="text-[10px] text-white/50">{insight.label}</span>
+                        </div>
+                        <p className={`text-sm font-semibold ${insight.color}`}>{insight.value}</p>
+                      </motion.div>
+                    ))}
+                  </div>
+                )}
               </div>
 
-              {!isMinimized && (
-                <>
-                  {/* Messages */}
-                  <ScrollArea className="flex-1 p-3" ref={scrollRef}>
-                    <div className="space-y-3">
-                      {messages.map((msg) => (
-                        <motion.div
-                          key={msg.id}
-                          initial={{ opacity: 0, y: 10 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          className={`flex gap-2 ${msg.type === 'user' ? 'justify-end' : 'justify-start'}`}
-                        >
-                          {msg.type === 'assistant' && (
-                            <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center shrink-0">
-                              <Bot className="w-4 h-4 text-primary" />
-                            </div>
+              {/* Messages */}
+              <ScrollArea className="flex-1 h-[calc(100%-180px)]" ref={scrollRef}>
+                <div className="p-4 space-y-4">
+                  {messages.map((message, index) => (
+                    <motion.div
+                      key={message.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={`flex ${message.type === "user" ? "justify-end" : "justify-start"}`}
+                    >
+                      <div className={`max-w-[85%] ${message.type === "user" ? "order-2" : "order-1"}`}>
+                        <div className={`rounded-2xl px-4 py-3 ${
+                          message.type === "user"
+                            ? "bg-gradient-to-br from-violet-600 to-fuchsia-600 text-white"
+                            : "bg-white/5 border border-white/10 text-white/90"
+                        }`}>
+                          {message.image && (
+                            <img src={message.image} alt="Anexo" className="max-w-full rounded-lg mb-2" />
                           )}
-                          <div className={`max-w-[85%] rounded-xl p-3 ${
-                            msg.type === 'user' 
-                              ? 'bg-primary text-primary-foreground' 
-                              : msg.tipoCrud 
-                                ? 'bg-green-500/20 border border-green-500/30' 
-                                : 'bg-secondary/80'
-                          }`}>
-                            {msg.image && (
-                              <img 
-                                src={msg.image} 
-                                alt="Uploaded" 
-                                className="max-w-full h-auto rounded-lg mb-2 max-h-32 object-contain"
-                              />
-                            )}
-                            <div className="text-sm whitespace-pre-wrap break-words">
-                              {msg.content.split('\n').map((line, i) => (
-                                <span key={i}>
-                                  {line.includes('**')
-                                    ? line.split('**').map((part, j) => j % 2 === 1 ? <strong key={j}>{part}</strong> : part)
-                                    : line
-                                  }
-                                  {i < msg.content.split('\n').length - 1 && <br />}
-                                </span>
-                              ))}
-                            </div>
-                            {msg.tempoProcessamento && (
-                              <p className="text-[10px] opacity-60 mt-1">
-                                ⚡ {msg.tempoProcessamento}ms
+                          <div className="prose prose-invert prose-sm max-w-none whitespace-pre-wrap">
+                            {message.content.split('\n').map((line, i) => (
+                              <p key={i} className="mb-1 last:mb-0">
+                                {line.replace(/\*\*(.*?)\*\*/g, '**$1**')}
                               </p>
-                            )}
-                            {msg.type === 'assistant' && msg.content && msg.id !== 'welcome' && (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-5 px-2 text-[10px] mt-1"
-                                onClick={() => handleCopy(msg.content)}
-                              >
-                                <Copy className="h-3 w-3 mr-1" />
-                                Copiar
-                              </Button>
-                            )}
+                            ))}
                           </div>
-                          {msg.type === 'user' && (
-                            <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center shrink-0">
-                              <UserIcon className="w-4 h-4" />
+                          
+                          {message.tipoCrud && message.tempoProcessamento && (
+                            <div className="mt-2 pt-2 border-t border-white/10 flex items-center gap-2">
+                              <Zap className="h-3 w-3 text-yellow-400" />
+                              <span className="text-[10px] text-white/50">{message.tempoProcessamento}ms</span>
                             </div>
                           )}
-                        </motion.div>
-                      ))}
-                      {isLoading && (
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex gap-2">
-                          <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center">
-                            <Bot className="w-4 h-4 text-primary" />
+                        </div>
+                        
+                        {message.type === "assistant" && message.id !== "welcome" && (
+                          <div className="flex gap-1 mt-1.5 ml-1">
+                            <button
+                              onClick={() => handleCopy(message.content)}
+                              className="p-1.5 rounded-lg hover:bg-white/10 text-white/40 hover:text-white/70 transition-colors"
+                            >
+                              <Copy className="h-3.5 w-3.5" />
+                            </button>
                           </div>
-                          <div className="bg-secondary/80 rounded-xl p-3">
-                            <div className="flex items-center gap-2">
-                              <Loader2 className="h-4 w-4 animate-spin text-primary" />
-                              <span className="text-sm text-muted-foreground">Processando...</span>
-                            </div>
-                          </div>
-                        </motion.div>
-                      )}
-                    </div>
-                  </ScrollArea>
-
-                  {/* Programmer Mode Button */}
-                  {programmerMode && isOwner && programmerCode && (
-                    <div className="px-3 pb-2">
-                      <Button 
-                        onClick={applyCodeChanges}
-                        className="w-full bg-green-600 hover:bg-green-700"
-                      >
-                        <RefreshCw className="w-4 h-4 mr-2" />
-                        Aplicar Mudanças e Refresh
-                      </Button>
-                    </div>
-                  )}
-
-                  {/* Quick Actions */}
-                  {messages.length <= 1 && !programmerMode && (
-                    <div className="px-3 pb-2 space-y-2">
-                      {/* Tabs */}
-                      <div className="flex gap-1">
-                        <Button
-                          variant={activeTab === 'crud' ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-6 text-[10px] flex-1"
-                          onClick={() => setActiveTab('crud')}
-                        >
-                          📝 Registrar
-                        </Button>
-                        <Button
-                          variant={activeTab === 'analise' ? 'default' : 'outline'}
-                          size="sm"
-                          className="h-6 text-[10px] flex-1"
-                          onClick={() => setActiveTab('analise')}
-                        >
-                          📊 Análises
-                        </Button>
+                        )}
                       </div>
-                      
-                      <div className="grid grid-cols-2 gap-1.5">
-                        {(activeTab === 'crud' ? quickActionsCRUD : quickActionsAnalise).map((action, i) => (
-                          <Button
-                            key={i}
-                            variant="outline"
-                            size="sm"
-                            className="h-9 text-[10px] justify-start"
-                            onClick={() => handleSend(action.prompt)}
+                    </motion.div>
+                  ))}
+                  
+                  {isLoading && (
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="flex justify-start"
+                    >
+                      <div className="bg-white/5 border border-white/10 rounded-2xl px-4 py-3">
+                        <div className="flex items-center gap-2">
+                          <motion.div
+                            animate={{ rotate: 360 }}
+                            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
                           >
-                            <action.icon className={`h-3.5 w-3.5 mr-1.5 shrink-0 ${(action as any).color || ''}`} />
-                            <span className="truncate">{action.label}</span>
-                          </Button>
-                        ))}
+                            <Loader2 className="h-4 w-4 text-purple-400" />
+                          </motion.div>
+                          <span className="text-sm text-purple-300">Processando...</span>
+                        </div>
                       </div>
-                    </div>
+                    </motion.div>
                   )}
+                </div>
+              </ScrollArea>
 
-                  {/* Image Preview */}
-                  {imagePreview && (
-                    <div className="px-3 pb-2">
-                      <div className="relative inline-block">
-                        <img 
-                          src={imagePreview} 
-                          alt="Preview" 
-                          className="h-14 w-auto rounded-lg border border-border"
-                        />
-                        <Button
-                          variant="destructive"
-                          size="icon"
-                          className="absolute -top-2 -right-2 h-5 w-5 rounded-full"
-                          onClick={removeImage}
-                        >
-                          <XCircle className="h-3 w-3" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Input */}
-                  <div className="p-3 border-t border-border">
-                    <div className="flex gap-2">
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        className="shrink-0 h-10 w-10"
-                        onClick={() => fileInputRef.current?.click()}
+              {/* Quick Actions */}
+              {showQuickActions && messages.length <= 1 && (
+                <div className="px-4 pb-2">
+                  <div className="grid grid-cols-4 gap-2">
+                    {quickActions.crud.map((action, i) => (
+                      <motion.button
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.05 }}
+                        onClick={() => handleQuickAction(action.prompt)}
+                        className={`p-2.5 rounded-xl bg-gradient-to-br ${action.color} border hover:scale-105 transition-all`}
                       >
-                        <Camera className="h-4 w-4" />
-                      </Button>
-                      <Button
-                        variant={isRecording ? "destructive" : "outline"}
-                        size="icon"
-                        className="shrink-0 h-10 w-10"
-                        onClick={isRecording ? stopRecording : startRecording}
-                      >
-                        {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                      </Button>
-                      <Textarea
-                        value={input}
-                        onChange={(e) => setInput(e.target.value)}
-                        onKeyDown={handleKeyDown}
-                        placeholder={programmerMode ? "Descreva a modificação..." : "Gastei 50 reais de gasolina..."}
-                        className="min-h-[40px] max-h-[80px] resize-none text-sm flex-1"
-                        rows={1}
-                      />
-                      <Button
-                        onClick={() => handleSend()}
-                        disabled={isLoading || (!input.trim() && !selectedImage)}
-                        className="shrink-0 h-10 w-10 bg-gradient-to-r from-primary to-purple-600"
-                        size="icon"
-                      >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                      </Button>
-                    </div>
-                    {isOwner && !programmerMode && (
-                      <p className="text-[10px] text-muted-foreground mt-1.5 text-center">
-                        💡 "ativar modo programador" para editar o site
-                      </p>
-                    )}
+                        <action.icon className="h-4 w-4 mx-auto text-white/80" />
+                        <span className="text-[10px] text-white/70 mt-1 block">{action.label}</span>
+                      </motion.button>
+                    ))}
                   </div>
-                </>
+                  <div className="grid grid-cols-4 gap-2 mt-2">
+                    {quickActions.analise.map((action, i) => (
+                      <motion.button
+                        key={i}
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: (i + 4) * 0.05 }}
+                        onClick={() => handleQuickAction(action.prompt)}
+                        className={`p-2.5 rounded-xl bg-gradient-to-br ${action.color} border hover:scale-105 transition-all`}
+                      >
+                        <action.icon className="h-4 w-4 mx-auto text-white/80" />
+                        <span className="text-[10px] text-white/70 mt-1 block">{action.label}</span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </motion.div>
-          </>
+
+              {/* Image Preview */}
+              {imagePreview && (
+                <div className="px-4 pb-2">
+                  <div className="relative inline-block">
+                    <img src={imagePreview} alt="Preview" className="h-16 rounded-lg border border-white/20" />
+                    <button
+                      onClick={removeImage}
+                      className="absolute -top-2 -right-2 h-5 w-5 bg-red-500 rounded-full flex items-center justify-center"
+                    >
+                      <XCircle className="h-3.5 w-3.5 text-white" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Input */}
+              <div className="p-4 border-t border-white/10 bg-gradient-to-r from-slate-900/50 to-purple-950/50">
+                <div className="flex items-end gap-2">
+                  <div className="flex gap-1.5">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => fileInputRef.current?.click()}
+                      className="h-10 w-10 rounded-xl bg-white/5 hover:bg-white/10 text-white/60 hover:text-white"
+                    >
+                      <Camera className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={toggleRecording}
+                      className={`h-10 w-10 rounded-xl ${
+                        isRecording 
+                          ? 'bg-red-500/20 text-red-400 hover:bg-red-500/30' 
+                          : 'bg-white/5 hover:bg-white/10 text-white/60 hover:text-white'
+                      }`}
+                    >
+                      {isRecording ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                  
+                  <div className="flex-1 relative">
+                    <Textarea
+                      ref={inputRef}
+                      value={input}
+                      onChange={(e) => setInput(e.target.value)}
+                      onKeyDown={handleKeyDown}
+                      placeholder={programmerMode ? "Descreva a modificação..." : "Digite seu comando..."}
+                      className="min-h-[44px] max-h-32 pr-12 resize-none bg-white/5 border-white/10 rounded-xl text-white placeholder:text-white/30 focus:border-purple-500/50 focus:ring-purple-500/20"
+                      rows={1}
+                    />
+                    <Button
+                      onClick={() => handleSend()}
+                      disabled={!input.trim() || isLoading}
+                      className="absolute right-1.5 bottom-1.5 h-8 w-8 rounded-lg bg-gradient-to-r from-violet-600 to-fuchsia-600 hover:from-violet-500 hover:to-fuchsia-500 disabled:opacity-50"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Send className="h-4 w-4" />
+                      )}
+                    </Button>
+                  </div>
+                </div>
+                
+                <p className="text-[10px] text-white/30 mt-2 text-center">
+                  TRAMON v7.0 OMEGA • Gemini 2.5 Pro • Precisão 99.9%
+                </p>
+              </div>
+            </div>
+          </motion.div>
         )}
       </AnimatePresence>
     </>
