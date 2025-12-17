@@ -104,6 +104,57 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
       ),
     },
 
+    // EMAIL PARA AFILIADOS
+    affiliate: {
+      subject: data.titulo || "Mensagem para Afiliados — Curso Moisés Medeiros 🤝",
+      html: getBaseTemplate(
+        data.titulo || "Mensagem para Afiliados",
+        `
+        <h2 style="margin:0 0 16px 0;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Parceiro(a)'}!</h2>
+        
+        ${data.mensagem ? `<div style="white-space: pre-wrap; margin:0 0 16px 0;">${data.mensagem}</div>` : ''}
+
+        ${data.cupom ? `
+        <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
+          <p style="margin:0 0 8px 0;color:#9aa0a6;font-size:12px;">SEU CUPOM EXCLUSIVO</p>
+          <p style="margin:0;color:#E62B4A;font-size:24px;font-weight:bold;letter-spacing:2px;">${data.cupom}</p>
+        </div>
+        ` : ''}
+
+        <p style="margin:16px 0 0 0;color:#9aa0a6;">Conte sempre conosco para qualquer dúvida ou suporte!</p>
+        `,
+        "Acessar Painel",
+        "https://gestao.moisesmedeiros.com.br/afiliados"
+      ),
+    },
+
+    // EMAIL DE PAGAMENTO DE COMISSÃO
+    affiliate_payment: {
+      subject: "Pagamento de Comissão Realizado! 💰 — Curso Moisés Medeiros",
+      html: getBaseTemplate(
+        "Pagamento de Comissão",
+        `
+        <h2 style="margin:0 0 16px 0;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Parceiro(a)'}!</h2>
+        
+        <p style="margin:0 0 12px 0;">Temos ótimas notícias! 🎉</p>
+
+        <p style="margin:0 0 12px 0;">Acabamos de realizar o pagamento da sua comissão referente às vendas do período.</p>
+
+        <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:0 0 8px 0;"><strong>💵 Valor:</strong> R$ ${data.valor || '0,00'}</p>
+          <p style="margin:0 0 8px 0;"><strong>📅 Data:</strong> ${data.data || new Date().toLocaleDateString('pt-BR')}</p>
+          <p style="margin:0;"><strong>🏦 Método:</strong> ${data.metodo || 'PIX'}</p>
+        </div>
+
+        <p style="margin:0 0 12px 0;">O valor já deve estar disponível na sua conta.</p>
+
+        <p style="margin:0;">Continue com o excelente trabalho! Juntos vamos longe. 🚀</p>
+        `,
+        "Ver Histórico",
+        "https://gestao.moisesmedeiros.com.br/afiliados"
+      ),
+    },
+
     // EMAIL DE RECUPERAÇÃO DE SENHA
     password_reset: {
       subject: "Recuperação de Senha — Curso Moisés Medeiros 🔐",
