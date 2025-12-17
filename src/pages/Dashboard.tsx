@@ -78,6 +78,7 @@ import { PredictiveMetricsWidget } from "@/components/dashboard/PredictiveMetric
 import { SmartAutomationsWidget } from "@/components/dashboard/SmartAutomationsWidget";
 import { AdvancedGamificationWidget } from "@/components/gamification/AdvancedGamificationWidget";
 import { WhatsAppCommandWidget } from "@/components/whatsapp/WhatsAppCommandWidget";
+import { MultiCNPJManager } from "@/components/finance/MultiCNPJManager";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -690,6 +691,13 @@ export default function Dashboard() {
           <AdvancedAnalytics />
           <AutomationRules />
         </section>
+
+        {/* EMPRESARIAL 2.0 - Gestão Multi-CNPJ (Apenas Owner) */}
+        {role === 'owner' && (
+          <section className="mb-8">
+            <MultiCNPJManager />
+          </section>
+        )}
 
         {/* Chemistry Stats Section */}
         <section className="mb-8">
