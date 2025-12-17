@@ -150,6 +150,7 @@ export type Database = {
           status: string | null
           taxa_comissao: number | null
           telefone: string | null
+          total_comissao: number | null
           total_vendas: number | null
           user_id: string | null
           whatsapp: string | null
@@ -172,6 +173,7 @@ export type Database = {
           status?: string | null
           taxa_comissao?: number | null
           telefone?: string | null
+          total_comissao?: number | null
           total_vendas?: number | null
           user_id?: string | null
           whatsapp?: string | null
@@ -194,6 +196,7 @@ export type Database = {
           status?: string | null
           taxa_comissao?: number | null
           telefone?: string | null
+          total_comissao?: number | null
           total_vendas?: number | null
           user_id?: string | null
           whatsapp?: string | null
@@ -5632,6 +5635,18 @@ export type Database = {
       }
     }
     Views: {
+      dashboard_executivo: {
+        Row: {
+          afiliados_ativos: number | null
+          alunos_ativos: number | null
+          conversas_abertas: number | null
+          despesa_mes: number | null
+          funcionarios_ativos: number | null
+          receita_mes: number | null
+          tarefas_pendentes: number | null
+        }
+        Relationships: []
+      }
       employees_public: {
         Row: {
           data_admissao: string | null
@@ -5681,6 +5696,39 @@ export type Database = {
         }
         Relationships: []
       }
+      metricas_afiliados: {
+        Row: {
+          afiliados_ativos: number | null
+          comissoes_totais: number | null
+          percentual_medio: number | null
+          total_afiliados: number | null
+          vendas_totais: number | null
+        }
+        Relationships: []
+      }
+      metricas_alunos: {
+        Row: {
+          alunos_ativos: number | null
+          alunos_cancelados: number | null
+          alunos_concluidos: number | null
+          receita_total: number | null
+          ticket_medio: number | null
+          total_alunos: number | null
+          vindos_hotmart: number | null
+        }
+        Relationships: []
+      }
+      metricas_funcionarios: {
+        Row: {
+          folha_mensal: number | null
+          funcionarios_afastados: number | null
+          funcionarios_ativos: number | null
+          funcionarios_ferias: number | null
+          total_funcionarios: number | null
+          total_setores: number | null
+        }
+        Relationships: []
+      }
       profiles_public: {
         Row: {
           avatar_url: string | null
@@ -5702,6 +5750,16 @@ export type Database = {
           is_online?: boolean | null
           last_activity_at?: string | null
           nome?: string | null
+        }
+        Relationships: []
+      }
+      resumo_financeiro: {
+        Row: {
+          despesas: number | null
+          lucro: number | null
+          receitas: number | null
+          ticket_medio: number | null
+          total_transacoes: number | null
         }
         Relationships: []
       }
