@@ -79,6 +79,7 @@ import { SmartAutomationsWidget } from "@/components/dashboard/SmartAutomationsW
 import { AdvancedGamificationWidget } from "@/components/gamification/AdvancedGamificationWidget";
 import { WhatsAppCommandWidget } from "@/components/whatsapp/WhatsAppCommandWidget";
 import { MultiCNPJManager } from "@/components/finance/MultiCNPJManager";
+import { RoleManagementWidget } from "@/components/dashboard/RoleManagementWidget";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -402,20 +403,23 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* Executive Summary - Only for Owner */}
+        {/* Executive Summary + Role Management - Only for Owner */}
         {role === 'owner' && (
-          <section className="mb-8">
-            <ExecutiveSummary
-              totalIncome={stats.income}
-              totalExpenses={stats.personalExpenses + stats.companyExpenses}
-              totalStudents={stats.students}
-              totalAffiliates={stats.affiliates}
-              monthlyGrowth={12.5}
-              conversionRate={8.3}
-              pendingPayments={stats.pendingPayments}
-              completedTasks={stats.tasksData?.filter((t: any) => t.is_completed).length || 0}
-              totalTasks={stats.tasksData?.length || 0}
-            />
+          <section className="grid gap-6 lg:grid-cols-3 mb-8">
+            <div className="lg:col-span-2">
+              <ExecutiveSummary
+                totalIncome={stats.income}
+                totalExpenses={stats.personalExpenses + stats.companyExpenses}
+                totalStudents={stats.students}
+                totalAffiliates={stats.affiliates}
+                monthlyGrowth={12.5}
+                conversionRate={8.3}
+                pendingPayments={stats.pendingPayments}
+                completedTasks={stats.tasksData?.filter((t: any) => t.is_completed).length || 0}
+                totalTasks={stats.tasksData?.length || 0}
+              />
+            </div>
+            <RoleManagementWidget />
           </section>
         )}
 
