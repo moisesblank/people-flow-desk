@@ -68,6 +68,9 @@ const CentralMetricas = lazy(() => import("./pages/CentralMetricas"));
 
 const queryClient = new QueryClient();
 
+// BUILD TIMESTAMP: 2024-12-17T18:55:00Z - FORCE CACHE REFRESH
+console.log('🚀 PLATAFORMA MOISÉS MEDEIROS v10.0 - Build: 2024-12-17T18:55:00Z');
+
 // Loading component
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
