@@ -464,49 +464,49 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
         className="hidden"
       />
 
-      {/* Floating Trigger Button */}
+      {/* Floating Trigger Button - CENTRALIZADO INFERIOR */}
       <AnimatePresence>
         {!isOpen && (
           <motion.div
             initial={{ scale: 0, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0, opacity: 0 }}
-            className="fixed bottom-6 right-6 z-[100]"
+            className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[100]"
           >
             <motion.button
               onClick={() => setIsOpen(true)}
-              className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-violet-600 via-purple-600 to-fuchsia-600 shadow-2xl shadow-purple-500/40 flex items-center justify-center group overflow-hidden"
+              className="relative h-16 w-16 rounded-2xl bg-gradient-to-br from-slate-400 via-slate-300 to-zinc-400 shadow-2xl shadow-slate-400/50 flex items-center justify-center group overflow-hidden border border-white/30"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              {/* Animated background */}
+              {/* Animated shimmer effect */}
               <motion.div
-                className="absolute inset-0 bg-gradient-to-t from-white/20 to-transparent"
+                className="absolute inset-0 bg-gradient-to-t from-white/40 to-transparent"
                 animate={{ y: ['100%', '-100%'] }}
                 transition={{ repeat: Infinity, duration: 2, ease: 'linear' }}
               />
               
-              {/* Glow effect */}
-              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-violet-400/50 to-fuchsia-400/50 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+              {/* Glow effect - cinza brilhante */}
+              <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-slate-300/60 to-zinc-300/60 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
               
-              <Sparkles className="h-7 w-7 text-white relative z-10 group-hover:scale-110 transition-transform" />
+              <Sparkles className="h-7 w-7 text-slate-700 relative z-10 group-hover:scale-110 transition-transform" />
               
               {/* Online indicator */}
               <motion.div
-                className="absolute -top-1 -right-1 h-4 w-4 bg-green-400 rounded-full border-2 border-background"
+                className="absolute -top-1 -right-1 h-4 w-4 bg-green-400 rounded-full border-2 border-white shadow-lg"
                 animate={{ scale: [1, 1.2, 1] }}
                 transition={{ repeat: Infinity, duration: 2 }}
               />
             </motion.button>
             
-            {/* Label */}
+            {/* Label - cinza brilhante */}
             <motion.span 
-              className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-lg"
+              className="absolute -top-3 left-1/2 -translate-x-1/2 bg-gradient-to-r from-slate-500 to-zinc-500 text-white px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shadow-lg border border-white/20"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
-              TRAMON v8 🌟
+              TRAMON v8 ✨
             </motion.span>
           </motion.div>
         )}
