@@ -10,10 +10,19 @@ import { cn } from "@/lib/utils";
 import { ChevronRight, Sparkles } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
+interface StatItem {
+  label: string;
+  value: string | number;
+  icon?: React.ComponentType<{ className?: string }>;
+}
+
 interface FuturisticPageHeaderProps {
   title: string;
   subtitle?: string;
-  icon?: ReactNode;
+  icon?: React.ComponentType<{ className?: string }>;
+  badge?: string;
+  stats?: StatItem[];
+  action?: ReactNode;
   children?: ReactNode;
   accentColor?: "primary" | "green" | "blue" | "purple" | "orange" | "cyan" | "gold";
   showBackButton?: boolean;
@@ -85,7 +94,10 @@ function ScanLine({ color }: { color: string }) {
 export function FuturisticPageHeader({
   title,
   subtitle,
-  icon,
+  icon: Icon,
+  badge,
+  stats,
+  action,
   children,
   accentColor = "primary",
   showBackButton = false,
@@ -192,7 +204,7 @@ export function FuturisticPageHeader({
             )}
 
             {/* Icon */}
-            {icon && (
+            {Icon && (
               <motion.div
                 initial={{ scale: 0, rotate: -180 }}
                 animate={{ scale: 1, rotate: 0 }}
@@ -204,26 +216,38 @@ export function FuturisticPageHeader({
                 )}
                 style={{ boxShadow: `0 0 20px ${config.glow}30` }}
               >
-                <div className={config.text}>{icon}</div>
+                <Icon className={cn("h-6 w-6", config.text)} />
               </motion.div>
             )}
 
             {/* Title & Subtitle */}
             <div>
-              <motion.h1
+              <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="text-2xl md:text-3xl font-bold text-foreground flex items-center gap-2"
+                className="flex items-center gap-2"
               >
-                {title}
+                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                  {title}
+                </h1>
+                {badge && (
+                  <span className={cn(
+                    "px-2 py-0.5 text-xs font-bold rounded-md border",
+                    config.border,
+                    config.text,
+                    "bg-background/30 backdrop-blur-xl"
+                  )}>
+                    {badge}
+                  </span>
+                )}
                 <motion.span
                   animate={{ rotate: [0, 15, -15, 0] }}
                   transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
                 >
                   <Sparkles className={cn("h-5 w-5", config.text)} />
                 </motion.span>
-              </motion.h1>
+              </motion.div>
               {subtitle && (
                 <motion.p
                   initial={{ opacity: 0 }}
@@ -237,14 +261,35 @@ export function FuturisticPageHeader({
             </div>
           </div>
 
+          {/* Stats */}
+          {stats && stats.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="flex items-center gap-4 flex-wrap"
+            >
+              {stats.map((stat, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  {stat.icon && <stat.icon className={cn("h-4 w-4", config.text)} />}
+                  <div className="text-center">
+                    <div className={cn("text-lg font-bold font-mono", config.text)}>{stat.value}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+                  </div>
+                </div>
+              ))}
+            </motion.div>
+          )}
+
           {/* Actions */}
-          {children && (
+          {(action || children) && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.3 }}
+              transition={{ delay: 0.4 }}
               className="flex items-center gap-2 flex-wrap"
             >
+              {action}
               {children}
             </motion.div>
           )}

@@ -12,12 +12,16 @@ import {
   LayoutGrid,
   List,
   Calendar,
-  BarChart3,
   Zap,
-  Settings2,
   Phone,
-  Paperclip,
+  CheckSquare,
+  Target,
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
+import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { FuturisticCard } from "@/components/ui/futuristic-card";
+import { CyberBackground } from "@/components/ui/cyber-background";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -245,156 +249,138 @@ export default function Tarefas() {
   };
 
   return (
-    <div className="p-4 md:p-8 lg:p-12 space-y-6 gradient-mesh min-h-screen">
-      <div className="fixed inset-0 cyber-grid pointer-events-none opacity-20" />
+    <div className="relative min-h-screen">
+      <CyberBackground variant="grid" />
+      
+      <div className="relative z-10 p-4 md:p-8 lg:p-12 space-y-6">
+        {/* Futuristic Header */}
+        <FuturisticPageHeader
+          title="Central de Tarefas"
+          subtitle="Sistema Kanban Inteligente com IA"
+          icon={CheckSquare}
+          badge="NEURAL SYNC"
+          accentColor="cyan"
+          stats={[
+            { label: "Total", value: stats.total, icon: Target },
+            { label: "Em Progresso", value: stats.byStatus.in_progress, icon: Clock },
+            { label: "Concluídas", value: stats.byStatus.done, icon: CheckSquare },
+            { label: "Atrasadas", value: stats.overdue, icon: AlertTriangle },
+          ]}
+        />
 
-      {/* Header */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="flex flex-col md:flex-row md:items-center justify-between gap-4"
-      >
-        <div>
+        {/* Actions Bar */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="flex flex-col md:flex-row md:items-center justify-between gap-4"
+        >
           <div className="flex items-center gap-2">
-            <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              Tarefas
-            </h1>
-            <Badge className="bg-gradient-to-r from-primary to-primary/60 text-primary-foreground">
-              EMPRESARIAL 2.0
-            </Badge>
-          </div>
-          <p className="text-muted-foreground">
-            Gerencie suas tarefas com Kanban Avançado, subtarefas e automações
-          </p>
-        </div>
-
-        <div className="flex items-center gap-3">
-          {/* Contato Assessores */}
-          <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="sm"
               onClick={() => contactAssessor('moises')}
-              className="gap-1"
+              className="gap-1 border-cyan-500/30 hover:border-cyan-500/60 hover:bg-cyan-500/10"
             >
-              <Phone className="h-3 w-3" />
+              <Phone className="h-3 w-3 text-cyan-400" />
               Moisés
             </Button>
             <Button
               variant="outline"
               size="sm"
               onClick={() => contactAssessor('bruna')}
-              className="gap-1"
+              className="gap-1 border-purple-500/30 hover:border-purple-500/60 hover:bg-purple-500/10"
             >
-              <Phone className="h-3 w-3" />
+              <Phone className="h-3 w-3 text-purple-400" />
               Bruna
             </Button>
           </div>
 
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar tarefas..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 w-64"
-            />
-          </div>
-
-          <div className="flex items-center border border-border rounded-lg p-1">
-            <Button
-              variant={view === "advanced" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setView("advanced")}
-              title="Kanban Avançado"
-            >
-              <Zap className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={view === "kanban" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setView("kanban")}
-              title="Kanban Simples"
-            >
-              <LayoutGrid className="h-4 w-4" />
-            </Button>
-            <Button
-              variant={view === "list" ? "secondary" : "ghost"}
-              size="sm"
-              onClick={() => setView("list")}
-              title="Lista"
-            >
-              <List className="h-4 w-4" />
-            </Button>
-          </div>
-
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Tarefa
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Nova Tarefa</DialogTitle>
-              </DialogHeader>
-              <TaskForm
-                onSubmit={handleCreate}
-                onClose={() => setIsDialogOpen(false)}
+          <div className="flex items-center gap-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Buscar tarefas..."
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-9 w-64 bg-background/50 border-border/50 focus:border-cyan-500/50"
               />
-            </DialogContent>
-          </Dialog>
+            </div>
+
+            <div className="flex items-center border border-border/50 rounded-lg p-1 bg-background/30 backdrop-blur-sm">
+              <Button
+                variant={view === "advanced" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setView("advanced")}
+                title="Kanban Avançado"
+                className={view === "advanced" ? "bg-cyan-500/20 text-cyan-400" : ""}
+              >
+                <Zap className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={view === "kanban" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setView("kanban")}
+                title="Kanban Simples"
+                className={view === "kanban" ? "bg-cyan-500/20 text-cyan-400" : ""}
+              >
+                <LayoutGrid className="h-4 w-4" />
+              </Button>
+              <Button
+                variant={view === "list" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setView("list")}
+                title="Lista"
+                className={view === "list" ? "bg-cyan-500/20 text-cyan-400" : ""}
+              >
+                <List className="h-4 w-4" />
+              </Button>
+            </div>
+
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-white shadow-lg shadow-cyan-500/25">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nova Tarefa
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="border-cyan-500/20 bg-background/95 backdrop-blur-xl">
+                <DialogHeader>
+                  <DialogTitle className="text-cyan-400">Nova Tarefa</DialogTitle>
+                </DialogHeader>
+                <TaskForm
+                  onSubmit={handleCreate}
+                  onClose={() => setIsDialogOpen(false)}
+                />
+              </DialogContent>
+            </Dialog>
+          </div>
+        </motion.div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <FuturisticCard accentColor="cyan" className="p-4 text-center">
+            <div className="text-3xl font-bold text-cyan-400">{stats.total}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
+          </FuturisticCard>
+          <FuturisticCard accentColor="blue" className="p-4 text-center">
+            <div className="text-3xl font-bold text-blue-400">{stats.byStatus.in_progress}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Em Progresso</div>
+          </FuturisticCard>
+          <FuturisticCard accentColor="green" className="p-4 text-center">
+            <div className="text-3xl font-bold text-green-400">{stats.byStatus.done}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídas</div>
+          </FuturisticCard>
+          <FuturisticCard accentColor="gold" className="p-4 text-center">
+            <div className="text-3xl font-bold text-yellow-400">{stats.byPriority.urgent + stats.byPriority.high}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Prioridade Alta</div>
+          </FuturisticCard>
+          <FuturisticCard accentColor="orange" className="p-4 text-center">
+            <div className="text-3xl font-bold text-red-400">{stats.overdue}</div>
+            <div className="text-xs text-muted-foreground uppercase tracking-wider">Atrasadas</div>
+          </FuturisticCard>
         </div>
-      </motion.div>
 
-      {/* Stats */}
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-2 md:grid-cols-5 gap-4"
-      >
-        <Card className="glass-card">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold">{stats.total}</div>
-            <div className="text-xs text-muted-foreground">Total</div>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-[hsl(var(--stats-blue))]">
-              {stats.byStatus.in_progress}
-            </div>
-            <div className="text-xs text-muted-foreground">Em Progresso</div>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-[hsl(var(--stats-green))]">
-              {stats.byStatus.done}
-            </div>
-            <div className="text-xs text-muted-foreground">Concluídas</div>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-[hsl(var(--stats-gold))]">
-              {stats.byPriority.urgent + stats.byPriority.high}
-            </div>
-            <div className="text-xs text-muted-foreground">Prioridade Alta</div>
-          </CardContent>
-        </Card>
-        <Card className="glass-card">
-          <CardContent className="p-4 text-center">
-            <div className="text-2xl font-bold text-destructive">
-              {stats.overdue}
-            </div>
-            <div className="text-xs text-muted-foreground">Atrasadas</div>
-          </CardContent>
-        </Card>
-      </motion.div>
-
-      {/* Views */}
+        {/* Views */}
       {view === "advanced" && (
         <motion.div
           initial={{ opacity: 0 }}
@@ -575,6 +561,7 @@ export default function Tarefas() {
           )}
         </DialogContent>
       </Dialog>
+      </div>
     </div>
   );
 }

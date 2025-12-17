@@ -5,7 +5,10 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Building2, Sparkles, Trash2, Edit2, Phone, TrendingUp, AlertTriangle, PieChart as PieChartIcon } from "lucide-react";
+import { Plus, Building2, Trash2, Edit2, Phone, TrendingUp, AlertTriangle, PieChart as PieChartIcon, DollarSign, Wallet, Receipt, Sparkles } from "lucide-react";
+import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { FuturisticCard } from "@/components/ui/futuristic-card";
+import { CyberBackground } from "@/components/ui/cyber-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -186,57 +189,53 @@ export default function FinancasEmpresa() {
   };
 
   return (
-    <div className="p-4 md:p-8 lg:p-12">
-      <div className="mx-auto max-w-7xl">
-        {/* Header */}
-        <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
-        >
-          <div className="flex items-center justify-between">
-            <div className="space-y-2">
-              <motion.div className="flex items-center gap-2 text-primary">
-                <Sparkles className="h-5 w-5" />
-                <span className="text-sm font-medium tracking-wide uppercase">Controle Empresarial</span>
-                <Badge className="bg-gradient-to-r from-primary to-primary/60 text-primary-foreground">
-                  EMPRESARIAL 2.0
-                </Badge>
-              </motion.div>
-              <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-                Finanças Empresa
-              </h1>
-              <p className="text-lg text-muted-foreground max-w-xl">
-                Gestão financeira completa com Multi-CNPJ e análises preditivas
-              </p>
-            </div>
+    <div className="relative min-h-screen">
+      <CyberBackground variant="particles" />
+      
+      <div className="relative z-10 p-4 md:p-8 lg:p-12">
+        <div className="mx-auto max-w-7xl space-y-6">
+          {/* Futuristic Header */}
+          <FuturisticPageHeader
+            title="Finanças Empresa"
+            subtitle="Gestão Financeira Inteligente com Multi-CNPJ"
+            icon={Building2}
+            badge="QUANTUM FINANCE"
+            accentColor="green"
+            stats={[
+              { label: "Gastos Fixos", value: formatCurrency(stats.totalFixed), icon: Wallet },
+              { label: "Gastos Extras", value: formatCurrency(stats.totalExtra), icon: Receipt },
+              { label: "Total Mensal", value: formatCurrency(stats.total), icon: DollarSign },
+            ]}
+          />
 
-            {/* Contatos Assessores */}
-            <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => contactAssessor('moises')}
-                className="gap-1"
-              >
-                <Phone className="h-3 w-3" />
-                Moisés
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => contactAssessor('bruna')}
-                className="gap-1"
-              >
-                <Phone className="h-3 w-3" />
-                Bruna
-              </Button>
-            </div>
-          </div>
-        </motion.header>
+          {/* Actions Bar */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-end gap-2"
+          >
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => contactAssessor('moises')}
+              className="gap-1 border-green-500/30 hover:border-green-500/60 hover:bg-green-500/10"
+            >
+              <Phone className="h-3 w-3 text-green-400" />
+              Moisés
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => contactAssessor('bruna')}
+              className="gap-1 border-emerald-500/30 hover:border-emerald-500/60 hover:bg-emerald-500/10"
+            >
+              <Phone className="h-3 w-3 text-emerald-400" />
+              Bruna
+            </Button>
+          </motion.div>
 
-        {/* Tabs */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-3 max-w-md">
             <TabsTrigger value="overview">Visão Geral</TabsTrigger>
             <TabsTrigger value="multicnpj">Multi-CNPJ</TabsTrigger>
@@ -562,6 +561,7 @@ export default function FinancasEmpresa() {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
     </div>
   );

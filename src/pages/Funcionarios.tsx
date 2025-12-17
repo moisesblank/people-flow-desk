@@ -5,7 +5,10 @@
 // ============================================
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { Plus, Users, UserCheck, DollarSign, TrendingUp, Sparkles, FlaskConical, Atom } from "lucide-react";
+import { Plus, Users, UserCheck, DollarSign, TrendingUp, FlaskConical, Briefcase, UserPlus } from "lucide-react";
+import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { FuturisticCard } from "@/components/ui/futuristic-card";
+import { CyberBackground } from "@/components/ui/cyber-background";
 import { motion, AnimatePresence } from "framer-motion";
 import { Button } from "@/components/ui/button";
 import { StatCard } from "@/components/employees/StatCard";
@@ -295,59 +298,48 @@ export default function Funcionarios() {
   };
 
   return (
-    <div className="p-4 md:p-8 lg:p-12">
-      <div className="mx-auto max-w-7xl">
-        {/* Hero Banner */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-8"
-        >
-          <img 
-            src={teamHeroImage} 
-            alt="Gestão de Equipe - Química do Trabalho" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
-          <div className="absolute inset-0 flex items-center justify-between p-8">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <FlaskConical className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium text-primary uppercase tracking-wider">Painel de Gestão</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Funcionários</h1>
-              <p className="text-muted-foreground max-w-md">
-                A química perfeita entre talento e resultados
-              </p>
-            </div>
-            <div className="hidden lg:flex items-center gap-4">
-              <AnimatedAtom size={70} />
+    <div className="relative min-h-screen">
+      <CyberBackground variant="waves" />
+      
+      <div className="relative z-10 p-4 md:p-8 lg:p-12">
+        <div className="mx-auto max-w-7xl space-y-6">
+          {/* Futuristic Header */}
+          <FuturisticPageHeader
+            title="Gestão de Equipe"
+            subtitle="Sistema Neural de Recursos Humanos"
+            icon={Users}
+            badge="TEAM MATRIX"
+            accentColor="purple"
+            stats={[
+              { label: "Total", value: stats.total, icon: Users },
+              { label: "Ativos", value: stats.ativos, icon: UserCheck },
+              { label: "Folha", value: stats.folhaPagamento ? formatCurrency(stats.folhaPagamento) : "••••", icon: DollarSign },
+            ]}
+            action={
               <Button
                 onClick={handleNewEmployee}
-                size="lg"
-                className="bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 gap-2 px-6 h-12 rounded-xl"
+                className="bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25"
               >
-                <Plus className="h-5 w-5" />
+                <UserPlus className="h-4 w-4 mr-2" />
                 Novo Funcionário
               </Button>
-            </div>
+            }
+          />
+
+          {/* Mobile Button */}
+          <div className="lg:hidden">
+            <Button
+              onClick={handleNewEmployee}
+              size="lg"
+              className="w-full bg-gradient-to-r from-purple-500 to-pink-600 hover:from-purple-400 hover:to-pink-500 text-white shadow-lg shadow-purple-500/25 gap-2 h-12 rounded-xl"
+            >
+              <Plus className="h-5 w-5" />
+              Novo Funcionário
+            </Button>
           </div>
-        </motion.div>
 
-        {/* Mobile Button */}
-        <div className="lg:hidden mb-6">
-          <Button
-            onClick={handleNewEmployee}
-            size="lg"
-            className="w-full bg-primary hover:bg-primary/90 shadow-xl shadow-primary/25 gap-2 h-12 rounded-xl"
-          >
-            <Plus className="h-5 w-5" />
-            Novo Funcionário
-          </Button>
-        </div>
-
-        {/* Stats Grid */}
-        <section className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {/* Stats Grid */}
+          <section className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {isInitialLoading ? (
             Array.from({ length: 4 }).map((_, i) => (
               <StatsSkeletonCard key={i} />
@@ -502,6 +494,7 @@ export default function Funcionarios() {
           onConfirm={handleConfirmDelete}
           isLoading={isLoading}
         />
+        </div>
       </div>
     </div>
   );
