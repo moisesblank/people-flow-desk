@@ -287,7 +287,7 @@ async function notifyWebhookMKT(
       responseBody = "Não foi possível ler resposta";
     }
 
-    // Registrar evento
+    // Registrar evento (inclui o payload enviado para auditoria/debug)
     await supabase.from("integration_events").insert({
       event_type: "webhook_mkt_notification",
       source: "webhook_mkt_site",
@@ -296,9 +296,22 @@ async function notifyWebhookMKT(
         action: "NOTIFICACAO_ENVIADA",
         event_type: eventType,
         email: data.email,
+        sent_payload: {
+          event: mktPayload.event,
+          email: mktPayload.email,
+          name: mktPayload.name,
+          phone: mktPayload.phone ? "***" : "", // evita vazar dados sensíveis
+          value: mktPayload.value,
+          product: mktPayload.product,
+          transaction: mktPayload.transaction,
+          access_level: (mktPayload as any).access_level,
+          group: (mktPayload as any).group,
+          meta: (mktPayload as any).meta,
+          timestamp: mktPayload.timestamp,
+        },
         response_status: response.status,
         response_ok: response.ok,
-        response_body: responseBody.substring(0, 1000),
+        response_body: responseBody.substring(0, 2000),
         sent_at: getCurrentTimestamp(),
       },
       processed: response.ok,
