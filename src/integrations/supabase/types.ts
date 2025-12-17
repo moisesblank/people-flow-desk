@@ -1214,6 +1214,7 @@ export type Database = {
           certificate_url: string | null
           completed_at: string | null
           course_id: string
+          created_at: string | null
           enrolled_at: string | null
           id: string
           progress_percentage: number | null
@@ -1224,6 +1225,7 @@ export type Database = {
           certificate_url?: string | null
           completed_at?: string | null
           course_id: string
+          created_at?: string | null
           enrolled_at?: string | null
           id?: string
           progress_percentage?: number | null
@@ -1234,6 +1236,7 @@ export type Database = {
           certificate_url?: string | null
           completed_at?: string | null
           course_id?: string
+          created_at?: string | null
           enrolled_at?: string | null
           id?: string
           progress_percentage?: number | null
