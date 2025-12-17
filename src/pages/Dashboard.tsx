@@ -8,6 +8,8 @@
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileDashboard } from "@/components/mobile/MobileDashboard";
 import { 
   Users, 
   Wallet, 
@@ -130,6 +132,13 @@ export default function Dashboard() {
   const [showTramon, setShowTramon] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
   const { isOpen: showTour, completeTour, resetTour } = useTour("dashboard");
+  const isMobile = useIsMobile();
+
+  // Mobile Dashboard - Experiência otimizada para celular
+  if (isMobile) {
+    return <MobileDashboard />;
+  }
+
   const processedData = useMemo(() => {
     if (!stats) return null;
 
