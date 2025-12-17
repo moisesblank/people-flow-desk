@@ -263,12 +263,15 @@ async function notifyWebhookMKT(
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), CONFIG.WEBHOOK_MKT.TIMEOUT);
 
-    const response = await fetch(CONFIG.WEBHOOK_MKT.URL, {
+    const response = await fetch(`${CONFIG.WEBHOOK_MKT.URL}?token=${encodeURIComponent(CONFIG.WEBHOOK_MKT.TOKEN)}`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "Accept": "application/json",
+        // Enviamos múltiplas variações para evitar mismatch de header no plugin do site
         "X-Site-Token": CONFIG.WEBHOOK_MKT.TOKEN,
+        "X-Webhook-Token": CONFIG.WEBHOOK_MKT.TOKEN,
+        "X-Auth-Token": CONFIG.WEBHOOK_MKT.TOKEN,
         "Authorization": `Bearer ${CONFIG.WEBHOOK_MKT.TOKEN}`,
       },
       body: JSON.stringify(mktPayload),
@@ -507,16 +510,52 @@ async function handleWordPressUserCreated(
 
   if (existingLead) {
     logger.warn("Lead já existe", { id: existingLead.id, status: existingLead.status });
-    
-    return new Response(JSON.stringify({ 
-      success: true, 
-      message: "Lead já cadastrado",
-      lead_id: existingLead.id,
-      code: "LEAD_EXISTS"
-    }), {
-      status: 200,
-      headers: { "Content-Type": "application/json", ...corsHeaders },
+
+    // Mesmo assim, precisamos garantir que o site receba o evento de REGISTRO
+    // (se a pessoa tentou cadastrar de novo, o WordPress NÃO pode promover para Beta aqui).
+    const mktResult = await notifyWebhookMKT(
+      { email: data.email, name: data.name, phone: data.phone },
+      "lead_registered",
+      supabase,
+      logger,
+      {
+        access_level: "registered",
+        group: "Registered",
+        origin: "cadastro_wordpress",
+        // instrução explícita (caso o plugin suporte) para REMOVER Beta e manter somente Registered
+        enforce: { add_groups: ["Registered"], remove_groups: ["Beta"] },
+      }
+    );
+
+    await supabase.from("integration_events").insert({
+      event_type: "wordpress_lead_exists",
+      source: "wordpress",
+      source_id: eventId,
+      payload: {
+        email: data.email,
+        name: data.name,
+        lead_id: existingLead.id,
+        lead_status: existingLead.status,
+        webhook_mkt: mktResult.success ? "OK" : mktResult.message,
+        action: "LEAD_JA_EXISTIA_MAS_REFORCAMOS_REGISTRO_NO_SITE",
+      },
+      processed: true,
+      processed_at: timestamp,
     });
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Lead já cadastrado (registro reforçado no site)",
+        lead_id: existingLead.id,
+        code: "LEAD_EXISTS",
+        integrations: { webhook_mkt: mktResult.success },
+      }),
+      {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      }
+    );
   }
 
   // Criar lead (NÃO ALUNO!)
