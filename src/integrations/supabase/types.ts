@@ -4560,24 +4560,30 @@ export type Database = {
     Views: {
       employees_public: {
         Row: {
-          created_at: string | null
+          data_admissao: string | null
+          email: string | null
           funcao: string | null
+          horario_trabalho: string | null
           id: number | null
           nome: string | null
           setor: Database["public"]["Enums"]["sector_type"] | null
           status: Database["public"]["Enums"]["employee_status"] | null
         }
         Insert: {
-          created_at?: string | null
+          data_admissao?: string | null
+          email?: string | null
           funcao?: string | null
+          horario_trabalho?: string | null
           id?: number | null
           nome?: string | null
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
         }
         Update: {
-          created_at?: string | null
+          data_admissao?: string | null
+          email?: string | null
           funcao?: string | null
+          horario_trabalho?: string | null
           id?: number | null
           nome?: string | null
           setor?: Database["public"]["Enums"]["sector_type"] | null
@@ -4587,167 +4593,92 @@ export type Database = {
       }
       employees_safe: {
         Row: {
-          created_at: string | null
-          created_by: string | null
-          data_admissao: string | null
-          email: string | null
           funcao: string | null
-          horario_trabalho: string | null
           id: number | null
           nome: string | null
-          responsabilidades: string | null
-          salario: number | null
           setor: Database["public"]["Enums"]["sector_type"] | null
           status: Database["public"]["Enums"]["employee_status"] | null
-          telefone: string | null
-          updated_at: string | null
-          user_id: string | null
         }
         Insert: {
-          created_at?: string | null
-          created_by?: string | null
-          data_admissao?: string | null
-          email?: never
           funcao?: string | null
-          horario_trabalho?: string | null
           id?: number | null
           nome?: string | null
-          responsabilidades?: string | null
-          salario?: never
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: never
-          updated_at?: string | null
-          user_id?: string | null
         }
         Update: {
-          created_at?: string | null
-          created_by?: string | null
-          data_admissao?: string | null
-          email?: never
           funcao?: string | null
-          horario_trabalho?: string | null
           id?: number | null
           nome?: string | null
-          responsabilidades?: string | null
-          salario?: never
           setor?: Database["public"]["Enums"]["sector_type"] | null
           status?: Database["public"]["Enums"]["employee_status"] | null
-          telefone?: never
-          updated_at?: string | null
-          user_id?: string | null
         }
         Relationships: []
       }
       profiles_public: {
         Row: {
           avatar_url: string | null
-          bio: string | null
-          created_at: string | null
           email: string | null
           id: string | null
           is_online: boolean | null
-          level: number | null
+          last_activity_at: string | null
           nome: string | null
-          phone: string | null
-          streak_days: number | null
-          xp_total: number | null
         }
         Insert: {
           avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          email?: never
+          email?: string | null
           id?: string | null
           is_online?: boolean | null
-          level?: number | null
+          last_activity_at?: string | null
           nome?: string | null
-          phone?: never
-          streak_days?: number | null
-          xp_total?: number | null
         }
         Update: {
           avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          email?: never
+          email?: string | null
           id?: string | null
           is_online?: boolean | null
-          level?: number | null
+          last_activity_at?: string | null
           nome?: string | null
-          phone?: never
-          streak_days?: number | null
-          xp_total?: number | null
         }
         Relationships: []
       }
       security_dashboard: {
         Row: {
           metric: string | null
-          value: number | null
+          value: string | null
         }
         Relationships: []
       }
       whatsapp_leads_dashboard: {
         Row: {
-          assigned_to: string | null
           contact_count: number | null
           created_at: string | null
-          email: string | null
-          external_id: string | null
           id: string | null
-          last_ai_response: string | null
           last_contact: string | null
-          last_interaction: string | null
-          last_message: string | null
           name: string | null
-          notes: string | null
           phone: string | null
           source: string | null
           status: string | null
-          tags: string[] | null
-          total_messages: number | null
-          updated_at: string | null
         }
         Insert: {
-          assigned_to?: string | null
           contact_count?: number | null
           created_at?: string | null
-          email?: string | null
-          external_id?: string | null
           id?: string | null
-          last_ai_response?: string | null
           last_contact?: string | null
-          last_interaction?: never
-          last_message?: string | null
           name?: string | null
-          notes?: string | null
           phone?: string | null
           source?: string | null
           status?: string | null
-          tags?: string[] | null
-          total_messages?: never
-          updated_at?: string | null
         }
         Update: {
-          assigned_to?: string | null
           contact_count?: number | null
           created_at?: string | null
-          email?: string | null
-          external_id?: string | null
           id?: string | null
-          last_ai_response?: string | null
           last_contact?: string | null
-          last_interaction?: never
-          last_message?: string | null
           name?: string | null
-          notes?: string | null
           phone?: string | null
           source?: string | null
           status?: string | null
-          tags?: string[] | null
-          total_messages?: never
-          updated_at?: string | null
         }
         Relationships: []
       }
