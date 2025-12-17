@@ -1,8 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - CALENDÁRIO
-// Spider-Man Theme - Gestão de Tarefas
-// Elementos de Química Integrados
-// + Sistema Universal de Anexos
+// EMPRESARIAL 2090 - CALENDÁRIO QUANTUM
+// Cyberpunk Edition - AJUDA15
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
@@ -21,8 +19,14 @@ import {
   Edit2,
   FlaskConical,
   Atom,
-  Paperclip
+  Paperclip,
+  Zap,
+  Target,
+  CheckSquare
 } from "lucide-react";
+import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { FuturisticCard } from "@/components/ui/futuristic-card";
+import { CyberBackground } from "@/components/ui/cyber-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

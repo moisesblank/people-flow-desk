@@ -1,12 +1,14 @@
 // ============================================
-// MOISÉS MEDEIROS v8.0 - ALUNOS
-// Spider-Man Theme - Gestão de Estudantes
-// Elementos de Química Integrados + Anexos Automáticos
+// EMPRESARIAL 2090 - ACADEMIA QUANTUM
+// Cyberpunk Edition - AJUDA15
 // ============================================
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Sparkles, Trash2, Edit2, Users, Award, TrendingUp, FlaskConical, Atom, Paperclip } from "lucide-react";
+import { Plus, GraduationCap, Sparkles, Trash2, Edit2, Users, Award, TrendingUp, FlaskConical, Atom, Paperclip, Brain, Target, BookOpen } from "lucide-react";
+import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { FuturisticCard } from "@/components/ui/futuristic-card";
+import { CyberBackground } from "@/components/ui/cyber-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -119,160 +121,178 @@ export default function Alunos() {
   };
 
   return (
-    <div className="p-4 md:p-8 lg:p-12">
-      <div className="mx-auto max-w-7xl">
-        {/* Hero Banner */}
-        <motion.div
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="relative w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-8"
-        >
-          <img 
-            src={studentsHeroImage} 
-            alt="Alunos - Futuros Cientistas" 
-            className="w-full h-full object-cover"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
-          <div className="absolute inset-0 flex items-center justify-between p-8">
-            <div>
-              <div className="flex items-center gap-2 mb-2">
-                <FlaskConical className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium text-primary uppercase tracking-wider">Plataforma</span>
-              </div>
-              <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Alunos</h1>
-              <p className="text-muted-foreground max-w-md">
-                Formando os cientistas e médicos do futuro
-              </p>
-            </div>
-            <div className="hidden lg:flex items-center gap-4">
-              <AnimatedAtom size={70} />
-              <Button onClick={() => openModal()} size="lg" className="gap-2">
-                <Plus className="h-5 w-5" /> Novo Aluno
+    <div className="relative min-h-screen">
+      <CyberBackground variant="matrix" />
+      
+      <div className="relative z-10 p-4 md:p-8 lg:p-12">
+        <div className="mx-auto max-w-7xl space-y-6">
+          {/* Futuristic Header */}
+          <FuturisticPageHeader
+            title="Academia Quantum"
+            subtitle="Sistema Neural de Gestão de Alunos"
+            icon={GraduationCap}
+            badge="STUDENT MATRIX"
+            accentColor="blue"
+            stats={[
+              { label: "Total", value: students.length, icon: Users },
+              { label: "Ativos", value: ativos, icon: Brain },
+              { label: "Concluídos", value: concluidos, icon: Award },
+            ]}
+            action={
+              <Button 
+                onClick={() => openModal()}
+                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white shadow-lg shadow-blue-500/25"
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Novo Aluno
               </Button>
-            </div>
-          </div>
-        </motion.div>
-
-        {/* Mobile Button */}
-        <div className="lg:hidden mb-6">
-          <Button onClick={() => openModal()} size="lg" className="w-full gap-2">
-            <Plus className="h-5 w-5" /> Novo Aluno
-          </Button>
-        </div>
-
-        {/* Stats */}
-        <section className="mb-10 grid gap-4 sm:grid-cols-4">
-          <StatCard title="Total Alunos" value={students.length} icon={Users} variant="blue" delay={0} />
-          <StatCard title="Ativos" value={ativos} icon={GraduationCap} variant="green" delay={1} />
-          <StatCard title="Concluídos" value={concluidos} icon={Award} variant="purple" delay={2} />
-          <StatCard title="Taxa Aprovação" value={students.length > 0 ? Math.round((concluidos / students.length) * 100) : 0} formatFn={(v) => `${v}%`} icon={TrendingUp} variant="red" delay={3} />
-        </section>
-
-        {/* Analytics */}
-        <section className="mb-8">
-          <StudentAnalytics 
-            totalStudents={students.length}
-            activeStudents={ativos}
-            completedStudents={concluidos}
-            averageProgress={students.length > 0 ? 65 : 0}
-            averageXP={students.length > 0 ? 2450 : 0}
-            topPerformers={students.slice(0, 5).map((s, i) => ({
-              id: s.id.toString(),
-              name: s.nome,
-              xp: 3000 - (i * 200),
-              progress: 90 - (i * 5)
-            }))}
+            }
           />
-        </section>
 
-        {/* Table */}
-        <section>
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-secondary/50">
-                <tr>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Email</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Curso</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Status</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {students.map((student) => (
-                  <tr key={student.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-4 text-foreground font-medium">{student.nome}</td>
-                    <td className="p-4 text-muted-foreground">{student.email || "-"}</td>
-                    <td className="p-4 text-muted-foreground">{student.curso || "-"}</td>
-                    <td className="p-4">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        student.status === "Ativo" ? "bg-status-active/20 text-status-active" :
-                        student.status === "Concluído" ? "bg-status-vacation/20 text-status-vacation" :
-                        student.status === "Pendente" ? "bg-status-away/20 text-status-away" :
-                        "bg-status-inactive/20 text-status-inactive"
-                      }`}>
-                        {student.status}
-                      </span>
-                    </td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <AttachmentButton
-                          entityType="student"
-                          entityId={student.id}
-                          entityLabel={student.nome}
-                          variant="ghost"
-                          size="icon"
-                        />
-                        <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-                {students.length === 0 && (
-                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nenhum aluno cadastrado</td></tr>
-                )}
-              </tbody>
-            </table>
+          {/* Mobile Button */}
+          <div className="lg:hidden">
+            <Button 
+              onClick={() => openModal()} 
+              size="lg" 
+              className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white shadow-lg shadow-blue-500/25 gap-2 h-12 rounded-xl"
+            >
+              <Plus className="h-5 w-5" />
+              Novo Aluno
+            </Button>
           </div>
-        </section>
 
-        {/* Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle>{editingItem ? "Editar" : "Novo"} Aluno</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <Label>Nome</Label>
-                <Input value={formData.nome} onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))} placeholder="Nome do aluno" className="mt-1.5" />
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <FuturisticCard accentColor="blue" className="p-4 text-center">
+              <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-blue-400">{students.length}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Alunos</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="green" className="p-4 text-center">
+              <GraduationCap className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-emerald-400">{ativos}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="purple" className="p-4 text-center">
+              <Award className="h-6 w-6 text-purple-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-purple-400">{concluidos}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídos</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="cyan" className="p-4 text-center">
+              <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-cyan-400">
+                {students.length > 0 ? Math.round((concluidos / students.length) * 100) : 0}%
               </div>
-              <div>
-                <Label>Email</Label>
-                <Input value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} placeholder="email@exemplo.com" className="mt-1.5" />
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa Aprovação</div>
+            </FuturisticCard>
+          </div>
+
+          {/* Analytics */}
+          <section className="mb-8">
+            <StudentAnalytics 
+              totalStudents={students.length}
+              activeStudents={ativos}
+              completedStudents={concluidos}
+              averageProgress={students.length > 0 ? 65 : 0}
+              averageXP={students.length > 0 ? 2450 : 0}
+              topPerformers={students.slice(0, 5).map((s, i) => ({
+                id: s.id.toString(),
+                name: s.nome,
+                xp: 3000 - (i * 200),
+                progress: 90 - (i * 5)
+              }))}
+            />
+          </section>
+
+          {/* Table */}
+          <section>
+            <FuturisticCard accentColor="blue">
+              <table className="w-full">
+                <thead className="bg-blue-500/10">
+                  <tr>
+                    <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
+                    <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
+                    <th className="text-left p-4 text-sm font-medium text-blue-400">Curso</th>
+                    <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
+                    <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {students.map((student) => (
+                    <tr key={student.id} className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
+                      <td className="p-4 text-foreground font-medium">{student.nome}</td>
+                      <td className="p-4 text-muted-foreground">{student.email || "-"}</td>
+                      <td className="p-4 text-muted-foreground">{student.curso || "-"}</td>
+                      <td className="p-4">
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
+                          student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
+                          student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
+                          "bg-red-500/20 text-red-400"
+                        }`}>
+                          {student.status}
+                        </span>
+                      </td>
+                      <td className="p-4 text-right">
+                        <div className="flex justify-end gap-2">
+                          <AttachmentButton
+                            entityType="student"
+                            entityId={student.id}
+                            entityLabel={student.nome}
+                            variant="ghost"
+                            size="icon"
+                          />
+                          <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
+                            <Edit2 className="h-4 w-4 text-blue-400" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                  {students.length === 0 && (
+                    <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nenhum aluno cadastrado</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </FuturisticCard>
+          </section>
+
+          {/* Modal */}
+          <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+            <DialogContent className="sm:max-w-md border-blue-500/30">
+              <DialogHeader>
+                <DialogTitle className="text-blue-400">{editingItem ? "Editar" : "Novo"} Aluno</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-4">
+                <div>
+                  <Label>Nome</Label>
+                  <Input value={formData.nome} onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))} placeholder="Nome do aluno" className="mt-1.5 border-blue-500/30" />
+                </div>
+                <div>
+                  <Label>Email</Label>
+                  <Input value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} placeholder="email@exemplo.com" className="mt-1.5 border-blue-500/30" />
+                </div>
+                <div>
+                  <Label>Curso</Label>
+                  <Input value={formData.curso} onChange={(e) => setFormData(prev => ({ ...prev, curso: e.target.value }))} placeholder="Nome do curso" className="mt-1.5 border-blue-500/30" />
+                </div>
+                <div>
+                  <Label>Status</Label>
+                  <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
+                    <SelectTrigger className="mt-1.5 border-blue-500/30"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <Button onClick={handleSave} className="w-full bg-gradient-to-r from-blue-500 to-cyan-600">Salvar</Button>
               </div>
-              <div>
-                <Label>Curso</Label>
-                <Input value={formData.curso} onChange={(e) => setFormData(prev => ({ ...prev, curso: e.target.value }))} placeholder="Nome do curso" className="mt-1.5" />
-              </div>
-              <div>
-                <Label>Status</Label>
-                <Select value={formData.status} onValueChange={(v) => setFormData(prev => ({ ...prev, status: v }))}>
-                  <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    {STATUS_OPTIONS.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleSave} className="w-full">Salvar</Button>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
     </div>
   );
