@@ -80,6 +80,7 @@ const menuGroups: MenuGroup[] = [
     image: marketingImg,
     color: "from-orange-600/80",
     items: [
+      { title: "Central de Métricas", url: "/central-metricas", icon: Activity, area: "metricas", badge: "LIVE" },
       { title: "Marketing", url: "/marketing", icon: Megaphone, area: "marketing" },
       { title: "Lançamento", url: "/lancamento", icon: Rocket, area: "lancamento" },
       { title: "Métricas", url: "/metricas", icon: BarChart3, area: "metricas" },

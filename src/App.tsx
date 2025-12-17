@@ -61,6 +61,7 @@ const CentralWhatsApp = lazy(() => import("./pages/CentralWhatsApp"));
 const DiagnosticoWhatsApp = lazy(() => import("./pages/DiagnosticoWhatsApp"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Documentos = lazy(() => import("./pages/Documentos"));
+const CentralMetricas = lazy(() => import("./pages/CentralMetricas"));
 
 const queryClient = new QueryClient();
 
@@ -162,6 +163,7 @@ function AppContent() {
           <Route path="/leads-whatsapp" element={<ProtectedPage><LeadsWhatsApp /></ProtectedPage>} />
           <Route path="/central-whatsapp" element={<ProtectedPage><CentralWhatsApp /></ProtectedPage>} />
           <Route path="/diagnostico-whatsapp" element={<ProtectedPage><DiagnosticoWhatsApp /></ProtectedPage>} />
+          <Route path="/central-metricas" element={<ProtectedPage><CentralMetricas /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
