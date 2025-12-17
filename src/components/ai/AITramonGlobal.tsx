@@ -448,11 +448,14 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
     inputRef.current?.focus();
   };
 
+  // SEMPRE MOSTRAR O BOTÃO - Mesmo sem acesso, mostra o botão
+  // Se não tem acesso, clica e mostra toast para fazer login
+  const showButton = true; // Sempre mostrar o botão visualmente
+  
   if (roleLoading) return null;
-  if (!hasAccess) return null;
 
   // ========================================
-  // 🎨 RENDER
+  // 🎨 RENDER - BUILD 2024.12.17.v9
   // ========================================
   return (
     <>
@@ -474,8 +477,16 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
             className="fixed bottom-8 left-1/2 -translate-x-1/2 z-[100]"
           >
             <motion.button
-              onClick={() => setIsOpen(true)}
-              className="relative h-18 w-18 rounded-2xl bg-gradient-to-br from-gray-200 via-silver-100 to-gray-300 shadow-2xl shadow-gray-400/60 flex items-center justify-center group overflow-hidden border-2 border-white/60"
+              onClick={() => {
+                if (!hasAccess) {
+                  toast.info("Faça login para acessar o TRAMON", {
+                    description: "A I.A. está disponível após autenticação"
+                  });
+                  return;
+                }
+                setIsOpen(true);
+              }}
+              className="relative h-16 w-16 rounded-2xl flex items-center justify-center group overflow-hidden border-2 border-white/60"
               style={{ 
                 background: 'linear-gradient(135deg, #e8e8e8 0%, #f5f5f5 25%, #d4d4d4 50%, #e8e8e8 75%, #f0f0f0 100%)',
                 boxShadow: '0 8px 32px rgba(180, 180, 180, 0.6), 0 0 20px rgba(255, 255, 255, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.8)'
