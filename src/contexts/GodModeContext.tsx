@@ -63,22 +63,16 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
           // Confirmação extra via backend (não bloqueia o modo caso falhe)
           try {
             const { data, error } = await supabase.rpc('is_owner');
-            if (error) {
-              console.warn('[GODMODE] is_owner rpc error (ignored):', error.message);
-            } else if (data === false) {
-              // Se o backend disser explicitamente que não é owner, respeitar
+            if (!error && data === false) {
               setIsOwner(false);
             }
-          } catch (err) {
-            console.warn('[GODMODE] is_owner rpc exception (ignored)');
+          } catch {
+            // Silencioso - manter verificação por email
           }
-
-          console.log('🔮 MODO DEUS disponível - Ctrl+Shift+E para ativar');
         } else {
           setIsOwner(false);
         }
-      } catch (err) {
-        console.error('Erro ao verificar owner:', err);
+      } catch {
         setIsOwner(false);
       } finally {
         setIsLoading(false);

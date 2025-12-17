@@ -521,7 +521,7 @@ export default function PortalAluno() {
                     title="Aula 1: Boas-vindas"
                     duration="5:00"
                     onComplete={() => toast.success("Aula concluída!")}
-                    onProgress={(progress) => console.log(`Progresso: ${progress}%`)}
+                    onProgress={() => {}}
                   />
                 </CardContent>
               </Card>
