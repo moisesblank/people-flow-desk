@@ -68,6 +68,7 @@ import {
 import { useDashboardStats } from "@/hooks/useDataCache";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { CashFlowForecast } from "@/components/finance/CashFlowForecast";
 
 // Cores do design system CYBER
 const COLORS = {
@@ -603,24 +604,31 @@ export default function DashboardExecutivo() {
         </Card>
       </div>
 
-      {/* Métricas de Saúde */}
-      <Card className="glass-card">
-        <CardHeader>
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Sparkles className="h-5 w-5 text-primary" />
-            Métricas de Saúde do Negócio
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-5">
-            <GaugeChart value={72} max={100} label="NPS Score" color={COLORS.green} />
-            <GaugeChart value={94} max={100} label="Retenção %" color={COLORS.blue} />
-            <GaugeChart value={2.5} max={10} label="Churn %" color={COLORS.gold} />
-            <GaugeChart value={158} max={200} label="LTV (R$k)" color={COLORS.purple} />
-            <GaugeChart value={32} max={50} label="CAC (R$k)" color={COLORS.primary} />
-          </div>
-        </CardContent>
-      </Card>
+      {/* Cash Flow Forecast */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <CashFlowForecast />
+        
+        {/* Métricas de Saúde */}
+        <Card className="glass-card">
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-primary" />
+              Métricas de Saúde do Negócio
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+              <GaugeChart value={72} max={100} label="NPS Score" color={COLORS.green} />
+              <GaugeChart value={94} max={100} label="Retenção %" color={COLORS.blue} />
+              <GaugeChart value={2.5} max={10} label="Churn %" color={COLORS.gold} />
+            </div>
+            <div className="grid gap-6 sm:grid-cols-2 mt-6">
+              <GaugeChart value={158} max={200} label="LTV (R$k)" color={COLORS.purple} />
+              <GaugeChart value={32} max={50} label="CAC (R$k)" color={COLORS.primary} />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

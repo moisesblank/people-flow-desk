@@ -302,6 +302,48 @@ export type Database = {
         }
         Relationships: []
       }
+      automated_reports: {
+        Row: {
+          config: Json | null
+          created_at: string
+          id: string
+          is_active: boolean | null
+          last_sent_at: string | null
+          next_send_at: string | null
+          recipients: string[] | null
+          report_type: string
+          schedule: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          recipients?: string[] | null
+          report_type: string
+          schedule?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          id?: string
+          is_active?: boolean | null
+          last_sent_at?: string | null
+          next_send_at?: string | null
+          recipients?: string[] | null
+          report_type?: string
+          schedule?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       badges: {
         Row: {
           category: string | null
@@ -2608,6 +2650,57 @@ export type Database = {
         }
         Relationships: []
       }
+      receipt_ocr_extractions: {
+        Row: {
+          amount_detected: number | null
+          category_suggested: string | null
+          confidence_score: number | null
+          created_at: string
+          date_detected: string | null
+          error_message: string | null
+          extracted_data: Json | null
+          file_name: string
+          file_url: string
+          id: string
+          processed_at: string | null
+          status: string | null
+          user_id: string
+          vendor_detected: string | null
+        }
+        Insert: {
+          amount_detected?: number | null
+          category_suggested?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          date_detected?: string | null
+          error_message?: string | null
+          extracted_data?: Json | null
+          file_name: string
+          file_url: string
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          user_id: string
+          vendor_detected?: string | null
+        }
+        Update: {
+          amount_detected?: number | null
+          category_suggested?: string | null
+          confidence_score?: number | null
+          created_at?: string
+          date_detected?: string | null
+          error_message?: string | null
+          extracted_data?: Json | null
+          file_name?: string
+          file_url?: string
+          id?: string
+          processed_at?: string | null
+          status?: string | null
+          user_id?: string
+          vendor_detected?: string | null
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           affiliate_id: number | null
@@ -3225,6 +3318,50 @@ export type Database = {
           valor?: number
         }
         Relationships: []
+      }
+      team_chat_messages: {
+        Row: {
+          attachments: Json | null
+          content: string
+          created_at: string
+          id: string
+          is_read: boolean | null
+          message_type: string | null
+          reply_to: string | null
+          sender_id: string
+          updated_at: string
+        }
+        Insert: {
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          reply_to?: string | null
+          sender_id: string
+          updated_at?: string
+        }
+        Update: {
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_read?: boolean | null
+          message_type?: string | null
+          reply_to?: string | null
+          sender_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "team_chat_messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "team_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       time_clock_absences: {
         Row: {

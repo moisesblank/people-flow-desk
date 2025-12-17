@@ -44,3 +44,9 @@ verify_jwt = false
 
 [functions.extract-document]
 verify_jwt = true
+
+[functions.send-weekly-report]
+verify_jwt = true
+
+[functions.ocr-receipt]
+verify_jwt = true
