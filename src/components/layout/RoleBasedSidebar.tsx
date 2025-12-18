@@ -4,14 +4,14 @@
 // MODO MASTER para Owner
 // ============================================
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
   LayoutDashboard, Users, Wallet, Building2, TrendingUp, Handshake,
   GraduationCap, FileText, LogOut, Settings, UserCog, BookOpen,
   Calendar, CreditCard, Calculator, Globe, ClipboardCheck, UserCheck,
   Brain, Link2, Shield, PlayCircle, Megaphone, Rocket, BarChart3,
   FolderOpen, PenTool, Monitor, MapPin, Code, User, Heart, FlaskConical,
-  Gauge, Activity, Zap, Crown, Sparkles, MessageSquareText, Stethoscope
+  Gauge, Activity, Zap, Crown, Sparkles, MessageSquareText, Stethoscope, GripVertical
 } from "lucide-react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
@@ -27,7 +27,7 @@ import {
   SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Reorder } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StorageAndBackupWidget } from "./StorageAndBackupWidget";
 
@@ -175,13 +175,120 @@ const menuGroups: MenuGroup[] = [
   },
 ];
 
+function SidebarMenuReorderable(props: {
+  groupId: string;
+  items: MenuItem[];
+  collapsed: boolean;
+  isGodModeActive: boolean;
+  isActive: (path: string) => boolean;
+  getContent: (key: string, fallback?: string) => string;
+  onPersistOrder: (orderedAreas: string[]) => Promise<void>;
+}) {
+  const { groupId, items, collapsed, isGodModeActive, isActive, getContent, onPersistOrder } = props;
+
+  const orderKey = `nav_group_${groupId}_order`;
+  const persisted = getContent(orderKey, "");
+
+  const computeOrder = useCallback(() => {
+    const base = items.map((i) => i.area as string);
+    if (!persisted) return base;
+    try {
+      const parsed = JSON.parse(persisted);
+      if (!Array.isArray(parsed)) return base;
+      const valid = parsed.filter((a: unknown) => typeof a === "string" && base.includes(a)) as string[];
+      const rest = base.filter((a) => !valid.includes(a));
+      return [...valid, ...rest];
+    } catch {
+      return base;
+    }
+  }, [items, persisted]);
+
+  const [orderedAreas, setOrderedAreas] = useState<string[]>(computeOrder());
+
+  useEffect(() => {
+    // Mantém sincronizado quando o conteúdo do banco muda
+    setOrderedAreas(computeOrder());
+  }, [computeOrder]);
+
+  const orderedItems = useMemo(() => {
+    const byArea = new Map<string, MenuItem>(items.map((i) => [i.area as string, i] as const));
+    return orderedAreas.map((a) => byArea.get(a)).filter(Boolean) as MenuItem[];
+  }, [items, orderedAreas]);
+
+  const persist = useCallback(async (next: string[]) => {
+    if (!isGodModeActive) return;
+    await onPersistOrder(next);
+  }, [isGodModeActive, onPersistOrder]);
+
+  const renderItem = (item: MenuItem, isDraggable: boolean) => (
+    <SidebarMenuItem key={item.area}>
+      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+        <NavLink
+          to={item.url}
+          end
+          className="flex items-center gap-3"
+          activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+        >
+          <item.icon className="h-4 w-4 shrink-0" />
+          {!collapsed && (
+            <span className="flex items-center gap-2 min-w-0">
+              {isDraggable && (
+                <span
+                  className="inline-flex items-center justify-center rounded-md px-1.5 py-1 text-muted-foreground/70"
+                  aria-hidden="true"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </span>
+              )}
+              <span className="truncate" data-editable-key={`nav_${item.area}_title`}>
+                {getContent(`nav_${item.area}_title`, item.title)}
+              </span>
+              {item.badge && (
+                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                  {item.badge}
+                </Badge>
+              )}
+            </span>
+          )}
+        </NavLink>
+      </SidebarMenuButton>
+    </SidebarMenuItem>
+  );
+
+  // Drag só faz sentido no modo expandido (com texto)
+  const canDrag = isGodModeActive && !collapsed;
+
+  if (!canDrag) {
+    return <>{orderedItems.map((item) => renderItem(item, false))}</>;
+  }
+
+  return (
+    <Reorder.Group axis="y" values={orderedAreas} onReorder={setOrderedAreas} className="space-y-1">
+      {orderedAreas.map((area) => {
+        const item = orderedItems.find((i) => i.area === area);
+        if (!item) return null;
+        return (
+          <Reorder.Item
+            key={area}
+            value={area}
+            onDragEnd={() => persist(orderedAreas)}
+            className="cursor-grab active:cursor-grabbing"
+          >
+            {renderItem(item, true)}
+          </Reorder.Item>
+        );
+      })}
+    </Reorder.Group>
+  );
+}
+
 export function RoleBasedSidebar() {
   const { state } = useSidebar();
   const collapsed = state === "collapsed";
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
-  const { getContent } = useGodMode();
+  const { getContent, updateContent, isActive: isGodModeActive, isOwner: isGodModeOwner } = useGodMode();
   const { role, isOwner, isGodMode, hasAccess, roleLabel, roleColor } = useRolePermissions();
   const [userName, setUserName] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -293,36 +400,18 @@ export function RoleBasedSidebar() {
                 <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>{group.label}</SidebarGroupLabel>
                 <SidebarGroupContent>
                   <SidebarMenu>
-                    {group.items.map((item) => (
-                      <SidebarMenuItem key={item.title}>
-                        <SidebarMenuButton 
-                          asChild
-                          isActive={isActive(item.url)}
-                          tooltip={item.title}
-                        >
-                          <NavLink 
-                            to={item.url} 
-                            end 
-                            className="flex items-center gap-3"
-                            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                          >
-                            <item.icon className="h-4 w-4 shrink-0" />
-                            {!collapsed && (
-                              <span className="flex items-center gap-2">
-                                <span data-editable-key={`nav_${item.area}_title`}>
-                                  {getContent(`nav_${item.area}_title`, item.title)}
-                                </span>
-                                {item.badge && (
-                                  <Badge variant="outline" className="text-[10px] px-1 py-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
-                                    {item.badge}
-                                  </Badge>
-                                )}
-                              </span>
-                            )}
-                          </NavLink>
-                        </SidebarMenuButton>
-                      </SidebarMenuItem>
-                    ))}
+                    <SidebarMenuReorderable
+                      groupId={group.id}
+                      items={group.items}
+                      collapsed={collapsed}
+                      isGodModeActive={isGodModeActive && isGodModeOwner}
+                      isActive={isActive}
+                      getContent={getContent}
+                      onPersistOrder={async (orderedAreas) => {
+                        const key = `nav_group_${group.id}_order`;
+                        await updateContent(key, JSON.stringify(orderedAreas), 'json');
+                      }}
+                    />
                   </SidebarMenu>
                 </SidebarGroupContent>
               </SidebarGroup>
