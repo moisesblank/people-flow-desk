@@ -1,14 +1,23 @@
 // ============================================
-// SYNAPSE v14.0 - MASTER MODE CONTEXT
+// SYNAPSE v15.0 - MASTER MODE CONTEXT
 // Context Provider para o MODO MASTER completo
+// Edição em tempo real de textos e imagens
 // Exclusivo para Owner: moisesblank@gmail.com
 // ============================================
 
-import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { createContext, useContext, useState, useEffect, useCallback, ReactNode, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
+
+interface EditingElement {
+  id: string;
+  type: 'text' | 'image';
+  element: HTMLElement;
+  originalContent: string;
+  contentKey?: string;
+}
 
 interface GodModeContextType {
   // Status
@@ -16,6 +25,10 @@ interface GodModeContextType {
   isGodMode: boolean;
   isActive: boolean;
   isLoading: boolean;
+  
+  // Elemento sendo editado
+  editingElement: EditingElement | null;
+  setEditingElement: (el: EditingElement | null) => void;
   
   // Ações
   toggle: () => void;
@@ -29,6 +42,9 @@ interface GodModeContextType {
   // Histórico
   getHistory: (key: string) => Promise<any[]>;
   revertToVersion: (key: string, version: number) => Promise<boolean>;
+  
+  // Upload de imagem
+  uploadImage: (key: string, file: File) => Promise<string | null>;
 }
 
 const GodModeContext = createContext<GodModeContextType | null>(null);
@@ -39,6 +55,8 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   const [isActive, setIsActive] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [contentCache, setContentCache] = useState<Record<string, string>>({});
+  const [editingElement, setEditingElement] = useState<EditingElement | null>(null);
+  const clickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
 
   // Verificar usuário e status de owner
   useEffect(() => {
@@ -56,18 +74,16 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
 
         const isEmailOwner = currentUser.email?.toLowerCase() === OWNER_EMAIL;
 
-        // Regra principal: email do owner (confiável para este projeto)
         if (isEmailOwner) {
           setIsOwner(true);
 
-          // Confirmação extra via backend (não bloqueia o modo caso falhe)
           try {
             const { data, error } = await supabase.rpc('is_owner');
             if (!error && data === false) {
               setIsOwner(false);
             }
           } catch {
-            // Silencioso - manter verificação por email
+            // Silencioso
           }
         } else {
           setIsOwner(false);
@@ -87,10 +103,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         setIsOwner(false);
         setIsActive(false);
       } else {
-        // Evita chamadas Supabase dentro do callback (anti-deadlock)
-        setTimeout(() => {
-          checkOwner();
-        }, 0);
+        setTimeout(checkOwner, 0);
       }
     });
 
@@ -118,6 +131,74 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     loadContent();
   }, []);
 
+  // Handler de clique global para edição em tempo real
+  useEffect(() => {
+    if (!isOwner || !isActive) {
+      // Remover handler se não estiver ativo
+      if (clickHandlerRef.current) {
+        document.removeEventListener('click', clickHandlerRef.current, true);
+        clickHandlerRef.current = null;
+      }
+      return;
+    }
+
+    const handleClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      
+      // Ignorar cliques no painel do God Mode e em botões/inputs
+      if (
+        target.closest('[data-godmode-panel]') ||
+        target.closest('button') ||
+        target.closest('input') ||
+        target.closest('textarea') ||
+        target.closest('[data-godmode-editing]')
+      ) {
+        return;
+      }
+
+      // Verificar se é um elemento editável
+      const isImage = target.tagName === 'IMG';
+      const isText = 
+        target.tagName === 'H1' ||
+        target.tagName === 'H2' ||
+        target.tagName === 'H3' ||
+        target.tagName === 'H4' ||
+        target.tagName === 'H5' ||
+        target.tagName === 'H6' ||
+        target.tagName === 'P' ||
+        target.tagName === 'SPAN' ||
+        target.tagName === 'A' ||
+        target.tagName === 'LABEL' ||
+        target.tagName === 'LI' ||
+        (target.tagName === 'DIV' && target.innerText && target.children.length === 0);
+
+      if (isImage || isText) {
+        e.preventDefault();
+        e.stopPropagation();
+
+        const contentKey = target.dataset.editableKey || `${target.tagName.toLowerCase()}_${Date.now()}`;
+
+        setEditingElement({
+          id: contentKey,
+          type: isImage ? 'image' : 'text',
+          element: target,
+          originalContent: isImage ? (target as HTMLImageElement).src : target.innerText,
+          contentKey,
+        });
+      }
+    };
+
+    clickHandlerRef.current = handleClick;
+    document.addEventListener('click', handleClick, true);
+
+    return () => {
+      if (clickHandlerRef.current) {
+        document.removeEventListener('click', clickHandlerRef.current, true);
+        clickHandlerRef.current = null;
+      }
+    };
+  }, [isOwner, isActive]);
+
   // Atalho de teclado Ctrl+Shift+E
   useEffect(() => {
     if (!isOwner) return;
@@ -127,11 +208,15 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         e.preventDefault();
         toggle();
       }
+      // ESC para cancelar edição
+      if (e.key === 'Escape' && editingElement) {
+        setEditingElement(null);
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOwner, isActive]);
+  }, [isOwner, isActive, editingElement]);
 
   const toggle = useCallback(() => {
     if (!isOwner) {
@@ -141,11 +226,12 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     setIsActive(prev => {
       const newState = !prev;
       if (newState) {
-      toast.success('🔮 MODO MASTER ativado', {
-          description: 'Clique em qualquer texto para editar'
+        toast.success('🔮 MODO MASTER ativado', {
+          description: 'Clique em qualquer texto ou imagem para editar em tempo real'
         });
       } else {
         toast.info('MODO MASTER desativado');
+        setEditingElement(null);
       }
       return newState;
     });
@@ -161,6 +247,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   const deactivate = useCallback(() => {
     if (isActive) {
       setIsActive(false);
+      setEditingElement(null);
       toast.info('MODO MASTER desativado');
     }
   }, [isActive]);
@@ -182,14 +269,24 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
       .replace(/on\w+=/gi, '');
 
     try {
-      // Tentar atualizar
-      const { error: updateError } = await supabase
+      // Verificar se existe
+      const { data: existing } = await supabase
         .from('editable_content')
-        .update({ content_value: sanitized })
-        .eq('content_key', key);
+        .select('id')
+        .eq('content_key', key)
+        .maybeSingle();
 
-      if (updateError) {
-        // Se não existir, criar
+      if (existing) {
+        const { error: updateError } = await supabase
+          .from('editable_content')
+          .update({ 
+            content_value: sanitized,
+            updated_at: new Date().toISOString()
+          })
+          .eq('content_key', key);
+
+        if (updateError) throw updateError;
+      } else {
         const { error: insertError } = await supabase
           .from('editable_content')
           .insert({
@@ -199,20 +296,48 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
             page_key: key.split('_')[0] || 'global'
           });
 
-        if (insertError) {
-          toast.error('Erro ao salvar');
-          return false;
-        }
+        if (insertError) throw insertError;
       }
 
       setContentCache(prev => ({ ...prev, [key]: sanitized }));
-      toast.success('Conteúdo salvo!');
+      toast.success('✨ Conteúdo salvo!');
       return true;
     } catch (err) {
+      console.error('Erro ao salvar:', err);
       toast.error('Erro ao salvar');
       return false;
     }
   }, [isOwner]);
+
+  const uploadImage = useCallback(async (key: string, file: File): Promise<string | null> => {
+    if (!isOwner) return null;
+
+    try {
+      const fileExt = file.name.split('.').pop();
+      const fileName = `godmode/${key}-${Date.now()}.${fileExt}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      const publicUrl = urlData.publicUrl;
+
+      await updateContent(key, publicUrl, 'image');
+
+      toast.success('📷 Imagem atualizada!');
+      return publicUrl;
+    } catch (err) {
+      console.error('Erro no upload:', err);
+      toast.error('Erro ao fazer upload');
+      return null;
+    }
+  }, [isOwner, updateContent]);
 
   const getHistory = useCallback(async (key: string): Promise<any[]> => {
     if (!isOwner) return [];
@@ -249,6 +374,8 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     isGodMode: isOwner,
     isActive,
     isLoading,
+    editingElement,
+    setEditingElement,
     toggle,
     activate,
     deactivate,
@@ -256,6 +383,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     updateContent,
     getHistory,
     revertToVersion,
+    uploadImage,
   };
 
   return (

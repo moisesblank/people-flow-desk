@@ -1,5 +1,5 @@
 // ============================================
-// SYNAPSE v14.0 - MASTER MODE PANEL
+// SYNAPSE v15.0 - MASTER MODE PANEL
 // Painel flutuante do MODO MASTER
 // Navegação rápida + Ferramentas de edição
 // ============================================
@@ -13,13 +13,12 @@ import {
   Type, Image, Settings, ChevronUp, ChevronDown,
   Users, Activity, LayoutDashboard, Calendar,
   DollarSign, Brain, Shield, Database, ExternalLink,
-  Keyboard
+  MousePointer2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
-import { toast } from 'sonner';
 
 const quickNavItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -55,8 +54,8 @@ export function GodModePanel() {
               background: 'linear-gradient(135deg, hsl(280 80% 50%), hsl(328 100% 54%))'
             }}
           >
-            <Zap className="w-4 h-4 animate-pulse" />
-            MODO MASTER ATIVO
+            <MousePointer2 className="w-4 h-4 animate-pulse" />
+            MODO MASTER - Clique em qualquer texto/imagem
             <span className="text-xs opacity-70 ml-2">Ctrl+Shift+E para sair</span>
           </motion.div>
         )}
@@ -65,11 +64,7 @@ export function GodModePanel() {
       {/* Painel principal */}
       <motion.div
         initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ 
-          opacity: 1, 
-          scale: 1,
-          height: isMinimized ? 'auto' : isExpanded ? 'auto' : 'auto'
-        }}
+        animate={{ opacity: 1, scale: 1 }}
         className={cn(
           "fixed z-[9999] rounded-xl shadow-2xl border border-primary/30 overflow-hidden",
           isMinimized ? "bottom-4 right-4 w-auto" : "bottom-4 right-4 w-72"
@@ -77,6 +72,7 @@ export function GodModePanel() {
         style={{
           background: 'linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%))'
         }}
+        data-godmode-panel="true"
       >
         {/* Header */}
         <div 
@@ -92,7 +88,7 @@ export function GodModePanel() {
               <>
                 <span className="text-sm font-semibold text-white">MODO MASTER</span>
                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-primary/20 border-primary/30 text-primary">
-                  v14.0
+                  v15.0
                 </Badge>
               </>
             )}
@@ -161,6 +157,19 @@ export function GodModePanel() {
                 )}
               </Button>
 
+              {/* Status quando ativo */}
+              {isActive && (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  className="p-2 rounded-lg bg-primary/10 border border-primary/20"
+                >
+                  <p className="text-xs text-primary text-center">
+                    ✨ Clique em qualquer texto ou imagem na página para editar em tempo real
+                  </p>
+                </motion.div>
+              )}
+
               {/* Navegação Rápida */}
               <div className="space-y-2">
                 <button
@@ -212,98 +221,45 @@ export function GodModePanel() {
                     className="space-y-2"
                   >
                     <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                      Ferramentas
+                      Ações
                     </p>
-                    <div className="grid grid-cols-4 gap-2">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-9 w-9"
-                            onClick={() => {
-                              toast.info('Modo Texto', {
-                                description: 'Clique em qualquer texto na página para editar'
-                              });
-                            }}
-                          >
-                            <Type className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Editar Textos</TooltipContent>
-                      </Tooltip>
-
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-9 w-9"
-                            onClick={() => {
-                              toast.info('Modo Imagem', {
-                                description: 'Clique em qualquer imagem na página para substituir'
-                              });
-                            }}
-                          >
-                            <Image className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Editar Imagens</TooltipContent>
-                      </Tooltip>
-
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-9 w-9"
-                            onClick={() => navigate('/configuracoes?tab=appearance')}
-                          >
-                            <Palette className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Cores e Temas</TooltipContent>
-                      </Tooltip>
-
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <Button 
-                            variant="outline" 
-                            size="icon" 
-                            className="h-9 w-9"
-                            onClick={() => navigate('/monitoramento')}
-                          >
-                            <History className="w-4 h-4" />
-                          </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>Histórico</TooltipContent>
-                      </Tooltip>
-                    </div>
-
-                    <div className="pt-2 border-t border-border/50">
-                      <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
-                        Admin
-                      </p>
-                      <div className="grid grid-cols-2 gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="justify-start gap-2 text-xs"
-                          onClick={() => navigate('/monitoramento')}
-                        >
-                          <Users className="w-3 h-3" />
-                          Usuários
-                        </Button>
-                        <Button 
-                          variant="outline" 
-                          size="sm" 
-                          className="justify-start gap-2 text-xs"
-                          onClick={() => navigate('/relatorios')}
-                        >
-                          <Activity className="w-3 h-3" />
-                          Relatórios
-                        </Button>
-                      </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="justify-start gap-2 text-xs"
+                        onClick={() => navigate('/monitoramento')}
+                      >
+                        <Users className="w-3 h-3" />
+                        Usuários
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="justify-start gap-2 text-xs"
+                        onClick={() => navigate('/relatorios')}
+                      >
+                        <Activity className="w-3 h-3" />
+                        Relatórios
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="justify-start gap-2 text-xs"
+                        onClick={() => navigate('/configuracoes?tab=appearance')}
+                      >
+                        <Palette className="w-3 h-3" />
+                        Temas
+                      </Button>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="justify-start gap-2 text-xs"
+                        onClick={() => navigate('/configuracoes')}
+                      >
+                        <Settings className="w-3 h-3" />
+                        Config
+                      </Button>
                     </div>
                   </motion.div>
                 )}
@@ -316,12 +272,6 @@ export function GodModePanel() {
                     Ctrl+Shift+E
                   </kbd>
                   <span>Toggle</span>
-                </div>
-                <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
-                  <kbd className="px-1.5 py-0.5 bg-secondary rounded font-mono">
-                    ?
-                  </kbd>
-                  <span>Ver todos atalhos</span>
                 </div>
               </div>
             </motion.div>
