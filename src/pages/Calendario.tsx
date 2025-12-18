@@ -5,9 +5,9 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { 
-  Calendar as CalendarIcon, 
-  Sparkles, 
+import {
+  Calendar as CalendarIcon,
+  Sparkles,
   Plus,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +20,7 @@ import {
   Mail,
   Bell,
   RefreshCw,
-  Loader2
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,18 +38,19 @@ import { TaskStats } from "@/components/calendar/TaskStats";
 import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
 import { AttachmentIndicator } from "@/components/attachments/AttachmentIndicator";
 import {
-  format, 
-  addMonths, 
-  subMonths, 
-  startOfMonth, 
-  endOfMonth, 
-  eachDayOfInterval, 
-  isSameMonth, 
-  isSameDay, 
+  format,
+  addMonths,
+  subMonths,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+  isSameMonth,
+  isSameDay,
   isToday,
   startOfWeek,
   endOfWeek,
-  addYears
+  addYears,
+  parseISO,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -74,9 +75,7 @@ const PRIORITIES = [
   { value: "urgent", label: "Urgente", color: "text-destructive" },
 ];
 
-const CATEGORIES = [
-  "Geral", "Reunião", "Curso", "Marketing", "Financeiro", "Pessoal", "Equipe", "Site"
-];
+const CATEGORIES = ["Geral", "Reunião", "Curso", "Marketing", "Financeiro", "Pessoal", "Equipe", "Site"];
 
 export default function Calendario() {
   const { toast } = useToast();
@@ -139,9 +138,11 @@ export default function Calendario() {
   }, [currentDate]);
 
   const getTasksForDate = (date: Date) => {
-    return tasks.filter(task => 
-      isSameDay(new Date(task.task_date), date) &&
-      (filterPriority === "all" || task.priority === filterPriority)
+    return tasks.filter(
+      (task) =>
+        // parseISO evita bug de fuso ("dia anterior") ao comparar YYYY-MM-DD
+        isSameDay(parseISO(task.task_date), date) &&
+        (filterPriority === "all" || task.priority === filterPriority)
     );
   };
 
@@ -176,6 +177,8 @@ export default function Calendario() {
     }
     setIsModalOpen(true);
   };
+
+  // ... keep existing code (rest of Calendario.tsx)
 
   const handleSave = async () => {
     if (!formData.title.trim()) {
@@ -407,7 +410,10 @@ export default function Calendario() {
             {/* Weekday headers */}
             <div className="grid grid-cols-7 mb-2">
               {["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((day) => (
-                <div key={day} className="text-center text-xs font-medium text-muted-foreground py-2">
+                <div
+                  key={day}
+                  className="text-center text-xs font-medium text-muted-foreground py-2"
+                >
                   {day}
                 </div>
               ))}
@@ -419,8 +425,10 @@ export default function Calendario() {
                 const dayTasks = getTasksForDate(day);
                 const isCurrentMonth = isSameMonth(day, currentDate);
                 const isSelected = selectedDate && isSameDay(day, selectedDate);
-                const hasUrgent = dayTasks.some(t => t.priority === "urgent" && !t.is_completed);
-                const hasIncomplete = dayTasks.some(t => !t.is_completed);
+                const hasUrgent = dayTasks.some(
+                  (t) => t.priority === "urgent" && !t.is_completed
+                );
+                const hasIncomplete = dayTasks.some((t) => !t.is_completed);
 
                 return (
                   <button
@@ -437,9 +445,15 @@ export default function Calendario() {
                     <span className="block">{format(day, "d")}</span>
                     {dayTasks.length > 0 && (
                       <div className="absolute bottom-1 left-1/2 -translate-x-1/2 flex gap-0.5">
-                        {hasUrgent && <div className="w-1.5 h-1.5 rounded-full bg-destructive" />}
-                        {hasIncomplete && !hasUrgent && <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--stats-blue))]" />}
-                        {dayTasks.every(t => t.is_completed) && <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--stats-green))]" />}
+                        {hasUrgent && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-destructive" />
+                        )}
+                        {hasIncomplete && !hasUrgent && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--stats-blue))]" />
+                        )}
+                        {dayTasks.every((t) => t.is_completed) && (
+                          <div className="w-1.5 h-1.5 rounded-full bg-[hsl(var(--stats-green))]" />
+                        )}
                       </div>
                     )}
                   </button>
@@ -474,7 +488,9 @@ export default function Calendario() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-semibold text-foreground">
-                  {selectedDate ? format(selectedDate, "d 'de' MMMM", { locale: ptBR }) : "Selecione um dia"}
+                  {selectedDate
+                    ? format(selectedDate, "d 'de' MMMM", { locale: ptBR })
+                    : "Selecione um dia"}
                 </h3>
                 <p className="text-xs text-muted-foreground">
                   {selectedDate ? format(selectedDate, "EEEE", { locale: ptBR }) : ""}
@@ -507,10 +523,12 @@ export default function Calendario() {
                         className="mt-0.5"
                       />
                       <div className="flex-1 min-w-0">
-                        <p className={cn(
-                          "text-sm font-medium text-foreground",
-                          task.is_completed && "line-through"
-                        )}>
+                        <p
+                          className={cn(
+                            "text-sm font-medium text-foreground",
+                            task.is_completed && "line-through"
+                          )}
+                        >
                           {task.title}
                         </p>
                         {task.task_time && (
@@ -519,16 +537,23 @@ export default function Calendario() {
                             {task.task_time}
                           </p>
                         )}
-                        <span className="text-xs text-muted-foreground">{task.category}</span>
+                        <span className="text-xs text-muted-foreground">
+                          {task.category}
+                        </span>
                       </div>
                       <div className="flex gap-1">
-                        <Button variant="ghost" size="icon" className="h-6 w-6" onClick={() => openModal(task)}>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6"
+                          onClick={() => openModal(task)}
+                        >
                           <Edit2 className="h-3 w-3" />
                         </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          className="h-6 w-6 text-destructive" 
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-6 w-6 text-destructive"
                           onClick={() => deleteTask(task.id)}
                         >
                           <Trash2 className="h-3 w-3" />
@@ -540,6 +565,19 @@ export default function Calendario() {
               )}
             </div>
           </motion.div>
+
+          {/* Integração / Status */}
+          <motion.aside
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.35 }}
+            className="glass-card rounded-2xl p-6 lg:col-span-1"
+          >
+            <div className="space-y-6">
+              <GoogleCalendarSync />
+              <TaskStats tasks={tasks} selectedDate={selectedDate} />
+            </div>
+          </motion.aside>
         </div>
 
         {/* Modal */}
