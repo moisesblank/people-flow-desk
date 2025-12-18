@@ -173,7 +173,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
       body.godmode-active p:hover::after,
       body.godmode-active span:hover::after,
       body.godmode-active img:hover::after {
-        content: '✏️ Clique para editar';
+        content: '✏️ Clique para editar (ALT em links/botões)';
         position: absolute;
         top: -24px;
         left: 0;
@@ -248,71 +248,68 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       
-      // Ignorar cliques no painel do God Mode, botões interativos e inputs
-      if (
-        target.closest('[data-godmode-panel]') ||
-        target.closest('[data-godmode-editing]') ||
-        target.closest('[data-radix-popper-content-wrapper]') ||
-        target.closest('.godmode-indicator') ||
-        target.tagName === 'BUTTON' ||
-        target.tagName === 'INPUT' ||
-        target.tagName === 'TEXTAREA' ||
-        target.tagName === 'SELECT' ||
-        target.closest('button') ||
-        target.closest('input') ||
-        target.closest('textarea') ||
-        target.closest('select') ||
-        target.closest('[role="button"]') ||
-        target.closest('[role="menuitem"]') ||
-        target.closest('[role="dialog"]')
-      ) {
+      // Elemento explicitamente marcável (preferência máxima)
+      const explicitEditable = target.closest('[data-editable-key]') as HTMLElement | null;
+      const candidate = explicitEditable ?? target;
+
+      const isInsideGodModeUi =
+        candidate.closest('[data-godmode-panel]') ||
+        candidate.closest('[data-godmode-editing]') ||
+        candidate.closest('[data-radix-popper-content-wrapper]') ||
+        candidate.closest('.godmode-indicator');
+
+      if (isInsideGodModeUi) return;
+
+      // Se for um elemento de navegação/ação, só editar com ALT pressionado
+      const isInteractive = !!candidate.closest('a, button, [role="button"], [data-sidebar="menu-button"]');
+      if (isInteractive && !e.altKey && !explicitEditable) {
         return;
       }
 
       // Verificar se é um elemento editável
-      const isImage = target.tagName === 'IMG';
-      const isText = 
-        target.tagName === 'H1' ||
-        target.tagName === 'H2' ||
-        target.tagName === 'H3' ||
-        target.tagName === 'H4' ||
-        target.tagName === 'H5' ||
-        target.tagName === 'H6' ||
-        target.tagName === 'P' ||
-        target.tagName === 'SPAN' ||
-        target.tagName === 'A' ||
-        target.tagName === 'LABEL' ||
-        target.tagName === 'LI' ||
-        target.tagName === 'TD' ||
-        target.tagName === 'TH' ||
-        target.tagName === 'STRONG' ||
-        target.tagName === 'EM' ||
-        target.tagName === 'B' ||
-        target.tagName === 'I' ||
-        (target.tagName === 'DIV' && target.innerText && target.children.length === 0);
+      const elementToEdit = explicitEditable ?? candidate;
+      const isImage = elementToEdit.tagName === 'IMG';
+      const isText =
+        elementToEdit.tagName === 'H1' ||
+        elementToEdit.tagName === 'H2' ||
+        elementToEdit.tagName === 'H3' ||
+        elementToEdit.tagName === 'H4' ||
+        elementToEdit.tagName === 'H5' ||
+        elementToEdit.tagName === 'H6' ||
+        elementToEdit.tagName === 'P' ||
+        elementToEdit.tagName === 'SPAN' ||
+        elementToEdit.tagName === 'A' ||
+        elementToEdit.tagName === 'LABEL' ||
+        elementToEdit.tagName === 'LI' ||
+        elementToEdit.tagName === 'TD' ||
+        elementToEdit.tagName === 'TH' ||
+        elementToEdit.tagName === 'STRONG' ||
+        elementToEdit.tagName === 'EM' ||
+        elementToEdit.tagName === 'B' ||
+        elementToEdit.tagName === 'I' ||
+        (elementToEdit.tagName === 'DIV' && elementToEdit.innerText);
 
       if (isImage || isText) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
 
-        const rect = target.getBoundingClientRect();
-        const contentKey = 
-          target.dataset.editableKey || 
-          target.id || 
-          `${target.tagName.toLowerCase()}_${target.innerText?.slice(0, 20).replace(/\s+/g, '_') || Date.now()}`;
+        const rect = elementToEdit.getBoundingClientRect();
+        const contentKey =
+          (elementToEdit as HTMLElement).dataset.editableKey ||
+          elementToEdit.id ||
+          `${elementToEdit.tagName.toLowerCase()}_${(elementToEdit.innerText || '').slice(0, 20).replace(/\s+/g, '_') || Date.now()}`;
 
         setEditingElement({
           id: contentKey,
           type: isImage ? 'image' : 'text',
-          element: target,
-          originalContent: isImage ? (target as HTMLImageElement).src : target.innerText || '',
+          element: elementToEdit,
+          originalContent: isImage ? (elementToEdit as HTMLImageElement).src : elementToEdit.innerText || '',
           contentKey,
           rect,
         });
 
-        // Adicionar destaque visual
-        target.setAttribute('data-godmode-editing', 'true');
+        elementToEdit.setAttribute('data-godmode-editing', 'true');
       }
     };
 

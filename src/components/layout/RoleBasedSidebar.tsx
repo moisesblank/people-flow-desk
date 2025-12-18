@@ -17,6 +17,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions, ROLE_LABELS, ROLE_COLORS, type SystemArea } from "@/hooks/useRolePermissions";
+import { useGodMode } from "@/contexts/GodModeContext";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -180,6 +181,7 @@ export function RoleBasedSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, signOut } = useAuth();
+  const { getContent } = useGodMode();
   const { role, isOwner, isGodMode, hasAccess, roleLabel, roleColor } = useRolePermissions();
   const [userName, setUserName] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
@@ -307,7 +309,9 @@ export function RoleBasedSidebar() {
                             <item.icon className="h-4 w-4 shrink-0" />
                             {!collapsed && (
                               <span className="flex items-center gap-2">
-                                {item.title}
+                                <span data-editable-key={`nav_${item.area}_title`}>
+                                  {getContent(`nav_${item.area}_title`, item.title)}
+                                </span>
                                 {item.badge && (
                                   <Badge variant="outline" className="text-[10px] px-1 py-0 bg-gradient-to-r from-purple-500 to-pink-500 text-white border-0">
                                     {item.badge}
