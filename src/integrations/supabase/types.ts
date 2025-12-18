@@ -385,6 +385,69 @@ export type Database = {
         }
         Relationships: []
       }
+      auditoria_grupo_beta: {
+        Row: {
+          acao_tomada: string | null
+          antes_grupos: Json | null
+          created_at: string
+          data_acao: string | null
+          data_deteccao: string
+          depois_grupos: Json | null
+          email: string
+          erro_mensagem: string | null
+          executado_por: string | null
+          id: string
+          ip_origem: string | null
+          nome: string | null
+          status_anterior: string | null
+          status_novo: string | null
+          sucesso: boolean | null
+          tipo_discrepancia: string
+          valor_transacao: number | null
+          wp_user_id: number | null
+        }
+        Insert: {
+          acao_tomada?: string | null
+          antes_grupos?: Json | null
+          created_at?: string
+          data_acao?: string | null
+          data_deteccao?: string
+          depois_grupos?: Json | null
+          email: string
+          erro_mensagem?: string | null
+          executado_por?: string | null
+          id?: string
+          ip_origem?: string | null
+          nome?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          sucesso?: boolean | null
+          tipo_discrepancia: string
+          valor_transacao?: number | null
+          wp_user_id?: number | null
+        }
+        Update: {
+          acao_tomada?: string | null
+          antes_grupos?: Json | null
+          created_at?: string
+          data_acao?: string | null
+          data_deteccao?: string
+          depois_grupos?: Json | null
+          email?: string
+          erro_mensagem?: string | null
+          executado_por?: string | null
+          id?: string
+          ip_origem?: string | null
+          nome?: string | null
+          status_anterior?: string | null
+          status_novo?: string | null
+          sucesso?: boolean | null
+          tipo_discrepancia?: string
+          valor_transacao?: number | null
+          wp_user_id?: number | null
+        }
+        Relationships: []
+      }
       automated_reports: {
         Row: {
           config: Json | null
@@ -664,6 +727,68 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      comandos_ia_central: {
+        Row: {
+          acao: string
+          completed_at: string | null
+          contexto_id: string | null
+          created_at: string
+          erro: string | null
+          ia_destino: string
+          ia_origem: string | null
+          id: string
+          parametros: Json
+          prioridade: number | null
+          resultado: Json | null
+          started_at: string | null
+          status: string
+          tempo_execucao_ms: number | null
+          webhook_trigger_id: string | null
+        }
+        Insert: {
+          acao: string
+          completed_at?: string | null
+          contexto_id?: string | null
+          created_at?: string
+          erro?: string | null
+          ia_destino: string
+          ia_origem?: string | null
+          id?: string
+          parametros?: Json
+          prioridade?: number | null
+          resultado?: Json | null
+          started_at?: string | null
+          status?: string
+          tempo_execucao_ms?: number | null
+          webhook_trigger_id?: string | null
+        }
+        Update: {
+          acao?: string
+          completed_at?: string | null
+          contexto_id?: string | null
+          created_at?: string
+          erro?: string | null
+          ia_destino?: string
+          ia_origem?: string | null
+          id?: string
+          parametros?: Json
+          prioridade?: number | null
+          resultado?: Json | null
+          started_at?: string | null
+          status?: string
+          tempo_execucao_ms?: number | null
+          webhook_trigger_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "comandos_ia_central_webhook_trigger_id_fkey"
+            columns: ["webhook_trigger_id"]
+            isOneToOne: false
+            referencedRelation: "webhooks_queue"
             referencedColumns: ["id"]
           },
         ]
@@ -998,6 +1123,51 @@ export type Database = {
           old_value?: string | null
           user_agent?: string | null
           version?: number
+        }
+        Relationships: []
+      }
+      contexto_compartilhado_ias: {
+        Row: {
+          ativo: boolean | null
+          created_at: string
+          dados: Json
+          entidade_id: string | null
+          expira_em: string | null
+          ia_criadora: string
+          ias_com_acesso: string[] | null
+          id: string
+          sessao_id: string
+          tipo_contexto: string
+          updated_at: string
+          versao: number | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string
+          dados?: Json
+          entidade_id?: string | null
+          expira_em?: string | null
+          ia_criadora: string
+          ias_com_acesso?: string[] | null
+          id?: string
+          sessao_id: string
+          tipo_contexto: string
+          updated_at?: string
+          versao?: number | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string
+          dados?: Json
+          entidade_id?: string | null
+          expira_em?: string | null
+          ia_criadora?: string
+          ias_com_acesso?: string[] | null
+          id?: string
+          sessao_id?: string
+          tipo_contexto?: string
+          updated_at?: string
+          versao?: number | null
         }
         Relationships: []
       }
@@ -2155,6 +2325,77 @@ export type Database = {
           },
         ]
       }
+      logs_integracao_detalhado: {
+        Row: {
+          acoes_executadas: Json | null
+          created_at: string
+          erro_detalhado: string | null
+          etapa_atual: string | null
+          etapas_concluidas: Json | null
+          event: string
+          ias_acionadas: string[] | null
+          id: string
+          ip_origem: string | null
+          payload_entrada: Json | null
+          payload_saida: Json | null
+          source: string
+          stack_trace: string | null
+          status: string
+          tempo_total_ms: number | null
+          updated_at: string
+          user_agent: string | null
+          webhook_queue_id: string | null
+        }
+        Insert: {
+          acoes_executadas?: Json | null
+          created_at?: string
+          erro_detalhado?: string | null
+          etapa_atual?: string | null
+          etapas_concluidas?: Json | null
+          event: string
+          ias_acionadas?: string[] | null
+          id?: string
+          ip_origem?: string | null
+          payload_entrada?: Json | null
+          payload_saida?: Json | null
+          source: string
+          stack_trace?: string | null
+          status?: string
+          tempo_total_ms?: number | null
+          updated_at?: string
+          user_agent?: string | null
+          webhook_queue_id?: string | null
+        }
+        Update: {
+          acoes_executadas?: Json | null
+          created_at?: string
+          erro_detalhado?: string | null
+          etapa_atual?: string | null
+          etapas_concluidas?: Json | null
+          event?: string
+          ias_acionadas?: string[] | null
+          id?: string
+          ip_origem?: string | null
+          payload_entrada?: Json | null
+          payload_saida?: Json | null
+          source?: string
+          stack_trace?: string | null
+          status?: string
+          tempo_total_ms?: number | null
+          updated_at?: string
+          user_agent?: string | null
+          webhook_queue_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "logs_integracao_detalhado_webhook_queue_id_fkey"
+            columns: ["webhook_queue_id"]
+            isOneToOne: false
+            referencedRelation: "webhooks_queue"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_campaigns: {
         Row: {
           budget: number | null
@@ -2203,6 +2444,96 @@ export type Database = {
           start_date?: string | null
           status?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      metricas_diarias: {
+        Row: {
+          acessos_plataforma: number | null
+          alunos_ativos: number | null
+          aulas_concluidas: number | null
+          calculado_em: string
+          cancelamentos: number | null
+          certificados_emitidos: number | null
+          comandos_ia_executados: number | null
+          comandos_ia_sucesso: number | null
+          created_at: string
+          custo_aquisicao: number | null
+          data: string
+          id: string
+          leads_gerados: number | null
+          leads_qualificados: number | null
+          novos_alunos: number | null
+          receita_bruta: number | null
+          receita_liquida: number | null
+          reembolsos: number | null
+          taxa_conversao: number | null
+          tempo_medio_processamento_ms: number | null
+          ticket_medio: number | null
+          total_vendas: number | null
+          valor_cancelado: number | null
+          valor_reembolsado: number | null
+          webhooks_falha: number | null
+          webhooks_processados: number | null
+          webhooks_recebidos: number | null
+        }
+        Insert: {
+          acessos_plataforma?: number | null
+          alunos_ativos?: number | null
+          aulas_concluidas?: number | null
+          calculado_em?: string
+          cancelamentos?: number | null
+          certificados_emitidos?: number | null
+          comandos_ia_executados?: number | null
+          comandos_ia_sucesso?: number | null
+          created_at?: string
+          custo_aquisicao?: number | null
+          data: string
+          id?: string
+          leads_gerados?: number | null
+          leads_qualificados?: number | null
+          novos_alunos?: number | null
+          receita_bruta?: number | null
+          receita_liquida?: number | null
+          reembolsos?: number | null
+          taxa_conversao?: number | null
+          tempo_medio_processamento_ms?: number | null
+          ticket_medio?: number | null
+          total_vendas?: number | null
+          valor_cancelado?: number | null
+          valor_reembolsado?: number | null
+          webhooks_falha?: number | null
+          webhooks_processados?: number | null
+          webhooks_recebidos?: number | null
+        }
+        Update: {
+          acessos_plataforma?: number | null
+          alunos_ativos?: number | null
+          aulas_concluidas?: number | null
+          calculado_em?: string
+          cancelamentos?: number | null
+          certificados_emitidos?: number | null
+          comandos_ia_executados?: number | null
+          comandos_ia_sucesso?: number | null
+          created_at?: string
+          custo_aquisicao?: number | null
+          data?: string
+          id?: string
+          leads_gerados?: number | null
+          leads_qualificados?: number | null
+          novos_alunos?: number | null
+          receita_bruta?: number | null
+          receita_liquida?: number | null
+          reembolsos?: number | null
+          taxa_conversao?: number | null
+          tempo_medio_processamento_ms?: number | null
+          ticket_medio?: number | null
+          total_vendas?: number | null
+          valor_cancelado?: number | null
+          valor_reembolsado?: number | null
+          webhooks_falha?: number | null
+          webhooks_processados?: number | null
+          webhooks_recebidos?: number | null
         }
         Relationships: []
       }
@@ -3089,6 +3420,63 @@ export type Database = {
           status?: string | null
           user_id?: string
           vendor_detected?: string | null
+        }
+        Relationships: []
+      }
+      relatorios_gerados: {
+        Row: {
+          arquivo_url: string | null
+          created_at: string
+          dados: Json
+          descricao: string | null
+          destinatarios: string[] | null
+          enviado: boolean | null
+          enviado_em: string | null
+          formato: string | null
+          gerado_por: string | null
+          id: string
+          periodo_fim: string | null
+          periodo_inicio: string | null
+          tipo: string
+          titulo: string
+          visualizado: boolean | null
+          visualizado_em: string | null
+        }
+        Insert: {
+          arquivo_url?: string | null
+          created_at?: string
+          dados: Json
+          descricao?: string | null
+          destinatarios?: string[] | null
+          enviado?: boolean | null
+          enviado_em?: string | null
+          formato?: string | null
+          gerado_por?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          tipo: string
+          titulo: string
+          visualizado?: boolean | null
+          visualizado_em?: string | null
+        }
+        Update: {
+          arquivo_url?: string | null
+          created_at?: string
+          dados?: Json
+          descricao?: string | null
+          destinatarios?: string[] | null
+          enviado?: boolean | null
+          enviado_em?: string | null
+          formato?: string | null
+          gerado_por?: string | null
+          id?: string
+          periodo_fim?: string | null
+          periodo_inicio?: string | null
+          tipo?: string
+          titulo?: string
+          visualizado?: boolean | null
+          visualizado_em?: string | null
         }
         Relationships: []
       }
@@ -4331,6 +4719,87 @@ export type Database = {
         }
         Relationships: []
       }
+      transacoes_hotmart_completo: {
+        Row: {
+          affiliate_id: string | null
+          affiliate_name: string | null
+          buyer_cpf: string | null
+          buyer_email: string
+          buyer_name: string | null
+          buyer_phone: string | null
+          comissao_afiliado: number | null
+          created_at: string
+          data_cancelamento: string | null
+          data_compra: string | null
+          data_confirmacao: string | null
+          hotmart_fee: number | null
+          id: string
+          metodo_pagamento: string | null
+          motivo_cancelamento: string | null
+          parcelas: number | null
+          product_id: string | null
+          product_name: string | null
+          status: string
+          transaction_id: string
+          updated_at: string
+          valor_bruto: number | null
+          valor_liquido: number | null
+          webhook_raw: Json | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          affiliate_name?: string | null
+          buyer_cpf?: string | null
+          buyer_email: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          comissao_afiliado?: number | null
+          created_at?: string
+          data_cancelamento?: string | null
+          data_compra?: string | null
+          data_confirmacao?: string | null
+          hotmart_fee?: number | null
+          id?: string
+          metodo_pagamento?: string | null
+          motivo_cancelamento?: string | null
+          parcelas?: number | null
+          product_id?: string | null
+          product_name?: string | null
+          status: string
+          transaction_id: string
+          updated_at?: string
+          valor_bruto?: number | null
+          valor_liquido?: number | null
+          webhook_raw?: Json | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          affiliate_name?: string | null
+          buyer_cpf?: string | null
+          buyer_email?: string
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          comissao_afiliado?: number | null
+          created_at?: string
+          data_cancelamento?: string | null
+          data_compra?: string | null
+          data_confirmacao?: string | null
+          hotmart_fee?: number | null
+          id?: string
+          metodo_pagamento?: string | null
+          motivo_cancelamento?: string | null
+          parcelas?: number | null
+          product_id?: string | null
+          product_name?: string | null
+          status?: string
+          transaction_id?: string
+          updated_at?: string
+          valor_bruto?: number | null
+          valor_liquido?: number | null
+          webhook_raw?: Json | null
+        }
+        Relationships: []
+      }
       transactions: {
         Row: {
           account_id: string | null
@@ -4756,6 +5225,72 @@ export type Database = {
         }
         Relationships: []
       }
+      usuarios_wordpress_sync: {
+        Row: {
+          created_at: string
+          data_cadastro_wp: string | null
+          email: string
+          grupos: Json | null
+          id: string
+          metadata: Json | null
+          nome: string | null
+          progresso_curso: number | null
+          roles: Json | null
+          status_acesso: string | null
+          sync_error: string | null
+          sync_status: string | null
+          tem_pagamento_confirmado: boolean | null
+          transaction_id_vinculado: string | null
+          ultimo_acesso_curso: string | null
+          ultimo_login: string | null
+          updated_at: string
+          username: string | null
+          wp_user_id: number
+        }
+        Insert: {
+          created_at?: string
+          data_cadastro_wp?: string | null
+          email: string
+          grupos?: Json | null
+          id?: string
+          metadata?: Json | null
+          nome?: string | null
+          progresso_curso?: number | null
+          roles?: Json | null
+          status_acesso?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          tem_pagamento_confirmado?: boolean | null
+          transaction_id_vinculado?: string | null
+          ultimo_acesso_curso?: string | null
+          ultimo_login?: string | null
+          updated_at?: string
+          username?: string | null
+          wp_user_id: number
+        }
+        Update: {
+          created_at?: string
+          data_cadastro_wp?: string | null
+          email?: string
+          grupos?: Json | null
+          id?: string
+          metadata?: Json | null
+          nome?: string | null
+          progresso_curso?: number | null
+          roles?: Json | null
+          status_acesso?: string | null
+          sync_error?: string | null
+          sync_status?: string | null
+          tem_pagamento_confirmado?: boolean | null
+          transaction_id_vinculado?: string | null
+          ultimo_acesso_curso?: string | null
+          ultimo_login?: string | null
+          updated_at?: string
+          username?: string | null
+          wp_user_id?: number
+        }
+        Relationships: []
+      }
       vehicle_maintenance: {
         Row: {
           cost: number | null
@@ -4911,6 +5446,48 @@ export type Database = {
           source?: string
           updated_at?: string
           window_start?: string
+        }
+        Relationships: []
+      }
+      webhooks_queue: {
+        Row: {
+          created_at: string
+          error_message: string | null
+          event: string
+          id: string
+          max_retries: number | null
+          payload: Json
+          processed_at: string | null
+          result: Json | null
+          retry_count: number | null
+          source: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          error_message?: string | null
+          event: string
+          id?: string
+          max_retries?: number | null
+          payload: Json
+          processed_at?: string | null
+          result?: Json | null
+          retry_count?: number | null
+          source: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          error_message?: string | null
+          event?: string
+          id?: string
+          max_retries?: number | null
+          payload?: Json
+          processed_at?: string | null
+          result?: Json | null
+          retry_count?: number | null
+          source?: string
+          status?: string
         }
         Relationships: []
       }
