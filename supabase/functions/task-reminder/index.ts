@@ -32,23 +32,54 @@ interface TaskReminderRequest {
   accessToken?: string;
 }
 
+// Helpers de data/hora (evita bug de "dia anterior" por fuso)
+function parseYMD(dateStr: string): { y: number; m: number; d: number } {
+  const [y, m, d] = dateStr.split('-').map((n) => Number(n));
+  return { y, m, d };
+}
+
+function formatYMD_UTC(y: number, m: number, d: number): string {
+  const mm = String(m).padStart(2, '0');
+  const dd = String(d).padStart(2, '0');
+  return `${y}-${mm}-${dd}`;
+}
+
+function addHoursToDateTime(dateStr: string, timeStr: string, hoursToAdd: number): { date: string; time: string } {
+  const [hh, min] = timeStr.split(':').map((n) => Number(n));
+  const totalMinutes = hh * 60 + min + hoursToAdd * 60;
+  const daysToAdd = Math.floor(totalMinutes / 1440);
+  const minsInDay = ((totalMinutes % 1440) + 1440) % 1440;
+  const newH = Math.floor(minsInDay / 60);
+  const newM = minsInDay % 60;
+
+  const { y, m, d } = parseYMD(dateStr);
+  const base = new Date(Date.UTC(y, m - 1, d));
+  base.setUTCDate(base.getUTCDate() + daysToAdd);
+
+  const outDate = formatYMD_UTC(base.getUTCFullYear(), base.getUTCMonth() + 1, base.getUTCDate());
+  const outTime = `${String(newH).padStart(2, '0')}:${String(newM).padStart(2, '0')}`;
+
+  return { date: outDate, time: outTime };
+}
+
 // Função para criar evento no Google Calendar
 async function createGoogleCalendarEvent(
-  accessToken: string, 
+  accessToken: string,
   task: TaskReminderRequest['task']
 ): Promise<{ success: boolean; eventId?: string; error?: string }> {
   if (!task) return { success: false, error: 'Task is required' };
 
-  const startDateTime = `${task.task_date}T${task.task_time || '09:00'}:00`;
-  const endDate = new Date(startDateTime);
-  endDate.setHours(endDate.getHours() + 1);
+  const startTime = task.task_time || '09:00';
+  const startDateTime = `${task.task_date}T${startTime}:00`;
+  const end = addHoursToDateTime(task.task_date, startTime, 1);
+  const endDateTime = `${end.date}T${end.time}:00`;
 
   // Mapear prioridade para cor do evento
   const colorMap: Record<string, string> = {
-    'urgent': '11', // Vermelho
-    'high': '5',    // Amarelo
-    'normal': '9',  // Azul
-    'low': '8',     // Cinza
+    urgent: '11', // Vermelho
+    high: '5', // Amarelo
+    normal: '9', // Azul
+    low: '8', // Cinza
   };
 
   const eventBody = {
@@ -59,16 +90,16 @@ async function createGoogleCalendarEvent(
       timeZone: 'America/Sao_Paulo',
     },
     end: {
-      dateTime: endDate.toISOString().replace('Z', ''),
+      dateTime: endDateTime,
       timeZone: 'America/Sao_Paulo',
     },
     colorId: colorMap[task.priority] || '9',
     reminders: {
       useDefault: false,
       overrides: [
-        { method: 'email', minutes: 60 },    // 1 hora antes
-        { method: 'popup', minutes: 30 },    // 30 min antes
-        { method: 'popup', minutes: 10 },    // 10 min antes
+        { method: 'email', minutes: 60 },
+        { method: 'popup', minutes: 30 },
+        { method: 'popup', minutes: 10 },
       ],
     },
   };
@@ -87,7 +118,7 @@ async function createGoogleCalendarEvent(
     );
 
     const result = await response.json();
-    
+
     if (result.error) {
       console.error('Google Calendar error:', result.error);
       return { success: false, error: result.error.message };
@@ -122,11 +153,13 @@ async function sendReminderEmail(
     'low': '⚪ Baixa',
   }[task.priority] || task.priority;
 
-  const formattedDate = new Date(task.task_date).toLocaleDateString('pt-BR', {
+  const { y, m, d } = parseYMD(task.task_date);
+  const formattedDate = new Date(Date.UTC(y, m - 1, d)).toLocaleDateString('pt-BR', {
     weekday: 'long',
     day: '2-digit',
     month: 'long',
-    year: 'numeric'
+    year: 'numeric',
+    timeZone: 'America/Sao_Paulo',
   });
 
   const formattedTime = task.task_time || 'Horário não definido';
