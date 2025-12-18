@@ -167,6 +167,9 @@ const menuGroups: MenuGroup[] = [
       { title: "Monitoramento", url: "/monitoramento", icon: Activity, area: "monitoramento", badge: "MASTER" },
       { title: "Central WhatsApp", url: "/central-whatsapp", icon: MessageSquareText, area: "central-whatsapp", badge: "LIVE" },
       { title: "Diagnóstico WhatsApp", url: "/diagnostico-whatsapp", icon: Stethoscope, area: "diagnostico-whatsapp" },
+      { title: "Auditoria Acessos", url: "/auditoria-acessos", icon: Shield, area: "monitoramento", badge: "AUDIT" },
+      { title: "Central Monitoramento", url: "/central-monitoramento", icon: Activity, area: "monitoramento", badge: "REAL-TIME" },
+      { title: "Central IAs", url: "/central-ias", icon: Brain, area: "monitoramento", badge: "AI" },
     ],
   },
 ];
