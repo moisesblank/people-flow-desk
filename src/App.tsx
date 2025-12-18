@@ -65,6 +65,9 @@ const DiagnosticoWebhooks = lazy(() => import("./pages/DiagnosticoWebhooks"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Documentos = lazy(() => import("./pages/Documentos"));
 const CentralMetricas = lazy(() => import("./pages/CentralMetricas"));
+const AuditoriaAcessos = lazy(() => import("./pages/AuditoriaAcessos"));
+const CentralMonitoramento = lazy(() => import("./pages/CentralMonitoramento"));
+const CentralIAs = lazy(() => import("./pages/CentralIAs"));
 
 const queryClient = new QueryClient();
 
@@ -176,6 +179,9 @@ function AppContent() {
           <Route path="/diagnostico-whatsapp" element={<ProtectedPage><DiagnosticoWhatsApp /></ProtectedPage>} />
           <Route path="/diagnostico-webhooks" element={<ProtectedPage><DiagnosticoWebhooks /></ProtectedPage>} />
           <Route path="/central-metricas" element={<ProtectedPage><CentralMetricas /></ProtectedPage>} />
+          <Route path="/auditoria-acessos" element={<ProtectedPage><AuditoriaAcessos /></ProtectedPage>} />
+          <Route path="/central-monitoramento" element={<ProtectedPage><CentralMonitoramento /></ProtectedPage>} />
+          <Route path="/central-ias" element={<ProtectedPage><CentralIAs /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />

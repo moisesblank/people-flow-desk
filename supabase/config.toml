@@ -80,3 +80,21 @@ verify_jwt = false
 
 [functions.google-analytics-sync]
 verify_jwt = false
+
+[functions.automacoes]
+verify_jwt = false
+
+[functions.webhook-handler]
+verify_jwt = false
+
+[functions.queue-worker]
+verify_jwt = false
+
+[functions.orchestrator]
+verify_jwt = false
+
+[functions.ia-gateway]
+verify_jwt = false
+
+[functions.wordpress-api]
+verify_jwt = false
