@@ -1,11 +1,11 @@
 // ============================================
-// EMPRESARIAL 2090 - ACADEMIA QUANTUM
-// Cyberpunk Edition - AJUDA15
+// TRAMON v8 - ACADEMIA QUANTUM
+// Sistema Neural de Gestão de Alunos + WordPress Sync
 // ============================================
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Sparkles, Trash2, Edit2, Users, Award, TrendingUp, FlaskConical, Atom, Paperclip, Brain, Target, BookOpen } from "lucide-react";
+import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe } from "lucide-react";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { FuturisticCard } from "@/components/ui/futuristic-card";
 import { CyberBackground } from "@/components/ui/cyber-background";
@@ -14,14 +14,15 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { AnimatedAtom, MiniPeriodicTable, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
 import { StudentAnalytics } from "@/components/students/StudentAnalytics";
-import { StudentProgressCard } from "@/components/students/StudentProgressCard";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
-import studentsHeroImage from "@/assets/students-chemistry-hero.jpg";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Student {
   id: string;
@@ -31,29 +32,91 @@ interface Student {
   status: string;
 }
 
+interface WordPressUser {
+  id: string;
+  wp_user_id: number;
+  email: string;
+  nome: string;
+  grupos: string[];
+  status_acesso: string;
+  tem_pagamento_confirmado: boolean;
+  data_cadastro_wp: string | null;
+  ultimo_login: string | null;
+  updated_at: string;
+}
+
 const STATUS_OPTIONS = ["Ativo", "Concluído", "Pendente", "Cancelado"];
 
 export default function Alunos() {
   const [students, setStudents] = useState<Student[]>([]);
+  const [wpUsers, setWpUsers] = useState<WordPressUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSyncing, setIsSyncing] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Student | null>(null);
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
+  const [activeTab, setActiveTab] = useState("alunos");
+
+  // Stats
+  const [wpStats, setWpStats] = useState({
+    total: 0,
+    ativos: 0,
+    comPagamento: 0,
+    semPagamento: 0
+  });
 
   const fetchData = async () => {
     try {
-      const { data, error } = await supabase.from("alunos").select("*").order("nome");
-      if (error) throw error;
-      setStudents(data?.map(s => ({
+      // Fetch alunos from original table
+      const { data: alunosData, error: alunosError } = await supabase.from("alunos").select("*").order("nome");
+      if (alunosError) throw alunosError;
+      
+      setStudents(alunosData?.map(s => ({
         id: s.id,
         nome: s.nome,
         email: s.email || "",
         curso: s.curso_id || "",
         status: s.status || "ativo",
       })) || []);
+
+      // Fetch WordPress sync users
+      const { data: wpData, error: wpError } = await supabase
+        .from("usuarios_wordpress_sync")
+        .select("*")
+        .order("updated_at", { ascending: false });
+      
+      if (wpError) {
+        console.error("Error fetching WP users:", wpError);
+      } else {
+        const wpUsersMapped: WordPressUser[] = (wpData || []).map(u => ({
+          id: u.id,
+          wp_user_id: u.wp_user_id,
+          email: u.email,
+          nome: u.nome || '',
+          grupos: Array.isArray(u.grupos) ? (u.grupos as unknown as string[]) : [],
+          status_acesso: u.status_acesso || 'aguardando_pagamento',
+          tem_pagamento_confirmado: u.tem_pagamento_confirmado || false,
+          data_cadastro_wp: u.data_cadastro_wp,
+          ultimo_login: u.ultimo_login,
+          updated_at: u.updated_at
+        }));
+        setWpUsers(wpUsersMapped);
+
+        // Calculate stats
+        const ativos = wpUsersMapped.filter(u => u.status_acesso === 'ativo').length;
+        const comPagamento = wpUsersMapped.filter(u => u.tem_pagamento_confirmado).length;
+        const semPagamento = wpUsersMapped.filter(u => !u.tem_pagamento_confirmado && u.grupos.length > 0).length;
+
+        setWpStats({
+          total: wpUsersMapped.length,
+          ativos,
+          comPagamento,
+          semPagamento
+        });
+      }
     } catch (error) {
-      console.error("Error fetching alunos:", error);
-      toast.error("Erro ao carregar alunos");
+      console.error("Error fetching data:", error);
+      toast.error("Erro ao carregar dados");
     } finally {
       setIsLoading(false);
     }
@@ -61,7 +124,39 @@ export default function Alunos() {
 
   useEffect(() => {
     fetchData();
+
+    // Realtime subscription for WordPress sync
+    const channel = supabase
+      .channel('wp-sync-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios_wordpress_sync' }, () => {
+        fetchData();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
+
+  const syncWordPress = async () => {
+    setIsSyncing(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('sync-wordpress-users');
+      
+      if (error) throw error;
+      
+      toast.success(`✅ Sincronização concluída!`, {
+        description: `${data?.total_synced || 0} usuários sincronizados`
+      });
+      
+      await fetchData();
+    } catch (error) {
+      console.error("Sync error:", error);
+      toast.error("Erro ao sincronizar com WordPress");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
 
   const ativos = students.filter(s => s.status === "Ativo").length;
   const concluidos = students.filter(s => s.status === "Concluído").length;
@@ -133,131 +228,262 @@ export default function Alunos() {
             badge="STUDENT MATRIX"
             accentColor="blue"
             stats={[
-              { label: "Total", value: students.length, icon: Users },
-              { label: "Ativos", value: ativos, icon: Brain },
-              { label: "Concluídos", value: concluidos, icon: Award },
+              { label: "Alunos DB", value: students.length, icon: Users },
+              { label: "WordPress", value: wpStats.total, icon: Globe },
+              { label: "Com Pagamento", value: wpStats.comPagamento, icon: CheckCircle },
             ]}
             action={
-              <Button 
-                onClick={() => openModal()}
-                className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white shadow-lg shadow-blue-500/25"
-              >
-                <Plus className="h-4 w-4 mr-2" />
-                Novo Aluno
-              </Button>
+              <div className="flex gap-2">
+                <Button 
+                  onClick={syncWordPress}
+                  disabled={isSyncing}
+                  variant="outline"
+                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
+                >
+                  <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                  Sync WordPress
+                </Button>
+                <Button 
+                  onClick={() => openModal()}
+                  className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white shadow-lg shadow-blue-500/25"
+                >
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Aluno
+                </Button>
+              </div>
             }
           />
 
-          {/* Mobile Button */}
-          <div className="lg:hidden">
-            <Button 
-              onClick={() => openModal()} 
-              size="lg" 
-              className="w-full bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white shadow-lg shadow-blue-500/25 gap-2 h-12 rounded-xl"
-            >
-              <Plus className="h-5 w-5" />
-              Novo Aluno
-            </Button>
-          </div>
+          {/* Tabs */}
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="grid w-full max-w-md grid-cols-2 bg-background/50 border border-blue-500/30">
+              <TabsTrigger value="alunos" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400">
+                <Users className="h-4 w-4 mr-2" />
+                Alunos DB ({students.length})
+              </TabsTrigger>
+              <TabsTrigger value="wordpress" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
+                <Globe className="h-4 w-4 mr-2" />
+                WordPress ({wpStats.total})
+              </TabsTrigger>
+            </TabsList>
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <FuturisticCard accentColor="blue" className="p-4 text-center">
-              <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-blue-400">{students.length}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Total Alunos</div>
-            </FuturisticCard>
-            <FuturisticCard accentColor="green" className="p-4 text-center">
-              <GraduationCap className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-emerald-400">{ativos}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
-            </FuturisticCard>
-            <FuturisticCard accentColor="purple" className="p-4 text-center">
-              <Award className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-purple-400">{concluidos}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídos</div>
-            </FuturisticCard>
-            <FuturisticCard accentColor="cyan" className="p-4 text-center">
-              <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-cyan-400">
-                {students.length > 0 ? Math.round((concluidos / students.length) * 100) : 0}%
+            {/* Tab: Alunos */}
+            <TabsContent value="alunos" className="space-y-6 mt-6">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <FuturisticCard accentColor="blue" className="p-4 text-center">
+                  <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-blue-400">{students.length}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
+                </FuturisticCard>
+                <FuturisticCard accentColor="green" className="p-4 text-center">
+                  <GraduationCap className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-emerald-400">{ativos}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
+                </FuturisticCard>
+                <FuturisticCard accentColor="purple" className="p-4 text-center">
+                  <Award className="h-6 w-6 text-purple-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-purple-400">{concluidos}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídos</div>
+                </FuturisticCard>
+                <FuturisticCard accentColor="cyan" className="p-4 text-center">
+                  <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-cyan-400">
+                    {students.length > 0 ? Math.round((concluidos / students.length) * 100) : 0}%
+                  </div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa</div>
+                </FuturisticCard>
               </div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa Aprovação</div>
-            </FuturisticCard>
-          </div>
 
-          {/* Analytics */}
-          <section className="mb-8">
-            <StudentAnalytics 
-              totalStudents={students.length}
-              activeStudents={ativos}
-              completedStudents={concluidos}
-              averageProgress={students.length > 0 ? 65 : 0}
-              averageXP={students.length > 0 ? 2450 : 0}
-              topPerformers={students.slice(0, 5).map((s, i) => ({
-                id: s.id.toString(),
-                name: s.nome,
-                xp: 3000 - (i * 200),
-                progress: 90 - (i * 5)
-              }))}
-            />
-          </section>
+              {/* Analytics */}
+              <StudentAnalytics 
+                totalStudents={students.length}
+                activeStudents={ativos}
+                completedStudents={concluidos}
+                averageProgress={students.length > 0 ? 65 : 0}
+                averageXP={students.length > 0 ? 2450 : 0}
+                topPerformers={students.slice(0, 5).map((s, i) => ({
+                  id: s.id.toString(),
+                  name: s.nome,
+                  xp: 3000 - (i * 200),
+                  progress: 90 - (i * 5)
+                }))}
+              />
 
-          {/* Table */}
-          <section>
-            <FuturisticCard accentColor="blue">
-              <table className="w-full">
-                <thead className="bg-blue-500/10">
-                  <tr>
-                    <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
-                    <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
-                    <th className="text-left p-4 text-sm font-medium text-blue-400">Curso</th>
-                    <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
-                    <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {students.map((student) => (
-                    <tr key={student.id} className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
-                      <td className="p-4 text-foreground font-medium">{student.nome}</td>
-                      <td className="p-4 text-muted-foreground">{student.email || "-"}</td>
-                      <td className="p-4 text-muted-foreground">{student.curso || "-"}</td>
-                      <td className="p-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                          student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
-                          student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
-                          student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
-                          "bg-red-500/20 text-red-400"
-                        }`}>
-                          {student.status}
-                        </span>
-                      </td>
-                      <td className="p-4 text-right">
-                        <div className="flex justify-end gap-2">
-                          <AttachmentButton
-                            entityType="student"
-                            entityId={student.id}
-                            entityLabel={student.nome}
-                            variant="ghost"
-                            size="icon"
-                          />
-                          <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
-                            <Edit2 className="h-4 w-4 text-blue-400" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
+              {/* Table */}
+              <FuturisticCard accentColor="blue">
+                <table className="w-full">
+                  <thead className="bg-blue-500/10">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
+                      <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
                     </tr>
-                  ))}
-                  {students.length === 0 && (
-                    <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nenhum aluno cadastrado</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </FuturisticCard>
-          </section>
+                  </thead>
+                  <tbody>
+                    {students.map((student) => (
+                      <tr key={student.id} className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
+                        <td className="p-4 text-foreground font-medium">{student.nome}</td>
+                        <td className="p-4 text-muted-foreground">{student.email || "-"}</td>
+                        <td className="p-4">
+                          <Badge variant={
+                            student.status === "Ativo" ? "default" :
+                            student.status === "Concluído" ? "secondary" : "outline"
+                          } className={
+                            student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
+                            student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
+                            student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
+                            "bg-red-500/20 text-red-400"
+                          }>
+                            {student.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <AttachmentButton
+                              entityType="student"
+                              entityId={student.id}
+                              entityLabel={student.nome}
+                              variant="ghost"
+                              size="icon"
+                            />
+                            <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
+                              <Edit2 className="h-4 w-4 text-blue-400" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {students.length === 0 && (
+                      <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum aluno cadastrado</td></tr>
+                    )}
+                  </tbody>
+                </table>
+              </FuturisticCard>
+            </TabsContent>
+
+            {/* Tab: WordPress Sync */}
+            <TabsContent value="wordpress" className="space-y-6 mt-6">
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <FuturisticCard accentColor="cyan" className="p-4 text-center">
+                  <Globe className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-cyan-400">{wpStats.total}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Total WordPress</div>
+                </FuturisticCard>
+                <FuturisticCard accentColor="green" className="p-4 text-center">
+                  <CheckCircle className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-emerald-400">{wpStats.ativos}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
+                </FuturisticCard>
+                <FuturisticCard accentColor="blue" className="p-4 text-center">
+                  <CheckCircle className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-blue-400">{wpStats.comPagamento}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Pagamento OK</div>
+                </FuturisticCard>
+                <FuturisticCard accentColor="orange" className="p-4 text-center">
+                  <AlertTriangle className="h-6 w-6 text-red-400 mx-auto mb-2" />
+                  <div className="text-2xl font-bold text-red-400">{wpStats.semPagamento}</div>
+                  <div className="text-xs text-muted-foreground uppercase tracking-wider">⚠️ Sem Pagamento</div>
+                </FuturisticCard>
+              </div>
+
+              {/* Alert for users without payment */}
+              {wpStats.semPagamento > 0 && (
+                <FuturisticCard accentColor="orange" className="p-4 border-red-500/50">
+                  <div className="flex items-center gap-3">
+                    <AlertTriangle className="h-6 w-6 text-red-400" />
+                    <div>
+                      <h4 className="font-semibold text-red-400">Atenção: Acesso Indevido Detectado</h4>
+                      <p className="text-sm text-muted-foreground">
+                        {wpStats.semPagamento} usuário(s) têm acesso ao curso mas não possuem pagamento confirmado.
+                        Verifique na página de Auditoria de Acessos.
+                      </p>
+                    </div>
+                  </div>
+                </FuturisticCard>
+              )}
+
+              {/* WordPress Users Table */}
+              <FuturisticCard accentColor="cyan">
+                <div className="p-4 border-b border-cyan-500/20 flex items-center justify-between">
+                  <h3 className="font-semibold text-cyan-400">Usuários WordPress Sincronizados</h3>
+                  <Button 
+                    onClick={syncWordPress} 
+                    disabled={isSyncing} 
+                    size="sm"
+                    className="bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
+                  >
+                    <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
+                    Sincronizar
+                  </Button>
+                </div>
+                <table className="w-full">
+                  <thead className="bg-cyan-500/10">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Nome</th>
+                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Email</th>
+                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Status</th>
+                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Pagamento</th>
+                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Grupos</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {wpUsers.map((user) => (
+                      <tr key={user.id} className="border-t border-cyan-500/20 hover:bg-cyan-500/5 transition-colors">
+                        <td className="p-4 text-foreground font-medium">{user.nome || "Sem nome"}</td>
+                        <td className="p-4 text-muted-foreground">{user.email}</td>
+                        <td className="p-4">
+                          <Badge className={
+                            user.status_acesso === 'ativo' 
+                              ? "bg-emerald-500/20 text-emerald-400" 
+                              : "bg-yellow-500/20 text-yellow-400"
+                          }>
+                            {user.status_acesso}
+                          </Badge>
+                        </td>
+                        <td className="p-4">
+                          {user.tem_pagamento_confirmado ? (
+                            <Badge className="bg-green-500/20 text-green-400">
+                              <CheckCircle className="h-3 w-3 mr-1" /> Confirmado
+                            </Badge>
+                          ) : (
+                            <Badge className="bg-red-500/20 text-red-400">
+                              <XCircle className="h-3 w-3 mr-1" /> Não confirmado
+                            </Badge>
+                          )}
+                        </td>
+                        <td className="p-4">
+                          <div className="flex flex-wrap gap-1">
+                            {user.grupos.length > 0 ? user.grupos.map((g, i) => (
+                              <Badge key={i} variant="outline" className="text-xs border-cyan-500/30">
+                                {String(g)}
+                              </Badge>
+                            )) : (
+                              <span className="text-muted-foreground text-sm">Nenhum grupo</span>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                    {wpUsers.length === 0 && (
+                      <tr>
+                        <td colSpan={5} className="p-8 text-center text-muted-foreground">
+                          <Globe className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                          <p>Nenhum usuário sincronizado</p>
+                          <p className="text-sm mt-1">Clique em "Sincronizar" para importar usuários do WordPress</p>
+                        </td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </FuturisticCard>
+            </TabsContent>
+          </Tabs>
 
           {/* Modal */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
