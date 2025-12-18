@@ -575,7 +575,7 @@ export default function Calendario() {
           >
             <div className="space-y-6">
               <GoogleCalendarSync />
-              <TaskStats tasks={tasks} selectedDate={selectedDate} />
+              <TaskStats tasks={tasks} />
             </div>
           </motion.aside>
         </div>
