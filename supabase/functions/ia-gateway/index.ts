@@ -153,10 +153,26 @@ serve(async (req) => {
           });
 
           const chatgptData = await chatgptResponse.json();
+          const emailContent = chatgptData.choices?.[0]?.message?.content;
+          
+          // Salvar email gerado na tabela emails_rd_station
+          if (action === 'gerar_email_boas_vindas' && params.email_aluno) {
+            await supabase.from('emails_rd_station').insert({
+              destinatario: String(params.email_aluno),
+              assunto: `Bem-vindo ao curso, ${params.nome_aluno || params.nome}! 🎉`,
+              corpo_html: emailContent,
+              template_id: 'boas_vindas_ia',
+              tags: ['novo_aluno', 'boas_vindas', 'ia_generated'],
+              status: 'pendente',
+              data_envio: new Date().toISOString()
+            });
+          }
+          
           resultado = {
-            content: chatgptData.choices?.[0]?.message?.content,
+            content: emailContent,
             action,
-            generated_for: params.nome || params.email
+            generated_for: params.nome_aluno || params.nome || params.email_aluno,
+            saved_to_queue: action === 'gerar_email_boas_vindas'
           };
           break;
 
@@ -345,8 +361,17 @@ function buildManusPrompt(action: string, params: Record<string, unknown>): stri
 function buildChatGPTPrompt(action: string, params: Record<string, unknown>): string {
   switch (action) {
     case 'gerar_email_boas_vindas':
-      return `Gere um email de boas-vindas para o aluno ${params.nome} que acabou de se matricular no curso de Química.
-      O email deve ser acolhedor, incluir próximos passos e motivar o estudo.`;
+      return `Gere um email HTML de boas-vindas para o aluno ${params.nome_aluno || params.nome} que acabou de comprar o curso "${params.curso || 'de Química'}".
+      
+      O email deve:
+      1. Ser acolhedor, motivador e inspirador
+      2. Agradecer sinceramente pela confiança
+      3. Explicar como acessar o curso (login em moisesmedeiros.com.br com o e-mail cadastrado)
+      4. Mencionar que o acesso já foi liberado automaticamente
+      5. Informar o WhatsApp de suporte: (83) 98920-0105
+      6. Assinar como "Prof. Moisés Medeiros"
+      
+      Formato: HTML simples com estilo inline, pronto para envio.`;
     
     case 'gerar_email_recuperacao':
       return `Gere um email de recuperação para o aluno ${params.nome} que está inativo há ${params.dias_inativo} dias.

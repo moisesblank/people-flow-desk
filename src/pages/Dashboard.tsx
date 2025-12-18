@@ -102,6 +102,7 @@ import { IntegracoesStatusWidget } from "@/components/dashboard/IntegracoesStatu
 import { QuickActionsV2 } from "@/components/dashboard/QuickActionsV2";
 import { AlertasSistemaWidget } from "@/components/dashboard/AlertasSistemaWidget";
 import { AlunosRealtimeWidget } from "@/components/dashboard/AlunosRealtimeWidget";
+import { WordPressSyncWidget } from "@/components/dashboard/WordPressSyncWidget";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
