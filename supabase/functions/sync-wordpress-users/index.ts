@@ -51,7 +51,7 @@ serve(async (req) => {
         console.log(`[SYNC-WP] Buscando página ${page}...`);
         
         const response = await fetch(
-          `${WP_API_URL}/wp/v2/users?per_page=100&page=${page}&context=edit`,
+          `${WP_API_URL}/wp/v2/users?per_page=100&page=${page}`,
           { headers }
         );
 
