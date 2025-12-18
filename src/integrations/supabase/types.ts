@@ -394,6 +394,66 @@ export type Database = {
         }
         Relationships: []
       }
+      audit_access_mismatches: {
+        Row: {
+          acao_sugerida: string | null
+          acao_tomada: string | null
+          audit_type: string
+          created_at: string
+          email: string
+          grupos_wordpress: Json | null
+          hotmart_transaction_id: string | null
+          id: string
+          nome: string | null
+          resolvido: boolean | null
+          resolvido_at: string | null
+          resolvido_por: string | null
+          status_hotmart: string | null
+          status_wordpress: string | null
+          updated_at: string
+          valor_pago: number | null
+          wp_user_id: number | null
+        }
+        Insert: {
+          acao_sugerida?: string | null
+          acao_tomada?: string | null
+          audit_type: string
+          created_at?: string
+          email: string
+          grupos_wordpress?: Json | null
+          hotmart_transaction_id?: string | null
+          id?: string
+          nome?: string | null
+          resolvido?: boolean | null
+          resolvido_at?: string | null
+          resolvido_por?: string | null
+          status_hotmart?: string | null
+          status_wordpress?: string | null
+          updated_at?: string
+          valor_pago?: number | null
+          wp_user_id?: number | null
+        }
+        Update: {
+          acao_sugerida?: string | null
+          acao_tomada?: string | null
+          audit_type?: string
+          created_at?: string
+          email?: string
+          grupos_wordpress?: Json | null
+          hotmart_transaction_id?: string | null
+          id?: string
+          nome?: string | null
+          resolvido?: boolean | null
+          resolvido_at?: string | null
+          resolvido_por?: string | null
+          status_hotmart?: string | null
+          status_wordpress?: string | null
+          updated_at?: string
+          valor_pago?: number | null
+          wp_user_id?: number | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
@@ -1454,6 +1514,51 @@ export type Database = {
           rule_type?: string
           trigger_event?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      dead_letter_queue: {
+        Row: {
+          created_at: string
+          error_history: Json[] | null
+          event_type: string
+          id: string
+          last_error: string | null
+          original_webhook_id: string | null
+          payload: Json
+          reprocessed: boolean | null
+          reprocessed_at: string | null
+          reprocessed_by: string | null
+          retry_count: number | null
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          error_history?: Json[] | null
+          event_type: string
+          id?: string
+          last_error?: string | null
+          original_webhook_id?: string | null
+          payload: Json
+          reprocessed?: boolean | null
+          reprocessed_at?: string | null
+          reprocessed_by?: string | null
+          retry_count?: number | null
+          source: string
+        }
+        Update: {
+          created_at?: string
+          error_history?: Json[] | null
+          event_type?: string
+          id?: string
+          last_error?: string | null
+          original_webhook_id?: string | null
+          payload?: Json
+          reprocessed?: boolean | null
+          reprocessed_at?: string | null
+          reprocessed_by?: string | null
+          retry_count?: number | null
+          source?: string
         }
         Relationships: []
       }
@@ -3758,6 +3863,51 @@ export type Database = {
         }
         Relationships: []
       }
+      security_events: {
+        Row: {
+          created_at: string
+          description: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          payload: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          source: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          payload?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          payload?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          source?: string
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       sensitive_operation_limits: {
         Row: {
           id: string
@@ -5667,6 +5817,7 @@ export type Database = {
           created_at: string
           error_message: string | null
           event: string
+          external_event_id: string | null
           id: string
           max_retries: number | null
           payload: Json
@@ -5680,6 +5831,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           event: string
+          external_event_id?: string | null
           id?: string
           max_retries?: number | null
           payload: Json
@@ -5693,6 +5845,7 @@ export type Database = {
           created_at?: string
           error_message?: string | null
           event?: string
+          external_event_id?: string | null
           id?: string
           max_retries?: number | null
           payload?: Json
@@ -6780,6 +6933,17 @@ export type Database = {
         }
         Returns: string
       }
+      log_security_event: {
+        Args: {
+          p_description?: string
+          p_event_type: string
+          p_ip_address?: string
+          p_payload?: Json
+          p_severity?: string
+          p_source?: string
+        }
+        Returns: string
+      }
       log_sensitive_data_access: {
         Args: {
           p_action: string
@@ -6790,6 +6954,10 @@ export type Database = {
       }
       mask_email: { Args: { p_email: string }; Returns: string }
       mask_phone: { Args: { p_phone: string }; Returns: string }
+      move_to_dead_letter_queue: {
+        Args: { p_error: string; p_webhook_id: string }
+        Returns: string
+      }
       register_user_login: {
         Args: {
           _browser?: string

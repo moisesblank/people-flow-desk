@@ -1,5 +1,8 @@
-// 🧠 TRAMON v8 - QUEUE WORKER (O Operário Inteligente)
-// Propósito: Processar webhooks da fila e acionar o orquestrador
+// ============================================
+// TRAMON v9.0 - QUEUE WORKER (O Operário Inteligente)
+// Propósito: Processar webhooks com retry + dead letter queue
+// Com: Exponential backoff, claim atômico, dead_letter_queue
+// ============================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -7,6 +10,9 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
+
+const MAX_RETRIES = 3;
+const BATCH_SIZE = 10;
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -21,14 +27,27 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
-    const body = await req.json();
-    const { queue_id } = body;
+    let body: { queue_id?: string; batch_mode?: boolean } = {};
+    try {
+      body = await req.json();
+    } catch {
+      body = {};
+    }
+    
+    const { queue_id, batch_mode = false } = body;
 
-    // Se recebeu um ID específico, processar apenas ele
-    // Senão, buscar pendentes na fila
-    let items = [];
+    let items: Array<{
+      id: string;
+      source: string;
+      event: string;
+      payload: Record<string, unknown>;
+      retry_count: number;
+      max_retries: number;
+      external_event_id?: string;
+    }> = [];
 
     if (queue_id) {
+      // Processar item específico
       const { data, error } = await supabase
         .from('webhooks_queue')
         .select('*')
@@ -39,41 +58,48 @@ serve(async (req) => {
         items = [data];
       }
     } else {
-      // Buscar até 10 itens pendentes para processamento em lote
+      // ===============================================
+      // 3.2.2 - CLAIM ATÔMICO DE N ITENS PENDENTES
+      // ===============================================
+      
+      // Buscar e marcar atomicamente como "processing"
+      // Isso evita que dois workers processem o mesmo item
       const { data, error } = await supabase
         .from('webhooks_queue')
-        .select('*')
+        .update({ status: 'processing' })
         .eq('status', 'pending')
         .order('created_at', { ascending: true })
-        .limit(10);
+        .limit(BATCH_SIZE)
+        .select();
       
       if (data && !error) {
         items = data;
       }
     }
 
-    const results = [];
+    const results: Array<{
+      id: string;
+      status: string;
+      processing_time_ms: number;
+      error?: string;
+      retry_count?: number;
+      moved_to_dlq?: boolean;
+    }> = [];
 
     for (const item of items) {
       const itemStartTime = Date.now();
       
       try {
-        // Marcar como processando
-        await supabase
-          .from('webhooks_queue')
-          .update({ status: 'processing' })
-          .eq('id', item.id);
-
         // Criar log de integração
         const { data: log } = await supabase
           .from('logs_integracao_detalhado')
           .insert({
             webhook_queue_id: item.id,
-            source: item.source,
-            event: item.event,
+            sistema_origem: item.source,
+            tipo_operacao: item.event,
             status: 'processando',
             etapa_atual: 'iniciando_orchestrator',
-            payload_entrada: item.payload
+            dados_entrada: item.payload
           })
           .select()
           .single();
@@ -83,8 +109,8 @@ serve(async (req) => {
           body: {
             queue_id: item.id,
             source: item.source,
-            event: item.event,
-            data: item.payload,
+            event_type: item.event,
+            payload: item.payload,
             log_id: log?.id
           }
         });
@@ -92,14 +118,14 @@ serve(async (req) => {
         const processingTime = Date.now() - itemStartTime;
 
         if (orchestratorResult.error) {
-          throw new Error(orchestratorResult.error.message);
+          throw new Error(orchestratorResult.error.message || 'Orchestrator error');
         }
 
-        // Marcar como concluído
+        // ✅ Marcar como concluído
         await supabase
           .from('webhooks_queue')
           .update({ 
-            status: 'completed',
+            status: 'processed',
             result: orchestratorResult.data,
             processed_at: new Date().toISOString()
           })
@@ -112,7 +138,7 @@ serve(async (req) => {
             .update({
               status: 'sucesso',
               etapa_atual: 'concluido',
-              payload_saida: orchestratorResult.data,
+              dados_saida: orchestratorResult.data,
               tempo_total_ms: processingTime
             })
             .eq('id', log.id);
@@ -132,10 +158,13 @@ serve(async (req) => {
         
         // Verificar se deve tentar novamente
         const retryCount = (item.retry_count || 0) + 1;
-        const maxRetries = item.max_retries || 3;
+        const maxRetries = item.max_retries || MAX_RETRIES;
         
         if (retryCount < maxRetries) {
-          // Marcar para retry
+          // ===============================================
+          // RETRY COM EXPONENTIAL BACKOFF (implícito via delay)
+          // ===============================================
+          
           await supabase
             .from('webhooks_queue')
             .update({ 
@@ -146,18 +175,68 @@ serve(async (req) => {
             .eq('id', item.id);
           
           console.log(`⚠️ Retry ${retryCount}/${maxRetries} for ${item.source}:${item.event}`);
+          
+          results.push({
+            id: item.id,
+            status: 'retry_scheduled',
+            retry_count: retryCount,
+            processing_time_ms: processingTime,
+            error: errorMessage
+          });
+          
         } else {
-          // Marcar como falha definitiva
+          // ===============================================
+          // 3.2.2 - MOVER PARA DEAD LETTER QUEUE APÓS 3 FALHAS
+          // ===============================================
+          
+          // Inserir na dead_letter_queue
+          await supabase
+            .from('dead_letter_queue')
+            .insert({
+              original_webhook_id: item.id,
+              source: item.source,
+              event_type: item.event,
+              payload: item.payload,
+              last_error: errorMessage,
+              retry_count: retryCount,
+              error_history: [{
+                attempt: retryCount,
+                error: errorMessage,
+                timestamp: new Date().toISOString()
+              }]
+            });
+          
+          // Remover da fila principal
           await supabase
             .from('webhooks_queue')
-            .update({ 
-              status: 'failed',
-              error_message: errorMessage,
-              processed_at: new Date().toISOString()
-            })
+            .delete()
             .eq('id', item.id);
           
-          console.error(`❌ Failed permanently: ${item.source}:${item.event} - ${errorMessage}`);
+          // Registrar evento de segurança
+          await supabase
+            .from('security_events')
+            .insert({
+              event_type: 'WEBHOOK_FAILED_PERMANENTLY',
+              severity: 'critical',
+              source: item.source,
+              description: `Webhook movido para dead letter queue após ${maxRetries} tentativas`,
+              payload: {
+                event: item.event,
+                error: errorMessage,
+                external_event_id: item.external_event_id
+              }
+            });
+          
+          console.error(`❌ Moved to DLQ: ${item.source}:${item.event} - ${errorMessage}`);
+          
+          results.push({
+            id: item.id,
+            status: 'moved_to_dlq',
+            moved_to_dlq: true,
+            retry_count: retryCount,
+            processing_time_ms: processingTime,
+            error: errorMessage
+          });
         }
 
         // Atualizar log de erro
@@ -169,14 +248,6 @@ serve(async (req) => {
             tempo_total_ms: processingTime
           })
           .eq('webhook_queue_id', item.id);
-
-        results.push({
-          id: item.id,
-          status: 'failed',
-          error: errorMessage,
-          retry_count: retryCount,
-          processing_time_ms: processingTime
-        });
       }
     }
 
@@ -185,6 +256,9 @@ serve(async (req) => {
     return new Response(JSON.stringify({
       status: 'ok',
       processed: results.length,
+      completed: results.filter(r => r.status === 'completed').length,
+      retried: results.filter(r => r.status === 'retry_scheduled').length,
+      moved_to_dlq: results.filter(r => r.moved_to_dlq).length,
       results,
       total_time_ms: totalTime
     }), {
