@@ -29,6 +29,8 @@ interface SocialMediaRequest {
 }
 
 // Buscar estatísticas do YouTube
+const YOUTUBE_CHANNEL_HANDLE = Deno.env.get('YOUTUBE_CHANNEL_HANDLE') || '@MoisesMedeiros';
+
 async function fetchYouTubeStats(): Promise<{
   subscribers: number;
   views: number;
@@ -42,46 +44,52 @@ async function fetchYouTubeStats(): Promise<{
 
   const baseUrl = 'https://www.googleapis.com/youtube/v3';
   
-  // Primeiro buscar o canal pelo handle/username
-  const searchUrl = `${baseUrl}/search?part=snippet&type=channel&q=moises.profquimica&key=${YOUTUBE_API_KEY}`;
-  const searchResponse = await fetch(searchUrl);
-  const searchData = await searchResponse.json();
+  // Buscar canal pelo handle usando forHandle
+  const handle = YOUTUBE_CHANNEL_HANDLE.replace('@', '');
+  const channelUrl = `${baseUrl}/channels?part=statistics,snippet&forHandle=${handle}&key=${YOUTUBE_API_KEY}`;
   
-  if (searchData.error) {
-    console.error('YouTube Search Error:', searchData.error);
-    throw new Error(searchData.error.message);
+  console.log('[YouTube] Buscando canal por handle:', handle);
+  
+  const channelResponse = await fetch(channelUrl);
+  const channelData = await channelResponse.json();
+  
+  if (channelData.error) {
+    console.error('YouTube API Error:', channelData.error);
+    throw new Error(channelData.error.message);
   }
 
-  let channelId = '';
-  if (searchData.items && searchData.items.length > 0) {
-    channelId = searchData.items[0].snippet.channelId;
-  } else {
-    // Tentar buscar diretamente pelo ID se a busca falhar
-    channelId = 'UCMoisesMedeiros'; // ID padrão
-  }
-
-  // Buscar estatísticas do canal
-  const statsUrl = `${baseUrl}/channels?part=statistics,snippet,contentDetails&id=${channelId}&key=${YOUTUBE_API_KEY}`;
-  const statsResponse = await fetch(statsUrl);
-  const statsData = await statsResponse.json();
-
-  if (statsData.error) {
-    console.error('YouTube Stats Error:', statsData.error);
-    throw new Error(statsData.error.message);
-  }
-
-  if (!statsData.items || statsData.items.length === 0) {
-    // Retornar dados mock se não encontrar
+  // Se não encontrar pelo handle, tentar buscar por username
+  if (!channelData.items || channelData.items.length === 0) {
+    console.log('[YouTube] Handle não encontrado, tentando username...');
+    const userUrl = `${baseUrl}/channels?part=statistics,snippet&forUsername=${handle}&key=${YOUTUBE_API_KEY}`;
+    const userResponse = await fetch(userUrl);
+    const userData = await userResponse.json();
+    
+    if (userData.items && userData.items.length > 0) {
+      const channel = userData.items[0];
+      return {
+        subscribers: parseInt(channel.statistics.subscriberCount || '0'),
+        views: parseInt(channel.statistics.viewCount || '0'),
+        videos: parseInt(channel.statistics.videoCount || '0'),
+        channelTitle: channel.snippet.title,
+        thumbnailUrl: channel.snippet.thumbnails?.high?.url || ''
+      };
+    }
+    
+    // Retornar zeros se não encontrar
+    console.log('[YouTube] Canal não encontrado');
     return {
       subscribers: 0,
       views: 0,
       videos: 0,
-      channelTitle: 'Prof. Moisés Medeiros',
+      channelTitle: 'Canal não encontrado',
       thumbnailUrl: ''
     };
   }
 
-  const channel = statsData.items[0];
+  const channel = channelData.items[0];
+  console.log('[YouTube] Canal encontrado:', channel.snippet.title);
+  
   return {
     subscribers: parseInt(channel.statistics.subscriberCount || '0'),
     views: parseInt(channel.statistics.viewCount || '0'),
