@@ -295,16 +295,36 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         e.stopImmediatePropagation();
 
         const rect = elementToEdit.getBoundingClientRect();
-        const contentKey =
-          (elementToEdit as HTMLElement).dataset.editableKey ||
-          elementToEdit.id ||
-          `${elementToEdit.tagName.toLowerCase()}_${(elementToEdit.innerText || '').slice(0, 20).replace(/\s+/g, '_') || Date.now()}`;
+        
+        // Priorizar data-editable-key, depois id, depois gerar um baseado no conteúdo
+        const dataKey = (elementToEdit as HTMLElement).dataset.editableKey;
+        const elementId = elementToEdit.id;
+        const textContent = elementToEdit.innerText || '';
+        
+        let contentKey: string;
+        if (dataKey) {
+          contentKey = dataKey;
+        } else if (elementId) {
+          contentKey = elementId;
+        } else {
+          // Gerar key única baseada no conteúdo e posição
+          const sanitizedText = textContent.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
+          contentKey = `${elementToEdit.tagName.toLowerCase()}_${sanitizedText}_${Date.now()}`;
+        }
+        
+        console.log('🔮 Elemento selecionado para edição:', {
+          tagName: elementToEdit.tagName,
+          dataKey,
+          elementId,
+          contentKey,
+          text: textContent.slice(0, 50)
+        });
 
         setEditingElement({
           id: contentKey,
           type: isImage ? 'image' : 'text',
           element: elementToEdit,
-          originalContent: isImage ? (elementToEdit as HTMLImageElement).src : elementToEdit.innerText || '',
+          originalContent: isImage ? (elementToEdit as HTMLImageElement).src : textContent,
           contentKey,
           rect,
         });
@@ -408,7 +428,10 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateContent = useCallback(async (key: string, value: string, type = 'text'): Promise<boolean> => {
+    console.log('🔮 updateContent chamado:', { key, value, type, isOwner });
+    
     if (!isOwner) {
+      console.warn('❌ Sem permissão - isOwner:', isOwner);
       toast.error('Sem permissão para editar');
       return false;
     }
@@ -420,14 +443,21 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
       .replace(/on\w+=/gi, '');
 
     try {
+      console.log('📝 Salvando no banco...', { key, sanitized });
+      
       // Verificar se existe
-      const { data: existing } = await supabase
+      const { data: existing, error: selectError } = await supabase
         .from('editable_content')
         .select('id')
         .eq('content_key', key)
         .maybeSingle();
 
+      if (selectError) {
+        console.error('Erro ao verificar existência:', selectError);
+      }
+
       if (existing) {
+        console.log('📝 Atualizando registro existente:', existing.id);
         const { error: updateError } = await supabase
           .from('editable_content')
           .update({ 
@@ -436,8 +466,13 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
           })
           .eq('content_key', key);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error('Erro no update:', updateError);
+          throw updateError;
+        }
+        console.log('✅ Update realizado com sucesso!');
       } else {
+        console.log('📝 Inserindo novo registro...');
         const { error: insertError } = await supabase
           .from('editable_content')
           .insert({
@@ -447,15 +482,24 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
             page_key: window.location.pathname.replace(/\//g, '_') || 'global'
           });
 
-        if (insertError) throw insertError;
+        if (insertError) {
+          console.error('Erro no insert:', insertError);
+          throw insertError;
+        }
+        console.log('✅ Insert realizado com sucesso!');
       }
 
       setContentCache(prev => ({ ...prev, [key]: sanitized }));
-      toast.success('✨ Salvo com sucesso!');
+      toast.success('✨ Salvo com sucesso!', {
+        description: `Conteúdo "${key}" atualizado`,
+        duration: 3000
+      });
       return true;
-    } catch (err) {
-      console.error('Erro ao salvar:', err);
-      toast.error('Erro ao salvar');
+    } catch (err: any) {
+      console.error('❌ Erro ao salvar:', err);
+      toast.error('Erro ao salvar', {
+        description: err?.message || 'Tente novamente'
+      });
       return false;
     }
   }, [isOwner]);
