@@ -116,7 +116,7 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
     addNotification({
       type: "success",
       title: "Novo Lead WhatsApp! 📱",
-      message: `${lead.name || 'Novo contato'} enviou mensagem via WhatsApp`,
+      message: `${lead.nome || 'Novo contato'} enviou mensagem via WhatsApp`,
       actionUrl: "/leads-whatsapp",
       actionLabel: "Ver lead",
     });

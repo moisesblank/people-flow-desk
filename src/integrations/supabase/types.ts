@@ -6764,7 +6764,7 @@ export type Database = {
           created_at: string | null
           id: string | null
           last_contact: string | null
-          name: string | null
+          nome: string | null
           phone: string | null
           source: string | null
           status: string | null
@@ -6774,7 +6774,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           last_contact?: string | null
-          name?: string | null
+          nome?: string | null
           phone?: string | null
           source?: string | null
           status?: string | null
@@ -6784,7 +6784,7 @@ export type Database = {
           created_at?: string | null
           id?: string | null
           last_contact?: string | null
-          name?: string | null
+          nome?: string | null
           phone?: string | null
           source?: string | null
           status?: string | null
@@ -6977,7 +6977,7 @@ export type Database = {
           p_ai_response?: string
           p_external_id?: string
           p_message?: string
-          p_name: string
+          p_nome: string
           p_phone: string
           p_source?: string
         }

@@ -635,7 +635,7 @@ async function handleWordPressUserCreated(
   // IMPORTANTE: status precisa respeitar o constraint do banco (whatsapp_leads_status_check)
   // Valores permitidos atualmente: novo | contatado | interessado | matriculado | perdido
   const leadData = {
-    name: data.name || "Lead WordPress",
+    nome: data.name || "Lead WordPress",
     email: data.email,
     phone: data.phone || null,
     source: "wordpress_user_created",
@@ -857,7 +857,7 @@ async function handleHotmartPurchase(
 
   // CRIAR ALUNO (AGORA SIM!)
   const alunoData = {
-    nome: data.name || existingLead?.name || "Aluno Hotmart",
+    nome: data.name || existingLead?.nome || "Aluno Hotmart",
     email: data.email,
     telefone: data.phone || existingLead?.phone || null,
     status: "ativo",

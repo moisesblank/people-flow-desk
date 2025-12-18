@@ -378,7 +378,7 @@ serve(async (req) => {
                 // Salvar lead/atualizar
                 const { data: lead } = await supabase.rpc('upsert_whatsapp_lead', {
                   p_phone: msgFrom,
-                  p_name: null,
+                  p_nome: null,
                   p_message: msgText.body,
                   p_source: 'whatsapp_api'
                 });
@@ -432,7 +432,7 @@ serve(async (req) => {
               .from('whatsapp_leads')
               .upsert({
                 email: lead.email,
-                name: lead.name,
+                nome: lead.name,
                 source: 'rdstation',
                 tags: lead.tags
               }, { onConflict: 'email' });
