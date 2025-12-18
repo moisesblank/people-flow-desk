@@ -1,6 +1,6 @@
 // ============================================
 // EMPRESARIAL 2090 - CALENDÁRIO QUANTUM
-// Cyberpunk Edition - AJUDA15
+// Cyberpunk Edition - INTEGRAÇÃO GOOGLE CALENDAR
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
@@ -17,16 +17,11 @@ import {
   Filter,
   Trash2,
   Edit2,
-  FlaskConical,
-  Atom,
-  Paperclip,
-  Zap,
-  Target,
-  CheckSquare
+  Mail,
+  Bell,
+  RefreshCw,
+  Loader2
 } from "lucide-react";
-import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
-import { FuturisticCard } from "@/components/ui/futuristic-card";
-import { CyberBackground } from "@/components/ui/cyber-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -34,17 +29,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Calendar } from "@/components/ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisuals";
+import { useCalendarSync } from "@/hooks/useCalendarSync";
 import { GoogleCalendarSync } from "@/components/calendar/GoogleCalendarSync";
 import { TaskStats } from "@/components/calendar/TaskStats";
 import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
 import { AttachmentIndicator } from "@/components/attachments/AttachmentIndicator";
-import calendarHeroImage from "@/assets/calendar-chemistry-hero.jpg";
 import {
   format, 
   addMonths, 
@@ -64,6 +56,7 @@ import { cn } from "@/lib/utils";
 
 interface Task {
   id: string;
+  user_id: string;
   title: string;
   description: string | null;
   task_date: string;
@@ -88,6 +81,7 @@ const CATEGORIES = [
 export default function Calendario() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { syncTask, syncing: syncingTask, isGoogleConnected, syncAllTasks } = useCalendarSync();
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -96,6 +90,7 @@ export default function Calendario() {
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [viewMode, setViewMode] = useState<"month" | "week">("month");
   const [filterPriority, setFilterPriority] = useState<string>("all");
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const [formData, setFormData] = useState({
     title: "",
@@ -189,8 +184,10 @@ export default function Calendario() {
     }
 
     try {
+      let savedTask: Task | null = null;
+
       if (editingTask) {
-        const { error } = await supabase
+        const { data, error } = await supabase
           .from("calendar_tasks")
           .update({
             title: formData.title,
@@ -201,12 +198,15 @@ export default function Calendario() {
             category: formData.category,
             reminder_enabled: formData.reminder_enabled,
           })
-          .eq("id", editingTask.id);
+          .eq("id", editingTask.id)
+          .select()
+          .single();
 
         if (error) throw error;
+        savedTask = data;
         toast({ title: "Tarefa atualizada!" });
       } else {
-        const { error } = await supabase.from("calendar_tasks").insert({
+        const { data, error } = await supabase.from("calendar_tasks").insert({
           user_id: user?.id,
           title: formData.title,
           description: formData.description || null,
@@ -215,16 +215,32 @@ export default function Calendario() {
           priority: formData.priority,
           category: formData.category,
           reminder_enabled: formData.reminder_enabled,
-        });
+        }).select().single();
 
         if (error) throw error;
+        savedTask = data;
         toast({ title: "Tarefa criada!" });
+      }
+
+      // SINCRONIZAÇÃO AUTOMÁTICA: Google Calendar + Email
+      if (savedTask && (isGoogleConnected || formData.reminder_enabled)) {
+        await syncTask(savedTask);
       }
 
       await fetchTasks();
       setIsModalOpen(false);
     } catch (error: any) {
       toast({ title: "Erro", description: error.message, variant: "destructive" });
+    }
+  };
+
+  // Sincronizar todas as tarefas pendentes com Google Calendar
+  const handleSyncAll = async () => {
+    setIsSyncing(true);
+    try {
+      await syncAllTasks();
+    } finally {
+      setIsSyncing(false);
     }
   };
 
@@ -341,6 +357,22 @@ export default function Calendario() {
           </div>
 
           <div className="flex items-center gap-2">
+            {isGoogleConnected && (
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={handleSyncAll}
+                disabled={isSyncing}
+                className="gap-2"
+              >
+                {isSyncing ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <RefreshCw className="h-4 w-4" />
+                )}
+                Sincronizar
+              </Button>
+            )}
             <Select value={filterPriority} onValueChange={setFilterPriority}>
               <SelectTrigger className="w-32">
                 <Filter className="h-4 w-4 mr-2" />
@@ -353,8 +385,13 @@ export default function Calendario() {
                 ))}
               </SelectContent>
             </Select>
-            <Button onClick={() => openModal()} className="gap-2">
-              <Plus className="h-4 w-4" /> Nova Tarefa
+            <Button onClick={() => openModal()} className="gap-2" disabled={syncingTask}>
+              {syncingTask ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Plus className="h-4 w-4" />
+              )}
+              Nova Tarefa
             </Button>
           </div>
         </motion.div>
@@ -583,13 +620,39 @@ export default function Calendario() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                <Checkbox
-                  id="reminder"
-                  checked={formData.reminder_enabled}
-                  onCheckedChange={(v) => setFormData(prev => ({ ...prev, reminder_enabled: !!v }))}
-                />
-                <Label htmlFor="reminder" className="text-sm">Ativar lembrete por email</Label>
+              {/* Lembretes e Google Calendar */}
+              <div className="space-y-3 p-3 rounded-lg bg-secondary/20 border border-border/50">
+                <div className="flex items-center gap-2">
+                  <Checkbox
+                    id="reminder"
+                    checked={formData.reminder_enabled}
+                    onCheckedChange={(v) => setFormData(prev => ({ ...prev, reminder_enabled: !!v }))}
+                  />
+                  <div className="flex-1">
+                    <Label htmlFor="reminder" className="text-sm flex items-center gap-2 cursor-pointer">
+                      <Mail className="h-4 w-4 text-primary" />
+                      Enviar lembrete por email
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Será enviado para: moisesblank@gmail.com
+                    </p>
+                  </div>
+                </div>
+                
+                {isGoogleConnected && (
+                  <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                    <Bell className="h-4 w-4 text-[hsl(var(--stats-green))]" />
+                    <span className="text-sm text-[hsl(var(--stats-green))]">
+                      ✓ Google Calendar conectado - Notificações no celular ativas
+                    </span>
+                  </div>
+                )}
+                
+                {!isGoogleConnected && (
+                  <p className="text-xs text-muted-foreground">
+                    💡 Conecte seu Google Calendar na barra lateral para receber lembretes no celular
+                  </p>
+                )}
               </div>
 
               {/* Seção de Anexos - só aparece se tarefa já existe */}
@@ -604,8 +667,15 @@ export default function Calendario() {
                 </div>
               )}
 
-              <Button onClick={handleSave} className="w-full">
-                {editingTask ? "Salvar Alterações" : "Criar Tarefa"}
+              <Button onClick={handleSave} className="w-full" disabled={syncingTask}>
+                {syncingTask ? (
+                  <>
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                    Sincronizando...
+                  </>
+                ) : (
+                  editingTask ? "Salvar Alterações" : "Criar Tarefa"
+                )}
               </Button>
             </div>
           </DialogContent>
