@@ -43,7 +43,7 @@ interface UseEditableContentReturn {
 
 export function useEditableContent(pageKey: string): UseEditableContentReturn {
   const [content, setContent] = useState<Record<string, EditableContent>>({});
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(false); // Não bloquear renderização
   const [isEditMode, setIsEditMode] = useState(false);
   const { canEdit, isOwner, userEmail } = useAdminCheck();
   
@@ -63,9 +63,13 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isGodMode]);
 
-  // Fetch content from database
+  // Fetch content from database - NON-BLOCKING (apenas para edit mode)
   useEffect(() => {
+    // Só buscar conteúdo editável se o usuário é owner (evitar queries desnecessárias)
+    if (!isGodMode) return;
+    
     async function fetchContent() {
+      setIsLoading(true);
       try {
         const { data, error } = await supabase
           .from("editable_content")
@@ -87,7 +91,7 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
     }
 
     fetchContent();
-  }, [pageKey]);
+  }, [pageKey, isGodMode]);
 
   const toggleEditMode = useCallback(() => {
     if (isGodMode) {
