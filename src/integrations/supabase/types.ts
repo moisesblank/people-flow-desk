@@ -6973,6 +6973,32 @@ export type Database = {
       security_cleanup_job: { Args: never; Returns: undefined }
       update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
+      upsert_hotmart_transaction: {
+        Args: {
+          p_affiliate_id?: string
+          p_affiliate_name?: string
+          p_buyer_email?: string
+          p_buyer_name?: string
+          p_buyer_phone?: string
+          p_commission_value?: number
+          p_coupon_code?: string
+          p_data_compra?: string
+          p_hotmart_event?: string
+          p_is_subscription?: boolean
+          p_metodo_pagamento?: string
+          p_offer_code?: string
+          p_parcelas?: number
+          p_product_id?: string
+          p_product_name?: string
+          p_recurrence_number?: number
+          p_status?: string
+          p_subscription_id?: string
+          p_transaction_id: string
+          p_valor_bruto?: number
+          p_webhook_raw?: Json
+        }
+        Returns: string
+      }
       upsert_whatsapp_lead: {
         Args: {
           p_ai_response?: string

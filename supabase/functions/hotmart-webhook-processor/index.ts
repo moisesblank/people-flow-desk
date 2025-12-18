@@ -910,6 +910,37 @@ async function handleHotmartPurchase(
 
   logger.success("Aluno criado/atualizado", { id: alunoId });
 
+  // ============================================
+  // SALVAR TRANSAÇÃO NA TABELA transacoes_hotmart_completo
+  // ============================================
+  const transacaoData = {
+    transaction_id: data.transactionId || generateEventId("tx"),
+    product_id: payload.data?.product?.id?.toString() || payload.product?.id?.toString() || null,
+    product_name: data.productName,
+    buyer_email: data.email,
+    buyer_name: data.name,
+    buyer_phone: data.phone || null,
+    status: "approved",
+    valor_bruto: data.purchaseValue,
+    metodo_pagamento: payload.data?.purchase?.payment?.type || payload.purchase?.payment?.type || null,
+    parcelas: payload.data?.purchase?.payment?.installments_number || payload.purchase?.installments || 1,
+    affiliate_name: payload.data?.affiliate?.name || payload.affiliate?.name || null,
+    affiliate_id: payload.data?.affiliate?.affiliate_code || payload.affiliate?.id?.toString() || null,
+    data_compra: timestamp,
+    webhook_raw: payload,
+    hotmart_event: payload.event || payload.status || "purchase_approved",
+  };
+
+  const { error: txError } = await supabase
+    .from("transacoes_hotmart_completo")
+    .upsert(transacaoData, { onConflict: "transaction_id" });
+
+  if (txError) {
+    logger.warn("Erro ao salvar transação Hotmart", txError.message);
+  } else {
+    logger.success("Transação Hotmart salva", { transaction_id: transacaoData.transaction_id });
+  }
+
   // Atualizar lead para matriculado
   // IMPORTANTE: status precisa respeitar o constraint do banco
   if (existingLead) {
