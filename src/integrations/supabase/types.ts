@@ -203,6 +203,57 @@ export type Database = {
         }
         Relationships: []
       }
+      alertas_sistema: {
+        Row: {
+          acao_sugerida: string | null
+          created_at: string | null
+          dados: Json | null
+          data_leitura: string | null
+          data_resolucao: string | null
+          destinatarios: Json
+          id: string
+          link: string | null
+          mensagem: string
+          origem: string
+          resolvido_por: string | null
+          status: string | null
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          acao_sugerida?: string | null
+          created_at?: string | null
+          dados?: Json | null
+          data_leitura?: string | null
+          data_resolucao?: string | null
+          destinatarios?: Json
+          id?: string
+          link?: string | null
+          mensagem: string
+          origem: string
+          resolvido_por?: string | null
+          status?: string | null
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          acao_sugerida?: string | null
+          created_at?: string | null
+          dados?: Json | null
+          data_leitura?: string | null
+          data_resolucao?: string | null
+          destinatarios?: Json
+          id?: string
+          link?: string | null
+          mensagem?: string
+          origem?: string
+          resolvido_por?: string | null
+          status?: string | null
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       alunos: {
         Row: {
           created_at: string | null
@@ -445,6 +496,57 @@ export type Database = {
           tipo_discrepancia?: string
           valor_transacao?: number | null
           wp_user_id?: number | null
+        }
+        Relationships: []
+      }
+      auditoria_grupo_beta_completo: {
+        Row: {
+          acao: string
+          antes_grupos: Json | null
+          created_at: string | null
+          depois_grupos: Json | null
+          email: string
+          executado_por: string
+          id: string
+          ip_origem: string | null
+          mensagem_erro: string | null
+          motivo: string
+          sucesso: boolean
+          transaction_id_hotmart: string | null
+          user_id_wordpress: number
+          valor_transacao: number | null
+        }
+        Insert: {
+          acao: string
+          antes_grupos?: Json | null
+          created_at?: string | null
+          depois_grupos?: Json | null
+          email: string
+          executado_por: string
+          id?: string
+          ip_origem?: string | null
+          mensagem_erro?: string | null
+          motivo: string
+          sucesso?: boolean
+          transaction_id_hotmart?: string | null
+          user_id_wordpress: number
+          valor_transacao?: number | null
+        }
+        Update: {
+          acao?: string
+          antes_grupos?: Json | null
+          created_at?: string | null
+          depois_grupos?: Json | null
+          email?: string
+          executado_por?: string
+          id?: string
+          ip_origem?: string | null
+          mensagem_erro?: string | null
+          motivo?: string
+          sucesso?: boolean
+          transaction_id_hotmart?: string | null
+          user_id_wordpress?: number
+          valor_transacao?: number | null
         }
         Relationships: []
       }
@@ -1171,6 +1273,42 @@ export type Database = {
         }
         Relationships: []
       }
+      conversas_tramon: {
+        Row: {
+          acoes_sugeridas: Json | null
+          contexto: Json | null
+          created_at: string | null
+          feedback_usuario: string | null
+          id: string
+          intencao_detectada: string | null
+          mensagem_usuario: string
+          resposta_tramon: string
+          user_id: string | null
+        }
+        Insert: {
+          acoes_sugeridas?: Json | null
+          contexto?: Json | null
+          created_at?: string | null
+          feedback_usuario?: string | null
+          id?: string
+          intencao_detectada?: string | null
+          mensagem_usuario: string
+          resposta_tramon: string
+          user_id?: string | null
+        }
+        Update: {
+          acoes_sugeridas?: Json | null
+          contexto?: Json | null
+          created_at?: string | null
+          feedback_usuario?: string | null
+          id?: string
+          intencao_detectada?: string | null
+          mensagem_usuario?: string
+          resposta_tramon?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       courses: {
         Row: {
           average_rating: number | null
@@ -1394,6 +1532,60 @@ export type Database = {
           page_key?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      emails_rd_station: {
+        Row: {
+          assunto: string | null
+          bounce_reason: string | null
+          campanha_id: string | null
+          corpo_html: string | null
+          corpo_texto: string | null
+          created_at: string | null
+          data_abertura: string | null
+          data_clique: string | null
+          data_envio: string
+          destinatario: string
+          id: string
+          link_clicado: string | null
+          status: string
+          tags: Json | null
+          template_id: string | null
+        }
+        Insert: {
+          assunto?: string | null
+          bounce_reason?: string | null
+          campanha_id?: string | null
+          corpo_html?: string | null
+          corpo_texto?: string | null
+          created_at?: string | null
+          data_abertura?: string | null
+          data_clique?: string | null
+          data_envio?: string
+          destinatario: string
+          id?: string
+          link_clicado?: string | null
+          status?: string
+          tags?: Json | null
+          template_id?: string | null
+        }
+        Update: {
+          assunto?: string | null
+          bounce_reason?: string | null
+          campanha_id?: string | null
+          corpo_html?: string | null
+          corpo_texto?: string | null
+          created_at?: string | null
+          data_abertura?: string | null
+          data_clique?: string | null
+          data_envio?: string
+          destinatario?: string
+          id?: string
+          link_clicado?: string | null
+          status?: string
+          tags?: Json | null
+          template_id?: string | null
         }
         Relationships: []
       }
@@ -2460,11 +2652,16 @@ export type Database = {
           created_at: string
           custo_aquisicao: number | null
           data: string
+          data_referencia: string | null
           id: string
           leads_gerados: number | null
           leads_qualificados: number | null
+          lucro_dia: number | null
           novos_alunos: number | null
+          novos_cadastros: number | null
+          novos_pagamentos: number | null
           receita_bruta: number | null
+          receita_dia: number | null
           receita_liquida: number | null
           reembolsos: number | null
           taxa_conversao: number | null
@@ -2489,11 +2686,16 @@ export type Database = {
           created_at?: string
           custo_aquisicao?: number | null
           data: string
+          data_referencia?: string | null
           id?: string
           leads_gerados?: number | null
           leads_qualificados?: number | null
+          lucro_dia?: number | null
           novos_alunos?: number | null
+          novos_cadastros?: number | null
+          novos_pagamentos?: number | null
           receita_bruta?: number | null
+          receita_dia?: number | null
           receita_liquida?: number | null
           reembolsos?: number | null
           taxa_conversao?: number | null
@@ -2518,11 +2720,16 @@ export type Database = {
           created_at?: string
           custo_aquisicao?: number | null
           data?: string
+          data_referencia?: string | null
           id?: string
           leads_gerados?: number | null
           leads_qualificados?: number | null
+          lucro_dia?: number | null
           novos_alunos?: number | null
+          novos_cadastros?: number | null
+          novos_pagamentos?: number | null
           receita_bruta?: number | null
+          receita_dia?: number | null
           receita_liquida?: number | null
           reembolsos?: number | null
           taxa_conversao?: number | null
@@ -4728,6 +4935,7 @@ export type Database = {
           buyer_name: string | null
           buyer_phone: string | null
           comissao_afiliado: number | null
+          cpf: string | null
           created_at: string
           data_cancelamento: string | null
           data_compra: string | null
@@ -4740,6 +4948,7 @@ export type Database = {
           product_id: string | null
           product_name: string | null
           status: string
+          telefone: string | null
           transaction_id: string
           updated_at: string
           valor_bruto: number | null
@@ -4754,6 +4963,7 @@ export type Database = {
           buyer_name?: string | null
           buyer_phone?: string | null
           comissao_afiliado?: number | null
+          cpf?: string | null
           created_at?: string
           data_cancelamento?: string | null
           data_compra?: string | null
@@ -4766,6 +4976,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string | null
           status: string
+          telefone?: string | null
           transaction_id: string
           updated_at?: string
           valor_bruto?: number | null
@@ -4780,6 +4991,7 @@ export type Database = {
           buyer_name?: string | null
           buyer_phone?: string | null
           comissao_afiliado?: number | null
+          cpf?: string | null
           created_at?: string
           data_cancelamento?: string | null
           data_compra?: string | null
@@ -4792,6 +5004,7 @@ export type Database = {
           product_id?: string | null
           product_name?: string | null
           status?: string
+          telefone?: string | null
           transaction_id?: string
           updated_at?: string
           valor_bruto?: number | null
@@ -6550,6 +6763,10 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      increment_metrica_diaria: {
+        Args: { p_campo: string; p_data: string; p_valor: number }
+        Returns: undefined
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_owner: { Args: { _user_id?: string }; Returns: boolean }

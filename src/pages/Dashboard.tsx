@@ -100,6 +100,8 @@ import { MetricasDiariasWidget } from "@/components/dashboard/MetricasDiariasWid
 import { RelatoriosAutomaticosWidget } from "@/components/dashboard/RelatoriosAutomaticosWidget";
 import { IntegracoesStatusWidget } from "@/components/dashboard/IntegracoesStatusWidget";
 import { QuickActionsV2 } from "@/components/dashboard/QuickActionsV2";
+import { AlertasSistemaWidget } from "@/components/dashboard/AlertasSistemaWidget";
+import { AlunosRealtimeWidget } from "@/components/dashboard/AlunosRealtimeWidget";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -537,11 +539,19 @@ export default function Dashboard() {
           </section>
         )}
 
-        {/* TRAMON v8 - Relatórios e Integrações (Owner Only) */}
+        {/* TRAMON v8 - Alertas, Alunos e Integrações (Owner Only) */}
+        {role === 'owner' && (
+          <section className="grid gap-6 lg:grid-cols-3 mb-8">
+            <AlertasSistemaWidget />
+            <AlunosRealtimeWidget />
+            <IntegracoesStatusWidget />
+          </section>
+        )}
+
+        {/* TRAMON v8 - Relatórios e Ações Rápidas (Owner Only) */}
         {role === 'owner' && (
           <section className="grid gap-6 lg:grid-cols-3 mb-8">
             <RelatoriosAutomaticosWidget />
-            <IntegracoesStatusWidget />
             <QuickActionsV2 />
           </section>
         )}

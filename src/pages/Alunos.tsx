@@ -24,7 +24,7 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import studentsHeroImage from "@/assets/students-chemistry-hero.jpg";
 
 interface Student {
-  id: number;
+  id: string;
   nome: string;
   email: string;
   curso: string;
@@ -42,17 +42,17 @@ export default function Alunos() {
 
   const fetchData = async () => {
     try {
-      const { data, error } = await supabase.from("students").select("*").order("nome");
+      const { data, error } = await supabase.from("alunos").select("*").order("nome");
       if (error) throw error;
       setStudents(data?.map(s => ({
         id: s.id,
         nome: s.nome,
         email: s.email || "",
-        curso: s.curso || "",
-        status: s.status || "Ativo",
+        curso: s.curso_id || "",
+        status: s.status || "ativo",
       })) || []);
     } catch (error) {
-      console.error("Error fetching students:", error);
+      console.error("Error fetching alunos:", error);
       toast.error("Erro ao carregar alunos");
     } finally {
       setIsLoading(false);
@@ -84,16 +84,15 @@ export default function Alunos() {
     try {
       if (editingItem) {
         const { error } = await supabase
-          .from("students")
-          .update({ nome: formData.nome, email: formData.email, curso: formData.curso, status: formData.status })
+          .from("alunos")
+          .update({ nome: formData.nome, email: formData.email, status: formData.status })
           .eq("id", editingItem.id);
         if (error) throw error;
         toast.success("Aluno atualizado!");
       } else {
-        const { error } = await supabase.from("students").insert({
+        const { error } = await supabase.from("alunos").insert({
           nome: formData.nome,
           email: formData.email,
-          curso: formData.curso,
           status: formData.status,
         });
         if (error) throw error;
@@ -108,9 +107,9 @@ export default function Alunos() {
     }
   };
 
-  const handleDelete = async (id: number) => {
+  const handleDelete = async (id: string) => {
     try {
-      const { error } = await supabase.from("students").delete().eq("id", id);
+      const { error } = await supabase.from("alunos").delete().eq("id", id);
       if (error) throw error;
       toast.success("Aluno removido!");
       await fetchData();
