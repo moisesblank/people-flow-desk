@@ -155,6 +155,10 @@ const adminMenuItems = [
 // Menu exclusivo do OWNER
 const ownerMenuItems = [
   { title: "Monitoramento", url: "/monitoramento", icon: Activity, badge: "MASTER" },
+  { title: "Central Logs", url: "/central-monitoramento", icon: Eye, badge: "LOGS" },
+  { title: "Central IAs", url: "/central-ias", icon: Sparkles, badge: "IA" },
+  { title: "Transações Hotmart", url: "/transacoes-hotmart", icon: CreditCard },
+  { title: "Auditoria Acessos", url: "/auditoria-acessos", icon: Shield },
 ];
 
 export function AppSidebar() {

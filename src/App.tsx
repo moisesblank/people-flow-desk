@@ -68,6 +68,7 @@ const CentralMetricas = lazy(() => import("./pages/CentralMetricas"));
 const AuditoriaAcessos = lazy(() => import("./pages/AuditoriaAcessos"));
 const CentralMonitoramento = lazy(() => import("./pages/CentralMonitoramento"));
 const CentralIAs = lazy(() => import("./pages/CentralIAs"));
+const TransacoesHotmart = lazy(() => import("./pages/TransacoesHotmart"));
 
 const queryClient = new QueryClient();
 
@@ -182,6 +183,7 @@ function AppContent() {
           <Route path="/auditoria-acessos" element={<ProtectedPage><AuditoriaAcessos /></ProtectedPage>} />
           <Route path="/central-monitoramento" element={<ProtectedPage><CentralMonitoramento /></ProtectedPage>} />
           <Route path="/central-ias" element={<ProtectedPage><CentralIAs /></ProtectedPage>} />
+          <Route path="/transacoes-hotmart" element={<ProtectedPage><TransacoesHotmart /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
