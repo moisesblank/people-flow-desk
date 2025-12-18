@@ -73,22 +73,37 @@ export function InlineEditor() {
   const handleSave = useCallback(async () => {
     if (!editingElement) return;
     
+    console.log('🔮 InlineEditor handleSave:', { 
+      id: editingElement.id, 
+      contentKey: editingElement.contentKey,
+      value,
+      originalContent: editingElement.originalContent 
+    });
+    
     setIsSaving(true);
     try {
       // Primeiro atualiza visualmente em tempo real
       saveDirectToElement(editingElement.element, value);
+      console.log('✅ Elemento atualizado visualmente');
       
       // Depois salva no banco
-      const success = await updateContent(
-        editingElement.contentKey || editingElement.id, 
-        value, 
-        editingElement.type
-      );
+      const key = editingElement.contentKey || editingElement.id;
+      console.log('📝 Salvando no banco com key:', key);
+      
+      const success = await updateContent(key, value, editingElement.type);
+      console.log('📝 Resultado do updateContent:', success);
       
       if (success) {
         editingElement.element.removeAttribute('data-godmode-editing');
         setEditingElement(null);
+      } else {
+        // Reverter visual se falhou
+        saveDirectToElement(editingElement.element, editingElement.originalContent);
       }
+    } catch (error) {
+      console.error('❌ Erro no handleSave:', error);
+      // Reverter visual em caso de erro
+      saveDirectToElement(editingElement.element, editingElement.originalContent);
     } finally {
       setIsSaving(false);
     }
