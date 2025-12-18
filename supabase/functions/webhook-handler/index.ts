@@ -1,12 +1,61 @@
-// 🧠 TRAMON v8 - WEBHOOK HANDLER (O Porteiro Resiliente)
-// Propósito: Receber, validar e enfileirar webhooks em <50ms
+// ============================================
+// TRAMON v9.0 - WEBHOOK HANDLER (O Porteiro Resiliente)
+// Propósito: Receber, validar (HMAC), e enfileirar webhooks em <50ms
+// Com: Idempotência, Segurança, Logging em security_events
+// ============================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-source, x-webhook-event, x-hotmart-hottok',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-source, x-webhook-event, x-hotmart-hottok, x-hub-signature-256, x-signature',
 };
+
+// Função para validar HMAC SHA256
+async function validateHMAC(payload: string, signature: string, secret: string): Promise<boolean> {
+  try {
+    const encoder = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      encoder.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['sign']
+    );
+    
+    const signatureBytes = await crypto.subtle.sign('HMAC', key, encoder.encode(payload));
+    const computedSignature = Array.from(new Uint8Array(signatureBytes))
+      .map(b => b.toString(16).padStart(2, '0'))
+      .join('');
+    
+    // Comparar signatures (timing-safe comparison)
+    const expectedSignature = signature.replace(/^sha256=/, '').toLowerCase();
+    return computedSignature.toLowerCase() === expectedSignature;
+  } catch (error) {
+    console.error('HMAC validation error:', error);
+    return false;
+  }
+}
+
+// Gerar external_event_id único baseado no payload
+function generateExternalEventId(source: string, payload: Record<string, unknown>): string {
+  // Usar IDs específicos de cada fonte para garantir idempotência
+  if (source === 'hotmart') {
+    const data = payload.data as Record<string, unknown> | undefined;
+    const purchase = data?.purchase as Record<string, unknown> | undefined;
+    return `hotmart_${purchase?.transaction || payload.hottok || Date.now()}`;
+  }
+  if (source === 'wordpress') {
+    return `wp_${payload.user_id || ''}_${payload.action || ''}_${payload.timestamp || Date.now()}`;
+  }
+  if (source === 'whatsapp') {
+    const entry = (payload.entry as Array<{ id?: string; changes?: Array<{ value?: { messages?: Array<{ id?: string }> } }> }>)?.[0];
+    const messageId = entry?.changes?.[0]?.value?.messages?.[0]?.id;
+    return `wa_${messageId || entry?.id || Date.now()}`;
+  }
+  // Fallback: hash do payload
+  return `generic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+}
 
 serve(async (req) => {
   const startTime = Date.now();
@@ -16,16 +65,36 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  try {
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  );
 
-    // Extrair informações do webhook
+  try {
     const url = new URL(req.url);
-    const pathParts = url.pathname.split('/');
+    const rawBody = await req.text();
     
+    // Parse do payload
+    let payload: Record<string, unknown> = {};
+    const contentType = req.headers.get('content-type') || '';
+    
+    if (contentType.includes('application/json') && rawBody) {
+      try {
+        payload = JSON.parse(rawBody);
+      } catch {
+        payload = { raw: rawBody };
+      }
+    } else if (contentType.includes('application/x-www-form-urlencoded')) {
+      const params = new URLSearchParams(rawBody);
+      payload = Object.fromEntries(params.entries());
+    } else if (rawBody) {
+      try {
+        payload = JSON.parse(rawBody);
+      } catch {
+        payload = { raw: rawBody };
+      }
+    }
+
     // Determinar fonte do webhook via headers ou path
     let source = req.headers.get('X-Webhook-Source') || 'unknown';
     let event = req.headers.get('X-Webhook-Event') || 'unknown';
@@ -38,24 +107,9 @@ serve(async (req) => {
     } else if (url.searchParams.get('hub.mode')) {
       source = 'whatsapp';
       event = 'verification';
-    }
-
-    // Parse do payload
-    let payload: Record<string, unknown> = {};
-    const contentType = req.headers.get('content-type') || '';
-    
-    if (contentType.includes('application/json')) {
-      payload = await req.json();
-    } else if (contentType.includes('application/x-www-form-urlencoded')) {
-      const formData = await req.formData();
-      payload = Object.fromEntries(formData.entries());
-    } else {
-      const text = await req.text();
-      try {
-        payload = JSON.parse(text);
-      } catch {
-        payload = { raw: text };
-      }
+    } else if (payload.entry && Array.isArray(payload.entry)) {
+      source = 'whatsapp';
+      event = 'incoming_message';
     }
 
     // Auto-detectar evento baseado no payload
@@ -63,25 +117,74 @@ serve(async (req) => {
       event = String(payload.event);
     } else if (source === 'wordpress' && payload.action) {
       event = String(payload.action);
-    } else if (payload.entry && Array.isArray(payload.entry)) {
-      source = 'whatsapp';
-      event = 'incoming_message';
     }
 
-    // Validação de segurança para Hotmart
+    const clientIP = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+
+    // ===============================================
+    // 3.2.1 - VALIDAÇÃO HMAC PARA CADA WEBHOOK
+    // ===============================================
+    
+    // Validação de segurança para Hotmart (Hottok)
     if (source === 'hotmart') {
       const hottok = req.headers.get('X-Hotmart-Hottok');
       const expectedHottok = Deno.env.get('HOTMART_HOTTOK');
       
-      if (hottok && expectedHottok && hottok !== expectedHottok) {
-        console.error('Invalid Hotmart Hottok');
+      if (expectedHottok && hottok !== expectedHottok) {
+        // Registrar evento de segurança: assinatura inválida
+        await supabase.from('security_events').insert({
+          event_type: 'INVALID_HMAC',
+          severity: 'warning',
+          source: 'hotmart',
+          ip_address: clientIP,
+          user_agent: userAgent,
+          description: 'Webhook Hotmart com Hottok inválido',
+          payload: { received_hottok: hottok ? hottok.substring(0, 10) + '...' : null }
+        });
+        
+        console.error(`🚨 [SECURITY] Invalid Hotmart Hottok from ${clientIP}`);
+        
         return new Response(JSON.stringify({ 
           status: 'error', 
-          message: 'Invalid authentication' 
+          message: 'Invalid authentication',
+          code: 'INVALID_HMAC'
         }), { 
-          status: 401, 
+          status: 403, 
           headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
         });
+      }
+    }
+
+    // Validação HMAC para WhatsApp (Meta)
+    if (source === 'whatsapp' && event !== 'verification') {
+      const signature = req.headers.get('x-hub-signature-256');
+      const appSecret = Deno.env.get('WHATSAPP_APP_SECRET');
+      
+      if (appSecret && signature && rawBody) {
+        const isValid = await validateHMAC(rawBody, signature, appSecret);
+        
+        if (!isValid) {
+          await supabase.from('security_events').insert({
+            event_type: 'INVALID_HMAC',
+            severity: 'warning',
+            source: 'whatsapp',
+            ip_address: clientIP,
+            user_agent: userAgent,
+            description: 'Webhook WhatsApp com assinatura HMAC inválida'
+          });
+          
+          console.error(`🚨 [SECURITY] Invalid WhatsApp HMAC from ${clientIP}`);
+          
+          return new Response(JSON.stringify({ 
+            status: 'error', 
+            message: 'Invalid signature',
+            code: 'INVALID_HMAC'
+          }), { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          });
+        }
       }
     }
 
@@ -94,27 +197,70 @@ serve(async (req) => {
       const verifyToken = Deno.env.get('WHATSAPP_VERIFY_TOKEN');
       
       if (mode === 'subscribe' && token === verifyToken) {
-        console.log('WhatsApp webhook verified');
+        console.log('✅ WhatsApp webhook verified');
         return new Response(challenge, { status: 200 });
       }
+      
+      await supabase.from('security_events').insert({
+        event_type: 'INVALID_VERIFICATION',
+        severity: 'warning',
+        source: 'whatsapp',
+        ip_address: clientIP,
+        description: 'Tentativa de verificação WhatsApp com token inválido'
+      });
       
       return new Response('Forbidden', { status: 403 });
     }
 
-    // Enfileirar webhook para processamento assíncrono
+    // ===============================================
+    // 3.1.3 - IDEMPOTÊNCIA VIA external_event_id
+    // ===============================================
+    
+    const externalEventId = generateExternalEventId(source, payload);
+
+    // Tentar inserir com constraint de unicidade
     const { data, error } = await supabase
       .from('webhooks_queue')
-      .insert({
+      .upsert({
         source,
         event,
         payload,
+        external_event_id: externalEventId,
         status: 'pending'
+      }, {
+        onConflict: 'source,external_event_id,event',
+        ignoreDuplicates: true
       })
       .select()
       .single();
 
+    const processingTime = Date.now() - startTime;
+
+    // Se não inseriu (duplicata), retornar sucesso silencioso
+    if (error && error.code === '23505') {
+      console.log(`⏭️ Duplicate webhook ignored: ${source}:${event}:${externalEventId}`);
+      return new Response(JSON.stringify({ 
+        status: 'duplicate',
+        message: 'Event already processed',
+        external_event_id: externalEventId,
+        processing_time_ms: processingTime
+      }), { 
+        status: 200, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
     if (error) {
       console.error('Failed to queue webhook:', error);
+      
+      await supabase.from('security_events').insert({
+        event_type: 'QUEUE_ERROR',
+        severity: 'critical',
+        source,
+        description: `Falha ao enfileirar webhook: ${error.message}`,
+        payload: { error: error.message, event }
+      });
+      
       return new Response(JSON.stringify({ 
         status: 'error', 
         message: 'Failed to queue webhook',
@@ -125,17 +271,19 @@ serve(async (req) => {
       });
     }
 
-    const processingTime = Date.now() - startTime;
-    console.log(`✅ Webhook queued: ${source}:${event} in ${processingTime}ms - ID: ${data.id}`);
+    console.log(`✅ Webhook queued: ${source}:${event} in ${processingTime}ms - ID: ${data?.id}`);
 
     // Disparar processamento assíncrono (fire and forget)
-    supabase.functions.invoke('queue-worker', {
-      body: { queue_id: data.id }
-    }).catch(err => console.error('Failed to invoke worker:', err));
+    if (data?.id) {
+      supabase.functions.invoke('queue-worker', {
+        body: { queue_id: data.id }
+      }).catch(err => console.error('Failed to invoke worker:', err));
+    }
 
     return new Response(JSON.stringify({ 
       status: 'queued',
-      queue_id: data.id,
+      queue_id: data?.id,
+      external_event_id: externalEventId,
       source,
       event,
       processing_time_ms: processingTime
@@ -146,6 +294,19 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Webhook handler error:', error);
+    
+    // Log do erro crítico
+    try {
+      await supabase.from('security_events').insert({
+        event_type: 'HANDLER_ERROR',
+        severity: 'critical',
+        source: 'webhook-handler',
+        description: error instanceof Error ? error.message : 'Unknown error'
+      });
+    } catch (logError) {
+      console.error('Failed to log security event:', logError);
+    }
+    
     return new Response(JSON.stringify({ 
       status: 'error', 
       message: error instanceof Error ? error.message : 'Unknown error' 
