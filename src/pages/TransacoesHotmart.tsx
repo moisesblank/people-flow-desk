@@ -68,14 +68,23 @@ export default function TransacoesHotmart() {
   const [selectedTransacao, setSelectedTransacao] = useState<Transacao | null>(null);
   const { toast } = useToast();
 
-  // Stats
+  // Stats - últimos 2 meses
   const [stats, setStats] = useState({
     total: 0,
     aprovadas: 0,
     canceladas: 0,
-    receitaTotal: 0,
-    receitaMes: 0
+    receitaAprovadas: 0,
+    receitaCanceladas: 0
   });
+
+  // Calcula a data de 2 meses atrás
+  const getDateTwoMonthsAgo = () => {
+    const date = new Date();
+    date.setMonth(date.getMonth() - 2);
+    date.setDate(1);
+    date.setHours(0, 0, 0, 0);
+    return date.toISOString();
+  };
 
   useEffect(() => {
     fetchTransacoes();
@@ -98,17 +107,19 @@ export default function TransacoesHotmart() {
   const fetchTransacoes = async () => {
     setIsLoading(true);
     try {
+      const twoMonthsAgo = getDateTwoMonthsAgo();
+      
       const { data, error } = await supabase
         .from("transacoes_hotmart_completo")
         .select("*")
-        .order("created_at", { ascending: false })
-        .limit(500);
+        .gte("created_at", twoMonthsAgo)
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
 
       setTransacoes(data || []);
 
-      // Calcular stats
+      // Calcular stats - últimos 2 meses
       const aprovadas = data?.filter(t => 
         ["approved", "purchase_approved", "purchase_complete"].includes(t.status?.toLowerCase() || "")
       ) || [];
@@ -117,23 +128,15 @@ export default function TransacoesHotmart() {
         ["canceled", "purchase_canceled", "refunded", "purchase_refunded", "chargeback"].includes(t.status?.toLowerCase() || "")
       ) || [];
 
-      const receitaTotal = aprovadas.reduce((sum, t) => sum + (t.valor_bruto || 0), 0);
-
-      // Receita do mês atual
-      const mesAtual = new Date();
-      mesAtual.setDate(1);
-      mesAtual.setHours(0, 0, 0, 0);
-      
-      const receitaMes = aprovadas
-        .filter(t => new Date(t.created_at) >= mesAtual)
-        .reduce((sum, t) => sum + (t.valor_bruto || 0), 0);
+      const receitaAprovadas = aprovadas.reduce((sum, t) => sum + (t.valor_bruto || 0), 0);
+      const receitaCanceladas = canceladas.reduce((sum, t) => sum + (t.valor_bruto || 0), 0);
 
       setStats({
         total: data?.length || 0,
         aprovadas: aprovadas.length,
         canceladas: canceladas.length,
-        receitaTotal,
-        receitaMes
+        receitaAprovadas,
+        receitaCanceladas
       });
 
     } catch (error) {
@@ -191,17 +194,17 @@ export default function TransacoesHotmart() {
     <div className="min-h-screen bg-background p-6 space-y-6">
       <FuturisticPageHeader
         title="Transações Hotmart"
-        subtitle="Acompanhamento completo de todas as transações"
+        subtitle="Últimos 2 meses - Compras aprovadas e canceladas"
         icon={CreditCard}
       />
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Últimos 2 meses */}
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
         <Card>
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Total Transações</p>
+                <p className="text-sm text-muted-foreground">Total (2 meses)</p>
                 <p className="text-2xl font-bold">{stats.total}</p>
               </div>
               <CreditCard className="h-8 w-8 text-primary/30" />
@@ -209,11 +212,11 @@ export default function TransacoesHotmart() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-green-500/20 bg-green-500/5">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Aprovadas</p>
+                <p className="text-sm text-muted-foreground">Aprovadas (2 meses)</p>
                 <p className="text-2xl font-bold text-green-500">{stats.aprovadas}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-500/30" />
@@ -221,11 +224,11 @@ export default function TransacoesHotmart() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-red-500/20 bg-red-500/5">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Canceladas</p>
+                <p className="text-sm text-muted-foreground">Canceladas (2 meses)</p>
                 <p className="text-2xl font-bold text-red-500">{stats.canceladas}</p>
               </div>
               <XCircle className="h-8 w-8 text-red-500/30" />
@@ -233,26 +236,26 @@ export default function TransacoesHotmart() {
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-green-500/20 bg-green-500/5">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Receita Total</p>
-                <p className="text-2xl font-bold text-primary">{formatCurrency(stats.receitaTotal)}</p>
+                <p className="text-sm text-muted-foreground">Receita Aprovadas</p>
+                <p className="text-2xl font-bold text-green-500">{formatCurrency(stats.receitaAprovadas)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-primary/30" />
+              <DollarSign className="h-8 w-8 text-green-500/30" />
             </div>
           </CardContent>
         </Card>
 
-        <Card>
+        <Card className="border-red-500/20 bg-red-500/5">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Receita Mês</p>
-                <p className="text-2xl font-bold text-green-500">{formatCurrency(stats.receitaMes)}</p>
+                <p className="text-sm text-muted-foreground">Valor Canceladas</p>
+                <p className="text-2xl font-bold text-red-500">{formatCurrency(stats.receitaCanceladas)}</p>
               </div>
-              <TrendingUp className="h-8 w-8 text-green-500/30" />
+              <TrendingUp className="h-8 w-8 text-red-500/30" />
             </div>
           </CardContent>
         </Card>
