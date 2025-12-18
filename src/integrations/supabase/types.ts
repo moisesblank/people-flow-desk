@@ -6087,7 +6087,7 @@ export type Database = {
           last_ai_response: string | null
           last_contact: string
           last_message: string | null
-          name: string
+          nome: string
           notes: string | null
           phone: string | null
           source: string
@@ -6105,7 +6105,7 @@ export type Database = {
           last_ai_response?: string | null
           last_contact?: string
           last_message?: string | null
-          name: string
+          nome: string
           notes?: string | null
           phone?: string | null
           source?: string
@@ -6123,7 +6123,7 @@ export type Database = {
           last_ai_response?: string | null
           last_contact?: string
           last_message?: string | null
-          name?: string
+          nome?: string
           notes?: string | null
           phone?: string | null
           source?: string
