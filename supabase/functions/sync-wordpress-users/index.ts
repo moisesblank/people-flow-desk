@@ -34,7 +34,8 @@ serve(async (req) => {
     };
 
     if (WP_API_TOKEN) {
-      headers['Authorization'] = `Bearer ${WP_API_TOKEN}`;
+      // WordPress Application Passwords usa Basic Auth
+      headers['Authorization'] = `Basic ${WP_API_TOKEN}`;
     }
 
     let page = 1;
