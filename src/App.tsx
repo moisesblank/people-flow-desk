@@ -82,10 +82,10 @@ const queryClient = new QueryClient({
 // BUILD TIMESTAMP - Performance Optimized
 console.log('🚀 PLATAFORMA v10.1 - Performance Optimized');
 
-// Loading component
+// Ultra-fast loading component - minimal DOM, CSS only
 const PageLoader = () => (
   <div className="min-h-screen bg-background flex items-center justify-center">
-    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+    <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
   </div>
 );
 

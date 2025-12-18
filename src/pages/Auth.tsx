@@ -282,9 +282,7 @@ export default function Auth() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="animate-spin" style={{ animationDuration: '2s' }}>
-          <Atom className="h-12 w-12 text-primary" />
-        </div>
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
       </div>
     );
   }
