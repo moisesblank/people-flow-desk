@@ -59,7 +59,12 @@ export type SystemArea =
   | "configuracoes"
   | "monitoramento"
   | "central-whatsapp"
-  | "diagnostico-whatsapp";
+  | "diagnostico-whatsapp"
+  | "auditoria-acessos"
+  | "central-monitoramento"
+  | "central-ias"
+  | "central-metricas"
+  | "documentos";
 
 // Mapeamento de URLs para áreas
 const URL_TO_AREA: Record<string, SystemArea> = {
@@ -100,6 +105,11 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/monitoramento": "monitoramento",
   "/central-whatsapp": "central-whatsapp",
   "/diagnostico-whatsapp": "diagnostico-whatsapp",
+  "/auditoria-acessos": "auditoria-acessos",
+  "/central-monitoramento": "central-monitoramento",
+  "/central-ias": "central-ias",
+  "/central-metricas": "central-metricas",
+  "/documentos": "documentos",
 };
 
 // ============================================
@@ -114,7 +124,8 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "financas-pessoais", "financas-empresa", "entradas", "pagamentos", "contabilidade",
     "cursos", "simulados", "afiliados", "alunos", "portal-aluno", "gestao-site",
     "relatorios", "guia", "laboratorio", "site-programador", "pessoal", "vida-pessoal",
-    "permissoes", "configuracoes", "monitoramento", "central-whatsapp", "diagnostico-whatsapp"
+    "permissoes", "configuracoes", "monitoramento", "central-whatsapp", "diagnostico-whatsapp",
+    "auditoria-acessos", "central-monitoramento", "central-ias", "central-metricas", "documentos"
   ],
 
   // ADMIN - Igual owner mas sem vida pessoal e monitoramento
