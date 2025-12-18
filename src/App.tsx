@@ -7,11 +7,9 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { GodModeProvider } from "@/contexts/GodModeContext";
 import { RoleProtectedRoute } from "@/components/layout/RoleProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { GodModePanel } from "@/components/editor/GodModePanel";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
 import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
-import { AITramonGlobal } from "@/components/ai/AITramonGlobal";
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -70,10 +68,19 @@ const CentralMonitoramento = lazy(() => import("./pages/CentralMonitoramento"));
 const CentralIAs = lazy(() => import("./pages/CentralIAs"));
 const TransacoesHotmart = lazy(() => import("./pages/TransacoesHotmart"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 1000 * 60 * 5, // 5 minutos
+      gcTime: 1000 * 60 * 30, // 30 minutos  
+      retry: 1,
+      refetchOnWindowFocus: false,
+    },
+  },
+});
 
-// BUILD TIMESTAMP: 2024-12-17T18:55:00Z - FORCE CACHE REFRESH
-console.log('🚀 PLATAFORMA MOISÉS MEDEIROS v10.0 - Build: 2024-12-17T18:55:00Z');
+// BUILD TIMESTAMP - Performance Optimized
+console.log('🚀 PLATAFORMA v10.1 - Performance Optimized');
 
 // Loading component
 const PageLoader = () => (
@@ -111,19 +118,26 @@ function useGlobalShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-// App wrapper with shortcuts overlay
+// App wrapper with shortcuts overlay - Lazy load heavy components
+const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
+const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
+
 function AppContent() {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
 
   return (
     <>
       <SessionTracker />
-      <GodModePanel />
+      <Suspense fallback={null}>
+        <LazyGodModePanel />
+      </Suspense>
       <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
       
-      {/* AI TRAMON GLOBAL - APARECE EM TODAS AS PÁGINAS */}
-      <AITramonGlobal />
+      {/* AI TRAMON - Lazy loaded */}
+      <Suspense fallback={null}>
+        <LazyAITramon />
+      </Suspense>
       
       <Suspense fallback={<PageLoader />}>
         <Routes>
