@@ -44,8 +44,8 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 interface Lead {
   id: string;
   external_id: string | null;
-  name: string;
-  phone: string;
+  nome: string;
+  phone: string | null;
   email: string | null;
   source: string;
   status: string;
@@ -55,6 +55,7 @@ interface Lead {
   contact_count: number;
   tags: string[] | null;
   notes: string | null;
+  assigned_to: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -152,8 +153,8 @@ export default function LeadsWhatsApp() {
     if (searchTerm) {
       result = result.filter(
         (lead) =>
-          lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          lead.phone.includes(searchTerm) ||
+          lead.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          lead.phone?.includes(searchTerm) ||
           lead.last_message?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -336,7 +337,7 @@ export default function LeadsWhatsApp() {
                   <CardTitle className="flex items-center justify-between">
                     <span className="truncate flex items-center gap-2">
                       <User className="h-4 w-4" />
-                      {lead.name}
+                      {lead.nome}
                     </span>
                     <Badge className={`${config.color} text-white`}>
                       <Icon className="h-3 w-3 mr-1" />
@@ -347,7 +348,7 @@ export default function LeadsWhatsApp() {
                 <CardContent className="space-y-2">
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Phone className="h-4 w-4" />
-                    <span>{lead.phone}</span>
+                    <span>{lead.phone || 'N/A'}</span>
                   </div>
                   {lead.email && (
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -388,7 +389,7 @@ export default function LeadsWhatsApp() {
             <DialogTitle className="flex items-center justify-between">
               <span className="flex items-center gap-2">
                 <User className="h-5 w-5" />
-                {selectedLead?.name}
+                {selectedLead?.nome}
               </span>
               {selectedLead && (
                 <Badge className={`${statusConfig[selectedLead.status as keyof typeof statusConfig]?.color || 'bg-gray-500'} text-white`}>
