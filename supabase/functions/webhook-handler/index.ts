@@ -38,23 +38,34 @@ async function validateHMAC(payload: string, signature: string, secret: string):
 }
 
 // Gerar external_event_id único baseado no payload
-function generateExternalEventId(source: string, payload: Record<string, unknown>): string {
+// Retorna null para fontes que não suportam idempotência
+function generateExternalEventId(source: string, payload: Record<string, unknown>): string | null {
   // Usar IDs específicos de cada fonte para garantir idempotência
   if (source === 'hotmart') {
     const data = payload.data as Record<string, unknown> | undefined;
     const purchase = data?.purchase as Record<string, unknown> | undefined;
-    return `hotmart_${purchase?.transaction || payload.hottok || Date.now()}`;
+    const transactionId = purchase?.transaction || (payload as Record<string, unknown>).hottok;
+    if (transactionId) {
+      return `hotmart_${transactionId}`;
+    }
+    return null;
   }
   if (source === 'wordpress') {
-    return `wp_${payload.user_id || ''}_${payload.action || ''}_${payload.timestamp || Date.now()}`;
+    if (payload.user_id && payload.action) {
+      return `wp_${payload.user_id}_${payload.action}_${payload.timestamp || ''}`;
+    }
+    return null;
   }
   if (source === 'whatsapp') {
     const entry = (payload.entry as Array<{ id?: string; changes?: Array<{ value?: { messages?: Array<{ id?: string }> } }> }>)?.[0];
     const messageId = entry?.changes?.[0]?.value?.messages?.[0]?.id;
-    return `wa_${messageId || entry?.id || Date.now()}`;
+    if (messageId || entry?.id) {
+      return `wa_${messageId || entry?.id}`;
+    }
+    return null;
   }
-  // Fallback: hash do payload
-  return `generic_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  // Fontes desconhecidas não têm idempotência automática
+  return null;
 }
 
 serve(async (req) => {
@@ -217,38 +228,61 @@ serve(async (req) => {
     // ===============================================
     
     const externalEventId = generateExternalEventId(source, payload);
+    
+    let data: { id: string } | null = null;
+    let error: { code?: string; message: string } | null = null;
 
-    // Tentar inserir com constraint de unicidade
-    const { data, error } = await supabase
-      .from('webhooks_queue')
-      .upsert({
-        source,
-        event,
-        payload,
-        external_event_id: externalEventId,
-        status: 'pending'
-      }, {
-        onConflict: 'source,external_event_id,event',
-        ignoreDuplicates: true
-      })
-      .select()
-      .single();
+    if (externalEventId) {
+      // Com external_event_id: usar upsert com idempotência
+      const result = await supabase
+        .from('webhooks_queue')
+        .upsert({
+          source,
+          event,
+          payload,
+          external_event_id: externalEventId,
+          status: 'pending'
+        }, {
+          onConflict: 'source,external_event_id,event',
+          ignoreDuplicates: true
+        })
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+      
+      // Se é duplicata, retornar sucesso silencioso
+      if (error && error.code === '23505') {
+        console.log(`⏭️ Duplicate webhook ignored: ${source}:${event}:${externalEventId}`);
+        return new Response(JSON.stringify({ 
+          status: 'duplicate',
+          message: 'Event already processed',
+          external_event_id: externalEventId,
+          processing_time_ms: Date.now() - startTime
+        }), { 
+          status: 200, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+      }
+    } else {
+      // Sem external_event_id: INSERT simples (sem idempotência)
+      const result = await supabase
+        .from('webhooks_queue')
+        .insert({
+          source,
+          event,
+          payload,
+          status: 'pending'
+        })
+        .select()
+        .single();
+      
+      data = result.data;
+      error = result.error;
+    }
 
     const processingTime = Date.now() - startTime;
-
-    // Se não inseriu (duplicata), retornar sucesso silencioso
-    if (error && error.code === '23505') {
-      console.log(`⏭️ Duplicate webhook ignored: ${source}:${event}:${externalEventId}`);
-      return new Response(JSON.stringify({ 
-        status: 'duplicate',
-        message: 'Event already processed',
-        external_event_id: externalEventId,
-        processing_time_ms: processingTime
-      }), { 
-        status: 200, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-      });
-    }
 
     if (error) {
       console.error('Failed to queue webhook:', error);

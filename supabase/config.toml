@@ -101,3 +101,6 @@ verify_jwt = false
 
 [functions.sync-wordpress-users]
 verify_jwt = false
+
+[functions.reports-api]
+verify_jwt = false
