@@ -21,7 +21,6 @@ import {
   Atom,
   Zap,
   ArrowRight,
-  Hexagon,
   CircuitBoard,
   Fingerprint
 } from "lucide-react";
@@ -41,11 +40,11 @@ import { EditableImage } from "@/components/editor/EditableImage";
 import { EditModeToggle } from "@/components/editor/EditModeToggle";
 import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
 
-// Animated Cyber Grid Background
+// Simplified Cyber Grid Background - Performance Optimized
 function CyberGrid() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Grid Pattern */}
+      {/* Static Grid Pattern */}
       <div 
         className="absolute inset-0 opacity-[0.03]"
         style={{
@@ -57,49 +56,13 @@ function CyberGrid() {
         }}
       />
       
-      {/* Animated Lines */}
-      {[...Array(5)].map((_, i) => (
-        <motion.div
-          key={`h-${i}`}
-          className="absolute h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent"
-          style={{ top: `${20 + i * 20}%` }}
-          animate={{
-            opacity: [0.1, 0.4, 0.1],
-            scaleX: [0.8, 1, 0.8],
-          }}
-          transition={{
-            duration: 4 + i,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: i * 0.5,
-          }}
-        />
-      ))}
-      
-      {/* Floating Hexagons */}
-      {[...Array(8)].map((_, i) => (
-        <motion.div
-          key={`hex-${i}`}
-          className="absolute"
-          style={{
-            left: `${10 + (i % 4) * 25}%`,
-            top: `${15 + Math.floor(i / 4) * 50}%`,
-          }}
-          animate={{
-            y: [0, -20, 0],
-            rotate: [0, 180, 360],
-            opacity: [0.1, 0.3, 0.1],
-          }}
-          transition={{
-            duration: 8 + i * 2,
-            repeat: Infinity,
-            ease: "easeInOut",
-            delay: i * 0.3,
-          }}
-        >
-          <Hexagon className="w-8 h-8 text-primary/20" strokeWidth={1} />
-        </motion.div>
-      ))}
+      {/* Single animated line for subtle effect */}
+      <motion.div
+        className="absolute h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent"
+        style={{ top: '50%' }}
+        animate={{ opacity: [0.1, 0.3, 0.1] }}
+        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      />
     </div>
   );
 }
@@ -124,78 +87,24 @@ function SpiderWebPattern() {
   );
 }
 
-// Glowing Orbs
+// Simplified Glowing Orbs - Single orb only
 function GlowingOrbs() {
   return (
-    <>
-      <motion.div
-        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(139, 0, 0, 0.15) 0%, transparent 70%)',
-        }}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.3, 0.5, 0.3],
-        }}
-        transition={{
-          duration: 8,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(80, 0, 0, 0.2) 0%, transparent 70%)',
-        }}
-        animate={{
-          scale: [1.2, 1, 1.2],
-          opacity: [0.2, 0.4, 0.2],
-        }}
-        transition={{
-          duration: 6,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      />
-    </>
+    <div
+      className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-30"
+      style={{
+        background: 'radial-gradient(circle, rgba(139, 0, 0, 0.15) 0%, transparent 70%)',
+      }}
+    />
   );
 }
 
-// Circuit Lines Animation
+// Removed CircuitLines - too heavy for performance
 function CircuitLines() {
-  return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {[...Array(6)].map((_, i) => (
-        <motion.div
-          key={i}
-          className="absolute"
-          style={{
-            left: `${i * 20}%`,
-            top: 0,
-            width: '2px',
-            height: '100%',
-          }}
-        >
-          <motion.div
-            className="w-full h-20 bg-gradient-to-b from-transparent via-primary/40 to-transparent"
-            animate={{
-              y: ['-100%', '500%'],
-            }}
-            transition={{
-              duration: 3 + i * 0.5,
-              repeat: Infinity,
-              ease: "linear",
-              delay: i * 0.8,
-            }}
-          />
-        </motion.div>
-      ))}
-    </div>
-  );
+  return null;
 }
 
-// Stats Display
+// Stats Display - Simplified
 function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) {
   return (
     <div className="flex flex-wrap justify-center gap-4 mt-8 w-full">
@@ -204,26 +113,12 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
           key={i}
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 + i * 0.1 }}
-          className="text-center px-6 py-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm min-w-[120px]"
-          whileHover={{ 
-            borderColor: 'rgba(139, 0, 0, 0.5)',
-            backgroundColor: 'rgba(139, 0, 0, 0.1)'
-          }}
+          transition={{ delay: 0.3 + i * 0.1 }}
+          className="text-center px-6 py-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm min-w-[120px] hover:border-primary/50 hover:bg-primary/10 transition-colors"
         >
-          <motion.div
-            className="text-2xl xl:text-3xl font-bold text-primary"
-            animate={{ 
-              textShadow: [
-                '0 0 10px rgba(139, 0, 0, 0.5)',
-                '0 0 20px rgba(139, 0, 0, 0.8)',
-                '0 0 10px rgba(139, 0, 0, 0.5)',
-              ]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
+          <div className="text-2xl xl:text-3xl font-bold text-primary">
             {stat.value}
-          </motion.div>
+          </div>
           <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">
             {stat.label}
           </div>
