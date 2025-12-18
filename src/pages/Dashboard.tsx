@@ -93,6 +93,10 @@ import { RoleManagementWidget } from "@/components/dashboard/RoleManagementWidge
 import { SystemPulseWidget } from "@/components/dashboard/SystemPulseWidget";
 import { HolographicDataCard } from "@/components/dashboard/HolographicDataCard";
 import { NeuralNetworkBackground } from "@/components/dashboard/NeuralNetworkBackground";
+// TRAMON v8 - Widgets de Controle
+import { TramonControlWidget } from "@/components/dashboard/TramonControlWidget";
+import { WebhooksStatusWidget } from "@/components/dashboard/WebhooksStatusWidget";
+import { MetricasDiariasWidget } from "@/components/dashboard/MetricasDiariasWidget";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -520,6 +524,15 @@ export default function Dashboard() {
         <section className="mb-8">
           <SystemPulseWidget className="w-full" />
         </section>
+
+        {/* TRAMON v8 - Central de Controle IAs (Owner Only) */}
+        {role === 'owner' && (
+          <section className="grid gap-6 lg:grid-cols-3 mb-8">
+            <TramonControlWidget />
+            <WebhooksStatusWidget />
+            <MetricasDiariasWidget />
+          </section>
+        )}
 
         {/* Advanced KPIs - Business Intelligence */}
         <section className="mb-8">
