@@ -27,7 +27,7 @@ import {
   SidebarGroupContent, SidebarGroupLabel, SidebarHeader,
   SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar,
 } from "@/components/ui/sidebar";
-import { motion, AnimatePresence, Reorder } from "framer-motion";
+import { motion, AnimatePresence, Reorder, useDragControls } from "framer-motion";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { StorageAndBackupWidget } from "./StorageAndBackupWidget";
 
@@ -175,6 +175,25 @@ const menuGroups: MenuGroup[] = [
   },
 ];
 
+function DraggableReorderItem(props: {
+  value: string;
+  onCommit: () => void;
+  children: (startDrag: (e: React.PointerEvent) => void) => React.ReactNode;
+}) {
+  const controls = useDragControls();
+  return (
+    <Reorder.Item
+      value={props.value}
+      dragListener={false}
+      dragControls={controls}
+      onDragEnd={props.onCommit}
+      className="select-none"
+    >
+      {props.children((e) => controls.start(e))}
+    </Reorder.Item>
+  );
+}
+
 function SidebarMenuReorderable(props: {
   groupId: string;
   items: MenuItem[];
@@ -206,7 +225,6 @@ function SidebarMenuReorderable(props: {
   const [orderedAreas, setOrderedAreas] = useState<string[]>(computeOrder());
 
   useEffect(() => {
-    // Mantém sincronizado quando o conteúdo do banco muda
     setOrderedAreas(computeOrder());
   }, [computeOrder]);
 
@@ -220,7 +238,7 @@ function SidebarMenuReorderable(props: {
     await onPersistOrder(next);
   }, [isGodModeActive, onPersistOrder]);
 
-  const renderItem = (item: MenuItem, isDraggable: boolean) => (
+  const renderItem = (item: MenuItem, isDraggable: boolean, startDrag?: (e: React.PointerEvent) => void) => (
     <SidebarMenuItem key={item.area}>
       <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
         <NavLink
@@ -233,12 +251,18 @@ function SidebarMenuReorderable(props: {
           {!collapsed && (
             <span className="flex items-center gap-2 min-w-0">
               {isDraggable && (
-                <span
-                  className="inline-flex items-center justify-center rounded-md px-1.5 py-1 text-muted-foreground/70"
-                  aria-hidden="true"
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startDrag?.(e);
+                  }}
+                  className="inline-flex items-center justify-center rounded-md px-1.5 py-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60"
+                  aria-label="Arrastar item"
                 >
                   <GripVertical className="h-4 w-4" />
-                </span>
+                </button>
               )}
               <span className="truncate" data-editable-key={`nav_${item.area}_title`}>
                 {getContent(`nav_${item.area}_title`, item.title)}
@@ -264,20 +288,141 @@ function SidebarMenuReorderable(props: {
 
   return (
     <Reorder.Group axis="y" values={orderedAreas} onReorder={setOrderedAreas} className="space-y-1">
-      {orderedAreas.map((area) => {
-        const item = orderedItems.find((i) => i.area === area);
-        if (!item) return null;
+      {orderedItems.map((item) => {
+        const area = item.area as string;
         return (
-          <Reorder.Item
+          <DraggableReorderItem
             key={area}
             value={area}
-            onDragEnd={() => persist(orderedAreas)}
-            className="cursor-grab active:cursor-grabbing"
+            onCommit={() => persist([...orderedAreas])}
           >
-            {renderItem(item, true)}
-          </Reorder.Item>
+            {(startDrag) => renderItem(item, true, startDrag)}
+          </DraggableReorderItem>
         );
       })}
+    </Reorder.Group>
+  );
+}
+
+
+function SidebarGroupsReorderable(props: {
+  collapsed: boolean;
+  groups: MenuGroup[];
+  canReorder: boolean;
+  getContent: (key: string, fallback?: string) => string;
+  updateContent: (key: string, value: string, type?: string) => Promise<boolean>;
+  isActive: (path: string) => boolean;
+  isGodModeActive: boolean;
+  isGodModeOwner: boolean;
+}) {
+  const { collapsed, groups, canReorder, getContent, updateContent, isActive, isGodModeActive, isGodModeOwner } = props;
+
+  const persistedGroups = getContent('nav_groups_order', '');
+
+  const computeGroupOrder = useCallback(() => {
+    const ids = groups.map((g) => g.id);
+    if (!persistedGroups) return ids;
+    try {
+      const parsed = JSON.parse(persistedGroups);
+      if (!Array.isArray(parsed)) return ids;
+      const valid = parsed.filter((id: unknown) => typeof id === 'string' && ids.includes(id)) as string[];
+      const rest = ids.filter((id) => !valid.includes(id));
+      return [...valid, ...rest];
+    } catch {
+      return ids;
+    }
+  }, [groups, persistedGroups]);
+
+  const [groupOrder, setGroupOrder] = useState<string[]>(computeGroupOrder());
+
+  useEffect(() => {
+    setGroupOrder(computeGroupOrder());
+  }, [computeGroupOrder]);
+
+  const groupsById = useMemo(() => new Map(groups.map((g) => [g.id, g] as const)), [groups]);
+  const orderedGroups = groupOrder.map((id) => groupsById.get(id)).filter(Boolean) as MenuGroup[];
+
+  const persistGroups = useCallback(
+    async (next: string[]) => {
+      if (!canReorder) return;
+      await updateContent('nav_groups_order', JSON.stringify(next), 'json');
+    },
+    [canReorder, updateContent]
+  );
+
+  const renderGroup = (group: MenuGroup, groupIndex: number, startDrag?: (e: React.PointerEvent) => void) => (
+    <motion.div
+      key={group.id}
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: groupIndex * 0.05 }}
+    >
+      <SidebarGroup>
+        {!collapsed && (
+          <div className="relative mb-2 rounded-lg overflow-hidden h-12 group">
+            <img
+              src={group.image}
+              alt={group.label}
+              className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
+            />
+            <div className={`absolute inset-0 bg-gradient-to-r ${group.color} to-transparent flex items-center px-3`}>
+              {canReorder && (
+                <button
+                  type="button"
+                  onPointerDown={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    startDrag?.(e);
+                  }}
+                  className="mr-2 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10"
+                  aria-label="Arrastar categoria"
+                >
+                  <GripVertical className="h-4 w-4" />
+                </button>
+              )}
+              <span className="text-xs font-bold text-white drop-shadow-lg">{group.label}</span>
+              {group.id === "owner" && <Sparkles className="w-3 h-3 ml-1 text-yellow-300" />}
+            </div>
+          </div>
+        )}
+        <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>{group.label}</SidebarGroupLabel>
+        <SidebarGroupContent>
+          <SidebarMenu>
+            <SidebarMenuReorderable
+              groupId={group.id}
+              items={group.items}
+              collapsed={collapsed}
+              isGodModeActive={isGodModeActive && isGodModeOwner}
+              isActive={isActive}
+              getContent={getContent}
+              onPersistOrder={async (orderedAreas) => {
+                const key = `nav_group_${group.id}_order`;
+                await updateContent(key, JSON.stringify(orderedAreas), 'json');
+              }}
+            />
+          </SidebarMenu>
+        </SidebarGroupContent>
+      </SidebarGroup>
+    </motion.div>
+  );
+
+  if (!canReorder) {
+    return <AnimatePresence>{orderedGroups.map((g, idx) => renderGroup(g, idx))}</AnimatePresence>;
+  }
+
+  return (
+    <Reorder.Group axis="y" values={groupOrder} onReorder={setGroupOrder} className="space-y-2">
+      {orderedGroups.map((group, idx) => (
+        <DraggableReorderItem
+          key={group.id}
+          value={group.id}
+          onCommit={async () => {
+            await persistGroups([...groupOrder]);
+          }}
+        >
+          {(startDrag) => renderGroup(group, idx, startDrag)}
+        </DraggableReorderItem>
+      ))}
     </Reorder.Group>
   );
 }
@@ -316,13 +461,29 @@ export function RoleBasedSidebar() {
 
   // Filtra os grupos de menu baseado nas permissões do usuário
   const filteredMenuGroups = useMemo(() => {
-    return menuGroups
+    const groups = menuGroups
       .map(group => ({
         ...group,
         items: group.items.filter(item => hasAccess(item.area))
       }))
       .filter(group => group.items.length > 0);
-  }, [hasAccess]);
+
+    const persisted = getContent('nav_groups_order', '');
+    if (!persisted) return groups;
+
+    try {
+      const parsed = JSON.parse(persisted);
+      if (!Array.isArray(parsed)) return groups;
+      const ids = groups.map(g => g.id);
+      const valid = parsed.filter((id: unknown) => typeof id === 'string' && ids.includes(id)) as string[];
+      const rest = ids.filter(id => !valid.includes(id));
+      const finalOrder = [...valid, ...rest];
+      const byId = new Map(groups.map(g => [g.id, g] as const));
+      return finalOrder.map(id => byId.get(id)).filter(Boolean) as typeof groups;
+    } catch {
+      return groups;
+    }
+  }, [hasAccess, getContent]);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -374,51 +535,20 @@ export function RoleBasedSidebar() {
         </div>
       </SidebarHeader>
 
+
       <SidebarContent className="px-2">
-        <AnimatePresence>
-          {filteredMenuGroups.map((group, groupIndex) => (
-            <motion.div
-              key={group.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: groupIndex * 0.05 }}
-            >
-              <SidebarGroup>
-                {!collapsed && (
-                  <div className="relative mb-2 rounded-lg overflow-hidden h-12 group">
-                    <img 
-                      src={group.image} 
-                      alt={group.label} 
-                      className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity"
-                    />
-                    <div className={`absolute inset-0 bg-gradient-to-r ${group.color} to-transparent flex items-center px-3`}>
-                      <span className="text-xs font-bold text-white drop-shadow-lg">{group.label}</span>
-                      {group.id === "owner" && <Sparkles className="w-3 h-3 ml-1 text-yellow-300" />}
-                    </div>
-                  </div>
-                )}
-                <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>{group.label}</SidebarGroupLabel>
-                <SidebarGroupContent>
-                  <SidebarMenu>
-                    <SidebarMenuReorderable
-                      groupId={group.id}
-                      items={group.items}
-                      collapsed={collapsed}
-                      isGodModeActive={isGodModeActive && isGodModeOwner}
-                      isActive={isActive}
-                      getContent={getContent}
-                      onPersistOrder={async (orderedAreas) => {
-                        const key = `nav_group_${group.id}_order`;
-                        await updateContent(key, JSON.stringify(orderedAreas), 'json');
-                      }}
-                    />
-                  </SidebarMenu>
-                </SidebarGroupContent>
-              </SidebarGroup>
-            </motion.div>
-          ))}
-        </AnimatePresence>
+        <SidebarGroupsReorderable
+          collapsed={collapsed}
+          groups={filteredMenuGroups}
+          canReorder={isGodModeActive && isGodModeOwner && !collapsed}
+          getContent={getContent}
+          updateContent={updateContent}
+          isActive={isActive}
+          isGodModeActive={isGodModeActive}
+          isGodModeOwner={isGodModeOwner}
+        />
       </SidebarContent>
+
 
       <SidebarFooter className="p-2">
         {/* Storage & Backup Widget */}
