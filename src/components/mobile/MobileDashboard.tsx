@@ -4,7 +4,7 @@
 // ============================================
 
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
@@ -13,7 +13,6 @@ import {
   Search,
   ChevronRight,
   Calendar,
-  Wallet,
   CheckSquare,
   TrendingUp,
   MessageSquare,
@@ -32,6 +31,7 @@ import { useDashboardStats } from "@/hooks/useDataCache";
 import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import type { CalendarTask } from "@/types/calendar";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("pt-BR", {
@@ -77,11 +77,11 @@ export function MobileDashboard() {
   const userName = user?.email?.split("@")[0] || "Usuário";
   const today = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
 
-  const todayTasks = useMemo(() => {
+  const todayTasks = useMemo((): CalendarTask[] => {
     if (!stats?.tasksData) return [];
     const todayStr = format(new Date(), "yyyy-MM-dd");
-    return stats.tasksData
-      .filter((t: any) => t.task_date === todayStr && !t.is_completed)
+    return (stats.tasksData as CalendarTask[])
+      .filter((t) => t.task_date === todayStr && !t.is_completed)
       .slice(0, 3);
   }, [stats?.tasksData]);
 
@@ -221,7 +221,7 @@ export function MobileDashboard() {
 
           {todayTasks.length > 0 ? (
             <div className="space-y-2">
-              {todayTasks.map((task: any, index: number) => (
+              {todayTasks.map((task, index) => (
                 <motion.div
                   key={task.id}
                   initial={{ opacity: 0, x: -10 }}
@@ -232,18 +232,18 @@ export function MobileDashboard() {
                 >
                   <div
                     className={`p-2 rounded-lg ${
-                      task.priority === "alta"
+                      task.priority === "alta" || task.priority === "high"
                         ? "bg-destructive/10"
-                        : task.priority === "media"
+                        : task.priority === "media" || task.priority === "normal"
                         ? "bg-amber-500/10"
                         : "bg-muted"
                     }`}
                   >
                     <CheckSquare
                       className={`h-4 w-4 ${
-                        task.priority === "alta"
+                        task.priority === "alta" || task.priority === "high"
                           ? "text-destructive"
-                          : task.priority === "media"
+                          : task.priority === "media" || task.priority === "normal"
                           ? "text-amber-500"
                           : "text-muted-foreground"
                       }`}
@@ -261,9 +261,9 @@ export function MobileDashboard() {
                   <Badge
                     variant="outline"
                     className={
-                      task.priority === "alta"
+                      task.priority === "alta" || task.priority === "high"
                         ? "border-destructive/50 text-destructive"
-                        : task.priority === "media"
+                        : task.priority === "media" || task.priority === "normal"
                         ? "border-amber-500/50 text-amber-600"
                         : "border-border"
                     }

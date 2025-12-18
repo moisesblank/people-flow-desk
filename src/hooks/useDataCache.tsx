@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import type { CalendarTask, DashboardStats } from "@/types/calendar";
 
 // Cache keys
 export const CACHE_KEYS = {
@@ -39,7 +40,7 @@ export function useDataFetch<T>(
 
 // Dashboard stats hook with caching
 export function useDashboardStats() {
-  return useDataFetch(CACHE_KEYS.dashboardStats, async () => {
+  return useDataFetch<DashboardStats>(CACHE_KEYS.dashboardStats, async () => {
     const [
       employeesRes,
       personalFixedRes,
@@ -84,7 +85,7 @@ export function useDashboardStats() {
       sitePendencias: sitePendenciasRes.data?.length || 0,
       personalExtraData: personalExtraRes.data || [],
       incomeData: incomeRes.data || [],
-      tasksData: calendarTasksRes.data || [],
+      tasksData: (calendarTasksRes.data || []) as CalendarTask[],
       paymentsData: paymentsRes.data || [],
       sitePendenciasData: sitePendenciasRes.data || [],
     };
