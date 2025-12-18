@@ -6,9 +6,8 @@
 // UPGRADE: Feedback melhorado, mensagens claras
 // ============================================
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
 import { 
   Mail, 
   Lock, 
@@ -40,7 +39,7 @@ import { EditableImage } from "@/components/editor/EditableImage";
 import { EditModeToggle } from "@/components/editor/EditModeToggle";
 import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
 
-// Simplified Cyber Grid Background - Performance Optimized
+// Performance Optimized Cyber Grid - CSS Only
 function CyberGrid() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
@@ -56,12 +55,10 @@ function CyberGrid() {
         }}
       />
       
-      {/* Single animated line for subtle effect */}
-      <motion.div
-        className="absolute h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent"
-        style={{ top: '50%' }}
-        animate={{ opacity: [0.1, 0.3, 0.1] }}
-        transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+      {/* CSS-only animated line */}
+      <div 
+        className="absolute h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse"
+        style={{ top: '50%', animationDuration: '4s' }}
       />
     </div>
   );
@@ -104,17 +101,15 @@ function CircuitLines() {
   return null;
 }
 
-// Stats Display - Simplified
+// Stats Display - CSS animations only
 function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) {
   return (
     <div className="flex flex-wrap justify-center gap-4 mt-8 w-full">
       {stats.map((stat, i) => (
-        <motion.div
+        <div
           key={i}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 + i * 0.1 }}
-          className="text-center px-6 py-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm min-w-[120px] hover:border-primary/50 hover:bg-primary/10 transition-colors"
+          className="text-center px-6 py-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm min-w-[120px] hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 animate-fade-in"
+          style={{ animationDelay: `${0.3 + i * 0.1}s`, animationFillMode: 'backwards' }}
         >
           <div className="text-2xl xl:text-3xl font-bold text-primary">
             {stat.value}
@@ -122,7 +117,7 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
           <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">
             {stat.label}
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
@@ -287,12 +282,9 @@ export default function Auth() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-        >
+        <div className="animate-spin" style={{ animationDuration: '2s' }}>
           <Atom className="h-12 w-12 text-primary" />
-        </motion.div>
+        </div>
       </div>
     );
   }
@@ -342,36 +334,28 @@ export default function Auth() {
         
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center items-center w-full p-12">
-          {/* Logo / Brand */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="mb-8"
-          >
+          {/* Logo / Brand - CSS animations */}
+          <div className="mb-8 animate-scale-in">
             <div className="relative">
-              {/* Glow Effect */}
-              <motion.div
-                className="absolute inset-0 rounded-full blur-3xl"
-                style={{ background: 'radial-gradient(circle, rgba(139, 0, 0, 0.4) 0%, transparent 70%)' }}
-                animate={{
-                  scale: [1, 1.3, 1],
-                  opacity: [0.5, 0.8, 0.5],
+              {/* Glow Effect - CSS only */}
+              <div
+                className="absolute inset-0 rounded-full blur-3xl animate-pulse"
+                style={{ 
+                  background: 'radial-gradient(circle, rgba(139, 0, 0, 0.4) 0%, transparent 70%)',
+                  animationDuration: '3s'
                 }}
-                transition={{ duration: 3, repeat: Infinity }}
               />
               
               {/* Hexagonal Frame */}
               <div className="relative w-72 h-72 flex items-center justify-center">
                 <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
-                  <motion.polygon
+                  <polygon
                     points="50,2 95,25 95,75 50,98 5,75 5,25"
                     fill="none"
                     stroke="url(#hexGradient)"
                     strokeWidth="1.5"
-                    animate={{
-                      strokeDasharray: ['0,1000', '1000,0'],
-                    }}
-                    transition={{ duration: 3, ease: "easeInOut" }}
+                    className="animate-dash"
+                    style={{ strokeDasharray: 1000, strokeDashoffset: 1000 }}
                   />
                   <defs>
                     <linearGradient id="hexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
@@ -396,33 +380,21 @@ export default function Auth() {
                 />
               </div>
               
-              {/* Status Indicator */}
-              <motion.div
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/90 to-[#DC143C]/90 backdrop-blur-sm border border-primary/30"
-                animate={{ 
-                  boxShadow: [
-                    '0 0 10px rgba(139, 0, 0, 0.3)',
-                    '0 0 20px rgba(139, 0, 0, 0.6)',
-                    '0 0 10px rgba(139, 0, 0, 0.3)',
-                  ]
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
+              {/* Status Indicator - CSS animation */}
+              <div
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/90 to-[#DC143C]/90 backdrop-blur-sm border border-primary/30 animate-pulse"
+                style={{ animationDuration: '2s' }}
               >
                 <span className="flex items-center gap-1.5 text-xs font-semibold text-white">
                   <Zap className="h-3 w-3" />
                   VERIFICADO
                 </span>
-              </motion.div>
+              </div>
             </div>
-          </motion.div>
+          </div>
 
-          {/* Title */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="text-center mb-6"
-          >
+          {/* Title - CSS animations */}
+          <div className="text-center mb-6 animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'backwards' }}>
             <h1 className="text-4xl xl:text-5xl font-bold text-white mb-3">
               <span className="text-gray-400">Prof.</span>{" "}
               <span className="bg-gradient-to-r from-primary via-[#DC143C] to-primary bg-clip-text text-transparent">
@@ -434,74 +406,52 @@ export default function Auth() {
                 />
               </span>
             </h1>
-            <motion.p
-              className="text-lg text-gray-400"
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
-            >
+            <p className="text-lg text-gray-400 animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
               <EditableText
                 value={getValue("auth_subtitle", "O professor que mais aprova em Medicina")}
                 onSave={(v) => updateValue("auth_subtitle", v)}
                 isEditMode={isEditMode}
                 canEdit={canEdit}
               />
-            </motion.p>
-          </motion.div>
+            </p>
+          </div>
 
-          {/* Feature Pills */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.5 }}
-            className="flex flex-wrap justify-center gap-3 mb-8"
-          >
+          {/* Feature Pills - CSS only */}
+          <div className="flex flex-wrap justify-center gap-3 mb-8 animate-fade-in" style={{ animationDelay: '0.5s', animationFillMode: 'backwards' }}>
             {[
               { icon: Atom, label: "Química Completa" },
               { icon: CircuitBoard, label: "Metodologia Exclusiva" },
               { icon: Shield, label: "Resultados Comprovados" },
             ].map((item, i) => (
-              <motion.div
+              <div
                 key={i}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ delay: 0.6 + i * 0.1 }}
-                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm"
-                whileHover={{ 
-                  scale: 1.05, 
-                  borderColor: 'rgba(139, 0, 0, 0.5)',
-                  backgroundColor: 'rgba(139, 0, 0, 0.1)'
-                }}
+                className="flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 backdrop-blur-sm hover:scale-105 hover:border-primary/50 hover:bg-primary/10 transition-all duration-200 animate-scale-in"
+                style={{ animationDelay: `${0.6 + i * 0.1}s`, animationFillMode: 'backwards' }}
               >
                 <item.icon className="h-4 w-4 text-primary" />
                 <span className="text-sm text-gray-300">{item.label}</span>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
 
           {/* Stats */}
           <StatsDisplay stats={stats} />
 
-          {/* Decorative Elements */}
-          <motion.div
-            className="absolute bottom-8 left-8 flex items-center gap-2 text-gray-500"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 1 }}
+          {/* Decorative Elements - CSS only */}
+          <div 
+            className="absolute bottom-8 left-8 flex items-center gap-2 text-gray-500 animate-fade-in"
+            style={{ animationDelay: '1s', animationFillMode: 'backwards' }}
           >
             <div className="w-8 h-px bg-gradient-to-r from-transparent to-primary/50" />
             <span className="text-xs uppercase tracking-widest">Sistema de Gestão</span>
-          </motion.div>
+          </div>
         </div>
 
-        {/* Vertical Separator */}
+        {/* Vertical Separator - CSS only */}
         <div className="absolute right-0 top-0 bottom-0 w-px">
-          <motion.div
-            className="h-full w-full bg-gradient-to-b from-transparent via-primary/30 to-transparent"
-            animate={{
-              opacity: [0.3, 0.6, 0.3],
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
+          <div 
+            className="h-full w-full bg-gradient-to-b from-transparent via-primary/30 to-transparent animate-pulse"
+            style={{ animationDuration: '3s' }}
           />
         </div>
       </div>
@@ -523,25 +473,16 @@ export default function Auth() {
           <span className="text-sm">Voltar</span>
         </Link>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="w-full max-w-md relative z-10"
-        >
+        <div className="w-full max-w-md relative z-10 animate-fade-in">
           {/* Logo */}
           <div className="text-center mb-8">
-            <motion.div
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="flex justify-center mb-4"
-            >
+            <div className="flex justify-center mb-4 animate-scale-in">
               <img 
                 src={logoMoises} 
                 alt="Moisés Medeiros - Curso de Química" 
                 className="h-24 md:h-28 w-auto drop-shadow-2xl"
               />
-            </motion.div>
+            </div>
           </div>
 
           {/* Card */}
@@ -557,11 +498,7 @@ export default function Auth() {
             
             {/* Header */}
             <div className="text-center mb-8 relative">
-              <motion.div
-                key={isLogin ? "login" : "signup"}
-                initial={{ opacity: 0, y: -10 }}
-                animate={{ opacity: 1, y: 0 }}
-              >
+              <div className="animate-fade-in">
                 <div className="flex flex-col items-center justify-center gap-2 mb-3">
                   <div className="flex items-center gap-2">
                     <Fingerprint className="h-5 w-5 text-primary" />
@@ -586,7 +523,7 @@ export default function Auth() {
                     canEdit={canEdit}
                   />
                 </p>
-              </motion.div>
+              </div>
             </div>
 
             {/* Acesso Restrito Info */}
@@ -610,11 +547,7 @@ export default function Auth() {
             {isForgotPassword ? (
               <div className="space-y-4">
                 {resetEmailSent ? (
-                  <motion.div
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    className="text-center py-8"
-                  >
+                  <div className="text-center py-8 animate-scale-in">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
                       <Mail className="h-8 w-8 text-green-500" />
                     </div>
@@ -632,7 +565,7 @@ export default function Auth() {
                     >
                       Voltar para Login
                     </Button>
-                  </motion.div>
+                  </div>
                 ) : (
                   <form onSubmit={handleForgotPassword} className="space-y-4">
                     <div className="text-center mb-4">
@@ -689,38 +622,30 @@ export default function Auth() {
               </div>
             ) : (
               <form onSubmit={handleSubmit} className="space-y-4">
-              <AnimatePresence mode="wait">
-                {!isLogin && (
-                  <motion.div
-                    key="nome"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Label htmlFor="nome" className="text-sm font-medium text-gray-300">
-                      Nome Completo
-                    </Label>
-                    <div className={`relative mt-1.5 transition-all ${focusedField === 'nome' ? 'scale-[1.02]' : ''}`}>
-                      <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
-                      <Input
-                        id="nome"
-                        name="nome"
-                        type="text"
-                        value={formData.nome}
-                        onChange={handleChange}
-                        onFocus={() => setFocusedField('nome')}
-                        onBlur={() => setFocusedField(null)}
-                        placeholder="Seu nome completo"
-                        className="pl-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
-                      />
-                    </div>
-                    {errors.nome && (
-                      <p className="text-xs text-red-400 mt-1">{errors.nome}</p>
-                    )}
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {!isLogin && (
+                <div className="animate-fade-in">
+                  <Label htmlFor="nome" className="text-sm font-medium text-gray-300">
+                    Nome Completo
+                  </Label>
+                  <div className={`relative mt-1.5 transition-all ${focusedField === 'nome' ? 'scale-[1.02]' : ''}`}>
+                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                    <Input
+                      id="nome"
+                      name="nome"
+                      type="text"
+                      value={formData.nome}
+                      onChange={handleChange}
+                      onFocus={() => setFocusedField('nome')}
+                      onBlur={() => setFocusedField(null)}
+                      placeholder="Seu nome completo"
+                      className="pl-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all"
+                    />
+                  </div>
+                  {errors.nome && (
+                    <p className="text-xs text-red-400 mt-1">{errors.nome}</p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <Label htmlFor="email" className="text-sm font-medium text-gray-300">
@@ -793,34 +718,26 @@ export default function Auth() {
                 )}
               </div>
 
-              <AnimatePresence mode="wait">
-                {!isLogin && (
-                  <motion.div
-                    key="terms"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: "auto" }}
-                    exit={{ opacity: 0, height: 0 }}
-                    className="flex items-start gap-3 pt-2"
-                  >
-                    <Checkbox
-                      id="acceptTerms"
-                      checked={acceptTerms}
-                      onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
-                      className="mt-0.5 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                    />
-                    <Label htmlFor="acceptTerms" className="text-xs text-gray-400 leading-relaxed cursor-pointer">
-                      Eu li e concordo com os{" "}
-                      <Link to="/termos" className="text-primary hover:underline" target="_blank">
-                        Termos de Uso
-                      </Link>{" "}
-                      e a{" "}
-                      <Link to="/privacidade" className="text-primary hover:underline" target="_blank">
-                        Política de Privacidade
-                      </Link>
-                    </Label>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              {!isLogin && (
+                <div className="flex items-start gap-3 pt-2 animate-fade-in">
+                  <Checkbox
+                    id="acceptTerms"
+                    checked={acceptTerms}
+                    onCheckedChange={(checked) => setAcceptTerms(checked as boolean)}
+                    className="mt-0.5 border-white/20 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                  />
+                  <Label htmlFor="acceptTerms" className="text-xs text-gray-400 leading-relaxed cursor-pointer">
+                    Eu li e concordo com os{" "}
+                    <Link to="/termos" className="text-primary hover:underline" target="_blank">
+                      Termos de Uso
+                    </Link>{" "}
+                    e a{" "}
+                    <Link to="/privacidade" className="text-primary hover:underline" target="_blank">
+                      Política de Privacidade
+                    </Link>
+                  </Label>
+                </div>
+              )}
 
               <Button
                 type="submit"
@@ -878,20 +795,16 @@ export default function Auth() {
             </form>
             )}
 
-            {/* Security Badge */}
+            {/* Security Badge - CSS animation */}
             <div className="mt-6 flex justify-center">
-              <motion.div 
-                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10"
-                animate={{
-                  borderColor: ['rgba(255,255,255,0.1)', 'rgba(139,0,0,0.3)', 'rgba(255,255,255,0.1)'],
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
+              <div 
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 hover:border-primary/30 transition-colors duration-300"
               >
                 <Shield className="h-4 w-4 text-green-500" />
                 <span className="text-xs text-gray-400">
                   Conexão criptografada SSL
                 </span>
-              </motion.div>
+              </div>
             </div>
           </div>
 
@@ -899,7 +812,7 @@ export default function Auth() {
           <p className="text-center text-xs text-gray-600 mt-6">
             © 2025 Prof. Moisés Medeiros. Todos os direitos reservados.
           </p>
-        </motion.div>
+        </div>
       </div>
     </div>
   );
