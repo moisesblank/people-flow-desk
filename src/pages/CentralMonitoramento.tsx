@@ -348,7 +348,7 @@ export default function CentralMonitoramento() {
                           <div>
                             <h4 className="font-medium mb-2">Ações Executadas</h4>
                             <div className="flex flex-wrap gap-2">
-                              {(log.acoes_executadas || []).map((acao, i) => (
+                              {(Array.isArray(log.acoes_executadas) ? log.acoes_executadas : []).map((acao: string, i: number) => (
                                 <Badge key={i} variant="outline">
                                   {acao}
                                 </Badge>
