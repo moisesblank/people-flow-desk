@@ -97,6 +97,9 @@ import { NeuralNetworkBackground } from "@/components/dashboard/NeuralNetworkBac
 import { TramonControlWidget } from "@/components/dashboard/TramonControlWidget";
 import { WebhooksStatusWidget } from "@/components/dashboard/WebhooksStatusWidget";
 import { MetricasDiariasWidget } from "@/components/dashboard/MetricasDiariasWidget";
+import { RelatoriosAutomaticosWidget } from "@/components/dashboard/RelatoriosAutomaticosWidget";
+import { IntegracoesStatusWidget } from "@/components/dashboard/IntegracoesStatusWidget";
+import { QuickActionsV2 } from "@/components/dashboard/QuickActionsV2";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -531,6 +534,15 @@ export default function Dashboard() {
             <TramonControlWidget />
             <WebhooksStatusWidget />
             <MetricasDiariasWidget />
+          </section>
+        )}
+
+        {/* TRAMON v8 - Relatórios e Integrações (Owner Only) */}
+        {role === 'owner' && (
+          <section className="grid gap-6 lg:grid-cols-3 mb-8">
+            <RelatoriosAutomaticosWidget />
+            <IntegracoesStatusWidget />
+            <QuickActionsV2 />
           </section>
         )}
 
