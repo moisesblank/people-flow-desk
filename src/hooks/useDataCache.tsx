@@ -31,10 +31,11 @@ export function useDataFetch<T>(
   return useQuery({
     queryKey: key,
     queryFn: fetcher,
-    staleTime: options?.staleTime ?? 5 * 60 * 1000, // 5 minutes default
-    gcTime: options?.cacheTime ?? 10 * 60 * 1000, // 10 minutes default
+    staleTime: options?.staleTime ?? 0, // Sempre buscar dados frescos por padrão
+    gcTime: options?.cacheTime ?? 5 * 60 * 1000, // 5 minutos de cache
     enabled: options?.enabled ?? true,
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true,
+    refetchOnMount: true,
   });
 }
 
@@ -89,7 +90,7 @@ export function useDashboardStats() {
       paymentsData: paymentsRes.data || [],
       sitePendenciasData: sitePendenciasRes.data || [],
     };
-  }, { staleTime: 2 * 60 * 1000 }); // 2 minutes
+  }, { staleTime: 0 }); // Sempre buscar dados frescos
 }
 
 // Employees hook with caching (usa view segura que mascara salários)

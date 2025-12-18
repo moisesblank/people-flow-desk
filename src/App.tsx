@@ -71,10 +71,18 @@ const TransacoesHotmart = lazy(() => import("./pages/TransacoesHotmart"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      staleTime: 1000 * 60 * 5, // 5 minutos
-      gcTime: 1000 * 60 * 30, // 30 minutos  
+      staleTime: 0, // Sempre buscar dados frescos
+      gcTime: 1000 * 60 * 5, // 5 minutos de cache
       retry: 1,
-      refetchOnWindowFocus: false,
+      refetchOnWindowFocus: true, // Refetch ao voltar para a janela
+      refetchOnMount: true, // Refetch ao montar componente
+      refetchOnReconnect: true, // Refetch ao reconectar
+    },
+    mutations: {
+      onSuccess: () => {
+        // Invalidar todo o cache após qualquer mutação
+        queryClient.invalidateQueries();
+      },
     },
   },
 });
