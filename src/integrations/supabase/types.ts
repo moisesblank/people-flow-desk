@@ -2685,7 +2685,7 @@ export type Database = {
           comandos_ia_sucesso?: number | null
           created_at?: string
           custo_aquisicao?: number | null
-          data: string
+          data?: string
           data_referencia?: string | null
           id?: string
           leads_gerados?: number | null
