@@ -1,7 +1,7 @@
 // ============================================
-// SYNAPSE v15.0 - MASTER MODE CONTEXT
+// SYNAPSE v16.0 - MASTER MODE CONTEXT ULTIMATE
 // Context Provider para o MODO MASTER completo
-// Edição em tempo real de textos e imagens
+// Edição em tempo real de QUALQUER elemento
 // Exclusivo para Owner: moisesblank@gmail.com
 // ============================================
 
@@ -17,6 +17,7 @@ interface EditingElement {
   element: HTMLElement;
   originalContent: string;
   contentKey?: string;
+  rect: DOMRect;
 }
 
 interface GodModeContextType {
@@ -38,6 +39,7 @@ interface GodModeContextType {
   // Conteúdo editável
   getContent: (key: string, fallback?: string) => string;
   updateContent: (key: string, value: string, type?: string) => Promise<boolean>;
+  saveDirectToElement: (element: HTMLElement, value: string) => void;
   
   // Histórico
   getHistory: (key: string) => Promise<any[]>;
@@ -57,6 +59,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   const [contentCache, setContentCache] = useState<Record<string, string>>({});
   const [editingElement, setEditingElement] = useState<EditingElement | null>(null);
   const clickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
+  const hoverStylesRef = useRef<Map<HTMLElement, string>>(new Map());
 
   // Verificar usuário e status de owner
   useEffect(() => {
@@ -131,10 +134,110 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     loadContent();
   }, []);
 
+  // Adicionar estilos de hover nos elementos editáveis
+  const addHoverStyles = useCallback(() => {
+    if (!isActive || !isOwner) return;
+
+    const styleId = 'godmode-hover-styles';
+    let styleEl = document.getElementById(styleId);
+    
+    if (!styleEl) {
+      styleEl = document.createElement('style');
+      styleEl.id = styleId;
+      document.head.appendChild(styleEl);
+    }
+
+    styleEl.textContent = `
+      body.godmode-active h1:hover,
+      body.godmode-active h2:hover,
+      body.godmode-active h3:hover,
+      body.godmode-active h4:hover,
+      body.godmode-active h5:hover,
+      body.godmode-active h6:hover,
+      body.godmode-active p:hover,
+      body.godmode-active span:hover,
+      body.godmode-active label:hover,
+      body.godmode-active li:hover,
+      body.godmode-active a:not([data-godmode-panel] *):hover,
+      body.godmode-active img:not([data-godmode-panel] *):hover,
+      body.godmode-active div[class*="text"]:hover {
+        outline: 2px dashed hsl(280 80% 50%) !important;
+        outline-offset: 2px !important;
+        cursor: pointer !important;
+        position: relative;
+      }
+      
+      body.godmode-active h1:hover::after,
+      body.godmode-active h2:hover::after,
+      body.godmode-active h3:hover::after,
+      body.godmode-active p:hover::after,
+      body.godmode-active span:hover::after,
+      body.godmode-active img:hover::after {
+        content: '✏️ Clique para editar';
+        position: absolute;
+        top: -24px;
+        left: 0;
+        font-size: 10px;
+        background: hsl(280 80% 50%);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        white-space: nowrap;
+        z-index: 10000;
+        font-weight: normal;
+        pointer-events: none;
+      }
+      
+      body.godmode-active [data-godmode-editing="true"] {
+        outline: 3px solid hsl(280 80% 50%) !important;
+        outline-offset: 3px !important;
+      }
+      
+      .godmode-indicator {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        z-index: 9999;
+        background: linear-gradient(135deg, hsl(280 80% 50%), hsl(300 80% 60%));
+        color: white;
+        padding: 8px 16px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 4px 20px rgba(168, 85, 247, 0.4);
+        animation: pulse 2s infinite;
+      }
+      
+      @keyframes pulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+      }
+    `;
+
+    document.body.classList.add('godmode-active');
+  }, [isActive, isOwner]);
+
+  const removeHoverStyles = useCallback(() => {
+    const styleEl = document.getElementById('godmode-hover-styles');
+    if (styleEl) {
+      styleEl.remove();
+    }
+    document.body.classList.remove('godmode-active');
+  }, []);
+
+  useEffect(() => {
+    if (isActive && isOwner) {
+      addHoverStyles();
+    } else {
+      removeHoverStyles();
+    }
+
+    return () => removeHoverStyles();
+  }, [isActive, isOwner, addHoverStyles, removeHoverStyles]);
+
   // Handler de clique global para edição em tempo real
   useEffect(() => {
     if (!isOwner || !isActive) {
-      // Remover handler se não estiver ativo
       if (clickHandlerRef.current) {
         document.removeEventListener('click', clickHandlerRef.current, true);
         clickHandlerRef.current = null;
@@ -145,13 +248,23 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       
-      // Ignorar cliques no painel do God Mode e em botões/inputs
+      // Ignorar cliques no painel do God Mode, botões interativos e inputs
       if (
         target.closest('[data-godmode-panel]') ||
+        target.closest('[data-godmode-editing]') ||
+        target.closest('[data-radix-popper-content-wrapper]') ||
+        target.closest('.godmode-indicator') ||
+        target.tagName === 'BUTTON' ||
+        target.tagName === 'INPUT' ||
+        target.tagName === 'TEXTAREA' ||
+        target.tagName === 'SELECT' ||
         target.closest('button') ||
         target.closest('input') ||
         target.closest('textarea') ||
-        target.closest('[data-godmode-editing]')
+        target.closest('select') ||
+        target.closest('[role="button"]') ||
+        target.closest('[role="menuitem"]') ||
+        target.closest('[role="dialog"]')
       ) {
         return;
       }
@@ -170,21 +283,36 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         target.tagName === 'A' ||
         target.tagName === 'LABEL' ||
         target.tagName === 'LI' ||
+        target.tagName === 'TD' ||
+        target.tagName === 'TH' ||
+        target.tagName === 'STRONG' ||
+        target.tagName === 'EM' ||
+        target.tagName === 'B' ||
+        target.tagName === 'I' ||
         (target.tagName === 'DIV' && target.innerText && target.children.length === 0);
 
       if (isImage || isText) {
         e.preventDefault();
         e.stopPropagation();
+        e.stopImmediatePropagation();
 
-        const contentKey = target.dataset.editableKey || `${target.tagName.toLowerCase()}_${Date.now()}`;
+        const rect = target.getBoundingClientRect();
+        const contentKey = 
+          target.dataset.editableKey || 
+          target.id || 
+          `${target.tagName.toLowerCase()}_${target.innerText?.slice(0, 20).replace(/\s+/g, '_') || Date.now()}`;
 
         setEditingElement({
           id: contentKey,
           type: isImage ? 'image' : 'text',
           element: target,
-          originalContent: isImage ? (target as HTMLImageElement).src : target.innerText,
+          originalContent: isImage ? (target as HTMLImageElement).src : target.innerText || '',
           contentKey,
+          rect,
         });
+
+        // Adicionar destaque visual
+        target.setAttribute('data-godmode-editing', 'true');
       }
     };
 
@@ -199,6 +327,15 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     };
   }, [isOwner, isActive]);
 
+  // Limpar highlight quando elemento de edição muda
+  useEffect(() => {
+    return () => {
+      document.querySelectorAll('[data-godmode-editing]').forEach(el => {
+        el.removeAttribute('data-godmode-editing');
+      });
+    };
+  }, [editingElement]);
+
   // Atalho de teclado Ctrl+Shift+E
   useEffect(() => {
     if (!isOwner) return;
@@ -210,6 +347,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
       }
       // ESC para cancelar edição
       if (e.key === 'Escape' && editingElement) {
+        editingElement.element.removeAttribute('data-godmode-editing');
         setEditingElement(null);
       }
     };
@@ -227,11 +365,15 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
       const newState = !prev;
       if (newState) {
         toast.success('🔮 MODO MASTER ativado', {
-          description: 'Clique em qualquer texto ou imagem para editar em tempo real'
+          description: 'Clique em qualquer texto ou imagem para editar',
+          duration: 4000,
         });
       } else {
         toast.info('MODO MASTER desativado');
         setEditingElement(null);
+        document.querySelectorAll('[data-godmode-editing]').forEach(el => {
+          el.removeAttribute('data-godmode-editing');
+        });
       }
       return newState;
     });
@@ -248,6 +390,9 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     if (isActive) {
       setIsActive(false);
       setEditingElement(null);
+      document.querySelectorAll('[data-godmode-editing]').forEach(el => {
+        el.removeAttribute('data-godmode-editing');
+      });
       toast.info('MODO MASTER desativado');
     }
   }, [isActive]);
@@ -255,6 +400,15 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   const getContent = useCallback((key: string, fallback = ''): string => {
     return contentCache[key] ?? fallback;
   }, [contentCache]);
+
+  // Salvar diretamente no elemento (para edição em tempo real)
+  const saveDirectToElement = useCallback((element: HTMLElement, value: string) => {
+    if (element.tagName === 'IMG') {
+      (element as HTMLImageElement).src = value;
+    } else {
+      element.innerText = value;
+    }
+  }, []);
 
   const updateContent = useCallback(async (key: string, value: string, type = 'text'): Promise<boolean> => {
     if (!isOwner) {
@@ -293,14 +447,14 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
             content_key: key,
             content_value: sanitized,
             content_type: type,
-            page_key: key.split('_')[0] || 'global'
+            page_key: window.location.pathname.replace(/\//g, '_') || 'global'
           });
 
         if (insertError) throw insertError;
       }
 
       setContentCache(prev => ({ ...prev, [key]: sanitized }));
-      toast.success('✨ Conteúdo salvo!');
+      toast.success('✨ Salvo com sucesso!');
       return true;
     } catch (err) {
       console.error('Erro ao salvar:', err);
@@ -314,7 +468,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
 
     try {
       const fileExt = file.name.split('.').pop();
-      const fileName = `godmode/${key}-${Date.now()}.${fileExt}`;
+      const fileName = `godmode/${key.replace(/[^a-zA-Z0-9]/g, '_')}-${Date.now()}.${fileExt}`;
 
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -381,6 +535,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     deactivate,
     getContent,
     updateContent,
+    saveDirectToElement,
     getHistory,
     revertToVersion,
     uploadImage,
@@ -389,6 +544,12 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   return (
     <GodModeContext.Provider value={value}>
       {children}
+      {/* Indicador visual quando ativo */}
+      {isActive && isOwner && (
+        <div className="godmode-indicator" data-godmode-panel="true">
+          🔮 MODO MASTER ATIVO
+        </div>
+      )}
     </GodModeContext.Provider>
   );
 }

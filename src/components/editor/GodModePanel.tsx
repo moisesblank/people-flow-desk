@@ -1,23 +1,22 @@
 // ============================================
-// SYNAPSE v15.0 - MASTER MODE PANEL
-// Painel flutuante do MODO MASTER
-// Navegação rápida + Ferramentas de edição
+// SYNAPSE v16.0 - GOD MODE PANEL ULTIMATE
+// Painel de controle para o MODO MASTER
 // ============================================
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGodMode } from '@/contexts/GodModeContext';
 import { useNavigate } from 'react-router-dom';
 import { 
-  Zap, X, Eye, EyeOff, History, Palette, 
-  Type, Image, Settings, ChevronUp, ChevronDown,
+  Zap, X, Eye, EyeOff, 
   Users, Activity, LayoutDashboard, Calendar,
   DollarSign, Brain, Shield, Database, ExternalLink,
-  MousePointer2
+  MousePointer2, Keyboard, Sparkles, Wand2
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { Badge } from '@/components/ui/badge';
+import { Switch } from '@/components/ui/switch';
 import { cn } from '@/lib/utils';
 
 const quickNavItems = [
@@ -32,19 +31,36 @@ const quickNavItems = [
 ];
 
 export function GodModePanel() {
-  const { isOwner, isActive, toggle } = useGodMode();
+  const { isOwner, isActive, isLoading, toggle, deactivate } = useGodMode();
   const navigate = useNavigate();
-  const [isExpanded, setIsExpanded] = useState(false);
-  const [isMinimized, setIsMinimized] = useState(false);
+  const [isMinimized, setIsMinimized] = useState(true);
   const [showNav, setShowNav] = useState(false);
+  const [showTip, setShowTip] = useState(true);
 
-  if (!isOwner) return null;
+  // Esconder dica após 5 segundos
+  useEffect(() => {
+    if (isActive && showTip) {
+      const timeout = setTimeout(() => setShowTip(false), 5000);
+      return () => clearTimeout(timeout);
+    }
+  }, [isActive, showTip]);
+
+  // Resetar dica quando ativa
+  useEffect(() => {
+    if (isActive) {
+      setShowTip(true);
+      setIsMinimized(false);
+    }
+  }, [isActive]);
+
+  // Não mostrar se não for owner ou estiver carregando
+  if (isLoading || !isOwner) return null;
 
   return (
     <>
       {/* Indicador fixo quando ativo */}
       <AnimatePresence>
-        {isActive && !isMinimized && (
+        {isActive && (
           <motion.div
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -53,122 +69,145 @@ export function GodModePanel() {
             style={{
               background: 'linear-gradient(135deg, hsl(280 80% 50%), hsl(328 100% 54%))'
             }}
+            data-godmode-panel="true"
           >
             <MousePointer2 className="w-4 h-4 animate-pulse" />
             MODO MASTER - Clique em qualquer texto/imagem
-            <span className="text-xs opacity-70 ml-2">Ctrl+Shift+E para sair</span>
+            <span className="text-xs opacity-70 ml-2">Ctrl+Shift+E sai</span>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Painel principal */}
-      <motion.div
-        initial={{ opacity: 0, scale: 0.9 }}
-        animate={{ opacity: 1, scale: 1 }}
-        className={cn(
-          "fixed z-[9999] rounded-xl shadow-2xl border border-primary/30 overflow-hidden",
-          isMinimized ? "bottom-4 right-4 w-auto" : "bottom-4 right-4 w-72"
+      {/* Botão flutuante quando minimizado */}
+      <AnimatePresence>
+        {!isActive && isMinimized && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.8, y: 20 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            exit={{ opacity: 0, scale: 0.8, y: 20 }}
+            className="fixed bottom-6 right-6 z-[9998]"
+            data-godmode-panel="true"
+          >
+            <Button
+              onClick={() => {
+                setIsMinimized(false);
+                toggle();
+              }}
+              className={cn(
+                "h-14 w-14 rounded-full shadow-xl transition-all duration-300",
+                "bg-gradient-to-br from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500",
+                "hover:scale-110 hover:shadow-2xl"
+              )}
+              style={{
+                boxShadow: '0 4px 20px rgba(168, 85, 247, 0.4)'
+              }}
+            >
+              <Wand2 className="h-6 w-6 text-white" />
+            </Button>
+            
+            {/* Tooltip */}
+            <motion.div
+              initial={{ opacity: 0, x: 10 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.5 }}
+              className="absolute right-full mr-3 top-1/2 -translate-y-1/2 whitespace-nowrap"
+            >
+              <div className="bg-background/95 backdrop-blur-sm border border-primary/30 rounded-lg px-3 py-2 shadow-xl">
+                <p className="text-xs font-medium text-primary flex items-center gap-2">
+                  <Sparkles className="h-3 w-3" />
+                  Modo Master
+                </p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">
+                  Ctrl+Shift+E
+                </p>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
-        style={{
-          background: 'linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%))'
-        }}
-        data-godmode-panel="true"
-      >
-        {/* Header */}
-        <div 
-          className="p-3 flex items-center justify-between cursor-pointer"
-          style={{
-            background: 'linear-gradient(135deg, hsl(280 80% 30% / 0.5), hsl(328 80% 35% / 0.5))'
-          }}
-          onClick={() => setIsMinimized(!isMinimized)}
-        >
-          <div className="flex items-center gap-2">
-            <Zap className="w-4 h-4 text-primary" />
-            {!isMinimized && (
-              <>
+      </AnimatePresence>
+
+      {/* Painel expandido */}
+      <AnimatePresence>
+        {(!isMinimized || isActive) && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9, x: 20 }}
+            animate={{ opacity: 1, scale: 1, x: 0 }}
+            exit={{ opacity: 0, scale: 0.9, x: 20 }}
+            className="fixed bottom-4 right-4 z-[9999] w-72 rounded-xl shadow-2xl border border-primary/30 overflow-hidden"
+            style={{
+              background: 'linear-gradient(180deg, hsl(0 0% 8%), hsl(0 0% 5%))'
+            }}
+            data-godmode-panel="true"
+          >
+            {/* Header */}
+            <div 
+              className="p-3 flex items-center justify-between"
+              style={{
+                background: 'linear-gradient(135deg, hsl(280 80% 30% / 0.5), hsl(328 80% 35% / 0.5))'
+              }}
+            >
+              <div className="flex items-center gap-2">
+                <Zap className="w-4 h-4 text-primary" />
                 <span className="text-sm font-semibold text-white">MODO MASTER</span>
                 <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 bg-primary/20 border-primary/30 text-primary">
-                  v15.0
+                  v16
                 </Badge>
-              </>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            {!isMinimized && (
+              </div>
               <Button
                 variant="ghost"
                 size="icon"
                 className="h-6 w-6 hover:bg-white/10"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setIsExpanded(!isExpanded);
+                onClick={() => {
+                  if (isActive) deactivate();
+                  setIsMinimized(true);
                 }}
               >
-                {isExpanded ? (
-                  <ChevronDown className="w-3 h-3" />
-                ) : (
-                  <ChevronUp className="w-3 h-3" />
-                )}
+                <X className="w-3 h-3" />
               </Button>
-            )}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="h-6 w-6 hover:bg-white/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                setIsMinimized(!isMinimized);
-              }}
-            >
-              {isMinimized ? <ChevronUp className="w-3 h-3" /> : <X className="w-3 h-3" />}
-            </Button>
-          </div>
-        </div>
+            </div>
 
-        {/* Content */}
-        <AnimatePresence>
-          {!isMinimized && (
-            <motion.div
-              initial={{ height: 0, opacity: 0 }}
-              animate={{ height: 'auto', opacity: 1 }}
-              exit={{ height: 0, opacity: 0 }}
-              className="p-3 space-y-3"
-            >
+            {/* Content */}
+            <div className="p-3 space-y-3">
               {/* Toggle principal */}
-              <Button
-                onClick={toggle}
-                className={cn(
-                  "w-full justify-start gap-2 transition-all",
-                  isActive 
-                    ? "bg-primary hover:bg-primary/90 text-white" 
-                    : "bg-secondary hover:bg-secondary/80"
-                )}
-              >
-                {isActive ? (
-                  <>
-                    <EyeOff className="w-4 h-4" />
-                    Desativar Edição
-                  </>
-                ) : (
-                  <>
-                    <Eye className="w-4 h-4" />
-                    Ativar Edição
-                  </>
-                )}
-              </Button>
+              <div className="flex items-center justify-between p-2 rounded-lg bg-muted/30">
+                <div className="flex items-center gap-2">
+                  {isActive ? (
+                    <Eye className="w-4 h-4 text-primary" />
+                  ) : (
+                    <EyeOff className="w-4 h-4 text-muted-foreground" />
+                  )}
+                  <span className="text-sm font-medium">Edição ativa</span>
+                </div>
+                <Switch 
+                  checked={isActive} 
+                  onCheckedChange={toggle}
+                  className="data-[state=checked]:bg-primary"
+                />
+              </div>
 
-              {/* Status quando ativo */}
-              {isActive && (
-                <motion.div
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className="p-2 rounded-lg bg-primary/10 border border-primary/20"
-                >
-                  <p className="text-xs text-primary text-center">
-                    ✨ Clique em qualquer texto ou imagem na página para editar em tempo real
-                  </p>
-                </motion.div>
-              )}
+              {/* Dica quando ativo */}
+              <AnimatePresence>
+                {isActive && showTip && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    exit={{ opacity: 0, height: 0 }}
+                    className="p-3 rounded-lg bg-primary/10 border border-primary/20"
+                  >
+                    <div className="flex items-start gap-2">
+                      <MousePointer2 className="h-4 w-4 text-primary mt-0.5 shrink-0" />
+                      <div>
+                        <p className="text-xs font-medium text-primary">
+                          Clique para editar
+                        </p>
+                        <p className="text-[10px] text-muted-foreground mt-1">
+                          Clique em qualquer texto ou imagem para editar em tempo real
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               {/* Navegação Rápida */}
               <div className="space-y-2">
@@ -211,73 +250,31 @@ export function GodModePanel() {
                 </AnimatePresence>
               </div>
 
-              {/* Ações rápidas */}
-              <AnimatePresence>
-                {isExpanded && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="space-y-2"
-                  >
-                    <p className="text-xs text-muted-foreground uppercase tracking-wider">
-                      Ações
-                    </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="justify-start gap-2 text-xs"
-                        onClick={() => navigate('/monitoramento')}
-                      >
-                        <Users className="w-3 h-3" />
-                        Usuários
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="justify-start gap-2 text-xs"
-                        onClick={() => navigate('/relatorios')}
-                      >
-                        <Activity className="w-3 h-3" />
-                        Relatórios
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="justify-start gap-2 text-xs"
-                        onClick={() => navigate('/configuracoes?tab=appearance')}
-                      >
-                        <Palette className="w-3 h-3" />
-                        Temas
-                      </Button>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="justify-start gap-2 text-xs"
-                        onClick={() => navigate('/configuracoes')}
-                      >
-                        <Settings className="w-3 h-3" />
-                        Config
-                      </Button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
               {/* Atalhos */}
-              <div className="text-center pt-2 border-t border-border/50 space-y-1">
-                <div className="flex items-center justify-center gap-2 text-[10px] text-muted-foreground">
-                  <kbd className="px-1.5 py-0.5 bg-secondary rounded font-mono">
-                    Ctrl+Shift+E
-                  </kbd>
-                  <span>Toggle</span>
+              <div className="space-y-2 pt-2 border-t border-border/50">
+                <p className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                  <Keyboard className="h-3 w-3" />
+                  Atalhos
+                </p>
+                <div className="space-y-1.5 text-[11px]">
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Ativar/Desativar</span>
+                    <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px]">Ctrl+Shift+E</kbd>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Salvar edição</span>
+                    <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px]">Enter</kbd>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-muted-foreground">Cancelar</span>
+                    <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px]">Esc</kbd>
+                  </div>
                 </div>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </motion.div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }
