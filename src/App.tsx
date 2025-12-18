@@ -121,6 +121,8 @@ function useGlobalShortcutsOverlay() {
 // App wrapper with shortcuts overlay - Lazy load heavy components
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
 const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
+const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
+
 
 function AppContent() {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
@@ -130,6 +132,7 @@ function AppContent() {
       <SessionTracker />
       <Suspense fallback={null}>
         <LazyGodModePanel />
+        <LazyInlineEditor />
       </Suspense>
       <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
