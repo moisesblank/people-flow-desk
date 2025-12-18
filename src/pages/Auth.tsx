@@ -6,13 +6,11 @@
 // UPGRADE: Feedback melhorado, mensagens claras
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, lazy, Suspense } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { 
   Mail, 
   Lock, 
-  User, 
-  Loader2, 
   Eye, 
   EyeOff, 
   ArrowLeft,
@@ -21,7 +19,9 @@ import {
   Zap,
   ArrowRight,
   CircuitBoard,
-  Fingerprint
+  Loader2,
+  Fingerprint,
+  User
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,14 +30,16 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
-import { PasswordStrengthMeter } from "@/components/auth/PasswordStrengthMeter";
 import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
-import { EditableText } from "@/components/editor/EditableText";
-import { EditableImage } from "@/components/editor/EditableImage";
-import { EditModeToggle } from "@/components/editor/EditModeToggle";
-import { TwoFactorVerification } from "@/components/auth/TwoFactorVerification";
+
+// Lazy load componentes pesados (apenas owner usa)
+const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
+const EditableImage = lazy(() => import("@/components/editor/EditableImage").then(m => ({ default: m.EditableImage })));
+const EditModeToggle = lazy(() => import("@/components/editor/EditModeToggle").then(m => ({ default: m.EditModeToggle })));
+const TwoFactorVerification = lazy(() => import("@/components/auth/TwoFactorVerification").then(m => ({ default: m.TwoFactorVerification })));
+const PasswordStrengthMeter = lazy(() => import("@/components/auth/PasswordStrengthMeter").then(m => ({ default: m.PasswordStrengthMeter })));
 
 // Performance Optimized Cyber Grid - CSS Only
 function CyberGrid() {
@@ -279,13 +281,8 @@ export default function Auth() {
     }
   };
 
-  if (authLoading) {
-    return (
-      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center">
-        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />
-      </div>
-    );
-  }
+  // REMOVIDO: authLoading check - renderizar instantaneamente
+  // O redirecionamento acontece no useEffect quando user/authLoading mudam
 
   // Renderizar tela de 2FA se necessário
   if (show2FA && pending2FAUser) {
@@ -294,30 +291,36 @@ export default function Auth() {
         <SpiderWebPattern />
         <CyberGrid />
         <GlowingOrbs />
-        <TwoFactorVerification
-          email={pending2FAUser.email}
-          userId={pending2FAUser.userId}
-          userName={pending2FAUser.nome}
-          onVerified={() => {
-            toast.success("Bem-vindo de volta!");
-            navigate("/");
-          }}
-          onCancel={() => {
-            setShow2FA(false);
-            setPending2FAUser(null);
-          }}
-        />
+        <Suspense fallback={<div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />}>
+          <TwoFactorVerification
+            email={pending2FAUser.email}
+            userId={pending2FAUser.userId}
+            userName={pending2FAUser.nome}
+            onVerified={() => {
+              toast.success("Bem-vindo de volta!");
+              navigate("/");
+            }}
+            onCancel={() => {
+              setShow2FA(false);
+              setPending2FAUser(null);
+            }}
+          />
+        </Suspense>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] flex relative overflow-hidden">
-      <EditModeToggle 
-        isEditMode={isEditMode} 
-        canEdit={canEdit} 
-        onToggle={toggleEditMode} 
-      />
+      {canEdit && (
+        <Suspense fallback={null}>
+          <EditModeToggle 
+            isEditMode={isEditMode} 
+            canEdit={canEdit} 
+            onToggle={toggleEditMode} 
+          />
+        </Suspense>
+      )}
       
       {/* Background Effects */}
       <SpiderWebPattern />
@@ -365,17 +368,25 @@ export default function Auth() {
                 </svg>
                 
                 {/* Professor Photo */}
-                <EditableImage
-                  src={professorPhoto}
-                  alt="Professor Moisés"
-                  onUpload={async (file) => {
-                    return await uploadImage("auth_professor_photo", file);
-                  }}
-                  isEditMode={isEditMode}
-                  canEdit={canEdit}
-                  className="w-full h-full object-cover [object-position:50%_15%]"
-                  containerClassName="w-60 h-60 rounded-full overflow-hidden border-4 border-primary/60 shadow-2xl shadow-primary/30"
-                />
+                {canEdit && isEditMode ? (
+                  <Suspense fallback={<img src={professorPhoto} alt="Professor Moisés" className="w-60 h-60 rounded-full object-cover [object-position:50%_15%] border-4 border-primary/60 shadow-2xl shadow-primary/30" />}>
+                    <EditableImage
+                      src={professorPhoto}
+                      alt="Professor Moisés"
+                      onUpload={async (file) => await uploadImage("auth_professor_photo", file)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                      className="w-full h-full object-cover [object-position:50%_15%]"
+                      containerClassName="w-60 h-60 rounded-full overflow-hidden border-4 border-primary/60 shadow-2xl shadow-primary/30"
+                    />
+                  </Suspense>
+                ) : (
+                  <img 
+                    src={professorPhoto} 
+                    alt="Professor Moisés" 
+                    className="w-60 h-60 rounded-full object-cover [object-position:50%_15%] border-4 border-primary/60 shadow-2xl shadow-primary/30" 
+                  />
+                )}
               </div>
               
               {/* Status Indicator - CSS animation */}
@@ -396,21 +407,33 @@ export default function Auth() {
             <h1 className="text-4xl xl:text-5xl font-bold text-white mb-3">
               <span className="text-gray-400">Prof.</span>{" "}
               <span className="bg-gradient-to-r from-primary via-[#DC143C] to-primary bg-clip-text text-transparent">
-                <EditableText
-                  value={getValue("auth_title_name", "Moisés Medeiros")}
-                  onSave={(v) => updateValue("auth_title_name", v)}
-                  isEditMode={isEditMode}
-                  canEdit={canEdit}
-                />
+                {canEdit && isEditMode ? (
+                  <Suspense fallback="Moisés Medeiros">
+                    <EditableText
+                      value={getValue("auth_title_name", "Moisés Medeiros")}
+                      onSave={(v) => updateValue("auth_title_name", v)}
+                      isEditMode={isEditMode}
+                      canEdit={canEdit}
+                    />
+                  </Suspense>
+                ) : (
+                  getValue("auth_title_name", "Moisés Medeiros")
+                )}
               </span>
             </h1>
             <p className="text-lg text-gray-400 animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
-              <EditableText
-                value={getValue("auth_subtitle", "O professor que mais aprova em Medicina")}
-                onSave={(v) => updateValue("auth_subtitle", v)}
-                isEditMode={isEditMode}
-                canEdit={canEdit}
-              />
+              {canEdit && isEditMode ? (
+                <Suspense fallback="O professor que mais aprova em Medicina">
+                  <EditableText
+                    value={getValue("auth_subtitle", "O professor que mais aprova em Medicina")}
+                    onSave={(v) => updateValue("auth_subtitle", v)}
+                    isEditMode={isEditMode}
+                    canEdit={canEdit}
+                  />
+                </Suspense>
+              ) : (
+                getValue("auth_subtitle", "O professor que mais aprova em Medicina")
+              )}
             </p>
           </div>
 
