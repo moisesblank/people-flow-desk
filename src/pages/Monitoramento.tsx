@@ -1,5 +1,5 @@
 // ============================================
-// SYNAPSE v14.0 - MONITORAMENTO EM TEMPO REAL
+// SYNAPSE v14.0 + TRAMON v9.0 - MONITORAMENTO EM TEMPO REAL
 // Dashboard de monitoramento para o OWNER
 // ============================================
 
@@ -19,11 +19,13 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useAdminCheck } from '@/hooks/useAdminCheck';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { SystemHealthWidget } from '@/components/dashboard/SystemHealthWidget';
 
 interface UserAccess {
   id: string;
@@ -361,51 +363,13 @@ export default function Monitoramento() {
             </Card>
           </motion.div>
 
-          {/* System Health */}
+          {/* System Health - Usando o novo widget TRAMON */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
           >
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Server className="h-5 w-5" />
-                  Saúde do Sistema
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid md:grid-cols-3 gap-6">
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Database</span>
-                      <span className="text-green-500 flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" /> Operacional
-                      </span>
-                    </div>
-                    <Progress value={95} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Edge Functions</span>
-                      <span className="text-green-500 flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" /> Ativas
-                      </span>
-                    </div>
-                    <Progress value={100} className="h-2" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Storage</span>
-                      <span className="text-green-500 flex items-center gap-1">
-                        <CheckCircle className="h-4 w-4" /> OK
-                      </span>
-                    </div>
-                    <Progress value={45} className="h-2" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+            <SystemHealthWidget />
           </motion.div>
         </div>
       </div>
