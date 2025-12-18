@@ -9,7 +9,6 @@ import { Loader2, ShieldX, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions, type SystemArea, URL_TO_AREA } from "@/hooks/useRolePermissions";
 import { Button } from "@/components/ui/button";
-import { motion } from "framer-motion";
 
 interface RoleProtectedRouteProps {
   children: ReactNode;
@@ -21,16 +20,11 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role } = useRolePermissions();
   const location = useLocation();
 
-  // Loading state
+  // Loading state - CSS only animation for max performance
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <motion.div
-          animate={{ rotate: 360 }}
-          transition={{ repeat: Infinity, duration: 1.5, ease: "linear" }}
-        >
-          <Loader2 className="h-8 w-8 text-primary" />
-        </motion.div>
+        <Loader2 className="h-8 w-8 text-primary animate-spin" />
       </div>
     );
   }
@@ -47,21 +41,10 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   if (!hasPermission) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <motion.div
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="max-w-md w-full text-center space-y-6"
-        >
-          <motion.div
-            animate={{ 
-              scale: [1, 1.1, 1],
-              rotate: [0, 5, -5, 0]
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
-            className="mx-auto w-24 h-24 rounded-full bg-destructive/10 flex items-center justify-center"
-          >
+        <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
+          <div className="mx-auto w-24 h-24 rounded-full bg-destructive/10 flex items-center justify-center animate-pulse">
             <ShieldX className="w-12 h-12 text-destructive" />
-          </motion.div>
+          </div>
 
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-foreground">
@@ -100,7 +83,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
               Ir para o Início
             </Button>
           </div>
-        </motion.div>
+        </div>
       </div>
     );
   }

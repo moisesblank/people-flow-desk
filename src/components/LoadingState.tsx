@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { Loader2 } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
@@ -37,18 +36,13 @@ export function LoadingState({
     return (
       <div className={cn("flex items-center justify-center gap-2", className)}>
         {[0, 1, 2].map((i) => (
-          <motion.div
+          <div
             key={i}
-            className={cn("rounded-full bg-primary", size === "sm" ? "w-2 h-2" : size === "md" ? "w-3 h-3" : "w-4 h-4")}
-            animate={{
-              y: [0, -10, 0],
-              opacity: [0.5, 1, 0.5],
-            }}
-            transition={{
-              duration: 0.6,
-              repeat: Infinity,
-              delay: i * 0.15,
-            }}
+            className={cn(
+              "rounded-full bg-primary animate-bounce",
+              size === "sm" ? "w-2 h-2" : size === "md" ? "w-3 h-3" : "w-4 h-4"
+            )}
+            style={{ animationDelay: `${i * 0.15}s` }}
           />
         ))}
       </div>
@@ -58,29 +52,19 @@ export function LoadingState({
   if (variant === "pulse") {
     return (
       <div className={cn("flex items-center justify-center", className)}>
-        <motion.div
+        <div
           className={cn(
-            "rounded-full bg-primary/20",
+            "rounded-full bg-primary/20 animate-pulse flex items-center justify-center",
             size === "sm" ? "w-12 h-12" : size === "md" ? "w-16 h-16" : "w-20 h-20"
           )}
-          animate={{
-            scale: [1, 1.2, 1],
-            opacity: [0.3, 0.6, 0.3],
-          }}
-          transition={{
-            duration: 1.5,
-            repeat: Infinity,
-          }}
         >
-          <div className="w-full h-full flex items-center justify-center">
-            <div
-              className={cn(
-                "rounded-full bg-primary",
-                size === "sm" ? "w-6 h-6" : size === "md" ? "w-8 h-8" : "w-10 h-10"
-              )}
-            />
-          </div>
-        </motion.div>
+          <div
+            className={cn(
+              "rounded-full bg-primary",
+              size === "sm" ? "w-6 h-6" : size === "md" ? "w-8 h-8" : "w-10 h-10"
+            )}
+          />
+        </div>
       </div>
     );
   }
@@ -105,17 +89,15 @@ export function LoadingState({
   );
 }
 
-// Card skeleton for lists
+// Card skeleton for lists - CSS only
 export function CardSkeleton({ count = 3 }: { count?: number }) {
   return (
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
       {Array.from({ length: count }).map((_, i) => (
-        <motion.div
+        <div
           key={i}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: i * 0.1 }}
-          className="glass-card rounded-2xl p-6"
+          className="glass-card rounded-2xl p-6 animate-fade-in"
+          style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'backwards' }}
         >
           <div className="flex items-center gap-4 mb-4">
             <Skeleton className="h-12 w-12 rounded-full" />
@@ -129,7 +111,7 @@ export function CardSkeleton({ count = 3 }: { count?: number }) {
             <Skeleton className="h-3 w-4/5" />
             <Skeleton className="h-3 w-3/5" />
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
@@ -158,17 +140,15 @@ export function TableSkeleton({ rows = 5 }: { rows?: number }) {
   );
 }
 
-// Stats skeleton
+// Stats skeleton - CSS only
 export function StatsSkeleton({ count = 4 }: { count?: number }) {
   return (
     <div className={cn("grid gap-4", count <= 2 ? "sm:grid-cols-2" : count === 3 ? "sm:grid-cols-3" : "sm:grid-cols-2 lg:grid-cols-4")}>
       {Array.from({ length: count }).map((_, i) => (
-        <motion.div
+        <div
           key={i}
-          initial={{ opacity: 0, scale: 0.95 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ delay: i * 0.1 }}
-          className="stat-card glass-card"
+          className="stat-card glass-card animate-scale-in"
+          style={{ animationDelay: `${i * 0.1}s`, animationFillMode: 'backwards' }}
         >
           <div className="flex items-start justify-between">
             <div className="space-y-2">
@@ -177,7 +157,7 @@ export function StatsSkeleton({ count = 4 }: { count?: number }) {
             </div>
             <Skeleton className="h-10 w-10 rounded-xl" />
           </div>
-        </motion.div>
+        </div>
       ))}
     </div>
   );
