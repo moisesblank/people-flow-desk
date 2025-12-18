@@ -6830,6 +6830,7 @@ export type Database = {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: number
       }
+      current_user_email: { Args: never; Returns: string }
       generate_2fa_code: { Args: never; Returns: string }
       get_all_users_last_access: {
         Args: never
