@@ -465,9 +465,9 @@ export function MasterQuickAddMenu() {
 
   return (
     <>
-      {/* Botão flutuante quando Master Mode está ativo */}
+      {/* Botão flutuante - SEMPRE visível para o Owner, independente de isActive */}
       <AnimatePresence>
-        {isActive && !isOpen && (
+        {!isOpen && (
           <motion.button
             initial={{ opacity: 0, scale: 0.8, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -476,6 +476,10 @@ export function MasterQuickAddMenu() {
               e.preventDefault();
               e.stopPropagation();
               setIsOpen(true);
+              toast.success('⚡ Menu Master aberto', {
+                description: 'Selecione o que deseja criar',
+                duration: 2000
+              });
             }}
             className="fixed top-20 right-4 z-[9999] flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-purple-600 text-primary-foreground rounded-full shadow-xl hover:shadow-2xl transition-all group"
             style={{ boxShadow: '0 0 30px hsl(280 80% 50% / 0.4)' }}

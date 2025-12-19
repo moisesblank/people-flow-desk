@@ -61,7 +61,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   const clickHandlerRef = useRef<((e: MouseEvent) => void) | null>(null);
   const hoverStylesRef = useRef<Map<HTMLElement, string>>(new Map());
 
-  // Verificar usuário e status de owner
+  // Verificar usuário e status de owner - SIMPLIFICADO E DIRETO
   useEffect(() => {
     const checkOwner = async () => {
       setIsLoading(true);
@@ -75,23 +75,21 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
           return;
         }
 
-        const isEmailOwner = currentUser.email?.toLowerCase() === OWNER_EMAIL;
-
+        // VERIFICAÇÃO DIRETA POR EMAIL - SEM DEPENDÊNCIA DE RPC
+        const isEmailOwner = (currentUser.email || '').toLowerCase() === OWNER_EMAIL;
+        setIsOwner(isEmailOwner);
+        
+        // Se é owner, ativar automaticamente o modo master na primeira vez
         if (isEmailOwner) {
-          setIsOwner(true);
-
-          try {
-            const { data, error } = await supabase.rpc('is_owner');
-            if (!error && data === false) {
-              setIsOwner(false);
-            }
-          } catch {
-            // Silencioso
+          const savedActive = localStorage.getItem('mm_godmode_active');
+          if (savedActive === 'true') {
+            setIsActive(true);
           }
-        } else {
-          setIsOwner(false);
         }
-      } catch {
+        
+        console.log('[GodMode] Owner check:', { email: currentUser.email, isOwner: isEmailOwner });
+      } catch (err) {
+        console.error('[GodMode] Error checking owner:', err);
         setIsOwner(false);
       } finally {
         setIsLoading(false);
@@ -106,7 +104,10 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         setIsOwner(false);
         setIsActive(false);
       } else {
-        setTimeout(checkOwner, 0);
+        // VERIFICAÇÃO IMEDIATA POR EMAIL
+        const isEmailOwner = (session.user.email || '').toLowerCase() === OWNER_EMAIL;
+        setIsOwner(isEmailOwner);
+        console.log('[GodMode] Auth change - Owner:', isEmailOwner);
       }
     });
 
@@ -380,10 +381,14 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     }
     setIsActive(prev => {
       const newState = !prev;
+      
+      // Salvar estado no localStorage
+      localStorage.setItem('mm_godmode_active', newState ? 'true' : 'false');
+      
       if (newState) {
-        toast.success('🔮 MODO MASTER ativado', {
-          description: 'Clique em qualquer texto ou imagem para editar',
-          duration: 4000,
+        toast.success('🔮 MODO MASTER DEUS ativado', {
+          description: 'Ctrl+Shift+Q = Menu • Ctrl+Z = Undo • Clique = Editar',
+          duration: 5000,
         });
       } else {
         toast.info('MODO MASTER desativado');
