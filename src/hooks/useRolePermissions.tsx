@@ -64,7 +64,14 @@ export type SystemArea =
   | "central-monitoramento"
   | "central-ias"
   | "central-metricas"
-  | "documentos";
+  | "documentos"
+  // NOVAS ÁREAS EMPRESARIAIS
+  | "dashboard-empresarial"
+  | "rh-funcionarios"
+  | "arquivos-empresariais"
+  | "fluxo-caixa"
+  | "contas-pagar"
+  | "contas-receber";
 
 // Mapeamento de URLs para áreas
 const URL_TO_AREA: Record<string, SystemArea> = {
@@ -110,6 +117,13 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/central-ias": "central-ias",
   "/central-metricas": "central-metricas",
   "/documentos": "documentos",
+  // NOVAS ÁREAS EMPRESARIAIS
+  "/empresas/dashboard": "dashboard-empresarial",
+  "/empresas/rh": "rh-funcionarios",
+  "/empresas/arquivos": "arquivos-empresariais",
+  "/empresas/fluxo-caixa": "fluxo-caixa",
+  "/empresas/contas-pagar": "contas-pagar",
+  "/empresas/contas-receber": "contas-receber",
 };
 
 // ============================================
@@ -125,7 +139,8 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "cursos", "simulados", "afiliados", "alunos", "portal-aluno", "gestao-site",
     "relatorios", "guia", "laboratorio", "site-programador", "pessoal", "vida-pessoal",
     "permissoes", "configuracoes", "monitoramento", "central-whatsapp", "diagnostico-whatsapp",
-    "auditoria-acessos", "central-monitoramento", "central-ias", "central-metricas", "documentos"
+    "auditoria-acessos", "central-monitoramento", "central-ias", "central-metricas", "documentos",
+    "dashboard-empresarial", "rh-funcionarios", "arquivos-empresariais", "fluxo-caixa", "contas-pagar", "contas-receber"
   ],
 
   // ADMIN - Igual owner mas sem vida pessoal e monitoramento

@@ -110,9 +110,23 @@ const menuGroups: MenuGroup[] = [
       { title: "Tarefas", url: "/tarefas", icon: ClipboardCheck, area: "tarefas" },
       { title: "Integrações", url: "/integracoes", icon: Link2, area: "integracoes" },
       { title: "Calendário", url: "/calendario", icon: Calendar, area: "calendario" },
-      { title: "Funcionários", url: "/funcionarios", icon: Users, area: "funcionarios" },
       { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck, area: "area-professor" },
       { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog, area: "gestao-equipe" },
+    ],
+  },
+  {
+    id: "empresas",
+    label: "EMPRESAS",
+    image: financeImg,
+    color: "from-purple-600/80",
+    items: [
+      { title: "Dashboard Empresarial", url: "/empresas/dashboard", icon: Building2, area: "dashboard-empresarial", badge: "ERP" },
+      { title: "Finanças Empresa", url: "/financas-empresa", icon: Wallet, area: "financas-empresa" },
+      { title: "Entradas", url: "/entradas", icon: TrendingUp, area: "entradas" },
+      { title: "Pagamentos", url: "/pagamentos", icon: CreditCard, area: "pagamentos" },
+      { title: "Contabilidade", url: "/contabilidade", icon: Calculator, area: "contabilidade" },
+      { title: "Funcionários (RH)", url: "/empresas/rh", icon: Users, area: "rh-funcionarios" },
+      { title: "Arquivos Empresariais", url: "/empresas/arquivos", icon: FolderOpen, area: "arquivos-empresariais" },
     ],
   },
   {
@@ -125,7 +139,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Marketing", url: "/marketing", icon: Megaphone, area: "marketing" },
       { title: "Lançamento", url: "/lancamento", icon: Rocket, area: "lancamento" },
       { title: "Métricas", url: "/metricas", icon: BarChart3, area: "metricas" },
-      { title: "Arquivos Importantes", url: "/arquivos", icon: FolderOpen, area: "arquivos" },
+      { title: "Arquivos", url: "/arquivos", icon: FolderOpen, area: "arquivos" },
     ],
   },
   {
