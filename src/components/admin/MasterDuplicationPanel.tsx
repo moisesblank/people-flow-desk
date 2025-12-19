@@ -125,8 +125,12 @@ export function MasterDuplicationPanel() {
           student: { table: 'alunos', nameField: 'nome' },
           document: { table: 'general_documents', nameField: 'nome' },
           category: { table: 'financial_categories', nameField: 'name' },
-          expense: { table: 'contas_pagar', nameField: 'descricao' },
-          income: { table: 'contas_receber', nameField: 'descricao' },
+          expense: { table: 'company_extra_expenses', nameField: 'nome' },
+          income: { table: 'entradas', nameField: 'descricao' },
+          conta_pagar: { table: 'contas_pagar', nameField: 'descricao' },
+          conta_receber: { table: 'contas_receber', nameField: 'descricao' },
+          alerta: { table: 'alertas_sistema', nameField: 'titulo' },
+          contabilidade: { table: 'contabilidade', nameField: 'descricao' },
         };
 
         const config = tableConfig[entityType];
