@@ -993,23 +993,25 @@ export function MasterAddModal({ isOpen, onClose, entityType, onSuccess }: Maste
 
       if (error) throw error;
 
-      // Adicionar ao histórico de undo
-      addToHistory({
-        type: 'create',
-        entityType,
-        table: config.table,
-        newData: data as Record<string, unknown>,
-        timestamp: Date.now()
-      });
-
       toast.success(`✅ ${config.title} criado com sucesso!`, {
         description: 'Item adicionado ao sistema',
         icon: <CheckCircle className="w-5 h-5 text-green-500" />
       });
       
-      // Emitir evento global
+      // Emitir evento global para sync e undo
       window.dispatchEvent(new CustomEvent('master-item-added', {
-        detail: { table: config.table, data, entityType }
+        detail: { 
+          table: config.table, 
+          data, 
+          entityType,
+          action: {
+            type: 'create',
+            entityType,
+            table: config.table,
+            newData: data as Record<string, unknown>,
+            timestamp: Date.now()
+          }
+        }
       }));
 
       // Forçar sync
@@ -1026,7 +1028,7 @@ export function MasterAddModal({ isOpen, onClose, entityType, onSuccess }: Maste
     } finally {
       setIsLoading(false);
     }
-  }, [isOwner, config, formData, onSuccess, onClose, entityType, addToHistory]);
+  }, [isOwner, config, formData, onSuccess, onClose, entityType]);
 
   const renderField = (field: FieldConfig) => {
     const value = formData[field.name];
