@@ -1,10 +1,11 @@
 // ============================================
 // FILTROS DE PERÍODO FINANCEIRO
 // Diário, Semanal, Mensal, Anual, 10 Anos
+// Com clique em dia para adicionar gasto
 // ============================================
 
 import { motion } from "framer-motion";
-import { Calendar, CalendarDays, CalendarRange, History, Clock } from "lucide-react";
+import { Calendar, CalendarDays, CalendarRange, History, Clock, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
@@ -19,6 +20,7 @@ interface PeriodFilterTabsProps {
   onPeriodChange: (period: PeriodFilter) => void;
   customRange?: { start: Date; end: Date };
   onCustomRangeChange?: (range: { start: Date; end: Date }) => void;
+  onDayClick?: (date: Date) => void;
 }
 
 const periodOptions: { value: PeriodFilter; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
@@ -33,9 +35,18 @@ export function PeriodFilterTabs({
   period, 
   onPeriodChange, 
   customRange,
-  onCustomRangeChange 
+  onCustomRangeChange,
+  onDayClick,
 }: PeriodFilterTabsProps) {
   const [isCustomOpen, setIsCustomOpen] = useState(false);
+  const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
+
+  const handleDaySelect = (date: Date | undefined) => {
+    if (date && onDayClick) {
+      onDayClick(date);
+      setIsAddExpenseOpen(false);
+    }
+  };
 
   return (
     <motion.div 
@@ -128,6 +139,36 @@ export function PeriodFilterTabs({
           </div>
         </PopoverContent>
       </Popover>
+
+      {/* Botão para adicionar gasto por data - NOVO */}
+      {onDayClick && (
+        <Popover open={isAddExpenseOpen} onOpenChange={setIsAddExpenseOpen}>
+          <PopoverTrigger asChild>
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-2 border-primary/50 hover:bg-primary/10"
+            >
+              <Plus className="h-4 w-4 text-primary" />
+              <span className="hidden sm:inline">Adicionar por Data</span>
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-auto p-0" align="start">
+            <div className="p-4 space-y-3">
+              <h4 className="font-medium text-sm flex items-center gap-2">
+                <Calendar className="h-4 w-4 text-primary" />
+                Clique em um dia para adicionar gasto
+              </h4>
+              <CalendarComponent
+                mode="single"
+                onSelect={handleDaySelect}
+                locale={ptBR}
+                className="rounded-md border"
+              />
+            </div>
+          </PopoverContent>
+        </Popover>
+      )}
     </motion.div>
   );
 }
