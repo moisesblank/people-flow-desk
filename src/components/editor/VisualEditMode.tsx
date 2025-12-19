@@ -77,31 +77,33 @@ export function VisualEditMode() {
         setEditValue(value);
         setPreviewImage(type === 'image' ? value : null);
         setIsEditing(true);
-      } else {
-        // Se clicar em qualquer texto/imagem, permitir edição
-        if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'A', 'IMG'].includes(target.tagName)) {
-          const value = target.tagName === 'IMG' 
-            ? (target as HTMLImageElement).src 
-            : target.innerText || '';
-          
-          if (value || target.tagName === 'IMG') {
-            e.preventDefault();
-            e.stopPropagation();
+        } else {
+          // Apenas editar elementos que NÃO são de navegação ou que têm atributo explícito
+          // Cliques em <a> ou <button> NÃO devem ser interceptados a menos que tenham data-editable
+          if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'IMG'].includes(target.tagName)) {
+            const value = target.tagName === 'IMG' 
+              ? (target as HTMLImageElement).src 
+              : target.innerText || '';
             
-            const elementType = target.tagName === 'IMG' ? 'image' : target.tagName === 'A' ? 'link' : 'text';
-            
-            setSelectedElement({
-              element: target,
-              type: elementType,
-              originalValue: value,
-              key: `dynamic_${target.tagName.toLowerCase()}_${Date.now()}`
-            });
-            setEditValue(value);
-            setPreviewImage(elementType === 'image' ? value : null);
-            setIsEditing(true);
+            if (value || target.tagName === 'IMG') {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              const elementType = target.tagName === 'IMG' ? 'image' : 'text';
+              
+              setSelectedElement({
+                element: target,
+                type: elementType,
+                originalValue: value,
+                key: `dynamic_${target.tagName.toLowerCase()}_${Date.now()}`
+              });
+              setEditValue(value);
+              setPreviewImage(elementType === 'image' ? value : null);
+              setIsEditing(true);
+            }
           }
+          // Links e botões continuam a funcionar normalmente
         }
-      }
     };
 
     const handleMouseOver = (e: MouseEvent) => {
@@ -110,7 +112,8 @@ export function VisualEditMode() {
         return;
       }
       
-      if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'A', 'IMG', 'BUTTON'].includes(target.tagName)) {
+      // NÃO destacar links e botões como editáveis para não confundir o usuário
+      if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'IMG'].includes(target.tagName)) {
         setHoveredElement(target);
         target.style.outline = '2px dashed hsl(280, 80%, 50%)';
         target.style.outlineOffset = '2px';
