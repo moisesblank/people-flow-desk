@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useMasterDuplication, DuplicableEntityType } from '@/hooks/useMasterDuplication';
+import { useDuplicationClipboard } from '@/contexts/DuplicationClipboardContext';
 import { cn } from '@/lib/utils';
 
 interface MasterDuplicateButtonProps {
@@ -74,6 +75,7 @@ export function MasterDuplicateButton({
   showAdvancedOptions = true,
 }: MasterDuplicateButtonProps) {
   const { duplicateEntity, isDuplicating, isOwner } = useMasterDuplication();
+  const { copyToClipboard } = useDuplicationClipboard();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [includeAttachments, setIncludeAttachments] = useState(true);
@@ -91,8 +93,19 @@ export function MasterDuplicateButton({
       insertAfterOriginal: true,
     });
 
-    if (result.success && result.newId && onDuplicated) {
-      onDuplicated(result.newId, result.newData);
+    if (result.success && result.newId) {
+      // Copiar para clipboard visual
+      copyToClipboard({
+        id: result.newId,
+        entityType,
+        entityName: result.originalName || entityName || ENTITY_LABELS[entityType],
+        originalId: entityId,
+        data: result.newData || {}
+      });
+
+      if (onDuplicated) {
+        onDuplicated(result.newId, result.newData);
+      }
     }
   };
 
@@ -105,6 +118,15 @@ export function MasterDuplicateButton({
     });
 
     if (result.success && result.newId) {
+      // Copiar para clipboard visual
+      copyToClipboard({
+        id: result.newId,
+        entityType,
+        entityName: newName || result.originalName || entityName || ENTITY_LABELS[entityType],
+        originalId: entityId,
+        data: result.newData || {}
+      });
+
       setDialogOpen(false);
       setNewName('');
       if (onDuplicated) {

@@ -47,6 +47,7 @@ interface DuplicationResult {
   message: string;
   duplicatedItems?: number;
   newData?: Record<string, unknown>;
+  originalName?: string;
 }
 
 // Mapeamento de entidades para suas tabelas e relações
@@ -298,8 +299,9 @@ export function useMasterDuplication() {
         } as never
       });
 
-      toast.success(`✨ ${originalName} duplicado!`, {
-        description: `${duplicatedCount} item(s) copiado(s) - aparece logo abaixo`
+      toast.success('📋 Item copiado!', {
+        description: `"${originalName}" copiado para área de transferência`,
+        duration: 5000,
       });
 
       return {
@@ -307,7 +309,8 @@ export function useMasterDuplication() {
         newId: String(newItem.id),
         message: 'Duplicação concluída com sucesso',
         duplicatedItems: duplicatedCount,
-        newData: newItem
+        newData: newItem,
+        originalName
       };
 
     } catch (error: unknown) {

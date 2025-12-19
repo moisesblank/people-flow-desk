@@ -5,11 +5,13 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { GodModeProvider } from "@/contexts/GodModeContext";
+import { DuplicationClipboardProvider } from "@/contexts/DuplicationClipboardContext";
 import { RoleProtectedRoute } from "@/components/layout/RoleProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
 import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
+import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
 
@@ -239,13 +241,16 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <GodModeProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
-        </TooltipProvider>
+        <DuplicationClipboardProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppContent />
+              <DuplicationClipboardIndicator />
+            </BrowserRouter>
+          </TooltipProvider>
+        </DuplicationClipboardProvider>
       </GodModeProvider>
     </AuthProvider>
   </QueryClientProvider>
