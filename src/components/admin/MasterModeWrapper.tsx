@@ -1,8 +1,9 @@
 // ============================================
-// MOISÉS MEDEIROS v13.0 - MASTER MODE WRAPPER
+// MOISÉS MEDEIROS v15.0 - MASTER MODE WRAPPER
 // Wrapper global para o sistema de edição MASTER
 // Integra todos os componentes de edição em tempo real
 // + Menu Contextual (Adicionar, Duplicar, Remover)
+// + Undo/Redo + Delete Button Universal
 // Owner: moisesblank@gmail.com
 // ============================================
 
@@ -10,10 +11,12 @@ import { useEffect, useCallback, useState } from 'react';
 import { useGodMode } from '@/contexts/GodModeContext';
 import { useRealtimeEquivalences } from '@/hooks/useRealtimeEquivalences';
 import { useInstantDuplication, useDuplicationListener } from '@/hooks/useInstantDuplication';
+import { useMasterUndo } from '@/hooks/useMasterUndo';
 import { RealtimeEditOverlay } from './RealtimeEditOverlay';
 import { PasteIndicator } from './PasteIndicator';
 import { MasterContextMenu } from './MasterContextMenu';
 import { MasterAddModal } from './MasterAddModal';
+import { MasterUndoIndicator } from './MasterUndoIndicator';
 import { EditModeToggle } from '@/components/editor/EditModeToggle';
 import { toast } from 'sonner';
 
@@ -25,6 +28,9 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
   const { isOwner, isActive, toggle } = useGodMode();
   const { forceGlobalSync } = useRealtimeEquivalences();
   const { isOwner: canDuplicate } = useInstantDuplication();
+  
+  // Inicializar sistema de undo (registra atalhos Ctrl+Z/Y)
+  useMasterUndo();
   
   // Estado para modal de adicionar
   const [addModalOpen, setAddModalOpen] = useState(false);
@@ -220,6 +226,9 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
         entityType={addModalType}
         onSuccess={() => forceGlobalSync()}
       />
+      
+      {/* Indicador de Undo/Redo */}
+      {isOwner && isActive && <MasterUndoIndicator />}
       
       {/* Indicador de área de transferência */}
       {canDuplicate && <PasteIndicator />}
