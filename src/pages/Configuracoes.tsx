@@ -35,7 +35,8 @@ import {
   RefreshCw,
   X,
   Lock,
-  AlertTriangle
+  AlertTriangle,
+  Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { LogoUploader } from "@/components/settings/LogoUploader";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { Separator } from "@/components/ui/separator";
+import { useCacheManager } from "@/hooks/useCacheManager";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -67,6 +69,7 @@ export default function Configuracoes() {
   const { role, user } = useAuth();
   const queryClient = useQueryClient();
   const { resetTour, hasCompleted: tourCompleted } = useOnboarding("dashboard");
+  const { clearAllCache, forceRefresh, appVersion } = useCacheManager();
   const [isLoading, setIsLoading] = useState(false);
   const [backupProgress, setBackupProgress] = useState<string | null>(null);
   const [showBackupCodes, setShowBackupCodes] = useState(false);
@@ -766,6 +769,32 @@ export default function Configuracoes() {
                   </div>
                 </div>
 
+                {/* Quick Cache Refresh */}
+                <div className="p-6 rounded-xl bg-stats-green/5 border border-stats-green/20">
+                  <div className="flex items-start gap-4">
+                    <div className="p-3 rounded-xl bg-stats-green/10">
+                      <Zap className="h-6 w-6 text-stats-green" />
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                        Atualizar Dados
+                        <Badge variant="outline" className="text-xs">v{appVersion}</Badge>
+                      </h4>
+                      <p className="text-sm text-muted-foreground mb-4">
+                        Limpa o cache e recarrega todos os dados do servidor. Use após atualizações.
+                      </p>
+                      <Button 
+                        onClick={forceRefresh}
+                        variant="outline"
+                        className="gap-2 border-stats-green/30 hover:bg-stats-green/10"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                        Atualizar Agora
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+
                 {/* Clear All Data (Danger Zone) */}
                 <div className="p-6 rounded-xl bg-destructive/5 border border-destructive/20">
                   <div className="flex items-start gap-4">
@@ -781,12 +810,12 @@ export default function Configuracoes() {
                         <AlertDialogTrigger asChild>
                           <Button variant="destructive" className="gap-2">
                             <Trash2 className="h-4 w-4" />
-                            Limpar Dados Locais
+                            Limpar Todos os Dados Locais
                           </Button>
                         </AlertDialogTrigger>
                         <AlertDialogContent>
                           <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar Limpeza</AlertDialogTitle>
+                            <AlertDialogTitle>Confirmar Limpeza Completa</AlertDialogTitle>
                             <AlertDialogDescription>
                               Isso vai limpar todos os dados locais do navegador (cache, preferências de tour, etc).
                               Seus dados salvos no servidor não serão afetados.
@@ -796,10 +825,8 @@ export default function Configuracoes() {
                             <AlertDialogCancel>Cancelar</AlertDialogCancel>
                             <AlertDialogAction
                               onClick={() => {
-                                localStorage.clear();
-                                sessionStorage.clear();
-                                toast.success("Dados locais limpos! A página será recarregada.");
-                                setTimeout(() => window.location.reload(), 1000);
+                                clearAllCache();
+                                setTimeout(() => window.location.reload(), 1500);
                               }}
                               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >

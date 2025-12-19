@@ -90,8 +90,17 @@ const queryClient = new QueryClient({
   },
 });
 
-// BUILD TIMESTAMP - Performance Optimized
-console.log('🚀 PLATAFORMA v10.1 - Performance Optimized');
+// BUILD TIMESTAMP - Performance Optimized with Cache Management
+console.log('🚀 PLATAFORMA v10.2 - Cache Management Enabled');
+
+// Listener global para limpeza de cache
+if (typeof window !== 'undefined') {
+  window.addEventListener('mm-clear-cache', () => {
+    queryClient.clear();
+    queryClient.invalidateQueries();
+    console.log('🧹 Cache limpo via evento global');
+  });
+}
 
 // Ultra-fast loading component - minimal DOM, CSS only
 const PageLoader = () => (
