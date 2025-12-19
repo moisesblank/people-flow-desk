@@ -103,21 +103,42 @@ function applyLayout(groups: MenuGroup[], layout: SidebarLayoutV1): MenuGroup[] 
     .map((g) => ({ ...g!, items: [] }));
 
   const nextGroupIndex = new Map(nextGroups.map((g, idx) => [g.id, idx] as const));
+  
+  // Track already placed items to avoid duplicates
+  const placedItems = new Set<string>();
 
   // place each item based on layout.groupByItem (fallback to original)
   itemMap.forEach((item) => {
+    // Skip if already placed (prevent duplicates)
+    if (placedItems.has(item.area)) return;
+    
     const desiredGroup = layout.groupByItem[item.area] ?? groups.find((g) => g.items.some((i) => i.area === item.area))?.id;
     const idx = desiredGroup ? nextGroupIndex.get(desiredGroup) : undefined;
     if (idx === undefined) return;
+    
     nextGroups[idx].items.push(item);
+    placedItems.add(item.area);
   });
 
-  // order within each group
+  // order within each group (deduplicate during ordering)
   nextGroups.forEach((g) => {
-    const baseAreas = g.items.map((i) => i.area);
+    const seenAreas = new Set<string>();
+    const uniqueItems: MenuItem[] = [];
+    
+    // Deduplicate items in this group
+    g.items.forEach((item) => {
+      if (!seenAreas.has(item.area)) {
+        seenAreas.add(item.area);
+        uniqueItems.push(item);
+      }
+    });
+    
+    const baseAreas = uniqueItems.map((i) => i.area);
     const desired = layout.itemOrderByGroup[g.id] ?? [];
-    const orderedAreas = [...desired.filter((a) => baseAreas.includes(a)), ...baseAreas.filter((a) => !desired.includes(a))];
-    const byArea = new Map(g.items.map((i) => [i.area, i] as const));
+    // Also deduplicate the desired order
+    const uniqueDesired = [...new Set(desired)];
+    const orderedAreas = [...uniqueDesired.filter((a) => baseAreas.includes(a)), ...baseAreas.filter((a) => !uniqueDesired.includes(a))];
+    const byArea = new Map(uniqueItems.map((i) => [i.area, i] as const));
     g.items = orderedAreas.map((a) => byArea.get(a)).filter(Boolean) as MenuItem[];
   });
 

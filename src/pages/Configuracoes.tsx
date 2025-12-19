@@ -89,14 +89,23 @@ export default function Configuracoes() {
     queryKey: ['mfa-settings', user?.id],
     queryFn: async () => {
       if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('user_mfa_settings')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle();
-      
-      if (error && error.code !== 'PGRST116') throw error;
-      return data;
+      try {
+        // Select only allowed columns (totp_secret and backup_codes are revoked from SELECT)
+        const { data, error } = await supabase
+          .from('user_mfa_settings')
+          .select('id, user_id, mfa_enabled, mfa_type, phone_number, last_verified_at, created_at, updated_at')
+          .eq('user_id', user.id)
+          .maybeSingle();
+        
+        if (error && error.code !== 'PGRST116') {
+          console.warn('MFA settings query error:', error.message);
+          return null;
+        }
+        return data;
+      } catch (err) {
+        console.warn('Failed to fetch MFA settings:', err);
+        return null;
+      }
     },
     enabled: !!user?.id
   });
@@ -162,7 +171,8 @@ export default function Configuracoes() {
     toast.success("Código copiado!");
   };
 
-  const backupCodes = (mfaSettings?.backup_codes as string[]) || [];
+  // Note: backup_codes are write-only (can't be read back due to security)
+  const backupCodes: string[] = [];
 
   const handleSave = async () => {
     setIsLoading(true);
