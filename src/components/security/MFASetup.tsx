@@ -44,18 +44,22 @@ export function MFASetup() {
 
   const fetchSettings = async () => {
     try {
+      // Select only allowed columns (totp_secret and backup_codes are revoked)
       const { data, error } = await supabase
         .from('user_mfa_settings')
-        .select('*')
+        .select('id, user_id, mfa_enabled, mfa_type, phone_number, last_verified_at, created_at, updated_at')
         .eq('user_id', user?.id)
         .maybeSingle();
 
-      if (error && error.code !== 'PGRST116') throw error;
+      if (error && error.code !== 'PGRST116') {
+        console.warn('MFA fetch error:', error.message);
+        return;
+      }
       if (data) {
         setSettings({
           ...data,
           mfa_method: (data.mfa_type as 'totp' | 'sms' | 'email') || 'email',
-          backup_codes: Array.isArray(data.backup_codes) ? data.backup_codes as string[] : null,
+          backup_codes: null, // Can't read back - write-only for security
         });
       }
     } catch (error) {
