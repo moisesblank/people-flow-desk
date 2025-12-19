@@ -1,11 +1,10 @@
 // ============================================
 // ARQUIVOS EMPRESARIAIS - GESTÃO DE DOCUMENTOS
-// Upload, Download e Gestão de Arquivos da Empresa
+// Upload, Download e Gestão de Arquivos por CNPJ
 // ============================================
 
 import { useState, useCallback } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -16,15 +15,9 @@ import { toast } from "sonner";
 import { 
   Upload, FileText, Download, Eye, Trash2, Search, 
   FolderOpen, File, FileSpreadsheet, Image, 
-  FileArchive, Calendar, Filter, Plus, X, Check
+  FileArchive, ArrowLeft, Building2, HardDrive
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 
 interface ArquivoEmpresa {
   id: string;
@@ -38,6 +31,22 @@ interface ArquivoEmpresa {
   created_at: string;
 }
 
+// CNPJs das empresas
+const CNPJS = [
+  { 
+    id: "44979308000104", 
+    label: "CNPJ 44.979.308/0001-04", 
+    nome: "CURSO QUÍMICA MOISES MEDEIROS",
+    color: "bg-purple-500/10 text-purple-500 border-purple-500/20"
+  },
+  { 
+    id: "53829761000117", 
+    label: "CNPJ 53.829.761/0001-17", 
+    nome: "MM CURSO DE QUÍMICA LTDA",
+    color: "bg-primary/10 text-primary border-primary/20"
+  },
+];
+
 const CATEGORIAS = [
   { id: "documentos-legais", label: "Documentos Legais", icon: FileText, color: "text-blue-500" },
   { id: "contratos", label: "Contratos", icon: File, color: "text-purple-500" },
@@ -49,9 +58,11 @@ const CATEGORIAS = [
 
 function FileUploadZone({ 
   categoria, 
+  cnpj,
   onUploadComplete 
 }: { 
   categoria: string; 
+  cnpj: string;
   onUploadComplete: () => void;
 }) {
   const [uploading, setUploading] = useState(false);
@@ -67,7 +78,6 @@ function FileUploadZone({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // Validar tamanho (max 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast.error(`${file.name} excede o tamanho máximo de 10MB`);
         continue;
@@ -77,11 +87,10 @@ function FileUploadZone({
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substring(7);
         const fileName = `${timestamp}-${randomSuffix}-${file.name}`;
-        const filePath = `${categoria}/${fileName}`;
+        const filePath = `${cnpj}/${categoria}/${fileName}`;
 
-        // Upload para Supabase Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("documentos-empresa")
+        const { error: uploadError } = await supabase.storage
+          .from("arquivos")
           .upload(filePath, file, {
             cacheControl: "3600",
             upsert: false
@@ -89,20 +98,20 @@ function FileUploadZone({
 
         if (uploadError) throw uploadError;
 
-        // Obter URL pública
         const { data: urlData } = supabase.storage
-          .from("documentos-empresa")
+          .from("arquivos")
           .getPublicUrl(filePath);
 
-        // Salvar metadados
+        // Salvar com CNPJ associado
         const { error: dbError } = await supabase
           .from("arquivos")
           .insert({
             nome: file.name,
             tipo: file.type,
-            modulo: categoria,
+            modulo: `empresa-${cnpj}-${categoria}`,
             tamanho: file.size,
-            url: urlData.publicUrl
+            url: urlData.publicUrl,
+            referencia_id: cnpj
           });
 
         if (dbError) throw dbError;
@@ -117,7 +126,7 @@ function FileUploadZone({
     setUploading(false);
     setProgress(0);
     onUploadComplete();
-  }, [categoria, onUploadComplete]);
+  }, [categoria, cnpj, onUploadComplete]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -125,22 +134,12 @@ function FileUploadZone({
     handleUpload(e.dataTransfer.files);
   }, [handleUpload]);
 
-  const handleDragOver = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(true);
-  }, []);
-
-  const handleDragLeave = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-  }, []);
-
   return (
     <div className="space-y-4">
       <div
         onDrop={handleDrop}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
+        onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+        onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
         className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
           dragActive
             ? "border-primary bg-primary/5 scale-[1.02]"
@@ -161,12 +160,8 @@ function FileUploadZone({
             <p className="text-primary font-medium">Solte os arquivos aqui...</p>
           ) : (
             <div>
-              <p className="font-medium mb-2">
-                Arraste arquivos aqui ou clique para selecionar
-              </p>
-              <p className="text-sm text-muted-foreground">
-                PDF, Excel, Word, Imagens (máx. 10MB)
-              </p>
+              <p className="font-medium mb-2">Arraste arquivos ou clique para selecionar</p>
+              <p className="text-sm text-muted-foreground">PDF, Excel, Word, Imagens (máx. 10MB)</p>
             </div>
           )}
         </label>
@@ -187,37 +182,63 @@ function FileUploadZone({
 
 export default function ArquivosEmpresariais() {
   const [searchTerm, setSearchTerm] = useState("");
+  const [cnpjSelecionado, setCnpjSelecionado] = useState<string | null>(null);
   const [categoriaAtiva, setCategoriaAtiva] = useState("documentos-legais");
   const queryClient = useQueryClient();
 
+  // Buscar arquivos do CNPJ selecionado
   const { data: arquivos, isLoading } = useQuery({
-    queryKey: ["arquivos-empresa", categoriaAtiva],
+    queryKey: ["arquivos-empresa", cnpjSelecionado, categoriaAtiva],
     queryFn: async () => {
+      if (!cnpjSelecionado) return [];
+      
       const { data, error } = await supabase
         .from("arquivos")
         .select("*")
-        .eq("modulo", categoriaAtiva)
+        .eq("modulo", `empresa-${cnpjSelecionado}-${categoriaAtiva}`)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
       return data as ArquivoEmpresa[];
     },
+    enabled: !!cnpjSelecionado,
+  });
+
+  // Buscar estatísticas de arquivos por CNPJ
+  const { data: statsArquivos } = useQuery({
+    queryKey: ["arquivos-stats"],
+    queryFn: async () => {
+      const stats: Record<string, { count: number; size: number }> = {};
+      
+      for (const cnpj of CNPJS) {
+        const { data, error } = await supabase
+          .from("arquivos")
+          .select("tamanho")
+          .like("modulo", `empresa-${cnpj.id}-%`);
+        
+        if (!error && data) {
+          stats[cnpj.id] = {
+            count: data.length,
+            size: data.reduce((acc, f) => acc + (f.tamanho || 0), 0)
+          };
+        } else {
+          stats[cnpj.id] = { count: 0, size: 0 };
+        }
+      }
+      
+      return stats;
+    },
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("arquivos")
-        .delete()
-        .eq("id", id);
+      const { error } = await supabase.from("arquivos").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["arquivos-empresa"] });
+      queryClient.invalidateQueries({ queryKey: ["arquivos-stats"] });
       toast.success("Arquivo removido com sucesso!");
-    },
-    onError: (error: any) => {
-      toast.error(`Erro ao remover: ${error.message}`);
     },
   });
 
@@ -238,18 +259,125 @@ export default function ArquivosEmpresariais() {
     return <File className="w-5 h-5 text-gray-500" />;
   };
 
-  return (
-    <div className="min-h-screen bg-background p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+  // Tela de seleção de CNPJ
+  if (!cnpjSelecionado) {
+    return (
+      <div className="min-h-screen bg-background p-6 space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
             <FolderOpen className="w-8 h-8 text-primary" />
             Arquivos Empresariais
           </h1>
           <p className="text-muted-foreground mt-1">
-            Gestão de documentos e arquivos da empresa
+            Selecione uma empresa para gerenciar seus documentos
           </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+          {CNPJS.map((cnpj) => {
+            const stats = statsArquivos?.[cnpj.id] || { count: 0, size: 0 };
+            
+            return (
+              <motion.div
+                key={cnpj.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+              >
+                <Card 
+                  className={`cursor-pointer hover:shadow-lg transition-all border-2 ${cnpj.color}`}
+                  onClick={() => setCnpjSelecionado(cnpj.id)}
+                >
+                  <CardHeader>
+                    <div className="flex items-center gap-4">
+                      <div className={`p-4 rounded-xl ${cnpj.color.replace('text-', 'bg-').replace('/10', '/20')}`}>
+                        <Building2 className="w-8 h-8" />
+                      </div>
+                      <div className="flex-1">
+                        <CardTitle className="text-lg">{cnpj.nome}</CardTitle>
+                        <CardDescription className="font-mono">{cnpj.label}</CardDescription>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <FileText className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {stats.count} arquivos
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <HardDrive className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {formatFileSize(stats.size)}
+                        </span>
+                      </div>
+                    </div>
+                    <Button className="w-full mt-4" variant="outline">
+                      <FolderOpen className="w-4 h-4 mr-2" />
+                      Acessar Arquivos
+                    </Button>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })}
+        </div>
+
+        {/* Resumo Total */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Resumo Total</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <p className="text-2xl font-bold text-primary">
+                  {CNPJS.reduce((acc, cnpj) => acc + (statsArquivos?.[cnpj.id]?.count || 0), 0)}
+                </p>
+                <p className="text-sm text-muted-foreground">Arquivos Total</p>
+              </div>
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <p className="text-2xl font-bold text-primary">
+                  {formatFileSize(CNPJS.reduce((acc, cnpj) => acc + (statsArquivos?.[cnpj.id]?.size || 0), 0))}
+                </p>
+                <p className="text-sm text-muted-foreground">Espaço Usado</p>
+              </div>
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <p className="text-2xl font-bold text-primary">2</p>
+                <p className="text-sm text-muted-foreground">CNPJs Ativos</p>
+              </div>
+              <div className="text-center p-4 bg-muted/50 rounded-lg">
+                <p className="text-2xl font-bold text-green-500">100%</p>
+                <p className="text-sm text-muted-foreground">Sincronizado</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
+  // Tela de arquivos do CNPJ selecionado
+  const cnpjAtual = CNPJS.find(c => c.id === cnpjSelecionado);
+
+  return (
+    <div className="min-h-screen bg-background p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div className="flex items-center gap-4">
+          <Button variant="ghost" size="icon" onClick={() => setCnpjSelecionado(null)}>
+            <ArrowLeft className="w-5 h-5" />
+          </Button>
+          <div>
+            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <Building2 className="w-6 h-6 text-primary" />
+              {cnpjAtual?.nome}
+            </h1>
+            <p className="text-muted-foreground font-mono text-sm">{cnpjAtual?.label}</p>
+          </div>
         </div>
         
         <div className="flex items-center gap-3">
@@ -290,13 +418,17 @@ export default function ArquivosEmpresariais() {
               Upload de Arquivos
             </CardTitle>
             <CardDescription>
-              Envie novos documentos para {CATEGORIAS.find(c => c.id === categoriaAtiva)?.label}
+              {CATEGORIAS.find(c => c.id === categoriaAtiva)?.label}
             </CardDescription>
           </CardHeader>
           <CardContent>
             <FileUploadZone
               categoria={categoriaAtiva}
-              onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ["arquivos-empresa"] })}
+              cnpj={cnpjSelecionado}
+              onUploadComplete={() => {
+                queryClient.invalidateQueries({ queryKey: ["arquivos-empresa"] });
+                queryClient.invalidateQueries({ queryKey: ["arquivos-stats"] });
+              }}
             />
           </CardContent>
         </Card>
@@ -309,10 +441,8 @@ export default function ArquivosEmpresariais() {
                 <FileText className="h-5 w-5 text-primary" />
                 Arquivos ({arquivosFiltrados?.length || 0})
               </span>
+              <Badge variant="outline">{cnpjAtual?.label}</Badge>
             </CardTitle>
-            <CardDescription>
-              {CATEGORIAS.find(c => c.id === categoriaAtiva)?.label}
-            </CardDescription>
           </CardHeader>
           <CardContent>
             {isLoading ? (
@@ -340,23 +470,15 @@ export default function ArquivosEmpresariais() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => window.open(arquivo.url, "_blank")}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => window.open(arquivo.url, "_blank")}>
                           <Eye className="w-4 h-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            const a = document.createElement("a");
-                            a.href = arquivo.url;
-                            a.download = arquivo.nome;
-                            a.click();
-                          }}
-                        >
+                        <Button variant="ghost" size="icon" onClick={() => {
+                          const a = document.createElement("a");
+                          a.href = arquivo.url;
+                          a.download = arquivo.nome;
+                          a.click();
+                        }}>
                           <Download className="w-4 h-4" />
                         </Button>
                         <Button

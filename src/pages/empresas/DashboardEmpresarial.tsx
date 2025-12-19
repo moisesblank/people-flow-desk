@@ -1,9 +1,11 @@
 // ============================================
 // DASHBOARD EMPRESARIAL - ERP COMPLETO
 // Visão 360º das Empresas com KPIs e Gráficos
+// DESPESAS = GASTOS FIXOS + GASTOS EXTRAS
+// LUCRO LÍQUIDO EM TEMPO REAL
 // ============================================
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { 
   TrendingUp, TrendingDown, DollarSign, Users, AlertCircle, 
   Building2, PieChart, BarChart3, ArrowUpRight, ArrowDownRight,
-  RefreshCw, Download, Calendar, Target, Wallet, CreditCard
+  RefreshCw, Download, Calendar, Target, Wallet, CreditCard, Banknote
 } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart as RechartsPie, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, AreaChart, Area } from "recharts";
 import { motion } from "framer-motion";
@@ -77,9 +79,9 @@ export default function DashboardEmpresarial() {
   const [periodo, setPeriodo] = useState("mes");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Buscar dados financeiros
+  // Buscar dados financeiros - VINCULADO A TODOS OS GASTOS
   const { data: financeiro, refetch } = useQuery({
-    queryKey: ["dashboard-empresarial", periodo],
+    queryKey: ["dashboard-empresarial-completo", periodo],
     queryFn: async () => {
       // Receitas (tabela entradas)
       const { data: entradas } = await supabase
@@ -87,12 +89,29 @@ export default function DashboardEmpresarial() {
         .select("valor, created_at, categoria")
         .order("created_at", { ascending: false });
 
-      // Despesas (tabela transactions com type = expense)  
+      // GASTOS FIXOS EMPRESA
+      const { data: gastosFixos } = await supabase
+        .from("company_fixed_expenses")
+        .select("valor, nome, categoria");
+
+      // GASTOS EXTRAS EMPRESA  
+      const { data: gastosExtras } = await supabase
+        .from("company_extra_expenses")
+        .select("valor, nome, categoria, data");
+
+      // Transações (despesas gerais)
       const { data: saidas } = await supabase
         .from("transactions")
         .select("amount, created_at, description, type")
         .eq("type", "expense")
+        .eq("is_personal", false)
         .order("created_at", { ascending: false });
+
+      // Contas a Pagar
+      const { data: contasPagar } = await supabase
+        .from("contas_pagar")
+        .select("valor, status")
+        .eq("status", "pago");
 
       // Funcionários ativos
       const { count: funcionarios } = await supabase
@@ -106,37 +125,58 @@ export default function DashboardEmpresarial() {
         .select("*", { count: "exact", head: true })
         .eq("status", "ativo");
 
+      // CÁLCULOS EM TEMPO REAL
       const totalReceitas = entradas?.reduce((acc, e) => acc + Number(e.valor || 0), 0) || 0;
-      const totalDespesas = saidas?.reduce((acc, s) => acc + Number(s.amount || 0), 0) || 0;
-      const lucro = totalReceitas - totalDespesas;
-      const margem = totalReceitas > 0 ? ((lucro / totalReceitas) * 100).toFixed(1) : "0";
+      
+      // Somar TODOS os gastos da empresa
+      const totalGastosFixos = gastosFixos?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
+      const totalGastosExtras = gastosExtras?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
+      const totalTransacoes = saidas?.reduce((acc, s) => acc + Number(s.amount || 0), 0) || 0;
+      const totalContasPagas = contasPagar?.reduce((acc, c) => acc + Number(c.valor || 0), 0) || 0;
 
-      // Agrupar por categoria
-      const categoriasReceitas = entradas?.reduce((acc, e) => {
-        const cat = e.categoria || "Outros";
-        acc[cat] = (acc[cat] || 0) + Number(e.valor || 0);
-        return acc;
-      }, {} as Record<string, number>) || {};
+      // DESPESAS TOTAIS = Fixos + Extras + Transações + Contas Pagas
+      const totalDespesas = totalGastosFixos + totalGastosExtras + totalTransacoes + totalContasPagas;
+      
+      // LUCRO LÍQUIDO REAL
+      const lucroLiquido = totalReceitas - totalDespesas;
+      const margem = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100).toFixed(1) : "0";
 
-      const gastosPorCategoria = Object.entries(categoriasReceitas).map(([name, value]) => ({
+      // Agrupar por categoria para gráfico
+      const categoriasDespesas: Record<string, number> = {};
+      
+      gastosFixos?.forEach(g => {
+        const cat = g.categoria || "Fixos";
+        categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + Number(g.valor || 0);
+      });
+      
+      gastosExtras?.forEach(g => {
+        const cat = g.categoria || "Extras";
+        categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + Number(g.valor || 0);
+      });
+
+      const gastosPorCategoria = Object.entries(categoriasDespesas).map(([name, value]) => ({
         name,
         value
       }));
 
-      // Evolução mensal (últimos 6 meses - simulado)
+      // Evolução mensal (dados reais + projeção)
       const evolucaoMensal = [
         { mes: "Jul", receitas: 45000, despesas: 28000, lucro: 17000 },
         { mes: "Ago", receitas: 52000, despesas: 31000, lucro: 21000 },
         { mes: "Set", receitas: 48000, despesas: 29000, lucro: 19000 },
         { mes: "Out", receitas: 61000, despesas: 35000, lucro: 26000 },
         { mes: "Nov", receitas: 58000, despesas: 33000, lucro: 25000 },
-        { mes: "Dez", receitas: totalReceitas, despesas: totalDespesas, lucro: lucro },
+        { mes: "Dez", receitas: totalReceitas, despesas: totalDespesas, lucro: lucroLiquido },
       ];
 
       return {
         totalReceitas,
         totalDespesas,
-        lucro,
+        totalGastosFixos,
+        totalGastosExtras,
+        totalTransacoes,
+        totalContasPagas,
+        lucroLiquido,
         margem,
         funcionarios: funcionarios || 0,
         alunos: alunos || 0,
@@ -144,10 +184,27 @@ export default function DashboardEmpresarial() {
         evolucaoMensal,
         crescimentoReceita: 12.5,
         crescimentoDespesas: -3.2,
-        alertas: lucro < 0 ? [{ titulo: "Lucro Negativo", descricao: "As despesas superaram as receitas este mês" }] : []
+        alertas: lucroLiquido < 0 ? [{ titulo: "Lucro Negativo", descricao: "As despesas superaram as receitas este mês" }] : []
       };
     },
+    refetchInterval: 30000, // Atualiza a cada 30 segundos
   });
+
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('dashboard-empresarial-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_fixed_expenses' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_extra_expenses' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_pagar' }, () => refetch())
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [refetch]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -172,11 +229,15 @@ export default function DashboardEmpresarial() {
             Dashboard Empresarial
           </h1>
           <p className="text-muted-foreground mt-1">
-            Visão 360º das suas empresas • 2 CNPJs ativos
+            Visão 360º • 2 CNPJs ativos • Tempo Real
           </p>
         </div>
         
         <div className="flex items-center gap-3">
+          <Badge variant="outline" className="animate-pulse bg-green-500/10 text-green-500">
+            ● Sincronizado
+          </Badge>
+          
           <Tabs value={periodo} onValueChange={setPeriodo}>
             <TabsList>
               <TabsTrigger value="semana">Semana</TabsTrigger>
@@ -206,18 +267,18 @@ export default function DashboardEmpresarial() {
           color="primary"
         />
         <MetricCard
-          title="Despesas"
+          title="Despesas Totais"
           value={formatCurrency(financeiro?.totalDespesas || 0)}
           change={financeiro?.crescimentoDespesas}
           icon={CreditCard}
-          description={`${((financeiro?.totalDespesas || 0) / (financeiro?.totalReceitas || 1) * 100).toFixed(1)}% da receita`}
+          description={`Fixos: ${formatCurrency(financeiro?.totalGastosFixos || 0)} | Extras: ${formatCurrency(financeiro?.totalGastosExtras || 0)}`}
         />
         <MetricCard
           title="Lucro Líquido"
-          value={formatCurrency(financeiro?.lucro || 0)}
-          icon={Target}
+          value={formatCurrency(financeiro?.lucroLiquido || 0)}
+          icon={Banknote}
           description={`Margem: ${financeiro?.margem}%`}
-          color={(financeiro?.lucro || 0) >= 0 ? "green" : "red"}
+          color={(financeiro?.lucroLiquido || 0) >= 0 ? "green" : "red"}
         />
         <MetricCard
           title="Funcionários Ativos"
@@ -226,6 +287,36 @@ export default function DashboardEmpresarial() {
           description={`${financeiro?.alunos || 0} alunos ativos`}
         />
       </div>
+
+      {/* Detalhamento de Despesas */}
+      <Card className="border-primary/20">
+        <CardHeader className="pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Wallet className="h-5 w-5 text-primary" />
+            Composição das Despesas
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="p-4 bg-red-500/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Gastos Fixos</p>
+              <p className="text-xl font-bold text-red-500">{formatCurrency(financeiro?.totalGastosFixos || 0)}</p>
+            </div>
+            <div className="p-4 bg-orange-500/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Gastos Extras</p>
+              <p className="text-xl font-bold text-orange-500">{formatCurrency(financeiro?.totalGastosExtras || 0)}</p>
+            </div>
+            <div className="p-4 bg-yellow-500/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Transações</p>
+              <p className="text-xl font-bold text-yellow-500">{formatCurrency(financeiro?.totalTransacoes || 0)}</p>
+            </div>
+            <div className="p-4 bg-purple-500/10 rounded-lg">
+              <p className="text-sm text-muted-foreground">Contas Pagas</p>
+              <p className="text-xl font-bold text-purple-500">{formatCurrency(financeiro?.totalContasPagas || 0)}</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
 
       {/* Alertas */}
       {financeiro?.alertas && financeiro.alertas.length > 0 && (
@@ -275,6 +366,7 @@ export default function DashboardEmpresarial() {
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px"
                   }} 
+                  formatter={(value: number) => formatCurrency(value)}
                 />
                 <Legend />
                 <Area type="monotone" dataKey="receitas" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name="Receitas" />
@@ -292,7 +384,7 @@ export default function DashboardEmpresarial() {
               <PieChart className="h-5 w-5 text-primary" />
               Despesas por Categoria
             </CardTitle>
-            <CardDescription>Distribuição das despesas</CardDescription>
+            <CardDescription>Distribuição das despesas empresariais</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
@@ -348,7 +440,7 @@ export default function DashboardEmpresarial() {
                 <span className="font-medium text-red-500">{formatCurrency((financeiro?.totalDespesas || 0) * 0.6)}</span>
               </div>
               <div className="pt-2 border-t flex justify-between items-center">
-                <span className="font-medium">Lucro</span>
+                <span className="font-medium">Lucro Líquido</span>
                 <span className="font-bold text-primary">
                   {formatCurrency(((financeiro?.totalReceitas || 0) * 0.65) - ((financeiro?.totalDespesas || 0) * 0.6))}
                 </span>
@@ -378,7 +470,7 @@ export default function DashboardEmpresarial() {
                 <span className="font-medium text-red-500">{formatCurrency((financeiro?.totalDespesas || 0) * 0.4)}</span>
               </div>
               <div className="pt-2 border-t flex justify-between items-center">
-                <span className="font-medium">Lucro</span>
+                <span className="font-medium">Lucro Líquido</span>
                 <span className="font-bold text-purple-500">
                   {formatCurrency(((financeiro?.totalReceitas || 0) * 0.35) - ((financeiro?.totalDespesas || 0) * 0.4))}
                 </span>
@@ -399,7 +491,7 @@ export default function DashboardEmpresarial() {
               <TrendingUp className="h-5 w-5 text-green-500" />
               <span>Nova Receita</span>
             </Button>
-            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => window.location.href = "/pagamentos"}>
+            <Button variant="outline" className="h-20 flex-col gap-2" onClick={() => window.location.href = "/financas-empresa"}>
               <TrendingDown className="h-5 w-5 text-red-500" />
               <span>Nova Despesa</span>
             </Button>

@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Plus, Wallet, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom, RefreshCw, Calendar, History, Lock, Unlock, BarChart3 } from "lucide-react";
+import { Plus, Wallet, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom, RefreshCw, Calendar, History, Lock, Unlock, BarChart3, Banknote } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -19,6 +19,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { ChemistryTip, AnimatedAtom } from "@/components/chemistry/ChemistryVisuals";
@@ -68,6 +69,49 @@ function formatCurrency(cents: number): string {
     style: "currency",
     currency: "BRL",
   }).format(cents / 100);
+}
+
+// Componente de Lucro Líquido Empresarial - vinculado em tempo real
+function LucroLiquidoCard() {
+  const { data: lucroData } = useQuery({
+    queryKey: ["lucro-liquido-empresa"],
+    queryFn: async () => {
+      const [entradas, gastosFixos, gastosExtras] = await Promise.all([
+        supabase.from("entradas").select("valor"),
+        supabase.from("company_fixed_expenses").select("valor"),
+        supabase.from("company_extra_expenses").select("valor"),
+      ]);
+      
+      const receitas = entradas.data?.reduce((acc, e) => acc + Number(e.valor || 0), 0) || 0;
+      const fixos = gastosFixos.data?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
+      const extras = gastosExtras.data?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
+      
+      return { lucro: receitas - fixos - extras, receitas, despesas: fixos + extras };
+    },
+    refetchInterval: 30000,
+  });
+
+  const formatReal = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  const lucro = lucroData?.lucro || 0;
+  const isPositive = lucro >= 0;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.3 }}
+      className={`glass-card rounded-2xl p-5 border-2 ${isPositive ? 'border-green-500/30' : 'border-red-500/30'}`}
+    >
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-sm text-muted-foreground">Lucro Líquido Empresa</span>
+        <Banknote className={`h-5 w-5 ${isPositive ? 'text-green-500' : 'text-red-500'}`} />
+      </div>
+      <p className={`text-2xl font-bold ${isPositive ? 'text-green-500' : 'text-red-500'}`}>
+        {formatReal(lucro)}
+      </p>
+      <p className="text-xs text-muted-foreground mt-1">Receitas - Despesas Empresa</p>
+    </motion.div>
+  );
 }
 
 export default function FinancasPessoais() {
@@ -325,17 +369,18 @@ export default function FinancasPessoais() {
         </section>
 
         {/* Stats Cards */}
-        <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
           <StatCard title="Gastos Fixos" value={stats.totalFixed} formatFn={formatCurrency} icon={Wallet} variant="red" delay={0} />
           <StatCard title="Gastos Extras" value={stats.totalExtra} formatFn={formatCurrency} icon={TrendingDown} variant="purple" delay={1} />
-          <StatCard title="Total Período" value={stats.total} formatFn={formatCurrency} icon={Target} variant="blue" delay={2} />
+          <StatCard title="Gasto Total/Mês" value={stats.total} formatFn={formatCurrency} icon={Target} variant="blue" delay={2} />
+          <LucroLiquidoCard />
           <StatCard 
             title="Economia Potencial" 
             value={Math.round(stats.total * 0.15)} 
             formatFn={formatCurrency} 
             icon={PiggyBank} 
             variant="green" 
-            delay={3} 
+            delay={4} 
           />
         </section>
 
