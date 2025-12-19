@@ -1,7 +1,7 @@
 // ============================================
 // 🌟 TRAMON v8.0 OMEGA ULTRA - SUPERINTELIGÊNCIA TOTAL
 // INTEGRAÇÃO COMPLETA: Hotmart + YouTube + Instagram + WhatsApp + Finanças
-// Modelo: Gemini 2.5 Pro (Multimodal)
+// Modelo: OpenAI GPT-5 (ChatGPT Pro)
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -761,14 +761,15 @@ ${alertas.length > 0 ? `### 🚨 ALERTAS\n${alertas.join('\n')}` : ''}
       }
     }
 
+    // Usando ChatGPT Pro (GPT-5) - modelo mais avançado
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "openai/gpt-5",
         messages: aiMessages,
         stream: true,
-        max_tokens: isProgrammerMode ? 8192 : 4096,
+        max_completion_tokens: isProgrammerMode ? 8192 : 4096,
       }),
     });
 

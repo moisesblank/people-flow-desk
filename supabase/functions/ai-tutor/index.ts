@@ -1,7 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v11.0 - AI TUTOR SUPREMO
 // Tutor Virtual de ELITE - Química para Medicina
-// Powered by Gemini 2.5 Flash
+// Powered by OpenAI GPT-5 Mini (ChatGPT Pro)
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -595,6 +595,7 @@ Se o aluno não especificar, pergunte:
 
     const systemPrompt = systemPrompts[mode] || systemPrompts.tutor;
 
+    // Usando ChatGPT Pro (GPT-5-mini) - excelente para educação
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
@@ -602,13 +603,12 @@ Se o aluno não especificar, pergunte:
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "openai/gpt-5-mini",
         messages: [
           { role: "system", content: systemPrompt },
           ...messages,
         ],
         stream: true,
-        temperature: mode === "flashcards" || mode === "cronograma" ? 0.3 : 0.7,
       }),
     });
 

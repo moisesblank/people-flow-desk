@@ -64,6 +64,7 @@ serve(async (req) => {
           // Usa Gemini Pro para raciocínio complexo
           const manusPrompt = buildManusPrompt(action, params);
           
+          // Usando ChatGPT Pro (GPT-5) para análises estratégicas
           const manusResponse = await fetch(LOVABLE_AI_URL, {
             method: 'POST',
             headers: {
@@ -71,7 +72,7 @@ serve(async (req) => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'google/gemini-2.5-pro',
+              model: 'openai/gpt-5',
               messages: [
                 {
                   role: 'system',
@@ -88,7 +89,7 @@ serve(async (req) => {
           const manusData = await manusResponse.json();
           resultado = {
             response: manusData.choices?.[0]?.message?.content,
-            model: 'gemini-2.5-pro',
+            model: 'openai/gpt-5',
             action
           };
           break;
@@ -132,6 +133,7 @@ serve(async (req) => {
         case 'chatgpt':
           const chatgptPrompt = buildChatGPTPrompt(action, params);
           
+          // Usando ChatGPT Pro (GPT-5-mini) para comunicação
           const chatgptResponse = await fetch(LOVABLE_AI_URL, {
             method: 'POST',
             headers: {
@@ -139,7 +141,7 @@ serve(async (req) => {
               'Content-Type': 'application/json'
             },
             body: JSON.stringify({
-              model: 'google/gemini-2.5-flash', // Rápido e eficiente para texto
+              model: 'openai/gpt-5-mini',
               messages: [
                 {
                   role: 'system',
@@ -232,6 +234,7 @@ serve(async (req) => {
 
             case 'responder_whatsapp':
               // Gerar resposta com IA
+              // Usando ChatGPT Pro (GPT-5-nano) para respostas rápidas
               const waResponse = await fetch(LOVABLE_AI_URL, {
                 method: 'POST',
                 headers: {
@@ -239,7 +242,7 @@ serve(async (req) => {
                   'Content-Type': 'application/json'
                 },
                 body: JSON.stringify({
-                  model: 'google/gemini-2.5-flash-lite', // Ultra rápido
+                  model: 'openai/gpt-5-nano',
                   messages: [
                     {
                       role: 'system',
