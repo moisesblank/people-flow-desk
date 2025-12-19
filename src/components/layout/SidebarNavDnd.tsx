@@ -17,7 +17,8 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
-import { GripVertical } from "lucide-react";
+import { GripVertical, Copy, Check } from "lucide-react";
+import { toast } from "sonner";
 
 import {
   SidebarGroup,
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
 import { NavLink } from "@/components/NavLink";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 type MenuItem = {
   title: string;
@@ -182,6 +184,7 @@ export function SidebarNavDnd(props: {
   // state we mutate with DnD
   const [layout, setLayout] = useState<SidebarLayoutV1>(parsedLayout);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [copiedItem, setCopiedItem] = useState<string | null>(null);
 
   useEffect(() => {
     setLayout(parsedLayout);
@@ -189,14 +192,73 @@ export function SidebarNavDnd(props: {
 
   const orderedGroups = useMemo(() => applyLayout(groups, layout), [groups, layout]);
 
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
+  const sensors = useSensors(
+    useSensor(PointerSensor, { 
+      activationConstraint: { distance: 5 } 
+    })
+  );
 
   const persist = useCallback(
     async (next: SidebarLayoutV1) => {
-      await updateContent(layoutKey, JSON.stringify(next), "json");
+      const success = await updateContent(layoutKey, JSON.stringify(next), "json");
+      if (success) {
+        toast.success("✅ Layout salvo!", {
+          description: "Menu atualizado com sucesso",
+          duration: 2000
+        });
+      }
     },
     [updateContent]
   );
+
+  // Função para duplicar item (copia a configuração para área de transferência)
+  const handleDuplicateItem = useCallback((item: MenuItem, groupId: string) => {
+    const itemData = {
+      type: 'menu_item',
+      item: {
+        title: item.title,
+        url: item.url,
+        area: item.area,
+        badge: item.badge
+      },
+      groupId
+    };
+    
+    navigator.clipboard.writeText(JSON.stringify(itemData, null, 2));
+    setCopiedItem(item.area);
+    
+    toast.success("📋 Item copiado!", {
+      description: `"${item.title}" copiado para área de transferência`,
+      duration: 2000
+    });
+
+    setTimeout(() => setCopiedItem(null), 2000);
+  }, []);
+
+  // Função para duplicar grupo
+  const handleDuplicateGroup = useCallback((group: MenuGroup) => {
+    const groupData = {
+      type: 'menu_group',
+      group: {
+        id: group.id,
+        label: group.label,
+        color: group.color,
+        items: group.items.map(i => ({
+          title: i.title,
+          url: i.url,
+          area: i.area,
+          badge: i.badge
+        }))
+      }
+    };
+    
+    navigator.clipboard.writeText(JSON.stringify(groupData, null, 2));
+    
+    toast.success("📋 Grupo copiado!", {
+      description: `"${group.label}" e todos os itens copiados`,
+      duration: 2000
+    });
+  }, []);
 
   const handleDragStart = (event: DragStartEvent) => {
     setActiveId(String(event.active.id));
@@ -346,108 +408,161 @@ export function SidebarNavDnd(props: {
 
   return (
     <DndContext
-      sensors={sensors}
-      collisionDetection={closestCenter}
-      onDragStart={handleDragStart}
-      onDragEnd={handleDragEnd}
-    >
-      <SortableContext items={groupIds} strategy={verticalListSortingStrategy}>
-        <div className="space-y-2">
-          {orderedGroups.map((group, idx) => {
-            const items = group.items.map((i) => `item:${i.area}`);
-            return (
-              <SortableGroup key={group.id} id={group.id}>
-                {({ attributes, listeners, setActivatorNodeRef }) => (
-                  <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
-                    <SidebarGroup>
-                      <div className="relative mb-2 rounded-lg overflow-hidden h-12 group">
-                        <img src={group.image} alt={group.label} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
-                        <div className={`absolute inset-0 bg-gradient-to-r ${group.color} to-transparent flex items-center px-3`}>
-                          {canEditLayout && (
-                            <button
-                              type="button"
-                              ref={setActivatorNodeRef}
-                              {...attributes}
-                              {...listeners}
-                              className="mr-2 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10 touch-none"
-                              aria-label="Arrastar categoria"
-                            >
-                              <GripVertical className="h-4 w-4" />
-                            </button>
-                          )}
-                          <span className="text-xs font-bold text-white drop-shadow-lg">{group.label}</span>
+        sensors={sensors}
+        collisionDetection={closestCenter}
+        onDragStart={handleDragStart}
+        onDragEnd={handleDragEnd}
+      >
+        <SortableContext items={groupIds} strategy={verticalListSortingStrategy}>
+          <div className="space-y-2">
+            {orderedGroups.map((group, idx) => {
+              const items = group.items.map((i) => `item:${i.area}`);
+              return (
+                <SortableGroup key={group.id} id={group.id}>
+                  {({ attributes, listeners, setActivatorNodeRef }) => (
+                    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: idx * 0.05 }}>
+                      <SidebarGroup>
+                        <div className="relative mb-2 rounded-lg overflow-hidden h-12 group">
+                          <img src={group.image} alt={group.label} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
+                          <div className={`absolute inset-0 bg-gradient-to-r ${group.color} to-transparent flex items-center px-3`}>
+                            {canEditLayout && (
+                              <div className="flex items-center gap-1 mr-2">
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      ref={setActivatorNodeRef}
+                                      {...attributes}
+                                      {...listeners}
+                                      className="inline-flex items-center justify-center rounded-md p-1.5 text-white/80 hover:text-white hover:bg-white/20 touch-none cursor-grab active:cursor-grabbing transition-colors"
+                                      aria-label="Arrastar categoria"
+                                    >
+                                      <GripVertical className="h-4 w-4" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">Arrastar grupo</TooltipContent>
+                                </Tooltip>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        handleDuplicateGroup(group);
+                                      }}
+                                      className="inline-flex items-center justify-center rounded-md p-1.5 text-white/80 hover:text-white hover:bg-white/20 transition-colors"
+                                      aria-label="Duplicar categoria"
+                                    >
+                                      <Copy className="h-3.5 w-3.5" />
+                                    </button>
+                                  </TooltipTrigger>
+                                  <TooltipContent side="right">Duplicar grupo</TooltipContent>
+                                </Tooltip>
+                              </div>
+                            )}
+                            <span className="text-xs font-bold text-white drop-shadow-lg">{group.label}</span>
+                          </div>
                         </div>
-                      </div>
 
-                      <SidebarGroupLabel className="sr-only">{group.label}</SidebarGroupLabel>
-                      <SidebarGroupContent>
-                        <SidebarMenu>
-                          <SortableContext items={items} strategy={verticalListSortingStrategy}>
-                            <div className="space-y-1">
-                              {group.items.map((item) => (
-                                <SortableItem key={item.area} groupId={group.id} area={item.area}>
-                                  {({ attributes, listeners, setActivatorNodeRef }) => (
-                                    <SidebarMenuItem>
-                                      <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
-                                        <NavLink
-                                          to={item.url}
-                                          end
-                                          className="flex items-center gap-3"
-                                          activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
-                                        >
-                                          <item.icon className="h-4 w-4 shrink-0" />
-                                          <span className="flex items-center gap-2 min-w-0">
-                                            {canEditLayout && (
-                                              <button
-                                                type="button"
-                                                ref={setActivatorNodeRef}
-                                                {...attributes}
-                                                {...listeners}
-                                                onClick={(e) => {
-                                                  e.preventDefault();
-                                                  e.stopPropagation();
-                                                }}
-                                                className="inline-flex items-center justify-center rounded-md px-1.5 py-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 touch-none"
-                                                aria-label="Arrastar item"
-                                              >
-                                                <GripVertical className="h-4 w-4" />
-                                              </button>
-                                            )}
-                                            <span className="truncate" data-editable-key={`nav_${item.area}_title`}>
-                                              {getContent(`nav_${item.area}_title`, item.title)}
+                        <SidebarGroupLabel className="sr-only">{group.label}</SidebarGroupLabel>
+                        <SidebarGroupContent>
+                          <SidebarMenu>
+                            <SortableContext items={items} strategy={verticalListSortingStrategy}>
+                              <div className="space-y-1">
+                                {group.items.map((item) => (
+                                  <SortableItem key={item.area} groupId={group.id} area={item.area}>
+                                    {({ attributes, listeners, setActivatorNodeRef }) => (
+                                      <SidebarMenuItem>
+                                        <SidebarMenuButton asChild isActive={isActive(item.url)} tooltip={item.title}>
+                                          <NavLink
+                                            to={item.url}
+                                            end
+                                            className="flex items-center gap-3"
+                                            activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                                          >
+                                            <item.icon className="h-4 w-4 shrink-0" />
+                                            <span className="flex items-center gap-2 min-w-0 flex-1">
+                                              {canEditLayout && (
+                                                <span className="flex items-center gap-0.5 shrink-0">
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <button
+                                                        type="button"
+                                                        ref={setActivatorNodeRef}
+                                                        {...attributes}
+                                                        {...listeners}
+                                                        onClick={(e) => {
+                                                          e.preventDefault();
+                                                          e.stopPropagation();
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 touch-none cursor-grab active:cursor-grabbing transition-colors"
+                                                        aria-label="Arrastar item"
+                                                      >
+                                                        <GripVertical className="h-3.5 w-3.5" />
+                                                      </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="right">Arrastar item</TooltipContent>
+                                                  </Tooltip>
+                                                  <Tooltip>
+                                                    <TooltipTrigger asChild>
+                                                      <button
+                                                        type="button"
+                                                        onClick={(e) => {
+                                                          e.preventDefault();
+                                                          e.stopPropagation();
+                                                          handleDuplicateItem(item, group.id);
+                                                        }}
+                                                        className="inline-flex items-center justify-center rounded-md p-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 transition-colors"
+                                                        aria-label="Duplicar item"
+                                                      >
+                                                        {copiedItem === item.area ? (
+                                                          <Check className="h-3 w-3 text-green-500" />
+                                                        ) : (
+                                                          <Copy className="h-3 w-3" />
+                                                        )}
+                                                      </button>
+                                                    </TooltipTrigger>
+                                                    <TooltipContent side="right">Duplicar item</TooltipContent>
+                                                  </Tooltip>
+                                                </span>
+                                              )}
+                                              <span className="truncate" data-editable-key={`nav_${item.area}_title`}>
+                                                {getContent(`nav_${item.area}_title`, item.title)}
+                                              </span>
+                                              {item.badge && (
+                                                <Badge variant="outline" className="text-[10px] px-1 py-0">
+                                                  {item.badge}
+                                                </Badge>
+                                              )}
                                             </span>
-                                            {item.badge && (
-                                              <Badge variant="outline" className="text-[10px] px-1 py-0">
-                                                {item.badge}
-                                              </Badge>
-                                            )}
-                                          </span>
-                                        </NavLink>
-                                      </SidebarMenuButton>
-                                    </SidebarMenuItem>
-                                  )}
-                                </SortableItem>
-                              ))}
-                            </div>
-                          </SortableContext>
-                        </SidebarMenu>
-                      </SidebarGroupContent>
-                    </SidebarGroup>
-                  </motion.div>
-                )}
-              </SortableGroup>
-            );
-          })}
-        </div>
-      </SortableContext>
-
-      <DragOverlay>
-        {activeId ? (
-          <div className="rounded-lg border border-border bg-background/95 px-3 py-2 text-sm shadow-xl">
-            Movendo...
+                                          </NavLink>
+                                        </SidebarMenuButton>
+                                      </SidebarMenuItem>
+                                    )}
+                                  </SortableItem>
+                                ))}
+                              </div>
+                            </SortableContext>
+                          </SidebarMenu>
+                        </SidebarGroupContent>
+                      </SidebarGroup>
+                    </motion.div>
+                  )}
+                </SortableGroup>
+              );
+            })}
           </div>
-        ) : null}
-      </DragOverlay>
-    </DndContext>
+        </SortableContext>
+
+        <DragOverlay>
+          {activeId ? (
+            <div className="rounded-lg border-2 border-primary bg-background/95 px-4 py-2 text-sm shadow-xl flex items-center gap-2">
+              <GripVertical className="h-4 w-4 text-primary" />
+              <span className="font-medium">Movendo...</span>
+            </div>
+          ) : null}
+        </DragOverlay>
+      </DndContext>
   );
 }
