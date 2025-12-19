@@ -147,6 +147,7 @@ const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m 
 const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
 const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
 const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
+const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then(m => ({ default: m.GlobalDuplicationSystem })));
 
 
 function AppContent() {
@@ -159,6 +160,7 @@ function AppContent() {
         <LazyGodModePanel />
         <LazyInlineEditor />
         <LazyMasterQuickAddMenu />
+        <LazyGlobalDuplication />
       </Suspense>
       <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />

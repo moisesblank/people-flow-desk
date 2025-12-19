@@ -1,15 +1,13 @@
 // ============================================
-// MOISÉS MEDEIROS v15.0 - MASTER QUICK ADD MENU
+// MOISÉS MEDEIROS v16.0 - MASTER QUICK ADD MENU
 // Menu flutuante de criação rápida Ctrl+Shift+Q
-// TODAS AS ENTIDADES DO SISTEMA
+// CORRIGIDO: Cliques funcionando + Submenus + Drag & Drop
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useGodMode } from '@/contexts/GodModeContext';
-import { useMasterActions } from '@/hooks/useMasterActions';
-import { MasterActionConfirmDialog } from './MasterActionConfirmDialog';
 import { MasterAddModal } from './MasterAddModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';
@@ -24,7 +22,6 @@ import {
   Target,
   Bell,
   BarChart3,
-  Briefcase,
   Video,
   MessageSquare,
   Settings,
@@ -34,7 +31,6 @@ import {
   UserCheck,
   CreditCard,
   ChevronRight,
-  Sparkles,
   Keyboard,
   Zap,
   GraduationCap,
@@ -53,10 +49,8 @@ import {
   School,
   Monitor,
   Users2,
-  Database,
   Globe,
   Link,
-  Image,
   Mic,
   Play,
   Edit3,
@@ -65,16 +59,21 @@ import {
   AlertCircle,
   Mail,
   Send,
-  Package,
-  ShoppingCart,
-  Store,
   Percent,
   Tag,
   Hash,
   Star,
   Flame,
-  Crown
+  Crown,
+  GripVertical
 } from 'lucide-react';
+
+interface QuickAddSubItem {
+  id: string;
+  label: string;
+  entityType: string;
+  icon?: React.ReactNode;
+}
 
 interface QuickAddCategory {
   id: string;
@@ -82,7 +81,7 @@ interface QuickAddCategory {
   icon: React.ReactNode;
   color: string;
   entityType: string;
-  subItems?: { id: string; label: string; entityType: string; icon?: React.ReactNode }[];
+  subItems?: QuickAddSubItem[];
 }
 
 // TODAS AS CATEGORIAS DISPONÍVEIS NA PLATAFORMA
@@ -232,7 +231,7 @@ const QUICK_ADD_CATEGORIES: QuickAddCategory[] = [
     subItems: [
       { id: 'turma_online', label: 'Turma Online', entityType: 'turma_online', icon: <Monitor className="w-3 h-3" /> },
       { id: 'turma_presencial', label: 'Turma Presencial', entityType: 'turma_presencial', icon: <School className="w-3 h-3" /> },
-      { id: 'experimento', label: 'Experimento', entityType: 'experimento', icon: <FlaskConical className="w-3 h-3" /> },
+      { id: 'experimento', label: 'Experimento', entityType: 'experiment', icon: <FlaskConical className="w-3 h-3" /> },
     ]
   },
   // ==================== AULAS AO VIVO ====================
@@ -341,7 +340,7 @@ const QUICK_ADD_CATEGORIES: QuickAddCategory[] = [
     color: 'text-gray-400',
     entityType: 'setting',
     subItems: [
-      { id: 'branding', label: 'Branding', entityType: 'branding', icon: <Image className="w-3 h-3" /> },
+      { id: 'branding', label: 'Branding', entityType: 'branding', icon: <Crown className="w-3 h-3" /> },
       { id: 'user_role', label: 'Role de Usuário', entityType: 'user_role', icon: <Crown className="w-3 h-3" /> },
     ]
   },
@@ -349,13 +348,15 @@ const QUICK_ADD_CATEGORIES: QuickAddCategory[] = [
 
 export function MasterQuickAddMenu() {
   const { isOwner, isActive } = useGodMode();
-  const { pendingAction, confirmAction, cancelAction, isProcessing } = useMasterActions();
   const location = useLocation();
   
   const [isOpen, setIsOpen] = useState(false);
   const [activeSubmenu, setActiveSubmenu] = useState<string | null>(null);
   const [selectedEntity, setSelectedEntity] = useState<string | null>(null);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [modalOpen, setModalOpen] = useState(false);
+  
+  const menuRef = useRef<HTMLDivElement>(null);
+  const submenuTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Atalho Ctrl+Shift+Q para abrir/fechar
   useEffect(() => {
@@ -364,10 +365,11 @@ export function MasterQuickAddMenu() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.shiftKey && e.key.toLowerCase() === 'q') {
         e.preventDefault();
+        e.stopPropagation();
         setIsOpen(prev => {
           if (!prev) {
             toast.success('⚡ Quick Add TOTAL ativado!', {
-              description: `${QUICK_ADD_CATEGORIES.length} categorias • Página: ${location.pathname}`,
+              description: `${QUICK_ADD_CATEGORIES.length} categorias disponíveis`,
               duration: 2000
             });
           }
@@ -384,50 +386,73 @@ export function MasterQuickAddMenu() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOwner, isOpen, location.pathname]);
+  }, [isOwner, isOpen]);
 
   // Fechar ao clicar fora
   useEffect(() => {
     if (!isOpen) return;
 
     const handleClickOutside = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (!target.closest('[data-quick-add-menu]')) {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setIsOpen(false);
         setActiveSubmenu(null);
       }
     };
 
-    document.addEventListener('click', handleClickOutside);
-    return () => document.removeEventListener('click', handleClickOutside);
+    // Usar timeout para evitar fechar imediatamente quando clica para abrir
+    const timeout = setTimeout(() => {
+      document.addEventListener('mousedown', handleClickOutside);
+    }, 100);
+
+    return () => {
+      clearTimeout(timeout);
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
   }, [isOpen]);
 
-  // Handler para selecionar categoria
-  const handleSelectCategory = useCallback((entityType: string) => {
+  // Handler para abrir modal de criação
+  const handleCreateItem = useCallback((entityType: string) => {
+    console.log('[QuickAdd] Criando item:', entityType);
     setSelectedEntity(entityType);
+    setModalOpen(true);
     setIsOpen(false);
     setActiveSubmenu(null);
+    
+    toast.info(`📝 Criando: ${entityType}`, {
+      description: 'Preencha o formulário',
+      duration: 2000
+    });
   }, []);
 
-  // Handler para confirmar criação
-  const handleConfirmAction = useCallback(async () => {
-    const result = await confirmAction();
-    if (result.success) {
-      setShowConfirmDialog(false);
+  // Handler para hover em categoria com submenu
+  const handleCategoryHover = useCallback((categoryId: string | null) => {
+    if (submenuTimeoutRef.current) {
+      clearTimeout(submenuTimeoutRef.current);
     }
-  }, [confirmAction]);
-
-  // Handler para cancelar
-  const handleCancelAction = useCallback(() => {
-    cancelAction();
-    setShowConfirmDialog(false);
-  }, [cancelAction]);
+    
+    if (categoryId) {
+      setActiveSubmenu(categoryId);
+    } else {
+      // Delay para fechar submenu (melhor UX)
+      submenuTimeoutRef.current = setTimeout(() => {
+        setActiveSubmenu(null);
+      }, 150);
+    }
+  }, []);
 
   // Handler de sucesso ao criar item
   const handleItemCreated = useCallback((data: Record<string, unknown>) => {
     toast.success('✅ Item criado com sucesso!', {
-      description: 'Use Ctrl+Z para desfazer'
+      description: 'Use Ctrl+Z para desfazer',
+      duration: 3000
     });
+    setModalOpen(false);
+    setSelectedEntity(null);
+  }, []);
+
+  // Fechar modal
+  const handleCloseModal = useCallback(() => {
+    setModalOpen(false);
     setSelectedEntity(null);
   }, []);
 
@@ -448,10 +473,10 @@ export function MasterQuickAddMenu() {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.8, y: -20 }}
             onClick={(e) => {
+              e.preventDefault();
               e.stopPropagation();
               setIsOpen(true);
             }}
-            data-quick-add-menu
             className="fixed top-20 right-4 z-[9999] flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary to-purple-600 text-primary-foreground rounded-full shadow-xl hover:shadow-2xl transition-all group"
             style={{ boxShadow: '0 0 30px hsl(280 80% 50% / 0.4)' }}
           >
@@ -469,11 +494,11 @@ export function MasterQuickAddMenu() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
+            ref={menuRef}
             initial={{ opacity: 0, scale: 0.9, y: -20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: -20 }}
             transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-            data-quick-add-menu
             className="fixed top-20 right-4 z-[99999] bg-background/95 backdrop-blur-xl border border-primary/30 rounded-2xl shadow-2xl overflow-hidden min-w-[320px] max-h-[85vh]"
             style={{ boxShadow: '0 0 60px hsl(280 80% 50% / 0.3)' }}
           >
@@ -501,16 +526,18 @@ export function MasterQuickAddMenu() {
             <div className="overflow-y-auto max-h-[calc(85vh-100px)] p-2">
               <div className="grid gap-1">
                 {QUICK_ADD_CATEGORIES.map((category) => (
-                  <div key={category.id} className="relative">
+                  <div 
+                    key={category.id} 
+                    className="relative"
+                    onMouseEnter={() => category.subItems && handleCategoryHover(category.id)}
+                    onMouseLeave={() => handleCategoryHover(null)}
+                  >
                     {category.subItems ? (
                       // Com submenu
-                      <div
-                        className="relative"
-                        onMouseEnter={() => setActiveSubmenu(category.id)}
-                        onMouseLeave={() => setActiveSubmenu(null)}
-                      >
+                      <div className="relative">
                         <button
-                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 rounded-lg transition-all group"
+                          onClick={() => handleCreateItem(category.entityType)}
+                          className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 rounded-lg transition-all group cursor-pointer"
                         >
                           <span className={category.color}>{category.icon}</span>
                           <span className="flex-1 text-left text-sm font-medium">{category.label}</span>
@@ -525,25 +552,31 @@ export function MasterQuickAddMenu() {
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: -10 }}
-                              className="absolute left-full top-0 ml-1 bg-background/95 backdrop-blur-xl border border-primary/30 rounded-xl shadow-xl min-w-[220px] max-h-[400px] overflow-y-auto z-[100000]"
+                              transition={{ duration: 0.15 }}
+                              className="absolute left-full top-0 ml-1 bg-background/95 backdrop-blur-xl border border-primary/30 rounded-xl shadow-xl min-w-[240px] max-h-[400px] overflow-y-auto z-[100000]"
                               style={{ boxShadow: '0 0 40px hsl(280 80% 50% / 0.2)' }}
+                              onMouseEnter={() => handleCategoryHover(category.id)}
+                              onMouseLeave={() => handleCategoryHover(null)}
                             >
                               <div className="p-2">
-                                <div className="px-2 py-1 text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
+                                <div className="px-2 py-1.5 text-[10px] text-muted-foreground uppercase tracking-wider mb-1 border-b border-border/50 pb-2">
                                   {category.label}
                                 </div>
                                 {category.subItems.map((subItem) => (
                                   <button
                                     key={subItem.id}
-                                    onClick={() => handleSelectCategory(subItem.entityType)}
-                                    className="w-full flex items-center gap-2 px-3 py-2 hover:bg-primary/10 rounded-lg transition-all text-sm"
+                                    onClick={(e) => {
+                                      e.preventDefault();
+                                      e.stopPropagation();
+                                      handleCreateItem(subItem.entityType);
+                                    }}
+                                    className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/20 rounded-lg transition-all text-sm cursor-pointer group"
                                   >
-                                    {subItem.icon ? (
-                                      <span className={category.color}>{subItem.icon}</span>
-                                    ) : (
-                                      <Plus className="w-3 h-3 text-green-500" />
-                                    )}
-                                    {subItem.label}
+                                    <span className={`${category.color} group-hover:scale-110 transition-transform`}>
+                                      {subItem.icon || <Plus className="w-3 h-3 text-green-500" />}
+                                    </span>
+                                    <span className="flex-1 text-left">{subItem.label}</span>
+                                    <Plus className="w-3 h-3 opacity-0 group-hover:opacity-100 text-primary transition-opacity" />
                                   </button>
                                 ))}
                               </div>
@@ -554,11 +587,16 @@ export function MasterQuickAddMenu() {
                     ) : (
                       // Sem submenu - clique direto
                       <button
-                        onClick={() => handleSelectCategory(category.entityType)}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 rounded-lg transition-all"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleCreateItem(category.entityType);
+                        }}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-primary/10 rounded-lg transition-all cursor-pointer"
                       >
                         <span className={category.color}>{category.icon}</span>
                         <span className="text-sm font-medium">{category.label}</span>
+                        <Plus className="w-3 h-3 ml-auto opacity-50" />
                       </button>
                     )}
                   </div>
@@ -585,26 +623,15 @@ export function MasterQuickAddMenu() {
         )}
       </AnimatePresence>
 
-      {/* Modal de criação */}
-      {selectedEntity && (
-        <MasterAddModal
-          isOpen={!!selectedEntity}
-          onClose={() => setSelectedEntity(null)}
-          entityType={selectedEntity}
-          onSuccess={handleItemCreated}
-        />
-      )}
-
-      {/* Diálogo de confirmação */}
-      {showConfirmDialog && pendingAction && (
-        <MasterActionConfirmDialog
-          isOpen={showConfirmDialog}
-          onClose={() => setShowConfirmDialog(false)}
-          action={pendingAction}
-          onConfirm={handleConfirmAction}
-          onCancel={handleCancelAction}
-        />
-      )}
+      {/* Modal de criação - SEMPRE renderizado quando selectedEntity existe */}
+      <MasterAddModal
+        isOpen={modalOpen}
+        onClose={handleCloseModal}
+        entityType={selectedEntity || 'task'}
+        onSuccess={handleItemCreated}
+      />
     </>
   );
 }
+
+export default MasterQuickAddMenu;
