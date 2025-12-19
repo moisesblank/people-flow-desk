@@ -23,26 +23,23 @@ import {
   Plus,
   BarChart3,
   Calendar,
-  FlaskConical,
-  Atom,
   Zap,
   Workflow,
   Instagram,
   Youtube,
-  Video,
-  Paperclip,
   DollarSign,
-  Percent
+  Percent,
+  Activity
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { AnimatedAtom, ChemistryTip, BubblingFlask } from "@/components/chemistry/ChemistryVisuals";
 import { SalesFunnel } from "@/components/marketing/SalesFunnel";
 import { AutomationFlow } from "@/components/marketing/AutomationFlow";
 import { SocialMediaStats } from "@/components/dashboard/SocialMediaStats";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
-import { SmartChecklist } from "@/components/checklists/SmartChecklist";
-import marketingHeroImage from "@/assets/marketing-chemistry-hero.jpg";
-import professorImage from "@/assets/professor-moises.jpg";
+import { MarketingAlertsWidget } from "@/components/marketing/MarketingAlertsWidget";
+import { MarketingKPIsRealtime } from "@/components/marketing/MarketingKPIsRealtime";
+import { LeadsCaptureWidget } from "@/components/marketing/LeadsCaptureWidget";
+import { useMarketingAutomations } from "@/hooks/useMarketingAutomations";
 
 const campaignData = [
   { id: 1, name: "Lançamento ENEM 2025", status: "ativo", budget: 15000, spent: 8500, leads: 1250, conversions: 89 },
@@ -122,6 +119,15 @@ export default function Marketing() {
             </TabsList>
 
         <TabsContent value="overview" className="space-y-6">
+          {/* KPIs em Tempo Real */}
+          <MarketingKPIsRealtime />
+          
+          {/* Grid: Leads + Alertas */}
+          <div className="grid lg:grid-cols-2 gap-6">
+            <LeadsCaptureWidget />
+            <MarketingAlertsWidget />
+          </div>
+          
           {/* Social Media Cards - DADOS REAIS */}
           <SocialMediaStats />
         </TabsContent>
