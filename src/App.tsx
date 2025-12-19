@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { GodModeProvider } from "@/contexts/GodModeContext";
 import { DuplicationClipboardProvider } from "@/contexts/DuplicationClipboardContext";
+import { ReactiveFinanceProvider } from "@/contexts/ReactiveFinanceContext";
 import { RoleProtectedRoute } from "@/components/layout/RoleProtectedRoute";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
@@ -240,18 +241,20 @@ function AppContent() {
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
-      <GodModeProvider>
-        <DuplicationClipboardProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <AppContent />
-              <DuplicationClipboardIndicator />
-            </BrowserRouter>
-          </TooltipProvider>
-        </DuplicationClipboardProvider>
-      </GodModeProvider>
+      <ReactiveFinanceProvider>
+        <GodModeProvider>
+          <DuplicationClipboardProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <AppContent />
+                <DuplicationClipboardIndicator />
+              </BrowserRouter>
+            </TooltipProvider>
+          </DuplicationClipboardProvider>
+        </GodModeProvider>
+      </ReactiveFinanceProvider>
     </AuthProvider>
   </QueryClientProvider>
 );
