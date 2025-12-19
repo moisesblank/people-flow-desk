@@ -162,10 +162,10 @@ export default function Dashboard() {
 
   // Auto-clear cache on first load for owner
   useEffect(() => {
-    if (isGodMode) {
+    if (isOwner) {
       window.dispatchEvent(new CustomEvent('lovable-cache-clear'));
     }
-  }, [isGodMode]);
+  }, [isOwner]);
 
   const handleCacheClear = async () => {
     setIsClearing(true);
@@ -567,7 +567,7 @@ export default function Dashboard() {
               </div>
               
               {/* CACHEE Button - Owner Only */}
-              {isGodMode && (
+              {isOwner && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
