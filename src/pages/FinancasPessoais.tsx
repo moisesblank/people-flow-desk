@@ -1,18 +1,21 @@
 // ============================================
 // MOISÉS MEDEIROS v8.0 - FINANÇAS PESSOAIS
 // Spider-Man Theme - Gestão Financeira Pessoal
-// Elementos de Química Integrados + Anexos Automáticos
 // HISTÓRICO DE LONGO PRAZO (50+ ANOS)
+// Controle: Diário, Semanal, Mensal, Anual, 10 Anos
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
-import { motion } from "framer-motion";
-import { Plus, Wallet, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom, RefreshCw } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Plus, Wallet, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom, RefreshCw, Calendar, History, Lock, Unlock, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -25,7 +28,9 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import { FinancialHistoryChart } from "@/components/finance/FinancialHistoryChart";
 import { PeriodFilterTabs } from "@/components/finance/PeriodFilterTabs";
 import { MonthlySnapshotCard } from "@/components/finance/MonthlySnapshotCard";
-import { useFinancialHistory } from "@/hooks/useFinancialHistory";
+import { useFinancialHistory, getMonthName } from "@/hooks/useFinancialHistory";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import financeHeroImage from "@/assets/finance-chemistry-hero.jpg";
 
 interface Expense {
@@ -33,6 +38,7 @@ interface Expense {
   nome: string;
   valor: number;
   categoria: string;
+  data?: string;
 }
 
 const EXPENSE_CATEGORIES = [
@@ -72,7 +78,22 @@ export default function FinancasPessoais() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"fixed" | "extra">("fixed");
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const [formData, setFormData] = useState({ nome: "", valor: "", categoria: "feira" });
+  const [formData, setFormData] = useState({ nome: "", valor: "", categoria: "feira", data: format(new Date(), "yyyy-MM-dd") });
+
+  // Hook de histórico financeiro
+  const {
+    period,
+    setPeriod,
+    customRange,
+    setCustomRange,
+    dateRange,
+    snapshots,
+    stats: historyStats,
+    chartData,
+    refresh: refreshHistory,
+    closeMonth,
+    consolidateYear,
+  } = useFinancialHistory();
 
   const fetchExpenses = async () => {
     try {
@@ -84,18 +105,20 @@ export default function FinancasPessoais() {
       if (fixedRes.error) throw fixedRes.error;
       if (extraRes.error) throw extraRes.error;
 
-      setFixedExpenses(fixedRes.data?.map(e => ({
+      setFixedExpenses(fixedRes.data?.map((e: any) => ({
         id: e.id,
         nome: e.nome,
         valor: e.valor,
         categoria: e.categoria || "outros",
+        data: e.data || null,
       })) || []);
 
-      setExtraExpenses(extraRes.data?.map(e => ({
+      setExtraExpenses(extraRes.data?.map((e: any) => ({
         id: e.id,
         nome: e.nome,
         valor: e.valor,
         categoria: e.categoria || "outros",
+        data: e.data || null,
       })) || []);
     } catch (error) {
       console.error("Error fetching expenses:", error);
@@ -109,11 +132,29 @@ export default function FinancasPessoais() {
     fetchExpenses();
   }, []);
 
+  // Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('personal-finances-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_fixed_expenses' }, () => {
+        fetchExpenses();
+        refreshHistory();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'personal_extra_expenses' }, () => {
+        fetchExpenses();
+        refreshHistory();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   const stats = useMemo(() => {
     const totalFixed = fixedExpenses.reduce((acc, e) => acc + e.valor, 0);
     const totalExtra = extraExpenses.reduce((acc, e) => acc + e.valor, 0);
     
-    // Process category data for pie chart
     const categoryMap: Record<string, number> = {};
     [...fixedExpenses, ...extraExpenses].forEach((expense) => {
       const cat = expense.categoria || "outros";
@@ -153,8 +194,8 @@ export default function FinancasPessoais() {
     setModalType(type);
     setEditingExpense(expense || null);
     setFormData(expense 
-      ? { nome: expense.nome, valor: String(expense.valor / 100), categoria: expense.categoria }
-      : { nome: "", valor: "", categoria: "feira" }
+      ? { nome: expense.nome, valor: String(expense.valor / 100), categoria: expense.categoria, data: expense.data || format(new Date(), "yyyy-MM-dd") }
+      : { nome: "", valor: "", categoria: "feira", data: format(new Date(), "yyyy-MM-dd") }
     );
     setIsModalOpen(true);
   };
@@ -170,9 +211,13 @@ export default function FinancasPessoais() {
 
     try {
       if (editingExpense) {
+        const updateData: any = { nome: formData.nome, valor: valorCents, categoria: formData.categoria };
+        if (modalType === "extra") {
+          updateData.data = formData.data;
+        }
         const { error } = await supabase
           .from(table)
-          .update({ nome: formData.nome, valor: valorCents, categoria: formData.categoria })
+          .update(updateData)
           .eq("id", editingExpense.id);
         if (error) throw error;
         toast.success("Gasto atualizado!");
@@ -183,6 +228,9 @@ export default function FinancasPessoais() {
           categoria: formData.categoria,
           user_id: user?.id,
         };
+        if (modalType === "extra") {
+          insertData.data = formData.data;
+        }
 
         const { error } = await supabase.from(table).insert(insertData);
         if (error) throw error;
@@ -211,6 +259,16 @@ export default function FinancasPessoais() {
     }
   };
 
+  // Agrupar snapshots por ano para exibição
+  const snapshotsByYear = useMemo(() => {
+    const grouped: Record<number, typeof snapshots> = {};
+    snapshots.forEach(s => {
+      if (!grouped[s.ano]) grouped[s.ano] = [];
+      grouped[s.ano].push(s);
+    });
+    return Object.entries(grouped).sort(([a], [b]) => Number(b) - Number(a));
+  }, [snapshots]);
+
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
@@ -234,20 +292,43 @@ export default function FinancasPessoais() {
               </div>
               <h1 className="text-3xl md:text-4xl font-bold text-foreground mb-2">Finanças Pessoais</h1>
               <p className="text-muted-foreground max-w-md">
-                A química do dinheiro: transforme gastos em investimentos
+                Histórico de 50+ anos • Controle diário a decenal
               </p>
             </div>
-            <div className="hidden lg:block">
+            <div className="hidden lg:flex items-center gap-4">
+              <Button variant="outline" size="sm" onClick={refreshHistory} className="gap-2">
+                <RefreshCw className="h-4 w-4" />
+                Atualizar
+              </Button>
               <AnimatedAtom size={80} />
             </div>
           </div>
         </motion.div>
 
-        {/* Stats */}
-        <section className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Filtros de Período */}
+        <section className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Calendar className="h-5 w-5 text-primary" />
+              Período de Análise
+            </h2>
+            <Badge variant="outline" className="text-xs">
+              {format(dateRange.start, "dd/MM/yyyy", { locale: ptBR })} - {format(dateRange.end, "dd/MM/yyyy", { locale: ptBR })}
+            </Badge>
+          </div>
+          <PeriodFilterTabs
+            period={period}
+            onPeriodChange={setPeriod}
+            customRange={customRange}
+            onCustomRangeChange={setCustomRange}
+          />
+        </section>
+
+        {/* Stats Cards */}
+        <section className="mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <StatCard title="Gastos Fixos" value={stats.totalFixed} formatFn={formatCurrency} icon={Wallet} variant="red" delay={0} />
           <StatCard title="Gastos Extras" value={stats.totalExtra} formatFn={formatCurrency} icon={TrendingDown} variant="purple" delay={1} />
-          <StatCard title="Total Mensal" value={stats.total} formatFn={formatCurrency} icon={Target} variant="blue" delay={2} />
+          <StatCard title="Total Período" value={stats.total} formatFn={formatCurrency} icon={Target} variant="blue" delay={2} />
           <StatCard 
             title="Economia Potencial" 
             value={Math.round(stats.total * 0.15)} 
@@ -258,8 +339,57 @@ export default function FinancasPessoais() {
           />
         </section>
 
-        {/* Chart + Fixed Expenses + Projections Grid */}
-        <section className="mb-10 grid gap-6 lg:grid-cols-3">
+        {/* Gráfico de Evolução Histórica - DESTAQUE */}
+        <section className="mb-8">
+          <FinancialHistoryChart
+            data={chartData}
+            period={period}
+            tendencia={historyStats.tendencia}
+            variacaoPercent={historyStats.variacaoPercent}
+          />
+        </section>
+
+        {/* Snapshots Mensais - Balanço Visual */}
+        {snapshots.length > 0 && (
+          <section className="mb-8">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <History className="h-5 w-5 text-primary" />
+                Balanços Mensais
+              </h2>
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => consolidateYear(new Date().getFullYear())}
+                className="gap-2"
+              >
+                <BarChart3 className="h-4 w-4" />
+                Consolidar Ano
+              </Button>
+            </div>
+            
+            <ScrollArea className="w-full">
+              <div className="flex gap-4 pb-4">
+                {snapshots.slice(0, 12).map((snapshot) => (
+                  <MonthlySnapshotCard
+                    key={`${snapshot.ano}-${snapshot.mes}`}
+                    ano={snapshot.ano}
+                    mes={snapshot.mes}
+                    receitas={snapshot.receitas_total}
+                    despesas={snapshot.despesas_total}
+                    saldo={snapshot.saldo_periodo}
+                    isFechado={snapshot.is_fechado}
+                    onClose={() => closeMonth(snapshot.ano, snapshot.mes)}
+                    compact
+                  />
+                ))}
+              </div>
+            </ScrollArea>
+          </section>
+        )}
+
+        {/* Grid Principal */}
+        <section className="mb-8 grid gap-6 lg:grid-cols-3">
           {/* Pie Chart */}
           {stats.pieData.length > 0 && (
             <motion.div
@@ -286,8 +416,8 @@ export default function FinancasPessoais() {
                     </Pie>
                     <Tooltip
                       contentStyle={{
-                        backgroundColor: "hsl(240, 6%, 10%)",
-                        border: "1px solid hsl(240, 6%, 20%)",
+                        backgroundColor: "hsl(var(--card))",
+                        border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
                       }}
                       formatter={(value: number) => formatCurrency(value)}
@@ -302,7 +432,7 @@ export default function FinancasPessoais() {
             </motion.div>
           )}
 
-          {/* Fixed Expenses */}
+          {/* Tabela de Gastos Fixos */}
           <div className={stats.pieData.length > 0 ? "lg:col-span-2" : "lg:col-span-3"}>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-semibold text-foreground">Gastos Fixos</h2>
@@ -321,8 +451,92 @@ export default function FinancasPessoais() {
                   </tr>
                 </thead>
                 <tbody>
-                  {fixedExpenses.map((expense) => (
-                    <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
+                  <AnimatePresence>
+                    {fixedExpenses.map((expense) => (
+                      <motion.tr 
+                        key={expense.id} 
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="border-t border-border/50 hover:bg-secondary/30 transition-colors"
+                      >
+                        <td className="p-4 text-foreground">{expense.nome}</td>
+                        <td className="p-4 text-muted-foreground">{getCategoryLabel(expense.categoria)}</td>
+                        <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
+                        <td className="p-4 text-right">
+                          <div className="flex justify-end gap-2">
+                            <AttachmentButton
+                              entityType="expense"
+                              entityId={expense.id}
+                              entityLabel={expense.nome}
+                              variant="ghost"
+                              size="icon"
+                            />
+                            <Button variant="ghost" size="icon" onClick={() => openModal("fixed", expense)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete("fixed", expense.id)} className="text-destructive hover:text-destructive">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))}
+                  </AnimatePresence>
+                  {fixedExpenses.length === 0 && (
+                    <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto fixo cadastrado</td></tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+
+        {/* Projeções e Analytics */}
+        <section className="mb-8 grid gap-6 lg:grid-cols-2">
+          <FinancialProjections 
+            totalFixed={stats.totalFixed} 
+            totalExtra={stats.totalExtra} 
+            type="personal" 
+          />
+          <SpendingAnalytics 
+            categories={stats.pieData} 
+            total={stats.total} 
+          />
+        </section>
+
+        {/* Gastos Extras */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-foreground">Gastos Extras</h2>
+            <Button onClick={() => openModal("extra")} size="sm" className="gap-2">
+              <Plus className="h-4 w-4" /> Adicionar
+            </Button>
+          </div>
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-secondary/50">
+                <tr>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Data</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
+                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
+                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                <AnimatePresence>
+                  {extraExpenses.map((expense) => (
+                    <motion.tr 
+                      key={expense.id}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      exit={{ opacity: 0 }}
+                      className="border-t border-border/50 hover:bg-secondary/30 transition-colors"
+                    >
+                      <td className="p-4 text-muted-foreground text-sm">
+                        {expense.data ? format(new Date(expense.data), "dd/MM/yyyy") : "-"}
+                      </td>
                       <td className="p-4 text-foreground">{expense.nome}</td>
                       <td className="p-4 text-muted-foreground">{getCategoryLabel(expense.categoria)}</td>
                       <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
@@ -335,96 +549,43 @@ export default function FinancasPessoais() {
                             variant="ghost"
                             size="icon"
                           />
-                          <Button variant="ghost" size="icon" onClick={() => openModal("fixed", expense)}>
+                          <Button variant="ghost" size="icon" onClick={() => openModal("extra", expense)}>
                             <Edit2 className="h-4 w-4" />
                           </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete("fixed", expense.id)} className="text-destructive hover:text-destructive">
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete("extra", expense.id)} className="text-destructive hover:text-destructive">
                             <Trash2 className="h-4 w-4" />
                           </Button>
                         </div>
                       </td>
-                    </tr>
+                    </motion.tr>
                   ))}
-                  {fixedExpenses.length === 0 && (
-                    <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto fixo cadastrado</td></tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </section>
-
-        {/* Projeções e Analytics */}
-        <section className="mb-10 grid gap-6 lg:grid-cols-2">
-          <FinancialProjections 
-            totalFixed={stats.totalFixed} 
-            totalExtra={stats.totalExtra} 
-            type="personal" 
-          />
-          <SpendingAnalytics 
-            categories={stats.pieData} 
-            total={stats.total} 
-          />
-        </section>
-
-        {/* Extra Expenses */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-foreground">Gastos Extras</h2>
-            <Button onClick={() => openModal("extra")} size="sm" className="gap-2">
-              <Plus className="h-4 w-4" /> Adicionar
-            </Button>
-          </div>
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-secondary/50">
-                <tr>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Nome</th>
-                  <th className="text-left p-4 text-sm font-medium text-muted-foreground">Categoria</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Valor</th>
-                  <th className="text-right p-4 text-sm font-medium text-muted-foreground">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {extraExpenses.map((expense) => (
-                  <tr key={expense.id} className="border-t border-border/50 hover:bg-secondary/30 transition-colors">
-                    <td className="p-4 text-foreground">{expense.nome}</td>
-                    <td className="p-4 text-muted-foreground">{getCategoryLabel(expense.categoria)}</td>
-                    <td className="p-4 text-right text-foreground font-medium">{formatCurrency(expense.valor)}</td>
-                    <td className="p-4 text-right">
-                      <div className="flex justify-end gap-2">
-                        <AttachmentButton
-                          entityType="expense"
-                          entityId={expense.id}
-                          entityLabel={expense.nome}
-                          variant="ghost"
-                          size="icon"
-                        />
-                        <Button variant="ghost" size="icon" onClick={() => openModal("extra", expense)}>
-                          <Edit2 className="h-4 w-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDelete("extra", expense.id)} className="text-destructive hover:text-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                </AnimatePresence>
                 {extraExpenses.length === 0 && (
-                  <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum gasto extra cadastrado</td></tr>
+                  <tr><td colSpan={5} className="p-8 text-center text-muted-foreground">Nenhum gasto extra cadastrado</td></tr>
                 )}
               </tbody>
             </table>
           </div>
         </section>
 
-        {/* Modal */}
+        {/* Modal de Adicionar/Editar */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle>{editingExpense ? "Editar" : "Novo"} Gasto {modalType === "fixed" ? "Fixo" : "Extra"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-4 pt-4">
+              {modalType === "extra" && (
+                <div>
+                  <Label>Data</Label>
+                  <Input 
+                    type="date"
+                    value={formData.data} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
+                    className="mt-1.5"
+                  />
+                </div>
+              )}
               <div>
                 <Label>Nome</Label>
                 <Input 
