@@ -67,6 +67,7 @@ import {
   PolarRadiusAxis,
 } from "recharts";
 import { useDashboardStats } from "@/hooks/useDataCache";
+import { useReactiveStore } from "@/stores/reactiveStore";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CashFlowForecast } from "@/components/finance/CashFlowForecast";
@@ -274,13 +275,16 @@ export default function DashboardExecutivo() {
     { name: "Outros", value: 10, color: COLORS.gold },
   ];
 
+  // Dados reativos do store central
+  const reactiveData = useReactiveStore(s => s.data);
+
   const performanceData = [
-    { subject: "Vendas", A: 85, fullMark: 100 },
+    { subject: "Vendas", A: Math.min(100, (reactiveData.vendas_mes / Math.max(1, reactiveData.meta_vendas_mes)) * 100) || 85, fullMark: 100 },
     { subject: "Engajamento", A: 72, fullMark: 100 },
-    { subject: "Retenção", A: 90, fullMark: 100 },
-    { subject: "NPS", A: 78, fullMark: 100 },
-    { subject: "ROI", A: 65, fullMark: 100 },
-    { subject: "Crescimento", A: 82, fullMark: 100 },
+    { subject: "Retenção", A: reactiveData.taxa_retencao || 90, fullMark: 100 },
+    { subject: "NPS", A: reactiveData.nps || 78, fullMark: 100 },
+    { subject: "ROI", A: Math.min(100, reactiveData.roi) || 65, fullMark: 100 },
+    { subject: "Crescimento", A: reactiveData.taxa_crescimento_receita || 82, fullMark: 100 },
   ];
 
   if (isLoading || !stats) {
@@ -639,13 +643,13 @@ export default function DashboardExecutivo() {
           <CardContent>
             {/* KPIs calculados com base nos dados reais do dashboard */}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <GaugeChart value={stats?.students ? Math.round(((stats.students * 0.7) - (stats.students * 0.1)) / (stats.students * 0.8) * 100) : 72} max={100} label="NPS Score" color={COLORS.green} />
-              <GaugeChart value={stats?.students ? Math.round(((stats.students - 5) / stats.students) * 100) : 94} max={100} label="Retenção %" color={COLORS.blue} />
-              <GaugeChart value={stats?.students ? Math.round((5 / stats.students) * 100) : 6} max={10} label="Churn %" color={COLORS.gold} />
+              <GaugeChart value={reactiveData.nps || 72} max={100} label="NPS Score" color={COLORS.green} />
+              <GaugeChart value={reactiveData.taxa_retencao || 94} max={100} label="Retenção %" color={COLORS.blue} />
+              <GaugeChart value={reactiveData.taxa_churn || 6} max={20} label="Churn %" color={COLORS.gold} />
             </div>
             <div className="grid gap-6 sm:grid-cols-2 mt-6">
-              <GaugeChart value={stats?.students && stats?.income ? Math.round((stats.income / stats.students) / 10000) : 158} max={200} label="LTV (R$k)" color={COLORS.purple} />
-              <GaugeChart value={stats?.income && stats?.students ? Math.round((stats.income * 0.1) / Math.max(stats.students, 1) / 10000) : 32} max={50} label="CAC (R$k)" color={COLORS.primary} />
+              <GaugeChart value={Math.round((reactiveData.ltv || 158000) / 10000)} max={200} label="LTV (R$k)" color={COLORS.purple} />
+              <GaugeChart value={Math.round((reactiveData.cac || 32000) / 10000)} max={50} label="CAC (R$k)" color={COLORS.primary} />
             </div>
           </CardContent>
         </Card>
