@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "owner" | "admin" | "employee" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
 
+const OWNER_EMAIL = "moisesblank@gmail.com";
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -30,14 +31,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
-        
+
+        const email = (session?.user?.email || "").toLowerCase();
+        if (email === OWNER_EMAIL) {
+          // Owner sempre reconhecido imediatamente
+          setRole("owner");
+        } else if (!session?.user) {
+          setRole(null);
+        }
+
         // Defer role fetch with setTimeout to avoid deadlock
         if (session?.user) {
           setTimeout(() => {
             fetchUserRole(session.user.id);
           }, 0);
-        } else {
-          setRole(null);
         }
       }
     );
@@ -46,7 +53,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setUser(session?.user ?? null);
-      
+
+      const email = (session?.user?.email || "").toLowerCase();
+      if (email === OWNER_EMAIL) {
+        setRole("owner");
+      } else if (!session?.user) {
+        setRole(null);
+      }
+
       if (session?.user) {
         fetchUserRole(session.user.id);
       }
@@ -63,13 +77,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         .select("role")
         .eq("user_id", userId)
         .maybeSingle();
-      
+
       if (error) {
         console.error("Error fetching role:", error);
         return;
       }
-      
-      setRole(data?.role as AppRole ?? null);
+
+      // Owner nunca perde o role por falha/ausência de registro em user_roles
+      const email = (supabase.auth.getUser ? (await supabase.auth.getUser()).data.user?.email : undefined) || undefined;
+      const isOwnerEmail = (email || "").toLowerCase() === OWNER_EMAIL;
+      if (isOwnerEmail) {
+        setRole("owner");
+        return;
+      }
+
+      setRole((data?.role as AppRole) ?? null);
     } catch (err) {
       console.error("Error fetching role:", err);
     }

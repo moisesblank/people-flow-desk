@@ -49,7 +49,7 @@ interface SelectedItem {
 }
 
 export function GlobalDuplicationSystem() {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const { clipboard, copyToClipboard, pasteFromClipboard, clearClipboard, isDuplicating } = useInstantDuplication();
   const duplicationContext = useDuplicationClipboard();
   
@@ -58,7 +58,7 @@ export function GlobalDuplicationSystem() {
   const [buttonPosition, setButtonPosition] = useState({ x: 0, y: 0 });
   const [justDuplicated, setJustDuplicated] = useState(false);
 
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL && role === 'owner';
+  const isOwner = (user?.email || '').toLowerCase() === OWNER_EMAIL;
 
   // Detectar itens duplicáveis ao passar o mouse (com data attributes)
   useEffect(() => {
@@ -319,8 +319,8 @@ export function GlobalDuplicationSystem() {
 // Dica que aparece uma vez para o usuário
 function DuplicationHint() {
   const [showHint, setShowHint] = useState(false);
-  const { user, role } = useAuth();
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL && role === 'owner';
+  const { user } = useAuth();
+  const isOwner = (user?.email || '').toLowerCase() === OWNER_EMAIL;
 
   useEffect(() => {
     if (!isOwner) return;
