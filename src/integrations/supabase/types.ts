@@ -3114,6 +3114,42 @@ export type Database = {
           },
         ]
       }
+      marketing_alerts: {
+        Row: {
+          created_at: string | null
+          dados: Json | null
+          id: string
+          lido: boolean | null
+          mensagem: string
+          resolvido: boolean | null
+          severidade: string | null
+          tipo: string
+          titulo: string
+        }
+        Insert: {
+          created_at?: string | null
+          dados?: Json | null
+          id?: string
+          lido?: boolean | null
+          mensagem: string
+          resolvido?: boolean | null
+          severidade?: string | null
+          tipo: string
+          titulo: string
+        }
+        Update: {
+          created_at?: string | null
+          dados?: Json | null
+          id?: string
+          lido?: boolean | null
+          mensagem?: string
+          resolvido?: boolean | null
+          severidade?: string | null
+          tipo?: string
+          titulo?: string
+        }
+        Relationships: []
+      }
       marketing_campaigns: {
         Row: {
           budget: number | null
@@ -3164,6 +3200,77 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      marketing_leads: {
+        Row: {
+          campanha_id: string | null
+          canal: string | null
+          convertido: boolean | null
+          created_at: string | null
+          data_conversao: string | null
+          email: string
+          id: string
+          nome: string | null
+          origem: string | null
+          score: number | null
+          status: string | null
+          telefone: string | null
+          updated_at: string | null
+          utm_campaign: string | null
+          utm_content: string | null
+          utm_medium: string | null
+          utm_source: string | null
+          valor_conversao: number | null
+        }
+        Insert: {
+          campanha_id?: string | null
+          canal?: string | null
+          convertido?: boolean | null
+          created_at?: string | null
+          data_conversao?: string | null
+          email: string
+          id?: string
+          nome?: string | null
+          origem?: string | null
+          score?: number | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          valor_conversao?: number | null
+        }
+        Update: {
+          campanha_id?: string | null
+          canal?: string | null
+          convertido?: boolean | null
+          created_at?: string | null
+          data_conversao?: string | null
+          email?: string
+          id?: string
+          nome?: string | null
+          origem?: string | null
+          score?: number | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          utm_campaign?: string | null
+          utm_content?: string | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          valor_conversao?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_leads_campanha_id_fkey"
+            columns: ["campanha_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_campaigns"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       metricas_diarias: {
         Row: {
