@@ -31,16 +31,16 @@ export function useAdminCheck(): AdminCheckResult {
 
   const userEmail = user?.email || null;
   
-  // Verificação dupla de owner (role + email exato)
-  const isOwner = role === "owner" && userEmail === OWNER_EMAIL;
+  // Verificação do OWNER: email do proprietário (poderes máximos)
+  const isOwner = (userEmail || '').toLowerCase() === OWNER_EMAIL;
   const isAdmin = role === "admin";
   const isCoordinator = role === "coordenacao";
   const isAdminOrOwner = isOwner || isAdmin;
   const isEmployee = role === "employee";
-  
-  // MODO DEUS: Verificação tripla (role + email + hardcoded)
-  const isGodMode = isOwner && userEmail === OWNER_EMAIL;
-  
+
+  // MODO DEUS: exclusivo do Owner
+  const isGodMode = isOwner;
+
   // Apenas owner pode editar campos críticos
   const canEdit = isGodMode;
   

@@ -40,23 +40,30 @@ export function VisualEditMode() {
 
     const handleClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
-      
+
       // Ignorar cliques no painel de edição
       if (target.closest('.visual-edit-panel') || target.closest('.god-mode-panel')) {
+        return;
+      }
+
+      // Não interceptar navegação/ações (a não ser que o clique seja explicitamente editável)
+      const explicitEditable = target.closest('[data-editable="true"], [data-editable-key]');
+      const interactiveAncestor = target.closest('a, button, [role="button"], [data-sidebar="menu-button"]');
+      if (interactiveAncestor && !explicitEditable) {
         return;
       }
 
       // Verificar se é um elemento editável
       const editableAttr = target.getAttribute('data-editable');
       const editableKey = target.getAttribute('data-editable-key');
-      
+
       if (editableAttr === 'true' || editableKey) {
         e.preventDefault();
         e.stopPropagation();
-        
+
         let type: 'text' | 'image' | 'link' = 'text';
         let value = '';
-        
+
         if (target.tagName === 'IMG') {
           type = 'image';
           value = (target as HTMLImageElement).src;
@@ -72,38 +79,41 @@ export function VisualEditMode() {
           element: target,
           type,
           originalValue: value,
-          key: editableKey || `inline_${Date.now()}`
+          key: editableKey || `inline_${Date.now()}`,
         });
         setEditValue(value);
         setPreviewImage(type === 'image' ? value : null);
         setIsEditing(true);
-        } else {
-          // Apenas editar elementos que NÃO são de navegação ou que têm atributo explícito
-          // Cliques em <a> ou <button> NÃO devem ser interceptados a menos que tenham data-editable
-          if (['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'IMG'].includes(target.tagName)) {
-            const value = target.tagName === 'IMG' 
-              ? (target as HTMLImageElement).src 
+      } else {
+        // Só permitir edição dinâmica fora de elementos interativos
+        if (
+          !interactiveAncestor &&
+          ['H1', 'H2', 'H3', 'H4', 'H5', 'H6', 'P', 'SPAN', 'IMG'].includes(target.tagName)
+        ) {
+          const value =
+            target.tagName === 'IMG'
+              ? (target as HTMLImageElement).src
               : target.innerText || '';
-            
-            if (value || target.tagName === 'IMG') {
-              e.preventDefault();
-              e.stopPropagation();
-              
-              const elementType = target.tagName === 'IMG' ? 'image' : 'text';
-              
-              setSelectedElement({
-                element: target,
-                type: elementType,
-                originalValue: value,
-                key: `dynamic_${target.tagName.toLowerCase()}_${Date.now()}`
-              });
-              setEditValue(value);
-              setPreviewImage(elementType === 'image' ? value : null);
-              setIsEditing(true);
-            }
+
+          if (value || target.tagName === 'IMG') {
+            e.preventDefault();
+            e.stopPropagation();
+
+            const elementType = target.tagName === 'IMG' ? 'image' : 'text';
+
+            setSelectedElement({
+              element: target,
+              type: elementType,
+              originalValue: value,
+              key: `dynamic_${target.tagName.toLowerCase()}_${Date.now()}`,
+            });
+            setEditValue(value);
+            setPreviewImage(elementType === 'image' ? value : null);
+            setIsEditing(true);
           }
-          // Links e botões continuam a funcionar normalmente
         }
+        // Links e botões continuam a funcionar normalmente
+      }
     };
 
     const handleMouseOver = (e: MouseEvent) => {

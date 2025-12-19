@@ -70,7 +70,7 @@ interface MousePosition {
 }
 
 export function useInstantDuplication() {
-  const { user, role } = useAuth();
+  const { user } = useAuth();
   const recalculateAll = useReactiveStore(state => state.recalculateAll);
   
   const [clipboard, setClipboard] = useState<ClipboardItem | null>(null);
@@ -80,8 +80,8 @@ export function useInstantDuplication() {
   
   const mousePositionRef = useRef<MousePosition>({ x: 0, y: 0 });
 
-  // Verificação estrita de owner
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL && role === 'owner';
+  // Verificação de owner (email do proprietário)
+  const isOwner = (user?.email || '').toLowerCase() === OWNER_EMAIL;
 
   // Rastrear posição do mouse
   useEffect(() => {
