@@ -616,23 +616,23 @@ export default function Dashboard() {
 
         {/* Advanced KPIs - Business Intelligence */}
         <section className="mb-8">
-          <AdvancedKPIs
+          <AdvancedKPIs 
             data={{
-              ltv: 158000,
-              ltvPreviousPeriod: 145000,
-              cac: 32000,
-              cacPreviousPeriod: 35000,
-              churnRate: 2.5,
-              churnRatePreviousPeriod: 3.2,
-              mrr: stats.income,
-              mrrPreviousPeriod: stats.income * 0.92,
-              arr: stats.income * 12,
-              nps: 72,
-              npsPreviousPeriod: 68,
-              activeUsers: stats.students + stats.affiliates,
-              totalUsers: (stats.students + stats.affiliates) * 1.3,
-              revenuePerUser: stats.income / Math.max(1, stats.students + stats.affiliates),
-              retentionRate: 94.5,
+              ltv: reactiveData.ltv || 158000,
+              ltvPreviousPeriod: (reactiveData.ltv || 158000) * 0.92,
+              cac: reactiveData.cac || 32000,
+              cacPreviousPeriod: (reactiveData.cac || 32000) * 1.09,
+              churnRate: reactiveData.taxa_churn || 2.5,
+              churnRatePreviousPeriod: (reactiveData.taxa_churn || 2.5) * 1.28,
+              mrr: reactiveData.receita_mes || stats.income,
+              mrrPreviousPeriod: (reactiveData.receita_mes || stats.income) * 0.92,
+              arr: (reactiveData.receita_mes || stats.income) * 12,
+              nps: reactiveData.nps || 72,
+              npsPreviousPeriod: (reactiveData.nps || 72) * 0.94,
+              activeUsers: reactiveData.alunos_ativos + reactiveData.total_afiliados || stats.students + stats.affiliates,
+              totalUsers: reactiveData.total_alunos || (stats.students + stats.affiliates) * 1.3,
+              revenuePerUser: reactiveData.receita_por_aluno || stats.income / Math.max(1, stats.students + stats.affiliates),
+              retentionRate: reactiveData.taxa_retencao || 94.5,
             }}
           />
         </section>
