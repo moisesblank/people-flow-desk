@@ -104,3 +104,15 @@ verify_jwt = false
 
 [functions.reports-api]
 verify_jwt = false
+
+[functions.api-gateway]
+verify_jwt = false
+
+[functions.task-reminder]
+verify_jwt = false
+
+[functions.api-fast]
+verify_jwt = false
+
+[functions.hotmart-fast]
+verify_jwt = false

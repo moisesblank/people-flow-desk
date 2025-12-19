@@ -7214,6 +7214,20 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_dashboard_stats_v2: {
+        Row: {
+          afiliados_ativos: number | null
+          alunos_ativos: number | null
+          despesa_mes: number | null
+          funcionarios_ativos: number | null
+          receita_mes: number | null
+          tarefas_hoje: number | null
+          updated_at: string | null
+          usuarios_online: number | null
+          vendas_mes: number | null
+        }
+        Relationships: []
+      }
       owner_activity_summary: {
         Row: {
           action: string | null
@@ -7475,6 +7489,7 @@ export type Database = {
         Args: { p_error: string; p_webhook_id: string }
         Returns: string
       }
+      refresh_dashboard_stats: { Args: never; Returns: undefined }
       register_user_login: {
         Args: {
           _browser?: string
