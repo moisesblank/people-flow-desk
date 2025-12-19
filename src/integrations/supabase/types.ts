@@ -421,6 +421,108 @@ export type Database = {
         }
         Relationships: []
       }
+      arquivos_universal: {
+        Row: {
+          afiliado_id: number | null
+          aluno_id: string | null
+          ano: number
+          ativo: boolean | null
+          aula_id: string | null
+          bucket: string | null
+          categoria: string | null
+          created_at: string | null
+          curso_id: string | null
+          data_upload: string | null
+          descricao: string | null
+          dia: number
+          empresa_id: string | null
+          extensao: string | null
+          funcionario_id: string | null
+          ia_ler: boolean | null
+          ia_processado: boolean | null
+          ia_resultado: Json | null
+          id: string
+          mes: number
+          nome: string
+          nome_storage: string
+          pasta: string | null
+          path: string
+          semana: number
+          tags: string[] | null
+          tamanho: number
+          tipo: string
+          updated_at: string | null
+          url: string
+          usuario_id: string | null
+        }
+        Insert: {
+          afiliado_id?: number | null
+          aluno_id?: string | null
+          ano: number
+          ativo?: boolean | null
+          aula_id?: string | null
+          bucket?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          curso_id?: string | null
+          data_upload?: string | null
+          descricao?: string | null
+          dia: number
+          empresa_id?: string | null
+          extensao?: string | null
+          funcionario_id?: string | null
+          ia_ler?: boolean | null
+          ia_processado?: boolean | null
+          ia_resultado?: Json | null
+          id?: string
+          mes: number
+          nome: string
+          nome_storage: string
+          pasta?: string | null
+          path: string
+          semana: number
+          tags?: string[] | null
+          tamanho: number
+          tipo: string
+          updated_at?: string | null
+          url: string
+          usuario_id?: string | null
+        }
+        Update: {
+          afiliado_id?: number | null
+          aluno_id?: string | null
+          ano?: number
+          ativo?: boolean | null
+          aula_id?: string | null
+          bucket?: string | null
+          categoria?: string | null
+          created_at?: string | null
+          curso_id?: string | null
+          data_upload?: string | null
+          descricao?: string | null
+          dia?: number
+          empresa_id?: string | null
+          extensao?: string | null
+          funcionario_id?: string | null
+          ia_ler?: boolean | null
+          ia_processado?: boolean | null
+          ia_resultado?: Json | null
+          id?: string
+          mes?: number
+          nome?: string
+          nome_storage?: string
+          pasta?: string | null
+          path?: string
+          semana?: number
+          tags?: string[] | null
+          tamanho?: number
+          tipo?: string
+          updated_at?: string | null
+          url?: string
+          usuario_id?: string | null
+        }
+        Relationships: []
+      }
       audit_access_mismatches: {
         Row: {
           acao_sugerida: string | null
