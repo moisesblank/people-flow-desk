@@ -2,11 +2,12 @@
 // MOISÉS MEDEIROS v8.0 - FINANÇAS PESSOAIS
 // Spider-Man Theme - Gestão Financeira Pessoal
 // Elementos de Química Integrados + Anexos Automáticos
+// HISTÓRICO DE LONGO PRAZO (50+ ANOS)
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, Wallet, Sparkles, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom, Paperclip } from "lucide-react";
+import { Plus, Wallet, Trash2, Edit2, TrendingUp, TrendingDown, Target, PiggyBank, FlaskConical, Atom, RefreshCw } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,11 +17,15 @@ import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, AreaChart, Area, XAxis, YAxis, CartesianGrid } from "recharts";
+import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { ChemistryTip, AnimatedAtom } from "@/components/chemistry/ChemistryVisuals";
 import { FinancialProjections } from "@/components/finance/FinancialProjections";
 import { SpendingAnalytics } from "@/components/finance/SpendingAnalytics";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
+import { FinancialHistoryChart } from "@/components/finance/FinancialHistoryChart";
+import { PeriodFilterTabs } from "@/components/finance/PeriodFilterTabs";
+import { MonthlySnapshotCard } from "@/components/finance/MonthlySnapshotCard";
+import { useFinancialHistory } from "@/hooks/useFinancialHistory";
 import financeHeroImage from "@/assets/finance-chemistry-hero.jpg";
 
 interface Expense {
