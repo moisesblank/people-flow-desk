@@ -107,8 +107,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
 import { useDashboardStats } from "@/hooks/useDataCache";
+import { useCacheManager } from "@/hooks/useCacheManager";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { RefreshCw } from "lucide-react";
 
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("pt-BR", {
@@ -147,12 +150,29 @@ function LiveClock() {
 export default function Dashboard() {
   const navigate = useNavigate();
   const { user, role } = useAuth();
+  const { isOwner, isGodMode } = useAdminCheck();
   const { data: stats, isLoading, error } = useDashboardStats();
+  const { clearAllCache, forceRefresh } = useCacheManager();
   const [showAITutor, setShowAITutor] = useState(false);
   const [showTramon, setShowTramon] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [isClearing, setIsClearing] = useState(false);
   const { isOpen: showTour, completeTour, resetTour } = useTour("dashboard");
   const isMobile = useIsMobile();
+
+  // Auto-clear cache on first load for owner
+  useEffect(() => {
+    if (isGodMode) {
+      window.dispatchEvent(new CustomEvent('lovable-cache-clear'));
+    }
+  }, [isGodMode]);
+
+  const handleCacheClear = async () => {
+    setIsClearing(true);
+    clearAllCache(true);
+    await forceRefresh();
+    setIsClearing(false);
+  };
 
   // Mobile Dashboard - Experiência otimizada para celular
   if (isMobile) {
@@ -533,11 +553,45 @@ export default function Dashboard() {
 
         {/* TRAMON v8 - Central de Controle IAs (Owner Only) */}
         {role === 'owner' && (
-          <section className="grid gap-6 lg:grid-cols-3 mb-8">
-            <TramonControlWidget />
-            <WebhooksStatusWidget />
-            <MetricasDiariasWidget />
-          </section>
+          <>
+            {/* Header com TRAMON v8 + CACHEE button */}
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-primary/20">
+                  <Brain className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">TRAMON v8</h2>
+                  <p className="text-xs text-muted-foreground">Central de Controle IAs</p>
+                </div>
+              </div>
+              
+              {/* CACHEE Button - Owner Only */}
+              {isGodMode && (
+                <motion.div
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: 0.3 }}
+                >
+                  <Button
+                    onClick={handleCacheClear}
+                    disabled={isClearing}
+                    size="sm"
+                    className="bg-[hsl(345,50%,30%)] hover:bg-[hsl(345,50%,25%)] text-white/90 border border-[hsl(345,50%,40%)]/30 shadow-lg shadow-[hsl(345,50%,20%)]/20 transition-all duration-300 hover:shadow-[hsl(345,50%,20%)]/40"
+                  >
+                    <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isClearing ? 'animate-spin' : ''}`} />
+                    CACHEE
+                  </Button>
+                </motion.div>
+              )}
+            </div>
+            
+            <section className="grid gap-6 lg:grid-cols-3 mb-8">
+              <TramonControlWidget />
+              <WebhooksStatusWidget />
+              <MetricasDiariasWidget />
+            </section>
+          </>
         )}
 
         {/* TRAMON v8 - Alertas, Alunos e Integrações (Owner Only) */}
