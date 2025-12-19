@@ -15,8 +15,9 @@ import { toast } from "sonner";
 import { 
   Upload, FileText, Download, Eye, Trash2, Search, 
   FolderOpen, File, FileSpreadsheet, Image, 
-  FileArchive, ArrowLeft, Building2, HardDrive
+  FileArchive, ArrowLeft, Building2, HardDrive, Brain
 } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface ArquivoEmpresa {
@@ -81,9 +82,9 @@ function FileUploadZone({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // Verificar tamanho (máx 50MB para permitir mais arquivos)
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error(`${file.name} excede o tamanho máximo de 50MB`);
+      // Verificar tamanho (máx 2GB - bucket configurado)
+      if (file.size > 2 * 1024 * 1024 * 1024) {
+        toast.error(`${file.name} excede o tamanho máximo de 2GB`);
         errorCount++;
         continue;
       }
@@ -96,14 +97,15 @@ function FileUploadZone({
         const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
         const fileName = `${timestamp}-${randomSuffix}-${sanitizedName}`;
         
-        // Organizar por data
+        // Organizar por data (ano/mês/dia)
         const dataHoje = new Date();
         const ano = dataHoje.getFullYear();
         const mes = String(dataHoje.getMonth() + 1).padStart(2, '0');
         const dia = String(dataHoje.getDate()).padStart(2, '0');
+        const semana = `semana-${Math.ceil(dataHoje.getDate() / 7)}`;
         
-        // Caminho: CNPJ/categoria/ano/mes/dia/arquivo
-        const filePath = `${cnpj}/${categoria}/${ano}/${mes}/${dia}/${fileName}`;
+        // Caminho: CNPJ/categoria/ano/mes/semana/dia/arquivo
+        const filePath = `${cnpj}/${categoria}/${ano}/${mes}/${semana}/${dia}/${fileName}`;
 
         console.log('[Upload] Iniciando upload:', filePath);
 
@@ -206,7 +208,7 @@ function FileUploadZone({
           ) : (
             <div>
               <p className="font-medium mb-2">Arraste arquivos ou clique para selecionar</p>
-              <p className="text-sm text-muted-foreground">Qualquer tipo de arquivo (máx. 10MB cada)</p>
+              <p className="text-sm text-muted-foreground">Qualquer tipo de arquivo (máx. 2GB cada)</p>
             </div>
           )}
         </label>
@@ -515,6 +517,27 @@ export default function ArquivosEmpresariais() {
                         </div>
                       </div>
                       <div className="flex items-center gap-2">
+                        {/* Botão IA LER */}
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          onClick={() => {
+                            toast.promise(
+                              supabase.functions.invoke('extract-document', {
+                                body: { documentUrl: arquivo.url, fileName: arquivo.nome, fileType: arquivo.tipo }
+                              }),
+                              {
+                                loading: 'IA lendo documento...',
+                                success: 'Documento processado pela IA!',
+                                error: 'Erro ao processar'
+                              }
+                            );
+                          }}
+                          title="IA Ler"
+                          className="text-purple-500 hover:text-purple-400"
+                        >
+                          <Brain className="w-4 h-4" />
+                        </Button>
                         <Button variant="ghost" size="icon" onClick={() => window.open(arquivo.url, "_blank")}>
                           <Eye className="w-4 h-4" />
                         </Button>
