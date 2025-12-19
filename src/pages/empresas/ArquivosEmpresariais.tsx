@@ -81,13 +81,14 @@ function FileUploadZone({
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
-      // Verificar tamanho (máx 10MB)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} excede o tamanho máximo de 10MB`);
+      // Verificar tamanho (máx 50MB para permitir mais arquivos)
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error(`${file.name} excede o tamanho máximo de 50MB`);
         errorCount++;
         continue;
       }
 
+      // QUALQUER tipo de arquivo é aceito (sem validação de tipo)
       try {
         // Criar nome único para o arquivo
         const timestamp = Date.now();

@@ -148,6 +148,7 @@ const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").t
 const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
 const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
 const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then(m => ({ default: m.GlobalDuplicationSystem })));
+const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then(m => ({ default: m.MasterUndoIndicator })));
 
 
 function AppContent() {
@@ -161,6 +162,7 @@ function AppContent() {
         <LazyInlineEditor />
         <LazyMasterQuickAddMenu />
         <LazyGlobalDuplication />
+        <LazyMasterUndoIndicator />
       </Suspense>
       <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
