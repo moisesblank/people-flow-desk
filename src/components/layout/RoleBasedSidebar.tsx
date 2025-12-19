@@ -309,7 +309,7 @@ export function RoleBasedSidebar() {
         <SidebarNavDnd
           collapsed={collapsed}
           groups={filteredMenuGroups as unknown as DndMenuGroup[]}
-          canEditLayout={isGodModeOwner && !collapsed}
+          canEditLayout={isGodModeOwner}
           getContent={getContent}
           updateContent={updateContent}
           isActive={isActive}
