@@ -40,6 +40,8 @@ import { CategoryPieChart } from "@/components/dashboard/CategoryPieChart";
 import { BudgetAlerts } from "@/components/dashboard/BudgetAlerts";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { ReactiveMetricsBar } from "@/components/dashboard/ReactiveMetricsBar";
+import { ReactiveDashboardSection } from "@/components/reactive";
+import { useReactiveData } from "@/hooks/useReactiveData";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
 import { AdvancedKPIs } from "@/components/dashboard/AdvancedKPIs";
 import { WeeklyInsights } from "@/components/dashboard/WeeklyInsights";
@@ -159,6 +161,9 @@ export default function Dashboard() {
   const [isClearing, setIsClearing] = useState(false);
   const { isOpen: showTour, completeTour, resetTour } = useTour("dashboard");
   const isMobile = useIsMobile();
+  
+  // PLANILHA VIVA: Inicializar sistema reativo
+  const { data: reactiveData } = useReactiveData();
 
   // Auto-clear cache on first load for owner
   useEffect(() => {
@@ -474,7 +479,10 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* Executive Summary + Role Management - Only for Owner */}
+        {/* PLANILHA VIVA: Dashboard Reativo Completo */}
+        <ReactiveDashboardSection showRefreshButton={true} />
+
+
         {role === 'owner' && (
           <section className="grid gap-6 lg:grid-cols-3 mb-8">
             <div className="lg:col-span-2">
