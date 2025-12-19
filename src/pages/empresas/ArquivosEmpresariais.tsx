@@ -1,577 +1,203 @@
 // ============================================
-// ARQUIVOS EMPRESARIAIS - GESTÃO DE DOCUMENTOS
-// Upload, Download e Gestão de Arquivos por CNPJ
+// PÁGINA DE ARQUIVOS EMPRESARIAIS
+// Sistema Universal de Anexos - 2GB, qualquer formato
+// Organizado por data, com IA ler
 // ============================================
 
-import { useState, useCallback } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Progress } from "@/components/ui/progress";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { supabase } from "@/integrations/supabase/client";
-import { toast } from "sonner";
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
-  Upload, FileText, Download, Eye, Trash2, Search, 
-  FolderOpen, File, FileSpreadsheet, Image, 
-  FileArchive, ArrowLeft, Building2, HardDrive, Brain
-} from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { motion, AnimatePresence } from "framer-motion";
+  FolderOpen, Search, Grid3X3, List, Trash2, 
+  Download, Eye, Brain, FileText, Image, 
+  Video, Music, Archive, FileIcon, MoreVertical, RefreshCw,
+  Loader2, CheckCircle2
+} from 'lucide-react';
+import { toast } from 'sonner';
 
-interface ArquivoEmpresa {
-  id: string;
-  nome: string;
-  tipo: string;
-  tamanho: number | null;
-  url: string;
-  modulo: string;
-  referencia_id?: string;
-  cnpj?: string;
-  created_at: string;
-}
+import { FileUpload } from '@/components/FileUpload';
+import { buscarArquivos, deleteFile, toggleIaLer, processarArquivoComIA, formatFileSize, getFileCategory } from '@/lib/fileUpload';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog';
+import { cn } from '@/lib/utils';
 
-// CNPJs das empresas
-const CNPJS = [
-  { 
-    id: "44979308000104", 
-    label: "CNPJ 44.979.308/0001-04", 
-    nome: "CURSO QUÍMICA MOISES MEDEIROS",
-    color: "bg-purple-500/10 text-purple-500 border-purple-500/20"
-  },
-  { 
-    id: "53829761000117", 
-    label: "CNPJ 53.829.761/0001-17", 
-    nome: "MM CURSO DE QUÍMICA LTDA",
-    color: "bg-primary/10 text-primary border-primary/20"
-  },
-];
-
-const CATEGORIAS = [
-  { id: "documentos-legais", label: "Documentos Legais", icon: FileText, color: "text-blue-500" },
-  { id: "contratos", label: "Contratos", icon: File, color: "text-purple-500" },
-  { id: "certidoes", label: "Certidões", icon: FileArchive, color: "text-green-500" },
-  { id: "notas-fiscais", label: "Notas Fiscais", icon: FileSpreadsheet, color: "text-orange-500" },
-  { id: "relatorios", label: "Relatórios", icon: FileText, color: "text-cyan-500" },
-  { id: "manuais", label: "Manuais", icon: FolderOpen, color: "text-pink-500" },
-];
-
-function FileUploadZone({ 
-  categoria, 
-  cnpj,
-  onUploadComplete 
-}: { 
-  categoria: string; 
-  cnpj: string;
-  onUploadComplete: () => void;
-}) {
-  const [uploading, setUploading] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [dragActive, setDragActive] = useState(false);
-
-  const handleUpload = useCallback(async (files: FileList | null) => {
-    if (!files || files.length === 0) return;
-    
-    setUploading(true);
-    setProgress(0);
-
-    let successCount = 0;
-    let errorCount = 0;
-
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i];
-      
-      // Verificar tamanho (máx 2GB - bucket configurado)
-      if (file.size > 2 * 1024 * 1024 * 1024) {
-        toast.error(`${file.name} excede o tamanho máximo de 2GB`);
-        errorCount++;
-        continue;
-      }
-
-      // QUALQUER tipo de arquivo é aceito (sem validação de tipo)
-      try {
-        // Criar nome único para o arquivo
-        const timestamp = Date.now();
-        const randomSuffix = Math.random().toString(36).substring(7);
-        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-        const fileName = `${timestamp}-${randomSuffix}-${sanitizedName}`;
-        
-        // Organizar por data (ano/mês/dia)
-        const dataHoje = new Date();
-        const ano = dataHoje.getFullYear();
-        const mes = String(dataHoje.getMonth() + 1).padStart(2, '0');
-        const dia = String(dataHoje.getDate()).padStart(2, '0');
-        const semana = `semana-${Math.ceil(dataHoje.getDate() / 7)}`;
-        
-        // Caminho: CNPJ/categoria/ano/mes/semana/dia/arquivo
-        const filePath = `${cnpj}/${categoria}/${ano}/${mes}/${semana}/${dia}/${fileName}`;
-
-        console.log('[Upload] Iniciando upload:', filePath);
-
-        // 1. Upload para o Storage
-        const { data: uploadData, error: uploadError } = await supabase.storage
-          .from("arquivos")
-          .upload(filePath, file, {
-            cacheControl: "3600",
-            upsert: false
-          });
-
-        if (uploadError) {
-          console.error('[Upload] Erro no storage:', uploadError);
-          throw uploadError;
-        }
-
-        console.log('[Upload] Upload concluído:', uploadData);
-
-        // 2. Obter URL pública
-        const { data: urlData } = supabase.storage
-          .from("arquivos")
-          .getPublicUrl(filePath);
-
-        const publicUrl = urlData.publicUrl;
-        console.log('[Upload] URL pública:', publicUrl);
-
-        // 3. Salvar metadados no banco
-        const { data: dbData, error: dbError } = await supabase
-          .from("arquivos")
-          .insert({
-            nome: file.name,
-            tipo: file.type || 'application/octet-stream',
-            modulo: `empresa-${cnpj}-${categoria}`,
-            tamanho: file.size,
-            url: publicUrl,
-            referencia_id: cnpj
-          })
-          .select()
-          .single();
-
-        if (dbError) {
-          console.error('[Upload] Erro no banco:', dbError);
-          throw dbError;
-        }
-
-        console.log('[Upload] Registro criado:', dbData);
-
-        successCount++;
-        setProgress(((i + 1) / files.length) * 100);
-      } catch (error: any) {
-        console.error('[Upload] Erro geral:', error);
-        toast.error(`Erro ao enviar ${file.name}: ${error.message}`);
-        errorCount++;
-      }
-    }
-
-    // Mensagem final
-    if (successCount > 0) {
-      toast.success(`${successCount} arquivo(s) enviado(s) com sucesso!`, {
-        description: errorCount > 0 ? `${errorCount} arquivo(s) falharam` : undefined
-      });
-    } else if (errorCount > 0) {
-      toast.error(`Todos os ${errorCount} arquivos falharam no upload`);
-    }
-
-    setUploading(false);
-    setProgress(0);
-    onUploadComplete();
-  }, [categoria, cnpj, onUploadComplete]);
-
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
-    handleUpload(e.dataTransfer.files);
-  }, [handleUpload]);
-
-  return (
-    <div className="space-y-4">
-      <div
-        onDrop={handleDrop}
-        onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
-        onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
-        className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-all ${
-          dragActive
-            ? "border-primary bg-primary/5 scale-[1.02]"
-            : "border-border hover:border-primary/50"
-        }`}
-      >
-        <input
-          type="file"
-          id="file-upload"
-          className="hidden"
-          multiple
-          onChange={(e) => handleUpload(e.target.files)}
-        />
-        <label htmlFor="file-upload" className="cursor-pointer">
-          <Upload className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-          {dragActive ? (
-            <p className="text-primary font-medium">Solte os arquivos aqui...</p>
-          ) : (
-            <div>
-              <p className="font-medium mb-2">Arraste arquivos ou clique para selecionar</p>
-              <p className="text-sm text-muted-foreground">Qualquer tipo de arquivo (máx. 2GB cada)</p>
-            </div>
-          )}
-        </label>
-      </div>
-
-      {uploading && (
-        <div className="space-y-2">
-          <div className="flex items-center justify-between text-sm">
-            <span>Enviando...</span>
-            <span>{Math.round(progress)}%</span>
-          </div>
-          <Progress value={progress} />
-        </div>
-      )}
-    </div>
-  );
+function FileTypeIcon({ tipo, className }: { tipo: string; className?: string }) {
+  const category = getFileCategory(tipo);
+  const iconClass = cn('w-5 h-5', className);
+  switch (category) {
+    case 'image': return <Image className={cn(iconClass, 'text-pink-500')} />;
+    case 'video': return <Video className={cn(iconClass, 'text-purple-500')} />;
+    case 'audio': return <Music className={cn(iconClass, 'text-blue-500')} />;
+    case 'document': return <FileText className={cn(iconClass, 'text-green-500')} />;
+    case 'archive': return <Archive className={cn(iconClass, 'text-yellow-500')} />;
+    default: return <FileIcon className={cn(iconClass, 'text-muted-foreground')} />;
+  }
 }
 
 export default function ArquivosEmpresariais() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [cnpjSelecionado, setCnpjSelecionado] = useState<string | null>(null);
-  const [categoriaAtiva, setCategoriaAtiva] = useState("documentos-legais");
   const queryClient = useQueryClient();
+  const [busca, setBusca] = useState('');
+  const [tipo, setTipo] = useState('todos');
+  const [ano, setAno] = useState<number | undefined>();
+  const [mes, setMes] = useState<number | undefined>();
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [selectedFile, setSelectedFile] = useState<any>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [processingIA, setProcessingIA] = useState<string | null>(null);
 
-  // Buscar arquivos do CNPJ selecionado
-  const { data: arquivos, isLoading } = useQuery({
-    queryKey: ["arquivos-empresa", cnpjSelecionado, categoriaAtiva],
-    queryFn: async () => {
-      if (!cnpjSelecionado) return [];
-      
-      const { data, error } = await supabase
-        .from("arquivos")
-        .select("*")
-        .eq("modulo", `empresa-${cnpjSelecionado}-${categoriaAtiva}`)
-        .order("created_at", { ascending: false });
-
-      if (error) throw error;
-      return data as ArquivoEmpresa[];
-    },
-    enabled: !!cnpjSelecionado,
+  const { data, isLoading, refetch } = useQuery({
+    queryKey: ['arquivos-empresariais', busca, tipo, ano, mes],
+    queryFn: () => buscarArquivos({
+      busca: busca || undefined,
+      pasta: 'empresas',
+      tipo: tipo !== 'todos' ? tipo : undefined,
+      ano, mes, limite: 100
+    }),
+    refetchOnWindowFocus: false
   });
 
-  // Buscar estatísticas de arquivos por CNPJ
-  const { data: statsArquivos } = useQuery({
-    queryKey: ["arquivos-stats"],
-    queryFn: async () => {
-      const stats: Record<string, { count: number; size: number }> = {};
-      
-      for (const cnpj of CNPJS) {
-        const { data, error } = await supabase
-          .from("arquivos")
-          .select("tamanho")
-          .like("modulo", `empresa-${cnpj.id}-%`);
-        
-        if (!error && data) {
-          stats[cnpj.id] = {
-            count: data.length,
-            size: data.reduce((acc, f) => acc + (f.tamanho || 0), 0)
-          };
-        } else {
-          stats[cnpj.id] = { count: 0, size: 0 };
-        }
-      }
-      
-      return stats;
-    },
-  });
+  const arquivos = data?.arquivos || [];
+  const total = data?.total || 0;
 
   const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase.from("arquivos").delete().eq("id", id);
-      if (error) throw error;
-    },
+    mutationFn: deleteFile,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["arquivos-empresa"] });
-      queryClient.invalidateQueries({ queryKey: ["arquivos-stats"] });
-      toast.success("Arquivo removido com sucesso!");
+      toast.success('Arquivo excluído!');
+      queryClient.invalidateQueries({ queryKey: ['arquivos-empresariais'] });
+      setDeleteConfirm(null);
     },
+    onError: (e: any) => toast.error(e.message)
   });
 
-  const arquivosFiltrados = arquivos?.filter(a =>
-    a.nome.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const toggleIAMutation = useMutation({
+    mutationFn: ({ id, iaLer }: { id: string; iaLer: boolean }) => toggleIaLer(id, iaLer),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['arquivos-empresariais'] })
+  });
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  const handleProcessarIA = async (id: string) => {
+    setProcessingIA(id);
+    try {
+      await processarArquivoComIA(id);
+      toast.success('Processado pela IA!');
+      queryClient.invalidateQueries({ queryKey: ['arquivos-empresariais'] });
+    } catch (e: any) { toast.error(e.message); }
+    finally { setProcessingIA(null); }
   };
 
-  const getFileIcon = (mimeType: string) => {
-    if (mimeType?.includes("pdf")) return <FileText className="w-5 h-5 text-red-500" />;
-    if (mimeType?.includes("sheet") || mimeType?.includes("excel")) return <FileSpreadsheet className="w-5 h-5 text-green-500" />;
-    if (mimeType?.includes("image")) return <Image className="w-5 h-5 text-blue-500" />;
-    return <File className="w-5 h-5 text-gray-500" />;
-  };
+  const handleDownload = (a: any) => { window.open(a.url, '_blank'); };
 
-  // Tela de seleção de CNPJ
-  if (!cnpjSelecionado) {
-    return (
-      <div className="min-h-screen bg-background p-6 space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center gap-3">
-            <FolderOpen className="w-8 h-8 text-primary" />
-            Arquivos Empresariais
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Selecione uma empresa para gerenciar seus documentos
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-          {CNPJS.map((cnpj) => {
-            const stats = statsArquivos?.[cnpj.id] || { count: 0, size: 0 };
-            
-            return (
-              <motion.div
-                key={cnpj.id}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-              >
-                <Card 
-                  className={`cursor-pointer hover:shadow-lg transition-all border-2 ${cnpj.color}`}
-                  onClick={() => setCnpjSelecionado(cnpj.id)}
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-4">
-                      <div className={`p-4 rounded-xl ${cnpj.color.replace('text-', 'bg-').replace('/10', '/20')}`}>
-                        <Building2 className="w-8 h-8" />
-                      </div>
-                      <div className="flex-1">
-                        <CardTitle className="text-lg">{cnpj.nome}</CardTitle>
-                        <CardDescription className="font-mono">{cnpj.label}</CardDescription>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          {stats.count} arquivos
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <HardDrive className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          {formatFileSize(stats.size)}
-                        </span>
-                      </div>
-                    </div>
-                    <Button className="w-full mt-4" variant="outline">
-                      <FolderOpen className="w-4 h-4 mr-2" />
-                      Acessar Arquivos
-                    </Button>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            );
-          })}
-        </div>
-
-        {/* Resumo Total */}
-        <Card className="mt-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Resumo Total</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-primary">
-                  {CNPJS.reduce((acc, cnpj) => acc + (statsArquivos?.[cnpj.id]?.count || 0), 0)}
-                </p>
-                <p className="text-sm text-muted-foreground">Arquivos Total</p>
-              </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-primary">
-                  {formatFileSize(CNPJS.reduce((acc, cnpj) => acc + (statsArquivos?.[cnpj.id]?.size || 0), 0))}
-                </p>
-                <p className="text-sm text-muted-foreground">Espaço Usado</p>
-              </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-primary">2</p>
-                <p className="text-sm text-muted-foreground">CNPJs Ativos</p>
-              </div>
-              <div className="text-center p-4 bg-muted/50 rounded-lg">
-                <p className="text-2xl font-bold text-green-500">100%</p>
-                <p className="text-sm text-muted-foreground">Sincronizado</p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
-
-  // Tela de arquivos do CNPJ selecionado
-  const cnpjAtual = CNPJS.find(c => c.id === cnpjSelecionado);
+  const currentYear = new Date().getFullYear();
+  const years = Array.from({ length: 5 }, (_, i) => currentYear - i);
+  const months = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 
   return (
-    <div className="min-h-screen bg-background p-6 space-y-6">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" size="icon" onClick={() => setCnpjSelecionado(null)}>
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-              <Building2 className="w-6 h-6 text-primary" />
-              {cnpjAtual?.nome}
-            </h1>
-            <p className="text-muted-foreground font-mono text-sm">{cnpjAtual?.label}</p>
-          </div>
+    <div className="container mx-auto p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+            Arquivos Empresariais
+          </h1>
+          <p className="text-muted-foreground">Upload até 2GB • Qualquer formato • Organizado por data</p>
         </div>
-        
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Buscar arquivos..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-9 w-64"
-            />
+        <Badge variant="outline" className="text-pink-500">{total} arquivo(s)</Badge>
+      </div>
+
+      <Tabs defaultValue="upload" className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="upload">📤 Upload</TabsTrigger>
+          <TabsTrigger value="arquivos">📁 Arquivos ({total})</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="upload">
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><FolderOpen className="w-5 h-5 text-pink-500" />Upload de Arquivos</CardTitle></CardHeader>
+            <CardContent>
+              <FileUpload bucket="arquivos" folder="empresas" categoria="empresa" showIaOption showDescription showTags
+                onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['arquivos-empresariais'] })} />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="arquivos" className="space-y-4">
+          <Card><CardContent className="pt-6 flex flex-wrap gap-4">
+            <div className="flex-1 min-w-[200px]"><Input placeholder="Buscar..." value={busca} onChange={e=>setBusca(e.target.value)} className="pl-3" /></div>
+            <Select value={tipo} onValueChange={setTipo}><SelectTrigger className="w-32"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="todos">Todos</SelectItem><SelectItem value="image">Imagens</SelectItem><SelectItem value="video">Vídeos</SelectItem><SelectItem value="application/pdf">PDFs</SelectItem></SelectContent></Select>
+            <Select value={ano?.toString()||''} onValueChange={v=>setAno(v?parseInt(v):undefined)}><SelectTrigger className="w-24"><SelectValue placeholder="Ano"/></SelectTrigger><SelectContent><SelectItem value="">Todos</SelectItem>{years.map(y=><SelectItem key={y} value={y.toString()}>{y}</SelectItem>)}</SelectContent></Select>
+            <Select value={mes?.toString()||''} onValueChange={v=>setMes(v?parseInt(v):undefined)}><SelectTrigger className="w-24"><SelectValue placeholder="Mês"/></SelectTrigger><SelectContent><SelectItem value="">Todos</SelectItem>{months.map((m,i)=><SelectItem key={i} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent></Select>
+            <div className="flex gap-1"><Button variant={viewMode==='grid'?'default':'outline'} size="icon" onClick={()=>setViewMode('grid')}><Grid3X3 className="w-4 h-4"/></Button><Button variant={viewMode==='list'?'default':'outline'} size="icon" onClick={()=>setViewMode('list')}><List className="w-4 h-4"/></Button></div>
+            <Button variant="outline" size="icon" onClick={()=>refetch()}><RefreshCw className="w-4 h-4"/></Button>
+          </CardContent></Card>
+
+          {isLoading ? <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-500"/></div>
+          : arquivos.length===0 ? <Card><CardContent className="py-12 text-center"><FolderOpen className="w-16 h-16 mx-auto text-muted-foreground mb-4"/><p>Nenhum arquivo</p></CardContent></Card>
+          : viewMode==='grid' ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
+              {arquivos.map((a:any)=>(
+                <Card key={a.id} className="group hover:border-pink-500/50 cursor-pointer" onClick={()=>{setSelectedFile(a);setPreviewOpen(true);}}>
+                  <CardContent className="p-4">
+                    <div className="aspect-square rounded-lg bg-muted flex items-center justify-center mb-2 overflow-hidden">
+                      {a.tipo.startsWith('image/')?<img src={a.url} className="w-full h-full object-cover"/>:<FileTypeIcon tipo={a.tipo} className="w-10 h-10"/>}
+                    </div>
+                    <p className="text-sm font-medium truncate">{a.nome}</p>
+                    <p className="text-xs text-muted-foreground">{formatFileSize(a.tamanho)}</p>
+                    {a.ia_ler && <Brain className="w-4 h-4 text-pink-500 mt-1"/>}
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          ) : (
+            <Card><div className="divide-y">{arquivos.map((a:any)=>(
+              <div key={a.id} className="flex items-center gap-4 p-4 hover:bg-muted/50 cursor-pointer" onClick={()=>{setSelectedFile(a);setPreviewOpen(true);}}>
+                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center">{a.tipo.startsWith('image/')?<img src={a.url} className="w-full h-full object-cover rounded"/>:<FileTypeIcon tipo={a.tipo}/>}</div>
+                <div className="flex-1 min-w-0"><p className="font-medium truncate">{a.nome}</p><p className="text-xs text-muted-foreground">{formatFileSize(a.tamanho)} • {new Date(a.created_at).toLocaleDateString('pt-BR')}</p></div>
+                {a.ia_ler&&<Brain className="w-4 h-4 text-pink-500"/>}
+                <DropdownMenu><DropdownMenuTrigger asChild onClick={e=>e.stopPropagation()}><Button variant="ghost" size="icon"><MoreVertical className="w-4 h-4"/></Button></DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={()=>handleDownload(a)}><Download className="w-4 h-4 mr-2"/>Download</DropdownMenuItem>
+                    <DropdownMenuItem onClick={()=>toggleIAMutation.mutate({id:a.id,iaLer:!a.ia_ler})}><Brain className="w-4 h-4 mr-2"/>{a.ia_ler?'Desativar':'Ativar'} IA</DropdownMenuItem>
+                    {a.ia_ler&&!a.ia_processado&&<DropdownMenuItem onClick={()=>handleProcessarIA(a.id)} disabled={processingIA===a.id}>{processingIA===a.id?<Loader2 className="w-4 h-4 mr-2 animate-spin"/>:<Brain className="w-4 h-4 mr-2 text-pink-500"/>}Processar IA</DropdownMenuItem>}
+                    <DropdownMenuSeparator/>
+                    <DropdownMenuItem className="text-destructive" onClick={()=>setDeleteConfirm(a.id)}><Trash2 className="w-4 h-4 mr-2"/>Excluir</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            ))}</div></Card>
+          )}
+        </TabsContent>
+      </Tabs>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader><DialogTitle>{selectedFile?.nome}</DialogTitle><DialogDescription>{formatFileSize(selectedFile?.tamanho||0)}</DialogDescription></DialogHeader>
+          <div className="rounded-lg bg-muted overflow-hidden max-h-[60vh] flex items-center justify-center">
+            {selectedFile?.tipo?.startsWith('image/')?<img src={selectedFile.url} className="max-w-full max-h-[60vh] object-contain"/>
+            :selectedFile?.tipo?.startsWith('video/')?<video src={selectedFile.url} controls className="max-w-full"/>
+            :selectedFile?.tipo?.startsWith('audio/')?<audio src={selectedFile.url} controls/>
+            :selectedFile?.tipo==='application/pdf'?<iframe src={selectedFile.url} className="w-full h-[60vh]"/>
+            :<div className="p-12 text-center"><FileTypeIcon tipo={selectedFile?.tipo||''} className="w-20 h-20 mx-auto"/><p className="mt-4 text-muted-foreground">Preview não disponível</p></div>}
           </div>
-        </div>
-      </div>
+          <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+            <div className="flex items-center gap-2"><Brain className={selectedFile?.ia_ler?'text-pink-500':'text-muted-foreground'}/><Label>IA deve ler?</Label></div>
+            <Switch checked={selectedFile?.ia_ler||false} onCheckedChange={c=>{toggleIAMutation.mutate({id:selectedFile?.id,iaLer:c});setSelectedFile((p:any)=>p?{...p,ia_ler:c}:p);}}/>
+          </div>
+          <DialogFooter><Button variant="outline" onClick={()=>setPreviewOpen(false)}>Fechar</Button><Button onClick={()=>handleDownload(selectedFile)}><Download className="w-4 h-4 mr-2"/>Download</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {/* Categorias */}
-      <div className="flex flex-wrap gap-2">
-        {CATEGORIAS.map((cat) => (
-          <Button
-            key={cat.id}
-            variant={categoriaAtiva === cat.id ? "default" : "outline"}
-            onClick={() => setCategoriaAtiva(cat.id)}
-            className="gap-2"
-          >
-            <cat.icon className={`w-4 h-4 ${cat.color}`} />
-            {cat.label}
-          </Button>
-        ))}
-      </div>
-
-      {/* Conteúdo */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Upload */}
-        <Card className="lg:col-span-1">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="h-5 w-5 text-primary" />
-              Upload de Arquivos
-            </CardTitle>
-            <CardDescription>
-              {CATEGORIAS.find(c => c.id === categoriaAtiva)?.label}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <FileUploadZone
-              categoria={categoriaAtiva}
-              cnpj={cnpjSelecionado}
-              onUploadComplete={() => {
-                queryClient.invalidateQueries({ queryKey: ["arquivos-empresa"] });
-                queryClient.invalidateQueries({ queryKey: ["arquivos-stats"] });
-              }}
-            />
-          </CardContent>
-        </Card>
-
-        {/* Lista de Arquivos */}
-        <Card className="lg:col-span-2">
-          <CardHeader>
-            <CardTitle className="flex items-center justify-between">
-              <span className="flex items-center gap-2">
-                <FileText className="h-5 w-5 text-primary" />
-                Arquivos ({arquivosFiltrados?.length || 0})
-              </span>
-              <Badge variant="outline">{cnpjAtual?.label}</Badge>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <div className="animate-spin h-8 w-8 border-2 border-primary border-t-transparent rounded-full" />
-              </div>
-            ) : arquivosFiltrados && arquivosFiltrados.length > 0 ? (
-              <div className="space-y-2">
-                <AnimatePresence>
-                  {arquivosFiltrados.map((arquivo) => (
-                    <motion.div
-                      key={arquivo.id}
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      exit={{ opacity: 0, y: -10 }}
-                      className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50 transition-colors"
-                    >
-                      <div className="flex items-center gap-3">
-                        {getFileIcon(arquivo.tipo)}
-                        <div>
-                          <p className="font-medium text-sm">{arquivo.nome}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {new Date(arquivo.created_at).toLocaleDateString("pt-BR")} • {formatFileSize(arquivo.tamanho || 0)}
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        {/* Botão IA LER */}
-                        <Button 
-                          variant="ghost" 
-                          size="icon" 
-                          onClick={() => {
-                            toast.promise(
-                              supabase.functions.invoke('extract-document', {
-                                body: { documentUrl: arquivo.url, fileName: arquivo.nome, fileType: arquivo.tipo }
-                              }),
-                              {
-                                loading: 'IA lendo documento...',
-                                success: 'Documento processado pela IA!',
-                                error: 'Erro ao processar'
-                              }
-                            );
-                          }}
-                          title="IA Ler"
-                          className="text-purple-500 hover:text-purple-400"
-                        >
-                          <Brain className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => window.open(arquivo.url, "_blank")}>
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => {
-                          const a = document.createElement("a");
-                          a.href = arquivo.url;
-                          a.download = arquivo.nome;
-                          a.click();
-                        }}>
-                          <Download className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => deleteMutation.mutate(arquivo.id)}
-                          className="text-destructive hover:text-destructive"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </motion.div>
-                  ))}
-                </AnimatePresence>
-              </div>
-            ) : (
-              <div className="text-center py-8 text-muted-foreground">
-                <FolderOpen className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                <p>Nenhum arquivo encontrado</p>
-                <p className="text-sm">Faça upload de arquivos usando o painel ao lado</p>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
+      <Dialog open={!!deleteConfirm} onOpenChange={()=>setDeleteConfirm(null)}>
+        <DialogContent><DialogHeader><DialogTitle className="text-destructive"><Trash2 className="w-5 h-5 inline mr-2"/>Confirmar Exclusão</DialogTitle></DialogHeader>
+          <p>Tem certeza? Esta ação não pode ser desfeita.</p>
+          <DialogFooter><Button variant="outline" onClick={()=>setDeleteConfirm(null)}>Cancelar</Button><Button variant="destructive" onClick={()=>deleteConfirm&&deleteMutation.mutate(deleteConfirm)} disabled={deleteMutation.isPending}>{deleteMutation.isPending?<Loader2 className="w-4 h-4 animate-spin"/>:<Trash2 className="w-4 h-4 mr-2"/>}Excluir</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
