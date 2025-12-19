@@ -516,21 +516,21 @@ export const useReactiveStore = create<ReactiveStore>()(
           supabase.from('alunos').select('id', { count: 'exact', head: true }).gte('created_at', startOfMonth),
           supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('status', 'ativo').lt('created_at', startOfMonth),
           
-          // Equipe
-          supabase.from('employees').select('id, salario', { count: 'exact' }).eq('status', 'ativo'),
+          // Equipe - employees não tem coluna salario, usar employee_compensation
+          supabase.from('employees').select('id', { count: 'exact' }).eq('status', 'ativo'),
           supabase.from('affiliates').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
           
           // Tarefas
           supabase.from('calendar_tasks').select('id, is_completed').eq('task_date', today),
           
-          // Vendas e Marketing
-          supabase.from('transacoes_hotmart_completo').select('id, valor', { count: 'exact' }).in('status', ['approved', 'purchase_approved']).gte('data_compra', startOfMonth),
+          // Vendas e Marketing - usar valor_liquido ao invés de valor
+          supabase.from('transacoes_hotmart_completo').select('id, valor_liquido', { count: 'exact' }).in('status', ['approved', 'purchase_approved']).gte('data_compra', startOfMonth),
           supabase.from('comissoes').select('valor, status').gte('created_at', startOfMonth),
           supabase.from('whatsapp_leads').select('id', { count: 'exact', head: true }).gte('created_at', startOfMonth),
           supabase.from('whatsapp_leads').select('id', { count: 'exact', head: true }),
           
-          // Hotmart detalhado
-          supabase.from('transacoes_hotmart_completo').select('valor').in('status', ['approved', 'purchase_approved']).gte('data_compra', startOfMonth),
+          // Hotmart detalhado - usar valor_liquido ao invés de valor
+          supabase.from('transacoes_hotmart_completo').select('valor_liquido').in('status', ['approved', 'purchase_approved']).gte('data_compra', startOfMonth),
         ]);
 
         // Calcular valores base
@@ -549,9 +549,9 @@ export const useReactiveStore = create<ReactiveStore>()(
         const novos_alunos_mes = alunosNovos.count || 0;
         const alunos_inicio_periodo = alunosInicioMes.count || alunos_ativos;
         
-        const funcionariosData = funcionarios.data || [];
-        const total_funcionarios = funcionariosData.length;
-        const folha_pagamento = funcionariosData.reduce((s, f: any) => s + (f.salario || 0), 0);
+        // Funcionários - contagem apenas (salário vem de employee_compensation)
+        const total_funcionarios = funcionarios.count || 0;
+        const folha_pagamento = 0; // TODO: Buscar de employee_compensation quando necessário
         
         const total_afiliados = afiliados.count || 0;
         
@@ -560,7 +560,7 @@ export const useReactiveStore = create<ReactiveStore>()(
         const tarefas_concluidas = tarefasData.filter((t: any) => t.is_completed).length;
         
         const vendas_mes = vendas.count || 0;
-        const hotmart_receita_mes = (hotmartTransacoes.data || []).reduce((s, t: any) => s + (t.valor || 0), 0);
+        const hotmart_receita_mes = (hotmartTransacoes.data || []).reduce((s, t: any) => s + (t.valor_liquido || 0), 0);
         
         const comissoesData = comissoes.data || [];
         const comissoes_mes = comissoesData.reduce((s, c) => s + (c.valor || 0), 0);
