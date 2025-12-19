@@ -1,12 +1,15 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - MASTER DUPLICATION HOOK
-// Sistema Universal de Duplicação para Owner
+// MOISÉS MEDEIROS v11.0 - MASTER DUPLICATION HOOK
+// Sistema Universal de Duplicação EXCLUSIVO para Owner
+// Owner: moisesblank@gmail.com
 // ============================================
 
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useAdminCheck } from '@/hooks/useAdminCheck';
+import { useAuth } from '@/hooks/useAuth';
+
+const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 export type DuplicableEntityType = 
   | 'course'
@@ -24,13 +27,18 @@ export type DuplicableEntityType =
   | 'document'
   | 'category'
   | 'expense'
-  | 'income';
+  | 'income'
+  | 'conta_pagar'
+  | 'conta_receber'
+  | 'alerta'
+  | 'contabilidade';
 
 interface DuplicationOptions {
   includeAttachments?: boolean;
   includeRelatedItems?: boolean;
   newName?: string;
   deepCopy?: boolean;
+  insertAfterOriginal?: boolean;
 }
 
 interface DuplicationResult {
@@ -38,12 +46,14 @@ interface DuplicationResult {
   newId?: string;
   message: string;
   duplicatedItems?: number;
+  newData?: Record<string, unknown>;
 }
 
 // Mapeamento de entidades para suas tabelas e relações
 const ENTITY_CONFIG: Record<DuplicableEntityType, {
   table: string;
   nameField: string;
+  orderField?: string;
   relations?: { table: string; foreignKey: string; cascade?: boolean }[];
   attachmentType?: string;
 }> = {
@@ -60,11 +70,13 @@ const ENTITY_CONFIG: Record<DuplicableEntityType, {
   lesson: {
     table: 'lessons',
     nameField: 'title',
+    orderField: 'order_index',
     attachmentType: 'lesson'
   },
   module: {
     table: 'modules',
     nameField: 'title',
+    orderField: 'order_index',
     relations: [
       { table: 'lessons', foreignKey: 'module_id', cascade: true },
     ],
@@ -80,6 +92,7 @@ const ENTITY_CONFIG: Record<DuplicableEntityType, {
   task: {
     table: 'tasks',
     nameField: 'title',
+    orderField: 'position',
     attachmentType: 'task'
   },
   calendar_task: {
@@ -125,48 +138,66 @@ const ENTITY_CONFIG: Record<DuplicableEntityType, {
     nameField: 'name',
   },
   expense: {
+    table: 'company_extra_expenses',
+    nameField: 'nome',
+  },
+  income: {
+    table: 'entradas',
+    nameField: 'descricao',
+  },
+  conta_pagar: {
     table: 'contas_pagar',
     nameField: 'descricao',
     attachmentType: 'transaction'
   },
-  income: {
+  conta_receber: {
     table: 'contas_receber',
     nameField: 'descricao',
     attachmentType: 'transaction'
+  },
+  alerta: {
+    table: 'alertas_sistema',
+    nameField: 'titulo',
+  },
+  contabilidade: {
+    table: 'contabilidade',
+    nameField: 'descricao',
   },
 };
 
 export function useMasterDuplication() {
   const [isDuplicating, setIsDuplicating] = useState(false);
-  const { isGodMode, isOwner } = useAdminCheck();
+  const { user, role } = useAuth();
 
-  const canDuplicate = isGodMode || isOwner;
+  // VERIFICAÇÃO ESTRITA: Apenas owner pode duplicar
+  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL && role === 'owner';
+  const canDuplicate = isOwner;
 
-  // Função auxiliar para executar queries dinâmicas via RPC
-  const executeQuery = async (table: string, operation: 'select' | 'insert', params: Record<string, unknown>) => {
-    // Usar supabase.rpc ou queries diretas com type assertion
-    const client = supabase as unknown as {
-      from: (t: string) => {
-        select: (s: string) => { eq: (k: string, v: unknown) => { single: () => Promise<{ data: unknown; error: unknown }> } };
-        insert: (d: unknown) => { select: () => { single: () => Promise<{ data: unknown; error: unknown }> } };
-      }
-    };
-
-    if (operation === 'select') {
-      return client.from(table).select('*').eq('id', params.id).single();
+  // Função para verificar se é owner antes de qualquer ação
+  const verifyOwnership = useCallback((): boolean => {
+    if (!user) {
+      toast.error('Você precisa estar logado');
+      return false;
     }
-    return client.from(table).insert(params.data).select().single();
-  };
+    if (user.email?.toLowerCase() !== OWNER_EMAIL) {
+      toast.error('Acesso negado', {
+        description: 'Apenas o owner pode usar esta funcionalidade'
+      });
+      return false;
+    }
+    return true;
+  }, [user]);
 
-  const duplicateEntity = async (
+  const duplicateEntity = useCallback(async (
     entityType: DuplicableEntityType,
     entityId: string,
     options: DuplicationOptions = {}
   ): Promise<DuplicationResult> => {
-    if (!canDuplicate) {
+    // Verificação de owner
+    if (!verifyOwnership()) {
       return {
         success: false,
-        message: 'Apenas o owner pode duplicar itens'
+        message: 'Acesso negado - apenas owner'
       };
     }
 
@@ -182,11 +213,15 @@ export function useMasterDuplication() {
     }
 
     try {
-      // 1. Buscar item original
-      const { data: originalData, error: fetchError } = await executeQuery(config.table, 'select', { id: entityId });
+      // 1. Buscar item original usando query dinâmica
+      const { data: originalData, error: fetchError } = await supabase
+        .from(config.table as 'courses')
+        .select('*')
+        .eq('id', entityId)
+        .single();
 
       if (fetchError || !originalData) {
-        throw new Error(`Item não encontrado: ${(fetchError as Error)?.message || 'Não encontrado'}`);
+        throw new Error(`Item não encontrado: ${fetchError?.message || 'Não encontrado'}`);
       }
 
       const original = originalData as Record<string, unknown>;
@@ -201,11 +236,21 @@ export function useMasterDuplication() {
       const originalName = (newData[config.nameField] as string) || 'Item';
       newData[config.nameField] = options.newName || `${originalName} (Cópia)`;
 
+      // Se tem campo de ordem, incrementar para aparecer logo abaixo
+      if (config.orderField && options.insertAfterOriginal !== false) {
+        const originalOrder = (original[config.orderField] as number) || 0;
+        newData[config.orderField] = originalOrder + 1;
+      }
+
       // 3. Inserir item duplicado
-      const { data: insertedData, error: insertError } = await executeQuery(config.table, 'insert', { data: newData });
+      const { data: insertedData, error: insertError } = await supabase
+        .from(config.table as 'courses')
+        .insert(newData as never)
+        .select()
+        .single();
 
       if (insertError || !insertedData) {
-        throw new Error(`Erro ao duplicar: ${(insertError as Error)?.message || 'Erro desconhecido'}`);
+        throw new Error(`Erro ao duplicar: ${insertError?.message || 'Erro desconhecido'}`);
       }
 
       const newItem = insertedData as Record<string, unknown>;
@@ -232,12 +277,20 @@ export function useMasterDuplication() {
         }
       }
 
-      // 5. Log da ação
+      // 5. Duplicar itens relacionados se habilitado (simplificado)
+      if (options.includeRelatedItems && config.relations) {
+        // Log para auditoria
+        console.log('Duplicação com itens relacionados solicitada para:', entityType);
+      }
+
+      // 6. Log da ação
       await supabase.from('activity_log').insert({
         action: 'MASTER_DUPLICATE',
         table_name: config.table,
         record_id: String(newItem.id),
-        old_value: { original_id: entityId } as never,
+        user_id: user?.id,
+        user_email: user?.email,
+        old_value: { original_id: entityId, entity_type: entityType } as never,
         new_value: { 
           new_id: newItem.id, 
           duplicated_items: duplicatedCount,
@@ -245,15 +298,16 @@ export function useMasterDuplication() {
         } as never
       });
 
-      toast.success(`${originalName} duplicado com sucesso!`, {
-        description: `${duplicatedCount} item(s) duplicado(s)`
+      toast.success(`✨ ${originalName} duplicado!`, {
+        description: `${duplicatedCount} item(s) copiado(s) - aparece logo abaixo`
       });
 
       return {
         success: true,
         newId: String(newItem.id),
         message: 'Duplicação concluída com sucesso',
-        duplicatedItems: duplicatedCount
+        duplicatedItems: duplicatedCount,
+        newData: newItem
       };
 
     } catch (error: unknown) {
@@ -270,13 +324,17 @@ export function useMasterDuplication() {
     } finally {
       setIsDuplicating(false);
     }
-  };
+  }, [user, verifyOwnership]);
 
   // Duplicação em lote
-  const duplicateMultiple = async (
+  const duplicateMultiple = useCallback(async (
     items: { entityType: DuplicableEntityType; entityId: string }[],
     options: DuplicationOptions = {}
   ): Promise<DuplicationResult[]> => {
+    if (!verifyOwnership()) {
+      return [{ success: false, message: 'Acesso negado' }];
+    }
+
     const results: DuplicationResult[] = [];
     
     for (const item of items) {
@@ -288,13 +346,46 @@ export function useMasterDuplication() {
     toast.success(`${successCount}/${items.length} itens duplicados`);
 
     return results;
-  };
+  }, [duplicateEntity, verifyOwnership]);
+
+  // Reordenar itens (para drag-and-drop)
+  const reorderItems = useCallback(async (
+    entityType: DuplicableEntityType,
+    items: { id: string; newOrder: number }[]
+  ): Promise<boolean> => {
+    if (!verifyOwnership()) return false;
+
+    const config = ENTITY_CONFIG[entityType];
+    if (!config || !config.orderField) {
+      toast.error('Este tipo não suporta reordenação');
+      return false;
+    }
+
+    try {
+      for (const item of items) {
+        await supabase
+          .from(config.table as 'courses')
+          .update({ [config.orderField]: item.newOrder } as never)
+          .eq('id', item.id);
+      }
+
+      toast.success('Ordem atualizada!');
+      return true;
+    } catch (error) {
+      console.error('Erro ao reordenar:', error);
+      toast.error('Erro ao reordenar');
+      return false;
+    }
+  }, [verifyOwnership]);
 
   return {
     duplicateEntity,
     duplicateMultiple,
+    reorderItems,
     isDuplicating,
     canDuplicate,
-    supportedTypes: Object.keys(ENTITY_CONFIG) as DuplicableEntityType[]
+    isOwner,
+    supportedTypes: Object.keys(ENTITY_CONFIG) as DuplicableEntityType[],
+    OWNER_EMAIL
   };
 }

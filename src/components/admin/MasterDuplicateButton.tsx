@@ -1,10 +1,11 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - MASTER DUPLICATE BUTTON
-// Botão Universal de Duplicação para Owner
+// MOISÉS MEDEIROS v11.0 - MASTER DUPLICATE BUTTON
+// Botão Universal de Duplicação EXCLUSIVO para Owner
+// Owner: moisesblank@gmail.com
 // ============================================
 
 import { useState } from 'react';
-import { Copy, Loader2, Settings2, Check } from 'lucide-react';
+import { Copy, Loader2, Settings2, Check, GripVertical } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import {
   Dialog,
@@ -35,9 +36,32 @@ interface MasterDuplicateButtonProps {
   variant?: 'default' | 'ghost' | 'outline' | 'icon' | 'dropdown';
   size?: 'sm' | 'default' | 'lg' | 'icon';
   className?: string;
-  onDuplicated?: (newId: string) => void;
+  onDuplicated?: (newId: string, newData?: Record<string, unknown>) => void;
   showAdvancedOptions?: boolean;
 }
+
+const ENTITY_LABELS: Record<DuplicableEntityType, string> = {
+  course: 'Curso',
+  lesson: 'Aula',
+  module: 'Módulo',
+  quiz: 'Quiz',
+  task: 'Tarefa',
+  calendar_task: 'Tarefa do Calendário',
+  transaction: 'Transação',
+  campaign: 'Campanha',
+  automation: 'Automação',
+  employee: 'Funcionário',
+  affiliate: 'Afiliado',
+  student: 'Aluno',
+  document: 'Documento',
+  category: 'Categoria',
+  expense: 'Despesa',
+  income: 'Receita',
+  conta_pagar: 'Conta a Pagar',
+  conta_receber: 'Conta a Receber',
+  alerta: 'Alerta',
+  contabilidade: 'Registro Contábil',
+};
 
 export function MasterDuplicateButton({
   entityType,
@@ -49,13 +73,14 @@ export function MasterDuplicateButton({
   onDuplicated,
   showAdvancedOptions = true,
 }: MasterDuplicateButtonProps) {
-  const { duplicateEntity, isDuplicating, canDuplicate } = useMasterDuplication();
+  const { duplicateEntity, isDuplicating, isOwner } = useMasterDuplication();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [newName, setNewName] = useState('');
   const [includeAttachments, setIncludeAttachments] = useState(true);
   const [includeRelatedItems, setIncludeRelatedItems] = useState(true);
 
-  if (!canDuplicate) {
+  // NÃO RENDERIZA SE NÃO FOR OWNER
+  if (!isOwner) {
     return null;
   }
 
@@ -63,10 +88,11 @@ export function MasterDuplicateButton({
     const result = await duplicateEntity(entityType, entityId, {
       includeAttachments: true,
       includeRelatedItems: true,
+      insertAfterOriginal: true,
     });
 
     if (result.success && result.newId && onDuplicated) {
-      onDuplicated(result.newId);
+      onDuplicated(result.newId, result.newData);
     }
   };
 
@@ -75,34 +101,16 @@ export function MasterDuplicateButton({
       newName: newName || undefined,
       includeAttachments,
       includeRelatedItems,
+      insertAfterOriginal: true,
     });
 
     if (result.success && result.newId) {
       setDialogOpen(false);
       setNewName('');
       if (onDuplicated) {
-        onDuplicated(result.newId);
+        onDuplicated(result.newId, result.newData);
       }
     }
-  };
-
-  const entityLabels: Record<DuplicableEntityType, string> = {
-    course: 'Curso',
-    lesson: 'Aula',
-    module: 'Módulo',
-    quiz: 'Quiz',
-    task: 'Tarefa',
-    calendar_task: 'Tarefa do Calendário',
-    transaction: 'Transação',
-    campaign: 'Campanha',
-    automation: 'Automação',
-    employee: 'Funcionário',
-    affiliate: 'Afiliado',
-    student: 'Aluno',
-    document: 'Documento',
-    category: 'Categoria',
-    expense: 'Despesa',
-    income: 'Receita',
   };
 
   // Variante dropdown para menus
@@ -111,14 +119,14 @@ export function MasterDuplicateButton({
       <DropdownMenuItem
         onClick={handleQuickDuplicate}
         disabled={isDuplicating}
-        className="cursor-pointer"
+        className="cursor-pointer text-primary"
       >
         {isDuplicating ? (
           <Loader2 className="h-4 w-4 mr-2 animate-spin" />
         ) : (
           <Copy className="h-4 w-4 mr-2" />
         )}
-        Duplicar {entityLabels[entityType]}
+        <span className="font-medium">🔮 Duplicar {ENTITY_LABELS[entityType]}</span>
       </DropdownMenuItem>
     );
   }
@@ -131,8 +139,8 @@ export function MasterDuplicateButton({
         size="icon"
         onClick={handleQuickDuplicate}
         disabled={isDuplicating}
-        className={cn("h-8 w-8", className)}
-        title={`Duplicar ${entityLabels[entityType]}`}
+        className={cn("h-8 w-8 text-primary hover:text-primary hover:bg-primary/10", className)}
+        title={`🔮 Duplicar ${ENTITY_LABELS[entityType]} (Master)`}
       >
         {isDuplicating ? (
           <Loader2 className="h-4 w-4 animate-spin" />
@@ -153,24 +161,24 @@ export function MasterDuplicateButton({
               variant={variant === 'default' ? 'default' : variant}
               size={size}
               disabled={isDuplicating}
-              className={className}
+              className={cn("text-primary border-primary/30 hover:bg-primary/10", className)}
             >
               {isDuplicating ? (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
               ) : (
                 <Copy className="h-4 w-4 mr-2" />
               )}
-              Duplicar
+              🔮 Duplicar
             </Button>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleQuickDuplicate}>
+          <DropdownMenuContent align="end" className="border-primary/20">
+            <DropdownMenuItem onClick={handleQuickDuplicate} className="text-primary">
               <Copy className="h-4 w-4 mr-2" />
               Duplicação Rápida
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DialogTrigger asChild>
-              <DropdownMenuItem>
+              <DropdownMenuItem className="text-primary">
                 <Settings2 className="h-4 w-4 mr-2" />
                 Duplicação Avançada...
               </DropdownMenuItem>
@@ -178,14 +186,18 @@ export function MasterDuplicateButton({
           </DropdownMenuContent>
         </DropdownMenu>
 
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-md border-primary/20">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Copy className="h-5 w-5 text-primary" />
-              Duplicar {entityLabels[entityType]}
+            <DialogTitle className="flex items-center gap-2 text-primary">
+              <Copy className="h-5 w-5" />
+              🔮 Duplicar {ENTITY_LABELS[entityType]}
             </DialogTitle>
             <DialogDescription>
-              Configure as opções de duplicação para{' '}
+              <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded">
+                MODO MASTER - Owner Only
+              </span>
+              <br />
+              Configure as opções para{' '}
               <span className="font-medium text-foreground">
                 {entityName || 'este item'}
               </span>
@@ -197,18 +209,19 @@ export function MasterDuplicateButton({
               <Label htmlFor="newName">Nome da cópia (opcional)</Label>
               <Input
                 id="newName"
-                placeholder={`${entityName || entityLabels[entityType]} (Cópia)`}
+                placeholder={`${entityName || ENTITY_LABELS[entityType]} (Cópia)`}
                 value={newName}
                 onChange={(e) => setNewName(e.target.value)}
+                className="border-primary/20 focus:border-primary"
               />
             </div>
 
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="space-y-0.5">
                   <Label>Incluir anexos</Label>
                   <p className="text-xs text-muted-foreground">
-                    Duplicar todos os arquivos anexados
+                    Duplicar todos os arquivos
                   </p>
                 </div>
                 <Switch
@@ -217,7 +230,7 @@ export function MasterDuplicateButton({
                 />
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
                 <div className="space-y-0.5">
                   <Label>Incluir itens relacionados</Label>
                   <p className="text-xs text-muted-foreground">
@@ -228,6 +241,13 @@ export function MasterDuplicateButton({
                   checked={includeRelatedItems}
                   onCheckedChange={setIncludeRelatedItems}
                 />
+              </div>
+
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                <GripVertical className="h-4 w-4 text-primary" />
+                <p className="text-xs text-muted-foreground">
+                  O item duplicado aparecerá <strong>logo abaixo</strong> do original e pode ser arrastado
+                </p>
               </div>
             </div>
           </div>
@@ -242,7 +262,7 @@ export function MasterDuplicateButton({
             <Button
               onClick={handleAdvancedDuplicate}
               disabled={isDuplicating}
-              className="gap-2"
+              className="gap-2 bg-primary hover:bg-primary/90"
             >
               {isDuplicating ? (
                 <>
@@ -269,14 +289,14 @@ export function MasterDuplicateButton({
       size={size}
       onClick={handleQuickDuplicate}
       disabled={isDuplicating}
-      className={className}
+      className={cn("text-primary", className)}
     >
       {isDuplicating ? (
         <Loader2 className="h-4 w-4 mr-2 animate-spin" />
       ) : (
         <Copy className="h-4 w-4 mr-2" />
       )}
-      Duplicar
+      🔮 Duplicar
     </Button>
   );
 }
@@ -289,7 +309,7 @@ export function MasterDuplicateMenuItem({
 }: {
   entityType: DuplicableEntityType;
   entityId: string;
-  onDuplicated?: (newId: string) => void;
+  onDuplicated?: (newId: string, newData?: Record<string, unknown>) => void;
 }) {
   return (
     <MasterDuplicateButton
@@ -299,5 +319,18 @@ export function MasterDuplicateMenuItem({
       showAdvancedOptions={false}
       onDuplicated={onDuplicated}
     />
+  );
+}
+
+// Componente de indicador de arrastar (para listas com drag-and-drop)
+export function MasterDragHandle({ className }: { className?: string }) {
+  const { isOwner } = useMasterDuplication();
+  
+  if (!isOwner) return null;
+  
+  return (
+    <div className={cn("cursor-grab active:cursor-grabbing text-primary/60 hover:text-primary", className)}>
+      <GripVertical className="h-4 w-4" />
+    </div>
   );
 }
