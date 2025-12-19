@@ -573,12 +573,7 @@ export default function Dashboard() {
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.3 }}
                 >
-                  <Button
-                    onClick={handleCacheClear}
-                    disabled={isClearing}
-                    size="sm"
-                    className="bg-[hsl(345,50%,30%)] hover:bg-[hsl(345,50%,25%)] text-white/90 border border-[hsl(345,50%,40%)]/30 shadow-lg shadow-[hsl(345,50%,20%)]/20 transition-all duration-300 hover:shadow-[hsl(345,50%,20%)]/40"
-                  >
+                  <Button variant="wine" onClick={handleCacheClear} disabled={isClearing} size="sm">
                     <RefreshCw className={`h-3.5 w-3.5 mr-1.5 ${isClearing ? 'animate-spin' : ''}`} />
                     CACHEE
                   </Button>

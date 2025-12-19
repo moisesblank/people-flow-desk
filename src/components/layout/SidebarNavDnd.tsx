@@ -229,7 +229,7 @@ export function SidebarNavDnd(props: {
       return;
     }
 
-    // item move within/between groups
+    // item move within/between groups (drop on item)
     if (a.startsWith("item:") && o.startsWith("item:")) {
       const activeArea = a.replace("item:", "");
       const overArea = o.replace("item:", "");
@@ -240,18 +240,24 @@ export function SidebarNavDnd(props: {
 
       const next = structuredClone(layout) as SidebarLayoutV1;
 
-      const fromList = [...(next.itemOrderByGroup[fromGroup] ?? orderedGroups.find((g) => g.id === fromGroup)?.items.map((i) => i.area) ?? [])];
-      const toList = fromGroup === toGroup
-        ? fromList
-        : [...(next.itemOrderByGroup[toGroup] ?? orderedGroups.find((g) => g.id === toGroup)?.items.map((i) => i.area) ?? [])];
+      const fromList = [
+        ...(next.itemOrderByGroup[fromGroup] ??
+          orderedGroups.find((g) => g.id === fromGroup)?.items.map((i) => i.area) ??
+          []),
+      ];
+
+      const toList =
+        fromGroup === toGroup
+          ? fromList
+          : [
+              ...(next.itemOrderByGroup[toGroup] ??
+                orderedGroups.find((g) => g.id === toGroup)?.items.map((i) => i.area) ??
+                []),
+            ];
 
       // ensure presence
-      if (!fromList.includes(activeArea)) {
-        fromList.push(activeArea);
-      }
-      if (!toList.includes(overArea)) {
-        toList.push(overArea);
-      }
+      if (!fromList.includes(activeArea)) fromList.push(activeArea);
+      if (!toList.includes(overArea)) toList.push(overArea);
 
       const fromIdx = fromList.indexOf(activeArea);
       const toIdx = toList.indexOf(overArea);
@@ -273,6 +279,38 @@ export function SidebarNavDnd(props: {
       setLayout(next);
       if (canEditLayout) await persist(next);
       return;
+    }
+
+    // item drop on group header (more forgiving)
+    if (a.startsWith("item:") && o.startsWith("group:")) {
+      const activeArea = a.replace("item:", "");
+      const toGroup = o.replace("group:", "");
+      const fromGroup = (active.data.current as any)?.groupId as string | undefined;
+      if (!fromGroup || !toGroup) return;
+      if (fromGroup === toGroup) return;
+
+      const next = structuredClone(layout) as SidebarLayoutV1;
+
+      const fromList = [
+        ...(next.itemOrderByGroup[fromGroup] ??
+          orderedGroups.find((g) => g.id === fromGroup)?.items.map((i) => i.area) ??
+          []),
+      ].filter((x) => x !== activeArea);
+
+      const toList = [
+        ...(next.itemOrderByGroup[toGroup] ??
+          orderedGroups.find((g) => g.id === toGroup)?.items.map((i) => i.area) ??
+          []),
+      ].filter((x) => x !== activeArea);
+
+      toList.push(activeArea); // move to end
+
+      next.itemOrderByGroup[fromGroup] = fromList;
+      next.itemOrderByGroup[toGroup] = toList;
+      next.groupByItem[activeArea] = toGroup;
+
+      setLayout(next);
+      if (canEditLayout) await persist(next);
     }
   };
 
@@ -331,7 +369,7 @@ export function SidebarNavDnd(props: {
                               ref={setActivatorNodeRef}
                               {...attributes}
                               {...listeners}
-                              className="mr-2 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10"
+                              className="mr-2 inline-flex items-center justify-center rounded-md px-1.5 py-1 text-white/80 hover:text-white hover:bg-white/10 touch-none"
                               aria-label="Arrastar categoria"
                             >
                               <GripVertical className="h-4 w-4" />
@@ -369,7 +407,7 @@ export function SidebarNavDnd(props: {
                                                   e.preventDefault();
                                                   e.stopPropagation();
                                                 }}
-                                                className="inline-flex items-center justify-center rounded-md px-1.5 py-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60"
+                                                className="inline-flex items-center justify-center rounded-md px-1.5 py-1 text-muted-foreground/70 hover:text-foreground hover:bg-muted/60 touch-none"
                                                 aria-label="Arrastar item"
                                               >
                                                 <GripVertical className="h-4 w-4" />
