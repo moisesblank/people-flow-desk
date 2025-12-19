@@ -358,6 +358,33 @@ export type Database = {
         }
         Relationships: []
       }
+      api_rate_limits: {
+        Row: {
+          client_id: string
+          created_at: string | null
+          endpoint: string
+          id: string
+          request_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          client_id: string
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          client_id?: string
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          request_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       arquivos: {
         Row: {
           created_at: string
@@ -7289,6 +7316,15 @@ export type Database = {
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       can_view_financial: { Args: { _user_id: string }; Returns: boolean }
       can_view_personal: { Args: { _user_id: string }; Returns: boolean }
+      check_api_rate_limit: {
+        Args: {
+          p_client_id: string
+          p_endpoint: string
+          p_limit?: number
+          p_window_seconds?: number
+        }
+        Returns: boolean
+      }
       check_rate_limit: {
         Args: {
           p_max_requests?: number
@@ -7300,6 +7336,7 @@ export type Database = {
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
+      cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
       comprehensive_security_cleanup: { Args: never; Returns: undefined }
       count_entity_attachments: {
@@ -7322,6 +7359,7 @@ export type Database = {
           ultima_sessao: Json
         }[]
       }
+      get_cached_dashboard_stats: { Args: never; Returns: Json }
       get_entity_attachments: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: {
