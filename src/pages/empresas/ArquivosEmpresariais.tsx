@@ -83,6 +83,31 @@ function FileUploadZone({
         continue;
       }
 
+      // Validar tipo
+      const allowedTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/vnd.ms-excel',
+        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        'application/vnd.ms-powerpoint',
+        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
+        'text/plain',
+        'text/csv',
+        'image/jpeg',
+        'image/png',
+        'image/gif',
+        'image/webp',
+        'image/svg+xml',
+        'application/zip',
+        'application/x-zip-compressed'
+      ];
+      
+      if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|webp|svg|zip|csv|txt)$/i)) {
+        toast.error(`${file.name} - tipo não suportado`);
+        continue;
+      }
+
       try {
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substring(7);
@@ -151,7 +176,7 @@ function FileUploadZone({
           id="file-upload"
           className="hidden"
           multiple
-          accept=".pdf,.xlsx,.xls,.doc,.docx,.png,.jpg,.jpeg"
+          accept=".pdf,.xlsx,.xls,.doc,.docx,.pptx,.ppt,.png,.jpg,.jpeg,.gif,.webp,.svg,.zip,.csv,.txt"
           onChange={(e) => handleUpload(e.target.files)}
         />
         <label htmlFor="file-upload" className="cursor-pointer">

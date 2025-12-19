@@ -1,6 +1,6 @@
 import { ReactNode, useState, useCallback, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Search, Command, Crown, MessageSquare } from "lucide-react";
+import { Search, Command, Crown, MessageSquare, RefreshCw } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { RoleBasedSidebar } from "./RoleBasedSidebar";
@@ -15,6 +15,7 @@ import { useNotificationsDatabase } from "@/hooks/useNotificationsDatabase";
 import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { useCacheManager } from "@/hooks/useCacheManager";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SystemHealthIndicator } from "@/components/dashboard/SystemHealthIndicator";
 import { TeamChat } from "@/components/chat/TeamChat";
@@ -38,9 +39,18 @@ export function AppLayout({ children }: AppLayoutProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [isTeamChatOpen, setIsTeamChatOpen] = useState(false);
+  const [isCacheClearing, setIsCacheClearing] = useState(false);
   const { user, signOut } = useAuth();
   const { roleLabel, roleColor, isGodMode } = useRolePermissions();
+  const { clearAllCache, forceRefresh } = useCacheManager();
   const navigate = useNavigate();
+
+  const handleClearCache = useCallback(async () => {
+    setIsCacheClearing(true);
+    clearAllCache(true);
+    await forceRefresh();
+    setIsCacheClearing(false);
+  }, [clearAllCache, forceRefresh]);
 
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
@@ -117,6 +127,22 @@ export function AppLayout({ children }: AppLayoutProps) {
             
             {/* System Health */}
             <SystemHealthIndicator />
+
+            {/* Clear Cache Button - Disponível para todos */}
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={handleClearCache}
+                  disabled={isCacheClearing}
+                  className="relative"
+                >
+                  <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Limpar Cache</TooltipContent>
+            </Tooltip>
             
             {/* Team Chat Button */}
             <Tooltip>
