@@ -146,6 +146,7 @@ function useGlobalShortcutsOverlay() {
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
 const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
 const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
+const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
 
 
 function AppContent() {
@@ -157,6 +158,7 @@ function AppContent() {
       <Suspense fallback={null}>
         <LazyGodModePanel />
         <LazyInlineEditor />
+        <LazyMasterQuickAddMenu />
       </Suspense>
       <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />

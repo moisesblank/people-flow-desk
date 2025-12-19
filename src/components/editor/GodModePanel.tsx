@@ -262,6 +262,10 @@ export function GodModePanel() {
                     <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px]">Ctrl+Shift+E</kbd>
                   </div>
                   <div className="flex justify-between">
+                    <span className="text-muted-foreground">⚡ Quick Add</span>
+                    <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px]">Ctrl+Shift+Q</kbd>
+                  </div>
+                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Salvar edição</span>
                     <kbd className="px-1.5 py-0.5 bg-secondary rounded text-[10px]">Enter</kbd>
                   </div>
