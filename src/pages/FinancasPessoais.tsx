@@ -29,6 +29,9 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import { FinancialHistoryChart } from "@/components/finance/FinancialHistoryChart";
 import { PeriodFilterTabs } from "@/components/finance/PeriodFilterTabs";
 import { MonthlySnapshotCard } from "@/components/finance/MonthlySnapshotCard";
+import { MonthlyBalanceModal } from "@/components/finance/MonthlyBalanceModal";
+import { YearlyBalanceSummary } from "@/components/finance/YearlyBalanceSummary";
+import { CalendarExpenseModal } from "@/components/finance/CalendarExpenseModal";
 import { useFinancialHistory, getMonthName } from "@/hooks/useFinancialHistory";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -123,6 +126,14 @@ export default function FinancasPessoais() {
   const [modalType, setModalType] = useState<"fixed" | "extra">("fixed");
   const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
   const [formData, setFormData] = useState({ nome: "", valor: "", categoria: "feira", data: format(new Date(), "yyyy-MM-dd") });
+
+  // Estado para modal de balanço mensal
+  const [selectedSnapshot, setSelectedSnapshot] = useState<any>(null);
+  const [isBalanceModalOpen, setIsBalanceModalOpen] = useState(false);
+
+  // Estado para modal de adicionar gasto por calendário
+  const [selectedDateForExpense, setSelectedDateForExpense] = useState<Date | null>(null);
+  const [isCalendarExpenseModalOpen, setIsCalendarExpenseModalOpen] = useState(false);
 
   // Hook de histórico financeiro
   const {
@@ -365,6 +376,10 @@ export default function FinancasPessoais() {
             onPeriodChange={setPeriod}
             customRange={customRange}
             onCustomRangeChange={setCustomRange}
+            onDayClick={(date) => {
+              setSelectedDateForExpense(date);
+              setIsCalendarExpenseModalOpen(true);
+            }}
           />
         </section>
 
@@ -425,6 +440,10 @@ export default function FinancasPessoais() {
                     saldo={snapshot.saldo_periodo}
                     isFechado={snapshot.is_fechado}
                     onClose={() => closeMonth(snapshot.ano, snapshot.mes)}
+                    onClick={() => {
+                      setSelectedSnapshot(snapshot);
+                      setIsBalanceModalOpen(true);
+                    }}
                     compact
                   />
                 ))}
@@ -432,6 +451,17 @@ export default function FinancasPessoais() {
             </ScrollArea>
           </section>
         )}
+
+        {/* Balanço Anual - NOVO */}
+        <section className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Balanço Anual
+            </h2>
+          </div>
+          <YearlyBalanceSummary snapshots={snapshots} />
+        </section>
 
         {/* Grid Principal */}
         <section className="mb-8 grid gap-6 lg:grid-cols-3">
@@ -666,6 +696,30 @@ export default function FinancasPessoais() {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Modal de Balanço Mensal Detalhado */}
+        <MonthlyBalanceModal
+          isOpen={isBalanceModalOpen}
+          onClose={() => setIsBalanceModalOpen(false)}
+          snapshot={selectedSnapshot}
+          onCloseMonth={() => {
+            if (selectedSnapshot) {
+              closeMonth(selectedSnapshot.ano, selectedSnapshot.mes);
+              setIsBalanceModalOpen(false);
+            }
+          }}
+        />
+
+        {/* Modal para Adicionar Gasto por Calendário */}
+        <CalendarExpenseModal
+          isOpen={isCalendarExpenseModalOpen}
+          onClose={() => setIsCalendarExpenseModalOpen(false)}
+          selectedDate={selectedDateForExpense}
+          onSuccess={() => {
+            fetchExpenses();
+            refreshHistory();
+          }}
+        />
       </div>
     </div>
   );

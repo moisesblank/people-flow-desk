@@ -20,6 +20,7 @@ interface MonthlySnapshotCardProps {
   saldo: number;
   isFechado: boolean;
   onClose?: () => void;
+  onClick?: () => void;
   compact?: boolean;
 }
 
@@ -40,6 +41,7 @@ export function MonthlySnapshotCard({
   saldo,
   isFechado,
   onClose,
+  onClick,
   compact = false,
 }: MonthlySnapshotCardProps) {
   const isPositive = saldo >= 0;
@@ -50,10 +52,13 @@ export function MonthlySnapshotCard({
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
+        whileHover={{ scale: 1.05 }}
+        whileTap={{ scale: 0.98 }}
+        onClick={onClick}
         className={cn(
-          "relative p-3 rounded-xl border",
+          "relative p-3 rounded-xl border cursor-pointer transition-all hover:shadow-lg",
           isFechado ? "bg-muted/50 border-border" : "bg-card border-border/50",
-          isPositive ? "ring-1 ring-green-500/20" : "ring-1 ring-destructive/20"
+          isPositive ? "ring-1 ring-green-500/20 hover:ring-green-500/40" : "ring-1 ring-destructive/20 hover:ring-destructive/40"
         )}
       >
         {/* Mini indicador de saldo no canto */}
@@ -80,6 +85,10 @@ export function MonthlySnapshotCard({
           value={percentUsed} 
           className="h-1 mt-2"
         />
+        
+        <p className="text-[10px] text-muted-foreground mt-1 text-center">
+          Clique para detalhes
+        </p>
       </motion.div>
     );
   }
