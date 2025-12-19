@@ -56,28 +56,9 @@ interface UploadOptions {
   triggerAIExtraction?: boolean;
 }
 
-// Formatos de arquivo permitidos
-const ALLOWED_TYPES = [
-  // Documentos
-  'application/pdf',
-  'application/msword',
-  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-  'application/vnd.ms-excel',
-  'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-  'application/vnd.ms-powerpoint',
-  'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-  'text/plain',
-  'text/csv',
-  // Imagens
-  'image/jpeg',
-  'image/png',
-  'image/gif',
-  'image/webp',
-  'image/svg+xml',
-  // Outros
-  'application/zip',
-  'application/x-rar-compressed',
-];
+// ACEITAR QUALQUER TIPO DE ARQUIVO (sem restrições)
+// A validação de tipo foi REMOVIDA para permitir qualquer arquivo
+const ALLOWED_TYPES: string[] = []; // Vazio = aceita TUDO
 
 const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
 
@@ -125,17 +106,13 @@ export function useUniversalAttachments(entityType: EntityType, entityId: string
       return null;
     }
 
-    // Validações
+    // Validação de tamanho apenas (aceita qualquer tipo)
     if (file.size > MAX_FILE_SIZE) {
       toast.error('Arquivo muito grande. Máximo: 2GB');
       return null;
     }
 
-    if (ALLOWED_TYPES.length > 0 && !ALLOWED_TYPES.includes(file.type) && !file.type.startsWith('image/')) {
-      toast.error('Tipo de arquivo não suportado');
-      return null;
-    }
-
+    // QUALQUER tipo de arquivo é aceito - sem validação de tipo
     setIsUploading(true);
     setUploadProgress(0);
 
