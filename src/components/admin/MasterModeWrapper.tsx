@@ -1,16 +1,19 @@
 // ============================================
-// MOISÉS MEDEIROS v12.0 - MASTER MODE WRAPPER
+// MOISÉS MEDEIROS v13.0 - MASTER MODE WRAPPER
 // Wrapper global para o sistema de edição MASTER
 // Integra todos os componentes de edição em tempo real
+// + Menu Contextual (Adicionar, Duplicar, Remover)
 // Owner: moisesblank@gmail.com
 // ============================================
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useGodMode } from '@/contexts/GodModeContext';
 import { useRealtimeEquivalences } from '@/hooks/useRealtimeEquivalences';
 import { useInstantDuplication, useDuplicationListener } from '@/hooks/useInstantDuplication';
 import { RealtimeEditOverlay } from './RealtimeEditOverlay';
 import { PasteIndicator } from './PasteIndicator';
+import { MasterContextMenu } from './MasterContextMenu';
+import { MasterAddModal } from './MasterAddModal';
 import { EditModeToggle } from '@/components/editor/EditModeToggle';
 import { toast } from 'sonner';
 
@@ -22,6 +25,21 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
   const { isOwner, isActive, toggle } = useGodMode();
   const { forceGlobalSync } = useRealtimeEquivalences();
   const { isOwner: canDuplicate } = useInstantDuplication();
+  
+  // Estado para modal de adicionar
+  const [addModalOpen, setAddModalOpen] = useState(false);
+  const [addModalType, setAddModalType] = useState<string>('');
+
+  // Listener para abrir modal de adicionar
+  useEffect(() => {
+    const handleOpenAddModal = (e: CustomEvent) => {
+      setAddModalType(e.detail.entityType || 'task');
+      setAddModalOpen(true);
+    };
+    
+    window.addEventListener('master-open-add-modal', handleOpenAddModal as EventListener);
+    return () => window.removeEventListener('master-open-add-modal', handleOpenAddModal as EventListener);
+  }, []);
 
   // Listener para duplicações - atualizar UI
   useDuplicationListener(useCallback((event) => {
@@ -191,6 +209,17 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
       
       {/* Overlay de edição em tempo real */}
       <RealtimeEditOverlay />
+      
+      {/* Menu contextual (clique direito) */}
+      <MasterContextMenu />
+      
+      {/* Modal para adicionar novos itens */}
+      <MasterAddModal
+        isOpen={addModalOpen}
+        onClose={() => setAddModalOpen(false)}
+        entityType={addModalType}
+        onSuccess={() => forceGlobalSync()}
+      />
       
       {/* Indicador de área de transferência */}
       {canDuplicate && <PasteIndicator />}
