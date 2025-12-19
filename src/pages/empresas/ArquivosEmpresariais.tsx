@@ -75,77 +75,97 @@ function FileUploadZone({
     setUploading(true);
     setProgress(0);
 
+    let successCount = 0;
+    let errorCount = 0;
+
     for (let i = 0; i < files.length; i++) {
       const file = files[i];
       
+      // Verificar tamanho (máx 10MB)
       if (file.size > 10 * 1024 * 1024) {
         toast.error(`${file.name} excede o tamanho máximo de 10MB`);
-        continue;
-      }
-
-      // Validar tipo
-      const allowedTypes = [
-        'application/pdf',
-        'application/msword',
-        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'application/vnd.ms-excel',
-        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
-        'application/vnd.ms-powerpoint',
-        'application/vnd.openxmlformats-officedocument.presentationml.presentation',
-        'text/plain',
-        'text/csv',
-        'image/jpeg',
-        'image/png',
-        'image/gif',
-        'image/webp',
-        'image/svg+xml',
-        'application/zip',
-        'application/x-zip-compressed'
-      ];
-      
-      if (!allowedTypes.includes(file.type) && !file.name.match(/\.(pdf|docx?|xlsx?|pptx?|png|jpe?g|gif|webp|svg|zip|csv|txt)$/i)) {
-        toast.error(`${file.name} - tipo não suportado`);
+        errorCount++;
         continue;
       }
 
       try {
+        // Criar nome único para o arquivo
         const timestamp = Date.now();
         const randomSuffix = Math.random().toString(36).substring(7);
-        const fileName = `${timestamp}-${randomSuffix}-${file.name}`;
-        const filePath = `${cnpj}/${categoria}/${fileName}`;
+        const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const fileName = `${timestamp}-${randomSuffix}-${sanitizedName}`;
+        
+        // Organizar por data
+        const dataHoje = new Date();
+        const ano = dataHoje.getFullYear();
+        const mes = String(dataHoje.getMonth() + 1).padStart(2, '0');
+        const dia = String(dataHoje.getDate()).padStart(2, '0');
+        
+        // Caminho: CNPJ/categoria/ano/mes/dia/arquivo
+        const filePath = `${cnpj}/${categoria}/${ano}/${mes}/${dia}/${fileName}`;
 
-        const { error: uploadError } = await supabase.storage
+        console.log('[Upload] Iniciando upload:', filePath);
+
+        // 1. Upload para o Storage
+        const { data: uploadData, error: uploadError } = await supabase.storage
           .from("arquivos")
           .upload(filePath, file, {
             cacheControl: "3600",
             upsert: false
           });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error('[Upload] Erro no storage:', uploadError);
+          throw uploadError;
+        }
 
+        console.log('[Upload] Upload concluído:', uploadData);
+
+        // 2. Obter URL pública
         const { data: urlData } = supabase.storage
           .from("arquivos")
           .getPublicUrl(filePath);
 
-        // Salvar com CNPJ associado
-        const { error: dbError } = await supabase
+        const publicUrl = urlData.publicUrl;
+        console.log('[Upload] URL pública:', publicUrl);
+
+        // 3. Salvar metadados no banco
+        const { data: dbData, error: dbError } = await supabase
           .from("arquivos")
           .insert({
             nome: file.name,
-            tipo: file.type,
+            tipo: file.type || 'application/octet-stream',
             modulo: `empresa-${cnpj}-${categoria}`,
             tamanho: file.size,
-            url: urlData.publicUrl,
+            url: publicUrl,
             referencia_id: cnpj
-          });
+          })
+          .select()
+          .single();
 
-        if (dbError) throw dbError;
+        if (dbError) {
+          console.error('[Upload] Erro no banco:', dbError);
+          throw dbError;
+        }
 
-        toast.success(`${file.name} enviado com sucesso!`);
+        console.log('[Upload] Registro criado:', dbData);
+
+        successCount++;
         setProgress(((i + 1) / files.length) * 100);
       } catch (error: any) {
+        console.error('[Upload] Erro geral:', error);
         toast.error(`Erro ao enviar ${file.name}: ${error.message}`);
+        errorCount++;
       }
+    }
+
+    // Mensagem final
+    if (successCount > 0) {
+      toast.success(`${successCount} arquivo(s) enviado(s) com sucesso!`, {
+        description: errorCount > 0 ? `${errorCount} arquivo(s) falharam` : undefined
+      });
+    } else if (errorCount > 0) {
+      toast.error(`Todos os ${errorCount} arquivos falharam no upload`);
     }
 
     setUploading(false);
@@ -176,7 +196,6 @@ function FileUploadZone({
           id="file-upload"
           className="hidden"
           multiple
-          accept=".pdf,.xlsx,.xls,.doc,.docx,.pptx,.ppt,.png,.jpg,.jpeg,.gif,.webp,.svg,.zip,.csv,.txt"
           onChange={(e) => handleUpload(e.target.files)}
         />
         <label htmlFor="file-upload" className="cursor-pointer">
@@ -186,7 +205,7 @@ function FileUploadZone({
           ) : (
             <div>
               <p className="font-medium mb-2">Arraste arquivos ou clique para selecionar</p>
-              <p className="text-sm text-muted-foreground">PDF, Excel, Word, Imagens (máx. 10MB)</p>
+              <p className="text-sm text-muted-foreground">Qualquer tipo de arquivo (máx. 10MB cada)</p>
             </div>
           )}
         </label>
