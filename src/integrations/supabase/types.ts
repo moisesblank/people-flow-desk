@@ -3266,6 +3266,78 @@ export type Database = {
         }
         Relationships: []
       }
+      owner_automations: {
+        Row: {
+          actions: Json | null
+          created_at: string | null
+          created_by: string | null
+          descricao: string | null
+          id: string
+          is_active: boolean | null
+          last_run_at: string | null
+          nome: string
+          run_count: number | null
+          trigger_config: Json | null
+          trigger_type: string
+          updated_at: string | null
+        }
+        Insert: {
+          actions?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          nome: string
+          run_count?: number | null
+          trigger_config?: Json | null
+          trigger_type: string
+          updated_at?: string | null
+        }
+        Update: {
+          actions?: Json | null
+          created_at?: string | null
+          created_by?: string | null
+          descricao?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_run_at?: string | null
+          nome?: string
+          run_count?: number | null
+          trigger_config?: Json | null
+          trigger_type?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      owner_layout_config: {
+        Row: {
+          config_key: string
+          config_value: Json | null
+          created_at: string | null
+          id: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          config_key: string
+          config_value?: Json | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          config_key?: string
+          config_value?: Json | null
+          created_at?: string | null
+          id?: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -5377,6 +5449,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tramon_command_log: {
+        Row: {
+          comando: string
+          contexto: Json | null
+          created_at: string | null
+          id: string
+          resposta: string | null
+          sucesso: boolean | null
+          tempo_execucao_ms: number | null
+          user_id: string | null
+        }
+        Insert: {
+          comando: string
+          contexto?: Json | null
+          created_at?: string | null
+          id?: string
+          resposta?: string | null
+          sucesso?: boolean | null
+          tempo_execucao_ms?: number | null
+          user_id?: string | null
+        }
+        Update: {
+          comando?: string
+          contexto?: Json | null
+          created_at?: string | null
+          id?: string
+          resposta?: string | null
+          sucesso?: boolean | null
+          tempo_execucao_ms?: number | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       tramon_conversations: {
         Row: {
