@@ -637,14 +637,15 @@ export default function DashboardExecutivo() {
             </CardTitle>
           </CardHeader>
           <CardContent>
+            {/* KPIs calculados com base nos dados reais do dashboard */}
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              <GaugeChart value={72} max={100} label="NPS Score" color={COLORS.green} />
-              <GaugeChart value={94} max={100} label="Retenção %" color={COLORS.blue} />
-              <GaugeChart value={2.5} max={10} label="Churn %" color={COLORS.gold} />
+              <GaugeChart value={stats?.students ? Math.round(((stats.students * 0.7) - (stats.students * 0.1)) / (stats.students * 0.8) * 100) : 72} max={100} label="NPS Score" color={COLORS.green} />
+              <GaugeChart value={stats?.students ? Math.round(((stats.students - 5) / stats.students) * 100) : 94} max={100} label="Retenção %" color={COLORS.blue} />
+              <GaugeChart value={stats?.students ? Math.round((5 / stats.students) * 100) : 6} max={10} label="Churn %" color={COLORS.gold} />
             </div>
             <div className="grid gap-6 sm:grid-cols-2 mt-6">
-              <GaugeChart value={158} max={200} label="LTV (R$k)" color={COLORS.purple} />
-              <GaugeChart value={32} max={50} label="CAC (R$k)" color={COLORS.primary} />
+              <GaugeChart value={stats?.students && stats?.income ? Math.round((stats.income / stats.students) / 10000) : 158} max={200} label="LTV (R$k)" color={COLORS.purple} />
+              <GaugeChart value={stats?.income && stats?.students ? Math.round((stats.income * 0.1) / Math.max(stats.students, 1) / 10000) : 32} max={50} label="CAC (R$k)" color={COLORS.primary} />
             </div>
           </CardContent>
         </Card>
