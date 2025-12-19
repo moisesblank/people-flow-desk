@@ -1252,6 +1252,154 @@ export type Database = {
         }
         Relationships: []
       }
+      contas_pagar: {
+        Row: {
+          categoria: string | null
+          centro_custo: string | null
+          comprovante_url: string | null
+          conta_bancaria_id: string | null
+          created_at: string
+          created_by: string | null
+          data_pagamento: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento: string | null
+          fornecedor: string | null
+          frequencia_recorrencia: string | null
+          id: string
+          numero_documento: string | null
+          observacoes: string | null
+          recorrente: boolean | null
+          status: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          centro_custo?: string | null
+          comprovante_url?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento: string
+          descricao: string
+          forma_pagamento?: string | null
+          fornecedor?: string | null
+          frequencia_recorrencia?: string | null
+          id?: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          categoria?: string | null
+          centro_custo?: string | null
+          comprovante_url?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          forma_pagamento?: string | null
+          fornecedor?: string | null
+          frequencia_recorrencia?: string | null
+          id?: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_pagar_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      contas_receber: {
+        Row: {
+          categoria: string | null
+          cliente: string | null
+          comprovante_url: string | null
+          conta_bancaria_id: string | null
+          created_at: string
+          created_by: string | null
+          data_recebimento: string | null
+          data_vencimento: string
+          descricao: string
+          forma_recebimento: string | null
+          frequencia_recorrencia: string | null
+          id: string
+          numero_documento: string | null
+          observacoes: string | null
+          origem: string | null
+          recorrente: boolean | null
+          status: string | null
+          updated_at: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          cliente?: string | null
+          comprovante_url?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_recebimento?: string | null
+          data_vencimento: string
+          descricao: string
+          forma_recebimento?: string | null
+          frequencia_recorrencia?: string | null
+          id?: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          updated_at?: string
+          valor: number
+        }
+        Update: {
+          categoria?: string | null
+          cliente?: string | null
+          comprovante_url?: string | null
+          conta_bancaria_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          data_recebimento?: string | null
+          data_vencimento?: string
+          descricao?: string
+          forma_recebimento?: string | null
+          frequencia_recorrencia?: string | null
+          id?: string
+          numero_documento?: string | null
+          observacoes?: string | null
+          origem?: string | null
+          recorrente?: boolean | null
+          status?: string | null
+          updated_at?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contas_receber_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       content_history: {
         Row: {
           changed_at: string | null
@@ -2156,6 +2304,150 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      fluxo_caixa: {
+        Row: {
+          conta_bancaria_id: string | null
+          created_at: string
+          data: string
+          id: string
+          saldo_final: number | null
+          saldo_inicial: number | null
+          total_entradas: number | null
+          total_saidas: number | null
+          updated_at: string
+        }
+        Insert: {
+          conta_bancaria_id?: string | null
+          created_at?: string
+          data: string
+          id?: string
+          saldo_final?: number | null
+          saldo_inicial?: number | null
+          total_entradas?: number | null
+          total_saidas?: number | null
+          updated_at?: string
+        }
+        Update: {
+          conta_bancaria_id?: string | null
+          created_at?: string
+          data?: string
+          id?: string
+          saldo_final?: number | null
+          saldo_inicial?: number | null
+          total_entradas?: number | null
+          total_saidas?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fluxo_caixa_conta_bancaria_id_fkey"
+            columns: ["conta_bancaria_id"]
+            isOneToOne: false
+            referencedRelation: "bank_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      folha_pagamento: {
+        Row: {
+          ano_referencia: number
+          created_at: string
+          created_by: string | null
+          data_pagamento: string | null
+          desconto_faltas: number | null
+          employee_id: number | null
+          faltas: number | null
+          fgts: number | null
+          horas_extras: number | null
+          id: string
+          inss: number | null
+          irrf: number | null
+          mes_referencia: number
+          observacoes: string | null
+          outros_beneficios: number | null
+          outros_descontos: number | null
+          salario_bruto: number
+          salario_liquido: number | null
+          status: string | null
+          updated_at: string
+          vale_refeicao: number | null
+          vale_transporte: number | null
+          valor_horas_extras: number | null
+        }
+        Insert: {
+          ano_referencia: number
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          desconto_faltas?: number | null
+          employee_id?: number | null
+          faltas?: number | null
+          fgts?: number | null
+          horas_extras?: number | null
+          id?: string
+          inss?: number | null
+          irrf?: number | null
+          mes_referencia: number
+          observacoes?: string | null
+          outros_beneficios?: number | null
+          outros_descontos?: number | null
+          salario_bruto?: number
+          salario_liquido?: number | null
+          status?: string | null
+          updated_at?: string
+          vale_refeicao?: number | null
+          vale_transporte?: number | null
+          valor_horas_extras?: number | null
+        }
+        Update: {
+          ano_referencia?: number
+          created_at?: string
+          created_by?: string | null
+          data_pagamento?: string | null
+          desconto_faltas?: number | null
+          employee_id?: number | null
+          faltas?: number | null
+          fgts?: number | null
+          horas_extras?: number | null
+          id?: string
+          inss?: number | null
+          irrf?: number | null
+          mes_referencia?: number
+          observacoes?: string | null
+          outros_beneficios?: number | null
+          outros_descontos?: number | null
+          salario_bruto?: number
+          salario_liquido?: number | null
+          status?: string | null
+          updated_at?: string
+          vale_refeicao?: number | null
+          vale_transporte?: number | null
+          valor_horas_extras?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "folha_pagamento_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folha_pagamento_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "folha_pagamento_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       gastos: {
         Row: {
@@ -3308,6 +3600,85 @@ export type Database = {
           weight?: number | null
         }
         Relationships: []
+      }
+      ponto_eletronico: {
+        Row: {
+          aprovado: boolean | null
+          aprovado_em: string | null
+          aprovado_por: string | null
+          created_at: string
+          data: string
+          employee_id: number | null
+          entrada_1: string | null
+          entrada_2: string | null
+          horas_extras: number | null
+          horas_trabalhadas: number | null
+          id: string
+          justificativa: string | null
+          saida_1: string | null
+          saida_2: string | null
+          tipo: string | null
+          updated_at: string
+        }
+        Insert: {
+          aprovado?: boolean | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          created_at?: string
+          data: string
+          employee_id?: number | null
+          entrada_1?: string | null
+          entrada_2?: string | null
+          horas_extras?: number | null
+          horas_trabalhadas?: number | null
+          id?: string
+          justificativa?: string | null
+          saida_1?: string | null
+          saida_2?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Update: {
+          aprovado?: boolean | null
+          aprovado_em?: string | null
+          aprovado_por?: string | null
+          created_at?: string
+          data?: string
+          employee_id?: number | null
+          entrada_1?: string | null
+          entrada_2?: string | null
+          horas_extras?: number | null
+          horas_trabalhadas?: number | null
+          id?: string
+          justificativa?: string | null
+          saida_1?: string | null
+          saida_2?: string | null
+          tipo?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ponto_eletronico_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ponto_eletronico_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ponto_eletronico_employee_id_fkey"
+            columns: ["employee_id"]
+            isOneToOne: false
+            referencedRelation: "employees_safe"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       professor_checklists: {
         Row: {
