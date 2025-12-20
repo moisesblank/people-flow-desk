@@ -1309,58 +1309,211 @@ export type Database = {
       }
       company_extra_expenses: {
         Row: {
+          ano: number | null
           categoria: string | null
           created_at: string | null
           created_by: string | null
           data: string | null
+          data_fechamento: string | null
+          dia: number | null
+          fechado: boolean | null
+          fechado_por: string | null
           id: number
+          mes: number | null
           nome: string
+          semana: number | null
+          updated_at: string | null
           valor: number
         }
         Insert: {
+          ano?: number | null
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
           data?: string | null
+          data_fechamento?: string | null
+          dia?: number | null
+          fechado?: boolean | null
+          fechado_por?: string | null
           id?: number
+          mes?: number | null
           nome: string
+          semana?: number | null
+          updated_at?: string | null
           valor?: number
         }
         Update: {
+          ano?: number | null
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
           data?: string | null
+          data_fechamento?: string | null
+          dia?: number | null
+          fechado?: boolean | null
+          fechado_por?: string | null
           id?: number
+          mes?: number | null
           nome?: string
+          semana?: number | null
+          updated_at?: string | null
           valor?: number
         }
         Relationships: []
       }
       company_fixed_expenses: {
         Row: {
+          ano: number | null
           categoria: string | null
           created_at: string | null
           created_by: string | null
+          data_fechamento: string | null
+          dia: number | null
+          fechado: boolean | null
+          fechado_por: string | null
           id: number
+          mes: number | null
           nome: string
+          semana: number | null
+          updated_at: string | null
           valor: number
         }
         Insert: {
+          ano?: number | null
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
+          data_fechamento?: string | null
+          dia?: number | null
+          fechado?: boolean | null
+          fechado_por?: string | null
           id?: number
+          mes?: number | null
           nome: string
+          semana?: number | null
+          updated_at?: string | null
           valor?: number
         }
         Update: {
+          ano?: number | null
           categoria?: string | null
           created_at?: string | null
           created_by?: string | null
+          data_fechamento?: string | null
+          dia?: number | null
+          fechado?: boolean | null
+          fechado_por?: string | null
           id?: number
+          mes?: number | null
           nome?: string
+          semana?: number | null
+          updated_at?: string | null
           valor?: number
+        }
+        Relationships: []
+      }
+      company_monthly_closures: {
+        Row: {
+          ano: number
+          created_at: string | null
+          fechado_por: string | null
+          id: string
+          mes: number
+          observacoes: string | null
+          qtd_entradas: number | null
+          qtd_gastos_extras: number | null
+          qtd_gastos_fixos: number | null
+          saldo_periodo: number | null
+          total_gastos_extras: number | null
+          total_gastos_fixos: number | null
+          total_receitas: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ano: number
+          created_at?: string | null
+          fechado_por?: string | null
+          id?: string
+          mes: number
+          observacoes?: string | null
+          qtd_entradas?: number | null
+          qtd_gastos_extras?: number | null
+          qtd_gastos_fixos?: number | null
+          saldo_periodo?: number | null
+          total_gastos_extras?: number | null
+          total_gastos_fixos?: number | null
+          total_receitas?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ano?: number
+          created_at?: string | null
+          fechado_por?: string | null
+          id?: string
+          mes?: number
+          observacoes?: string | null
+          qtd_entradas?: number | null
+          qtd_gastos_extras?: number | null
+          qtd_gastos_fixos?: number | null
+          saldo_periodo?: number | null
+          total_gastos_extras?: number | null
+          total_gastos_fixos?: number | null
+          total_receitas?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      company_yearly_closures: {
+        Row: {
+          ano: number
+          created_at: string | null
+          fechado_por: string | null
+          id: string
+          melhor_mes: number | null
+          meses_fechados: number | null
+          observacoes: string | null
+          pior_mes: number | null
+          qtd_total_entradas: number | null
+          qtd_total_gastos: number | null
+          saldo_ano: number | null
+          total_gastos_extras: number | null
+          total_gastos_fixos: number | null
+          total_receitas: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          ano: number
+          created_at?: string | null
+          fechado_por?: string | null
+          id?: string
+          melhor_mes?: number | null
+          meses_fechados?: number | null
+          observacoes?: string | null
+          pior_mes?: number | null
+          qtd_total_entradas?: number | null
+          qtd_total_gastos?: number | null
+          saldo_ano?: number | null
+          total_gastos_extras?: number | null
+          total_gastos_fixos?: number | null
+          total_receitas?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          ano?: number
+          created_at?: string | null
+          fechado_por?: string | null
+          id?: string
+          melhor_mes?: number | null
+          meses_fechados?: number | null
+          observacoes?: string | null
+          pior_mes?: number | null
+          qtd_total_entradas?: number | null
+          qtd_total_gastos?: number | null
+          saldo_ano?: number | null
+          total_gastos_extras?: number | null
+          total_gastos_fixos?: number | null
+          total_receitas?: number | null
+          updated_at?: string | null
         }
         Relationships: []
       }
