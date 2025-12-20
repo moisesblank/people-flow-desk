@@ -469,7 +469,7 @@ export function SidebarNavDnd(props: {
                                                     <TooltipContent side="right">Duplicar item</TooltipContent>
                                                   </Tooltip>
                                                 </span>}
-                                              <span className="truncate" data-editable-key={`nav_${item.area}_title`}>
+                                              <span data-editable-key={`nav_${item.area}_title`} className="truncate text-center font-sans font-extrabold text-sm">
                                                 {getContent(`nav_${item.area}_title`, item.title)}
                                               </span>
                                               {item.badge && <Badge variant="outline" className="text-[10px] px-1 py-0">
