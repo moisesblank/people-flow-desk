@@ -309,10 +309,10 @@ export async function buscarArquivos(options: BuscarArquivosOptions = {}) {
   }
 
   if (options.pasta) {
-    query = query.eq('pasta', options.pasta);
-  }
-
-  if (options.empresaId) {
+    // Usar ilike para buscar pastas que começam com o prefixo especificado
+    query = query.ilike('pasta', `${options.pasta}%`);
+  } else if (options.empresaId) {
+    // Se não tem pasta, buscar por empresa_id
     query = query.eq('empresa_id', options.empresaId);
   }
 
