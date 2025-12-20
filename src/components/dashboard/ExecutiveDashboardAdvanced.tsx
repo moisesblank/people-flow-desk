@@ -103,6 +103,7 @@ function formatValue(value: number, format: KPIMetric["format"]): string {
       return `${value.toFixed(1)}%`;
     default:
       return value.toLocaleString("pt-BR");
+  }
 }
 
 export function ExecutiveDashboardAdvanced() {
@@ -443,7 +444,7 @@ export function ExecutiveDashboardAdvanced() {
           <CardContent>
             <div className="h-[280px]">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={monthlyData}>
+                <AreaChart data={realData?.monthlyData || []}>
                   <defs>
                     <linearGradient id="colorReceita" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="hsl(var(--stats-green))" stopOpacity={0.3} />
@@ -571,7 +572,7 @@ export function ExecutiveDashboardAdvanced() {
         </CardHeader>
         <CardContent>
           <div className="grid md:grid-cols-4 gap-4">
-            {performanceData.map((course, index) => (
+            {[].map((course: { name: string; value: number; fill: string }, index: number) => (
               <motion.div
                 key={course.name}
                 initial={{ opacity: 0, scale: 0.95 }}
