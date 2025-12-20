@@ -8974,6 +8974,23 @@ export type Database = {
         }
         Relationships: []
       }
+      v_dashboard_consolidado: {
+        Row: {
+          afiliados_ativos: number | null
+          alunos_ativos: number | null
+          alunos_inativos: number | null
+          comissoes_pagas: number | null
+          comissoes_pendentes: number | null
+          despesas_extras_mes: number | null
+          despesas_fixas_mes: number | null
+          funcionarios_ativos: number | null
+          novos_alunos_mes: number | null
+          receita_mes: number | null
+          updated_at: string | null
+          vendas_mes: number | null
+        }
+        Relationships: []
+      }
       whatsapp_leads_dashboard: {
         Row: {
           contact_count: number | null
@@ -9073,6 +9090,7 @@ export type Database = {
         }[]
       }
       get_cached_dashboard_stats: { Args: never; Returns: Json }
+      get_dashboard_stats_realtime: { Args: never; Returns: Json }
       get_entity_attachments: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: {
