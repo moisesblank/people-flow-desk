@@ -23,7 +23,9 @@ export type EntityType =
   | 'lesson'
   | 'module'
   | 'document'
-  | 'payment';
+  | 'payment'
+  | 'company_expense_fixed'
+  | 'company_expense_extra';
 
 export interface Attachment {
   id: string;
