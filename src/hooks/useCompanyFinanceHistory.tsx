@@ -1,0 +1,601 @@
+// ============================================
+// HOOK: Central Finanças Empresa - Estilo Softcom
+// Histórico de 50+ anos, fechamento mensal/anual
+// ============================================
+
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { 
+  startOfDay, endOfDay, startOfWeek, endOfWeek, 
+  startOfMonth, endOfMonth, startOfYear, endOfYear,
+  subDays, subWeeks, subMonths, subYears, format
+} from "date-fns";
+import { ptBR } from "date-fns/locale";
+
+export type CompanyPeriodFilter = 
+  | "hoje" 
+  | "semana" 
+  | "mes" 
+  | "ano" 
+  | "10anos" 
+  | "50anos"
+  | "custom";
+
+export interface CompanyExpense {
+  id: number;
+  nome: string;
+  valor: number;
+  categoria: string | null;
+  data?: string | null;
+  ano?: number;
+  mes?: number;
+  semana?: number;
+  dia?: number;
+  fechado?: boolean;
+  created_at?: string;
+  updated_at?: string;
+  type: 'fixed' | 'extra';
+}
+
+export interface CompanyMonthlyClosure {
+  id: string;
+  ano: number;
+  mes: number;
+  total_gastos_fixos: number;
+  total_gastos_extras: number;
+  total_receitas: number;
+  saldo_periodo: number;
+  qtd_gastos_fixos: number;
+  qtd_gastos_extras: number;
+  qtd_entradas: number;
+  observacoes?: string;
+  fechado_por?: string;
+  created_at: string;
+}
+
+export interface CompanyYearlyClosure {
+  id: string;
+  ano: number;
+  total_gastos_fixos: number;
+  total_gastos_extras: number;
+  total_receitas: number;
+  saldo_ano: number;
+  meses_fechados: number;
+  qtd_total_gastos: number;
+  qtd_total_entradas: number;
+  melhor_mes?: number;
+  pior_mes?: number;
+  observacoes?: string;
+  created_at: string;
+}
+
+export interface CompanyFinanceStats {
+  totalGastosFixos: number;
+  totalGastosExtras: number;
+  totalGastos: number;
+  totalReceitas: number;
+  saldo: number;
+  qtdGastosFixos: number;
+  qtdGastosExtras: number;
+  qtdEntradas: number;
+}
+
+function getMonthName(month: number): string {
+  const months = [
+    "Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+    "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+  ];
+  return months[month - 1] || "";
+}
+
+export function useCompanyFinanceHistory() {
+  const { user } = useAuth();
+  const [period, setPeriod] = useState<CompanyPeriodFilter>("mes");
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+  const [customStartDate, setCustomStartDate] = useState<Date | null>(null);
+  const [customEndDate, setCustomEndDate] = useState<Date | null>(null);
+  
+  const [fixedExpenses, setFixedExpenses] = useState<CompanyExpense[]>([]);
+  const [extraExpenses, setExtraExpenses] = useState<CompanyExpense[]>([]);
+  const [entradas, setEntradas] = useState<any[]>([]);
+  const [monthlyClosures, setMonthlyClosures] = useState<CompanyMonthlyClosure[]>([]);
+  const [yearlyClosures, setYearlyClosures] = useState<CompanyYearlyClosure[]>([]);
+  
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Calcular range de datas baseado no período
+  const dateRange = useMemo(() => {
+    const now = new Date();
+    let start: Date;
+    let end: Date = endOfDay(now);
+
+    switch (period) {
+      case "hoje":
+        start = startOfDay(now);
+        break;
+      case "semana":
+        start = startOfWeek(now, { weekStartsOn: 0 });
+        end = endOfWeek(now, { weekStartsOn: 0 });
+        break;
+      case "mes":
+        start = startOfMonth(new Date(selectedYear, selectedMonth - 1));
+        end = endOfMonth(new Date(selectedYear, selectedMonth - 1));
+        break;
+      case "ano":
+        start = startOfYear(new Date(selectedYear, 0));
+        end = endOfYear(new Date(selectedYear, 0));
+        break;
+      case "10anos":
+        start = subYears(startOfYear(now), 10);
+        break;
+      case "50anos":
+        start = subYears(startOfYear(now), 50);
+        break;
+      case "custom":
+        start = customStartDate || subMonths(now, 1);
+        end = customEndDate || now;
+        break;
+      default:
+        start = startOfMonth(now);
+    }
+
+    return { start, end };
+  }, [period, selectedYear, selectedMonth, customStartDate, customEndDate]);
+
+  // Anos disponíveis (50 anos para trás e para frente)
+  const availableYears = useMemo(() => {
+    const currentYear = new Date().getFullYear();
+    const years: number[] = [];
+    for (let y = currentYear - 50; y <= currentYear + 50; y++) {
+      years.push(y);
+    }
+    return years;
+  }, []);
+
+  // Buscar gastos fixos
+  const fetchFixedExpenses = useCallback(async () => {
+    try {
+      let query = supabase
+        .from("company_fixed_expenses")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (period === "mes") {
+        query = query.eq("ano", selectedYear).eq("mes", selectedMonth);
+      } else if (period === "ano") {
+        query = query.eq("ano", selectedYear);
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setFixedExpenses((data || []).map((e: any) => ({
+        ...e,
+        type: 'fixed' as const
+      })));
+    } catch (error) {
+      console.error("Error fetching fixed expenses:", error);
+    }
+  }, [period, selectedYear, selectedMonth]);
+
+  // Buscar gastos extras
+  const fetchExtraExpenses = useCallback(async () => {
+    try {
+      let query = supabase
+        .from("company_extra_expenses")
+        .select("*")
+        .order("data", { ascending: false });
+
+      if (period === "mes") {
+        query = query.eq("ano", selectedYear).eq("mes", selectedMonth);
+      } else if (period === "ano") {
+        query = query.eq("ano", selectedYear);
+      } else if (period !== "50anos" && period !== "10anos") {
+        query = query
+          .gte("data", format(dateRange.start, "yyyy-MM-dd"))
+          .lte("data", format(dateRange.end, "yyyy-MM-dd"));
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setExtraExpenses((data || []).map((e: any) => ({
+        ...e,
+        type: 'extra' as const
+      })));
+    } catch (error) {
+      console.error("Error fetching extra expenses:", error);
+    }
+  }, [period, selectedYear, selectedMonth, dateRange]);
+
+  // Buscar entradas/receitas
+  const fetchEntradas = useCallback(async () => {
+    try {
+      let query = supabase
+        .from("entradas")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (period !== "50anos" && period !== "10anos") {
+        query = query
+          .gte("created_at", dateRange.start.toISOString())
+          .lte("created_at", dateRange.end.toISOString());
+      }
+
+      const { data, error } = await query;
+      if (error) throw error;
+
+      setEntradas(data || []);
+    } catch (error) {
+      console.error("Error fetching entradas:", error);
+    }
+  }, [period, dateRange]);
+
+  // Buscar fechamentos mensais
+  const fetchMonthlyClosures = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("company_monthly_closures")
+        .select("*")
+        .order("ano", { ascending: false })
+        .order("mes", { ascending: false });
+
+      if (error) throw error;
+      setMonthlyClosures(data || []);
+    } catch (error) {
+      console.error("Error fetching monthly closures:", error);
+    }
+  }, []);
+
+  // Buscar fechamentos anuais
+  const fetchYearlyClosures = useCallback(async () => {
+    try {
+      const { data, error } = await supabase
+        .from("company_yearly_closures")
+        .select("*")
+        .order("ano", { ascending: false });
+
+      if (error) throw error;
+      setYearlyClosures(data || []);
+    } catch (error) {
+      console.error("Error fetching yearly closures:", error);
+    }
+  }, []);
+
+  // Estatísticas do período atual
+  const stats = useMemo((): CompanyFinanceStats => {
+    const totalGastosFixos = fixedExpenses.reduce((acc, e) => acc + (e.valor || 0), 0);
+    const totalGastosExtras = extraExpenses.reduce((acc, e) => acc + (e.valor || 0), 0);
+    const totalReceitas = entradas.reduce((acc, e) => acc + (e.valor || 0), 0);
+
+    return {
+      totalGastosFixos,
+      totalGastosExtras,
+      totalGastos: totalGastosFixos + totalGastosExtras,
+      totalReceitas,
+      saldo: totalReceitas - (totalGastosFixos + totalGastosExtras),
+      qtdGastosFixos: fixedExpenses.length,
+      qtdGastosExtras: extraExpenses.length,
+      qtdEntradas: entradas.length
+    };
+  }, [fixedExpenses, extraExpenses, entradas]);
+
+  // Fechar mês
+  const closeMonth = useCallback(async (ano: number, mes: number) => {
+    try {
+      // Buscar dados do mês
+      const [fixedRes, extraRes, entradasRes] = await Promise.all([
+        supabase.from("company_fixed_expenses").select("valor").eq("ano", ano).eq("mes", mes),
+        supabase.from("company_extra_expenses").select("valor").eq("ano", ano).eq("mes", mes),
+        supabase.from("entradas").select("valor")
+          .gte("created_at", new Date(ano, mes - 1, 1).toISOString())
+          .lt("created_at", new Date(ano, mes, 1).toISOString())
+      ]);
+
+      const totalGastosFixos = (fixedRes.data || []).reduce((acc, e: any) => acc + (e.valor || 0), 0);
+      const totalGastosExtras = (extraRes.data || []).reduce((acc, e: any) => acc + (e.valor || 0), 0);
+      const totalReceitas = (entradasRes.data || []).reduce((acc, e: any) => acc + (e.valor || 0), 0);
+
+      const { error } = await supabase
+        .from("company_monthly_closures")
+        .upsert({
+          ano,
+          mes,
+          total_gastos_fixos: totalGastosFixos,
+          total_gastos_extras: totalGastosExtras,
+          total_receitas: totalReceitas,
+          saldo_periodo: totalReceitas - totalGastosFixos - totalGastosExtras,
+          qtd_gastos_fixos: fixedRes.data?.length || 0,
+          qtd_gastos_extras: extraRes.data?.length || 0,
+          qtd_entradas: entradasRes.data?.length || 0,
+          fechado_por: user?.id
+        }, { onConflict: 'ano,mes' });
+
+      if (error) throw error;
+
+      // Marcar gastos como fechados
+      await Promise.all([
+        supabase.from("company_fixed_expenses")
+          .update({ fechado: true, data_fechamento: new Date().toISOString(), fechado_por: user?.id })
+          .eq("ano", ano).eq("mes", mes),
+        supabase.from("company_extra_expenses")
+          .update({ fechado: true, data_fechamento: new Date().toISOString(), fechado_por: user?.id })
+          .eq("ano", ano).eq("mes", mes)
+      ]);
+
+      toast.success(`Mês ${getMonthName(mes)}/${ano} fechado com sucesso!`);
+      await fetchMonthlyClosures();
+    } catch (error: any) {
+      console.error("Error closing month:", error);
+      toast.error(error.message || "Erro ao fechar mês");
+    }
+  }, [user, fetchMonthlyClosures]);
+
+  // Fechar ano
+  const closeYear = useCallback(async (ano: number) => {
+    try {
+      // Buscar todos os fechamentos mensais do ano
+      const { data: closures } = await supabase
+        .from("company_monthly_closures")
+        .select("*")
+        .eq("ano", ano);
+
+      if (!closures || closures.length === 0) {
+        toast.error("Nenhum mês fechado neste ano. Feche os meses primeiro.");
+        return;
+      }
+
+      const totalGastosFixos = closures.reduce((acc, c) => acc + (Number(c.total_gastos_fixos) || 0), 0);
+      const totalGastosExtras = closures.reduce((acc, c) => acc + (Number(c.total_gastos_extras) || 0), 0);
+      const totalReceitas = closures.reduce((acc, c) => acc + (Number(c.total_receitas) || 0), 0);
+      const saldoAno = closures.reduce((acc, c) => acc + (Number(c.saldo_periodo) || 0), 0);
+
+      // Encontrar melhor e pior mês
+      let melhorMes = closures[0]?.mes;
+      let piorMes = closures[0]?.mes;
+      let melhorSaldo = Number(closures[0]?.saldo_periodo) || 0;
+      let piorSaldo = Number(closures[0]?.saldo_periodo) || 0;
+
+      closures.forEach(c => {
+        const saldo = Number(c.saldo_periodo) || 0;
+        if (saldo > melhorSaldo) {
+          melhorSaldo = saldo;
+          melhorMes = c.mes;
+        }
+        if (saldo < piorSaldo) {
+          piorSaldo = saldo;
+          piorMes = c.mes;
+        }
+      });
+
+      const { error } = await supabase
+        .from("company_yearly_closures")
+        .upsert({
+          ano,
+          total_gastos_fixos: totalGastosFixos,
+          total_gastos_extras: totalGastosExtras,
+          total_receitas: totalReceitas,
+          saldo_ano: saldoAno,
+          meses_fechados: closures.length,
+          qtd_total_gastos: closures.reduce((acc, c) => acc + (c.qtd_gastos_fixos || 0) + (c.qtd_gastos_extras || 0), 0),
+          qtd_total_entradas: closures.reduce((acc, c) => acc + (c.qtd_entradas || 0), 0),
+          melhor_mes: melhorMes,
+          pior_mes: piorMes,
+          fechado_por: user?.id
+        }, { onConflict: 'ano' });
+
+      if (error) throw error;
+
+      toast.success(`Ano ${ano} consolidado com sucesso!`);
+      await fetchYearlyClosures();
+    } catch (error: any) {
+      console.error("Error closing year:", error);
+      toast.error(error.message || "Erro ao consolidar ano");
+    }
+  }, [user, fetchYearlyClosures]);
+
+  // Verificar se mês está fechado
+  const isMonthClosed = useCallback((ano: number, mes: number) => {
+    return monthlyClosures.some(c => c.ano === ano && c.mes === mes);
+  }, [monthlyClosures]);
+
+  // Verificar se ano está fechado
+  const isYearClosed = useCallback((ano: number) => {
+    return yearlyClosures.some(c => c.ano === ano);
+  }, [yearlyClosures]);
+
+  // Obter fechamento do mês
+  const getMonthClosure = useCallback((ano: number, mes: number) => {
+    return monthlyClosures.find(c => c.ano === ano && c.mes === mes);
+  }, [monthlyClosures]);
+
+  // Obter fechamento do ano
+  const getYearClosure = useCallback((ano: number) => {
+    return yearlyClosures.find(c => c.ano === ano);
+  }, [yearlyClosures]);
+
+  // Anos com dados
+  const yearsWithData = useMemo(() => {
+    const years = new Set<number>();
+    fixedExpenses.forEach(e => e.ano && years.add(e.ano));
+    extraExpenses.forEach(e => e.ano && years.add(e.ano));
+    monthlyClosures.forEach(c => years.add(c.ano));
+    yearlyClosures.forEach(c => years.add(c.ano));
+    return Array.from(years).sort((a, b) => b - a);
+  }, [fixedExpenses, extraExpenses, monthlyClosures, yearlyClosures]);
+
+  // Meses com dados para um ano
+  const getMonthsWithData = useCallback((ano: number) => {
+    const months = new Set<number>();
+    fixedExpenses.filter(e => e.ano === ano).forEach(e => e.mes && months.add(e.mes));
+    extraExpenses.filter(e => e.ano === ano).forEach(e => e.mes && months.add(e.mes));
+    monthlyClosures.filter(c => c.ano === ano).forEach(c => months.add(c.mes));
+    return Array.from(months).sort((a, b) => a - b);
+  }, [fixedExpenses, extraExpenses, monthlyClosures]);
+
+  // Dados para gráfico
+  const chartData = useMemo(() => {
+    // Usar fechamentos mensais se disponíveis
+    if (monthlyClosures.length > 0) {
+      return monthlyClosures
+        .filter(c => {
+          if (period === "ano") return c.ano === selectedYear;
+          if (period === "10anos") return c.ano >= new Date().getFullYear() - 10;
+          if (period === "50anos") return true;
+          return true;
+        })
+        .slice(0, 24)
+        .reverse()
+        .map(c => ({
+          label: `${String(c.mes).padStart(2, "0")}/${c.ano}`,
+          receitas: Number(c.total_receitas) / 100,
+          despesas: (Number(c.total_gastos_fixos) + Number(c.total_gastos_extras)) / 100,
+          saldo: Number(c.saldo_periodo) / 100
+        }));
+    }
+
+    // Fallback: calcular a partir dos dados
+    const months: Record<string, { receitas: number; despesas: number }> = {};
+    
+    extraExpenses.forEach(e => {
+      if (e.ano && e.mes) {
+        const key = `${String(e.mes).padStart(2, "0")}/${e.ano}`;
+        if (!months[key]) months[key] = { receitas: 0, despesas: 0 };
+        months[key].despesas += e.valor / 100;
+      }
+    });
+
+    fixedExpenses.forEach(e => {
+      if (e.ano && e.mes) {
+        const key = `${String(e.mes).padStart(2, "0")}/${e.ano}`;
+        if (!months[key]) months[key] = { receitas: 0, despesas: 0 };
+        months[key].despesas += e.valor / 100;
+      }
+    });
+
+    entradas.forEach(e => {
+      const date = new Date(e.created_at);
+      const key = `${String(date.getMonth() + 1).padStart(2, "0")}/${date.getFullYear()}`;
+      if (!months[key]) months[key] = { receitas: 0, despesas: 0 };
+      months[key].receitas += (e.valor || 0) / 100;
+    });
+
+    return Object.entries(months)
+      .map(([label, data]) => ({
+        label,
+        receitas: data.receitas,
+        despesas: data.despesas,
+        saldo: data.receitas - data.despesas
+      }))
+      .sort((a, b) => {
+        const [mA, yA] = a.label.split("/").map(Number);
+        const [mB, yB] = b.label.split("/").map(Number);
+        return yA === yB ? mA - mB : yA - yB;
+      })
+      .slice(-12);
+  }, [monthlyClosures, fixedExpenses, extraExpenses, entradas, period, selectedYear]);
+
+  // Carregar dados
+  useEffect(() => {
+    const loadData = async () => {
+      setIsLoading(true);
+      await Promise.all([
+        fetchFixedExpenses(),
+        fetchExtraExpenses(),
+        fetchEntradas(),
+        fetchMonthlyClosures(),
+        fetchYearlyClosures()
+      ]);
+      setIsLoading(false);
+    };
+    loadData();
+  }, [fetchFixedExpenses, fetchExtraExpenses, fetchEntradas, fetchMonthlyClosures, fetchYearlyClosures]);
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel('company-finance-history-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_fixed_expenses' }, () => {
+        fetchFixedExpenses();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_extra_expenses' }, () => {
+        fetchExtraExpenses();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, () => {
+        fetchEntradas();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_monthly_closures' }, () => {
+        fetchMonthlyClosures();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_yearly_closures' }, () => {
+        fetchYearlyClosures();
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchFixedExpenses, fetchExtraExpenses, fetchEntradas, fetchMonthlyClosures, fetchYearlyClosures]);
+
+  const refresh = useCallback(async () => {
+    setIsLoading(true);
+    await Promise.all([
+      fetchFixedExpenses(),
+      fetchExtraExpenses(),
+      fetchEntradas(),
+      fetchMonthlyClosures(),
+      fetchYearlyClosures()
+    ]);
+    setIsLoading(false);
+  }, [fetchFixedExpenses, fetchExtraExpenses, fetchEntradas, fetchMonthlyClosures, fetchYearlyClosures]);
+
+  return {
+    // Estado
+    period,
+    setPeriod,
+    selectedYear,
+    setSelectedYear,
+    selectedMonth,
+    setSelectedMonth,
+    customStartDate,
+    setCustomStartDate,
+    customEndDate,
+    setCustomEndDate,
+    isLoading,
+    
+    // Dados
+    fixedExpenses,
+    extraExpenses,
+    entradas,
+    monthlyClosures,
+    yearlyClosures,
+    stats,
+    chartData,
+    dateRange,
+    availableYears,
+    
+    // Ações
+    closeMonth,
+    closeYear,
+    refresh,
+    
+    // Helpers
+    isMonthClosed,
+    isYearClosed,
+    getMonthClosure,
+    getYearClosure,
+    yearsWithData,
+    getMonthsWithData,
+    getMonthName
+  };
+}
+
+export function formatCompanyCurrency(cents: number): string {
+  return new Intl.NumberFormat("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  }).format(cents / 100);
+}
