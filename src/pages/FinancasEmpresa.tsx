@@ -580,6 +580,140 @@ export default function FinancasEmpresa() {
 
   const renderDashboard = () => (
     <div className="space-y-6">
+      {/* ═══════════════════════════════════════════════════════════════
+          CARD PRINCIPAL: SALDO DISPONÍVEL PARA INVESTIR
+          ═══════════════════════════════════════════════════════════════ */}
+      <motion.div
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="relative"
+      >
+        <Card className={cn(
+          "border-2 overflow-hidden",
+          unifiedStats.saldo >= 0 
+            ? "border-emerald-500/50 bg-gradient-to-br from-emerald-500/20 via-green-500/10 to-teal-500/5" 
+            : "border-red-500/50 bg-gradient-to-br from-red-500/20 via-rose-500/10 to-orange-500/5"
+        )}>
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmZmZmYiIGZpbGwtb3BhY2l0eT0iMC4wMyI+PGNpcmNsZSBjeD0iMzAiIGN5PSIzMCIgcj0iMiIvPjwvZz48L2c+PC9zdmc+')] opacity-50" />
+          
+          <CardContent className="relative p-6">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              {/* Receitas */}
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                <TrendingUp className="h-8 w-8 text-emerald-500 mb-2" />
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Receitas do Período</p>
+                <p className="text-2xl font-bold text-emerald-500">{formatCompanyCurrency(unifiedStats.receitas)}</p>
+                <Badge variant="secondary" className="mt-1 text-xs">{unifiedStats.countReceitas} entradas</Badge>
+              </div>
+
+              {/* Sinal de Menos */}
+              <div className="flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-red-500/20 border border-red-500/30 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-red-500">−</span>
+                </div>
+              </div>
+
+              {/* Gastos Totais */}
+              <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-red-500/10 border border-red-500/20">
+                <Wallet className="h-8 w-8 text-red-500 mb-2" />
+                <p className="text-xs text-muted-foreground uppercase tracking-wider">Gastos Totais</p>
+                <p className="text-2xl font-bold text-red-500">{formatCompanyCurrency(unifiedStats.totalGastos)}</p>
+                <div className="flex gap-2 mt-1">
+                  <Badge variant="outline" className="text-[10px]">Fixos: {formatCompanyCurrency(unifiedStats.gastosFixos)}</Badge>
+                  <Badge variant="outline" className="text-[10px]">Extras: {formatCompanyCurrency(unifiedStats.gastosExtras)}</Badge>
+                </div>
+              </div>
+
+              {/* Sinal de Igual */}
+              <div className="flex items-center justify-center">
+                <div className="w-12 h-12 rounded-full bg-primary/20 border border-primary/30 flex items-center justify-center">
+                  <span className="text-2xl font-bold text-primary">=</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Resultado Principal */}
+            <motion.div 
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className={cn(
+                "mt-6 p-6 rounded-2xl border-2 text-center",
+                unifiedStats.saldo >= 0 
+                  ? "bg-gradient-to-r from-emerald-500/20 to-green-500/10 border-emerald-500/40" 
+                  : "bg-gradient-to-r from-red-500/20 to-rose-500/10 border-red-500/40"
+              )}
+            >
+              <div className="flex items-center justify-center gap-3 mb-2">
+                {unifiedStats.saldo >= 0 ? (
+                  <>
+                    <Sparkles className="h-8 w-8 text-emerald-400 animate-pulse" />
+                    <h2 className="text-lg font-semibold text-emerald-400 uppercase tracking-wider">
+                      💰 Disponível para Investir
+                    </h2>
+                    <Sparkles className="h-8 w-8 text-emerald-400 animate-pulse" />
+                  </>
+                ) : (
+                  <>
+                    <AlertTriangle className="h-8 w-8 text-red-400 animate-pulse" />
+                    <h2 className="text-lg font-semibold text-red-400 uppercase tracking-wider">
+                      ⚠️ Déficit no Período
+                    </h2>
+                    <AlertTriangle className="h-8 w-8 text-red-400 animate-pulse" />
+                  </>
+                )}
+              </div>
+              <p className={cn(
+                "text-5xl md:text-6xl font-black tracking-tight",
+                unifiedStats.saldo >= 0 ? "text-emerald-400" : "text-red-400"
+              )}>
+                {formatCompanyCurrency(Math.abs(unifiedStats.saldo))}
+              </p>
+              <p className="text-sm text-muted-foreground mt-2">
+                {unifiedStats.saldo >= 0 
+                  ? "Este é o valor que sobrou no mês para investimentos, reserva ou lucro!"
+                  : "Atenção! Os gastos superaram as receitas neste período."}
+              </p>
+              
+              {/* Detalhes adicionais */}
+              <div className="flex flex-wrap justify-center gap-4 mt-4">
+                <div className="px-4 py-2 rounded-lg bg-background/50 border border-border/50">
+                  <p className="text-xs text-muted-foreground">Margem de Lucro</p>
+                  <p className={cn(
+                    "text-lg font-bold",
+                    unifiedStats.saldo >= 0 ? "text-emerald-500" : "text-red-500"
+                  )}>
+                    {unifiedStats.receitas > 0 
+                      ? ((unifiedStats.saldo / unifiedStats.receitas) * 100).toFixed(1) 
+                      : "0"}%
+                  </p>
+                </div>
+                <div className="px-4 py-2 rounded-lg bg-background/50 border border-border/50">
+                  <p className="text-xs text-muted-foreground">Comprometimento</p>
+                  <p className={cn(
+                    "text-lg font-bold",
+                    (unifiedStats.totalGastos / (unifiedStats.receitas || 1)) < 0.7 ? "text-green-500" : 
+                    (unifiedStats.totalGastos / (unifiedStats.receitas || 1)) < 0.9 ? "text-yellow-500" : "text-red-500"
+                  )}>
+                    {unifiedStats.receitas > 0 
+                      ? ((unifiedStats.totalGastos / unifiedStats.receitas) * 100).toFixed(1) 
+                      : "0"}%
+                  </p>
+                </div>
+                <div className="px-4 py-2 rounded-lg bg-background/50 border border-border/50">
+                  <p className="text-xs text-muted-foreground">Média/Entrada</p>
+                  <p className="text-lg font-bold text-primary">
+                    {unifiedStats.countReceitas > 0 
+                      ? formatCompanyCurrency(unifiedStats.receitas / unifiedStats.countReceitas)
+                      : "R$ 0"}
+                  </p>
+                </div>
+              </div>
+            </motion.div>
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Hero Stats Grid */}
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {[
@@ -612,7 +746,7 @@ export default function FinancasEmpresa() {
         ))}
       </div>
 
-      {/* Progress + Saldo */}
+      {/* Progress + Link para Receitas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
           <CardContent className="p-6">
@@ -640,30 +774,32 @@ export default function FinancasEmpresa() {
           </CardContent>
         </Card>
 
-        <Card className={cn(
-          "border-border/50 bg-gradient-to-br",
-          unifiedStats.saldo >= 0 ? "from-green-500/10 to-green-500/5" : "from-red-500/10 to-red-500/5"
-        )}>
+        {/* Link para página de Receitas */}
+        <Card 
+          className="border-emerald-500/30 bg-gradient-to-br from-emerald-500/10 to-green-500/5 cursor-pointer hover:border-emerald-500/50 transition-all group"
+          onClick={() => window.location.href = "/empresas/receitas"}
+        >
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-semibold flex items-center gap-2">
-                  {unifiedStats.saldo >= 0 ? (
-                    <TrendingUp className="h-5 w-5 text-green-500" />
-                  ) : (
-                    <TrendingDown className="h-5 w-5 text-red-500" />
-                  )}
-                  Saldo do Período
+                <h3 className="font-semibold flex items-center gap-2 text-emerald-500">
+                  <TrendingUp className="h-5 w-5" />
+                  Ver Detalhes das Receitas
                 </h3>
-                <p className="text-sm text-muted-foreground">Receitas - Gastos</p>
-              </div>
-              <div className="text-right">
-                <p className={cn(
-                  "text-4xl font-bold",
-                  unifiedStats.saldo >= 0 ? "text-green-500" : "text-red-500"
-                )}>
-                  {formatCompanyCurrency(unifiedStats.saldo)}
+                <p className="text-sm text-muted-foreground mt-1">
+                  Acesse a Central de Receitas para ver todas as entradas
                 </p>
+                <div className="flex gap-2 mt-3">
+                  <Badge variant="secondary" className="text-xs">
+                    {unifiedStats.countReceitas} entradas
+                  </Badge>
+                  <Badge className="text-xs bg-emerald-500/20 text-emerald-400 hover:bg-emerald-500/30">
+                    {formatCompanyCurrency(unifiedStats.receitas)}
+                  </Badge>
+                </div>
+              </div>
+              <div className="p-4 rounded-xl bg-emerald-500/20 group-hover:bg-emerald-500/30 transition-colors">
+                <ArrowUpRight className="h-8 w-8 text-emerald-500" />
               </div>
             </div>
           </CardContent>
