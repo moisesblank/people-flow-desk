@@ -39,32 +39,38 @@ export function useDataFetch<T>(
   });
 }
 
-// Dashboard stats hook with caching
+// Dashboard stats hook with caching - CORRIGIDO para usar tabelas corretas
 export function useDashboardStats() {
   return useDataFetch<DashboardStats>(CACHE_KEYS.dashboardStats, async () => {
+    // Início do mês atual para filtros
+    const inicioMes = new Date();
+    inicioMes.setDate(1);
+    inicioMes.setHours(0, 0, 0, 0);
+    const inicioMesISO = inicioMes.toISOString();
+    
     const [
       employeesRes,
       personalFixedRes,
       personalExtraRes,
       companyFixedRes,
       companyExtraRes,
-      incomeRes,
+      entradasRes, // Usar 'entradas' em vez de 'income'
       affiliatesRes,
-      studentsRes,
+      alunosRes, // Usar 'alunos' em vez de 'students'
       calendarTasksRes,
       paymentsRes,
       sitePendenciasRes,
     ] = await Promise.all([
-      supabase.from("employees").select("id", { count: "exact", head: true }),
+      supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "ativo"),
       supabase.from("personal_fixed_expenses").select("valor"),
       supabase.from("personal_extra_expenses").select("valor, categoria, nome, created_at"),
       supabase.from("company_fixed_expenses").select("valor"),
       supabase.from("company_extra_expenses").select("valor, nome, created_at"),
-      supabase.from("income").select("valor, fonte, created_at"),
-      supabase.from("affiliates").select("id", { count: "exact", head: true }),
-      supabase.from("students").select("id", { count: "exact", head: true }),
+      supabase.from("entradas").select("valor, fonte, created_at, descricao").gte("created_at", inicioMesISO), // Entradas do mês
+      supabase.from("affiliates").select("id", { count: "exact", head: true }).eq("status", "ativo"),
+      supabase.from("alunos").select("id", { count: "exact", head: true }).eq("status", "ativo"), // Alunos ativos
       supabase.from("calendar_tasks").select("*").eq("is_completed", false),
-      supabase.from("payments").select("*").eq("status", "pendente"),
+      supabase.from("contas_pagar").select("*").eq("status", "pendente"), // Usar contas_pagar
       supabase.from("website_pendencias").select("*").neq("status", "concluido"),
     ]);
 
@@ -72,20 +78,20 @@ export function useDashboardStats() {
     const personalExtra = personalExtraRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
     const companyFixed = companyFixedRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
     const companyExtra = companyExtraRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
-    const totalIncome = incomeRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
+    const totalEntradas = entradasRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
 
     return {
       employees: employeesRes.count || 0,
       personalExpenses: personalFixed + personalExtra,
       companyExpenses: companyFixed + companyExtra,
-      income: totalIncome,
+      income: totalEntradas, // Agora usa entradas reais
       affiliates: affiliatesRes.count || 0,
-      students: studentsRes.count || 0,
+      students: alunosRes.count || 0, // Agora usa alunos reais
       pendingTasks: calendarTasksRes.data?.length || 0,
       pendingPayments: paymentsRes.data?.length || 0,
       sitePendencias: sitePendenciasRes.data?.length || 0,
       personalExtraData: personalExtraRes.data || [],
-      incomeData: incomeRes.data || [],
+      incomeData: entradasRes.data || [],
       tasksData: (calendarTasksRes.data || []) as CalendarTask[],
       paymentsData: paymentsRes.data || [],
       sitePendenciasData: sitePendenciasRes.data || [],
