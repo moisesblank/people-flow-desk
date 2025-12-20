@@ -920,8 +920,26 @@ export default function Arquivos() {
                       className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-colors cursor-pointer group"
                       onClick={() => handlePreview(arquivo)}
                     >
-                      <div className={cn("p-3 rounded-xl bg-gradient-to-br", getFileGradient(arquivo.tipo))}>
-                        <FileIcon className={cn("h-6 w-6", getFileColor(arquivo.tipo))} />
+                      <div className={cn(
+                        "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center overflow-hidden flex-shrink-0",
+                        getFileGradient(arquivo.tipo)
+                      )}>
+                        {arquivo.tipo.includes('image') ? (
+                          <img 
+                            src={arquivo.url} 
+                            alt={arquivo.nome}
+                            className="w-full h-full object-cover"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none';
+                              (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            }}
+                          />
+                        ) : null}
+                        <FileIcon className={cn(
+                          "h-6 w-6", 
+                          getFileColor(arquivo.tipo),
+                          arquivo.tipo.includes('image') ? 'hidden' : ''
+                        )} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="font-medium text-foreground truncate">{arquivo.nome}</p>
@@ -1199,8 +1217,26 @@ export default function Arquivos() {
                         </td>
                         <td className="p-4">
                           <div className="flex items-center gap-3">
-                            <div className={cn("p-2.5 rounded-xl bg-gradient-to-br", getFileGradient(arquivo.tipo))}>
-                              <FileIcon className={cn("h-5 w-5", getFileColor(arquivo.tipo))} />
+                            <div className={cn(
+                              "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center overflow-hidden flex-shrink-0",
+                              getFileGradient(arquivo.tipo)
+                            )}>
+                              {arquivo.tipo.includes('image') ? (
+                                <img 
+                                  src={arquivo.url} 
+                                  alt={arquivo.nome}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    (e.target as HTMLImageElement).style.display = 'none';
+                                    (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                                  }}
+                                />
+                              ) : null}
+                              <FileIcon className={cn(
+                                "h-5 w-5", 
+                                getFileColor(arquivo.tipo),
+                                arquivo.tipo.includes('image') ? 'hidden' : ''
+                              )} />
                             </div>
                             <div className="min-w-0">
                               <p className="font-medium text-foreground truncate max-w-[250px]">{arquivo.nome}</p>
@@ -1349,12 +1385,29 @@ export default function Arquivos() {
                       </div>
                     </div>
 
-                    {/* File icon */}
+                    {/* File icon ou Thumbnail para imagens */}
                     <div className={cn(
-                      "p-6 rounded-xl bg-gradient-to-br mb-4 flex items-center justify-center",
+                      "relative rounded-xl bg-gradient-to-br mb-4 flex items-center justify-center overflow-hidden",
+                      arquivo.tipo.includes('image') ? "aspect-square" : "p-6",
                       getFileGradient(arquivo.tipo)
                     )}>
-                      <FileIcon className={cn("h-12 w-12", getFileColor(arquivo.tipo))} />
+                      {arquivo.tipo.includes('image') ? (
+                        <img 
+                          src={arquivo.url} 
+                          alt={arquivo.nome}
+                          className="w-full h-full object-cover rounded-xl"
+                          onError={(e) => {
+                            // Fallback para ícone se imagem não carregar
+                            (e.target as HTMLImageElement).style.display = 'none';
+                            (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                          }}
+                        />
+                      ) : null}
+                      <FileIcon className={cn(
+                        "h-12 w-12", 
+                        getFileColor(arquivo.tipo),
+                        arquivo.tipo.includes('image') ? 'hidden' : ''
+                      )} />
                     </div>
 
                     {/* File info */}

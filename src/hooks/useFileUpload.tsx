@@ -20,12 +20,15 @@ interface UploadedFile {
 // Security: Default signed URL expiration (1 hour in seconds)
 const DEFAULT_URL_EXPIRATION = 3600;
 
+// Limite de 2GB em bytes
+const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024 * 1024;
+
 export function useFileUpload(options: UploadOptions = {}) {
   const {
-    bucket = 'documentos',
+    bucket = 'arquivos',
     folder = '',
-    maxSize = 10,
-    allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp']
+    maxSize = 2048, // 2GB em MB por padrão
+    allowedTypes = [] // Vazio = aceita QUALQUER tipo de arquivo
   } = options;
 
   const [uploading, setUploading] = useState(false);
@@ -47,13 +50,14 @@ export function useFileUpload(options: UploadOptions = {}) {
   };
 
   const uploadFile = async (file: File): Promise<UploadedFile | null> => {
-    // Validate file size
-    if (file.size > maxSize * 1024 * 1024) {
-      toast.error(`Arquivo muito grande. Máximo: ${maxSize}MB`);
+    // Validar tamanho - máximo 2GB
+    const maxSizeBytes = Math.min(maxSize * 1024 * 1024, MAX_FILE_SIZE_BYTES);
+    if (file.size > maxSizeBytes) {
+      toast.error(`Arquivo muito grande. Máximo: 2GB`);
       return null;
     }
 
-    // Validate file type
+    // Aceita QUALQUER tipo de arquivo se allowedTypes estiver vazio
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
       toast.error('Tipo de arquivo não permitido');
       return null;
