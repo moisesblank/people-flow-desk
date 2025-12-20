@@ -3,7 +3,7 @@ import { closestCenter, DndContext, DragEndEvent, DragOverlay, DragStartEvent, P
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
-import { GripVertical, Copy, Check } from "lucide-react";
+import { GripVertical, Copy, Check, Folder } from "lucide-react";
 import { toast } from "sonner";
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
 import { Badge } from "@/components/ui/badge";
@@ -412,7 +412,7 @@ export function SidebarNavDnd(props: {
                                   </TooltipTrigger>
                                   <TooltipContent side="right">Arrastar grupo</TooltipContent>
                                 </Tooltip>
-                                <Tooltip>
+                                <Folder>
                                   <TooltipTrigger asChild>
                                     <button type="button" onClick={e => {
                             e.preventDefault();
@@ -423,7 +423,7 @@ export function SidebarNavDnd(props: {
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent side="right">Duplicar grupo</TooltipContent>
-                                </Tooltip>
+                                </Folder>
                               </div>}
                             <span className="font-bold drop-shadow-lg text-center text-primary-foreground text-lg">{group.label}</span>
                           </div>
