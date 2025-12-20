@@ -1,10 +1,11 @@
 // ============================================
-// MOISÉS MEDEIROS v10.1 - ROLE-BASED SIDEBAR
+// MOISÉS MEDEIROS v10.2 - ROLE-BASED SIDEBAR
 // Sidebar com menu filtrado por cargo
 // + MODO MASTER: editar títulos e reordenar/realocar itens e categorias
+// + Safe useSidebar hook (prevents crash outside SidebarProvider)
 // ============================================
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, useContext, createContext } from "react";
 import {
   LayoutDashboard,
   Users,
