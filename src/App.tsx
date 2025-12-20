@@ -74,7 +74,7 @@ const TransacoesHotmart = lazy(() => import("./pages/TransacoesHotmart"));
 const DashboardEmpresarial = lazy(() => import("./pages/empresas/DashboardEmpresarial"));
 const ArquivosEmpresariais = lazy(() => import("./pages/empresas/ArquivosEmpresariais"));
 const RHFuncionarios = lazy(() => import("./pages/empresas/RHFuncionarios"));
-
+const Perfil = lazy(() => import("./pages/Perfil"));
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -214,6 +214,7 @@ function AppContent() {
           <Route path="/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
           <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
           <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
+          <Route path="/perfil" element={<ProtectedPage><Perfil /></ProtectedPage>} />
           
           <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
           <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
