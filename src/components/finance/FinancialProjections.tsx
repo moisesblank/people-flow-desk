@@ -147,6 +147,8 @@ export function FinancialProjections({ totalFixed, totalExtra, type }: Financial
                   border: "1px solid hsl(240, 6%, 20%)",
                   borderRadius: "8px",
                 }}
+                itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                 formatter={(value: number) => [formatCurrency(value), ""]}
               />
               <Area

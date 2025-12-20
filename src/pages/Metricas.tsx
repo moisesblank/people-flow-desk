@@ -151,9 +151,8 @@ export default function Metricas() {
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
-                    color: "#ffffff",
-                    fontWeight: "bold",
                   }}
+                  itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   formatter={(value: number) => [`R$ ${value.toLocaleString()}`, "Faturamento"]}
                 />
@@ -227,9 +226,8 @@ export default function Metricas() {
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
-                    color: "#ffffff",
-                    fontWeight: "bold",
                   }}
+                  itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                 />
                 <Bar 

@@ -63,9 +63,8 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 border: "1px solid hsl(240, 6%, 15%)",
                 borderRadius: "12px",
                 boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
-                color: "#ffffff",
-                fontWeight: "bold",
               }}
+              itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
               labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
               formatter={(value: number) => [formatCurrency(value), ""]}
             />

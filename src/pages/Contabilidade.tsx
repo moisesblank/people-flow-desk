@@ -430,9 +430,8 @@ export default function Contabilidade() {
                       backgroundColor: "hsl(240, 6%, 8%)",
                       border: "1px solid hsl(240, 6%, 15%)",
                       borderRadius: "12px",
-                      color: "#ffffff",
-                      fontWeight: "bold",
                     }}
+                    itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
                     labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                     formatter={(value: number) => formatCurrency(value)}
                   />

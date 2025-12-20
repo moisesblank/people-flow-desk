@@ -990,6 +990,8 @@ export function IntegratedMetricsDashboard() {
                               borderRadius: '12px',
                               boxShadow: '0 10px 40px rgba(0,0,0,0.2)'
                             }}
+                            itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                            labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                             formatter={(value: number) => [formatNumber(value), "Seguidores"]}
                           />
                         </RechartsPie>
@@ -1055,6 +1057,8 @@ export function IntegratedMetricsDashboard() {
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '12px'
                         }}
+                        itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                        labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                         formatter={(value: number) => [`${value.toFixed(1)}%`, "Engajamento"]}
                       />
                     </RadarChart>
@@ -1083,11 +1087,11 @@ export function IntegratedMetricsDashboard() {
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
                         <XAxis 
                           dataKey="name" 
-                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} 
+                          tick={{ fill: '#ffffff', fontSize: 9, fontWeight: 'bold' }} 
                           axisLine={{ stroke: 'hsl(var(--border))' }}
                         />
                         <YAxis 
-                          tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 9 }} 
+                          tick={{ fill: '#ffffff', fontSize: 9, fontWeight: 'bold' }} 
                           axisLine={{ stroke: 'hsl(var(--border))' }}
                         />
                         <Tooltip
@@ -1096,6 +1100,8 @@ export function IntegratedMetricsDashboard() {
                             border: '1px solid hsl(var(--border))',
                             borderRadius: '12px'
                           }}
+                          itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                          labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                           formatter={(value: number) => [`${value.toFixed(0)}%`, "ROI"]}
                         />
                         <Bar dataKey="roi" fill="#22c55e" radius={[6, 6, 0, 0]} />
@@ -1344,11 +1350,11 @@ export function IntegratedMetricsDashboard() {
                   <ResponsiveContainer width="100%" height={400}>
                     <BarChart data={facebookCampaignsData} layout="vertical">
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
-                      <XAxis type="number" tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} />
+                      <XAxis type="number" tick={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} />
                       <YAxis 
                         dataKey="name" 
                         type="category" 
-                        tick={{ fill: 'hsl(var(--muted-foreground))', fontSize: 10 }} 
+                        tick={{ fill: '#ffffff', fontSize: 10, fontWeight: 'bold' }} 
                         width={80} 
                       />
                       <Tooltip
@@ -1357,6 +1363,8 @@ export function IntegratedMetricsDashboard() {
                           border: '1px solid hsl(var(--border))',
                           borderRadius: '12px'
                         }}
+                        itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                        labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                         formatter={(value: number, name: string) => [
                           name === "receita" || name === "investimento" 
                             ? `R$ ${value.toFixed(2)}` 

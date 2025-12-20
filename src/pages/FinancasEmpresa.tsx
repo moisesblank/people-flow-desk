@@ -438,11 +438,10 @@ export default function FinancasEmpresa() {
                               backgroundColor: "hsl(var(--card))",
                               border: "1px solid hsl(var(--border))",
                               borderRadius: "8px",
-                              color: "#ffffff",
-                              fontWeight: "bold",
                             }}
-                            formatter={(value: number) => formatCurrency(value)}
+                            itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
                             labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                            formatter={(value: number) => formatCurrency(value)}
                           />
                           <Legend 
                             wrapperStyle={{ fontSize: '12px' }}
@@ -493,11 +492,10 @@ export default function FinancasEmpresa() {
                             backgroundColor: "hsl(var(--card))",
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "8px",
-                            color: "#ffffff",
-                            fontWeight: "bold",
                           }}
-                          formatter={(value: number) => formatCurrency(value)}
+                          itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
                           labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                          formatter={(value: number) => formatCurrency(value)}
                         />
                         <Bar dataKey="value" radius={[0, 8, 8, 0]} />
                       </BarChart>

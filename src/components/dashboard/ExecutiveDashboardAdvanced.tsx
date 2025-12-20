@@ -379,6 +379,8 @@ export function ExecutiveDashboardAdvanced() {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                     }}
+                    itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                    labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                     formatter={(value: number) => [
                       formatCurrency(value * 100),
                       "",
