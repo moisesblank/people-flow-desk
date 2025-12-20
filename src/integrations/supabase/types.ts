@@ -3829,52 +3829,211 @@ export type Database = {
       }
       payments: {
         Row: {
+          ano: number | null
+          categoria: string | null
           comprovante_url: string | null
           created_at: string
           created_by: string | null
+          data_fechamento: string | null
           data_pagamento: string | null
           data_vencimento: string
           descricao: string
+          dia: number | null
+          fechado: boolean | null
+          fechado_por: string | null
           id: string
+          mes: number | null
           metodo_pagamento: string | null
           observacoes: string | null
           recorrente: boolean
+          semana: number | null
           status: string
           tipo: string
           user_id: string
           valor: number
         }
         Insert: {
+          ano?: number | null
+          categoria?: string | null
           comprovante_url?: string | null
           created_at?: string
           created_by?: string | null
+          data_fechamento?: string | null
           data_pagamento?: string | null
           data_vencimento: string
           descricao: string
+          dia?: number | null
+          fechado?: boolean | null
+          fechado_por?: string | null
           id?: string
+          mes?: number | null
           metodo_pagamento?: string | null
           observacoes?: string | null
           recorrente?: boolean
+          semana?: number | null
           status?: string
           tipo: string
           user_id: string
           valor?: number
         }
         Update: {
+          ano?: number | null
+          categoria?: string | null
           comprovante_url?: string | null
           created_at?: string
           created_by?: string | null
+          data_fechamento?: string | null
           data_pagamento?: string | null
           data_vencimento?: string
           descricao?: string
+          dia?: number | null
+          fechado?: boolean | null
+          fechado_por?: string | null
           id?: string
+          mes?: number | null
           metodo_pagamento?: string | null
           observacoes?: string | null
           recorrente?: boolean
+          semana?: number | null
           status?: string
           tipo?: string
           user_id?: string
           valor?: number
+        }
+        Relationships: []
+      }
+      payments_monthly_closures: {
+        Row: {
+          ano: number
+          created_at: string
+          fechado_em: string | null
+          fechado_por: string | null
+          id: string
+          is_fechado: boolean | null
+          mes: number
+          observacoes: string | null
+          resumo_por_metodo: Json | null
+          resumo_por_tipo: Json | null
+          tipo: string
+          total_atrasado: number | null
+          total_cancelado: number | null
+          total_pagamentos: number | null
+          total_pago: number | null
+          total_pendente: number | null
+          total_valor_atrasado: number | null
+          total_valor_pago: number | null
+          total_valor_pendente: number | null
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          fechado_em?: string | null
+          fechado_por?: string | null
+          id?: string
+          is_fechado?: boolean | null
+          mes: number
+          observacoes?: string | null
+          resumo_por_metodo?: Json | null
+          resumo_por_tipo?: Json | null
+          tipo?: string
+          total_atrasado?: number | null
+          total_cancelado?: number | null
+          total_pagamentos?: number | null
+          total_pago?: number | null
+          total_pendente?: number | null
+          total_valor_atrasado?: number | null
+          total_valor_pago?: number | null
+          total_valor_pendente?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          fechado_em?: string | null
+          fechado_por?: string | null
+          id?: string
+          is_fechado?: boolean | null
+          mes?: number
+          observacoes?: string | null
+          resumo_por_metodo?: Json | null
+          resumo_por_tipo?: Json | null
+          tipo?: string
+          total_atrasado?: number | null
+          total_cancelado?: number | null
+          total_pagamentos?: number | null
+          total_pago?: number | null
+          total_pendente?: number | null
+          total_valor_atrasado?: number | null
+          total_valor_pago?: number | null
+          total_valor_pendente?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      payments_yearly_closures: {
+        Row: {
+          ano: number
+          created_at: string
+          fechado_em: string | null
+          fechado_por: string | null
+          id: string
+          is_fechado: boolean | null
+          media_mensal: number | null
+          melhor_mes: number | null
+          melhor_mes_valor: number | null
+          observacoes: string | null
+          pior_mes: number | null
+          pior_mes_valor: number | null
+          resumo_por_metodo: Json | null
+          resumo_por_tipo: Json | null
+          total_meses_fechados: number | null
+          total_pagamentos: number | null
+          total_valor_geral: number | null
+          total_valor_pago: number | null
+          updated_at: string
+        }
+        Insert: {
+          ano: number
+          created_at?: string
+          fechado_em?: string | null
+          fechado_por?: string | null
+          id?: string
+          is_fechado?: boolean | null
+          media_mensal?: number | null
+          melhor_mes?: number | null
+          melhor_mes_valor?: number | null
+          observacoes?: string | null
+          pior_mes?: number | null
+          pior_mes_valor?: number | null
+          resumo_por_metodo?: Json | null
+          resumo_por_tipo?: Json | null
+          total_meses_fechados?: number | null
+          total_pagamentos?: number | null
+          total_valor_geral?: number | null
+          total_valor_pago?: number | null
+          updated_at?: string
+        }
+        Update: {
+          ano?: number
+          created_at?: string
+          fechado_em?: string | null
+          fechado_por?: string | null
+          id?: string
+          is_fechado?: boolean | null
+          media_mensal?: number | null
+          melhor_mes?: number | null
+          melhor_mes_valor?: number | null
+          observacoes?: string | null
+          pior_mes?: number | null
+          pior_mes_valor?: number | null
+          resumo_por_metodo?: Json | null
+          resumo_por_tipo?: Json | null
+          total_meses_fechados?: number | null
+          total_pagamentos?: number | null
+          total_valor_geral?: number | null
+          total_valor_pago?: number | null
+          updated_at?: string
         }
         Relationships: []
       }
