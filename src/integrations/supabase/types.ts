@@ -1410,13 +1410,17 @@ export type Database = {
           created_by: string | null
           data: string | null
           data_fechamento: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
           dia: number | null
           fechado: boolean | null
           fechado_por: string | null
           id: number
           mes: number | null
           nome: string
+          observacoes_pagamento: string | null
           semana: number | null
+          status_pagamento: string | null
           updated_at: string | null
           valor: number
         }
@@ -1427,13 +1431,17 @@ export type Database = {
           created_by?: string | null
           data?: string | null
           data_fechamento?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
           dia?: number | null
           fechado?: boolean | null
           fechado_por?: string | null
           id?: number
           mes?: number | null
           nome: string
+          observacoes_pagamento?: string | null
           semana?: number | null
+          status_pagamento?: string | null
           updated_at?: string | null
           valor?: number
         }
@@ -1444,13 +1452,17 @@ export type Database = {
           created_by?: string | null
           data?: string | null
           data_fechamento?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
           dia?: number | null
           fechado?: boolean | null
           fechado_por?: string | null
           id?: number
           mes?: number | null
           nome?: string
+          observacoes_pagamento?: string | null
           semana?: number | null
+          status_pagamento?: string | null
           updated_at?: string | null
           valor?: number
         }
@@ -1463,13 +1475,17 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           data_fechamento: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
           dia: number | null
           fechado: boolean | null
           fechado_por: string | null
           id: number
           mes: number | null
           nome: string
+          observacoes_pagamento: string | null
           semana: number | null
+          status_pagamento: string | null
           updated_at: string | null
           valor: number
         }
@@ -1479,13 +1495,17 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           data_fechamento?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
           dia?: number | null
           fechado?: boolean | null
           fechado_por?: string | null
           id?: number
           mes?: number | null
           nome: string
+          observacoes_pagamento?: string | null
           semana?: number | null
+          status_pagamento?: string | null
           updated_at?: string | null
           valor?: number
         }
@@ -1495,13 +1515,17 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           data_fechamento?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
           dia?: number | null
           fechado?: boolean | null
           fechado_por?: string | null
           id?: number
           mes?: number | null
           nome?: string
+          observacoes_pagamento?: string | null
           semana?: number | null
+          status_pagamento?: string | null
           updated_at?: string | null
           valor?: number
         }
@@ -9109,6 +9133,7 @@ export type Database = {
         Returns: number
       }
       current_user_email: { Args: never; Returns: string }
+      fn_check_overdue_expenses: { Args: never; Returns: undefined }
       generate_2fa_code: { Args: never; Returns: string }
       get_all_users_last_access: {
         Args: never
