@@ -778,16 +778,47 @@ export default function FinancasEmpresa() {
                     </span>
                   </div>
 
-                  {/* Status */}
-                  <div className="col-span-2 md:col-span-2 flex items-center justify-center">
-                    <Badge className={cn(
-                      "text-xs font-medium px-2.5 py-1 gap-1.5",
-                      statusConfig.bg, 
-                      statusConfig.text
-                    )}>
-                      <StatusIcon className="h-3 w-3" />
-                      <span className="capitalize">{item.statusKey}</span>
-                    </Badge>
+                  {/* Status - Clicável para mudar */}
+                  <div 
+                    className="col-span-2 md:col-span-2 flex items-center justify-center"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className={cn(
+                          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-all hover:opacity-80 hover:scale-105",
+                          statusConfig.bg, 
+                          statusConfig.text
+                        )}>
+                          <StatusIcon className="h-3 w-3" />
+                          <span className="capitalize">{item.statusKey}</span>
+                          <ChevronDown className="h-3 w-3 opacity-60" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="center" className="min-w-[140px]">
+                        <DropdownMenuItem 
+                          onClick={() => handleStatusChange(item, 'pago')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <Check className="h-4 w-4 text-green-500" />
+                          <span>Pago</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleStatusChange(item, 'pendente')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <Clock className="h-4 w-4 text-yellow-500" />
+                          <span>Pendente</span>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem 
+                          onClick={() => handleStatusChange(item, 'atrasado')}
+                          className="gap-2 cursor-pointer"
+                        >
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                          <span>Atrasado</span>
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </motion.div>
               );
