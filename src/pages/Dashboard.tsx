@@ -697,7 +697,7 @@ export default function Dashboard() {
             icon={CreditCard}
             variant="red"
             delay={9}
-            href="/pagamentos"
+            href="/financas-empresa"
           />
           <StatCard
             title="Pendências Site"

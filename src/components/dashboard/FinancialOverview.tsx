@@ -176,7 +176,7 @@ export function FinancialOverview({
           </motion.button>
           {pendingPayments > 0 && (
             <motion.button
-              onClick={() => navigate("/pagamentos")}
+              onClick={() => navigate("/financas-empresa")}
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
               className="col-span-2 flex items-center justify-between p-3 rounded-lg bg-[hsl(var(--stats-gold))]/10 border border-[hsl(var(--stats-gold))]/20 hover:border-[hsl(var(--stats-gold))]/40 transition-all group"
