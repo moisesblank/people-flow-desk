@@ -7421,6 +7421,169 @@ export type Database = {
           },
         ]
       }
+      youtube_live_attendance: {
+        Row: {
+          aluno_id: string | null
+          id: string
+          interactions: number | null
+          joined_at: string | null
+          left_at: string | null
+          live_id: string | null
+          watch_time_minutes: number | null
+          xp_earned: number | null
+        }
+        Insert: {
+          aluno_id?: string | null
+          id?: string
+          interactions?: number | null
+          joined_at?: string | null
+          left_at?: string | null
+          live_id?: string | null
+          watch_time_minutes?: number | null
+          xp_earned?: number | null
+        }
+        Update: {
+          aluno_id?: string | null
+          id?: string
+          interactions?: number | null
+          joined_at?: string | null
+          left_at?: string | null
+          live_id?: string | null
+          watch_time_minutes?: number | null
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youtube_live_attendance_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "youtube_live_attendance_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_lives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      youtube_live_chat: {
+        Row: {
+          author_channel_id: string | null
+          author_name: string | null
+          created_at: string | null
+          id: string
+          is_member: boolean | null
+          is_moderator: boolean | null
+          is_owner: boolean | null
+          live_id: string | null
+          message: string | null
+          published_at: string | null
+          super_chat_amount: number | null
+          video_id: string | null
+        }
+        Insert: {
+          author_channel_id?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_member?: boolean | null
+          is_moderator?: boolean | null
+          is_owner?: boolean | null
+          live_id?: string | null
+          message?: string | null
+          published_at?: string | null
+          super_chat_amount?: number | null
+          video_id?: string | null
+        }
+        Update: {
+          author_channel_id?: string | null
+          author_name?: string | null
+          created_at?: string | null
+          id?: string
+          is_member?: boolean | null
+          is_moderator?: boolean | null
+          is_owner?: boolean | null
+          live_id?: string | null
+          message?: string | null
+          published_at?: string | null
+          super_chat_amount?: number | null
+          video_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youtube_live_chat_live_id_fkey"
+            columns: ["live_id"]
+            isOneToOne: false
+            referencedRelation: "youtube_lives"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      youtube_lives: {
+        Row: {
+          actual_end: string | null
+          actual_start: string | null
+          aula_id: string | null
+          created_at: string | null
+          curso_id: string | null
+          descricao: string | null
+          id: string
+          max_viewers: number | null
+          scheduled_start: string | null
+          status: string | null
+          thumbnail_url: string | null
+          titulo: string
+          total_chat_messages: number | null
+          updated_at: string | null
+          video_id: string
+        }
+        Insert: {
+          actual_end?: string | null
+          actual_start?: string | null
+          aula_id?: string | null
+          created_at?: string | null
+          curso_id?: string | null
+          descricao?: string | null
+          id?: string
+          max_viewers?: number | null
+          scheduled_start?: string | null
+          status?: string | null
+          thumbnail_url?: string | null
+          titulo: string
+          total_chat_messages?: number | null
+          updated_at?: string | null
+          video_id: string
+        }
+        Update: {
+          actual_end?: string | null
+          actual_start?: string | null
+          aula_id?: string | null
+          created_at?: string | null
+          curso_id?: string | null
+          descricao?: string | null
+          id?: string
+          max_viewers?: number | null
+          scheduled_start?: string | null
+          status?: string | null
+          thumbnail_url?: string | null
+          titulo?: string
+          total_chat_messages?: number | null
+          updated_at?: string | null
+          video_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "youtube_lives_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       youtube_metrics: {
         Row: {
           channel_id: string | null
@@ -7465,36 +7628,60 @@ export type Database = {
       }
       youtube_videos: {
         Row: {
+          actual_start_time: string | null
           channel_id: string | null
           comentarios: number | null
+          concurrent_viewers: number | null
           created_at: string
+          descricao: string | null
+          duracao: string | null
           id: string
+          is_live: boolean | null
           likes: number | null
+          live_status: string | null
           publicado_em: string | null
+          scheduled_start_time: string | null
+          thumbnail_url: string | null
           titulo: string | null
           updated_at: string
           video_id: string
           visualizacoes: number | null
         }
         Insert: {
+          actual_start_time?: string | null
           channel_id?: string | null
           comentarios?: number | null
+          concurrent_viewers?: number | null
           created_at?: string
+          descricao?: string | null
+          duracao?: string | null
           id?: string
+          is_live?: boolean | null
           likes?: number | null
+          live_status?: string | null
           publicado_em?: string | null
+          scheduled_start_time?: string | null
+          thumbnail_url?: string | null
           titulo?: string | null
           updated_at?: string
           video_id: string
           visualizacoes?: number | null
         }
         Update: {
+          actual_start_time?: string | null
           channel_id?: string | null
           comentarios?: number | null
+          concurrent_viewers?: number | null
           created_at?: string
+          descricao?: string | null
+          duracao?: string | null
           id?: string
+          is_live?: boolean | null
           likes?: number | null
+          live_status?: string | null
           publicado_em?: string | null
+          scheduled_start_time?: string | null
+          thumbnail_url?: string | null
           titulo?: string | null
           updated_at?: string
           video_id?: string
