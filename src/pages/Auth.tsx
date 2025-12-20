@@ -7,6 +7,7 @@
 // ============================================
 
 import { useState, useEffect, lazy, Suspense } from "react";
+import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
 import { 
   Mail, 
@@ -138,10 +139,41 @@ export default function Auth() {
     uploadImage 
   } = useEditableContent("auth");
 
+  // =====================================================
+  // AUDITORIA: Stats reais do banco - nenhum valor fictício
+  // Se não houver dados, mostra 0
+  // =====================================================
+  const [realStats, setRealStats] = useState({ alunos: 0, aprovados: 0 });
+  
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        // Buscar total de alunos
+        const { count: alunosCount } = await supabase
+          .from("alunos")
+          .select("*", { count: "exact", head: true });
+        
+        // Buscar alunos ativos (considerados "aprovados" no sistema)
+        const { count: aprovadosCount } = await supabase
+          .from("alunos")
+          .select("*", { count: "exact", head: true })
+          .eq("status", "ativo");
+        
+        setRealStats({
+          alunos: alunosCount || 0,
+          aprovados: aprovadosCount || 0
+        });
+      } catch (error) {
+        console.error("[AUDIT] Erro ao buscar stats:", error);
+      }
+    };
+    fetchStats();
+  }, []);
+
   const stats = [
-    { value: "12.847+", label: "Alunos" },
-    { value: "4.892+", label: "Aprovados" },
-    { value: "98%", label: "Satisfação" },
+    { value: realStats.alunos > 0 ? `${realStats.alunos.toLocaleString("pt-BR")}+` : "0", label: "Alunos" },
+    { value: realStats.aprovados > 0 ? `${realStats.aprovados.toLocaleString("pt-BR")}+` : "0", label: "Ativos" },
+    { value: "0%", label: "Satisfação" }, // TODO: Implementar sistema de avaliação
   ];
   
   const [isLogin, setIsLogin] = useState(true);

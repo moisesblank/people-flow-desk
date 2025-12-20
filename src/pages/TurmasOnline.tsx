@@ -14,49 +14,89 @@ import {
   BarChart3
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import professorImage from "@/assets/professor-moises.jpg";
 
-const turmasOnline = [
-  {
-    id: 1,
-    name: "Turma ENEM 2025 - Extensivo",
-    students: 847,
-    progress: 35,
-    status: "ativo",
-    rating: 4.9,
-    completionRate: 78,
-    nextClass: "Hoje, 19h",
-  },
-  {
-    id: 2,
-    name: "Intensivão Química - Janeiro",
-    students: 234,
-    progress: 0,
-    status: "matriculas_abertas",
-    rating: null,
-    completionRate: null,
-    nextClass: "15/01/2025",
-  },
-  {
-    id: 3,
-    name: "Turma ENEM 2024 - Revisão Final",
-    students: 1250,
-    progress: 100,
-    status: "concluido",
-    rating: 4.8,
-    completionRate: 92,
-    nextClass: null,
-  },
-];
-
-const stats = [
-  { label: "Total de Alunos", value: "2.331", icon: Users, color: "text-blue-500" },
-  { label: "Turmas Ativas", value: "2", icon: Monitor, color: "text-emerald-500" },
-  { label: "Aulas Ministradas", value: "156", icon: PlayCircle, color: "text-purple-500" },
-  { label: "Taxa de Conclusão", value: "85%", icon: TrendingUp, color: "text-amber-500" },
-];
+// =====================================================
+// AUDITORIA: Todos os dados vêm do banco de dados
+// Nenhum valor fictício - se não houver dados, mostra 0
+// =====================================================
 
 export default function TurmasOnline() {
+  // Buscar alunos ativos do banco
+  const { data: alunosData } = useQuery({
+    queryKey: ["turmas-alunos-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("alunos")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "ativo");
+      if (error) {
+        console.error("[AUDIT] Erro ao buscar alunos:", error);
+        return 0;
+      }
+      return count || 0;
+    }
+  });
+
+  // Buscar cursos/turmas do banco
+  const { data: cursosData } = useQuery({
+    queryKey: ["turmas-cursos-count"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("courses")
+        .select("*");
+      if (error) {
+        console.error("[AUDIT] Erro ao buscar cursos:", error);
+        return [];
+      }
+      return data || [];
+    }
+  });
+
+  // Buscar aulas do banco
+  const { data: aulasData } = useQuery({
+    queryKey: ["turmas-aulas-count"],
+    queryFn: async () => {
+      const { count, error } = await supabase
+        .from("lessons")
+        .select("*", { count: "exact", head: true });
+      if (error) {
+        console.error("[AUDIT] Erro ao buscar aulas:", error);
+        return 0;
+      }
+      return count || 0;
+    }
+  });
+
+  // Valores REAIS do banco - sem mock
+  const totalAlunos = alunosData || 0;
+  const turmasAtivas = cursosData?.filter(c => c.is_published)?.length || 0;
+  const aulasMinstradas = aulasData || 0;
+  
+  // Taxa de conclusão real (baseada em dados do banco ou 0 se não disponível)
+  const taxaConclusao = 0; // TODO: Calcular de course_enrollments quando houver dados
+
+  const stats = [
+    { label: "Total de Alunos", value: totalAlunos.toLocaleString("pt-BR"), icon: Users, color: "text-blue-500" },
+    { label: "Turmas Ativas", value: turmasAtivas.toString(), icon: Monitor, color: "text-emerald-500" },
+    { label: "Aulas Ministradas", value: aulasMinstradas.toLocaleString("pt-BR"), icon: PlayCircle, color: "text-purple-500" },
+    { label: "Taxa de Conclusão", value: `${taxaConclusao}%`, icon: TrendingUp, color: "text-amber-500" },
+  ];
+
+  // Turmas do banco
+  const turmasOnline = cursosData?.map(curso => ({
+    id: curso.id,
+    name: curso.title,
+    students: 0, // TODO: Buscar de course_enrollments
+    progress: 0,
+    status: curso.is_published ? "ativo" : "rascunho",
+    rating: null,
+    completionRate: null,
+    nextClass: null,
+  })) || [];
+
   const getStatusBadge = (status: string) => {
     switch (status) {
       case "ativo":
@@ -65,6 +105,8 @@ export default function TurmasOnline() {
         return <Badge className="bg-blue-500">Matrículas Abertas</Badge>;
       case "concluido":
         return <Badge variant="secondary">Concluído</Badge>;
+      case "rascunho":
+        return <Badge variant="outline">Rascunho</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
     }

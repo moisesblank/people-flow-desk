@@ -161,15 +161,67 @@ export default function DashboardEmpresarial() {
         value
       }));
 
-      // Evolução mensal (dados reais do mês atual)
-      const evolucaoMensal = [
-        { mes: "Jul", receitas: 45000, despesas: 28000, lucro: 17000 },
-        { mes: "Ago", receitas: 52000, despesas: 31000, lucro: 21000 },
-        { mes: "Set", receitas: 48000, despesas: 29000, lucro: 19000 },
-        { mes: "Out", receitas: 61000, despesas: 35000, lucro: 26000 },
-        { mes: "Nov", receitas: 58000, despesas: 33000, lucro: 25000 },
-        { mes: "Dez", receitas: totalReceitas / 100, despesas: totalDespesas / 100, lucro: lucroLiquido / 100 },
-      ];
+      // =====================================================
+      // AUDITORIA: Evolução mensal com dados REAIS do banco
+      // Buscar fechamentos mensais ou calcular em tempo real
+      // =====================================================
+      const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const anoAtual = new Date().getFullYear();
+      const mesAtual = new Date().getMonth();
+      
+      // Buscar fechamentos mensais
+      const { data: fechamentosMensais } = await supabase
+        .from("company_monthly_closures")
+        .select("*")
+        .eq("ano", anoAtual)
+        .order("mes", { ascending: true });
+
+      // Construir evolução mensal a partir de fechamentos reais
+      const evolucaoMensal = meses.slice(0, mesAtual + 1).map((mes, index) => {
+        const fechamento = fechamentosMensais?.find(f => f.mes === index + 1);
+        
+        if (fechamento) {
+          // Usar dados do fechamento
+          return {
+            mes,
+            receitas: Number(fechamento.total_receitas || 0) / 100,
+            despesas: (Number(fechamento.total_gastos_fixos || 0) + Number(fechamento.total_gastos_extras || 0)) / 100,
+            lucro: Number(fechamento.saldo_periodo || 0) / 100
+          };
+        }
+        
+        // Para o mês atual, usar dados calculados
+        if (index === mesAtual) {
+          return {
+            mes,
+            receitas: totalReceitas / 100,
+            despesas: totalDespesas / 100,
+            lucro: lucroLiquido / 100
+          };
+        }
+        
+        // Sem dados para este mês
+        return { mes, receitas: 0, despesas: 0, lucro: 0 };
+      }).filter(m => m.receitas > 0 || m.despesas > 0); // Mostrar apenas meses com dados
+
+      // Calcular crescimento real (comparar com mês anterior)
+      let crescimentoReceita = 0;
+      let crescimentoDespesas = 0;
+      
+      if (fechamentosMensais && fechamentosMensais.length > 0) {
+        const mesAnterior = fechamentosMensais.find(f => f.mes === mesAtual); // mês anterior (0-indexed vs 1-indexed)
+        if (mesAnterior && totalReceitas > 0) {
+          const receitaAnterior = Number(mesAnterior.total_receitas || 0);
+          const despesaAnterior = Number(mesAnterior.total_gastos_fixos || 0) + Number(mesAnterior.total_gastos_extras || 0);
+          
+          if (receitaAnterior > 0) {
+            crescimentoReceita = ((totalReceitas - receitaAnterior) / receitaAnterior) * 100;
+          }
+          if (despesaAnterior > 0) {
+            crescimentoDespesas = ((totalDespesas - despesaAnterior) / despesaAnterior) * 100;
+          }
+        }
+      }
 
       return {
         totalReceitas,
@@ -185,8 +237,8 @@ export default function DashboardEmpresarial() {
         alunos: alunos || 0,
         gastosPorCategoria,
         evolucaoMensal,
-        crescimentoReceita: 12.5,
-        crescimentoDespesas: -3.2,
+        crescimentoReceita,
+        crescimentoDespesas,
         alertas: [
           ...(lucroLiquido < 0 ? [{ titulo: "Lucro Negativo", descricao: "As despesas superaram as receitas este mês" }] : []),
           ...(totalAtrasado > 0 ? [{ titulo: "Pagamentos Atrasados", descricao: `R$ ${(totalAtrasado / 100).toLocaleString('pt-BR')} em despesas atrasadas` }] : [])

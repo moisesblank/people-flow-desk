@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -263,15 +263,36 @@ export default function ReceitasEmpresariais() {
     }
   ];
 
-  // Dados para gráfico de área
-  const chartData = [
-    { name: "Jan", hotmart: 45000, stone: 12000, asaas: 8000, outros: 5000 },
-    { name: "Fev", hotmart: 52000, stone: 15000, asaas: 10000, outros: 7000 },
-    { name: "Mar", hotmart: 48000, stone: 18000, asaas: 12000, outros: 6000 },
-    { name: "Abr", hotmart: 61000, stone: 20000, asaas: 15000, outros: 8000 },
-    { name: "Mai", hotmart: 55000, stone: 22000, asaas: 18000, outros: 9000 },
-    { name: "Jun", hotmart: 67000, stone: 25000, asaas: 20000, outros: 10000 }
-  ];
+  // Dados REAIS para gráfico de área - agregados do banco
+  const chartData = useMemo(() => {
+    const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+    const anoAtual = new Date().getFullYear();
+    
+    return meses.map((mes, index) => {
+      // Filtrar entradas por mês
+      const entradasMes = entradas?.filter(e => {
+        const dataEntrada = new Date(e.data || e.created_at);
+        return dataEntrada.getMonth() === index && dataEntrada.getFullYear() === anoAtual;
+      }) || [];
+      
+      // Filtrar transações Hotmart por mês
+      const hotmartMes = transacoesHotmart?.filter(t => {
+        const dataCompra = new Date(t.data_compra);
+        return dataCompra.getMonth() === index && dataCompra.getFullYear() === anoAtual;
+      }) || [];
+      
+      const totalHotmartMes = hotmartMes.reduce((acc, t) => acc + (t.valor_liquido || t.valor_bruto || 0), 0);
+      const totalOutrosMes = entradasMes.filter(e => !e.fonte || e.fonte === 'manual').reduce((acc, e) => acc + (e.valor || 0), 0);
+      
+      return {
+        name: mes,
+        hotmart: totalHotmartMes / 100, // Converter de centavos para reais
+        stone: 0, // Placeholder - integração pendente
+        asaas: 0, // Placeholder - integração pendente
+        outros: totalOutrosMes / 100
+      };
+    }).filter(d => d.hotmart > 0 || d.outros > 0); // Mostrar apenas meses com dados
+  }, [entradas, transacoesHotmart]);
 
   // Dados para gráfico de pizza
   const pieData = receitaSources.map(s => ({

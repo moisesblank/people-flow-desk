@@ -1,11 +1,13 @@
 // ============================================
 // EMPRESARIAL 2.0 - DASHBOARD EXECUTIVO AVANÇADO
 // Métricas preditivas e inteligência de negócios
-// Conforme documento AJUDA5
+// AUDITORIA: 100% dados reais do banco
 // ============================================
 
 import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import {
   TrendingUp,
   TrendingDown,
@@ -86,103 +88,6 @@ interface PredictiveInsight {
   actionable: boolean;
 }
 
-const mockKPIs: KPIMetric[] = [
-  {
-    id: "revenue",
-    title: "Receita Total",
-    value: 8500000, // centavos
-    previousValue: 7200000,
-    format: "currency",
-    icon: DollarSign,
-    color: "hsl(var(--stats-green))",
-    trend: "up",
-    target: 10000000,
-    prediction: 9200000,
-  },
-  {
-    id: "students",
-    title: "Alunos Ativos",
-    value: 127,
-    previousValue: 98,
-    format: "number",
-    icon: GraduationCap,
-    color: "hsl(var(--stats-blue))",
-    trend: "up",
-    target: 150,
-    prediction: 145,
-  },
-  {
-    id: "profit_margin",
-    title: "Margem de Lucro",
-    value: 62,
-    previousValue: 55,
-    format: "percentage",
-    icon: Target,
-    color: "hsl(var(--stats-purple))",
-    trend: "up",
-    target: 70,
-    prediction: 65,
-  },
-  {
-    id: "conversion",
-    title: "Taxa de Conversão",
-    value: 8.3,
-    previousValue: 6.1,
-    format: "percentage",
-    icon: Activity,
-    color: "hsl(var(--stats-gold))",
-    trend: "up",
-    target: 10,
-    prediction: 9.5,
-  },
-];
-
-const mockInsights: PredictiveInsight[] = [
-  {
-    id: "1",
-    type: "opportunity",
-    title: "Potencial de crescimento detectado",
-    description: "Baseado nos padrões de matrícula, o próximo mês terá 23% mais alunos novos.",
-    impact: "Aumento de R$ 12.000 em receita",
-    confidence: 87,
-    actionable: true,
-  },
-  {
-    id: "2",
-    type: "risk",
-    title: "Despesas acima do esperado",
-    description: "As despesas operacionais estão 15% acima da média dos últimos 3 meses.",
-    impact: "Redução de R$ 3.500 no lucro",
-    confidence: 92,
-    actionable: true,
-  },
-  {
-    id: "3",
-    type: "trend",
-    title: "Engajamento em alta",
-    description: "O tempo médio de estudo dos alunos aumentou 40% este mês.",
-    impact: "Melhora na retenção e NPS",
-    confidence: 78,
-    actionable: false,
-  },
-];
-
-const monthlyData = [
-  { month: "Jan", receita: 45000, despesas: 25000, lucro: 20000, alunos: 85 },
-  { month: "Fev", receita: 52000, despesas: 28000, lucro: 24000, alunos: 92 },
-  { month: "Mar", receita: 48000, despesas: 26000, lucro: 22000, alunos: 89 },
-  { month: "Abr", receita: 61000, despesas: 30000, lucro: 31000, alunos: 105 },
-  { month: "Mai", receita: 72000, despesas: 32000, lucro: 40000, alunos: 118 },
-  { month: "Jun", receita: 85000, despesas: 35000, lucro: 50000, alunos: 127 },
-];
-
-const performanceData = [
-  { name: "Química Geral", value: 85, fill: "hsl(var(--stats-green))" },
-  { name: "Química Orgânica", value: 72, fill: "hsl(var(--stats-blue))" },
-  { name: "Físico-Química", value: 68, fill: "hsl(var(--stats-purple))" },
-  { name: "Química Analítica", value: 91, fill: "hsl(var(--stats-gold))" },
-];
-
 function formatCurrency(cents: number): string {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -198,7 +103,6 @@ function formatValue(value: number, format: KPIMetric["format"]): string {
       return `${value.toFixed(1)}%`;
     default:
       return value.toLocaleString("pt-BR");
-  }
 }
 
 export function ExecutiveDashboardAdvanced() {
@@ -206,9 +110,192 @@ export function ExecutiveDashboardAdvanced() {
   const [period, setPeriod] = useState("month");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  const handleRefresh = () => {
+  // =====================================================
+  // AUDITORIA: Buscar dados REAIS do banco de dados
+  // Nenhum valor fictício - 0 se não houver dados
+  // =====================================================
+  const { data: realData, refetch } = useQuery({
+    queryKey: ["executive-dashboard-real", period],
+    queryFn: async () => {
+      // Buscar receitas do mês atual
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+      
+      const { data: entradas } = await supabase
+        .from("entradas")
+        .select("valor")
+        .gte("created_at", startOfMonth.toISOString());
+      
+      const totalReceita = (entradas || []).reduce((acc, e) => acc + (e.valor || 0), 0);
+
+      // Buscar gastos fixos e extras
+      const mesAtual = new Date().getMonth() + 1;
+      const anoAtual = new Date().getFullYear();
+      
+      const [fixosRes, extrasRes] = await Promise.all([
+        supabase.from("company_fixed_expenses").select("valor").eq("mes", mesAtual).eq("ano", anoAtual),
+        supabase.from("company_extra_expenses").select("valor").eq("mes", mesAtual).eq("ano", anoAtual),
+      ]);
+      
+      const totalGastos = [
+        ...(fixosRes.data || []),
+        ...(extrasRes.data || [])
+      ].reduce((acc, g) => acc + (g.valor || 0), 0);
+
+      // Alunos ativos
+      const { count: alunosAtivos } = await supabase
+        .from("alunos")
+        .select("*", { count: "exact", head: true })
+        .eq("status", "ativo");
+
+      // Lucro e margem
+      const lucro = totalReceita - totalGastos;
+      const margem = totalReceita > 0 ? (lucro / totalReceita) * 100 : 0;
+
+      // Buscar fechamentos mensais para evolução
+      const { data: fechamentos } = await supabase
+        .from("company_monthly_closures")
+        .select("*")
+        .eq("ano", anoAtual)
+        .order("mes", { ascending: true });
+
+      const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      const monthlyData = meses.map((month, index) => {
+        const fechamento = (fechamentos || []).find(f => f.mes === index + 1);
+        if (fechamento) {
+          return {
+            month,
+            receita: Number(fechamento.total_receitas || 0) / 100,
+            despesas: (Number(fechamento.total_gastos_fixos || 0) + Number(fechamento.total_gastos_extras || 0)) / 100,
+            lucro: Number(fechamento.saldo_periodo || 0) / 100,
+            alunos: 0 // TODO: histórico de alunos por mês
+          };
+        }
+        // Mês atual
+        if (index + 1 === mesAtual) {
+          return {
+            month,
+            receita: totalReceita / 100,
+            despesas: totalGastos / 100,
+            lucro: lucro / 100,
+            alunos: alunosAtivos || 0
+          };
+        }
+        return { month, receita: 0, despesas: 0, lucro: 0, alunos: 0 };
+      }).filter(m => m.receita > 0 || m.despesas > 0);
+
+      return {
+        totalReceita,
+        totalGastos,
+        lucro,
+        margem,
+        alunosAtivos: alunosAtivos || 0,
+        monthlyData
+      };
+    },
+    refetchInterval: 30000
+  });
+
+  // KPIs dinâmicos baseados em dados reais
+  const realKPIs: KPIMetric[] = useMemo(() => [
+    {
+      id: "revenue",
+      title: "Receita Total",
+      value: realData?.totalReceita || 0,
+      previousValue: 1, // Evitar divisão por zero
+      format: "currency",
+      icon: DollarSign,
+      color: "hsl(var(--stats-green))",
+      trend: (realData?.totalReceita || 0) > 0 ? "up" : "stable",
+      target: 0, // TODO: Definir metas no banco
+      prediction: 0,
+    },
+    {
+      id: "students",
+      title: "Alunos Ativos",
+      value: realData?.alunosAtivos || 0,
+      previousValue: 1,
+      format: "number",
+      icon: GraduationCap,
+      color: "hsl(var(--stats-blue))",
+      trend: (realData?.alunosAtivos || 0) > 0 ? "up" : "stable",
+      target: 0,
+      prediction: 0,
+    },
+    {
+      id: "profit_margin",
+      title: "Margem de Lucro",
+      value: realData?.margem || 0,
+      previousValue: 1,
+      format: "percentage",
+      icon: Target,
+      color: "hsl(var(--stats-purple))",
+      trend: (realData?.margem || 0) > 0 ? "up" : (realData?.margem || 0) < 0 ? "down" : "stable",
+      target: 0,
+      prediction: 0,
+    },
+    {
+      id: "gastos",
+      title: "Gastos Totais",
+      value: realData?.totalGastos || 0,
+      previousValue: 1,
+      format: "currency",
+      icon: Wallet,
+      color: "hsl(var(--stats-gold))",
+      trend: "stable",
+      target: 0,
+      prediction: 0,
+    },
+  ], [realData]);
+
+  // Insights dinâmicos baseados em dados reais
+  const realInsights: PredictiveInsight[] = useMemo(() => {
+    const insights: PredictiveInsight[] = [];
+    
+    if ((realData?.margem || 0) < 0) {
+      insights.push({
+        id: "risk-margin",
+        type: "risk",
+        title: "Margem de lucro negativa",
+        description: "Os gastos estão superando as receitas neste período.",
+        impact: `Prejuízo de ${formatCurrency(Math.abs(realData?.lucro || 0))}`,
+        confidence: 100,
+        actionable: true,
+      });
+    }
+    
+    if ((realData?.margem || 0) > 30) {
+      insights.push({
+        id: "opp-margin",
+        type: "opportunity",
+        title: "Boa margem de lucro",
+        description: `Sua margem de ${(realData?.margem || 0).toFixed(1)}% indica saúde financeira.`,
+        impact: "Oportunidade de investimento",
+        confidence: 100,
+        actionable: true,
+      });
+    }
+
+    if ((realData?.alunosAtivos || 0) === 0) {
+      insights.push({
+        id: "trend-alunos",
+        type: "trend",
+        title: "Nenhum aluno ativo registrado",
+        description: "Cadastre seus alunos para acompanhar métricas de crescimento.",
+        impact: "Melhoria no acompanhamento",
+        confidence: 100,
+        actionable: true,
+      });
+    }
+
+    return insights;
+  }, [realData]);
+
+  const handleRefresh = async () => {
     setIsRefreshing(true);
-    setTimeout(() => setIsRefreshing(false), 1500);
+    await refetch();
+    setIsRefreshing(false);
   };
 
   return (
@@ -266,7 +353,7 @@ export function ExecutiveDashboardAdvanced() {
 
       {/* KPIs Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {mockKPIs.map((kpi, index) => {
+        {realKPIs.map((kpi, index) => {
           const Icon = kpi.icon;
           const change = ((kpi.value - kpi.previousValue) / kpi.previousValue) * 100;
           const targetProgress = kpi.target ? (kpi.value / kpi.target) * 100 : 0;
@@ -419,7 +506,7 @@ export function ExecutiveDashboardAdvanced() {
           <CardContent>
             <ScrollArea className="h-[280px]">
               <div className="space-y-3 pr-2">
-                {mockInsights.map((insight, index) => (
+                {realInsights.map((insight, index) => (
                   <motion.div
                     key={insight.id}
                     initial={{ opacity: 0, x: -10 }}
