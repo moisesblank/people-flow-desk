@@ -128,54 +128,36 @@ export function ReactiveFinanceProvider({ children }: { children: React.ReactNod
     const startOfWeek = getStartOfWeek();
 
     try {
-      // Buscar todos os dados em paralelo
-      const [
-        entradasMes,
-        entradasHoje,
-        entradasSemana,
-        despesasMes,
-        despesasHoje,
-        despesasPessoais,
-        despesasEmpresa,
-        alunos,
-        funcionarios,
-        afiliados,
-        vendasHotmart,
-        tarefasHoje,
-        pagamentosPendentes,
-        entradasTotal,
-        despesasTotal
-      ] = await Promise.all([
-        // Entradas do mês
+      // Pegar mês e ano atual para filtros
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
+      
+      // Buscar dados financeiros
+      const [entradasMes, entradasHoje, entradasSemana, entradasTotal] = await Promise.all([
         supabase.from('entradas').select('valor').gte('created_at', startOfMonth),
-        // Entradas de hoje
         supabase.from('entradas').select('valor').gte('created_at', today),
-        // Entradas da semana
         supabase.from('entradas').select('valor').gte('created_at', startOfWeek),
-        // Despesas do mês (contas pagas)
-        supabase.from('contas_pagar').select('valor').eq('status', 'pago').gte('data_pagamento', startOfMonth),
-        // Despesas de hoje
-        supabase.from('contas_pagar').select('valor').eq('status', 'pago').eq('data_pagamento', today),
-        // Despesas pessoais do mês
-        supabase.from('personal_extra_expenses').select('valor').gte('data', startOfMonth),
-        // Despesas empresa do mês
-        supabase.from('company_extra_expenses').select('valor').gte('data', startOfMonth),
-        // Alunos ativos
-        supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
-        // Funcionários ativos
-        supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
-        // Afiliados ativos
-        supabase.from('affiliates').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
-        // Vendas Hotmart do mês
-        supabase.from('transacoes_hotmart_completo').select('id', { count: 'exact', head: true }).in('status', ['approved', 'purchase_approved']).gte('data_compra', startOfMonth),
-        // Tarefas de hoje
-        supabase.from('calendar_tasks').select('id, is_completed', { count: 'exact' }).eq('task_date', today),
-        // Pagamentos pendentes
-        supabase.from('contas_pagar').select('id', { count: 'exact', head: true }).eq('status', 'pendente'),
-        // Total de entradas (histórico)
         supabase.from('entradas').select('valor'),
-        // Total de despesas (histórico)
-        supabase.from('contas_pagar').select('valor').eq('status', 'pago'),
+      ]);
+      
+      // Buscar despesas
+      const despesasMesQuery = await supabase.from('contas_pagar').select('valor').eq('status', 'pago').gte('data_pagamento', startOfMonth);
+      const despesasHojeQuery = await supabase.from('contas_pagar').select('valor').eq('status', 'pago').eq('data_pagamento', today);
+      const despesasTotalQuery = await supabase.from('contas_pagar').select('valor').eq('status', 'pago');
+      
+      // Buscar despesas pessoais (usa campo 'data') e empresa (usa mes/ano)
+      const despesasPessoaisQuery = await (supabase.from('personal_extra_expenses' as any).select('valor').gte('data', startOfMonth) as any);
+      const despesasEmpresaExtras = await (supabase.from('company_extra_expenses' as any).select('valor').eq('mes', currentMonth).eq('ano', currentYear) as any);
+      const despesasEmpresaFixas = await (supabase.from('company_fixed_expenses' as any).select('valor').eq('mes', currentMonth).eq('ano', currentYear) as any);
+      
+      // Buscar contadores
+      const [alunos, funcionarios, afiliados, vendasHotmart, tarefasHoje, pagamentosPendentes] = await Promise.all([
+        supabase.from('alunos').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
+        supabase.from('employees').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
+        supabase.from('affiliates').select('id', { count: 'exact', head: true }).eq('status', 'ativo'),
+        supabase.from('transacoes_hotmart_completo').select('id', { count: 'exact', head: true }).in('status', ['approved', 'purchase_approved']).gte('data_compra', startOfMonth),
+        supabase.from('calendar_tasks').select('id, is_completed', { count: 'exact' }).eq('task_date', today),
+        supabase.from('contas_pagar').select('id', { count: 'exact', head: true }).eq('status', 'pendente'),
       ]);
 
       // Calcular valores
@@ -184,12 +166,14 @@ export function ReactiveFinanceProvider({ children }: { children: React.ReactNod
       const receitaSemana = (entradasSemana.data || []).reduce((sum, e) => sum + (e.valor || 0), 0);
       const receitaTotal = (entradasTotal.data || []).reduce((sum, e) => sum + (e.valor || 0), 0);
       
-      const despesaMesBase = (despesasMes.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
-      const despesaPessoal = (despesasPessoais.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
-      const despesaEmpresa = (despesasEmpresa.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
+      const despesaMesBase = (despesasMesQuery.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
+      const despesaPessoal = (despesasPessoaisQuery.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
+      const despesaEmpresaExtras = (despesasEmpresaExtras.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
+      const despesaEmpresaFixas = (despesasEmpresaFixas.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
+      const despesaEmpresa = despesaEmpresaExtras + despesaEmpresaFixas;
       const despesaMes = despesaMesBase + despesaPessoal + despesaEmpresa;
-      const despesaHoje = (despesasHoje.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
-      const despesaTotal = (despesasTotal.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
+      const despesaHoje = (despesasHojeQuery.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
+      const despesaTotal = (despesasTotalQuery.data || []).reduce((sum, d) => sum + (d.valor || 0), 0);
       
       // Saldos
       const saldoMes = receitaMes - despesaMes;
