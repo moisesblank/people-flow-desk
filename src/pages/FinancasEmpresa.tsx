@@ -11,7 +11,8 @@ import {
   Filter, Calendar, Paperclip, Receipt, Wallet, DollarSign,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search,
   MoreVertical, FolderOpen, FolderClosed, Lock, Archive, RefreshCw,
-  CalendarDays, CalendarRange, History, BarChart3, Sparkles, TrendingUp
+  CalendarDays, CalendarRange, History, BarChart3, Sparkles, TrendingUp,
+  CircleDollarSign, AlertTriangle, CheckCircle2, XCircle, Bell
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { useCompanyFinanceHistory, formatCompanyCurrency, type CompanyPeriodFilter, type CompanyExpense } from "@/hooks/useCompanyFinanceHistory";
+import { useCompanyFinanceHistory, formatCompanyCurrency, type CompanyPeriodFilter, type CompanyExpense, type PaymentStatus } from "@/hooks/useCompanyFinanceHistory";
 
 interface AttachmentCount {
   [key: string]: number;
@@ -90,7 +91,8 @@ export default function FinancasEmpresa() {
     isMonthClosed, isYearClosed,
     getMonthClosure, getYearClosure,
     yearsWithData, getMonthsWithData,
-    getMonthName
+    getMonthName,
+    updatePaymentStatus
   } = useCompanyFinanceHistory();
 
   // Estado local
@@ -110,6 +112,8 @@ export default function FinancasEmpresa() {
     valor: "",
     categoria: "",
     data: format(new Date(), "yyyy-MM-dd"),
+    data_vencimento: "",
+    status_pagamento: "pendente" as PaymentStatus,
   });
 
   // Combinar todos os gastos
@@ -185,6 +189,8 @@ export default function FinancasEmpresa() {
         valor: String(expense.valor / 100),
         categoria: expense.categoria || "",
         data: expense.data || format(new Date(), "yyyy-MM-dd"),
+        data_vencimento: expense.data_vencimento || "",
+        status_pagamento: expense.status_pagamento || "pendente",
       });
     } else {
       setEditingExpense(null);
@@ -193,9 +199,82 @@ export default function FinancasEmpresa() {
         valor: "",
         categoria: "",
         data: format(new Date(), "yyyy-MM-dd"),
+        data_vencimento: "",
+        status_pagamento: "pendente",
       });
     }
     setIsModalOpen(true);
+  };
+
+  // Handler para alterar status de pagamento (clique no botão)
+  const handleStatusClick = async (expense: CompanyExpense, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (expense.fechado) {
+      toast.error("Este gasto está fechado e não pode ser alterado");
+      return;
+    }
+    
+    // Ciclar entre os status: pendente -> pago -> atrasado -> pendente
+    const currentStatus = expense.status_pagamento || 'pendente';
+    let newStatus: PaymentStatus;
+    
+    if (currentStatus === 'pendente') {
+      newStatus = 'pago';
+    } else if (currentStatus === 'pago') {
+      newStatus = 'pendente';
+    } else {
+      newStatus = 'pago';
+    }
+    
+    await updatePaymentStatus(expense, newStatus);
+  };
+
+  // Renderizar badge de status clicável
+  const renderPaymentStatusBadge = (expense: CompanyExpense) => {
+    const status = expense.status_pagamento || 'pendente';
+    const isLocked = expense.fechado;
+    
+    const statusConfig = {
+      pago: {
+        label: "PAGO",
+        icon: CheckCircle2,
+        className: "bg-green-500/20 text-green-500 border-green-500/50 hover:bg-green-500/30",
+        bgActive: "bg-green-500 text-white"
+      },
+      pendente: {
+        label: "PENDENTE",
+        icon: Clock,
+        className: "bg-yellow-500/20 text-yellow-500 border-yellow-500/50 hover:bg-yellow-500/30",
+        bgActive: "bg-yellow-500 text-black"
+      },
+      atrasado: {
+        label: "ATRASADO",
+        icon: AlertTriangle,
+        className: "bg-red-500/20 text-red-500 border-red-500/50 hover:bg-red-500/30 animate-pulse",
+        bgActive: "bg-red-500 text-white"
+      }
+    };
+    
+    const config = statusConfig[status];
+    const Icon = config.icon;
+    
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={(e) => handleStatusClick(expense, e)}
+        disabled={isLocked}
+        className={cn(
+          "gap-1.5 font-bold text-xs px-3 py-1 h-8 border-2 transition-all",
+          config.className,
+          isLocked && "opacity-50 cursor-not-allowed"
+        )}
+      >
+        <Icon className="h-4 w-4" />
+        {config.label}
+      </Button>
+    );
   };
 
   const handleSave = async () => {
@@ -209,7 +288,7 @@ export default function FinancasEmpresa() {
     const dataRef = new Date(formData.data);
 
     try {
-      const baseData = {
+      const baseData: any = {
         nome: formData.nome,
         valor: valorCents,
         categoria: formData.categoria,
@@ -217,6 +296,8 @@ export default function FinancasEmpresa() {
         mes: dataRef.getMonth() + 1,
         semana: Math.ceil(dataRef.getDate() / 7),
         dia: dataRef.getDate(),
+        status_pagamento: formData.status_pagamento,
+        data_vencimento: formData.data_vencimento || null,
       };
 
       if (editingExpense) {
@@ -296,51 +377,92 @@ export default function FinancasEmpresa() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: 0.1 }}
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8"
+      className="space-y-4 mb-8"
     >
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-red-500">
-        <div className="flex items-center justify-between mb-3">
-          <Building2 className="h-6 w-6 text-red-500" />
-          <Badge variant="outline" className="text-xs">{fixedExpenses.length}</Badge>
+      {/* Primeira linha - Totais */}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <div className="glass-card rounded-2xl p-5 border-l-4 border-red-500">
+          <div className="flex items-center justify-between mb-3">
+            <Building2 className="h-6 w-6 text-red-500" />
+            <Badge variant="outline" className="text-xs">{fixedExpenses.length}</Badge>
+          </div>
+          <p className="text-2xl font-bold text-red-400">{formatCompanyCurrency(stats.totalGastosFixos)}</p>
+          <p className="text-sm text-muted-foreground">Gastos Fixos</p>
         </div>
-        <p className="text-2xl font-bold text-red-400">{formatCompanyCurrency(stats.totalGastosFixos)}</p>
-        <p className="text-sm text-muted-foreground">Gastos Fixos</p>
-      </div>
-      
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-blue-500">
-        <div className="flex items-center justify-between mb-3">
-          <Receipt className="h-6 w-6 text-blue-500" />
-          <Badge variant="outline" className="text-xs">{extraExpenses.length}</Badge>
+        
+        <div className="glass-card rounded-2xl p-5 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between mb-3">
+            <Receipt className="h-6 w-6 text-blue-500" />
+            <Badge variant="outline" className="text-xs">{extraExpenses.length}</Badge>
+          </div>
+          <p className="text-2xl font-bold text-blue-400">{formatCompanyCurrency(stats.totalGastosExtras)}</p>
+          <p className="text-sm text-muted-foreground">Gastos Extras</p>
         </div>
-        <p className="text-2xl font-bold text-blue-400">{formatCompanyCurrency(stats.totalGastosExtras)}</p>
-        <p className="text-sm text-muted-foreground">Gastos Extras</p>
+
+        <div className="glass-card rounded-2xl p-5 border-l-4 border-purple-500">
+          <div className="flex items-center justify-between mb-3">
+            <DollarSign className="h-6 w-6 text-purple-500" />
+            <Badge variant="outline" className="text-xs">{allExpenses.length}</Badge>
+          </div>
+          <p className="text-2xl font-bold text-purple-400">{formatCompanyCurrency(stats.totalGastos)}</p>
+          <p className="text-sm text-muted-foreground">Total Gastos</p>
+        </div>
+
+        <div className="glass-card rounded-2xl p-5 border-l-4 border-[hsl(var(--stats-green))]">
+          <div className="flex items-center justify-between mb-3">
+            <TrendingUp className="h-6 w-6 text-[hsl(var(--stats-green))]" />
+            <Badge variant="outline" className="text-xs">{entradas.length}</Badge>
+          </div>
+          <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">{formatCompanyCurrency(stats.totalReceitas)}</p>
+          <p className="text-sm text-muted-foreground">Receitas</p>
+        </div>
+
+        <div className="glass-card rounded-2xl p-5 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 gap-2">
+          <Button onClick={() => openModal('fixed')} className="gap-2 w-full" variant="outline">
+            <Plus className="h-4 w-4" /> Gasto Fixo
+          </Button>
+          <Button onClick={() => openModal('extra')} className="gap-2 w-full">
+            <Plus className="h-4 w-4" /> Gasto Extra
+          </Button>
+        </div>
       </div>
 
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-purple-500">
-        <div className="flex items-center justify-between mb-3">
-          <DollarSign className="h-6 w-6 text-purple-500" />
-          <Badge variant="outline" className="text-xs">{allExpenses.length}</Badge>
+      {/* Segunda linha - Status de Pagamento */}
+      <div className="grid gap-4 sm:grid-cols-3">
+        <div className="glass-card rounded-2xl p-5 border-l-4 border-green-500 bg-gradient-to-br from-green-500/5 to-green-500/10">
+          <div className="flex items-center justify-between mb-3">
+            <CheckCircle2 className="h-6 w-6 text-green-500" />
+            <Badge className="bg-green-500/20 text-green-500 text-xs">{stats.qtdPago}</Badge>
+          </div>
+          <p className="text-2xl font-bold text-green-400">{formatCompanyCurrency(stats.totalPago)}</p>
+          <p className="text-sm text-muted-foreground">Pagos</p>
         </div>
-        <p className="text-2xl font-bold text-purple-400">{formatCompanyCurrency(stats.totalGastos)}</p>
-        <p className="text-sm text-muted-foreground">Total Gastos</p>
-      </div>
-
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-[hsl(var(--stats-green))]">
-        <div className="flex items-center justify-between mb-3">
-          <TrendingUp className="h-6 w-6 text-[hsl(var(--stats-green))]" />
-          <Badge variant="outline" className="text-xs">{entradas.length}</Badge>
+        
+        <div className="glass-card rounded-2xl p-5 border-l-4 border-yellow-500 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10">
+          <div className="flex items-center justify-between mb-3">
+            <Clock className="h-6 w-6 text-yellow-500" />
+            <Badge className="bg-yellow-500/20 text-yellow-500 text-xs">{stats.qtdPendente}</Badge>
+          </div>
+          <p className="text-2xl font-bold text-yellow-400">{formatCompanyCurrency(stats.totalPendente)}</p>
+          <p className="text-sm text-muted-foreground">Pendentes</p>
         </div>
-        <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">{formatCompanyCurrency(stats.totalReceitas)}</p>
-        <p className="text-sm text-muted-foreground">Receitas</p>
-      </div>
 
-      <div className="glass-card rounded-2xl p-5 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 gap-2">
-        <Button onClick={() => openModal('fixed')} className="gap-2 w-full" variant="outline">
-          <Plus className="h-4 w-4" /> Gasto Fixo
-        </Button>
-        <Button onClick={() => openModal('extra')} className="gap-2 w-full">
-          <Plus className="h-4 w-4" /> Gasto Extra
-        </Button>
+        <div className={cn(
+          "glass-card rounded-2xl p-5 border-l-4 border-red-500 bg-gradient-to-br from-red-500/5 to-red-500/10",
+          stats.qtdAtrasado > 0 && "animate-pulse"
+        )}>
+          <div className="flex items-center justify-between mb-3">
+            <AlertTriangle className="h-6 w-6 text-red-500" />
+            <Badge className="bg-red-500/20 text-red-500 text-xs">{stats.qtdAtrasado}</Badge>
+          </div>
+          <p className="text-2xl font-bold text-red-400">{formatCompanyCurrency(stats.totalAtrasado)}</p>
+          <p className="text-sm text-muted-foreground">Atrasados</p>
+          {stats.qtdAtrasado > 0 && (
+            <div className="flex items-center gap-1 mt-2 text-xs text-red-400">
+              <Bell className="h-3 w-3" /> Alerta no calendário
+            </div>
+          )}
+        </div>
       </div>
     </motion.section>
   );
@@ -610,6 +732,7 @@ export default function FinancasEmpresa() {
                     <th className="text-left p-4 text-sm font-bold text-white">Categoria</th>
                     <th className="text-left p-4 text-sm font-bold text-white">Data</th>
                     <th className="text-right p-4 text-sm font-bold text-white">Valor</th>
+                    <th className="text-center p-4 text-sm font-bold text-white">Status</th>
                     <th className="text-center p-4 text-sm font-bold text-white">Anexos</th>
                     <th className="text-right p-4 text-sm font-bold text-white">Ações</th>
                   </tr>
@@ -660,6 +783,9 @@ export default function FinancasEmpresa() {
                           </td>
                           <td className="p-4 text-right font-semibold text-red-400">
                             {formatCompanyCurrency(expense.valor)}
+                          </td>
+                          <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
+                            {renderPaymentStatusBadge(expense)}
                           </td>
                           <td className="p-4 text-center">
                             <Badge
@@ -877,6 +1003,46 @@ export default function FinancasEmpresa() {
                     ))}
                   </SelectContent>
                 </Select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="font-bold text-white">Data Vencimento</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_vencimento}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                    className="mt-1.5"
+                  />
+                </div>
+                <div>
+                  <Label className="font-bold text-white">Status Pagamento</Label>
+                  <Select 
+                    value={formData.status_pagamento} 
+                    onValueChange={(v) => setFormData(prev => ({ ...prev, status_pagamento: v as PaymentStatus }))}
+                  >
+                    <SelectTrigger className="mt-1.5">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pendente">
+                        <span className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-yellow-500" /> Pendente
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="pago">
+                        <span className="flex items-center gap-2">
+                          <CheckCircle2 className="h-4 w-4 text-green-500" /> Pago
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="atrasado">
+                        <span className="flex items-center gap-2">
+                          <AlertTriangle className="h-4 w-4 text-red-500" /> Atrasado
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
 
               {editingExpense && (

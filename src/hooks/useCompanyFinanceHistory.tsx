@@ -23,6 +23,8 @@ export type CompanyPeriodFilter =
   | "50anos"
   | "custom";
 
+export type PaymentStatus = 'pendente' | 'pago' | 'atrasado';
+
 export interface CompanyExpense {
   id: number;
   nome: string;
@@ -37,6 +39,10 @@ export interface CompanyExpense {
   created_at?: string;
   updated_at?: string;
   type: 'fixed' | 'extra';
+  status_pagamento?: PaymentStatus;
+  data_vencimento?: string | null;
+  data_pagamento?: string | null;
+  observacoes_pagamento?: string | null;
 }
 
 export interface CompanyMonthlyClosure {
@@ -80,6 +86,12 @@ export interface CompanyFinanceStats {
   qtdGastosFixos: number;
   qtdGastosExtras: number;
   qtdEntradas: number;
+  totalPago: number;
+  totalPendente: number;
+  totalAtrasado: number;
+  qtdPago: number;
+  qtdPendente: number;
+  qtdAtrasado: number;
 }
 
 function getMonthName(month: number): string {
@@ -267,9 +279,15 @@ export function useCompanyFinanceHistory() {
 
   // Estatísticas do período atual
   const stats = useMemo((): CompanyFinanceStats => {
+    const allExpenses = [...fixedExpenses, ...extraExpenses];
     const totalGastosFixos = fixedExpenses.reduce((acc, e) => acc + (e.valor || 0), 0);
     const totalGastosExtras = extraExpenses.reduce((acc, e) => acc + (e.valor || 0), 0);
     const totalReceitas = entradas.reduce((acc, e) => acc + (e.valor || 0), 0);
+    
+    // Cálculos por status de pagamento
+    const pagoExpenses = allExpenses.filter(e => e.status_pagamento === 'pago');
+    const pendenteExpenses = allExpenses.filter(e => e.status_pagamento === 'pendente' || !e.status_pagamento);
+    const atrasadoExpenses = allExpenses.filter(e => e.status_pagamento === 'atrasado');
 
     return {
       totalGastosFixos,
@@ -279,7 +297,13 @@ export function useCompanyFinanceHistory() {
       saldo: totalReceitas - (totalGastosFixos + totalGastosExtras),
       qtdGastosFixos: fixedExpenses.length,
       qtdGastosExtras: extraExpenses.length,
-      qtdEntradas: entradas.length
+      qtdEntradas: entradas.length,
+      totalPago: pagoExpenses.reduce((acc, e) => acc + (e.valor || 0), 0),
+      totalPendente: pendenteExpenses.reduce((acc, e) => acc + (e.valor || 0), 0),
+      totalAtrasado: atrasadoExpenses.reduce((acc, e) => acc + (e.valor || 0), 0),
+      qtdPago: pagoExpenses.length,
+      qtdPendente: pendenteExpenses.length,
+      qtdAtrasado: atrasadoExpenses.length
     };
   }, [fixedExpenses, extraExpenses, entradas]);
 
@@ -552,6 +576,43 @@ export function useCompanyFinanceHistory() {
     setIsLoading(false);
   }, [fetchFixedExpenses, fetchExtraExpenses, fetchEntradas, fetchMonthlyClosures, fetchYearlyClosures]);
 
+  // Atualizar status de pagamento de um gasto
+  const updatePaymentStatus = useCallback(async (
+    expense: CompanyExpense, 
+    newStatus: PaymentStatus
+  ) => {
+    const table = expense.type === 'fixed' ? 'company_fixed_expenses' : 'company_extra_expenses';
+    
+    try {
+      const updateData: any = {
+        status_pagamento: newStatus,
+        updated_at: new Date().toISOString()
+      };
+      
+      if (newStatus === 'pago') {
+        updateData.data_pagamento = new Date().toISOString();
+      }
+      
+      const { error } = await supabase
+        .from(table)
+        .update(updateData)
+        .eq('id', expense.id);
+      
+      if (error) throw error;
+      
+      toast.success(
+        newStatus === 'pago' 
+          ? `✅ "${expense.nome}" marcado como PAGO!` 
+          : `⏳ "${expense.nome}" marcado como ${newStatus.toUpperCase()}`
+      );
+      
+      await refresh();
+    } catch (error: any) {
+      console.error('Error updating payment status:', error);
+      toast.error(error.message || 'Erro ao atualizar status');
+    }
+  }, [refresh]);
+
   return {
     // Estado
     period,
@@ -581,6 +642,7 @@ export function useCompanyFinanceHistory() {
     closeMonth,
     closeYear,
     refresh,
+    updatePaymentStatus,
     
     // Helpers
     isMonthClosed,
