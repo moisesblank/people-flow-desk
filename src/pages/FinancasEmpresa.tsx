@@ -1,18 +1,23 @@
 // ============================================
-// CENTRAL FINANÇAS EMPRESA v2.0
-// Estilo Softcom - Igual à Central de Pagamentos
-// Multi-CNPJ, Histórico 50 Anos, Anexos Funcionais
+// MOISÉS MEDEIROS v15.0 - ENTERPRISE FINANCE VAULT
+// Sistema Financeiro de Multinacional - Ano 2300
+// Central Financeira Futurística com IA
 // ============================================
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import {
+import { 
   Building2, Plus, Check, Clock, AlertCircle, Trash2, Edit2,
   Filter, Calendar, Paperclip, Receipt, Wallet, DollarSign,
   ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search,
   MoreVertical, FolderOpen, FolderClosed, Lock, Archive, RefreshCw,
   CalendarDays, CalendarRange, History, BarChart3, Sparkles, TrendingUp,
-  CircleDollarSign, AlertTriangle, CheckCircle2, XCircle, Bell
+  CircleDollarSign, AlertTriangle, CheckCircle2, XCircle, Bell,
+  Brain, Zap, Shield, Activity, PieChart, TrendingDown, CreditCard,
+  Banknote, ArrowUpRight, ArrowDownRight, Target, Gauge, Eye,
+  Download, Upload, Settings2, LayoutGrid, LayoutList, Grid3X3, List,
+  Layers, Database, Globe, Command, Cpu, Home, FileText, FileSpreadsheet,
+  Bot, Star, Bookmark, Info, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,6 +28,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,7 +40,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useCompanyFinanceHistory, formatCompanyCurrency, type CompanyPeriodFilter, type CompanyExpense, type PaymentStatus } from "@/hooks/useCompanyFinanceHistory";
 
@@ -39,31 +49,16 @@ interface AttachmentCount {
 }
 
 const EXPENSE_TYPES = [
-  { value: "all", label: "📊 Todos", icon: Wallet, color: "bg-primary/20 text-primary" },
-  { value: "fixed", label: "📌 Fixo", icon: Building2, color: "bg-red-500/20 text-red-500" },
-  { value: "extra", label: "📋 Extra", icon: Receipt, color: "bg-blue-500/20 text-blue-500" },
+  { value: "all", label: "Todos", icon: Wallet, color: "from-primary/20 to-primary/5" },
+  { value: "fixed", label: "Fixos", icon: Building2, color: "from-red-500/20 to-red-500/5" },
+  { value: "extra", label: "Extras", icon: Receipt, color: "from-blue-500/20 to-blue-500/5" },
 ];
 
 const CATEGORIAS = [
-  "Folha de Pagamento",
-  "Aluguel",
-  "Energia",
-  "Internet",
-  "Telefone",
-  "Marketing",
-  "Software/SaaS",
-  "Impostos",
-  "Contador",
-  "Material de Escritório",
-  "Equipamentos",
-  "Manutenção",
-  "Viagens",
-  "Alimentação",
-  "Transporte",
-  "Funcionário",
-  "Site",
-  "NOTA FISCAL",
-  "Outros"
+  "Folha de Pagamento", "Aluguel", "Energia", "Internet", "Telefone",
+  "Marketing", "Software/SaaS", "Impostos", "Contador", "Material de Escritório",
+  "Equipamentos", "Manutenção", "Viagens", "Alimentação", "Transporte",
+  "Funcionário", "Site", "NOTA FISCAL", "Outros"
 ];
 
 const PERIOD_OPTIONS = [
@@ -75,7 +70,13 @@ const PERIOD_OPTIONS = [
   { value: "50anos", label: "50 Anos", icon: Archive },
 ];
 
-type ViewMode = "expenses" | "months" | "years";
+type ViewMode = "dashboard" | "expenses" | "months" | "years";
+
+const STATUS_COLORS: Record<PaymentStatus, { bg: string; text: string; icon: typeof Check }> = {
+  pendente: { bg: "bg-yellow-500/20", text: "text-yellow-500", icon: Clock },
+  pago: { bg: "bg-green-500/20", text: "text-green-500", icon: Check },
+  atrasado: { bg: "bg-red-500/20", text: "text-red-500", icon: AlertCircle },
+};
 
 export default function FinancasEmpresa() {
   const { user } = useAuth();
@@ -96,17 +97,21 @@ export default function FinancasEmpresa() {
   } = useCompanyFinanceHistory();
 
   // Estado local
-  const [viewMode, setViewMode] = useState<ViewMode>("expenses");
+  const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"fixed" | "extra">("extra");
   const [editingExpense, setEditingExpense] = useState<CompanyExpense | null>(null);
   const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewType, setViewType] = useState<"grid" | "list">("list");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [attachmentCounts, setAttachmentCounts] = useState<AttachmentCount>({});
   const [closeMonthDialogOpen, setCloseMonthDialogOpen] = useState(false);
   const [closeYearDialogOpen, setCloseYearDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<CompanyExpense | null>(null);
+  const [selectedExpenses, setSelectedExpenses] = useState<Set<string>>(new Set());
+  const [sortBy, setSortBy] = useState<"data" | "valor" | "nome">("data");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [formData, setFormData] = useState({
     nome: "",
     valor: "",
@@ -135,11 +140,40 @@ export default function FinancasEmpresa() {
     }
 
     return filtered.sort((a, b) => {
-      const dateA = a.data || a.created_at || '';
-      const dateB = b.data || b.created_at || '';
-      return dateB.localeCompare(dateA);
+      let comparison = 0;
+      if (sortBy === "data") {
+        const dateA = a.data || a.created_at || '';
+        const dateB = b.data || b.created_at || '';
+        comparison = dateA.localeCompare(dateB);
+      } else if (sortBy === "valor") {
+        comparison = a.valor - b.valor;
+      } else if (sortBy === "nome") {
+        comparison = a.nome.localeCompare(b.nome);
+      }
+      return sortOrder === "desc" ? -comparison : comparison;
     });
-  }, [fixedExpenses, extraExpenses, searchTerm, activeTab]);
+  }, [fixedExpenses, extraExpenses, searchTerm, activeTab, sortBy, sortOrder]);
+
+  // Stats calculados
+  const calculatedStats = useMemo(() => {
+    const totalFixo = fixedExpenses.reduce((sum, e) => sum + e.valor, 0);
+    const totalExtra = extraExpenses.reduce((sum, e) => sum + e.valor, 0);
+    const totalPago = allExpenses.filter(e => e.status_pagamento === 'pago').reduce((sum, e) => sum + e.valor, 0);
+    const totalPendente = allExpenses.filter(e => e.status_pagamento === 'pendente').reduce((sum, e) => sum + e.valor, 0);
+    const totalAtrasado = allExpenses.filter(e => e.status_pagamento === 'atrasado').reduce((sum, e) => sum + e.valor, 0);
+    const percentPago = (totalFixo + totalExtra) > 0 ? (totalPago / (totalFixo + totalExtra)) * 100 : 0;
+    
+    return {
+      totalFixo, totalExtra, totalPago, totalPendente, totalAtrasado,
+      total: totalFixo + totalExtra,
+      percentPago,
+      countFixo: fixedExpenses.length,
+      countExtra: extraExpenses.length,
+      countPago: allExpenses.filter(e => e.status_pagamento === 'pago').length,
+      countPendente: allExpenses.filter(e => e.status_pagamento === 'pendente').length,
+      countAtrasado: allExpenses.filter(e => e.status_pagamento === 'atrasado').length,
+    };
+  }, [fixedExpenses, extraExpenses, allExpenses]);
 
   // Buscar contagem de anexos
   useEffect(() => {
@@ -206,923 +240,745 @@ export default function FinancasEmpresa() {
     setIsModalOpen(true);
   };
 
-  // Handler para alterar status de pagamento (clique no botão)
-  const handleStatusClick = async (expense: CompanyExpense, e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    if (expense.fechado) {
-      toast.error("Este gasto está fechado e não pode ser alterado");
-      return;
-    }
-    
-    // Ciclar entre os status: pendente -> pago -> atrasado -> pendente
-    const currentStatus = expense.status_pagamento || 'pendente';
-    let newStatus: PaymentStatus;
-    
-    if (currentStatus === 'pendente') {
-      newStatus = 'pago';
-    } else if (currentStatus === 'pago') {
-      newStatus = 'pendente';
-    } else {
-      newStatus = 'pago';
-    }
-    
-    await updatePaymentStatus(expense, newStatus);
-  };
-
-  // Renderizar badge de status clicável
-  const renderPaymentStatusBadge = (expense: CompanyExpense) => {
-    const status = expense.status_pagamento || 'pendente';
-    const isLocked = expense.fechado;
-    
-    const statusConfig = {
-      pago: {
-        label: "PAGO",
-        icon: CheckCircle2,
-        className: "bg-green-500/20 text-green-500 border-green-500/50 hover:bg-green-500/30",
-        bgActive: "bg-green-500 text-white"
-      },
-      pendente: {
-        label: "PENDENTE",
-        icon: Clock,
-        className: "bg-yellow-500/20 text-yellow-500 border-yellow-500/50 hover:bg-yellow-500/30",
-        bgActive: "bg-yellow-500 text-black"
-      },
-      atrasado: {
-        label: "ATRASADO",
-        icon: AlertTriangle,
-        className: "bg-red-500/20 text-red-500 border-red-500/50 hover:bg-red-500/30 animate-pulse",
-        bgActive: "bg-red-500 text-white"
-      }
-    };
-    
-    const config = statusConfig[status];
-    const Icon = config.icon;
-    
-    return (
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={(e) => handleStatusClick(expense, e)}
-        disabled={isLocked}
-        className={cn(
-          "gap-1.5 font-bold text-xs px-3 py-1 h-8 border-2 transition-all",
-          config.className,
-          isLocked && "opacity-50 cursor-not-allowed"
-        )}
-      >
-        <Icon className="h-4 w-4" />
-        {config.label}
-      </Button>
-    );
-  };
-
   const handleSave = async () => {
-    if (!formData.nome.trim() || !formData.valor) {
+    if (!formData.nome || !formData.valor) {
       toast.error("Preencha nome e valor");
       return;
     }
 
-    const valorCents = Math.round(parseFloat(formData.valor.replace(",", ".")) * 100);
+    const valorCentavos = Math.round(parseFloat(formData.valor.replace(",", ".")) * 100);
+    const dataRef = new Date(formData.data || new Date());
     const table = modalType === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
-    const dataRef = new Date(formData.data);
+
+    const payload = {
+      nome: formData.nome,
+      valor: valorCentavos,
+      categoria: formData.categoria || null,
+      data: formData.data || null,
+      data_vencimento: formData.data_vencimento || null,
+      status_pagamento: formData.status_pagamento,
+      mes: dataRef.getMonth() + 1,
+      ano: dataRef.getFullYear(),
+      dia: dataRef.getDate(),
+      semana: Math.ceil(dataRef.getDate() / 7),
+    };
 
     try {
-      const baseData: any = {
-        nome: formData.nome,
-        valor: valorCents,
-        categoria: formData.categoria,
-        ano: dataRef.getFullYear(),
-        mes: dataRef.getMonth() + 1,
-        semana: Math.ceil(dataRef.getDate() / 7),
-        dia: dataRef.getDate(),
-        status_pagamento: formData.status_pagamento,
-        data_vencimento: formData.data_vencimento || null,
-      };
-
       if (editingExpense) {
-        const updateData: any = { ...baseData };
-        if (modalType === "extra") updateData.data = formData.data;
-        const { error } = await supabase.from(table).update(updateData).eq("id", editingExpense.id);
-        if (error) throw error;
+        await supabase.from(table).update(payload).eq("id", editingExpense.id);
         toast.success("Gasto atualizado!");
       } else {
-        const insertData: any = { ...baseData, created_by: user?.id };
-        if (modalType === "extra") insertData.data = formData.data;
-        const { error } = await supabase.from(table).insert(insertData);
-        if (error) throw error;
-        toast.success("Gasto adicionado!");
+        await supabase.from(table).insert(payload);
+        toast.success("Gasto criado!");
       }
-
-      await refresh();
       setIsModalOpen(false);
-    } catch (error: any) {
-      toast.error(error.message || "Erro ao salvar gasto");
-    }
-  };
-
-  const handleDelete = async () => {
-    if (!deleteDialogOpen) return;
-    const table = deleteDialogOpen.type === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
-    
-    try {
-      // Deletar anexos primeiro
-      await supabase
-        .from("universal_attachments")
-        .delete()
-        .eq("entity_type", deleteDialogOpen.type === "fixed" ? "company_expense_fixed" : "company_expense_extra")
-        .eq("entity_id", String(deleteDialogOpen.id));
-      
-      const { error } = await supabase.from(table).delete().eq("id", deleteDialogOpen.id);
-      if (error) throw error;
-      toast.success("Gasto removido!");
-      await refresh();
+      refresh();
     } catch (error) {
-      toast.error("Erro ao remover gasto");
+      toast.error("Erro ao salvar");
     }
-    setDeleteDialogOpen(null);
   };
 
-  const toggleRowExpand = (id: string) => {
-    setExpandedRows(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) newSet.delete(id);
-      else newSet.add(id);
-      return newSet;
+  const handleDelete = async (expense: CompanyExpense) => {
+    const table = expense.type === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
+    await supabase.from(table).delete().eq("id", expense.id);
+    toast.success("Gasto excluído!");
+    setDeleteDialogOpen(null);
+    refresh();
+  };
+
+  const handleStatusChange = async (expense: CompanyExpense, newStatus: PaymentStatus) => {
+    await updatePaymentStatus(expense, newStatus);
+    toast.success(`Status atualizado para ${newStatus}`);
+  };
+
+  const toggleExpenseSelection = (id: string) => {
+    setSelectedExpenses(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
-  const getTypeBadge = (type: 'fixed' | 'extra') => {
-    const t = EXPENSE_TYPES.find(x => x.value === type);
-    return t ? <Badge className={cn("gap-1", t.color)}>{t.label}</Badge> : null;
+  const toggleRow = (id: string) => {
+    setExpandedRows(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
   };
 
-  const handleCloseMonth = async () => {
-    await closeMonth(selectedYear, selectedMonth);
-    setCloseMonthDialogOpen(false);
-  };
-
-  const handleCloseYear = async () => {
-    await closeYear(selectedYear);
-    setCloseYearDialogOpen(false);
-  };
-
-  const handleAttachmentChange = (expense: CompanyExpense, count: number) => {
-    setAttachmentCounts(prev => ({ ...prev, [`${expense.type}_${expense.id}`]: count }));
-  };
-
-  // ================== RENDER STATS ==================
-  const renderStatsCards = () => (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="space-y-4 mb-8"
-    >
-      {/* Primeira linha - Totais */}
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-        <div className="glass-card rounded-2xl p-5 border-l-4 border-red-500">
-          <div className="flex items-center justify-between mb-3">
-            <Building2 className="h-6 w-6 text-red-500" />
-            <Badge variant="outline" className="text-xs">{fixedExpenses.length}</Badge>
-          </div>
-          <p className="text-2xl font-bold text-red-400">{formatCompanyCurrency(stats.totalGastosFixos)}</p>
-          <p className="text-sm text-muted-foreground">Gastos Fixos</p>
-        </div>
-        
-        <div className="glass-card rounded-2xl p-5 border-l-4 border-blue-500">
-          <div className="flex items-center justify-between mb-3">
-            <Receipt className="h-6 w-6 text-blue-500" />
-            <Badge variant="outline" className="text-xs">{extraExpenses.length}</Badge>
-          </div>
-          <p className="text-2xl font-bold text-blue-400">{formatCompanyCurrency(stats.totalGastosExtras)}</p>
-          <p className="text-sm text-muted-foreground">Gastos Extras</p>
-        </div>
-
-        <div className="glass-card rounded-2xl p-5 border-l-4 border-purple-500">
-          <div className="flex items-center justify-between mb-3">
-            <DollarSign className="h-6 w-6 text-purple-500" />
-            <Badge variant="outline" className="text-xs">{allExpenses.length}</Badge>
-          </div>
-          <p className="text-2xl font-bold text-purple-400">{formatCompanyCurrency(stats.totalGastos)}</p>
-          <p className="text-sm text-muted-foreground">Total Gastos</p>
-        </div>
-
-        <div className="glass-card rounded-2xl p-5 border-l-4 border-[hsl(var(--stats-green))]">
-          <div className="flex items-center justify-between mb-3">
-            <TrendingUp className="h-6 w-6 text-[hsl(var(--stats-green))]" />
-            <Badge variant="outline" className="text-xs">{entradas.length}</Badge>
-          </div>
-          <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">{formatCompanyCurrency(stats.totalReceitas)}</p>
-          <p className="text-sm text-muted-foreground">Receitas</p>
-        </div>
-
-        <div className="glass-card rounded-2xl p-5 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 gap-2">
-          <Button onClick={() => openModal('fixed')} className="gap-2 w-full" variant="outline">
-            <Plus className="h-4 w-4" /> Gasto Fixo
-          </Button>
-          <Button onClick={() => openModal('extra')} className="gap-2 w-full">
-            <Plus className="h-4 w-4" /> Gasto Extra
-          </Button>
-        </div>
+  // Render Dashboard Stats
+  const renderDashboard = () => (
+    <div className="space-y-6">
+      {/* Hero Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+        {[
+          { label: "Total Gastos", value: calculatedStats.total, icon: Wallet, color: "from-primary to-primary/50", count: allExpenses.length },
+          { label: "Gastos Fixos", value: calculatedStats.totalFixo, icon: Building2, color: "from-red-500 to-red-500/50", count: calculatedStats.countFixo },
+          { label: "Gastos Extras", value: calculatedStats.totalExtra, icon: Receipt, color: "from-blue-500 to-blue-500/50", count: calculatedStats.countExtra },
+          { label: "Pagos", value: calculatedStats.totalPago, icon: CheckCircle2, color: "from-green-500 to-green-500/50", count: calculatedStats.countPago },
+          { label: "Pendentes", value: calculatedStats.totalPendente, icon: Clock, color: "from-yellow-500 to-yellow-500/50", count: calculatedStats.countPendente },
+          { label: "Atrasados", value: calculatedStats.totalAtrasado, icon: AlertTriangle, color: "from-red-600 to-red-600/50", count: calculatedStats.countAtrasado },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+          >
+            <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card to-card/50 hover:border-primary/30 transition-all group">
+              <div className={cn("absolute inset-0 opacity-10 bg-gradient-to-br", stat.color)} />
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <stat.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <Badge variant="secondary" className="text-xs">{stat.count}</Badge>
+                </div>
+                <p className="text-2xl font-bold">{formatCompanyCurrency(stat.value)}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      {/* Segunda linha - Status de Pagamento */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <div className="glass-card rounded-2xl p-5 border-l-4 border-green-500 bg-gradient-to-br from-green-500/5 to-green-500/10">
-          <div className="flex items-center justify-between mb-3">
-            <CheckCircle2 className="h-6 w-6 text-green-500" />
-            <Badge className="bg-green-500/20 text-green-500 text-xs">{stats.qtdPago}</Badge>
-          </div>
-          <p className="text-2xl font-bold text-green-400">{formatCompanyCurrency(stats.totalPago)}</p>
-          <p className="text-sm text-muted-foreground">Pagos</p>
-        </div>
-        
-        <div className="glass-card rounded-2xl p-5 border-l-4 border-yellow-500 bg-gradient-to-br from-yellow-500/5 to-yellow-500/10">
-          <div className="flex items-center justify-between mb-3">
-            <Clock className="h-6 w-6 text-yellow-500" />
-            <Badge className="bg-yellow-500/20 text-yellow-500 text-xs">{stats.qtdPendente}</Badge>
-          </div>
-          <p className="text-2xl font-bold text-yellow-400">{formatCompanyCurrency(stats.totalPendente)}</p>
-          <p className="text-sm text-muted-foreground">Pendentes</p>
-        </div>
-
-        <div className={cn(
-          "glass-card rounded-2xl p-5 border-l-4 border-red-500 bg-gradient-to-br from-red-500/5 to-red-500/10",
-          stats.qtdAtrasado > 0 && "animate-pulse"
-        )}>
-          <div className="flex items-center justify-between mb-3">
-            <AlertTriangle className="h-6 w-6 text-red-500" />
-            <Badge className="bg-red-500/20 text-red-500 text-xs">{stats.qtdAtrasado}</Badge>
-          </div>
-          <p className="text-2xl font-bold text-red-400">{formatCompanyCurrency(stats.totalAtrasado)}</p>
-          <p className="text-sm text-muted-foreground">Atrasados</p>
-          {stats.qtdAtrasado > 0 && (
-            <div className="flex items-center gap-1 mt-2 text-xs text-red-400">
-              <Bell className="h-3 w-3" /> Alerta no calendário
+      {/* Progress Ring */}
+      <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                Progresso de Pagamentos
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {calculatedStats.countPago} de {allExpenses.length} gastos pagos
+              </p>
             </div>
-          )}
-        </div>
-      </div>
-    </motion.section>
-  );
+            <div className="text-right">
+              <p className="text-3xl font-bold text-primary">{calculatedStats.percentPago.toFixed(0)}%</p>
+              <p className="text-xs text-muted-foreground">concluído</p>
+            </div>
+          </div>
+          <Progress value={calculatedStats.percentPago} className="h-3" />
+          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-green-500" /> Pagos
+            </span>
+            <span className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-yellow-500" /> Pendentes
+            </span>
+            <span className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-red-500" /> Atrasados
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
-  // ================== RENDER PERIOD NAV ==================
-  const renderPeriodNavigation = () => (
-    <div className="flex flex-wrap items-center gap-3 mb-6">
-      <div className="flex flex-wrap gap-2">
-        {PERIOD_OPTIONS.map((opt) => {
-          const Icon = opt.icon;
-          const isActive = period === opt.value;
-          return (
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Novo Gasto Fixo", icon: Building2, color: "text-red-500", action: () => openModal("fixed") },
+          { label: "Novo Gasto Extra", icon: Receipt, color: "text-blue-500", action: () => openModal("extra") },
+          { label: "Ver Gastos", icon: List, color: "text-primary", action: () => setViewMode("expenses") },
+          { label: "Atualizar", icon: RefreshCw, color: "text-green-500", action: refresh },
+        ].map((action, i) => (
+          <motion.div
+            key={action.label}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.05 }}
+          >
             <Button
-              key={opt.value}
-              variant={isActive ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPeriod(opt.value as CompanyPeriodFilter)}
-              className={cn("gap-2", isActive && "shadow-lg shadow-primary/25")}
+              variant="outline"
+              className="w-full h-20 flex-col gap-2 hover:border-primary/50"
+              onClick={action.action}
             >
-              <Icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{opt.label}</span>
+              <action.icon className={cn("h-6 w-6", action.color)} />
+              <span className="text-xs">{action.label}</span>
             </Button>
-          );
-        })}
+          </motion.div>
+        ))}
       </div>
 
-      {(period === "mes" || period === "ano") && (
-        <div className="flex items-center gap-2 ml-auto">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedYear(y => y - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
-            <SelectTrigger className="w-24">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
-              {availableYears.map(y => (
-                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {period === "mes" && (
-            <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => (
-                  <SelectItem key={i + 1} value={String(i + 1)}>{getMonthName(i + 1)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Button variant="ghost" size="icon" onClick={() => setSelectedYear(y => y + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
-
-      <div className="flex gap-2 ml-auto">
-        <Button
-          variant={viewMode === "expenses" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("expenses")}
-          className="gap-2"
-        >
-          <Receipt className="h-4 w-4" />
-          <span className="hidden sm:inline">Gastos</span>
-        </Button>
-        <Button
-          variant={viewMode === "months" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("months")}
-          className="gap-2"
-        >
-          <FolderOpen className="h-4 w-4" />
-          <span className="hidden sm:inline">Meses</span>
-        </Button>
-        <Button
-          variant={viewMode === "years" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("years")}
-          className="gap-2"
-        >
-          <Archive className="h-4 w-4" />
-          <span className="hidden sm:inline">Anos</span>
-        </Button>
-      </div>
+      {/* Recent Expenses */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              Gastos Recentes
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setViewMode("expenses")}>
+              Ver Todos <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {allExpenses.slice(0, 5).map((expense) => (
+              <div
+                key={`${expense.type}-${expense.id}`}
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn(
+                    "w-10 h-10 rounded-lg flex items-center justify-center",
+                    expense.type === 'fixed' ? "bg-red-500/20" : "bg-blue-500/20"
+                  )}>
+                    {expense.type === 'fixed' ? (
+                      <Building2 className="h-5 w-5 text-red-500" />
+                    ) : (
+                      <Receipt className="h-5 w-5 text-blue-500" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{expense.nome}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {expense.categoria || 'Sem categoria'} • {expense.data ? format(new Date(expense.data), 'dd/MM/yyyy') : '-'}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{formatCompanyCurrency(expense.valor)}</p>
+                  <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[expense.status_pagamento || 'pendente'].bg, STATUS_COLORS[expense.status_pagamento || 'pendente'].text)}>
+                    {expense.status_pagamento || 'pendente'}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
-  // ================== RENDER MONTHS ==================
-  const renderMonthFolders = () => {
-    const months = getMonthsWithData(selectedYear);
-    const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
-
-    return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold flex items-center gap-3">
-            <FolderOpen className="h-6 w-6 text-primary" />
-            Meses de {selectedYear}
-          </h2>
-          {!isYearClosed(selectedYear) && (
-            <Button onClick={() => setCloseYearDialogOpen(true)} className="gap-2">
-              <Lock className="h-4 w-4" /> Fechar Ano {selectedYear}
-            </Button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {allMonths.map((mes) => {
-            const isClosed = isMonthClosed(selectedYear, mes);
-            const hasData = months.includes(mes);
-            const closure = getMonthClosure(selectedYear, mes);
-
-            return (
-              <motion.div
-                key={mes}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => {
-                  setSelectedMonth(mes);
-                  setPeriod("mes");
-                  setViewMode("expenses");
-                }}
-                className={cn(
-                  "glass-card rounded-xl p-4 cursor-pointer transition-all border-2",
-                  isClosed
-                    ? "border-[hsl(var(--stats-green))]/50 bg-[hsl(var(--stats-green))]/5"
-                    : hasData
-                      ? "border-primary/30 hover:border-primary/60"
-                      : "border-border/30 opacity-60 hover:opacity-100"
-                )}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  {isClosed ? (
-                    <FolderClosed className="h-8 w-8 text-[hsl(var(--stats-green))]" />
-                  ) : hasData ? (
-                    <FolderOpen className="h-8 w-8 text-primary" />
-                  ) : (
-                    <FolderClosed className="h-8 w-8 text-muted-foreground" />
-                  )}
-                  {isClosed && <Lock className="h-4 w-4 text-[hsl(var(--stats-green))]" />}
-                </div>
-                <p className="font-semibold text-foreground">{getMonthName(mes)}</p>
-                {closure && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {formatCompanyCurrency(Number(closure.total_gastos_fixos || 0) + Number(closure.total_gastos_extras || 0))}
-                  </p>
-                )}
-                {hasData && !isClosed && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full mt-2 text-xs gap-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setCloseMonthDialogOpen(true);
-                    }}
-                  >
-                    <Lock className="h-3 w-3" /> Fechar
-                  </Button>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
-    );
-  };
-
-  // ================== RENDER YEARS ==================
-  const renderYearFolders = () => {
-    const currentYear = new Date().getFullYear();
-    const yearsToShow = Array.from({ length: 61 }, (_, i) => currentYear - 10 + i);
-
-    return (
-      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
-        <h2 className="text-2xl font-bold flex items-center gap-3">
-          <Archive className="h-6 w-6 text-primary" />
-          Arquivo de Anos (50 anos)
-        </h2>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
-          {yearsToShow.map((ano) => {
-            const isClosed = isYearClosed(ano);
-            const hasData = yearsWithData.includes(ano);
-            const closure = getYearClosure(ano);
-
-            return (
-              <motion.div
-                key={ano}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => {
-                  setSelectedYear(ano);
-                  setViewMode("months");
-                }}
-                className={cn(
-                  "glass-card rounded-xl p-3 cursor-pointer transition-all border-2 text-center",
-                  isClosed
-                    ? "border-[hsl(var(--stats-green))]/50 bg-[hsl(var(--stats-green))]/5"
-                    : hasData
-                      ? "border-primary/30 hover:border-primary/60"
-                      : "border-border/20 opacity-40 hover:opacity-70"
-                )}
-              >
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  {isClosed ? (
-                    <Lock className="h-4 w-4 text-[hsl(var(--stats-green))]" />
-                  ) : hasData ? (
-                    <FolderOpen className="h-4 w-4 text-primary" />
-                  ) : null}
-                </div>
-                <p className={cn("font-bold text-lg", ano === currentYear && "text-primary")}>{ano}</p>
-                {closure && (
-                  <p className="text-xs text-muted-foreground">
-                    {formatCompanyCurrency(Number(closure.saldo_ano || 0))}
-                  </p>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
-    );
-  };
-
-  // ================== RENDER EXPENSES LIST ==================
-  const renderExpensesList = () => (
-    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
-      {/* Search and Filters */}
-      <div className="flex flex-wrap items-center gap-4">
+  // Render Expenses List
+  const renderExpenses = () => (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Buscar gastos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-9"
           />
         </div>
-        <Button variant="outline" size="icon" onClick={refresh}>
-          <RefreshCw className="h-4 w-4" />
+
+        <Tabs value={activeTab} onValueChange={setActiveTab}>
+          <TabsList className="bg-muted/50">
+            {EXPENSE_TYPES.map(type => (
+              <TabsTrigger key={type.value} value={type.value} className="gap-1">
+                <type.icon className="h-4 w-4" />
+                {type.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+
+        <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="data">Por Data</SelectItem>
+            <SelectItem value="valor">Por Valor</SelectItem>
+            <SelectItem value="nome">Por Nome</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button variant="outline" size="icon" onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+          {sortOrder === 'desc' ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </Button>
+
+        <div className="flex border rounded-md">
+          <Button variant={viewType === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewType('list')}>
+            <List className="h-4 w-4" />
+          </Button>
+          <Button variant={viewType === 'grid' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewType('grid')}>
+            <Grid3X3 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Tabs */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-secondary/50 flex-wrap h-auto gap-1 p-1">
-          {EXPENSE_TYPES.map(type => (
-            <TabsTrigger key={type.value} value={type.value} className="gap-1">
-              {type.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      {/* Expenses Grid/List */}
+      {viewType === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <AnimatePresence mode="popLayout">
+            {allExpenses.map((expense, i) => (
+              <motion.div
+                key={`${expense.type}-${expense.id}`}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: i * 0.02 }}
+              >
+                <Card className={cn(
+                  "relative overflow-hidden hover:shadow-lg transition-all cursor-pointer group",
+                  selectedExpenses.has(String(expense.id)) && "ring-2 ring-primary"
+                )}>
+                  <div className={cn(
+                    "absolute top-0 left-0 w-1 h-full",
+                    expense.type === 'fixed' ? "bg-red-500" : "bg-blue-500"
+                  )} />
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={cn(
+                        "w-10 h-10 rounded-lg flex items-center justify-center",
+                        expense.type === 'fixed' ? "bg-red-500/20" : "bg-blue-500/20"
+                      )}>
+                        {expense.type === 'fixed' ? (
+                          <Building2 className="h-5 w-5 text-red-500" />
+                        ) : (
+                          <Receipt className="h-5 w-5 text-blue-500" />
+                        )}
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openModal(expense.type, expense)}>
+                            <Edit2 className="h-4 w-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pago')}>
+                            <Check className="h-4 w-4 mr-2 text-green-500" /> Marcar Pago
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pendente')}>
+                            <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Marcar Pendente
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setDeleteDialogOpen(expense)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <h4 className="font-semibold truncate mb-1">{expense.nome}</h4>
+                    <p className="text-xs text-muted-foreground mb-3">{expense.categoria || 'Sem categoria'}</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg font-bold">{formatCompanyCurrency(expense.valor)}</p>
+                      <Badge className={cn("text-xs", STATUS_COLORS[expense.status_pagamento || 'pendente'].bg, STATUS_COLORS[expense.status_pagamento || 'pendente'].text)}>
+                        {expense.status_pagamento || 'pendente'}
+                      </Badge>
+                    </div>
+                    {getAttachmentCount(expense) > 0 && (
+                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                        <Paperclip className="h-3 w-3" />
+                        {getAttachmentCount(expense)} anexo(s)
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      ) : (
+        <Card className="border-border/50">
+          <ScrollArea className="h-[600px]">
+            <div className="divide-y divide-border">
+              {allExpenses.map((expense, i) => (
+                <motion.div
+                  key={`${expense.type}-${expense.id}`}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="group"
+                >
+                  <div
+                    className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => toggleRow(`${expense.type}-${expense.id}`)}
+                  >
+                    <div className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
+                      expense.type === 'fixed' ? "bg-red-500/20" : "bg-blue-500/20"
+                    )}>
+                      {expense.type === 'fixed' ? (
+                        <Building2 className="h-5 w-5 text-red-500" />
+                      ) : (
+                        <Receipt className="h-5 w-5 text-blue-500" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">{expense.nome}</p>
+                        {getAttachmentCount(expense) > 0 && (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Paperclip className="h-3 w-3" /> {getAttachmentCount(expense)}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {expense.categoria || 'Sem categoria'} • {expense.data ? format(new Date(expense.data), 'dd/MM/yyyy') : '-'}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-semibold">{formatCompanyCurrency(expense.valor)}</p>
+                      <Badge className={cn("text-xs", STATUS_COLORS[expense.status_pagamento || 'pendente'].bg, STATUS_COLORS[expense.status_pagamento || 'pendente'].text)}>
+                        {expense.status_pagamento || 'pendente'}
+                      </Badge>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="shrink-0 opacity-0 group-hover:opacity-100">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openModal(expense.type, expense)}>
+                          <Edit2 className="h-4 w-4 mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pago')}>
+                          <Check className="h-4 w-4 mr-2 text-green-500" /> Marcar Pago
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pendente')}>
+                          <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Marcar Pendente
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setDeleteDialogOpen(expense)} className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
 
-        <TabsContent value={activeTab} className="mt-0">
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-secondary/50">
-                  <tr>
-                    <th className="text-left p-4 text-sm font-bold text-white">Descrição</th>
-                    <th className="text-left p-4 text-sm font-bold text-white">Tipo</th>
-                    <th className="text-left p-4 text-sm font-bold text-white">Categoria</th>
-                    <th className="text-left p-4 text-sm font-bold text-white">Data</th>
-                    <th className="text-right p-4 text-sm font-bold text-white">Valor</th>
-                    <th className="text-center p-4 text-sm font-bold text-white">Status</th>
-                    <th className="text-center p-4 text-sm font-bold text-white">Anexos</th>
-                    <th className="text-right p-4 text-sm font-bold text-white">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {allExpenses.map((expense) => {
-                    const rowKey = `${expense.type}_${expense.id}`;
-                    const expenseDate = expense.data || expense.created_at || '';
-                    
-                    return (
-                      <>
-                        <tr
-                          key={rowKey}
-                          className={cn(
-                            "border-t border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer",
-                            expandedRows.has(rowKey) && "bg-secondary/20",
-                            expense.fechado && "opacity-60"
-                          )}
-                          onClick={() => toggleRowExpand(rowKey)}
-                        >
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              {expandedRows.has(rowKey) ?
-                                <ChevronUp className="h-4 w-4 text-muted-foreground" /> :
-                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                              }
-                              <div>
-                                <p className="font-medium text-foreground">{expense.nome}</p>
-                                {expense.fechado && (
-                                  <Badge variant="outline" className="text-xs gap-1 mt-1">
-                                    <Lock className="h-3 w-3" /> Fechado
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </td>
-                          <td className="p-4">{getTypeBadge(expense.type)}</td>
-                          <td className="p-4">
-                            <span className="text-sm text-muted-foreground">{expense.categoria || '-'}</span>
-                          </td>
-                          <td className="p-4">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4 text-muted-foreground" />
-                              <span className="text-sm text-foreground">
-                                {expenseDate ? format(new Date(expenseDate), "dd/MM/yyyy") : '-'}
-                              </span>
-                            </div>
-                          </td>
-                          <td className="p-4 text-right font-semibold text-red-400">
-                            {formatCompanyCurrency(expense.valor)}
-                          </td>
-                          <td className="p-4 text-center" onClick={(e) => e.stopPropagation()}>
-                            {renderPaymentStatusBadge(expense)}
-                          </td>
-                          <td className="p-4 text-center">
-                            <Badge
-                              variant={getAttachmentCount(expense) > 0 ? "default" : "outline"}
-                              className="gap-1"
-                            >
-                              <Paperclip className="h-3 w-3" />
-                              {getAttachmentCount(expense)}
-                            </Badge>
-                          </td>
-                          <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                            <div className="flex justify-end gap-1">
-                              {!expense.fechado && (
-                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(expense.type, expense)}>
-                                  <Edit2 className="h-4 w-4" />
-                                </Button>
-                              )}
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                  <DropdownMenuItem onClick={() => toggleRowExpand(rowKey)}>
-                                    <Paperclip className="h-4 w-4 mr-2" />
-                                    {expandedRows.has(rowKey) ? "Fechar Anexos" : "Ver Anexos"}
-                                  </DropdownMenuItem>
-                                  {!expense.fechado && (
-                                    <DropdownMenuItem
-                                      onClick={() => setDeleteDialogOpen(expense)}
-                                      className="text-destructive"
-                                    >
-                                      <Trash2 className="h-4 w-4 mr-2" />
-                                      Excluir
-                                    </DropdownMenuItem>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
-                            </div>
-                          </td>
-                        </tr>
-                        {/* Expanded Row */}
-                        <AnimatePresence>
-                          {expandedRows.has(rowKey) && (
-                            <motion.tr
-                              initial={{ opacity: 0, height: 0 }}
-                              animate={{ opacity: 1, height: "auto" }}
-                              exit={{ opacity: 0, height: 0 }}
-                            >
-                              <td colSpan={7} className="p-0 bg-secondary/10">
-                                <motion.div
-                                  initial={{ opacity: 0 }}
-                                  animate={{ opacity: 1 }}
-                                  exit={{ opacity: 0 }}
-                                  className="p-6 border-t border-border/30"
-                                >
-                                  <div className="grid md:grid-cols-2 gap-6">
-                                    <div className="space-y-4">
-                                      <h3 className="font-semibold text-foreground flex items-center gap-2">
-                                        <Receipt className="h-4 w-4" />
-                                        Detalhes do Gasto
-                                      </h3>
-                                      <div className="grid grid-cols-2 gap-3 text-sm">
-                                        <div>
-                                          <p className="text-muted-foreground">Valor</p>
-                                          <p className="font-medium text-foreground">{formatCompanyCurrency(expense.valor)}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Tipo</p>
-                                          <p className="font-medium text-foreground">{expense.type === 'fixed' ? 'Fixo' : 'Extra'}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Categoria</p>
-                                          <p className="font-medium text-foreground">{expense.categoria || 'Não informada'}</p>
-                                        </div>
-                                        <div>
-                                          <p className="text-muted-foreground">Data</p>
-                                          <p className="font-medium text-foreground">
-                                            {expenseDate ? format(new Date(expenseDate), "dd/MM/yyyy") : '-'}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    </div>
-                                    <div>
-                                      <UniversalAttachments
-                                        entityType={expense.type === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
-                                        entityId={String(expense.id)}
-                                        title="Comprovantes e Anexos"
-                                        maxFiles={20}
-                                        showAIExtraction={true}
-                                        onAttachmentChange={(count) => handleAttachmentChange(expense, count)}
-                                      />
-                                    </div>
-                                  </div>
-                                </motion.div>
-                              </td>
-                            </motion.tr>
-                          )}
-                        </AnimatePresence>
-                      </>
-                    );
-                  })}
-                  {allExpenses.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="p-12 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <Receipt className="h-12 w-12 text-muted-foreground/50" />
-                          <p className="text-muted-foreground">Nenhum gasto encontrado</p>
-                          <div className="flex gap-2">
-                            <Button onClick={() => openModal('fixed')} variant="outline" className="gap-2">
-                              <Plus className="h-4 w-4" /> Gasto Fixo
-                            </Button>
-                            <Button onClick={() => openModal('extra')} className="gap-2">
-                              <Plus className="h-4 w-4" /> Gasto Extra
-                            </Button>
-                          </div>
+                  {/* Expanded Row with Attachments */}
+                  <AnimatePresence>
+                    {expandedRows.has(`${expense.type}-${expense.id}`) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="border-t border-border/50 bg-muted/20"
+                      >
+                        <div className="p-4">
+                          <UniversalAttachments
+                            entityType={expense.type === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
+                            entityId={String(expense.id)}
+                            title="Comprovantes"
+                            showAIExtraction
+                          />
                         </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
             </div>
-          </div>
-        </TabsContent>
-      </Tabs>
-    </motion.div>
+          </ScrollArea>
+        </Card>
+      )}
+    </div>
+  );
+
+  // Render Months View
+  const renderMonths = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 mb-4">
+        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {yearsWithData.map(year => (
+              <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => {
+          const closure = getMonthClosure(selectedYear, month);
+          const isClosed = isMonthClosed(selectedYear, month);
+          return (
+            <Card key={month} className={cn(
+              "relative overflow-hidden transition-all hover:shadow-lg",
+              isClosed ? "border-green-500/50" : "border-border/50"
+            )}>
+              {isClosed && (
+                <div className="absolute top-2 right-2">
+                  <Lock className="h-4 w-4 text-green-500" />
+                </div>
+              )}
+              <CardContent className="p-4">
+                <h4 className="font-semibold mb-2">{getMonthName(month)}</h4>
+                {closure ? (
+                  <>
+                    <p className="text-2xl font-bold text-destructive">
+                      {formatCompanyCurrency((closure.total_gastos_fixos || 0) + (closure.total_gastos_extras || 0))}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Fixos: {formatCompanyCurrency(closure.total_gastos_fixos || 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Extras: {formatCompanyCurrency(closure.total_gastos_extras || 0)}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-sm">Sem dados</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Render Years View
+  const renderYears = () => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {yearsWithData.map(year => {
+        const closure = getYearClosure(year);
+        const isClosed = isYearClosed(year);
+        return (
+          <Card key={year} className={cn(
+            "relative overflow-hidden transition-all hover:shadow-lg cursor-pointer",
+            isClosed ? "border-green-500/50" : "border-border/50"
+          )} onClick={() => { setSelectedYear(year); setViewMode('months'); }}>
+            {isClosed && (
+              <div className="absolute top-2 right-2">
+                <Lock className="h-4 w-4 text-green-500" />
+              </div>
+            )}
+            <CardContent className="p-4">
+              <h4 className="text-2xl font-bold mb-2">{year}</h4>
+              {closure ? (
+                <>
+                  <p className="text-xl font-semibold text-destructive">
+                    {formatCompanyCurrency(closure.total_gastos_fixos + closure.total_gastos_extras)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{closure.meses_fechados || 0} meses fechados</p>
+                </>
+              ) : (
+                <p className="text-muted-foreground text-sm">Em andamento</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 
   return (
-    <div className="p-4 md:p-8 lg:p-12">
-      <div className="mx-auto max-w-7xl">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
-        <motion.header
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="space-y-2">
-            <motion.div className="flex items-center gap-2 text-primary">
-              <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-medium tracking-wide uppercase">Central Financeira</span>
-            </motion.div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-              Finanças Empresa
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-xl">
-              Sistema completo estilo Softcom com fechamento de mês/ano e histórico de 50 anos.
-            </p>
+        <div className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
+                    <CircleDollarSign className="h-6 w-6 text-primary-foreground" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-background flex items-center justify-center">
+                    <Zap className="h-2 w-2 text-white" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                    Enterprise Finance Vault
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Central Financeira Empresarial com IA
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={refresh} disabled={isLoading}>
+                  <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+                  Atualizar
+                </Button>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button size="sm" className="gap-2">
+                      <Plus className="h-4 w-4" />
+                      Novo Gasto
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem onClick={() => openModal("fixed")}>
+                      <Building2 className="h-4 w-4 mr-2 text-red-500" />
+                      Gasto Fixo
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => openModal("extra")}>
+                      <Receipt className="h-4 w-4 mr-2 text-blue-500" />
+                      Gasto Extra
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2">
+              {[
+                { value: "dashboard", label: "Dashboard", icon: Home },
+                { value: "expenses", label: "Gastos", icon: List },
+                { value: "months", label: "Meses", icon: Calendar },
+                { value: "years", label: "Anos", icon: Archive },
+              ].map(nav => (
+                <Button
+                  key={nav.value}
+                  variant={viewMode === nav.value ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode(nav.value as ViewMode)}
+                  className="gap-2"
+                >
+                  <nav.icon className="h-4 w-4" />
+                  {nav.label}
+                </Button>
+              ))}
+
+              <Separator orientation="vertical" className="h-6 mx-2" />
+
+              {PERIOD_OPTIONS.map(opt => (
+                <Button
+                  key={opt.value}
+                  variant={period === opt.value ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setPeriod(opt.value as CompanyPeriodFilter)}
+                  className="gap-1"
+                >
+                  <opt.icon className="h-3 w-3" />
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
           </div>
-        </motion.header>
-
-        {/* Stats Cards */}
-        {renderStatsCards()}
-
-        {/* Period Navigation */}
-        {renderPeriodNavigation()}
+        </div>
 
         {/* Content */}
-        {viewMode === "expenses" && renderExpensesList()}
-        {viewMode === "months" && renderMonthFolders()}
-        {viewMode === "years" && renderYearFolders()}
+        <div className="container mx-auto px-4 py-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-muted-foreground">Carregando dados financeiros...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {viewMode === 'dashboard' && renderDashboard()}
+              {viewMode === 'expenses' && renderExpenses()}
+              {viewMode === 'months' && renderMonths()}
+              {viewMode === 'years' && renderYears()}
+            </>
+          )}
+        </div>
 
-        {/* Modal de Novo/Editar Gasto */}
+        {/* Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                {modalType === 'fixed' ? <Building2 className="h-5 w-5 text-red-500" /> : <Receipt className="h-5 w-5 text-blue-500" />}
-                {editingExpense ? "Editar" : "Novo"} Gasto {modalType === 'fixed' ? 'Fixo' : 'Extra'}
+                {modalType === 'fixed' ? (
+                  <Building2 className="h-5 w-5 text-red-500" />
+                ) : (
+                  <Receipt className="h-5 w-5 text-blue-500" />
+                )}
+                {editingExpense ? 'Editar' : 'Novo'} Gasto {modalType === 'fixed' ? 'Fixo' : 'Extra'}
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 pt-4">
+            <div className="space-y-4">
               <div>
-                <Label className="font-bold text-white">Descrição *</Label>
+                <Label>Nome *</Label>
                 <Input
                   value={formData.nome}
                   onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                  placeholder="Ex: Aluguel, Internet, Software..."
-                  className="mt-1.5"
+                  placeholder="Nome do gasto"
                 />
               </div>
-
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="font-bold text-white">Valor (R$) *</Label>
+                  <Label>Valor (R$) *</Label>
                   <Input
+                    type="number"
+                    step="0.01"
                     value={formData.valor}
                     onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
                     placeholder="0,00"
-                    className="mt-1.5"
                   />
                 </div>
                 <div>
-                  <Label className="font-bold text-white">Data</Label>
-                  <Input
-                    type="date"
-                    value={formData.data}
-                    onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
-                    className="mt-1.5"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <Label className="font-bold text-white">Categoria</Label>
-                <Select value={formData.categoria} onValueChange={(v) => setFormData(prev => ({ ...prev, categoria: v }))}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Selecione a categoria..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {CATEGORIAS.map((cat) => (
-                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label className="font-bold text-white">Data Vencimento</Label>
-                  <Input
-                    type="date"
-                    value={formData.data_vencimento}
-                    onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
-                    className="mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label className="font-bold text-white">Status Pagamento</Label>
-                  <Select 
-                    value={formData.status_pagamento} 
-                    onValueChange={(v) => setFormData(prev => ({ ...prev, status_pagamento: v as PaymentStatus }))}
-                  >
-                    <SelectTrigger className="mt-1.5">
-                      <SelectValue />
-                    </SelectTrigger>
+                  <Label>Categoria</Label>
+                  <Select value={formData.categoria} onValueChange={(v) => setFormData(prev => ({ ...prev, categoria: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="pendente">
-                        <span className="flex items-center gap-2">
-                          <Clock className="h-4 w-4 text-yellow-500" /> Pendente
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="pago">
-                        <span className="flex items-center gap-2">
-                          <CheckCircle2 className="h-4 w-4 text-green-500" /> Pago
-                        </span>
-                      </SelectItem>
-                      <SelectItem value="atrasado">
-                        <span className="flex items-center gap-2">
-                          <AlertTriangle className="h-4 w-4 text-red-500" /> Atrasado
-                        </span>
-                      </SelectItem>
+                      {CATEGORIAS.map(cat => (
+                        <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
               </div>
-
-              {editingExpense && (
-                <div className="border-t pt-4">
-                  <UniversalAttachments
-                    entityType={editingExpense.type === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
-                    entityId={String(editingExpense.id)}
-                    title="Comprovantes e Anexos"
-                    maxFiles={20}
-                    showAIExtraction={true}
-                    onAttachmentChange={(count) => handleAttachmentChange(editingExpense, count)}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Data</Label>
+                  <Input
+                    type="date"
+                    value={formData.data}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
                   />
                 </div>
-              )}
-
-              <Button onClick={handleSave} className="w-full gap-2">
-                <Check className="h-4 w-4" />
-                {editingExpense ? "Salvar Alterações" : "Adicionar Gasto"}
-              </Button>
+                <div>
+                  <Label>Vencimento</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_vencimento}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                  />
+                </div>
+              </div>
+              <div>
+                <Label>Status</Label>
+                <Select value={formData.status_pagamento} onValueChange={(v: PaymentStatus) => setFormData(prev => ({ ...prev, status_pagamento: v }))}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="pendente">Pendente</SelectItem>
+                    <SelectItem value="pago">Pago</SelectItem>
+                    <SelectItem value="atrasado">Atrasado</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSave}>Salvar</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Dialog Fechar Mês */}
-        <AlertDialog open={closeMonthDialogOpen} onOpenChange={setCloseMonthDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Fechar Mês</AlertDialogTitle>
-              <AlertDialogDescription>
-                Você está prestes a fechar {getMonthName(selectedMonth)} de {selectedYear}. 
-                Após o fechamento, os gastos deste período não poderão mais ser editados.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleCloseMonth}>
-                <Lock className="h-4 w-4 mr-2" /> Fechar Mês
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Dialog Fechar Ano */}
-        <AlertDialog open={closeYearDialogOpen} onOpenChange={setCloseYearDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Fechar Ano</AlertDialogTitle>
-              <AlertDialogDescription>
-                Você está prestes a fechar o ano de {selectedYear}. 
-                Após o fechamento, nenhum gasto deste ano poderá ser editado.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleCloseYear}>
-                <Lock className="h-4 w-4 mr-2" /> Fechar Ano
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Dialog Confirmar Exclusão */}
+        {/* Delete Dialog */}
         <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="text-destructive">Excluir Gasto</AlertDialogTitle>
+              <AlertDialogTitle>Excluir Gasto</AlertDialogTitle>
               <AlertDialogDescription>
-                Tem certeza que deseja excluir "{deleteDialogOpen?.nome}"? 
-                Esta ação não pode ser desfeita e todos os anexos serão removidos.
+                Tem certeza que deseja excluir "{deleteDialogOpen?.nome}"? Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                <Trash2 className="h-4 w-4 mr-2" /> Excluir
+              <AlertDialogAction onClick={() => deleteDialogOpen && handleDelete(deleteDialogOpen)} className="bg-destructive text-destructive-foreground">
+                Excluir
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }

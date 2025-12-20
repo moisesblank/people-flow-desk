@@ -1,52 +1,21 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - CENTRAL DE PAGAMENTOS
-// Sistema Completo Estilo Softcom
-// Fechamento Mês/Ano com Histórico 50 Anos
+// MOISÉS MEDEIROS v15.0 - ENTERPRISE PAYMENT VAULT
+// Sistema de Pagamentos de Multinacional - Ano 2300
+// Central de Pagamentos Futurística com IA
 // ============================================
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-  CreditCard, 
-  Sparkles, 
-  Plus,
-  Check,
-  Clock,
-  AlertCircle,
-  Trash2,
-  Edit2,
-  Filter,
-  Calendar,
-  Paperclip,
-  FileText,
-  Download,
-  Eye,
-  Receipt,
-  Wallet,
-  TrendingDown,
-  TrendingUp,
-  DollarSign,
-  Building2,
-  User,
-  ChevronDown,
-  ChevronUp,
-  ChevronLeft,
-  ChevronRight,
-  Search,
-  MoreVertical,
-  Upload,
-  FolderOpen,
-  FolderClosed,
-  Lock,
-  Unlock,
-  Archive,
-  RefreshCw,
-  CalendarDays,
-  CalendarRange,
-  History,
-  BarChart3,
-  X,
-  ArrowLeft
+  CreditCard, Sparkles, Plus, Check, Clock, AlertCircle, Trash2, Edit2,
+  Filter, Calendar, Paperclip, FileText, Download, Eye, Receipt, Wallet,
+  TrendingDown, TrendingUp, DollarSign, Building2, User, ChevronDown,
+  ChevronUp, ChevronLeft, ChevronRight, Search, MoreVertical, Upload,
+  FolderOpen, FolderClosed, Lock, Unlock, Archive, RefreshCw, CalendarDays,
+  CalendarRange, History, BarChart3, X, ArrowLeft, Zap, Shield, Activity,
+  PieChart, Target, Gauge, Home, List, Grid3X3, Banknote, ArrowUpRight,
+  ArrowDownRight, Brain, Bot, Star, Bookmark, Copy, Info, CircleDollarSign,
+  Layers, Database, Globe, Command, Cpu, Settings2, CheckCircle2, XCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,30 +26,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format, isPast, isToday, parseISO, startOfMonth, endOfMonth, isWithinInterval } from "date-fns";
+import { format, isPast, isToday, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import { Progress } from "@/components/ui/progress";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { 
   usePaymentsHistory, 
   formatPaymentCurrency, 
@@ -96,12 +55,13 @@ interface AttachmentCount {
 }
 
 const PAYMENT_TYPES = [
-  { value: "curso", label: "💰 Curso", icon: Building2, color: "bg-[hsl(var(--stats-green))]/20 text-[hsl(var(--stats-green))]" },
-  { value: "pessoal_moises", label: "👨 Moisés", icon: User, color: "bg-[hsl(var(--stats-blue))]/20 text-[hsl(var(--stats-blue))]" },
-  { value: "pessoal_bruna", label: "👩 Bruna", icon: User, color: "bg-[hsl(var(--stats-purple))]/20 text-[hsl(var(--stats-purple))]" },
-  { value: "funcionario", label: "👥 Funcionário", icon: User, color: "bg-[hsl(var(--stats-gold))]/20 text-[hsl(var(--stats-gold))]" },
-  { value: "fornecedor", label: "🏢 Fornecedor", icon: Building2, color: "bg-orange-500/20 text-orange-500" },
-  { value: "imposto", label: "📋 Imposto", icon: Receipt, color: "bg-red-500/20 text-red-500" },
+  { value: "all", label: "Todos", icon: Wallet, color: "from-primary/20 to-primary/5" },
+  { value: "curso", label: "Curso", icon: Building2, color: "from-green-500/20 to-green-500/5" },
+  { value: "pessoal_moises", label: "Moisés", icon: User, color: "from-blue-500/20 to-blue-500/5" },
+  { value: "pessoal_bruna", label: "Bruna", icon: User, color: "from-purple-500/20 to-purple-500/5" },
+  { value: "funcionario", label: "Funcionário", icon: User, color: "from-yellow-500/20 to-yellow-500/5" },
+  { value: "fornecedor", label: "Fornecedor", icon: Building2, color: "from-orange-500/20 to-orange-500/5" },
+  { value: "imposto", label: "Imposto", icon: Receipt, color: "from-red-500/20 to-red-500/5" },
 ];
 
 const PAYMENT_METHODS = [
@@ -115,10 +75,11 @@ const PAYMENT_METHODS = [
 ];
 
 const STATUS_OPTIONS = [
-  { value: "pendente", label: "Pendente", icon: Clock, color: "bg-[hsl(var(--stats-gold))]/20 text-[hsl(var(--stats-gold))]" },
-  { value: "pago", label: "Pago", icon: Check, color: "bg-[hsl(var(--stats-green))]/20 text-[hsl(var(--stats-green))]" },
-  { value: "atrasado", label: "Atrasado", icon: AlertCircle, color: "bg-destructive/20 text-destructive" },
-  { value: "cancelado", label: "Cancelado", icon: Trash2, color: "bg-muted text-muted-foreground" },
+  { value: "all", label: "Todos", icon: Wallet, color: "bg-muted text-muted-foreground" },
+  { value: "pendente", label: "Pendente", icon: Clock, color: "bg-yellow-500/20 text-yellow-500" },
+  { value: "pago", label: "Pago", icon: Check, color: "bg-green-500/20 text-green-500" },
+  { value: "atrasado", label: "Atrasado", icon: AlertCircle, color: "bg-red-500/20 text-red-500" },
+  { value: "cancelado", label: "Cancelado", icon: XCircle, color: "bg-muted text-muted-foreground" },
 ];
 
 const PERIOD_OPTIONS = [
@@ -130,20 +91,16 @@ const PERIOD_OPTIONS = [
   { value: "50anos", label: "50 Anos", icon: Archive },
 ];
 
-type ViewMode = "payments" | "months" | "years" | "history";
+type ViewMode = "dashboard" | "payments" | "months" | "years";
 
 export default function Pagamentos() {
   const { toast } = useToast();
   const { user } = useAuth();
   
-  // Hook de histórico
   const {
-    period,
-    setPeriod,
-    selectedYear,
-    setSelectedYear,
-    selectedMonth,
-    setSelectedMonth,
+    period, setPeriod,
+    selectedYear, setSelectedYear,
+    selectedMonth, setSelectedMonth,
     isLoading,
     payments,
     monthlyClosures,
@@ -152,30 +109,25 @@ export default function Pagamentos() {
     availableYears,
     yearsWithData,
     getMonthsWithData,
-    closeMonth,
-    closeYear,
-    isMonthClosed,
-    isYearClosed,
-    getMonthClosure,
-    getYearClosure,
+    closeMonth, closeYear,
+    isMonthClosed, isYearClosed,
+    getMonthClosure, getYearClosure,
     refresh,
   } = usePaymentsHistory();
 
   // Estado local
-  const [viewMode, setViewMode] = useState<ViewMode>("payments");
+  const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingPayment, setEditingPayment] = useState<Payment | null>(null);
   const [activeTab, setActiveTab] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
+  const [viewType, setViewType] = useState<"grid" | "list">("list");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [attachmentCounts, setAttachmentCounts] = useState<AttachmentCount>({});
-  const [closeMonthDialogOpen, setCloseMonthDialogOpen] = useState(false);
-  const [closeYearDialogOpen, setCloseYearDialogOpen] = useState(false);
-  const [selectedClosureMonth, setSelectedClosureMonth] = useState<{ano: number, mes: number} | null>(null);
-  const [selectedClosureYear, setSelectedClosureYear] = useState<number | null>(null);
-  const [viewingClosure, setViewingClosure] = useState<MonthlyPaymentClosure | null>(null);
-  const [viewingYearClosure, setViewingYearClosure] = useState<YearlyPaymentClosure | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<Payment | null>(null);
+  const [sortBy, setSortBy] = useState<"data" | "valor" | "descricao">("data");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   const [formData, setFormData] = useState({
     tipo: "curso",
@@ -210,13 +162,44 @@ export default function Pagamentos() {
   }, [payments]);
 
   const filteredPayments = useMemo(() => {
-    return payments.filter(p => {
+    let filtered = payments.filter(p => {
       if (activeTab !== "all" && p.tipo !== activeTab) return false;
       if (filterStatus !== "all" && p.status !== filterStatus) return false;
       if (searchTerm && !p.descricao.toLowerCase().includes(searchTerm.toLowerCase())) return false;
       return true;
     });
-  }, [payments, activeTab, filterStatus, searchTerm]);
+
+    return filtered.sort((a, b) => {
+      let comparison = 0;
+      if (sortBy === "data") {
+        comparison = a.data_vencimento.localeCompare(b.data_vencimento);
+      } else if (sortBy === "valor") {
+        comparison = a.valor - b.valor;
+      } else if (sortBy === "descricao") {
+        comparison = a.descricao.localeCompare(b.descricao);
+      }
+      return sortOrder === "desc" ? -comparison : comparison;
+    });
+  }, [payments, activeTab, filterStatus, searchTerm, sortBy, sortOrder]);
+
+  // Stats calculados
+  const calculatedStats = useMemo(() => {
+    const totalPago = payments.filter(p => p.status === 'pago').reduce((sum, p) => sum + p.valor, 0);
+    const totalPendente = payments.filter(p => p.status === 'pendente').reduce((sum, p) => sum + p.valor, 0);
+    const totalAtrasado = payments.filter(p => p.status === 'atrasado').reduce((sum, p) => sum + p.valor, 0);
+    const totalCancelado = payments.filter(p => p.status === 'cancelado').reduce((sum, p) => sum + p.valor, 0);
+    const total = totalPago + totalPendente + totalAtrasado;
+    const percentPago = total > 0 ? (totalPago / total) * 100 : 0;
+    
+    return {
+      totalPago, totalPendente, totalAtrasado, totalCancelado, total, percentPago,
+      countTotal: payments.length,
+      countPago: payments.filter(p => p.status === 'pago').length,
+      countPendente: payments.filter(p => p.status === 'pendente').length,
+      countAtrasado: payments.filter(p => p.status === 'atrasado').length,
+      countCancelado: payments.filter(p => p.status === 'cancelado').length,
+    };
+  }, [payments]);
 
   const openModal = (payment?: Payment) => {
     if (payment) {
@@ -288,7 +271,7 @@ export default function Pagamentos() {
         });
 
         if (error) throw error;
-        toast({ title: "Pagamento adicionado!" });
+        toast({ title: "Pagamento criado!" });
       }
 
       await refresh();
@@ -316,982 +299,734 @@ export default function Pagamentos() {
     }
   };
 
-  const deletePayment = async (id: string) => {
+  const markAsPending = async (payment: Payment) => {
+    try {
+      const { error } = await supabase
+        .from("payments")
+        .update({ status: "pendente", data_pagamento: null })
+        .eq("id", payment.id);
+
+      if (error) throw error;
+      toast({ title: "Marcado como pendente" });
+      await refresh();
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const deletePayment = async (payment: Payment) => {
     try {
       await supabase
         .from("universal_attachments")
         .delete()
         .eq("entity_type", "payment")
-        .eq("entity_id", id);
+        .eq("entity_id", payment.id);
 
-      const { error } = await supabase.from("payments").delete().eq("id", id);
+      const { error } = await supabase.from("payments").delete().eq("id", payment.id);
       if (error) throw error;
-      toast({ title: "Pagamento removido" });
+      toast({ title: "Pagamento excluído" });
+      setDeleteDialogOpen(null);
       await refresh();
     } catch (error) {
       console.error("Error deleting payment:", error);
     }
   };
 
-  const toggleRowExpand = (id: string) => {
+  const toggleRow = (id: string) => {
     setExpandedRows(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(id)) newSet.delete(id);
-      else newSet.add(id);
-      return newSet;
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const option = STATUS_OPTIONS.find(s => s.value === status);
-    if (!option) return null;
-    const Icon = option.icon;
-    return (
-      <Badge className={cn("gap-1", option.color)}>
-        <Icon className="h-3 w-3" />
-        {option.label}
-      </Badge>
-    );
+  const getStatusColor = (status: string) => {
+    const opt = STATUS_OPTIONS.find(s => s.value === status);
+    return opt?.color || "bg-muted text-muted-foreground";
   };
 
-  const getTypeBadge = (tipo: string) => {
-    const option = PAYMENT_TYPES.find(t => t.value === tipo);
-    return option ? <Badge className={option.color}>{option.label}</Badge> : null;
+  const getTypeColor = (tipo: string) => {
+    const opt = PAYMENT_TYPES.find(t => t.value === tipo);
+    return opt?.color || "from-muted to-muted";
   };
 
-  const handleAttachmentChange = (paymentId: string, count: number) => {
-    setAttachmentCounts(prev => ({ ...prev, [paymentId]: count }));
-  };
-
-  const handleCloseMonth = async () => {
-    if (selectedClosureMonth) {
-      await closeMonth(selectedClosureMonth.ano, selectedClosureMonth.mes);
-      setCloseMonthDialogOpen(false);
-      setSelectedClosureMonth(null);
-    }
-  };
-
-  const handleCloseYear = async () => {
-    if (selectedClosureYear) {
-      await closeYear(selectedClosureYear);
-      setCloseYearDialogOpen(false);
-      setSelectedClosureYear(null);
-    }
-  };
-
-  const openMonthFolder = (ano: number, mes: number) => {
-    const closure = getMonthClosure(ano, mes);
-    if (closure?.is_fechado) {
-      setViewingClosure(closure);
-    } else {
-      setSelectedYear(ano);
-      setSelectedMonth(mes);
-      setPeriod("mensal");
-      setViewMode("payments");
-    }
-  };
-
-  const openYearFolder = (ano: number) => {
-    const closure = getYearClosure(ano);
-    if (closure?.is_fechado) {
-      setViewingYearClosure(closure);
-    } else {
-      setSelectedYear(ano);
-      setViewMode("months");
-    }
-  };
-
-  // Renderizar Cards de Estatísticas
-  const renderStatsCards = () => (
-    <motion.section
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.1 }}
-      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8"
-    >
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-[hsl(var(--stats-gold))]">
-        <div className="flex items-center justify-between mb-3">
-          <Clock className="h-6 w-6 text-[hsl(var(--stats-gold))]" />
-          <Badge variant="outline" className="text-xs">{stats.totalPendente}</Badge>
-        </div>
-        <p className="text-2xl font-bold text-foreground">{formatPaymentCurrency(stats.valorPendente)}</p>
-        <p className="text-sm text-muted-foreground">Pendentes</p>
-      </div>
-      
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-[hsl(var(--stats-green))]">
-        <div className="flex items-center justify-between mb-3">
-          <Check className="h-6 w-6 text-[hsl(var(--stats-green))]" />
-          <Badge variant="outline" className="text-xs">{stats.totalPago}</Badge>
-        </div>
-        <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">{formatPaymentCurrency(stats.valorPago)}</p>
-        <p className="text-sm text-muted-foreground">Pagos</p>
+  // Render Dashboard
+  const renderDashboard = () => (
+    <div className="space-y-6">
+      {/* Hero Stats */}
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+        {[
+          { label: "Total Geral", value: calculatedStats.total, icon: Wallet, color: "from-primary to-primary/50", count: calculatedStats.countTotal },
+          { label: "Pagos", value: calculatedStats.totalPago, icon: CheckCircle2, color: "from-green-500 to-green-500/50", count: calculatedStats.countPago },
+          { label: "Pendentes", value: calculatedStats.totalPendente, icon: Clock, color: "from-yellow-500 to-yellow-500/50", count: calculatedStats.countPendente },
+          { label: "Atrasados", value: calculatedStats.totalAtrasado, icon: AlertCircle, color: "from-red-500 to-red-500/50", count: calculatedStats.countAtrasado },
+          { label: "Cancelados", value: calculatedStats.totalCancelado, icon: XCircle, color: "from-gray-500 to-gray-500/50", count: calculatedStats.countCancelado },
+        ].map((stat, i) => (
+          <motion.div
+            key={stat.label}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: i * 0.05 }}
+          >
+            <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card to-card/50 hover:border-primary/30 transition-all group">
+              <div className={cn("absolute inset-0 opacity-10 bg-gradient-to-br", stat.color)} />
+              <CardContent className="p-4">
+                <div className="flex items-center justify-between mb-2">
+                  <stat.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+                  <Badge variant="secondary" className="text-xs">{stat.count}</Badge>
+                </div>
+                <p className="text-2xl font-bold">{formatPaymentCurrency(stat.value)}</p>
+                <p className="text-xs text-muted-foreground">{stat.label}</p>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
       </div>
 
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-destructive">
-        <div className="flex items-center justify-between mb-3">
-          <AlertCircle className="h-6 w-6 text-destructive" />
-          <Badge variant="destructive" className="text-xs">{stats.totalAtrasado}</Badge>
-        </div>
-        <p className="text-2xl font-bold text-destructive">{formatPaymentCurrency(stats.valorAtrasado)}</p>
-        <p className="text-sm text-muted-foreground">Atrasados</p>
-      </div>
-      
-      <div className="glass-card rounded-2xl p-5 border-l-4 border-[hsl(var(--stats-blue))]">
-        <div className="flex items-center justify-between mb-3">
-          <BarChart3 className="h-6 w-6 text-[hsl(var(--stats-blue))]" />
-          <Badge variant="outline" className="text-xs">{stats.countTotal}</Badge>
-        </div>
-        <p className="text-2xl font-bold text-[hsl(var(--stats-blue))]">
-          {formatPaymentCurrency(stats.valorPago + stats.valorPendente + stats.valorAtrasado)}
-        </p>
-        <p className="text-sm text-muted-foreground">Total Período</p>
-      </div>
-      
-      <div className="glass-card rounded-2xl p-5 flex items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20">
-        <Button onClick={() => openModal()} className="gap-2 w-full">
-          <Plus className="h-4 w-4" /> Novo Pagamento
-        </Button>
-      </div>
-    </motion.section>
-  );
+      {/* Progress Ring */}
+      <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+        <CardContent className="p-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="font-semibold flex items-center gap-2">
+                <Target className="h-5 w-5 text-primary" />
+                Progresso de Pagamentos
+              </h3>
+              <p className="text-sm text-muted-foreground">
+                {calculatedStats.countPago} de {calculatedStats.countTotal} pagamentos realizados
+              </p>
+            </div>
+            <div className="text-right">
+              <p className="text-3xl font-bold text-primary">{calculatedStats.percentPago.toFixed(0)}%</p>
+              <p className="text-xs text-muted-foreground">concluído</p>
+            </div>
+          </div>
+          <Progress value={calculatedStats.percentPago} className="h-3" />
+          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-green-500" /> Pagos
+            </span>
+            <span className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-yellow-500" /> Pendentes
+            </span>
+            <span className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-red-500" /> Atrasados
+            </span>
+          </div>
+        </CardContent>
+      </Card>
 
-  // Renderizar Navegação de Período
-  const renderPeriodNavigation = () => (
-    <div className="flex flex-wrap items-center gap-3 mb-6">
-      {/* Botões de Período */}
-      <div className="flex flex-wrap gap-2">
-        {PERIOD_OPTIONS.map((opt) => {
-          const Icon = opt.icon;
-          const isActive = period === opt.value;
-          return (
+      {/* Quick Actions */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[
+          { label: "Novo Pagamento", icon: Plus, color: "text-primary", action: () => openModal() },
+          { label: "Ver Pagamentos", icon: List, color: "text-blue-500", action: () => setViewMode("payments") },
+          { label: "Ver Meses", icon: Calendar, color: "text-purple-500", action: () => setViewMode("months") },
+          { label: "Atualizar", icon: RefreshCw, color: "text-green-500", action: refresh },
+        ].map((action, i) => (
+          <motion.div
+            key={action.label}
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: i * 0.05 }}
+          >
             <Button
-              key={opt.value}
-              variant={isActive ? "default" : "outline"}
-              size="sm"
-              onClick={() => setPeriod(opt.value as PaymentPeriodFilter)}
-              className={cn("gap-2", isActive && "shadow-lg shadow-primary/25")}
+              variant="outline"
+              className="w-full h-20 flex-col gap-2 hover:border-primary/50"
+              onClick={action.action}
             >
-              <Icon className="h-4 w-4" />
-              <span className="hidden sm:inline">{opt.label}</span>
+              <action.icon className={cn("h-6 w-6", action.color)} />
+              <span className="text-xs">{action.label}</span>
             </Button>
-          );
-        })}
+          </motion.div>
+        ))}
       </div>
 
-      {/* Seletor de Ano/Mês */}
-      {(period === "mensal" || period === "anual") && (
-        <div className="flex items-center gap-2 ml-auto">
-          <Button variant="ghost" size="icon" onClick={() => setSelectedYear(y => y - 1)}>
-            <ChevronLeft className="h-4 w-4" />
-          </Button>
-          <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
-            <SelectTrigger className="w-24">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-60">
-              {availableYears.map(y => (
-                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          {period === "mensal" && (
-            <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
-              <SelectTrigger className="w-32">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {Array.from({ length: 12 }, (_, i) => (
-                  <SelectItem key={i + 1} value={String(i + 1)}>{getMonthName(i + 1)}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-          <Button variant="ghost" size="icon" onClick={() => setSelectedYear(y => y + 1)}>
-            <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
-      )}
+      {/* Por Tipo */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <PieChart className="h-5 w-5 text-primary" />
+            Distribuição por Tipo
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+            {PAYMENT_TYPES.filter(t => t.value !== 'all').map(type => {
+              const count = payments.filter(p => p.tipo === type.value).length;
+              const value = payments.filter(p => p.tipo === type.value).reduce((sum, p) => sum + p.valor, 0);
+              return (
+                <Card key={type.value} className={cn("relative overflow-hidden", `bg-gradient-to-br ${type.color}`)}>
+                  <CardContent className="p-3">
+                    <type.icon className="h-4 w-4 mb-2 text-muted-foreground" />
+                    <p className="font-semibold text-sm">{formatPaymentCurrency(value)}</p>
+                    <p className="text-xs text-muted-foreground">{type.label} ({count})</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
-      {/* Botões de Visualização */}
-      <div className="flex gap-2 ml-auto">
-        <Button
-          variant={viewMode === "payments" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("payments")}
-          className="gap-2"
-        >
-          <Receipt className="h-4 w-4" />
-          <span className="hidden sm:inline">Pagamentos</span>
-        </Button>
-        <Button
-          variant={viewMode === "months" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("months")}
-          className="gap-2"
-        >
-          <FolderOpen className="h-4 w-4" />
-          <span className="hidden sm:inline">Meses</span>
-        </Button>
-        <Button
-          variant={viewMode === "years" ? "default" : "outline"}
-          size="sm"
-          onClick={() => setViewMode("years")}
-          className="gap-2"
-        >
-          <Archive className="h-4 w-4" />
-          <span className="hidden sm:inline">Anos</span>
-        </Button>
-      </div>
+      {/* Recent Payments */}
+      <Card className="border-border/50">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center justify-between">
+            <span className="flex items-center gap-2">
+              <Activity className="h-5 w-5 text-primary" />
+              Pagamentos Recentes
+            </span>
+            <Button variant="ghost" size="sm" onClick={() => setViewMode("payments")}>
+              Ver Todos <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            {filteredPayments.slice(0, 5).map((payment) => (
+              <div
+                key={payment.id}
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
+              >
+                <div className="flex items-center gap-3">
+                  <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br", getTypeColor(payment.tipo))}>
+                    {PAYMENT_TYPES.find(t => t.value === payment.tipo)?.icon && (
+                      <CreditCard className="h-5 w-5 text-muted-foreground" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{payment.descricao}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {payment.tipo} • {format(new Date(payment.data_vencimento), 'dd/MM/yyyy')}
+                    </p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <p className="font-semibold">{formatPaymentCurrency(payment.valor)}</p>
+                  <Badge variant="secondary" className={cn("text-xs", getStatusColor(payment.status))}>
+                    {payment.status}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
-  // Renderizar Pastas de Meses
-  const renderMonthFolders = () => {
-    const months = getMonthsWithData(selectedYear);
-    const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
-
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="space-y-6"
-      >
-        <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold flex items-center gap-3">
-            <FolderOpen className="h-6 w-6 text-primary" />
-            Meses de {selectedYear}
-          </h2>
-          {!isYearClosed(selectedYear) && monthlyClosures.filter(c => c.ano === selectedYear).length >= 12 && (
-            <Button
-              onClick={() => {
-                setSelectedClosureYear(selectedYear);
-                setCloseYearDialogOpen(true);
-              }}
-              className="gap-2"
-            >
-              <Lock className="h-4 w-4" />
-              Fechar Ano {selectedYear}
-            </Button>
-          )}
-        </div>
-
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
-          {allMonths.map((mes) => {
-            const isClosed = isMonthClosed(selectedYear, mes);
-            const hasData = months.includes(mes);
-            const closure = getMonthClosure(selectedYear, mes);
-
-            return (
-              <motion.div
-                key={mes}
-                whileHover={{ scale: 1.02 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => openMonthFolder(selectedYear, mes)}
-                className={cn(
-                  "glass-card rounded-xl p-4 cursor-pointer transition-all border-2",
-                  isClosed 
-                    ? "border-[hsl(var(--stats-green))]/50 bg-[hsl(var(--stats-green))]/5" 
-                    : hasData 
-                      ? "border-primary/30 hover:border-primary/60" 
-                      : "border-border/30 opacity-60 hover:opacity-100"
-                )}
-              >
-                <div className="flex items-center justify-between mb-3">
-                  {isClosed ? (
-                    <FolderClosed className="h-8 w-8 text-[hsl(var(--stats-green))]" />
-                  ) : hasData ? (
-                    <FolderOpen className="h-8 w-8 text-primary" />
-                  ) : (
-                    <FolderClosed className="h-8 w-8 text-muted-foreground" />
-                  )}
-                  {isClosed && <Lock className="h-4 w-4 text-[hsl(var(--stats-green))]" />}
-                </div>
-                <p className="font-semibold text-foreground">{getMonthName(mes)}</p>
-                {closure && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {closure.total_pagamentos} pagamentos
-                  </p>
-                )}
-                {hasData && !isClosed && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="w-full mt-2 text-xs gap-1"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setSelectedClosureMonth({ ano: selectedYear, mes });
-                      setCloseMonthDialogOpen(true);
-                    }}
-                  >
-                    <Lock className="h-3 w-3" /> Fechar
-                  </Button>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
-    );
-  };
-
-  // Renderizar Pastas de Anos
-  const renderYearFolders = () => {
-    const currentYear = new Date().getFullYear();
-    const yearsToShow = Array.from({ length: 61 }, (_, i) => currentYear - 10 + i);
-
-    return (
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        className="space-y-6"
-      >
-        <h2 className="text-2xl font-bold flex items-center gap-3">
-          <Archive className="h-6 w-6 text-primary" />
-          Arquivo de Anos (50 anos)
-        </h2>
-
-        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
-          {yearsToShow.map((ano) => {
-            const isClosed = isYearClosed(ano);
-            const hasData = yearsWithData.includes(ano);
-            const closure = getYearClosure(ano);
-
-            return (
-              <motion.div
-                key={ano}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={() => openYearFolder(ano)}
-                className={cn(
-                  "glass-card rounded-xl p-3 cursor-pointer transition-all border-2 text-center",
-                  isClosed 
-                    ? "border-[hsl(var(--stats-green))]/50 bg-[hsl(var(--stats-green))]/5" 
-                    : hasData 
-                      ? "border-primary/30 hover:border-primary/60" 
-                      : "border-border/20 opacity-40 hover:opacity-70"
-                )}
-              >
-                <div className="flex items-center justify-center gap-1 mb-1">
-                  {isClosed ? (
-                    <Lock className="h-4 w-4 text-[hsl(var(--stats-green))]" />
-                  ) : hasData ? (
-                    <FolderOpen className="h-4 w-4 text-primary" />
-                  ) : null}
-                </div>
-                <p className={cn(
-                  "font-bold text-lg",
-                  ano === currentYear && "text-primary"
-                )}>
-                  {ano}
-                </p>
-                {closure && (
-                  <p className="text-xs text-muted-foreground">
-                    {formatPaymentCurrency(closure.total_valor_pago)}
-                  </p>
-                )}
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
-    );
-  };
-
-  // Renderizar Lista de Pagamentos
-  const renderPaymentsList = () => (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="space-y-6"
-    >
-      {/* Search and Filters */}
-      <div className="flex flex-wrap items-center gap-4">
+  // Render Payments List
+  const renderPayments = () => (
+    <div className="space-y-4">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-2">
         <div className="relative flex-1 min-w-[200px]">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
+          <Input
             placeholder="Buscar pagamentos..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
+            className="pl-9"
           />
         </div>
+
         <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-40">
-            <Filter className="h-4 w-4 mr-2" />
-            <SelectValue placeholder="Status" />
+          <SelectTrigger className="w-[130px]">
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">Todos Status</SelectItem>
-            {STATUS_OPTIONS.map((s) => (
-              <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+            {STATUS_OPTIONS.map(opt => (
+              <SelectItem key={opt.value} value={opt.value}>
+                <span className="flex items-center gap-2">
+                  <opt.icon className="h-3 w-3" /> {opt.label}
+                </span>
+              </SelectItem>
             ))}
           </SelectContent>
         </Select>
-        <Button variant="outline" size="icon" onClick={refresh}>
-          <RefreshCw className="h-4 w-4" />
+
+        <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
+          <SelectTrigger className="w-[130px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="data">Por Data</SelectItem>
+            <SelectItem value="valor">Por Valor</SelectItem>
+            <SelectItem value="descricao">Por Descrição</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Button variant="outline" size="icon" onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
+          {sortOrder === 'desc' ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
         </Button>
+
+        <div className="flex border rounded-md">
+          <Button variant={viewType === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewType('list')}>
+            <List className="h-4 w-4" />
+          </Button>
+          <Button variant={viewType === 'grid' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewType('grid')}>
+            <Grid3X3 className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
-      {/* Tabs and List */}
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-secondary/50 flex-wrap h-auto gap-1 p-1">
-          <TabsTrigger value="all" className="gap-1">
-            <Wallet className="h-4 w-4" /> Todos
-          </TabsTrigger>
+      {/* Type Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-muted/50 flex-wrap h-auto gap-1 p-1">
           {PAYMENT_TYPES.map(type => (
             <TabsTrigger key={type.value} value={type.value} className="gap-1">
+              <type.icon className="h-4 w-4" />
               {type.label}
             </TabsTrigger>
           ))}
         </TabsList>
-
-        <TabsContent value={activeTab} className="mt-0">
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-secondary/50">
-                  <tr>
-                    <th className="text-left p-4 text-sm font-bold text-white">Descrição</th>
-                    <th className="text-left p-4 text-sm font-bold text-white">Tipo</th>
-                    <th className="text-left p-4 text-sm font-bold text-white">Vencimento</th>
-                    <th className="text-right p-4 text-sm font-bold text-white">Valor</th>
-                    <th className="text-center p-4 text-sm font-bold text-white">Status</th>
-                    <th className="text-center p-4 text-sm font-bold text-white">Anexos</th>
-                    <th className="text-right p-4 text-sm font-bold text-white">Ações</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredPayments.map((payment) => (
-                    <>
-                      <tr 
-                        key={payment.id} 
-                        className={cn(
-                          "border-t border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer",
-                          expandedRows.has(payment.id) && "bg-secondary/20",
-                          payment.fechado && "opacity-60"
-                        )}
-                        onClick={() => toggleRowExpand(payment.id)}
-                      >
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            {expandedRows.has(payment.id) ? 
-                              <ChevronUp className="h-4 w-4 text-muted-foreground" /> : 
-                              <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            }
-                            <div>
-                              <p className="font-medium text-foreground">{payment.descricao}</p>
-                              <div className="flex items-center gap-2 mt-1">
-                                {payment.recorrente && (
-                                  <span className="text-xs text-muted-foreground">🔄 Recorrente</span>
-                                )}
-                                {payment.fechado && (
-                                  <Badge variant="outline" className="text-xs gap-1">
-                                    <Lock className="h-3 w-3" /> Fechado
-                                  </Badge>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="p-4">{getTypeBadge(payment.tipo)}</td>
-                        <td className="p-4">
-                          <div className="flex items-center gap-2">
-                            <Calendar className="h-4 w-4 text-muted-foreground" />
-                            <span className="text-sm text-foreground">
-                              {format(new Date(payment.data_vencimento), "dd/MM/yyyy")}
-                            </span>
-                          </div>
-                          {payment.data_pagamento && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Pago em {format(new Date(payment.data_pagamento), "dd/MM/yyyy")}
-                            </p>
-                          )}
-                        </td>
-                        <td className="p-4 text-right font-semibold text-foreground">
-                          {formatPaymentCurrency(payment.valor)}
-                        </td>
-                        <td className="p-4 text-center">{getStatusBadge(payment.status)}</td>
-                        <td className="p-4 text-center">
-                          <Badge 
-                            variant={attachmentCounts[payment.id] > 0 ? "default" : "outline"}
-                            className="gap-1"
-                          >
-                            <Paperclip className="h-3 w-3" />
-                            {attachmentCounts[payment.id] || 0}
-                          </Badge>
-                        </td>
-                        <td className="p-4" onClick={(e) => e.stopPropagation()}>
-                          <div className="flex justify-end gap-1">
-                            {payment.status !== "pago" && !payment.fechado && (
-                              <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-[hsl(var(--stats-green))]"
-                                onClick={() => markAsPaid(payment)}
-                                title="Marcar como pago"
-                              >
-                                <Check className="h-4 w-4" />
-                              </Button>
-                            )}
-                            {!payment.fechado && (
-                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(payment)}>
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                            )}
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => toggleRowExpand(payment.id)}>
-                                  <Paperclip className="h-4 w-4 mr-2" />
-                                  {expandedRows.has(payment.id) ? "Fechar Anexos" : "Ver Anexos"}
-                                </DropdownMenuItem>
-                                {!payment.fechado && (
-                                  <DropdownMenuItem 
-                                    onClick={() => deletePayment(payment.id)}
-                                    className="text-destructive"
-                                  >
-                                    <Trash2 className="h-4 w-4 mr-2" />
-                                    Excluir
-                                  </DropdownMenuItem>
-                                )}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                        </td>
-                      </tr>
-                      {/* Expanded Row */}
-                      <AnimatePresence>
-                        {expandedRows.has(payment.id) && (
-                          <motion.tr
-                            initial={{ opacity: 0, height: 0 }}
-                            animate={{ opacity: 1, height: "auto" }}
-                            exit={{ opacity: 0, height: 0 }}
-                          >
-                            <td colSpan={7} className="p-0 bg-secondary/10">
-                              <motion.div
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                exit={{ opacity: 0 }}
-                                className="p-6 border-t border-border/30"
-                              >
-                                <div className="grid md:grid-cols-2 gap-6">
-                                  <div className="space-y-4">
-                                    <h3 className="font-semibold text-foreground flex items-center gap-2">
-                                      <Receipt className="h-4 w-4" />
-                                      Detalhes do Pagamento
-                                    </h3>
-                                    <div className="grid grid-cols-2 gap-3 text-sm">
-                                      <div>
-                                        <p className="text-muted-foreground">Valor</p>
-                                        <p className="font-medium text-foreground">{formatPaymentCurrency(payment.valor)}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-muted-foreground">Vencimento</p>
-                                        <p className="font-medium text-foreground">
-                                          {format(new Date(payment.data_vencimento), "dd/MM/yyyy")}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-muted-foreground">Método</p>
-                                        <p className="font-medium text-foreground">
-                                          {PAYMENT_METHODS.find(m => m.value === payment.metodo_pagamento)?.label || "Não informado"}
-                                        </p>
-                                      </div>
-                                      <div>
-                                        <p className="text-muted-foreground">Status</p>
-                                        {getStatusBadge(payment.status)}
-                                      </div>
-                                    </div>
-                                    {payment.observacoes && (
-                                      <div>
-                                        <p className="text-muted-foreground text-sm">Observações</p>
-                                        <p className="text-sm text-foreground mt-1">{payment.observacoes}</p>
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div>
-                                    <UniversalAttachments
-                                      entityType="payment"
-                                      entityId={payment.id}
-                                      title="Comprovantes e Anexos"
-                                      maxFiles={20}
-                                      showAIExtraction={true}
-                                      onAttachmentChange={(count) => handleAttachmentChange(payment.id, count)}
-                                    />
-                                  </div>
-                                </div>
-                              </motion.div>
-                            </td>
-                          </motion.tr>
-                        )}
-                      </AnimatePresence>
-                    </>
-                  ))}
-                  {filteredPayments.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="p-12 text-center">
-                        <div className="flex flex-col items-center gap-3">
-                          <Receipt className="h-12 w-12 text-muted-foreground/50" />
-                          <p className="text-muted-foreground">Nenhum pagamento encontrado</p>
-                          <Button onClick={() => openModal()} variant="outline" className="gap-2">
-                            <Plus className="h-4 w-4" /> Adicionar Pagamento
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </TabsContent>
       </Tabs>
-    </motion.div>
+
+      {/* Payments Grid/List */}
+      {viewType === 'grid' ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <AnimatePresence mode="popLayout">
+            {filteredPayments.map((payment, i) => (
+              <motion.div
+                key={payment.id}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.95 }}
+                transition={{ delay: i * 0.02 }}
+              >
+                <Card className="relative overflow-hidden hover:shadow-lg transition-all cursor-pointer group">
+                  <div className={cn("absolute top-0 left-0 w-1 h-full bg-gradient-to-b", getTypeColor(payment.tipo))} />
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center bg-gradient-to-br", getTypeColor(payment.tipo))}>
+                        <CreditCard className="h-5 w-5 text-muted-foreground" />
+                      </div>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openModal(payment)}>
+                            <Edit2 className="h-4 w-4 mr-2" /> Editar
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => markAsPaid(payment)}>
+                            <Check className="h-4 w-4 mr-2 text-green-500" /> Marcar Pago
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => markAsPending(payment)}>
+                            <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Marcar Pendente
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem onClick={() => setDeleteDialogOpen(payment)} className="text-destructive">
+                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
+                    <h4 className="font-semibold truncate mb-1">{payment.descricao}</h4>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      {payment.tipo} • {format(new Date(payment.data_vencimento), 'dd/MM/yyyy')}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-lg font-bold">{formatPaymentCurrency(payment.valor)}</p>
+                      <Badge className={cn("text-xs", getStatusColor(payment.status))}>
+                        {payment.status}
+                      </Badge>
+                    </div>
+                    {attachmentCounts[payment.id] > 0 && (
+                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
+                        <Paperclip className="h-3 w-3" />
+                        {attachmentCounts[payment.id]} anexo(s)
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            ))}
+          </AnimatePresence>
+        </div>
+      ) : (
+        <Card className="border-border/50">
+          <ScrollArea className="h-[600px]">
+            <div className="divide-y divide-border">
+              {filteredPayments.map((payment, i) => (
+                <motion.div
+                  key={payment.id}
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: i * 0.02 }}
+                  className="group"
+                >
+                  <div
+                    className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer"
+                    onClick={() => toggleRow(payment.id)}
+                  >
+                    <div className={cn("w-10 h-10 rounded-lg flex items-center justify-center shrink-0 bg-gradient-to-br", getTypeColor(payment.tipo))}>
+                      <CreditCard className="h-5 w-5 text-muted-foreground" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <p className="font-medium truncate">{payment.descricao}</p>
+                        {attachmentCounts[payment.id] > 0 && (
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Paperclip className="h-3 w-3" /> {attachmentCounts[payment.id]}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        {PAYMENT_TYPES.find(t => t.value === payment.tipo)?.label || payment.tipo} • {format(new Date(payment.data_vencimento), 'dd/MM/yyyy')}
+                      </p>
+                    </div>
+                    <div className="text-right shrink-0">
+                      <p className="font-semibold">{formatPaymentCurrency(payment.valor)}</p>
+                      <Badge className={cn("text-xs", getStatusColor(payment.status))}>
+                        {payment.status}
+                      </Badge>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="shrink-0 opacity-0 group-hover:opacity-100">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => openModal(payment)}>
+                          <Edit2 className="h-4 w-4 mr-2" /> Editar
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => markAsPaid(payment)}>
+                          <Check className="h-4 w-4 mr-2 text-green-500" /> Marcar Pago
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => markAsPending(payment)}>
+                          <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Marcar Pendente
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => setDeleteDialogOpen(payment)} className="text-destructive">
+                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+
+                  {/* Expanded Row with Attachments */}
+                  <AnimatePresence>
+                    {expandedRows.has(payment.id) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        className="border-t border-border/50 bg-muted/20"
+                      >
+                        <div className="p-4">
+                          <UniversalAttachments
+                            entityType="payment"
+                            entityId={payment.id}
+                            title="Comprovantes"
+                            showAIExtraction
+                          />
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+              ))}
+            </div>
+          </ScrollArea>
+        </Card>
+      )}
+    </div>
+  );
+
+  // Render Months View
+  const renderMonths = () => (
+    <div className="space-y-4">
+      <div className="flex items-center gap-4 mb-4">
+        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+          <SelectTrigger className="w-[150px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {yearsWithData.map(year => (
+              <SelectItem key={year} value={String(year)}>{year}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => {
+          const closure = getMonthClosure(selectedYear, month);
+          const isClosed = isMonthClosed(selectedYear, month);
+          return (
+            <Card key={month} className={cn(
+              "relative overflow-hidden transition-all hover:shadow-lg",
+              isClosed ? "border-green-500/50" : "border-border/50"
+            )}>
+              {isClosed && (
+                <div className="absolute top-2 right-2">
+                  <Lock className="h-4 w-4 text-green-500" />
+                </div>
+              )}
+              <CardContent className="p-4">
+                <h4 className="font-semibold mb-2">{getMonthName(month)}</h4>
+                {closure ? (
+                  <>
+                    <p className="text-2xl font-bold text-primary">
+                      {formatPaymentCurrency(closure.total_valor_pago || 0)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {closure.total_pago || 0} pagos de {closure.total_pagamentos || 0}
+                    </p>
+                  </>
+                ) : (
+                  <p className="text-muted-foreground text-sm">Sem dados</p>
+                )}
+              </CardContent>
+            </Card>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  // Render Years View
+  const renderYears = () => (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+      {yearsWithData.map(year => {
+        const closure = getYearClosure(year);
+        const isClosed = isYearClosed(year);
+        return (
+          <Card key={year} className={cn(
+            "relative overflow-hidden transition-all hover:shadow-lg cursor-pointer",
+            isClosed ? "border-green-500/50" : "border-border/50"
+          )} onClick={() => { setSelectedYear(year); setViewMode('months'); }}>
+            {isClosed && (
+              <div className="absolute top-2 right-2">
+                <Lock className="h-4 w-4 text-green-500" />
+              </div>
+            )}
+            <CardContent className="p-4">
+              <h4 className="text-2xl font-bold mb-2">{year}</h4>
+              {closure ? (
+                <>
+                  <p className="text-xl font-semibold text-primary">
+                    {formatPaymentCurrency(closure.total_valor_pago)}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{closure.total_meses_fechados || 0} meses fechados</p>
+                </>
+              ) : (
+                <p className="text-muted-foreground text-sm">Em andamento</p>
+              )}
+            </CardContent>
+          </Card>
+        );
+      })}
+    </div>
   );
 
   return (
-    <div className="p-4 md:p-8 lg:p-12">
-      <div className="mx-auto max-w-7xl">
+    <TooltipProvider>
+      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
         {/* Header */}
-        <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
-        >
-          <div className="space-y-2">
-            <motion.div className="flex items-center gap-2 text-primary">
-              <Sparkles className="h-5 w-5" />
-              <span className="text-sm font-medium tracking-wide uppercase">Central Financeira</span>
-            </motion.div>
-            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
-              Central de Pagamentos
-            </h1>
-            <p className="text-lg text-muted-foreground max-w-xl">
-              Sistema completo estilo Softcom com fechamento de mês/ano e histórico de 50 anos.
-            </p>
+        <div className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="relative">
+                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-green-500 to-green-500/50 flex items-center justify-center">
+                    <CreditCard className="h-6 w-6 text-white" />
+                  </div>
+                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-primary border-2 border-background flex items-center justify-center">
+                    <Zap className="h-2 w-2 text-primary-foreground" />
+                  </div>
+                </div>
+                <div>
+                  <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
+                    Enterprise Payment Vault
+                  </h1>
+                  <p className="text-sm text-muted-foreground">
+                    Central de Pagamentos com IA
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={refresh} disabled={isLoading}>
+                  <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
+                  Atualizar
+                </Button>
+                <Button size="sm" className="gap-2" onClick={() => openModal()}>
+                  <Plus className="h-4 w-4" />
+                  Novo Pagamento
+                </Button>
+              </div>
+            </div>
+
+            {/* Navigation */}
+            <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2">
+              {[
+                { value: "dashboard", label: "Dashboard", icon: Home },
+                { value: "payments", label: "Pagamentos", icon: List },
+                { value: "months", label: "Meses", icon: Calendar },
+                { value: "years", label: "Anos", icon: Archive },
+              ].map(nav => (
+                <Button
+                  key={nav.value}
+                  variant={viewMode === nav.value ? "default" : "ghost"}
+                  size="sm"
+                  onClick={() => setViewMode(nav.value as ViewMode)}
+                  className="gap-2"
+                >
+                  <nav.icon className="h-4 w-4" />
+                  {nav.label}
+                </Button>
+              ))}
+
+              <Separator orientation="vertical" className="h-6 mx-2" />
+
+              {PERIOD_OPTIONS.map(opt => (
+                <Button
+                  key={opt.value}
+                  variant={period === opt.value ? "secondary" : "ghost"}
+                  size="sm"
+                  onClick={() => setPeriod(opt.value as PaymentPeriodFilter)}
+                  className="gap-1"
+                >
+                  <opt.icon className="h-3 w-3" />
+                  {opt.label}
+                </Button>
+              ))}
+            </div>
           </div>
-        </motion.header>
+        </div>
 
-        {/* Stats Cards */}
-        {renderStatsCards()}
+        {/* Content */}
+        <div className="container mx-auto px-4 py-6">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-64">
+              <div className="flex flex-col items-center gap-4">
+                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
+                <p className="text-muted-foreground">Carregando pagamentos...</p>
+              </div>
+            </div>
+          ) : (
+            <>
+              {viewMode === 'dashboard' && renderDashboard()}
+              {viewMode === 'payments' && renderPayments()}
+              {viewMode === 'months' && renderMonths()}
+              {viewMode === 'years' && renderYears()}
+            </>
+          )}
+        </div>
 
-        {/* Period Navigation */}
-        {renderPeriodNavigation()}
-
-        {/* Content based on view mode */}
-        {viewMode === "payments" && renderPaymentsList()}
-        {viewMode === "months" && renderMonthFolders()}
-        {viewMode === "years" && renderYearFolders()}
-
-        {/* Modal de Novo/Editar Pagamento */}
+        {/* Modal */}
         <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+          <DialogContent className="max-w-lg">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-primary" />
-                {editingPayment ? "Editar" : "Novo"} Pagamento
+                <CreditCard className="h-5 w-5 text-green-500" />
+                {editingPayment ? 'Editar' : 'Novo'} Pagamento
               </DialogTitle>
             </DialogHeader>
-            <div className="space-y-4 pt-4">
-              <div>
-                <Label className="font-bold text-white">Tipo *</Label>
-                <Select value={formData.tipo} onValueChange={(v) => setFormData(prev => ({ ...prev, tipo: v }))}>
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_TYPES.map((t) => (
-                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
-                <Label className="font-bold text-white">Descrição *</Label>
-                <Input
-                  value={formData.descricao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                  placeholder="Ex: Mensalidade, Aluguel, Internet..."
-                  className="mt-1.5"
-                />
-              </div>
-
+            <div className="space-y-4">
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="font-bold text-white">Valor (R$) *</Label>
+                  <Label>Tipo *</Label>
+                  <Select value={formData.tipo} onValueChange={(v) => setFormData(prev => ({ ...prev, tipo: v }))}>
+                    <SelectTrigger><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_TYPES.filter(t => t.value !== 'all').map(type => (
+                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div>
+                  <Label>Valor (R$) *</Label>
                   <Input
+                    type="number"
+                    step="0.01"
                     value={formData.valor}
                     onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
                     placeholder="0,00"
-                    className="mt-1.5"
                   />
                 </div>
+              </div>
+              <div>
+                <Label>Descrição *</Label>
+                <Input
+                  value={formData.descricao}
+                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                  placeholder="Descrição do pagamento"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="font-bold text-white">Vencimento *</Label>
+                  <Label>Vencimento</Label>
                   <Input
                     type="date"
                     value={formData.data_vencimento}
                     onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
-                    className="mt-1.5"
                   />
                 </div>
-              </div>
-
-              <div>
-                <Label className="font-bold text-white">Método de Pagamento</Label>
-                <Select 
-                  value={formData.metodo_pagamento} 
-                  onValueChange={(v) => setFormData(prev => ({ ...prev, metodo_pagamento: v }))}
-                >
-                  <SelectTrigger className="mt-1.5">
-                    <SelectValue placeholder="Selecione o método..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {PAYMENT_METHODS.map((m) => (
-                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="flex items-center justify-between p-3 rounded-lg bg-secondary/30">
                 <div>
-                  <Label className="font-bold text-white">Pagamento Recorrente</Label>
-                  <p className="text-xs text-muted-foreground">Marcar como pagamento mensal/recorrente</p>
+                  <Label>Método</Label>
+                  <Select value={formData.metodo_pagamento} onValueChange={(v) => setFormData(prev => ({ ...prev, metodo_pagamento: v }))}>
+                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    <SelectContent>
+                      {PAYMENT_METHODS.map(method => (
+                        <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <Switch
-                  checked={formData.recorrente}
-                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, recorrente: checked }))}
-                />
               </div>
-
               <div>
-                <Label className="font-bold text-white">Observações</Label>
+                <Label>Observações</Label>
                 <Textarea
                   value={formData.observacoes}
                   onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-                  placeholder="Notas adicionais..."
-                  className="mt-1.5"
-                  rows={3}
+                  placeholder="Observações..."
+                  rows={2}
                 />
               </div>
-
-              {editingPayment && (
-                <div className="border-t pt-4">
-                  <UniversalAttachments
-                    entityType="payment"
-                    entityId={editingPayment.id}
-                    title="Comprovantes e Anexos"
-                    maxFiles={20}
-                    showAIExtraction={true}
-                    onAttachmentChange={(count) => handleAttachmentChange(editingPayment.id, count)}
-                  />
-                </div>
-              )}
-
-              <Button onClick={handleSave} className="w-full gap-2">
-                <Check className="h-4 w-4" />
-                {editingPayment ? "Salvar Alterações" : "Adicionar Pagamento"}
-              </Button>
+              <div className="flex items-center gap-2">
+                <Switch
+                  checked={formData.recorrente}
+                  onCheckedChange={(v) => setFormData(prev => ({ ...prev, recorrente: v }))}
+                />
+                <Label>Pagamento recorrente</Label>
+              </div>
             </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+              <Button onClick={handleSave}>Salvar</Button>
+            </DialogFooter>
           </DialogContent>
         </Dialog>
 
-        {/* Dialog de Fechamento de Mês */}
-        <AlertDialog open={closeMonthDialogOpen} onOpenChange={setCloseMonthDialogOpen}>
+        {/* Delete Dialog */}
+        <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
           <AlertDialogContent>
             <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <Lock className="h-5 w-5 text-primary" />
-                Fechar Mês
-              </AlertDialogTitle>
+              <AlertDialogTitle>Excluir Pagamento</AlertDialogTitle>
               <AlertDialogDescription>
-                Você está prestes a fechar o mês de{" "}
-                <strong>{selectedClosureMonth && getMonthName(selectedClosureMonth.mes)}/{selectedClosureMonth?.ano}</strong>.
-                <br /><br />
-                Isso irá:
-                <ul className="list-disc ml-4 mt-2 space-y-1">
-                  <li>Consolidar todos os pagamentos do mês</li>
-                  <li>Bloquear edições nos pagamentos deste período</li>
-                  <li>Criar um snapshot permanente para histórico</li>
-                </ul>
-                <br />
-                <strong>Esta ação não pode ser desfeita.</strong>
+                Tem certeza que deseja excluir "{deleteDialogOpen?.descricao}"? Esta ação não pode ser desfeita.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleCloseMonth} className="gap-2">
-                <Lock className="h-4 w-4" />
-                Confirmar Fechamento
+              <AlertDialogAction onClick={() => deleteDialogOpen && deletePayment(deleteDialogOpen)} className="bg-destructive text-destructive-foreground">
+                Excluir
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
-
-        {/* Dialog de Fechamento de Ano */}
-        <AlertDialog open={closeYearDialogOpen} onOpenChange={setCloseYearDialogOpen}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <Archive className="h-5 w-5 text-primary" />
-                Consolidar Ano
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Você está prestes a consolidar o ano de <strong>{selectedClosureYear}</strong>.
-                <br /><br />
-                Isso irá criar um resumo anual com todos os meses fechados.
-                <br /><br />
-                <strong>Esta ação não pode ser desfeita.</strong>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={handleCloseYear} className="gap-2">
-                <Archive className="h-4 w-4" />
-                Confirmar Consolidação
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-
-        {/* Modal de Visualização de Fechamento Mensal */}
-        <Dialog open={!!viewingClosure} onOpenChange={() => setViewingClosure(null)}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <FolderClosed className="h-5 w-5 text-[hsl(var(--stats-green))]" />
-                {viewingClosure && `${getMonthName(viewingClosure.mes)} ${viewingClosure.ano}`}
-                <Badge className="ml-2 gap-1 bg-[hsl(var(--stats-green))]/20 text-[hsl(var(--stats-green))]">
-                  <Lock className="h-3 w-3" /> Fechado
-                </Badge>
-              </DialogTitle>
-            </DialogHeader>
-            {viewingClosure && (
-              <div className="space-y-6 pt-4">
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Total Pagamentos</p>
-                    <p className="text-2xl font-bold">{viewingClosure.total_pagamentos}</p>
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Valor Pago</p>
-                    <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">
-                      {formatPaymentCurrency(viewingClosure.total_valor_pago)}
-                    </p>
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Pendente</p>
-                    <p className="text-2xl font-bold text-[hsl(var(--stats-gold))]">
-                      {formatPaymentCurrency(viewingClosure.total_valor_pendente)}
-                    </p>
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Atrasado</p>
-                    <p className="text-2xl font-bold text-destructive">
-                      {formatPaymentCurrency(viewingClosure.total_valor_atrasado)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <p className="text-lg font-bold text-[hsl(var(--stats-green))]">{viewingClosure.total_pago}</p>
-                    <p className="text-xs text-muted-foreground">Pagos</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <p className="text-lg font-bold text-[hsl(var(--stats-gold))]">{viewingClosure.total_pendente}</p>
-                    <p className="text-xs text-muted-foreground">Pendentes</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <p className="text-lg font-bold text-destructive">{viewingClosure.total_atrasado}</p>
-                    <p className="text-xs text-muted-foreground">Atrasados</p>
-                  </div>
-                  <div className="text-center p-3 rounded-lg bg-secondary/30">
-                    <p className="text-lg font-bold text-muted-foreground">{viewingClosure.total_cancelado}</p>
-                    <p className="text-xs text-muted-foreground">Cancelados</p>
-                  </div>
-                </div>
-
-                {viewingClosure.fechado_em && (
-                  <p className="text-xs text-muted-foreground text-center">
-                    Fechado em {format(new Date(viewingClosure.fechado_em), "dd/MM/yyyy 'às' HH:mm")}
-                  </p>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Modal de Visualização de Fechamento Anual */}
-        <Dialog open={!!viewingYearClosure} onOpenChange={() => setViewingYearClosure(null)}>
-          <DialogContent className="sm:max-w-2xl">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <Archive className="h-5 w-5 text-[hsl(var(--stats-green))]" />
-                Ano {viewingYearClosure?.ano}
-                <Badge className="ml-2 gap-1 bg-[hsl(var(--stats-green))]/20 text-[hsl(var(--stats-green))]">
-                  <Lock className="h-3 w-3" /> Consolidado
-                </Badge>
-              </DialogTitle>
-            </DialogHeader>
-            {viewingYearClosure && (
-              <div className="space-y-6 pt-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Meses Fechados</p>
-                    <p className="text-2xl font-bold">{viewingYearClosure.total_meses_fechados}/12</p>
-                    <Progress value={(viewingYearClosure.total_meses_fechados / 12) * 100} className="mt-2" />
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Total Pagamentos</p>
-                    <p className="text-2xl font-bold">{viewingYearClosure.total_pagamentos}</p>
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Total Pago</p>
-                    <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">
-                      {formatPaymentCurrency(viewingYearClosure.total_valor_pago)}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Média Mensal</p>
-                    <p className="text-xl font-bold">{formatPaymentCurrency(viewingYearClosure.media_mensal)}</p>
-                  </div>
-                  <div className="glass-card rounded-xl p-4">
-                    <p className="text-sm text-muted-foreground">Total Geral</p>
-                    <p className="text-xl font-bold">{formatPaymentCurrency(viewingYearClosure.total_valor_geral)}</p>
-                  </div>
-                </div>
-
-                {viewingYearClosure.melhor_mes && (
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-4 rounded-lg bg-[hsl(var(--stats-green))]/10 border border-[hsl(var(--stats-green))]/30">
-                      <p className="text-sm text-muted-foreground">Melhor Mês</p>
-                      <p className="font-bold text-[hsl(var(--stats-green))]">
-                        {getMonthName(viewingYearClosure.melhor_mes)} - {formatPaymentCurrency(viewingYearClosure.melhor_mes_valor)}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-destructive/10 border border-destructive/30">
-                      <p className="text-sm text-muted-foreground">Pior Mês</p>
-                      <p className="font-bold text-destructive">
-                        {viewingYearClosure.pior_mes && getMonthName(viewingYearClosure.pior_mes)} - {formatPaymentCurrency(viewingYearClosure.pior_mes_valor)}
-                      </p>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
-    </div>
+    </TooltipProvider>
   );
 }
