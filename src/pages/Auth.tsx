@@ -144,7 +144,7 @@ export default function Auth() {
     { value: "98%", label: "Satisfação" },
   ];
   
-  const isLogin = true; // Somente login - cadastro desabilitado (owner cria contas)
+  const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -267,12 +267,27 @@ export default function Auth() {
           });
         }
       } else {
-        // Cadastro desabilitado - apenas owner pode criar contas
-        toast.error("Cadastro desabilitado", {
-          description: "Apenas o administrador pode criar novas contas."
+        // Cadastro de novo usuário
+        const result = await signUp(formData.email, formData.password, formData.nome);
+        if (result.error) {
+          if (result.error.message.includes("User already registered")) {
+            toast.error("Email já cadastrado", {
+              description: "Este email já possui uma conta. Tente fazer login."
+            });
+          } else {
+            toast.error("Erro no cadastro", {
+              description: result.error.message
+            });
+          }
+          setIsLoading(false);
+          return;
+        }
+        
+        toast.success("Conta criada com sucesso!", {
+          description: "Você já pode fazer login."
         });
-        setIsLoading(false);
-        return;
+        setIsLogin(true);
+        setFormData({ nome: "", email: formData.email, password: "" });
       }
     } catch {
       toast.error("Erro ao processar solicitação");
@@ -813,6 +828,25 @@ export default function Auth() {
                 </svg>
                 <span className="font-medium">Google</span>
               </Button>
+
+              {/* Toggle Login/Signup */}
+              <div className="text-center mt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    setErrors({});
+                    setFormData({ nome: "", email: "", password: "" });
+                  }}
+                  className="text-sm text-gray-400 hover:text-white transition-colors"
+                >
+                  {isLogin ? (
+                    <>Não tem conta? <span className="text-primary hover:underline">Criar conta</span></>
+                  ) : (
+                    <>Já tem conta? <span className="text-primary hover:underline">Fazer login</span></>
+                  )}
+                </button>
+              </div>
             </form>
             )}
 
