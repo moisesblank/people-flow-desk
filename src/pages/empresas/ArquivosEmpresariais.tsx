@@ -4,16 +4,17 @@
 // Organizado por data, com IA ler
 // ============================================
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  FolderOpen, Search, Grid3X3, List, Trash2, 
-  Download, Eye, Brain, FileText, Image, 
+import {
+  FolderOpen, Grid3X3, List, Trash2,
+  Download, Brain, FileText, Image,
   Video, Music, Archive, FileIcon, MoreVertical, RefreshCw,
-  Loader2, CheckCircle2
+  Loader2
 } from 'lucide-react';
 import { toast } from 'sonner';
 
+import { supabase } from '@/integrations/supabase/client';
 import { FileUpload } from '@/components/FileUpload';
 import { buscarArquivos, deleteFile, toggleIaLer, processarArquivoComIA, formatFileSize, getFileCategory } from '@/lib/fileUpload';
 import { Button } from '@/components/ui/button';
@@ -53,24 +54,47 @@ export default function ArquivosEmpresariais() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [processingIA, setProcessingIA] = useState<string | null>(null);
 
-  // Empresas (CNPJ) - filtro obrigatório
-  const companies = [
-    { id: '53.829.761/0001-17', name: 'MMM CURSO DE QUÍMICA LTDA' },
-    { id: '44.979.308/0001-04', name: 'CURSO QUÍMICA MOISÉS MEDEIROS' },
-  ];
-  const [empresaId, setEmpresaId] = useState<string>(companies[0].id);
+  // Empresas (CNPJ) - vindo do backend (UUID)
+  const { data: empresas, isLoading: empresasLoading } = useQuery({
+    queryKey: ['empresas-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('empresas')
+        .select('id, nome, cnpj, ativo')
+        .eq('ativo', true)
+        .order('created_at', { ascending: true });
+      if (error) throw error;
+      return data || [];
+    },
+    refetchOnWindowFocus: false,
+  });
+
+  const [empresaId, setEmpresaId] = useState<string>('');
+
+  useEffect(() => {
+    if (!empresaId && (empresas || []).length > 0) {
+      setEmpresaId(empresas![0].id);
+    }
+  }, [empresaId, empresas]);
+
+  const empresaSelecionada = useMemo(
+    () => (empresas || []).find((e) => e.id === empresaId),
+    [empresas, empresaId]
+  );
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['arquivos-empresariais', empresaId, busca, tipo, ano, mes],
-    queryFn: () => buscarArquivos({
-      busca: busca || undefined,
-      pasta: 'empresas',
-      empresaId,
-      tipo: tipo !== 'todos' ? tipo : undefined,
-      ano,
-      mes,
-      limite: 100,
-    }),
+    queryFn: () =>
+      buscarArquivos({
+        busca: busca || undefined,
+        pasta: 'empresas',
+        empresaId: empresaId || undefined,
+        tipo: tipo !== 'todos' ? tipo : undefined,
+        ano,
+        mes,
+        limite: 100,
+      }),
+    enabled: !!empresaId,
     refetchOnWindowFocus: false,
   });
 
@@ -118,11 +142,13 @@ export default function ArquivosEmpresariais() {
           <p className="text-muted-foreground">Upload até 2GB • Qualquer formato • Organizado por data</p>
           <div className="mt-3 flex flex-wrap items-center gap-3">
             <div className="min-w-[280px]">
-              <Select value={empresaId} onValueChange={setEmpresaId}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+              <Select value={empresaId} onValueChange={setEmpresaId} disabled={empresasLoading}>
+                <SelectTrigger><SelectValue placeholder={empresasLoading ? 'Carregando...' : 'Selecione a empresa'} /></SelectTrigger>
                 <SelectContent>
-                  {companies.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>{c.name} • {c.id}</SelectItem>
+                  {(empresas || []).map((e) => (
+                    <SelectItem key={e.id} value={e.id}>
+                      {e.nome} • {e.cnpj}
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
@@ -144,7 +170,7 @@ export default function ArquivosEmpresariais() {
             <CardContent>
               <FileUpload
                 bucket="arquivos"
-                folder={`empresas/${empresaId.replace(/\D/g, '')}`}
+                folder={`empresas/${(empresaSelecionada?.cnpj || 'empresa').replace(/\D/g, '')}`}
                 categoria="empresa"
                 empresaId={empresaId}
                 showIaOption
@@ -164,7 +190,7 @@ export default function ArquivosEmpresariais() {
             <Select value={mes?.toString()||''} onValueChange={v=>setMes(v?parseInt(v):undefined)}><SelectTrigger className="w-24"><SelectValue placeholder="Mês"/></SelectTrigger><SelectContent><SelectItem value="">Todos</SelectItem>{months.map((m,i)=><SelectItem key={i} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent></Select>
             <div className="flex gap-1"><Button variant={viewMode==='grid'?'default':'outline'} size="icon" onClick={()=>setViewMode('grid')}><Grid3X3 className="w-4 h-4"/></Button><Button variant={viewMode==='list'?'default':'outline'} size="icon" onClick={()=>setViewMode('list')}><List className="w-4 h-4"/></Button></div>
             <Button variant="outline" size="icon" onClick={()=>refetch()}><RefreshCw className="w-4 h-4"/></Button>
-            <Badge variant="outline" className="text-muted-foreground">{companies.find(c=>c.id===empresaId)?.id}</Badge>
+            <Badge variant="outline" className="text-muted-foreground">{empresaSelecionada?.cnpj}</Badge>
           </CardContent></Card>
 
           {isLoading ? <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-500"/></div>
