@@ -302,20 +302,23 @@ export function CashFlowForecast() {
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
             <XAxis 
               dataKey="month" 
-              stroke="hsl(240, 5%, 55%)"
-              tick={{ fontSize: 11 }}
+              stroke="#ffffff"
+              tick={{ fontSize: 11, fill: "#ffffff", fontWeight: "bold" }}
             />
             <YAxis 
-              stroke="hsl(240, 5%, 55%)"
+              stroke="#ffffff"
               tickFormatter={(value) => `${(value / 100000).toFixed(0)}k`}
-              tick={{ fontSize: 11 }}
+              tick={{ fontSize: 11, fill: "#ffffff", fontWeight: "bold" }}
             />
             <Tooltip
               contentStyle={{
                 backgroundColor: "hsl(240, 6%, 8%)",
                 border: "1px solid hsl(240, 6%, 15%)",
                 borderRadius: "12px",
+                color: "#ffffff",
+                fontWeight: "bold",
               }}
+              labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
               formatter={(value: number) => formatCurrency(value)}
               labelFormatter={(label, payload) => {
                 const item = payload?.[0]?.payload as ForecastData;

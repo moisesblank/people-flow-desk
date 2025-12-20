@@ -137,20 +137,22 @@ export function FinancialHistoryChart({ data, period, tendencia, variacaoPercent
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="label" 
-                      stroke="hsl(var(--muted-foreground))" 
+                      stroke="#ffffff" 
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       angle={-45}
                       textAnchor="end"
                       height={60}
+                      tick={{ fill: "#ffffff", fontWeight: "bold" }}
                     />
                     <YAxis 
-                      stroke="hsl(var(--muted-foreground))" 
+                      stroke="#ffffff" 
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) => formatCurrency(value)}
+                      tick={{ fill: "#ffffff", fontWeight: "bold" }}
                     />
                     <Tooltip
                       contentStyle={{
@@ -158,8 +160,10 @@ export function FinancialHistoryChart({ data, period, tendencia, variacaoPercent
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "12px",
                         boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
+                        color: "#ffffff",
+                        fontWeight: "bold",
                       }}
-                      labelStyle={{ color: "hsl(var(--foreground))" }}
+                      labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       formatter={(value: number, name: string) => [
                         formatCurrency(value),
                         name === "receitas" ? "Receitas" : name === "despesas" ? "Despesas" : "Saldo"
@@ -167,7 +171,7 @@ export function FinancialHistoryChart({ data, period, tendencia, variacaoPercent
                     />
                     <Legend 
                       formatter={(value) => (
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-white font-bold text-xs">
                           {value === "receitas" ? "Receitas" : value === "despesas" ? "Despesas" : "Saldo"}
                         </span>
                       )}
@@ -200,27 +204,32 @@ export function FinancialHistoryChart({ data, period, tendencia, variacaoPercent
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="label" 
-                      stroke="hsl(var(--muted-foreground))" 
+                      stroke="#ffffff" 
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       angle={-45}
                       textAnchor="end"
                       height={60}
+                      tick={{ fill: "#ffffff", fontWeight: "bold" }}
                     />
                     <YAxis 
-                      stroke="hsl(var(--muted-foreground))" 
+                      stroke="#ffffff" 
                       fontSize={11}
                       tickLine={false}
                       axisLine={false}
                       tickFormatter={(value) => formatCurrency(value)}
+                      tick={{ fill: "#ffffff", fontWeight: "bold" }}
                     />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "12px",
+                        color: "#ffffff",
+                        fontWeight: "bold",
                       }}
+                      labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       formatter={(value: number, name: string) => [
                         formatCurrency(value),
                         name === "receitas" ? "Receitas" : name === "despesas" ? "Despesas" : "Saldo"
@@ -228,7 +237,7 @@ export function FinancialHistoryChart({ data, period, tendencia, variacaoPercent
                     />
                     <Legend 
                       formatter={(value) => (
-                        <span className="text-muted-foreground text-xs">
+                        <span className="text-white font-bold text-xs">
                           {value === "receitas" ? "Receitas" : value === "despesas" ? "Despesas" : "Saldo"}
                         </span>
                       )}

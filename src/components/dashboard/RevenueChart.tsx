@@ -43,17 +43,19 @@ export function RevenueChart({ data }: RevenueChartProps) {
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
             <XAxis 
               dataKey="month" 
-              stroke="hsl(240, 5%, 55%)" 
+              stroke="#ffffff" 
               fontSize={12}
               tickLine={false}
               axisLine={false}
+              tick={{ fill: "#ffffff", fontWeight: "bold" }}
             />
             <YAxis 
-              stroke="hsl(240, 5%, 55%)" 
+              stroke="#ffffff" 
               fontSize={12}
               tickLine={false}
               axisLine={false}
               tickFormatter={(value) => formatCurrency(value)}
+              tick={{ fill: "#ffffff", fontWeight: "bold" }}
             />
             <Tooltip
               contentStyle={{
@@ -61,8 +63,10 @@ export function RevenueChart({ data }: RevenueChartProps) {
                 border: "1px solid hsl(240, 6%, 15%)",
                 borderRadius: "12px",
                 boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+                color: "#ffffff",
+                fontWeight: "bold",
               }}
-              labelStyle={{ color: "hsl(0, 0%, 98%)" }}
+              labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
               formatter={(value: number) => [formatCurrency(value), ""]}
             />
             <Area

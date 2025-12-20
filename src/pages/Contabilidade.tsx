@@ -423,14 +423,17 @@ export default function Contabilidade() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
-                  <XAxis dataKey="month" stroke="hsl(240, 5%, 55%)" fontSize={12} />
-                  <YAxis stroke="hsl(240, 5%, 55%)" fontSize={12} tickFormatter={(v) => formatCurrency(v)} />
+                  <XAxis dataKey="month" stroke="#ffffff" fontSize={12} tick={{ fill: "#ffffff", fontWeight: "bold" }} />
+                  <YAxis stroke="#ffffff" fontSize={12} tick={{ fill: "#ffffff", fontWeight: "bold" }} tickFormatter={(v) => formatCurrency(v)} />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "hsl(240, 6%, 8%)",
                       border: "1px solid hsl(240, 6%, 15%)",
                       borderRadius: "12px",
+                      color: "#ffffff",
+                      fontWeight: "bold",
                     }}
+                    labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                     formatter={(value: number) => formatCurrency(value)}
                   />
                   <Area type="monotone" dataKey="receitas" stroke="hsl(152, 76%, 47%)" fillOpacity={1} fill="url(#colorReceitas)" name="Receitas" />

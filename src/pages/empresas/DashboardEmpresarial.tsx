@@ -358,17 +358,20 @@ export default function DashboardEmpresarial() {
             <ResponsiveContainer width="100%" height={300}>
               <AreaChart data={financeiro?.evolucaoMensal || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="mes" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" />
+                <XAxis dataKey="mes" stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} />
+                <YAxis stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
+                    borderRadius: "8px",
+                    color: "#ffffff",
+                    fontWeight: "bold",
                   }} 
+                  labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   formatter={(value: number) => formatCurrency(value)}
                 />
-                <Legend />
+                <Legend formatter={(value) => <span className="text-white font-bold">{value}</span>} />
                 <Area type="monotone" dataKey="receitas" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name="Receitas" />
                 <Area type="monotone" dataKey="despesas" stackId="2" stroke="#ef4444" fill="#ef4444" fillOpacity={0.3} name="Despesas" />
                 <Line type="monotone" dataKey="lucro" stroke="hsl(var(--primary))" strokeWidth={2} name="Lucro" />

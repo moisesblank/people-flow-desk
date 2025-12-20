@@ -144,14 +144,17 @@ export default function Metricas() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" />
-                <YAxis stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `R$${v/1000}k`} />
+                <XAxis dataKey="month" stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} />
+                <YAxis stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} tickFormatter={(v) => `R$${v/1000}k`} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
+                    borderRadius: "8px",
+                    color: "#ffffff",
+                    fontWeight: "bold",
                   }}
+                  labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   formatter={(value: number) => [`R$ ${value.toLocaleString()}`, "Faturamento"]}
                 />
                 <Area 
@@ -217,14 +220,17 @@ export default function Metricas() {
             <ResponsiveContainer width="100%" height={250}>
               <BarChart data={conversionData} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" stroke="hsl(var(--muted-foreground))" />
-                <YAxis type="category" dataKey="stage" stroke="hsl(var(--muted-foreground))" width={100} />
+                <XAxis type="number" stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} />
+                <YAxis type="category" dataKey="stage" stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} width={100} />
                 <Tooltip 
                   contentStyle={{ 
                     backgroundColor: "hsl(var(--card))", 
                     border: "1px solid hsl(var(--border))",
-                    borderRadius: "8px"
+                    borderRadius: "8px",
+                    color: "#ffffff",
+                    fontWeight: "bold",
                   }}
+                  labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                 />
                 <Bar 
                   dataKey="value" 

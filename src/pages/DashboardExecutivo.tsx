@@ -446,10 +446,11 @@ export default function DashboardExecutivo() {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                <XAxis dataKey="month" stroke="#ffffff" fontSize={12} tick={{ fill: "#ffffff", fontWeight: "bold" }} />
                 <YAxis
-                  stroke="hsl(var(--muted-foreground))"
+                  stroke="#ffffff"
                   fontSize={12}
+                  tick={{ fill: "#ffffff", fontWeight: "bold" }}
                   tickFormatter={(v) => `${(v / 100000).toFixed(0)}k`}
                 />
                 <Tooltip
@@ -457,7 +458,10 @@ export default function DashboardExecutivo() {
                     backgroundColor: "hsl(var(--card))",
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
+                    color: "#ffffff",
+                    fontWeight: "bold",
                   }}
+                  labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   formatter={(value: number) => [formatCurrency(value), ""]}
                 />
                 <Area

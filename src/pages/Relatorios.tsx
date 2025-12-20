@@ -445,22 +445,26 @@ export default function Relatorios() {
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" />
                     <XAxis 
                       type="number" 
-                      stroke="hsl(240, 5%, 55%)"
+                      stroke="#ffffff"
+                      tick={{ fill: "#ffffff", fontWeight: "bold" }}
                       tickFormatter={(value) => formatCurrency(value)}
                     />
                     <YAxis 
                       type="category" 
                       dataKey="name" 
-                      stroke="hsl(240, 5%, 55%)"
+                      stroke="#ffffff"
                       width={75}
-                      tick={{ fontSize: 11 }}
+                      tick={{ fontSize: 11, fill: "#ffffff", fontWeight: "bold" }}
                     />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "hsl(240, 6%, 8%)",
                         border: "1px solid hsl(240, 6%, 15%)",
                         borderRadius: "12px",
+                        color: "#ffffff",
+                        fontWeight: "bold",
                       }}
+                      labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       formatter={(value: number) => formatCurrency(value)}
                     />
                     <Bar dataKey="value" radius={[0, 8, 8, 0]}>
@@ -514,12 +518,15 @@ export default function Relatorios() {
                         backgroundColor: "hsl(240, 6%, 8%)",
                         border: "1px solid hsl(240, 6%, 15%)",
                         borderRadius: "12px",
+                        color: "#ffffff",
+                        fontWeight: "bold",
                       }}
+                      labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       formatter={(value: number) => formatCurrency(value)}
                     />
                     <Legend 
                       wrapperStyle={{ fontSize: '12px' }}
-                      formatter={(value) => <span className="text-muted-foreground">{value}</span>}
+                      formatter={(value) => <span className="text-white font-bold">{value}</span>}
                     />
                   </PieChart>
                 </ResponsiveContainer>
