@@ -768,8 +768,26 @@ export default function ArquivosEmpresariais() {
                   className="flex items-center gap-4 p-3 rounded-xl hover:bg-secondary/50 transition-colors cursor-pointer group"
                   onClick={() => handlePreview(arquivo)}
                 >
-                  <div className={cn("p-3 rounded-xl bg-gradient-to-br", getFileGradient(arquivo.tipo))}>
-                    <FileIconComponent className={cn("h-6 w-6", getFileColor(arquivo.tipo))} />
+                  <div className={cn(
+                    "w-12 h-12 rounded-xl bg-gradient-to-br flex items-center justify-center overflow-hidden flex-shrink-0",
+                    getFileGradient(arquivo.tipo)
+                  )}>
+                    {arquivo.tipo.includes('image') ? (
+                      <img 
+                        src={arquivo.url} 
+                        alt={arquivo.nome}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <FileIconComponent className={cn(
+                      "h-6 w-6", 
+                      getFileColor(arquivo.tipo),
+                      arquivo.tipo.includes('image') ? 'hidden' : ''
+                    )} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-foreground truncate">{arquivo.nome}</p>

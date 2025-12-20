@@ -34,8 +34,8 @@ interface FileUploaderProps {
 
 export function FileUploader({
   folder = '',
-  maxSize = 10,
-  allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/webp'],
+  maxSize = 2048, // 2GB em MB
+  allowedTypes = [], // Vazio = aceita QUALQUER tipo
   multiple = true,
   onUpload,
   onRemove,
@@ -101,11 +101,14 @@ export function FileUploader({
     return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
   };
 
-  const acceptedTypesDisplay = allowedTypes.map(type => {
-    if (type === 'application/pdf') return 'PDF';
-    if (type.startsWith('image/')) return type.replace('image/', '').toUpperCase();
-    return type;
-  }).join(', ');
+  // Exibe "TODOS" se allowedTypes estiver vazio
+  const acceptedTypesDisplay = allowedTypes.length === 0 
+    ? 'QUALQUER tipo de arquivo' 
+    : allowedTypes.map(type => {
+        if (type === 'application/pdf') return 'PDF';
+        if (type.startsWith('image/')) return type.replace('image/', '').toUpperCase();
+        return type;
+      }).join(', ');
 
   return (
     <div className={className}>
@@ -129,7 +132,7 @@ export function FileUploader({
           ref={fileInputRef}
           type="file"
           multiple={multiple}
-          accept={allowedTypes.join(',')}
+          accept={allowedTypes.length > 0 ? allowedTypes.join(',') : '*/*'}
           onChange={(e) => handleFileSelect(e.target.files)}
           className="hidden"
         />
@@ -147,7 +150,7 @@ export function FileUploader({
               Arraste arquivos aqui ou clique para selecionar
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              Formatos: {acceptedTypesDisplay} • Máximo: {maxSize}MB
+              Formatos: <span className="text-primary font-medium">{acceptedTypesDisplay}</span> • Máximo: <span className="text-primary font-medium">2GB</span>
             </p>
           </>
         )}
@@ -175,13 +178,19 @@ export function FileUploader({
                 transition={{ delay: index * 0.05 }}
                 className="flex items-center gap-3 p-3 bg-muted rounded-lg"
               >
-                {getFileIcon(file.type)}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium truncate">{file.name}</p>
-                  <p className="text-xs text-muted-foreground">
-                    {formatFileSize(file.size)}
-                  </p>
-                </div>
+              <div className="w-10 h-10 rounded bg-muted flex items-center justify-center overflow-hidden flex-shrink-0">
+                {file.type.startsWith('image/') ? (
+                  <img src={file.url} alt={file.name} className="w-full h-full object-cover" />
+                ) : (
+                  getFileIcon(file.type)
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{file.name}</p>
+                <p className="text-xs text-muted-foreground">
+                  {formatFileSize(file.size)}
+                </p>
+              </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-green-500" />
                   <Button

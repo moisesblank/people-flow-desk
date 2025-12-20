@@ -280,7 +280,7 @@ export function UniversalAttachments({
               Arraste arquivos ou clique para selecionar
             </p>
             <p className="text-xs text-muted-foreground mt-1">
-              PDF, Word, Excel, PowerPoint, Imagens • Máximo 2GB
+              Aceita <span className="text-primary font-medium">QUALQUER</span> tipo de arquivo • Máximo <span className="text-primary font-medium">2GB</span>
             </p>
           </>
         )}
@@ -315,9 +315,23 @@ export function UniversalAttachments({
                   transition={{ delay: index * 0.03 }}
                   className="flex items-center gap-3 p-3 bg-secondary/30 rounded-lg hover:bg-secondary/50 transition-colors group"
                 >
-                  {/* Ícone */}
-                  <div className={cn("p-2 rounded-lg bg-background", fileColor)}>
-                    <FileIcon className="h-5 w-5" />
+                  {/* Ícone ou Thumbnail para imagens */}
+                  <div className={cn(
+                    "w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center flex-shrink-0 bg-background",
+                    fileColor
+                  )}>
+                    {attachment.file_type.startsWith('image/') ? (
+                      <img 
+                        src={attachment.file_url} 
+                        alt={attachment.file_name}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                          (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                        }}
+                      />
+                    ) : null}
+                    <FileIcon className={cn("h-5 w-5", attachment.file_type.startsWith('image/') ? 'hidden' : '')} />
                   </div>
 
                   {/* Info */}
