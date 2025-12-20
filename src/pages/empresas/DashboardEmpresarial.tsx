@@ -79,39 +79,28 @@ export default function DashboardEmpresarial() {
   const [periodo, setPeriodo] = useState("mes");
   const [isRefreshing, setIsRefreshing] = useState(false);
 
-  // Buscar dados financeiros - VINCULADO A TODOS OS GASTOS
+  // ============================================
+  // BUSCAR DADOS FINANCEIROS - SINCRONIZADO COM FINANÇAS EMPRESA
+  // MESMAS TABELAS: company_fixed_expenses + company_extra_expenses
+  // ============================================
   const { data: financeiro, refetch } = useQuery({
     queryKey: ["dashboard-empresarial-completo", periodo],
     queryFn: async () => {
-      // Receitas (tabela entradas)
+      // Receitas (tabela entradas) - em centavos
       const { data: entradas } = await supabase
         .from("entradas")
         .select("valor, created_at, categoria")
         .order("created_at", { ascending: false });
 
-      // GASTOS FIXOS EMPRESA
+      // GASTOS FIXOS EMPRESA (tabela principal de Finanças Empresa)
       const { data: gastosFixos } = await supabase
         .from("company_fixed_expenses")
-        .select("valor, nome, categoria");
+        .select("valor, nome, categoria, status_pagamento");
 
-      // GASTOS EXTRAS EMPRESA  
+      // GASTOS EXTRAS EMPRESA (tabela principal de Finanças Empresa)
       const { data: gastosExtras } = await supabase
         .from("company_extra_expenses")
-        .select("valor, nome, categoria, data");
-
-      // Transações (despesas gerais)
-      const { data: saidas } = await supabase
-        .from("transactions")
-        .select("amount, created_at, description, type")
-        .eq("type", "expense")
-        .eq("is_personal", false)
-        .order("created_at", { ascending: false });
-
-      // Contas a Pagar
-      const { data: contasPagar } = await supabase
-        .from("contas_pagar")
-        .select("valor, status")
-        .eq("status", "pago");
+        .select("valor, nome, categoria, data, status_pagamento");
 
       // Funcionários ativos
       const { count: funcionarios } = await supabase
@@ -125,17 +114,30 @@ export default function DashboardEmpresarial() {
         .select("*", { count: "exact", head: true })
         .eq("status", "ativo");
 
-      // CÁLCULOS EM TEMPO REAL
+      // ============================================
+      // CÁLCULOS - IDÊNTICOS AOS DE FINANÇAS EMPRESA
+      // DESPESAS = GASTOS FIXOS + GASTOS EXTRAS (apenas)
+      // ============================================
       const totalReceitas = entradas?.reduce((acc, e) => acc + Number(e.valor || 0), 0) || 0;
       
-      // Somar TODOS os gastos da empresa
+      // Somar APENAS gastos das tabelas company_*
       const totalGastosFixos = gastosFixos?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
       const totalGastosExtras = gastosExtras?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
-      const totalTransacoes = saidas?.reduce((acc, s) => acc + Number(s.amount || 0), 0) || 0;
-      const totalContasPagas = contasPagar?.reduce((acc, c) => acc + Number(c.valor || 0), 0) || 0;
 
-      // DESPESAS TOTAIS = Fixos + Extras + Transações + Contas Pagas
-      const totalDespesas = totalGastosFixos + totalGastosExtras + totalTransacoes + totalContasPagas;
+      // DESPESAS TOTAIS = MESMO VALOR DE TOTAL GASTOS EM FINANÇAS EMPRESA
+      const totalDespesas = totalGastosFixos + totalGastosExtras;
+      
+      // Por status de pagamento
+      const allGastos = [...(gastosFixos || []), ...(gastosExtras || [])];
+      const totalPago = allGastos
+        .filter(g => g.status_pagamento === 'pago')
+        .reduce((acc, g) => acc + Number(g.valor || 0), 0);
+      const totalPendente = allGastos
+        .filter(g => g.status_pagamento === 'pendente' || !g.status_pagamento)
+        .reduce((acc, g) => acc + Number(g.valor || 0), 0);
+      const totalAtrasado = allGastos
+        .filter(g => g.status_pagamento === 'atrasado')
+        .reduce((acc, g) => acc + Number(g.valor || 0), 0);
       
       // LUCRO LÍQUIDO REAL
       const lucroLiquido = totalReceitas - totalDespesas;
@@ -159,14 +161,14 @@ export default function DashboardEmpresarial() {
         value
       }));
 
-      // Evolução mensal (dados reais + projeção)
+      // Evolução mensal (dados reais do mês atual)
       const evolucaoMensal = [
         { mes: "Jul", receitas: 45000, despesas: 28000, lucro: 17000 },
         { mes: "Ago", receitas: 52000, despesas: 31000, lucro: 21000 },
         { mes: "Set", receitas: 48000, despesas: 29000, lucro: 19000 },
         { mes: "Out", receitas: 61000, despesas: 35000, lucro: 26000 },
         { mes: "Nov", receitas: 58000, despesas: 33000, lucro: 25000 },
-        { mes: "Dez", receitas: totalReceitas, despesas: totalDespesas, lucro: lucroLiquido },
+        { mes: "Dez", receitas: totalReceitas / 100, despesas: totalDespesas / 100, lucro: lucroLiquido / 100 },
       ];
 
       return {
@@ -174,8 +176,9 @@ export default function DashboardEmpresarial() {
         totalDespesas,
         totalGastosFixos,
         totalGastosExtras,
-        totalTransacoes,
-        totalContasPagas,
+        totalPago,
+        totalPendente,
+        totalAtrasado,
         lucroLiquido,
         margem,
         funcionarios: funcionarios || 0,
@@ -184,10 +187,13 @@ export default function DashboardEmpresarial() {
         evolucaoMensal,
         crescimentoReceita: 12.5,
         crescimentoDespesas: -3.2,
-        alertas: lucroLiquido < 0 ? [{ titulo: "Lucro Negativo", descricao: "As despesas superaram as receitas este mês" }] : []
+        alertas: [
+          ...(lucroLiquido < 0 ? [{ titulo: "Lucro Negativo", descricao: "As despesas superaram as receitas este mês" }] : []),
+          ...(totalAtrasado > 0 ? [{ titulo: "Pagamentos Atrasados", descricao: `R$ ${(totalAtrasado / 100).toLocaleString('pt-BR')} em despesas atrasadas` }] : [])
+        ]
       };
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
+    refetchInterval: 10000, // Atualiza a cada 10 segundos
   });
 
   // Realtime subscription
@@ -298,23 +304,31 @@ export default function DashboardEmpresarial() {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div className="p-4 bg-red-500/10 rounded-lg">
+            <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
               <p className="text-sm text-muted-foreground">Gastos Fixos</p>
               <p className="text-xl font-bold text-red-500">{formatCurrency(financeiro?.totalGastosFixos || 0)}</p>
             </div>
-            <div className="p-4 bg-orange-500/10 rounded-lg">
+            <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
               <p className="text-sm text-muted-foreground">Gastos Extras</p>
               <p className="text-xl font-bold text-orange-500">{formatCurrency(financeiro?.totalGastosExtras || 0)}</p>
             </div>
-            <div className="p-4 bg-yellow-500/10 rounded-lg">
-              <p className="text-sm text-muted-foreground">Transações</p>
-              <p className="text-xl font-bold text-yellow-500">{formatCurrency(financeiro?.totalTransacoes || 0)}</p>
+            <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
+              <p className="text-sm text-muted-foreground">✅ Pagos</p>
+              <p className="text-xl font-bold text-green-500">{formatCurrency(financeiro?.totalPago || 0)}</p>
             </div>
-            <div className="p-4 bg-purple-500/10 rounded-lg">
-              <p className="text-sm text-muted-foreground">Contas Pagas</p>
-              <p className="text-xl font-bold text-purple-500">{formatCurrency(financeiro?.totalContasPagas || 0)}</p>
+            <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
+              <p className="text-sm text-muted-foreground">⏳ Pendentes</p>
+              <p className="text-xl font-bold text-yellow-500">{formatCurrency(financeiro?.totalPendente || 0)}</p>
             </div>
           </div>
+          {(financeiro?.totalAtrasado || 0) > 0 && (
+            <div className="mt-4 p-4 bg-red-500/20 rounded-lg border border-red-500/50 animate-pulse">
+              <p className="text-sm font-medium text-red-400 flex items-center gap-2">
+                <AlertCircle className="h-4 w-4" />
+                Despesas Atrasadas: <span className="text-red-500 font-bold">{formatCurrency(financeiro?.totalAtrasado || 0)}</span>
+              </p>
+            </div>
+          )}
         </CardContent>
       </Card>
 
