@@ -1,7 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v13.0 - MASTER REMOVE HOOK
-// Sistema de remoção total com cascata
-// Remove de todas as equivalências e associações
+// MOISÉS MEDEIROS v16.0 - MASTER REMOVE HOOK ULTIMATE
+// Sistema de remoção total com cascata COMPLETA
+// Remove de TODAS as equivalências, cruzamentos e ligações
+// Exclusão permanente de QUALQUER lugar do banco
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
@@ -12,30 +13,36 @@ import { useAuth } from '@/hooks/useAuth';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
-// Mapeamento de entidades e suas relações para remoção em cascata
+// Mapeamento COMPLETO de entidades e suas relações para remoção em cascata
 const ENTITY_RELATIONS: Record<string, {
   table: string;
   nameField: string;
-  relations?: { table: string; foreignKey: string }[];
+  relations?: { table: string; foreignKey: string; cascadeDelete?: boolean }[];
   attachmentType?: string;
+  crossReferences?: { table: string; column: string }[];
 }> = {
+  // ========== CURSOS E LMS ==========
   course: {
     table: 'courses',
     nameField: 'title',
     relations: [
-      { table: 'modules', foreignKey: 'course_id' },
-      { table: 'lessons', foreignKey: 'course_id' },
-      { table: 'quizzes', foreignKey: 'course_id' },
-      { table: 'course_enrollments', foreignKey: 'course_id' },
-      { table: 'lesson_progress', foreignKey: 'course_id' },
+      { table: 'modules', foreignKey: 'course_id', cascadeDelete: true },
+      { table: 'lessons', foreignKey: 'course_id', cascadeDelete: true },
+      { table: 'quizzes', foreignKey: 'course_id', cascadeDelete: true },
+      { table: 'course_enrollments', foreignKey: 'course_id', cascadeDelete: true },
+      { table: 'lesson_progress', foreignKey: 'course_id', cascadeDelete: true },
+      { table: 'certificates', foreignKey: 'course_id', cascadeDelete: true },
     ],
-    attachmentType: 'course'
+    attachmentType: 'course',
+    crossReferences: [
+      { table: 'alunos', column: 'curso_id' },
+    ]
   },
   module: {
     table: 'modules',
     nameField: 'title',
     relations: [
-      { table: 'lessons', foreignKey: 'module_id' },
+      { table: 'lessons', foreignKey: 'module_id', cascadeDelete: true },
     ],
     attachmentType: 'module'
   },
@@ -43,8 +50,8 @@ const ENTITY_RELATIONS: Record<string, {
     table: 'lessons',
     nameField: 'title',
     relations: [
-      { table: 'lesson_progress', foreignKey: 'lesson_id' },
-      { table: 'lesson_comments', foreignKey: 'lesson_id' },
+      { table: 'lesson_progress', foreignKey: 'lesson_id', cascadeDelete: true },
+      { table: 'lesson_comments', foreignKey: 'lesson_id', cascadeDelete: true },
     ],
     attachmentType: 'lesson'
   },
@@ -52,10 +59,12 @@ const ENTITY_RELATIONS: Record<string, {
     table: 'quizzes',
     nameField: 'title',
     relations: [
-      { table: 'quiz_questions', foreignKey: 'quiz_id' },
-      { table: 'quiz_attempts', foreignKey: 'quiz_id' },
+      { table: 'quiz_questions', foreignKey: 'quiz_id', cascadeDelete: true },
+      { table: 'quiz_attempts', foreignKey: 'quiz_id', cascadeDelete: true },
     ],
   },
+  
+  // ========== TAREFAS ==========
   task: {
     table: 'tasks',
     nameField: 'title',
@@ -66,45 +75,16 @@ const ENTITY_RELATIONS: Record<string, {
     nameField: 'title',
     attachmentType: 'task'
   },
+  dev_task: {
+    table: 'dev_tasks',
+    nameField: 'title',
+  },
+  
+  // ========== FINANCEIRO ==========
   transaction: {
     table: 'transactions',
     nameField: 'description',
     attachmentType: 'transaction'
-  },
-  employee: {
-    table: 'employees',
-    nameField: 'nome',
-    relations: [
-      { table: 'employee_documents', foreignKey: 'employee_id' },
-      { table: 'employee_compensation', foreignKey: 'employee_id' },
-    ],
-    attachmentType: 'employee'
-  },
-  affiliate: {
-    table: 'affiliates',
-    nameField: 'nome',
-    relations: [
-      { table: 'comissoes', foreignKey: 'afiliado_id' },
-    ],
-  },
-  aluno: {
-    table: 'alunos',
-    nameField: 'nome',
-    relations: [
-      { table: 'lesson_progress', foreignKey: 'user_id' },
-      { table: 'quiz_attempts', foreignKey: 'user_id' },
-    ],
-    attachmentType: 'student'
-  },
-  campaign: {
-    table: 'marketing_campaigns',
-    nameField: 'name',
-    attachmentType: 'campaign'
-  },
-  document: {
-    table: 'general_documents',
-    nameField: 'nome',
-    attachmentType: 'document'
   },
   conta_pagar: {
     table: 'contas_pagar',
@@ -116,13 +96,125 @@ const ENTITY_RELATIONS: Record<string, {
     nameField: 'descricao',
     attachmentType: 'transaction'
   },
+  entrada: {
+    table: 'entradas',
+    nameField: 'descricao',
+    attachmentType: 'transaction'
+  },
+  contabilidade: {
+    table: 'contabilidade',
+    nameField: 'descricao',
+    attachmentType: 'document'
+  },
+  
+  // ========== FUNCIONÁRIOS ==========
+  employee: {
+    table: 'employees',
+    nameField: 'nome',
+    relations: [
+      { table: 'employee_documents', foreignKey: 'employee_id', cascadeDelete: true },
+      { table: 'employee_compensation', foreignKey: 'employee_id', cascadeDelete: true },
+      { table: 'time_clock_entries', foreignKey: 'employee_id', cascadeDelete: true },
+    ],
+    attachmentType: 'employee',
+    crossReferences: [
+      { table: 'arquivos_universal', column: 'funcionario_id' },
+    ]
+  },
+  
+  // ========== AFILIADOS ==========
+  affiliate: {
+    table: 'affiliates',
+    nameField: 'nome',
+    relations: [
+      { table: 'comissoes', foreignKey: 'afiliado_id', cascadeDelete: true },
+    ],
+    crossReferences: [
+      { table: 'arquivos_universal', column: 'afiliado_id' },
+    ]
+  },
+  
+  // ========== ALUNOS ==========
+  aluno: {
+    table: 'alunos',
+    nameField: 'nome',
+    relations: [
+      { table: 'lesson_progress', foreignKey: 'user_id', cascadeDelete: true },
+      { table: 'quiz_attempts', foreignKey: 'user_id', cascadeDelete: true },
+      { table: 'course_enrollments', foreignKey: 'user_id', cascadeDelete: true },
+      { table: 'certificates', foreignKey: 'user_id', cascadeDelete: true },
+      { table: 'comissoes', foreignKey: 'aluno_id', cascadeDelete: true },
+    ],
+    attachmentType: 'student',
+    crossReferences: [
+      { table: 'arquivos_universal', column: 'aluno_id' },
+      { table: 'transacoes_hotmart_completo', column: 'buyer_email' }, // via email
+    ]
+  },
+  
+  // ========== MARKETING ==========
+  campaign: {
+    table: 'marketing_campaigns',
+    nameField: 'name',
+    attachmentType: 'campaign'
+  },
+  lead: {
+    table: 'marketing_leads',
+    nameField: 'nome',
+  },
+  whatsapp_lead: {
+    table: 'whatsapp_leads',
+    nameField: 'nome',
+    relations: [
+      { table: 'whatsapp_conversation_history', foreignKey: 'lead_id', cascadeDelete: true },
+    ],
+  },
+  
+  // ========== DOCUMENTOS ==========
+  document: {
+    table: 'general_documents',
+    nameField: 'nome',
+    attachmentType: 'document'
+  },
+  arquivo: {
+    table: 'arquivos',
+    nameField: 'nome',
+  },
+  arquivo_universal: {
+    table: 'arquivos_universal',
+    nameField: 'nome',
+  },
+  
+  // ========== SISTEMA ==========
   alerta: {
     table: 'alertas_sistema',
     nameField: 'titulo',
   },
-  dev_task: {
-    table: 'dev_tasks',
+  notification: {
+    table: 'notifications',
     nameField: 'title',
+  },
+  webhook: {
+    table: 'webhooks_queue',
+    nameField: 'event',
+  },
+  transacao_hotmart: {
+    table: 'transacoes_hotmart_completo',
+    nameField: 'buyer_name',
+  },
+  
+  // ========== GENÉRICOS ==========
+  card: {
+    table: 'generic_items',
+    nameField: 'name',
+  },
+  row: {
+    table: 'generic_items',
+    nameField: 'name',
+  },
+  item: {
+    table: 'generic_items',
+    nameField: 'name',
   },
 };
 
@@ -131,6 +223,8 @@ interface RemoveResult {
   message: string;
   removedItems: number;
   affectedTables: string[];
+  entityType: string;
+  entityId: string;
 }
 
 interface RemovePreview {
@@ -139,6 +233,7 @@ interface RemovePreview {
   totalItems: number;
   canRemove: boolean;
   warning?: string;
+  crossReferences?: { table: string; count: number }[];
 }
 
 export function useMasterRemove() {
@@ -163,7 +258,7 @@ export function useMasterRemove() {
     return true;
   }, [user]);
 
-  // Preview do que será removido
+  // Preview COMPLETO do que será removido
   const getRemovePreview = useCallback(async (
     entityType: string,
     entityId: string
@@ -173,9 +268,10 @@ export function useMasterRemove() {
     if (!config) {
       return {
         entityName: 'Item',
-        affectedItems: [],
+        affectedItems: [`⚠️ Tipo "${entityType}" - remoção direta`],
         totalItems: 1,
-        canRemove: true
+        canRemove: true,
+        warning: 'Tipo não mapeado - será removido diretamente'
       };
     }
 
@@ -188,10 +284,11 @@ export function useMasterRemove() {
         .single();
 
       const entityName = original?.[config.nameField] as string || 'Item';
-      const affectedItems: string[] = [`${entityType}: ${entityName}`];
+      const affectedItems: string[] = [`✓ ${entityType}: ${entityName}`];
       let totalItems = 1;
+      const crossRefs: { table: string; count: number }[] = [];
 
-      // Buscar itens relacionados
+      // Buscar itens relacionados (CASCADE)
       if (config.relations) {
         for (const relation of config.relations) {
           try {
@@ -201,7 +298,7 @@ export function useMasterRemove() {
               .eq(relation.foreignKey, entityId);
             
             if (count && count > 0) {
-              affectedItems.push(`${relation.table}: ${count} itens`);
+              affectedItems.push(`→ ${relation.table}: ${count} item(ns)`);
               totalItems += count;
             }
           } catch {
@@ -210,7 +307,27 @@ export function useMasterRemove() {
         }
       }
 
-      // Verificar anexos
+      // Verificar referências cruzadas
+      if (config.crossReferences) {
+        for (const ref of config.crossReferences) {
+          try {
+            const { count } = await supabase
+              .from(ref.table as any)
+              .select('*', { count: 'exact', head: true })
+              .eq(ref.column, entityId);
+            
+            if (count && count > 0) {
+              crossRefs.push({ table: ref.table, count });
+              affectedItems.push(`⚡ ${ref.table}: ${count} referência(s)`);
+              totalItems += count;
+            }
+          } catch {
+            // Tabela pode não existir
+          }
+        }
+      }
+
+      // Verificar anexos universais
       if (config.attachmentType) {
         const { count } = await supabase
           .from('universal_attachments')
@@ -219,16 +336,43 @@ export function useMasterRemove() {
           .eq('entity_id', entityId);
         
         if (count && count > 0) {
-          affectedItems.push(`Anexos: ${count} arquivos`);
+          affectedItems.push(`📎 Anexos: ${count} arquivo(s)`);
           totalItems += count;
         }
+      }
+
+      // Verificar arquivos universais
+      try {
+        const columnMap: Record<string, string> = {
+          aluno: 'aluno_id',
+          employee: 'funcionario_id',
+          affiliate: 'afiliado_id',
+          course: 'curso_id',
+          lesson: 'aula_id',
+        };
+        
+        const column = columnMap[entityType];
+        if (column) {
+          const { count } = await supabase
+            .from('arquivos_universal')
+            .select('*', { count: 'exact', head: true })
+            .eq(column as 'aluno_id', entityId);
+          
+          if (count && count > 0) {
+            affectedItems.push(`📁 Arquivos: ${count} arquivo(s)`);
+            totalItems += count;
+          }
+        }
+      } catch {
+        // Sem arquivos
       }
 
       return {
         entityName,
         affectedItems,
         totalItems,
-        canRemove: true
+        canRemove: true,
+        crossReferences: crossRefs.length > 0 ? crossRefs : undefined
       };
     } catch (error) {
       console.error('Erro ao gerar preview:', error);
@@ -241,7 +385,7 @@ export function useMasterRemove() {
     }
   }, []);
 
-  // Remover entidade com todas as relações
+  // Remover entidade com TODAS as relações - CASCATA COMPLETA
   const removeEntity = useCallback(async (
     entityType: string,
     entityId: string
@@ -251,7 +395,9 @@ export function useMasterRemove() {
         success: false,
         message: 'Acesso negado - apenas owner',
         removedItems: 0,
-        affectedTables: []
+        affectedTables: [],
+        entityType,
+        entityId
       };
     }
 
@@ -260,17 +406,46 @@ export function useMasterRemove() {
     const affectedTables: string[] = [];
     let removedItems = 0;
 
-    if (!config) {
-      setIsRemoving(false);
-      return {
-        success: false,
-        message: `Tipo "${entityType}" não suportado para remoção`,
-        removedItems: 0,
-        affectedTables: []
-      };
-    }
-
     try {
+      // Se não tem config, tentar remover diretamente
+      if (!config) {
+        console.warn(`[MasterRemove] Tipo "${entityType}" não mapeado, tentando remoção direta`);
+        
+        // Tentar algumas tabelas comuns
+        const possibleTables = [entityType, `${entityType}s`, entityType.replace('_', '')];
+        
+        for (const table of possibleTables) {
+          try {
+            const { error } = await supabase
+              .from(table as any)
+              .delete()
+              .eq('id', entityId);
+            
+            if (!error) {
+              affectedTables.push(table);
+              removedItems++;
+              break;
+            }
+          } catch {
+            continue;
+          }
+        }
+
+        if (removedItems === 0) {
+          throw new Error(`Não foi possível remover item do tipo "${entityType}"`);
+        }
+
+        toast.success('🗑️ Item removido!');
+        return {
+          success: true,
+          message: 'Remoção direta concluída',
+          removedItems,
+          affectedTables,
+          entityType,
+          entityId
+        };
+      }
+
       // 1. Buscar item original para log
       const { data: original } = await supabase
         .from(config.table as any)
@@ -278,17 +453,34 @@ export function useMasterRemove() {
         .eq('id', entityId)
         .single();
 
-      // 2. Remover itens relacionados primeiro (cascade)
+      // 2. Remover referências cruzadas primeiro
+      if (config.crossReferences) {
+        for (const ref of config.crossReferences) {
+          try {
+            // Atualizar para NULL ao invés de deletar (para manter integridade)
+            const { error } = await supabase
+              .from(ref.table as any)
+              .update({ [ref.column]: null } as any)
+              .eq(ref.column, entityId);
+            
+            if (!error) {
+              affectedTables.push(`${ref.table} (refs)`);
+            }
+          } catch {
+            // Continuar mesmo com erro
+          }
+        }
+      }
+
+      // 3. Remover itens relacionados (CASCADE)
       if (config.relations) {
         for (const relation of config.relations) {
           try {
-            // Primeiro contar quantos itens serão removidos
             const { count: itemCount } = await supabase
               .from(relation.table as any)
               .select('*', { count: 'exact', head: true })
               .eq(relation.foreignKey, entityId);
             
-            // Depois remover
             const { error } = await supabase
               .from(relation.table as any)
               .delete()
@@ -299,37 +491,65 @@ export function useMasterRemove() {
               removedItems += itemCount || 0;
             }
           } catch {
-            // Tabela pode não existir ou não ter dados
+            // Continuar mesmo com erro
           }
         }
       }
 
-      // 3. Remover anexos
+      // 4. Remover anexos universais
       if (config.attachmentType) {
         try {
-          // Contar antes de remover
           const { count: attachCount } = await supabase
             .from('universal_attachments')
             .select('*', { count: 'exact', head: true })
             .eq('entity_type', config.attachmentType)
             .eq('entity_id', entityId);
           
-          const { error } = await supabase
+          await supabase
             .from('universal_attachments')
             .delete()
             .eq('entity_type', config.attachmentType)
             .eq('entity_id', entityId);
           
-          if (!error) {
-            affectedTables.push('universal_attachments');
-            removedItems += attachCount || 0;
-          }
+          affectedTables.push('universal_attachments');
+          removedItems += attachCount || 0;
         } catch {
-          // Sem anexos
+          // Continuar
         }
       }
 
-      // 4. Remover item principal
+      // 5. Remover arquivos universais
+      try {
+        const columnMap: Record<string, string> = {
+          aluno: 'aluno_id',
+          employee: 'funcionario_id',
+          affiliate: 'afiliado_id',
+          course: 'curso_id',
+          lesson: 'aula_id',
+        };
+        
+        const column = columnMap[entityType];
+        if (column) {
+          const { count } = await supabase
+            .from('arquivos_universal')
+            .select('*', { count: 'exact', head: true })
+            .eq(column as 'aluno_id', entityId);
+
+          if (count && count > 0) {
+            await supabase
+              .from('arquivos_universal')
+              .delete()
+              .eq(column as 'aluno_id', entityId);
+
+            affectedTables.push('arquivos_universal');
+            removedItems += count;
+          }
+        }
+      } catch {
+        // Continuar
+      }
+
+      // 6. Remover item principal
       const { error: deleteError } = await supabase
         .from(config.table as any)
         .delete()
@@ -342,9 +562,9 @@ export function useMasterRemove() {
       affectedTables.push(config.table);
       removedItems += 1;
 
-      // 5. Log da ação
+      // 7. Log da ação
       await supabase.from('activity_log').insert({
-        action: 'MASTER_REMOVE',
+        action: 'MASTER_REMOVE_CASCADE',
         table_name: config.table,
         record_id: entityId,
         user_id: user?.id,
@@ -352,11 +572,12 @@ export function useMasterRemove() {
         old_value: original as never,
         new_value: { 
           removed_items: removedItems,
-          affected_tables: affectedTables 
+          affected_tables: affectedTables,
+          cascade_complete: true
         } as never
       });
 
-      // 6. Emitir evento para atualizar UI
+      // 8. Emitir eventos para atualizar UI
       window.dispatchEvent(new CustomEvent('master-item-removed', {
         detail: { 
           entityType, 
@@ -367,18 +588,22 @@ export function useMasterRemove() {
         }
       }));
 
-      // 7. Forçar recálculo global
       window.dispatchEvent(new CustomEvent('global-sync'));
+      window.dispatchEvent(new CustomEvent('data-invalidate', {
+        detail: { tables: affectedTables }
+      }));
 
-      toast.success('🗑️ Item removido!', {
-        description: `${removedItems} itens removidos de ${affectedTables.length} tabelas`
+      toast.success('🗑️ Exclusão permanente concluída!', {
+        description: `${removedItems} item(ns) de ${affectedTables.length} tabela(s)`
       });
 
       return {
         success: true,
-        message: 'Remoção concluída com sucesso',
+        message: 'Remoção em cascata concluída com sucesso',
         removedItems,
-        affectedTables
+        affectedTables,
+        entityType,
+        entityId
       };
 
     } catch (error: any) {
@@ -389,7 +614,9 @@ export function useMasterRemove() {
         success: false,
         message: error.message,
         removedItems,
-        affectedTables
+        affectedTables,
+        entityType,
+        entityId
       };
     } finally {
       setIsRemoving(false);
@@ -401,7 +628,14 @@ export function useMasterRemove() {
     items: { entityType: string; entityId: string }[]
   ): Promise<RemoveResult[]> => {
     if (!verifyOwnership()) {
-      return [{ success: false, message: 'Acesso negado', removedItems: 0, affectedTables: [] }];
+      return [{ 
+        success: false, 
+        message: 'Acesso negado', 
+        removedItems: 0, 
+        affectedTables: [],
+        entityType: '',
+        entityId: ''
+      }];
     }
 
     const results: RemoveResult[] = [];
@@ -412,18 +646,94 @@ export function useMasterRemove() {
     }
 
     const totalRemoved = results.reduce((sum, r) => sum + r.removedItems, 0);
-    toast.success(`${totalRemoved} itens removidos no total`);
+    const successCount = results.filter(r => r.success).length;
+    
+    toast.success(`🗑️ ${successCount}/${items.length} itens removidos`, {
+      description: `Total: ${totalRemoved} registros excluídos permanentemente`
+    });
 
     return results;
   }, [removeEntity, verifyOwnership]);
 
+  // Remover por tabela e ID diretamente
+  const removeFromTable = useCallback(async (
+    tableName: string,
+    recordId: string
+  ): Promise<RemoveResult> => {
+    if (!verifyOwnership()) {
+      return {
+        success: false,
+        message: 'Acesso negado',
+        removedItems: 0,
+        affectedTables: [],
+        entityType: tableName,
+        entityId: recordId
+      };
+    }
+
+    setIsRemoving(true);
+
+    try {
+      // Buscar item para log
+      const { data: original } = await supabase
+        .from(tableName as any)
+        .select('*')
+        .eq('id', recordId)
+        .single();
+
+      // Remover diretamente
+      const { error } = await supabase
+        .from(tableName as any)
+        .delete()
+        .eq('id', recordId);
+
+      if (error) throw error;
+
+      // Log
+      await supabase.from('activity_log').insert({
+        action: 'MASTER_DIRECT_REMOVE',
+        table_name: tableName,
+        record_id: recordId,
+        user_id: user?.id,
+        user_email: user?.email,
+        old_value: original as never,
+      });
+
+      toast.success('🗑️ Removido!');
+
+      return {
+        success: true,
+        message: 'Item removido',
+        removedItems: 1,
+        affectedTables: [tableName],
+        entityType: tableName,
+        entityId: recordId
+      };
+
+    } catch (error: any) {
+      toast.error('Erro ao remover', { description: error.message });
+      return {
+        success: false,
+        message: error.message,
+        removedItems: 0,
+        affectedTables: [],
+        entityType: tableName,
+        entityId: recordId
+      };
+    } finally {
+      setIsRemoving(false);
+    }
+  }, [user, verifyOwnership]);
+
   return {
     removeEntity,
     removeMultiple,
+    removeFromTable,
     getRemovePreview,
     isRemoving,
     canRemove,
     isOwner,
-    OWNER_EMAIL
+    OWNER_EMAIL,
+    ENTITY_RELATIONS // Exportar para uso em outros lugares
   };
 }
