@@ -425,7 +425,7 @@ export function SidebarNavDnd(props: {
                                   <TooltipContent side="right">Duplicar grupo</TooltipContent>
                                 </Tooltip>
                               </div>}
-                            <span className="font-bold drop-shadow-lg text-center text-primary-foreground text-lg">{group.label}</span>
+                            <span className="drop-shadow-lg text-base text-left font-extrabold font-sans text-primary-foreground">{group.label}</span>
                           </div>
                         </div>
 
