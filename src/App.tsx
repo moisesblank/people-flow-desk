@@ -75,6 +75,7 @@ const Lives = lazy(() => import("./pages/Lives"));
 const DashboardEmpresarial = lazy(() => import("./pages/empresas/DashboardEmpresarial"));
 const ArquivosEmpresariais = lazy(() => import("./pages/empresas/ArquivosEmpresariais"));
 const RHFuncionarios = lazy(() => import("./pages/empresas/RHFuncionarios"));
+const ReceitasEmpresariais = lazy(() => import("./pages/empresas/ReceitasEmpresariais"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -240,6 +241,7 @@ function AppContent() {
           
           {/* Rotas Empresariais */}
           <Route path="/empresas/dashboard" element={<ProtectedPage><DashboardEmpresarial /></ProtectedPage>} />
+          <Route path="/empresas/receitas" element={<ProtectedPage><ReceitasEmpresariais /></ProtectedPage>} />
           <Route path="/empresas/arquivos" element={<ProtectedPage><ArquivosEmpresariais /></ProtectedPage>} />
           <Route path="/empresas/rh" element={<ProtectedPage><RHFuncionarios /></ProtectedPage>} />
           
