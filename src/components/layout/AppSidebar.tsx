@@ -108,6 +108,7 @@ const marketingMenuItems = [
 ];
 
 const classMenuItems = [
+  { title: "Lives YouTube", url: "/lives", icon: PlayCircle, badge: "LIVE" },
   { title: "Planejamento de Aula", url: "/planejamento-aula", icon: PenTool },
   { title: "Turmas Online", url: "/turmas-online", icon: Monitor },
   { title: "Turmas Presenciais", url: "/turmas-presenciais", icon: MapPin },

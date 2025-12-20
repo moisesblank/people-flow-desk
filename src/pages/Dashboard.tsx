@@ -61,6 +61,7 @@ import { TasksOverviewWidget } from "@/components/dashboard/TasksOverviewWidget"
 import { WhatsAppStatsCard } from "@/components/whatsapp/WhatsAppStatsCard";
 import { WhatsAppTasksWidget } from "@/components/whatsapp/WhatsAppTasksWidget";
 import { WhatsAppFinanceWidget } from "@/components/whatsapp/WhatsAppFinanceWidget";
+import { YouTubeLiveWidget } from "@/components/youtube";
 
 import { LabStatusWidget } from "@/components/dashboard/LabStatusWidget";
 import { AdvancedAnalytics } from "@/components/dashboard/AdvancedAnalytics";
