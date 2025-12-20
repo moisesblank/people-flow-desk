@@ -1163,6 +1163,13 @@ export type Database = {
             referencedRelation: "alunos"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "comissoes_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       command_finance: {
@@ -2290,6 +2297,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_safe"
             referencedColumns: ["id"]
           },
         ]
@@ -3728,6 +3742,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_cursos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_safe"
             referencedColumns: ["id"]
           },
           {
@@ -7461,6 +7482,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "youtube_live_attendance_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_safe"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "youtube_live_attendance_live_id_fkey"
             columns: ["live_id"]
             isOneToOne: false
@@ -7691,6 +7719,53 @@ export type Database = {
       }
     }
     Views: {
+      alunos_safe: {
+        Row: {
+          cidade: string | null
+          created_at: string | null
+          curso_id: string | null
+          data_matricula: string | null
+          email: string | null
+          estado: string | null
+          fonte: string | null
+          id: string | null
+          nome: string | null
+          status: string | null
+        }
+        Insert: {
+          cidade?: string | null
+          created_at?: string | null
+          curso_id?: string | null
+          data_matricula?: string | null
+          email?: string | null
+          estado?: string | null
+          fonte?: string | null
+          id?: string | null
+          nome?: string | null
+          status?: string | null
+        }
+        Update: {
+          cidade?: string | null
+          created_at?: string | null
+          curso_id?: string | null
+          data_matricula?: string | null
+          email?: string | null
+          estado?: string | null
+          fonte?: string | null
+          id?: string | null
+          nome?: string | null
+          status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alunos_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dashboard_executivo: {
         Row: {
           afiliados_ativos: number | null
