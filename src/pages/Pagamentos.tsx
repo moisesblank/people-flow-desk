@@ -599,6 +599,9 @@ export default function Pagamentos() {
             {filteredPayments.map((payment, i) => (
               <motion.div
                 key={payment.id}
+                data-entity-type="payment"
+                data-entity-id={payment.id}
+                data-table="payments"
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.95 }}

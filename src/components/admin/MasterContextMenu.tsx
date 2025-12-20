@@ -1,7 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v14.0 - MASTER CONTEXT MENU
+// MOISÉS MEDEIROS v16.0 - MASTER CONTEXT MENU ULTIMATE
 // Menu contextual com Adicionar, Duplicar, Remover
-// + Confirmação Salvar / Não Salvar
+// + Detecção inteligente de entidades
+// + Confirmação de exclusão permanente
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
@@ -9,7 +10,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGodMode } from '@/contexts/GodModeContext';
 import { useMasterActions } from '@/hooks/useMasterActions';
 import { MasterActionConfirmDialog } from './MasterActionConfirmDialog';
-import { Plus, Copy, Trash2, ChevronRight, FileText, Users, DollarSign, Calendar, BookOpen, BarChart3, Bell, Target, X, Loader2 } from 'lucide-react';
+import { Plus, Copy, Trash2, ChevronRight, FileText, Users, DollarSign, Calendar, BookOpen, BarChart3, Bell, Target, X, Loader2, GraduationCap, Briefcase } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -19,6 +20,7 @@ interface ContextMenuPosition {
   targetElement: HTMLElement | null;
   entityType?: string;
   entityId?: string;
+  tableName?: string;
 }
 
 interface CategoryItem {
@@ -28,23 +30,23 @@ interface CategoryItem {
   table: string;
   nameField: string;
   defaultData: Record<string, unknown>;
-  subItems?: { id: string; label: string; data: Record<string, unknown> }[];
+  subItems?: { id: string; label: string; table: string; data: Record<string, unknown> }[];
 }
 
-// Categorias disponíveis para adicionar
+// Categorias disponíveis para adicionar - MAPEAMENTO COMPLETO
 const CATEGORIES: CategoryItem[] = [
   {
     id: 'financas',
     label: 'Finanças',
     icon: <DollarSign className="w-4 h-4" />,
-    table: 'transactions',
-    nameField: 'description',
-    defaultData: { type: 'expense', amount: 0, category: 'geral' },
+    table: 'entradas',
+    nameField: 'descricao',
+    defaultData: { descricao: 'Nova Entrada', valor: 0, fonte: 'manual' },
     subItems: [
-      { id: 'receita', label: 'Nova Receita', data: { type: 'income', amount: 0, description: 'Nova Receita' } },
-      { id: 'despesa', label: 'Nova Despesa', data: { type: 'expense', amount: 0, description: 'Nova Despesa' } },
-      { id: 'conta_pagar', label: 'Conta a Pagar', data: { descricao: 'Nova Conta', valor: 0, data_vencimento: new Date().toISOString().split('T')[0] } },
-      { id: 'conta_receber', label: 'Conta a Receber', data: { descricao: 'Nova Conta', valor: 0, data_vencimento: new Date().toISOString().split('T')[0] } },
+      { id: 'receita', label: 'Nova Receita/Entrada', table: 'entradas', data: { descricao: 'Nova Receita', valor: 0, fonte: 'manual', data: new Date().toISOString().split('T')[0] } },
+      { id: 'despesa', label: 'Nova Despesa Extra', table: 'company_extra_expenses', data: { nome: 'Nova Despesa', valor: 0, data: new Date().toISOString().split('T')[0] } },
+      { id: 'gasto_fixo', label: 'Novo Gasto Fixo', table: 'company_fixed_expenses', data: { nome: 'Novo Gasto Fixo', valor: 0 } },
+      { id: 'pagamento', label: 'Novo Pagamento', table: 'pagamentos_funcionarios', data: { descricao: 'Novo Pagamento', valor: 0, status: 'pendente' } },
     ]
   },
   {
@@ -55,23 +57,39 @@ const CATEGORIES: CategoryItem[] = [
     nameField: 'title',
     defaultData: { title: 'Novo Curso', is_published: false },
     subItems: [
-      { id: 'course', label: 'Novo Curso', data: { title: 'Novo Curso', is_published: false } },
-      { id: 'module', label: 'Novo Módulo', data: { title: 'Novo Módulo' } },
-      { id: 'lesson', label: 'Nova Aula', data: { title: 'Nova Aula' } },
-      { id: 'quiz', label: 'Novo Quiz', data: { title: 'Novo Quiz' } },
+      { id: 'course', label: 'Novo Curso', table: 'courses', data: { title: 'Novo Curso', is_published: false } },
+      { id: 'module', label: 'Novo Módulo', table: 'modules', data: { title: 'Novo Módulo' } },
+      { id: 'lesson', label: 'Nova Aula', table: 'lessons', data: { title: 'Nova Aula' } },
+      { id: 'quiz', label: 'Novo Quiz', table: 'quizzes', data: { title: 'Novo Quiz' } },
     ]
   },
   {
     id: 'equipe',
     label: 'Equipe/RH',
-    icon: <Users className="w-4 h-4" />,
+    icon: <Briefcase className="w-4 h-4" />,
     table: 'employees',
     nameField: 'nome',
     defaultData: { nome: 'Novo Funcionário', status: 'ativo' },
     subItems: [
-      { id: 'employee', label: 'Novo Funcionário', data: { nome: 'Novo Funcionário', status: 'ativo' } },
-      { id: 'dev_task', label: 'Nova Tarefa Dev', data: { title: 'Nova Tarefa', status: 'todo', member_name: 'Equipe', priority: 'medium' } },
+      { id: 'employee', label: 'Novo Funcionário', table: 'employees', data: { nome: 'Novo Funcionário', status: 'ativo', cargo: 'A definir' } },
+      { id: 'dev_task', label: 'Nova Tarefa Dev', table: 'dev_tasks', data: { title: 'Nova Tarefa', status: 'todo', member_name: 'Equipe', priority: 'medium' } },
     ]
+  },
+  {
+    id: 'alunos',
+    label: 'Alunos',
+    icon: <GraduationCap className="w-4 h-4" />,
+    table: 'alunos',
+    nameField: 'nome',
+    defaultData: { nome: 'Novo Aluno', email: `aluno_${Date.now()}@temp.com`, status: 'ativo' },
+  },
+  {
+    id: 'afiliados',
+    label: 'Afiliados',
+    icon: <Users className="w-4 h-4" />,
+    table: 'affiliates',
+    nameField: 'nome',
+    defaultData: { nome: 'Novo Afiliado', status: 'ativo' },
   },
   {
     id: 'tarefas',
@@ -81,8 +99,8 @@ const CATEGORIES: CategoryItem[] = [
     nameField: 'title',
     defaultData: { title: 'Nova Tarefa', status: 'todo', priority: 'medium' },
     subItems: [
-      { id: 'task', label: 'Nova Tarefa', data: { title: 'Nova Tarefa', status: 'todo' } },
-      { id: 'calendar_task', label: 'Tarefa no Calendário', data: { title: 'Nova Tarefa', is_completed: false, task_date: new Date().toISOString().split('T')[0] } },
+      { id: 'task', label: 'Nova Tarefa', table: 'tasks', data: { title: 'Nova Tarefa', status: 'todo' } },
+      { id: 'calendar_task', label: 'Evento no Calendário', table: 'calendar_tasks', data: { title: 'Novo Evento', is_completed: false, task_date: new Date().toISOString().split('T')[0] } },
     ]
   },
   {
@@ -101,17 +119,8 @@ const CATEGORIES: CategoryItem[] = [
     nameField: 'name',
     defaultData: { name: 'Nova Campanha', status: 'draft' },
     subItems: [
-      { id: 'campaign', label: 'Nova Campanha', data: { name: 'Nova Campanha', status: 'draft' } },
-      { id: 'affiliate', label: 'Novo Afiliado', data: { nome: 'Novo Afiliado', status: 'ativo' } },
+      { id: 'campaign', label: 'Nova Campanha', table: 'marketing_campaigns', data: { name: 'Nova Campanha', status: 'draft' } },
     ]
-  },
-  {
-    id: 'alunos',
-    label: 'Alunos',
-    icon: <Users className="w-4 h-4" />,
-    table: 'alunos',
-    nameField: 'nome',
-    defaultData: { nome: 'Novo Aluno', email: 'novo@aluno.com', status: 'ativo' },
   },
   {
     id: 'alertas',
@@ -139,31 +148,73 @@ const CATEGORIES: CategoryItem[] = [
   },
 ];
 
-// Detectar tipo de entidade baseado no elemento clicado
-function detectEntityFromElement(element: HTMLElement): { type: string; id: string } | null {
-  // Procurar data attributes
+// Mapeamento de URL para tipo de entidade
+const URL_ENTITY_MAP: Record<string, { type: string; table: string }> = {
+  '/pagamentos': { type: 'pagamento', table: 'pagamentos_funcionarios' },
+  '/financas-empresa': { type: 'gasto', table: 'company_extra_expenses' },
+  '/financas-pessoais': { type: 'transaction', table: 'transactions' },
+  '/funcionarios': { type: 'employee', table: 'employees' },
+  '/alunos': { type: 'aluno', table: 'alunos' },
+  '/afiliados': { type: 'affiliate', table: 'affiliates' },
+  '/cursos': { type: 'course', table: 'courses' },
+  '/tarefas': { type: 'task', table: 'tasks' },
+  '/calendario': { type: 'calendar_task', table: 'calendar_tasks' },
+  '/marketing': { type: 'campaign', table: 'marketing_campaigns' },
+  '/entradas': { type: 'entrada', table: 'entradas' },
+  '/contabilidade': { type: 'contabilidade', table: 'contabilidade' },
+};
+
+// Detectar tipo de entidade baseado no elemento clicado - MELHORADO
+function detectEntityFromElement(element: HTMLElement): { type: string; id: string; table?: string } | null {
+  // 1. Procurar data attributes diretos
   const entityType = element.dataset.entityType || element.closest('[data-entity-type]')?.getAttribute('data-entity-type');
   const entityId = element.dataset.entityId || element.closest('[data-entity-id]')?.getAttribute('data-entity-id');
+  const tableName = element.dataset.table || element.closest('[data-table]')?.getAttribute('data-table');
   
   if (entityType && entityId) {
-    return { type: entityType, id: entityId };
+    return { type: entityType, id: entityId, table: tableName || undefined };
   }
 
-  // Detectar por classes/estrutura
-  const card = element.closest('[class*="card"]');
-  const row = element.closest('tr[data-row-id]');
-  const item = element.closest('[data-item-id]');
-
+  // 2. Procurar em linha de tabela (tr)
+  const row = element.closest('tr[data-row-id], tr[data-id]');
   if (row) {
-    return { type: 'row', id: row.getAttribute('data-row-id') || '' };
+    const rowId = row.getAttribute('data-row-id') || row.getAttribute('data-id');
+    const rowType = row.getAttribute('data-entity-type') || row.getAttribute('data-type');
+    const rowTable = row.getAttribute('data-table');
+    if (rowId) {
+      // Tentar detectar tipo pela URL atual
+      const urlInfo = URL_ENTITY_MAP[window.location.pathname];
+      return { 
+        type: rowType || urlInfo?.type || 'row', 
+        id: rowId,
+        table: rowTable || urlInfo?.table 
+      };
+    }
   }
+
+  // 3. Procurar em card ou item genérico
+  const item = element.closest('[data-item-id], [data-id]');
   if (item) {
-    return { type: 'item', id: item.getAttribute('data-item-id') || '' };
+    const itemId = item.getAttribute('data-item-id') || item.getAttribute('data-id');
+    const itemType = item.getAttribute('data-entity-type') || item.getAttribute('data-type');
+    const itemTable = item.getAttribute('data-table');
+    if (itemId) {
+      const urlInfo = URL_ENTITY_MAP[window.location.pathname];
+      return { 
+        type: itemType || urlInfo?.type || 'item', 
+        id: itemId,
+        table: itemTable || urlInfo?.table 
+      };
+    }
   }
-  if (card) {
-    const cardId = card.getAttribute('data-id') || card.id;
-    if (cardId) {
-      return { type: 'card', id: cardId };
+
+  // 4. Detectar pelo contexto da página (URL)
+  const urlInfo = URL_ENTITY_MAP[window.location.pathname];
+  if (urlInfo) {
+    // Procurar qualquer ID no elemento pai mais próximo
+    const parent = element.closest('[id]');
+    if (parent?.id && parent.id.length > 8) {
+      return { type: urlInfo.type, id: parent.id, table: urlInfo.table };
     }
   }
 
@@ -243,9 +294,11 @@ export function MasterContextMenu() {
   }, [isOwner, isActive]);
 
   // Função ADICIONAR - prepara ação e abre diálogo
-  const handleAdd = useCallback(async (category: CategoryItem, subItem?: { id: string; label: string; data: Record<string, unknown> }) => {
+  const handleAdd = useCallback(async (category: CategoryItem, subItem?: { id: string; label: string; table: string; data: Record<string, unknown> }) => {
     const dataToInsert = subItem?.data || category.defaultData;
-    const entityType = subItem?.id || category.id;
+    const entityType = subItem?.table || category.table; // Usar tabela diretamente!
+    
+    console.log('[MasterContextMenu] handleAdd:', { entityType, dataToInsert });
     
     await prepareAdd(entityType, dataToInsert);
     setMenuPosition(null);
