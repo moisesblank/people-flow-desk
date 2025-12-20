@@ -1,27 +1,17 @@
 // ============================================
-// MOISÉS MEDEIROS v15.0 - MASTER DELETE BUTTON
-// Botão de exclusão universal flutuante
-// Visível no canto inferior direito de cada item
+// MOISÉS MEDEIROS v16.0 - MASTER DELETE BUTTON
+// Botão de exclusão universal com confirmação SIM/NÃO
+// Exclusão permanente de QUALQUER lugar do banco
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Trash2, AlertTriangle, Loader2, X } from 'lucide-react';
+import { Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGodMode } from '@/contexts/GodModeContext';
 import { useMasterRemove } from '@/hooks/useMasterRemove';
-import { toast } from 'sonner';
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from '@/components/ui/alert-dialog';
+import { MasterConfirmDialog } from './MasterConfirmDialog';
 
 interface MasterDeleteButtonProps {
   entityType: string;
@@ -50,6 +40,7 @@ export function MasterDeleteButton({
     entityName: string;
     affectedItems: string[];
     totalItems: number;
+    crossReferences?: { table: string; count: number }[];
   } | null>(null);
 
   // Só exibe se for Owner e Master Mode estiver ativo
@@ -70,8 +61,14 @@ export function MasterDeleteButton({
     
     if (result.success) {
       setShowConfirm(false);
+      setPreview(null);
       onDeleted?.();
     }
+  };
+
+  const handleCancel = () => {
+    setShowConfirm(false);
+    setPreview(null);
   };
 
   const sizeClasses = {
@@ -86,9 +83,10 @@ export function MasterDeleteButton({
     lg: 'w-5 h-5'
   };
 
-  if (variant === 'floating') {
-    return (
-      <>
+  // Componente do botão de delete
+  const DeleteButton = () => {
+    if (variant === 'floating') {
+      return (
         <motion.button
           initial={{ opacity: 0, scale: 0.8 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -117,75 +115,11 @@ export function MasterDeleteButton({
             <Trash2 className={iconSizes[size]} />
           )}
         </motion.button>
+      );
+    }
 
-        {/* Modal de confirmação */}
-        <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-          <AlertDialogContent className="border-destructive/50">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="w-5 h-5" />
-                Confirmar Exclusão
-              </AlertDialogTitle>
-              <AlertDialogDescription className="space-y-3">
-                <p>
-                  Você está prestes a excluir <strong>"{preview?.entityName || entityName}"</strong>.
-                </p>
-                
-                {preview && preview.affectedItems.length > 0 && (
-                  <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-3 mt-2">
-                    <p className="font-medium text-destructive mb-2">
-                      ⚠️ Itens que serão removidos:
-                    </p>
-                    <ul className="text-sm space-y-1">
-                      {preview.affectedItems.map((item, idx) => (
-                        <li key={idx} className="flex items-center gap-2">
-                          <span className="w-1.5 h-1.5 bg-destructive rounded-full" />
-                          {item}
-                        </li>
-                      ))}
-                    </ul>
-                    <p className="text-xs text-muted-foreground mt-2 pt-2 border-t border-destructive/20">
-                      Total: {preview.totalItems} item(ns)
-                    </p>
-                  </div>
-                )}
-
-                <p className="text-destructive font-medium">
-                  Esta ação pode ser desfeita com Ctrl+Z
-                </p>
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel disabled={isRemoving}>
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleConfirmDelete}
-                disabled={isRemoving}
-                className="bg-destructive hover:bg-destructive/90"
-              >
-                {isRemoving ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Excluindo...
-                  </>
-                ) : (
-                  <>
-                    <Trash2 className="w-4 h-4 mr-2" />
-                    Excluir Permanentemente
-                  </>
-                )}
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </>
-    );
-  }
-
-  if (variant === 'icon') {
-    return (
-      <>
+    if (variant === 'icon') {
+      return (
         <Button
           variant="ghost"
           size="icon"
@@ -200,37 +134,11 @@ export function MasterDeleteButton({
             <Trash2 className="w-4 h-4" />
           )}
         </Button>
+      );
+    }
 
-        <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-          {/* Mesmo conteúdo do modal */}
-          <AlertDialogContent className="border-destructive/50">
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-                <AlertTriangle className="w-5 h-5" />
-                Confirmar Exclusão
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja excluir "{preview?.entityName || entityName}"?
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={handleConfirmDelete}
-                className="bg-destructive hover:bg-destructive/90"
-              >
-                Excluir
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </>
-    );
-  }
-
-  // Variant inline
-  return (
-    <>
+    // Variant inline
+    return (
       <Button
         variant="destructive"
         size="sm"
@@ -245,29 +153,23 @@ export function MasterDeleteButton({
         )}
         Excluir
       </Button>
+    );
+  };
 
-      <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-        <AlertDialogContent className="border-destructive/50">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-destructive">
-              <AlertTriangle className="w-5 h-5" />
-              Confirmar Exclusão
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir "{preview?.entityName || entityName}"?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleConfirmDelete}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+  return (
+    <>
+      <DeleteButton />
+
+      {/* Diálogo de confirmação SIM/NÃO */}
+      <MasterConfirmDialog
+        isOpen={showConfirm}
+        onClose={handleCancel}
+        onConfirm={handleConfirmDelete}
+        entityName={preview?.entityName || entityName}
+        entityType={entityType}
+        preview={preview}
+        isLoading={isRemoving}
+      />
     </>
   );
 }
