@@ -23,7 +23,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { 
+  ResizableDialog,
+  ResizableDialogContent,
+  ResizableDialogHeader,
+  ResizableDialogBody,
+  ResizableDialogFooter,
+  ResizableDialogTitle,
+} from "@/components/ui/resizable-dialog";
+import { MinimizableSection, useMinimizable, MinimizeButton } from "@/components/ui/minimizable-section";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -879,87 +887,139 @@ export default function FinancasEmpresa() {
           )}
         </div>
 
-        {/* Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+        {/* Modal Redimensionável */}
+        <ResizableDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <ResizableDialogContent 
+            showMaximize 
+            defaultSize={{ width: 550, height: 580 }}
+            minSize={{ width: 400, height: 400 }}
+            maxSize={{ width: 800, height: 800 }}
+          >
+            <ResizableDialogHeader>
+              <ResizableDialogTitle className="flex items-center gap-2">
                 {modalType === 'fixed' ? (
                   <Building2 className="h-5 w-5 text-red-500" />
                 ) : (
                   <Receipt className="h-5 w-5 text-blue-500" />
                 )}
                 {editingExpense ? 'Editar' : 'Novo'} Gasto {modalType === 'fixed' ? 'Fixo' : 'Extra'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label>Nome *</Label>
-                <Input
-                  value={formData.nome}
-                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                  placeholder="Nome do gasto"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
+              </ResizableDialogTitle>
+            </ResizableDialogHeader>
+            <ResizableDialogBody>
+              <div className="space-y-4">
                 <div>
-                  <Label>Valor (R$) *</Label>
+                  <Label>Descrição *</Label>
                   <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.valor}
-                    onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-                    placeholder="0,00"
+                    value={formData.nome}
+                    onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                    placeholder="Nome do gasto"
                   />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Valor (R$) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.valor}
+                      onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                      placeholder="0,00"
+                    />
+                  </div>
+                  <div>
+                    <Label>Data</Label>
+                    <Input
+                      type="date"
+                      value={formData.data}
+                      onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
+                    />
+                  </div>
                 </div>
                 <div>
                   <Label>Categoria</Label>
                   <Select value={formData.categoria} onValueChange={(v) => setFormData(prev => ({ ...prev, categoria: v }))}>
                     <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="max-h-60">
                       {CATEGORIAS.map(cat => (
                         <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Data</Label>
-                  <Input
-                    type="date"
-                    value={formData.data}
-                    onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
-                  />
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Data Vencimento</Label>
+                    <Input
+                      type="date"
+                      value={formData.data_vencimento}
+                      onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Status Pagamento</Label>
+                    <Select value={formData.status_pagamento} onValueChange={(v: PaymentStatus) => setFormData(prev => ({ ...prev, status_pagamento: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pendente">
+                          <span className="flex items-center gap-2">
+                            <Clock className="h-3 w-3 text-yellow-500" />
+                            Pendente
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="pago">
+                          <span className="flex items-center gap-2">
+                            <Check className="h-3 w-3 text-green-500" />
+                            Pago
+                          </span>
+                        </SelectItem>
+                        <SelectItem value="atrasado">
+                          <span className="flex items-center gap-2">
+                            <AlertCircle className="h-3 w-3 text-red-500" />
+                            Atrasado
+                          </span>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
-                <div>
-                  <Label>Vencimento</Label>
-                  <Input
-                    type="date"
-                    value={formData.data_vencimento}
-                    onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
-                  />
-                </div>
+                
+                {/* Seção de Anexos Minimizável */}
+                <MinimizableSection
+                  title="Comprovantes e Anexos"
+                  icon={<Paperclip className="h-4 w-4" />}
+                  variant="card"
+                  storageKey="finance-attachments"
+                  badge={
+                    editingExpense && attachmentCounts[editingExpense.id] > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {attachmentCounts[editingExpense.id]}
+                      </Badge>
+                    )
+                  }
+                >
+                  {editingExpense && (
+                    <UniversalAttachments
+                      entityType={modalType === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
+                      entityId={editingExpense.id.toString()}
+                    />
+                  )}
+                  {!editingExpense && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Salve o gasto primeiro para adicionar anexos
+                    </p>
+                  )}
+                </MinimizableSection>
               </div>
-              <div>
-                <Label>Status</Label>
-                <Select value={formData.status_pagamento} onValueChange={(v: PaymentStatus) => setFormData(prev => ({ ...prev, status_pagamento: v }))}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="pendente">Pendente</SelectItem>
-                    <SelectItem value="pago">Pago</SelectItem>
-                    <SelectItem value="atrasado">Atrasado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-            <DialogFooter>
+            </ResizableDialogBody>
+            <ResizableDialogFooter>
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave}>Salvar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
+                <Check className="h-4 w-4 mr-2" />
+                Salvar Alterações
+              </Button>
+            </ResizableDialogFooter>
+          </ResizableDialogContent>
+        </ResizableDialog>
 
         {/* Delete Dialog */}
         <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
