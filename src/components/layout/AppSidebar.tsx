@@ -153,6 +153,13 @@ const adminMenuItems = [
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
+// Menu Empresas (acesso geral)
+const empresasMenuItems = [
+  { title: "Dashboard Empresarial", url: "/empresas/dashboard", icon: Building2 },
+  { title: "Arquivos Empresariais", url: "/empresas/arquivos", icon: FolderOpen },
+  { title: "RH Funcionários", url: "/empresas/rh", icon: Users },
+];
+
 // Menu exclusivo do OWNER
 const ownerMenuItems = [
   { title: "Monitoramento", url: "/monitoramento", icon: Activity, badge: "MASTER" },
@@ -471,6 +478,42 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {pessoalMenuItems.map((item) => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton 
+                    asChild
+                    isActive={isActive(item.url)}
+                    tooltip={item.title}
+                  >
+                    <NavLink 
+                      to={item.url} 
+                      end 
+                      className="flex items-center gap-3"
+                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                    >
+                      <item.icon className="h-4 w-4 shrink-0" />
+                      {!collapsed && <span>{item.title}</span>}
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
+        {/* Empresas Menu */}
+        <SidebarGroup>
+          {!collapsed && (
+            <SidebarGroupBanner
+              title="Empresas"
+              image={teamImg}
+              icon={<Building2 className="h-4 w-4 text-white" />}
+              accentColor="green"
+            />
+          )}
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Empresas</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {empresasMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton 
                     asChild
