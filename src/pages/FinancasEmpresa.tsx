@@ -443,7 +443,7 @@ export default function FinancasEmpresa() {
                           />
                           <Legend 
                             wrapperStyle={{ fontSize: '12px' }}
-                            formatter={(value) => <span className="text-muted-foreground text-xs">{value}</span>}
+                            formatter={(value) => <span className="text-white font-bold text-xs">{value}</span>}
                           />
                         </PieChart>
                       </ResponsiveContainer>
