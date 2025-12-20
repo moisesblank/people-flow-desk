@@ -256,11 +256,16 @@ export type Database = {
       }
       alunos: {
         Row: {
+          cidade: string | null
+          cpf: string | null
           created_at: string | null
           curso_id: string | null
           data_matricula: string | null
+          data_nascimento: string | null
           email: string
+          estado: string | null
           fonte: string | null
+          foto_url: string | null
           hotmart_transaction_id: string | null
           id: string
           nome: string
@@ -271,11 +276,16 @@ export type Database = {
           valor_pago: number | null
         }
         Insert: {
+          cidade?: string | null
+          cpf?: string | null
           created_at?: string | null
           curso_id?: string | null
           data_matricula?: string | null
+          data_nascimento?: string | null
           email: string
+          estado?: string | null
           fonte?: string | null
+          foto_url?: string | null
           hotmart_transaction_id?: string | null
           id?: string
           nome: string
@@ -286,11 +296,16 @@ export type Database = {
           valor_pago?: number | null
         }
         Update: {
+          cidade?: string | null
+          cpf?: string | null
           created_at?: string | null
           curso_id?: string | null
           data_matricula?: string | null
+          data_nascimento?: string | null
           email?: string
+          estado?: string | null
           fonte?: string | null
+          foto_url?: string | null
           hotmart_transaction_id?: string | null
           id?: string
           nome?: string
@@ -975,28 +990,40 @@ export type Database = {
       }
       certificates: {
         Row: {
+          carga_horaria: number | null
           certificate_number: string
           course_id: string | null
           id: string
           issued_at: string | null
+          nome_aluno: string | null
+          nome_curso: string | null
           pdf_url: string | null
           user_id: string | null
+          validado: boolean | null
         }
         Insert: {
+          carga_horaria?: number | null
           certificate_number: string
           course_id?: string | null
           id?: string
           issued_at?: string | null
+          nome_aluno?: string | null
+          nome_curso?: string | null
           pdf_url?: string | null
           user_id?: string | null
+          validado?: boolean | null
         }
         Update: {
+          carga_horaria?: number | null
           certificate_number?: string
           course_id?: string | null
           id?: string
           issued_at?: string | null
+          nome_aluno?: string | null
+          nome_curso?: string | null
           pdf_url?: string | null
           user_id?: string | null
+          validado?: boolean | null
         }
         Relationships: [
           {
@@ -1654,6 +1681,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           description: string | null
+          destaque: boolean | null
           difficulty_level: string | null
           duration_hours: number | null
           estimated_hours: number | null
@@ -1662,12 +1690,15 @@ export type Database = {
           is_published: boolean | null
           meta_description: string | null
           meta_title: string | null
+          ordem: number | null
           preview_video_url: string | null
           price: number | null
           published_at: string | null
           short_description: string | null
           slug: string | null
+          status: string | null
           thumbnail_url: string | null
+          tipo: string | null
           title: string
           total_reviews: number | null
           total_students: number | null
@@ -1681,6 +1712,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          destaque?: boolean | null
           difficulty_level?: string | null
           duration_hours?: number | null
           estimated_hours?: number | null
@@ -1689,12 +1721,15 @@ export type Database = {
           is_published?: boolean | null
           meta_description?: string | null
           meta_title?: string | null
+          ordem?: number | null
           preview_video_url?: string | null
           price?: number | null
           published_at?: string | null
           short_description?: string | null
           slug?: string | null
+          status?: string | null
           thumbnail_url?: string | null
+          tipo?: string | null
           title: string
           total_reviews?: number | null
           total_students?: number | null
@@ -1708,6 +1743,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          destaque?: boolean | null
           difficulty_level?: string | null
           duration_hours?: number | null
           estimated_hours?: number | null
@@ -1716,12 +1752,15 @@ export type Database = {
           is_published?: boolean | null
           meta_description?: string | null
           meta_title?: string | null
+          ordem?: number | null
           preview_video_url?: string | null
           price?: number | null
           published_at?: string | null
           short_description?: string | null
           slug?: string | null
+          status?: string | null
           thumbnail_url?: string | null
+          tipo?: string | null
           title?: string
           total_reviews?: number | null
           total_students?: number | null
@@ -2139,10 +2178,15 @@ export type Database = {
           course_id: string
           created_at: string | null
           enrolled_at: string | null
+          forma_pagamento: string | null
           id: string
+          observacoes: string | null
+          origem: string | null
           progress_percentage: number | null
           status: string | null
+          transaction_id: string | null
           user_id: string
+          valor_pago: number | null
         }
         Insert: {
           certificate_url?: string | null
@@ -2150,10 +2194,15 @@ export type Database = {
           course_id: string
           created_at?: string | null
           enrolled_at?: string | null
+          forma_pagamento?: string | null
           id?: string
+          observacoes?: string | null
+          origem?: string | null
           progress_percentage?: number | null
           status?: string | null
+          transaction_id?: string | null
           user_id: string
+          valor_pago?: number | null
         }
         Update: {
           certificate_url?: string | null
@@ -2161,10 +2210,15 @@ export type Database = {
           course_id?: string
           created_at?: string | null
           enrolled_at?: string | null
+          forma_pagamento?: string | null
           id?: string
+          observacoes?: string | null
+          origem?: string | null
           progress_percentage?: number | null
           status?: string | null
+          transaction_id?: string | null
           user_id?: string
+          valor_pago?: number | null
         }
         Relationships: [
           {
@@ -2931,34 +2985,40 @@ export type Database = {
       }
       lesson_progress: {
         Row: {
+          avaliacao: number | null
           completed: boolean | null
           completed_at: string | null
           created_at: string | null
           id: string
           last_position_seconds: number | null
           lesson_id: string
+          notas: string | null
           updated_at: string | null
           user_id: string
           watch_time_seconds: number | null
         }
         Insert: {
+          avaliacao?: number | null
           completed?: boolean | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
           last_position_seconds?: number | null
           lesson_id: string
+          notas?: string | null
           updated_at?: string | null
           user_id: string
           watch_time_seconds?: number | null
         }
         Update: {
+          avaliacao?: number | null
           completed?: boolean | null
           completed_at?: string | null
           created_at?: string | null
           id?: string
           last_position_seconds?: number | null
           lesson_id?: string
+          notas?: string | null
           updated_at?: string | null
           user_id?: string
           watch_time_seconds?: number | null
@@ -2995,8 +3055,12 @@ export type Database = {
           duration_minutes: number | null
           id: string
           is_free: boolean | null
+          material_nome: string | null
+          material_url: string | null
           module_id: string
           position: number | null
+          status: string | null
+          tipo: string | null
           title: string
           updated_at: string | null
           video_duration: number | null
@@ -3010,8 +3074,12 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
+          material_nome?: string | null
+          material_url?: string | null
           module_id: string
           position?: number | null
+          status?: string | null
+          tipo?: string | null
           title: string
           updated_at?: string | null
           video_duration?: number | null
@@ -3025,8 +3093,12 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
+          material_nome?: string | null
+          material_url?: string | null
           module_id?: string
           position?: number | null
+          status?: string | null
+          tipo?: string | null
           title?: string
           updated_at?: string | null
           video_duration?: number | null
@@ -3428,7 +3500,9 @@ export type Database = {
           created_at: string | null
           description: string | null
           id: string
+          is_published: boolean | null
           position: number | null
+          status: string | null
           title: string
           updated_at: string | null
           xp_reward: number | null
@@ -3438,7 +3512,9 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_published?: boolean | null
           position?: number | null
+          status?: string | null
           title: string
           updated_at?: string | null
           xp_reward?: number | null
@@ -3448,7 +3524,9 @@ export type Database = {
           created_at?: string | null
           description?: string | null
           id?: string
+          is_published?: boolean | null
           position?: number | null
+          status?: string | null
           title?: string
           updated_at?: string | null
           xp_reward?: number | null
@@ -3573,6 +3651,100 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      pagamentos_cursos: {
+        Row: {
+          aluno_id: string | null
+          comprovante_url: string | null
+          created_at: string | null
+          cupom_usado: string | null
+          curso_id: string | null
+          data_pagamento: string | null
+          data_vencimento: string | null
+          enrollment_id: string | null
+          forma_pagamento: string | null
+          gateway: string | null
+          id: string
+          metadata: Json | null
+          observacoes: string | null
+          parcela_atual: number | null
+          parcelas: number | null
+          status: string | null
+          transaction_id: string | null
+          updated_at: string | null
+          valor: number
+          valor_desconto: number | null
+          valor_final: number
+        }
+        Insert: {
+          aluno_id?: string | null
+          comprovante_url?: string | null
+          created_at?: string | null
+          cupom_usado?: string | null
+          curso_id?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          enrollment_id?: string | null
+          forma_pagamento?: string | null
+          gateway?: string | null
+          id?: string
+          metadata?: Json | null
+          observacoes?: string | null
+          parcela_atual?: number | null
+          parcelas?: number | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          valor?: number
+          valor_desconto?: number | null
+          valor_final?: number
+        }
+        Update: {
+          aluno_id?: string | null
+          comprovante_url?: string | null
+          created_at?: string | null
+          cupom_usado?: string | null
+          curso_id?: string | null
+          data_pagamento?: string | null
+          data_vencimento?: string | null
+          enrollment_id?: string | null
+          forma_pagamento?: string | null
+          gateway?: string | null
+          id?: string
+          metadata?: Json | null
+          observacoes?: string | null
+          parcela_atual?: number | null
+          parcelas?: number | null
+          status?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          valor?: number
+          valor_desconto?: number | null
+          valor_final?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pagamentos_cursos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_cursos_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "pagamentos_cursos_enrollment_id_fkey"
+            columns: ["enrollment_id"]
+            isOneToOne: false
+            referencedRelation: "enrollments"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payment_transactions: {
         Row: {
