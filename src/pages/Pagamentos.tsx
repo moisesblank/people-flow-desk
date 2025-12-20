@@ -21,7 +21,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { 
+  ResizableDialog,
+  ResizableDialogContent,
+  ResizableDialogHeader,
+  ResizableDialogBody,
+  ResizableDialogFooter,
+  ResizableDialogTitle,
+} from "@/components/ui/resizable-dialog";
+import { MinimizableSection, useMinimizable, MinimizeButton } from "@/components/ui/minimizable-section";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -923,91 +931,142 @@ export default function Pagamentos() {
           )}
         </div>
 
-        {/* Modal */}
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogContent className="max-w-lg">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
+        {/* Modal Redimensionável */}
+        <ResizableDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <ResizableDialogContent 
+            showMaximize 
+            defaultSize={{ width: 580, height: 620 }}
+            minSize={{ width: 420, height: 450 }}
+            maxSize={{ width: 850, height: 850 }}
+          >
+            <ResizableDialogHeader>
+              <ResizableDialogTitle className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-green-500" />
                 {editingPayment ? 'Editar' : 'Novo'} Pagamento
-              </DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Tipo *</Label>
-                  <Select value={formData.tipo} onValueChange={(v) => setFormData(prev => ({ ...prev, tipo: v }))}>
-                    <SelectTrigger><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {PAYMENT_TYPES.filter(t => t.value !== 'all').map(type => (
-                        <SelectItem key={type.value} value={type.value}>{type.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+              </ResizableDialogTitle>
+            </ResizableDialogHeader>
+            <ResizableDialogBody>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Tipo *</Label>
+                    <Select value={formData.tipo} onValueChange={(v) => setFormData(prev => ({ ...prev, tipo: v }))}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {PAYMENT_TYPES.filter(t => t.value !== 'all').map(type => (
+                          <SelectItem key={type.value} value={type.value}>
+                            <span className="flex items-center gap-2">
+                              <type.icon className="h-3 w-3" />
+                              {type.label}
+                            </span>
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label>Valor (R$) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      value={formData.valor}
+                      onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                      placeholder="0,00"
+                    />
+                  </div>
                 </div>
                 <div>
-                  <Label>Valor (R$) *</Label>
+                  <Label>Descrição *</Label>
                   <Input
-                    type="number"
-                    step="0.01"
-                    value={formData.valor}
-                    onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-                    placeholder="0,00"
+                    value={formData.descricao}
+                    onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
+                    placeholder="Descrição do pagamento"
                   />
                 </div>
-              </div>
-              <div>
-                <Label>Descrição *</Label>
-                <Input
-                  value={formData.descricao}
-                  onChange={(e) => setFormData(prev => ({ ...prev, descricao: e.target.value }))}
-                  placeholder="Descrição do pagamento"
-                />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Vencimento</Label>
-                  <Input
-                    type="date"
-                    value={formData.data_vencimento}
-                    onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label>Vencimento</Label>
+                    <Input
+                      type="date"
+                      value={formData.data_vencimento}
+                      onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                    />
+                  </div>
+                  <div>
+                    <Label>Método</Label>
+                    <Select value={formData.metodo_pagamento} onValueChange={(v) => setFormData(prev => ({ ...prev, metodo_pagamento: v }))}>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                      <SelectContent className="max-h-60">
+                        {PAYMENT_METHODS.map(method => (
+                          <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                
+                {/* Seção de Observações Minimizável */}
+                <MinimizableSection
+                  title="Observações"
+                  icon={<FileText className="h-4 w-4" />}
+                  variant="card"
+                  storageKey="payment-observations"
+                  defaultMinimized={!formData.observacoes}
+                >
+                  <Textarea
+                    value={formData.observacoes}
+                    onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                    placeholder="Observações adicionais..."
+                    rows={3}
+                    className="resize-y min-h-[60px]"
                   />
+                </MinimizableSection>
+                
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-muted/30 border border-border/50">
+                  <Switch
+                    checked={formData.recorrente}
+                    onCheckedChange={(v) => setFormData(prev => ({ ...prev, recorrente: v }))}
+                  />
+                  <Label className="cursor-pointer">Pagamento recorrente</Label>
                 </div>
-                <div>
-                  <Label>Método</Label>
-                  <Select value={formData.metodo_pagamento} onValueChange={(v) => setFormData(prev => ({ ...prev, metodo_pagamento: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent>
-                      {PAYMENT_METHODS.map(method => (
-                        <SelectItem key={method.value} value={method.value}>{method.label}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+                
+                {/* Seção de Anexos Minimizável */}
+                <MinimizableSection
+                  title="Comprovantes e Anexos"
+                  icon={<Paperclip className="h-4 w-4" />}
+                  variant="card"
+                  storageKey="payment-attachments"
+                  badge={
+                    editingPayment && attachmentCounts[editingPayment.id] > 0 && (
+                      <Badge variant="secondary" className="ml-2">
+                        {attachmentCounts[editingPayment.id]}
+                      </Badge>
+                    )
+                  }
+                >
+                  {editingPayment && (
+                    <UniversalAttachments
+                      entityType="payment"
+                      entityId={editingPayment.id}
+                    />
+                  )}
+                  {!editingPayment && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                      Salve o pagamento primeiro para adicionar anexos
+                    </p>
+                  )}
+                </MinimizableSection>
               </div>
-              <div>
-                <Label>Observações</Label>
-                <Textarea
-                  value={formData.observacoes}
-                  onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
-                  placeholder="Observações..."
-                  rows={2}
-                />
-              </div>
-              <div className="flex items-center gap-2">
-                <Switch
-                  checked={formData.recorrente}
-                  onCheckedChange={(v) => setFormData(prev => ({ ...prev, recorrente: v }))}
-                />
-                <Label>Pagamento recorrente</Label>
-              </div>
-            </div>
-            <DialogFooter>
+            </ResizableDialogBody>
+            <ResizableDialogFooter>
               <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave}>Salvar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
+                <Check className="h-4 w-4 mr-2" />
+                Salvar Alterações
+              </Button>
+            </ResizableDialogFooter>
+          </ResizableDialogContent>
+        </ResizableDialog>
 
         {/* Delete Dialog */}
         <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
