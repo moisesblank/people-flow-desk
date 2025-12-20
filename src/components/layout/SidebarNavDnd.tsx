@@ -412,7 +412,7 @@ export function SidebarNavDnd(props: {
                                   </TooltipTrigger>
                                   <TooltipContent side="right">Arrastar grupo</TooltipContent>
                                 </Tooltip>
-                                <Folder>
+                                <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button type="button" onClick={e => {
                             e.preventDefault();
@@ -423,7 +423,7 @@ export function SidebarNavDnd(props: {
                                     </button>
                                   </TooltipTrigger>
                                   <TooltipContent side="right">Duplicar grupo</TooltipContent>
-                                </Folder>
+                                </Tooltip>
                               </div>}
                             <span className="font-bold drop-shadow-lg text-center text-primary-foreground text-lg">{group.label}</span>
                           </div>
