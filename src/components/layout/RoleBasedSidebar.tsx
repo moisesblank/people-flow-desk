@@ -177,19 +177,20 @@ const menuGroups: MenuGroup[] = [
       { title: "Afiliados", url: "/afiliados", icon: Handshake, area: "afiliados" },
       { title: "Alunos", url: "/alunos", icon: GraduationCap, area: "alunos" },
       { title: "Portal Aluno", url: "/portal-aluno", icon: UserCheck, area: "portal-aluno" },
-      { title: "Gestão Site", url: "/gestao-site", icon: Globe, area: "gestao-site" },
+      
       { title: "Relatórios", url: "/relatorios", icon: FileText, area: "relatorios" },
       { title: "Guia", url: "/guia", icon: BookOpen, area: "guia" },
     ],
   },
   {
-    id: "laboratorio",
-    label: "Laboratório",
+    id: "site",
+    label: "Site",
     image: devImg,
     color: "from-cyan-600/80",
     items: [
-      { title: "Laboratório", url: "/laboratorio", icon: Zap, area: "laboratorio" },
+      { title: "Gestão Site", url: "/gestao-site", icon: Globe, area: "gestao-site" },
       { title: "Site/Programador", url: "/site-programador", icon: Code, area: "site-programador" },
+      { title: "Laboratório", url: "/laboratorio", icon: Zap, area: "laboratorio" },
     ],
   },
   {
