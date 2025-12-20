@@ -332,13 +332,15 @@ export default function ArquivosEmpresariais() {
   // ═══════════════════════════════════════════════════════════════
 
   const { data: arquivosData, isLoading, refetch } = useQuery({
-    queryKey: ['arquivos-empresa', empresaId, period, selectedYear, selectedMonth, selectedCategory],
+    queryKey: ['arquivos-empresa', empresaId, period, selectedYear, selectedMonth, selectedCategory, searchQuery],
     queryFn: async () => {
-      if (!empresaId) return { arquivos: [], total: 0 };
+      if (!empresaId || !empresaSelecionada) return { arquivos: [], total: 0 };
+      
+      const cnpjClean = empresaSelecionada.cnpj.replace(/\D/g, '');
       
       return buscarArquivos({
         busca: searchQuery || undefined,
-        pasta: 'empresas',
+        pasta: `empresas/${cnpjClean}`,
         empresaId: empresaId,
         tipo: filterType !== 'todos' ? filterType : undefined,
         ano: period === 'ano' || period === 'mes' ? selectedYear : undefined,
@@ -347,7 +349,7 @@ export default function ArquivosEmpresariais() {
         limite: 500,
       });
     },
-    enabled: !!empresaId,
+    enabled: !!empresaId && !!empresaSelecionada,
     refetchOnWindowFocus: false,
   });
 
@@ -356,24 +358,29 @@ export default function ArquivosEmpresariais() {
 
   // Realtime subscription
   useEffect(() => {
-    if (!empresaId) return;
+    if (!empresaId || !empresaSelecionada) return;
+    
+    const cnpjClean = empresaSelecionada.cnpj.replace(/\D/g, '');
     
     const channel = supabase
       .channel('arquivos-empresa-realtime')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
-        table: 'arquivos_universal',
-        filter: `empresa_id=eq.${empresaId}`
-      }, () => {
-        refetch();
+        table: 'arquivos_universal'
+      }, (payload) => {
+        // Verificar se o arquivo pertence a esta empresa pela pasta
+        const pasta = (payload.new as any)?.pasta || (payload.old as any)?.pasta;
+        if (pasta && pasta.startsWith(`empresas/${cnpjClean}`)) {
+          refetch();
+        }
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [empresaId, refetch]);
+  }, [empresaId, empresaSelecionada, refetch]);
 
   // ═══════════════════════════════════════════════════════════════
   // FILTROS E ORDENAÇÃO
@@ -504,6 +511,9 @@ export default function ArquivosEmpresariais() {
           iaLer: uploadIaLer,
           descricao: uploadDescription,
           tags: uploadTags ? uploadTags.split(',').map(t => t.trim()) : undefined,
+          relacionamentos: {
+            empresaId: empresaId
+          }
         });
       }
 
