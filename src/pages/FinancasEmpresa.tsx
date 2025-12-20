@@ -438,8 +438,11 @@ export default function FinancasEmpresa() {
                               backgroundColor: "hsl(var(--card))",
                               border: "1px solid hsl(var(--border))",
                               borderRadius: "8px",
+                              color: "#ffffff",
+                              fontWeight: "bold",
                             }}
                             formatter={(value: number) => formatCurrency(value)}
+                            labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                           />
                           <Legend 
                             wrapperStyle={{ fontSize: '12px' }}
@@ -474,13 +477,15 @@ export default function FinancasEmpresa() {
                         <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                         <XAxis 
                           type="number" 
-                          stroke="hsl(var(--muted-foreground))"
+                          stroke="#ffffff"
+                          tick={{ fill: "#ffffff", fontWeight: "bold" }}
                           tickFormatter={(value) => formatCurrency(value)}
                         />
                         <YAxis 
                           type="category" 
                           dataKey="name" 
-                          stroke="hsl(var(--muted-foreground))"
+                          stroke="#ffffff"
+                          tick={{ fill: "#ffffff", fontWeight: "bold" }}
                           width={85}
                         />
                         <Tooltip
@@ -488,8 +493,11 @@ export default function FinancasEmpresa() {
                             backgroundColor: "hsl(var(--card))",
                             border: "1px solid hsl(var(--border))",
                             borderRadius: "8px",
+                            color: "#ffffff",
+                            fontWeight: "bold",
                           }}
                           formatter={(value: number) => formatCurrency(value)}
+                          labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                         />
                         <Bar dataKey="value" radius={[0, 8, 8, 0]} />
                       </BarChart>

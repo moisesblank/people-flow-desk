@@ -71,16 +71,18 @@ export function SpendingAnalytics({ categories, total }: SpendingAnalyticsProps)
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(240, 6%, 15%)" horizontal={false} />
               <XAxis 
                 type="number" 
-                stroke="hsl(240, 5%, 55%)"
+                stroke="#ffffff"
                 fontSize={12}
+                tick={{ fill: "#ffffff", fontWeight: "bold" }}
                 tickFormatter={(value) => `R$${(value / 100).toFixed(0)}`}
               />
               <YAxis 
                 type="category" 
                 dataKey="name" 
-                stroke="hsl(240, 5%, 55%)"
+                stroke="#ffffff"
                 fontSize={11}
                 width={100}
+                tick={{ fill: "#ffffff", fontWeight: "bold" }}
                 tickFormatter={(value) => value.length > 12 ? value.slice(0, 12) + '...' : value}
               />
               <Tooltip
@@ -88,7 +90,10 @@ export function SpendingAnalytics({ categories, total }: SpendingAnalyticsProps)
                   backgroundColor: "hsl(240, 6%, 10%)",
                   border: "1px solid hsl(240, 6%, 20%)",
                   borderRadius: "8px",
+                  color: "#ffffff",
+                  fontWeight: "bold",
                 }}
+                labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                 formatter={(value: number) => [formatCurrency(value), "Valor"]}
               />
               <Bar dataKey="value" radius={[0, 8, 8, 0]}>

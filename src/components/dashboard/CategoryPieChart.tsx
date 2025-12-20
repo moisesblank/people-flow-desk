@@ -49,8 +49,10 @@ export function CategoryPieChart({ data, title }: CategoryPieChartProps) {
                 border: "1px solid hsl(240, 6%, 15%)",
                 borderRadius: "12px",
                 boxShadow: "0 10px 40px rgba(0,0,0,0.5)",
+                color: "#ffffff",
+                fontWeight: "bold",
               }}
-              labelStyle={{ color: "hsl(0, 0%, 98%)" }}
+              labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
               formatter={(value: number) => formatCurrency(value)}
             />
           </PieChart>
@@ -63,7 +65,7 @@ export function CategoryPieChart({ data, title }: CategoryPieChartProps) {
               className="w-3 h-3 rounded-full" 
               style={{ backgroundColor: entry.color }}
             />
-            <span className="text-xs text-muted-foreground">{entry.name}</span>
+            <span className="text-xs text-white font-bold">{entry.name}</span>
           </div>
         ))}
       </div>

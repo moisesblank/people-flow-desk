@@ -354,14 +354,16 @@ export function AdvancedAnalytics() {
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis 
                   dataKey="date" 
-                  stroke="hsl(var(--muted-foreground))" 
+                  stroke="#ffffff" 
                   fontSize={10}
                   interval="preserveStartEnd"
+                  tick={{ fill: "#ffffff", fontWeight: "bold" }}
                 />
                 <YAxis 
-                  stroke="hsl(var(--muted-foreground))" 
+                  stroke="#ffffff" 
                   fontSize={10}
                   tickFormatter={(v) => `${(v / 100).toFixed(0)}`}
+                  tick={{ fill: "#ffffff", fontWeight: "bold" }}
                 />
                 <Tooltip
                   contentStyle={{
@@ -369,7 +371,10 @@ export function AdvancedAnalytics() {
                     border: "1px solid hsl(var(--border))",
                     borderRadius: "8px",
                     fontSize: "12px",
+                    color: "#ffffff",
+                    fontWeight: "bold",
                   }}
+                  labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   formatter={(value: number) => [`R$ ${(value / 100).toFixed(2)}`, "Receita"]}
                 />
                 <Area

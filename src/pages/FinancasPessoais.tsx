@@ -494,12 +494,15 @@ export default function FinancasPessoais() {
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "8px",
+                        color: "#ffffff",
+                        fontWeight: "bold",
                       }}
+                      labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       formatter={(value: number) => formatCurrency(value)}
                     />
                     <Legend 
                       wrapperStyle={{ fontSize: '12px' }}
-                      formatter={(value) => <span className="text-muted-foreground text-xs">{value}</span>}
+                      formatter={(value) => <span className="text-white font-bold text-xs">{value}</span>}
                     />
                   </PieChart>
                 </ResponsiveContainer>
