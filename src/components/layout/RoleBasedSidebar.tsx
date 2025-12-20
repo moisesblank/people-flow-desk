@@ -112,7 +112,6 @@ const menuGroups: MenuGroup[] = [
       { title: "Integrações", url: "/integracoes", icon: Link2, area: "integracoes" },
       { title: "Calendário", url: "/calendario", icon: Calendar, area: "calendario" },
       { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck, area: "area-professor" },
-      { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog, area: "gestao-equipe" },
     ],
   },
   {

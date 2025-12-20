@@ -97,7 +97,6 @@ const mainMenuItems = [
   { title: "Funcionários", url: "/funcionarios", icon: Users },
   
   { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck },
-  { title: "Gestão Equipe", url: "/gestao-equipe", icon: UserCog },
 ];
 
 const marketingMenuItems = [
