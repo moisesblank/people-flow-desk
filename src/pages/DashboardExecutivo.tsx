@@ -593,6 +593,8 @@ export default function DashboardExecutivo() {
                       border: "1px solid hsl(var(--border))",
                       borderRadius: "8px",
                     }}
+                    itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                    labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                     formatter={(value: number) => [`${value}%`, ""]}
                   />
                 </RechartsPie>

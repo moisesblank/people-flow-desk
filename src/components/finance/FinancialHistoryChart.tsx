@@ -160,9 +160,8 @@ export function FinancialHistoryChart({ data, period, tendencia, variacaoPercent
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "12px",
                         boxShadow: "0 10px 40px rgba(0,0,0,0.3)",
-                        color: "#ffffff",
-                        fontWeight: "bold",
                       }}
+                      itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       formatter={(value: number, name: string) => [
                         formatCurrency(value),
@@ -226,9 +225,8 @@ export function FinancialHistoryChart({ data, period, tendencia, variacaoPercent
                         backgroundColor: "hsl(var(--card))",
                         border: "1px solid hsl(var(--border))",
                         borderRadius: "12px",
-                        color: "#ffffff",
-                        fontWeight: "bold",
                       }}
+                      itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                       formatter={(value: number, name: string) => [
                         formatCurrency(value),

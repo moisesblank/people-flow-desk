@@ -89,8 +89,9 @@ export function FinancialHistoryWidget() {
                     borderRadius: "8px",
                     fontSize: "12px",
                   }}
+                  itemStyle={{ color: "#ffffff", fontWeight: "bold" }}
+                  labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
                   formatter={(value: number) => [formatCurrency(value), "Saldo"]}
-                  labelFormatter={(label) => label}
                 />
                 <Area
                   type="monotone"
