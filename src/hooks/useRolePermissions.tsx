@@ -120,6 +120,7 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/documentos": "documentos",
   // NOVAS ÁREAS EMPRESARIAIS
   "/empresas/dashboard": "dashboard-empresarial",
+  "/empresas/receitas": "receitas-empresariais",
   "/empresas/rh": "rh-funcionarios",
   "/empresas/arquivos": "arquivos-empresariais",
   "/empresas/fluxo-caixa": "fluxo-caixa",
@@ -141,7 +142,7 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "relatorios", "guia", "laboratorio", "site-programador", "pessoal", "vida-pessoal",
     "permissoes", "configuracoes", "monitoramento", "central-whatsapp", "diagnostico-whatsapp",
     "auditoria-acessos", "central-monitoramento", "central-ias", "central-metricas", "documentos",
-    "dashboard-empresarial", "rh-funcionarios", "arquivos-empresariais", "fluxo-caixa", "contas-pagar", "contas-receber"
+    "dashboard-empresarial", "receitas-empresariais", "rh-funcionarios", "arquivos-empresariais", "fluxo-caixa", "contas-pagar", "contas-receber"
   ],
 
   // ADMIN - Igual owner mas sem vida pessoal e monitoramento
