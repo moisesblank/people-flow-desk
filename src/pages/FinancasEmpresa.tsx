@@ -107,8 +107,8 @@ export default function FinancasEmpresa() {
   const [searchTerm, setSearchTerm] = useState("");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
   const [deleteDialogOpen, setDeleteDialogOpen] = useState<any>(null);
-  const [sortBy, setSortBy] = useState<"data" | "valor" | "nome">("data");
-  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [sortBy, setSortBy] = useState<"vencimento" | "data" | "valor" | "nome">("vencimento");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   const [formData, setFormData] = useState({
     nome: "",
@@ -172,10 +172,30 @@ export default function FinancasEmpresa() {
       );
     }
 
-    // Ordenação
+    // Ordenação por vencimento (mais próximo primeiro) como padrão
     return combined.sort((a, b) => {
       let comparison = 0;
-      if (sortBy === "data") {
+      const today = new Date();
+      
+      if (sortBy === "vencimento") {
+        // Ordenar por data de vencimento mais próxima
+        const dateA = a.data_vencimento || a.data || a.created_at || '9999-12-31';
+        const dateB = b.data_vencimento || b.data || b.created_at || '9999-12-31';
+        const dA = new Date(dateA);
+        const dB = new Date(dateB);
+        
+        // Priorizar itens pendentes/atrasados e com vencimento próximo
+        const isPendingA = a.statusKey === 'pendente' || a.statusKey === 'atrasado';
+        const isPendingB = b.statusKey === 'pendente' || b.statusKey === 'atrasado';
+        
+        if (isPendingA && !isPendingB) return -1;
+        if (!isPendingA && isPendingB) return 1;
+        
+        // Ordenar por proximidade do vencimento
+        const diffA = Math.abs(dA.getTime() - today.getTime());
+        const diffB = Math.abs(dB.getTime() - today.getTime());
+        comparison = diffA - diffB;
+      } else if (sortBy === "data") {
         const dateA = a.data || a.created_at || '';
         const dateB = b.data || b.created_at || '';
         comparison = dateA.localeCompare(dateB);
@@ -306,6 +326,90 @@ export default function FinancasEmpresa() {
 
     return { categoryData, typeData, statusData, monthlyData };
   }, [allItems, unifiedStats, companyFinance, paymentsHistory]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // PRÓXIMOS VENCIMENTOS (ordenados por proximidade)
+  // ═══════════════════════════════════════════════════════════════
+
+  const proximosVencimentos = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    // Filtrar apenas itens pendentes/atrasados com data de vencimento
+    const itensComVencimento = allItems.filter(item => {
+      const hasVencimento = item.data_vencimento || item.data;
+      const isPending = item.statusKey === 'pendente' || item.statusKey === 'atrasado';
+      return hasVencimento && isPending;
+    });
+
+    // Calcular dias até vencimento e ordenar
+    const comDias = itensComVencimento.map(item => {
+      const dataVenc = new Date(item.data_vencimento || item.data);
+      dataVenc.setHours(0, 0, 0, 0);
+      const diasAte = Math.floor((dataVenc.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      return {
+        ...item,
+        diasAteVencimento: diasAte,
+        dataVencimento: dataVenc,
+        isVencidoHoje: diasAte === 0,
+        isAtrasado: diasAte < 0,
+        isProximo: diasAte > 0 && diasAte <= 7,
+      };
+    });
+
+    // Ordenar: atrasados primeiro, depois por proximidade
+    return comDias.sort((a, b) => {
+      // Atrasados vêm primeiro
+      if (a.isAtrasado && !b.isAtrasado) return -1;
+      if (!a.isAtrasado && b.isAtrasado) return 1;
+      // Vencendo hoje segundo
+      if (a.isVencidoHoje && !b.isVencidoHoje) return -1;
+      if (!a.isVencidoHoje && b.isVencidoHoje) return 1;
+      // Depois por dias até vencimento (mais próximo primeiro)
+      return a.diasAteVencimento - b.diasAteVencimento;
+    });
+  }, [allItems]);
+
+  // Verificar vencimentos ao carregar e notificar
+  useEffect(() => {
+    const verificarVencimentos = async () => {
+      const atrasados = proximosVencimentos.filter(v => v.isAtrasado);
+      const vencendoHoje = proximosVencimentos.filter(v => v.isVencidoHoje);
+      
+      if (atrasados.length > 0 || vencendoHoje.length > 0) {
+        const totalAtrasado = atrasados.reduce((sum, v) => sum + v.valor, 0);
+        const totalHoje = vencendoHoje.reduce((sum, v) => sum + v.valor, 0);
+        
+        if (atrasados.length > 0) {
+          toast.warning(
+            `⚠️ ${atrasados.length} gasto(s) atrasado(s)! Total: ${formatCompanyCurrency(totalAtrasado)}`,
+            { duration: 8000 }
+          );
+        }
+        if (vencendoHoje.length > 0) {
+          toast.info(
+            `📅 ${vencendoHoje.length} gasto(s) vencem HOJE! Total: ${formatCompanyCurrency(totalHoje)}`,
+            { duration: 8000 }
+          );
+        }
+
+        // Chamar edge function para enviar email ao owner (se ainda não enviado hoje)
+        try {
+          const response = await supabase.functions.invoke('check-vencimentos');
+          if (response.data?.success) {
+            console.log('[Vencimentos] Edge function executada:', response.data);
+          }
+        } catch (error) {
+          console.error('[Vencimentos] Erro ao verificar:', error);
+        }
+      }
+    };
+
+    if (proximosVencimentos.length > 0) {
+      verificarVencimentos();
+    }
+  }, [proximosVencimentos]);
 
   // ═══════════════════════════════════════════════════════════════
   // HANDLERS
@@ -565,6 +669,190 @@ export default function FinancasEmpresa() {
           </CardContent>
         </Card>
       </div>
+
+      {/* ════════════════════════════════════════════════════════════
+          SEÇÃO: PRÓXIMOS VENCIMENTOS (ALERTA VISUAL)
+          ════════════════════════════════════════════════════════════ */}
+      {proximosVencimentos.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="relative"
+        >
+          <Card className={cn(
+            "border-2 overflow-hidden",
+            proximosVencimentos.some(v => v.isAtrasado) 
+              ? "border-red-500/50 bg-gradient-to-br from-red-500/10 to-red-900/5" 
+              : proximosVencimentos.some(v => v.isVencidoHoje)
+              ? "border-yellow-500/50 bg-gradient-to-br from-yellow-500/10 to-yellow-900/5"
+              : "border-orange-500/30 bg-gradient-to-br from-orange-500/5 to-orange-900/5"
+          )}>
+            {/* Pulse animation para alertas urgentes */}
+            {(proximosVencimentos.some(v => v.isAtrasado || v.isVencidoHoje)) && (
+              <div className="absolute top-0 right-0 p-4">
+                <span className="relative flex h-4 w-4">
+                  <span className={cn(
+                    "animate-ping absolute inline-flex h-full w-full rounded-full opacity-75",
+                    proximosVencimentos.some(v => v.isAtrasado) ? "bg-red-400" : "bg-yellow-400"
+                  )}></span>
+                  <span className={cn(
+                    "relative inline-flex rounded-full h-4 w-4",
+                    proximosVencimentos.some(v => v.isAtrasado) ? "bg-red-500" : "bg-yellow-500"
+                  )}></span>
+                </span>
+              </div>
+            )}
+            
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Bell className={cn(
+                  "h-5 w-5",
+                  proximosVencimentos.some(v => v.isAtrasado) ? "text-red-500 animate-pulse" : "text-yellow-500"
+                )} />
+                <span>Próximos Vencimentos</span>
+                <Badge variant="outline" className={cn(
+                  "ml-auto",
+                  proximosVencimentos.some(v => v.isAtrasado) 
+                    ? "bg-red-500/20 text-red-400 border-red-500/30" 
+                    : "bg-yellow-500/20 text-yellow-400 border-yellow-500/30"
+                )}>
+                  {proximosVencimentos.length} pendente{proximosVencimentos.length > 1 ? 's' : ''}
+                </Badge>
+              </CardTitle>
+              <CardDescription>
+                {proximosVencimentos.filter(v => v.isAtrasado).length > 0 && (
+                  <span className="text-red-400 font-semibold">
+                    🚨 {proximosVencimentos.filter(v => v.isAtrasado).length} atrasado(s)! 
+                  </span>
+                )}
+                {proximosVencimentos.filter(v => v.isVencidoHoje).length > 0 && (
+                  <span className="text-yellow-400 font-semibold ml-2">
+                    📅 {proximosVencimentos.filter(v => v.isVencidoHoje).length} vence(m) hoje! 
+                  </span>
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                {proximosVencimentos.slice(0, 8).map((item, index) => {
+                  const statusConfig = STATUS_COLORS[item.statusKey] || STATUS_COLORS.pendente;
+                  const StatusIcon = statusConfig.icon;
+                  
+                  return (
+                    <motion.div
+                      key={`venc-${item.itemType}-${item.id}`}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: index * 0.05 }}
+                      className={cn(
+                        "flex items-center justify-between p-3 rounded-lg cursor-pointer transition-all hover:scale-[1.01]",
+                        item.isAtrasado 
+                          ? "bg-red-500/10 border border-red-500/30 hover:bg-red-500/20" 
+                          : item.isVencidoHoje
+                          ? "bg-yellow-500/10 border border-yellow-500/30 hover:bg-yellow-500/20"
+                          : item.isProximo
+                          ? "bg-orange-500/5 border border-orange-500/20 hover:bg-orange-500/10"
+                          : "bg-muted/30 border border-border/30 hover:bg-muted/50"
+                      )}
+                      onClick={() => openModal(item.itemType, item)}
+                    >
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={cn(
+                          "w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0",
+                          item.isAtrasado ? "bg-red-500/20" : item.isVencidoHoje ? "bg-yellow-500/20" : "bg-muted"
+                        )}>
+                          {item.itemType === 'gasto_fixo' ? <Building2 className="h-5 w-5 text-red-400" /> :
+                           item.itemType === 'gasto_extra' ? <Receipt className="h-5 w-5 text-blue-400" /> :
+                           <CreditCard className="h-5 w-5 text-purple-400" />}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="font-semibold text-sm truncate">{item.label}</p>
+                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                            <span>
+                              {item.dataVencimento ? format(item.dataVencimento, "dd/MM/yyyy", { locale: ptBR }) : '--'}
+                            </span>
+                            <span className={cn(
+                              "font-semibold",
+                              item.isAtrasado ? "text-red-400" : item.isVencidoHoje ? "text-yellow-400" : "text-muted-foreground"
+                            )}>
+                              {item.isAtrasado 
+                                ? `${Math.abs(item.diasAteVencimento)} dia(s) atrasado` 
+                                : item.isVencidoHoje 
+                                ? "VENCE HOJE!" 
+                                : `em ${item.diasAteVencimento} dia(s)`
+                              }
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        <span className="font-bold text-primary text-base">
+                          {formatCompanyCurrency(item.valor)}
+                        </span>
+                        
+                        {/* Status clicável */}
+                        <div onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <button className={cn(
+                                "flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium cursor-pointer transition-all hover:opacity-80",
+                                statusConfig.bg, 
+                                statusConfig.text
+                              )}>
+                                <StatusIcon className="h-3 w-3" />
+                                <span className="capitalize">{item.statusKey}</span>
+                                <ChevronDown className="h-3 w-3 opacity-60" />
+                              </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="min-w-[140px]">
+                              <DropdownMenuItem 
+                                onClick={() => handleStatusChange(item, 'pago')}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Check className="h-4 w-4 text-green-500" />
+                                <span>Marcar Pago</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleStatusChange(item, 'pendente')}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <Clock className="h-4 w-4 text-yellow-500" />
+                                <span>Pendente</span>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem 
+                                onClick={() => handleStatusChange(item, 'atrasado')}
+                                className="gap-2 cursor-pointer"
+                              >
+                                <AlertCircle className="h-4 w-4 text-red-500" />
+                                <span>Atrasado</span>
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+                
+                {proximosVencimentos.length > 8 && (
+                  <p className="text-center text-sm text-muted-foreground py-2">
+                    + {proximosVencimentos.length - 8} outros vencimentos...
+                  </p>
+                )}
+              </div>
+              
+              {/* Resumo total */}
+              <div className="mt-4 pt-4 border-t border-border/30 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total pendente:</span>
+                <span className="font-bold text-xl text-primary">
+                  {formatCompanyCurrency(proximosVencimentos.reduce((sum, v) => sum + v.valor, 0))}
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </motion.div>
+      )}
 
       {/* Gráficos */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

@@ -7769,6 +7769,45 @@ export type Database = {
         }
         Relationships: []
       }
+      vencimentos_notificacoes: {
+        Row: {
+          created_at: string
+          data_notificacao: string
+          enviado_para: string
+          erro: string | null
+          id: string
+          itens_ids: string[] | null
+          sucesso: boolean | null
+          tipo_notificacao: string
+          total_itens: number
+          valor_total: number
+        }
+        Insert: {
+          created_at?: string
+          data_notificacao?: string
+          enviado_para: string
+          erro?: string | null
+          id?: string
+          itens_ids?: string[] | null
+          sucesso?: boolean | null
+          tipo_notificacao?: string
+          total_itens?: number
+          valor_total?: number
+        }
+        Update: {
+          created_at?: string
+          data_notificacao?: string
+          enviado_para?: string
+          erro?: string | null
+          id?: string
+          itens_ids?: string[] | null
+          sucesso?: boolean | null
+          tipo_notificacao?: string
+          total_itens?: number
+          valor_total?: number
+        }
+        Relationships: []
+      }
       webhook_diagnostics: {
         Row: {
           created_at: string | null
@@ -9105,6 +9144,7 @@ export type Database = {
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       can_view_financial: { Args: { _user_id: string }; Returns: boolean }
       can_view_personal: { Args: { _user_id: string }; Returns: boolean }
+      check_and_update_overdue_expenses: { Args: never; Returns: undefined }
       check_api_rate_limit: {
         Args: {
           p_client_id: string
