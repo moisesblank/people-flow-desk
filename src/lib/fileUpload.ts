@@ -68,6 +68,7 @@ export interface UploadResult {
 export interface BuscarArquivosOptions {
   categoria?: string;
   pasta?: string;
+  empresaId?: string;
   tipo?: string;
   ano?: number;
   mes?: number;
@@ -216,6 +217,7 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
         semana,
         dia,
         data_upload: now.toISOString(),
+        ativo: true,
         ia_ler: iaLer,
         descricao: descricao || null,
         tags: tags || null,
@@ -308,6 +310,10 @@ export async function buscarArquivos(options: BuscarArquivosOptions = {}) {
 
   if (options.pasta) {
     query = query.eq('pasta', options.pasta);
+  }
+
+  if (options.empresaId) {
+    query = query.eq('empresa_id', options.empresaId);
   }
 
   if (options.tipo && options.tipo !== 'todos') {

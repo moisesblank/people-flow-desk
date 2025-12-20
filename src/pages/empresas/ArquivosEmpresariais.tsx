@@ -53,15 +53,25 @@ export default function ArquivosEmpresariais() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [processingIA, setProcessingIA] = useState<string | null>(null);
 
+  // Empresas (CNPJ) - filtro obrigatório
+  const companies = [
+    { id: '53.829.761/0001-17', name: 'MMM CURSO DE QUÍMICA LTDA' },
+    { id: '44.979.308/0001-04', name: 'CURSO QUÍMICA MOISÉS MEDEIROS' },
+  ];
+  const [empresaId, setEmpresaId] = useState<string>(companies[0].id);
+
   const { data, isLoading, refetch } = useQuery({
-    queryKey: ['arquivos-empresariais', busca, tipo, ano, mes],
+    queryKey: ['arquivos-empresariais', empresaId, busca, tipo, ano, mes],
     queryFn: () => buscarArquivos({
       busca: busca || undefined,
       pasta: 'empresas',
+      empresaId,
       tipo: tipo !== 'todos' ? tipo : undefined,
-      ano, mes, limite: 100
+      ano,
+      mes,
+      limite: 100,
     }),
-    refetchOnWindowFocus: false
+    refetchOnWindowFocus: false,
   });
 
   const arquivos = data?.arquivos || [];
@@ -106,8 +116,20 @@ export default function ArquivosEmpresariais() {
             Arquivos Empresariais
           </h1>
           <p className="text-muted-foreground">Upload até 2GB • Qualquer formato • Organizado por data</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <div className="min-w-[280px]">
+              <Select value={empresaId} onValueChange={setEmpresaId}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {companies.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>{c.name} • {c.id}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <Badge variant="outline" className="text-pink-500">{total} arquivo(s)</Badge>
+          </div>
         </div>
-        <Badge variant="outline" className="text-pink-500">{total} arquivo(s)</Badge>
       </div>
 
       <Tabs defaultValue="upload" className="space-y-6">
@@ -120,8 +142,16 @@ export default function ArquivosEmpresariais() {
           <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><FolderOpen className="w-5 h-5 text-pink-500" />Upload de Arquivos</CardTitle></CardHeader>
             <CardContent>
-              <FileUpload bucket="arquivos" folder="empresas" categoria="empresa" showIaOption showDescription showTags
-                onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['arquivos-empresariais'] })} />
+              <FileUpload
+                bucket="arquivos"
+                folder={`empresas/${empresaId.replace(/\D/g, '')}`}
+                categoria="empresa"
+                empresaId={empresaId}
+                showIaOption
+                showDescription
+                showTags
+                onUploadComplete={() => queryClient.invalidateQueries({ queryKey: ['arquivos-empresariais'] })}
+              />
             </CardContent>
           </Card>
         </TabsContent>
@@ -134,6 +164,7 @@ export default function ArquivosEmpresariais() {
             <Select value={mes?.toString()||''} onValueChange={v=>setMes(v?parseInt(v):undefined)}><SelectTrigger className="w-24"><SelectValue placeholder="Mês"/></SelectTrigger><SelectContent><SelectItem value="">Todos</SelectItem>{months.map((m,i)=><SelectItem key={i} value={(i+1).toString()}>{m}</SelectItem>)}</SelectContent></Select>
             <div className="flex gap-1"><Button variant={viewMode==='grid'?'default':'outline'} size="icon" onClick={()=>setViewMode('grid')}><Grid3X3 className="w-4 h-4"/></Button><Button variant={viewMode==='list'?'default':'outline'} size="icon" onClick={()=>setViewMode('list')}><List className="w-4 h-4"/></Button></div>
             <Button variant="outline" size="icon" onClick={()=>refetch()}><RefreshCw className="w-4 h-4"/></Button>
+            <Badge variant="outline" className="text-muted-foreground">{companies.find(c=>c.id===empresaId)?.id}</Badge>
           </CardContent></Card>
 
           {isLoading ? <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-pink-500"/></div>
