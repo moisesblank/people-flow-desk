@@ -121,8 +121,8 @@ const menuGroups: MenuGroup[] = [
     color: "from-purple-600/80",
     items: [
       { title: "Dashboard Empresarial", url: "/empresas/dashboard", icon: Building2, area: "dashboard-empresarial", badge: "ERP" },
+      { title: "Receitas", url: "/empresas/receitas", icon: TrendingUp, area: "receitas-empresariais", badge: "LIVE" },
       { title: "Finanças Empresa", url: "/financas-empresa", icon: Wallet, area: "financas-empresa" },
-      { title: "Entradas", url: "/entradas", icon: TrendingUp, area: "entradas" },
       { title: "Pagamentos", url: "/pagamentos", icon: CreditCard, area: "pagamentos" },
       { title: "Contabilidade", url: "/contabilidade", icon: Calculator, area: "contabilidade" },
       { title: "Funcionários (RH)", url: "/empresas/rh", icon: Users, area: "rh-funcionarios" },

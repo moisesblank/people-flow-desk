@@ -67,6 +67,7 @@ export type SystemArea =
   | "documentos"
   // NOVAS ÁREAS EMPRESARIAIS
   | "dashboard-empresarial"
+  | "receitas-empresariais"
   | "rh-funcionarios"
   | "arquivos-empresariais"
   | "fluxo-caixa"
