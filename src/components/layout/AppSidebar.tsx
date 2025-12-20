@@ -115,9 +115,8 @@ const classMenuItems = [
 
 const financeMenuItems = [
   { title: "Finanças Pessoais", url: "/financas-pessoais", icon: Wallet },
-  { title: "Finanças Empresa", url: "/financas-empresa", icon: Building2 },
+  { title: "Finanças Empresa", url: "/financas-empresa", icon: Building2, badge: "CENTRAL" },
   { title: "Entradas", url: "/entradas", icon: TrendingUp },
-  { title: "Pagamentos", url: "/pagamentos", icon: CreditCard },
   { title: "Contabilidade", url: "/contabilidade", icon: Calculator },
 ];
 
