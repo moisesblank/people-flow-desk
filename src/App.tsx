@@ -199,7 +199,7 @@ function AppContent() {
           <Route path="/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
           <Route path="/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />
           <Route path="/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
-          <Route path="/pagamentos" element={<ProtectedPage><Pagamentos /></ProtectedPage>} />
+          <Route path="/pagamentos" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
           <Route path="/contabilidade" element={<ProtectedPage><Contabilidade /></ProtectedPage>} />
           <Route path="/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
           <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
