@@ -399,6 +399,10 @@ export default function Auth() {
                   <img 
                     src={professorPhoto} 
                     alt="Professor Moisés" 
+                    width={240}
+                    height={240}
+                    loading="eager"
+                    decoding="async"
                     className="w-60 h-60 rounded-full object-cover [object-position:50%_15%] border-4 border-primary/60 shadow-2xl shadow-primary/30" 
                   />
                 )}
@@ -516,6 +520,11 @@ export default function Auth() {
               <img 
                 src={logoMoises} 
                 alt="Moisés Medeiros - Curso de Química" 
+                width={269}
+                height={112}
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 className="h-24 md:h-28 w-auto drop-shadow-2xl"
               />
             </div>
@@ -629,7 +638,7 @@ export default function Auth() {
                         />
                       </div>
                       {errors.email && (
-                        <p className="text-xs text-red-400 mt-1">{errors.email}</p>
+                        <p className="text-xs text-red-400 mt-1" role="alert" aria-live="polite">{errors.email}</p>
                       )}
                     </div>
                     
@@ -678,7 +687,7 @@ export default function Auth() {
                     />
                   </div>
                   {errors.nome && (
-                    <p className="text-xs text-red-400 mt-1">{errors.nome}</p>
+                    <p className="text-xs text-red-400 mt-1" role="alert" aria-live="polite">{errors.nome}</p>
                   )}
                 </div>
               )}
@@ -703,7 +712,7 @@ export default function Auth() {
                   />
                 </div>
                 {errors.email && (
-                  <p className="text-xs text-red-400 mt-1">{errors.email}</p>
+                  <p className="text-xs text-red-400 mt-1" role="alert" aria-live="polite">{errors.email}</p>
                 )}
               </div>
 
@@ -728,13 +737,14 @@ export default function Auth() {
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
+                    aria-label={showPassword ? "Ocultar senha" : "Mostrar senha"}
                     className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white transition-colors"
                   >
-                    {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                    {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
                   </button>
                 </div>
                 {errors.password && (
-                  <p className="text-xs text-red-400 mt-1">{errors.password}</p>
+                  <p className="text-xs text-red-400 mt-1" role="alert" aria-live="polite">{errors.password}</p>
                 )}
                 
                 {!isLogin && formData.password && (
