@@ -155,6 +155,7 @@ const adminMenuItems = [
 // Menu Empresas (acesso geral)
 const empresasMenuItems = [
   { title: "Dashboard Empresarial", url: "/empresas/dashboard", icon: Building2 },
+  { title: "Central de Receitas", url: "/empresas/receitas", icon: TrendingUp, badge: "LIVE" },
   { title: "Arquivos Empresariais", url: "/empresas/arquivos", icon: FolderOpen },
   { title: "RH Funcionários", url: "/empresas/rh", icon: Users },
 ];
