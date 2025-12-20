@@ -1,47 +1,47 @@
 // ============================================
-// CENTRAL FINANÇAS EMPRESA - ESTILO SOFTCOM
-// Multi-CNPJ, Histórico 50+ anos, Anexos
+// CENTRAL FINANÇAS EMPRESA v2.0
+// Estilo Softcom - Igual à Central de Pagamentos
+// Multi-CNPJ, Histórico 50 Anos, Anexos Funcionais
 // ============================================
 
-import { useState, useMemo } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { 
-  Plus, Building2, Trash2, Edit2, Phone, TrendingUp, TrendingDown,
-  PieChart as PieChartIcon, DollarSign, Wallet, Receipt, History, 
-  RefreshCw, Calendar, ChevronDown, ChevronRight, Lock, Unlock,
-  FolderOpen, Folder, CheckCircle, AlertCircle, FileText, Search,
-  Download, Upload, Paperclip, Eye, EyeOff
+import {
+  Building2, Plus, Check, Clock, AlertCircle, Trash2, Edit2,
+  Filter, Calendar, Paperclip, Receipt, Wallet, DollarSign,
+  ChevronDown, ChevronUp, ChevronLeft, ChevronRight, Search,
+  MoreVertical, FolderOpen, FolderClosed, Lock, Archive, RefreshCw,
+  CalendarDays, CalendarRange, History, BarChart3, Sparkles, TrendingUp
 } from "lucide-react";
-import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
-import { CyberBackground } from "@/components/ui/cyber-background";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { StatCard } from "@/components/employees/StatCard";
-import { MultiCNPJManager } from "@/components/finance/MultiCNPJManager";
-import { FinancialHistoryChart } from "@/components/finance/FinancialHistoryChart";
-import { MonthlySnapshotCard } from "@/components/finance/MonthlySnapshotCard";
-import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { useCompanyFinanceHistory, formatCompanyCurrency, type CompanyPeriodFilter, type CompanyExpense } from "@/hooks/useCompanyFinanceHistory";
-import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
+import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
+import { useCompanyFinanceHistory, formatCompanyCurrency, type CompanyPeriodFilter, type CompanyExpense } from "@/hooks/useCompanyFinanceHistory";
 
-const ASSESSORS = {
-  moises: { name: "Moisés", phone: "5583998920105", whatsapp: "558398920105" },
-  bruna: { name: "Bruna", phone: "5583996354090", whatsapp: "558396354090" },
-};
+interface AttachmentCount {
+  [key: string]: number;
+}
+
+const EXPENSE_TYPES = [
+  { value: "all", label: "📊 Todos", icon: Wallet, color: "bg-primary/20 text-primary" },
+  { value: "fixed", label: "📌 Fixo", icon: Building2, color: "bg-red-500/20 text-red-500" },
+  { value: "extra", label: "📋 Extra", icon: Receipt, color: "bg-blue-500/20 text-blue-500" },
+];
 
 const CATEGORIAS = [
   "Folha de Pagamento",
@@ -59,8 +59,22 @@ const CATEGORIAS = [
   "Viagens",
   "Alimentação",
   "Transporte",
+  "Funcionário",
+  "Site",
+  "NOTA FISCAL",
   "Outros"
 ];
+
+const PERIOD_OPTIONS = [
+  { value: "hoje", label: "Hoje", icon: Clock },
+  { value: "semana", label: "Semana", icon: CalendarDays },
+  { value: "mes", label: "Mês", icon: Calendar },
+  { value: "ano", label: "Ano", icon: CalendarRange },
+  { value: "10anos", label: "10 Anos", icon: History },
+  { value: "50anos", label: "50 Anos", icon: Archive },
+];
+
+type ViewMode = "expenses" | "months" | "years";
 
 export default function FinancasEmpresa() {
   const { user } = useAuth();
@@ -79,83 +93,120 @@ export default function FinancasEmpresa() {
     getMonthName
   } = useCompanyFinanceHistory();
 
-  // Estados locais
-  const [activeTab, setActiveTab] = useState("overview");
+  // Estado local
+  const [viewMode, setViewMode] = useState<ViewMode>("expenses");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<"fixed" | "extra">("fixed");
+  const [modalType, setModalType] = useState<"fixed" | "extra">("extra");
   const [editingExpense, setEditingExpense] = useState<CompanyExpense | null>(null);
-  const [formData, setFormData] = useState({ nome: "", valor: "", categoria: "", data: format(new Date(), "yyyy-MM-dd") });
+  const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
-  const [expandedExpense, setExpandedExpense] = useState<number | null>(null);
-  const [showCloseMonthDialog, setShowCloseMonthDialog] = useState(false);
-  const [showCloseYearDialog, setShowCloseYearDialog] = useState(false);
-  const [viewClosureDialog, setViewClosureDialog] = useState<{ type: 'month' | 'year', ano: number, mes?: number } | null>(null);
-  const [expandedYear, setExpandedYear] = useState<number | null>(new Date().getFullYear());
-  const [showYearFolders, setShowYearFolders] = useState(false);
-  const [showMonthFolders, setShowMonthFolders] = useState(true);
-  const [attachmentCounts, setAttachmentCounts] = useState<Record<string, number>>({});
+  const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
+  const [attachmentCounts, setAttachmentCounts] = useState<AttachmentCount>({});
+  const [closeMonthDialogOpen, setCloseMonthDialogOpen] = useState(false);
+  const [closeYearDialogOpen, setCloseYearDialogOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<CompanyExpense | null>(null);
+  const [formData, setFormData] = useState({
+    nome: "",
+    valor: "",
+    categoria: "",
+    data: format(new Date(), "yyyy-MM-dd"),
+  });
 
-  // Combinar gastos para listagem
+  // Combinar todos os gastos
   const allExpenses = useMemo(() => {
     const combined = [
       ...fixedExpenses.map(e => ({ ...e, type: 'fixed' as const })),
       ...extraExpenses.map(e => ({ ...e, type: 'extra' as const }))
     ];
-    
+
+    let filtered = combined;
+    if (activeTab !== "all") {
+      filtered = combined.filter(e => e.type === activeTab);
+    }
     if (searchTerm) {
-      return combined.filter(e => 
+      filtered = filtered.filter(e =>
         e.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
         e.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
-    
-    return combined.sort((a, b) => {
+
+    return filtered.sort((a, b) => {
       const dateA = a.data || a.created_at || '';
       const dateB = b.data || b.created_at || '';
       return dateB.localeCompare(dateA);
     });
-  }, [fixedExpenses, extraExpenses, searchTerm]);
+  }, [fixedExpenses, extraExpenses, searchTerm, activeTab]);
 
-  // Dados para gráfico de pizza
-  const pieData = useMemo(() => {
-    const categoryMap: Record<string, number> = {};
-    allExpenses.forEach((expense) => {
-      const cat = expense.categoria || "Outros";
-      categoryMap[cat] = (categoryMap[cat] || 0) + expense.valor;
-    });
-    
-    const colors = ["#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#8b5cf6", "#ec4899", "#06b6d4", "#84cc16", "#f43f5e"];
-    
-    return Object.entries(categoryMap)
-      .filter(([_, value]) => value > 0)
-      .map(([key, value], index) => ({
-        name: key,
-        value,
-        color: colors[index % colors.length],
-      }))
-      .sort((a, b) => b.value - a.value);
-  }, [allExpenses]);
+  // Buscar contagem de anexos
+  useEffect(() => {
+    const fetchAttachmentCounts = async () => {
+      const fixedIds = fixedExpenses.map(e => String(e.id));
+      const extraIds = extraExpenses.map(e => String(e.id));
+      
+      const counts: AttachmentCount = {};
+      
+      if (fixedIds.length > 0) {
+        const { data } = await supabase
+          .from("universal_attachments")
+          .select("entity_id")
+          .eq("entity_type", "company_expense_fixed")
+          .in("entity_id", fixedIds);
+        (data || []).forEach(a => {
+          counts[`fixed_${a.entity_id}`] = (counts[`fixed_${a.entity_id}`] || 0) + 1;
+        });
+      }
+      
+      if (extraIds.length > 0) {
+        const { data } = await supabase
+          .from("universal_attachments")
+          .select("entity_id")
+          .eq("entity_type", "company_expense_extra")
+          .in("entity_id", extraIds);
+        (data || []).forEach(a => {
+          counts[`extra_${a.entity_id}`] = (counts[`extra_${a.entity_id}`] || 0) + 1;
+        });
+      }
+      
+      setAttachmentCounts(counts);
+    };
+    fetchAttachmentCounts();
+  }, [fixedExpenses, extraExpenses]);
 
-  // Modal handlers
+  const getAttachmentCount = (expense: CompanyExpense) => {
+    return attachmentCounts[`${expense.type}_${expense.id}`] || 0;
+  };
+
   const openModal = (type: "fixed" | "extra", expense?: CompanyExpense) => {
     setModalType(type);
-    setEditingExpense(expense || null);
-    setFormData(expense 
-      ? { nome: expense.nome, valor: String(expense.valor / 100), categoria: expense.categoria || "", data: expense.data || format(new Date(), "yyyy-MM-dd") }
-      : { nome: "", valor: "", categoria: "", data: format(new Date(), "yyyy-MM-dd") }
-    );
+    if (expense) {
+      setEditingExpense(expense);
+      setFormData({
+        nome: expense.nome,
+        valor: String(expense.valor / 100),
+        categoria: expense.categoria || "",
+        data: expense.data || format(new Date(), "yyyy-MM-dd"),
+      });
+    } else {
+      setEditingExpense(null);
+      setFormData({
+        nome: "",
+        valor: "",
+        categoria: "",
+        data: format(new Date(), "yyyy-MM-dd"),
+      });
+    }
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
     if (!formData.nome.trim() || !formData.valor) {
-      toast.error("Preencha todos os campos");
+      toast.error("Preencha nome e valor");
       return;
     }
 
     const valorCents = Math.round(parseFloat(formData.valor.replace(",", ".")) * 100);
     const table = modalType === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
-    const dataRef = modalType === "extra" ? new Date(formData.data) : new Date();
+    const dataRef = new Date(formData.data);
 
     try {
       const baseData = {
@@ -165,25 +216,18 @@ export default function FinancasEmpresa() {
         ano: dataRef.getFullYear(),
         mes: dataRef.getMonth() + 1,
         semana: Math.ceil(dataRef.getDate() / 7),
-        dia: dataRef.getDate()
+        dia: dataRef.getDate(),
       };
 
       if (editingExpense) {
         const updateData: any = { ...baseData };
-        if (modalType === "extra") {
-          updateData.data = formData.data;
-        }
+        if (modalType === "extra") updateData.data = formData.data;
         const { error } = await supabase.from(table).update(updateData).eq("id", editingExpense.id);
         if (error) throw error;
         toast.success("Gasto atualizado!");
       } else {
-        const insertData: any = {
-          ...baseData,
-          created_by: user?.id,
-        };
-        if (modalType === "extra") {
-          insertData.data = formData.data;
-        }
+        const insertData: any = { ...baseData, created_by: user?.id };
+        if (modalType === "extra") insertData.data = formData.data;
         const { error } = await supabase.from(table).insert(insertData);
         if (error) throw error;
         toast.success("Gasto adicionado!");
@@ -192,788 +236,727 @@ export default function FinancasEmpresa() {
       await refresh();
       setIsModalOpen(false);
     } catch (error: any) {
-      console.error("Error saving expense:", error);
       toast.error(error.message || "Erro ao salvar gasto");
     }
   };
 
-  const handleDelete = async (expense: CompanyExpense) => {
-    const table = expense.type === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
+  const handleDelete = async () => {
+    if (!deleteDialogOpen) return;
+    const table = deleteDialogOpen.type === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
     
     try {
-      const { error } = await supabase.from(table).delete().eq("id", expense.id);
+      // Deletar anexos primeiro
+      await supabase
+        .from("universal_attachments")
+        .delete()
+        .eq("entity_type", deleteDialogOpen.type === "fixed" ? "company_expense_fixed" : "company_expense_extra")
+        .eq("entity_id", String(deleteDialogOpen.id));
+      
+      const { error } = await supabase.from(table).delete().eq("id", deleteDialogOpen.id);
       if (error) throw error;
       toast.success("Gasto removido!");
       await refresh();
     } catch (error) {
-      console.error("Error deleting expense:", error);
       toast.error("Erro ao remover gasto");
     }
+    setDeleteDialogOpen(null);
   };
 
-  const contactAssessor = (assessor: 'moises' | 'bruna') => {
-    const data = ASSESSORS[assessor];
-    window.open(`https://wa.me/${data.whatsapp}?text=Olá ${data.name}, preciso de ajuda com as finanças da empresa!`, '_blank');
+  const toggleRowExpand = (id: string) => {
+    setExpandedRows(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(id)) newSet.delete(id);
+      else newSet.add(id);
+      return newSet;
+    });
+  };
+
+  const getTypeBadge = (type: 'fixed' | 'extra') => {
+    const t = EXPENSE_TYPES.find(x => x.value === type);
+    return t ? <Badge className={cn("gap-1", t.color)}>{t.label}</Badge> : null;
   };
 
   const handleCloseMonth = async () => {
     await closeMonth(selectedYear, selectedMonth);
-    setShowCloseMonthDialog(false);
+    setCloseMonthDialogOpen(false);
   };
 
   const handleCloseYear = async () => {
     await closeYear(selectedYear);
-    setShowCloseYearDialog(false);
+    setCloseYearDialogOpen(false);
   };
 
-  // Tendência
-  const tendencia = useMemo(() => {
-    if (chartData.length < 2) return { direction: "stable" as const, percent: 0 };
-    const current = chartData[chartData.length - 1]?.despesas || 0;
-    const previous = chartData[chartData.length - 2]?.despesas || 0;
-    if (previous === 0) return { direction: "stable" as const, percent: 0 };
-    const percent = ((current - previous) / previous) * 100;
-    return {
-      direction: percent > 5 ? "up" as const : percent < -5 ? "down" as const : "stable" as const,
-      percent
-    };
-  }, [chartData]);
+  const handleAttachmentChange = (expense: CompanyExpense, count: number) => {
+    setAttachmentCounts(prev => ({ ...prev, [`${expense.type}_${expense.id}`]: count }));
+  };
 
-  return (
-    <div className="relative min-h-screen">
-      <CyberBackground variant="particles" />
+  // ================== RENDER STATS ==================
+  const renderStatsCards = () => (
+    <motion.section
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.1 }}
+      className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5 mb-8"
+    >
+      <div className="glass-card rounded-2xl p-5 border-l-4 border-red-500">
+        <div className="flex items-center justify-between mb-3">
+          <Building2 className="h-6 w-6 text-red-500" />
+          <Badge variant="outline" className="text-xs">{fixedExpenses.length}</Badge>
+        </div>
+        <p className="text-2xl font-bold text-red-400">{formatCompanyCurrency(stats.totalGastosFixos)}</p>
+        <p className="text-sm text-muted-foreground">Gastos Fixos</p>
+      </div>
       
-      <div className="relative z-10 p-4 md:p-8 lg:p-12">
-        <div className="mx-auto max-w-7xl space-y-6">
-          {/* Header */}
-          <FuturisticPageHeader
-            title="Finanças Empresa"
-            subtitle="Central Financeira Empresarial • Histórico de 50+ Anos"
-            icon={Building2}
-            badge="QUANTUM FINANCE"
-            accentColor="green"
-            stats={[
-              { label: "Gastos Fixos", value: formatCompanyCurrency(stats.totalGastosFixos), icon: Wallet },
-              { label: "Gastos Extras", value: formatCompanyCurrency(stats.totalGastosExtras), icon: Receipt },
-              { label: "Total Gastos", value: formatCompanyCurrency(stats.totalGastos), icon: DollarSign },
-              { label: "Receitas", value: formatCompanyCurrency(stats.totalReceitas), icon: TrendingUp },
-            ]}
-          />
+      <div className="glass-card rounded-2xl p-5 border-l-4 border-blue-500">
+        <div className="flex items-center justify-between mb-3">
+          <Receipt className="h-6 w-6 text-blue-500" />
+          <Badge variant="outline" className="text-xs">{extraExpenses.length}</Badge>
+        </div>
+        <p className="text-2xl font-bold text-blue-400">{formatCompanyCurrency(stats.totalGastosExtras)}</p>
+        <p className="text-sm text-muted-foreground">Gastos Extras</p>
+      </div>
 
-          {/* Controles de Período */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card rounded-2xl p-4"
-          >
-            <div className="flex flex-wrap items-center justify-between gap-4">
-              {/* Botões de período */}
-              <div className="flex flex-wrap gap-2">
-                {[
-                  { key: "hoje", label: "Hoje" },
-                  { key: "semana", label: "Semana" },
-                  { key: "mes", label: "Mês" },
-                  { key: "ano", label: "Ano" },
-                  { key: "10anos", label: "10 Anos" },
-                  { key: "50anos", label: "50 Anos" }
-                ].map(({ key, label }) => (
-                  <Button
-                    key={key}
-                    variant={period === key ? "default" : "outline"}
-                    size="sm"
-                    onClick={() => setPeriod(key as CompanyPeriodFilter)}
-                    className={period === key ? "bg-primary" : ""}
-                  >
-                    {label}
-                  </Button>
+      <div className="glass-card rounded-2xl p-5 border-l-4 border-purple-500">
+        <div className="flex items-center justify-between mb-3">
+          <DollarSign className="h-6 w-6 text-purple-500" />
+          <Badge variant="outline" className="text-xs">{allExpenses.length}</Badge>
+        </div>
+        <p className="text-2xl font-bold text-purple-400">{formatCompanyCurrency(stats.totalGastos)}</p>
+        <p className="text-sm text-muted-foreground">Total Gastos</p>
+      </div>
+
+      <div className="glass-card rounded-2xl p-5 border-l-4 border-[hsl(var(--stats-green))]">
+        <div className="flex items-center justify-between mb-3">
+          <TrendingUp className="h-6 w-6 text-[hsl(var(--stats-green))]" />
+          <Badge variant="outline" className="text-xs">{entradas.length}</Badge>
+        </div>
+        <p className="text-2xl font-bold text-[hsl(var(--stats-green))]">{formatCompanyCurrency(stats.totalReceitas)}</p>
+        <p className="text-sm text-muted-foreground">Receitas</p>
+      </div>
+
+      <div className="glass-card rounded-2xl p-5 flex flex-col items-center justify-center bg-gradient-to-br from-primary/10 to-primary/5 border border-primary/20 gap-2">
+        <Button onClick={() => openModal('fixed')} className="gap-2 w-full" variant="outline">
+          <Plus className="h-4 w-4" /> Gasto Fixo
+        </Button>
+        <Button onClick={() => openModal('extra')} className="gap-2 w-full">
+          <Plus className="h-4 w-4" /> Gasto Extra
+        </Button>
+      </div>
+    </motion.section>
+  );
+
+  // ================== RENDER PERIOD NAV ==================
+  const renderPeriodNavigation = () => (
+    <div className="flex flex-wrap items-center gap-3 mb-6">
+      <div className="flex flex-wrap gap-2">
+        {PERIOD_OPTIONS.map((opt) => {
+          const Icon = opt.icon;
+          const isActive = period === opt.value;
+          return (
+            <Button
+              key={opt.value}
+              variant={isActive ? "default" : "outline"}
+              size="sm"
+              onClick={() => setPeriod(opt.value as CompanyPeriodFilter)}
+              className={cn("gap-2", isActive && "shadow-lg shadow-primary/25")}
+            >
+              <Icon className="h-4 w-4" />
+              <span className="hidden sm:inline">{opt.label}</span>
+            </Button>
+          );
+        })}
+      </div>
+
+      {(period === "mes" || period === "ano") && (
+        <div className="flex items-center gap-2 ml-auto">
+          <Button variant="ghost" size="icon" onClick={() => setSelectedYear(y => y - 1)}>
+            <ChevronLeft className="h-4 w-4" />
+          </Button>
+          <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
+            <SelectTrigger className="w-24">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="max-h-60">
+              {availableYears.map(y => (
+                <SelectItem key={y} value={String(y)}>{y}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {period === "mes" && (
+            <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
+              <SelectTrigger className="w-32">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Array.from({ length: 12 }, (_, i) => (
+                  <SelectItem key={i + 1} value={String(i + 1)}>{getMonthName(i + 1)}</SelectItem>
                 ))}
-              </div>
+              </SelectContent>
+            </Select>
+          )}
+          <Button variant="ghost" size="icon" onClick={() => setSelectedYear(y => y + 1)}>
+            <ChevronRight className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
 
-              {/* Seletores de ano/mês */}
-              <div className="flex items-center gap-2">
-                <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
-                  <SelectTrigger className="w-[100px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableYears.filter(y => y >= 2020 && y <= 2075).map((year) => (
-                      <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+      <div className="flex gap-2 ml-auto">
+        <Button
+          variant={viewMode === "expenses" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setViewMode("expenses")}
+          className="gap-2"
+        >
+          <Receipt className="h-4 w-4" />
+          <span className="hidden sm:inline">Gastos</span>
+        </Button>
+        <Button
+          variant={viewMode === "months" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setViewMode("months")}
+          className="gap-2"
+        >
+          <FolderOpen className="h-4 w-4" />
+          <span className="hidden sm:inline">Meses</span>
+        </Button>
+        <Button
+          variant={viewMode === "years" ? "default" : "outline"}
+          size="sm"
+          onClick={() => setViewMode("years")}
+          className="gap-2"
+        >
+          <Archive className="h-4 w-4" />
+          <span className="hidden sm:inline">Anos</span>
+        </Button>
+      </div>
+    </div>
+  );
 
-                <Select value={String(selectedMonth)} onValueChange={(v) => setSelectedMonth(Number(v))}>
-                  <SelectTrigger className="w-[130px]">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Array.from({ length: 12 }, (_, i) => (
-                      <SelectItem key={i + 1} value={String(i + 1)}>
-                        {getMonthName(i + 1)}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+  // ================== RENDER MONTHS ==================
+  const renderMonthFolders = () => {
+    const months = getMonthsWithData(selectedYear);
+    const allMonths = Array.from({ length: 12 }, (_, i) => i + 1);
 
-                <Button variant="outline" size="icon" onClick={refresh}>
-                  <RefreshCw className="h-4 w-4" />
-                </Button>
-              </div>
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold flex items-center gap-3">
+            <FolderOpen className="h-6 w-6 text-primary" />
+            Meses de {selectedYear}
+          </h2>
+          {!isYearClosed(selectedYear) && (
+            <Button onClick={() => setCloseYearDialogOpen(true)} className="gap-2">
+              <Lock className="h-4 w-4" /> Fechar Ano {selectedYear}
+            </Button>
+          )}
+        </div>
 
-              {/* Ações de fechamento */}
-              <div className="flex gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCloseMonthDialog(true)}
-                  disabled={isMonthClosed(selectedYear, selectedMonth)}
-                  className="gap-1"
-                >
-                  {isMonthClosed(selectedYear, selectedMonth) ? (
-                    <><Lock className="h-3 w-3" /> Mês Fechado</>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+          {allMonths.map((mes) => {
+            const isClosed = isMonthClosed(selectedYear, mes);
+            const hasData = months.includes(mes);
+            const closure = getMonthClosure(selectedYear, mes);
+
+            return (
+              <motion.div
+                key={mes}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  setSelectedMonth(mes);
+                  setPeriod("mes");
+                  setViewMode("expenses");
+                }}
+                className={cn(
+                  "glass-card rounded-xl p-4 cursor-pointer transition-all border-2",
+                  isClosed
+                    ? "border-[hsl(var(--stats-green))]/50 bg-[hsl(var(--stats-green))]/5"
+                    : hasData
+                      ? "border-primary/30 hover:border-primary/60"
+                      : "border-border/30 opacity-60 hover:opacity-100"
+                )}
+              >
+                <div className="flex items-center justify-between mb-3">
+                  {isClosed ? (
+                    <FolderClosed className="h-8 w-8 text-[hsl(var(--stats-green))]" />
+                  ) : hasData ? (
+                    <FolderOpen className="h-8 w-8 text-primary" />
                   ) : (
-                    <><Unlock className="h-3 w-3" /> Fechar Mês</>
+                    <FolderClosed className="h-8 w-8 text-muted-foreground" />
                   )}
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowCloseYearDialog(true)}
-                  disabled={isYearClosed(selectedYear)}
-                  className="gap-1"
-                >
-                  {isYearClosed(selectedYear) ? (
-                    <><Lock className="h-3 w-3" /> Ano Fechado</>
-                  ) : (
-                    <><Unlock className="h-3 w-3" /> Fechar Ano</>
-                  )}
-                </Button>
-              </div>
-            </div>
-          </motion.div>
+                  {isClosed && <Lock className="h-4 w-4 text-[hsl(var(--stats-green))]" />}
+                </div>
+                <p className="font-semibold text-foreground">{getMonthName(mes)}</p>
+                {closure && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {formatCompanyCurrency(Number(closure.total_gastos_fixos || 0) + Number(closure.total_gastos_extras || 0))}
+                  </p>
+                )}
+                {hasData && !isClosed && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="w-full mt-2 text-xs gap-1"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setCloseMonthDialogOpen(true);
+                    }}
+                  >
+                    <Lock className="h-3 w-3" /> Fechar
+                  </Button>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    );
+  };
 
-          {/* Gráfico de Evolução */}
-          <FinancialHistoryChart
-            data={chartData}
-            period={period === "mes" ? "mensal" : period === "ano" ? "anual" : "mensal"}
-            tendencia={tendencia.direction}
-            variacaoPercent={tendencia.percent}
+  // ================== RENDER YEARS ==================
+  const renderYearFolders = () => {
+    const currentYear = new Date().getFullYear();
+    const yearsToShow = Array.from({ length: 61 }, (_, i) => currentYear - 10 + i);
+
+    return (
+      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-6">
+        <h2 className="text-2xl font-bold flex items-center gap-3">
+          <Archive className="h-6 w-6 text-primary" />
+          Arquivo de Anos (50 anos)
+        </h2>
+
+        <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 xl:grid-cols-10 gap-3">
+          {yearsToShow.map((ano) => {
+            const isClosed = isYearClosed(ano);
+            const hasData = yearsWithData.includes(ano);
+            const closure = getYearClosure(ano);
+
+            return (
+              <motion.div
+                key={ano}
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => {
+                  setSelectedYear(ano);
+                  setViewMode("months");
+                }}
+                className={cn(
+                  "glass-card rounded-xl p-3 cursor-pointer transition-all border-2 text-center",
+                  isClosed
+                    ? "border-[hsl(var(--stats-green))]/50 bg-[hsl(var(--stats-green))]/5"
+                    : hasData
+                      ? "border-primary/30 hover:border-primary/60"
+                      : "border-border/20 opacity-40 hover:opacity-70"
+                )}
+              >
+                <div className="flex items-center justify-center gap-1 mb-1">
+                  {isClosed ? (
+                    <Lock className="h-4 w-4 text-[hsl(var(--stats-green))]" />
+                  ) : hasData ? (
+                    <FolderOpen className="h-4 w-4 text-primary" />
+                  ) : null}
+                </div>
+                <p className={cn("font-bold text-lg", ano === currentYear && "text-primary")}>{ano}</p>
+                {closure && (
+                  <p className="text-xs text-muted-foreground">
+                    {formatCompanyCurrency(Number(closure.saldo_ano || 0))}
+                  </p>
+                )}
+              </motion.div>
+            );
+          })}
+        </div>
+      </motion.div>
+    );
+  };
+
+  // ================== RENDER EXPENSES LIST ==================
+  const renderExpensesList = () => (
+    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+      {/* Search and Filters */}
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative flex-1 min-w-[200px]">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Buscar gastos..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="pl-10"
           />
+        </div>
+        <Button variant="outline" size="icon" onClick={refresh}>
+          <RefreshCw className="h-4 w-4" />
+        </Button>
+      </div>
 
-          {/* Pastas de Anos */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="glass-card rounded-2xl p-4"
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-semibold flex items-center gap-2">
-                <FolderOpen className="h-5 w-5 text-primary" />
-                Histórico por Ano
-              </h3>
-              <Button variant="ghost" size="sm" onClick={() => setShowYearFolders(!showYearFolders)}>
-                {showYearFolders ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-              </Button>
-            </div>
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
+        <TabsList className="bg-secondary/50 flex-wrap h-auto gap-1 p-1">
+          {EXPENSE_TYPES.map(type => (
+            <TabsTrigger key={type.value} value={type.value} className="gap-1">
+              {type.label}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-            {showYearFolders && (
-              <ScrollArea className="w-full">
-                <div className="flex gap-3 pb-4">
-                  {yearsWithData.slice(0, 20).map((ano) => {
-                    const closure = getYearClosure(ano);
-                    const monthsCount = getMonthsWithData(ano).length;
+        <TabsContent value={activeTab} className="mt-0">
+          <div className="glass-card rounded-2xl overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="bg-secondary/50">
+                  <tr>
+                    <th className="text-left p-4 text-sm font-bold text-white">Descrição</th>
+                    <th className="text-left p-4 text-sm font-bold text-white">Tipo</th>
+                    <th className="text-left p-4 text-sm font-bold text-white">Categoria</th>
+                    <th className="text-left p-4 text-sm font-bold text-white">Data</th>
+                    <th className="text-right p-4 text-sm font-bold text-white">Valor</th>
+                    <th className="text-center p-4 text-sm font-bold text-white">Anexos</th>
+                    <th className="text-right p-4 text-sm font-bold text-white">Ações</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {allExpenses.map((expense) => {
+                    const rowKey = `${expense.type}_${expense.id}`;
+                    const expenseDate = expense.data || expense.created_at || '';
                     
                     return (
-                      <motion.div
-                        key={ano}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        onClick={() => {
-                          setSelectedYear(ano);
-                          setExpandedYear(expandedYear === ano ? null : ano);
-                        }}
-                        className={`flex-shrink-0 cursor-pointer rounded-xl p-4 border transition-all ${
-                          expandedYear === ano 
-                            ? "border-primary bg-primary/10" 
-                            : "border-border/50 hover:border-primary/50 bg-card/50"
-                        }`}
-                      >
-                        <div className="flex items-center gap-2 mb-2">
-                          {closure ? (
-                            <Lock className="h-4 w-4 text-green-500" />
-                          ) : (
-                            <Folder className="h-4 w-4 text-yellow-500" />
+                      <>
+                        <tr
+                          key={rowKey}
+                          className={cn(
+                            "border-t border-border/50 hover:bg-secondary/30 transition-colors cursor-pointer",
+                            expandedRows.has(rowKey) && "bg-secondary/20",
+                            expense.fechado && "opacity-60"
                           )}
-                          <span className="font-bold">{ano}</span>
-                        </div>
-                        <p className="text-xs text-muted-foreground">{monthsCount} meses</p>
-                        {closure && (
-                          <p className="text-xs text-green-500 mt-1">
-                            {formatCompanyCurrency(Number(closure.saldo_ano))}
-                          </p>
-                        )}
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              </ScrollArea>
-            )}
-          </motion.div>
-
-          {/* Pastas de Meses do Ano Selecionado */}
-          <AnimatePresence>
-            {showMonthFolders && (
-              <motion.div
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                className="glass-card rounded-2xl p-4"
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-semibold flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-primary" />
-                    Meses de {selectedYear}
-                  </h3>
-                </div>
-
-                <ScrollArea className="w-full">
-                  <div className="flex gap-3 pb-4">
-                    {Array.from({ length: 12 }, (_, i) => i + 1).map((mes) => {
-                      const closure = getMonthClosure(selectedYear, mes);
-                      const isClosed = isMonthClosed(selectedYear, mes);
-                      
-                      return (
-                        <motion.div
-                          key={mes}
-                          whileHover={{ scale: 1.05 }}
-                          whileTap={{ scale: 0.95 }}
-                          onClick={() => {
-                            setSelectedMonth(mes);
-                            if (closure) {
-                              setViewClosureDialog({ type: 'month', ano: selectedYear, mes });
-                            }
-                          }}
-                          className={`flex-shrink-0 cursor-pointer rounded-xl p-4 border transition-all min-w-[120px] ${
-                            selectedMonth === mes 
-                              ? "border-primary bg-primary/10" 
-                              : "border-border/50 hover:border-primary/50 bg-card/50"
-                          }`}
+                          onClick={() => toggleRowExpand(rowKey)}
                         >
-                          <div className="flex items-center gap-2 mb-2">
-                            {isClosed ? (
-                              <CheckCircle className="h-4 w-4 text-green-500" />
-                            ) : (
-                              <AlertCircle className="h-4 w-4 text-yellow-500" />
-                            )}
-                            <span className="font-medium text-sm">{getMonthName(mes)}</span>
-                          </div>
-                          {closure && (
-                            <>
-                              <p className="text-xs text-muted-foreground">
-                                {closure.qtd_gastos_fixos + closure.qtd_gastos_extras} gastos
-                              </p>
-                              <p className={`text-xs mt-1 ${Number(closure.saldo_periodo) >= 0 ? "text-green-500" : "text-red-500"}`}>
-                                {formatCompanyCurrency(Number(closure.saldo_periodo))}
-                              </p>
-                            </>
-                          )}
-                        </motion.div>
-                      );
-                    })}
-                  </div>
-                </ScrollArea>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-            <TabsList className="grid w-full grid-cols-4 max-w-lg">
-              <TabsTrigger value="overview">Visão Geral</TabsTrigger>
-              <TabsTrigger value="gastos">Gastos</TabsTrigger>
-              <TabsTrigger value="multicnpj">Multi-CNPJ</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
-            </TabsList>
-
-            {/* Tab Overview */}
-            <TabsContent value="overview" className="space-y-6">
-              {/* Stats Cards */}
-              <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-                <StatCard title="Gastos Fixos" value={stats.totalGastosFixos} formatFn={formatCompanyCurrency} icon={Wallet} variant="red" delay={0} />
-                <StatCard title="Gastos Extras" value={stats.totalGastosExtras} formatFn={formatCompanyCurrency} icon={Receipt} variant="purple" delay={1} />
-                <StatCard title="Receitas" value={stats.totalReceitas} formatFn={formatCompanyCurrency} icon={TrendingUp} variant="green" delay={2} />
-                <StatCard title="Saldo" value={stats.saldo} formatFn={formatCompanyCurrency} icon={DollarSign} variant={stats.saldo >= 0 ? "green" : "red"} delay={3} />
-              </section>
-
-              {/* Charts */}
-              <section className="grid gap-6 lg:grid-cols-2">
-                {pieData.length > 0 && (
-                  <Card className="glass-card">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <PieChartIcon className="h-5 w-5 text-primary" />
-                        Distribuição por Categoria
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="h-[280px]">
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={pieData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={50}
-                              outerRadius={90}
-                              paddingAngle={2}
-                              dataKey="value"
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              {expandedRows.has(rowKey) ?
+                                <ChevronUp className="h-4 w-4 text-muted-foreground" /> :
+                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                              }
+                              <div>
+                                <p className="font-medium text-foreground">{expense.nome}</p>
+                                {expense.fechado && (
+                                  <Badge variant="outline" className="text-xs gap-1 mt-1">
+                                    <Lock className="h-3 w-3" /> Fechado
+                                  </Badge>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="p-4">{getTypeBadge(expense.type)}</td>
+                          <td className="p-4">
+                            <span className="text-sm text-muted-foreground">{expense.categoria || '-'}</span>
+                          </td>
+                          <td className="p-4">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-sm text-foreground">
+                                {expenseDate ? format(new Date(expenseDate), "dd/MM/yyyy") : '-'}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="p-4 text-right font-semibold text-red-400">
+                            {formatCompanyCurrency(expense.valor)}
+                          </td>
+                          <td className="p-4 text-center">
+                            <Badge
+                              variant={getAttachmentCount(expense) > 0 ? "default" : "outline"}
+                              className="gap-1"
                             >
-                              {pieData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip
-                              contentStyle={{
-                                backgroundColor: "hsl(var(--card))",
-                                border: "1px solid hsl(var(--border))",
-                                borderRadius: "8px",
-                              }}
-                              formatter={(value: number) => formatCompanyCurrency(value)}
-                            />
-                            <Legend />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-
-                {/* Comparativo Fixos vs Extras */}
-                <Card className="glass-card">
-                  <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <BarChart className="h-5 w-5 text-primary" />
-                      Fixos vs Extras
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="h-[280px]">
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={[
-                          { name: "Fixos", valor: stats.totalGastosFixos / 100, fill: "#ef4444" },
-                          { name: "Extras", valor: stats.totalGastosExtras / 100, fill: "#8b5cf6" }
-                        ]}>
-                          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                          <XAxis dataKey="name" stroke="hsl(var(--foreground))" />
-                          <YAxis stroke="hsl(var(--foreground))" tickFormatter={(v) => `R$ ${v.toLocaleString()}`} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: "hsl(var(--card))",
-                              border: "1px solid hsl(var(--border))",
-                              borderRadius: "8px",
-                            }}
-                            formatter={(value: number) => [`R$ ${value.toLocaleString()}`, "Valor"]}
-                          />
-                          <Bar dataKey="valor" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </div>
-                  </CardContent>
-                </Card>
-              </section>
-
-              {/* Snapshots Mensais */}
-              {monthlyClosures.length > 0 && (
-                <section>
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                    <History className="h-5 w-5 text-primary" />
-                    Balanços Mensais Fechados
-                  </h3>
-                  <ScrollArea className="w-full">
-                    <div className="flex gap-4 pb-4">
-                      {monthlyClosures.slice(0, 12).map((closure) => (
-                        <MonthlySnapshotCard
-                          key={`${closure.ano}-${closure.mes}`}
-                          ano={closure.ano}
-                          mes={closure.mes}
-                          receitas={Number(closure.total_receitas)}
-                          despesas={Number(closure.total_gastos_fixos) + Number(closure.total_gastos_extras)}
-                          saldo={Number(closure.saldo_periodo)}
-                          isFechado={true}
-                          compact
-                        />
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </section>
-              )}
-            </TabsContent>
-
-            {/* Tab Gastos */}
-            <TabsContent value="gastos" className="space-y-6">
-              {/* Ações */}
-              <div className="flex flex-wrap items-center justify-between gap-4">
-                <div className="flex items-center gap-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar gastos..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10 w-[250px]"
-                    />
-                  </div>
-                </div>
-                <div className="flex gap-2">
-                  <Button onClick={() => openModal("fixed")} className="gap-1">
-                    <Plus className="h-4 w-4" />
-                    Gasto Fixo
-                  </Button>
-                  <Button onClick={() => openModal("extra")} variant="secondary" className="gap-1">
-                    <Plus className="h-4 w-4" />
-                    Gasto Extra
-                  </Button>
-                </div>
-              </div>
-
-              {/* Tabela de Gastos */}
-              <Card className="glass-card">
-                <CardContent className="p-0">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-10"></TableHead>
-                        <TableHead>Descrição</TableHead>
-                        <TableHead>Tipo</TableHead>
-                        <TableHead>Categoria</TableHead>
-                        <TableHead>Data</TableHead>
-                        <TableHead className="text-right">Valor</TableHead>
-                        <TableHead className="w-10">Anexos</TableHead>
-                        <TableHead className="w-20">Ações</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {isLoading ? (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8">
-                            <RefreshCw className="h-6 w-6 animate-spin mx-auto" />
-                          </TableCell>
-                        </TableRow>
-                      ) : allExpenses.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={8} className="text-center py-8 text-muted-foreground">
-                            Nenhum gasto encontrado
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        allExpenses.map((expense) => (
-                          <Collapsible key={`${expense.type}-${expense.id}`} open={expandedExpense === expense.id}>
-                            <TableRow className="group hover:bg-muted/50">
-                              <TableCell>
-                                <CollapsibleTrigger asChild>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-6 w-6"
-                                    onClick={() => setExpandedExpense(expandedExpense === expense.id ? null : expense.id)}
-                                  >
-                                    {expandedExpense === expense.id ? (
-                                      <ChevronDown className="h-4 w-4" />
-                                    ) : (
-                                      <ChevronRight className="h-4 w-4" />
-                                    )}
+                              <Paperclip className="h-3 w-3" />
+                              {getAttachmentCount(expense)}
+                            </Badge>
+                          </td>
+                          <td className="p-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex justify-end gap-1">
+                              {!expense.fechado && (
+                                <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(expense.type, expense)}>
+                                  <Edit2 className="h-4 w-4" />
+                                </Button>
+                              )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
                                   </Button>
-                                </CollapsibleTrigger>
-                              </TableCell>
-                              <TableCell className="font-medium">{expense.nome}</TableCell>
-                              <TableCell>
-                                <Badge variant={expense.type === "fixed" ? "destructive" : "secondary"}>
-                                  {expense.type === "fixed" ? "Fixo" : "Extra"}
-                                </Badge>
-                              </TableCell>
-                              <TableCell>{expense.categoria || "-"}</TableCell>
-                              <TableCell>
-                                {expense.data 
-                                  ? format(new Date(expense.data), "dd/MM/yyyy")
-                                  : expense.created_at 
-                                    ? format(new Date(expense.created_at), "dd/MM/yyyy")
-                                    : "-"
-                                }
-                              </TableCell>
-                              <TableCell className="text-right font-mono font-bold text-red-500">
-                                {formatCompanyCurrency(expense.valor)}
-                              </TableCell>
-                              <TableCell>
-                                <Badge variant="outline" className="gap-1">
-                                  <Paperclip className="h-3 w-3" />
-                                  0
-                                </Badge>
-                              </TableCell>
-                              <TableCell>
-                                <div className="flex gap-1">
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7"
-                                    onClick={() => openModal(expense.type, expense)}
-                                    disabled={expense.fechado}
-                                  >
-                                    <Edit2 className="h-3 w-3" />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-7 w-7 text-destructive"
-                                    onClick={() => handleDelete(expense)}
-                                    disabled={expense.fechado}
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </Button>
-                                </div>
-                              </TableCell>
-                            </TableRow>
-                            <CollapsibleContent asChild>
-                              <TableRow>
-                                <TableCell colSpan={8} className="bg-muted/30 p-4">
-                                  <div className="space-y-4">
-                                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                                      <div>
-                                        <p className="text-muted-foreground">Ano</p>
-                                        <p className="font-medium">{expense.ano}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-muted-foreground">Mês</p>
-                                        <p className="font-medium">{expense.mes ? getMonthName(expense.mes) : "-"}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-muted-foreground">Semana</p>
-                                        <p className="font-medium">{expense.semana || "-"}</p>
-                                      </div>
-                                      <div>
-                                        <p className="text-muted-foreground">Status</p>
-                                        <Badge variant={expense.fechado ? "default" : "secondary"}>
-                                          {expense.fechado ? "Fechado" : "Aberto"}
-                                        </Badge>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end">
+                                  <DropdownMenuItem onClick={() => toggleRowExpand(rowKey)}>
+                                    <Paperclip className="h-4 w-4 mr-2" />
+                                    {expandedRows.has(rowKey) ? "Fechar Anexos" : "Ver Anexos"}
+                                  </DropdownMenuItem>
+                                  {!expense.fechado && (
+                                    <DropdownMenuItem
+                                      onClick={() => setDeleteDialogOpen(expense)}
+                                      className="text-destructive"
+                                    >
+                                      <Trash2 className="h-4 w-4 mr-2" />
+                                      Excluir
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </td>
+                        </tr>
+                        {/* Expanded Row */}
+                        <AnimatePresence>
+                          {expandedRows.has(rowKey) && (
+                            <motion.tr
+                              initial={{ opacity: 0, height: 0 }}
+                              animate={{ opacity: 1, height: "auto" }}
+                              exit={{ opacity: 0, height: 0 }}
+                            >
+                              <td colSpan={7} className="p-0 bg-secondary/10">
+                                <motion.div
+                                  initial={{ opacity: 0 }}
+                                  animate={{ opacity: 1 }}
+                                  exit={{ opacity: 0 }}
+                                  className="p-6 border-t border-border/30"
+                                >
+                                  <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                                        <Receipt className="h-4 w-4" />
+                                        Detalhes do Gasto
+                                      </h3>
+                                      <div className="grid grid-cols-2 gap-3 text-sm">
+                                        <div>
+                                          <p className="text-muted-foreground">Valor</p>
+                                          <p className="font-medium text-foreground">{formatCompanyCurrency(expense.valor)}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-muted-foreground">Tipo</p>
+                                          <p className="font-medium text-foreground">{expense.type === 'fixed' ? 'Fixo' : 'Extra'}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-muted-foreground">Categoria</p>
+                                          <p className="font-medium text-foreground">{expense.categoria || 'Não informada'}</p>
+                                        </div>
+                                        <div>
+                                          <p className="text-muted-foreground">Data</p>
+                                          <p className="font-medium text-foreground">
+                                            {expenseDate ? format(new Date(expenseDate), "dd/MM/yyyy") : '-'}
+                                          </p>
+                                        </div>
                                       </div>
                                     </div>
-                                    
                                     <div>
-                                      <p className="text-sm text-muted-foreground mb-2">Anexos e Comprovantes</p>
                                       <UniversalAttachments
                                         entityType={expense.type === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
                                         entityId={String(expense.id)}
-                                        maxFiles={10}
-                                        compact
+                                        title="Comprovantes e Anexos"
+                                        maxFiles={20}
+                                        showAIExtraction={true}
+                                        onAttachmentChange={(count) => handleAttachmentChange(expense, count)}
                                       />
                                     </div>
                                   </div>
-                                </TableCell>
-                              </TableRow>
-                            </CollapsibleContent>
-                          </Collapsible>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            </TabsContent>
-
-            {/* Tab Multi-CNPJ */}
-            <TabsContent value="multicnpj">
-              <MultiCNPJManager />
-            </TabsContent>
-
-            {/* Tab Analytics */}
-            <TabsContent value="analytics" className="space-y-6">
-              <Card className="glass-card">
-                <CardHeader>
-                  <CardTitle>Analytics Avançado</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="p-4 rounded-lg bg-muted/30">
-                      <p className="text-sm text-muted-foreground">Média Mensal de Gastos</p>
-                      <p className="text-2xl font-bold">
-                        {formatCompanyCurrency(monthlyClosures.length > 0 
-                          ? monthlyClosures.reduce((acc, c) => acc + Number(c.total_gastos_fixos) + Number(c.total_gastos_extras), 0) / monthlyClosures.length
-                          : 0
-                        )}
-                      </p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/30">
-                      <p className="text-sm text-muted-foreground">Meses Fechados</p>
-                      <p className="text-2xl font-bold">{monthlyClosures.length}</p>
-                    </div>
-                    <div className="p-4 rounded-lg bg-muted/30">
-                      <p className="text-sm text-muted-foreground">Anos com Dados</p>
-                      <p className="text-2xl font-bold">{yearsWithData.length}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            </TabsContent>
-          </Tabs>
-
-          {/* Contatos */}
-          <div className="flex justify-center gap-4">
-            <Button variant="outline" onClick={() => contactAssessor('moises')} className="gap-2">
-              <Phone className="h-4 w-4 text-green-400" />
-              Moisés
-            </Button>
-            <Button variant="outline" onClick={() => contactAssessor('bruna')} className="gap-2">
-              <Phone className="h-4 w-4 text-emerald-400" />
-              Bruna
-            </Button>
+                                </motion.div>
+                              </td>
+                            </motion.tr>
+                          )}
+                        </AnimatePresence>
+                      </>
+                    );
+                  })}
+                  {allExpenses.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="p-12 text-center">
+                        <div className="flex flex-col items-center gap-3">
+                          <Receipt className="h-12 w-12 text-muted-foreground/50" />
+                          <p className="text-muted-foreground">Nenhum gasto encontrado</p>
+                          <div className="flex gap-2">
+                            <Button onClick={() => openModal('fixed')} variant="outline" className="gap-2">
+                              <Plus className="h-4 w-4" /> Gasto Fixo
+                            </Button>
+                            <Button onClick={() => openModal('extra')} className="gap-2">
+                              <Plus className="h-4 w-4" /> Gasto Extra
+                            </Button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
+    </motion.div>
+  );
 
-      {/* Modal de Gasto */}
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>
-              {editingExpense ? "Editar" : "Novo"} Gasto {modalType === "fixed" ? "Fixo" : "Extra"}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4">
-            <div>
-              <Label>Descrição</Label>
-              <Input
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="Ex: Aluguel do escritório"
-              />
-            </div>
-            <div>
-              <Label>Valor (R$)</Label>
-              <Input
-                value={formData.valor}
-                onChange={(e) => setFormData({ ...formData, valor: e.target.value })}
-                placeholder="0,00"
-                type="text"
-              />
-            </div>
-            <div>
-              <Label>Categoria</Label>
-              <Select value={formData.categoria} onValueChange={(v) => setFormData({ ...formData, categoria: v })}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {CATEGORIAS.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {modalType === "extra" && (
+  return (
+    <div className="p-4 md:p-8 lg:p-12">
+      <div className="mx-auto max-w-7xl">
+        {/* Header */}
+        <motion.header
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="mb-8"
+        >
+          <div className="space-y-2">
+            <motion.div className="flex items-center gap-2 text-primary">
+              <Sparkles className="h-5 w-5" />
+              <span className="text-sm font-medium tracking-wide uppercase">Central Financeira</span>
+            </motion.div>
+            <h1 className="text-4xl md:text-5xl font-bold text-foreground tracking-tight">
+              Finanças Empresa
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-xl">
+              Sistema completo estilo Softcom com fechamento de mês/ano e histórico de 50 anos.
+            </p>
+          </div>
+        </motion.header>
+
+        {/* Stats Cards */}
+        {renderStatsCards()}
+
+        {/* Period Navigation */}
+        {renderPeriodNavigation()}
+
+        {/* Content */}
+        {viewMode === "expenses" && renderExpensesList()}
+        {viewMode === "months" && renderMonthFolders()}
+        {viewMode === "years" && renderYearFolders()}
+
+        {/* Modal de Novo/Editar Gasto */}
+        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+          <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                {modalType === 'fixed' ? <Building2 className="h-5 w-5 text-red-500" /> : <Receipt className="h-5 w-5 text-blue-500" />}
+                {editingExpense ? "Editar" : "Novo"} Gasto {modalType === 'fixed' ? 'Fixo' : 'Extra'}
+              </DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 pt-4">
               <div>
-                <Label>Data</Label>
+                <Label className="font-bold text-white">Descrição *</Label>
                 <Input
-                  type="date"
-                  value={formData.data}
-                  onChange={(e) => setFormData({ ...formData, data: e.target.value })}
+                  value={formData.nome}
+                  onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
+                  placeholder="Ex: Aluguel, Internet, Software..."
+                  className="mt-1.5"
                 />
               </div>
-            )}
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-            <Button onClick={handleSave}>Salvar</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
 
-      {/* Dialog Fechar Mês */}
-      <Dialog open={showCloseMonthDialog} onOpenChange={setShowCloseMonthDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Fechar Mês</DialogTitle>
-          </DialogHeader>
-          <p className="text-muted-foreground">
-            Você está prestes a fechar o mês de <strong>{getMonthName(selectedMonth)}/{selectedYear}</strong>.
-          </p>
-          <div className="p-4 rounded-lg bg-muted/30 space-y-2">
-            <p>Gastos Fixos: <strong className="text-red-500">{formatCompanyCurrency(stats.totalGastosFixos)}</strong></p>
-            <p>Gastos Extras: <strong className="text-purple-500">{formatCompanyCurrency(stats.totalGastosExtras)}</strong></p>
-            <p>Total Gastos: <strong>{formatCompanyCurrency(stats.totalGastos)}</strong></p>
-            <p>Receitas: <strong className="text-green-500">{formatCompanyCurrency(stats.totalReceitas)}</strong></p>
-            <p>Saldo: <strong className={stats.saldo >= 0 ? "text-green-500" : "text-red-500"}>{formatCompanyCurrency(stats.saldo)}</strong></p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCloseMonthDialog(false)}>Cancelar</Button>
-            <Button onClick={handleCloseMonth}>Confirmar Fechamento</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Fechar Ano */}
-      <Dialog open={showCloseYearDialog} onOpenChange={setShowCloseYearDialog}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Consolidar Ano</DialogTitle>
-          </DialogHeader>
-          <p className="text-muted-foreground">
-            Você está prestes a consolidar o ano de <strong>{selectedYear}</strong>.
-          </p>
-          <p className="text-sm text-yellow-500">
-            ⚠️ Certifique-se de que todos os meses foram fechados antes de consolidar o ano.
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setShowCloseYearDialog(false)}>Cancelar</Button>
-            <Button onClick={handleCloseYear}>Confirmar Consolidação</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      {/* Dialog Ver Fechamento */}
-      <Dialog open={!!viewClosureDialog} onOpenChange={() => setViewClosureDialog(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {viewClosureDialog?.type === 'month' 
-                ? `Fechamento ${getMonthName(viewClosureDialog?.mes || 1)}/${viewClosureDialog?.ano}`
-                : `Consolidação ${viewClosureDialog?.ano}`
-              }
-            </DialogTitle>
-          </DialogHeader>
-          {viewClosureDialog?.type === 'month' && viewClosureDialog.mes && (
-            (() => {
-              const closure = getMonthClosure(viewClosureDialog.ano, viewClosureDialog.mes);
-              if (!closure) return null;
-              return (
-                <div className="space-y-3">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="p-3 rounded-lg bg-red-500/10">
-                      <p className="text-xs text-muted-foreground">Gastos Fixos</p>
-                      <p className="text-lg font-bold text-red-500">{formatCompanyCurrency(Number(closure.total_gastos_fixos))}</p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-purple-500/10">
-                      <p className="text-xs text-muted-foreground">Gastos Extras</p>
-                      <p className="text-lg font-bold text-purple-500">{formatCompanyCurrency(Number(closure.total_gastos_extras))}</p>
-                    </div>
-                    <div className="p-3 rounded-lg bg-green-500/10">
-                      <p className="text-xs text-muted-foreground">Receitas</p>
-                      <p className="text-lg font-bold text-green-500">{formatCompanyCurrency(Number(closure.total_receitas))}</p>
-                    </div>
-                    <div className={`p-3 rounded-lg ${Number(closure.saldo_periodo) >= 0 ? 'bg-green-500/10' : 'bg-red-500/10'}`}>
-                      <p className="text-xs text-muted-foreground">Saldo</p>
-                      <p className={`text-lg font-bold ${Number(closure.saldo_periodo) >= 0 ? 'text-green-500' : 'text-red-500'}`}>
-                        {formatCompanyCurrency(Number(closure.saldo_periodo))}
-                      </p>
-                    </div>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Fechado em: {format(new Date(closure.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                  </p>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label className="font-bold text-white">Valor (R$) *</Label>
+                  <Input
+                    value={formData.valor}
+                    onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                    placeholder="0,00"
+                    className="mt-1.5"
+                  />
                 </div>
-              );
-            })()
-          )}
-        </DialogContent>
-      </Dialog>
+                <div>
+                  <Label className="font-bold text-white">Data</Label>
+                  <Input
+                    type="date"
+                    value={formData.data}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
+                    className="mt-1.5"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <Label className="font-bold text-white">Categoria</Label>
+                <Select value={formData.categoria} onValueChange={(v) => setFormData(prev => ({ ...prev, categoria: v }))}>
+                  <SelectTrigger className="mt-1.5">
+                    <SelectValue placeholder="Selecione a categoria..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {CATEGORIAS.map((cat) => (
+                      <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {editingExpense && (
+                <div className="border-t pt-4">
+                  <UniversalAttachments
+                    entityType={editingExpense.type === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
+                    entityId={String(editingExpense.id)}
+                    title="Comprovantes e Anexos"
+                    maxFiles={20}
+                    showAIExtraction={true}
+                    onAttachmentChange={(count) => handleAttachmentChange(editingExpense, count)}
+                  />
+                </div>
+              )}
+
+              <Button onClick={handleSave} className="w-full gap-2">
+                <Check className="h-4 w-4" />
+                {editingExpense ? "Salvar Alterações" : "Adicionar Gasto"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Dialog Fechar Mês */}
+        <AlertDialog open={closeMonthDialogOpen} onOpenChange={setCloseMonthDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Fechar Mês</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você está prestes a fechar {getMonthName(selectedMonth)} de {selectedYear}. 
+                Após o fechamento, os gastos deste período não poderão mais ser editados.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCloseMonth}>
+                <Lock className="h-4 w-4 mr-2" /> Fechar Mês
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Dialog Fechar Ano */}
+        <AlertDialog open={closeYearDialogOpen} onOpenChange={setCloseYearDialogOpen}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Fechar Ano</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você está prestes a fechar o ano de {selectedYear}. 
+                Após o fechamento, nenhum gasto deste ano poderá ser editado.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleCloseYear}>
+                <Lock className="h-4 w-4 mr-2" /> Fechar Ano
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
+        {/* Dialog Confirmar Exclusão */}
+        <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle className="text-destructive">Excluir Gasto</AlertDialogTitle>
+              <AlertDialogDescription>
+                Tem certeza que deseja excluir "{deleteDialogOpen?.nome}"? 
+                Esta ação não pode ser desfeita e todos os anexos serão removidos.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+                <Trash2 className="h-4 w-4 mr-2" /> Excluir
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   );
 }
