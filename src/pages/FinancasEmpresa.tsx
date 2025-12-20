@@ -706,7 +706,7 @@ export default function FinancasEmpresa() {
                               <TableCell>
                                 <Badge variant="outline" className="gap-1">
                                   <Paperclip className="h-3 w-3" />
-                                  {getAttachmentCount(`company_expense_${expense.type}`, String(expense.id))}
+                                  0
                                 </Badge>
                               </TableCell>
                               <TableCell>
@@ -760,9 +760,8 @@ export default function FinancasEmpresa() {
                                     <div>
                                       <p className="text-sm text-muted-foreground mb-2">Anexos e Comprovantes</p>
                                       <UniversalAttachments
-                                        entityType={`company_expense_${expense.type}`}
+                                        entityType={expense.type === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
                                         entityId={String(expense.id)}
-                                        allowUpload={!expense.fechado}
                                         maxFiles={10}
                                         compact
                                       />
