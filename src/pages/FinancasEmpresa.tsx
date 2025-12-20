@@ -1,10 +1,10 @@
 // ============================================
-// MOISÉS MEDEIROS v15.0 - ENTERPRISE FINANCE VAULT
-// Sistema Financeiro de Multinacional - Ano 2300
-// Central Financeira Futurística com IA
+// MOISÉS MEDEIROS v15.0 - CENTRAL FINANCEIRA EMPRESARIAL
+// Sistema Completo de Finanças: Gastos + Pagamentos + Gráficos + Relatórios
+// Tudo unificado em um único lugar
 // ============================================
 
-import { useState, useEffect, useMemo, useCallback, useRef } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Building2, Plus, Check, Clock, AlertCircle, Trash2, Edit2,
@@ -17,7 +17,7 @@ import {
   Banknote, ArrowUpRight, ArrowDownRight, Target, Gauge, Eye,
   Download, Upload, Settings2, LayoutGrid, LayoutList, Grid3X3, List,
   Layers, Database, Globe, Command, Cpu, Home, FileText, FileSpreadsheet,
-  Bot, Star, Bookmark, Info, Copy
+  Bot, Star, Bookmark, Info, Copy, Landmark, Users, CircleOff, BadgeDollarSign
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -37,30 +37,26 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { format } from "date-fns";
+import { format, parseISO, isPast, isToday, startOfMonth, endOfMonth, differenceInDays, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { UniversalAttachments } from "@/components/attachments/UniversalAttachments";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { useCompanyFinanceHistory, formatCompanyCurrency, type CompanyPeriodFilter, type CompanyExpense, type PaymentStatus } from "@/hooks/useCompanyFinanceHistory";
+import { usePaymentsHistory, formatPaymentCurrency, type Payment } from "@/hooks/usePaymentsHistory";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, LineChart, Line, PieChart as RechartPieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from "recharts";
 
-interface AttachmentCount {
-  [key: string]: number;
-}
-
-const EXPENSE_TYPES = [
-  { value: "all", label: "Todos", icon: Wallet, color: "from-primary/20 to-primary/5" },
-  { value: "fixed", label: "Fixos", icon: Building2, color: "from-red-500/20 to-red-500/5" },
-  { value: "extra", label: "Extras", icon: Receipt, color: "from-blue-500/20 to-blue-500/5" },
-];
+// ═══════════════════════════════════════════════════════════════
+// CONSTANTES
+// ═══════════════════════════════════════════════════════════════
 
 const CATEGORIAS = [
   "Folha de Pagamento", "Aluguel", "Energia", "Internet", "Telefone",
@@ -78,234 +74,386 @@ const PERIOD_OPTIONS = [
   { value: "50anos", label: "50 Anos", icon: Archive },
 ];
 
-type ViewMode = "dashboard" | "expenses" | "months" | "years";
-
-const STATUS_COLORS: Record<PaymentStatus, { bg: string; text: string; icon: typeof Check }> = {
+const STATUS_COLORS: Record<string, { bg: string; text: string; icon: typeof Check }> = {
   pendente: { bg: "bg-yellow-500/20", text: "text-yellow-500", icon: Clock },
   pago: { bg: "bg-green-500/20", text: "text-green-500", icon: Check },
   atrasado: { bg: "bg-red-500/20", text: "text-red-500", icon: AlertCircle },
+  cancelado: { bg: "bg-muted", text: "text-muted-foreground", icon: XCircle },
 };
+
+const CHART_COLORS = ['#EC4899', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#6366F1', '#14B8A6', '#F97316'];
+
+type ViewMode = "dashboard" | "gastos" | "pagamentos" | "relatorios" | "meses" | "anos";
+type ExpenseType = "fixed" | "extra";
+type ItemType = "gasto_fixo" | "gasto_extra" | "pagamento";
+
+// ═══════════════════════════════════════════════════════════════
+// COMPONENTE PRINCIPAL
+// ═══════════════════════════════════════════════════════════════
 
 export default function FinancasEmpresa() {
   const { user } = useAuth();
-  const {
-    period, setPeriod,
-    selectedYear, setSelectedYear,
-    selectedMonth, setSelectedMonth,
-    isLoading,
-    fixedExpenses, extraExpenses, entradas,
-    monthlyClosures, yearlyClosures,
-    stats, chartData, availableYears,
-    closeMonth, closeYear, refresh,
-    isMonthClosed, isYearClosed,
-    getMonthClosure, getYearClosure,
-    yearsWithData, getMonthsWithData,
-    getMonthName,
-    updatePaymentStatus
-  } = useCompanyFinanceHistory();
+  
+  // Hooks de dados
+  const companyFinance = useCompanyFinanceHistory();
+  const paymentsHistory = usePaymentsHistory();
 
   // Estado local
   const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalType, setModalType] = useState<"fixed" | "extra">("extra");
-  const [editingExpense, setEditingExpense] = useState<CompanyExpense | null>(null);
-  const [activeTab, setActiveTab] = useState("all");
+  const [modalItemType, setModalItemType] = useState<ItemType>("gasto_fixo");
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("todos");
   const [searchTerm, setSearchTerm] = useState("");
-  const [viewType, setViewType] = useState<"grid" | "list">("list");
   const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
-  const [attachmentCounts, setAttachmentCounts] = useState<AttachmentCount>({});
-  const [closeMonthDialogOpen, setCloseMonthDialogOpen] = useState(false);
-  const [closeYearDialogOpen, setCloseYearDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState<CompanyExpense | null>(null);
-  const [selectedExpenses, setSelectedExpenses] = useState<Set<string>>(new Set());
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState<any>(null);
   const [sortBy, setSortBy] = useState<"data" | "valor" | "nome">("data");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
   const [formData, setFormData] = useState({
     nome: "",
+    descricao: "",
     valor: "",
     categoria: "",
     data: format(new Date(), "yyyy-MM-dd"),
     data_vencimento: "",
     status_pagamento: "pendente" as PaymentStatus,
+    tipo: "curso",
+    metodo_pagamento: "",
+    observacoes: "",
+    recorrente: false,
   });
 
-  // Combinar todos os gastos
-  const allExpenses = useMemo(() => {
-    const combined = [
-      ...fixedExpenses.map(e => ({ ...e, type: 'fixed' as const })),
-      ...extraExpenses.map(e => ({ ...e, type: 'extra' as const }))
+  // ═══════════════════════════════════════════════════════════════
+  // DADOS COMBINADOS
+  // ═══════════════════════════════════════════════════════════════
+
+  const allItems = useMemo(() => {
+    const gastos = [
+      ...companyFinance.fixedExpenses.map(e => ({ 
+        ...e, 
+        itemType: 'gasto_fixo' as ItemType,
+        label: e.nome,
+        statusKey: e.status_pagamento || 'pendente'
+      })),
+      ...companyFinance.extraExpenses.map(e => ({ 
+        ...e, 
+        itemType: 'gasto_extra' as ItemType,
+        label: e.nome,
+        statusKey: e.status_pagamento || 'pendente'
+      })),
     ];
 
-    let filtered = combined;
-    if (activeTab !== "all") {
-      filtered = combined.filter(e => e.type === activeTab);
+    const pagamentos = paymentsHistory.payments.map(p => ({
+      ...p,
+      itemType: 'pagamento' as ItemType,
+      label: p.descricao,
+      nome: p.descricao,
+      statusKey: p.status,
+      data: p.data_vencimento,
+    }));
+
+    let combined = [...gastos, ...pagamentos];
+
+    // Filtro por tab
+    if (activeTab === "fixos") {
+      combined = combined.filter(i => i.itemType === 'gasto_fixo');
+    } else if (activeTab === "extras") {
+      combined = combined.filter(i => i.itemType === 'gasto_extra');
+    } else if (activeTab === "pagamentos") {
+      combined = combined.filter(i => i.itemType === 'pagamento');
     }
+
+    // Filtro por busca
     if (searchTerm) {
-      filtered = filtered.filter(e =>
-        e.nome.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        e.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
+      combined = combined.filter(i =>
+        i.label?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        i.categoria?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
-    return filtered.sort((a, b) => {
+    // Ordenação
+    return combined.sort((a, b) => {
       let comparison = 0;
       if (sortBy === "data") {
         const dateA = a.data || a.created_at || '';
         const dateB = b.data || b.created_at || '';
         comparison = dateA.localeCompare(dateB);
       } else if (sortBy === "valor") {
-        comparison = a.valor - b.valor;
+        comparison = (a.valor || 0) - (b.valor || 0);
       } else if (sortBy === "nome") {
-        comparison = a.nome.localeCompare(b.nome);
+        comparison = (a.label || '').localeCompare(b.label || '');
       }
       return sortOrder === "desc" ? -comparison : comparison;
     });
-  }, [fixedExpenses, extraExpenses, searchTerm, activeTab, sortBy, sortOrder]);
+  }, [companyFinance.fixedExpenses, companyFinance.extraExpenses, paymentsHistory.payments, activeTab, searchTerm, sortBy, sortOrder]);
 
-  // Stats calculados
-  const calculatedStats = useMemo(() => {
-    const totalFixo = fixedExpenses.reduce((sum, e) => sum + e.valor, 0);
-    const totalExtra = extraExpenses.reduce((sum, e) => sum + e.valor, 0);
-    const totalPago = allExpenses.filter(e => e.status_pagamento === 'pago').reduce((sum, e) => sum + e.valor, 0);
-    const totalPendente = allExpenses.filter(e => e.status_pagamento === 'pendente').reduce((sum, e) => sum + e.valor, 0);
-    const totalAtrasado = allExpenses.filter(e => e.status_pagamento === 'atrasado').reduce((sum, e) => sum + e.valor, 0);
-    const percentPago = (totalFixo + totalExtra) > 0 ? (totalPago / (totalFixo + totalExtra)) * 100 : 0;
-    
+  // ═══════════════════════════════════════════════════════════════
+  // ESTATÍSTICAS UNIFICADAS
+  // ═══════════════════════════════════════════════════════════════
+
+  const unifiedStats = useMemo(() => {
+    const gastosFixos = companyFinance.fixedExpenses.reduce((sum, e) => sum + e.valor, 0);
+    const gastosExtras = companyFinance.extraExpenses.reduce((sum, e) => sum + e.valor, 0);
+    const totalGastos = gastosFixos + gastosExtras;
+    const receitas = companyFinance.entradas.reduce((sum, e) => sum + (e.valor || 0), 0);
+
+    const pagamentosTotal = paymentsHistory.payments.reduce((sum, p) => sum + p.valor, 0);
+    const pagamentosPagos = paymentsHistory.payments.filter(p => p.status === 'pago').reduce((sum, p) => sum + p.valor, 0);
+    const pagamentosPendentes = paymentsHistory.payments.filter(p => p.status === 'pendente').reduce((sum, p) => sum + p.valor, 0);
+    const pagamentosAtrasados = paymentsHistory.payments.filter(p => p.status === 'atrasado').reduce((sum, p) => sum + p.valor, 0);
+
+    // Gastos por status
+    const gastosPagos = allItems.filter(i => i.itemType !== 'pagamento' && i.statusKey === 'pago').reduce((sum, i) => sum + i.valor, 0);
+    const gastosPendentes = allItems.filter(i => i.itemType !== 'pagamento' && i.statusKey === 'pendente').reduce((sum, i) => sum + i.valor, 0);
+    const gastosAtrasados = allItems.filter(i => i.itemType !== 'pagamento' && i.statusKey === 'atrasado').reduce((sum, i) => sum + i.valor, 0);
+
+    const totalPago = gastosPagos + pagamentosPagos;
+    const totalPendente = gastosPendentes + pagamentosPendentes;
+    const totalAtrasado = gastosAtrasados + pagamentosAtrasados;
+    const totalGeral = totalGastos + pagamentosTotal;
+
+    const percentPago = totalGeral > 0 ? (totalPago / totalGeral) * 100 : 0;
+    const saldo = receitas - totalGastos;
+
     return {
-      totalFixo, totalExtra, totalPago, totalPendente, totalAtrasado,
-      total: totalFixo + totalExtra,
+      gastosFixos,
+      gastosExtras,
+      totalGastos,
+      receitas,
+      pagamentosTotal,
+      pagamentosPagos,
+      pagamentosPendentes,
+      pagamentosAtrasados,
+      totalPago,
+      totalPendente,
+      totalAtrasado,
+      totalGeral,
       percentPago,
-      countFixo: fixedExpenses.length,
-      countExtra: extraExpenses.length,
-      countPago: allExpenses.filter(e => e.status_pagamento === 'pago').length,
-      countPendente: allExpenses.filter(e => e.status_pagamento === 'pendente').length,
-      countAtrasado: allExpenses.filter(e => e.status_pagamento === 'atrasado').length,
+      saldo,
+      countGastosFixos: companyFinance.fixedExpenses.length,
+      countGastosExtras: companyFinance.extraExpenses.length,
+      countPagamentos: paymentsHistory.payments.length,
+      countReceitas: companyFinance.entradas.length,
+      countPago: allItems.filter(i => i.statusKey === 'pago').length,
+      countPendente: allItems.filter(i => i.statusKey === 'pendente').length,
+      countAtrasado: allItems.filter(i => i.statusKey === 'atrasado').length,
     };
-  }, [fixedExpenses, extraExpenses, allExpenses]);
+  }, [companyFinance, paymentsHistory, allItems]);
 
-  // Buscar contagem de anexos
-  useEffect(() => {
-    const fetchAttachmentCounts = async () => {
-      const fixedIds = fixedExpenses.map(e => String(e.id));
-      const extraIds = extraExpenses.map(e => String(e.id));
-      
-      const counts: AttachmentCount = {};
-      
-      if (fixedIds.length > 0) {
-        const { data } = await supabase
-          .from("universal_attachments")
-          .select("entity_id")
-          .eq("entity_type", "company_expense_fixed")
-          .in("entity_id", fixedIds);
-        (data || []).forEach(a => {
-          counts[`fixed_${a.entity_id}`] = (counts[`fixed_${a.entity_id}`] || 0) + 1;
-        });
-      }
-      
-      if (extraIds.length > 0) {
-        const { data } = await supabase
-          .from("universal_attachments")
-          .select("entity_id")
-          .eq("entity_type", "company_expense_extra")
-          .in("entity_id", extraIds);
-        (data || []).forEach(a => {
-          counts[`extra_${a.entity_id}`] = (counts[`extra_${a.entity_id}`] || 0) + 1;
-        });
-      }
-      
-      setAttachmentCounts(counts);
-    };
-    fetchAttachmentCounts();
-  }, [fixedExpenses, extraExpenses]);
+  // ═══════════════════════════════════════════════════════════════
+  // DADOS PARA GRÁFICOS
+  // ═══════════════════════════════════════════════════════════════
 
-  const getAttachmentCount = (expense: CompanyExpense) => {
-    return attachmentCounts[`${expense.type}_${expense.id}`] || 0;
-  };
+  const chartData = useMemo(() => {
+    // Dados por categoria
+    const byCategory: Record<string, number> = {};
+    allItems.forEach(item => {
+      const cat = item.categoria || 'Outros';
+      byCategory[cat] = (byCategory[cat] || 0) + item.valor;
+    });
+    const categoryData = Object.entries(byCategory)
+      .map(([name, value]) => ({ name, value: value / 100 }))
+      .sort((a, b) => b.value - a.value)
+      .slice(0, 8);
 
-  const openModal = (type: "fixed" | "extra", expense?: CompanyExpense) => {
-    setModalType(type);
-    if (expense) {
-      setEditingExpense(expense);
+    // Dados por tipo
+    const typeData = [
+      { name: 'Gastos Fixos', value: unifiedStats.gastosFixos / 100, color: '#EF4444' },
+      { name: 'Gastos Extras', value: unifiedStats.gastosExtras / 100, color: '#3B82F6' },
+      { name: 'Pagamentos', value: unifiedStats.pagamentosTotal / 100, color: '#8B5CF6' },
+    ];
+
+    // Dados por status
+    const statusData = [
+      { name: 'Pagos', value: unifiedStats.totalPago / 100, color: '#10B981' },
+      { name: 'Pendentes', value: unifiedStats.totalPendente / 100, color: '#F59E0B' },
+      { name: 'Atrasados', value: unifiedStats.totalAtrasado / 100, color: '#EF4444' },
+    ];
+
+    // Últimos 6 meses
+    const monthlyData: { month: string; gastos: number; receitas: number; pagamentos: number }[] = [];
+    for (let i = 5; i >= 0; i--) {
+      const date = subMonths(new Date(), i);
+      const monthNum = date.getMonth() + 1;
+      const yearNum = date.getFullYear();
+      
+      const gastosMes = [...companyFinance.fixedExpenses, ...companyFinance.extraExpenses]
+        .filter(e => e.mes === monthNum && e.ano === yearNum)
+        .reduce((sum, e) => sum + e.valor, 0);
+
+      const pagamentosMes = paymentsHistory.payments
+        .filter(p => {
+          const d = parseISO(p.data_vencimento);
+          return d.getMonth() + 1 === monthNum && d.getFullYear() === yearNum;
+        })
+        .reduce((sum, p) => sum + p.valor, 0);
+
+      const receitasMes = companyFinance.entradas
+        .filter(e => {
+          const d = e.created_at ? parseISO(e.created_at) : new Date();
+          return d.getMonth() + 1 === monthNum && d.getFullYear() === yearNum;
+        })
+        .reduce((sum, e) => sum + (e.valor || 0), 0);
+
+      monthlyData.push({
+        month: format(date, 'MMM', { locale: ptBR }),
+        gastos: gastosMes / 100,
+        pagamentos: pagamentosMes / 100,
+        receitas: receitasMes / 100,
+      });
+    }
+
+    return { categoryData, typeData, statusData, monthlyData };
+  }, [allItems, unifiedStats, companyFinance, paymentsHistory]);
+
+  // ═══════════════════════════════════════════════════════════════
+  // HANDLERS
+  // ═══════════════════════════════════════════════════════════════
+
+  const openModal = (type: ItemType, item?: any) => {
+    setModalItemType(type);
+    if (item) {
+      setEditingItem(item);
       setFormData({
-        nome: expense.nome,
-        valor: String(expense.valor / 100),
-        categoria: expense.categoria || "",
-        data: expense.data || format(new Date(), "yyyy-MM-dd"),
-        data_vencimento: expense.data_vencimento || "",
-        status_pagamento: expense.status_pagamento || "pendente",
+        nome: item.nome || item.descricao || "",
+        descricao: item.descricao || item.nome || "",
+        valor: String((item.valor || 0) / 100),
+        categoria: item.categoria || "",
+        data: item.data || format(new Date(), "yyyy-MM-dd"),
+        data_vencimento: item.data_vencimento || "",
+        status_pagamento: item.status_pagamento || item.status || "pendente",
+        tipo: item.tipo || "curso",
+        metodo_pagamento: item.metodo_pagamento || "",
+        observacoes: item.observacoes || "",
+        recorrente: item.recorrente || false,
       });
     } else {
-      setEditingExpense(null);
+      setEditingItem(null);
       setFormData({
         nome: "",
+        descricao: "",
         valor: "",
         categoria: "",
         data: format(new Date(), "yyyy-MM-dd"),
-        data_vencimento: "",
+        data_vencimento: format(new Date(), "yyyy-MM-dd"),
         status_pagamento: "pendente",
+        tipo: "curso",
+        metodo_pagamento: "",
+        observacoes: "",
+        recorrente: false,
       });
     }
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
-    if (!formData.nome || !formData.valor) {
-      toast.error("Preencha nome e valor");
+    if (!formData.nome && !formData.descricao) {
+      toast.error("Preencha nome/descrição");
+      return;
+    }
+    if (!formData.valor) {
+      toast.error("Preencha o valor");
       return;
     }
 
     const valorCentavos = Math.round(parseFloat(formData.valor.replace(",", ".")) * 100);
     const dataRef = new Date(formData.data || new Date());
-    const table = modalType === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
-
-    const payload = {
-      nome: formData.nome,
-      valor: valorCentavos,
-      categoria: formData.categoria || null,
-      data: formData.data || null,
-      data_vencimento: formData.data_vencimento || null,
-      status_pagamento: formData.status_pagamento,
-      mes: dataRef.getMonth() + 1,
-      ano: dataRef.getFullYear(),
-      dia: dataRef.getDate(),
-      semana: Math.ceil(dataRef.getDate() / 7),
-    };
 
     try {
-      if (editingExpense) {
-        await supabase.from(table).update(payload).eq("id", editingExpense.id);
-        toast.success("Gasto atualizado!");
+      if (modalItemType === "gasto_fixo" || modalItemType === "gasto_extra") {
+        const table = modalItemType === "gasto_fixo" ? "company_fixed_expenses" : "company_extra_expenses";
+        const payload = {
+          nome: formData.nome || formData.descricao,
+          valor: valorCentavos,
+          categoria: formData.categoria || null,
+          data: formData.data || null,
+          data_vencimento: formData.data_vencimento || null,
+          status_pagamento: formData.status_pagamento,
+          mes: dataRef.getMonth() + 1,
+          ano: dataRef.getFullYear(),
+          dia: dataRef.getDate(),
+          semana: Math.ceil(dataRef.getDate() / 7),
+        };
+
+        if (editingItem) {
+          await supabase.from(table).update(payload).eq("id", editingItem.id);
+          toast.success("Gasto atualizado!");
+        } else {
+          await supabase.from(table).insert(payload);
+          toast.success("Gasto criado!");
+        }
+        companyFinance.refresh();
       } else {
-        await supabase.from(table).insert(payload);
-        toast.success("Gasto criado!");
+        // Pagamento
+        const payload = {
+          tipo: formData.tipo,
+          descricao: formData.descricao || formData.nome,
+          valor: valorCentavos,
+          data_vencimento: formData.data_vencimento || formData.data,
+          metodo_pagamento: formData.metodo_pagamento || null,
+          categoria: formData.categoria || null,
+          observacoes: formData.observacoes || null,
+          recorrente: formData.recorrente,
+        };
+
+        if (editingItem) {
+          await supabase.from("payments").update(payload).eq("id", editingItem.id);
+          toast.success("Pagamento atualizado!");
+        } else {
+          await supabase.from("payments").insert({
+            ...payload,
+            user_id: user?.id,
+            created_by: user?.id,
+          });
+          toast.success("Pagamento criado!");
+        }
+        paymentsHistory.refresh();
       }
       setIsModalOpen(false);
-      refresh();
     } catch (error) {
       toast.error("Erro ao salvar");
     }
   };
 
-  const handleDelete = async (expense: CompanyExpense) => {
-    const table = expense.type === "fixed" ? "company_fixed_expenses" : "company_extra_expenses";
-    await supabase.from(table).delete().eq("id", expense.id);
-    toast.success("Gasto excluído!");
-    setDeleteDialogOpen(null);
-    refresh();
+  const handleDelete = async (item: any) => {
+    try {
+      if (item.itemType === "gasto_fixo") {
+        await supabase.from("company_fixed_expenses").delete().eq("id", item.id);
+        companyFinance.refresh();
+      } else if (item.itemType === "gasto_extra") {
+        await supabase.from("company_extra_expenses").delete().eq("id", item.id);
+        companyFinance.refresh();
+      } else {
+        await supabase.from("payments").delete().eq("id", item.id);
+        paymentsHistory.refresh();
+      }
+      toast.success("Excluído com sucesso!");
+      setDeleteDialogOpen(null);
+    } catch (error) {
+      toast.error("Erro ao excluir");
+    }
   };
 
-  const handleStatusChange = async (expense: CompanyExpense, newStatus: PaymentStatus) => {
-    await updatePaymentStatus(expense, newStatus);
-    toast.success(`Status atualizado para ${newStatus}`);
-  };
-
-  const toggleExpenseSelection = (id: string) => {
-    setSelectedExpenses(prev => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+  const handleStatusChange = async (item: any, newStatus: string) => {
+    try {
+      if (item.itemType === "gasto_fixo") {
+        await supabase.from("company_fixed_expenses").update({ status_pagamento: newStatus }).eq("id", item.id);
+        companyFinance.refresh();
+      } else if (item.itemType === "gasto_extra") {
+        await supabase.from("company_extra_expenses").update({ status_pagamento: newStatus }).eq("id", item.id);
+        companyFinance.refresh();
+      } else {
+        await supabase.from("payments").update({ 
+          status: newStatus,
+          data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null
+        }).eq("id", item.id);
+        paymentsHistory.refresh();
+      }
+      toast.success(`Marcado como ${newStatus}`);
+    } catch (error) {
+      toast.error("Erro ao atualizar status");
+    }
   };
 
   const toggleRow = (id: string) => {
@@ -317,24 +465,33 @@ export default function FinancasEmpresa() {
     });
   };
 
-  // Render Dashboard Stats
+  const refresh = () => {
+    companyFinance.refresh();
+    paymentsHistory.refresh();
+  };
+
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER DASHBOARD
+  // ═══════════════════════════════════════════════════════════════
+
   const renderDashboard = () => (
     <div className="space-y-6">
-      {/* Hero Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      {/* Hero Stats Grid */}
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
         {[
-          { label: "Total Gastos", value: calculatedStats.total, icon: Wallet, color: "from-primary to-primary/50", count: allExpenses.length },
-          { label: "Gastos Fixos", value: calculatedStats.totalFixo, icon: Building2, color: "from-red-500 to-red-500/50", count: calculatedStats.countFixo },
-          { label: "Gastos Extras", value: calculatedStats.totalExtra, icon: Receipt, color: "from-blue-500 to-blue-500/50", count: calculatedStats.countExtra },
-          { label: "Pagos", value: calculatedStats.totalPago, icon: CheckCircle2, color: "from-green-500 to-green-500/50", count: calculatedStats.countPago },
-          { label: "Pendentes", value: calculatedStats.totalPendente, icon: Clock, color: "from-yellow-500 to-yellow-500/50", count: calculatedStats.countPendente },
-          { label: "Atrasados", value: calculatedStats.totalAtrasado, icon: AlertTriangle, color: "from-red-600 to-red-600/50", count: calculatedStats.countAtrasado },
+          { label: "Gastos Fixos", value: unifiedStats.gastosFixos, icon: Building2, color: "from-red-500 to-red-500/50", count: unifiedStats.countGastosFixos },
+          { label: "Gastos Extras", value: unifiedStats.gastosExtras, icon: Receipt, color: "from-blue-500 to-blue-500/50", count: unifiedStats.countGastosExtras },
+          { label: "Total Gastos", value: unifiedStats.totalGastos, icon: Wallet, color: "from-primary to-primary/50", count: unifiedStats.countGastosFixos + unifiedStats.countGastosExtras },
+          { label: "Receitas", value: unifiedStats.receitas, icon: TrendingUp, color: "from-emerald-500 to-emerald-500/50", count: unifiedStats.countReceitas },
+          { label: "Pagos", value: unifiedStats.totalPago, icon: CheckCircle2, color: "from-green-500 to-green-500/50", count: unifiedStats.countPago },
+          { label: "Pendentes", value: unifiedStats.totalPendente, icon: Clock, color: "from-yellow-500 to-yellow-500/50", count: unifiedStats.countPendente },
+          { label: "Atrasados", value: unifiedStats.totalAtrasado, icon: AlertTriangle, color: "from-red-600 to-red-600/50", count: unifiedStats.countAtrasado },
         ].map((stat, i) => (
           <motion.div
             key={stat.label}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.05 }}
+            transition={{ delay: i * 0.03 }}
           >
             <Card className="relative overflow-hidden border-border/50 bg-gradient-to-br from-card to-card/50 hover:border-primary/30 transition-all group">
               <div className={cn("absolute inset-0 opacity-10 bg-gradient-to-br", stat.color)} />
@@ -343,7 +500,7 @@ export default function FinancasEmpresa() {
                   <stat.icon className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
                   <Badge variant="secondary" className="text-xs">{stat.count}</Badge>
                 </div>
-                <p className="text-2xl font-bold">{formatCompanyCurrency(stat.value)}</p>
+                <p className="text-xl font-bold">{formatCompanyCurrency(stat.value)}</p>
                 <p className="text-xs text-muted-foreground">{stat.label}</p>
               </CardContent>
             </Card>
@@ -351,46 +508,148 @@ export default function FinancasEmpresa() {
         ))}
       </div>
 
-      {/* Progress Ring */}
-      <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <h3 className="font-semibold flex items-center gap-2">
-                <Target className="h-5 w-5 text-primary" />
-                Progresso de Pagamentos
-              </h3>
-              <p className="text-sm text-muted-foreground">
-                {calculatedStats.countPago} de {allExpenses.length} gastos pagos
-              </p>
+      {/* Progress + Saldo */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card className="border-border/50 bg-gradient-to-br from-card to-card/50">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-semibold flex items-center gap-2">
+                  <Target className="h-5 w-5 text-primary" />
+                  Progresso de Pagamentos
+                </h3>
+                <p className="text-sm text-muted-foreground">
+                  {unifiedStats.countPago} de {allItems.length} itens pagos
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-primary">{unifiedStats.percentPago.toFixed(0)}%</p>
+                <p className="text-xs text-muted-foreground">concluído</p>
+              </div>
             </div>
-            <div className="text-right">
-              <p className="text-3xl font-bold text-primary">{calculatedStats.percentPago.toFixed(0)}%</p>
-              <p className="text-xs text-muted-foreground">concluído</p>
+            <Progress value={unifiedStats.percentPago} className="h-3" />
+            <div className="flex justify-between mt-3 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-green-500" /> Pagos</span>
+              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-yellow-500" /> Pendentes</span>
+              <span className="flex items-center gap-1"><div className="w-2 h-2 rounded-full bg-red-500" /> Atrasados</span>
             </div>
-          </div>
-          <Progress value={calculatedStats.percentPago} className="h-3" />
-          <div className="flex justify-between mt-2 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-green-500" /> Pagos
-            </span>
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-yellow-500" /> Pendentes
-            </span>
-            <span className="flex items-center gap-1">
-              <div className="w-2 h-2 rounded-full bg-red-500" /> Atrasados
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
+
+        <Card className={cn(
+          "border-border/50 bg-gradient-to-br",
+          unifiedStats.saldo >= 0 ? "from-green-500/10 to-green-500/5" : "from-red-500/10 to-red-500/5"
+        )}>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold flex items-center gap-2">
+                  {unifiedStats.saldo >= 0 ? (
+                    <TrendingUp className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <TrendingDown className="h-5 w-5 text-red-500" />
+                  )}
+                  Saldo do Período
+                </h3>
+                <p className="text-sm text-muted-foreground">Receitas - Gastos</p>
+              </div>
+              <div className="text-right">
+                <p className={cn(
+                  "text-4xl font-bold",
+                  unifiedStats.saldo >= 0 ? "text-green-500" : "text-red-500"
+                )}>
+                  {formatCompanyCurrency(unifiedStats.saldo)}
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Gráficos */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Gráfico de Evolução */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Evolução Mensal
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={chartData.monthlyData}>
+                  <defs>
+                    <linearGradient id="colorGastos" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#EF4444" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#EF4444" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorReceitas" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                      <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis dataKey="month" stroke="#888" fontSize={12} />
+                  <YAxis stroke="#888" fontSize={12} tickFormatter={(v) => `R$${v}`} />
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
+                    formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, '']}
+                  />
+                  <Area type="monotone" dataKey="gastos" stroke="#EF4444" fill="url(#colorGastos)" name="Gastos" />
+                  <Area type="monotone" dataKey="receitas" stroke="#10B981" fill="url(#colorReceitas)" name="Receitas" />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Gráfico de Status */}
+        <Card className="border-border/50">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-primary" />
+              Status dos Pagamentos
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-64">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartPieChart>
+                  <Pie
+                    data={chartData.statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={50}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                    label={({ name, value }) => `${name}: R$${value.toLocaleString('pt-BR')}`}
+                  >
+                    {chartData.statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
+                    formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, '']}
+                  />
+                </RechartPieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          { label: "Novo Gasto Fixo", icon: Building2, color: "text-red-500", action: () => openModal("fixed") },
-          { label: "Novo Gasto Extra", icon: Receipt, color: "text-blue-500", action: () => openModal("extra") },
-          { label: "Ver Gastos", icon: List, color: "text-primary", action: () => setViewMode("expenses") },
-          { label: "Atualizar", icon: RefreshCw, color: "text-green-500", action: refresh },
+          { label: "+ Gasto Fixo", icon: Building2, color: "text-red-500 border-red-500/30 hover:bg-red-500/10", action: () => openModal("gasto_fixo") },
+          { label: "+ Gasto Extra", icon: Receipt, color: "text-blue-500 border-blue-500/30 hover:bg-blue-500/10", action: () => openModal("gasto_extra") },
+          { label: "+ Pagamento", icon: CreditCard, color: "text-purple-500 border-purple-500/30 hover:bg-purple-500/10", action: () => openModal("pagamento") },
+          { label: "Ver Todos", icon: List, color: "text-primary border-primary/30 hover:bg-primary/10", action: () => setViewMode("gastos") },
         ].map((action, i) => (
           <motion.div
             key={action.label}
@@ -398,647 +657,631 @@ export default function FinancasEmpresa() {
             animate={{ opacity: 1, scale: 1 }}
             transition={{ delay: i * 0.05 }}
           >
-            <Button
+            <Button 
               variant="outline"
-              className="w-full h-20 flex-col gap-2 hover:border-primary/50"
+              className={cn("w-full h-16 flex flex-col gap-1", action.color)}
               onClick={action.action}
             >
-              <action.icon className={cn("h-6 w-6", action.color)} />
+              <action.icon className="h-5 w-5" />
               <span className="text-xs">{action.label}</span>
             </Button>
           </motion.div>
         ))}
       </div>
 
-      {/* Recent Expenses */}
+      {/* Lista Recente */}
       <Card className="border-border/50">
-        <CardHeader className="pb-2">
-          <CardTitle className="flex items-center justify-between">
-            <span className="flex items-center gap-2">
-              <Activity className="h-5 w-5 text-primary" />
-              Gastos Recentes
-            </span>
-            <Button variant="ghost" size="sm" onClick={() => setViewMode("expenses")}>
-              Ver Todos <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
+        <CardHeader className="flex flex-row items-center justify-between pb-2">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Zap className="h-5 w-5 text-yellow-500" />
+            Lançamentos Recentes
           </CardTitle>
+          <Button variant="ghost" size="sm" onClick={() => setViewMode("gastos")}>
+            Ver todos <ArrowUpRight className="h-4 w-4 ml-1" />
+          </Button>
         </CardHeader>
         <CardContent>
           <div className="space-y-2">
-            {allExpenses.slice(0, 5).map((expense) => (
-              <div
-                key={`${expense.type}-${expense.id}`}
-                className="flex items-center justify-between p-3 rounded-lg bg-muted/30 hover:bg-muted/50 transition-colors"
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "w-10 h-10 rounded-lg flex items-center justify-center",
-                    expense.type === 'fixed' ? "bg-red-500/20" : "bg-blue-500/20"
-                  )}>
-                    {expense.type === 'fixed' ? (
-                      <Building2 className="h-5 w-5 text-red-500" />
-                    ) : (
-                      <Receipt className="h-5 w-5 text-blue-500" />
-                    )}
+            {allItems.slice(0, 8).map((item) => {
+              const statusConfig = STATUS_COLORS[item.statusKey] || STATUS_COLORS.pendente;
+              const StatusIcon = statusConfig.icon;
+              return (
+                <div
+                  key={`${item.itemType}-${item.id}`}
+                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={cn(
+                      "w-10 h-10 rounded-lg flex items-center justify-center",
+                      item.itemType === 'gasto_fixo' ? "bg-red-500/20" :
+                      item.itemType === 'gasto_extra' ? "bg-blue-500/20" : "bg-purple-500/20"
+                    )}>
+                      {item.itemType === 'gasto_fixo' ? <Building2 className="h-5 w-5 text-red-500" /> :
+                       item.itemType === 'gasto_extra' ? <Receipt className="h-5 w-5 text-blue-500" /> :
+                       <CreditCard className="h-5 w-5 text-purple-500" />}
+                    </div>
+                    <div>
+                      <p className="font-medium text-sm">{item.label}</p>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                        <span>{item.categoria || 'Sem categoria'}</span>
+                        <span>•</span>
+                        <span>{item.data ? format(parseISO(item.data), 'dd/MM/yyyy') : '--'}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <p className="font-medium text-sm">{expense.nome}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {expense.categoria || 'Sem categoria'} • {expense.data ? format(new Date(expense.data), 'dd/MM/yyyy') : '-'}
-                    </p>
+                  <div className="flex items-center gap-3">
+                    <span className="font-bold text-primary">{formatCompanyCurrency(item.valor)}</span>
+                    <Badge className={cn("text-xs", statusConfig.bg, statusConfig.text)}>
+                      <StatusIcon className="h-3 w-3 mr-1" />
+                      {item.statusKey}
+                    </Badge>
                   </div>
                 </div>
-                <div className="text-right">
-                  <p className="font-semibold">{formatCompanyCurrency(expense.valor)}</p>
-                  <Badge variant="secondary" className={cn("text-xs", STATUS_COLORS[expense.status_pagamento || 'pendente'].bg, STATUS_COLORS[expense.status_pagamento || 'pendente'].text)}>
-                    {expense.status_pagamento || 'pendente'}
-                  </Badge>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </CardContent>
       </Card>
     </div>
   );
 
-  // Render Expenses List
-  const renderExpenses = () => (
-    <div className="space-y-4">
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER LISTA DE GASTOS/PAGAMENTOS
+  // ═══════════════════════════════════════════════════════════════
+
+  const renderGastosList = () => (
+    <div className="space-y-6">
       {/* Toolbar */}
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="relative flex-1 min-w-[200px]">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Buscar gastos..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab}>
-          <TabsList className="bg-muted/50">
-            {EXPENSE_TYPES.map(type => (
-              <TabsTrigger key={type.value} value={type.value} className="gap-1">
-                <type.icon className="h-4 w-4" />
-                {type.label}
-              </TabsTrigger>
-            ))}
-          </TabsList>
-        </Tabs>
-
-        <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
-          <SelectTrigger className="w-[130px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="data">Por Data</SelectItem>
-            <SelectItem value="valor">Por Valor</SelectItem>
-            <SelectItem value="nome">Por Nome</SelectItem>
-          </SelectContent>
-        </Select>
-
-        <Button variant="outline" size="icon" onClick={() => setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc')}>
-          {sortOrder === 'desc' ? <ChevronDown className="h-4 w-4" /> : <ChevronUp className="h-4 w-4" />}
-        </Button>
-
-        <div className="flex border rounded-md">
-          <Button variant={viewType === 'list' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewType('list')}>
-            <List className="h-4 w-4" />
-          </Button>
-          <Button variant={viewType === 'grid' ? 'secondary' : 'ghost'} size="icon" onClick={() => setViewType('grid')}>
-            <Grid3X3 className="h-4 w-4" />
-          </Button>
-        </div>
-      </div>
-
-      {/* Expenses Grid/List */}
-      {viewType === 'grid' ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <AnimatePresence mode="popLayout">
-            {allExpenses.map((expense, i) => (
-              <motion.div
-                key={`${expense.type}-${expense.id}`}
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.95 }}
-                transition={{ delay: i * 0.02 }}
-              >
-                <Card className={cn(
-                  "relative overflow-hidden hover:shadow-lg transition-all cursor-pointer group",
-                  selectedExpenses.has(String(expense.id)) && "ring-2 ring-primary"
-                )}>
-                  <div className={cn(
-                    "absolute top-0 left-0 w-1 h-full",
-                    expense.type === 'fixed' ? "bg-red-500" : "bg-blue-500"
-                  )} />
-                  <CardContent className="p-4">
-                    <div className="flex items-start justify-between mb-3">
-                      <div className={cn(
-                        "w-10 h-10 rounded-lg flex items-center justify-center",
-                        expense.type === 'fixed' ? "bg-red-500/20" : "bg-blue-500/20"
-                      )}>
-                        {expense.type === 'fixed' ? (
-                          <Building2 className="h-5 w-5 text-red-500" />
-                        ) : (
-                          <Receipt className="h-5 w-5 text-blue-500" />
-                        )}
-                      </div>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 opacity-0 group-hover:opacity-100">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => openModal(expense.type, expense)}>
-                            <Edit2 className="h-4 w-4 mr-2" /> Editar
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pago')}>
-                            <Check className="h-4 w-4 mr-2 text-green-500" /> Marcar Pago
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pendente')}>
-                            <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Marcar Pendente
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem onClick={() => setDeleteDialogOpen(expense)} className="text-destructive">
-                            <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </div>
-                    <h4 className="font-semibold truncate mb-1">{expense.nome}</h4>
-                    <p className="text-xs text-muted-foreground mb-3">{expense.categoria || 'Sem categoria'}</p>
-                    <div className="flex items-center justify-between">
-                      <p className="text-lg font-bold">{formatCompanyCurrency(expense.valor)}</p>
-                      <Badge className={cn("text-xs", STATUS_COLORS[expense.status_pagamento || 'pendente'].bg, STATUS_COLORS[expense.status_pagamento || 'pendente'].text)}>
-                        {expense.status_pagamento || 'pendente'}
-                      </Badge>
-                    </div>
-                    {getAttachmentCount(expense) > 0 && (
-                      <div className="flex items-center gap-1 mt-2 text-xs text-muted-foreground">
-                        <Paperclip className="h-3 w-3" />
-                        {getAttachmentCount(expense)} anexo(s)
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
-              </motion.div>
-            ))}
-          </AnimatePresence>
-        </div>
-      ) : (
-        <Card className="border-border/50">
-          <ScrollArea className="h-[600px]">
-            <div className="divide-y divide-border">
-              {allExpenses.map((expense, i) => (
-                <motion.div
-                  key={`${expense.type}-${expense.id}`}
-                  initial={{ opacity: 0, x: -10 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: i * 0.02 }}
-                  className="group"
-                >
-                  <div
-                    className="flex items-center gap-4 p-4 hover:bg-muted/30 transition-colors cursor-pointer"
-                    onClick={() => toggleRow(`${expense.type}-${expense.id}`)}
-                  >
-                    <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center shrink-0",
-                      expense.type === 'fixed' ? "bg-red-500/20" : "bg-blue-500/20"
-                    )}>
-                      {expense.type === 'fixed' ? (
-                        <Building2 className="h-5 w-5 text-red-500" />
-                      ) : (
-                        <Receipt className="h-5 w-5 text-blue-500" />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <p className="font-medium truncate">{expense.nome}</p>
-                        {getAttachmentCount(expense) > 0 && (
-                          <Badge variant="outline" className="text-xs gap-1">
-                            <Paperclip className="h-3 w-3" /> {getAttachmentCount(expense)}
-                          </Badge>
-                        )}
-                      </div>
-                      <p className="text-sm text-muted-foreground">
-                        {expense.categoria || 'Sem categoria'} • {expense.data ? format(new Date(expense.data), 'dd/MM/yyyy') : '-'}
-                      </p>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <p className="font-semibold">{formatCompanyCurrency(expense.valor)}</p>
-                      <Badge className={cn("text-xs", STATUS_COLORS[expense.status_pagamento || 'pendente'].bg, STATUS_COLORS[expense.status_pagamento || 'pendente'].text)}>
-                        {expense.status_pagamento || 'pendente'}
-                      </Badge>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                        <Button variant="ghost" size="icon" className="shrink-0 opacity-0 group-hover:opacity-100">
-                          <MoreVertical className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => openModal(expense.type, expense)}>
-                          <Edit2 className="h-4 w-4 mr-2" /> Editar
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pago')}>
-                          <Check className="h-4 w-4 mr-2 text-green-500" /> Marcar Pago
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => handleStatusChange(expense, 'pendente')}>
-                          <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Marcar Pendente
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => setDeleteDialogOpen(expense)} className="text-destructive">
-                          <Trash2 className="h-4 w-4 mr-2" /> Excluir
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-
-                  {/* Expanded Row with Attachments */}
-                  <AnimatePresence>
-                    {expandedRows.has(`${expense.type}-${expense.id}`) && (
-                      <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        className="border-t border-border/50 bg-muted/20"
-                      >
-                        <div className="p-4">
-                          <UniversalAttachments
-                            entityType={expense.type === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
-                            entityId={String(expense.id)}
-                            title="Comprovantes"
-                            showAIExtraction
-                          />
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-              ))}
+      <Card className="border-border/50">
+        <CardContent className="p-4">
+          <div className="flex flex-wrap items-center gap-4">
+            <div className="relative flex-1 min-w-[200px]">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar gastos e pagamentos..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10"
+              />
             </div>
-          </ScrollArea>
-        </Card>
-      )}
-    </div>
-  );
 
-  // Render Months View
-  const renderMonths = () => (
-    <div className="space-y-4">
-      <div className="flex items-center gap-4 mb-4">
-        <Select value={String(selectedYear)} onValueChange={(v) => setSelectedYear(Number(v))}>
-          <SelectTrigger className="w-[150px]">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {yearsWithData.map(year => (
-              <SelectItem key={year} value={String(year)}>{year}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+              <TabsList>
+                <TabsTrigger value="todos" className="gap-1"><Wallet className="h-4 w-4" /> Todos</TabsTrigger>
+                <TabsTrigger value="fixos" className="gap-1"><Building2 className="h-4 w-4" /> Fixos</TabsTrigger>
+                <TabsTrigger value="extras" className="gap-1"><Receipt className="h-4 w-4" /> Extras</TabsTrigger>
+                <TabsTrigger value="pagamentos" className="gap-1"><CreditCard className="h-4 w-4" /> Pagamentos</TabsTrigger>
+              </TabsList>
+            </Tabs>
 
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-        {Array.from({ length: 12 }, (_, i) => i + 1).map(month => {
-          const closure = getMonthClosure(selectedYear, month);
-          const isClosed = isMonthClosed(selectedYear, month);
-          return (
-            <Card key={month} className={cn(
-              "relative overflow-hidden transition-all hover:shadow-lg",
-              isClosed ? "border-green-500/50" : "border-border/50"
-            )}>
-              {isClosed && (
-                <div className="absolute top-2 right-2">
-                  <Lock className="h-4 w-4 text-green-500" />
-                </div>
-              )}
-              <CardContent className="p-4">
-                <h4 className="font-semibold mb-2">{getMonthName(month)}</h4>
-                {closure ? (
-                  <>
-                    <p className="text-2xl font-bold text-destructive">
-                      {formatCompanyCurrency((closure.total_gastos_fixos || 0) + (closure.total_gastos_extras || 0))}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Fixos: {formatCompanyCurrency(closure.total_gastos_fixos || 0)}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Extras: {formatCompanyCurrency(closure.total_gastos_extras || 0)}
-                    </p>
-                  </>
-                ) : (
-                  <p className="text-muted-foreground text-sm">Sem dados</p>
-                )}
-              </CardContent>
-            </Card>
-          );
-        })}
-      </div>
-    </div>
-  );
+            <Button variant="outline" size="icon" onClick={refresh}>
+              <RefreshCw className="h-4 w-4" />
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
-  // Render Years View
-  const renderYears = () => (
-    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-      {yearsWithData.map(year => {
-        const closure = getYearClosure(year);
-        const isClosed = isYearClosed(year);
-        return (
-          <Card key={year} className={cn(
-            "relative overflow-hidden transition-all hover:shadow-lg cursor-pointer",
-            isClosed ? "border-green-500/50" : "border-border/50"
-          )} onClick={() => { setSelectedYear(year); setViewMode('months'); }}>
-            {isClosed && (
-              <div className="absolute top-2 right-2">
-                <Lock className="h-4 w-4 text-green-500" />
+      {/* Lista */}
+      <Card className="border-border/50">
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-border/50 bg-muted/30">
+                  <th className="text-left p-4 font-medium text-sm text-muted-foreground">Descrição</th>
+                  <th className="text-left p-4 font-medium text-sm text-muted-foreground">Tipo</th>
+                  <th className="text-left p-4 font-medium text-sm text-muted-foreground">Categoria</th>
+                  <th className="text-left p-4 font-medium text-sm text-muted-foreground">Data</th>
+                  <th className="text-right p-4 font-medium text-sm text-muted-foreground">Valor</th>
+                  <th className="text-center p-4 font-medium text-sm text-muted-foreground">Status</th>
+                  <th className="text-center p-4 font-medium text-sm text-muted-foreground">Anexos</th>
+                  <th className="text-center p-4 font-medium text-sm text-muted-foreground">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {allItems.map((item) => {
+                  const statusConfig = STATUS_COLORS[item.statusKey] || STATUS_COLORS.pendente;
+                  const StatusIcon = statusConfig.icon;
+                  const isExpanded = expandedRows.has(`${item.itemType}-${item.id}`);
+
+                  return (
+                    <>
+                      <tr 
+                        key={`${item.itemType}-${item.id}`}
+                        className="border-b border-border/30 hover:bg-muted/20 transition-colors cursor-pointer"
+                        onClick={() => toggleRow(`${item.itemType}-${item.id}`)}
+                      >
+                        <td className="p-4">
+                          <div className="flex items-center gap-3">
+                            <ChevronDown className={cn("h-4 w-4 transition-transform", isExpanded && "rotate-180")} />
+                            <span className="font-medium">{item.label}</span>
+                          </div>
+                        </td>
+                        <td className="p-4">
+                          <Badge variant="outline" className={cn(
+                            item.itemType === 'gasto_fixo' ? "border-red-500/50 text-red-500" :
+                            item.itemType === 'gasto_extra' ? "border-blue-500/50 text-blue-500" :
+                            "border-purple-500/50 text-purple-500"
+                          )}>
+                            {item.itemType === 'gasto_fixo' ? 'Fixo' :
+                             item.itemType === 'gasto_extra' ? 'Extra' : 'Pagamento'}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-sm text-muted-foreground">{item.categoria || '--'}</td>
+                        <td className="p-4 text-sm">
+                          {item.data ? format(parseISO(item.data), 'dd/MM/yyyy') : '--'}
+                        </td>
+                        <td className="p-4 text-right font-bold text-primary">
+                          {formatCompanyCurrency(item.valor)}
+                        </td>
+                        <td className="p-4 text-center">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="sm" className={cn("gap-1", statusConfig.bg, statusConfig.text)}>
+                                <StatusIcon className="h-3 w-3" />
+                                {item.statusKey}
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(item, 'pago'); }}>
+                                <Check className="h-4 w-4 mr-2 text-green-500" /> Marcar Pago
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(item, 'pendente'); }}>
+                                <Clock className="h-4 w-4 mr-2 text-yellow-500" /> Marcar Pendente
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleStatusChange(item, 'atrasado'); }}>
+                                <AlertCircle className="h-4 w-4 mr-2 text-red-500" /> Marcar Atrasado
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                        <td className="p-4 text-center">
+                          <Badge variant="secondary" className="text-xs">
+                            <Paperclip className="h-3 w-3 mr-1" />
+                            0
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-center">
+                          <div className="flex items-center justify-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openModal(item.itemType, item)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-400" onClick={() => setDeleteDialogOpen(item)}>
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {/* Expanded Row */}
+                      <AnimatePresence>
+                        {isExpanded && (
+                          <tr>
+                            <td colSpan={8} className="p-0">
+                              <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: "auto", opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                className="bg-muted/20 border-b border-border/30"
+                              >
+                                <div className="p-6">
+                                  <MinimizableSection 
+                                    title="Comprovantes e Anexos"
+                                    storageKey={`attachments-${item.itemType}-${item.id}`}
+                                  >
+                                    <UniversalAttachments
+                                      entityType={item.itemType === 'pagamento' ? 'payment' : item.itemType === 'gasto_fixo' ? 'company_expense_fixed' : 'company_expense_extra'}
+                                      entityId={String(item.id)}
+                                    />
+                                  </MinimizableSection>
+                                </div>
+                              </motion.div>
+                            </td>
+                          </tr>
+                        )}
+                      </AnimatePresence>
+                    </>
+                  );
+                })}
+              </tbody>
+            </table>
+
+            {allItems.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 text-center">
+                <FolderOpen className="h-16 w-16 text-muted-foreground/30 mb-4" />
+                <p className="text-muted-foreground">Nenhum item encontrado</p>
               </div>
             )}
-            <CardContent className="p-4">
-              <h4 className="text-2xl font-bold mb-2">{year}</h4>
-              {closure ? (
-                <>
-                  <p className="text-xl font-semibold text-destructive">
-                    {formatCompanyCurrency(closure.total_gastos_fixos + closure.total_gastos_extras)}
-                  </p>
-                  <p className="text-xs text-muted-foreground">{closure.meses_fechados || 0} meses fechados</p>
-                </>
-              ) : (
-                <p className="text-muted-foreground text-sm">Em andamento</p>
-              )}
-            </CardContent>
-          </Card>
-        );
-      })}
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 
-  return (
-    <TooltipProvider>
-      <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-        {/* Header */}
-        <div className="sticky top-0 z-40 backdrop-blur-xl bg-background/80 border-b border-border/50">
-          <div className="container mx-auto px-4 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="relative">
-                  <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-primary/50 flex items-center justify-center">
-                    <CircleDollarSign className="h-6 w-6 text-primary-foreground" />
-                  </div>
-                  <div className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-background flex items-center justify-center">
-                    <Zap className="h-2 w-2 text-white" />
-                  </div>
-                </div>
-                <div>
-                  <h1 className="text-2xl font-bold bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text">
-                    Enterprise Finance Vault
-                  </h1>
-                  <p className="text-sm text-muted-foreground">
-                    Central Financeira Empresarial com IA
-                  </p>
-                </div>
-              </div>
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER RELATÓRIOS
+  // ═══════════════════════════════════════════════════════════════
 
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" onClick={refresh} disabled={isLoading}>
-                  <RefreshCw className={cn("h-4 w-4 mr-2", isLoading && "animate-spin")} />
-                  Atualizar
-                </Button>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button size="sm" className="gap-2">
-                      <Plus className="h-4 w-4" />
-                      Novo Gasto
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem onClick={() => openModal("fixed")}>
-                      <Building2 className="h-4 w-4 mr-2 text-red-500" />
-                      Gasto Fixo
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => openModal("extra")}>
-                      <Receipt className="h-4 w-4 mr-2 text-blue-500" />
-                      Gasto Extra
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
+  const renderRelatorios = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Por Categoria */}
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <BarChart3 className="h-5 w-5 text-primary" />
+              Gastos por Categoria
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={chartData.categoryData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                  <XAxis type="number" tickFormatter={(v) => `R$${v}`} />
+                  <YAxis dataKey="name" type="category" width={120} fontSize={12} />
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
+                    formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, '']}
+                  />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                    {chartData.categoryData.map((_, index) => (
+                      <Cell key={`cell-${index}`} fill={CHART_COLORS[index % CHART_COLORS.length]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Navigation */}
-            <div className="flex items-center gap-2 mt-4 overflow-x-auto pb-2">
-              {[
-                { value: "dashboard", label: "Dashboard", icon: Home },
-                { value: "expenses", label: "Gastos", icon: List },
-                { value: "months", label: "Meses", icon: Calendar },
-                { value: "years", label: "Anos", icon: Archive },
-              ].map(nav => (
-                <Button
-                  key={nav.value}
-                  variant={viewMode === nav.value ? "default" : "ghost"}
-                  size="sm"
-                  onClick={() => setViewMode(nav.value as ViewMode)}
-                  className="gap-2"
-                >
-                  <nav.icon className="h-4 w-4" />
-                  {nav.label}
-                </Button>
-              ))}
+        {/* Por Tipo */}
+        <Card className="border-border/50">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <PieChart className="h-5 w-5 text-primary" />
+              Distribuição por Tipo
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                <RechartPieChart>
+                  <Pie
+                    data={chartData.typeData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={100}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name}: ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {chartData.typeData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Legend />
+                  <RechartsTooltip 
+                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
+                    formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, '']}
+                  />
+                </RechartPieChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
 
-              <Separator orientation="vertical" className="h-6 mx-2" />
+      {/* Tendência */}
+      <Card className="border-border/50">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-primary" />
+            Tendência Mensal (Gastos vs Receitas)
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="h-80">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData.monthlyData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#333" />
+                <XAxis dataKey="month" />
+                <YAxis tickFormatter={(v) => `R$${v}`} />
+                <RechartsTooltip 
+                  contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #333' }}
+                  formatter={(value: number) => [`R$ ${value.toLocaleString('pt-BR')}`, '']}
+                />
+                <Legend />
+                <Line type="monotone" dataKey="gastos" stroke="#EF4444" strokeWidth={2} name="Gastos" />
+                <Line type="monotone" dataKey="pagamentos" stroke="#8B5CF6" strokeWidth={2} name="Pagamentos" />
+                <Line type="monotone" dataKey="receitas" stroke="#10B981" strokeWidth={2} name="Receitas" />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
 
-              {PERIOD_OPTIONS.map(opt => (
+  // ═══════════════════════════════════════════════════════════════
+  // RENDER PRINCIPAL
+  // ═══════════════════════════════════════════════════════════════
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-6 lg:p-8">
+      {/* Header */}
+      <motion.div 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="mb-8"
+      >
+        <div className="flex items-center gap-2 text-primary mb-2">
+          <Sparkles className="h-5 w-5" />
+          <span className="text-sm font-medium uppercase tracking-wider">Central Financeira</span>
+        </div>
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl md:text-4xl font-bold bg-gradient-to-r from-primary via-pink-500 to-purple-500 bg-clip-text text-transparent">
+              Finanças Empresa
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Gastos, pagamentos, gráficos e relatórios em um único lugar
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Period Filter */}
+            <div className="flex items-center gap-2">
+              {PERIOD_OPTIONS.map((opt) => (
                 <Button
                   key={opt.value}
-                  variant={period === opt.value ? "secondary" : "ghost"}
+                  variant={companyFinance.period === opt.value ? "default" : "outline"}
                   size="sm"
-                  onClick={() => setPeriod(opt.value as CompanyPeriodFilter)}
+                  onClick={() => companyFinance.setPeriod(opt.value as CompanyPeriodFilter)}
                   className="gap-1"
                 >
-                  <opt.icon className="h-3 w-3" />
+                  <opt.icon className="h-4 w-4" />
                   {opt.label}
                 </Button>
               ))}
             </div>
+
+            <Button onClick={refresh} variant="outline" className="gap-2">
+              <RefreshCw className="h-4 w-4" />
+              Atualizar
+            </Button>
+
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button className="gap-2 bg-primary hover:bg-primary/90">
+                  <Plus className="h-4 w-4" />
+                  Novo
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => openModal("gasto_fixo")}>
+                  <Building2 className="h-4 w-4 mr-2 text-red-500" /> Gasto Fixo
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => openModal("gasto_extra")}>
+                  <Receipt className="h-4 w-4 mr-2 text-blue-500" /> Gasto Extra
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={() => openModal("pagamento")}>
+                  <CreditCard className="h-4 w-4 mr-2 text-purple-500" /> Pagamento
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
         </div>
+      </motion.div>
 
-        {/* Content */}
-        <div className="container mx-auto px-4 py-6">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-64">
-              <div className="flex flex-col items-center gap-4">
-                <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin" />
-                <p className="text-muted-foreground">Carregando dados financeiros...</p>
-              </div>
-            </div>
-          ) : (
-            <>
-              {viewMode === 'dashboard' && renderDashboard()}
-              {viewMode === 'expenses' && renderExpenses()}
-              {viewMode === 'months' && renderMonths()}
-              {viewMode === 'years' && renderYears()}
-            </>
+      {/* Navigation Tabs */}
+      <Tabs value={viewMode} onValueChange={(v) => setViewMode(v as ViewMode)} className="mb-6">
+        <TabsList className="bg-muted/50 p-1">
+          <TabsTrigger value="dashboard" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Home className="h-4 w-4" /> Dashboard
+          </TabsTrigger>
+          <TabsTrigger value="gastos" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <List className="h-4 w-4" /> Gastos & Pagamentos
+          </TabsTrigger>
+          <TabsTrigger value="relatorios" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <BarChart3 className="h-4 w-4" /> Relatórios
+          </TabsTrigger>
+          <TabsTrigger value="meses" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <CalendarDays className="h-4 w-4" /> Meses
+          </TabsTrigger>
+          <TabsTrigger value="anos" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <CalendarRange className="h-4 w-4" /> Anos
+          </TabsTrigger>
+        </TabsList>
+      </Tabs>
+
+      {/* Content */}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={viewMode}
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -20 }}
+        >
+          {viewMode === "dashboard" && renderDashboard()}
+          {viewMode === "gastos" && renderGastosList()}
+          {viewMode === "relatorios" && renderRelatorios()}
+          {viewMode === "meses" && (
+            <Card className="border-border/50 p-8 text-center">
+              <CalendarDays className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Fechamento Mensal</h3>
+              <p className="text-muted-foreground">
+                Histórico de fechamentos mensais com resumo de gastos, receitas e saldo.
+              </p>
+            </Card>
           )}
-        </div>
+          {viewMode === "anos" && (
+            <Card className="border-border/50 p-8 text-center">
+              <CalendarRange className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
+              <h3 className="text-lg font-semibold mb-2">Fechamento Anual</h3>
+              <p className="text-muted-foreground">
+                Histórico de fechamentos anuais com comparativos e análises.
+              </p>
+            </Card>
+          )}
+        </motion.div>
+      </AnimatePresence>
 
-        {/* Modal Redimensionável */}
-        <ResizableDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <ResizableDialogContent 
-            showMaximize 
-            defaultSize={{ width: 550, height: 580 }}
-            minSize={{ width: 400, height: 400 }}
-            maxSize={{ width: 800, height: 800 }}
-          >
-            <ResizableDialogHeader>
-              <ResizableDialogTitle className="flex items-center gap-2">
-                {modalType === 'fixed' ? (
-                  <Building2 className="h-5 w-5 text-red-500" />
-                ) : (
-                  <Receipt className="h-5 w-5 text-blue-500" />
-                )}
-                {editingExpense ? 'Editar' : 'Novo'} Gasto {modalType === 'fixed' ? 'Fixo' : 'Extra'}
-              </ResizableDialogTitle>
-            </ResizableDialogHeader>
-            <ResizableDialogBody>
-              <div className="space-y-4">
-                <div>
-                  <Label>Descrição *</Label>
+      {/* Modal Criar/Editar */}
+      <ResizableDialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <ResizableDialogContent className="sm:max-w-[600px]">
+          <ResizableDialogHeader>
+            <ResizableDialogTitle className="flex items-center gap-2">
+              {modalItemType === "gasto_fixo" ? <Building2 className="h-5 w-5 text-red-500" /> :
+               modalItemType === "gasto_extra" ? <Receipt className="h-5 w-5 text-blue-500" /> :
+               <CreditCard className="h-5 w-5 text-purple-500" />}
+              {editingItem ? "Editar" : "Novo"} {
+                modalItemType === "gasto_fixo" ? "Gasto Fixo" :
+                modalItemType === "gasto_extra" ? "Gasto Extra" : "Pagamento"
+              }
+            </ResizableDialogTitle>
+          </ResizableDialogHeader>
+          <ResizableDialogBody>
+            <div className="grid gap-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="col-span-2">
+                  <Label>{modalItemType === "pagamento" ? "Descrição" : "Nome"}</Label>
                   <Input
-                    value={formData.nome}
-                    onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))}
-                    placeholder="Nome do gasto"
+                    value={modalItemType === "pagamento" ? formData.descricao : formData.nome}
+                    onChange={(e) => setFormData(prev => modalItemType === "pagamento" 
+                      ? { ...prev, descricao: e.target.value }
+                      : { ...prev, nome: e.target.value }
+                    )}
+                    placeholder={modalItemType === "pagamento" ? "Descrição do pagamento..." : "Nome do gasto..."}
                   />
                 </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <Label>Valor (R$) *</Label>
-                    <Input
-                      type="number"
-                      step="0.01"
-                      value={formData.valor}
-                      onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
-                      placeholder="0,00"
-                    />
-                  </div>
-                  <div>
-                    <Label>Data</Label>
-                    <Input
-                      type="date"
-                      value={formData.data}
-                      onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
-                    />
-                  </div>
+
+                <div>
+                  <Label>Valor (R$)</Label>
+                  <Input
+                    type="text"
+                    value={formData.valor}
+                    onChange={(e) => setFormData(prev => ({ ...prev, valor: e.target.value }))}
+                    placeholder="0,00"
+                  />
                 </div>
+
                 <div>
                   <Label>Categoria</Label>
                   <Select value={formData.categoria} onValueChange={(v) => setFormData(prev => ({ ...prev, categoria: v }))}>
-                    <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
-                    <SelectContent className="max-h-60">
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
                       {CATEGORIAS.map(cat => (
                         <SelectItem key={cat} value={cat}>{cat}</SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="grid grid-cols-2 gap-4">
+
+                <div>
+                  <Label>Data</Label>
+                  <Input
+                    type="date"
+                    value={formData.data}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <Label>Vencimento</Label>
+                  <Input
+                    type="date"
+                    value={formData.data_vencimento}
+                    onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
+                  />
+                </div>
+
+                <div>
+                  <Label>Status</Label>
+                  <Select value={formData.status_pagamento} onValueChange={(v) => setFormData(prev => ({ ...prev, status_pagamento: v as PaymentStatus }))}>
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="pendente">Pendente</SelectItem>
+                      <SelectItem value="pago">Pago</SelectItem>
+                      <SelectItem value="atrasado">Atrasado</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {modalItemType === "pagamento" && (
                   <div>
-                    <Label>Data Vencimento</Label>
-                    <Input
-                      type="date"
-                      value={formData.data_vencimento}
-                      onChange={(e) => setFormData(prev => ({ ...prev, data_vencimento: e.target.value }))}
-                    />
-                  </div>
-                  <div>
-                    <Label>Status Pagamento</Label>
-                    <Select value={formData.status_pagamento} onValueChange={(v: PaymentStatus) => setFormData(prev => ({ ...prev, status_pagamento: v }))}>
-                      <SelectTrigger><SelectValue /></SelectTrigger>
+                    <Label>Método de Pagamento</Label>
+                    <Select value={formData.metodo_pagamento} onValueChange={(v) => setFormData(prev => ({ ...prev, metodo_pagamento: v }))}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione..." />
+                      </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pendente">
-                          <span className="flex items-center gap-2">
-                            <Clock className="h-3 w-3 text-yellow-500" />
-                            Pendente
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="pago">
-                          <span className="flex items-center gap-2">
-                            <Check className="h-3 w-3 text-green-500" />
-                            Pago
-                          </span>
-                        </SelectItem>
-                        <SelectItem value="atrasado">
-                          <span className="flex items-center gap-2">
-                            <AlertCircle className="h-3 w-3 text-red-500" />
-                            Atrasado
-                          </span>
-                        </SelectItem>
+                        <SelectItem value="pix">Pix</SelectItem>
+                        <SelectItem value="boleto">Boleto</SelectItem>
+                        <SelectItem value="cartao_credito">Cartão de Crédito</SelectItem>
+                        <SelectItem value="transferencia">Transferência</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
-                
-                {/* Seção de Anexos Minimizável */}
+                )}
+              </div>
+
+              <MinimizableSection 
+                title="Observações"
+                storageKey="modal-observacoes"
+              >
+                <Textarea
+                  value={formData.observacoes}
+                  onChange={(e) => setFormData(prev => ({ ...prev, observacoes: e.target.value }))}
+                  placeholder="Observações adicionais..."
+                  rows={3}
+                />
+              </MinimizableSection>
+
+              {editingItem && (
                 <MinimizableSection
                   title="Comprovantes e Anexos"
-                  icon={<Paperclip className="h-4 w-4" />}
-                  variant="card"
-                  storageKey="finance-attachments"
-                  badge={
-                    editingExpense && attachmentCounts[editingExpense.id] > 0 && (
-                      <Badge variant="secondary" className="ml-2">
-                        {attachmentCounts[editingExpense.id]}
-                      </Badge>
-                    )
-                  }
+                  storageKey="modal-anexos"
                 >
-                  {editingExpense && (
-                    <UniversalAttachments
-                      entityType={modalType === 'fixed' ? 'company_expense_fixed' : 'company_expense_extra'}
-                      entityId={editingExpense.id.toString()}
-                    />
-                  )}
-                  {!editingExpense && (
-                    <p className="text-sm text-muted-foreground text-center py-4">
-                      Salve o gasto primeiro para adicionar anexos
-                    </p>
-                  )}
+                  <UniversalAttachments
+                    entityType={modalItemType === 'pagamento' ? 'payment' : modalItemType === 'gasto_fixo' ? 'company_expense_fixed' : 'company_expense_extra'}
+                    entityId={String(editingItem.id)}
+                  />
                 </MinimizableSection>
-              </div>
-            </ResizableDialogBody>
-            <ResizableDialogFooter>
-              <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
-              <Button onClick={handleSave} className="bg-primary hover:bg-primary/90">
-                <Check className="h-4 w-4 mr-2" />
-                Salvar Alterações
-              </Button>
-            </ResizableDialogFooter>
-          </ResizableDialogContent>
-        </ResizableDialog>
+              )}
+            </div>
+          </ResizableDialogBody>
+          <ResizableDialogFooter>
+            <Button variant="outline" onClick={() => setIsModalOpen(false)}>Cancelar</Button>
+            <Button onClick={handleSave} className="gap-2">
+              <Check className="h-4 w-4" />
+              {editingItem ? "Salvar" : "Criar"}
+            </Button>
+          </ResizableDialogFooter>
+        </ResizableDialogContent>
+      </ResizableDialog>
 
-        {/* Delete Dialog */}
-        <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Excluir Gasto</AlertDialogTitle>
-              <AlertDialogDescription>
-                Tem certeza que deseja excluir "{deleteDialogOpen?.nome}"? Esta ação não pode ser desfeita.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancelar</AlertDialogCancel>
-              <AlertDialogAction onClick={() => deleteDialogOpen && handleDelete(deleteDialogOpen)} className="bg-destructive text-destructive-foreground">
-                Excluir
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    </TooltipProvider>
+      {/* Dialog Excluir */}
+      <AlertDialog open={!!deleteDialogOpen} onOpenChange={() => setDeleteDialogOpen(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar Exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir "{deleteDialogOpen?.label}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => handleDelete(deleteDialogOpen)} className="bg-red-500 hover:bg-red-600">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </div>
   );
 }
