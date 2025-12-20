@@ -36,8 +36,10 @@ import {
   X,
   Lock,
   AlertTriangle,
-  Zap
+  Zap,
+  Menu
 } from "lucide-react";
+import { DynamicMenuManager } from "@/components/admin/DynamicMenuManager";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -295,7 +297,7 @@ export default function Configuracoes() {
         </motion.header>
 
         <Tabs defaultValue="security" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-6 bg-card/50 border border-border/50 backdrop-blur-sm">
+          <TabsList className="grid w-full grid-cols-7 bg-card/50 border border-border/50 backdrop-blur-sm">
             <TabsTrigger value="general" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <SettingsIcon className="h-4 w-4" />
               <span className="hidden sm:inline">Geral</span>
@@ -312,6 +314,12 @@ export default function Configuracoes() {
               <Bell className="h-4 w-4" />
               <span className="hidden sm:inline">Notificações</span>
             </TabsTrigger>
+            {role === 'owner' && (
+              <TabsTrigger value="menus" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+                <Menu className="h-4 w-4" />
+                <span className="hidden sm:inline">Menus</span>
+              </TabsTrigger>
+            )}
             <TabsTrigger value="help" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
               <HelpCircle className="h-4 w-4" />
               <span className="hidden sm:inline">Ajuda</span>
@@ -851,6 +859,29 @@ export default function Configuracoes() {
               </div>
             </motion.div>
           </TabsContent>
+
+          {/* Menus - Owner Only */}
+          {role === 'owner' && (
+            <TabsContent value="menus">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="space-y-6"
+              >
+                <div className="glass-card rounded-2xl p-6">
+                  <h3 className="text-lg font-semibold text-foreground flex items-center gap-2 mb-4">
+                    <Menu className="h-5 w-5 text-primary" />
+                    Gerenciar Menus do Sistema
+                    <Badge variant="outline" className="ml-2">Owner Only</Badge>
+                  </h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Crie, edite e organize os itens do menu da plataforma. Itens criados aqui aparecem automaticamente no sidebar.
+                  </p>
+                  <DynamicMenuManager />
+                </div>
+              </motion.div>
+            </TabsContent>
+          )}
 
           {/* Backup */}
           <TabsContent value="backup">

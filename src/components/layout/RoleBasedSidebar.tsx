@@ -53,6 +53,7 @@ import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions, type SystemArea } from "@/hooks/useRolePermissions";
 import { useGodMode } from "@/contexts/GodModeContext";
+import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -235,6 +236,7 @@ export function RoleBasedSidebar() {
   const { user, signOut } = useAuth();
   const { getContent, updateContent, isActive: isGodModeActive, isOwner: isGodModeOwner } = useGodMode();
   const { role, isGodMode, hasAccess, roleLabel, roleColor } = useRolePermissions();
+  const { items: dynamicItems } = useDynamicMenuItems();
   const [userName, setUserName] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
@@ -253,11 +255,62 @@ export function RoleBasedSidebar() {
     fetchUserProfile();
   }, [user?.id, user?.user_metadata?.nome]);
 
+  // Merge static menu groups with dynamic items from database
   const filteredMenuGroups = useMemo(() => {
-    return menuGroups
+    // Create a map of icons for dynamic items
+    const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
+      FileText, Brain, Users, Wallet, Building2, TrendingUp, Handshake,
+      GraduationCap, BookOpen, Calendar, Calculator, Globe, ClipboardCheck,
+      UserCheck, Link2, Shield, PlayCircle, Megaphone, Rocket, BarChart3,
+      FolderOpen, PenTool, Monitor, MapPin, Code, User, Heart, Gauge,
+      Activity, Zap, Crown, Sparkles, MessageSquareText, Stethoscope, Settings, UserCog, CreditCard
+    };
+    
+    // Add dynamic items to their respective groups
+    const enhancedGroups = menuGroups.map(group => {
+      const groupDynamicItems = dynamicItems
+        .filter(di => di.group_id === group.id && di.is_active)
+        .map(di => ({
+          title: di.title,
+          url: di.url,
+          icon: iconMap[di.icon] || FileText,
+          area: di.area as SystemArea,
+          badge: di.badge || undefined
+        }));
+      
+      return {
+        ...group,
+        items: [...group.items, ...groupDynamicItems]
+      };
+    });
+    
+    // Create new groups for dynamic items that don't match existing groups
+    const customGroupIds = [...new Set(dynamicItems.filter(di => 
+      di.is_active && !menuGroups.some(g => g.id === di.group_id)
+    ).map(di => di.group_id))];
+    
+    const customGroups: MenuGroup[] = customGroupIds.map(gid => ({
+      id: gid,
+      label: gid.charAt(0).toUpperCase() + gid.slice(1).replace(/-/g, ' '),
+      image: dashboardImg,
+      color: 'from-primary/80',
+      items: dynamicItems
+        .filter(di => di.group_id === gid && di.is_active)
+        .map(di => ({
+          title: di.title,
+          url: di.url,
+          icon: iconMap[di.icon] || FileText,
+          area: di.area as SystemArea,
+          badge: di.badge || undefined
+        }))
+    }));
+    
+    const allGroups = [...enhancedGroups, ...customGroups];
+    
+    return allGroups
       .map((group) => ({ ...group, items: group.items.filter((item) => hasAccess(item.area)) }))
       .filter((group) => group.items.length > 0);
-  }, [hasAccess]);
+  }, [hasAccess, dynamicItems]);
 
   const isActive = (path: string) => location.pathname === path;
 

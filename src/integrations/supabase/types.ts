@@ -2472,6 +2472,51 @@ export type Database = {
         }
         Relationships: []
       }
+      dynamic_menu_items: {
+        Row: {
+          area: string
+          badge: string | null
+          created_at: string
+          created_by: string | null
+          group_id: string
+          icon: string
+          id: string
+          is_active: boolean
+          order_index: number
+          title: string
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          area: string
+          badge?: string | null
+          created_at?: string
+          created_by?: string | null
+          group_id: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          title: string
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          area?: string
+          badge?: string | null
+          created_at?: string
+          created_by?: string | null
+          group_id?: string
+          icon?: string
+          id?: string
+          is_active?: boolean
+          order_index?: number
+          title?: string
+          updated_at?: string
+          url?: string
+        }
+        Relationships: []
+      }
       editable_content: {
         Row: {
           content_key: string
@@ -9371,6 +9416,7 @@ export type Database = {
         | "afiliado"
         | "marketing"
         | "contabilidade"
+        | "aluno"
       employee_status: "ativo" | "ferias" | "afastado" | "inativo"
       expense_category:
         | "comida"
@@ -9535,6 +9581,7 @@ export const Constants = {
         "afiliado",
         "marketing",
         "contabilidade",
+        "aluno",
       ],
       employee_status: ["ativo", "ferias", "afastado", "inativo"],
       expense_category: [
