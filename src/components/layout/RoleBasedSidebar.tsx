@@ -122,8 +122,7 @@ const menuGroups: MenuGroup[] = [
     items: [
       { title: "Dashboard Empresarial", url: "/empresas/dashboard", icon: Building2, area: "dashboard-empresarial", badge: "ERP" },
       { title: "Receitas", url: "/empresas/receitas", icon: TrendingUp, area: "receitas-empresariais", badge: "LIVE" },
-      { title: "Finanças Empresa", url: "/financas-empresa", icon: Wallet, area: "financas-empresa" },
-      { title: "Pagamentos", url: "/pagamentos", icon: CreditCard, area: "pagamentos" },
+      { title: "Finanças Empresa", url: "/financas-empresa", icon: Wallet, area: "financas-empresa", badge: "CENTRAL" },
       { title: "Contabilidade", url: "/contabilidade", icon: Calculator, area: "contabilidade" },
       { title: "Funcionários (RH)", url: "/empresas/rh", icon: Users, area: "rh-funcionarios" },
       { title: "Arquivos Empresariais", url: "/empresas/arquivos", icon: FolderOpen, area: "arquivos-empresariais" },
@@ -160,9 +159,8 @@ const menuGroups: MenuGroup[] = [
     color: "from-green-600/80",
     items: [
       { title: "Finanças Pessoais", url: "/financas-pessoais", icon: Wallet, area: "financas-pessoais" },
-      { title: "Finanças Empresa", url: "/financas-empresa", icon: Building2, area: "financas-empresa" },
+      { title: "Finanças Empresa", url: "/financas-empresa", icon: Building2, area: "financas-empresa", badge: "CENTRAL" },
       { title: "Entradas", url: "/entradas", icon: TrendingUp, area: "entradas" },
-      { title: "Pagamentos", url: "/pagamentos", icon: CreditCard, area: "pagamentos" },
       { title: "Contabilidade", url: "/contabilidade", icon: Calculator, area: "contabilidade" },
     ],
   },

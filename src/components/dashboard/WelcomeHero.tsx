@@ -228,7 +228,7 @@ export function WelcomeHero({ pendingTasks, completedToday, pendingPayments, pro
             {pendingPayments > 0 && (
               <div 
                 className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[hsl(var(--stats-gold))]/10 border border-[hsl(var(--stats-gold))]/20 cursor-pointer hover:bg-[hsl(var(--stats-gold))]/20 hover:border-[hsl(var(--stats-gold))]/40 transition-all group backdrop-blur-sm"
-                onClick={() => navigate("/pagamentos")}
+                onClick={() => navigate("/financas-empresa")}
               >
                 <AlertTriangle className="h-4 w-4 text-[hsl(var(--stats-gold))]" />
                 <span className="text-sm font-medium text-[hsl(var(--stats-gold))]">
