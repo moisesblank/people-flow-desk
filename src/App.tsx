@@ -150,7 +150,8 @@ const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").t
 const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
 const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then(m => ({ default: m.GlobalDuplicationSystem })));
 const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then(m => ({ default: m.MasterUndoIndicator })));
-
+const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then(m => ({ default: m.MasterDeleteOverlay })));
+const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then(m => ({ default: m.MasterContextMenu })));
 
 function AppContent() {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
@@ -164,6 +165,8 @@ function AppContent() {
         <LazyMasterQuickAddMenu />
         <LazyGlobalDuplication />
         <LazyMasterUndoIndicator />
+        <LazyMasterDeleteOverlay />
+        <LazyMasterContextMenu />
       </Suspense>
       <VisualEditMode />
       <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
