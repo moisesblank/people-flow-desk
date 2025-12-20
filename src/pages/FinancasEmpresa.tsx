@@ -669,57 +669,157 @@ export default function FinancasEmpresa() {
         ))}
       </div>
 
-      {/* Lista Recente */}
-      <Card className="border-border/50">
-        <CardHeader className="flex flex-row items-center justify-between pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Zap className="h-5 w-5 text-yellow-500" />
-            Lançamentos Recentes
-          </CardTitle>
-          <Button variant="ghost" size="sm" onClick={() => setViewMode("gastos")}>
-            Ver todos <ArrowUpRight className="h-4 w-4 ml-1" />
+      {/* Lista Recente - Estilo Multinacional */}
+      <Card className="border-border/50 overflow-hidden">
+        <CardHeader className="flex flex-row items-center justify-between pb-4 border-b border-border/30 bg-gradient-to-r from-secondary/50 to-transparent">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-yellow-500/20 to-orange-500/20 flex items-center justify-center">
+              <Zap className="h-5 w-5 text-yellow-500" />
+            </div>
+            <div>
+              <CardTitle className="text-lg">Lançamentos Recentes</CardTitle>
+              <p className="text-xs text-muted-foreground">Últimas movimentações financeiras</p>
+            </div>
+          </div>
+          <Button variant="outline" size="sm" className="gap-2" onClick={() => setViewMode("gastos")}>
+            Ver todos <ArrowUpRight className="h-4 w-4" />
           </Button>
         </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {allItems.slice(0, 8).map((item) => {
+        <CardContent className="p-0">
+          {/* Header da Tabela */}
+          <div className="grid grid-cols-12 gap-4 px-4 py-3 bg-muted/30 border-b border-border/30 text-xs font-medium text-muted-foreground uppercase tracking-wider">
+            <div className="col-span-4 md:col-span-4">Descrição</div>
+            <div className="col-span-2 md:col-span-2">Categoria</div>
+            <div className="col-span-2 md:col-span-2 text-center">Data</div>
+            <div className="col-span-2 md:col-span-2 text-right">Valor</div>
+            <div className="col-span-2 md:col-span-2 text-center">Status</div>
+          </div>
+
+          {/* Lista de Items */}
+          <div className="divide-y divide-border/20">
+            {allItems.slice(0, 10).map((item, index) => {
               const statusConfig = STATUS_COLORS[item.statusKey] || STATUS_COLORS.pendente;
               const StatusIcon = statusConfig.icon;
+              const itemDate = item.data ? parseISO(item.data) : null;
+              const daysDiff = itemDate ? differenceInDays(new Date(), itemDate) : null;
+              
+              // Determinar texto relativo de tempo
+              let timeRelative = '--';
+              if (itemDate) {
+                if (isToday(itemDate)) {
+                  timeRelative = 'Hoje';
+                } else if (daysDiff === 1) {
+                  timeRelative = 'Ontem';
+                } else if (daysDiff !== null && daysDiff > 0 && daysDiff <= 7) {
+                  timeRelative = `${daysDiff} dias atrás`;
+                } else if (daysDiff !== null && daysDiff > 7 && daysDiff <= 30) {
+                  timeRelative = `${Math.floor(daysDiff / 7)} sem. atrás`;
+                } else {
+                  timeRelative = format(itemDate, "dd/MM/yy");
+                }
+              }
+
               return (
-                <div
+                <motion.div
                   key={`${item.itemType}-${item.id}`}
-                  className="flex items-center justify-between p-3 rounded-lg bg-secondary/30 hover:bg-secondary/50 transition-colors"
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  transition={{ delay: index * 0.03 }}
+                  className="grid grid-cols-12 gap-4 px-4 py-4 hover:bg-secondary/30 transition-all cursor-pointer group"
+                  onClick={() => openModal(item.itemType, item)}
                 >
-                  <div className="flex items-center gap-3">
+                  {/* Descrição com Ícone */}
+                  <div className="col-span-4 md:col-span-4 flex items-center gap-3">
                     <div className={cn(
-                      "w-10 h-10 rounded-lg flex items-center justify-center",
-                      item.itemType === 'gasto_fixo' ? "bg-red-500/20" :
-                      item.itemType === 'gasto_extra' ? "bg-blue-500/20" : "bg-purple-500/20"
+                      "w-10 h-10 rounded-xl flex items-center justify-center flex-shrink-0 transition-transform group-hover:scale-110",
+                      item.itemType === 'gasto_fixo' ? "bg-gradient-to-br from-red-500/20 to-red-600/10 border border-red-500/20" :
+                      item.itemType === 'gasto_extra' ? "bg-gradient-to-br from-blue-500/20 to-blue-600/10 border border-blue-500/20" : 
+                      "bg-gradient-to-br from-purple-500/20 to-purple-600/10 border border-purple-500/20"
                     )}>
                       {item.itemType === 'gasto_fixo' ? <Building2 className="h-5 w-5 text-red-500" /> :
                        item.itemType === 'gasto_extra' ? <Receipt className="h-5 w-5 text-blue-500" /> :
                        <CreditCard className="h-5 w-5 text-purple-500" />}
                     </div>
-                    <div>
-                      <p className="font-medium text-sm">{item.label}</p>
-                      <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                        <span>{item.categoria || 'Sem categoria'}</span>
-                        <span>•</span>
-                        <span>{item.data ? format(parseISO(item.data), 'dd/MM/yyyy') : '--'}</span>
+                    <div className="min-w-0">
+                      <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{item.label}</p>
+                      <div className="flex items-center gap-1">
+                        <Badge variant="outline" className={cn(
+                          "text-[10px] h-5 px-1.5",
+                          item.itemType === 'gasto_fixo' ? "border-red-500/30 text-red-400" :
+                          item.itemType === 'gasto_extra' ? "border-blue-500/30 text-blue-400" : 
+                          "border-purple-500/30 text-purple-400"
+                        )}>
+                          {item.itemType === 'gasto_fixo' ? 'Fixo' :
+                           item.itemType === 'gasto_extra' ? 'Extra' : 'Pagamento'}
+                        </Badge>
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="font-bold text-primary">{formatCompanyCurrency(item.valor)}</span>
-                    <Badge className={cn("text-xs", statusConfig.bg, statusConfig.text)}>
-                      <StatusIcon className="h-3 w-3 mr-1" />
-                      {item.statusKey}
+
+                  {/* Categoria */}
+                  <div className="col-span-2 md:col-span-2 flex items-center">
+                    <span className="text-sm text-muted-foreground truncate">{item.categoria || 'Outros'}</span>
+                  </div>
+
+                  {/* Data Completa */}
+                  <div className="col-span-2 md:col-span-2 flex flex-col items-center justify-center">
+                    <span className="text-xs font-medium text-foreground">
+                      {itemDate ? format(itemDate, "dd MMM", { locale: ptBR }) : '--'}
+                    </span>
+                    <span className="text-[10px] text-muted-foreground">
+                      {timeRelative}
+                    </span>
+                  </div>
+
+                  {/* Valor */}
+                  <div className="col-span-2 md:col-span-2 flex items-center justify-end">
+                    <span className="font-bold text-primary text-base tabular-nums">
+                      {formatCompanyCurrency(item.valor)}
+                    </span>
+                  </div>
+
+                  {/* Status */}
+                  <div className="col-span-2 md:col-span-2 flex items-center justify-center">
+                    <Badge className={cn(
+                      "text-xs font-medium px-2.5 py-1 gap-1.5",
+                      statusConfig.bg, 
+                      statusConfig.text
+                    )}>
+                      <StatusIcon className="h-3 w-3" />
+                      <span className="capitalize">{item.statusKey}</span>
                     </Badge>
                   </div>
-                </div>
+                </motion.div>
               );
             })}
           </div>
+
+          {/* Footer com Total */}
+          {allItems.length > 0 && (
+            <div className="px-4 py-3 bg-muted/30 border-t border-border/30 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">
+                Mostrando {Math.min(10, allItems.length)} de {allItems.length} lançamentos
+              </span>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-muted-foreground">Total visível:</span>
+                  <span className="font-bold text-primary">
+                    {formatCompanyCurrency(allItems.slice(0, 10).reduce((sum, i) => sum + i.valor, 0))}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {allItems.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <div className="w-16 h-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
+                <FolderOpen className="h-8 w-8 text-muted-foreground/50" />
+              </div>
+              <p className="text-muted-foreground font-medium">Nenhum lançamento encontrado</p>
+              <p className="text-xs text-muted-foreground/70 mt-1">Adicione seu primeiro lançamento acima</p>
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
