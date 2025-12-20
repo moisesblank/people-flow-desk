@@ -22,7 +22,8 @@ export type EntityType =
   | 'equipment'
   | 'lesson'
   | 'module'
-  | 'document';
+  | 'document'
+  | 'payment';
 
 export interface Attachment {
   id: string;
