@@ -7567,6 +7567,54 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access_expiration: {
+        Row: {
+          access_end_date: string
+          access_start_date: string
+          created_at: string | null
+          days_duration: number
+          extended_at: string | null
+          extended_by: string | null
+          id: string
+          is_active: boolean | null
+          notes: string | null
+          original_end_date: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          access_end_date?: string
+          access_start_date?: string
+          created_at?: string | null
+          days_duration?: number
+          extended_at?: string | null
+          extended_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          original_end_date?: string | null
+          role: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          access_end_date?: string
+          access_start_date?: string
+          created_at?: string | null
+          days_duration?: number
+          extended_at?: string | null
+          extended_by?: string | null
+          id?: string
+          is_active?: boolean | null
+          notes?: string | null
+          original_end_date?: string | null
+          role?: Database["public"]["Enums"]["app_role"]
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_achievements: {
         Row: {
           achievement_id: string
@@ -9458,6 +9506,19 @@ export type Database = {
         Returns: Json
       }
       admin_get_device_stats: { Args: never; Returns: Json }
+      admin_list_beta_users: {
+        Args: never
+        Returns: {
+          access_end: string
+          access_start: string
+          days_remaining: number
+          email: string
+          is_active: boolean
+          is_expired: boolean
+          nome: string
+          user_id: string
+        }[]
+      }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
@@ -9478,6 +9539,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_beta_access: { Args: { _user_id?: string }; Returns: Json }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
@@ -9514,6 +9576,10 @@ export type Database = {
       }
       current_user_email: { Args: never; Returns: string }
       deactivate_device: { Args: { p_device_id: string }; Returns: Json }
+      extend_beta_access: {
+        Args: { _additional_days: number; _user_id: string }
+        Returns: Json
+      }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
       generate_2fa_code: { Args: never; Returns: string }
       generate_signed_video_url: {
@@ -9628,6 +9694,10 @@ export type Database = {
         Args: { _user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      grant_beta_access: {
+        Args: { _days?: number; _user_id: string }
+        Returns: Json
+      }
       has_area_permission: {
         Args: { _area: string; _user_id: string }
         Returns: boolean
@@ -9718,6 +9788,7 @@ export type Database = {
         Returns: string
       }
       register_user_logout: { Args: never; Returns: undefined }
+      revoke_beta_access: { Args: { _user_id: string }; Returns: Json }
       security_cleanup_job: { Args: never; Returns: undefined }
       update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
@@ -9780,6 +9851,8 @@ export type Database = {
         | "marketing"
         | "contabilidade"
         | "aluno"
+        | "beta"
+        | "aluno_gratuito"
       employee_status: "ativo" | "ferias" | "afastado" | "inativo"
       expense_category:
         | "comida"
@@ -9945,6 +10018,8 @@ export const Constants = {
         "marketing",
         "contabilidade",
         "aluno",
+        "beta",
+        "aluno_gratuito",
       ],
       employee_status: ["ativo", "ferias", "afastado", "inativo"],
       expense_category: [

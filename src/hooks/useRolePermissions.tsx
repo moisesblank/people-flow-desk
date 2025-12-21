@@ -19,7 +19,9 @@ export type FullAppRole =
   | "monitoria" 
   | "afiliado" 
   | "marketing" 
-  | "contabilidade";
+  | "contabilidade"
+  | "beta"           // ALUNO PAGANTE (365 dias)
+  | "aluno_gratuito"; // CADASTRO COMUM (apenas área gratuita)
 
 // Áreas do sistema
 export type SystemArea = 
@@ -72,7 +74,12 @@ export type SystemArea =
   | "arquivos-empresariais"
   | "fluxo-caixa"
   | "contas-pagar"
-  | "contas-receber";
+  | "contas-receber"
+  // NOVAS ÁREAS PARA ALUNOS
+  | "area-beta"
+  | "area-gratuita"
+  | "comunidade"
+  | "portal-beta";
 
 // Mapeamento de URLs para áreas
 const URL_TO_AREA: Record<string, SystemArea> = {
@@ -126,6 +133,11 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/empresas/fluxo-caixa": "fluxo-caixa",
   "/empresas/contas-pagar": "contas-pagar",
   "/empresas/contas-receber": "contas-receber",
+  // ÁREAS DE ALUNOS
+  "/area-beta": "area-beta",
+  "/area-gratuita": "area-gratuita",
+  "/comunidade": "comunidade",
+  "/portal-beta": "portal-beta",
 };
 
 // ============================================
@@ -208,6 +220,17 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "cursos", "alunos", "portal-aluno",
     "relatorios", "guia"
   ],
+
+  // BETA - ALUNO PAGANTE (365 dias de acesso)
+  beta: [
+    "portal-beta", "area-beta", "cursos", "simulados", 
+    "portal-aluno", "comunidade", "guia"
+  ],
+
+  // ALUNO GRATUITO - Apenas área pré-login
+  aluno_gratuito: [
+    "area-gratuita"
+  ],
 };
 
 // Rótulos amigáveis para cada cargo
@@ -221,6 +244,8 @@ export const ROLE_LABELS: Record<FullAppRole, string> = {
   marketing: "Marketing",
   contabilidade: "Contabilidade",
   employee: "Administrativo",
+  beta: "Aluno BETA (Premium)",
+  aluno_gratuito: "Usuário Gratuito",
 };
 
 // Cores para badges de cargo
@@ -234,6 +259,8 @@ export const ROLE_COLORS: Record<FullAppRole, string> = {
   marketing: "bg-gradient-to-r from-orange-500 to-red-500 text-white",
   contabilidade: "bg-gradient-to-r from-teal-500 to-green-500 text-white",
   employee: "bg-gradient-to-r from-gray-500 to-slate-500 text-white",
+  beta: "bg-gradient-to-r from-amber-500 to-yellow-400 text-black",
+  aluno_gratuito: "bg-gradient-to-r from-slate-400 to-gray-300 text-black",
 };
 
 // Descrições dos cargos
@@ -247,6 +274,8 @@ export const ROLE_DESCRIPTIONS: Record<FullAppRole, string> = {
   marketing: "Marketing, lançamentos e gestão do site.",
   contabilidade: "Acesso às finanças da empresa (visualização).",
   employee: "Acesso básico ao sistema (somente leitura em algumas áreas).",
+  beta: "Aluno Premium com acesso completo por 365 dias à área do aluno.",
+  aluno_gratuito: "Acesso exclusivo à área gratuita (pré-login).",
 };
 
 const OWNER_EMAIL = "moisesblank@gmail.com";

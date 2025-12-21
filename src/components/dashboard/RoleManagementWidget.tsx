@@ -58,6 +58,8 @@ const ROLE_ICONS: Record<FullAppRole, React.ElementType> = {
   marketing: TrendingUp,
   contabilidade: Calculator,
   employee: UserCheck,
+  beta: Sparkles,
+  aluno_gratuito: Users2,
 };
 
 // Cores de gradiente para cada cargo
@@ -71,6 +73,8 @@ const ROLE_GRADIENTS: Record<FullAppRole, string> = {
   marketing: "from-orange-500 via-red-500 to-rose-500",
   contabilidade: "from-teal-500 via-cyan-500 to-blue-500",
   employee: "from-slate-500 via-gray-500 to-zinc-500",
+  beta: "from-amber-500 via-yellow-400 to-orange-500",
+  aluno_gratuito: "from-gray-400 via-slate-400 to-zinc-400",
 };
 
 // Cores de fundo suave
@@ -84,6 +88,8 @@ const ROLE_BG: Record<FullAppRole, string> = {
   marketing: "bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20",
   contabilidade: "bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20",
   employee: "bg-slate-500/10 border-slate-500/30 hover:bg-slate-500/20",
+  beta: "bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20",
+  aluno_gratuito: "bg-gray-500/10 border-gray-500/30 hover:bg-gray-500/20",
 };
 
 // Labels amigáveis para áreas principais
@@ -109,7 +115,8 @@ const ALL_AREAS = Object.keys(ROLE_PERMISSIONS.owner) as SystemArea[];
 // Ordem de exibição dos cargos
 const ROLE_ORDER: FullAppRole[] = [
   "owner", "admin", "coordenacao", "suporte", 
-  "monitoria", "marketing", "contabilidade", "afiliado", "employee"
+  "monitoria", "marketing", "contabilidade", "afiliado", "employee",
+  "beta", "aluno_gratuito"
 ];
 
 // Descrições curtas
@@ -123,6 +130,8 @@ const ROLE_SHORT_DESC: Record<FullAppRole, string> = {
   contabilidade: "Finanças empresa (leitura)",
   afiliado: "Métricas de afiliados",
   employee: "Acesso básico limitado",
+  beta: "Aluno Premium (365 dias)",
+  aluno_gratuito: "Apenas área gratuita",
 };
 
 export function RoleManagementWidget() {
