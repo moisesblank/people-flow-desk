@@ -5735,6 +5735,7 @@ export type Database = {
           avatar_url: string | null
           bio: string | null
           churn_risk_score: number | null
+          cpf: string | null
           created_at: string | null
           current_focus_area_id: string | null
           email: string | null
@@ -5757,6 +5758,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           churn_risk_score?: number | null
+          cpf?: string | null
           created_at?: string | null
           current_focus_area_id?: string | null
           email?: string | null
@@ -5779,6 +5781,7 @@ export type Database = {
           avatar_url?: string | null
           bio?: string | null
           churn_risk_score?: number | null
+          cpf?: string | null
           created_at?: string | null
           current_focus_area_id?: string | null
           email?: string | null
@@ -10464,6 +10467,10 @@ export type Database = {
         | "webhook.received"
         | "notification.sent"
         | "content.viewed"
+        | "flashcard.reviewed"
+        | "churn.risk.high"
+        | "study.session.started"
+        | "study.session.ended"
       event_status:
         | "pending"
         | "processing"
@@ -10486,6 +10493,8 @@ export type Database = {
         | "gasolina"
         | "lanches"
       flashcard_rating: "again" | "hard" | "good" | "easy"
+      flashcard_state: "new" | "learning" | "review" | "relearning"
+      question_difficulty: "easy" | "medium" | "hard"
       sector_type:
         | "Coordenação"
         | "Suporte"
@@ -10666,6 +10675,10 @@ export const Constants = {
         "webhook.received",
         "notification.sent",
         "content.viewed",
+        "flashcard.reviewed",
+        "churn.risk.high",
+        "study.session.started",
+        "study.session.ended",
       ],
       event_status: [
         "pending",
@@ -10691,6 +10704,8 @@ export const Constants = {
         "lanches",
       ],
       flashcard_rating: ["again", "hard", "good", "easy"],
+      flashcard_state: ["new", "learning", "review", "relearning"],
+      question_difficulty: ["easy", "medium", "hard"],
       sector_type: [
         "Coordenação",
         "Suporte",
