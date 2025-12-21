@@ -1734,6 +1734,30 @@ export type Database = {
         }
         Relationships: []
       }
+      connection_pool_stats: {
+        Row: {
+          active_connections: number | null
+          id: string
+          measured_at: string | null
+          peak_connections: number | null
+          requests_per_second: number | null
+        }
+        Insert: {
+          active_connections?: number | null
+          id?: string
+          measured_at?: string | null
+          peak_connections?: number | null
+          requests_per_second?: number | null
+        }
+        Update: {
+          active_connections?: number | null
+          id?: string
+          measured_at?: string | null
+          peak_connections?: number | null
+          requests_per_second?: number | null
+        }
+        Relationships: []
+      }
       contabilidade: {
         Row: {
           ano_referencia: number | null
@@ -10201,6 +10225,17 @@ export type Database = {
         }
         Relationships: []
       }
+      mv_realtime_stats: {
+        Row: {
+          alunos_ativos: number | null
+          funcionarios_ativos: number | null
+          receita_mes: number | null
+          updated_at: string | null
+          usuarios_online: number | null
+          vendas_mes: number | null
+        }
+        Relationships: []
+      }
       owner_activity_summary: {
         Row: {
           action: string | null
@@ -10338,6 +10373,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      auto_cleanup_for_load: { Args: never; Returns: undefined }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
@@ -10466,6 +10502,10 @@ export type Database = {
         }[]
       }
       get_cached_dashboard_stats: { Args: never; Returns: Json }
+      get_dashboard_cached: {
+        Args: { p_force_refresh?: boolean }
+        Returns: Json
+      }
       get_dashboard_stats_realtime: { Args: never; Returns: Json }
       get_entity_attachments: {
         Args: { p_entity_id: string; p_entity_type: string }
@@ -10528,6 +10568,7 @@ export type Database = {
           nome: string
         }[]
       }
+      get_system_load: { Args: never; Returns: Json }
       get_user_devices: { Args: { p_user_id?: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
@@ -10619,6 +10660,7 @@ export type Database = {
         Returns: number
       }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
+      refresh_realtime_stats: { Args: never; Returns: undefined }
       register_device_with_limit: {
         Args: {
           p_browser?: string
