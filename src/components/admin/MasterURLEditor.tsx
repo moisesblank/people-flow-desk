@@ -277,77 +277,7 @@ export function MasterURLEditor() {
     return typeConfig.prefix + urlValue;
   }, [urlValue, urlType]);
 
-  // Salvar URL
-  const handleSave = useCallback(async () => {
-    if (!editingElement) return;
-
-    setIsSaving(true);
-    try {
-      const finalURL = buildFinalURL();
-
-      // Aplicar no elemento
-      if (editingElement.elementType === 'a') {
-        (editingElement.element as HTMLAnchorElement).href = finalURL;
-      } else {
-        editingElement.element.dataset.href = finalURL;
-        editingElement.element.dataset.url = finalURL;
-      }
-
-      // Configurar target
-      if (targetBlank) {
-        editingElement.element.setAttribute('target', '_blank');
-        editingElement.element.setAttribute('rel', 'noopener noreferrer');
-      } else {
-        editingElement.element.removeAttribute('target');
-        editingElement.element.removeAttribute('rel');
-      }
-
-      // Adicionar handler de navegação para buttons/divs
-      if (editingElement.elementType !== 'a' && finalURL) {
-        editingElement.element.style.cursor = 'pointer';
-        editingElement.element.onclick = (e) => {
-          e.preventDefault();
-          if (finalURL.startsWith('/')) {
-            window.location.href = finalURL;
-          } else if (targetBlank) {
-            window.open(finalURL, '_blank');
-          } else {
-            window.location.href = finalURL;
-          }
-        };
-      }
-
-      // Salvar no banco
-      const { error } = await supabase
-        .from('editable_content')
-        .upsert({
-          content_key: editingElement.contentKey || `url_${Date.now()}`,
-          content_value: JSON.stringify({
-            original_url: editingElement.originalHref,
-            new_url: finalURL,
-            target: targetBlank ? '_blank' : '_self',
-            element_type: editingElement.elementType,
-          }),
-          content_type: 'url',
-          page_key: window.location.pathname.replace(/\//g, '_') || 'global',
-        }, { onConflict: 'content_key' });
-
-      if (error) throw error;
-
-      toast.success('🔗 URL atualizada!', {
-        description: `Novo destino: ${finalURL}`,
-      });
-
-      handleClose();
-    } catch (error) {
-      console.error('Erro ao salvar URL:', error);
-      toast.error('Erro ao salvar URL');
-    } finally {
-      setIsSaving(false);
-    }
-  }, [editingElement, buildFinalURL, targetBlank]);
-
-  // Cancelar/Fechar
+  // Cancelar/Fechar - DEFINIDO ANTES de handleSave
   const handleClose = useCallback(() => {
     if (editingElement) {
       editingElement.element.style.outline = '';
@@ -358,6 +288,137 @@ export function MasterURLEditor() {
     setUrlType('internal');
     setTargetBlank(false);
   }, [editingElement]);
+
+  // Salvar URL - CORRIGIDO PARA FUNCIONAR 100%
+  const handleSave = useCallback(async () => {
+    if (!editingElement) return;
+
+    setIsSaving(true);
+    const finalURL = buildFinalURL();
+    const contentKey = editingElement.contentKey || `url_${editingElement.elementType}_${Date.now()}`;
+
+    console.log('🔗 [MasterURLEditor] Iniciando salvamento:', {
+      contentKey,
+      finalURL,
+      targetBlank,
+      elementType: editingElement.elementType
+    });
+
+    try {
+      // 1. Aplicar no elemento IMEDIATAMENTE
+      if (editingElement.elementType === 'a') {
+        (editingElement.element as HTMLAnchorElement).href = finalURL;
+      } else {
+        editingElement.element.dataset.href = finalURL;
+        editingElement.element.dataset.url = finalURL;
+      }
+
+      // 2. Configurar target
+      if (targetBlank) {
+        editingElement.element.setAttribute('target', '_blank');
+        editingElement.element.setAttribute('rel', 'noopener noreferrer');
+      } else {
+        editingElement.element.removeAttribute('target');
+        editingElement.element.removeAttribute('rel');
+      }
+
+      // 3. Adicionar handler de navegação para buttons/divs
+      if (editingElement.elementType !== 'a' && finalURL) {
+        editingElement.element.style.cursor = 'pointer';
+        const url = finalURL; // Capturar em closure
+        const openBlank = targetBlank;
+        editingElement.element.onclick = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (url.startsWith('/')) {
+            window.location.href = url;
+          } else if (openBlank) {
+            window.open(url, '_blank', 'noopener,noreferrer');
+          } else {
+            window.location.href = url;
+          }
+        };
+      }
+
+      // 4. SALVAR NO BANCO - Usar INSERT/UPDATE separado para debug
+      const contentData = {
+        content_key: contentKey,
+        content_value: JSON.stringify({
+          original_url: editingElement.originalHref,
+          new_url: finalURL,
+          target: targetBlank ? '_blank' : '_self',
+          element_type: editingElement.elementType,
+          element_path: editingElement.elementPath,
+          saved_at: new Date().toISOString(),
+        }),
+        content_type: 'url',
+        page_key: window.location.pathname.replace(/\//g, '_') || 'global',
+        updated_at: new Date().toISOString(),
+      };
+
+      console.log('📝 [MasterURLEditor] Dados para salvar:', contentData);
+
+      // Verificar se já existe
+      const { data: existing, error: selectError } = await supabase
+        .from('editable_content')
+        .select('id')
+        .eq('content_key', contentKey)
+        .maybeSingle();
+
+      if (selectError) {
+        console.error('❌ [MasterURLEditor] Erro ao verificar:', selectError);
+      }
+
+      let saveError;
+      
+      if (existing) {
+        // UPDATE
+        console.log('📝 [MasterURLEditor] Atualizando registro existente:', existing.id);
+        const { error } = await supabase
+          .from('editable_content')
+          .update({
+            content_value: contentData.content_value,
+            updated_at: contentData.updated_at,
+          })
+          .eq('content_key', contentKey);
+        saveError = error;
+      } else {
+        // INSERT
+        console.log('📝 [MasterURLEditor] Inserindo novo registro...');
+        const { error } = await supabase
+          .from('editable_content')
+          .insert(contentData);
+        saveError = error;
+      }
+
+      if (saveError) {
+        console.error('❌ [MasterURLEditor] Erro ao salvar:', saveError);
+        throw saveError;
+      }
+
+      console.log('✅ [MasterURLEditor] Salvo com sucesso!');
+
+      toast.success('🔗 URL salva com sucesso!', {
+        description: `Destino: ${finalURL}`,
+        duration: 4000,
+      });
+
+      // Emitir evento para sincronização global
+      window.dispatchEvent(new CustomEvent('global-sync'));
+      window.dispatchEvent(new CustomEvent('url-updated', { 
+        detail: { key: contentKey, url: finalURL } 
+      }));
+
+      handleClose();
+    } catch (error: any) {
+      console.error('❌ [MasterURLEditor] Erro crítico:', error);
+      toast.error('Erro ao salvar URL', {
+        description: error?.message || 'Verifique o console para detalhes',
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  }, [editingElement, buildFinalURL, targetBlank, handleClose]);
 
   // Restaurar URL original
   const handleRestore = useCallback(() => {

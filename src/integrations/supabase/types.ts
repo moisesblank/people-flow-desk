@@ -9315,7 +9315,9 @@ export type Database = {
         Returns: undefined
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
-      is_owner: { Args: { _user_id?: string }; Returns: boolean }
+      is_owner:
+        | { Args: never; Returns: boolean }
+        | { Args: { _user_id?: string }; Returns: boolean }
       log_activity: {
         Args: {
           _action: string

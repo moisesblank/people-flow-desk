@@ -433,11 +433,13 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const updateContent = useCallback(async (key: string, value: string, type = 'text'): Promise<boolean> => {
-    console.log('🔮 updateContent chamado:', { key, value, type, isOwner });
+    console.log('🔮 [GodMode] updateContent chamado:', { key, valueLength: value.length, type, isOwner });
     
     if (!isOwner) {
-      console.warn('❌ Sem permissão - isOwner:', isOwner);
-      toast.error('Sem permissão para editar');
+      console.warn('❌ [GodMode] Sem permissão - isOwner:', isOwner);
+      toast.error('Sem permissão para editar', {
+        description: 'Apenas o Owner pode editar conteúdo'
+      });
       return false;
     }
 
@@ -448,7 +450,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
       .replace(/on\w+=/gi, '');
 
     try {
-      console.log('📝 Salvando no banco...', { key, sanitized });
+      console.log('📝 [GodMode] Salvando no banco...', { key, sanitizedLength: sanitized.length });
       
       // Verificar se existe
       const { data: existing, error: selectError } = await supabase
@@ -458,52 +460,60 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         .maybeSingle();
 
       if (selectError) {
-        console.error('Erro ao verificar existência:', selectError);
+        console.error('❌ [GodMode] Erro ao verificar existência:', selectError);
       }
 
+      let saveError;
+
       if (existing) {
-        console.log('📝 Atualizando registro existente:', existing.id);
-        const { error: updateError } = await supabase
+        console.log('📝 [GodMode] Atualizando registro existente:', existing.id);
+        const { error } = await supabase
           .from('editable_content')
           .update({ 
             content_value: sanitized,
             updated_at: new Date().toISOString()
           })
           .eq('content_key', key);
-
-        if (updateError) {
-          console.error('Erro no update:', updateError);
-          throw updateError;
-        }
-        console.log('✅ Update realizado com sucesso!');
+        saveError = error;
       } else {
-        console.log('📝 Inserindo novo registro...');
-        const { error: insertError } = await supabase
+        console.log('📝 [GodMode] Inserindo novo registro...');
+        const { error } = await supabase
           .from('editable_content')
           .insert({
             content_key: key,
             content_value: sanitized,
             content_type: type,
-            page_key: window.location.pathname.replace(/\//g, '_') || 'global'
+            page_key: window.location.pathname.replace(/\//g, '_') || 'global',
+            updated_at: new Date().toISOString()
           });
-
-        if (insertError) {
-          console.error('Erro no insert:', insertError);
-          throw insertError;
-        }
-        console.log('✅ Insert realizado com sucesso!');
+        saveError = error;
       }
 
+      if (saveError) {
+        console.error('❌ [GodMode] Erro ao salvar:', saveError);
+        throw saveError;
+      }
+
+      console.log('✅ [GodMode] Salvo com sucesso!');
+      
+      // Atualizar cache local
       setContentCache(prev => ({ ...prev, [key]: sanitized }));
-      toast.success('✨ Salvo com sucesso!', {
-        description: `Conteúdo "${key}" atualizado`,
+      
+      // Emitir evento de sincronização
+      window.dispatchEvent(new CustomEvent('global-sync'));
+      window.dispatchEvent(new CustomEvent('content-updated', { 
+        detail: { key, value: sanitized, type } 
+      }));
+      
+      toast.success('✨ Conteúdo salvo!', {
+        description: `"${key.slice(0, 30)}..." atualizado`,
         duration: 3000
       });
       return true;
     } catch (err: any) {
-      console.error('❌ Erro ao salvar:', err);
-      toast.error('Erro ao salvar', {
-        description: err?.message || 'Tente novamente'
+      console.error('❌ [GodMode] Erro crítico ao salvar:', err);
+      toast.error('Erro ao salvar conteúdo', {
+        description: err?.message || 'Verifique o console para detalhes'
       });
       return false;
     }
