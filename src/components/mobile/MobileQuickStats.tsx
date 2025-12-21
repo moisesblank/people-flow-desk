@@ -1,8 +1,9 @@
 // ============================================
-// MOISÉS MEDEIROS - Mobile Quick Stats
-// Cards compactos para visão rápida no mobile
+// SYNAPSE v15.0 - Mobile Quick Stats ULTRA
+// Cards compactos ULTRA otimizados para mobile
 // ============================================
 
+import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
 import {
   TrendingUp,
@@ -12,6 +13,8 @@ import {
   CheckSquare,
   AlertCircle,
 } from "lucide-react";
+import { usePerformance } from "@/hooks/usePerformance";
+import { cn } from "@/lib/utils";
 
 interface MobileQuickStatsProps {
   income: number;
@@ -22,16 +25,87 @@ interface MobileQuickStatsProps {
   students: number;
 }
 
-function formatCurrency(cents: number): string {
+// Memoized currency formatter
+const formatCurrency = (cents: number): string => {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
     notation: "compact",
     maximumFractionDigits: 1,
   }).format(cents / 100);
-}
+};
 
-export function MobileQuickStats({
+// Static stat card for low-end devices
+const StaticStatCard = memo(function StaticStatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  bg,
+}: {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+}) {
+  return (
+    <div className="p-4 rounded-2xl bg-card border border-border contain-layout">
+      <div className="flex items-center gap-2 mb-2">
+        <div className={cn("p-1.5 rounded-lg", bg)}>
+          <Icon className={cn("h-4 w-4", color)} />
+        </div>
+        <span className="text-xs text-muted-foreground font-medium">
+          {label}
+        </span>
+      </div>
+      <p className={cn("text-xl font-bold", color)}>{value}</p>
+    </div>
+  );
+});
+
+// Animated stat card for capable devices
+const AnimatedStatCard = memo(function AnimatedStatCard({
+  label,
+  value,
+  icon: Icon,
+  color,
+  bg,
+  index,
+  animationDuration,
+}: {
+  label: string;
+  value: string;
+  icon: React.ElementType;
+  color: string;
+  bg: string;
+  index: number;
+  animationDuration: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        delay: Math.min(index * 0.05, 0.2),
+        duration: animationDuration / 1000
+      }}
+      className="p-4 rounded-2xl bg-card border border-border gpu-accelerate contain-layout"
+    >
+      <div className="flex items-center gap-2 mb-2">
+        <div className={cn("p-1.5 rounded-lg", bg)}>
+          <Icon className={cn("h-4 w-4", color)} />
+        </div>
+        <span className="text-xs text-muted-foreground font-medium">
+          {label}
+        </span>
+      </div>
+      <p className={cn("text-xl font-bold", color)}>{value}</p>
+    </motion.div>
+  );
+});
+
+export const MobileQuickStats = memo(function MobileQuickStats({
   income,
   expenses,
   profit,
@@ -39,7 +113,11 @@ export function MobileQuickStats({
   pendingPayments,
   students,
 }: MobileQuickStatsProps) {
-  const stats = [
+  const { shouldReduceMotion, isLowEndDevice, animationDuration } = usePerformance();
+  const skipAnimations = shouldReduceMotion || isLowEndDevice;
+  
+  // Memoize stats calculation
+  const stats = useMemo(() => [
     {
       label: "Receita",
       value: formatCurrency(income),
@@ -68,57 +146,67 @@ export function MobileQuickStats({
       color: "text-stats-blue",
       bg: "bg-stats-blue/10",
     },
-  ];
+  ], [income, expenses, profit, students]);
 
-  const alerts = [
-    {
-      label: "Tarefas Pendentes",
-      value: pendingTasks,
-      icon: CheckSquare,
-      show: pendingTasks > 0,
-    },
-    {
-      label: "Pagamentos Pendentes",
-      value: pendingPayments,
-      icon: AlertCircle,
-      show: pendingPayments > 0,
-    },
-  ].filter((a) => a.show);
+  // Memoize alerts
+  const alerts = useMemo(() => {
+    const items = [];
+    if (pendingTasks > 0) {
+      items.push({
+        label: "Tarefas Pendentes",
+        value: pendingTasks,
+        icon: CheckSquare,
+      });
+    }
+    if (pendingPayments > 0) {
+      items.push({
+        label: "Pagamentos Pendentes",
+        value: pendingPayments,
+        icon: AlertCircle,
+      });
+    }
+    return items;
+  }, [pendingTasks, pendingPayments]);
+
+  const CardComponent = skipAnimations ? StaticStatCard : AnimatedStatCard;
 
   return (
     <div className="space-y-4">
-      {/* Main Stats Grid */}
+      {/* Main Stats Grid - CSS Grid for better mobile performance */}
       <div className="grid grid-cols-2 gap-3">
-        {stats.map((stat, index) => {
-          const Icon = stat.icon;
-          return (
-            <motion.div
+        {stats.map((stat, index) => (
+          skipAnimations ? (
+            <StaticStatCard
               key={stat.label}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              className="p-4 rounded-2xl bg-card border border-border"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <div className={`p-1.5 rounded-lg ${stat.bg}`}>
-                  <Icon className={`h-4 w-4 ${stat.color}`} />
-                </div>
-                <span className="text-xs text-muted-foreground font-medium">
-                  {stat.label}
-                </span>
-              </div>
-              <p className={`text-xl font-bold ${stat.color}`}>{stat.value}</p>
-            </motion.div>
-          );
-        })}
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+              bg={stat.bg}
+            />
+          ) : (
+            <AnimatedStatCard
+              key={stat.label}
+              label={stat.label}
+              value={stat.value}
+              icon={stat.icon}
+              color={stat.color}
+              bg={stat.bg}
+              index={index}
+              animationDuration={animationDuration}
+            />
+          )
+        ))}
       </div>
 
-      {/* Alerts Banner */}
+      {/* Alerts Banner - Static for performance */}
       {alerts.length > 0 && (
-        <motion.div
-          initial={{ opacity: 0, x: -10 }}
-          animate={{ opacity: 1, x: 0 }}
-          className="flex items-center gap-3 p-3 rounded-xl bg-amber-500/10 border border-amber-500/30"
+        <div
+          className={cn(
+            "flex items-center gap-3 p-3 rounded-xl",
+            "bg-amber-500/10 border border-amber-500/30",
+            !skipAnimations && "mobile-fade-in"
+          )}
         >
           <AlertCircle className="h-5 w-5 text-amber-500 shrink-0" />
           <div className="flex-1 flex items-center gap-4 text-sm">
@@ -128,8 +216,8 @@ export function MobileQuickStats({
               </span>
             ))}
           </div>
-        </motion.div>
+        </div>
       )}
     </div>
   );
-}
+});
