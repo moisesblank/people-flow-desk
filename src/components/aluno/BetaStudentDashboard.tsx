@@ -25,6 +25,8 @@ import { FocusTrack } from "./FocusTrack";
 import { LearningStyleInsight } from "./LearningStyleInsight";
 import { ChurnRiskAlert } from "./ChurnRiskAlert";
 import { BestStudyTimeInsight } from "./BestStudyTimeInsight";
+import { StudentCommandCenter } from "./StudentCommandCenter";
+import { AdaptiveScheduler } from "./AdaptiveScheduler";
 
 // Animações
 const container = {
