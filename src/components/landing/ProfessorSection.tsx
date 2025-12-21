@@ -1,25 +1,23 @@
 // ============================================
-// PROFESSOR SECTION - MOISÉS MEDEIROS
-// Com fotos reais do professor
+// PROFESSOR SECTION 2300 - ULTRA COMPACTA E FUTURISTA
+// Design otimizado sem cortes
 // ============================================
 
 import { motion } from "framer-motion";
 import { useState } from "react";
 import { 
   Award, 
-  Users, 
-  BookOpen, 
   Star, 
   Sparkles, 
   GraduationCap,
   Trophy,
-  Target,
   Instagram,
   Youtube,
   Play,
   ChevronLeft,
   ChevronRight,
-  CheckCircle2
+  CheckCircle2,
+  Zap
 } from "lucide-react";
 
 // Import professor images - FOTOS REAIS
@@ -30,20 +28,6 @@ import logoMoises from "@/assets/logo-moises-medeiros.png";
 
 const professorImages = [professorImageNovo, professorImage1, professorImage2];
 
-const achievements = [
-  { icon: <GraduationCap className="w-5 h-5" />, label: "Químico UFRN", color: "pink" },
-  { icon: <Trophy className="w-5 h-5" />, label: "+10.847 Aprovados", color: "purple" },
-  { icon: <BookOpen className="w-5 h-5" />, label: "500h+ de Aulas", color: "blue" },
-  { icon: <Star className="w-5 h-5" />, label: "4.9/5 Avaliação", color: "yellow" },
-];
-
-const stats = [
-  { number: "15+", label: "Anos de Experiência" },
-  { number: "50k+", label: "Seguidores" },
-  { number: "1M+", label: "Views no YouTube" },
-  { number: "#1", label: "Brasil" },
-];
-
 export const ProfessorSection = () => {
   const [currentImage, setCurrentImage] = useState(0);
 
@@ -51,249 +35,221 @@ export const ProfessorSection = () => {
   const prevImage = () => setCurrentImage((prev) => (prev - 1 + professorImages.length) % professorImages.length);
 
   return (
-    <section id="professor" className="relative py-24 overflow-hidden">
-      {/* Background */}
-      <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-black to-slate-950" />
-      {/* Grid Pattern */}
-      <div className="absolute inset-0 opacity-10" style={{
-        backgroundImage: `radial-gradient(circle at center, rgba(236,72,153,0.3) 0%, transparent 50%)`,
-      }} />
-
-      {/* Animated Rings */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full border border-pink-500/20"
-        animate={{ rotate: 360 }}
-        transition={{ duration: 60, repeat: Infinity, ease: "linear" }}
-      />
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-purple-500/10"
-        animate={{ rotate: -360 }}
-        transition={{ duration: 90, repeat: Infinity, ease: "linear" }}
-      />
+    <section id="professor" className="relative py-16 md:py-20 overflow-hidden">
+      {/* Background minimalista */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,rgba(236,72,153,0.08)_0%,transparent_60%)]" />
 
       <div className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-12 items-center">
-          {/* Left - Image */}
+        {/* Header compacto */}
+        <motion.div
+          className="text-center mb-10"
+          initial={{ opacity: 0, y: -20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+        >
           <motion.div
-            initial={{ opacity: 0, x: -50 }}
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 mb-4"
+          >
+            <Award className="w-4 h-4 text-pink-400" />
+            <span className="text-sm font-medium text-pink-300">Seu Mentor</span>
+          </motion.div>
+          
+          <h2 className="text-3xl md:text-4xl lg:text-5xl font-black">
+            <span className="text-white">Prof. </span>
+            <span className="bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500 bg-clip-text text-transparent">
+              Moisés Medeiros
+            </span>
+          </h2>
+        </motion.div>
+
+        {/* Layout compacto em grid */}
+        <div className="grid lg:grid-cols-2 gap-8 items-start max-w-6xl mx-auto">
+          {/* Coluna esquerda - Imagem e Card */}
+          <motion.div
+            initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
             className="relative"
           >
-            {/* Glow */}
-            <div className="absolute inset-0 bg-gradient-to-r from-pink-500/30 to-purple-500/30 rounded-3xl blur-3xl" />
+            {/* Glow sutil */}
+            <div className="absolute -inset-4 bg-gradient-to-r from-pink-500/20 to-purple-500/20 rounded-2xl blur-2xl opacity-50" />
             
-            {/* Image Container with Gallery */}
-            <div className="relative rounded-3xl overflow-hidden border-2 border-white/10 bg-black/60">
-              {/* Professor Image with Gallery */}
-              <div className="aspect-[4/5] relative">
+            {/* Container principal */}
+            <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/80 backdrop-blur-xl">
+              {/* Galeria de imagens - aspect ratio reduzido */}
+              <div className="aspect-[4/4] relative">
                 {professorImages.map((img, idx) => (
                   <motion.img 
                     key={idx}
                     src={img} 
                     alt={`Prof. Moisés Medeiros - Foto ${idx + 1}`} 
-                    className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
                   />
                 ))}
                 
-                {/* Image Navigation */}
-                <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 z-10">
-                  <button 
+                {/* Navigation */}
+                <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-2 z-10">
+                  <motion.button 
                     onClick={prevImage}
-                    className="p-2 rounded-full bg-black/60 border border-white/20 text-white hover:bg-pink-500/60 transition-colors"
+                    className="p-2 rounded-full bg-black/70 border border-white/20 text-white hover:bg-pink-500/60 transition-all"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <ChevronLeft className="w-5 h-5" />
-                  </button>
-                  <button 
+                    <ChevronLeft className="w-4 h-4" />
+                  </motion.button>
+                  <motion.button 
                     onClick={nextImage}
-                    className="p-2 rounded-full bg-black/60 border border-white/20 text-white hover:bg-pink-500/60 transition-colors"
+                    className="p-2 rounded-full bg-black/70 border border-white/20 text-white hover:bg-pink-500/60 transition-all"
+                    whileHover={{ scale: 1.1 }}
+                    whileTap={{ scale: 0.95 }}
                   >
-                    <ChevronRight className="w-5 h-5" />
-                  </button>
+                    <ChevronRight className="w-4 h-4" />
+                  </motion.button>
                 </div>
 
-                {/* Image Dots */}
-                <div className="absolute bottom-24 left-0 right-0 flex justify-center gap-2 z-10">
+                {/* Dots */}
+                <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
                   {professorImages.map((_, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentImage(idx)}
-                      className={`w-2 h-2 rounded-full transition-all ${idx === currentImage ? 'bg-pink-500 w-6' : 'bg-white/50'}`}
+                      className={`h-1.5 rounded-full transition-all ${idx === currentImage ? 'bg-pink-500 w-6' : 'bg-white/40 w-1.5'}`}
                     />
                   ))}
                 </div>
                 
-                {/* Overlay with name */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent pointer-events-none" />
+                {/* Overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
+                
+                {/* Badge TOP 1 */}
+                <motion.div
+                  className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg"
+                  animate={{ scale: [1, 1.05, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                >
+                  <Star className="w-3 h-3" fill="white" />
+                  TOP 1 ENEM
+                </motion.div>
               </div>
 
-              {/* Info Card abaixo da imagem - NÃO CORTA */}
-              <div className="relative bg-gradient-to-b from-black/95 to-black p-6">
-                {/* Logo e info do professor */}
-                <div className="flex items-start gap-4">
-                  {/* Avatar/Logo */}
+              {/* Card info compacto */}
+              <div className="p-4 bg-gradient-to-b from-black to-slate-950">
+                <div className="flex items-center gap-3">
+                  {/* Logo */}
                   <motion.div
                     className="relative flex-shrink-0"
                     animate={{ 
-                      boxShadow: ['0 0 20px rgba(236,72,153,0.3)', '0 0 40px rgba(236,72,153,0.5)', '0 0 20px rgba(236,72,153,0.3)']
+                      boxShadow: ['0 0 15px rgba(236,72,153,0.3)', '0 0 25px rgba(236,72,153,0.5)', '0 0 15px rgba(236,72,153,0.3)']
                     }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
-                      <img src={logoMoises} alt="Logo" className="w-12 h-12 object-contain" />
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
+                      <img src={logoMoises} alt="Logo" className="w-9 h-9 object-contain" />
                     </div>
-                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-black">
-                      <CheckCircle2 className="w-3 h-3 text-white" />
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center border border-black">
+                      <CheckCircle2 className="w-2.5 h-2.5 text-white" />
                     </div>
                   </motion.div>
                   
                   {/* Info */}
-                  <div className="flex-1">
-                    <h3 className="text-xl font-bold text-white mb-1">Prof. Moisés Medeiros</h3>
-                    <p className="text-gray-400 text-sm mb-2">Mestre em Química • 15+ anos de experiência</p>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="text-base font-bold text-white truncate">Prof. Moisés Medeiros</h3>
+                    <p className="text-gray-400 text-xs">Mestre em Química • 15+ anos</p>
                     
-                    {/* Rating */}
-                    <div className="flex items-center gap-2 mb-3">
+                    {/* Rating inline */}
+                    <div className="flex items-center gap-1.5 mt-1">
                       <div className="flex">
                         {[1,2,3,4,5].map(i => (
-                          <Star key={i} className="w-4 h-4 text-amber-400" fill="rgba(251,191,36,1)" />
+                          <Star key={i} className="w-3 h-3 text-amber-400" fill="rgba(251,191,36,1)" />
                         ))}
                       </div>
-                      <span className="text-amber-400 font-bold text-sm">4.9/5</span>
-                      <span className="text-gray-500 text-xs">(2.847 avaliações)</span>
-                    </div>
-                    
-                    {/* Badges */}
-                    <div className="flex flex-wrap gap-2">
-                      <motion.div
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white text-xs font-bold"
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 2, repeat: Infinity }}
-                      >
-                        <Trophy className="w-3 h-3" />
-                        #1 Brasil
-                      </motion.div>
-                      <motion.div
-                        className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs font-bold"
-                        animate={{ scale: [1, 1.05, 1] }}
-                        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                      >
-                        <GraduationCap className="w-3 h-3" />
-                        10.847+ Aprovados
-                      </motion.div>
+                      <span className="text-amber-400 font-bold text-xs">4.9/5</span>
                     </div>
                   </div>
                 </div>
+                
+                {/* Badges inline */}
+                <div className="flex gap-2 mt-3">
+                  <motion.div
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white text-[10px] font-bold"
+                    animate={{ scale: [1, 1.03, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Trophy className="w-2.5 h-2.5" />
+                    #1 Brasil
+                  </motion.div>
+                  <motion.div
+                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-green-600 to-emerald-500 text-white text-[10px] font-bold"
+                    animate={{ scale: [1, 1.03, 1] }}
+                    transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                  >
+                    <GraduationCap className="w-2.5 h-2.5" />
+                    10.847+ Aprovados
+                  </motion.div>
+                </div>
               </div>
-
-              {/* Badge TOP 1 */}
-              <motion.div
-                initial={{ scale: 0 }}
-                whileInView={{ scale: 1 }}
-                transition={{ delay: 0.3 }}
-                viewport={{ once: true }}
-                className="absolute top-4 right-4 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white text-sm font-bold flex items-center gap-2"
-              >
-                <Star className="w-4 h-4" />
-                TOP 1 ENEM
-              </motion.div>
             </div>
-
-            {/* Floating Stats */}
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-              viewport={{ once: true }}
-              className="absolute -bottom-6 left-1/2 -translate-x-1/2 flex gap-4"
-            >
-              {achievements.map((item, i) => (
-                <motion.div
-                  key={i}
-                  initial={{ scale: 0 }}
-                  whileInView={{ scale: 1 }}
-                  transition={{ delay: 0.5 + i * 0.1 }}
-                  viewport={{ once: true }}
-                  className={`p-3 rounded-xl bg-black/90 border border-${item.color}-500/30 text-${item.color}-400 shadow-lg`}
-                >
-                  {item.icon}
-                </motion.div>
-              ))}
-            </motion.div>
           </motion.div>
 
-          {/* Right - Content */}
+          {/* Coluna direita - Conteúdo */}
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0, x: 30 }}
             whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true }}
-            className="space-y-6"
+            className="space-y-5"
           >
-            {/* Badge */}
-            <motion.div
-              initial={{ scale: 0 }}
-              whileInView={{ scale: 1 }}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30"
-            >
-              <Award className="w-4 h-4 text-pink-400" />
-              <span className="text-sm font-medium text-pink-300">Seu Mentor</span>
-            </motion.div>
-
-            <h2 className="text-4xl md:text-5xl font-black">
-              <span className="text-white">Prof. </span>
-              <span className="bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
-                Moisés Medeiros
-              </span>
-            </h2>
-
-            <p className="text-gray-400 text-lg leading-relaxed">
+            <p className="text-gray-300 text-base leading-relaxed">
               Químico formado pela UFRN, professor há mais de 15 anos, especialista em preparação para ENEM e vestibulares de medicina. Criador da metodologia que mais aprova alunos em universidades federais do Brasil.
             </p>
 
-            <p className="text-gray-400 text-lg leading-relaxed">
+            <p className="text-gray-400 text-sm leading-relaxed">
               Com uma abordagem didática única e uso de tecnologia de ponta, incluindo IA personalizada, 
-              o Prof. Moisés já transformou a vida de mais de 10.847 alunos aprovados.
+              o Prof. Moisés já transformou a vida de milhares de estudantes.
             </p>
 
-            {/* Stats Grid */}
-            <div className="grid grid-cols-2 gap-4 py-6">
-              {stats.map((stat, i) => (
+            {/* Stats compactos */}
+            <div className="grid grid-cols-4 gap-2">
+              {[
+                { number: "15+", label: "Anos" },
+                { number: "50k+", label: "Seguidores" },
+                { number: "1M+", label: "Views" },
+                { number: "#1", label: "Brasil" },
+              ].map((stat, i) => (
                 <motion.div
                   key={i}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 10 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.1 }}
-                  viewport={{ once: true }}
-                  className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-pink-500/30 transition-colors"
+                  className="p-3 rounded-xl bg-white/5 border border-white/10 text-center hover:border-pink-500/30 transition-colors"
                 >
-                  <div className="text-3xl font-black bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
+                  <div className="text-xl font-black bg-gradient-to-r from-pink-500 to-purple-500 bg-clip-text text-transparent">
                     {stat.number}
                   </div>
-                  <div className="text-sm text-gray-400">{stat.label}</div>
+                  <div className="text-[10px] text-gray-500 uppercase tracking-wider">{stat.label}</div>
                 </motion.div>
               ))}
             </div>
 
             {/* Social Links */}
-            <div className="flex gap-4 pt-4">
-              <a
+            <div className="flex gap-3">
+              <motion.a
                 href="https://www.instagram.com/moises.profaprova"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-400 hover:bg-pink-500/30 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 text-pink-400 hover:bg-pink-500/30 transition-all text-sm"
+                whileHover={{ scale: 1.03 }}
               >
-                <Instagram className="w-5 h-5" />
+                <Instagram className="w-4 h-4" />
                 <span className="font-medium">Instagram</span>
-              </a>
-              <a
+              </motion.a>
+              <motion.a
                 href="https://www.youtube.com/@moisesmedeiros"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-colors"
+                className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-red-500/20 to-pink-500/20 border border-red-500/30 text-red-400 hover:bg-red-500/30 transition-all text-sm"
+                whileHover={{ scale: 1.03 }}
               >
-                <Youtube className="w-5 h-5" />
+                <Youtube className="w-4 h-4" />
                 <span className="font-medium">YouTube</span>
-              </a>
+              </motion.a>
             </div>
 
             {/* CTA */}
@@ -301,14 +257,13 @@ export const ProfessorSection = () => {
               href="https://youtu.be/aOzCtPc7byY"
               target="_blank"
               rel="noopener noreferrer"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              viewport={{ once: true }}
-              className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold hover:scale-105 transition-transform shadow-lg shadow-pink-500/30 mt-4"
+              className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-purple-500 text-white font-bold hover:scale-105 transition-transform shadow-lg shadow-pink-500/30"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.98 }}
             >
-              <Play className="w-5 h-5" />
+              <Play className="w-4 h-4" />
               Assistir Aula Grátis
-              <Sparkles className="w-5 h-5" />
+              <Zap className="w-4 h-4" />
             </motion.a>
           </motion.div>
         </div>
