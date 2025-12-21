@@ -438,6 +438,66 @@ export type Database = {
         }
         Relationships: []
       }
+      areas: {
+        Row: {
+          color: string | null
+          course_id: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          parent_id: string | null
+          position: number
+          slug: string | null
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          parent_id?: string | null
+          position?: number
+          slug?: string | null
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          course_id?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          parent_id?: string | null
+          position?: number
+          slug?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "areas_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "areas_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       arquivos: {
         Row: {
           created_at: string
@@ -4208,6 +4268,53 @@ export type Database = {
           },
         ]
       }
+      lesson_attempts: {
+        Row: {
+          completed: boolean | null
+          completed_at: string | null
+          created_at: string
+          id: string
+          last_position_seconds: number | null
+          lesson_id: string
+          updated_at: string
+          user_id: string
+          watch_time_seconds: number | null
+          xp_earned: number | null
+        }
+        Insert: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_position_seconds?: number | null
+          lesson_id: string
+          updated_at?: string
+          user_id: string
+          watch_time_seconds?: number | null
+          xp_earned?: number | null
+        }
+        Update: {
+          completed?: boolean | null
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          last_position_seconds?: number | null
+          lesson_id?: string
+          updated_at?: string
+          user_id?: string
+          watch_time_seconds?: number | null
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_attempts_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lesson_notes: {
         Row: {
           content: string
@@ -4326,6 +4433,7 @@ export type Database = {
       }
       lessons: {
         Row: {
+          area_id: string | null
           content: string | null
           created_at: string | null
           description: string | null
@@ -4339,12 +4447,14 @@ export type Database = {
           status: string | null
           tipo: string | null
           title: string
+          transcript: string | null
           updated_at: string | null
           video_duration: number | null
           video_url: string | null
           xp_reward: number | null
         }
         Insert: {
+          area_id?: string | null
           content?: string | null
           created_at?: string | null
           description?: string | null
@@ -4358,12 +4468,14 @@ export type Database = {
           status?: string | null
           tipo?: string | null
           title: string
+          transcript?: string | null
           updated_at?: string | null
           video_duration?: number | null
           video_url?: string | null
           xp_reward?: number | null
         }
         Update: {
+          area_id?: string | null
           content?: string | null
           created_at?: string | null
           description?: string | null
@@ -4377,12 +4489,20 @@ export type Database = {
           status?: string | null
           tipo?: string | null
           title?: string
+          transcript?: string | null
           updated_at?: string | null
           video_duration?: number | null
           video_url?: string | null
           xp_reward?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "lessons_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "lessons_module_id_fkey"
             columns: ["module_id"]
@@ -5811,6 +5931,7 @@ export type Database = {
       }
       question_attempts: {
         Row: {
+          attempt_number: number | null
           created_at: string
           id: string
           is_correct: boolean
@@ -5818,8 +5939,10 @@ export type Database = {
           selected_answer: string
           time_spent_seconds: number | null
           user_id: string
+          xp_earned: number | null
         }
         Insert: {
+          attempt_number?: number | null
           created_at?: string
           id?: string
           is_correct: boolean
@@ -5827,8 +5950,10 @@ export type Database = {
           selected_answer: string
           time_spent_seconds?: number | null
           user_id: string
+          xp_earned?: number | null
         }
         Update: {
+          attempt_number?: number | null
           created_at?: string
           id?: string
           is_correct?: boolean
@@ -5836,6 +5961,7 @@ export type Database = {
           selected_answer?: string
           time_spent_seconds?: number | null
           user_id?: string
+          xp_earned?: number | null
         }
         Relationships: [
           {
@@ -5857,6 +5983,91 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      questions: {
+        Row: {
+          ano: number | null
+          area_id: string | null
+          banca: string | null
+          correct_answer: string
+          created_at: string
+          difficulty: Database["public"]["Enums"]["question_difficulty"] | null
+          explanation: string | null
+          id: string
+          is_active: boolean | null
+          lesson_id: string | null
+          options: Json
+          points: number | null
+          position: number | null
+          question_text: string
+          question_type: string | null
+          quiz_id: string | null
+          tags: string[] | null
+          updated_at: string
+        }
+        Insert: {
+          ano?: number | null
+          area_id?: string | null
+          banca?: string | null
+          correct_answer: string
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["question_difficulty"] | null
+          explanation?: string | null
+          id?: string
+          is_active?: boolean | null
+          lesson_id?: string | null
+          options?: Json
+          points?: number | null
+          position?: number | null
+          question_text: string
+          question_type?: string | null
+          quiz_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Update: {
+          ano?: number | null
+          area_id?: string | null
+          banca?: string | null
+          correct_answer?: string
+          created_at?: string
+          difficulty?: Database["public"]["Enums"]["question_difficulty"] | null
+          explanation?: string | null
+          id?: string
+          is_active?: boolean | null
+          lesson_id?: string | null
+          options?: Json
+          points?: number | null
+          position?: number | null
+          question_text?: string
+          question_type?: string | null
+          quiz_id?: string | null
+          tags?: string[] | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "questions_quiz_id_fkey"
+            columns: ["quiz_id"]
+            isOneToOne: false
+            referencedRelation: "quizzes"
             referencedColumns: ["id"]
           },
         ]
@@ -6737,11 +6948,14 @@ export type Database = {
           id: string
           lapses: number | null
           last_review: string | null
+          lesson_id: string | null
           question: string
           reps: number | null
           scheduled_days: number | null
+          source: string | null
           stability: number | null
           state: string | null
+          tags: string[] | null
           user_id: string
         }
         Insert: {
@@ -6754,11 +6968,14 @@ export type Database = {
           id?: string
           lapses?: number | null
           last_review?: string | null
+          lesson_id?: string | null
           question: string
           reps?: number | null
           scheduled_days?: number | null
+          source?: string | null
           stability?: number | null
           state?: string | null
+          tags?: string[] | null
           user_id: string
         }
         Update: {
@@ -6771,11 +6988,14 @@ export type Database = {
           id?: string
           lapses?: number | null
           last_review?: string | null
+          lesson_id?: string | null
           question?: string
           reps?: number | null
           scheduled_days?: number | null
+          source?: string | null
           stability?: number | null
           state?: string | null
+          tags?: string[] | null
           user_id?: string
         }
         Relationships: [
@@ -6784,6 +7004,13 @@ export type Database = {
             columns: ["area_id"]
             isOneToOne: false
             referencedRelation: "study_areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "study_flashcards_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
             referencedColumns: ["id"]
           },
           {
