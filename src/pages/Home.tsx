@@ -1,11 +1,13 @@
 // ============================================
 // MOISÉS MEDEIROS v33.0 - LANDING PAGE 2500
 // ULTRA PERFORMANCE - MOBILE/3G OPTIMIZED
+// Suporta 5000+ usuários simultâneos
 // ============================================
 
 import { useState, useEffect, useCallback, lazy, memo, Suspense } from "react";
 import { motion } from "framer-motion";
 import { usePerformance } from "@/hooks/usePerformance";
+import { LazySection } from "@/components/performance/LazySection";
 
 // Critical components - loaded immediately
 import { CinematicIntro } from "@/components/landing/CinematicIntro";
@@ -76,43 +78,6 @@ const SectionLoader = memo(() => (
 ));
 
 SectionLoader.displayName = "SectionLoader";
-
-// ============================================
-// LAZY SECTION WRAPPER - Performance optimized
-// ============================================
-const LazySection = memo(({ children }: { children: React.ReactNode }) => {
-  const { isSlowConnection, isMobile } = usePerformance();
-  const rootMargin = isSlowConnection ? "600px" : isMobile ? "400px" : "300px";
-  
-  const [isVisible, setIsVisible] = useState(false);
-  const ref = useCallback((node: HTMLDivElement | null) => {
-    if (!node || isVisible) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsVisible(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin, threshold: 0.01 }
-    );
-
-    observer.observe(node);
-  }, [isVisible, rootMargin]);
-
-  return (
-    <section ref={ref} className="will-change-auto transform-gpu">
-      {isVisible ? (
-        <Suspense fallback={<SectionLoader />}>{children}</Suspense>
-      ) : (
-        <div className="min-h-[100px]" />
-      )}
-    </section>
-  );
-});
-
-LazySection.displayName = "LazySection";
 
 // ============================================
 // MAIN HOME COMPONENT - ULTRA OPTIMIZED
