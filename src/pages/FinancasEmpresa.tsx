@@ -98,6 +98,28 @@ export default function FinancasEmpresa() {
   const companyFinance = useCompanyFinanceHistory();
   const paymentsHistory = usePaymentsHistory();
 
+  // ═══════════════════════════════════════════════════════════════
+  // BUSCAR DADOS COMPLEMENTARES (funcionários, alunos) - MIGRADO DO DASHBOARD
+  // ═══════════════════════════════════════════════════════════════
+  const [dadosComplementares, setDadosComplementares] = useState({
+    funcionarios: 0,
+    alunos: 0,
+  });
+
+  useEffect(() => {
+    const fetchComplementares = async () => {
+      const [funcRes, alunosRes] = await Promise.all([
+        supabase.from("employees").select("*", { count: "exact", head: true }).eq("status", "ativo"),
+        supabase.from("alunos").select("*", { count: "exact", head: true }).eq("status", "ativo"),
+      ]);
+      setDadosComplementares({
+        funcionarios: funcRes.count || 0,
+        alunos: alunosRes.count || 0,
+      });
+    };
+    fetchComplementares();
+  }, []);
+
   // Estado local
   const [viewMode, setViewMode] = useState<ViewMode>("dashboard");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -1151,13 +1173,122 @@ export default function FinancasEmpresa() {
         </Card>
       </div>
 
+      {/* ═══════════════════════════════════════════════════════════════
+          CARDS CNPJs - MIGRADO DO DASHBOARD EMPRESARIAL
+          ═══════════════════════════════════════════════════════════════ */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* CNPJ 1 */}
+        <Card className="border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base">MM CURSO DE QUÍMICA LTDA</CardTitle>
+                <CardDescription className="text-xs">53.829.761/0001-17</CardDescription>
+              </div>
+              <Badge className="bg-green-500/10 text-green-500 text-xs">Ativo</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Receita</span>
+              <span className="font-medium text-green-500">{formatCompanyCurrency(unifiedStats.receitas * 0.65)}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Despesas</span>
+              <span className="font-medium text-red-500">{formatCompanyCurrency(unifiedStats.totalGastos * 0.6)}</span>
+            </div>
+            <Separator className="my-2" />
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-sm">Lucro Líquido</span>
+              <span className="font-bold text-primary">
+                {formatCompanyCurrency((unifiedStats.receitas * 0.65) - (unifiedStats.totalGastos * 0.6))}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* CNPJ 2 */}
+        <Card className="border-purple-500/20 bg-gradient-to-br from-purple-500/5 to-transparent">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-base">CURSO QUÍMICA MOISES MEDEIROS</CardTitle>
+                <CardDescription className="text-xs">44.979.308/0001-04</CardDescription>
+              </div>
+              <Badge className="bg-green-500/10 text-green-500 text-xs">Ativo</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Receita</span>
+              <span className="font-medium text-green-500">{formatCompanyCurrency(unifiedStats.receitas * 0.35)}</span>
+            </div>
+            <div className="flex justify-between items-center text-sm">
+              <span className="text-muted-foreground">Despesas</span>
+              <span className="font-medium text-red-500">{formatCompanyCurrency(unifiedStats.totalGastos * 0.4)}</span>
+            </div>
+            <Separator className="my-2" />
+            <div className="flex justify-between items-center">
+              <span className="font-medium text-sm">Lucro Líquido</span>
+              <span className="font-bold text-purple-500">
+                {formatCompanyCurrency((unifiedStats.receitas * 0.35) - (unifiedStats.totalGastos * 0.4))}
+              </span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Funcionários e Alunos Card */}
+        <Card className="border-blue-500/20 bg-gradient-to-br from-blue-500/5 to-transparent">
+          <CardHeader className="pb-2">
+            <div className="flex items-center justify-between">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Users className="h-4 w-4 text-blue-500" />
+                Equipe & Alunos
+              </CardTitle>
+              <Badge variant="outline" className="text-xs">Tempo Real</Badge>
+            </div>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-blue-500" />
+                </div>
+                <span className="text-sm text-muted-foreground">Funcionários Ativos</span>
+              </div>
+              <span className="font-bold text-xl">{dadosComplementares.funcionarios}</span>
+            </div>
+            <div className="flex justify-between items-center">
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-green-500/10 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-green-500" />
+                </div>
+                <span className="text-sm text-muted-foreground">Alunos Ativos</span>
+              </div>
+              <span className="font-bold text-xl text-green-500">{dadosComplementares.alunos}</span>
+            </div>
+            <Separator className="my-2" />
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => window.location.href = "/funcionarios"}>
+                <Users className="h-3 w-3 mr-1" /> RH
+              </Button>
+              <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => window.location.href = "/gestao-alunos"}>
+                <Users className="h-3 w-3 mr-1" /> Alunos
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
       {/* Quick Actions */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4">
         {[
           { label: "+ Gasto Fixo", icon: Building2, color: "text-red-500 border-red-500/30 hover:bg-red-500/10", action: () => openModal("gasto_fixo") },
           { label: "+ Gasto Extra", icon: Receipt, color: "text-blue-500 border-blue-500/30 hover:bg-blue-500/10", action: () => openModal("gasto_extra") },
           { label: "+ Pagamento", icon: CreditCard, color: "text-purple-500 border-purple-500/30 hover:bg-purple-500/10", action: () => openModal("pagamento") },
           { label: "Ver Todos", icon: List, color: "text-primary border-primary/30 hover:bg-primary/10", action: () => setViewMode("gastos") },
+          { label: "Receitas", icon: TrendingUp, color: "text-green-500 border-green-500/30 hover:bg-green-500/10", action: () => window.location.href = "/entradas" },
+          { label: "Relatórios", icon: FileSpreadsheet, color: "text-amber-500 border-amber-500/30 hover:bg-amber-500/10", action: () => window.location.href = "/relatorios" },
         ].map((action, i) => (
           <motion.div
             key={action.label}

@@ -86,7 +86,7 @@ const CentralMonitoramento = lazy(() => import("./pages/CentralMonitoramento"));
 const CentralIAs = lazy(() => import("./pages/CentralIAs"));
 const TransacoesHotmart = lazy(() => import("./pages/TransacoesHotmart"));
 const Lives = lazy(() => import("./pages/Lives"));
-const DashboardEmpresarial = lazy(() => import("./pages/empresas/DashboardEmpresarial"));
+// DashboardEmpresarial removido - migrado para FinancasEmpresa
 const ArquivosEmpresariais = lazy(() => import("./pages/empresas/ArquivosEmpresariais"));
 const RHFuncionarios = lazy(() => import("./pages/empresas/RHFuncionarios"));
 const ReceitasEmpresariais = lazy(() => import("./pages/empresas/ReceitasEmpresariais"));
@@ -280,7 +280,8 @@ const AppContent = memo(() => {
           <Route path="/lives" element={<ProtectedPage><Lives /></ProtectedPage>} />
           
           {/* Rotas Empresariais */}
-          <Route path="/empresas/dashboard" element={<ProtectedPage><DashboardEmpresarial /></ProtectedPage>} />
+          {/* DashboardEmpresarial removido - acessar via /financas-empresa */}
+          <Route path="/empresas/dashboard" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
           <Route path="/empresas/receitas" element={<ProtectedPage><ReceitasEmpresariais /></ProtectedPage>} />
           <Route path="/empresas/arquivos" element={<ProtectedPage><ArquivosEmpresariais /></ProtectedPage>} />
           <Route path="/empresas/rh" element={<ProtectedPage><RHFuncionarios /></ProtectedPage>} />

@@ -152,7 +152,7 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/central-metricas": "central-metricas",
   "/documentos": "documentos",
   // NOVAS ÁREAS EMPRESARIAIS
-  "/empresas/dashboard": "dashboard-empresarial",
+  "/empresas/dashboard": "financas-empresa", // Redirecionado para Central Financeira
   "/empresas/receitas": "receitas-empresariais",
   "/empresas/rh": "rh-funcionarios",
   "/empresas/arquivos": "arquivos-empresariais",
