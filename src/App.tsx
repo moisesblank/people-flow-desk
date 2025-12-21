@@ -1,7 +1,12 @@
+// ============================================
+// ⚡ MATRIZ DIGITAL - APP CORE ⚡
+// Evangelho da Velocidade v2.0 Aplicado
+// ============================================
+
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { GodModeProvider } from "@/contexts/GodModeContext";
@@ -14,11 +19,13 @@ import { VisualEditMode } from "@/components/editor/VisualEditMode";
 import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
-import { Suspense, lazy, useState, useEffect } from "react";
-import { Loader2 } from "lucide-react";
+import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 
-// Lazy load pages for better performance
+// ⚡ DOGMA V: QueryClient otimizado com cache sagrado
+import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
+
+// ⚡ DOGMA III: Lazy loading inteligente de todas as páginas
 const Auth = lazy(() => import("./pages/Auth"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Funcionarios = lazy(() => import("./pages/Funcionarios"));
@@ -79,52 +86,46 @@ const ArquivosEmpresariais = lazy(() => import("./pages/empresas/ArquivosEmpresa
 const RHFuncionarios = lazy(() => import("./pages/empresas/RHFuncionarios"));
 const ReceitasEmpresariais = lazy(() => import("./pages/empresas/ReceitasEmpresariais"));
 const Perfil = lazy(() => import("./pages/Perfil"));
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      staleTime: 0, // Sempre buscar dados frescos
-      gcTime: 1000 * 60 * 5, // 5 minutos de cache
-      retry: 1,
-      refetchOnWindowFocus: true, // Refetch ao voltar para a janela
-      refetchOnMount: true, // Refetch ao montar componente
-      refetchOnReconnect: true, // Refetch ao reconectar
-    },
-    mutations: {
-      onSuccess: () => {
-        // Invalidar todo o cache após qualquer mutação
-        queryClient.invalidateQueries();
-      },
-    },
-  },
-});
 
-// BUILD TIMESTAMP - Performance Optimized with Cache Management
-console.log('🚀 PLATAFORMA v10.2 - Cache Management Enabled');
+// Lazy load heavy components (DOGMA VIII)
+const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
+const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
+const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
+const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
+const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then(m => ({ default: m.GlobalDuplicationSystem })));
+const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then(m => ({ default: m.MasterUndoIndicator })));
+const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then(m => ({ default: m.MasterDeleteOverlay })));
+const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then(m => ({ default: m.MasterContextMenu })));
+
+// ⚡ DOGMA V: QueryClient Sagrado com cache otimizado
+const queryClient = createSacredQueryClient();
 
 // Listener global para limpeza de cache
 if (typeof window !== 'undefined') {
   window.addEventListener('mm-clear-cache', () => {
     queryClient.clear();
     queryClient.invalidateQueries();
-    console.log('🧹 Cache limpo via evento global');
+    console.log('[MATRIZ] 🧹 Cache purificado');
   });
 }
 
-// Ultra-fast loading component - minimal DOM, CSS only
-const PageLoader = () => (
+// ⚡ DOGMA I: Ultra-fast loading - CSS only, minimal DOM
+const PageLoader = memo(() => (
   <div className="min-h-screen bg-background flex items-center justify-center">
     <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
   </div>
-);
+));
+PageLoader.displayName = 'PageLoader';
 
-// Protected route wrapper component with role-based access
-const ProtectedPage = ({ children }: { children: React.ReactNode }) => (
+// Protected route wrapper - memoized
+const ProtectedPage = memo(({ children }: { children: React.ReactNode }) => (
   <RoleProtectedRoute>
     <AppLayout>{children}</AppLayout>
   </RoleProtectedRoute>
-);
+));
+ProtectedPage.displayName = 'ProtectedPage';
 
-// Global keyboard shortcuts overlay hook
+// Global keyboard shortcuts hook - optimized
 function useGlobalShortcutsOverlay() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -138,7 +139,6 @@ function useGlobalShortcutsOverlay() {
         }
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, []);
@@ -146,25 +146,18 @@ function useGlobalShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-// App wrapper with shortcuts overlay - Lazy load heavy components
-const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
-const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
-const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
-const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
-const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplicationSystem").then(m => ({ default: m.GlobalDuplicationSystem })));
-const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then(m => ({ default: m.MasterUndoIndicator })));
-const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then(m => ({ default: m.MasterDeleteOverlay })));
-const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then(m => ({ default: m.MasterContextMenu })));
-
-function AppContent() {
+// App Content - memoized for performance
+const AppContent = memo(() => {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
-  
-  // Bloqueio global de DevTools (exceto owner)
   useGlobalDevToolsBlock();
+
+  const handleClose = useCallback(() => setIsOpen(false), [setIsOpen]);
 
   return (
     <>
       <SessionTracker />
+      
+      {/* Heavy components - deferred loading */}
       <Suspense fallback={null}>
         <LazyGodModePanel />
         <LazyInlineEditor />
@@ -174,17 +167,19 @@ function AppContent() {
         <LazyMasterDeleteOverlay />
         <LazyMasterContextMenu />
       </Suspense>
+      
       <VisualEditMode />
-      <KeyboardShortcutsOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
+      <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
       
       {/* AI TRAMON - Lazy loaded */}
       <Suspense fallback={null}>
         <LazyAITramon />
       </Suspense>
       
+      {/* Routes with optimized Suspense */}
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public routes */}
+          {/* Public routes - SSG candidates (DOGMA VII) */}
           <Route path="/" element={<Home />} />
           <Route path="/site" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
@@ -226,7 +221,6 @@ function AppContent() {
           <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
           <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
           <Route path="/perfil" element={<ProtectedPage><Perfil /></ProtectedPage>} />
-          
           <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
           <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
           <Route path="/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
@@ -257,9 +251,11 @@ function AppContent() {
       </Suspense>
     </>
   );
-}
+});
+AppContent.displayName = 'AppContent';
 
-const App = () => (
+// ⚡ App Principal - Estrutura de providers otimizada
+const App = memo(() => (
   <QueryClientProvider client={queryClient}>
     <AuthProvider>
       <LiveSheetProvider>
@@ -280,6 +276,7 @@ const App = () => (
       </LiveSheetProvider>
     </AuthProvider>
   </QueryClientProvider>
-);
+));
+App.displayName = 'App';
 
 export default App;

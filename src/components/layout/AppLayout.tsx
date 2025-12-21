@@ -1,4 +1,4 @@
-import { ReactNode, useState, useCallback, useEffect } from "react";
+import { ReactNode, useState, useCallback, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Search, Command, Crown, MessageSquare, RefreshCw } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
@@ -30,12 +30,159 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
 
-
 interface AppLayoutProps {
   children: ReactNode;
 }
 
-export function AppLayout({ children }: AppLayoutProps) {
+// ⚡ DOGMA VIII: Componentes memoizados para evitar re-renders
+const MemoizedSidebar = memo(RoleBasedSidebar);
+MemoizedSidebar.displayName = 'MemoizedSidebar';
+
+const MemoizedSystemHealth = memo(SystemHealthIndicator);
+MemoizedSystemHealth.displayName = 'MemoizedSystemHealth';
+
+// ⚡ DOGMA I: Loader CSS-only ultra-leve
+const PageLoader = memo(() => (
+  <div className="min-h-screen bg-background flex items-center justify-center">
+    <div className="h-6 w-6 border-2 border-primary border-t-transparent rounded-full animate-spin" />
+  </div>
+));
+PageLoader.displayName = 'PageLoader';
+
+// ⚡ Header otimizado e memoizado
+const AppHeader = memo(({ 
+  openSearch, 
+  handleClearCache, 
+  isCacheClearing, 
+  setIsTeamChatOpen,
+  notifications,
+  onMarkAsRead,
+  onMarkAllAsRead,
+  onDelete,
+  onClearAll,
+  user,
+  roleLabel,
+  roleColor,
+  isGodMode,
+  signOut,
+  navigate,
+}: any) => {
+  const getInitials = useCallback((name: string) => {
+    return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
+  }, []);
+
+  return (
+    <header className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40">
+      <SidebarTrigger className="-ml-1" />
+      
+      <Button
+        variant="ghost"
+        onClick={openSearch}
+        data-search-button
+        className="flex-1 max-w-md justify-start gap-2 text-muted-foreground hover:text-foreground bg-secondary/50 hover:bg-secondary"
+      >
+        <Search className="h-4 w-4" />
+        <span className="text-sm">Buscar...</span>
+        <div className="ml-auto flex items-center gap-1">
+          <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">
+            <Command className="h-3 w-3 inline" />
+          </kbd>
+          <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">K</kbd>
+        </div>
+      </Button>
+
+      <CalculatorButton />
+      <PeriodicTableButton />
+      <MemoizedSystemHealth />
+
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleClearCache}
+            disabled={isCacheClearing}
+          >
+            <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Limpar Cache</TooltipContent>
+      </Tooltip>
+      
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button variant="ghost" size="icon" onClick={() => setIsTeamChatOpen(true)}>
+            <MessageSquare className="h-4 w-4" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Chat da Equipe</TooltipContent>
+      </Tooltip>
+      
+      <div className="flex-1" />
+
+      <div data-notification-center>
+        <NotificationCenter
+          notifications={notifications}
+          onMarkAsRead={onMarkAsRead}
+          onMarkAllAsRead={onMarkAllAsRead}
+          onDelete={onDelete}
+          onClearAll={onClearAll}
+        />
+      </div>
+
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Avatar className="h-8 w-8">
+              <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
+                {user?.email ? getInitials(user.email.split('@')[0]) : 'U'}
+              </AvatarFallback>
+            </Avatar>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <DropdownMenuLabel>
+            <div className="flex flex-col gap-1">
+              <span className="text-sm font-medium">Minha Conta</span>
+              <span className="text-xs text-muted-foreground truncate">{user?.email}</span>
+              <Badge className={`${roleColor} text-[10px] px-2 py-0 w-fit mt-1`}>
+                {isGodMode && <Crown className="w-2 h-2 mr-1" />}
+                {roleLabel}
+              </Badge>
+            </div>
+          </DropdownMenuLabel>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => navigate('/configuracoes')}>Configurações</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate('/permissoes')}>Permissões</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={() => signOut()} className="text-destructive focus:text-destructive">
+            Sair
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </header>
+  );
+});
+AppHeader.displayName = 'AppHeader';
+
+// ⚡ Main Content com animação otimizada
+const MainContent = memo(({ children }: { children: ReactNode }) => (
+  <AnimatePresence mode="wait">
+    <motion.main
+      key="main-content"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.15 }}
+      className="flex-1"
+    >
+      {children}
+    </motion.main>
+  </AnimatePresence>
+));
+MainContent.displayName = 'MainContent';
+
+export const AppLayout = memo(function AppLayout({ children }: AppLayoutProps) {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [isAIAssistantOpen, setIsAIAssistantOpen] = useState(false);
   const [isTeamChatOpen, setIsTeamChatOpen] = useState(false);
@@ -54,10 +201,12 @@ export function AppLayout({ children }: AppLayoutProps) {
 
   const openSearch = useCallback(() => setIsSearchOpen(true), []);
   const closeSearch = useCallback(() => setIsSearchOpen(false), []);
+  const openAI = useCallback(() => setIsAIAssistantOpen(true), []);
+  const closeAI = useCallback(() => setIsAIAssistantOpen(false), []);
+  const closeChat = useCallback(() => setIsTeamChatOpen(false), []);
 
   useKeyboardShortcuts(openSearch, closeSearch);
 
-  // Use database-backed notifications
   const {
     notifications,
     addNotification,
@@ -67,10 +216,9 @@ export function AppLayout({ children }: AppLayoutProps) {
     clearAll,
   } = useNotificationsDatabase();
 
-  // Enable realtime notifications from other tables
   useRealtimeNotifications({ addNotification });
 
-  // Add welcome notification on first load
+  // Welcome notification - só uma vez por sessão
   useEffect(() => {
     const hasSeenWelcome = sessionStorage.getItem('hasSeenWelcome');
     if (!hasSeenWelcome && user) {
@@ -83,166 +231,41 @@ export function AppLayout({ children }: AppLayoutProps) {
     }
   }, [user, addNotification]);
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .slice(0, 2)
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase();
-  };
-
   return (
     <SidebarProvider>
       <div className="min-h-screen flex w-full">
-        <RoleBasedSidebar />
+        <MemoizedSidebar />
         <SidebarInset className="flex-1">
-          <header className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40">
-            <SidebarTrigger className="-ml-1" />
-            
-            {/* Search Button */}
-            <Button
-              variant="ghost"
-              onClick={openSearch}
-              data-search-button
-              className="flex-1 max-w-md justify-start gap-2 text-muted-foreground hover:text-foreground bg-secondary/50 hover:bg-secondary"
-            >
-              <Search className="h-4 w-4" />
-              <span className="text-sm">Buscar...</span>
-              <div className="ml-auto flex items-center gap-1">
-                <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">
-                  <Command className="h-3 w-3 inline" />
-                </kbd>
-                <kbd className="px-1.5 py-0.5 text-[10px] bg-background/50 rounded border border-border">
-                  K
-                </kbd>
-              </div>
-            </Button>
-
-            {/* Calculator */}
-            <CalculatorButton />
-            
-            {/* Periodic Table */}
-            <PeriodicTableButton />
-            
-            {/* System Health */}
-            <SystemHealthIndicator />
-
-            {/* Clear Cache Button - Disponível para todos */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={handleClearCache}
-                  disabled={isCacheClearing}
-                  className="relative"
-                >
-                  <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Limpar Cache</TooltipContent>
-            </Tooltip>
-            
-            {/* Team Chat Button */}
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => setIsTeamChatOpen(true)}
-                  className="relative"
-                >
-                  <MessageSquare className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Chat da Equipe</TooltipContent>
-            </Tooltip>
-            
-            <div className="flex-1" />
-
-            {/* Notification Center */}
-            <div data-notification-center>
-              <NotificationCenter
-                notifications={notifications}
-                onMarkAsRead={markAsRead}
-                onMarkAllAsRead={markAllAsRead}
-                onDelete={deleteNotification}
-                onClearAll={clearAll}
-              />
-            </div>
-
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="rounded-full">
-                  <Avatar className="h-8 w-8">
-                    <AvatarFallback className="bg-primary/10 text-primary text-xs font-medium">
-                      {user?.email ? getInitials(user.email.split('@')[0]) : 'U'}
-                    </AvatarFallback>
-                  </Avatar>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                <DropdownMenuLabel>
-                  <div className="flex flex-col gap-1">
-                    <span className="text-sm font-medium">Minha Conta</span>
-                    <span className="text-xs text-muted-foreground truncate">
-                      {user?.email}
-                    </span>
-                    <Badge className={`${roleColor} text-[10px] px-2 py-0 w-fit mt-1`}>
-                      {isGodMode && <Crown className="w-2 h-2 mr-1" />}
-                      {roleLabel}
-                    </Badge>
-                  </div>
-                </DropdownMenuLabel>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => navigate('/configuracoes')}>
-                  Configurações
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate('/permissoes')}>
-                  Permissões
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => signOut()}
-                  className="text-destructive focus:text-destructive"
-                >
-                  Sair
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </header>
-          
-          <AnimatePresence mode="wait">
-            <motion.main
-              key="main-content"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              transition={{ duration: 0.2 }}
-              className="flex-1"
-            >
-              {children}
-            </motion.main>
-          </AnimatePresence>
+          <AppHeader
+            openSearch={openSearch}
+            handleClearCache={handleClearCache}
+            isCacheClearing={isCacheClearing}
+            setIsTeamChatOpen={setIsTeamChatOpen}
+            notifications={notifications}
+            onMarkAsRead={markAsRead}
+            onMarkAllAsRead={markAllAsRead}
+            onDelete={deleteNotification}
+            onClearAll={clearAll}
+            user={user}
+            roleLabel={roleLabel}
+            roleColor={roleColor}
+            isGodMode={isGodMode}
+            signOut={signOut}
+            navigate={navigate}
+          />
+          <MainContent>{children}</MainContent>
         </SidebarInset>
       </div>
 
-      {/* Global Search Modal */}
-      <GlobalSearch isOpen={isSearchOpen} onClose={closeSearch} />
+      {/* Modais lazy-loaded */}
+      {isSearchOpen && <GlobalSearch isOpen={isSearchOpen} onClose={closeSearch} />}
+      
+      <AIAssistantTrigger onClick={openAI} />
+      {isAIAssistantOpen && (
+        <AIAssistant isOpen={isAIAssistantOpen} onClose={closeAI} context="dashboard" />
+      )}
 
-      {/* AI Assistant - Global */}
-      <AIAssistantTrigger onClick={() => setIsAIAssistantOpen(true)} />
-      <AIAssistant 
-        isOpen={isAIAssistantOpen} 
-        onClose={() => setIsAIAssistantOpen(false)} 
-        context="dashboard"
-      />
-
-      {/* Team Chat */}
-      <TeamChat isOpen={isTeamChatOpen} onClose={() => setIsTeamChatOpen(false)} />
-
+      {isTeamChatOpen && <TeamChat isOpen={isTeamChatOpen} onClose={closeChat} />}
     </SidebarProvider>
   );
-}
+});
