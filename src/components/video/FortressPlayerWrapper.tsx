@@ -4,7 +4,8 @@
 // Tolerância ZERO a roubo de conteúdo
 // ============================================
 
-import { ReactNode, useEffect, useRef, useCallback } from "react";
+import { ReactNode, useEffect, useRef, useCallback, useState } from "react";
+import { toast } from "sonner";
 import { motion } from "framer-motion";
 import { Shield, Lock } from "lucide-react";
 
@@ -28,37 +29,89 @@ interface FortressPlayerWrapperProps {
 }
 
 // ============================================
-// CAMADA 5: DETECÇÃO DE DEVTOOLS (Anti-Inspeção)
+// CAMADA 4: O DETECTOR DE DEVTOOLS (A Armadilha Final)
+// Detecta DevTools e pausa o vídeo imediatamente
 // ============================================
-const useDevToolsProtection = () => {
+const useDevToolsDetector = (
+  containerRef: React.RefObject<HTMLDivElement>,
+  onDevToolsDetected?: () => void
+) => {
+  const [devToolsOpen, setDevToolsOpen] = useState(false);
+  const hasShownWarning = useRef(false);
+
   useEffect(() => {
-    // Detectar DevTools pelo tamanho da janela
-    const detectDevTools = () => {
-      const widthThreshold = window.outerWidth - window.innerWidth > 160;
-      const heightThreshold = window.outerHeight - window.innerHeight > 160;
-      
-      if (widthThreshold || heightThreshold) {
-        console.clear();
-        console.log(
-          "%c⚠️ SISTEMA PROTEGIDO ⚠️",
-          "color: red; font-size: 40px; font-weight: bold;"
-        );
-        console.log(
-          "%cA inspeção deste conteúdo viola os termos de uso.",
-          "color: orange; font-size: 16px;"
-        );
+    const checkDevTools = () => {
+      const threshold = 160;
+      const widthDiff = window.outerWidth - window.innerWidth > threshold;
+      const heightDiff = window.outerHeight - window.innerHeight > threshold;
+
+      if (widthDiff || heightDiff) {
+        setDevToolsOpen(true);
+
+        // Pausar TODOS os vídeos/iframes no container
+        if (containerRef.current) {
+          // Pausar vídeos HTML5
+          const videos = containerRef.current.querySelectorAll("video");
+          videos.forEach((video) => {
+            if (!video.paused) {
+              video.pause();
+            }
+          });
+
+          // Tentar pausar iframes do YouTube via postMessage
+          const iframes = containerRef.current.querySelectorAll("iframe");
+          iframes.forEach((iframe) => {
+            try {
+              iframe.contentWindow?.postMessage(
+                '{"event":"command","func":"pauseVideo","args":""}',
+                "*"
+              );
+            } catch (e) {
+              // Ignorar erros de cross-origin
+            }
+          });
+        }
+
+        // Mostrar aviso apenas uma vez por sessão
+        if (!hasShownWarning.current) {
+          hasShownWarning.current = true;
+          
+          // Limpar console e mostrar aviso
+          console.clear();
+          console.log(
+            "%c🚨 ATIVIDADE SUSPEITA DETECTADA 🚨",
+            "color: red; font-size: 30px; font-weight: bold; background: black; padding: 10px;"
+          );
+          console.log(
+            "%cO conteúdo está protegido. Feche as ferramentas de desenvolvedor.",
+            "color: orange; font-size: 16px;"
+          );
+
+          // Toast de aviso
+          toast.error("⚠️ Atividade suspeita detectada", {
+            description: "O vídeo foi pausado. Feche as ferramentas de desenvolvedor para continuar.",
+            duration: 10000,
+          });
+
+          onDevToolsDetected?.();
+        }
+      } else {
+        setDevToolsOpen(false);
       }
     };
 
-    // Checar periodicamente
-    const interval = setInterval(detectDevTools, 1000);
-    window.addEventListener("resize", detectDevTools);
+    // Verificar imediatamente e a cada segundo
+    checkDevTools();
+    const interval = setInterval(checkDevTools, 1000);
+    window.addEventListener("resize", checkDevTools);
 
     return () => {
       clearInterval(interval);
-      window.removeEventListener("resize", detectDevTools);
+      window.removeEventListener("resize", checkDevTools);
     };
-  }, []);
+  }, [containerRef, onDevToolsDetected]);
+
+  return devToolsOpen;
 };
 
 // ============================================
@@ -284,7 +337,7 @@ export const FortressPlayerWrapper = ({
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Ativar todas as camadas de proteção
-  useDevToolsProtection();
+  const devToolsOpen = useDevToolsDetector(containerRef);
   useInteractionGuardian(containerRef);
 
   return (
