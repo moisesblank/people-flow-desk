@@ -2,6 +2,7 @@
 // MOISÉS MEDEIROS v9.0 - AULA PAGE
 // Página de visualização de aula com YouTube Player
 // Protegida pelo BetaLessonGuard (PARTE 4 - v5.0)
+// + Sistema de Abas Educacionais (LessonTabs)
 // ============================================
 
 import { useParams, useNavigate } from 'react-router-dom';
@@ -16,6 +17,7 @@ import { YouTubePlayer, VideoChapter } from '@/components/lms/YouTubePlayer';
 import { LessonComments } from '@/components/forum/LessonComments';
 import { BetaLessonGuard } from '@/components/lms/BetaLessonGuard';
 import { usePublishEvent } from '@/hooks/usePublishEvent';
+import { LessonTabs } from '@/components/player/LessonTabs';
 
 function AulaContent() {
   const { courseId, lessonId } = useParams();
