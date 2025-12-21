@@ -177,3 +177,10 @@ verify_jwt = false
 
 [functions.get-panda-signed-url]
 verify_jwt = true
+
+# ============================================
+# 🧠 AI CONTENT GENERATION
+# ============================================
+
+[functions.generate-ai-content]
+verify_jwt = true
