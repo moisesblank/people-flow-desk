@@ -10684,6 +10684,15 @@ export type Database = {
       register_user_logout: { Args: never; Returns: undefined }
       revoke_beta_access: { Args: { _user_id: string }; Returns: Json }
       security_cleanup_job: { Args: never; Returns: undefined }
+      update_expense_status: {
+        Args: {
+          p_data_pagamento?: string
+          p_expense_id: number
+          p_expense_type: string
+          p_new_status: string
+        }
+        Returns: Json
+      }
       update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
       upsert_hotmart_transaction: {
