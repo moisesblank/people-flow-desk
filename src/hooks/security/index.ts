@@ -11,3 +11,9 @@ export { useSecureVideo } from '../useSecureVideo';
 
 // DOGMA IV - Proxy Seguro de API
 export { useSecureApiProxy } from '../useSecureApiProxy';
+
+// DOGMA IX - Logs de Auditoria
+export { useAuditLog } from '../useAuditLog';
+
+// DOGMA X - Rate Limiting
+export { useRateLimiter } from '../useRateLimiter';
