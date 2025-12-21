@@ -111,14 +111,6 @@ const LazySection = memo(({ children }: { children: React.ReactNode }) => {
     </section>
   );
 });
-          {children}
-        </Suspense>
-      ) : (
-        <div className="min-h-[100px]" />
-      )}
-    </section>
-  );
-});
 
 LazySection.displayName = "LazySection";
 
