@@ -1,10 +1,11 @@
 // ============================================
 // MOISÉS MEDEIROS v9.0 - AULA PAGE
 // Página de visualização de aula com YouTube Player
+// Protegida pelo BetaLessonGuard (PARTE 4 - v5.0)
 // ============================================
 
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowLeft, BookOpen, FileText, Download, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,11 +14,14 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { YouTubePlayer, VideoChapter } from '@/components/lms/YouTubePlayer';
 import { LessonComments } from '@/components/forum/LessonComments';
+import { BetaLessonGuard } from '@/components/lms/BetaLessonGuard';
+import { usePublishEvent } from '@/hooks/usePublishEvent';
 
-export default function Aula() {
+function AulaContent() {
   const { courseId, lessonId } = useParams();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("video");
+  const { publishLessonCompleted, publishEvent } = usePublishEvent();
 
   // Exemplo de capítulos para a aula
   const sampleChapters: VideoChapter[] = [
@@ -43,8 +47,24 @@ export default function Aula() {
   ];
 
   // ID do vídeo YouTube de exemplo (substitua pelo real)
-  // Você pode extrair isso do banco de dados da aula
-  const youtubeVideoId = "dQw4w9WgXcQ"; // Exemplo - substitua pelo ID real
+  const youtubeVideoId = "dQw4w9WgXcQ";
+
+  // Handler para progresso do vídeo (publicar evento quando completar 90%)
+  const handleProgress = useCallback((progress: number) => {
+    console.log("Progresso:", progress);
+    // Publicar evento de progresso significativo
+    if (progress >= 90 && lessonId) {
+      publishLessonCompleted(lessonId, progress);
+    }
+  }, [lessonId, publishLessonCompleted]);
+
+  // Handler para aula concluída
+  const handleComplete = useCallback(() => {
+    console.log("Aula concluída!");
+    if (lessonId) {
+      publishLessonCompleted(lessonId, 100);
+    }
+  }, [lessonId, publishLessonCompleted]);
 
   return (
     <div className="container mx-auto py-6 px-4 space-y-6 max-w-7xl">
@@ -87,8 +107,8 @@ export default function Aula() {
                 title="Aula 2: Introdução Inorgânica PT2-2025"
                 chapters={sampleChapters}
                 showChaptersBelow={true}
-                onProgress={(progress) => console.log("Progresso:", progress)}
-                onComplete={() => console.log("Aula concluída!")}
+                onProgress={handleProgress}
+                onComplete={handleComplete}
               />
             </TabsContent>
 
@@ -189,5 +209,19 @@ export default function Aula() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+// Página principal com proteção BETA
+export default function Aula() {
+  const { lessonId } = useParams();
+  
+  return (
+    <BetaLessonGuard 
+      lessonId={lessonId}
+      lessonTitle="Introdução Inorgânica PT2-2025"
+    >
+      <AulaContent />
+    </BetaLessonGuard>
   );
 }
