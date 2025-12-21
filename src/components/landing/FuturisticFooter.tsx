@@ -1,13 +1,15 @@
 // ============================================
-// FOOTER FUTURISTA COMPLETO
+// FOOTER FUTURISTA COMPLETO 2500
 // Links, redes sociais, info legal
+// Com efeitos holográficos e animações
 // ============================================
 
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
   Youtube, Instagram, Phone, Mail, MapPin, 
-  Heart, ExternalLink, Shield, Award, Zap
+  Heart, ExternalLink, Shield, Award, Zap,
+  Atom, Sparkles, Star, ChevronRight, Globe
 } from "lucide-react";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
@@ -17,63 +19,141 @@ const footerLinks = {
     { label: 'Medicina', href: '/auth' },
     { label: 'Intensivão', href: '/auth' },
     { label: 'Simulados', href: '/auth' },
+    { label: 'Aulas Grátis', href: '/auth' },
   ],
   suporte: [
     { label: 'Central de Ajuda', href: '#' },
     { label: 'FAQ', href: '#' },
-    { label: 'WhatsApp', href: 'https://wa.me/5500000000000' },
+    { label: 'WhatsApp', href: 'https://wa.me/5500000000000', external: true },
     { label: 'Contato', href: '#' },
+    { label: 'Suporte IA', href: '#' },
   ],
   legal: [
     { label: 'Termos de Uso', href: '/termos-de-uso' },
     { label: 'Política de Privacidade', href: '/politica-privacidade' },
     { label: 'Política de Reembolso', href: '#' },
+    { label: 'LGPD', href: '#' },
   ],
 };
 
 const socialLinks = [
-  { icon: Youtube, href: 'https://youtube.com/@moisesmedeiros', label: 'YouTube', color: 'hover:text-red-500' },
-  { icon: Instagram, href: 'https://instagram.com/moisesmedeiros', label: 'Instagram', color: 'hover:text-pink-500' },
+  { icon: Youtube, href: 'https://youtube.com/@moisesmedeiros', label: 'YouTube', color: 'from-red-600 to-red-700', glow: 'rgba(220, 38, 38, 0.5)' },
+  { icon: Instagram, href: 'https://instagram.com/moisesmedeiros', label: 'Instagram', color: 'from-pink-600 to-purple-600', glow: 'rgba(236, 72, 153, 0.5)' },
+];
+
+const trustBadges = [
+  { icon: Shield, label: 'Site 100% Seguro', color: 'text-green-400', bg: 'bg-green-500/10', border: 'border-green-500/20' },
+  { icon: Award, label: 'Garantia de 30 dias', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/20' },
+  { icon: Zap, label: 'Acesso Imediato', color: 'text-blue-400', bg: 'bg-blue-500/10', border: 'border-blue-500/20' },
+  { icon: Star, label: '4.9/5 Avaliações', color: 'text-purple-400', bg: 'bg-purple-500/10', border: 'border-purple-500/20' },
 ];
 
 export const FuturisticFooter = () => {
   return (
-    <footer className="relative pt-24 pb-8 overflow-hidden">
-      {/* Background */}
+    <footer className="relative pt-32 pb-10 overflow-hidden">
+      {/* Background épico */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-t from-black via-gray-950 to-transparent" />
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/50 to-transparent" />
+        
+        {/* Grid holográfico */}
+        <div 
+          className="absolute inset-0 opacity-10"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(220, 38, 38, 0.4) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(220, 38, 38, 0.4) 1px, transparent 1px)
+            `,
+            backgroundSize: '50px 50px'
+          }}
+        />
+        
+        {/* Orbes de energia */}
+        <motion.div
+          className="absolute left-1/4 bottom-1/4 w-[500px] h-[500px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%)',
+            filter: 'blur(100px)',
+          }}
+          animate={{
+            scale: [1, 1.3, 1],
+            opacity: [0.2, 0.4, 0.2],
+          }}
+          transition={{ duration: 10, repeat: Infinity }}
+        />
+        
+        {/* Linha de energia no topo */}
+        <motion.div 
+          className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
+          animate={{ opacity: [0.3, 0.8, 0.3] }}
+          transition={{ duration: 3, repeat: Infinity }}
+        />
       </div>
 
-      {/* Grid pattern */}
-      <div 
-        className="absolute inset-0 opacity-5"
-        style={{
-          backgroundImage: `
-            linear-gradient(rgba(220, 38, 38, 0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(220, 38, 38, 0.3) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px'
-        }}
-      />
-
       <div className="container mx-auto px-4 relative z-10">
+        {/* Newsletter section */}
+        <motion.div
+          initial={{ opacity: 0, y: 40 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="max-w-3xl mx-auto text-center mb-20"
+        >
+          <motion.div
+            className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-red-900/30 border border-red-700/40 mb-6"
+            whileHover={{ scale: 1.02 }}
+          >
+            <motion.div
+              animate={{ rotate: 360 }}
+              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+            >
+              <Atom className="w-5 h-5 text-red-400" />
+            </motion.div>
+            <span className="text-sm font-bold text-red-400 tracking-wide">O FUTURO DA QUÍMICA - ANO 2500</span>
+          </motion.div>
+          
+          <h3 className="text-3xl md:text-4xl font-black text-white mb-4">
+            Pronto para sua <span className="bg-gradient-to-r from-red-500 to-amber-500 bg-clip-text text-transparent">Aprovação</span>?
+          </h3>
+          <p className="text-gray-400 mb-8">
+            Junte-se a mais de 10.000 alunos aprovados em Medicina
+          </p>
+          
+          <Link to="/auth">
+            <motion.div
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.97 }}
+              className="relative inline-block"
+            >
+              <motion.div
+                className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-2xl blur-lg"
+                animate={{ opacity: [0.4, 0.7, 0.4] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <button className="relative px-10 py-4 bg-gradient-to-r from-red-700 to-red-600 text-white font-black rounded-2xl flex items-center gap-3">
+                <Sparkles className="w-5 h-5" />
+                Começar Agora
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </motion.div>
+          </Link>
+        </motion.div>
+        
         {/* Main footer content */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-8 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 mb-16">
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-2">
             <motion.img 
               src={logoMoises} 
               alt="Moisés Medeiros" 
-              className="h-12 mb-6"
+              className="h-14 mb-6"
               whileHover={{ scale: 1.05 }}
+              style={{ filter: 'drop-shadow(0 0 20px rgba(220, 38, 38, 0.3))' }}
             />
-            <p className="text-gray-400 mb-6 max-w-sm">
+            <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">
               O curso de Química que mais aprova no Brasil. 
-              Transformando sonhos em aprovações há mais de 15 anos.
+              Transformando sonhos em aprovações há mais de 15 anos com tecnologia do futuro.
             </p>
             
-            {/* Social links */}
+            {/* Social links épicos */}
             <div className="flex items-center gap-4">
               {socialLinks.map((social) => (
                 <motion.a
@@ -81,11 +161,17 @@ export const FuturisticFooter = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  whileHover={{ scale: 1.1, y: -2 }}
+                  whileHover={{ scale: 1.1, y: -3 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`p-3 rounded-xl bg-white/5 border border-white/10 text-gray-400 ${social.color} transition-colors`}
+                  className="relative group"
                 >
-                  <social.icon className="w-5 h-5" />
+                  <motion.div
+                    className="absolute -inset-1 rounded-xl blur-lg opacity-0 group-hover:opacity-60 transition-opacity"
+                    style={{ background: social.glow }}
+                  />
+                  <div className={`relative p-4 rounded-xl bg-gradient-to-br ${social.color} shadow-lg`}>
+                    <social.icon className="w-6 h-6 text-white" />
+                  </div>
                 </motion.a>
               ))}
             </div>
@@ -93,118 +179,156 @@ export const FuturisticFooter = () => {
 
           {/* Cursos */}
           <div>
-            <h4 className="text-white font-bold mb-4">Cursos</h4>
-            <ul className="space-y-3">
+            <h4 className="text-white font-black mb-6 text-lg">Cursos</h4>
+            <ul className="space-y-4">
               {footerLinks.cursos.map((link) => (
-                <li key={link.label}>
+                <motion.li key={link.label} whileHover={{ x: 5 }}>
                   <Link 
                     to={link.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                    className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2 group"
                   >
+                    <ChevronRight className="w-3 h-3 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     {link.label}
                   </Link>
-                </li>
+                </motion.li>
               ))}
             </ul>
           </div>
 
           {/* Suporte */}
           <div>
-            <h4 className="text-white font-bold mb-4">Suporte</h4>
-            <ul className="space-y-3">
+            <h4 className="text-white font-black mb-6 text-lg">Suporte</h4>
+            <ul className="space-y-4">
               {footerLinks.suporte.map((link) => (
-                <li key={link.label}>
+                <motion.li key={link.label} whileHover={{ x: 5 }}>
                   <a 
                     href={link.href}
-                    target={link.href.startsWith('http') ? '_blank' : undefined}
-                    rel={link.href.startsWith('http') ? 'noopener noreferrer' : undefined}
-                    className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-1"
+                    target={link.external ? '_blank' : undefined}
+                    rel={link.external ? 'noopener noreferrer' : undefined}
+                    className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2 group"
                   >
+                    <ChevronRight className="w-3 h-3 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     {link.label}
-                    {link.href.startsWith('http') && <ExternalLink className="w-3 h-3" />}
+                    {link.external && <ExternalLink className="w-3 h-3 opacity-50" />}
                   </a>
-                </li>
+                </motion.li>
               ))}
             </ul>
           </div>
 
           {/* Legal */}
           <div>
-            <h4 className="text-white font-bold mb-4">Legal</h4>
-            <ul className="space-y-3">
+            <h4 className="text-white font-black mb-6 text-lg">Legal</h4>
+            <ul className="space-y-4">
               {footerLinks.legal.map((link) => (
-                <li key={link.label}>
+                <motion.li key={link.label} whileHover={{ x: 5 }}>
                   <Link 
                     to={link.href}
-                    className="text-gray-400 hover:text-white transition-colors text-sm"
+                    className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2 group"
                   >
+                    <ChevronRight className="w-3 h-3 text-red-500 opacity-0 group-hover:opacity-100 transition-opacity" />
                     {link.label}
                   </Link>
-                </li>
+                </motion.li>
               ))}
             </ul>
           </div>
         </div>
 
-        {/* Contact info */}
-        <div className="flex flex-wrap items-center justify-center gap-6 mb-8 py-6 border-t border-white/10">
-          <a 
+        {/* Contact info com estilo */}
+        <motion.div 
+          className="flex flex-wrap items-center justify-center gap-8 mb-10 py-8 border-t border-white/10"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
+          <motion.a 
             href="mailto:contato@moisesmedeiros.com.br"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+            className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group"
+            whileHover={{ scale: 1.02 }}
           >
-            <Mail className="w-4 h-4" />
-            contato@moisesmedeiros.com.br
-          </a>
-          <a 
+            <div className="p-2 rounded-lg bg-red-500/10 border border-red-500/20 group-hover:bg-red-500/20 transition-colors">
+              <Mail className="w-4 h-4 text-red-400" />
+            </div>
+            <span className="text-sm">contato@moisesmedeiros.com.br</span>
+          </motion.a>
+          
+          <motion.a 
             href="https://wa.me/5500000000000"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 text-gray-400 hover:text-white transition-colors text-sm"
+            className="flex items-center gap-3 text-gray-400 hover:text-white transition-colors group"
+            whileHover={{ scale: 1.02 }}
           >
-            <Phone className="w-4 h-4" />
-            WhatsApp
-          </a>
-          <span className="flex items-center gap-2 text-gray-400 text-sm">
-            <MapPin className="w-4 h-4" />
-            Brasil
-          </span>
-        </div>
+            <div className="p-2 rounded-lg bg-green-500/10 border border-green-500/20 group-hover:bg-green-500/20 transition-colors">
+              <Phone className="w-4 h-4 text-green-400" />
+            </div>
+            <span className="text-sm">WhatsApp</span>
+          </motion.a>
+          
+          <div className="flex items-center gap-3 text-gray-400">
+            <div className="p-2 rounded-lg bg-blue-500/10 border border-blue-500/20">
+              <Globe className="w-4 h-4 text-blue-400" />
+            </div>
+            <span className="text-sm">Brasil</span>
+          </div>
+        </motion.div>
 
-        {/* Trust badges */}
-        <div className="flex flex-wrap items-center justify-center gap-6 mb-8">
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <Shield className="w-4 h-4 text-green-400" />
-            Site 100% Seguro
-          </div>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <Award className="w-4 h-4 text-amber-400" />
-            Garantia de 30 dias
-          </div>
-          <div className="flex items-center gap-2 text-gray-500 text-sm">
-            <Zap className="w-4 h-4 text-blue-400" />
-            Acesso Imediato
-          </div>
+        {/* Trust badges épicos */}
+        <div className="flex flex-wrap items-center justify-center gap-4 mb-10">
+          {trustBadges.map((badge, i) => (
+            <motion.div
+              key={badge.label}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ delay: i * 0.1 }}
+              whileHover={{ scale: 1.05, y: -2 }}
+              className={`flex items-center gap-2 px-4 py-2.5 rounded-xl ${badge.bg} border ${badge.border}`}
+            >
+              <badge.icon className={`w-4 h-4 ${badge.color}`} />
+              <span className="text-sm text-gray-300 font-medium">{badge.label}</span>
+            </motion.div>
+          ))}
         </div>
 
         {/* Bottom bar */}
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4 pt-8 border-t border-white/10">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-6 pt-10 border-t border-white/10">
           <p className="text-sm text-gray-500">
             © {new Date().getFullYear()} Moisés Medeiros. Todos os direitos reservados.
           </p>
-          <p className="text-sm text-gray-500 flex items-center gap-1">
-            Feito com <Heart className="w-3 h-3 text-red-500" fill="currentColor" /> por Professor Moisés Medeiros
+          <p className="text-sm text-gray-500 flex items-center gap-2">
+            Feito com 
+            <motion.span
+              animate={{ scale: [1, 1.3, 1] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              <Heart className="w-4 h-4 text-red-500" fill="currentColor" />
+            </motion.span>
+            por Professor Moisés Medeiros
           </p>
         </div>
 
-        {/* Empresas */}
-        <div className="text-center mt-8 pt-8 border-t border-white/5">
-          <p className="text-xs text-gray-600 mb-2">
-            MMM CURSO DE QUÍMICA LTDA • CNPJ: 53.829.761/0001-17
-          </p>
-          <p className="text-xs text-gray-600">
-            CURSO QUÍMICA MOISES MEDEIROS • CNPJ: 44.979.308/0001-04
-          </p>
-        </div>
+        {/* Empresas info */}
+        <motion.div 
+          className="text-center mt-10 pt-8 border-t border-white/5"
+          initial={{ opacity: 0 }}
+          whileInView={{ opacity: 1 }}
+          viewport={{ once: true }}
+        >
+          <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-white/5 border border-white/10">
+            <Shield className="w-4 h-4 text-green-400" />
+            <span className="text-xs text-gray-500">Empresas verificadas e regularizadas</span>
+          </div>
+          <div className="mt-4 space-y-1">
+            <p className="text-xs text-gray-600">
+              MMM CURSO DE QUÍMICA LTDA • CNPJ: 53.829.761/0001-17
+            </p>
+            <p className="text-xs text-gray-600">
+              CURSO QUÍMICA MOISES MEDEIROS • CNPJ: 44.979.308/0001-04
+            </p>
+          </div>
+        </motion.div>
       </div>
     </footer>
   );
