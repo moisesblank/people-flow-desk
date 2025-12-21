@@ -1,10 +1,16 @@
-import { useState, useEffect, createContext, useContext, ReactNode } from "react";
+// ============================================
+// 🛡️ EVANGELHO DA SEGURANÇA v2.0
+// Autenticação com DOGMA I: Sessão Única
+// ============================================
+
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback } from "react";
 import { User, Session, Provider } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 
 type AppRole = "owner" | "admin" | "employee" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
+const SESSION_TOKEN_KEY = 'matriz_session_token';
 interface AuthContextType {
   user: User | null;
   session: Session | null;
@@ -97,12 +103,62 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  // 🛡️ DOGMA I: Login cria sessão única e invalida anteriores
   const signIn = async (email: string, password: string) => {
     const { error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
+    
+    if (!error) {
+      // Criar sessão única após login bem-sucedido
+      setTimeout(async () => {
+        try {
+          const deviceInfo = detectDeviceInfo();
+          const { data } = await supabase.rpc('create_single_session', {
+            _ip_address: null,
+            _user_agent: navigator.userAgent.slice(0, 255),
+            _device_type: deviceInfo.device_type,
+            _browser: deviceInfo.browser,
+            _os: deviceInfo.os,
+          });
+          
+          if (data && data.length > 0) {
+            localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
+            console.log('[DOGMA I] ✅ Sessão única criada, anteriores invalidadas');
+          }
+        } catch (err) {
+          console.error('[DOGMA I] Erro ao criar sessão:', err);
+        }
+      }, 100);
+    }
+    
     return { error };
+  };
+  
+  // Helper para detectar dispositivo
+  const detectDeviceInfo = () => {
+    const ua = navigator.userAgent;
+    
+    let device_type = 'desktop';
+    if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+      device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+    }
+    
+    let browser = 'unknown';
+    if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Edg')) browser = 'Edge';
+    else if (ua.includes('Chrome')) browser = 'Chrome';
+    else if (ua.includes('Safari')) browser = 'Safari';
+    
+    let os = 'unknown';
+    if (ua.includes('Windows')) os = 'Windows';
+    else if (ua.includes('Mac')) os = 'macOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+    else if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iOS') || ua.includes('iPhone')) os = 'iOS';
+    
+    return { device_type, browser, os };
   };
 
   const signUp = async (email: string, password: string, nome: string) => {
@@ -140,7 +196,22 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error };
   };
 
+  // 🛡️ DOGMA I: Logout invalida sessão
   const signOut = async () => {
+    // Invalidar sessão no banco antes de deslogar
+    try {
+      const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
+      if (sessionToken) {
+        await supabase.rpc('invalidate_session', {
+          p_session_token: sessionToken,
+        });
+        localStorage.removeItem(SESSION_TOKEN_KEY);
+        console.log('[DOGMA I] ✅ Sessão invalidada');
+      }
+    } catch (err) {
+      console.error('[DOGMA I] Erro ao invalidar sessão:', err);
+    }
+    
     await supabase.auth.signOut();
     setUser(null);
     setSession(null);

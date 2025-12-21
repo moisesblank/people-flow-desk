@@ -5895,6 +5895,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_access_attempts: {
+        Row: {
+          attempted_resource: string
+          blocked: boolean | null
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          reason: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempted_resource: string
+          blocked?: boolean | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempted_resource?: string
+          blocked?: boolean | null
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          reason?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       security_events: {
         Row: {
           created_at: string
@@ -7622,6 +7655,7 @@ export type Database = {
           login_at: string
           logout_at: string | null
           os: string | null
+          session_token: string | null
           user_agent: string | null
           user_id: string
         }
@@ -7635,6 +7669,7 @@ export type Database = {
           login_at?: string
           logout_at?: string | null
           os?: string | null
+          session_token?: string | null
           user_agent?: string | null
           user_id: string
         }
@@ -7648,6 +7683,7 @@ export type Database = {
           login_at?: string
           logout_at?: string | null
           os?: string | null
+          session_token?: string | null
           user_agent?: string | null
           user_id?: string
         }
@@ -9217,6 +9253,19 @@ export type Database = {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: number
       }
+      create_single_session: {
+        Args: {
+          _browser?: string
+          _device_type?: string
+          _ip_address?: string
+          _os?: string
+          _user_agent?: string
+        }
+        Returns: {
+          session_id: string
+          session_token: string
+        }[]
+      }
       current_user_email: { Args: never; Returns: string }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
       generate_2fa_code: { Args: never; Returns: string }
@@ -9301,6 +9350,14 @@ export type Database = {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_role_secure: {
+        Args: { _user_id?: string }
+        Returns: Database["public"]["Enums"]["app_role"]
+      }
+      has_area_permission: {
+        Args: { _area: string; _user_id: string }
+        Returns: boolean
+      }
       has_role:
         | {
             Args: {
@@ -9314,6 +9371,10 @@ export type Database = {
         Args: { p_campo: string; p_data: string; p_valor: number }
         Returns: undefined
       }
+      invalidate_session: {
+        Args: { p_session_token?: string }
+        Returns: boolean
+      }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_owner:
         | { Args: never; Returns: boolean }
@@ -9326,6 +9387,10 @@ export type Database = {
           _record_id?: string
           _table_name?: string
         }
+        Returns: string
+      }
+      log_blocked_access: {
+        Args: { p_ip?: string; p_reason: string; p_resource: string }
         Returns: string
       }
       log_security_event: {
@@ -9404,6 +9469,10 @@ export type Database = {
           p_source?: string
         }
         Returns: string
+      }
+      validate_session_token: {
+        Args: { p_session_token: string }
+        Returns: boolean
       }
       verify_2fa_code: { Args: { p_code: string }; Returns: boolean }
     }

@@ -1,6 +1,7 @@
 // ============================================
 // ⚡ MATRIZ DIGITAL - APP CORE ⚡
 // Evangelho da Velocidade v2.0 Aplicado
+// 🛡️ Evangelho da Segurança v2.0 Integrado
 // ============================================
 
 import { Toaster } from "@/components/ui/toaster";
@@ -19,6 +20,7 @@ import { VisualEditMode } from "@/components/editor/VisualEditMode";
 import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
+import { SessionGuard } from "@/components/security/SessionGuard";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 
@@ -155,7 +157,9 @@ const AppContent = memo(() => {
 
   return (
     <>
-      <SessionTracker />
+      {/* 🛡️ DOGMA I: Guarda de Sessão Única */}
+      <SessionGuard>
+        <SessionTracker />
       
       {/* Heavy components - deferred loading */}
       <Suspense fallback={null}>
@@ -249,6 +253,7 @@ const AppContent = memo(() => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      </SessionGuard>
     </>
   );
 });
