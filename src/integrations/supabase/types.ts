@@ -7602,6 +7602,57 @@ export type Database = {
           },
         ]
       }
+      user_devices: {
+        Row: {
+          browser: string | null
+          created_at: string | null
+          deactivated_at: string | null
+          deactivated_by: string | null
+          device_fingerprint: string
+          device_name: string
+          device_type: string | null
+          first_seen_at: string | null
+          id: string
+          is_active: boolean | null
+          is_trusted: boolean | null
+          last_seen_at: string | null
+          os: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          device_fingerprint: string
+          device_name: string
+          device_type?: string | null
+          first_seen_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_trusted?: boolean | null
+          last_seen_at?: string | null
+          os?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          created_at?: string | null
+          deactivated_at?: string | null
+          deactivated_by?: string | null
+          device_fingerprint?: string
+          device_name?: string
+          device_type?: string | null
+          first_seen_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_trusted?: boolean | null
+          last_seen_at?: string | null
+          os?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       user_gamification: {
         Row: {
           badges_earned: number | null
@@ -7722,42 +7773,54 @@ export type Database = {
       user_sessions: {
         Row: {
           browser: string | null
+          device_fingerprint: string | null
+          device_name: string | null
           device_type: string | null
           id: string
           ip_address: string | null
           is_active: boolean | null
+          is_trusted: boolean | null
           last_activity_at: string | null
           login_at: string
           logout_at: string | null
           os: string | null
+          registered_at: string | null
           session_token: string | null
           user_agent: string | null
           user_id: string
         }
         Insert: {
           browser?: string | null
+          device_fingerprint?: string | null
+          device_name?: string | null
           device_type?: string | null
           id?: string
           ip_address?: string | null
           is_active?: boolean | null
+          is_trusted?: boolean | null
           last_activity_at?: string | null
           login_at?: string
           logout_at?: string | null
           os?: string | null
+          registered_at?: string | null
           session_token?: string | null
           user_agent?: string | null
           user_id: string
         }
         Update: {
           browser?: string | null
+          device_fingerprint?: string | null
+          device_name?: string | null
           device_type?: string | null
           id?: string
           ip_address?: string | null
           is_active?: boolean | null
+          is_trusted?: boolean | null
           last_activity_at?: string | null
           login_at?: string
           logout_at?: string | null
           os?: string | null
+          registered_at?: string | null
           session_token?: string | null
           user_agent?: string | null
           user_id?: string
@@ -9329,6 +9392,10 @@ export type Database = {
         }
         Returns: number
       }
+      admin_get_all_devices: {
+        Args: { p_limit?: number; p_offset?: number }
+        Returns: Json
+      }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
@@ -9349,6 +9416,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
           p_max_requests?: number
@@ -9368,6 +9436,7 @@ export type Database = {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: number
       }
+      count_user_devices: { Args: { p_user_id?: string }; Returns: number }
       create_single_session: {
         Args: {
           _browser?: string
@@ -9382,6 +9451,7 @@ export type Database = {
         }[]
       }
       current_user_email: { Args: never; Returns: string }
+      deactivate_device: { Args: { p_device_id: string }; Returns: Json }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
       generate_2fa_code: { Args: never; Returns: string }
       generate_signed_video_url: {
@@ -9487,6 +9557,7 @@ export type Database = {
           nome: string
         }[]
       }
+      get_user_devices: { Args: { p_user_id?: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
         Returns: Database["public"]["Enums"]["app_role"]
@@ -9564,6 +9635,16 @@ export type Database = {
         Returns: string
       }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
+      register_device_with_limit: {
+        Args: {
+          p_browser?: string
+          p_device_fingerprint: string
+          p_device_name: string
+          p_device_type?: string
+          p_os?: string
+        }
+        Returns: Json
+      }
       register_user_login: {
         Args: {
           _browser?: string
