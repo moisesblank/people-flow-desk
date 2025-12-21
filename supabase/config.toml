@@ -170,3 +170,10 @@ verify_jwt = false
 
 [functions.generate-context]
 verify_jwt = false
+
+# ============================================
+# 🎥 PANDA VIDEO - URLs Assinadas
+# ============================================
+
+[functions.get-panda-signed-url]
+verify_jwt = true
