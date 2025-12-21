@@ -4938,6 +4938,45 @@ export type Database = {
           },
         ]
       }
+      monthly_xp: {
+        Row: {
+          created_at: string
+          id: string
+          lessons_completed: number | null
+          month: number
+          questions_answered: number | null
+          streak_max: number | null
+          updated_at: string
+          user_id: string
+          xp_earned: number
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lessons_completed?: number | null
+          month: number
+          questions_answered?: number | null
+          streak_max?: number | null
+          updated_at?: string
+          user_id: string
+          xp_earned?: number
+          year: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lessons_completed?: number | null
+          month?: number
+          questions_answered?: number | null
+          streak_max?: number | null
+          updated_at?: string
+          user_id?: string
+          xp_earned?: number
+          year?: number
+        }
+        Relationships: []
+      }
       notifications: {
         Row: {
           action_url: string | null
