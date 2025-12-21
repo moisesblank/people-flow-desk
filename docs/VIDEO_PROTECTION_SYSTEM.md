@@ -1,24 +1,57 @@
-# SISTEMA DE PROTEÇÃO DE VÍDEOS - DOCUMENTAÇÃO
+# 🔥 SISTEMA DE PROTEÇÃO DE VÍDEOS - FORTALEZA DIGITAL
 
 ## 📌 REGRA OBRIGATÓRIA PARA TODOS OS VÍDEOS
 
-**TODOS os vídeos do sistema DEVEM usar o `ProtectedVideoWrapper`** para:
+**TODOS os vídeos do sistema DEVEM usar o `FortressPlayerWrapper`** (ou `ProtectedVideoWrapper` para casos simples):
+
 1. Bloquear botões de "Assistir no YouTube"
 2. Bloquear botões de "Compartilhar"
 3. Forçar qualidade 1080p automaticamente
+4. Bloquear clique direito e atalhos de teclado
+5. Detectar tentativas de inspeção (DevTools)
 
 ---
 
-## 🛡️ COMPONENTE DE PROTEÇÃO
+## 🔥 FORTALEZA DIGITAL (5 CAMADAS)
+
+### Arquivo: `src/components/video/FortressPlayerWrapper.tsx`
+
+### As 5 Camadas de Proteção:
+
+| Camada | Nome | Proteção |
+|--------|------|----------|
+| 1 | Escudo CSS | Máscaras invisíveis que bloqueiam cliques em áreas sensíveis |
+| 2 | Escudo JS (Cliques) | Bloqueio de contextmenu, drag, select, copy |
+| 3 | Escudo JS (Teclado) | Bloqueio de Ctrl+S, F12, Ctrl+U, Ctrl+Shift+I/J/C |
+| 4 | Anti-Inspeção | Detecção de DevTools e limpeza de console |
+| 5 | CSS Específico | Oculta botões de download/share do Panda/YouTube |
+
+### Como Usar (Modo Fortaleza):
+
+```tsx
+import { FortressPlayerWrapper, getFortressYouTubeUrl } from "@/components/video/FortressPlayerWrapper";
+
+// Em qualquer componente com vídeo:
+<FortressPlayerWrapper className="aspect-video" showSecurityBadge>
+  <iframe
+    src={getFortressYouTubeUrl(videoId, true)}
+    className="w-full h-full"
+    allowFullScreen
+  />
+</FortressPlayerWrapper>
+```
+
+---
+
+## 🛡️ COMPONENTE BÁSICO (ProtectedVideoWrapper)
 
 ### Arquivo: `src/components/video/ProtectedVideoWrapper.tsx`
 
-### Como Usar:
+Para casos onde proteção mais leve é suficiente:
 
 ```tsx
 import { ProtectedVideoWrapper, getProtectedYouTubeUrl } from "@/components/video/ProtectedVideoWrapper";
 
-// Em qualquer componente com vídeo:
 <ProtectedVideoWrapper className="aspect-video">
   <iframe
     src={getProtectedYouTubeUrl(videoId, true)}
@@ -30,22 +63,23 @@ import { ProtectedVideoWrapper, getProtectedYouTubeUrl } from "@/components/vide
 
 ---
 
-## 🎯 MÁSCARAS DE PROTEÇÃO
+## 🎯 MÁSCARAS DE PROTEÇÃO (Fortaleza)
 
-O wrapper adiciona 4 máscaras invisíveis que bloqueiam cliques:
+O FortressPlayerWrapper adiciona escudos em todas as bordas:
 
 | Área | Dimensão | O que bloqueia |
 |------|----------|----------------|
-| Inferior esquerdo | 200x65px | "Assistir no YouTube", Logo |
-| Superior direito | 160x55px | Compartilhar, Configurações |
-| Inferior direito | 60x50px | Botões adicionais |
-| Lateral esquerda | 50x100px | Logo YouTube |
+| Superior | 100% x 60px | Info do vídeo, título, share |
+| Inferior | 100% x 70px | Controles, timeline, logo |
+| Esquerda | 80px x 100% | Logo, branding |
+| Direita | 80px x 100% | Config, share, mais |
+| Centro | 30% x 40% | **PERMITIDO** (Play/Pause) |
 
 ---
 
 ## 📺 PARÂMETROS DE QUALIDADE
 
-Usar `getProtectedYouTubeUrl()` ou `PROTECTED_PLAYER_VARS`:
+Usar `getFortressYouTubeUrl()` ou `FORTRESS_PLAYER_VARS`:
 
 ```js
 {
@@ -54,6 +88,7 @@ Usar `getProtectedYouTubeUrl()` ou `PROTECTED_PLAYER_VARS`:
   modestbranding: "1", // Minimiza branding
   showinfo: "0",       // Oculta info do canal
   iv_load_policy: "3", // Oculta anotações
+  enablejsapi: "0",    // Desabilita API JS (anti-manipulação)
 }
 ```
 
@@ -72,21 +107,26 @@ Usar `getProtectedYouTubeUrl()` ou `PROTECTED_PLAYER_VARS`:
 
 **OBRIGATÓRIO**: Qualquer novo componente de vídeo DEVE:
 
-1. Importar `ProtectedVideoWrapper`
+1. Importar `FortressPlayerWrapper` (recomendado) ou `ProtectedVideoWrapper`
 2. Envolver o iframe com o wrapper
-3. Usar `getProtectedYouTubeUrl()` para URLs
-4. Para YouTube IFrame API, usar `PROTECTED_PLAYER_VARS`
+3. Usar `getFortressYouTubeUrl()` ou `getFortressPandaUrl()` para URLs
+4. Para YouTube IFrame API, usar `FORTRESS_PLAYER_VARS`
 
 ---
 
-## 🔒 PROTEÇÕES ADICIONAIS
+## 🔒 PROTEÇÕES ATIVAS
 
-- Clique direito bloqueado no container
-- `onContextMenu` desabilitado
-- Camadas de overlay invisíveis
-- Qualidade 1080p forçada via parâmetro `vq=hd1080`
+- ✅ Clique direito bloqueado
+- ✅ Arrastar bloqueado
+- ✅ Selecionar texto bloqueado
+- ✅ Copiar bloqueado
+- ✅ Atalhos de DevTools bloqueados (F12, Ctrl+Shift+I, etc.)
+- ✅ Detecção de DevTools aberto
+- ✅ Máscaras invisíveis em todas as bordas
+- ✅ CSS para ocultar botões de share/download
+- ✅ Qualidade 1080p forçada
 
 ---
 
 **Atualizado em:** 2024-12-21
-**Versão:** 1.0
+**Versão:** 2.0 - FORTALEZA DIGITAL
