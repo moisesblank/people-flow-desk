@@ -1,0 +1,79 @@
+-- Add robust status update RPC that supports UUID ids (payments) and integer ids (company expenses)
+CREATE OR REPLACE FUNCTION public.update_item_status_v2(
+  p_item_id text,
+  p_item_type text,
+  p_new_status text,
+  p_data_pagamento text DEFAULT NULL
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public
+AS $$
+DECLARE
+  v_affected_rows integer;
+  v_data_pag timestamp with time zone;
+BEGIN
+  -- Verificar se o usuário é owner ou admin
+  IF NOT (is_owner(auth.uid()) OR is_admin_or_owner(auth.uid())) THEN
+    RETURN jsonb_build_object('success', false, 'error', 'Permissão negada');
+  END IF;
+
+  -- Converter data se fornecida
+  IF p_data_pagamento IS NOT NULL THEN
+    v_data_pag := p_data_pagamento::timestamp with time zone;
+  ELSE
+    v_data_pag := NOW();
+  END IF;
+
+  IF p_item_type = 'gasto_fixo' THEN
+    UPDATE company_fixed_expenses
+    SET 
+      status_pagamento = p_new_status,
+      data_pagamento = CASE WHEN p_new_status = 'pago' THEN v_data_pag ELSE NULL END,
+      updated_at = now()
+    WHERE id = p_item_id::integer;
+
+    GET DIAGNOSTICS v_affected_rows = ROW_COUNT;
+
+  ELSIF p_item_type = 'gasto_extra' THEN
+    UPDATE company_extra_expenses
+    SET 
+      status_pagamento = p_new_status,
+      data_pagamento = CASE WHEN p_new_status = 'pago' THEN v_data_pag ELSE NULL END,
+      updated_at = now()
+    WHERE id = p_item_id::integer;
+
+    GET DIAGNOSTICS v_affected_rows = ROW_COUNT;
+
+  ELSIF p_item_type = 'pagamento' THEN
+    UPDATE payments
+    SET 
+      status = p_new_status,
+      data_pagamento = CASE WHEN p_new_status = 'pago' THEN v_data_pag ELSE NULL END,
+      updated_at = now()
+    WHERE id = p_item_id::uuid;
+
+    GET DIAGNOSTICS v_affected_rows = ROW_COUNT;
+
+  ELSE
+    RETURN jsonb_build_object('success', false, 'error', 'Tipo inválido: ' || p_item_type);
+  END IF;
+
+  IF v_affected_rows = 0 THEN
+    RETURN jsonb_build_object(
+      'success', false,
+      'error', 'Nenhum registro encontrado (id=' || p_item_id || ', tipo=' || p_item_type || ')',
+      'affected_rows', 0
+    );
+  END IF;
+
+  RETURN jsonb_build_object(
+    'success', true,
+    'affected_rows', v_affected_rows,
+    'new_status', p_new_status,
+    'item_type', p_item_type,
+    'item_id', p_item_id
+  );
+END;
+$$;

@@ -544,75 +544,88 @@ export default function FinancasEmpresa() {
     }
   };
 
-  const handleStatusChange = async (item: any, newStatus: string) => {
+  const handleStatusChange = async (item: any, newStatus: PaymentStatus) => {
     console.log('[FINANÇAS] Atualizando status:', { id: item.id, itemType: item.itemType, newStatus, isProjecao: item.isProjecao });
-    
-    const statusLabels: Record<string, string> = {
+
+    const statusLabels: Record<PaymentStatus, string> = {
       pago: '✅ PAGO',
       pendente: '⏳ Pendente',
       atrasado: '⚠️ Atrasado',
     };
-    
-    const loadingToast = toast.loading(`Atualizando para ${statusLabels[newStatus] || newStatus}...`);
-    
+
+    const loadingToast = toast.loading(`Atualizando para ${statusLabels[newStatus]}...`);
+
     try {
-      let expenseId = typeof item.id === 'string' ? parseInt(item.id, 10) : Number(item.id);
-      
       // Se for uma projeção, precisamos materializar primeiro
+      let itemId = String(item.id);
+
       if (item.isProjecao && item.gastoOrigemId) {
         console.log('[FINANÇAS] Materializando projeção antes de atualizar status...');
-        
+
         const materialized = await companyFinance.materializeProjection(item);
-        
+
         if (!materialized) {
           toast.dismiss(loadingToast);
           toast.error('Erro ao criar registro do gasto');
           return;
         }
-        
-        expenseId = materialized.id;
-        console.log('[FINANÇAS] Projeção materializada, novo ID:', expenseId);
+
+        itemId = String(materialized.id);
+        console.log('[FINANÇAS] Projeção materializada, novo ID:', itemId);
       }
-      
-      if (isNaN(expenseId) || expenseId < 0) {
+
+      // Validações rápidas
+      if (!item.itemType) {
         toast.dismiss(loadingToast);
-        toast.error('ID inválido para atualização');
-        console.error('[FINANÇAS] ID inválido:', item.id);
+        toast.error('Tipo do item não identificado');
+        console.error('[FINANÇAS] itemType ausente:', item);
         return;
       }
 
-      console.log('[FINANÇAS] Chamando RPC com:', {
-        p_expense_id: expenseId,
-        p_expense_type: item.itemType,
+      if ((item.itemType === 'gasto_fixo' || item.itemType === 'gasto_extra') && !/^\d+$/.test(itemId)) {
+        toast.dismiss(loadingToast);
+        toast.error('ID inválido para gasto');
+        console.error('[FINANÇAS] ID inválido para gasto:', { itemId, item });
+        return;
+      }
+
+      if (item.itemType === 'pagamento' && !itemId) {
+        toast.dismiss(loadingToast);
+        toast.error('ID inválido para pagamento');
+        return;
+      }
+
+      console.log('[FINANÇAS] Chamando RPC update_item_status_v2 com:', {
+        p_item_id: itemId,
+        p_item_type: item.itemType,
         p_new_status: newStatus,
-        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : undefined,
+        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null,
       });
-      
-      // Usar função RPC SECURITY DEFINER para garantir o update
-      const { data, error } = await supabase.rpc('update_expense_status', {
-        p_expense_id: expenseId,
-        p_expense_type: item.itemType,
+
+      // Função robusta: aceita UUID (pagamento) e integer (gastos)
+      const { data, error } = await supabase.rpc('update_item_status_v2', {
+        p_item_id: itemId,
+        p_item_type: item.itemType,
         p_new_status: newStatus,
-        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : undefined,
+        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null,
       });
-      
+
       toast.dismiss(loadingToast);
-      
+
       if (error) {
         console.error('[FINANÇAS] Erro RPC:', error);
         toast.error(`Erro ao atualizar: ${error.message}`);
         return;
       }
-      
+
       const result = data as { success?: boolean; error?: string; affected_rows?: number } | null;
-      
       console.log('[FINANÇAS] Resultado RPC:', result);
-      
+
       if (result?.success) {
-        toast.success(`${item.nome || item.label} → ${statusLabels[newStatus] || newStatus}`, {
+        toast.success(`${item.nome || item.label} → ${statusLabels[newStatus]}`, {
           description: newStatus === 'pago' ? `Pago em ${format(new Date(), "dd/MM/yyyy")}` : undefined,
         });
-        
+
         // Refresh dos dados
         if (item.itemType === "pagamento") {
           await paymentsHistory.refresh();
@@ -623,7 +636,7 @@ export default function FinancasEmpresa() {
         console.error('[FINANÇAS] RPC retornou erro:', result);
         toast.error(result?.error || 'Erro desconhecido ao atualizar');
       }
-      
+
     } catch (error: any) {
       toast.dismiss(loadingToast);
       console.error('[FINANÇAS] Erro crítico:', error);
