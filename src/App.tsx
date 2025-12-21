@@ -233,7 +233,7 @@ const AppContent = memo(() => {
           <Route path="/financas-empresa" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
           <Route path="/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
           <Route path="/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
-          <Route path="/alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
+          <Route path="/gestao-alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
           <Route path="/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
           <Route path="/configuracoes" element={<ProtectedPage><Configuracoes /></ProtectedPage>} />
           <Route path="/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
@@ -288,32 +288,34 @@ const AppContent = memo(() => {
           <Route path="/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
           
           {/* ===== CENTRAL DO ALUNO - QUÍMICA ENEM ===== */}
+          {/* URL BASE: /alunos - HOME dos alunos após login */}
           {/* Apenas OWNER e BETA podem acessar */}
-          <Route path="/aluno/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
-          <Route path="/aluno/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
-          <Route path="/aluno/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
-          <Route path="/aluno/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
-          <Route path="/aluno/resumos" element={<ProtectedPage><AlunoResumos /></ProtectedPage>} />
-          <Route path="/aluno/mapas-mentais" element={<ProtectedPage><AlunoMapasMentais /></ProtectedPage>} />
-          <Route path="/aluno/questoes" element={<ProtectedPage><AlunoQuestoes /></ProtectedPage>} />
-          <Route path="/aluno/simulados" element={<ProtectedPage><AlunoSimulados /></ProtectedPage>} />
-          <Route path="/aluno/redacao" element={<ProtectedPage><AlunoRedacao /></ProtectedPage>} />
-          <Route path="/aluno/desempenho" element={<ProtectedPage><AlunoDesempenho /></ProtectedPage>} />
-          <Route path="/aluno/ranking" element={<ProtectedPage><AlunoRanking /></ProtectedPage>} />
-          <Route path="/aluno/conquistas" element={<ProtectedPage><AlunoConquistas /></ProtectedPage>} />
-          <Route path="/aluno/tutoria" element={<ProtectedPage><AlunoTutoria /></ProtectedPage>} />
-          <Route path="/aluno/forum" element={<ProtectedPage><AlunoForum /></ProtectedPage>} />
-          <Route path="/aluno/lives" element={<ProtectedPage><AlunoLives /></ProtectedPage>} />
-          <Route path="/aluno/duvidas" element={<ProtectedPage><AlunoDuvidas /></ProtectedPage>} />
-          <Route path="/aluno/revisao" element={<ProtectedPage><AlunoRevisao /></ProtectedPage>} />
-          <Route path="/aluno/laboratorio" element={<ProtectedPage><AlunoLaboratorio /></ProtectedPage>} />
-          <Route path="/aluno/calculadora" element={<ProtectedPage><AlunoCalculadora /></ProtectedPage>} />
-          <Route path="/aluno/tabela-periodica" element={<ProtectedPage><AlunoTabelaPeriodica /></ProtectedPage>} />
-          <Route path="/aluno/flashcards" element={<ProtectedPage><AlunoFlashcards /></ProtectedPage>} />
-          <Route path="/aluno/metas" element={<ProtectedPage><AlunoMetas /></ProtectedPage>} />
-          <Route path="/aluno/agenda" element={<ProtectedPage><AlunoAgenda /></ProtectedPage>} />
-          <Route path="/aluno/certificados" element={<ProtectedPage><AlunoCertificados /></ProtectedPage>} />
-          <Route path="/aluno/perfil" element={<ProtectedPage><AlunoPerfil /></ProtectedPage>} />
+          <Route path="/alunos" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
+          <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
+          <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
+          <Route path="/alunos/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
+          <Route path="/alunos/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
+          <Route path="/alunos/resumos" element={<ProtectedPage><AlunoResumos /></ProtectedPage>} />
+          <Route path="/alunos/mapas-mentais" element={<ProtectedPage><AlunoMapasMentais /></ProtectedPage>} />
+          <Route path="/alunos/questoes" element={<ProtectedPage><AlunoQuestoes /></ProtectedPage>} />
+          <Route path="/alunos/simulados" element={<ProtectedPage><AlunoSimulados /></ProtectedPage>} />
+          <Route path="/alunos/redacao" element={<ProtectedPage><AlunoRedacao /></ProtectedPage>} />
+          <Route path="/alunos/desempenho" element={<ProtectedPage><AlunoDesempenho /></ProtectedPage>} />
+          <Route path="/alunos/ranking" element={<ProtectedPage><AlunoRanking /></ProtectedPage>} />
+          <Route path="/alunos/conquistas" element={<ProtectedPage><AlunoConquistas /></ProtectedPage>} />
+          <Route path="/alunos/tutoria" element={<ProtectedPage><AlunoTutoria /></ProtectedPage>} />
+          <Route path="/alunos/forum" element={<ProtectedPage><AlunoForum /></ProtectedPage>} />
+          <Route path="/alunos/lives" element={<ProtectedPage><AlunoLives /></ProtectedPage>} />
+          <Route path="/alunos/duvidas" element={<ProtectedPage><AlunoDuvidas /></ProtectedPage>} />
+          <Route path="/alunos/revisao" element={<ProtectedPage><AlunoRevisao /></ProtectedPage>} />
+          <Route path="/alunos/laboratorio" element={<ProtectedPage><AlunoLaboratorio /></ProtectedPage>} />
+          <Route path="/alunos/calculadora" element={<ProtectedPage><AlunoCalculadora /></ProtectedPage>} />
+          <Route path="/alunos/tabela-periodica" element={<ProtectedPage><AlunoTabelaPeriodica /></ProtectedPage>} />
+          <Route path="/alunos/flashcards" element={<ProtectedPage><AlunoFlashcards /></ProtectedPage>} />
+          <Route path="/alunos/metas" element={<ProtectedPage><AlunoMetas /></ProtectedPage>} />
+          <Route path="/alunos/agenda" element={<ProtectedPage><AlunoAgenda /></ProtectedPage>} />
+          <Route path="/alunos/certificados" element={<ProtectedPage><AlunoCertificados /></ProtectedPage>} />
+          <Route path="/alunos/perfil" element={<ProtectedPage><AlunoPerfil /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
