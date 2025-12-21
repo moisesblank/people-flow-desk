@@ -355,6 +355,8 @@ interface RolePermissionsResult {
   isLoading: boolean;
   isOwner: boolean;
   isAdmin: boolean;
+  isBeta: boolean;
+  isAlunoGratuito: boolean;
   isGodMode: boolean;
   canEdit: boolean;
   canViewAll: boolean;
@@ -410,6 +412,8 @@ export function useRolePermissions(): RolePermissionsResult {
   // Verificação de owner (role + email exato)
   const isOwner = role === "owner" && userEmail === OWNER_EMAIL;
   const isAdmin = role === "admin";
+  const isBeta = role === "beta";
+  const isAlunoGratuito = role === "aluno_gratuito";
   const isGodMode = isOwner;
   const canEdit = isOwner;
   const canViewAll = isOwner || isAdmin;
@@ -448,6 +452,8 @@ export function useRolePermissions(): RolePermissionsResult {
     isLoading,
     isOwner,
     isAdmin,
+    isBeta,
+    isAlunoGratuito,
     isGodMode,
     canEdit,
     canViewAll,
