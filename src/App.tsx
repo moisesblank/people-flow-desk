@@ -31,6 +31,7 @@ import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
 
 // ⚡ DOGMA III: Lazy loading inteligente de todas as páginas
 const Auth = lazy(() => import("./pages/Auth"));
+const AreaGratuita = lazy(() => import("./pages/AreaGratuita"));
 const Dashboard = lazy(() => import("./pages/Dashboard"));
 const Funcionarios = lazy(() => import("./pages/Funcionarios"));
 const FinancasPessoais = lazy(() => import("./pages/FinancasPessoais"));
@@ -194,6 +195,7 @@ const AppContent = memo(() => {
           <Route path="/auth" element={<Auth />} />
           <Route path="/termos" element={<TermosDeUso />} />
           <Route path="/privacidade" element={<PoliticaPrivacidade />} />
+          <Route path="/area-gratuita" element={<AreaGratuita />} />
           
           {/* Protected routes with layout */}
           <Route path="/app" element={<ProtectedPage><Dashboard /></ProtectedPage>} />

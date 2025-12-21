@@ -106,6 +106,7 @@ import { QuickActionsV2 } from "@/components/dashboard/QuickActionsV2";
 import { AlertasSistemaWidget } from "@/components/dashboard/AlertasSistemaWidget";
 import { AlunosRealtimeWidget } from "@/components/dashboard/AlunosRealtimeWidget";
 import { WordPressSyncWidget } from "@/components/dashboard/WordPressSyncWidget";
+import { ChurnRiskAlert } from "@/components/dashboard/ChurnRiskAlert";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useAuth } from "@/hooks/useAuth";
@@ -483,6 +484,10 @@ export default function Dashboard() {
         {/* PLANILHA VIVA: Dashboard Reativo Completo */}
         <ReactiveDashboardSection showRefreshButton={true} />
 
+        {/* AXIOMA V - Monitor de Churn (Admin Only) */}
+        {role === 'owner' && (
+          <ChurnRiskAlert showAdminView={true} className="mb-6" />
+        )}
 
         {role === 'owner' && (
           <section className="grid gap-6 lg:grid-cols-3 mb-8">
