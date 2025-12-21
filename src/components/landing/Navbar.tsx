@@ -109,11 +109,20 @@ export const Navbar = () => {
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.3 }}
+                whileHover={{ scale: 1.05, y: -2 }}
+                whileTap={{ scale: 0.95 }}
+                className="relative group"
               >
+                {/* Glow pulsante para o botão Área do Aluno */}
+                <motion.div
+                  className="absolute -inset-1 bg-gradient-to-r from-amber-500 via-orange-500 to-red-500 rounded-xl blur-lg opacity-40 group-hover:opacity-70 transition-opacity"
+                  animate={{ opacity: [0.3, 0.5, 0.3] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
                 <Button 
-                  variant="ghost" 
-                  className="text-gray-300 hover:text-white hover:bg-white/10 font-semibold"
+                  className="relative bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 text-white font-bold shadow-lg shadow-orange-500/30 px-6 h-11 rounded-xl border-0 flex items-center gap-2"
                 >
+                  <Sparkles className="w-4 h-4" />
                   Área do Aluno
                 </Button>
               </motion.div>
@@ -243,12 +252,19 @@ export const Navbar = () => {
                 </Link>
                 
                 <Link to="/auth" onClick={() => setMobileOpen(false)}>
-                  <Button 
-                    variant="outline" 
-                    className="w-full border-2 border-gray-700 hover:border-red-500/50 h-14 text-base font-semibold rounded-2xl bg-white/5"
-                  >
-                    Área do Aluno
-                  </Button>
+                  <div className="relative">
+                    <motion.div
+                      className="absolute -inset-1 bg-gradient-to-r from-amber-500 to-orange-500 rounded-2xl blur-lg opacity-50"
+                      animate={{ opacity: [0.3, 0.6, 0.3] }}
+                      transition={{ duration: 2, repeat: Infinity }}
+                    />
+                    <Button 
+                      className="relative w-full bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 h-14 text-base font-bold rounded-2xl border-0 flex items-center justify-center gap-3"
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      Área do Aluno
+                    </Button>
+                  </div>
                 </Link>
               </motion.div>
             </div>
