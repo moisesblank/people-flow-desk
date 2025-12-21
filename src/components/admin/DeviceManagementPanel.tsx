@@ -1,25 +1,25 @@
 // ============================================
-// 🛡️ DOGMA XI: Painel de Gestão de Dispositivos
-// Monitoramento em tempo real (Owner Only)
+// 🛡️ DOGMA XI v2.0: Painel de Gestão de Dispositivos
+// Monitoramento em tempo real para o OWNER
 // ============================================
 
 import { useState, useEffect, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Monitor, Smartphone, Tablet, Shield, AlertTriangle, 
-  RefreshCw, Search, Trash2, Users, Eye, Clock,
-  ChevronDown, ChevronUp, Ban
-} from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { supabase } from '@/integrations/supabase/client';
-import { format, formatDistanceToNow } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
-import { cn } from '@/lib/utils';
+import { 
+  Monitor, Smartphone, Tablet, RefreshCw, Search, Users, 
+  Shield, AlertTriangle, Activity, Power, ChevronDown, 
+  ChevronRight, Clock, Eye, XCircle, Wifi
+} from 'lucide-react';
+import { formatDistanceToNow, format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface DeviceData {
   id: string;
@@ -30,31 +30,61 @@ interface DeviceData {
   browser: string;
   os: string;
   is_active: boolean;
+  is_trusted: boolean;
+  first_seen_at: string;
   last_seen_at: string;
+  deactivated_at: string | null;
   active_count: number;
 }
 
-interface SuspiciousUser {
-  user_id: string;
+interface BlockedAttempt {
+  id: string;
   user_email: string;
-  device_count: number;
+  device_name: string;
+  device_type: string;
+  browser: string;
+  os: string;
+  attempt_type: string;
+  blocked: boolean;
+  resolved: boolean;
+  created_at: string;
+}
+
+interface DeviceStats {
+  total_devices: number;
+  active_devices: number;
+  total_users: number;
+  users_at_limit: number;
+  recent_attempts: number;
+  devices_by_type: Record<string, number>;
+  online_now: number;
 }
 
 export function DeviceManagementPanel() {
   const [devices, setDevices] = useState<DeviceData[]>([]);
-  const [suspiciousUsers, setSuspiciousUsers] = useState<SuspiciousUser[]>([]);
-  const [totalDevices, setTotalDevices] = useState(0);
-  const [totalUsers, setTotalUsers] = useState(0);
+  const [blockedAttempts, setBlockedAttempts] = useState<BlockedAttempt[]>([]);
+  const [stats, setStats] = useState<DeviceStats | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
-  const [expandedUser, setExpandedUser] = useState<string | null>(null);
+  const [expandedUsers, setExpandedUsers] = useState<Set<string>>(new Set());
+  const [activeTab, setActiveTab] = useState('devices');
 
+  // Buscar estatísticas
+  const fetchStats = useCallback(async () => {
+    const { data, error } = await supabase.rpc('admin_get_device_stats');
+    if (!error && data) {
+      setStats(data as unknown as DeviceStats);
+    }
+  }, []);
+
+  // Buscar dispositivos
   const fetchDevices = useCallback(async () => {
     setIsLoading(true);
     try {
       const { data, error } = await supabase.rpc('admin_get_all_devices', {
-        p_limit: 200,
-        p_offset: 0
+        p_limit: 500,
+        p_offset: 0,
+        p_only_active: false
       });
 
       if (error) throw error;
@@ -62,27 +92,7 @@ export function DeviceManagementPanel() {
       const result = data as any;
       if (result.success) {
         setDevices(result.devices || []);
-        setTotalDevices(result.total || 0);
       }
-
-      // Buscar usuários no limite (extrair dos dados já carregados)
-      const usersAtLimit = Object.values(
-        (result.devices || []).reduce((acc: Record<string, any>, d: DeviceData) => {
-          if (!acc[d.user_id]) acc[d.user_id] = { user_id: d.user_id, user_email: d.user_email, count: 0 };
-          if (d.is_active) acc[d.user_id].count++;
-          return acc;
-        }, {})
-      ).filter((u: any) => u.count >= 3) as SuspiciousUser[];
-      
-      setSuspiciousUsers(usersAtLimit.map((u: any) => ({ 
-        user_id: u.user_id, 
-        user_email: u.user_email, 
-        device_count: u.count 
-      })));
-      
-      // Contar usuários únicos
-      const uniqueUsers = new Set((result.devices || []).map((d: DeviceData) => d.user_id));
-      setTotalUsers(uniqueUsers.size);
     } catch (err) {
       console.error('[ADMIN] Erro ao buscar dispositivos:', err);
       toast.error('Erro ao carregar dispositivos');
@@ -90,27 +100,61 @@ export function DeviceManagementPanel() {
     setIsLoading(false);
   }, []);
 
+  // Buscar tentativas bloqueadas
+  const fetchBlockedAttempts = useCallback(async () => {
+    const { data, error } = await supabase.rpc('admin_get_blocked_attempts', {
+      p_limit: 50,
+      p_only_unresolved: false
+    });
+
+    if (!error && data) {
+      const result = data as any;
+      if (result.success) {
+        setBlockedAttempts(result.attempts || []);
+      }
+    }
+  }, []);
+
+  // Carregar tudo inicialmente
   useEffect(() => {
     fetchDevices();
+    fetchStats();
+    fetchBlockedAttempts();
 
-    // Realtime subscription
-    const channel = supabase
-      .channel('device-changes')
+    // Realtime para dispositivos
+    const deviceChannel = supabase
+      .channel('device-management-updates')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'user_devices'
       }, () => {
         fetchDevices();
+        fetchStats();
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'device_access_attempts'
+      }, (payload) => {
+        fetchBlockedAttempts();
+        fetchStats();
+        
+        // Notificação de nova tentativa bloqueada
+        const attempt = payload.new as any;
+        toast.warning('Nova tentativa bloqueada', {
+          description: `${attempt.device_name || 'Dispositivo'} - ${attempt.attempt_type}`,
+        });
       })
       .subscribe();
 
     return () => {
-      supabase.removeChannel(channel);
+      supabase.removeChannel(deviceChannel);
     };
-  }, [fetchDevices]);
+  }, [fetchDevices, fetchStats, fetchBlockedAttempts]);
 
-  const handleDeactivateDevice = async (deviceId: string) => {
+  // Desativar dispositivo
+  const handleDeactivateDevice = async (deviceId: string, deviceName: string) => {
     try {
       const { data, error } = await supabase.rpc('deactivate_device', {
         p_device_id: deviceId
@@ -120,8 +164,9 @@ export function DeviceManagementPanel() {
 
       const result = data as any;
       if (result.success) {
-        toast.success(`Dispositivo "${result.device_name}" desativado`);
+        toast.success(`Dispositivo "${deviceName}" desativado`);
         fetchDevices();
+        fetchStats();
       } else {
         toast.error(result.error || 'Erro ao desativar');
       }
@@ -131,6 +176,7 @@ export function DeviceManagementPanel() {
     }
   };
 
+  // Ícone do dispositivo
   const getDeviceIcon = (type: string) => {
     switch (type) {
       case 'mobile': return <Smartphone className="w-4 h-4" />;
@@ -139,254 +185,377 @@ export function DeviceManagementPanel() {
     }
   };
 
+  // Formatar tempo
+  const formatTime = (dateStr: string) => {
+    try {
+      return formatDistanceToNow(new Date(dateStr), { addSuffix: true, locale: ptBR });
+    } catch {
+      return 'Desconhecido';
+    }
+  };
+
+  // Filtrar dispositivos
   const filteredDevices = devices.filter(d => 
     d.user_email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     d.device_name?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   // Agrupar por usuário
-  const devicesByUser = filteredDevices.reduce((acc, device) => {
-    const key = device.user_id;
-    if (!acc[key]) {
-      acc[key] = {
-        user_email: device.user_email,
-        devices: []
+  const devicesByUser = filteredDevices.reduce((acc, d) => {
+    if (!acc[d.user_id]) {
+      acc[d.user_id] = {
+        email: d.user_email,
+        devices: [],
+        activeCount: 0
       };
     }
-    acc[key].devices.push(device);
+    acc[d.user_id].devices.push(d);
+    if (d.is_active) acc[d.user_id].activeCount++;
     return acc;
-  }, {} as Record<string, { user_email: string; devices: DeviceData[] }>);
+  }, {} as Record<string, { email: string; devices: DeviceData[]; activeCount: number }>);
+
+  // Toggle expansão de usuário
+  const toggleUser = (userId: string) => {
+    setExpandedUsers(prev => {
+      const next = new Set(prev);
+      if (next.has(userId)) {
+        next.delete(userId);
+      } else {
+        next.add(userId);
+      }
+      return next;
+    });
+  };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
-            <Shield className="w-6 h-6 text-primary" />
+          <h1 className="text-2xl font-bold flex items-center gap-2">
+            <Shield className="w-7 h-7 text-primary" />
             Gestão de Dispositivos
           </h1>
           <p className="text-muted-foreground">
-            Monitoramento em tempo real • DOGMA XI
+            Monitoramento em tempo real - DOGMA XI
           </p>
         </div>
-        <Button onClick={fetchDevices} variant="outline" size="sm">
-          <RefreshCw className={cn("w-4 h-4 mr-2", isLoading && "animate-spin")} />
+        
+        <Button onClick={() => { fetchDevices(); fetchStats(); fetchBlockedAttempts(); }} variant="outline">
+          <RefreshCw className={`w-4 h-4 mr-2 ${isLoading ? 'animate-spin' : ''}`} />
           Atualizar
         </Button>
       </div>
 
-      {/* Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-primary/20">
-              <Monitor className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totalDevices}</p>
-              <p className="text-sm text-muted-foreground">Dispositivos Totais</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-blue-500/10 to-blue-500/5 border-blue-500/20">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-blue-500/20">
-              <Users className="w-6 h-6 text-blue-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{totalUsers}</p>
-              <p className="text-sm text-muted-foreground">Usuários Ativos</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-amber-500/10 to-amber-500/5 border-amber-500/20">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-amber-500/20">
-              <AlertTriangle className="w-6 h-6 text-amber-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{suspiciousUsers.length}</p>
-              <p className="text-sm text-muted-foreground">No Limite (3+)</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 rounded-xl bg-green-500/20">
-              <Eye className="w-6 h-6 text-green-500" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">
-                {devices.filter(d => {
-                  const lastSeen = new Date(d.last_seen_at);
-                  const now = new Date();
-                  return (now.getTime() - lastSeen.getTime()) < 5 * 60 * 1000;
-                }).length}
-              </p>
-              <p className="text-sm text-muted-foreground">Online Agora</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Usuários no limite */}
-      {suspiciousUsers.length > 0 && (
-        <Card className="border-amber-500/30 bg-amber-500/5">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-amber-500 flex items-center gap-2 text-base">
-              <AlertTriangle className="w-5 h-5" />
-              Usuários no Limite de Dispositivos
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-2">
-              {suspiciousUsers.map((user) => (
-                <Badge 
-                  key={user.user_id} 
-                  variant="outline" 
-                  className="bg-amber-500/10 border-amber-500/30 text-amber-600"
-                >
-                  {user.user_email} ({user.device_count} dispositivos)
-                </Badge>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Search */}
-      <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Buscar por email ou dispositivo..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="pl-10"
-        />
-      </div>
-
-      {/* Devices by User */}
-      <ScrollArea className="h-[500px]">
-        <div className="space-y-3">
-          {Object.entries(devicesByUser).map(([userId, userData]) => (
-            <motion.div
-              key={userId}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="border border-border rounded-xl overflow-hidden bg-card"
-            >
-              {/* User Header */}
-              <div 
-                className="p-4 flex items-center justify-between cursor-pointer hover:bg-muted/50 transition-colors"
-                onClick={() => setExpandedUser(expandedUser === userId ? null : userId)}
-              >
-                <div className="flex items-center gap-3">
-                  <div className={cn(
-                    "p-2 rounded-lg",
-                    userData.devices.length >= 3 ? "bg-amber-500/20" : "bg-primary/20"
-                  )}>
-                    <Users className={cn(
-                      "w-5 h-5",
-                      userData.devices.length >= 3 ? "text-amber-500" : "text-primary"
-                    )} />
-                  </div>
-                  <div>
-                    <p className="font-medium text-foreground">{userData.user_email}</p>
-                    <p className="text-sm text-muted-foreground">
-                      {userData.devices.filter(d => d.is_active).length} dispositivos ativos
-                    </p>
-                  </div>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  {userData.devices.length >= 3 && (
-                    <Badge variant="outline" className="bg-amber-500/10 text-amber-600 border-amber-500/30">
-                      No Limite
-                    </Badge>
-                  )}
-                  {expandedUser === userId ? (
-                    <ChevronUp className="w-5 h-5 text-muted-foreground" />
-                  ) : (
-                    <ChevronDown className="w-5 h-5 text-muted-foreground" />
-                  )}
+      {/* Stats Cards */}
+      {stats && (
+        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-5 h-5 text-muted-foreground" />
+                <div>
+                  <p className="text-2xl font-bold">{stats.total_devices}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
                 </div>
               </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Activity className="w-5 h-5 text-green-500" />
+                <div>
+                  <p className="text-2xl font-bold text-green-500">{stats.active_devices}</p>
+                  <p className="text-xs text-muted-foreground">Ativos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-500" />
+                <div>
+                  <p className="text-2xl font-bold text-blue-500">{stats.total_users}</p>
+                  <p className="text-xs text-muted-foreground">Usuários</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className="w-5 h-5 text-amber-500" />
+                <div>
+                  <p className="text-2xl font-bold text-amber-500">{stats.users_at_limit}</p>
+                  <p className="text-xs text-muted-foreground">No Limite</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <XCircle className="w-5 h-5 text-destructive" />
+                <div>
+                  <p className="text-2xl font-bold text-destructive">{stats.recent_attempts}</p>
+                  <p className="text-xs text-muted-foreground">Bloqueados 24h</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex items-center gap-2">
+                <Wifi className="w-5 h-5 text-emerald-500" />
+                <div>
+                  <p className="text-2xl font-bold text-emerald-500">{stats.online_now}</p>
+                  <p className="text-xs text-muted-foreground">Online Agora</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="pt-4">
+              <div className="flex gap-2">
+                <div className="flex items-center gap-1">
+                  <Monitor className="w-3 h-3" />
+                  <span className="text-xs">{stats.devices_by_type?.desktop || 0}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Smartphone className="w-3 h-3" />
+                  <span className="text-xs">{stats.devices_by_type?.mobile || 0}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Tablet className="w-3 h-3" />
+                  <span className="text-xs">{stats.devices_by_type?.tablet || 0}</span>
+                </div>
+              </div>
+              <p className="text-xs text-muted-foreground mt-1">Por Tipo</p>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-              {/* Devices List */}
-              <AnimatePresence>
-                {expandedUser === userId && (
-                  <motion.div
-                    initial={{ height: 0, opacity: 0 }}
-                    animate={{ height: 'auto', opacity: 1 }}
-                    exit={{ height: 0, opacity: 0 }}
-                    className="border-t border-border"
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList>
+          <TabsTrigger value="devices" className="gap-2">
+            <Monitor className="w-4 h-4" />
+            Dispositivos
+          </TabsTrigger>
+          <TabsTrigger value="attempts" className="gap-2">
+            <AlertTriangle className="w-4 h-4" />
+            Tentativas Bloqueadas
+            {blockedAttempts.filter(a => !a.resolved).length > 0 && (
+              <Badge variant="destructive" className="ml-1 h-5 px-1.5">
+                {blockedAttempts.filter(a => !a.resolved).length}
+              </Badge>
+            )}
+          </TabsTrigger>
+        </TabsList>
+
+        {/* Tab: Dispositivos */}
+        <TabsContent value="devices" className="mt-4">
+          {/* Search */}
+          <div className="relative mb-4">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por email ou dispositivo..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+
+          {/* Lista de usuários e dispositivos */}
+          <ScrollArea className="h-[600px]">
+            <div className="space-y-2">
+              {Object.entries(devicesByUser).map(([userId, userData]) => (
+                <Card key={userId} className={userData.activeCount >= 3 ? 'border-amber-500/50' : ''}>
+                  <CardHeader 
+                    className="cursor-pointer py-3"
+                    onClick={() => toggleUser(userId)}
                   >
-                    <div className="p-4 space-y-2 bg-muted/30">
-                      {userData.devices.map((device) => (
-                        <div 
-                          key={device.id}
-                          className={cn(
-                            "flex items-center justify-between p-3 rounded-lg",
-                            device.is_active ? "bg-background" : "bg-muted/50 opacity-60"
-                          )}
-                        >
-                          <div className="flex items-center gap-3">
-                            <div className="p-2 rounded-lg bg-muted">
-                              {getDeviceIcon(device.device_type)}
-                            </div>
-                            <div>
-                              <p className="font-medium text-foreground text-sm">
-                                {device.device_name}
-                              </p>
-                              <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                <Clock className="w-3 h-3" />
-                                {formatDistanceToNow(new Date(device.last_seen_at), { 
-                                  addSuffix: true, 
-                                  locale: ptBR 
-                                })}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        {expandedUsers.has(userId) ? (
+                          <ChevronDown className="w-4 h-4" />
+                        ) : (
+                          <ChevronRight className="w-4 h-4" />
+                        )}
+                        <div>
+                          <CardTitle className="text-sm font-medium">
+                            {userData.email}
+                          </CardTitle>
+                          <CardDescription className="text-xs">
+                            {userData.devices.length} dispositivos • {userData.activeCount} ativos
+                          </CardDescription>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        {userData.activeCount >= 3 && (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
+                            <AlertTriangle className="w-3 h-3 mr-1" />
+                            No Limite
+                          </Badge>
+                        )}
+                        <Badge variant={userData.activeCount > 0 ? 'default' : 'secondary'}>
+                          {userData.activeCount}/{3}
+                        </Badge>
+                      </div>
+                    </div>
+                  </CardHeader>
+                  
+                  <AnimatePresence>
+                    {expandedUsers.has(userId) && (
+                      <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        <CardContent className="pt-0 space-y-2">
+                          {userData.devices.map((device) => (
+                            <div 
+                              key={device.id}
+                              className={`flex items-center justify-between p-3 rounded-lg border ${
+                                device.is_active 
+                                  ? 'bg-muted/50 border-border' 
+                                  : 'bg-muted/20 border-dashed opacity-60'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                                  device.is_active ? 'bg-primary/10 text-primary' : 'bg-muted text-muted-foreground'
+                                }`}>
+                                  {getDeviceIcon(device.device_type)}
+                                </div>
+                                
+                                <div>
+                                  <p className="font-medium text-sm flex items-center gap-2">
+                                    {device.device_name}
+                                    {device.is_trusted && (
+                                      <Badge variant="outline" className="text-xs bg-emerald-500/10 text-emerald-500">
+                                        Confiável
+                                      </Badge>
+                                    )}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    {device.browser} • {device.os}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                                    <Clock className="w-3 h-3" />
+                                    {formatTime(device.last_seen_at)}
+                                  </p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center gap-2">
+                                {device.is_active ? (
+                                  <>
+                                    <Badge variant="default" className="bg-green-500/20 text-green-500">
+                                      Ativo
+                                    </Badge>
+                                    <Button
+                                      size="sm"
+                                      variant="ghost"
+                                      className="h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleDeactivateDevice(device.id, device.device_name);
+                                      }}
+                                    >
+                                      <Power className="w-4 h-4" />
+                                    </Button>
+                                  </>
+                                ) : (
+                                  <Badge variant="secondary">Inativo</Badge>
+                                )}
                               </div>
                             </div>
-                          </div>
-
-                          <div className="flex items-center gap-2">
-                            <Badge variant={device.is_active ? "default" : "secondary"}>
-                              {device.is_active ? 'Ativo' : 'Inativo'}
-                            </Badge>
-                            {device.is_active && (
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                className="text-destructive hover:text-destructive hover:bg-destructive/10"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleDeactivateDevice(device.id);
-                                }}
-                              >
-                                <Ban className="w-4 h-4" />
-                              </Button>
-                            )}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          ))}
-
-          {Object.keys(devicesByUser).length === 0 && !isLoading && (
-            <div className="text-center py-12 text-muted-foreground">
-              <Monitor className="w-12 h-12 mx-auto mb-4 opacity-50" />
-              <p>Nenhum dispositivo encontrado</p>
+                          ))}
+                        </CardContent>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </Card>
+              ))}
+              
+              {Object.keys(devicesByUser).length === 0 && !isLoading && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Eye className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>Nenhum dispositivo encontrado</p>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      </ScrollArea>
+          </ScrollArea>
+        </TabsContent>
+
+        {/* Tab: Tentativas Bloqueadas */}
+        <TabsContent value="attempts" className="mt-4">
+          <ScrollArea className="h-[600px]">
+            <div className="space-y-2">
+              {blockedAttempts.map((attempt) => (
+                <Card key={attempt.id} className={!attempt.resolved ? 'border-destructive/30' : ''}>
+                  <CardContent className="py-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                          attempt.resolved ? 'bg-muted' : 'bg-destructive/10'
+                        }`}>
+                          {getDeviceIcon(attempt.device_type)}
+                        </div>
+                        
+                        <div>
+                          <p className="font-medium text-sm">{attempt.user_email}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {attempt.device_name} • {attempt.browser} • {attempt.os}
+                          </p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                            <Clock className="w-3 h-3" />
+                            {formatTime(attempt.created_at)}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center gap-2">
+                        <Badge variant={attempt.resolved ? 'secondary' : 'destructive'}>
+                          {attempt.attempt_type.replace(/_/g, ' ')}
+                        </Badge>
+                        {attempt.resolved ? (
+                          <Badge variant="outline" className="bg-green-500/10 text-green-500">
+                            Resolvido
+                          </Badge>
+                        ) : (
+                          <Badge variant="outline" className="bg-amber-500/10 text-amber-500">
+                            Pendente
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              
+              {blockedAttempts.length === 0 && (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Shield className="w-12 h-12 mx-auto mb-4 opacity-30" />
+                  <p>Nenhuma tentativa bloqueada</p>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

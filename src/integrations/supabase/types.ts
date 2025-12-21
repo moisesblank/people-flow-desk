@@ -2514,6 +2514,57 @@ export type Database = {
         }
         Relationships: []
       }
+      device_access_attempts: {
+        Row: {
+          attempt_type: string
+          blocked: boolean | null
+          browser: string | null
+          created_at: string | null
+          device_fingerprint: string
+          device_name: string | null
+          device_type: string | null
+          id: string
+          ip_hint: string | null
+          os: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          attempt_type: string
+          blocked?: boolean | null
+          browser?: string | null
+          created_at?: string | null
+          device_fingerprint: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hint?: string | null
+          os?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          attempt_type?: string
+          blocked?: boolean | null
+          browser?: string | null
+          created_at?: string | null
+          device_fingerprint?: string
+          device_name?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hint?: string | null
+          os?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       dynamic_menu_items: {
         Row: {
           area: string
@@ -9392,10 +9443,21 @@ export type Database = {
         }
         Returns: number
       }
-      admin_get_all_devices: {
-        Args: { p_limit?: number; p_offset?: number }
+      admin_get_all_devices:
+        | { Args: { p_limit?: number; p_offset?: number }; Returns: Json }
+        | {
+            Args: {
+              p_limit?: number
+              p_offset?: number
+              p_only_active?: boolean
+            }
+            Returns: Json
+          }
+      admin_get_blocked_attempts: {
+        Args: { p_limit?: number; p_only_unresolved?: boolean }
         Returns: Json
       }
+      admin_get_device_stats: { Args: never; Returns: Json }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
