@@ -115,7 +115,7 @@ const AlunoDuvidas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m
 const AlunoRevisao = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRevisao })));
 const AlunoLaboratorio = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoLaboratorio })));
 const AlunoCalculadora = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCalculadora })));
-const AlunoFlashcards = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoFlashcards })));
+const AlunoFlashcards = lazy(() => import("./pages/FlashcardsPage"));
 const AlunoMetas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoMetas })));
 const AlunoAgenda = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoAgenda })));
 const AlunoCertificados = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCertificados })));
