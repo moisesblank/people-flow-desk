@@ -542,86 +542,52 @@ export default function FinancasEmpresa() {
   const handleStatusChange = async (item: any, newStatus: string) => {
     console.log('[FINANÇAS] Atualizando status:', { id: item.id, itemType: item.itemType, newStatus });
     
+    const statusLabels: Record<string, string> = {
+      pago: '✅ PAGO',
+      pendente: '⏳ Pendente',
+      atrasado: '⚠️ Atrasado',
+    };
+    
+    const loadingToast = toast.loading(`Atualizando para ${statusLabels[newStatus] || newStatus}...`);
+    
     try {
-      const updateData: Record<string, any> = {
-        status_pagamento: newStatus,
-        updated_at: new Date().toISOString(),
-      };
+      // Usar função RPC SECURITY DEFINER para garantir o update
+      const { data, error } = await supabase.rpc('update_expense_status', {
+        p_expense_id: typeof item.id === 'string' ? parseInt(item.id) : item.id,
+        p_expense_type: item.itemType,
+        p_new_status: newStatus,
+        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null,
+      });
       
-      // Adicionar data_pagamento quando marcado como pago
-      if (newStatus === 'pago') {
-        updateData.data_pagamento = format(new Date(), "yyyy-MM-dd");
-      } else {
-        updateData.data_pagamento = null;
-      }
-      
-      let error = null;
-      
-      if (item.itemType === "gasto_fixo") {
-        const result = await supabase
-          .from("company_fixed_expenses")
-          .update(updateData)
-          .eq("id", item.id)
-          .select();
-        
-        error = result.error;
-        console.log('[FINANÇAS] Update gasto_fixo:', result);
-        
-        if (!error) {
-          // Invalidar cache e recarregar
-          await companyFinance.refresh();
-        }
-      } else if (item.itemType === "gasto_extra") {
-        const result = await supabase
-          .from("company_extra_expenses")
-          .update(updateData)
-          .eq("id", item.id)
-          .select();
-        
-        error = result.error;
-        console.log('[FINANÇAS] Update gasto_extra:', result);
-        
-        if (!error) {
-          await companyFinance.refresh();
-        }
-      } else {
-        // Para pagamentos, o campo é 'status' não 'status_pagamento'
-        const result = await supabase
-          .from("payments")
-          .update({ 
-            status: newStatus,
-            data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null,
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", item.id)
-          .select();
-        
-        error = result.error;
-        console.log('[FINANÇAS] Update payment:', result);
-        
-        if (!error) {
-          await paymentsHistory.refresh();
-        }
-      }
+      toast.dismiss(loadingToast);
       
       if (error) {
-        console.error('[FINANÇAS] Erro no update:', error);
+        console.error('[FINANÇAS] Erro RPC:', error);
         toast.error(`Erro ao atualizar: ${error.message}`);
         return;
       }
       
-      // Feedback visual imediato
-      const statusLabels: Record<string, string> = {
-        pago: '✅ PAGO',
-        pendente: '⏳ Pendente',
-        atrasado: '⚠️ Atrasado',
-      };
+      const result = data as { success?: boolean; error?: string; affected_rows?: number } | null;
       
-      toast.success(`${item.nome || item.label} marcado como ${statusLabels[newStatus] || newStatus}`, {
-        description: newStatus === 'pago' ? `Data de pagamento: ${format(new Date(), "dd/MM/yyyy")}` : undefined,
-      });
+      console.log('[FINANÇAS] Resultado RPC:', result);
+      
+      if (result?.success) {
+        toast.success(`${item.nome || item.label} → ${statusLabels[newStatus] || newStatus}`, {
+          description: newStatus === 'pago' ? `Pago em ${format(new Date(), "dd/MM/yyyy")}` : undefined,
+        });
+        
+        // Refresh dos dados
+        if (item.itemType === "pagamento") {
+          await paymentsHistory.refresh();
+        } else {
+          await companyFinance.refresh();
+        }
+      } else {
+        toast.error(result?.error || 'Erro desconhecido ao atualizar');
+      }
       
     } catch (error: any) {
+      toast.dismiss(loadingToast);
       console.error('[FINANÇAS] Erro crítico:', error);
       toast.error(`Erro ao atualizar status: ${error?.message || 'Erro desconhecido'}`);
     }
