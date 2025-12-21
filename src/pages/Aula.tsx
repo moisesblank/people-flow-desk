@@ -18,6 +18,7 @@ import { LessonComments } from '@/components/forum/LessonComments';
 import { BetaLessonGuard } from '@/components/lms/BetaLessonGuard';
 import { usePublishEvent } from '@/hooks/usePublishEvent';
 import { LessonTabs } from '@/components/player/LessonTabs';
+import { LessonProgressWidget } from '@/components/player/LessonProgressWidget';
 
 function AulaContent() {
   const { courseId, lessonId } = useParams();
@@ -88,13 +89,15 @@ function AulaContent() {
         <p className="text-muted-foreground">Módulo: Química Geral • Duração: 3h 57min</p>
       </div>
 
+      {/* Layout Principal */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="grid grid-cols-1 lg:grid-cols-3 gap-6"
+        className="grid grid-cols-1 xl:grid-cols-4 gap-6"
       >
-        {/* Coluna Principal - Player */}
-        <div className="lg:col-span-2 space-y-6">
+        {/* Coluna Principal - Player + Abas Educacionais */}
+        <div className="xl:col-span-3 space-y-6">
+          {/* Player de Vídeo */}
           <Tabs value={activeTab} onValueChange={setActiveTab}>
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="video">🎬 Vídeo</TabsTrigger>
@@ -103,7 +106,6 @@ function AulaContent() {
             </TabsList>
 
             <TabsContent value="video" className="mt-4">
-              {/* YouTube Player */}
               <YouTubePlayer
                 videoId={youtubeVideoId}
                 title="Aula 2: Introdução Inorgânica PT2-2025"
@@ -156,7 +158,6 @@ function AulaContent() {
             </TabsContent>
 
             <TabsContent value="discussao" className="mt-4">
-              {/* Seção de Comentários/Fórum */}
               <LessonComments
                 lessonId={lessonId || ""}
                 lessonTitle="Introdução Inorgânica PT2-2025"
@@ -164,6 +165,17 @@ function AulaContent() {
               />
             </TabsContent>
           </Tabs>
+
+          {/* ========================================
+              SISTEMA DE ABAS EDUCACIONAIS v9.0
+              Resumo IA | Quiz | Flashcards | Transcrição
+              Mapa Mental | Anotações | TRAMON
+          ======================================== */}
+          <LessonTabs
+            lessonId={lessonId || "demo-lesson"}
+            lessonTitle="Introdução Inorgânica PT2-2025 - Diagramas de Fases"
+            className="animate-fade-in"
+          />
         </div>
 
         {/* Sidebar - Info da Aula */}
@@ -192,6 +204,7 @@ function AulaContent() {
             </CardContent>
           </Card>
 
+          {/* Card de Gamificação */}
           <Card className="bg-gradient-to-br from-primary/10 to-purple-500/10 border-primary/20">
             <CardContent className="pt-6">
               <div className="text-center space-y-3">
@@ -205,6 +218,30 @@ function AulaContent() {
                 <Badge className="bg-amber-500/20 text-amber-500 border-amber-500/30">
                   +50 XP ao concluir
                 </Badge>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Widget de Progresso */}
+          <LessonProgressWidget lessonId={lessonId || "demo-lesson"} />
+
+          {/* Card de Recursos IA */}
+          <Card className="border-primary/20 bg-gradient-to-br from-blue-500/5 to-purple-500/5">
+            <CardContent className="pt-6">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-lg bg-gradient-to-br from-primary to-purple-500 flex items-center justify-center">
+                    <span className="text-white text-sm">🤖</span>
+                  </div>
+                  <h4 className="font-semibold">Recursos IA</h4>
+                </div>
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>✨ Resumo gerado por IA</p>
+                  <p>🧠 Mapa mental automático</p>
+                  <p>❓ Quiz personalizado</p>
+                  <p>🃏 Flashcards inteligentes</p>
+                  <p>💬 Tutor TRAMON 24/7</p>
+                </div>
               </div>
             </CardContent>
           </Card>
