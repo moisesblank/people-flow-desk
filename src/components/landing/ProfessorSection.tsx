@@ -18,27 +18,30 @@ import {
   Youtube,
   Play,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  CheckCircle2
 } from "lucide-react";
 
 // Import professor images - FOTOS REAIS
 import professorImage1 from "@/assets/professor-moises-1.jpg";
 import professorImage2 from "@/assets/professor-moises-2.jpg";
+import professorImageNovo from "@/assets/professor-moises-novo.png";
+import logoMoises from "@/assets/logo-moises-medeiros.png";
 
-const professorImages = [professorImage1, professorImage2];
+const professorImages = [professorImageNovo, professorImage1, professorImage2];
 
 const achievements = [
   { icon: <GraduationCap className="w-5 h-5" />, label: "Químico UFRN", color: "pink" },
-  { icon: <Trophy className="w-5 h-5" />, label: "+2.847 Aprovados", color: "purple" },
+  { icon: <Trophy className="w-5 h-5" />, label: "+10.847 Aprovados", color: "purple" },
   { icon: <BookOpen className="w-5 h-5" />, label: "500h+ de Aulas", color: "blue" },
   { icon: <Star className="w-5 h-5" />, label: "4.9/5 Avaliação", color: "yellow" },
 ];
 
 const stats = [
-  { number: "10+", label: "Anos de Experiência" },
+  { number: "15+", label: "Anos de Experiência" },
   { number: "50k+", label: "Seguidores" },
   { number: "1M+", label: "Views no YouTube" },
-  { number: "#1", label: "Aprovação ENEM" },
+  { number: "#1", label: "Brasil" },
 ];
 
 export const ProfessorSection = () => {
@@ -89,7 +92,7 @@ export const ProfessorSection = () => {
                     key={idx}
                     src={img} 
                     alt={`Prof. Moisés Medeiros - Foto ${idx + 1}`} 
-                    className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
+                    className={`absolute inset-0 w-full h-full object-cover object-center transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
                   />
                 ))}
                 
@@ -110,7 +113,7 @@ export const ProfessorSection = () => {
                 </div>
 
                 {/* Image Dots */}
-                <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 z-10">
+                <div className="absolute bottom-24 left-0 right-0 flex justify-center gap-2 z-10">
                   {professorImages.map((_, idx) => (
                     <button
                       key={idx}
@@ -121,14 +124,69 @@ export const ProfessorSection = () => {
                 </div>
                 
                 {/* Overlay with name */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
-                <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
-                  <h3 className="text-2xl font-bold text-white mb-1">Prof. Moisés Medeiros</h3>
-                  <p className="text-pink-400 font-medium">O professor que mais aprova em Química</p>
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-black/30 to-transparent pointer-events-none" />
+              </div>
+
+              {/* Info Card abaixo da imagem - NÃO CORTA */}
+              <div className="relative bg-gradient-to-b from-black/95 to-black p-6">
+                {/* Logo e info do professor */}
+                <div className="flex items-start gap-4">
+                  {/* Avatar/Logo */}
+                  <motion.div
+                    className="relative flex-shrink-0"
+                    animate={{ 
+                      boxShadow: ['0 0 20px rgba(236,72,153,0.3)', '0 0 40px rgba(236,72,153,0.5)', '0 0 20px rgba(236,72,153,0.3)']
+                    }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <div className="w-16 h-16 rounded-xl bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
+                      <img src={logoMoises} alt="Logo" className="w-12 h-12 object-contain" />
+                    </div>
+                    <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center border-2 border-black">
+                      <CheckCircle2 className="w-3 h-3 text-white" />
+                    </div>
+                  </motion.div>
+                  
+                  {/* Info */}
+                  <div className="flex-1">
+                    <h3 className="text-xl font-bold text-white mb-1">Prof. Moisés Medeiros</h3>
+                    <p className="text-gray-400 text-sm mb-2">Mestre em Química • 15+ anos de experiência</p>
+                    
+                    {/* Rating */}
+                    <div className="flex items-center gap-2 mb-3">
+                      <div className="flex">
+                        {[1,2,3,4,5].map(i => (
+                          <Star key={i} className="w-4 h-4 text-amber-400" fill="rgba(251,191,36,1)" />
+                        ))}
+                      </div>
+                      <span className="text-amber-400 font-bold text-sm">4.9/5</span>
+                      <span className="text-gray-500 text-xs">(2.847 avaliações)</span>
+                    </div>
+                    
+                    {/* Badges */}
+                    <div className="flex flex-wrap gap-2">
+                      <motion.div
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white text-xs font-bold"
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity }}
+                      >
+                        <Trophy className="w-3 h-3" />
+                        #1 Brasil
+                      </motion.div>
+                      <motion.div
+                        className="flex items-center gap-1 px-3 py-1.5 rounded-full bg-gradient-to-r from-green-600 to-emerald-500 text-white text-xs font-bold"
+                        animate={{ scale: [1, 1.05, 1] }}
+                        transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+                      >
+                        <GraduationCap className="w-3 h-3" />
+                        10.847+ Aprovados
+                      </motion.div>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Badge */}
+              {/* Badge TOP 1 */}
               <motion.div
                 initial={{ scale: 0 }}
                 whileInView={{ scale: 1 }}
@@ -189,12 +247,12 @@ export const ProfessorSection = () => {
             </h2>
 
             <p className="text-gray-400 text-lg leading-relaxed">
-              Químico formado pela UFRN, professor há mais de 10 anos, especialista em preparação para ENEM e vestibulares de medicina. Criador da metodologia que mais aprova alunos em universidades federais do Brasil.
+              Químico formado pela UFRN, professor há mais de 15 anos, especialista em preparação para ENEM e vestibulares de medicina. Criador da metodologia que mais aprova alunos em universidades federais do Brasil.
             </p>
 
             <p className="text-gray-400 text-lg leading-relaxed">
               Com uma abordagem didática única e uso de tecnologia de ponta, incluindo IA personalizada, 
-              o Prof. Moisés já transformou a vida de mais de 2.847 alunos aprovados.
+              o Prof. Moisés já transformou a vida de mais de 10.847 alunos aprovados.
             </p>
 
             {/* Stats Grid */}
