@@ -1,24 +1,19 @@
 // ============================================
-// MASTER PRO ULTRA v3.0 - SERVICE WORKER
-// Cache inteligente + Offline + Push
+// ⚡ DOGMA VII: SERVICE WORKER SAGRADO ⚡
+// Cache inteligente + Offline + Performance
 // ============================================
 
-const CACHE_VERSION = 'v1.0.0';
+const CACHE_VERSION = 'v2.0.0';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
+const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 
-// Assets para cache estático
-const STATIC_ASSETS = [
-  '/',
-  '/index.html',
-  '/manifest.json',
-  '/favicon.ico',
-  '/offline.html'
-];
+const STATIC_ASSETS = ['/', '/index.html', '/manifest.json', '/favicon.ico'];
 
-// Instalar
+// INSTALL
 self.addEventListener('install', (event) => {
+  console.log('[SW] ⚡ Installing DOGMA VII...');
   event.waitUntil(
     caches.open(STATIC_CACHE)
       .then(cache => cache.addAll(STATIC_ASSETS))
@@ -26,106 +21,90 @@ self.addEventListener('install', (event) => {
   );
 });
 
-// Ativar
+// ACTIVATE
 self.addEventListener('activate', (event) => {
+  console.log('[SW] ⚡ Activating DOGMA VII...');
   event.waitUntil(
     caches.keys()
       .then(keys => Promise.all(
-        keys
-          .filter(key => !key.includes(CACHE_VERSION))
-          .map(key => caches.delete(key))
+        keys.filter(key => !key.includes(CACHE_VERSION)).map(key => caches.delete(key))
       ))
       .then(() => self.clients.claim())
   );
 });
 
-// Fetch
+// FETCH - Estratégias otimizadas
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+  
+  if (url.protocol === 'ws:' || url.protocol === 'wss:' || url.protocol === 'chrome-extension:') return;
+  if (request.method !== 'GET') return;
 
-  // Ignorar WebSocket, extensões e chrome-extension
-  if (url.protocol === 'ws:' || url.protocol === 'wss:') return;
-  if (url.protocol === 'chrome-extension:') return;
-  if (url.pathname.includes('extension')) return;
-
-  // API: Network first, fallback to cache
-  if (url.pathname.startsWith('/api/') || url.hostname.includes('supabase')) {
+  // API: Network first com cache fallback
+  if (url.hostname.includes('supabase') || url.pathname.startsWith('/api/')) {
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          // Cache apenas GET bem-sucedidos
-          if (request.method === 'GET' && response.ok) {
-            const clone = response.clone();
-            caches.open(API_CACHE).then(cache => cache.put(request, clone));
-          }
+      fetch(request).then(response => {
+        if (response.ok) {
+          const clone = response.clone();
+          caches.open(API_CACHE).then(cache => cache.put(request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(request))
+    );
+    return;
+  }
+
+  // Imagens: Stale-while-revalidate
+  if (request.destination === 'image') {
+    event.respondWith(
+      caches.match(request).then(cached => {
+        const fetchPromise = fetch(request).then(response => {
+          if (response.ok) caches.open(IMAGE_CACHE).then(cache => cache.put(request, response.clone()));
           return response;
-        })
-        .catch(() => caches.match(request))
+        }).catch(() => cached);
+        return cached || fetchPromise;
+      })
     );
     return;
   }
 
   // Assets estáticos: Cache first
-  if (request.destination === 'image' ||
-      request.destination === 'script' ||
-      request.destination === 'style' ||
-      request.destination === 'font') {
+  if (['script', 'style', 'font'].includes(request.destination)) {
     event.respondWith(
-      caches.match(request)
-        .then(cached => {
-          if (cached) return cached;
-
-          return fetch(request).then(response => {
-            if (response.ok) {
-              const clone = response.clone();
-              caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
-            }
-            return response;
-          });
-        })
+      caches.match(request).then(cached => cached || fetch(request).then(response => {
+        if (response.ok) caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, response.clone()));
+        return response;
+      }))
     );
     return;
   }
 
-  // HTML: Network first, fallback to cache, then offline page
+  // HTML: Network first
   if (request.mode === 'navigate') {
     event.respondWith(
-      fetch(request)
-        .then(response => {
-          const clone = response.clone();
-          caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, clone));
-          return response;
-        })
-        .catch(() => caches.match(request).then(cached => cached || caches.match('/offline.html')))
+      fetch(request).then(response => {
+        caches.open(DYNAMIC_CACHE).then(cache => cache.put(request, response.clone()));
+        return response;
+      }).catch(() => caches.match(request))
     );
-    return;
   }
 });
 
 // Push notifications
 self.addEventListener('push', (event) => {
   const data = event.data?.json() || {};
-
   event.waitUntil(
     self.registration.showNotification(data.title || 'Gestão MM', {
-      body: data.body,
-      icon: '/icon-192.png',
-      badge: '/favicon.ico',
-      vibrate: [100, 50, 100],
-      data: { url: data.url || '/' },
-      actions: [
-        { action: 'open', title: 'Abrir' },
-        { action: 'close', title: 'Fechar' }
-      ]
+      body: data.body, icon: '/favicon.ico', badge: '/favicon.ico',
+      data: { url: data.url || '/' }
     })
   );
 });
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
-
-  if (event.action !== 'close') {
-    event.waitUntil(self.clients.openWindow(event.notification.data.url));
-  }
+  event.waitUntil(self.clients.openWindow(event.notification.data.url));
 });
+
+console.log('[SW] ⚡ DOGMA VII Service Worker carregado');
