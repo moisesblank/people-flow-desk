@@ -184,3 +184,10 @@ verify_jwt = true
 
 [functions.generate-ai-content]
 verify_jwt = true
+
+# ============================================
+# 🧠 FSRS FLASHCARD SYSTEM
+# ============================================
+
+[functions.reschedule-flashcard]
+verify_jwt = true
