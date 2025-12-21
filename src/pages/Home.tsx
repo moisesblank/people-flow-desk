@@ -3,8 +3,9 @@
 // ULTRA PERFORMANCE OPTIMIZED
 // ============================================
 
-import { useState, useEffect, useCallback, lazy, Suspense, memo } from "react";
+import { useState, useEffect, useCallback, lazy, memo } from "react";
 import { motion } from "framer-motion";
+import { LazyMount } from "@/components/performance/LazyMount";
 
 // Critical components - loaded immediately
 import { CinematicIntro } from "@/components/landing/CinematicIntro";
@@ -34,40 +35,37 @@ const FuturisticFooter = lazy(() => import("@/components/landing/FuturisticFoote
 // ============================================
 const UltraBackground = memo(() => (
   <div className="fixed inset-0 overflow-hidden pointer-events-none z-0 will-change-auto">
-    {/* Static gradient - no animation */}
     <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
-    
-    {/* Grid holográfico - CSS only, no JS */}
-    <div 
-      className="absolute inset-0 opacity-10" 
+
+    <div
+      className="absolute inset-0 opacity-10"
       style={{
         backgroundImage: `linear-gradient(rgba(220,38,38,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(30,64,175,0.2) 1px, transparent 1px)`,
-        backgroundSize: '80px 80px',
-        willChange: 'auto'
-      }} 
+        backgroundSize: "80px 80px",
+        willChange: "auto",
+      }}
     />
-    
-    {/* Static orbs - no animation, pure CSS */}
-    <div 
+
+    <div
       className="absolute -left-40 top-1/4 w-[600px] h-[600px] rounded-full opacity-20"
-      style={{ 
-        background: 'radial-gradient(circle, rgba(220,38,38,0.3) 0%, transparent 70%)',
-        filter: 'blur(60px)',
-        willChange: 'auto'
-      }} 
+      style={{
+        background: "radial-gradient(circle, rgba(220,38,38,0.3) 0%, transparent 70%)",
+        filter: "blur(60px)",
+        willChange: "auto",
+      }}
     />
-    <div 
+    <div
       className="absolute -right-40 bottom-1/4 w-[500px] h-[500px] rounded-full opacity-20"
-      style={{ 
-        background: 'radial-gradient(circle, rgba(30,64,175,0.3) 0%, transparent 70%)',
-        filter: 'blur(60px)',
-        willChange: 'auto'
-      }} 
+      style={{
+        background: "radial-gradient(circle, rgba(30,64,175,0.3) 0%, transparent 70%)",
+        filter: "blur(60px)",
+        willChange: "auto",
+      }}
     />
   </div>
 ));
 
-UltraBackground.displayName = 'UltraBackground';
+UltraBackground.displayName = "UltraBackground";
 
 // ============================================
 // SECTION LOADER - Minimal skeleton
@@ -78,18 +76,7 @@ const SectionLoader = memo(() => (
   </div>
 ));
 
-SectionLoader.displayName = 'SectionLoader';
-
-// ============================================
-// LAZY SECTION WRAPPER - Intersection Observer
-// ============================================
-const LazySection = memo(({ children, fallback }: { children: React.ReactNode; fallback?: React.ReactNode }) => (
-  <Suspense fallback={fallback || <SectionLoader />}>
-    {children}
-  </Suspense>
-));
-
-LazySection.displayName = 'LazySection';
+SectionLoader.displayName = "SectionLoader";
 
 // ============================================
 // MAIN HOME COMPONENT - ULTRA OPTIMIZED
