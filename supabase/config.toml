@@ -162,3 +162,11 @@ verify_jwt = false
 
 [functions.c-handle-refund]
 verify_jwt = false
+
+# ============================================
+# 🧠 AXIOMA I - CONTEXTO PREDITIVO
+# Compila a "alma" do aluno em tempo real
+# ============================================
+
+[functions.generate-context]
+verify_jwt = false
