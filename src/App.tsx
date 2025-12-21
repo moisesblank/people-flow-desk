@@ -98,7 +98,7 @@ const AlunoDashboard = lazy(() => import("./pages/aluno/AlunoDashboard"));
 const AlunoVideoaulas = lazy(() => import("./pages/aluno/AlunoVideoaulas"));
 const AlunoQuestoes = lazy(() => import("./pages/aluno/AlunoQuestoes"));
 const AlunoSimulados = lazy(() => import("./pages/aluno/AlunoSimulados"));
-const AlunoRanking = lazy(() => import("./pages/aluno/AlunoRanking"));
+const AlunoRanking = lazy(() => import("./pages/RankingPage"));
 const AlunoTabelaPeriodica = lazy(() => import("./pages/aluno/AlunoTabelaPeriodica"));
 // Placeholders - Named exports
 const AlunoCronograma = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCronograma })));
