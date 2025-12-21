@@ -20,6 +20,7 @@ import { VideoSection } from "@/components/landing/VideoSection";
 import { MaterialSection } from "@/components/landing/MaterialSection";
 import { ProfessorSection } from "@/components/landing/ProfessorSection";
 import { ApprovedStudentsSection } from "@/components/landing/ApprovedStudentsSection";
+import { FeaturesSection } from "@/components/landing/FeaturesSection";
 
 // ============================================
 // BACKGROUND ANIMADO ULTRA
@@ -81,6 +82,7 @@ const Home = () => {
           <RealtimeStats variant="section" />
           <VideoSection />
           <ProfessorSection />
+          <FeaturesSection />
           <MaterialSection />
           <AIAutomationsSection />
           <CoursesSection />
