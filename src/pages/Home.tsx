@@ -24,6 +24,7 @@ import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { VideoFeedbackCarousel } from "@/components/landing/VideoFeedbackCarousel";
 import { ApprovedCarousel } from "@/components/landing/ApprovedCarousel";
 import { FirstPlaceShowcase } from "@/components/landing/FirstPlaceShowcase";
+import { MainApprovedArt } from "@/components/landing/MainApprovedArt";
 
 // ============================================
 // BACKGROUND ANIMADO ULTRA
@@ -83,6 +84,7 @@ const Home = () => {
           <Navbar />
           <HeroSection />
           <RealtimeStats variant="section" />
+          <MainApprovedArt />
           <VideoSection />
           <ProfessorSection />
           <FirstPlaceShowcase />
