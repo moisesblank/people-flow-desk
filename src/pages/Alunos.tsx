@@ -176,6 +176,11 @@ export default function Alunos() {
       return;
     }
 
+    if (!formData.email.trim()) {
+      toast.error("Preencha o email");
+      return;
+    }
+
     try {
       if (editingItem) {
         const { error } = await supabase
@@ -185,13 +190,37 @@ export default function Alunos() {
         if (error) throw error;
         toast.success("Aluno atualizado!");
       } else {
-        const { error } = await supabase.from("alunos").insert({
+        // 1. Inserir na tabela alunos
+        const { data: alunoData, error: alunoError } = await supabase.from("alunos").insert({
           nome: formData.nome,
           email: formData.email,
           status: formData.status,
-        });
-        if (error) throw error;
-        toast.success("Aluno adicionado!");
+        }).select().single();
+        
+        if (alunoError) throw alunoError;
+
+        // 2. Verificar se existe um profile com esse email para atribuir role beta
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("email", formData.email.toLowerCase())
+          .maybeSingle();
+
+        if (profileData?.id) {
+          // 3. Atribuir role 'beta' ao usuário (aluno pagante)
+          const { error: roleError } = await supabase.from("user_roles").upsert({
+            user_id: profileData.id,
+            role: "beta" as any,
+          }, { onConflict: "user_id,role" });
+
+          if (roleError) {
+            console.warn("Não foi possível atribuir role beta:", roleError);
+          } else {
+            toast.success("🎓 Aluno adicionado com acesso BETA!");
+          }
+        } else {
+          toast.success("Aluno adicionado! (Role será atribuído quando fizer login)");
+        }
       }
 
       await fetchData();
