@@ -117,42 +117,33 @@ async function atualizarStatusAlunos(): Promise<{ count: number; errors: string[
 
 // ============================================
 // ATUALIZAR STATUS DE FUNCIONÁRIOS
-// - Verificar contratos vencidos
-// - Atualizar status de férias
+// - Verificar funcionários inativos há muito tempo
+// - Limpar dados obsoletos
 // ============================================
 async function atualizarStatusFuncionarios(): Promise<{ count: number; errors: string[] }> {
   const errors: string[] = [];
   let count = 0;
 
   try {
-    const hoje = new Date().toISOString().split('T')[0];
+    // Buscar funcionários ativos que não foram atualizados há 180 dias
+    const dataLimite = new Date();
+    dataLimite.setDate(dataLimite.getDate() - 180);
     
-    // Funcionários com contrato vencido
-    const { data: contratosVencidos, error } = await supabase
+    const { data: funcionariosInativos, error } = await supabase
       .from("employees")
-      .select("id, nome, status, data_fim_contrato")
+      .select("id, nome, status, updated_at")
       .eq("status", "ativo")
-      .lt("data_fim_contrato", hoje)
-      .not("data_fim_contrato", "is", null);
+      .lt("updated_at", dataLimite.toISOString());
     
     if (error) {
       errors.push(`Erro funcionários: ${error.message}`);
       return { count, errors };
     }
 
-    for (const func of contratosVencidos || []) {
-      const { error: updateError } = await supabase
-        .from("employees")
-        .update({ 
-          status: "contrato_encerrado",
-          observacoes: `Contrato encerrado automaticamente em ${hoje}`
-        })
-        .eq("id", func.id);
-      
-      if (!updateError) {
-        count++;
-        console.log(`[MATRIZ] Contrato encerrado: ${func.nome}`);
-      }
+    // Apenas logar para revisão manual (não inativar automaticamente)
+    for (const func of funcionariosInativos || []) {
+      console.log(`[MATRIZ] Funcionário sem atualização há 180+ dias: ${func.nome}`);
+      count++;
     }
 
   } catch (err: any) {
