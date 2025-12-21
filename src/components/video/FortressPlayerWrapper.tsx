@@ -8,6 +8,12 @@ import { ReactNode, useEffect, useRef, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Shield, Lock } from "lucide-react";
 
+interface UserWatermarkData {
+  nome?: string;
+  cpf?: string;
+  email?: string;
+}
+
 interface FortressPlayerWrapperProps {
   children: ReactNode;
   className?: string;
@@ -15,6 +21,10 @@ interface FortressPlayerWrapperProps {
   allowFullscreen?: boolean;
   allowPlayPause?: boolean;
   allowSettings?: boolean;
+  /** Dados do usuário para marca d'água dinâmica */
+  userData?: UserWatermarkData;
+  /** Mostrar marca d'água com dados do usuário */
+  showWatermark?: boolean;
 }
 
 // ============================================
@@ -151,6 +161,114 @@ const useInteractionGuardian = (containerRef: React.RefObject<HTMLDivElement>) =
 };
 
 // ============================================
+// CAMADA 3: MARCA D'ÁGUA DINÂMICA (Anti-Gravação)
+// ============================================
+const DynamicWatermark = ({ userData }: { userData: UserWatermarkData }) => {
+  const maskCPF = (cpf: string) => {
+    if (!cpf || cpf.length < 6) return cpf;
+    return `${cpf.slice(0, 3)}.***.***-${cpf.slice(-2)}`;
+  };
+
+  const watermarkText = [
+    userData.nome || "",
+    userData.cpf ? maskCPF(userData.cpf) : "",
+    userData.email || "",
+  ].filter(Boolean).join(" • ");
+
+  if (!watermarkText) return null;
+
+  return (
+    <>
+      {/* Marca d'água posição 1 - Superior esquerda, movimento diagonal */}
+      <motion.div
+        className="absolute z-[55] pointer-events-none select-none"
+        initial={{ x: "5%", y: "15%" }}
+        animate={{
+          x: ["5%", "15%", "5%"],
+          y: ["15%", "25%", "15%"],
+        }}
+        transition={{
+          duration: 30,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+        style={{
+          textShadow: "0 0 2px rgba(0,0,0,0.5)",
+        }}
+      >
+        <span className="text-white/20 text-[10px] sm:text-xs font-mono tracking-widest whitespace-nowrap">
+          {watermarkText}
+        </span>
+      </motion.div>
+
+      {/* Marca d'água posição 2 - Centro direita, movimento vertical */}
+      <motion.div
+        className="absolute z-[55] pointer-events-none select-none"
+        initial={{ x: "60%", y: "45%" }}
+        animate={{
+          x: ["60%", "65%", "60%"],
+          y: ["45%", "55%", "45%"],
+        }}
+        transition={{
+          duration: 25,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 5,
+        }}
+        style={{
+          textShadow: "0 0 2px rgba(0,0,0,0.5)",
+        }}
+      >
+        <span className="text-white/15 text-[10px] sm:text-xs font-mono tracking-widest whitespace-nowrap transform rotate-[-5deg]">
+          {watermarkText}
+        </span>
+      </motion.div>
+
+      {/* Marca d'água posição 3 - Inferior central, movimento horizontal */}
+      <motion.div
+        className="absolute z-[55] pointer-events-none select-none"
+        initial={{ x: "25%", y: "75%" }}
+        animate={{
+          x: ["25%", "40%", "25%"],
+          y: ["75%", "70%", "75%"],
+        }}
+        transition={{
+          duration: 35,
+          repeat: Infinity,
+          ease: "easeInOut",
+          delay: 10,
+        }}
+        style={{
+          textShadow: "0 0 2px rgba(0,0,0,0.5)",
+        }}
+      >
+        <span className="text-white/18 text-[9px] sm:text-[11px] font-mono tracking-widest whitespace-nowrap transform rotate-[3deg]">
+          {watermarkText}
+        </span>
+      </motion.div>
+
+      {/* Marca d'água posição 4 - Centro, muito sutil */}
+      <motion.div
+        className="absolute z-[55] pointer-events-none select-none"
+        initial={{ x: "35%", y: "50%" }}
+        animate={{
+          opacity: [0.08, 0.12, 0.08],
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "easeInOut",
+        }}
+      >
+        <span className="text-white/10 text-sm sm:text-base font-mono tracking-[0.3em] whitespace-nowrap">
+          {userData.nome?.toUpperCase() || ""}
+        </span>
+      </motion.div>
+    </>
+  );
+};
+
+// ============================================
 // COMPONENTE PRINCIPAL: FORTRESS PLAYER WRAPPER
 // ============================================
 export const FortressPlayerWrapper = ({
@@ -160,6 +278,8 @@ export const FortressPlayerWrapper = ({
   allowFullscreen = true,
   allowPlayPause = true,
   allowSettings = true,
+  userData,
+  showWatermark = false,
 }: FortressPlayerWrapperProps) => {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -185,6 +305,13 @@ export const FortressPlayerWrapper = ({
           CAMADA 1: VÍDEO/CONTEÚDO
           ═══════════════════════════════════════════════════════ */}
       {children}
+
+      {/* ═══════════════════════════════════════════════════════
+          CAMADA 3: MARCA D'ÁGUA DINÂMICA (Anti-Gravação)
+          ═══════════════════════════════════════════════════════ */}
+      {showWatermark && userData && (
+        <DynamicWatermark userData={userData} />
+      )}
 
       {/* ═══════════════════════════════════════════════════════
           CAMADA 2: ESCUDO DE CLIQUES (CSS Shield)
