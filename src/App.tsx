@@ -16,6 +16,7 @@ import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortc
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { Suspense, lazy, useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 
 // Lazy load pages for better performance
 const Auth = lazy(() => import("./pages/Auth"));
@@ -157,6 +158,9 @@ const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContex
 
 function AppContent() {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
+  
+  // Bloqueio global de DevTools (exceto owner)
+  useGlobalDevToolsBlock();
 
   return (
     <>
