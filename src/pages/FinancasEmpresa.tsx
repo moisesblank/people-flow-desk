@@ -540,23 +540,90 @@ export default function FinancasEmpresa() {
   };
 
   const handleStatusChange = async (item: any, newStatus: string) => {
+    console.log('[FINANÇAS] Atualizando status:', { id: item.id, itemType: item.itemType, newStatus });
+    
     try {
-      if (item.itemType === "gasto_fixo") {
-        await supabase.from("company_fixed_expenses").update({ status_pagamento: newStatus }).eq("id", item.id);
-        companyFinance.refresh();
-      } else if (item.itemType === "gasto_extra") {
-        await supabase.from("company_extra_expenses").update({ status_pagamento: newStatus }).eq("id", item.id);
-        companyFinance.refresh();
+      const updateData: Record<string, any> = {
+        status_pagamento: newStatus,
+        updated_at: new Date().toISOString(),
+      };
+      
+      // Adicionar data_pagamento quando marcado como pago
+      if (newStatus === 'pago') {
+        updateData.data_pagamento = format(new Date(), "yyyy-MM-dd");
       } else {
-        await supabase.from("payments").update({ 
-          status: newStatus,
-          data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null
-        }).eq("id", item.id);
-        paymentsHistory.refresh();
+        updateData.data_pagamento = null;
       }
-      toast.success(`Marcado como ${newStatus}`);
-    } catch (error) {
-      toast.error("Erro ao atualizar status");
+      
+      let error = null;
+      
+      if (item.itemType === "gasto_fixo") {
+        const result = await supabase
+          .from("company_fixed_expenses")
+          .update(updateData)
+          .eq("id", item.id)
+          .select();
+        
+        error = result.error;
+        console.log('[FINANÇAS] Update gasto_fixo:', result);
+        
+        if (!error) {
+          // Invalidar cache e recarregar
+          await companyFinance.refresh();
+        }
+      } else if (item.itemType === "gasto_extra") {
+        const result = await supabase
+          .from("company_extra_expenses")
+          .update(updateData)
+          .eq("id", item.id)
+          .select();
+        
+        error = result.error;
+        console.log('[FINANÇAS] Update gasto_extra:', result);
+        
+        if (!error) {
+          await companyFinance.refresh();
+        }
+      } else {
+        // Para pagamentos, o campo é 'status' não 'status_pagamento'
+        const result = await supabase
+          .from("payments")
+          .update({ 
+            status: newStatus,
+            data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", item.id)
+          .select();
+        
+        error = result.error;
+        console.log('[FINANÇAS] Update payment:', result);
+        
+        if (!error) {
+          await paymentsHistory.refresh();
+        }
+      }
+      
+      if (error) {
+        console.error('[FINANÇAS] Erro no update:', error);
+        toast.error(`Erro ao atualizar: ${error.message}`);
+        return;
+      }
+      
+      // Feedback visual imediato
+      const statusLabels: Record<string, string> = {
+        pago: '✅ PAGO',
+        pendente: '⏳ Pendente',
+        atrasado: '⚠️ Atrasado',
+      };
+      
+      toast.success(`${item.nome || item.label} marcado como ${statusLabels[newStatus] || newStatus}`, {
+        description: newStatus === 'pago' ? `Data de pagamento: ${format(new Date(), "dd/MM/yyyy")}` : undefined,
+      });
+      
+    } catch (error: any) {
+      console.error('[FINANÇAS] Erro crítico:', error);
+      toast.error(`Erro ao atualizar status: ${error?.message || 'Erro desconhecido'}`);
     }
   };
 
