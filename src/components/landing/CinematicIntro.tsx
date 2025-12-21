@@ -1,9 +1,10 @@
 // ============================================
 // ABERTURA CINEMATOGRÁFICA 2500 - ULTRA PREMIUM
-// Estilo Marvel/Disney Épico Absoluto
+// Estilo Marvel/Disney/Avengers Épico Absoluto
+// Versão MÁXIMA com efeitos de portal dimensional
 // ============================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
@@ -11,53 +12,142 @@ interface CinematicIntroProps {
   onComplete: () => void;
 }
 
-// Holographic Grid - Grid holográfico futurista
-const HolographicGrid = ({ phase }: { phase: number }) => (
+// Portal Dimensional - Efeito de abertura estilo Doctor Strange
+const DimensionalPortal = ({ phase }: { phase: number }) => {
+  const rings = useMemo(() => 
+    Array.from({ length: 8 }, (_, i) => ({
+      size: 150 + i * 100,
+      duration: 15 + i * 2,
+      delay: i * 0.1,
+      color: i % 4 === 0 ? 'rgba(220, 38, 38, 0.8)' : 
+             i % 4 === 1 ? 'rgba(251, 191, 36, 0.7)' : 
+             i % 4 === 2 ? 'rgba(30, 64, 175, 0.6)' : 
+             'rgba(147, 51, 234, 0.5)',
+    })),
+  []);
+
+  return (
+    <motion.div
+      className="absolute inset-0 flex items-center justify-center"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: phase >= 2 ? 1 : 0 }}
+      transition={{ duration: 1 }}
+    >
+      {rings.map((ring, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            width: ring.size,
+            height: ring.size,
+            border: `${3 - i * 0.2}px solid ${ring.color}`,
+            boxShadow: `
+              0 0 30px ${ring.color},
+              inset 0 0 30px ${ring.color},
+              0 0 60px ${ring.color}
+            `,
+          }}
+          initial={{ scale: 0, rotate: 0, opacity: 0 }}
+          animate={{
+            scale: phase >= 2 ? 1 : 0,
+            rotate: phase >= 2 ? (i % 2 === 0 ? 360 : -360) : 0,
+            opacity: phase >= 2 ? [0.3, 0.8, 0.3] : 0,
+          }}
+          transition={{
+            scale: { duration: 2, delay: ring.delay, type: "spring", stiffness: 50 },
+            rotate: { duration: ring.duration, repeat: Infinity, ease: "linear" },
+            opacity: { duration: 3, repeat: Infinity, delay: ring.delay },
+          }}
+        />
+      ))}
+
+      {/* Runas mágicas orbitando */}
+      {phase >= 2 && [...Array(24)].map((_, i) => (
+        <motion.div
+          key={`rune-${i}`}
+          className="absolute w-6 h-6 rounded-full"
+          style={{
+            background: `radial-gradient(circle, ${i % 3 === 0 ? '#dc2626' : i % 3 === 1 ? '#fbbf24' : '#1e40af'} 0%, transparent 70%)`,
+            boxShadow: `0 0 20px ${i % 3 === 0 ? '#dc2626' : i % 3 === 1 ? '#fbbf24' : '#1e40af'}`,
+          }}
+          animate={{
+            x: Math.cos((i / 24) * Math.PI * 2 + Date.now() * 0.001) * (250 + (i % 3) * 80),
+            y: Math.sin((i / 24) * Math.PI * 2 + Date.now() * 0.001) * (250 + (i % 3) * 80),
+            scale: [1, 1.5, 1],
+          }}
+          transition={{
+            x: { duration: 8 + i * 0.5, repeat: Infinity, ease: "linear" },
+            y: { duration: 8 + i * 0.5, repeat: Infinity, ease: "linear" },
+            scale: { duration: 2, repeat: Infinity },
+          }}
+        />
+      ))}
+    </motion.div>
+  );
+};
+
+// Holographic Grid - Grid holográfico futurista 3D
+const HolographicGrid3D = ({ phase }: { phase: number }) => (
   <motion.div
-    className="absolute inset-0 overflow-hidden"
+    className="absolute inset-0 overflow-hidden perspective-[2000px]"
     initial={{ opacity: 0 }}
-    animate={{ opacity: phase >= 1 ? 0.15 : 0 }}
+    animate={{ opacity: phase >= 1 ? 0.25 : 0 }}
     transition={{ duration: 2 }}
   >
+    {/* Grid no chão */}
     <div 
-      className="absolute inset-0"
+      className="absolute inset-0 origin-bottom"
       style={{
         backgroundImage: `
-          linear-gradient(rgba(220, 38, 38, 0.5) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(30, 64, 175, 0.5) 1px, transparent 1px)
+          linear-gradient(rgba(220, 38, 38, 0.6) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(30, 64, 175, 0.6) 1px, transparent 1px)
         `,
-        backgroundSize: '100px 100px',
-        transform: 'perspective(500px) rotateX(60deg)',
+        backgroundSize: '80px 80px',
+        transform: 'perspective(800px) rotateX(75deg) translateY(50%)',
+        transformOrigin: 'center bottom',
+      }}
+    />
+    
+    {/* Grid no teto */}
+    <div 
+      className="absolute inset-0 origin-top"
+      style={{
+        backgroundImage: `
+          linear-gradient(rgba(251, 191, 36, 0.4) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(147, 51, 234, 0.4) 1px, transparent 1px)
+        `,
+        backgroundSize: '80px 80px',
+        transform: 'perspective(800px) rotateX(-75deg) translateY(-50%)',
         transformOrigin: 'center top',
       }}
     />
+    
+    {/* Linha de energia horizontal */}
     <motion.div
-      className="absolute inset-0"
+      className="absolute h-1 w-full left-0"
       style={{
-        background: 'linear-gradient(to top, transparent, rgba(220, 38, 38, 0.1))',
+        background: 'linear-gradient(90deg, transparent, rgba(220, 38, 38, 0.8), rgba(251, 191, 36, 0.8), transparent)',
+        boxShadow: '0 0 40px rgba(220, 38, 38, 0.6)',
       }}
-      animate={{ y: ['-100%', '100%'] }}
-      transition={{ duration: 3, repeat: Infinity, ease: 'linear' }}
+      animate={{ top: ['0%', '100%'] }}
+      transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
     />
   </motion.div>
 );
 
-// Partículas quânticas - muito mais densas e épicas
-const QuantumParticles = ({ phase }: { phase: number }) => {
-  const particles = Array.from({ length: 300 }, (_, i) => ({
-    id: i,
-    x: Math.random() * 100,
-    y: Math.random() * 100,
-    size: Math.random() * 6 + 1,
-    delay: Math.random() * 4,
-    duration: 3 + Math.random() * 4,
-    color: i % 6 === 0 ? '#dc2626' : 
-           i % 6 === 1 ? '#1e40af' : 
-           i % 6 === 2 ? '#fbbf24' : 
-           i % 6 === 3 ? '#7c3aed' : 
-           i % 6 === 4 ? '#10b981' :
-           '#ec4899'
-  }));
+// Partículas quânticas - muito mais densas e épicas com trails
+const QuantumParticlesWithTrails = ({ phase }: { phase: number }) => {
+  const particles = useMemo(() => 
+    Array.from({ length: 400 }, (_, i) => ({
+      id: i,
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      size: Math.random() * 8 + 2,
+      delay: Math.random() * 5,
+      duration: 2 + Math.random() * 4,
+      color: ['#dc2626', '#1e40af', '#fbbf24', '#7c3aed', '#10b981', '#ec4899'][i % 6]
+    })),
+  []);
 
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -71,14 +161,14 @@ const QuantumParticles = ({ phase }: { phase: number }) => {
             left: `${p.x}%`,
             top: `${p.y}%`,
             background: `radial-gradient(circle, ${p.color} 0%, transparent 70%)`,
-            boxShadow: `0 0 ${p.size * 6}px ${p.color}`,
+            boxShadow: `0 0 ${p.size * 8}px ${p.color}, 0 0 ${p.size * 4}px ${p.color}`,
           }}
           initial={{ opacity: 0, scale: 0 }}
           animate={{
-            opacity: phase >= 1 ? [0, 1, 0] : 0,
-            scale: phase >= 1 ? [0, 2.5, 0] : 0,
-            y: phase >= 1 ? [0, -400 - Math.random() * 200] : 0,
-            x: phase >= 1 ? [0, (Math.random() - 0.5) * 150] : 0,
+            opacity: phase >= 1 ? [0, 1, 0.5, 0] : 0,
+            scale: phase >= 1 ? [0, 3, 1.5, 0] : 0,
+            y: phase >= 1 ? [0, -500 - Math.random() * 300] : 0,
+            x: phase >= 1 ? [0, (Math.random() - 0.5) * 200] : 0,
           }}
           transition={{
             duration: p.duration,
@@ -92,55 +182,80 @@ const QuantumParticles = ({ phase }: { phase: number }) => {
   );
 };
 
-// Molécula de DNA animada (tema química) - mais complexa
-const MolecularHelix = ({ phase }: { phase: number }) => {
-  const segments = 30;
+// Molécula de DNA animada 3D (tema química)
+const MolecularHelix3D = ({ phase }: { phase: number }) => {
+  const segments = 40;
   
   return (
     <motion.div 
-      className="absolute left-1/2 -translate-x-1/2 h-full w-48"
-      initial={{ opacity: 0 }}
-      animate={{ opacity: phase >= 2 ? 0.4 : 0 }}
-      transition={{ duration: 1.5 }}
+      className="absolute left-1/2 -translate-x-1/2 h-full w-64"
+      initial={{ opacity: 0, rotateY: 0 }}
+      animate={{ 
+        opacity: phase >= 2 ? 0.5 : 0,
+        rotateY: phase >= 2 ? 360 : 0,
+      }}
+      transition={{ 
+        opacity: { duration: 1.5 },
+        rotateY: { duration: 20, repeat: Infinity, ease: "linear" }
+      }}
+      style={{ perspective: '1000px' }}
     >
       {[...Array(segments)].map((_, i) => (
         <motion.div key={i} className="absolute left-1/2">
-          {/* Átomo principal */}
+          {/* Átomo principal esquerdo */}
           <motion.div
-            className="absolute w-5 h-5 rounded-full"
+            className="absolute w-6 h-6 rounded-full"
             style={{
-              background: i % 2 === 0 ? 'radial-gradient(circle, #dc2626 0%, transparent 70%)' : 'radial-gradient(circle, #1e40af 0%, transparent 70%)',
-              boxShadow: `0 0 25px ${i % 2 === 0 ? '#dc2626' : '#1e40af'}`,
+              background: `radial-gradient(circle, ${i % 2 === 0 ? '#dc2626' : '#1e40af'} 0%, transparent 70%)`,
+              boxShadow: `0 0 30px ${i % 2 === 0 ? '#dc2626' : '#1e40af'}, 0 0 60px ${i % 2 === 0 ? '#dc2626' : '#1e40af'}`,
               top: `${(i / segments) * 100}%`,
             }}
             animate={{
-              x: [
-                Math.sin((i / segments) * Math.PI * 4) * 80,
-                Math.sin((i / segments) * Math.PI * 4 + Math.PI) * 80,
-              ],
-              scale: [1, 1.3, 1],
-              opacity: [0.7, 1, 0.7],
+              x: Math.sin((i / segments) * Math.PI * 6) * 100,
+              z: Math.cos((i / segments) * Math.PI * 6) * 50,
+              scale: [1, 1.5, 1],
             }}
             transition={{
-              duration: 4,
-              repeat: Infinity,
-              ease: "easeInOut",
-              delay: i * 0.05,
+              x: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+              z: { duration: 6, repeat: Infinity, ease: "easeInOut" },
+              scale: { duration: 2, repeat: Infinity, delay: i * 0.03 },
             }}
           />
+          
+          {/* Átomo principal direito */}
+          <motion.div
+            className="absolute w-6 h-6 rounded-full"
+            style={{
+              background: `radial-gradient(circle, ${i % 2 === 1 ? '#dc2626' : '#fbbf24'} 0%, transparent 70%)`,
+              boxShadow: `0 0 30px ${i % 2 === 1 ? '#dc2626' : '#fbbf24'}`,
+              top: `${(i / segments) * 100}%`,
+            }}
+            animate={{
+              x: -Math.sin((i / segments) * Math.PI * 6) * 100,
+              z: -Math.cos((i / segments) * Math.PI * 6) * 50,
+            }}
+            transition={{
+              duration: 6,
+              repeat: Infinity,
+              ease: "easeInOut",
+            }}
+          />
+          
           {/* Conexão entre átomos */}
-          {i < segments - 1 && (
+          {i < segments - 1 && i % 3 === 0 && (
             <motion.div
-              className="absolute h-px w-16"
+              className="absolute h-0.5 w-24"
               style={{
-                background: `linear-gradient(90deg, ${i % 2 === 0 ? '#dc2626' : '#1e40af'}, ${i % 2 === 1 ? '#dc2626' : '#1e40af'})`,
+                background: `linear-gradient(90deg, ${i % 2 === 0 ? '#dc2626' : '#1e40af'}, #fbbf24, ${i % 2 === 1 ? '#dc2626' : '#1e40af'})`,
                 top: `${((i + 0.5) / segments) * 100}%`,
+                left: '-48px',
+                boxShadow: '0 0 15px rgba(251, 191, 36, 0.5)',
               }}
               animate={{
-                x: [0, Math.sin((i / segments) * Math.PI * 4) * 40],
-                opacity: [0.3, 0.6, 0.3],
+                opacity: [0.3, 0.8, 0.3],
+                scaleX: [0.8, 1.2, 0.8],
               }}
-              transition={{ duration: 3, repeat: Infinity }}
+              transition={{ duration: 2, repeat: Infinity, delay: i * 0.05 }}
             />
           )}
         </motion.div>
@@ -149,81 +264,9 @@ const MolecularHelix = ({ phase }: { phase: number }) => {
   );
 };
 
-// Anéis orbitais estilo Marvel com trilhas de luz
-const EpicOrbitalRings = ({ phase }: { phase: number }) => {
-  const rings = [
-    { size: 900, duration: 25, color: 'rgba(220, 38, 38, 0.6)', delay: 0, thickness: 3 },
-    { size: 750, duration: 20, color: 'rgba(30, 64, 175, 0.5)', delay: 0.15, thickness: 2 },
-    { size: 600, duration: 18, color: 'rgba(251, 191, 36, 0.6)', delay: 0.3, thickness: 3 },
-    { size: 450, duration: 14, color: 'rgba(124, 58, 237, 0.5)', delay: 0.45, thickness: 2 },
-    { size: 300, duration: 10, color: 'rgba(236, 72, 153, 0.5)', delay: 0.6, thickness: 2 },
-  ];
-
-  return (
-    <>
-      {rings.map((ring, i) => (
-        <motion.div
-          key={i}
-          className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
-          style={{
-            width: ring.size,
-            height: ring.size,
-            border: `${ring.thickness}px solid ${ring.color}`,
-            boxShadow: `
-              0 0 40px ${ring.color}, 
-              inset 0 0 40px ${ring.color},
-              0 0 80px ${ring.color}
-            `,
-          }}
-          initial={{ scale: 0, rotate: 0, opacity: 0 }}
-          animate={{
-            scale: phase >= 2 ? 1 : 0,
-            rotate: phase >= 2 ? (i % 2 === 0 ? 360 : -360) : 0,
-            opacity: phase >= 2 ? 0.8 : 0,
-          }}
-          transition={{
-            scale: { duration: 2, delay: ring.delay, type: "spring", stiffness: 50 },
-            rotate: { duration: ring.duration, repeat: Infinity, ease: "linear" },
-            opacity: { duration: 1.5, delay: ring.delay },
-          }}
-        />
-      ))}
-      
-      {/* Partículas orbitando */}
-      {phase >= 2 && rings.map((ring, i) => (
-        <motion.div
-          key={`particle-${i}`}
-          className="absolute left-1/2 top-1/2 w-4 h-4 rounded-full"
-          style={{
-            background: ring.color.replace('0.5', '1').replace('0.6', '1'),
-            boxShadow: `0 0 30px ${ring.color}, 0 0 60px ${ring.color}`,
-          }}
-          animate={{
-            x: [
-              Math.cos(0) * (ring.size / 2),
-              Math.cos(Math.PI) * (ring.size / 2),
-              Math.cos(Math.PI * 2) * (ring.size / 2),
-            ],
-            y: [
-              Math.sin(0) * (ring.size / 2),
-              Math.sin(Math.PI) * (ring.size / 2),
-              Math.sin(Math.PI * 2) * (ring.size / 2),
-            ],
-          }}
-          transition={{
-            duration: ring.duration / 2,
-            repeat: Infinity,
-            ease: "linear",
-          }}
-        />
-      ))}
-    </>
-  );
-};
-
-// Raios de luz convergentes épicos
-const ConvergingLightRays = ({ phase }: { phase: number }) => {
-  const rays = 24;
+// Raios de luz convergentes com pulsos de energia
+const EnergyPulseRays = ({ phase }: { phase: number }) => {
+  const rays = 32;
   
   return (
     <div className="absolute inset-0 overflow-hidden">
@@ -232,25 +275,32 @@ const ConvergingLightRays = ({ phase }: { phase: number }) => {
           key={i}
           className="absolute left-1/2 top-1/2 origin-center"
           style={{
-            width: '3px',
-            height: '1200px',
+            width: '4px',
+            height: '1500px',
             background: `linear-gradient(to top, 
-              transparent, 
-              ${i % 3 === 0 ? 'rgba(220, 38, 38, 0.7)' : i % 3 === 1 ? 'rgba(251, 191, 36, 0.6)' : 'rgba(30, 64, 175, 0.5)'}, 
-              transparent
+              transparent 0%, 
+              ${i % 4 === 0 ? 'rgba(220, 38, 38, 0.9)' : 
+                i % 4 === 1 ? 'rgba(251, 191, 36, 0.8)' : 
+                i % 4 === 2 ? 'rgba(30, 64, 175, 0.7)' : 
+                'rgba(147, 51, 234, 0.6)'} 50%, 
+              transparent 100%
             )`,
             transform: `rotate(${(i / rays) * 360}deg) translateY(-50%)`,
+            boxShadow: `0 0 30px ${i % 4 === 0 ? 'rgba(220, 38, 38, 0.5)' : 
+              i % 4 === 1 ? 'rgba(251, 191, 36, 0.4)' : 
+              i % 4 === 2 ? 'rgba(30, 64, 175, 0.4)' : 
+              'rgba(147, 51, 234, 0.3)'}`,
           }}
           initial={{ opacity: 0, scaleY: 0 }}
           animate={{
-            opacity: phase >= 3 ? [0, 0.9, 0] : 0,
-            scaleY: phase >= 3 ? [0, 1.2, 0] : 0,
+            opacity: phase >= 3 ? [0, 1, 0.5, 0] : 0,
+            scaleY: phase >= 3 ? [0, 1.3, 0.8, 0] : 0,
           }}
           transition={{
-            duration: 2.5,
-            delay: i * 0.08,
+            duration: 2,
+            delay: i * 0.06,
             repeat: phase >= 3 && phase < 6 ? Infinity : 0,
-            repeatDelay: 1.5,
+            repeatDelay: 1,
           }}
         />
       ))}
@@ -258,52 +308,146 @@ const ConvergingLightRays = ({ phase }: { phase: number }) => {
   );
 };
 
-// Nebulosa dinâmica
+// Nebulosa dinâmica com cores vibrantes
 const DynamicNebula = ({ phase }: { phase: number }) => (
-  <motion.div
-    className="absolute inset-0"
-    animate={{
-      background: phase >= 2 ? [
-        `radial-gradient(ellipse at 20% 30%, rgba(220, 38, 38, 0.4) 0%, transparent 50%),
-         radial-gradient(ellipse at 80% 70%, rgba(30, 64, 175, 0.4) 0%, transparent 50%),
-         radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.3) 0%, transparent 40%)`,
-        `radial-gradient(ellipse at 30% 40%, rgba(30, 64, 175, 0.4) 0%, transparent 50%),
-         radial-gradient(ellipse at 70% 60%, rgba(220, 38, 38, 0.4) 0%, transparent 50%),
-         radial-gradient(ellipse at 50% 50%, rgba(124, 58, 237, 0.3) 0%, transparent 40%)`,
-        `radial-gradient(ellipse at 20% 30%, rgba(220, 38, 38, 0.4) 0%, transparent 50%),
-         radial-gradient(ellipse at 80% 70%, rgba(30, 64, 175, 0.4) 0%, transparent 50%),
-         radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.3) 0%, transparent 40%)`,
-      ] : 'none',
-    }}
-    transition={{ duration: 8, repeat: Infinity }}
-  />
+  <motion.div className="absolute inset-0">
+    {/* Camada 1 - Vermelha */}
+    <motion.div
+      className="absolute inset-0"
+      animate={{
+        background: phase >= 1 ? [
+          'radial-gradient(ellipse at 20% 30%, rgba(220, 38, 38, 0.5) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 40% 60%, rgba(220, 38, 38, 0.4) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 20% 30%, rgba(220, 38, 38, 0.5) 0%, transparent 50%)',
+        ] : 'none',
+      }}
+      transition={{ duration: 6, repeat: Infinity }}
+    />
+    
+    {/* Camada 2 - Azul */}
+    <motion.div
+      className="absolute inset-0"
+      animate={{
+        background: phase >= 1 ? [
+          'radial-gradient(ellipse at 80% 70%, rgba(30, 64, 175, 0.5) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 60% 40%, rgba(30, 64, 175, 0.4) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 80% 70%, rgba(30, 64, 175, 0.5) 0%, transparent 50%)',
+        ] : 'none',
+      }}
+      transition={{ duration: 8, repeat: Infinity }}
+    />
+    
+    {/* Camada 3 - Dourada central */}
+    <motion.div
+      className="absolute inset-0"
+      animate={{
+        background: phase >= 2 ? [
+          'radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.4) 0%, transparent 40%)',
+          'radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.6) 0%, transparent 50%)',
+          'radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.4) 0%, transparent 40%)',
+        ] : 'none',
+      }}
+      transition={{ duration: 4, repeat: Infinity }}
+    />
+    
+    {/* Camada 4 - Roxa */}
+    <motion.div
+      className="absolute inset-0"
+      animate={{
+        background: phase >= 2 ? [
+          'radial-gradient(ellipse at 30% 80%, rgba(147, 51, 234, 0.3) 0%, transparent 40%)',
+          'radial-gradient(ellipse at 70% 20%, rgba(147, 51, 234, 0.4) 0%, transparent 40%)',
+          'radial-gradient(ellipse at 30% 80%, rgba(147, 51, 234, 0.3) 0%, transparent 40%)',
+        ] : 'none',
+      }}
+      transition={{ duration: 7, repeat: Infinity }}
+    />
+  </motion.div>
 );
 
-// Texto glitch futurista
-const GlitchText = ({ text, phase, className }: { text: string; phase: number; className?: string }) => (
-  <motion.div
-    className={`relative ${className}`}
-    animate={{
-      textShadow: phase >= 5 ? [
-        '0 0 20px rgba(220, 38, 38, 0.5), 2px 2px 0 #1e40af, -2px -2px 0 #dc2626',
-        '0 0 40px rgba(220, 38, 38, 0.8), -2px -2px 0 #1e40af, 2px 2px 0 #dc2626',
-        '0 0 20px rgba(220, 38, 38, 0.5), 2px 2px 0 #1e40af, -2px -2px 0 #dc2626',
-      ] : 'none',
-    }}
-    transition={{ duration: 0.1, repeat: Infinity, repeatType: 'mirror' }}
-  >
-    <span 
-      className="block"
-      style={{
-        background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 25%, #fbbf24 50%, #f59e0b 75%, #dc2626 100%)',
-        backgroundSize: '200% 200%',
-        WebkitBackgroundClip: 'text',
-        WebkitTextFillColor: 'transparent',
-        animation: 'gradient 3s ease infinite',
-      }}
+// Texto com efeito glitch cinematográfico
+const CinematicGlitchText = ({ text, phase, className }: { text: string; phase: number; className?: string }) => (
+  <motion.div className={`relative ${className}`}>
+    {/* Camada de sombra glitch vermelha */}
+    <motion.span
+      className="absolute inset-0 text-red-500"
+      animate={phase >= 5 ? {
+        x: [-3, 3, -3],
+        opacity: [0, 0.8, 0],
+      } : {}}
+      transition={{ duration: 0.15, repeat: Infinity }}
     >
       {text}
-    </span>
+    </motion.span>
+    
+    {/* Camada de sombra glitch azul */}
+    <motion.span
+      className="absolute inset-0 text-blue-500"
+      animate={phase >= 5 ? {
+        x: [3, -3, 3],
+        opacity: [0, 0.8, 0],
+      } : {}}
+      transition={{ duration: 0.15, repeat: Infinity, delay: 0.05 }}
+    >
+      {text}
+    </motion.span>
+    
+    {/* Texto principal com gradiente */}
+    <motion.span 
+      className="relative block"
+      style={{
+        background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 20%, #fbbf24 40%, #f59e0b 60%, #dc2626 80%, #ef4444 100%)',
+        backgroundSize: '300% 300%',
+        WebkitBackgroundClip: 'text',
+        WebkitTextFillColor: 'transparent',
+      }}
+      animate={{
+        backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
+      }}
+      transition={{ duration: 4, repeat: Infinity }}
+    >
+      {text}
+    </motion.span>
+  </motion.div>
+);
+
+// Escudo de energia hexagonal
+const EnergyShield = ({ phase }: { phase: number }) => (
+  <motion.div
+    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
+    initial={{ scale: 0, opacity: 0 }}
+    animate={{
+      scale: phase >= 4 ? 1 : 0,
+      opacity: phase >= 4 ? 1 : 0,
+    }}
+    transition={{ duration: 1.5, type: "spring" }}
+  >
+    {/* Hexágono de energia rotativo */}
+    <motion.div
+      className="absolute -inset-48"
+      style={{
+        background: 'conic-gradient(from 0deg, rgba(220, 38, 38, 0.6), rgba(251, 191, 36, 0.5), rgba(30, 64, 175, 0.6), rgba(147, 51, 234, 0.5), rgba(220, 38, 38, 0.6))',
+        clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+        filter: 'blur(20px)',
+      }}
+      animate={{ rotate: [0, 360] }}
+      transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+    />
+    
+    {/* Hexágono interno */}
+    <motion.div
+      className="absolute -inset-32"
+      style={{
+        background: 'conic-gradient(from 180deg, rgba(220, 38, 38, 0.4), rgba(30, 64, 175, 0.4), rgba(251, 191, 36, 0.4), rgba(220, 38, 38, 0.4))',
+        clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
+        filter: 'blur(15px)',
+      }}
+      animate={{ rotate: [360, 0], scale: [1, 1.1, 1] }}
+      transition={{ 
+        rotate: { duration: 10, repeat: Infinity, ease: "linear" },
+        scale: { duration: 3, repeat: Infinity },
+      }}
+    />
   </motion.div>
 );
 
@@ -316,13 +460,13 @@ export const CinematicIntro = ({ onComplete }: CinematicIntroProps) => {
     
     // Timeline épica da animação - mais rápida e impactante
     const timers = [
-      setTimeout(() => setPhase(1), 200),     // Partículas + grid
-      setTimeout(() => setPhase(2), 1200),    // Anéis + DNA
-      setTimeout(() => setPhase(3), 2400),    // Logo surge + raios
-      setTimeout(() => setPhase(4), 3600),    // Logo brilha intensamente
-      setTimeout(() => setPhase(5), 4800),    // Tagline aparece
-      setTimeout(() => setPhase(6), 6000),    // Flash final épico
-      setTimeout(() => onComplete(), 6800),   // Fim da intro
+      setTimeout(() => setPhase(1), 200),     // Partículas + grid + nebulosa
+      setTimeout(() => setPhase(2), 1000),    // Anéis portal + DNA
+      setTimeout(() => setPhase(3), 2000),    // Raios de energia
+      setTimeout(() => setPhase(4), 3000),    // Logo surge + escudo
+      setTimeout(() => setPhase(5), 4000),    // Tagline + glitch
+      setTimeout(() => setPhase(6), 5500),    // Flash final
+      setTimeout(() => onComplete(), 6300),   // Fim
     ];
 
     return () => {
@@ -331,245 +475,205 @@ export const CinematicIntro = ({ onComplete }: CinematicIntroProps) => {
     };
   }, [onComplete]);
 
+  const handleSkip = useCallback(() => {
+    onComplete();
+  }, [onComplete]);
+
   return (
     <motion.div
       className="fixed inset-0 z-[100] bg-black flex items-center justify-center overflow-hidden"
       initial={{ opacity: 1 }}
       animate={{ opacity: phase >= 6 ? 0 : 1 }}
-      transition={{ duration: 0.6 }}
+      transition={{ duration: 0.8 }}
     >
-      {/* Background base com gradiente animado */}
+      {/* Background base com gradiente animado cósmico */}
       <motion.div
         className="absolute inset-0"
         animate={{
           background: [
-            'radial-gradient(ellipse at center, rgba(15, 0, 25, 1) 0%, rgba(0, 0, 0, 1) 100%)',
-            'radial-gradient(ellipse at center, rgba(30, 0, 20, 1) 0%, rgba(0, 0, 0, 1) 100%)',
-            'radial-gradient(ellipse at center, rgba(15, 0, 25, 1) 0%, rgba(0, 0, 0, 1) 100%)',
+            'radial-gradient(ellipse at center, rgba(20, 0, 30, 1) 0%, rgba(5, 0, 10, 1) 50%, rgba(0, 0, 0, 1) 100%)',
+            'radial-gradient(ellipse at center, rgba(40, 0, 20, 1) 0%, rgba(10, 0, 20, 1) 50%, rgba(0, 0, 0, 1) 100%)',
+            'radial-gradient(ellipse at center, rgba(20, 0, 30, 1) 0%, rgba(5, 0, 10, 1) 50%, rgba(0, 0, 0, 1) 100%)',
           ],
         }}
-        transition={{ duration: 4, repeat: Infinity }}
+        transition={{ duration: 5, repeat: Infinity }}
       />
 
-      <HolographicGrid phase={phase} />
+      {/* Efeitos de fundo */}
+      <HolographicGrid3D phase={phase} />
       <DynamicNebula phase={phase} />
-      <QuantumParticles phase={phase} />
-      <MolecularHelix phase={phase} />
-      <EpicOrbitalRings phase={phase} />
-      <ConvergingLightRays phase={phase} />
+      <QuantumParticlesWithTrails phase={phase} />
+      <MolecularHelix3D phase={phase} />
+      <DimensionalPortal phase={phase} />
+      <EnergyPulseRays phase={phase} />
+      <EnergyShield phase={phase} />
 
       {/* Container central do logo */}
       <motion.div
         className="relative z-10 flex flex-col items-center"
-        initial={{ scale: 0.3, opacity: 0, y: 150, rotateX: 45 }}
+        initial={{ scale: 0.2, opacity: 0, y: 200, rotateX: 60 }}
         animate={{
-          scale: phase >= 3 ? 1 : 0.3,
-          opacity: phase >= 3 ? 1 : 0,
-          y: phase >= 3 ? 0 : 150,
-          rotateX: phase >= 3 ? 0 : 45,
+          scale: phase >= 4 ? 1 : 0.2,
+          opacity: phase >= 4 ? 1 : 0,
+          y: phase >= 4 ? 0 : 200,
+          rotateX: phase >= 4 ? 0 : 60,
         }}
         transition={{
-          duration: 1.8,
+          duration: 1.5,
           type: "spring",
-          stiffness: 60,
+          stiffness: 50,
           damping: 12,
         }}
       >
         {/* Múltiplas camadas de glow atrás do logo */}
         <motion.div
-          className="absolute -inset-40 rounded-full"
+          className="absolute -inset-52 rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(220, 38, 38, 0.7) 0%, rgba(220, 38, 38, 0.3) 30%, transparent 70%)',
-            filter: 'blur(60px)',
+            background: 'radial-gradient(circle, rgba(220, 38, 38, 0.8) 0%, rgba(220, 38, 38, 0.3) 30%, transparent 70%)',
+            filter: 'blur(80px)',
           }}
           animate={{
-            scale: phase >= 4 ? [1, 1.6, 1] : 1,
-            opacity: phase >= 4 ? [0.7, 1, 0.7] : 0.7,
+            scale: phase >= 4 ? [1, 1.8, 1] : 1,
+            opacity: phase >= 4 ? [0.6, 1, 0.6] : 0.6,
           }}
-          transition={{ duration: 1.8, repeat: phase >= 4 && phase < 6 ? Infinity : 0 }}
+          transition={{ duration: 2, repeat: phase >= 4 && phase < 6 ? Infinity : 0 }}
         />
         
         <motion.div
-          className="absolute -inset-32 rounded-full"
+          className="absolute -inset-40 rounded-full"
           style={{
-            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.5) 0%, transparent 60%)',
-            filter: 'blur(40px)',
+            background: 'radial-gradient(circle, rgba(251, 191, 36, 0.6) 0%, transparent 60%)',
+            filter: 'blur(50px)',
           }}
           animate={{
-            scale: phase >= 4 ? [1.2, 1, 1.2] : 1.2,
+            scale: phase >= 4 ? [1.3, 1, 1.3] : 1.3,
           }}
-          transition={{ duration: 2, repeat: Infinity }}
-        />
-
-        {/* Hexágono de energia */}
-        <motion.div
-          className="absolute -inset-24"
-          style={{
-            background: 'conic-gradient(from 0deg, rgba(220, 38, 38, 0.5), rgba(30, 64, 175, 0.5), rgba(251, 191, 36, 0.5), rgba(124, 58, 237, 0.5), rgba(220, 38, 38, 0.5))',
-            clipPath: 'polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%)',
-            filter: 'blur(20px)',
-          }}
-          animate={{
-            rotate: [0, 360],
-            scale: phase >= 4 ? [1, 1.2, 1] : 1,
-          }}
-          transition={{
-            rotate: { duration: 15, repeat: Infinity, ease: "linear" },
-            scale: { duration: 2, repeat: Infinity },
-          }}
+          transition={{ duration: 2.5, repeat: Infinity }}
         />
 
         {/* Logo principal com efeitos extremos */}
         <motion.img
           src={logoMoises}
           alt="Moisés Medeiros"
-          className="w-80 md:w-[420px] lg:w-[500px] relative z-10"
+          className="w-80 md:w-[450px] lg:w-[550px] relative z-10"
           animate={{
             filter: phase >= 4 ? [
-              'brightness(1) drop-shadow(0 0 40px rgba(220, 38, 38, 0.6)) drop-shadow(0 0 80px rgba(251, 191, 36, 0.3))',
-              'brightness(1.8) drop-shadow(0 0 100px rgba(220, 38, 38, 1)) drop-shadow(0 0 150px rgba(251, 191, 36, 0.7))',
-              'brightness(1) drop-shadow(0 0 40px rgba(220, 38, 38, 0.6)) drop-shadow(0 0 80px rgba(251, 191, 36, 0.3))',
-            ] : 'brightness(1) drop-shadow(0 0 30px rgba(220, 38, 38, 0.4))',
+              'brightness(1) drop-shadow(0 0 50px rgba(220, 38, 38, 0.7)) drop-shadow(0 0 100px rgba(251, 191, 36, 0.4))',
+              'brightness(2) drop-shadow(0 0 120px rgba(220, 38, 38, 1)) drop-shadow(0 0 180px rgba(251, 191, 36, 0.8))',
+              'brightness(1) drop-shadow(0 0 50px rgba(220, 38, 38, 0.7)) drop-shadow(0 0 100px rgba(251, 191, 36, 0.4))',
+            ] : 'brightness(1) drop-shadow(0 0 40px rgba(220, 38, 38, 0.5))',
           }}
           transition={{
-            duration: 1.2,
+            duration: 1.5,
             repeat: phase >= 4 && phase < 6 ? Infinity : 0,
           }}
         />
 
         {/* Tagline épica */}
         <motion.div
-          className="mt-12 text-center"
-          initial={{ opacity: 0, y: 40 }}
+          className="mt-16 text-center"
+          initial={{ opacity: 0, y: 50 }}
           animate={{ 
             opacity: phase >= 5 ? 1 : 0, 
-            y: phase >= 5 ? 0 : 40,
+            y: phase >= 5 ? 0 : 50,
           }}
           transition={{ duration: 1 }}
         >
-          <GlitchText 
+          <CinematicGlitchText 
             text="O FUTURO DA QUÍMICA"
             phase={phase}
-            className="text-4xl md:text-5xl lg:text-6xl font-black tracking-wider"
+            className="text-4xl md:text-6xl lg:text-7xl font-black tracking-wider"
           />
           
           <motion.p
-            className="text-xl md:text-2xl text-gray-300 mt-6 tracking-[0.4em] uppercase"
+            className="text-xl md:text-2xl text-gray-300 mt-8 tracking-[0.5em] uppercase font-light"
             initial={{ opacity: 0 }}
             animate={{ opacity: phase >= 5 ? 1 : 0 }}
-            transition={{ delay: 0.5 }}
+            transition={{ delay: 0.4 }}
           >
             Sua aprovação começa aqui
           </motion.p>
           
           <motion.div
-            className="mt-8 flex items-center justify-center gap-4"
+            className="mt-10 flex items-center justify-center gap-6"
             initial={{ opacity: 0 }}
             animate={{ opacity: phase >= 5 ? 1 : 0 }}
-            transition={{ delay: 0.8 }}
+            transition={{ delay: 0.7 }}
           >
-            <div className="h-px w-20 bg-gradient-to-r from-transparent to-red-500" />
-            <span className="text-red-400 text-sm tracking-widest">ANO 2500</span>
-            <div className="h-px w-20 bg-gradient-to-l from-transparent to-red-500" />
+            <motion.div 
+              className="h-px w-32 bg-gradient-to-r from-transparent via-red-500 to-transparent"
+              animate={{ scaleX: [0, 1, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+            <span className="text-red-400 text-sm tracking-[0.3em] font-bold">ANO 2500</span>
+            <motion.div 
+              className="h-px w-32 bg-gradient-to-r from-transparent via-red-500 to-transparent"
+              animate={{ scaleX: [0, 1, 0] }}
+              transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
+            />
           </motion.div>
         </motion.div>
       </motion.div>
 
-      {/* Flash final épico com ondas */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ 
-          opacity: phase >= 6 ? [0, 1, 0] : 0,
-          background: phase >= 6 ? [
-            'radial-gradient(circle at center, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 100%)',
-            'radial-gradient(circle at center, rgba(255,255,255,1) 0%, rgba(255,255,255,1) 100%)',
-            'radial-gradient(circle at center, rgba(255,255,255,0) 0%, rgba(255,255,255,0) 100%)',
-          ] : 'none',
-        }}
-        transition={{ duration: 0.5 }}
-      />
-
-      {/* Linhas de velocidade no flash */}
-      {phase >= 6 && (
-        <motion.div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(50)].map((_, i) => (
+      {/* Flash final épico com ondas de energia */}
+      <AnimatePresence>
+        {phase >= 6 && (
+          <>
+            {/* Ondas de choque */}
+            {[...Array(5)].map((_, i) => (
+              <motion.div
+                key={`shockwave-${i}`}
+                className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-4"
+                style={{
+                  borderColor: i % 2 === 0 ? 'rgba(220, 38, 38, 0.8)' : 'rgba(251, 191, 36, 0.6)',
+                }}
+                initial={{ width: 0, height: 0, opacity: 1 }}
+                animate={{ 
+                  width: 3000, 
+                  height: 3000, 
+                  opacity: 0,
+                }}
+                transition={{ duration: 1, delay: i * 0.1 }}
+              />
+            ))}
+            
+            {/* Flash branco final */}
             <motion.div
-              key={i}
-              className="absolute h-1 rounded-full"
-              style={{
-                width: '120%',
-                left: '-10%',
-                top: `${(i / 50) * 100}%`,
-                background: `linear-gradient(90deg, transparent, ${i % 3 === 0 ? '#dc2626' : i % 3 === 1 ? '#fbbf24' : '#1e40af'}, transparent)`,
-                transform: `rotate(${Math.random() * 8 - 4}deg)`,
-              }}
-              initial={{ scaleX: 0, opacity: 0 }}
-              animate={{ scaleX: [0, 1], opacity: [0, 1, 0] }}
-              transition={{ duration: 0.3, delay: Math.random() * 0.15 }}
+              className="absolute inset-0 bg-white pointer-events-none"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: [0, 1, 0] }}
+              transition={{ duration: 0.6 }}
             />
-          ))}
-        </motion.div>
-      )}
+          </>
+        )}
+      </AnimatePresence>
 
-      {/* Botão pular - mais estilizado */}
+      {/* Botão de skip elegante */}
       <AnimatePresence>
         {skipVisible && phase < 6 && (
           <motion.button
             initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            animate={{ opacity: 0.7, y: 0 }}
             exit={{ opacity: 0, y: 20 }}
-            onClick={onComplete}
-            className="absolute bottom-8 right-8 px-8 py-4 text-sm text-gray-300 hover:text-white border border-gray-700/50 hover:border-red-500/70 rounded-full transition-all bg-black/60 backdrop-blur-2xl hover:bg-red-950/30 flex items-center gap-3 group"
+            whileHover={{ opacity: 1, scale: 1.05 }}
+            onClick={handleSkip}
+            className="absolute bottom-10 right-10 px-8 py-3 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white/80 hover:text-white text-sm tracking-widest backdrop-blur-xl transition-all"
           >
-            <span className="tracking-wider">Pular Intro</span>
-            <motion.span
-              animate={{ x: [0, 8, 0] }}
-              transition={{ duration: 1.2, repeat: Infinity }}
-              className="text-red-400"
-            >
-              →
-            </motion.span>
+            PULAR INTRO
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Indicador de progresso - mais visual */}
-      <motion.div
-        className="absolute bottom-8 left-8 flex gap-3"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: skipVisible ? 1 : 0 }}
-      >
-        {[1, 2, 3, 4, 5, 6].map((p) => (
-          <motion.div
-            key={p}
-            className="relative"
-          >
-            <motion.div
-              className="w-3 h-3 rounded-full"
-              style={{
-                background: phase >= p 
-                  ? `linear-gradient(135deg, #dc2626, #fbbf24)` 
-                  : 'rgba(255,255,255,0.15)',
-                boxShadow: phase >= p ? '0 0 15px #dc2626, 0 0 30px #dc2626' : 'none',
-              }}
-              animate={{
-                scale: phase === p ? [1, 1.5, 1] : 1,
-              }}
-              transition={{ duration: 0.6, repeat: phase === p ? Infinity : 0 }}
-            />
-            {phase === p && (
-              <motion.div
-                className="absolute inset-0 rounded-full bg-red-500"
-                animate={{ scale: [1, 2.5], opacity: [0.5, 0] }}
-                transition={{ duration: 1, repeat: Infinity }}
-              />
-            )}
-          </motion.div>
-        ))}
-      </motion.div>
+      {/* Barra de progresso */}
+      <motion.div 
+        className="absolute bottom-0 left-0 h-1 bg-gradient-to-r from-red-600 via-amber-500 to-red-600"
+        initial={{ width: '0%' }}
+        animate={{ width: `${(phase / 6) * 100}%` }}
+        transition={{ duration: 0.5 }}
+        style={{ boxShadow: '0 0 30px rgba(220, 38, 38, 0.8)' }}
+      />
 
-      {/* CSS para animação de gradiente */}
+      {/* CSS para gradiente animado */}
       <style>{`
         @keyframes gradient {
           0%, 100% { background-position: 0% 50%; }

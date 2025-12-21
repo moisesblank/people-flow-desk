@@ -1,183 +1,305 @@
 // ============================================
 // HERO SECTION ÉPICA 2500 - ULTRA FUTURISTA
-// Impacto visual máximo + conversão
+// Impacto visual máximo + conversão extrema
+// Com efeitos holográficos e parallax 3D
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
   Play, ChevronDown, ArrowRight, Rocket, Atom, 
-  FlaskConical, Zap, Star, Sparkles, Shield
+  FlaskConical, Zap, Star, Sparkles, Shield, 
+  Trophy, Users, BookOpen, Crown, Target, CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
-// Partículas flutuantes no hero
-const HeroParticles = () => (
-  <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(50)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute w-1 h-1 rounded-full"
-        style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
-          background: i % 3 === 0 ? '#dc2626' : i % 3 === 1 ? '#1e40af' : '#fbbf24',
-          boxShadow: `0 0 ${10 + Math.random() * 10}px currentColor`,
-        }}
-        animate={{
-          y: [0, -30, 0],
-          opacity: [0.3, 0.8, 0.3],
-          scale: [1, 1.5, 1],
-        }}
-        transition={{
-          duration: 3 + Math.random() * 2,
-          repeat: Infinity,
-          delay: Math.random() * 2,
-        }}
-      />
-    ))}
-  </div>
-);
+// Partículas flutuantes no hero - mais densas e coloridas
+const HeroParticles = () => {
+  const particles = useMemo(() => 
+    Array.from({ length: 80 }, (_, i) => ({
+      x: Math.random() * 100,
+      y: Math.random() * 100,
+      color: ['#dc2626', '#1e40af', '#fbbf24', '#7c3aed', '#10b981'][i % 5],
+      size: Math.random() * 4 + 2,
+      duration: 3 + Math.random() * 3,
+      delay: Math.random() * 3,
+    })),
+  []);
 
-// Grid holográfico de fundo
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {particles.map((p, i) => (
+        <motion.div
+          key={i}
+          className="absolute rounded-full"
+          style={{
+            left: `${p.x}%`,
+            top: `${p.y}%`,
+            width: p.size,
+            height: p.size,
+            background: p.color,
+            boxShadow: `0 0 ${p.size * 6}px ${p.color}`,
+          }}
+          animate={{
+            y: [0, -50, 0],
+            opacity: [0.2, 1, 0.2],
+            scale: [1, 2, 1],
+          }}
+          transition={{
+            duration: p.duration,
+            repeat: Infinity,
+            delay: p.delay,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
+
+// Grid holográfico de fundo com efeito 3D
 const HolographicBackground = () => (
   <div className="absolute inset-0 overflow-hidden">
-    {/* Grid principal */}
+    {/* Grid principal com perspectiva */}
     <div 
-      className="absolute inset-0 opacity-10"
+      className="absolute inset-0 opacity-15"
       style={{
         backgroundImage: `
-          linear-gradient(rgba(220, 38, 38, 0.4) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(30, 64, 175, 0.4) 1px, transparent 1px)
+          linear-gradient(rgba(220, 38, 38, 0.5) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(30, 64, 175, 0.5) 1px, transparent 1px)
         `,
-        backgroundSize: '80px 80px',
+        backgroundSize: '60px 60px',
+        transform: 'perspective(1000px) rotateX(60deg)',
+        transformOrigin: 'center bottom',
       }}
     />
     
-    {/* Ondas de energia */}
+    {/* Ondas de energia múltiplas */}
     <motion.div
       className="absolute inset-0"
       style={{
-        background: 'radial-gradient(ellipse at 30% 30%, rgba(220, 38, 38, 0.2) 0%, transparent 50%)',
+        background: 'radial-gradient(ellipse at 20% 20%, rgba(220, 38, 38, 0.3) 0%, transparent 50%)',
       }}
       animate={{
-        opacity: [0.3, 0.6, 0.3],
-        scale: [1, 1.1, 1],
-      }}
-      transition={{ duration: 5, repeat: Infinity }}
-    />
-    
-    <motion.div
-      className="absolute inset-0"
-      style={{
-        background: 'radial-gradient(ellipse at 70% 70%, rgba(30, 64, 175, 0.2) 0%, transparent 50%)',
-      }}
-      animate={{
-        opacity: [0.3, 0.5, 0.3],
-        scale: [1.1, 1, 1.1],
+        opacity: [0.2, 0.5, 0.2],
+        scale: [1, 1.2, 1],
       }}
       transition={{ duration: 6, repeat: Infinity }}
     />
+    
+    <motion.div
+      className="absolute inset-0"
+      style={{
+        background: 'radial-gradient(ellipse at 80% 80%, rgba(30, 64, 175, 0.3) 0%, transparent 50%)',
+      }}
+      animate={{
+        opacity: [0.2, 0.4, 0.2],
+        scale: [1.1, 1, 1.1],
+      }}
+      transition={{ duration: 7, repeat: Infinity }}
+    />
+    
+    <motion.div
+      className="absolute inset-0"
+      style={{
+        background: 'radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.2) 0%, transparent 40%)',
+      }}
+      animate={{
+        opacity: [0.1, 0.3, 0.1],
+        scale: [1, 1.3, 1],
+      }}
+      transition={{ duration: 5, repeat: Infinity }}
+    />
   </div>
 );
 
-// Badge animado futurista
+// Badge animado futurista ultra premium
 const FuturisticBadge = () => (
   <motion.div 
-    initial={{ opacity: 0, y: 30 }} 
-    animate={{ opacity: 1, y: 0 }} 
-    transition={{ delay: 0.3 }}
+    initial={{ opacity: 0, y: 30, scale: 0.9 }} 
+    animate={{ opacity: 1, y: 0, scale: 1 }} 
+    transition={{ delay: 0.3, type: "spring" }}
     className="relative inline-flex items-center gap-3"
   >
-    {/* Glow de fundo */}
+    {/* Glow pulsante de fundo */}
     <motion.div
-      className="absolute -inset-2 rounded-full"
+      className="absolute -inset-3 rounded-full"
       style={{
-        background: 'linear-gradient(90deg, rgba(220, 38, 38, 0.3), rgba(30, 64, 175, 0.3))',
-        filter: 'blur(15px)',
+        background: 'linear-gradient(90deg, rgba(220, 38, 38, 0.4), rgba(251, 191, 36, 0.4), rgba(30, 64, 175, 0.4))',
+        filter: 'blur(20px)',
       }}
-      animate={{ opacity: [0.5, 0.8, 0.5] }}
+      animate={{ 
+        opacity: [0.4, 0.8, 0.4],
+        scale: [1, 1.1, 1],
+      }}
       transition={{ duration: 2, repeat: Infinity }}
     />
     
-    <div className="relative px-6 py-3 rounded-full bg-gradient-to-r from-red-900/50 to-blue-900/50 border border-red-500/40 backdrop-blur-xl">
-      <div className="flex items-center gap-3">
+    <div className="relative px-8 py-4 rounded-full bg-gradient-to-r from-red-900/60 via-amber-900/40 to-blue-900/60 border border-red-500/50 backdrop-blur-2xl shadow-2xl">
+      <div className="flex items-center gap-4">
         <motion.div 
           animate={{ rotate: 360 }} 
-          transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+          transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
         >
-          <Atom className="w-5 h-5 text-red-400" />
+          <Atom className="w-6 h-6 text-red-400" />
         </motion.div>
-        <span className="text-sm font-bold bg-gradient-to-r from-red-400 via-amber-400 to-red-400 bg-clip-text text-transparent tracking-wide">
+        <span className="text-base font-black bg-gradient-to-r from-red-400 via-amber-400 to-red-400 bg-clip-text text-transparent tracking-wide">
           O CURSO QUE MAIS APROVA EM MEDICINA
         </span>
         <motion.div
-          className="w-2 h-2 rounded-full bg-green-400"
-          animate={{ scale: [1, 1.3, 1], opacity: [1, 0.5, 1] }}
+          className="relative"
+          animate={{ scale: [1, 1.4, 1] }}
           transition={{ duration: 1.5, repeat: Infinity }}
-        />
+        >
+          <div className="w-3 h-3 rounded-full bg-green-400" />
+          <motion.div
+            className="absolute inset-0 rounded-full bg-green-400"
+            animate={{ scale: [1, 2.5], opacity: [0.6, 0] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
+        </motion.div>
       </div>
     </div>
   </motion.div>
 );
 
-// Contador animado com estilo futurista
-const FuturisticCounter = ({ value, label }: { value: string; label: string }) => (
+// Contador animado com estilo futurista épico
+const EpicCounter = ({ value, label, icon: Icon, gradient, glow }: { 
+  value: string; 
+  label: string; 
+  icon: any;
+  gradient: string;
+  glow: string;
+}) => (
   <motion.div
-    className="relative group"
-    whileHover={{ scale: 1.05, y: -2 }}
+    className="relative group cursor-pointer"
+    whileHover={{ scale: 1.05, y: -5 }}
+    initial={{ opacity: 0, y: 30 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ type: "spring" }}
   >
-    <div className="absolute -inset-1 bg-gradient-to-r from-red-600/20 to-blue-600/20 rounded-xl blur-lg opacity-0 group-hover:opacity-100 transition-opacity" />
-    <div className="relative p-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm">
-      <div className="text-2xl md:text-3xl font-black text-white">{value}</div>
-      <div className="text-xs text-gray-400 uppercase tracking-wider">{label}</div>
+    {/* Glow de fundo */}
+    <motion.div 
+      className="absolute -inset-2 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity"
+      style={{ background: glow }}
+    />
+    
+    <div className="relative p-6 rounded-2xl bg-white/[0.08] border border-white/10 backdrop-blur-xl group-hover:border-white/20 transition-all">
+      <motion.div 
+        className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} mb-4`}
+        animate={{ rotate: [0, 5, -5, 0] }}
+        transition={{ duration: 3, repeat: Infinity }}
+        style={{ boxShadow: `0 10px 40px ${glow}` }}
+      >
+        <Icon className="w-7 h-7 text-white" />
+      </motion.div>
+      <div className="text-4xl font-black text-white mb-1">{value}</div>
+      <div className="text-sm text-gray-400 uppercase tracking-wider">{label}</div>
     </div>
   </motion.div>
 );
 
-// Card do professor flutuante
+// Card do professor flutuante premium
 const ProfessorCard = () => (
   <motion.div 
-    className="absolute -bottom-4 -left-4 right-4 p-5 rounded-2xl bg-black/90 backdrop-blur-2xl border border-red-500/40"
-    initial={{ opacity: 0, y: 50 }} 
-    animate={{ opacity: 1, y: 0 }} 
-    transition={{ delay: 1 }}
-    whileHover={{ scale: 1.02 }}
+    className="absolute -bottom-6 -left-6 right-6 p-6 rounded-3xl bg-black/95 backdrop-blur-3xl border border-red-500/50 shadow-2xl shadow-red-500/20"
+    initial={{ opacity: 0, y: 60, scale: 0.9 }} 
+    animate={{ opacity: 1, y: 0, scale: 1 }} 
+    transition={{ delay: 1, type: "spring" }}
+    whileHover={{ scale: 1.02, y: -3 }}
   >
-    <div className="flex items-center gap-4">
+    <div className="flex items-center gap-5">
       <motion.div 
-        className="relative w-16 h-16 rounded-xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center"
+        className="relative w-20 h-20 rounded-2xl bg-gradient-to-br from-red-600 to-red-700 flex items-center justify-center"
         whileHover={{ rotate: [0, -5, 5, 0] }}
         transition={{ duration: 0.5 }}
+        style={{ boxShadow: '0 15px 50px rgba(220, 38, 38, 0.4)' }}
       >
-        <FlaskConical className="w-8 h-8 text-white" />
+        <FlaskConical className="w-10 h-10 text-white" />
         <motion.div
-          className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-green-500 border-2 border-black"
+          className="absolute -top-2 -right-2 w-6 h-6 rounded-full bg-green-500 border-3 border-black flex items-center justify-center"
           animate={{ scale: [1, 1.2, 1] }}
           transition={{ duration: 2, repeat: Infinity }}
-        />
+        >
+          <CheckCircle className="w-4 h-4 text-white" />
+        </motion.div>
       </motion.div>
-      <div>
-        <div className="text-white font-bold text-lg">Prof. Moisés Medeiros</div>
-        <div className="text-gray-400 text-sm">Mestre em Química • 15+ anos de experiência</div>
-        <div className="flex items-center gap-1 mt-1">
-          {[...Array(5)].map((_, i) => (
-            <Star key={i} className="w-3 h-3 text-amber-400" fill="currentColor" />
-          ))}
-          <span className="text-xs text-gray-500 ml-1">4.9/5</span>
+      <div className="flex-1">
+        <div className="text-white font-black text-xl">Prof. Moisés Medeiros</div>
+        <div className="text-gray-400 text-sm mb-2">Mestre em Química • 15+ anos de experiência</div>
+        <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
+            {[...Array(5)].map((_, i) => (
+              <Star key={i} className="w-4 h-4 text-amber-400" fill="currentColor" />
+            ))}
+          </div>
+          <span className="text-sm text-amber-400 font-bold">4.9/5</span>
+          <span className="text-xs text-gray-500">(2.847 avaliações)</span>
         </div>
       </div>
     </div>
+    
+    {/* Badges de conquistas */}
+    <div className="flex items-center gap-3 mt-4 pt-4 border-t border-white/10">
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-amber-500/20 border border-amber-500/30">
+        <Crown className="w-4 h-4 text-amber-400" />
+        <span className="text-xs text-amber-400 font-bold">#1 Brasil</span>
+      </div>
+      <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-green-500/20 border border-green-500/30">
+        <Trophy className="w-4 h-4 text-green-400" />
+        <span className="text-xs text-green-400 font-bold">10.847+ Aprovados</span>
+      </div>
+    </div>
   </motion.div>
+);
+
+// Anéis orbitais decorativos
+const OrbitalRings = () => (
+  <>
+    {[220, 300, 380].map((size, i) => (
+      <motion.div
+        key={size}
+        className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
+        style={{
+          width: size,
+          height: size,
+          border: `${2 - i * 0.5}px solid ${i === 0 ? 'rgba(220, 38, 38, 0.4)' : i === 1 ? 'rgba(30, 64, 175, 0.3)' : 'rgba(251, 191, 36, 0.2)'}`,
+          boxShadow: `0 0 30px ${i === 0 ? 'rgba(220, 38, 38, 0.2)' : i === 1 ? 'rgba(30, 64, 175, 0.15)' : 'rgba(251, 191, 36, 0.1)'}`,
+        }}
+        animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
+        transition={{ duration: 20 + i * 8, repeat: Infinity, ease: "linear" }}
+      />
+    ))}
+    
+    {/* Partículas orbitando */}
+    {[...Array(8)].map((_, i) => (
+      <motion.div
+        key={`orb-particle-${i}`}
+        className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full"
+        style={{
+          background: i % 2 === 0 ? '#dc2626' : '#fbbf24',
+          boxShadow: `0 0 20px ${i % 2 === 0 ? '#dc2626' : '#fbbf24'}`,
+        }}
+        animate={{
+          x: Math.cos((i / 8) * Math.PI * 2 + Date.now() * 0.0005) * 160,
+          y: Math.sin((i / 8) * Math.PI * 2 + Date.now() * 0.0005) * 160,
+        }}
+        transition={{
+          duration: 15,
+          repeat: Infinity,
+          ease: "linear",
+        }}
+      />
+    ))}
+  </>
 );
 
 export const HeroSection = () => {
   const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 600], [0, 200]);
-  const opacity = useTransform(scrollY, [0, 500], [1, 0]);
-  const scale = useTransform(scrollY, [0, 500], [1, 0.9]);
+  const y = useTransform(scrollY, [0, 800], [0, 300]);
+  const opacity = useTransform(scrollY, [0, 600], [1, 0]);
+  const scale = useTransform(scrollY, [0, 600], [1, 0.85]);
 
   const [typedText, setTypedText] = useState("");
   const fullText = "Sua aprovação começa aqui!";
@@ -191,38 +313,44 @@ export const HeroSection = () => {
       } else {
         clearInterval(timer);
       }
-    }, 80);
+    }, 70);
     return () => clearInterval(timer);
   }, []);
 
+  const stats = [
+    { value: "10.847+", label: "Aprovados", icon: Trophy, gradient: "from-red-600 to-red-700", glow: "rgba(220, 38, 38, 0.4)" },
+    { value: "98%", label: "Aprovação", icon: Target, gradient: "from-amber-500 to-amber-600", glow: "rgba(245, 158, 11, 0.4)" },
+    { value: "500+", label: "Horas", icon: BookOpen, gradient: "from-blue-600 to-blue-700", glow: "rgba(37, 99, 235, 0.4)" },
+  ];
+
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-24 pb-16 overflow-hidden">
+    <section className="relative min-h-screen flex items-center justify-center pt-28 pb-20 overflow-hidden">
       <HolographicBackground />
       <HeroParticles />
       
       <motion.div style={{ y, opacity, scale }} className="container mx-auto px-4 relative z-10">
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <div className="grid lg:grid-cols-2 gap-20 items-center">
           {/* Coluna esquerda - Conteúdo */}
           <motion.div 
             initial={{ opacity: 0, x: -100 }} 
             animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.8 }}
+            transition={{ duration: 1, type: "spring" }}
             className="text-center lg:text-left"
           >
             <FuturisticBadge />
             
-            {/* Headline principal */}
+            {/* Headline principal épica */}
             <motion.h1 
-              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-[0.9] mt-8 mb-6"
-              initial={{ opacity: 0, y: 40 }}
+              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-[0.85] mt-10 mb-8"
+              initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
+              transition={{ delay: 0.4, type: "spring" }}
             >
-              <span className="text-white block">{typedText.split('começa')[0]}</span>
+              <span className="text-white block drop-shadow-2xl">{typedText.split('começa')[0]}</span>
               <motion.span 
-                className="block mt-2"
+                className="block mt-3"
                 style={{
-                  background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 25%, #fbbf24 50%, #f59e0b 75%, #dc2626 100%)',
+                  background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 20%, #fbbf24 50%, #f59e0b 70%, #dc2626 100%)',
                   backgroundSize: '200% 200%',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
@@ -235,43 +363,47 @@ export const HeroSection = () => {
                 começa aqui!
               </motion.span>
               <motion.span
-                className="inline-block w-1 h-12 md:h-16 bg-red-500 ml-1"
+                className="inline-block w-1.5 h-14 md:h-20 bg-gradient-to-b from-red-500 to-amber-500 ml-2 rounded-full"
                 animate={{ opacity: [1, 0, 1] }}
-                transition={{ duration: 0.8, repeat: Infinity }}
+                transition={{ duration: 0.7, repeat: Infinity }}
               />
             </motion.h1>
 
             {/* Subheadline */}
             <motion.p 
-              className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-10 max-w-xl mx-auto lg:mx-0 leading-relaxed"
+              className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
             >
-              O método que já aprovou <span className="text-red-400 font-bold">mais de 10.000 alunos</span> em Medicina nas melhores universidades do Brasil.
+              O método que já aprovou <span className="text-red-400 font-black">mais de 10.000 alunos</span> em Medicina nas melhores universidades do Brasil.
             </motion.p>
 
-            {/* CTAs */}
+            {/* CTAs épicos */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12"
+              className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start mb-14"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
             >
               <Link to="/auth">
                 <motion.div 
-                  whileHover={{ scale: 1.03, y: -2 }}
+                  whileHover={{ scale: 1.03, y: -3 }}
                   whileTap={{ scale: 0.97 }}
                   className="relative group"
                 >
-                  <div className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-2xl blur-lg opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <motion.div 
+                    className="absolute -inset-1.5 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 rounded-2xl blur-lg"
+                    animate={{ opacity: [0.5, 0.8, 0.5] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  />
                   <Button 
                     size="lg" 
-                    className="relative bg-gradient-to-r from-red-700 via-red-600 to-red-700 text-white shadow-2xl shadow-red-600/40 px-10 h-16 text-lg font-bold w-full sm:w-auto rounded-xl border-0"
+                    className="relative bg-gradient-to-r from-red-700 via-red-600 to-red-700 text-white shadow-2xl shadow-red-600/50 px-12 h-18 text-lg font-black w-full sm:w-auto rounded-2xl border-0"
                   >
-                    <Rocket className="w-5 h-5 mr-2 animate-pulse" />
+                    <Rocket className="w-6 h-6 mr-3 animate-bounce" />
                     QUERO SER APROVADO
-                    <ArrowRight className="w-5 h-5 ml-2" />
+                    <ArrowRight className="w-6 h-6 ml-3" />
                   </Button>
                 </motion.div>
               </Link>
@@ -284,109 +416,126 @@ export const HeroSection = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-2 border-gray-600 hover:border-red-500/60 bg-white/5 hover:bg-white/10 h-16 text-lg w-full sm:w-auto rounded-xl backdrop-blur-sm"
+                  className="border-2 border-gray-600 hover:border-red-500/60 bg-white/5 hover:bg-white/10 h-18 text-lg w-full sm:w-auto rounded-2xl backdrop-blur-sm px-10"
                 >
-                  <Play className="w-5 h-5 mr-2 text-red-400" />
+                  <motion.div
+                    className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mr-3"
+                    animate={{ scale: [1, 1.1, 1] }}
+                    transition={{ duration: 2, repeat: Infinity }}
+                  >
+                    <Play className="w-5 h-5 text-red-400" fill="currentColor" />
+                  </motion.div>
                   Ver Aula Grátis
                 </Button>
               </motion.a>
             </motion.div>
 
-            {/* Mini stats */}
+            {/* Mini stats épicos */}
             <motion.div 
-              className="grid grid-cols-3 gap-4"
+              className="grid grid-cols-3 gap-5"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
             >
-              <FuturisticCounter value="10.847+" label="Aprovados" />
-              <FuturisticCounter value="98%" label="Aprovação" />
-              <FuturisticCounter value="500+" label="Horas" />
+              {stats.map((stat, i) => (
+                <EpicCounter key={stat.label} {...stat} />
+              ))}
             </motion.div>
 
             {/* Trust indicators */}
             <motion.div
-              className="flex flex-wrap items-center justify-center lg:justify-start gap-6 mt-8"
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-8 mt-10"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2 }}
             >
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Shield className="w-4 h-4 text-green-400" />
-                <span>Garantia 30 dias</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Zap className="w-4 h-4 text-amber-400" />
-                <span>Acesso imediato</span>
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-500">
-                <Sparkles className="w-4 h-4 text-purple-400" />
-                <span>IA integrada</span>
-              </div>
+              {[
+                { icon: Shield, label: "Garantia 30 dias", color: "text-green-400" },
+                { icon: Zap, label: "Acesso imediato", color: "text-amber-400" },
+                { icon: Sparkles, label: "IA integrada", color: "text-purple-400" },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center gap-2 text-sm text-gray-400">
+                  <item.icon className={`w-5 h-5 ${item.color}`} />
+                  <span>{item.label}</span>
+                </div>
+              ))}
             </motion.div>
           </motion.div>
 
-          {/* Coluna direita - Visual */}
+          {/* Coluna direita - Visual épico */}
           <motion.div 
             initial={{ opacity: 0, x: 100 }} 
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
+            transition={{ delay: 0.5, duration: 1, type: "spring" }}
             className="relative hidden lg:block"
           >
-            {/* Glow de fundo */}
+            {/* Glow de fundo massivo */}
             <motion.div 
-              className="absolute -inset-8"
+              className="absolute -inset-16"
               style={{
-                background: 'radial-gradient(ellipse at center, rgba(220, 38, 38, 0.3) 0%, rgba(30, 64, 175, 0.2) 50%, transparent 70%)',
-                filter: 'blur(60px)',
+                background: 'radial-gradient(ellipse at center, rgba(220, 38, 38, 0.4) 0%, rgba(30, 64, 175, 0.3) 50%, transparent 70%)',
+                filter: 'blur(80px)',
               }}
               animate={{
-                scale: [1, 1.1, 1],
-                opacity: [0.5, 0.7, 0.5],
+                scale: [1, 1.2, 1],
+                opacity: [0.4, 0.7, 0.4],
               }}
-              transition={{ duration: 5, repeat: Infinity }}
+              transition={{ duration: 6, repeat: Infinity }}
             />
             
-            {/* Container do visual */}
+            {/* Container do visual principal */}
             <motion.div 
-              className="relative rounded-3xl overflow-hidden border-2 border-white/10 bg-gradient-to-br from-gray-900/80 to-black/80 backdrop-blur-xl"
+              className="relative rounded-[40px] overflow-hidden border-2 border-white/10 bg-gradient-to-br from-gray-900/90 to-black/90 backdrop-blur-3xl"
               whileHover={{ scale: 1.01 }}
+              style={{ boxShadow: '0 50px 100px rgba(220, 38, 38, 0.2)' }}
             >
               {/* Imagem ou placeholder visual futurista */}
               <div className="aspect-[4/5] relative">
                 {/* Grid futurista interno */}
                 <div 
-                  className="absolute inset-0 opacity-20"
+                  className="absolute inset-0 opacity-25"
                   style={{
                     backgroundImage: `
-                      linear-gradient(rgba(220, 38, 38, 0.3) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(30, 64, 175, 0.3) 1px, transparent 1px)
+                      linear-gradient(rgba(220, 38, 38, 0.4) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(30, 64, 175, 0.4) 1px, transparent 1px)
                     `,
-                    backgroundSize: '40px 40px',
+                    backgroundSize: '35px 35px',
                   }}
                 />
                 
-                {/* Logo centralizado */}
+                {/* Logo centralizado com efeitos */}
                 <div className="absolute inset-0 flex items-center justify-center">
                   <motion.div
                     animate={{
-                      y: [0, -10, 0],
+                      y: [0, -15, 0],
                       rotateY: [0, 5, 0],
                     }}
-                    transition={{ duration: 4, repeat: Infinity }}
+                    transition={{ duration: 5, repeat: Infinity }}
+                    className="relative"
                   >
+                    {/* Glow atrás do logo */}
+                    <motion.div
+                      className="absolute -inset-20 rounded-full"
+                      style={{
+                        background: 'radial-gradient(circle, rgba(220, 38, 38, 0.5) 0%, transparent 60%)',
+                        filter: 'blur(40px)',
+                      }}
+                      animate={{
+                        scale: [1, 1.3, 1],
+                        opacity: [0.5, 0.8, 0.5],
+                      }}
+                      transition={{ duration: 3, repeat: Infinity }}
+                    />
+                    
                     <motion.img 
                       src={logoMoises} 
                       alt="Moisés Medeiros"
-                      className="w-64 md:w-80"
-                      style={{
-                        filter: 'drop-shadow(0 0 40px rgba(220, 38, 38, 0.5))',
-                      }}
+                      className="w-72 md:w-96 relative z-10"
                       animate={{
                         filter: [
-                          'drop-shadow(0 0 40px rgba(220, 38, 38, 0.5))',
-                          'drop-shadow(0 0 60px rgba(220, 38, 38, 0.8))',
-                          'drop-shadow(0 0 40px rgba(220, 38, 38, 0.5))',
+                          'drop-shadow(0 0 40px rgba(220, 38, 38, 0.6))',
+                          'drop-shadow(0 0 80px rgba(220, 38, 38, 0.9))',
+                          'drop-shadow(0 0 40px rgba(220, 38, 38, 0.6))',
                         ],
                       }}
                       transition={{ duration: 3, repeat: Infinity }}
@@ -395,22 +544,10 @@ export const HeroSection = () => {
                 </div>
                 
                 {/* Anéis orbitais decorativos */}
-                {[200, 280, 360].map((size, i) => (
-                  <motion.div
-                    key={size}
-                    className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border"
-                    style={{
-                      width: size,
-                      height: size,
-                      borderColor: i === 0 ? 'rgba(220, 38, 38, 0.3)' : i === 1 ? 'rgba(30, 64, 175, 0.2)' : 'rgba(251, 191, 36, 0.2)',
-                    }}
-                    animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-                    transition={{ duration: 15 + i * 5, repeat: Infinity, ease: "linear" }}
-                  />
-                ))}
+                <OrbitalRings />
                 
                 {/* Gradiente de sobreposição */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-70" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent opacity-80" />
               </div>
               
               {/* Card do professor */}
@@ -420,14 +557,23 @@ export const HeroSection = () => {
         </div>
       </motion.div>
 
-      {/* Scroll indicator */}
+      {/* Scroll indicator épico */}
       <motion.div 
-        className="absolute bottom-8 left-1/2 -translate-x-1/2 flex flex-col items-center gap-3"
-        animate={{ y: [0, 12, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
+        className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4"
+        animate={{ y: [0, 15, 0] }}
+        transition={{ duration: 2.5, repeat: Infinity }}
       >
-        <span className="text-xs text-gray-500 uppercase tracking-[0.3em]">Scroll</span>
-        <ChevronDown className="w-5 h-5 text-gray-500" />
+        <motion.div
+          className="w-6 h-10 rounded-full border-2 border-white/30 flex items-start justify-center pt-2"
+          style={{ boxShadow: '0 0 20px rgba(255,255,255,0.1)' }}
+        >
+          <motion.div
+            className="w-1.5 h-3 rounded-full bg-gradient-to-b from-red-500 to-amber-500"
+            animate={{ y: [0, 12, 0], opacity: [1, 0.3, 1] }}
+            transition={{ duration: 2, repeat: Infinity }}
+          />
+        </motion.div>
+        <span className="text-xs text-gray-500 uppercase tracking-[0.4em]">Scroll</span>
       </motion.div>
     </section>
   );
