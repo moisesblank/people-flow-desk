@@ -1,6 +1,7 @@
 // ============================================
 // FUTURISTIC VIDEO PLAYER - 2300 STYLE
 // Player de vídeo cinematográfico com bordas futuristas
+// COM PROTEÇÃO ANTI-COMPARTILHAMENTO
 // ============================================
 
 import { useState } from "react";
@@ -11,8 +12,10 @@ import {
   Maximize2, 
   Volume2,
   Sparkles,
-  Zap
+  Zap,
+  Shield
 } from "lucide-react";
+import { ProtectedVideoWrapper, getProtectedYouTubeUrl } from "@/components/video/ProtectedVideoWrapper";
 
 interface FuturisticVideoPlayerProps {
   videoId: string;
@@ -21,7 +24,7 @@ interface FuturisticVideoPlayerProps {
   className?: string;
 }
 
-// Componente de player futurista
+// Componente de player futurista COM PROTEÇÃO
 export const FuturisticVideoPlayer = ({ 
   videoId, 
   title = "Vídeo", 
@@ -33,8 +36,8 @@ export const FuturisticVideoPlayer = ({
 
   const thumbnailUrl = thumbnail || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
 
-  // YouTube embed com parâmetros de alta qualidade e sem mostrar URL
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1&controls=1&showinfo=0&fs=1&vq=hd1080`;
+  // YouTube embed com parâmetros de alta qualidade (1080p) e proteção
+  const embedUrl = getProtectedYouTubeUrl(videoId, true);
 
   return (
     <>
@@ -90,8 +93,9 @@ export const FuturisticVideoPlayer = ({
                 <span className="font-medium text-white/80 truncate max-w-[200px]">{title}</span>
               </div>
               <div className="flex items-center gap-2">
-                <div className="px-2 py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-[10px] font-bold text-white">
-                  FULL HD
+                <div className="flex items-center gap-1 px-2 py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-[10px] font-bold text-white">
+                  <Shield className="w-3 h-3" />
+                  1080p
                 </div>
                 <Zap className="w-4 h-4 text-yellow-500" />
               </div>
@@ -185,21 +189,22 @@ export const FuturisticVideoPlayer = ({
               </div>
             </div>
           ) : (
-            <div className="aspect-video">
+            /* PLAYER COM PROTEÇÃO ANTI-COMPARTILHAMENTO */
+            <ProtectedVideoWrapper className="aspect-video">
               <iframe
                 src={embedUrl}
                 title={title}
                 className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 style={{ border: 0 }}
               />
-            </div>
+            </ProtectedVideoWrapper>
           )}
 
           {/* Bottom Glow Line */}
           <motion.div
-            className="absolute bottom-0 left-0 right-0 h-1"
+            className="absolute bottom-0 left-0 right-0 h-1 z-10"
             style={{
               background: 'linear-gradient(90deg, #ec4899, #8b5cf6, #3b82f6, #ec4899)',
               backgroundSize: '200% 100%',
@@ -231,7 +236,7 @@ export const FuturisticVideoPlayer = ({
               <X className="w-6 h-6" />
             </motion.button>
 
-            {/* Fullscreen Video */}
+            {/* Fullscreen Video COM PROTEÇÃO */}
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -252,16 +257,16 @@ export const FuturisticVideoPlayer = ({
                 <div className="w-full h-full rounded-2xl bg-black" />
               </motion.div>
 
-              <div className="absolute inset-0 rounded-xl overflow-hidden">
+              <ProtectedVideoWrapper className="absolute inset-0 rounded-xl overflow-hidden">
                 <iframe
                   src={embedUrl}
                   title={title}
                   className="w-full h-full"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   style={{ border: 0 }}
                 />
-              </div>
+              </ProtectedVideoWrapper>
             </motion.div>
           </motion.div>
         )}

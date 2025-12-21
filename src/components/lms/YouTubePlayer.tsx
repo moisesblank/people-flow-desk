@@ -1,6 +1,7 @@
 // ============================================
-// YOUTUBE EMBEDDED PLAYER v2.0
+// YOUTUBE EMBEDDED PLAYER v2.1
 // Player de vídeo YouTube com capítulos e controles
+// COM PROTEÇÃO ANTI-COMPARTILHAMENTO + 1080p AUTO
 // ============================================
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -19,7 +20,8 @@ import {
   Atom,
   FlaskConical,
   ExternalLink,
-  Maximize
+  Maximize,
+  Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -32,6 +34,7 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { ProtectedVideoWrapper, PROTECTED_PLAYER_VARS } from "@/components/video/ProtectedVideoWrapper";
 
 // Interface para capítulos/timestamps
 export interface VideoChapter {
@@ -135,13 +138,8 @@ export function YouTubePlayer({
       width: "100%",
       height: "100%",
       playerVars: {
+        ...PROTECTED_PLAYER_VARS,
         autoplay: autoplay ? 1 : 0,
-        controls: 1,
-        modestbranding: 1,
-        rel: 0,
-        showinfo: 0,
-        fs: 1,
-        playsinline: 1,
         origin: window.location.origin
       },
       events: {
@@ -262,8 +260,8 @@ export function YouTubePlayer({
 
   return (
     <div className="space-y-4">
-      {/* Video Container */}
-      <div className="relative rounded-2xl overflow-hidden bg-black">
+      {/* Video Container COM PROTEÇÃO */}
+      <ProtectedVideoWrapper className="relative rounded-2xl overflow-hidden bg-black">
         {/* YouTube Player Container */}
         <div 
           ref={containerRef} 
@@ -300,7 +298,7 @@ export function YouTubePlayer({
             <p className="text-sm text-white/90 font-medium">{currentChapter.title}</p>
           </motion.div>
         )}
-      </div>
+      </ProtectedVideoWrapper>
 
       {/* Custom Controls Bar */}
       {isReady && (
