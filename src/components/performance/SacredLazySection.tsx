@@ -52,8 +52,8 @@ export const SacredLazySection = memo(forwardRef<HTMLDivElement, SacredLazySecti
     return (
       <section
         id={id}
-        ref={(node) => {
-          (internalRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+        ref={(node: HTMLDivElement | null) => {
+          internalRef.current = node;
           if (typeof forwardedRef === "function") forwardedRef(node);
           else if (forwardedRef) forwardedRef.current = node;
         }}
