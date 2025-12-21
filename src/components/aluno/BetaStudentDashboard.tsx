@@ -20,6 +20,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 
+// Componentes de IA do Santuário v9.0
+import { FocusTrack } from "./FocusTrack";
+import { LearningStyleInsight } from "./LearningStyleInsight";
+import { ChurnRiskAlert } from "./ChurnRiskAlert";
+import { BestStudyTimeInsight } from "./BestStudyTimeInsight";
+
 // Animações
 const container = {
   hidden: { opacity: 0 },
@@ -138,8 +144,22 @@ export function BetaStudentDashboard() {
     return "Lenda";
   };
 
+  // Mock de dados do usuário - será substituído por dados reais
+  const mockUserData = {
+    churnRiskScore: 0.3, // Baixo risco por padrão
+    learningStyle: 'visual',
+    bestStudyTime: '19:00 - 21:00',
+    currentFocusAreaId: 'area-1'
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
+      {/* ALERTA PREDITIVO DE IA: Só aparece se o risco for significativo */}
+      <ChurnRiskAlert 
+        riskScore={mockUserData.churnRiskScore} 
+        userName={user?.email?.split('@')[0]} 
+      />
+
       {/* Header Hero Futurista */}
       <motion.div 
         initial={{ opacity: 0, y: -20 }}
@@ -226,11 +246,34 @@ export function BetaStudentDashboard() {
         </div>
       </motion.div>
 
-      {/* Recomendações da IA */}
+      {/* A TRILHA DE FOCO: O CORAÇÃO DA EXPERIÊNCIA v9.0 */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+      >
+        <FocusTrack 
+          userId={user?.id || ''} 
+          currentFocusAreaId={mockUserData.currentFocusAreaId} 
+        />
+      </motion.div>
+
+      {/* INSIGHTS DE IA SOBRE O ALUNO */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
+        className="grid md:grid-cols-2 gap-4"
+      >
+        <LearningStyleInsight learningStyle={mockUserData.learningStyle} />
+        <BestStudyTimeInsight bestTime={mockUserData.bestStudyTime} />
+      </motion.div>
+
+      {/* Recomendações da IA (mantido do original) */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.25 }}
       >
         <Card className="border-purple-500/30 bg-gradient-to-r from-purple-500/5 via-transparent to-cyan-500/5">
           <CardHeader>
