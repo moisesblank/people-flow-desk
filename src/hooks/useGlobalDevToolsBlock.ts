@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v2.0 - GLOBAL DEVTOOLS BLOCK
-// Bloqueio Global de DevTools + Print Screen em todo o projeto
+// MOISÉS MEDEIROS v3.0 - GLOBAL DEVTOOLS BLOCK + ANTI-COPY
+// Bloqueio Global de DevTools + Print Screen + Cópia de Conteúdo
 // EXCETO para o OWNER: moisesblank@gmail.com
 // ============================================
 
@@ -88,6 +88,13 @@ export function useGlobalDevToolsBlock() {
       try {
         const { data: { user } } = await supabase.auth.getUser();
         isOwnerRef.current = (user?.email || '').toLowerCase() === OWNER_EMAIL;
+        
+        // Se for owner, remover restrições de CSS
+        if (isOwnerRef.current) {
+          document.body.classList.add('owner-mode');
+        } else {
+          document.body.classList.remove('owner-mode');
+        }
       } catch {
         isOwnerRef.current = false;
       }
@@ -98,10 +105,16 @@ export function useGlobalDevToolsBlock() {
     // Listener de mudança de auth
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_, session) => {
       isOwnerRef.current = (session?.user?.email || '').toLowerCase() === OWNER_EMAIL;
+      
+      if (isOwnerRef.current) {
+        document.body.classList.add('owner-mode');
+      } else {
+        document.body.classList.remove('owner-mode');
+      }
     });
 
     // Mostrar aviso
-    const showWarning = (type: 'devtools' | 'screenshot' = 'devtools') => {
+    const showWarning = (type: 'devtools' | 'screenshot' | 'copy' = 'devtools') => {
       if (warningShownRef.current) return;
       warningShownRef.current = true;
       
@@ -120,6 +133,19 @@ export function useGlobalDevToolsBlock() {
           duration: 3000,
           icon: '🛡️',
         });
+      } else if (type === 'copy') {
+        console.log(
+          '%c📋 CÓPIA BLOQUEADA 📋',
+          'background: linear-gradient(90deg, #f59e0b, #d97706); color: white; font-size: 24px; font-weight: bold; padding: 20px 40px; border-radius: 10px;'
+        );
+        console.log(
+          '%cCópia de conteúdo não é permitida nesta plataforma.',
+          'color: #fbbf24; font-size: 14px; padding: 10px;'
+        );
+        toast.error('Cópia bloqueada! Este conteúdo é protegido.', {
+          duration: 3000,
+          icon: '🔒',
+        });
       } else {
         console.log(
           '%c🛡️ ACESSO BLOQUEADO 🛡️',
@@ -137,13 +163,44 @@ export function useGlobalDevToolsBlock() {
       }, 5000);
     };
 
-    // Bloqueio de teclas
+    // ═══════════════════════════════════════════════════════════
+    // BLOQUEIO TOTAL DE CÓPIA (Ctrl+C, Ctrl+X, Command+C, Command+X)
+    // ═══════════════════════════════════════════════════════════
     const handleKeyDown = (e: KeyboardEvent) => {
       // Owner pode tudo
       if (isOwnerRef.current) return;
 
       const key = e.key;
       const keyUpper = key.toUpperCase();
+      
+      // ═══════════════════════════════════════════════════════════
+      // BLOQUEIO DE CTRL+C / CTRL+X / CTRL+A (Windows/Linux)
+      // ═══════════════════════════════════════════════════════════
+      if (e.ctrlKey && !e.shiftKey && !e.altKey && !e.metaKey) {
+        if (keyUpper === 'C' || keyUpper === 'X') {
+          e.preventDefault();
+          e.stopPropagation();
+          e.stopImmediatePropagation();
+          showWarning('copy');
+          return false;
+        }
+      }
+      
+      // ═══════════════════════════════════════════════════════════
+      // BLOQUEIO DE CMD+C / CMD+X (macOS)
+      // ═══════════════════════════════════════════════════════════
+      if (e.metaKey && !e.ctrlKey && !e.altKey) {
+        if (keyUpper === 'C' || keyUpper === 'X') {
+          // Verificar se não é Ctrl+Shift+C (devtools)
+          if (!e.shiftKey) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.stopImmediatePropagation();
+            showWarning('copy');
+            return false;
+          }
+        }
+      }
       
       // ═══════════════════════════════════════════════════════════
       // BLOQUEIO DE PRINT SCREEN (múltiplos formatos)
@@ -241,23 +298,49 @@ export function useGlobalDevToolsBlock() {
     };
 
     // ═══════════════════════════════════════════════════════════
-    // PROTEÇÃO ADICIONAL CONTRA CLIPBOARD (Print Screen)
+    // BLOQUEIO TOTAL NO EVENTO COPY (backup)
     // ═══════════════════════════════════════════════════════════
     const handleCopy = (e: ClipboardEvent) => {
       if (isOwnerRef.current) return;
       
-      // Permitir cópia de texto normal, mas bloquear imagens
-      const items = e.clipboardData?.items;
-      if (items) {
-        for (let i = 0; i < items.length; i++) {
-          if (items[i].type.indexOf('image') !== -1) {
-            e.preventDefault();
-            e.stopPropagation();
-            showWarning('screenshot');
-            return;
-          }
-        }
+      // Bloquear TODA cópia de conteúdo
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      // Limpar clipboard
+      if (e.clipboardData) {
+        e.clipboardData.setData('text/plain', '');
+        e.clipboardData.setData('text/html', '');
       }
+      
+      showWarning('copy');
+      return false;
+    };
+    
+    // ═══════════════════════════════════════════════════════════
+    // BLOQUEIO DE CUT (Ctrl+X / Cmd+X)
+    // ═══════════════════════════════════════════════════════════
+    const handleCut = (e: ClipboardEvent) => {
+      if (isOwnerRef.current) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      e.stopImmediatePropagation();
+      
+      showWarning('copy');
+      return false;
+    };
+    
+    // ═══════════════════════════════════════════════════════════
+    // BLOQUEIO DE DRAG AND DROP (para evitar arrastar conteúdo)
+    // ═══════════════════════════════════════════════════════════
+    const handleDragStart = (e: DragEvent) => {
+      if (isOwnerRef.current) return;
+      
+      e.preventDefault();
+      e.stopPropagation();
+      showWarning('copy');
     };
 
     // ═══════════════════════════════════════════════════════════
@@ -267,9 +350,7 @@ export function useGlobalDevToolsBlock() {
       if (isOwnerRef.current) return;
       
       // Quando a página perde foco, pode ser indicativo de screenshot
-      // Mostrar aviso quando voltar
       if (document.hidden) {
-        // Usuário saiu da aba - pode estar fazendo screenshot
         console.log(
           '%c👁️ ATIVIDADE MONITORADA 👁️',
           'background: #f59e0b; color: black; font-size: 12px; padding: 5px 10px;'
@@ -309,22 +390,72 @@ export function useGlobalDevToolsBlock() {
     };
 
     // ═══════════════════════════════════════════════════════════
-    // CSS ANTI-SCREENSHOT (blur quando perde foco)
+    // CSS ANTI-COPY + ANTI-SCREENSHOT
+    // Bloqueia seleção e cópia de todo conteúdo (exceto owner)
     // ═══════════════════════════════════════════════════════════
-    const addAntiScreenshotCSS = () => {
+    const addProtectionCSS = () => {
       const style = document.createElement('style');
-      style.id = 'anti-screenshot-css';
+      style.id = 'global-protection-css';
       style.textContent = `
-        /* Desabilitar seleção de texto em elementos sensíveis */
-        .protected-content {
-          user-select: none !important;
-          -webkit-user-select: none !important;
-          -moz-user-select: none !important;
-          -ms-user-select: none !important;
+        /* ═══════════════════════════════════════════════════════════
+           BLOQUEIO GLOBAL DE CÓPIA - v3.0
+           Permite seleção, mas bloqueia cópia de conteúdo
+        ═══════════════════════════════════════════════════════════ */
+        
+        /* Desabilitar arrastar conteúdo */
+        body:not(.owner-mode) *:not(input):not(textarea) {
+          -webkit-user-drag: none !important;
+          -khtml-user-drag: none !important;
+          -moz-user-drag: none !important;
+          -o-user-drag: none !important;
+          user-drag: none !important;
         }
         
-        /* Adicionar marca d'água invisível que aparece em screenshots */
-        body::after {
+        /* Desabilitar seleção de texto em áreas protegidas */
+        body:not(.owner-mode) {
+          -webkit-touch-callout: none !important;
+        }
+        
+        /* Desabilitar cópia via CSS (backup adicional) */
+        body:not(.owner-mode) *::selection {
+          background: hsl(var(--primary) / 0.3) !important;
+        }
+        
+        body:not(.owner-mode) *::-moz-selection {
+          background: hsl(var(--primary) / 0.3) !important;
+        }
+        
+        /* Desabilitar print (backup) */
+        @media print {
+          body:not(.owner-mode) {
+            display: none !important;
+          }
+        }
+        
+        /* Proteger imagens */
+        body:not(.owner-mode) img {
+          pointer-events: none !important;
+          -webkit-user-drag: none !important;
+        }
+        
+        /* Proteger vídeos */
+        body:not(.owner-mode) video {
+          pointer-events: auto !important;
+        }
+        
+        /* Proteger iframes */
+        body:not(.owner-mode) iframe {
+          pointer-events: auto !important;
+        }
+        
+        /* Proteger PDFs embutidos */
+        body:not(.owner-mode) embed,
+        body:not(.owner-mode) object {
+          pointer-events: auto !important;
+        }
+        
+        /* Adicionar marca d'água invisível */
+        body:not(.owner-mode)::after {
           content: '';
           position: fixed;
           top: 0;
@@ -341,18 +472,34 @@ export function useGlobalDevToolsBlock() {
             rgba(255,0,0,0.001) 20px
           );
         }
+        
+        /* OWNER MODE - Liberar tudo */
+        body.owner-mode * {
+          -webkit-user-select: auto !important;
+          -moz-user-select: auto !important;
+          -ms-user-select: auto !important;
+          user-select: auto !important;
+          -webkit-user-drag: auto !important;
+        }
+        
+        body.owner-mode img {
+          pointer-events: auto !important;
+          -webkit-user-drag: auto !important;
+        }
       `;
       document.head.appendChild(style);
     };
 
-    // Adicionar CSS anti-screenshot
-    addAntiScreenshotCSS();
+    // Adicionar CSS de proteção
+    addProtectionCSS();
 
     // Adicionar listeners
     document.addEventListener('keydown', handleKeyDown, true);
     document.addEventListener('keyup', handleKeyDown, true);
     document.addEventListener('contextmenu', handleContextMenu, true);
     document.addEventListener('copy', handleCopy, true);
+    document.addEventListener('cut', handleCut, true);
+    document.addEventListener('dragstart', handleDragStart, true);
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     // Verificar DevTools periodicamente
@@ -363,13 +510,18 @@ export function useGlobalDevToolsBlock() {
       document.removeEventListener('keyup', handleKeyDown, true);
       document.removeEventListener('contextmenu', handleContextMenu, true);
       document.removeEventListener('copy', handleCopy, true);
+      document.removeEventListener('cut', handleCut, true);
+      document.removeEventListener('dragstart', handleDragStart, true);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
       clearInterval(devToolsInterval);
       subscription.unsubscribe();
       
       // Remover CSS
-      const style = document.getElementById('anti-screenshot-css');
+      const style = document.getElementById('global-protection-css');
       if (style) style.remove();
+      
+      // Remover classe owner
+      document.body.classList.remove('owner-mode');
     };
   }, []);
 }
