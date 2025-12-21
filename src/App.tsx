@@ -93,6 +93,34 @@ const ReceitasEmpresariais = lazy(() => import("./pages/empresas/ReceitasEmpresa
 const Perfil = lazy(() => import("./pages/Perfil"));
 const GestaoDispositivos = lazy(() => import("./pages/GestaoDispositivos"));
 
+// ===== CENTRAL DO ALUNO - QUÍMICA ENEM =====
+const AlunoDashboard = lazy(() => import("./pages/aluno/AlunoDashboard"));
+const AlunoVideoaulas = lazy(() => import("./pages/aluno/AlunoVideoaulas"));
+const AlunoQuestoes = lazy(() => import("./pages/aluno/AlunoQuestoes"));
+const AlunoSimulados = lazy(() => import("./pages/aluno/AlunoSimulados"));
+const AlunoRanking = lazy(() => import("./pages/aluno/AlunoRanking"));
+const AlunoTabelaPeriodica = lazy(() => import("./pages/aluno/AlunoTabelaPeriodica"));
+// Placeholders - Named exports
+const AlunoCronograma = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCronograma })));
+const AlunoMateriais = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoMateriais })));
+const AlunoResumos = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoResumos })));
+const AlunoMapasMentais = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoMapasMentais })));
+const AlunoRedacao = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRedacao })));
+const AlunoDesempenho = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoDesempenho })));
+const AlunoConquistas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoConquistas })));
+const AlunoTutoria = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoTutoria })));
+const AlunoForum = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoForum })));
+const AlunoLives = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoLives })));
+const AlunoDuvidas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoDuvidas })));
+const AlunoRevisao = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRevisao })));
+const AlunoLaboratorio = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoLaboratorio })));
+const AlunoCalculadora = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCalculadora })));
+const AlunoFlashcards = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoFlashcards })));
+const AlunoMetas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoMetas })));
+const AlunoAgenda = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoAgenda })));
+const AlunoCertificados = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCertificados })));
+const AlunoPerfil = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoPerfil })));
+
 // Lazy load heavy components (DOGMA VIII)
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
 const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
@@ -258,6 +286,34 @@ const AppContent = memo(() => {
           
           {/* 🛡️ DOGMA XI: Gestão de Dispositivos */}
           <Route path="/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
+          
+          {/* ===== CENTRAL DO ALUNO - QUÍMICA ENEM ===== */}
+          {/* Apenas OWNER e BETA podem acessar */}
+          <Route path="/aluno/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
+          <Route path="/aluno/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
+          <Route path="/aluno/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
+          <Route path="/aluno/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
+          <Route path="/aluno/resumos" element={<ProtectedPage><AlunoResumos /></ProtectedPage>} />
+          <Route path="/aluno/mapas-mentais" element={<ProtectedPage><AlunoMapasMentais /></ProtectedPage>} />
+          <Route path="/aluno/questoes" element={<ProtectedPage><AlunoQuestoes /></ProtectedPage>} />
+          <Route path="/aluno/simulados" element={<ProtectedPage><AlunoSimulados /></ProtectedPage>} />
+          <Route path="/aluno/redacao" element={<ProtectedPage><AlunoRedacao /></ProtectedPage>} />
+          <Route path="/aluno/desempenho" element={<ProtectedPage><AlunoDesempenho /></ProtectedPage>} />
+          <Route path="/aluno/ranking" element={<ProtectedPage><AlunoRanking /></ProtectedPage>} />
+          <Route path="/aluno/conquistas" element={<ProtectedPage><AlunoConquistas /></ProtectedPage>} />
+          <Route path="/aluno/tutoria" element={<ProtectedPage><AlunoTutoria /></ProtectedPage>} />
+          <Route path="/aluno/forum" element={<ProtectedPage><AlunoForum /></ProtectedPage>} />
+          <Route path="/aluno/lives" element={<ProtectedPage><AlunoLives /></ProtectedPage>} />
+          <Route path="/aluno/duvidas" element={<ProtectedPage><AlunoDuvidas /></ProtectedPage>} />
+          <Route path="/aluno/revisao" element={<ProtectedPage><AlunoRevisao /></ProtectedPage>} />
+          <Route path="/aluno/laboratorio" element={<ProtectedPage><AlunoLaboratorio /></ProtectedPage>} />
+          <Route path="/aluno/calculadora" element={<ProtectedPage><AlunoCalculadora /></ProtectedPage>} />
+          <Route path="/aluno/tabela-periodica" element={<ProtectedPage><AlunoTabelaPeriodica /></ProtectedPage>} />
+          <Route path="/aluno/flashcards" element={<ProtectedPage><AlunoFlashcards /></ProtectedPage>} />
+          <Route path="/aluno/metas" element={<ProtectedPage><AlunoMetas /></ProtectedPage>} />
+          <Route path="/aluno/agenda" element={<ProtectedPage><AlunoAgenda /></ProtectedPage>} />
+          <Route path="/aluno/certificados" element={<ProtectedPage><AlunoCertificados /></ProtectedPage>} />
+          <Route path="/aluno/perfil" element={<ProtectedPage><AlunoPerfil /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
