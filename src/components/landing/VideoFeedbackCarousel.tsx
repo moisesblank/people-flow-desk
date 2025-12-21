@@ -1,7 +1,7 @@
 // ============================================
 // VIDEO FEEDBACK CAROUSEL - EX-ALUNOS REAIS
 // Carrossel automático horizontal com vídeos do YouTube
-// COM PROTEÇÃO ANTI-COMPARTILHAMENTO
+// COM PROTEÇÃO FORTALEZA DIGITAL
 // ============================================
 
 import { useState, useEffect, useRef } from "react";
@@ -18,7 +18,7 @@ import {
   ExternalLink,
   Shield
 } from "lucide-react";
-import { ProtectedVideoWrapper, getProtectedYouTubeUrl } from "@/components/video/ProtectedVideoWrapper";
+import { FortressVideoPlayer } from "@/components/video";
 
 // Lista de vídeos de feedback dos ex-alunos
 const feedbackVideos = [
@@ -195,7 +195,7 @@ const VideoCard = ({
   );
 };
 
-// Modal de vídeo
+// Modal de vídeo com FortressVideoPlayer
 const VideoModal = ({ 
   video, 
   onClose 
@@ -231,21 +231,23 @@ const VideoModal = ({
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
           
-          <ProtectedVideoWrapper className="relative aspect-video rounded-xl overflow-hidden bg-black">
-            <iframe
-              src={getProtectedYouTubeUrl(video.id, true)}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
+          {/* FortressVideoPlayer */}
+          <div className="relative rounded-xl overflow-hidden bg-black">
+            <FortressVideoPlayer
+              videoId={video.id}
+              type="youtube"
+              title={video.title}
+              autoplay
+              showSecurityBadge
             />
-          </ProtectedVideoWrapper>
+          </div>
           
           {/* Close Button */}
           <motion.button
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
             onClick={onClose}
-            className="absolute -top-4 -right-4 p-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/50"
+            className="absolute -top-4 -right-4 p-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/50 z-50"
           >
             <X className="w-6 h-6" />
           </motion.button>

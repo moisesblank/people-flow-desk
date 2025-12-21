@@ -34,7 +34,7 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
-import { ProtectedVideoWrapper, PROTECTED_PLAYER_VARS } from "@/components/video/ProtectedVideoWrapper";
+import { FortressPlayerWrapper, FORTRESS_PLAYER_VARS } from "@/components/video";
 
 // Interface para capítulos/timestamps
 export interface VideoChapter {
@@ -138,7 +138,7 @@ export function YouTubePlayer({
       width: "100%",
       height: "100%",
       playerVars: {
-        ...PROTECTED_PLAYER_VARS,
+        ...FORTRESS_PLAYER_VARS,
         autoplay: autoplay ? 1 : 0,
         origin: window.location.origin
       },
@@ -261,7 +261,7 @@ export function YouTubePlayer({
   return (
     <div className="space-y-4">
       {/* Video Container COM PROTEÇÃO */}
-      <ProtectedVideoWrapper className="relative rounded-2xl overflow-hidden bg-black">
+      <FortressPlayerWrapper className="relative rounded-2xl overflow-hidden bg-black" showSecurityBadge>
         {/* YouTube Player Container */}
         <div 
           ref={containerRef} 
@@ -298,7 +298,7 @@ export function YouTubePlayer({
             <p className="text-sm text-white/90 font-medium">{currentChapter.title}</p>
           </motion.div>
         )}
-      </ProtectedVideoWrapper>
+      </FortressPlayerWrapper>
 
       {/* Custom Controls Bar */}
       {isReady && (
