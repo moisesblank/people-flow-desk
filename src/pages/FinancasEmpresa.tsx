@@ -134,13 +134,16 @@ export default function FinancasEmpresa() {
         ...e, 
         itemType: 'gasto_fixo' as ItemType,
         label: e.nome,
-        statusKey: e.status_pagamento || 'pendente'
+        statusKey: e.status_pagamento || 'pendente',
+        isProjecao: e.is_projecao || false,
+        gastoOrigemId: e.gasto_origem_id,
       })),
       ...companyFinance.extraExpenses.map(e => ({ 
         ...e, 
         itemType: 'gasto_extra' as ItemType,
         label: e.nome,
-        statusKey: e.status_pagamento || 'pendente'
+        statusKey: e.status_pagamento || 'pendente',
+        isProjecao: false,
       })),
     ];
 
@@ -151,6 +154,8 @@ export default function FinancasEmpresa() {
       nome: p.descricao,
       statusKey: p.status,
       data: p.data_vencimento,
+      isProjecao: false,
+      gastoOrigemId: null as number | null,
     }));
 
     let combined = [...gastos, ...pagamentos];
@@ -540,7 +545,7 @@ export default function FinancasEmpresa() {
   };
 
   const handleStatusChange = async (item: any, newStatus: string) => {
-    console.log('[FINANÇAS] Atualizando status:', { id: item.id, itemType: item.itemType, newStatus, item });
+    console.log('[FINANÇAS] Atualizando status:', { id: item.id, itemType: item.itemType, newStatus, isProjecao: item.isProjecao });
     
     const statusLabels: Record<string, string> = {
       pago: '✅ PAGO',
@@ -551,10 +556,25 @@ export default function FinancasEmpresa() {
     const loadingToast = toast.loading(`Atualizando para ${statusLabels[newStatus] || newStatus}...`);
     
     try {
-      // Garantir que o ID é número para gastos
-      const expenseId = typeof item.id === 'string' ? parseInt(item.id, 10) : Number(item.id);
+      let expenseId = typeof item.id === 'string' ? parseInt(item.id, 10) : Number(item.id);
       
-      if (isNaN(expenseId)) {
+      // Se for uma projeção, precisamos materializar primeiro
+      if (item.isProjecao && item.gastoOrigemId) {
+        console.log('[FINANÇAS] Materializando projeção antes de atualizar status...');
+        
+        const materialized = await companyFinance.materializeProjection(item);
+        
+        if (!materialized) {
+          toast.dismiss(loadingToast);
+          toast.error('Erro ao criar registro do gasto');
+          return;
+        }
+        
+        expenseId = materialized.id;
+        console.log('[FINANÇAS] Projeção materializada, novo ID:', expenseId);
+      }
+      
+      if (isNaN(expenseId) || expenseId < 0) {
         toast.dismiss(loadingToast);
         toast.error('ID inválido para atualização');
         console.error('[FINANÇAS] ID inválido:', item.id);
@@ -1216,7 +1236,14 @@ export default function FinancasEmpresa() {
                        <CreditCard className="h-5 w-5 text-purple-500" />}
                     </div>
                     <div className="min-w-0">
-                      <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{item.label}</p>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm truncate group-hover:text-primary transition-colors">{item.label}</p>
+                        {item.isProjecao && (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-cyan-500/10 border-cyan-500/30 text-cyan-400">
+                            🔄 Recorrente
+                          </Badge>
+                        )}
+                      </div>
                       <div className="flex items-center gap-1">
                         <Badge variant="outline" className={cn(
                           "text-[10px] h-5 px-1.5",
