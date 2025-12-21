@@ -1,6 +1,5 @@
 // ============================================
-// MOISÉS MEDEIROS v30.0 - LANDING PAGE 2500
-// ABERTURA CINEMATOGRÁFICA ULTRA ÉPICA
+// MOISÉS MEDEIROS v30.0 - LANDING PAGE 2300
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -16,6 +15,11 @@ import { CoursesSection } from "@/components/landing/CoursesSection";
 import { EpicCTASection } from "@/components/landing/EpicCTASection";
 import { FuturisticFooter } from "@/components/landing/FuturisticFooter";
 import { Navbar } from "@/components/landing/Navbar";
+import { FAQSection } from "@/components/landing/FAQSection";
+import { VideoSection } from "@/components/landing/VideoSection";
+import { MaterialSection } from "@/components/landing/MaterialSection";
+import { ProfessorSection } from "@/components/landing/ProfessorSection";
+import { ApprovedStudentsSection } from "@/components/landing/ApprovedStudentsSection";
 
 // ============================================
 // BACKGROUND ANIMADO ULTRA
@@ -75,9 +79,14 @@ const Home = () => {
           <Navbar />
           <HeroSection />
           <RealtimeStats variant="section" />
+          <VideoSection />
+          <ProfessorSection />
+          <MaterialSection />
           <AIAutomationsSection />
           <CoursesSection />
+          <ApprovedStudentsSection />
           <TestimonialsSection />
+          <FAQSection />
           <EpicCTASection />
           <FuturisticFooter />
         </motion.div>
