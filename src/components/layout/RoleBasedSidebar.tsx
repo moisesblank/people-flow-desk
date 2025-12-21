@@ -160,12 +160,12 @@ const menuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-cyan-600/80 via-blue-600/80",
     items: [
-      { title: "Dashboard Aluno", url: "/aluno/dashboard", icon: LayoutDashboard, area: "aluno-dashboard", badge: "BETA" },
-      { title: "Meu Cronograma", url: "/aluno/cronograma", icon: CalendarDays, area: "aluno-cronograma" },
-      { title: "Videoaulas", url: "/aluno/videoaulas", icon: Video, area: "aluno-videoaulas", badge: "HD" },
-      { title: "Materiais PDF", url: "/aluno/materiais", icon: FileDown, area: "aluno-materiais" },
-      { title: "Resumos", url: "/aluno/resumos", icon: Lightbulb, area: "aluno-resumos" },
-      { title: "Mapas Mentais", url: "/aluno/mapas-mentais", icon: Network, area: "aluno-mapas-mentais" },
+      { title: "Dashboard Aluno", url: "/alunos", icon: LayoutDashboard, area: "aluno-dashboard", badge: "HOME" },
+      { title: "Meu Cronograma", url: "/alunos/cronograma", icon: CalendarDays, area: "aluno-cronograma" },
+      { title: "Videoaulas", url: "/alunos/videoaulas", icon: Video, area: "aluno-videoaulas", badge: "HD" },
+      { title: "Materiais PDF", url: "/alunos/materiais", icon: FileDown, area: "aluno-materiais" },
+      { title: "Resumos", url: "/alunos/resumos", icon: Lightbulb, area: "aluno-resumos" },
+      { title: "Mapas Mentais", url: "/alunos/mapas-mentais", icon: Network, area: "aluno-mapas-mentais" },
     ],
   },
   {
@@ -174,11 +174,11 @@ const menuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-emerald-600/80 via-green-600/80",
     items: [
-      { title: "Banco de Questões", url: "/aluno/questoes", icon: HelpCircle, area: "aluno-questoes", badge: "+5000" },
-      { title: "Simulados ENEM", url: "/aluno/simulados", icon: Brain, area: "aluno-simulados", badge: "REAL" },
-      { title: "Redação Química", url: "/aluno/redacao", icon: PenLine, area: "aluno-redacao" },
-      { title: "Flashcards", url: "/aluno/flashcards", icon: Sparkles, area: "aluno-flashcards" },
-      { title: "Revisão Inteligente", url: "/aluno/revisao", icon: Eraser, area: "aluno-revisao", badge: "IA" },
+      { title: "Banco de Questões", url: "/alunos/questoes", icon: HelpCircle, area: "aluno-questoes", badge: "+5000" },
+      { title: "Simulados ENEM", url: "/alunos/simulados", icon: Brain, area: "aluno-simulados", badge: "REAL" },
+      { title: "Redação Química", url: "/alunos/redacao", icon: PenLine, area: "aluno-redacao" },
+      { title: "Flashcards", url: "/alunos/flashcards", icon: Sparkles, area: "aluno-flashcards" },
+      { title: "Revisão Inteligente", url: "/alunos/revisao", icon: Eraser, area: "aluno-revisao", badge: "IA" },
     ],
   },
   {
@@ -187,9 +187,9 @@ const menuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-violet-600/80 via-purple-600/80",
     items: [
-      { title: "Laboratório Virtual", url: "/aluno/laboratorio", icon: Beaker, area: "aluno-laboratorio", badge: "3D" },
-      { title: "Calculadora Química", url: "/aluno/calculadora", icon: CalcIcon, area: "aluno-calculadora" },
-      { title: "Tabela Periódica", url: "/aluno/tabela-periodica", icon: AtomIcon, area: "aluno-tabela-periodica", badge: "INTERATIVA" },
+      { title: "Laboratório Virtual", url: "/alunos/laboratorio", icon: Beaker, area: "aluno-laboratorio", badge: "3D" },
+      { title: "Calculadora Química", url: "/alunos/calculadora", icon: CalcIcon, area: "aluno-calculadora" },
+      { title: "Tabela Periódica", url: "/alunos/tabela-periodica", icon: AtomIcon, area: "aluno-tabela-periodica", badge: "INTERATIVA" },
     ],
   },
   {
@@ -198,10 +198,10 @@ const menuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-amber-500/80 via-yellow-500/80",
     items: [
-      { title: "Meu Desempenho", url: "/aluno/desempenho", icon: BarChart3, area: "aluno-desempenho" },
-      { title: "Ranking Geral", url: "/aluno/ranking", icon: Trophy, area: "aluno-ranking", badge: "TOP" },
-      { title: "Conquistas", url: "/aluno/conquistas", icon: Medal, area: "aluno-conquistas" },
-      { title: "Metas de Estudo", url: "/aluno/metas", icon: Target, area: "aluno-metas" },
+      { title: "Meu Desempenho", url: "/alunos/desempenho", icon: BarChart3, area: "aluno-desempenho" },
+      { title: "Ranking Geral", url: "/alunos/ranking", icon: Trophy, area: "aluno-ranking", badge: "TOP" },
+      { title: "Conquistas", url: "/alunos/conquistas", icon: Medal, area: "aluno-conquistas" },
+      { title: "Metas de Estudo", url: "/alunos/metas", icon: Target, area: "aluno-metas" },
     ],
   },
   {
@@ -210,10 +210,10 @@ const menuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-rose-500/80 via-pink-600/80",
     items: [
-      { title: "Tutoria ao Vivo", url: "/aluno/tutoria", icon: UserCheck, area: "aluno-tutoria", badge: "LIVE" },
-      { title: "Fórum de Dúvidas", url: "/aluno/forum", icon: MessageCircle, area: "aluno-forum" },
-      { title: "Lives Exclusivas", url: "/aluno/lives", icon: Radio, area: "aluno-lives", badge: "AO VIVO" },
-      { title: "Tire suas Dúvidas", url: "/aluno/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
+      { title: "Tutoria ao Vivo", url: "/alunos/tutoria", icon: UserCheck, area: "aluno-tutoria", badge: "LIVE" },
+      { title: "Fórum de Dúvidas", url: "/alunos/forum", icon: MessageCircle, area: "aluno-forum" },
+      { title: "Lives Exclusivas", url: "/alunos/lives", icon: Radio, area: "aluno-lives", badge: "AO VIVO" },
+      { title: "Tire suas Dúvidas", url: "/alunos/duvidas", icon: HelpCircle, area: "aluno-duvidas" },
     ],
   },
   {
@@ -222,9 +222,9 @@ const menuGroups: MenuGroup[] = [
     image: alunosCentralImg,
     color: "from-slate-500/80 via-gray-600/80",
     items: [
-      { title: "Minha Agenda", url: "/aluno/agenda", icon: Calendar, area: "aluno-agenda" },
-      { title: "Certificados", url: "/aluno/certificados", icon: Award, area: "aluno-certificados" },
-      { title: "Meu Perfil", url: "/aluno/perfil", icon: User, area: "aluno-perfil" },
+      { title: "Minha Agenda", url: "/alunos/agenda", icon: Calendar, area: "aluno-agenda" },
+      { title: "Certificados", url: "/alunos/certificados", icon: Award, area: "aluno-certificados" },
+      { title: "Meu Perfil", url: "/alunos/perfil", icon: User, area: "aluno-perfil" },
     ],
   },
   {
@@ -272,7 +272,7 @@ const menuGroups: MenuGroup[] = [
       { title: "Cursos", url: "/cursos", icon: PlayCircle, area: "cursos" },
       { title: "Simulados", url: "/simulados", icon: Brain, area: "simulados" },
       { title: "Afiliados", url: "/afiliados", icon: Handshake, area: "afiliados" },
-      { title: "Alunos", url: "/alunos", icon: GraduationCap, area: "alunos" },
+      { title: "Gestão Alunos", url: "/gestao-alunos", icon: GraduationCap, area: "alunos" },
       { title: "Portal Aluno", url: "/portal-aluno", icon: UserCheck, area: "portal-aluno" },
       
       { title: "Relatórios", url: "/relatorios", icon: FileText, area: "relatorios" },

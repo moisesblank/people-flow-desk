@@ -30,6 +30,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
+import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
@@ -129,6 +130,7 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp, resetPassword, isLoading: authLoading } = useAuth();
+  const { redirectAfterLogin } = useRoleBasedRedirect();
   
   const { 
     isEditMode, 
@@ -195,11 +197,12 @@ export default function Auth() {
     password: "",
   });
 
+  // Redirecionamento pós-login baseado no role
   useEffect(() => {
     if (user && !authLoading) {
-      navigate("/");
+      redirectAfterLogin();
     }
-  }, [user, authLoading, navigate]);
+  }, [user, authLoading]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -345,7 +348,7 @@ export default function Auth() {
             userName={pending2FAUser.nome}
             onVerified={() => {
               toast.success("Bem-vindo de volta!");
-              navigate("/");
+              redirectAfterLogin();
             }}
             onCancel={() => {
               setShow2FA(false);
