@@ -1,8 +1,10 @@
 // ============================================
 // PROFESSOR SECTION - MOISÉS MEDEIROS
+// Com fotos reais do professor
 // ============================================
 
 import { motion } from "framer-motion";
+import { useState } from "react";
 import { 
   Award, 
   Users, 
@@ -14,11 +16,16 @@ import {
   Target,
   Instagram,
   Youtube,
-  Play
+  Play,
+  ChevronLeft,
+  ChevronRight
 } from "lucide-react";
 
-// Import professor image
-import professorImage from "@/assets/professor-moises.jpg";
+// Import professor images - FOTOS REAIS
+import professorImage1 from "@/assets/professor-moises-1.jpg";
+import professorImage2 from "@/assets/professor-moises-2.jpg";
+
+const professorImages = [professorImage1, professorImage2];
 
 const achievements = [
   { icon: <GraduationCap className="w-5 h-5" />, label: "Químico UFRN", color: "pink" },
@@ -35,11 +42,15 @@ const stats = [
 ];
 
 export const ProfessorSection = () => {
+  const [currentImage, setCurrentImage] = useState(0);
+
+  const nextImage = () => setCurrentImage((prev) => (prev + 1) % professorImages.length);
+  const prevImage = () => setCurrentImage((prev) => (prev - 1 + professorImages.length) % professorImages.length);
+
   return (
     <section id="professor" className="relative py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-black to-slate-950" />
-      
       {/* Grid Pattern */}
       <div className="absolute inset-0 opacity-10" style={{
         backgroundImage: `radial-gradient(circle at center, rgba(236,72,153,0.3) 0%, transparent 50%)`,
@@ -69,18 +80,48 @@ export const ProfessorSection = () => {
             {/* Glow */}
             <div className="absolute inset-0 bg-gradient-to-r from-pink-500/30 to-purple-500/30 rounded-3xl blur-3xl" />
             
-            {/* Image Container */}
+            {/* Image Container with Gallery */}
             <div className="relative rounded-3xl overflow-hidden border-2 border-white/10 bg-black/60">
-              {/* Professor Image */}
+              {/* Professor Image with Gallery */}
               <div className="aspect-[4/5] relative">
-                <img 
-                  src={professorImage} 
-                  alt="Prof. Moisés Medeiros" 
-                  className="w-full h-full object-cover object-center"
-                />
+                {professorImages.map((img, idx) => (
+                  <motion.img 
+                    key={idx}
+                    src={img} 
+                    alt={`Prof. Moisés Medeiros - Foto ${idx + 1}`} 
+                    className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
+                  />
+                ))}
+                
+                {/* Image Navigation */}
+                <div className="absolute inset-y-0 left-0 right-0 flex items-center justify-between px-3 z-10">
+                  <button 
+                    onClick={prevImage}
+                    className="p-2 rounded-full bg-black/60 border border-white/20 text-white hover:bg-pink-500/60 transition-colors"
+                  >
+                    <ChevronLeft className="w-5 h-5" />
+                  </button>
+                  <button 
+                    onClick={nextImage}
+                    className="p-2 rounded-full bg-black/60 border border-white/20 text-white hover:bg-pink-500/60 transition-colors"
+                  >
+                    <ChevronRight className="w-5 h-5" />
+                  </button>
+                </div>
+
+                {/* Image Dots */}
+                <div className="absolute bottom-20 left-0 right-0 flex justify-center gap-2 z-10">
+                  {professorImages.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setCurrentImage(idx)}
+                      className={`w-2 h-2 rounded-full transition-all ${idx === currentImage ? 'bg-pink-500 w-6' : 'bg-white/50'}`}
+                    />
+                  ))}
+                </div>
                 
                 {/* Overlay with name */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent pointer-events-none" />
                 <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
                   <h3 className="text-2xl font-bold text-white mb-1">Prof. Moisés Medeiros</h3>
                   <p className="text-pink-400 font-medium">O professor que mais aprova em Química</p>

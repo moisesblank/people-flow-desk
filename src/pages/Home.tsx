@@ -21,6 +21,7 @@ import { MaterialSection } from "@/components/landing/MaterialSection";
 import { ProfessorSection } from "@/components/landing/ProfessorSection";
 import { ApprovedStudentsSection } from "@/components/landing/ApprovedStudentsSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
+import { VideoFeedbackCarousel } from "@/components/landing/VideoFeedbackCarousel";
 
 // ============================================
 // BACKGROUND ANIMADO ULTRA
@@ -88,6 +89,7 @@ const Home = () => {
           <CoursesSection />
           <ApprovedStudentsSection />
           <TestimonialsSection />
+          <VideoFeedbackCarousel />
           <FAQSection />
           <EpicCTASection />
           <FuturisticFooter />
