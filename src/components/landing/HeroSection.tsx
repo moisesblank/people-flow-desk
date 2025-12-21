@@ -174,28 +174,28 @@ const EpicCounter = ({ value, label, icon: Icon, gradient, glow }: {
 }) => (
   <motion.div
     className="relative group cursor-pointer"
-    whileHover={{ scale: 1.05, y: -5 }}
+    whileHover={{ scale: 1.05, y: -3 }}
     initial={{ opacity: 0, y: 30 }}
     animate={{ opacity: 1, y: 0 }}
     transition={{ type: "spring" }}
   >
     {/* Glow de fundo */}
     <motion.div 
-      className="absolute -inset-2 rounded-2xl blur-xl opacity-0 group-hover:opacity-40 transition-opacity"
+      className="absolute -inset-1 rounded-xl blur-lg opacity-0 group-hover:opacity-40 transition-opacity"
       style={{ background: glow }}
     />
     
-    <div className="relative p-6 rounded-2xl bg-white/[0.08] border border-white/10 backdrop-blur-xl group-hover:border-white/20 transition-all">
+    <div className="relative p-3 md:p-4 rounded-xl bg-white/[0.08] border border-white/10 backdrop-blur-xl group-hover:border-white/20 transition-all">
       <motion.div 
-        className={`inline-flex items-center justify-center w-14 h-14 rounded-xl bg-gradient-to-br ${gradient} mb-4`}
+        className={`inline-flex items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg bg-gradient-to-br ${gradient} mb-2 md:mb-3`}
         animate={{ rotate: [0, 5, -5, 0] }}
         transition={{ duration: 3, repeat: Infinity }}
-        style={{ boxShadow: `0 10px 40px ${glow}` }}
+        style={{ boxShadow: `0 8px 30px ${glow}` }}
       >
-        <Icon className="w-7 h-7 text-white" />
+        <Icon className="w-5 h-5 md:w-6 md:h-6 text-white" />
       </motion.div>
-      <div className="text-4xl font-black text-white mb-1">{value}</div>
-      <div className="text-sm text-gray-400 uppercase tracking-wider">{label}</div>
+      <div className="text-2xl md:text-3xl font-black text-white mb-0.5">{value}</div>
+      <div className="text-[10px] md:text-xs text-gray-400 uppercase tracking-wider">{label}</div>
     </div>
   </motion.div>
 );
@@ -324,11 +324,11 @@ export const HeroSection = () => {
   ];
 
   return (
-    <section className="relative min-h-screen flex items-center justify-center pt-28 pb-20 overflow-hidden">
+    <section className="relative min-h-[100svh] flex items-center pt-20 md:pt-24 pb-8 md:pb-16 overflow-hidden">
       <HolographicBackground />
       <HeroParticles />
       
-      <motion.div style={{ y, opacity, scale }} className="container mx-auto px-4 relative z-10">
+      <motion.div style={{ y, opacity, scale }} className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           {/* Coluna esquerda - Conteúdo */}
           <motion.div 
@@ -341,14 +341,14 @@ export const HeroSection = () => {
             
             {/* Headline principal épica */}
             <motion.h1 
-              className="text-5xl md:text-6xl lg:text-7xl xl:text-8xl font-black leading-[0.85] mt-10 mb-8"
+              className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[0.9] mt-6 md:mt-10 mb-6 md:mb-8"
               initial={{ opacity: 0, y: 50 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4, type: "spring" }}
             >
               <span className="text-white block drop-shadow-2xl">{typedText.split('começa')[0]}</span>
               <motion.span 
-                className="block mt-3"
+                className="block mt-2 md:mt-3"
                 style={{
                   background: 'linear-gradient(135deg, #dc2626 0%, #ef4444 20%, #fbbf24 50%, #f59e0b 70%, #dc2626 100%)',
                   backgroundSize: '200% 200%',
@@ -363,7 +363,7 @@ export const HeroSection = () => {
                 começa aqui!
               </motion.span>
               <motion.span
-                className="inline-block w-1.5 h-14 md:h-20 bg-gradient-to-b from-red-500 to-amber-500 ml-2 rounded-full"
+                className="inline-block w-1 h-10 md:h-16 bg-gradient-to-b from-red-500 to-amber-500 ml-2 rounded-full"
                 animate={{ opacity: [1, 0, 1] }}
                 transition={{ duration: 0.7, repeat: Infinity }}
               />
@@ -371,7 +371,7 @@ export const HeroSection = () => {
 
             {/* Subheadline */}
             <motion.p 
-              className="text-xl md:text-2xl text-gray-300 mb-12 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
+              className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-8 md:mb-10 max-w-2xl mx-auto lg:mx-0 leading-relaxed"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.6 }}
@@ -381,7 +381,7 @@ export const HeroSection = () => {
 
             {/* CTAs épicos */}
             <motion.div 
-              className="flex flex-col sm:flex-row gap-5 justify-center lg:justify-start mb-14"
+              className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center lg:justify-start mb-8 md:mb-10"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.8 }}
@@ -393,17 +393,17 @@ export const HeroSection = () => {
                   className="relative group"
                 >
                   <motion.div 
-                    className="absolute -inset-1.5 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 rounded-2xl blur-lg"
+                    className="absolute -inset-1 bg-gradient-to-r from-red-600 via-amber-500 to-red-600 rounded-xl blur-md"
                     animate={{ opacity: [0.5, 0.8, 0.5] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   />
                   <Button 
                     size="lg" 
-                    className="relative bg-gradient-to-r from-red-700 via-red-600 to-red-700 text-white shadow-2xl shadow-red-600/50 px-12 h-18 text-lg font-black w-full sm:w-auto rounded-2xl border-0"
+                    className="relative bg-gradient-to-r from-red-700 via-red-600 to-red-700 text-white shadow-xl shadow-red-600/40 px-6 md:px-10 h-12 md:h-14 text-sm md:text-base font-black w-full sm:w-auto rounded-xl border-0"
                   >
-                    <Rocket className="w-6 h-6 mr-3 animate-bounce" />
+                    <Rocket className="w-5 h-5 mr-2 animate-bounce" />
                     QUERO SER APROVADO
-                    <ArrowRight className="w-6 h-6 ml-3" />
+                    <ArrowRight className="w-5 h-5 ml-2" />
                   </Button>
                 </motion.div>
               </Link>
@@ -416,14 +416,14 @@ export const HeroSection = () => {
                 <Button 
                   size="lg" 
                   variant="outline" 
-                  className="border-2 border-gray-600 hover:border-red-500/60 bg-white/5 hover:bg-white/10 h-18 text-lg w-full sm:w-auto rounded-2xl backdrop-blur-sm px-10"
+                  className="border-2 border-gray-600 hover:border-red-500/60 bg-white/5 hover:bg-white/10 h-12 md:h-14 text-sm md:text-base w-full sm:w-auto rounded-xl backdrop-blur-sm px-6 md:px-8"
                 >
                   <motion.div
-                    className="w-12 h-12 rounded-full bg-red-500/20 flex items-center justify-center mr-3"
+                    className="w-9 h-9 md:w-10 md:h-10 rounded-full bg-red-500/20 flex items-center justify-center mr-2"
                     animate={{ scale: [1, 1.1, 1] }}
                     transition={{ duration: 2, repeat: Infinity }}
                   >
-                    <Play className="w-5 h-5 text-red-400" fill="currentColor" />
+                    <Play className="w-4 h-4 text-red-400" fill="currentColor" />
                   </motion.div>
                   Ver Aula Grátis
                 </Button>
@@ -432,7 +432,7 @@ export const HeroSection = () => {
 
             {/* Mini stats épicos */}
             <motion.div 
-              className="grid grid-cols-3 gap-5"
+              className="grid grid-cols-3 gap-2 md:gap-4"
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 1 }}
@@ -444,7 +444,7 @@ export const HeroSection = () => {
 
             {/* Trust indicators */}
             <motion.div
-              className="flex flex-wrap items-center justify-center lg:justify-start gap-8 mt-10"
+              className="flex flex-wrap items-center justify-center lg:justify-start gap-4 md:gap-6 mt-6 md:mt-8"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ delay: 1.2 }}
@@ -454,8 +454,8 @@ export const HeroSection = () => {
                 { icon: Zap, label: "Acesso imediato", color: "text-amber-400" },
                 { icon: Sparkles, label: "IA integrada", color: "text-purple-400" },
               ].map((item) => (
-                <div key={item.label} className="flex items-center gap-2 text-sm text-gray-400">
-                  <item.icon className={`w-5 h-5 ${item.color}`} />
+                <div key={item.label} className="flex items-center gap-1.5 text-xs md:text-sm text-gray-400">
+                  <item.icon className={`w-4 h-4 ${item.color}`} />
                   <span>{item.label}</span>
                 </div>
               ))}
