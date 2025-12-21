@@ -297,3 +297,129 @@ export function useLeaderboard(limit = 10) {
     },
   });
 }
+
+// Hook: Ranking Global (Panteão Eterno)
+export function useGlobalRanking() {
+  return useQuery({
+    queryKey: ['global-ranking'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('user_gamification')
+        .select(`
+          user_id,
+          total_xp,
+          current_level,
+          current_streak,
+          profile:profiles!user_gamification_user_id_fkey(id, nome, avatar_url)
+        `)
+        .order('total_xp', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      return (data || []).map((entry, index) => ({
+        id: entry.user_id,
+        rank: index + 1,
+        name: entry.profile?.nome || 'Anônimo',
+        avatar: entry.profile?.avatar_url,
+        xp: entry.total_xp || 0,
+        level: entry.current_level || 1,
+        streak: entry.current_streak || 0,
+      }));
+    },
+    staleTime: 60000,
+    refetchInterval: 120000,
+  });
+}
+
+// Hook: Ranking Semanal (Arena da Semana)
+export function useWeeklyRanking() {
+  return useQuery({
+    queryKey: ['weekly-ranking'],
+    queryFn: async () => {
+      // Pegar início da semana (domingo)
+      const now = new Date();
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() - now.getDay());
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const { data, error } = await supabase
+        .from('weekly_xp')
+        .select('user_id, xp_this_week, week_start')
+        .gte('week_start', startOfWeek.toISOString().split('T')[0])
+        .order('xp_this_week', { ascending: false })
+        .limit(100);
+
+      if (error) throw error;
+
+      // Se houver dados, buscar perfis separadamente
+      if (data && data.length > 0) {
+        const userIds = data.map(d => d.user_id);
+        const { data: profiles } = await supabase
+          .from('profiles')
+          .select('id, nome, avatar_url')
+          .in('id', userIds);
+
+        const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+        return data.map((entry, index) => {
+          const profile = profileMap.get(entry.user_id);
+          return {
+            id: entry.user_id,
+            rank: index + 1,
+            name: profile?.nome || 'Anônimo',
+            avatar: profile?.avatar_url,
+            xp: entry.xp_this_week || 0,
+            level: 1,
+            streak: 0,
+          };
+        });
+      }
+
+      // Fallback: buscar do xp_history se não houver dados em weekly_xp
+      const { data: historyData } = await supabase
+        .from('xp_history')
+        .select('user_id, amount')
+        .gte('created_at', startOfWeek.toISOString());
+
+      if (!historyData || historyData.length === 0) {
+        return [];
+      }
+
+      // Agregar XP por usuário
+      const xpByUser = new Map<string, number>();
+      historyData.forEach((entry) => {
+        const existing = xpByUser.get(entry.user_id) || 0;
+        xpByUser.set(entry.user_id, existing + (entry.amount || 0));
+      });
+
+      // Buscar perfis
+      const userIds = Array.from(xpByUser.keys());
+      const { data: profiles } = await supabase
+        .from('profiles')
+        .select('id, nome, avatar_url')
+        .in('id', userIds);
+
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+      const sorted = Array.from(xpByUser.entries())
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 100);
+
+      return sorted.map(([userId, xp], index) => {
+        const profile = profileMap.get(userId);
+        return {
+          id: userId,
+          rank: index + 1,
+          name: profile?.nome || 'Anônimo',
+          avatar: profile?.avatar_url,
+          xp,
+          level: 1,
+          streak: 0,
+        };
+      });
+    },
+    staleTime: 60000,
+    refetchInterval: 120000,
+  });
+}
