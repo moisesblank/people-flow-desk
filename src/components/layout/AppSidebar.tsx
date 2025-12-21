@@ -151,9 +151,9 @@ const adminMenuItems = [
   { title: "Configurações", url: "/configuracoes", icon: Settings },
 ];
 
-// Menu Empresas (acesso geral)
+// Menu Empresas (acesso geral) - Dashboard migrado para /financas-empresa
 const empresasMenuItems = [
-  { title: "Dashboard Empresarial", url: "/empresas/dashboard", icon: Building2 },
+  { title: "Central Financeira", url: "/financas-empresa", icon: Wallet, badge: "CENTRAL" },
   { title: "Central de Receitas", url: "/empresas/receitas", icon: TrendingUp, badge: "LIVE" },
   { title: "Arquivos Empresariais", url: "/empresas/arquivos", icon: FolderOpen },
   { title: "RH Funcionários", url: "/empresas/rh", icon: Users },
