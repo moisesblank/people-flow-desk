@@ -2,6 +2,7 @@
 // ⚡ MATRIZ DIGITAL - APP CORE ⚡
 // Evangelho da Velocidade v2.0 Aplicado
 // 🛡️ Evangelho da Segurança v2.0 Integrado
+// 🛡️ DOGMA XI: Controle de Dispositivos
 // ============================================
 
 import { Toaster } from "@/components/ui/toaster";
