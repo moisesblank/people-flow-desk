@@ -119,7 +119,7 @@ const AlunoFlashcards = lazy(() => import("./pages/FlashcardsPage"));
 const AlunoMetas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoMetas })));
 const AlunoAgenda = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoAgenda })));
 const AlunoCertificados = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCertificados })));
-const AlunoPerfil = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoPerfil })));
+const AlunoPerfil = lazy(() => import("./pages/ProfilePage"));
 
 // Lazy load heavy components (DOGMA VIII)
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));

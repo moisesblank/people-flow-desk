@@ -298,6 +298,58 @@ export function useLeaderboard(limit = 10) {
   });
 }
 
+// Hook para conquistas do usuário
+interface UserAchievement {
+  id: string;
+  user_id: string;
+  badge_id: string;
+  earned_at: string;
+  achievement: {
+    id: string;
+    name: string;
+    description: string;
+    icon: string;
+    xp_reward: number;
+    rarity: string;
+    category: string;
+  };
+}
+
+export function useUserAchievements() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['user-achievements', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+
+      const { data, error } = await supabase
+        .from('user_badges')
+        .select(`
+          id,
+          user_id,
+          badge_id,
+          earned_at,
+          achievement:badges(
+            id,
+            name,
+            description,
+            icon,
+            xp_reward,
+            rarity,
+            category
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('earned_at', { ascending: false });
+
+      if (error) throw error;
+      return data as UserAchievement[];
+    },
+    enabled: !!user?.id,
+  });
+}
+
 // Hook: Ranking Global (Panteão Eterno)
 export function useGlobalRanking() {
   return useQuery({
