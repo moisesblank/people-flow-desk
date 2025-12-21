@@ -1,9 +1,9 @@
 // ============================================
-// MOISÉS MEDEIROS - Mobile Dashboard
-// Dashboard otimizado para dispositivos móveis
+// SYNAPSE v15.0 - Mobile Dashboard ULTRA
+// Dashboard ULTRA otimizado para dispositivos móveis
 // ============================================
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback, memo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import {
@@ -29,16 +29,19 @@ import { MobileQuickStats } from "./MobileQuickStats";
 import { MobileBottomNav } from "./MobileBottomNav";
 import { useDashboardStats } from "@/hooks/useDataCache";
 import { useAuth } from "@/hooks/useAuth";
+import { usePerformance } from "@/hooks/usePerformance";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { cn } from "@/lib/utils";
 import type { CalendarTask } from "@/types/calendar";
 
-function formatCurrency(cents: number): string {
+// Memoized currency formatter
+const formatCurrency = (cents: number): string => {
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
   }).format(cents / 100);
-}
+};
 
 interface QuickAction {
   icon: React.ElementType;
@@ -55,17 +58,81 @@ const quickActions: QuickAction[] = [
   { icon: Users, label: "Alunos", path: "/alunos", color: "bg-amber-500" },
 ];
 
+// Memoized Quick Action Button
+const QuickActionButton = memo(function QuickActionButton({
+  action,
+  index,
+  onClick,
+  skipAnimations,
+}: {
+  action: QuickAction;
+  index: number;
+  onClick: () => void;
+  skipAnimations: boolean;
+}) {
+  const Icon = action.icon;
+  
+  if (skipAnimations) {
+    return (
+      <button
+        onClick={onClick}
+        className="flex flex-col items-center gap-2 min-w-[72px] active:scale-95 transition-transform"
+      >
+        <div className={cn("p-3 rounded-2xl text-white shadow-lg", action.color)}>
+          <Icon className="h-5 w-5" />
+        </div>
+        <span className="text-xs font-medium text-center whitespace-normal max-w-[72px]">
+          {action.label}
+        </span>
+      </button>
+    );
+  }
+  
+  return (
+    <motion.button
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ delay: index * 0.03 }}
+      onClick={onClick}
+      className="flex flex-col items-center gap-2 min-w-[72px] gpu-accelerate"
+      whileTap={{ scale: 0.95 }}
+    >
+      <div className={cn("p-3 rounded-2xl text-white shadow-lg", action.color)}>
+        <Icon className="h-5 w-5" />
+      </div>
+      <span className="text-xs font-medium text-center whitespace-normal max-w-[72px]">
+        {action.label}
+      </span>
+    </motion.button>
+  );
+});
+
+// Loading skeleton optimized
+const MobileLoadingSkeleton = memo(function MobileLoadingSkeleton() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="text-center">
+        <div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
+        <p className="mt-4 text-muted-foreground text-sm">Carregando...</p>
+      </div>
+    </div>
+  );
+});
+
 export function MobileDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: stats, isLoading, refetch } = useDashboardStats();
+  const { shouldReduceMotion, isLowEndDevice, animationDuration } = usePerformance();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  const skipAnimations = shouldReduceMotion || isLowEndDevice;
 
-  const handleRefresh = async () => {
+  const handleRefresh = useCallback(async () => {
     setIsRefreshing(true);
     await refetch();
-    setTimeout(() => setIsRefreshing(false), 1000);
-  };
+    setTimeout(() => setIsRefreshing(false), 500);
+  }, [refetch]);
 
   const greeting = useMemo(() => {
     const hour = new Date().getHours();
@@ -74,8 +141,15 @@ export function MobileDashboard() {
     return "Boa noite";
   }, []);
 
-  const userName = user?.email?.split("@")[0] || "Usuário";
-  const today = format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR });
+  const userName = useMemo(() => 
+    user?.email?.split("@")[0] || "Usuário",
+    [user?.email]
+  );
+  
+  const today = useMemo(() => 
+    format(new Date(), "EEEE, d 'de' MMMM", { locale: ptBR }),
+    []
+  );
 
   const todayTasks = useMemo((): CalendarTask[] => {
     if (!stats?.tasksData) return [];
@@ -85,20 +159,11 @@ export function MobileDashboard() {
       .slice(0, 3);
   }, [stats?.tasksData]);
 
+  // Memoized navigation handlers
+  const handleNavigate = useCallback((path: string) => () => navigate(path), [navigate]);
+
   if (isLoading || !stats) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ repeat: Infinity, duration: 1, ease: "linear" }}
-          >
-            <RefreshCw className="h-8 w-8 text-primary mx-auto" />
-          </motion.div>
-          <p className="mt-4 text-muted-foreground">Carregando...</p>
-        </div>
-      </div>
-    );
+    return <MobileLoadingSkeleton />;
   }
 
   const profit = stats.income - stats.personalExpenses - stats.companyExpenses;
