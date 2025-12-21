@@ -17,6 +17,9 @@ import {
   Play
 } from "lucide-react";
 
+// Import professor image
+import professorImage from "@/assets/professor-moises.jpg";
+
 const achievements = [
   { icon: <GraduationCap className="w-5 h-5" />, label: "Químico UFRN", color: "pink" },
   { icon: <Trophy className="w-5 h-5" />, label: "+2.847 Aprovados", color: "purple" },
@@ -68,19 +71,20 @@ export const ProfessorSection = () => {
             
             {/* Image Container */}
             <div className="relative rounded-3xl overflow-hidden border-2 border-white/10 bg-black/60">
-              {/* Placeholder Professor Image */}
-              <div className="aspect-[4/5] bg-gradient-to-br from-slate-800 to-slate-900 flex items-center justify-center relative">
-                {/* Silhouette/Placeholder */}
-                <div className="text-center p-8">
-                  <div className="w-48 h-48 mx-auto rounded-full bg-gradient-to-br from-pink-500/30 to-purple-500/30 border-4 border-white/20 flex items-center justify-center mb-6">
-                    <GraduationCap className="w-24 h-24 text-white/60" />
-                  </div>
-                  <h3 className="text-2xl font-bold text-white mb-2">Prof. Moisés Medeiros</h3>
+              {/* Professor Image */}
+              <div className="aspect-[4/5] relative">
+                <img 
+                  src={professorImage} 
+                  alt="Prof. Moisés Medeiros" 
+                  className="w-full h-full object-cover object-center"
+                />
+                
+                {/* Overlay with name */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6 text-center">
+                  <h3 className="text-2xl font-bold text-white mb-1">Prof. Moisés Medeiros</h3>
                   <p className="text-pink-400 font-medium">O professor que mais aprova em Química</p>
                 </div>
-                
-                {/* Overlay Effects */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
               </div>
 
               {/* Badge */}

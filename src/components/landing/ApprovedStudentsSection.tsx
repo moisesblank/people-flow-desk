@@ -14,6 +14,9 @@ import {
   Medal
 } from "lucide-react";
 
+// Import approved students image
+import alunosImage from "@/assets/alunos-aprovados.jpg";
+
 // Placeholder students data - você pode substituir depois
 const approvedStudents = [
   {
@@ -178,6 +181,28 @@ export const ApprovedStudentsSection = () => {
                 </div>
               </motion.div>
             ))}
+          </div>
+        </motion.div>
+
+        {/* Featured Image */}
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          whileInView={{ opacity: 1, scale: 1 }}
+          viewport={{ once: true }}
+          className="mb-12 max-w-4xl mx-auto"
+        >
+          <div className="relative rounded-3xl overflow-hidden border-2 border-yellow-500/30">
+            <img 
+              src={alunosImage} 
+              alt="Alunos Aprovados" 
+              className="w-full h-auto"
+            />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+            <div className="absolute bottom-4 left-4 right-4 text-center">
+              <span className="px-4 py-2 rounded-full bg-gradient-to-r from-yellow-500 to-orange-500 text-black font-bold text-sm">
+                🏆 Aprovados em Medicina nas melhores universidades do Brasil
+              </span>
+            </div>
           </div>
         </motion.div>
 
