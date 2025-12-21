@@ -10090,7 +10090,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      check_beta_access: { Args: { _user_id?: string }; Returns: Json }
+      check_beta_access: { Args: { _user_id: string }; Returns: Json }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
