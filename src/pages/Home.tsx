@@ -86,13 +86,13 @@ const Home = () => {
           <VideoSection />
           <ProfessorSection />
           <FirstPlaceShowcase />
+          <ApprovedCarousel />
+          <VideoFeedbackCarousel />
+          <TestimonialsSection />
           <FeaturesSection />
           <MaterialSection />
           <AIAutomationsSection />
           <CoursesSection />
-          <ApprovedCarousel />
-          <TestimonialsSection />
-          <VideoFeedbackCarousel />
           <FAQSection />
           <EpicCTASection />
           <FuturisticFooter />
