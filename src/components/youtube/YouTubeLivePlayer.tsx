@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useYouTubeLivePlayer } from '@/hooks/useYouTubeLive';
 import { cn } from '@/lib/utils';
-import { ProtectedVideoWrapper } from '@/components/video/ProtectedVideoWrapper';
+import { FortressPlayerWrapper, getFortressYouTubeUrl } from "@/components/video";
 
 interface YouTubeLivePlayerProps {
   videoId?: string;
@@ -159,12 +159,12 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
         "flex",
         showChatPanel ? "flex-col lg:flex-row" : "flex-col"
       )}>
-        {/* Video Player */}
+        {/* Video Player com FortressPlayerWrapper */}
         <div className={cn(
           "relative bg-black",
           showChatPanel ? "lg:flex-1" : "w-full"
         )}>
-          <ProtectedVideoWrapper className="aspect-video">
+          <FortressPlayerWrapper className="aspect-video" showSecurityBadge>
             <iframe
               src={embedSrc}
               className="w-full h-full"
@@ -172,14 +172,14 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
               allowFullScreen
               title={title || 'YouTube Live'}
             />
-          </ProtectedVideoWrapper>
+          </FortressPlayerWrapper>
 
           {/* Live indicator overlay */}
           {isLive && (
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="absolute top-4 left-4 pointer-events-none"
+              className="absolute top-4 left-4 pointer-events-none z-[70]"
             >
               <div className="flex items-center gap-2 bg-red-600/90 text-white px-3 py-1.5 rounded-full text-sm font-medium backdrop-blur-sm">
                 <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
