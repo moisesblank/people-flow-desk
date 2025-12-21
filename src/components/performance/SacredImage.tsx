@@ -1,0 +1,280 @@
+// ============================================
+// ⚡ EVANGELHO DA VELOCIDADE v2.0 ⚡
+// DOGMA III: O RITUAL DO LAZY LOADING INTELIGENTE
+// Componente de imagem ultra-otimizado
+// ============================================
+
+import React, { memo, useState, useEffect, useRef, useMemo } from "react";
+import { cn } from "@/lib/utils";
+import { 
+  getOptimizedImageUrl, 
+  getImageFormatSupport,
+  generateBlurPlaceholder 
+} from "@/lib/performance/compressionUtils";
+import { usePerformanceTier } from "@/hooks/useEvangelhoVelocidade";
+
+interface SacredImageProps {
+  src: string;
+  alt: string;
+  className?: string;
+  width?: number;
+  height?: number;
+  priority?: boolean;
+  quality?: number;
+  placeholder?: 'blur' | 'empty' | 'skeleton' | 'color';
+  placeholderColor?: string;
+  objectFit?: 'cover' | 'contain' | 'fill' | 'none';
+  sizes?: string;
+  onLoad?: () => void;
+  onError?: () => void;
+}
+
+/**
+ * DOGMA III.1, III.3 - Imagem otimizada com lazy loading e LQIP
+ * - loading="lazy" nativo para below-the-fold
+ * - Placeholder blur/color enquanto carrega
+ * - Formatos modernos (AVIF/WebP) com fallback
+ * - Otimização baseada em performance tier
+ */
+export const SacredImage = memo(function SacredImage({
+  src,
+  alt,
+  className,
+  width,
+  height,
+  priority = false,
+  quality,
+  placeholder = 'blur',
+  placeholderColor,
+  objectFit = 'cover',
+  sizes,
+  onLoad,
+  onError,
+}: SacredImageProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
+  const [isInView, setIsInView] = useState(priority);
+  const imgRef = useRef<HTMLDivElement>(null);
+  const { tier } = usePerformanceTier();
+  
+  // Calcular qualidade baseada no tier
+  const effectiveQuality = useMemo(() => {
+    if (quality) return quality;
+    const qualityMap = { divine: 90, blessed: 80, mortal: 70, challenged: 60 };
+    return qualityMap[tier];
+  }, [quality, tier]);
+  
+  // URL otimizada com formato moderno
+  const optimizedSrc = useMemo(() => {
+    return getOptimizedImageUrl(src, {
+      width,
+      height,
+      quality: effectiveQuality,
+      format: 'auto',
+    });
+  }, [src, width, height, effectiveQuality]);
+  
+  // Placeholder gradient
+  const blurPlaceholder = useMemo(() => {
+    return generateBlurPlaceholder(placeholderColor);
+  }, [placeholderColor]);
+  
+  // DOGMA III.1 - Intersection Observer para lazy loading
+  useEffect(() => {
+    if (priority || isInView) return;
+    
+    const element = imgRef.current;
+    if (!element) return;
+    
+    // Margem maior para conexões lentas (preload antecipado)
+    const marginMap = { divine: '100px', blessed: '200px', mortal: '400px', challenged: '600px' };
+    const rootMargin = marginMap[tier];
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin, threshold: 0.01 }
+    );
+    
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [priority, isInView, tier]);
+  
+  const handleLoad = () => {
+    setIsLoaded(true);
+    onLoad?.();
+  };
+  
+  const handleError = () => {
+    setHasError(true);
+    onError?.();
+  };
+  
+  // Object fit classes
+  const objectFitClass = {
+    cover: 'object-cover',
+    contain: 'object-contain',
+    fill: 'object-fill',
+    none: 'object-none',
+  }[objectFit];
+  
+  return (
+    <div
+      ref={imgRef}
+      className={cn(
+        "relative overflow-hidden",
+        className
+      )}
+      style={{ width, height }}
+    >
+      {/* DOGMA III.3 - Placeholder (LQIP) */}
+      {!isLoaded && !hasError && (
+        <div 
+          className={cn(
+            "absolute inset-0 transition-opacity duration-300",
+            isLoaded ? 'opacity-0' : 'opacity-100'
+          )}
+          style={{
+            background: placeholder === 'blur' || placeholder === 'color' 
+              ? blurPlaceholder 
+              : undefined,
+          }}
+          aria-hidden="true"
+        >
+          {placeholder === 'skeleton' && (
+            <div className="w-full h-full animate-pulse bg-gradient-to-r from-muted/30 via-muted/50 to-muted/30" />
+          )}
+        </div>
+      )}
+      
+      {/* Error state */}
+      {hasError && (
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/30">
+          <span className="text-xs text-muted-foreground">Erro ao carregar</span>
+        </div>
+      )}
+      
+      {/* Imagem principal - só renderiza quando em view */}
+      {isInView && !hasError && (
+        <picture>
+          {/* DOGMA II.2 - Fontes modernas com fallback */}
+          {getImageFormatSupport().avif && src.includes('supabase') && (
+            <source 
+              srcSet={getOptimizedImageUrl(src, { width, height, quality: effectiveQuality, format: 'avif' })} 
+              type="image/avif" 
+            />
+          )}
+          {getImageFormatSupport().webp && src.includes('supabase') && (
+            <source 
+              srcSet={getOptimizedImageUrl(src, { width, height, quality: effectiveQuality, format: 'webp' })} 
+              type="image/webp" 
+            />
+          )}
+          
+          <img
+            src={optimizedSrc}
+            alt={alt}
+            width={width}
+            height={height}
+            sizes={sizes}
+            // DOGMA III.1 - Native lazy loading
+            loading={priority ? "eager" : "lazy"}
+            decoding="async"
+            fetchPriority={priority ? "high" : "auto"}
+            onLoad={handleLoad}
+            onError={handleError}
+            className={cn(
+              "w-full h-full transition-opacity duration-300",
+              objectFitClass,
+              isLoaded ? "opacity-100" : "opacity-0"
+            )}
+          />
+        </picture>
+      )}
+    </div>
+  );
+});
+
+/**
+ * DOGMA III.1 - Iframe com lazy loading nativo
+ */
+interface SacredIframeProps {
+  src: string;
+  title: string;
+  className?: string;
+  width?: number | string;
+  height?: number | string;
+  priority?: boolean;
+  allow?: string;
+}
+
+export const SacredIframe = memo(function SacredIframe({
+  src,
+  title,
+  className,
+  width,
+  height,
+  priority = false,
+  allow,
+}: SacredIframeProps) {
+  const [isLoaded, setIsLoaded] = useState(false);
+  const [isInView, setIsInView] = useState(priority);
+  const iframeRef = useRef<HTMLDivElement>(null);
+  
+  useEffect(() => {
+    if (priority || isInView) return;
+    
+    const element = iframeRef.current;
+    if (!element) return;
+    
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsInView(true);
+          observer.disconnect();
+        }
+      },
+      { rootMargin: '200px', threshold: 0.01 }
+    );
+    
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [priority, isInView]);
+  
+  return (
+    <div
+      ref={iframeRef}
+      className={cn("relative overflow-hidden bg-muted/20", className)}
+      style={{ width, height }}
+    >
+      {!isLoaded && (
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+        </div>
+      )}
+      
+      {isInView && (
+        <iframe
+          src={src}
+          title={title}
+          width="100%"
+          height="100%"
+          // DOGMA III.1 - Native lazy loading para iframes
+          loading={priority ? "eager" : "lazy"}
+          allow={allow}
+          onLoad={() => setIsLoaded(true)}
+          className={cn(
+            "w-full h-full border-0 transition-opacity duration-300",
+            isLoaded ? "opacity-100" : "opacity-0"
+          )}
+        />
+      )}
+    </div>
+  );
+});
+
+export default SacredImage;
