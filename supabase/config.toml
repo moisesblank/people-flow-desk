@@ -122,3 +122,6 @@ verify_jwt = false
 
 [functions.check-vencimentos]
 verify_jwt = false
+
+[functions.atualizar-status-alunos]
+verify_jwt = false
