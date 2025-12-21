@@ -1,9 +1,11 @@
 // ============================================
-// VIDEO SECTION - APRESENTAÇÃO DO CURSO
+// VIDEO SECTION - APRESENTAÇÃO DO CURSO 2300
+// Com player futurista cinematográfico
 // ============================================
 
 import { motion } from "framer-motion";
 import { Play, Sparkles, Users, Clock, Award, Zap } from "lucide-react";
+import { FuturisticVideoPlayer } from "./FuturisticVideoPlayer";
 
 export const VideoSection = () => {
   return (
@@ -63,46 +65,17 @@ export const VideoSection = () => {
           </p>
         </motion.div>
 
-        {/* Video Container */}
+        {/* Video Container - Now with Futuristic Player */}
         <motion.div
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
           className="relative max-w-5xl mx-auto"
         >
-          {/* Glow Effect */}
-          <div className="absolute -inset-4 bg-gradient-to-r from-pink-500/30 via-purple-500/30 to-blue-500/30 rounded-3xl blur-2xl opacity-50" />
-          
-          {/* Video Frame */}
-          <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 bg-black/80 shadow-2xl shadow-pink-500/20">
-            {/* Top Bar */}
-            <div className="bg-gradient-to-r from-slate-900 to-slate-800 px-4 py-3 flex items-center justify-between border-b border-white/10">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-red-500" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500" />
-                <div className="w-3 h-3 rounded-full bg-green-500" />
-              </div>
-              <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Sparkles className="w-4 h-4 text-pink-400" />
-                <span>Prof. Moisés Medeiros - Matrículas 2026</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-xs text-green-400">HD</span>
-              </div>
-            </div>
-
-            {/* YouTube Embed */}
-            <div className="aspect-video">
-              <iframe
-                src="https://www.youtube.com/embed/aOzCtPc7byY?rel=0&modestbranding=1"
-                title="Apresentação do Curso - Prof. Moisés Medeiros"
-                className="w-full h-full"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              />
-            </div>
-          </div>
+          <FuturisticVideoPlayer
+            videoId="aOzCtPc7byY"
+            title="Prof. Moisés Medeiros - Matrículas 2026"
+          />
 
           {/* Floating Stats */}
           <motion.div
@@ -112,7 +85,7 @@ export const VideoSection = () => {
             viewport={{ once: true }}
             className="absolute -left-4 top-1/3 hidden lg:block"
           >
-            <div className="bg-black/90 backdrop-blur-xl border border-pink-500/30 rounded-xl p-4 shadow-xl">
+            <div className="bg-black/90 backdrop-blur-xl border border-pink-500/30 rounded-xl p-4 shadow-xl shadow-pink-500/20">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-pink-500/20">
                   <Users className="w-5 h-5 text-pink-400" />
@@ -132,7 +105,7 @@ export const VideoSection = () => {
             viewport={{ once: true }}
             className="absolute -right-4 top-1/2 hidden lg:block"
           >
-            <div className="bg-black/90 backdrop-blur-xl border border-purple-500/30 rounded-xl p-4 shadow-xl">
+            <div className="bg-black/90 backdrop-blur-xl border border-purple-500/30 rounded-xl p-4 shadow-xl shadow-purple-500/20">
               <div className="flex items-center gap-3">
                 <div className="p-2 rounded-lg bg-purple-500/20">
                   <Clock className="w-5 h-5 text-purple-400" />
@@ -151,7 +124,7 @@ export const VideoSection = () => {
           initial={{ opacity: 0, y: 30 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true }}
-          className="mt-16 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
+          className="mt-20 grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto"
         >
           {[
             { icon: <Play className="w-5 h-5" />, label: "Aulas em 4K", color: "pink" },
@@ -165,7 +138,8 @@ export const VideoSection = () => {
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
               viewport={{ once: true }}
-              className={`p-4 rounded-xl border border-${item.color}-500/30 bg-${item.color}-500/10 text-center hover:scale-105 transition-transform`}
+              whileHover={{ scale: 1.05, y: -5 }}
+              className={`p-4 rounded-xl border border-${item.color}-500/30 bg-${item.color}-500/10 text-center transition-all cursor-pointer`}
             >
               <div className={`inline-flex p-2 rounded-lg bg-${item.color}-500/20 text-${item.color}-400 mb-2`}>
                 {item.icon}
@@ -182,16 +156,23 @@ export const VideoSection = () => {
           viewport={{ once: true }}
           className="mt-12 text-center"
         >
-          <a
+          <motion.a
             href="https://www.moisesmedeiros.com.br"
             target="_blank"
             rel="noopener noreferrer"
-            className="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white font-bold text-lg hover:scale-105 transition-transform shadow-2xl shadow-pink-500/40"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.98 }}
+            className="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white font-bold text-lg shadow-2xl shadow-pink-500/40 relative overflow-hidden"
           >
-            <Sparkles className="w-5 h-5" />
-            Garantir Minha Vaga 2026
-            <Zap className="w-5 h-5" />
-          </a>
+            <motion.div
+              className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
+              animate={{ x: ['-200%', '200%'] }}
+              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+            />
+            <Sparkles className="w-5 h-5 relative z-10" />
+            <span className="relative z-10">Garantir Minha Vaga 2026</span>
+            <Zap className="w-5 h-5 relative z-10" />
+          </motion.a>
         </motion.div>
       </div>
     </section>

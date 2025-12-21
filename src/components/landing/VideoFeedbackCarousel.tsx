@@ -94,56 +94,99 @@ const VideoCard = ({
       onClick={onClick}
       className="flex-shrink-0 w-[280px] md:w-[320px] cursor-pointer group"
     >
-      <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 bg-black/60 transition-all duration-500 group-hover:border-pink-500/50 group-hover:scale-105 group-hover:shadow-2xl group-hover:shadow-pink-500/20">
-        {/* Thumbnail */}
-        <div className="aspect-video relative">
-          <img
-            src={getYouTubeThumbnail(video.id)}
-            alt={video.title}
-            className="w-full h-full object-cover"
-            loading="lazy"
-          />
-          
-          {/* Overlay */}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
-          
-          {/* Play Button */}
-          <motion.div
-            className="absolute inset-0 flex items-center justify-center"
-            whileHover={{ scale: 1.1 }}
-          >
-            <div className="w-16 h-16 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 flex items-center justify-center shadow-lg shadow-pink-500/50 group-hover:scale-110 transition-transform">
-              <Play className="w-8 h-8 text-white ml-1" fill="white" />
-            </div>
-          </motion.div>
-
-          {/* Badge */}
-          <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/70 border border-pink-500/50 text-xs text-pink-400 font-medium flex items-center gap-1">
-            <Star className="w-3 h-3" fill="currentColor" />
-            Ex-Aluno Real
-          </div>
-
-          {/* Type Badge */}
-          <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-xs text-white font-bold">
-            {video.type === "short" ? "SHORT" : "VÍDEO"}
-          </div>
-        </div>
-
-        {/* Info */}
-        <div className="p-4 bg-gradient-to-b from-black/80 to-black">
-          <p className="text-sm text-gray-300 line-clamp-1 group-hover:text-white transition-colors">
-            {video.title}
-          </p>
-          <div className="flex items-center gap-2 mt-2 text-xs text-pink-400">
-            <Video className="w-3 h-3" />
-            <span>Clique para assistir</span>
-          </div>
-        </div>
-
-        {/* Glow Effect */}
-        <div className="absolute inset-0 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none" 
-          style={{ boxShadow: 'inset 0 0 30px rgba(236, 72, 153, 0.3)' }} 
+      {/* Animated Border Glow */}
+      <div className="relative">
+        <motion.div
+          className="absolute -inset-1 rounded-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+          style={{
+            background: 'conic-gradient(from 0deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #ec4899)',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
         />
+        
+        <div className="relative rounded-2xl overflow-hidden border-2 border-white/10 bg-black/90 transition-all duration-500 group-hover:border-transparent group-hover:shadow-2xl group-hover:shadow-pink-500/30">
+          {/* Thumbnail */}
+          <div className="aspect-video relative">
+            <img
+              src={getYouTubeThumbnail(video.id)}
+              alt={video.title}
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+              loading="lazy"
+            />
+            
+            {/* Holographic Overlay */}
+            <motion.div
+              className="absolute inset-0 opacity-0 group-hover:opacity-30"
+              style={{
+                background: 'linear-gradient(135deg, transparent 30%, rgba(236,72,153,0.3) 50%, transparent 70%)',
+                backgroundSize: '400% 400%',
+              }}
+              animate={{ backgroundPosition: ['0% 0%', '100% 100%', '0% 0%'] }}
+              transition={{ duration: 4, repeat: Infinity }}
+            />
+            
+            {/* Overlay Gradient */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+            
+            {/* Play Button */}
+            <motion.div
+              className="absolute inset-0 flex items-center justify-center"
+              whileHover={{ scale: 1.1 }}
+            >
+              <motion.div
+                animate={{ scale: [1, 1.1, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-pink-500 via-purple-500 to-blue-500 flex items-center justify-center shadow-lg shadow-pink-500/50 group-hover:scale-110 transition-transform">
+                  <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                </div>
+              </motion.div>
+            </motion.div>
+
+            {/* Badge */}
+            <div className="absolute top-3 left-3 px-3 py-1 rounded-full bg-black/80 backdrop-blur-sm border border-pink-500/50 text-xs text-pink-400 font-medium flex items-center gap-1">
+              <Star className="w-3 h-3" fill="currentColor" />
+              Ex-Aluno Real
+            </div>
+
+            {/* HD Badge */}
+            <div className="absolute top-3 right-3 px-2 py-1 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-xs text-white font-bold">
+              {video.type === "short" ? "SHORT" : "FULL HD"}
+            </div>
+
+            {/* Corner Decorations */}
+            <div className="absolute top-2 left-2 w-4 h-4 border-l-2 border-t-2 border-pink-500/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+            <div className="absolute bottom-2 right-2 w-4 h-4 border-r-2 border-b-2 border-purple-500/50 opacity-0 group-hover:opacity-100 transition-opacity" />
+          </div>
+
+          {/* Info */}
+          <div className="p-4 bg-gradient-to-b from-black/80 to-black relative overflow-hidden">
+            {/* Scan Line */}
+            <motion.div
+              className="absolute inset-0 opacity-5"
+              style={{
+                backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.1) 2px, rgba(255,255,255,0.1) 4px)',
+              }}
+            />
+            
+            <p className="text-sm text-gray-300 line-clamp-1 group-hover:text-white transition-colors relative z-10">
+              {video.title}
+            </p>
+            <div className="flex items-center gap-2 mt-2 text-xs text-pink-400 relative z-10">
+              <Video className="w-3 h-3" />
+              <span>Clique para assistir</span>
+            </div>
+
+            {/* Animated Bottom Line */}
+            <motion.div
+              className="absolute bottom-0 left-0 h-0.5 bg-gradient-to-r from-pink-500 via-purple-500 to-blue-500"
+              initial={{ width: '0%' }}
+              whileInView={{ width: '100%' }}
+              transition={{ duration: 1, delay: index * 0.1 }}
+            />
+          </div>
+        </div>
       </div>
     </motion.div>
   );
@@ -165,30 +208,44 @@ const VideoModal = ({
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
-        className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-xl p-4"
+        className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-xl p-4"
         onClick={onClose}
       >
         <motion.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.8, opacity: 0 }}
-          className="relative w-full max-w-4xl aspect-video rounded-2xl overflow-hidden border-2 border-pink-500/50 shadow-2xl shadow-pink-500/30"
+          className="relative w-full max-w-5xl"
           onClick={(e) => e.stopPropagation()}
         >
-          <iframe
-            src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0`}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
+          {/* Animated Border */}
+          <motion.div
+            className="absolute -inset-2 rounded-2xl"
+            style={{
+              background: 'conic-gradient(from 0deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #ec4899)',
+            }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
           
+          <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
+            <iframe
+              src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&vq=hd1080`}
+              className="w-full h-full"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+          
           {/* Close Button */}
-          <button
+          <motion.button
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full bg-black/80 border border-white/20 text-white hover:bg-pink-500 transition-colors"
+            className="absolute -top-4 -right-4 p-3 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white shadow-lg shadow-pink-500/50"
           >
             <X className="w-6 h-6" />
-          </button>
+          </motion.button>
         </motion.div>
       </motion.div>
     </AnimatePresence>
