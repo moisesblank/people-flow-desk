@@ -1,120 +1,247 @@
 // ============================================
-// 🛡️ DOGMA XI: Device Fingerprinting
+// 🛡️ DOGMA XI v2.0: Device Fingerprinting
 // Identificação única de dispositivo (não IP)
+// Otimizado para Alta Performance - 5000+ usuários
+// Matriz Digital 2300
 // ============================================
+
+// Cache do fingerprint para evitar recálculo
+let cachedFingerprint: string | null = null;
+let fingerprintTimestamp: number = 0;
+const FINGERPRINT_CACHE_TTL = 1000 * 60 * 30; // 30 minutos
 
 // Gera fingerprint baseado em características do dispositivo
 export async function generateDeviceFingerprint(): Promise<string> {
+  // Usar cache se ainda válido
+  const now = Date.now();
+  if (cachedFingerprint && (now - fingerprintTimestamp) < FINGERPRINT_CACHE_TTL) {
+    return cachedFingerprint;
+  }
+  
   const components: string[] = [];
   
-  // 1. Screen info
-  components.push(`${screen.width}x${screen.height}x${screen.colorDepth}`);
-  components.push(`${screen.availWidth}x${screen.availHeight}`);
+  try {
+    // 1. Screen info (rápido e confiável)
+    components.push(`scr:${screen.width}x${screen.height}x${screen.colorDepth}`);
+    components.push(`avail:${screen.availWidth}x${screen.availHeight}`);
+    
+    // 2. Timezone
+    components.push(`tz:${Intl.DateTimeFormat().resolvedOptions().timeZone}`);
+    components.push(`tzo:${new Date().getTimezoneOffset()}`);
+    
+    // 3. Language
+    components.push(`lang:${navigator.language}`);
+    components.push(`langs:${(navigator.languages || []).slice(0, 3).join(',')}`);
+    
+    // 4. Platform
+    components.push(`plat:${navigator.platform || 'unknown'}`);
+    
+    // 5. Hardware concurrency (CPU cores)
+    components.push(`cpu:${navigator.hardwareConcurrency || 0}`);
+    
+    // 6. Device memory (if available)
+    components.push(`mem:${(navigator as any).deviceMemory || 0}`);
+    
+    // 7. Touch support
+    components.push(`touch:${'ontouchstart' in window ? 1 : 0}:${navigator.maxTouchPoints || 0}`);
+    
+    // 8. WebGL info (otimizado - sem criar canvas desnecessariamente)
+    const webglInfo = getWebGLInfo();
+    components.push(`gl:${webglInfo}`);
+    
+    // 9. Canvas fingerprint (otimizado)
+    const canvasHash = await getCanvasFingerprint();
+    components.push(`cv:${canvasHash}`);
+    
+    // 10. Audio context fingerprint (otimizado)
+    const audioHash = getAudioFingerprint();
+    components.push(`au:${audioHash}`);
+    
+    // 11. Plugins count (rápido)
+    components.push(`plug:${navigator.plugins?.length || 0}`);
+    
+    // 12. Cookie enabled
+    components.push(`ck:${navigator.cookieEnabled ? 1 : 0}`);
+    
+    // 13. Do Not Track
+    components.push(`dnt:${navigator.doNotTrack || 'u'}`);
+    
+    // 14. User Agent hash (últimos 32 chars)
+    components.push(`ua:${navigator.userAgent.slice(-32)}`);
+    
+  } catch (e) {
+    console.warn('[Fingerprint] Erro parcial:', e);
+  }
   
-  // 2. Timezone
-  components.push(Intl.DateTimeFormat().resolvedOptions().timeZone);
-  components.push(String(new Date().getTimezoneOffset()));
+  // Hash all components
+  const fingerprint = components.join('|');
+  const hash = await hashString(fingerprint);
   
-  // 3. Language
-  components.push(navigator.language);
-  components.push((navigator.languages || []).join(','));
+  // Cache do resultado
+  cachedFingerprint = hash;
+  fingerprintTimestamp = now;
   
-  // 4. Platform
-  components.push(navigator.platform || 'unknown');
-  
-  // 5. Hardware concurrency (CPU cores)
-  components.push(String(navigator.hardwareConcurrency || 0));
-  
-  // 6. Device memory (if available)
-  components.push(String((navigator as any).deviceMemory || 0));
-  
-  // 7. Touch support
-  components.push(String('ontouchstart' in window));
-  components.push(String(navigator.maxTouchPoints || 0));
-  
-  // 8. WebGL info
+  return hash;
+}
+
+// WebGL info otimizado
+function getWebGLInfo(): string {
   try {
     const canvas = document.createElement('canvas');
     const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
     if (gl && gl instanceof WebGLRenderingContext) {
       const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
       if (debugInfo) {
-        components.push(gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || '');
-        components.push(gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '');
+        const vendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || '';
+        const renderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || '';
+        return `${vendor.slice(0, 20)}:${renderer.slice(0, 30)}`;
       }
+      return gl.getParameter(gl.RENDERER) || 'basic';
     }
   } catch (e) {
-    components.push('webgl-error');
+    // Silent fail
   }
-  
-  // 9. Canvas fingerprint
+  return 'none';
+}
+
+// Canvas fingerprint otimizado
+async function getCanvasFingerprint(): Promise<string> {
   try {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
-    if (ctx) {
-      canvas.width = 200;
-      canvas.height = 50;
-      ctx.textBaseline = 'top';
-      ctx.font = '14px Arial';
-      ctx.fillStyle = '#f60';
-      ctx.fillRect(0, 0, 200, 50);
-      ctx.fillStyle = '#069';
-      ctx.fillText('MatrizDigital2300', 2, 15);
-      components.push(canvas.toDataURL().slice(-50));
-    }
+    if (!ctx) return 'no-ctx';
+    
+    canvas.width = 120;
+    canvas.height = 30;
+    
+    // Desenho único
+    ctx.textBaseline = 'top';
+    ctx.font = '12px monospace';
+    ctx.fillStyle = '#f60';
+    ctx.fillRect(0, 0, 60, 30);
+    ctx.fillStyle = '#069';
+    ctx.fillText('M2300', 2, 8);
+    ctx.fillStyle = 'rgba(102,204,0,0.7)';
+    ctx.fillText('XY', 65, 8);
+    
+    // Hash parcial do dataURL
+    const dataUrl = canvas.toDataURL();
+    return dataUrl.slice(-40, -10);
   } catch (e) {
-    components.push('canvas-error');
+    return 'err';
   }
-  
-  // 10. Audio context fingerprint
-  try {
-    const audioContext = new (window.AudioContext || (window as any).webkitAudioContext)();
-    components.push(String(audioContext.sampleRate));
-    audioContext.close();
-  } catch (e) {
-    components.push('audio-error');
-  }
-  
-  // Hash all components
-  const fingerprint = components.join('|||');
-  const hash = await hashString(fingerprint);
-  
-  return hash;
 }
 
-// Hash usando Web Crypto API
+// Audio fingerprint otimizado (sem criar AudioContext se não suportado)
+function getAudioFingerprint(): string {
+  try {
+    const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!AudioCtx) return 'no-audio';
+    
+    // Apenas pegar sample rate sem criar contexto completo
+    const ctx = new AudioCtx();
+    const rate = ctx.sampleRate;
+    ctx.close();
+    return String(rate);
+  } catch (e) {
+    return 'err';
+  }
+}
+
+// Hash usando Web Crypto API (otimizado)
 async function hashString(str: string): Promise<string> {
-  const encoder = new TextEncoder();
-  const data = encoder.encode(str);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  try {
+    const encoder = new TextEncoder();
+    const data = encoder.encode(str);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  } catch (e) {
+    // Fallback para hash simples se crypto não disponível
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return Math.abs(hash).toString(16).padStart(16, '0');
+  }
 }
 
 // Gerar nome amigável do dispositivo
 export function generateDeviceName(): string {
   const ua = navigator.userAgent;
   
+  let deviceModel = '';
   let os = 'Desktop';
-  if (ua.includes('Windows')) os = 'Windows';
-  else if (ua.includes('Mac')) os = 'Mac';
-  else if (ua.includes('Linux')) os = 'Linux';
-  else if (ua.includes('Android')) os = 'Android';
-  else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
   
-  let browser = 'Browser';
+  // Detectar modelo específico
+  if (ua.includes('iPhone')) {
+    os = 'iPhone';
+    deviceModel = 'iPhone';
+  } else if (ua.includes('iPad')) {
+    os = 'iPad';
+    deviceModel = 'iPad';
+  } else if (ua.includes('Android')) {
+    os = 'Android';
+    // Tentar extrair modelo
+    const match = ua.match(/Android[^;]*;([^)]*)\)/);
+    if (match) deviceModel = match[1].trim().split(' ')[0];
+  } else if (ua.includes('Windows NT 10')) {
+    os = 'Windows 10/11';
+  } else if (ua.includes('Windows')) {
+    os = 'Windows';
+  } else if (ua.includes('Mac OS X')) {
+    os = 'macOS';
+  } else if (ua.includes('Linux')) {
+    os = 'Linux';
+  } else if (ua.includes('CrOS')) {
+    os = 'Chrome OS';
+  }
+  
+  let browser = 'Navegador';
   if (ua.includes('Firefox')) browser = 'Firefox';
-  else if (ua.includes('Edg')) browser = 'Edge';
-  else if (ua.includes('Chrome')) browser = 'Chrome';
-  else if (ua.includes('Safari')) browser = 'Safari';
+  else if (ua.includes('Edg/')) browser = 'Edge';
+  else if (ua.includes('OPR') || ua.includes('Opera')) browser = 'Opera';
+  else if (ua.includes('Chrome') && !ua.includes('Edg')) browser = 'Chrome';
+  else if (ua.includes('Safari') && !ua.includes('Chrome')) browser = 'Safari';
   
+  if (deviceModel) {
+    return `${deviceModel} • ${browser}`;
+  }
   return `${os} • ${browser}`;
 }
 
 // Detectar tipo de dispositivo
 export function detectDeviceType(): 'desktop' | 'mobile' | 'tablet' {
   const ua = navigator.userAgent;
-  if (/iPad|Tablet/i.test(ua)) return 'tablet';
-  if (/Mobi|Android|iPhone/i.test(ua)) return 'mobile';
+  
+  // Tablets específicos
+  if (/iPad/i.test(ua)) return 'tablet';
+  if (/Android/i.test(ua) && !/Mobile/i.test(ua)) return 'tablet';
+  if (/Tablet/i.test(ua)) return 'tablet';
+  
+  // Mobile
+  if (/Mobi|Android.*Mobile|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua)) {
+    return 'mobile';
+  }
+  
+  // Verificar por touch em telas grandes (pode ser tablet)
+  if ('ontouchstart' in window && screen.width >= 768 && screen.width <= 1024) {
+    return 'tablet';
+  }
+  
   return 'desktop';
+}
+
+// Limpar cache (útil para forçar nova verificação)
+export function clearFingerprintCache(): void {
+  cachedFingerprint = null;
+  fingerprintTimestamp = 0;
+}
+
+// Verificar se fingerprint está em cache
+export function isFingerprintCached(): boolean {
+  const now = Date.now();
+  return cachedFingerprint !== null && (now - fingerprintTimestamp) < FINGERPRINT_CACHE_TTL;
 }
