@@ -94,6 +94,7 @@ const Perfil = lazy(() => import("./pages/Perfil"));
 const GestaoDispositivos = lazy(() => import("./pages/GestaoDispositivos"));
 
 // ===== CENTRAL DO ALUNO - QUÍMICA ENEM =====
+const AlunosRouteSwitcher = lazy(() => import("./pages/AlunosRouteSwitcher"));
 const AlunoDashboard = lazy(() => import("./pages/aluno/AlunoDashboard"));
 const AlunoVideoaulas = lazy(() => import("./pages/aluno/AlunoVideoaulas"));
 const AlunoQuestoes = lazy(() => import("./pages/aluno/AlunoQuestoes"));
@@ -288,9 +289,8 @@ const AppContent = memo(() => {
           <Route path="/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
           
           {/* ===== CENTRAL DO ALUNO - QUÍMICA ENEM ===== */}
-          {/* URL BASE: /alunos - HOME dos alunos após login */}
-          {/* Apenas OWNER e BETA podem acessar */}
-          <Route path="/alunos" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
+          {/* /alunos é inteligente: no domínio de gestão vira Gestão de Alunos; no domínio do aluno vira Portal */}
+          <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
           <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
           <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
           <Route path="/alunos/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />

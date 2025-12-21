@@ -173,7 +173,7 @@ export function AppSidebar() {
   const collapsed = state === "collapsed";
   const location = useLocation();
   const { user, signOut } = useAuth();
-  const { isOwner } = useAdminCheck();
+  const { isOwner, isAdminOrOwner } = useAdminCheck();
   const [userName, setUserName] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
@@ -404,25 +404,32 @@ export function AppSidebar() {
           <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Negócios</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {businessMenuItems.map((item) => (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton 
-                    asChild
-                    isActive={isActive(item.url)}
-                    tooltip={item.title}
-                  >
-                    <NavLink 
-                      to={item.url} 
-                      end 
-                      className="flex items-center gap-3"
-                      activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+              {businessMenuItems.map((item) => {
+                const resolvedUrl =
+                  item.title === "Alunos"
+                    ? (isAdminOrOwner ? "/gestao-alunos" : "/alunos")
+                    : item.url;
+
+                return (
+                  <SidebarMenuItem key={item.title}>
+                    <SidebarMenuButton 
+                      asChild
+                      isActive={isActive(resolvedUrl)}
+                      tooltip={item.title}
                     >
-                      <item.icon className="h-4 w-4 shrink-0" />
-                      {!collapsed && <span>{item.title}</span>}
-                    </NavLink>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                      <NavLink 
+                        to={resolvedUrl} 
+                        end 
+                        className="flex items-center gap-3"
+                        activeClassName="bg-sidebar-accent text-sidebar-primary font-medium"
+                      >
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {!collapsed && <span>{item.title}</span>}
+                      </NavLink>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
