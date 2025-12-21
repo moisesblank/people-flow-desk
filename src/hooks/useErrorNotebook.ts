@@ -1,0 +1,317 @@
+// ============================================
+// HOOK: useErrorNotebook - Caderno de Erros
+// SANTUÁRIO v9.0 - Lei I: Performance Máxima
+// ============================================
+
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
+import { toast } from 'sonner';
+
+// Tipos
+export interface ErrorNotebookEntry {
+  user_id: string;
+  question_id: string;
+  error_count: number;
+  last_error_at: string;
+  mastered: boolean;
+  mastered_at: string | null;
+  // Dados da questão (join)
+  question?: {
+    id: string;
+    text: string;
+    options: any;
+    correct_answer: string;
+    explanation: string | null;
+    difficulty: string | null;
+    area_id: string;
+    area?: {
+      id: string;
+      name: string;
+      icon: string | null;
+      color: string | null;
+    };
+  };
+}
+
+export interface ErrorNotebookStats {
+  totalErrors: number;
+  masteredCount: number;
+  pendingCount: number;
+  masteryRate: number;
+  byArea: {
+    areaId: string;
+    areaName: string;
+    count: number;
+    mastered: number;
+  }[];
+  recentErrors: ErrorNotebookEntry[];
+}
+
+export interface UseErrorNotebookOptions {
+  onlyPending?: boolean;
+  areaId?: string;
+  limit?: number;
+}
+
+/**
+ * Hook para gerenciar o Caderno de Erros do aluno
+ * - Lista questões erradas
+ * - Marca como dominada (mastered)
+ * - Estatísticas por área
+ * - Cache otimizado com TanStack Query
+ */
+export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  const { onlyPending = false, areaId, limit = 50 } = options;
+
+  // Query principal: buscar entradas do caderno de erros
+  const {
+    data: entries,
+    isLoading,
+    error,
+    refetch
+  } = useQuery({
+    queryKey: ['error-notebook', user?.id, onlyPending, areaId, limit],
+    queryFn: async () => {
+      if (!user?.id) return [];
+
+      let query = supabase
+        .from('error_notebook')
+        .select(`
+          *,
+          question:sanctuary_questions(
+            id,
+            text,
+            options,
+            correct_answer,
+            explanation,
+            difficulty,
+            area_id,
+            area:study_areas(id, name, icon, color)
+          )
+        `)
+        .eq('user_id', user.id)
+        .order('last_error_at', { ascending: false })
+        .limit(limit);
+
+      // Filtrar apenas pendentes (não dominadas)
+      if (onlyPending) {
+        query = query.eq('mastered', false);
+      }
+
+      // Filtrar por área (via subquery)
+      // Nota: filtragem por área será feita client-side para performance
+
+      const { data, error } = await query;
+
+      if (error) throw error;
+
+      // Filtrar por área se especificado
+      let filteredData = data as ErrorNotebookEntry[];
+      if (areaId && filteredData) {
+        filteredData = filteredData.filter(
+          entry => entry.question?.area_id === areaId
+        );
+      }
+
+      return filteredData;
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 5, // 5 minutos de cache
+  });
+
+  // Query: estatísticas do caderno de erros
+  const { data: stats } = useQuery({
+    queryKey: ['error-notebook-stats', user?.id],
+    queryFn: async (): Promise<ErrorNotebookStats> => {
+      if (!user?.id) {
+        return {
+          totalErrors: 0,
+          masteredCount: 0,
+          pendingCount: 0,
+          masteryRate: 0,
+          byArea: [],
+          recentErrors: []
+        };
+      }
+
+      const { data, error } = await supabase
+        .from('error_notebook')
+        .select(`
+          *,
+          question:sanctuary_questions(
+            id, text, area_id,
+            area:study_areas(id, name)
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+
+      const entries = (data || []) as ErrorNotebookEntry[];
+      const totalErrors = entries.length;
+      const masteredCount = entries.filter(e => e.mastered).length;
+      const pendingCount = totalErrors - masteredCount;
+
+      // Agrupar por área
+      const areaMap = new Map<string, { name: string; count: number; mastered: number }>();
+      entries.forEach(entry => {
+        const areaId = entry.question?.area_id || 'unknown';
+        const areaName = entry.question?.area?.name || 'Sem área';
+        
+        if (!areaMap.has(areaId)) {
+          areaMap.set(areaId, { name: areaName, count: 0, mastered: 0 });
+        }
+        
+        const area = areaMap.get(areaId)!;
+        area.count++;
+        if (entry.mastered) area.mastered++;
+      });
+
+      const byArea = Array.from(areaMap.entries()).map(([areaId, data]) => ({
+        areaId,
+        areaName: data.name,
+        count: data.count,
+        mastered: data.mastered
+      }));
+
+      // Últimos 5 erros
+      const recentErrors = entries
+        .filter(e => !e.mastered)
+        .sort((a, b) => new Date(b.last_error_at).getTime() - new Date(a.last_error_at).getTime())
+        .slice(0, 5);
+
+      return {
+        totalErrors,
+        masteredCount,
+        pendingCount,
+        masteryRate: totalErrors > 0 ? (masteredCount / totalErrors) * 100 : 0,
+        byArea,
+        recentErrors
+      };
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60 * 2, // 2 minutos
+  });
+
+  // Mutation: marcar questão como dominada
+  const markAsMastered = useMutation({
+    mutationFn: async (questionId: string) => {
+      if (!user?.id) throw new Error('Usuário não autenticado');
+
+      const { error } = await supabase
+        .from('error_notebook')
+        .update({
+          mastered: true,
+          mastered_at: new Date().toISOString()
+        })
+        .eq('user_id', user.id)
+        .eq('question_id', questionId);
+
+      if (error) throw error;
+      return questionId;
+    },
+    onSuccess: (questionId) => {
+      // Invalidar cache
+      queryClient.invalidateQueries({ queryKey: ['error-notebook'] });
+      queryClient.invalidateQueries({ queryKey: ['error-notebook-stats'] });
+      toast.success('Questão marcada como dominada! 🎯');
+    },
+    onError: (error) => {
+      console.error('Erro ao marcar questão:', error);
+      toast.error('Erro ao marcar questão como dominada');
+    }
+  });
+
+  // Mutation: resetar status de dominada (para revisar novamente)
+  const resetMastered = useMutation({
+    mutationFn: async (questionId: string) => {
+      if (!user?.id) throw new Error('Usuário não autenticado');
+
+      const { error } = await supabase
+        .from('error_notebook')
+        .update({
+          mastered: false,
+          mastered_at: null
+        })
+        .eq('user_id', user.id)
+        .eq('question_id', questionId);
+
+      if (error) throw error;
+      return questionId;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['error-notebook'] });
+      queryClient.invalidateQueries({ queryKey: ['error-notebook-stats'] });
+      toast.info('Questão voltou para revisão');
+    },
+    onError: (error) => {
+      console.error('Erro ao resetar questão:', error);
+      toast.error('Erro ao resetar questão');
+    }
+  });
+
+  // Helpers
+  const getPendingCount = () => stats?.pendingCount || 0;
+  const getMasteryRate = () => stats?.masteryRate || 0;
+  const getAreaWithMostErrors = () => {
+    if (!stats?.byArea.length) return null;
+    return stats.byArea.reduce((prev, curr) => 
+      (curr.count - curr.mastered) > (prev.count - prev.mastered) ? curr : prev
+    );
+  };
+
+  return {
+    // Dados
+    entries: entries || [],
+    stats,
+    
+    // Estados
+    isLoading,
+    error,
+    
+    // Mutations
+    markAsMastered: markAsMastered.mutate,
+    resetMastered: resetMastered.mutate,
+    isMarking: markAsMastered.isPending,
+    isResetting: resetMastered.isPending,
+    
+    // Helpers
+    getPendingCount,
+    getMasteryRate,
+    getAreaWithMostErrors,
+    refetch,
+    
+    // Computed
+    hasPendingErrors: (stats?.pendingCount || 0) > 0,
+    isEmpty: (entries?.length || 0) === 0,
+  };
+}
+
+/**
+ * Hook simplificado para apenas contar erros pendentes
+ * Útil para badges e indicadores
+ */
+export function useErrorNotebookCount() {
+  const { user } = useAuth();
+
+  return useQuery({
+    queryKey: ['error-notebook-count', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return 0;
+
+      const { count, error } = await supabase
+        .from('error_notebook')
+        .select('*', { count: 'exact', head: true })
+        .eq('user_id', user.id)
+        .eq('mastered', false);
+
+      if (error) throw error;
+      return count || 0;
+    },
+    enabled: !!user?.id,
+    staleTime: 1000 * 60, // 1 minuto
+  });
+}
