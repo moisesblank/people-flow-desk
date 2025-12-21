@@ -142,3 +142,23 @@ verify_jwt = true
 
 [functions.rate-limit-gateway]
 verify_jwt = false
+
+# ============================================
+# 🌌 TESTAMENTO DA SINGULARIDADE v5.0
+# SISTEMA NERVOSO DIVINO - Event-Driven Architecture
+# ============================================
+
+[functions.webhook-receiver]
+verify_jwt = false
+
+[functions.event-router]
+verify_jwt = false
+
+[functions.c-create-beta-user]
+verify_jwt = false
+
+[functions.c-grant-xp]
+verify_jwt = false
+
+[functions.c-handle-refund]
+verify_jwt = false
