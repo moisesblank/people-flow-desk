@@ -1,0 +1,172 @@
+# ============================================
+# 🔥 DOGMA VIII - EXORCISMO DAS DEPENDÊNCIAS
+# Auditoria automática de segurança
+# ============================================
+
+name: 🛡️ Security Audit
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+  schedule:
+    # Rodar diariamente às 6h
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: read
+  security-events: write
+  actions: read
+
+jobs:
+  # ============================================
+  # NPM AUDIT - Vulnerabilidades de Dependências
+  # ============================================
+  npm-audit:
+    name: 📦 NPM Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm ci --ignore-scripts
+
+      - name: 🔍 Audit de Segurança (High/Critical)
+        run: |
+          echo "🛡️ Iniciando auditoria de segurança..."
+          npm audit --audit-level=high --json > audit-report.json || true
+          
+          # Verificar vulnerabilidades críticas e altas
+          CRITICAL=$(cat audit-report.json | jq '.metadata.vulnerabilities.critical // 0')
+          HIGH=$(cat audit-report.json | jq '.metadata.vulnerabilities.high // 0')
+          
+          echo "📊 Resultado:"
+          echo "   - Críticas: $CRITICAL"
+          echo "   - Altas: $HIGH"
+          
+          if [ "$CRITICAL" -gt 0 ] || [ "$HIGH" -gt 0 ]; then
+            echo ""
+            echo "❌ FALHA: Vulnerabilidades encontradas!"
+            echo "   Execute 'npm audit fix' localmente para corrigir."
+            npm audit --audit-level=high
+            exit 1
+          else
+            echo ""
+            echo "✅ Nenhuma vulnerabilidade crítica/alta encontrada!"
+          fi
+
+      - name: Upload Audit Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-audit-report
+          path: audit-report.json
+          retention-days: 30
+
+  # ============================================
+  # CODEQL - Análise Estática de Segurança (SAST)
+  # DOGMA X - Vigília Eterna
+  # ============================================
+  codeql-analysis:
+    name: 🔬 CodeQL SAST Analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: Inicializar CodeQL
+        uses: github/codeql-action/init@v3
+        with:
+          languages: javascript-typescript
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@v3
+
+      - name: 🔍 Executar Análise CodeQL
+        uses: github/codeql-action/analyze@v3
+        with:
+          category: "/language:javascript-typescript"
+
+  # ============================================
+  # DEPENDENCY REVIEW - PRs Only
+  # ============================================
+  dependency-review:
+    name: 📋 Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🔍 Revisar Dependências
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          deny-licenses: GPL-3.0, AGPL-3.0
+
+  # ============================================
+  # SECRETS SCAN - Prevenir vazamento de chaves
+  # ============================================
+  secrets-scan:
+    name: 🔐 Secrets Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: 🔍 Detectar Secrets no Código
+        uses: trufflesecurity/trufflehog@main
+        with:
+          path: ./
+          base: ${{ github.event.repository.default_branch }}
+          extra_args: --only-verified
+
+  # ============================================
+  # NOTIFICAÇÃO DE RESULTADOS
+  # ============================================
+  notify-results:
+    name: 📢 Notificar Resultados
+    runs-on: ubuntu-latest
+    needs: [npm-audit, codeql-analysis]
+    if: failure()
+    steps:
+      - name: ⚠️ Criar Issue de Segurança
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issueTitle = '🚨 Vulnerabilidades de Segurança Detectadas';
+            const issueBody = `
+            ## ⚠️ Alerta de Segurança
+            
+            O pipeline de segurança detectou problemas que precisam de atenção imediata.
+            
+            ### Ações Necessárias:
+            1. Execute \`npm audit\` localmente
+            2. Revise o relatório do CodeQL
+            3. Corrija as vulnerabilidades antes do próximo deploy
+            
+            ### Links:
+            - [Workflow Run](${process.env.GITHUB_SERVER_URL}/${process.env.GITHUB_REPOSITORY}/actions/runs/${process.env.GITHUB_RUN_ID})
+            
+            ---
+            _Gerado automaticamente pelo DOGMA VIII - Exorcismo das Dependências_
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: issueTitle,
+              body: issueBody,
+              labels: ['security', 'high-priority']
+            });

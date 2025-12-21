@@ -135,3 +135,10 @@ verify_jwt = true
 
 [functions.secure-api-proxy]
 verify_jwt = true
+
+# ============================================
+# 🔥 DOGMA X - RATE LIMITING
+# ============================================
+
+[functions.rate-limit-gateway]
+verify_jwt = false

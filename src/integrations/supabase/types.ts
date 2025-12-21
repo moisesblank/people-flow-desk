@@ -9402,6 +9402,28 @@ export type Database = {
           ultima_sessao: Json
         }[]
       }
+      get_audit_logs: {
+        Args: {
+          p_action?: string
+          p_from_date?: string
+          p_limit?: number
+          p_table_name?: string
+          p_to_date?: string
+          p_user_id?: string
+        }
+        Returns: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json
+          new_data: Json
+          old_data: Json
+          record_id: string
+          table_name: string
+          user_email: string
+          user_id: string
+        }[]
+      }
       get_cached_dashboard_stats: { Args: never; Returns: Json }
       get_dashboard_stats_realtime: { Args: never; Returns: Json }
       get_entity_attachments: {
@@ -9510,6 +9532,10 @@ export type Database = {
       }
       log_blocked_access: {
         Args: { p_ip?: string; p_reason: string; p_resource: string }
+        Returns: string
+      }
+      log_report_access: {
+        Args: { p_report_params?: Json; p_report_type: string }
         Returns: string
       }
       log_security_event: {

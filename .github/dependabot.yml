@@ -1,0 +1,51 @@
+# ============================================
+# 🔥 DOGMA VIII - DEPENDABOT
+# Atualização automática de dependências
+# ============================================
+
+version: 2
+updates:
+  # Dependências NPM
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "06:00"
+      timezone: "America/Sao_Paulo"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "moisesblank"
+    labels:
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "🔒 deps:"
+    # Agrupar atualizações menores
+    groups:
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "patch"
+          - "minor"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "patch"
+          - "minor"
+    # Ignorar atualizações que podem quebrar
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "🔧 ci:"
