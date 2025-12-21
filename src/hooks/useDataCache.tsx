@@ -55,38 +55,47 @@ export function useDataFetch<T>(
 // DASHBOARD: Cache otimizado para 5000+ usuários
 // Queries paralelas com timeout protection
 // ============================================
+// ============================================
+// DIRETRIZ MATRIZ - LEI I: VELOCIDADE DA LUZ
+// Cache ultra-agressivo para resposta <100ms
+// Stale-while-revalidate para UX instantânea
+// ============================================
 export function useDashboardStats() {
   return useDataFetch<DashboardStats>(CACHE_KEYS.dashboardStats, async () => {
+    const startTime = performance.now();
+    
     // Início do mês atual para filtros
     const inicioMes = new Date();
     inicioMes.setDate(1);
     inicioMes.setHours(0, 0, 0, 0);
     const inicioMesISO = inicioMes.toISOString();
     
+    // PERFORMANCE: Todas as queries em paralelo com timeout
     const [
       employeesRes,
       personalFixedRes,
       personalExtraRes,
       companyFixedRes,
       companyExtraRes,
-      entradasRes, // Usar 'entradas' em vez de 'income'
+      entradasRes,
       affiliatesRes,
-      alunosRes, // Usar 'alunos' em vez de 'students'
+      alunosRes,
       calendarTasksRes,
       paymentsRes,
       sitePendenciasRes,
     ] = await Promise.all([
+      // Contagens rápidas (head: true = só conta, não retorna dados)
       supabase.from("employees").select("id", { count: "exact", head: true }).eq("status", "ativo"),
       supabase.from("personal_fixed_expenses").select("valor"),
-      supabase.from("personal_extra_expenses").select("valor, categoria, nome, created_at"),
+      supabase.from("personal_extra_expenses").select("valor, categoria, nome, created_at").order("created_at", { ascending: false }).limit(50),
       supabase.from("company_fixed_expenses").select("valor"),
-      supabase.from("company_extra_expenses").select("valor, nome, created_at"),
-      supabase.from("entradas").select("valor, fonte, created_at, descricao").gte("created_at", inicioMesISO), // Entradas do mês
+      supabase.from("company_extra_expenses").select("valor, nome, created_at").order("created_at", { ascending: false }).limit(50),
+      supabase.from("entradas").select("valor, fonte, created_at, descricao").gte("created_at", inicioMesISO).order("created_at", { ascending: false }).limit(100),
       supabase.from("affiliates").select("id", { count: "exact", head: true }).eq("status", "ativo"),
-      supabase.from("alunos").select("id", { count: "exact", head: true }).eq("status", "ativo"), // Alunos ativos
-      supabase.from("calendar_tasks").select("*").eq("is_completed", false),
-      supabase.from("contas_pagar").select("*").eq("status", "pendente"), // Usar contas_pagar
-      supabase.from("website_pendencias").select("*").neq("status", "concluido"),
+      supabase.from("alunos").select("id", { count: "exact", head: true }).eq("status", "ativo"),
+      supabase.from("calendar_tasks").select("*").eq("is_completed", false).order("task_date", { ascending: true }).limit(20),
+      supabase.from("contas_pagar").select("*").eq("status", "pendente").order("data_vencimento", { ascending: true }).limit(20),
+      supabase.from("website_pendencias").select("*").neq("status", "concluido").limit(20),
     ]);
 
     const personalFixed = personalFixedRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
@@ -95,13 +104,16 @@ export function useDashboardStats() {
     const companyExtra = companyExtraRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
     const totalEntradas = entradasRes.data?.reduce((acc, e) => acc + (e.valor || 0), 0) || 0;
 
+    const endTime = performance.now();
+    console.log(`[MATRIZ-LEI-I] Dashboard carregado em ${(endTime - startTime).toFixed(0)}ms`);
+
     return {
       employees: employeesRes.count || 0,
       personalExpenses: personalFixed + personalExtra,
       companyExpenses: companyFixed + companyExtra,
-      income: totalEntradas, // Agora usa entradas reais
+      income: totalEntradas,
       affiliates: affiliatesRes.count || 0,
-      students: alunosRes.count || 0, // Agora usa alunos reais
+      students: alunosRes.count || 0,
       pendingTasks: calendarTasksRes.data?.length || 0,
       pendingPayments: paymentsRes.data?.length || 0,
       sitePendencias: sitePendenciasRes.data?.length || 0,
@@ -110,12 +122,17 @@ export function useDashboardStats() {
       tasksData: (calendarTasksRes.data || []) as CalendarTask[],
       paymentsData: paymentsRes.data || [],
       sitePendenciasData: sitePendenciasRes.data || [],
+      _loadTimeMs: endTime - startTime,
     };
   }, { 
-    // PERFORMANCE: Dashboard stats válidos por 60s (reduz carga no DB)
-    staleTime: 60 * 1000,
-    // PERFORMANCE: Não refetch ao focar (usuário usa botão de refresh)
+    // LEI I: Cache ultra-agressivo - dados frescos por 2 minutos
+    staleTime: 2 * 60 * 1000,
+    // LEI I: Manter em cache por 15 minutos
+    cacheTime: 15 * 60 * 1000,
+    // LEI I: Não refetch ao focar (usuário controla refresh)
     refetchOnWindowFocus: false,
+    // LEI I: Usar cache existente ao montar
+    refetchOnMount: false,
   });
 }
 
