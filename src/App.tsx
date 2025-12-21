@@ -39,6 +39,7 @@ const PortalAluno = lazy(() => import("./pages/PortalAluno"));
 const Integracoes = lazy(() => import("./pages/Integracoes"));
 const Permissoes = lazy(() => import("./pages/Permissoes"));
 const LandingPage = lazy(() => import("./pages/LandingPage"));
+const Home = lazy(() => import("./pages/Home"));
 const TermosDeUso = lazy(() => import("./pages/TermosDeUso"));
 const PoliticaPrivacidade = lazy(() => import("./pages/PoliticaPrivacidade"));
 const Cursos = lazy(() => import("./pages/Cursos"));
@@ -180,13 +181,14 @@ function AppContent() {
       <Suspense fallback={<PageLoader />}>
         <Routes>
           {/* Public routes */}
+          <Route path="/" element={<Home />} />
           <Route path="/site" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/termos" element={<TermosDeUso />} />
           <Route path="/privacidade" element={<PoliticaPrivacidade />} />
           
           {/* Protected routes with layout */}
-          <Route path="/" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+          <Route path="/app" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
           <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
           <Route path="/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
           <Route path="/financas-pessoais" element={<ProtectedPage><FinancasPessoais /></ProtectedPage>} />
