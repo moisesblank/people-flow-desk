@@ -133,6 +133,7 @@ import { FileUpload } from "@/components/FileUpload";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { buscarArquivos, deleteFile, toggleIaLer, processarArquivoComIA, formatFileSize, getFileCategory, uploadFile } from "@/lib/fileUpload";
 import { MinimizableSection, useMinimizable } from "@/components/ui/minimizable-section";
+import { FortressPlayerWrapper } from "@/components/video/FortressPlayerWrapper";
 
 // ═══════════════════════════════════════════════════════════════
 // TIPOS E INTERFACES
@@ -1382,7 +1383,9 @@ export default function ArquivosEmpresariais() {
                     {selectedFile.tipo.startsWith('image/') ? (
                       <img src={selectedFile.url} className="max-w-full max-h-[50vh] object-contain" />
                     ) : selectedFile.tipo.startsWith('video/') ? (
-                      <video src={selectedFile.url} controls className="max-w-full" />
+                      <FortressPlayerWrapper className="max-w-full rounded-lg overflow-hidden" showSecurityBadge>
+                        <video src={selectedFile.url} controls className="max-w-full" />
+                      </FortressPlayerWrapper>
                     ) : selectedFile.tipo.startsWith('audio/') ? (
                       <audio src={selectedFile.url} controls />
                     ) : selectedFile.tipo === 'application/pdf' ? (

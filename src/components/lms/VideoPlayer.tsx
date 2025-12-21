@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v7.0 - VIDEO PLAYER LMS
-// Spider-Man Theme - Player com notas e XP
+// MOISÉS MEDEIROS v8.0 - VIDEO PLAYER LMS
+// FORTALEZA DIGITAL - Player com proteção total
 // ============================================
 
 import { useState, useRef, useCallback } from "react";
@@ -28,6 +28,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
+import { FortressPlayerWrapper } from "@/components/video/FortressPlayerWrapper";
 
 interface Note {
   id: string;
@@ -179,7 +180,7 @@ export function VideoPlayer({
   return (
     <div className="space-y-4">
       {/* Video Container */}
-      <div className="relative rounded-2xl overflow-hidden bg-black group">
+      <FortressPlayerWrapper className="relative rounded-2xl overflow-hidden bg-black group" showSecurityBadge>
         <video
           ref={videoRef}
           src={src}
@@ -359,7 +360,7 @@ export function VideoPlayer({
             </div>
           </div>
         </div>
-      </div>
+      </FortressPlayerWrapper>
 
       {/* Title */}
       <div>

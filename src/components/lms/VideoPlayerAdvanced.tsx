@@ -1,6 +1,6 @@
 // ============================================
-// MOISÉS MEDEIROS v8.0 - VIDEO PLAYER AVANÇADO
-// Player com Capítulos/Timestamps Clicáveis
+// MOISÉS MEDEIROS v9.0 - VIDEO PLAYER AVANÇADO
+// FORTALEZA DIGITAL - Player com proteção total
 // ============================================
 
 import { useState, useRef, useCallback, useEffect } from "react";
@@ -36,6 +36,7 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
+import { FortressPlayerWrapper } from "@/components/video/FortressPlayerWrapper";
 
 // Interface para capítulos/timestamps
 export interface VideoChapter {
@@ -268,8 +269,8 @@ export function VideoPlayerAdvanced({
 
   return (
     <div className="space-y-4" ref={containerRef}>
-      {/* Video Container */}
-      <div className="relative rounded-2xl overflow-hidden bg-black group">
+      {/* Video Container - FORTALEZA DIGITAL */}
+      <FortressPlayerWrapper className="relative rounded-2xl overflow-hidden bg-black group" showSecurityBadge>
         <video
           ref={videoRef}
           src={src}
@@ -491,10 +492,10 @@ export function VideoPlayerAdvanced({
                   <Maximize className="h-4 w-4" />
                 )}
               </Button>
-            </div>
+          </div>
           </div>
         </div>
-      </div>
+      </FortressPlayerWrapper>
 
       {/* Chapter Buttons (TRACKLIST) - Below Player */}
       {showChaptersBelow && chapters.length > 0 && (
