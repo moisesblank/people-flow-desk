@@ -1,11 +1,10 @@
 // ============================================
-// HERO SECTION ÉPICA 2500 - ULTRA FUTURISTA
-// Impacto visual máximo + conversão extrema
-// Com efeitos holográficos e parallax 3D
+// HERO SECTION ÉPICA 2500 - ULTRA PERFORMANCE
+// Otimizado para máxima performance
 // ============================================
 
-import { useState, useEffect, useMemo } from "react";
-import { motion, useScroll, useTransform } from "framer-motion";
+import { useState, useEffect, useMemo, memo } from "react";
+import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import { 
   Play, ChevronDown, ArrowRight, Rocket, Atom, 
@@ -15,59 +14,50 @@ import {
 import { Button } from "@/components/ui/button";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
-// Partículas flutuantes no hero - mais densas e coloridas
-const HeroParticles = () => {
+// Partículas ESTÁTICAS - sem animação JS, apenas CSS
+const HeroParticles = memo(() => {
   const particles = useMemo(() => 
-    Array.from({ length: 80 }, (_, i) => ({
+    Array.from({ length: 20 }, (_, i) => ({
       x: Math.random() * 100,
       y: Math.random() * 100,
-      color: ['#dc2626', '#1e40af', '#fbbf24', '#7c3aed', '#10b981'][i % 5],
-      size: Math.random() * 4 + 2,
-      duration: 3 + Math.random() * 3,
-      delay: Math.random() * 3,
+      color: ['#dc2626', '#1e40af', '#fbbf24'][i % 3],
+      size: Math.random() * 3 + 2,
     })),
   []);
 
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
       {particles.map((p, i) => (
-        <motion.div
+        <div
           key={i}
-          className="absolute rounded-full"
+          className="absolute rounded-full animate-pulse"
           style={{
             left: `${p.x}%`,
             top: `${p.y}%`,
             width: p.size,
             height: p.size,
             background: p.color,
-            boxShadow: `0 0 ${p.size * 6}px ${p.color}`,
-          }}
-          animate={{
-            y: [0, -50, 0],
-            opacity: [0.2, 1, 0.2],
-            scale: [1, 2, 1],
-          }}
-          transition={{
-            duration: p.duration,
-            repeat: Infinity,
-            delay: p.delay,
+            opacity: 0.4,
+            animationDelay: `${i * 0.2}s`,
           }}
         />
       ))}
     </div>
   );
-};
+});
 
-// Grid holográfico de fundo com efeito 3D
-const HolographicBackground = () => (
+HeroParticles.displayName = 'HeroParticles';
+
+// Grid holográfico ESTÁTICO - sem animação JS
+const HolographicBackground = memo(() => (
   <div className="absolute inset-0 overflow-hidden">
     {/* Grid principal com perspectiva */}
     <div 
-      className="absolute inset-0 opacity-15"
+      className="absolute inset-0 opacity-10"
       style={{
         backgroundImage: `
-          linear-gradient(rgba(220, 38, 38, 0.5) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(30, 64, 175, 0.5) 1px, transparent 1px)
+          linear-gradient(rgba(220, 38, 38, 0.4) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(30, 64, 175, 0.4) 1px, transparent 1px)
         `,
         backgroundSize: '60px 60px',
         transform: 'perspective(1000px) rotateX(60deg)',
@@ -75,44 +65,24 @@ const HolographicBackground = () => (
       }}
     />
     
-    {/* Ondas de energia múltiplas */}
-    <motion.div
-      className="absolute inset-0"
+    {/* Gradientes estáticos */}
+    <div
+      className="absolute inset-0 opacity-20"
       style={{
         background: 'radial-gradient(ellipse at 20% 20%, rgba(220, 38, 38, 0.3) 0%, transparent 50%)',
       }}
-      animate={{
-        opacity: [0.2, 0.5, 0.2],
-        scale: [1, 1.2, 1],
-      }}
-      transition={{ duration: 6, repeat: Infinity }}
     />
     
-    <motion.div
-      className="absolute inset-0"
+    <div
+      className="absolute inset-0 opacity-15"
       style={{
         background: 'radial-gradient(ellipse at 80% 80%, rgba(30, 64, 175, 0.3) 0%, transparent 50%)',
       }}
-      animate={{
-        opacity: [0.2, 0.4, 0.2],
-        scale: [1.1, 1, 1.1],
-      }}
-      transition={{ duration: 7, repeat: Infinity }}
-    />
-    
-    <motion.div
-      className="absolute inset-0"
-      style={{
-        background: 'radial-gradient(ellipse at 50% 50%, rgba(251, 191, 36, 0.2) 0%, transparent 40%)',
-      }}
-      animate={{
-        opacity: [0.1, 0.3, 0.1],
-        scale: [1, 1.3, 1],
-      }}
-      transition={{ duration: 5, repeat: Infinity }}
     />
   </div>
-);
+));
+
+HolographicBackground.displayName = 'HolographicBackground';
 
 // Badge animado futurista ultra premium
 const FuturisticBadge = () => (
@@ -254,53 +224,26 @@ const ProfessorCard = () => (
   </motion.div>
 );
 
-// Anéis orbitais decorativos
-const OrbitalRings = () => (
+// Anéis orbitais ESTÁTICOS - sem animação pesada
+const OrbitalRings = memo(() => (
   <>
-    {[220, 300, 380].map((size, i) => (
-      <motion.div
+    {[220, 300].map((size, i) => (
+      <div
         key={size}
         className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full"
         style={{
           width: size,
           height: size,
-          border: `${2 - i * 0.5}px solid ${i === 0 ? 'rgba(220, 38, 38, 0.4)' : i === 1 ? 'rgba(30, 64, 175, 0.3)' : 'rgba(251, 191, 36, 0.2)'}`,
-          boxShadow: `0 0 30px ${i === 0 ? 'rgba(220, 38, 38, 0.2)' : i === 1 ? 'rgba(30, 64, 175, 0.15)' : 'rgba(251, 191, 36, 0.1)'}`,
-        }}
-        animate={{ rotate: i % 2 === 0 ? 360 : -360 }}
-        transition={{ duration: 20 + i * 8, repeat: Infinity, ease: "linear" }}
-      />
-    ))}
-    
-    {/* Partículas orbitando */}
-    {[...Array(8)].map((_, i) => (
-      <motion.div
-        key={`orb-particle-${i}`}
-        className="absolute left-1/2 top-1/2 w-3 h-3 rounded-full"
-        style={{
-          background: i % 2 === 0 ? '#dc2626' : '#fbbf24',
-          boxShadow: `0 0 20px ${i % 2 === 0 ? '#dc2626' : '#fbbf24'}`,
-        }}
-        animate={{
-          x: Math.cos((i / 8) * Math.PI * 2 + Date.now() * 0.0005) * 160,
-          y: Math.sin((i / 8) * Math.PI * 2 + Date.now() * 0.0005) * 160,
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "linear",
+          border: `${2 - i * 0.5}px solid ${i === 0 ? 'rgba(220, 38, 38, 0.3)' : 'rgba(30, 64, 175, 0.2)'}`,
         }}
       />
     ))}
   </>
-);
+));
 
-export const HeroSection = () => {
-  const { scrollY } = useScroll();
-  const y = useTransform(scrollY, [0, 800], [0, 300]);
-  const opacity = useTransform(scrollY, [0, 600], [1, 0]);
-  const scale = useTransform(scrollY, [0, 600], [1, 0.85]);
+OrbitalRings.displayName = 'OrbitalRings';
 
+export const HeroSection = memo(() => {
   const [typedText, setTypedText] = useState("");
   const fullText = "Sua aprovação começa aqui!";
 
@@ -328,7 +271,7 @@ export const HeroSection = () => {
       <HolographicBackground />
       <HeroParticles />
       
-      <motion.div style={{ y, opacity, scale }} className="container mx-auto px-4 sm:px-6 relative z-10">
+      <div className="container mx-auto px-4 sm:px-6 relative z-10">
         <div className="grid lg:grid-cols-2 gap-20 items-center">
           {/* Coluna esquerda - Conteúdo */}
           <motion.div 
@@ -555,7 +498,7 @@ export const HeroSection = () => {
             </motion.div>
           </motion.div>
         </div>
-      </motion.div>
+      </div>
 
       {/* Scroll indicator épico */}
       <motion.div 
@@ -577,4 +520,6 @@ export const HeroSection = () => {
       </motion.div>
     </section>
   );
-};
+});
+
+HeroSection.displayName = 'HeroSection';
