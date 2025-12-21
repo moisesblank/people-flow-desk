@@ -1,7 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v16.0 - MASTER URL EDITOR
-// Editor de URLs/Destinos para qualquer elemento
-// Clique em qualquer link/botão/menu e edite o destino
+// MOISÉS MEDEIROS v17.0 - MASTER URL EDITOR ULTRA
+// Editor de URLs/Destinos SOBERANO para QUALQUER elemento
+// OWNER tem controle TOTAL sobre TODOS os links do sistema
+// Ctrl+Click OU Clique Simples (com modo ativo) = EDITAR
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
@@ -10,7 +11,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Check, X, Link2, ExternalLink, Globe, 
   Navigation, Sparkles, Copy, RotateCcw,
-  MousePointer, Hash, Mail, Phone, FileText
+  MousePointer, Hash, Mail, Phone, FileText,
+  Zap, Settings, Target, Edit3
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -25,9 +27,10 @@ import { cn } from '@/lib/utils';
 interface URLEditorElement {
   element: HTMLElement;
   originalHref: string;
-  elementType: 'a' | 'button' | 'div' | 'span' | 'other';
+  elementType: 'a' | 'button' | 'div' | 'span' | 'nav' | 'menu' | 'other';
   rect: DOMRect;
   contentKey?: string;
+  elementPath?: string;
 }
 
 interface SavedURL {
@@ -47,27 +50,46 @@ const URL_TYPES = [
   { value: 'email', label: 'Email', icon: Mail, prefix: 'mailto:' },
   { value: 'phone', label: 'Telefone', icon: Phone, prefix: 'tel:' },
   { value: 'file', label: 'Arquivo', icon: FileText, prefix: '' },
+  { value: 'action', label: 'Ação JavaScript', icon: Zap, prefix: 'javascript:' },
+  { value: 'whatsapp', label: 'WhatsApp', icon: Phone, prefix: 'https://wa.me/' },
 ];
 
-// Rotas internas comuns
+// Rotas internas comuns - EXPANDIDO
 const INTERNAL_ROUTES = [
-  { path: '/', label: 'Home' },
-  { path: '/dashboard', label: 'Dashboard' },
-  { path: '/alunos', label: 'Alunos' },
+  { path: '/', label: 'Home (Landing Page)' },
+  { path: '/dashboard', label: 'Dashboard Principal' },
+  { path: '/alunos', label: 'Gestão de Alunos' },
   { path: '/funcionarios', label: 'Funcionários' },
-  { path: '/afiliados', label: 'Afiliados' },
+  { path: '/afiliados', label: 'Programa de Afiliados' },
   { path: '/financas-empresa', label: 'Finanças Empresa' },
   { path: '/financas-pessoais', label: 'Finanças Pessoais' },
-  { path: '/marketing', label: 'Marketing' },
+  { path: '/marketing', label: 'Marketing Digital' },
   { path: '/cursos', label: 'Cursos' },
-  { path: '/tarefas', label: 'Tarefas' },
+  { path: '/tarefas', label: 'Gestão de Tarefas' },
   { path: '/calendario', label: 'Calendário' },
   { path: '/configuracoes', label: 'Configurações' },
   { path: '/contabilidade', label: 'Contabilidade' },
-  { path: '/ia-central', label: 'IA Central' },
-  { path: '/webhooks', label: 'Webhooks' },
+  { path: '/ia-central', label: 'IA Central / TRAMON' },
+  { path: '/webhooks', label: 'Webhooks & Integrações' },
   { path: '/monitoramento', label: 'Monitoramento' },
-  { path: '/dev', label: 'Dev Area' },
+  { path: '/dev', label: 'Área de Desenvolvimento' },
+  { path: '/login', label: 'Login' },
+  { path: '/register', label: 'Cadastro' },
+  { path: '/arquivos', label: 'Gestão de Arquivos' },
+  { path: '/relatorios', label: 'Relatórios' },
+  { path: '/certificados', label: 'Certificados' },
+  { path: '/gamificacao', label: 'Gamificação' },
+  { path: '/comunicacao', label: 'Comunicação' },
+  { path: '/vida-pessoal', label: 'Vida Pessoal (Owner)' },
+];
+
+// Links externos frequentes
+const EXTERNAL_LINKS = [
+  { url: 'https://www.moisesmedeiros.com.br', label: 'Site Principal' },
+  { url: 'https://hotmart.com', label: 'Hotmart' },
+  { url: 'https://instagram.com/profmoisesmedeiros', label: 'Instagram' },
+  { url: 'https://youtube.com/@moisesmedeiros', label: 'YouTube' },
+  { url: 'https://api.whatsapp.com/send?phone=5511999999999', label: 'WhatsApp' },
 ];
 
 export function MasterURLEditor() {
@@ -77,60 +99,102 @@ export function MasterURLEditor() {
   const [urlType, setUrlType] = useState('internal');
   const [targetBlank, setTargetBlank] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [urlEditMode, setUrlEditMode] = useState<'ctrl-click' | 'all-clicks'>('ctrl-click');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Detectar clique em elementos navegáveis com Ctrl pressionado
+  // Gerar caminho único do elemento para identificação
+  const generateElementPath = useCallback((element: HTMLElement): string => {
+    const path: string[] = [];
+    let current: HTMLElement | null = element;
+    
+    while (current && current !== document.body) {
+      let selector = current.tagName.toLowerCase();
+      if (current.id) {
+        selector += `#${current.id}`;
+      } else if (current.className && typeof current.className === 'string') {
+        const classes = current.className.split(' ').filter(c => c && !c.startsWith('hover:')).slice(0, 2);
+        if (classes.length) selector += `.${classes.join('.')}`;
+      }
+      path.unshift(selector);
+      current = current.parentElement;
+    }
+    
+    return path.join(' > ').slice(0, 200);
+  }, []);
+
+  // Detectar clique em QUALQUER elemento clicável
   useEffect(() => {
     if (!isOwner || !isActive) return;
 
     const handleClick = (e: MouseEvent) => {
-      // Ctrl+Click = editar URL
-      if (!e.ctrlKey) return;
-
       const target = e.target as HTMLElement;
       
-      // Ignorar UI do sistema
+      // Ignorar UI do sistema MASTER
       if (target.closest('[data-godmode-panel]') || 
           target.closest('[data-master-menu]') ||
-          target.closest('[data-master-url-editor]')) {
+          target.closest('[data-master-url-editor]') ||
+          target.closest('[data-radix-popper-content-wrapper]') ||
+          target.closest('.sonner-toast')) {
         return;
       }
 
-      // Procurar elemento navegável
+      // MODO: Ctrl+Click OU Alt+Click = sempre edita
+      const shouldEdit = e.ctrlKey || e.altKey;
+      if (!shouldEdit) return;
+
+      // Encontrar elemento clicável mais próximo
       const link = target.closest('a') as HTMLAnchorElement;
       const button = target.closest('button, [role="button"]') as HTMLElement;
-      const clickable = target.closest('[onclick], [data-href], [data-url]') as HTMLElement;
+      const navItem = target.closest('nav a, nav button, [data-nav-item]') as HTMLElement;
+      const menuItem = target.closest('[role="menuitem"], [data-menu-item], .menu-item') as HTMLElement;
+      const clickable = target.closest('[onclick], [data-href], [data-url], [data-action]') as HTMLElement;
+      const anyClickable = target.closest('[class*="cursor-pointer"], [class*="hover:"]') as HTMLElement;
 
       let elementToEdit: HTMLElement | null = null;
       let originalHref = '';
       let elementType: URLEditorElement['elementType'] = 'other';
 
+      // Prioridade: link > navItem > menuItem > button > clickable > any
       if (link) {
         elementToEdit = link;
         originalHref = link.href || link.getAttribute('href') || '';
         elementType = 'a';
+      } else if (navItem) {
+        elementToEdit = navItem;
+        originalHref = navItem.getAttribute('href') || navItem.dataset.href || '';
+        elementType = 'nav';
+      } else if (menuItem) {
+        elementToEdit = menuItem;
+        originalHref = menuItem.dataset.href || menuItem.dataset.url || '';
+        elementType = 'menu';
       } else if (button) {
         elementToEdit = button;
-        // Tentar extrair URL de atributos data
-        originalHref = button.dataset.href || button.dataset.url || '';
+        originalHref = button.dataset.href || button.dataset.url || button.getAttribute('formaction') || '';
         elementType = 'button';
       } else if (clickable) {
         elementToEdit = clickable;
         originalHref = clickable.dataset.href || clickable.dataset.url || '';
         elementType = 'div';
+      } else if (anyClickable && (anyClickable.onclick || anyClickable.getAttribute('onclick'))) {
+        elementToEdit = anyClickable;
+        originalHref = '';
+        elementType = 'span';
       }
 
+      // Se encontrou elemento, abrir editor
       if (elementToEdit) {
         e.preventDefault();
         e.stopPropagation();
         e.stopImmediatePropagation();
 
         const rect = elementToEdit.getBoundingClientRect();
+        const elementPath = generateElementPath(elementToEdit);
         
-        // Gerar key única para o elemento
+        // Gerar key persistente baseada no caminho
         const elementId = elementToEdit.id || '';
-        const elementText = elementToEdit.innerText?.slice(0, 30)?.replace(/[^a-zA-Z0-9]/g, '_') || '';
-        const contentKey = `url_${elementType}_${elementId || elementText}_${Date.now()}`;
+        const elementText = elementToEdit.innerText?.slice(0, 20)?.replace(/[^a-zA-Z0-9]/g, '_') || '';
+        const pathHash = elementPath.split('').reduce((a, b) => ((a << 5) - a) + b.charCodeAt(0), 0).toString(36);
+        const contentKey = `url_${elementType}_${elementId || elementText}_${pathHash}`;
 
         setEditingElement({
           element: elementToEdit,
@@ -138,9 +202,10 @@ export function MasterURLEditor() {
           elementType,
           rect,
           contentKey,
+          elementPath,
         });
 
-        // Detectar tipo de URL
+        // Detectar tipo de URL existente
         if (originalHref.startsWith('/')) {
           setUrlType('internal');
           setUrlValue(originalHref);
@@ -153,27 +218,44 @@ export function MasterURLEditor() {
         } else if (originalHref.startsWith('#')) {
           setUrlType('anchor');
           setUrlValue(originalHref);
-        } else {
+        } else if (originalHref.includes('wa.me') || originalHref.includes('whatsapp')) {
+          setUrlType('whatsapp');
+          setUrlValue(originalHref.replace(/https?:\/\/wa\.me\//, '').replace(/https?:\/\/api\.whatsapp\.com\/send\?phone=/, ''));
+        } else if (originalHref.startsWith('javascript:')) {
+          setUrlType('action');
+          setUrlValue(originalHref.replace('javascript:', ''));
+        } else if (originalHref) {
           setUrlType('external');
           setUrlValue(originalHref);
+        } else {
+          // Sem URL - padrão interno
+          setUrlType('internal');
+          setUrlValue('');
         }
 
         setTargetBlank(elementToEdit.getAttribute('target') === '_blank');
 
+        // Highlight visual
         elementToEdit.style.outline = '3px solid hsl(280 80% 50%)';
-        elementToEdit.style.outlineOffset = '3px';
+        elementToEdit.style.outlineOffset = '4px';
+        elementToEdit.style.transition = 'outline 0.2s ease';
 
-        console.log('🔗 Elemento de URL selecionado:', {
+        console.log('🔗 MASTER URL Editor - Elemento capturado:', {
           type: elementType,
           href: originalHref,
           element: elementToEdit.tagName,
+          path: elementPath,
+          key: contentKey,
         });
+
+        toast.info('🔗 Elemento selecionado para edição de URL', { duration: 1500 });
       }
     };
 
+    // Capturar no fase de captura para máxima prioridade
     document.addEventListener('click', handleClick, true);
     return () => document.removeEventListener('click', handleClick, true);
-  }, [isOwner, isActive]);
+  }, [isOwner, isActive, generateElementPath]);
 
   // Focar input ao abrir
   useEffect(() => {

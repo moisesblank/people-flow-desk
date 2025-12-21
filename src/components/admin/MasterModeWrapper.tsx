@@ -1,11 +1,13 @@
 // ============================================
-// MOISÉS MEDEIROS v16.0 - MASTER MODE WRAPPER
+// MOISÉS MEDEIROS v17.0 - MASTER MODE WRAPPER
 // Wrapper global para o sistema de edição MASTER
-// Integra todos os componentes de edição em tempo real
+// Integra TODOS os componentes de controle do OWNER
 // + Menu Contextual (Adicionar, Duplicar, Remover)
 // + Undo/Redo + Delete Button Universal
-// + Editor de URLs/Destinos (Ctrl+Click)
-// Owner: moisesblank@gmail.com
+// + Editor de URLs/Destinos (Ctrl+Click / Alt+Click)
+// + Painel Flutuante de Controle Total
+// + Organizador de Seções com Drag & Drop
+// Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
 import { useEffect, useCallback, useState } from 'react';
@@ -19,6 +21,7 @@ import { MasterContextMenu } from './MasterContextMenu';
 import { MasterAddModal } from './MasterAddModal';
 import { MasterUndoIndicator } from './MasterUndoIndicator';
 import { MasterURLEditor } from './MasterURLEditor';
+import { MasterFloatingPanel } from './MasterFloatingPanel';
 import { EditModeToggle } from '@/components/editor/EditModeToggle';
 import { toast } from 'sonner';
 
@@ -37,6 +40,9 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
   // Estado para modal de adicionar
   const [addModalOpen, setAddModalOpen] = useState(false);
   const [addModalType, setAddModalType] = useState<string>('');
+  
+  // Estado para painel flutuante MASTER
+  const [masterPanelOpen, setMasterPanelOpen] = useState(false);
 
   // Listener para abrir modal de adicionar
   useEffect(() => {
@@ -205,13 +211,11 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
     <>
       {children}
       
-      {/* Botão de toggle do modo master */}
+      {/* Painel Flutuante MASTER - Controle Total */}
       {isOwner && (
-        <EditModeToggle
-          isEditMode={isActive}
-          canEdit={isOwner}
-          onToggle={toggle}
-          isGodMode={isActive}
+        <MasterFloatingPanel
+          isOpen={masterPanelOpen}
+          onToggle={() => setMasterPanelOpen(!masterPanelOpen)}
         />
       )}
       
@@ -221,7 +225,7 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
       {/* Menu contextual (clique direito) */}
       <MasterContextMenu />
       
-      {/* Editor de URLs/Destinos (Ctrl+Click) */}
+      {/* Editor de URLs/Destinos (Ctrl+Click / Alt+Click) */}
       <MasterURLEditor />
       
       {/* Modal para adicionar novos itens */}
