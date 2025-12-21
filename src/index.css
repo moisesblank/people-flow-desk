@@ -854,3 +854,83 @@
 .editor-panel-content {
   @apply p-4 max-h-[60vh] overflow-y-auto;
 }
+
+/* ============================================
+   VIDEO PLAYER 2300 - ANIMAÇÕES ULTRA LEVES
+   ============================================ */
+
+/* Gradiente cônico para borda animada */
+.bg-gradient-conic {
+  background: conic-gradient(from 0deg, #ec4899, #8b5cf6, #3b82f6, #10b981, #ec4899);
+}
+
+/* Gradiente cônico com rotação via variável */
+@property --rotation {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
+}
+
+/* Float animation suave */
+@keyframes float-smooth {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1deg); }
+}
+
+.animate-float-smooth {
+  animation: float-smooth 4s ease-in-out infinite;
+}
+
+/* Glow pulsante para logo */
+@keyframes logo-glow {
+  0%, 100% { 
+    filter: drop-shadow(0 0 20px rgba(220, 38, 38, 0.5));
+  }
+  50% { 
+    filter: drop-shadow(0 0 40px rgba(220, 38, 38, 0.8)) drop-shadow(0 0 60px rgba(236, 72, 153, 0.4));
+  }
+}
+
+.animate-logo-glow {
+  animation: logo-glow 3s ease-in-out infinite;
+}
+
+/* Scan line futurista */
+@keyframes scan-line {
+  0% { transform: translateY(-100%); opacity: 0; }
+  50% { opacity: 0.6; }
+  100% { transform: translateY(500%); opacity: 0; }
+}
+
+.animate-scan {
+  animation: scan-line 4s linear infinite;
+}
+
+/* Border rotation - CSS puro (mais leve que framer-motion) */
+@keyframes border-rotate {
+  from { --rotation: 0deg; }
+  to { --rotation: 360deg; }
+}
+
+/* Otimização para mobile - reduz animações */
+@media (prefers-reduced-motion: reduce) {
+  .animate-spin-slow,
+  .animate-gradient-x,
+  .animate-pulse-slow,
+  .animate-ping-slow,
+  .animate-ping-slower,
+  .animate-float,
+  .animate-logo-glow {
+    animation: none !important;
+  }
+}
+
+/* Mobile: animações mais leves */
+@media (max-width: 768px) {
+  .animate-spin-slow {
+    animation-duration: 30s !important;
+  }
+  .animate-gradient-x {
+    animation-duration: 6s !important;
+  }
+}

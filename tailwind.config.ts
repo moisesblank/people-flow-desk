@@ -168,6 +168,27 @@ export default {
         "dash": {
           to: { strokeDashoffset: "0" },
         },
+        // Animações ULTRA LEVES para video player 2300
+        "spin-slow": {
+          from: { transform: "rotate(0deg)" },
+          to: { transform: "rotate(360deg)" },
+        },
+        "gradient-x": {
+          "0%, 100%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+        },
+        "pulse-slow": {
+          "0%, 100%": { opacity: "0.4", transform: "scale(1)" },
+          "50%": { opacity: "0.8", transform: "scale(1.1)" },
+        },
+        "ping-slow": {
+          "0%": { transform: "scale(1)", opacity: "0.8" },
+          "75%, 100%": { transform: "scale(1.5)", opacity: "0" },
+        },
+        "ping-slower": {
+          "0%": { transform: "scale(1)", opacity: "0.5" },
+          "75%, 100%": { transform: "scale(2)", opacity: "0" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -181,6 +202,12 @@ export default {
         "shimmer": "shimmer 2s linear infinite",
         "web-swing": "web-swing 3s ease-in-out infinite",
         "dash": "dash 3s ease-in-out forwards",
+        // Animações ULTRA LEVES para video player 2300
+        "spin-slow": "spin-slow 15s linear infinite",
+        "gradient-x": "gradient-x 3s ease infinite",
+        "pulse-slow": "pulse-slow 4s ease-in-out infinite",
+        "ping-slow": "ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "ping-slower": "ping-slower 3s cubic-bezier(0, 0, 0.2, 1) infinite",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
