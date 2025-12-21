@@ -3192,6 +3192,93 @@ export type Database = {
         }
         Relationships: []
       }
+      event_consumers: {
+        Row: {
+          config: Json | null
+          consumer_name: string
+          created_at: string | null
+          error_count: number | null
+          event_types: Database["public"]["Enums"]["event_name"][]
+          id: string
+          is_active: boolean | null
+          last_processed_at: string | null
+          last_processed_event_id: number | null
+        }
+        Insert: {
+          config?: Json | null
+          consumer_name: string
+          created_at?: string | null
+          error_count?: number | null
+          event_types: Database["public"]["Enums"]["event_name"][]
+          id?: string
+          is_active?: boolean | null
+          last_processed_at?: string | null
+          last_processed_event_id?: number | null
+        }
+        Update: {
+          config?: Json | null
+          consumer_name?: string
+          created_at?: string | null
+          error_count?: number | null
+          event_types?: Database["public"]["Enums"]["event_name"][]
+          id?: string
+          is_active?: boolean | null
+          last_processed_at?: string | null
+          last_processed_event_id?: number | null
+        }
+        Relationships: []
+      }
+      events: {
+        Row: {
+          created_at: string
+          entity_id: string | null
+          entity_type: string | null
+          error_message: string | null
+          id: number
+          max_retries: number | null
+          name: Database["public"]["Enums"]["event_name"]
+          payload: Json
+          processed_at: string | null
+          processed_by: string | null
+          retry_count: number | null
+          status: Database["public"]["Enums"]["event_status"]
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          id?: number
+          max_retries?: number | null
+          name: Database["public"]["Enums"]["event_name"]
+          payload?: Json
+          processed_at?: string | null
+          processed_by?: string | null
+          retry_count?: number | null
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_id?: string | null
+          entity_type?: string | null
+          error_message?: string | null
+          id?: number
+          max_retries?: number | null
+          name?: Database["public"]["Enums"]["event_name"]
+          payload?: Json
+          processed_at?: string | null
+          processed_by?: string | null
+          retry_count?: number | null
+          status?: Database["public"]["Enums"]["event_status"]
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       facebook_ads_metrics: {
         Row: {
           alcance: number | null
@@ -8953,6 +9040,42 @@ export type Database = {
           },
         ]
       }
+      xp_rules: {
+        Row: {
+          action: Database["public"]["Enums"]["event_name"]
+          created_at: string | null
+          description: string | null
+          id: string
+          is_active: boolean | null
+          max_daily_occurrences: number | null
+          multiplier_streak: number | null
+          updated_at: string | null
+          xp_amount: number
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["event_name"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_daily_occurrences?: number | null
+          multiplier_streak?: number | null
+          updated_at?: string | null
+          xp_amount: number
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["event_name"]
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          is_active?: boolean | null
+          max_daily_occurrences?: number | null
+          multiplier_streak?: number | null
+          updated_at?: string | null
+          xp_amount?: number
+        }
+        Relationships: []
+      }
       youtube_live_attendance: {
         Row: {
           aluno_id: string | null
@@ -9549,12 +9672,35 @@ export type Database = {
         }
         Returns: boolean
       }
+      claim_next_event: {
+        Args: {
+          p_consumer_name: string
+          p_event_types: Database["public"]["Enums"]["event_name"][]
+        }
+        Returns: {
+          created_at: string
+          entity_id: string
+          entity_type: string
+          event_id: number
+          event_name: Database["public"]["Enums"]["event_name"]
+          payload: Json
+          user_id: string
+        }[]
+      }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
       cleanup_expired_signed_urls: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      complete_event: {
+        Args: {
+          p_error_message?: string
+          p_event_id: number
+          p_success?: boolean
+        }
+        Returns: boolean
+      }
       comprehensive_security_cleanup: { Args: never; Returns: undefined }
       count_entity_attachments: {
         Args: { p_entity_id: string; p_entity_type: string }
@@ -9766,6 +9912,15 @@ export type Database = {
         Args: { p_error: string; p_webhook_id: string }
         Returns: string
       }
+      publish_event: {
+        Args: {
+          p_entity_id?: string
+          p_entity_type?: string
+          p_name: Database["public"]["Enums"]["event_name"]
+          p_payload?: Json
+        }
+        Returns: number
+      }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
       register_device_with_limit: {
         Args: {
@@ -9854,6 +10009,38 @@ export type Database = {
         | "beta"
         | "aluno_gratuito"
       employee_status: "ativo" | "ferias" | "afastado" | "inativo"
+      event_name:
+        | "payment.succeeded"
+        | "payment.failed"
+        | "payment.refunded"
+        | "lesson.started"
+        | "lesson.completed"
+        | "quiz.started"
+        | "quiz.passed"
+        | "quiz.failed"
+        | "correct.answer"
+        | "wrong.answer"
+        | "daily.login"
+        | "streak.achieved"
+        | "level.up"
+        | "badge.earned"
+        | "certificate.generated"
+        | "access.granted"
+        | "access.expired"
+        | "access.revoked"
+        | "user.registered"
+        | "user.upgraded"
+        | "churn.risk.detected"
+        | "ai.prediction.made"
+        | "webhook.received"
+        | "notification.sent"
+        | "content.viewed"
+      event_status:
+        | "pending"
+        | "processing"
+        | "processed"
+        | "failed"
+        | "retrying"
       expense_category:
         | "comida"
         | "casa"
@@ -10022,6 +10209,40 @@ export const Constants = {
         "aluno_gratuito",
       ],
       employee_status: ["ativo", "ferias", "afastado", "inativo"],
+      event_name: [
+        "payment.succeeded",
+        "payment.failed",
+        "payment.refunded",
+        "lesson.started",
+        "lesson.completed",
+        "quiz.started",
+        "quiz.passed",
+        "quiz.failed",
+        "correct.answer",
+        "wrong.answer",
+        "daily.login",
+        "streak.achieved",
+        "level.up",
+        "badge.earned",
+        "certificate.generated",
+        "access.granted",
+        "access.expired",
+        "access.revoked",
+        "user.registered",
+        "user.upgraded",
+        "churn.risk.detected",
+        "ai.prediction.made",
+        "webhook.received",
+        "notification.sent",
+        "content.viewed",
+      ],
+      event_status: [
+        "pending",
+        "processing",
+        "processed",
+        "failed",
+        "retrying",
+      ],
       expense_category: [
         "comida",
         "casa",
