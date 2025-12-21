@@ -214,107 +214,201 @@ const useInteractionGuardian = (containerRef: React.RefObject<HTMLDivElement>) =
 };
 
 // ============================================
-// CAMADA 3: MARCA D'ÁGUA DINÂMICA (Anti-Gravação)
+// CAMADA 3: MARCA D'ÁGUA DINÂMICA v2.0 (Anti-Gravação AVANÇADA)
+// CPF translúcido + posições variáveis + tempos aleatórios
+// Autorização do Arquiteto: 21/12/2024
 // ============================================
+
+interface WatermarkPosition {
+  x: string;
+  y: string;
+  rotation: number;
+  opacity: number;
+}
+
+// Gera posições aleatórias para a marca d'água
+const generateRandomPositions = (): WatermarkPosition[] => {
+  const positions: WatermarkPosition[] = [
+    { x: "5%", y: "10%", rotation: -5, opacity: 0.12 },
+    { x: "70%", y: "15%", rotation: 3, opacity: 0.10 },
+    { x: "15%", y: "45%", rotation: -3, opacity: 0.08 },
+    { x: "60%", y: "50%", rotation: 5, opacity: 0.11 },
+    { x: "25%", y: "75%", rotation: -2, opacity: 0.09 },
+    { x: "75%", y: "80%", rotation: 4, opacity: 0.10 },
+    { x: "40%", y: "25%", rotation: 0, opacity: 0.07 },
+    { x: "50%", y: "65%", rotation: -4, opacity: 0.08 },
+  ];
+  return positions;
+};
+
+// Tempos de transição variáveis (10, 20, 30 segundos alternados)
+const TRANSITION_TIMES = [10, 20, 30];
+
 const DynamicWatermark = ({ userData }: { userData: UserWatermarkData }) => {
-  const maskCPF = (cpf: string) => {
-    if (!cpf || cpf.length < 6) return cpf;
-    return `${cpf.slice(0, 3)}.***.***-${cpf.slice(-2)}`;
+  const [currentPositionIndex, setCurrentPositionIndex] = useState(0);
+  const [positions] = useState(generateRandomPositions);
+  const [transitionTimeIndex, setTransitionTimeIndex] = useState(0);
+  
+  // Formatação do CPF - translúcido mas visível para identificação
+  const formatCPFForWatermark = (cpf: string) => {
+    if (!cpf || cpf.length < 11) return cpf;
+    // Formato: 123.456.789-00 (completo para identificação anti-pirataria)
+    const cleaned = cpf.replace(/\D/g, '');
+    if (cleaned.length === 11) {
+      return `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6, 9)}-${cleaned.slice(9, 11)}`;
+    }
+    return cpf;
   };
 
-  const watermarkText = [
-    userData.nome || "",
-    userData.cpf ? maskCPF(userData.cpf) : "",
-    userData.email || "",
-  ].filter(Boolean).join(" • ");
+  // Timer para mudar posição em tempos variáveis (10, 20, 30 segundos)
+  useEffect(() => {
+    const currentTime = TRANSITION_TIMES[transitionTimeIndex];
+    
+    const timer = setTimeout(() => {
+      setCurrentPositionIndex((prev) => (prev + 1) % positions.length);
+      setTransitionTimeIndex((prev) => (prev + 1) % TRANSITION_TIMES.length);
+    }, currentTime * 1000);
 
-  if (!watermarkText) return null;
+    return () => clearTimeout(timer);
+  }, [currentPositionIndex, transitionTimeIndex, positions.length]);
+
+  const watermarkCPF = userData.cpf ? formatCPFForWatermark(userData.cpf) : "";
+  const watermarkName = userData.nome || "";
+  const watermarkEmail = userData.email || "";
+
+  if (!watermarkCPF && !watermarkName && !watermarkEmail) return null;
+
+  const currentPos = positions[currentPositionIndex];
+  const nextPos = positions[(currentPositionIndex + 1) % positions.length];
 
   return (
     <>
-      {/* Marca d'água posição 1 - Superior esquerda, movimento diagonal */}
+      {/* Marca d'água principal com CPF - Move entre posições */}
       <motion.div
         className="absolute z-[55] pointer-events-none select-none"
-        initial={{ x: "5%", y: "15%" }}
+        initial={{ x: currentPos.x, y: currentPos.y, rotate: currentPos.rotation }}
         animate={{
-          x: ["5%", "15%", "5%"],
-          y: ["15%", "25%", "15%"],
+          x: [currentPos.x, nextPos.x],
+          y: [currentPos.y, nextPos.y],
+          rotate: [currentPos.rotation, nextPos.rotation],
         }}
         transition={{
-          duration: 30,
-          repeat: Infinity,
+          duration: TRANSITION_TIMES[transitionTimeIndex],
           ease: "easeInOut",
         }}
-        style={{
-          textShadow: "0 0 2px rgba(0,0,0,0.5)",
+        key={`main-${currentPositionIndex}`}
+      >
+        <div className="flex flex-col items-center gap-0.5">
+          {/* CPF - Principal identificador */}
+          {watermarkCPF && (
+            <span 
+              className="font-mono tracking-[0.2em] whitespace-nowrap text-[11px] sm:text-sm"
+              style={{
+                color: `rgba(255, 255, 255, ${currentPos.opacity + 0.05})`,
+                textShadow: "0 0 3px rgba(0,0,0,0.4)",
+              }}
+            >
+              {watermarkCPF}
+            </span>
+          )}
+          {/* Nome do usuário */}
+          {watermarkName && (
+            <span 
+              className="font-mono tracking-widest whitespace-nowrap text-[9px] sm:text-[10px]"
+              style={{
+                color: `rgba(255, 255, 255, ${currentPos.opacity})`,
+                textShadow: "0 0 2px rgba(0,0,0,0.3)",
+              }}
+            >
+              {watermarkName.toUpperCase()}
+            </span>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Segunda marca d'água - posição oposta, tempo diferente */}
+      <motion.div
+        className="absolute z-[55] pointer-events-none select-none"
+        initial={{ 
+          x: positions[(currentPositionIndex + 4) % positions.length].x, 
+          y: positions[(currentPositionIndex + 4) % positions.length].y 
+        }}
+        animate={{
+          x: [
+            positions[(currentPositionIndex + 4) % positions.length].x,
+            positions[(currentPositionIndex + 5) % positions.length].x,
+          ],
+          y: [
+            positions[(currentPositionIndex + 4) % positions.length].y,
+            positions[(currentPositionIndex + 5) % positions.length].y,
+          ],
+          opacity: [0.06, 0.10, 0.06],
+        }}
+        transition={{
+          duration: TRANSITION_TIMES[(transitionTimeIndex + 1) % TRANSITION_TIMES.length] * 1.5,
+          ease: "easeInOut",
         }}
       >
-        <span className="text-white/20 text-[10px] sm:text-xs font-mono tracking-widest whitespace-nowrap">
-          {watermarkText}
+        <span 
+          className="font-mono tracking-[0.15em] whitespace-nowrap text-[10px] sm:text-xs transform rotate-[-3deg]"
+          style={{
+            color: "rgba(255, 255, 255, 0.08)",
+            textShadow: "0 0 2px rgba(0,0,0,0.3)",
+          }}
+        >
+          {watermarkCPF || watermarkEmail}
         </span>
       </motion.div>
 
-      {/* Marca d'água posição 2 - Centro direita, movimento vertical */}
+      {/* Terceira marca d'água - Centro, pulsa suavemente */}
       <motion.div
         className="absolute z-[55] pointer-events-none select-none"
-        initial={{ x: "60%", y: "45%" }}
+        style={{ left: "50%", top: "50%", transform: "translate(-50%, -50%)" }}
         animate={{
-          x: ["60%", "65%", "60%"],
-          y: ["45%", "55%", "45%"],
+          opacity: [0.04, 0.08, 0.04],
+          scale: [1, 1.02, 1],
         }}
         transition={{
-          duration: 25,
+          duration: 20,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 5,
-        }}
-        style={{
-          textShadow: "0 0 2px rgba(0,0,0,0.5)",
         }}
       >
-        <span className="text-white/15 text-[10px] sm:text-xs font-mono tracking-widest whitespace-nowrap transform rotate-[-5deg]">
-          {watermarkText}
+        <span 
+          className="font-mono tracking-[0.4em] whitespace-nowrap text-sm sm:text-base"
+          style={{
+            color: "rgba(255, 255, 255, 0.06)",
+            textShadow: "0 0 4px rgba(0,0,0,0.2)",
+          }}
+        >
+          {watermarkName.toUpperCase()}
         </span>
       </motion.div>
 
-      {/* Marca d'água posição 3 - Inferior central, movimento horizontal */}
+      {/* Quarta marca d'água - Canto inferior, alterna com delay */}
       <motion.div
         className="absolute z-[55] pointer-events-none select-none"
-        initial={{ x: "25%", y: "75%" }}
+        initial={{ x: "80%", y: "85%" }}
         animate={{
-          x: ["25%", "40%", "25%"],
-          y: ["75%", "70%", "75%"],
+          x: ["80%", "10%", "80%"],
+          y: ["85%", "88%", "85%"],
+          opacity: [0.07, 0.11, 0.07],
         }}
         transition={{
-          duration: 35,
+          duration: 45,
           repeat: Infinity,
           ease: "easeInOut",
-          delay: 10,
-        }}
-        style={{
-          textShadow: "0 0 2px rgba(0,0,0,0.5)",
+          delay: 15,
         }}
       >
-        <span className="text-white/18 text-[9px] sm:text-[11px] font-mono tracking-widest whitespace-nowrap transform rotate-[3deg]">
-          {watermarkText}
-        </span>
-      </motion.div>
-
-      {/* Marca d'água posição 4 - Centro, muito sutil */}
-      <motion.div
-        className="absolute z-[55] pointer-events-none select-none"
-        initial={{ x: "35%", y: "50%" }}
-        animate={{
-          opacity: [0.08, 0.12, 0.08],
-        }}
-        transition={{
-          duration: 15,
-          repeat: Infinity,
-          ease: "easeInOut",
-        }}
-      >
-        <span className="text-white/10 text-sm sm:text-base font-mono tracking-[0.3em] whitespace-nowrap">
-          {userData.nome?.toUpperCase() || ""}
+        <span 
+          className="font-mono tracking-widest whitespace-nowrap text-[8px] sm:text-[9px]"
+          style={{
+            color: "rgba(255, 255, 255, 0.09)",
+            textShadow: "0 0 2px rgba(0,0,0,0.3)",
+          }}
+        >
+          {watermarkCPF} • {new Date().toLocaleDateString('pt-BR')}
         </span>
       </motion.div>
     </>
