@@ -52,106 +52,102 @@ const useDevToolsProtection = () => {
 };
 
 // ============================================
-// CAMADA 4: BLOQUEIO DE ATALHOS (JavaScript)
+// CAMADA 2: O GUARDIÃO DA INTERAÇÃO (JavaScript)
+// Bloqueia todas as tentativas de interação maliciosa
 // ============================================
-const useKeyboardProtection = (containerRef: React.RefObject<HTMLDivElement>) => {
+const useInteractionGuardian = (containerRef: React.RefObject<HTMLDivElement>) => {
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Bloquear Ctrl+S (Salvar)
-      if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+    const wrapper = containerRef.current;
+    if (!wrapper) return;
+
+    // 1. Bloquear menu de contexto (botão direito)
+    const blockContextMenu = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    // 2. Bloquear arrastar e soltar
+    const blockDrag = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    // 3. Bloquear seleção de texto
+    const blockSelect = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    // 4. Bloquear cópia
+    const blockCopy = (e: Event) => {
+      e.preventDefault();
+      e.stopPropagation();
+      return false;
+    };
+
+    // 5. Bloquear atalhos de teclado perigosos
+    const blockShortcuts = (e: KeyboardEvent) => {
+      const isCtrl = e.ctrlKey || e.metaKey;
+      const isShift = e.shiftKey;
+      const key = e.key.toLowerCase();
+
+      // Ctrl+S (Salvar), Ctrl+P (Print), Ctrl+C (Copiar), Ctrl+U (View Source)
+      if (isCtrl && (key === "s" || key === "p" || key === "c" || key === "u")) {
         e.preventDefault();
+        e.stopPropagation();
         return false;
       }
-      
-      // Bloquear Ctrl+Shift+I (DevTools)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "I") {
-        e.preventDefault();
-        return false;
-      }
-      
-      // Bloquear Ctrl+Shift+J (Console)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "J") {
-        e.preventDefault();
-        return false;
-      }
-      
-      // Bloquear Ctrl+U (View Source)
-      if ((e.ctrlKey || e.metaKey) && e.key === "u") {
-        e.preventDefault();
-        return false;
-      }
-      
-      // Bloquear F12
+
+      // F12 (DevTools)
       if (e.key === "F12") {
         e.preventDefault();
+        e.stopPropagation();
         return false;
       }
-      
-      // Bloquear Ctrl+Shift+C (Inspect Element)
-      if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "C") {
+
+      // Ctrl+Shift+I (Inspect), Ctrl+Shift+J (Console), Ctrl+Shift+C (Select Element)
+      if (isCtrl && isShift && (key === "i" || key === "j" || key === "c")) {
         e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+
+      // Ctrl+Shift+K (Firefox Console)
+      if (isCtrl && isShift && key === "k") {
+        e.preventDefault();
+        e.stopPropagation();
+        return false;
+      }
+
+      // Alt+Cmd+I (Mac DevTools)
+      if (e.altKey && e.metaKey && key === "i") {
+        e.preventDefault();
+        e.stopPropagation();
         return false;
       }
     };
 
-    const container = containerRef.current;
-    if (container) {
-      container.addEventListener("keydown", handleKeyDown);
-    }
-    
-    // Também no document para captura global
-    document.addEventListener("keydown", handleKeyDown);
+    // Adicionar listeners ao wrapper
+    wrapper.addEventListener("contextmenu", blockContextMenu);
+    wrapper.addEventListener("dragstart", blockDrag);
+    wrapper.addEventListener("selectstart", blockSelect);
+    wrapper.addEventListener("copy", blockCopy);
 
+    // Adicionar listener global para atalhos de teclado
+    window.addEventListener("keydown", blockShortcuts);
+
+    // Cleanup
     return () => {
-      if (container) {
-        container.removeEventListener("keydown", handleKeyDown);
-      }
-      document.removeEventListener("keydown", handleKeyDown);
+      wrapper.removeEventListener("contextmenu", blockContextMenu);
+      wrapper.removeEventListener("dragstart", blockDrag);
+      wrapper.removeEventListener("selectstart", blockSelect);
+      wrapper.removeEventListener("copy", blockCopy);
+      window.removeEventListener("keydown", blockShortcuts);
     };
   }, [containerRef]);
-};
-
-// ============================================
-// CAMADA 3: BLOQUEIO DE CLIQUES (JavaScript)
-// ============================================
-const useClickProtection = (containerRef: React.RefObject<HTMLDivElement>) => {
-  const handleContextMenu = useCallback((e: Event) => {
-    e.preventDefault();
-    e.stopPropagation();
-    return false;
-  }, []);
-
-  const handleDragStart = useCallback((e: Event) => {
-    e.preventDefault();
-    return false;
-  }, []);
-
-  const handleSelectStart = useCallback((e: Event) => {
-    e.preventDefault();
-    return false;
-  }, []);
-
-  const handleCopy = useCallback((e: Event) => {
-    e.preventDefault();
-    return false;
-  }, []);
-
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
-
-    container.addEventListener("contextmenu", handleContextMenu);
-    container.addEventListener("dragstart", handleDragStart);
-    container.addEventListener("selectstart", handleSelectStart);
-    container.addEventListener("copy", handleCopy);
-
-    return () => {
-      container.removeEventListener("contextmenu", handleContextMenu);
-      container.removeEventListener("dragstart", handleDragStart);
-      container.removeEventListener("selectstart", handleSelectStart);
-      container.removeEventListener("copy", handleCopy);
-    };
-  }, [containerRef, handleContextMenu, handleDragStart, handleSelectStart, handleCopy]);
 };
 
 // ============================================
@@ -169,8 +165,7 @@ export const FortressPlayerWrapper = ({
 
   // Ativar todas as camadas de proteção
   useDevToolsProtection();
-  useKeyboardProtection(containerRef);
-  useClickProtection(containerRef);
+  useInteractionGuardian(containerRef);
 
   return (
     <div
