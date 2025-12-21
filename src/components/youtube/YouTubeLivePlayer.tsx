@@ -3,7 +3,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Play, Users, Radio, ExternalLink, Maximize2, 
   MessageSquare, Heart, Share2, Bell, Volume2, VolumeX,
-  ChevronDown, ChevronUp, Clock
+  ChevronDown, ChevronUp, Clock, Shield
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useYouTubeLivePlayer } from '@/hooks/useYouTubeLive';
 import { cn } from '@/lib/utils';
+import { ProtectedVideoWrapper } from '@/components/video/ProtectedVideoWrapper';
 
 interface YouTubeLivePlayerProps {
   videoId?: string;
@@ -89,7 +90,7 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
     );
   }
 
-  const embedSrc = `https://www.youtube.com/embed/${activeVideoId}?autoplay=${autoplay ? 1 : 0}&rel=0&modestbranding=1&mute=${isMuted ? 1 : 0}`;
+  const embedSrc = `https://www.youtube.com/embed/${activeVideoId}?autoplay=${autoplay ? 1 : 0}&rel=0&modestbranding=1&mute=${isMuted ? 1 : 0}&vq=hd1080&showinfo=0&iv_load_policy=3`;
   const chatSrc = `https://www.youtube.com/live_chat?v=${activeVideoId}&embed_domain=${window.location.hostname}`;
 
   return (
@@ -163,7 +164,7 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
           "relative bg-black",
           showChatPanel ? "lg:flex-1" : "w-full"
         )}>
-          <div className="aspect-video">
+          <ProtectedVideoWrapper className="aspect-video">
             <iframe
               src={embedSrc}
               className="w-full h-full"
@@ -171,7 +172,7 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
               allowFullScreen
               title={title || 'YouTube Live'}
             />
-          </div>
+          </ProtectedVideoWrapper>
 
           {/* Live indicator overlay */}
           {isLive && (

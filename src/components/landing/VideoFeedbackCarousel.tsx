@@ -1,6 +1,7 @@
 // ============================================
 // VIDEO FEEDBACK CAROUSEL - EX-ALUNOS REAIS
 // Carrossel automático horizontal com vídeos do YouTube
+// COM PROTEÇÃO ANTI-COMPARTILHAMENTO
 // ============================================
 
 import { useState, useEffect, useRef } from "react";
@@ -14,8 +15,10 @@ import {
   Sparkles,
   Users,
   X,
-  ExternalLink
+  ExternalLink,
+  Shield
 } from "lucide-react";
+import { ProtectedVideoWrapper, getProtectedYouTubeUrl } from "@/components/video/ProtectedVideoWrapper";
 
 // Lista de vídeos de feedback dos ex-alunos
 const feedbackVideos = [
@@ -228,14 +231,14 @@ const VideoModal = ({
             transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
           />
           
-          <div className="relative aspect-video rounded-xl overflow-hidden bg-black">
+          <ProtectedVideoWrapper className="relative aspect-video rounded-xl overflow-hidden bg-black">
             <iframe
-              src={`https://www.youtube.com/embed/${video.id}?autoplay=1&rel=0&modestbranding=1&vq=hd1080`}
+              src={getProtectedYouTubeUrl(video.id, true)}
               className="w-full h-full"
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
-          </div>
+          </ProtectedVideoWrapper>
           
           {/* Close Button */}
           <motion.button
