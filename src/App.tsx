@@ -21,6 +21,7 @@ import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { SessionGuard } from "@/components/security/SessionGuard";
+import { DeviceGuard } from "@/components/security/DeviceGuard";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 
@@ -88,6 +89,7 @@ const ArquivosEmpresariais = lazy(() => import("./pages/empresas/ArquivosEmpresa
 const RHFuncionarios = lazy(() => import("./pages/empresas/RHFuncionarios"));
 const ReceitasEmpresariais = lazy(() => import("./pages/empresas/ReceitasEmpresariais"));
 const Perfil = lazy(() => import("./pages/Perfil"));
+const GestaoDispositivos = lazy(() => import("./pages/GestaoDispositivos"));
 
 // Lazy load heavy components (DOGMA VIII)
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
@@ -159,7 +161,9 @@ const AppContent = memo(() => {
     <>
       {/* 🛡️ DOGMA I: Guarda de Sessão Única */}
       <SessionGuard>
-        <SessionTracker />
+        {/* 🛡️ DOGMA XI: Guarda de Limite de Dispositivos */}
+        <DeviceGuard>
+          <SessionTracker />
       
       {/* Heavy components - deferred loading */}
       <Suspense fallback={null}>
@@ -249,10 +253,14 @@ const AppContent = memo(() => {
           <Route path="/empresas/arquivos" element={<ProtectedPage><ArquivosEmpresariais /></ProtectedPage>} />
           <Route path="/empresas/rh" element={<ProtectedPage><RHFuncionarios /></ProtectedPage>} />
           
+          {/* 🛡️ DOGMA XI: Gestão de Dispositivos */}
+          <Route path="/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
+          
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+        </DeviceGuard>
       </SessionGuard>
     </>
   );

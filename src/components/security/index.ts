@@ -6,6 +6,10 @@
 // DOGMA I - Sessão Única
 export { SessionGuard } from './SessionGuard';
 
+// DOGMA XI - Controle de Dispositivos
+export { DeviceGuard } from './DeviceGuard';
+export { DeviceLimitModal } from './DeviceLimitModal';
+
 // DOGMA III - Proteção de Conteúdo
 export { ProtectedPDFViewer } from './ProtectedPDFViewer';
 
