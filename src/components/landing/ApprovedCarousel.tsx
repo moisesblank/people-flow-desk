@@ -27,12 +27,22 @@ import aprovado7 from "@/assets/aprovados/aprovado-7.png";
 import aprovado8 from "@/assets/aprovados/aprovado-8.png";
 import aprovado9 from "@/assets/aprovados/aprovado-9.png";
 import aprovado10 from "@/assets/aprovados/aprovado-10.png";
+import aprovado11 from "@/assets/aprovados/aprovado-11.png";
+import aprovado12 from "@/assets/aprovados/aprovado-12.png";
+import aprovado13 from "@/assets/aprovados/aprovado-13.png";
+import aprovado14 from "@/assets/aprovados/aprovado-14.png";
+import aprovado15 from "@/assets/aprovados/aprovado-15.png";
+import aprovado16 from "@/assets/aprovados/aprovado-16.png";
+import aprovado17 from "@/assets/aprovados/aprovado-17.png";
+import aprovado18 from "@/assets/aprovados/aprovado-18.png";
+import aprovado19 from "@/assets/aprovados/aprovado-19.png";
+import aprovado20 from "@/assets/aprovados/aprovado-20.png";
 
 // Lista de alunos aprovados
 const approvedStudents = [
   { id: 1, image: aprovado1, nome: "Ailton Filho", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "O Professor Moisés mudou minha vida! Aprovei em 1º lugar!" },
   { id: 2, image: aprovado2, nome: "Artur Leal", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Método incrível, didática perfeita!" },
-  { id: 3, image: aprovado3, nome: "Carlos Cauã Cavalvanti", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "A plataforma é sensacional, IA me ajudou muito!" },
+  { id: 3, image: aprovado3, nome: "Carlos Cauã Cavalcanti", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "A plataforma é sensacional, IA me ajudou muito!" },
   { id: 4, image: aprovado4, nome: "Arthur Sodré", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Gratidão eterna ao Prof. Moisés!" },
   { id: 5, image: aprovado5, nome: "Beatriz Mamede", curso: "Medicina", universidade: "UFCG", ano: "2K24", feedback: "Sonho realizado graças a essa metodologia!" },
   { id: 6, image: aprovado6, nome: "Arthur Antônio", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Melhor investimento da minha vida!" },
@@ -40,6 +50,16 @@ const approvedStudents = [
   { id: 8, image: aprovado8, nome: "Maria Clara", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Prof. Moisés é simplesmente o melhor!" },
   { id: 9, image: aprovado9, nome: "Ana Clara Nóbrega", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "A IA do curso me deu um diferencial imenso!" },
   { id: 10, image: aprovado10, nome: "Ana Beatriz Aires", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Recomendo de olhos fechados!" },
+  { id: 11, image: aprovado11, nome: "Marina Costa Soares", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "O método é revolucionário! Aprovei na primeira tentativa!" },
+  { id: 12, image: aprovado12, nome: "Dante Leonardo", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Professor incrível, conteúdo de altíssima qualidade!" },
+  { id: 13, image: aprovado13, nome: "Maria Eduarda Tomaz", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "A IA e os simulados fizeram toda diferença!" },
+  { id: 14, image: aprovado14, nome: "Sophia Bueno", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Dedicação e método certo = aprovação garantida!" },
+  { id: 15, image: aprovado15, nome: "Maria Cecília Neiva", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Flashcards e mapas mentais são incríveis!" },
+  { id: 16, image: aprovado16, nome: "Henrique Mariz", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Só tenho a agradecer! Sonho realizado!" },
+  { id: 17, image: aprovado17, nome: "Maria Beatriz", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Plataforma completa, preparação total!" },
+  { id: 18, image: aprovado18, nome: "Luiza Marcelle", curso: "Medicina", universidade: "UFBA", ano: "2K24", feedback: "6º lugar geral! Obrigada Prof. Moisés!" },
+  { id: 19, image: aprovado19, nome: "Josué Nunes", curso: "Medicina", universidade: "UFRN", ano: "2K24", feedback: "O cronograma inteligente foi essencial!" },
+  { id: 20, image: aprovado20, nome: "Jonattas Gabriel", curso: "Medicina", universidade: "UFRN", ano: "2K24", feedback: "Método transformador! Aprovei em medicina!" },
 ];
 
 // Card de aluno aprovado
