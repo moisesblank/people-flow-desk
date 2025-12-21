@@ -37,6 +37,16 @@ import aprovado17 from "@/assets/aprovados/aprovado-17.png";
 import aprovado18 from "@/assets/aprovados/aprovado-18.png";
 import aprovado19 from "@/assets/aprovados/aprovado-19.png";
 import aprovado20 from "@/assets/aprovados/aprovado-20.png";
+import aprovado21 from "@/assets/aprovados/aprovado-21.png";
+import aprovado22 from "@/assets/aprovados/aprovado-22.png";
+import aprovado23 from "@/assets/aprovados/aprovado-23.png";
+import aprovado24 from "@/assets/aprovados/aprovado-24.png";
+import aprovado25 from "@/assets/aprovados/aprovado-25.png";
+import aprovado26 from "@/assets/aprovados/aprovado-26.png";
+import aprovado27 from "@/assets/aprovados/aprovado-27.png";
+import aprovado28 from "@/assets/aprovados/aprovado-28.png";
+import aprovado29 from "@/assets/aprovados/aprovado-29.png";
+import aprovado30 from "@/assets/aprovados/aprovado-30.png";
 
 // Lista de alunos aprovados
 const approvedStudents = [
@@ -60,6 +70,16 @@ const approvedStudents = [
   { id: 18, image: aprovado18, nome: "Luiza Marcelle", curso: "Medicina", universidade: "UFBA", ano: "2K24", feedback: "6º lugar geral! Obrigada Prof. Moisés!" },
   { id: 19, image: aprovado19, nome: "Josué Nunes", curso: "Medicina", universidade: "UFRN", ano: "2K24", feedback: "O cronograma inteligente foi essencial!" },
   { id: 20, image: aprovado20, nome: "Jonattas Gabriel", curso: "Medicina", universidade: "UFRN", ano: "2K24", feedback: "Método transformador! Aprovei em medicina!" },
+  { id: 21, image: aprovado21, nome: "Ylanne Barra", curso: "Medicina", universidade: "UFBA", ano: "2K24", feedback: "Química nunca foi tão fácil! Aprovada!" },
+  { id: 22, image: aprovado22, nome: "Alice Lima", curso: "Medicina", universidade: "UERN", ano: "2K24", feedback: "Prof. Moisés é sensacional! Gratidão eterna!" },
+  { id: 23, image: aprovado23, nome: "Ana Luiza", curso: "Medicina", universidade: "UFMA", ano: "2K24", feedback: "O curso mais completo que já vi! Aprovada!" },
+  { id: 24, image: aprovado24, nome: "Harley Dantas", curso: "Medicina", universidade: "UFRJ", ano: "2K24", feedback: "Dedicação + método = aprovação na Federal!" },
+  { id: 25, image: aprovado25, nome: "Joseilton Dias", curso: "Medicina", universidade: "UFCG", ano: "2K24", feedback: "Nunca desista! O Prof. Moisés me provou isso!" },
+  { id: 26, image: aprovado26, nome: "Luísa Furtado", curso: "Medicina", universidade: "UFRN", ano: "2K24", feedback: "A IA do curso é incrível! Me ajudou demais!" },
+  { id: 27, image: aprovado27, nome: "Ana Clara", curso: "Medicina", universidade: "UFRN", ano: "2K24", feedback: "Sonho realizado! Obrigada Prof. Moisés!" },
+  { id: 28, image: aprovado28, nome: "Ana Beatriz", curso: "Medicina", universidade: "UFRN", ano: "2K24", feedback: "Metodologia perfeita para quem quer ser aprovado!" },
+  { id: 29, image: aprovado29, nome: "Igor Evangelista", curso: "Medicina", universidade: "UFCG", ano: "2K24", feedback: "Foco, força e Prof. Moisés = aprovação!" },
+  { id: 30, image: aprovado30, nome: "Gitana Keila", curso: "Medicina", universidade: "UERN", ano: "2K24", feedback: "O melhor investimento da minha vida foi esse curso!" },
 ];
 
 // Card de aluno aprovado
