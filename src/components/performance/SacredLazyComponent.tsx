@@ -1,7 +1,7 @@
 // ============================================
-// ⚡ EVANGELHO DA VELOCIDADE v2.0 ⚡
+// ⚡ EVANGELHO DA VELOCIDADE v3.0 ⚡
 // DOGMA III.2: LAZY LOADING DE COMPONENTES
-// React.lazy + Suspense otimizados
+// ANO 2300 - Carregamento Quântico
 // ============================================
 
 import React, { 
@@ -71,13 +71,13 @@ export function createLazyComponent<T extends ComponentType<any>>(
   
   return memo(function WrappedLazyComponent(props: React.ComponentProps<T>) {
     const { tier } = usePerformanceTier();
-    const [shouldLoad, setShouldLoad] = useState(tier === 'divine');
+    const [shouldLoad, setShouldLoad] = useState(tier === 'quantum');
     
-    // Delay de carregamento para dispositivos lentos
+    // Delay de carregamento para dispositivos lentos (v3.0 tiers)
     useEffect(() => {
       if (shouldLoad) return;
       
-      const delayMap = { divine: 0, blessed: 50, mortal: 100, challenged: 200 };
+      const delayMap = { quantum: 0, neural: 25, enhanced: 50, standard: 100, legacy: 200 };
       const timer = setTimeout(() => setShouldLoad(true), delayMap[tier]);
       
       return () => clearTimeout(timer);
@@ -138,7 +138,8 @@ export function withLazyLoading<P extends object>(
     const { tier } = usePerformanceTier();
     
     useEffect(() => {
-      const delay = options?.delay ?? (tier === 'challenged' ? 200 : 50);
+      // v3.0 tier mapping
+      const delay = options?.delay ?? (tier === 'legacy' ? 200 : 50);
       const timer = setTimeout(() => setIsVisible(true), delay);
       return () => clearTimeout(timer);
     }, [tier]);
