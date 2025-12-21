@@ -103,8 +103,28 @@ export function usePendingFlashcards() {
   const { user } = useAuth();
   return useQuery({
     queryKey: ['pending-flashcards', user?.id],
-    queryFn: async () => ({ count: 12, dueToday: 8, newCards: 4 }),
+    queryFn: async () => {
+      const today = new Date().toISOString().split('T')[0];
+      
+      // Cards devido hoje
+      const { data: dueCards } = await supabase
+        .from('study_flashcards')
+        .select('id, state')
+        .eq('user_id', user!.id)
+        .lte('due_date', today);
+      
+      const cards = dueCards || [];
+      const newCards = cards.filter(c => c.state === 'new').length;
+      
+      return { 
+        count: cards.length, 
+        dueToday: cards.length - newCards, 
+        newCards 
+      };
+    },
     enabled: !!user?.id,
+    staleTime: 30000,
+    refetchInterval: 60000,
   });
 }
 
