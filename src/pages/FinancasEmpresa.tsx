@@ -540,7 +540,7 @@ export default function FinancasEmpresa() {
   };
 
   const handleStatusChange = async (item: any, newStatus: string) => {
-    console.log('[FINANÇAS] Atualizando status:', { id: item.id, itemType: item.itemType, newStatus });
+    console.log('[FINANÇAS] Atualizando status:', { id: item.id, itemType: item.itemType, newStatus, item });
     
     const statusLabels: Record<string, string> = {
       pago: '✅ PAGO',
@@ -551,12 +551,29 @@ export default function FinancasEmpresa() {
     const loadingToast = toast.loading(`Atualizando para ${statusLabels[newStatus] || newStatus}...`);
     
     try {
-      // Usar função RPC SECURITY DEFINER para garantir o update
-      const { data, error } = await supabase.rpc('update_expense_status', {
-        p_expense_id: typeof item.id === 'string' ? parseInt(item.id) : item.id,
+      // Garantir que o ID é número para gastos
+      const expenseId = typeof item.id === 'string' ? parseInt(item.id, 10) : Number(item.id);
+      
+      if (isNaN(expenseId)) {
+        toast.dismiss(loadingToast);
+        toast.error('ID inválido para atualização');
+        console.error('[FINANÇAS] ID inválido:', item.id);
+        return;
+      }
+
+      console.log('[FINANÇAS] Chamando RPC com:', {
+        p_expense_id: expenseId,
         p_expense_type: item.itemType,
         p_new_status: newStatus,
-        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : null,
+        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : undefined,
+      });
+      
+      // Usar função RPC SECURITY DEFINER para garantir o update
+      const { data, error } = await supabase.rpc('update_expense_status', {
+        p_expense_id: expenseId,
+        p_expense_type: item.itemType,
+        p_new_status: newStatus,
+        p_data_pagamento: newStatus === 'pago' ? format(new Date(), "yyyy-MM-dd") : undefined,
       });
       
       toast.dismiss(loadingToast);
@@ -583,6 +600,7 @@ export default function FinancasEmpresa() {
           await companyFinance.refresh();
         }
       } else {
+        console.error('[FINANÇAS] RPC retornou erro:', result);
         toast.error(result?.error || 'Erro desconhecido ao atualizar');
       }
       
