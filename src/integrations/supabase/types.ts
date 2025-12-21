@@ -1573,15 +1573,20 @@ export type Database = {
           created_at: string | null
           created_by: string | null
           data_fechamento: string | null
+          data_fim_recorrencia: string | null
+          data_inicio_recorrencia: string | null
           data_pagamento: string | null
           data_vencimento: string | null
           dia: number | null
           fechado: boolean | null
           fechado_por: string | null
+          gasto_origem_id: number | null
           id: number
+          is_projecao: boolean | null
           mes: number | null
           nome: string
           observacoes_pagamento: string | null
+          recorrente: boolean | null
           semana: number | null
           status_pagamento: string | null
           updated_at: string | null
@@ -1593,15 +1598,20 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           data_fechamento?: string | null
+          data_fim_recorrencia?: string | null
+          data_inicio_recorrencia?: string | null
           data_pagamento?: string | null
           data_vencimento?: string | null
           dia?: number | null
           fechado?: boolean | null
           fechado_por?: string | null
+          gasto_origem_id?: number | null
           id?: number
+          is_projecao?: boolean | null
           mes?: number | null
           nome: string
           observacoes_pagamento?: string | null
+          recorrente?: boolean | null
           semana?: number | null
           status_pagamento?: string | null
           updated_at?: string | null
@@ -1613,15 +1623,20 @@ export type Database = {
           created_at?: string | null
           created_by?: string | null
           data_fechamento?: string | null
+          data_fim_recorrencia?: string | null
+          data_inicio_recorrencia?: string | null
           data_pagamento?: string | null
           data_vencimento?: string | null
           dia?: number | null
           fechado?: boolean | null
           fechado_por?: string | null
+          gasto_origem_id?: number | null
           id?: number
+          is_projecao?: boolean | null
           mes?: number | null
           nome?: string
           observacoes_pagamento?: string | null
+          recorrente?: boolean | null
           semana?: number | null
           status_pagamento?: string | null
           updated_at?: string | null
@@ -10547,6 +10562,26 @@ export type Database = {
         Args: { emp_salary: number; emp_user_id: string }
         Returns: number
       }
+      get_projected_fixed_expenses: {
+        Args: { p_end_date: string; p_start_date: string }
+        Returns: {
+          ano: number
+          categoria: string
+          created_at: string
+          data_pagamento: string
+          data_vencimento: string
+          dia: number
+          gasto_origem_id: number
+          id: number
+          is_projecao: boolean
+          mes: number
+          nome: string
+          recorrente: boolean
+          semana: number
+          status_pagamento: string
+          valor: number
+        }[]
+      }
       get_quiz_questions_for_student: {
         Args: { p_quiz_id: string }
         Returns: {
@@ -10646,6 +10681,10 @@ export type Database = {
       }
       mask_email: { Args: { p_email: string }; Returns: string }
       mask_phone: { Args: { p_phone: string }; Returns: string }
+      materialize_fixed_expense: {
+        Args: { p_ano: number; p_gasto_origem_id: number; p_mes: number }
+        Returns: number
+      }
       move_to_dead_letter_queue: {
         Args: { p_error: string; p_webhook_id: string }
         Returns: string

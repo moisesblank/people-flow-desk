@@ -43,6 +43,12 @@ export interface CompanyExpense {
   data_vencimento?: string | null;
   data_pagamento?: string | null;
   observacoes_pagamento?: string | null;
+  // Campos de recorrência
+  recorrente?: boolean;
+  is_projecao?: boolean;
+  gasto_origem_id?: number | null;
+  data_inicio_recorrencia?: string | null;
+  data_fim_recorrencia?: string | null;
 }
 
 export interface CompanyMonthlyClosure {
@@ -167,9 +173,19 @@ export function useCompanyFinanceHistory() {
     return years;
   }, []);
 
-  // Buscar gastos fixos
+  // Buscar gastos fixos COM projeção automática para meses seguintes
   const fetchFixedExpenses = useCallback(async () => {
     try {
+      // Primeiro buscar todos os gastos fixos base (recorrentes)
+      const { data: baseExpenses, error: baseError } = await supabase
+        .from("company_fixed_expenses")
+        .select("*")
+        .eq("recorrente", true)
+        .order("created_at", { ascending: false });
+
+      if (baseError) throw baseError;
+
+      // Buscar gastos específicos do período selecionado
       let query = supabase
         .from("company_fixed_expenses")
         .select("*")
@@ -181,13 +197,118 @@ export function useCompanyFinanceHistory() {
         query = query.eq("ano", selectedYear);
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
+      const { data: periodExpenses, error: periodError } = await query;
+      if (periodError) throw periodError;
 
-      setFixedExpenses((data || []).map((e: any) => ({
-        ...e,
-        type: 'fixed' as const
-      })));
+      // Gerar projeções automáticas para gastos recorrentes
+      const projectedExpenses: CompanyExpense[] = [];
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      const currentMonth = now.getMonth() + 1;
+
+      // Para cada gasto recorrente base, verificar se precisa projetar
+      (baseExpenses || []).forEach((base: any) => {
+        // Definir range de projeção baseado no período
+        let startYear = selectedYear;
+        let startMonth = selectedMonth;
+        let endYear = selectedYear;
+        let endMonth = selectedMonth;
+
+        if (period === "ano") {
+          startMonth = 1;
+          endMonth = 12;
+        } else if (period === "10anos") {
+          startYear = currentYear - 10;
+          endYear = currentYear + 1;
+          startMonth = 1;
+          endMonth = 12;
+        } else if (period === "50anos") {
+          startYear = currentYear - 50;
+          endYear = currentYear + 1;
+          startMonth = 1;
+          endMonth = 12;
+        } else if (period === "hoje" || period === "semana") {
+          startYear = currentYear;
+          endYear = currentYear;
+          startMonth = currentMonth;
+          endMonth = currentMonth;
+        }
+
+        // Data de início da recorrência
+        const recStartDate = base.data_inicio_recorrencia 
+          ? new Date(base.data_inicio_recorrencia) 
+          : new Date(base.ano || currentYear, (base.mes || currentMonth) - 1, 1);
+        
+        const recEndDate = base.data_fim_recorrencia 
+          ? new Date(base.data_fim_recorrencia) 
+          : null;
+
+        // Projetar para cada mês no range
+        for (let y = startYear; y <= endYear; y++) {
+          const mStart = y === startYear ? startMonth : 1;
+          const mEnd = y === endYear ? endMonth : 12;
+          
+          for (let m = mStart; m <= mEnd; m++) {
+            const projDate = new Date(y, m - 1, 1);
+            
+            // Verificar se está dentro do período de recorrência
+            if (projDate < recStartDate) continue;
+            if (recEndDate && projDate > recEndDate) continue;
+            
+            // Verificar se já existe registro real para este mês
+            const existsReal = (periodExpenses || []).some((e: any) => 
+              e.nome === base.nome && 
+              e.valor === base.valor && 
+              e.ano === y && 
+              e.mes === m
+            );
+            
+            if (!existsReal) {
+              // Criar projeção
+              projectedExpenses.push({
+                id: -(base.id * 10000 + y * 100 + m), // ID negativo único
+                nome: base.nome,
+                valor: base.valor,
+                categoria: base.categoria,
+                ano: y,
+                mes: m,
+                dia: base.dia || 1,
+                semana: Math.ceil((base.dia || 1) / 7),
+                status_pagamento: 'pendente',
+                data_vencimento: `${y}-${String(m).padStart(2, '0')}-${String(Math.min(base.dia || 1, 28)).padStart(2, '0')}`,
+                data_pagamento: null,
+                type: 'fixed',
+                recorrente: true,
+                is_projecao: true,
+                gasto_origem_id: base.id,
+                created_at: base.created_at,
+              });
+            }
+          }
+        }
+      });
+
+      // Combinar gastos reais + projeções
+      const allExpenses = [
+        ...(periodExpenses || []).map((e: any) => ({
+          ...e,
+          type: 'fixed' as const,
+          is_projecao: false,
+        })),
+        ...projectedExpenses
+      ];
+
+      // Remover duplicatas (preferir reais sobre projeções)
+      const uniqueMap = new Map<string, CompanyExpense>();
+      allExpenses.forEach(exp => {
+        const key = `${exp.nome}-${exp.valor}-${exp.ano}-${exp.mes}`;
+        const existing = uniqueMap.get(key);
+        if (!existing || (existing.is_projecao && !exp.is_projecao)) {
+          uniqueMap.set(key, exp);
+        }
+      });
+
+      setFixedExpenses(Array.from(uniqueMap.values()));
     } catch (error) {
       console.error("Error fetching fixed expenses:", error);
     }
@@ -613,6 +734,58 @@ export function useCompanyFinanceHistory() {
     }
   }, [refresh]);
 
+  // Materializar projeção (criar registro real a partir de uma projeção)
+  const materializeProjection = useCallback(async (expense: CompanyExpense) => {
+    if (!expense.is_projecao || !expense.gasto_origem_id) {
+      toast.error('Este não é um gasto projetado');
+      return null;
+    }
+
+    try {
+      // Buscar gasto original
+      const { data: original, error: origError } = await supabase
+        .from('company_fixed_expenses')
+        .select('*')
+        .eq('id', expense.gasto_origem_id)
+        .single();
+
+      if (origError || !original) {
+        throw new Error('Gasto original não encontrado');
+      }
+
+      // Criar registro real
+      const { data: newExpense, error: insertError } = await supabase
+        .from('company_fixed_expenses')
+        .insert({
+          nome: original.nome,
+          valor: original.valor,
+          categoria: original.categoria,
+          ano: expense.ano,
+          mes: expense.mes,
+          dia: original.dia || 1,
+          semana: Math.ceil((original.dia || 1) / 7),
+          status_pagamento: 'pendente',
+          data_vencimento: expense.data_vencimento,
+          recorrente: true,
+          gasto_origem_id: original.id,
+          is_projecao: false,
+          created_by: original.created_by,
+        })
+        .select()
+        .single();
+
+      if (insertError) throw insertError;
+
+      toast.success(`✅ Gasto "${original.nome}" criado para ${expense.mes}/${expense.ano}`);
+      await refresh();
+      return newExpense;
+    } catch (error: any) {
+      console.error('Error materializing projection:', error);
+      toast.error(error.message || 'Erro ao criar gasto');
+      return null;
+    }
+  }, [refresh]);
+
   return {
     // Estado
     period,
@@ -643,6 +816,7 @@ export function useCompanyFinanceHistory() {
     closeYear,
     refresh,
     updatePaymentStatus,
+    materializeProjection,
     
     // Helpers
     isMonthClosed,
