@@ -1,7 +1,7 @@
 // ============================================
 // DASHBOARD EMPRESARIAL - ERP COMPLETO
 // Visão 360º das Empresas com KPIs e Gráficos
-// DESPESAS = GASTOS FIXOS + GASTOS EXTRAS
+// DESPESAS = GASTOS FIXOS + GASTOS EXTRAS (SINCRONIZADO COM FINANÇAS EMPRESA)
 // LUCRO LÍQUIDO EM TEMPO REAL
 // ============================================
 
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useCompanyFinanceHistory } from "@/hooks/useCompanyFinanceHistory";
 import { 
   TrendingUp, TrendingDown, DollarSign, Users, AlertCircle, 
   Building2, PieChart, BarChart3, ArrowUpRight, ArrowDownRight,
@@ -80,28 +81,33 @@ export default function DashboardEmpresarial() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // ============================================
-  // BUSCAR DADOS FINANCEIROS - SINCRONIZADO COM FINANÇAS EMPRESA
-  // MESMAS TABELAS: company_fixed_expenses + company_extra_expenses
+  // USAR O MESMO HOOK DE FINANÇAS EMPRESA
+  // SINCRONIZADO COM company_fixed_expenses + company_extra_expenses
+  // INCLUI PROJEÇÕES AUTOMÁTICAS DE GASTOS RECORRENTES
   // ============================================
-  const { data: financeiro, refetch } = useQuery({
-    queryKey: ["dashboard-empresarial-completo", periodo],
+  const { 
+    stats, 
+    fixedExpenses, 
+    extraExpenses, 
+    entradas,
+    period,
+    setPeriod,
+    isLoading: isLoadingFinance
+  } = useCompanyFinanceHistory();
+
+  // Sincronizar período do dashboard com o hook
+  useEffect(() => {
+    if (periodo === "semana") setPeriod("semana");
+    else if (periodo === "mes") setPeriod("mes");
+    else if (periodo === "ano") setPeriod("ano");
+  }, [periodo, setPeriod]);
+
+  // ============================================
+  // BUSCAR DADOS COMPLEMENTARES (funcionários, alunos, evolução)
+  // ============================================
+  const { data: dadosComplementares, refetch: refetchComplementares } = useQuery({
+    queryKey: ["dashboard-empresarial-complementar", periodo],
     queryFn: async () => {
-      // Receitas (tabela entradas) - em centavos
-      const { data: entradas } = await supabase
-        .from("entradas")
-        .select("valor, created_at, categoria")
-        .order("created_at", { ascending: false });
-
-      // GASTOS FIXOS EMPRESA (tabela principal de Finanças Empresa)
-      const { data: gastosFixos } = await supabase
-        .from("company_fixed_expenses")
-        .select("valor, nome, categoria, status_pagamento");
-
-      // GASTOS EXTRAS EMPRESA (tabela principal de Finanças Empresa)
-      const { data: gastosExtras } = await supabase
-        .from("company_extra_expenses")
-        .select("valor, nome, categoria, data, status_pagamento");
-
       // Funcionários ativos
       const { count: funcionarios } = await supabase
         .from("employees")
@@ -114,74 +120,22 @@ export default function DashboardEmpresarial() {
         .select("*", { count: "exact", head: true })
         .eq("status", "ativo");
 
-      // ============================================
-      // CÁLCULOS - IDÊNTICOS AOS DE FINANÇAS EMPRESA
-      // DESPESAS = GASTOS FIXOS + GASTOS EXTRAS (apenas)
-      // ============================================
-      const totalReceitas = entradas?.reduce((acc, e) => acc + Number(e.valor || 0), 0) || 0;
-      
-      // Somar APENAS gastos das tabelas company_*
-      const totalGastosFixos = gastosFixos?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
-      const totalGastosExtras = gastosExtras?.reduce((acc, g) => acc + Number(g.valor || 0), 0) || 0;
-
-      // DESPESAS TOTAIS = MESMO VALOR DE TOTAL GASTOS EM FINANÇAS EMPRESA
-      const totalDespesas = totalGastosFixos + totalGastosExtras;
-      
-      // Por status de pagamento
-      const allGastos = [...(gastosFixos || []), ...(gastosExtras || [])];
-      const totalPago = allGastos
-        .filter(g => g.status_pagamento === 'pago')
-        .reduce((acc, g) => acc + Number(g.valor || 0), 0);
-      const totalPendente = allGastos
-        .filter(g => g.status_pagamento === 'pendente' || !g.status_pagamento)
-        .reduce((acc, g) => acc + Number(g.valor || 0), 0);
-      const totalAtrasado = allGastos
-        .filter(g => g.status_pagamento === 'atrasado')
-        .reduce((acc, g) => acc + Number(g.valor || 0), 0);
-      
-      // LUCRO LÍQUIDO REAL
-      const lucroLiquido = totalReceitas - totalDespesas;
-      const margem = totalReceitas > 0 ? ((lucroLiquido / totalReceitas) * 100).toFixed(1) : "0";
-
-      // Agrupar por categoria para gráfico
-      const categoriasDespesas: Record<string, number> = {};
-      
-      gastosFixos?.forEach(g => {
-        const cat = g.categoria || "Fixos";
-        categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + Number(g.valor || 0);
-      });
-      
-      gastosExtras?.forEach(g => {
-        const cat = g.categoria || "Extras";
-        categoriasDespesas[cat] = (categoriasDespesas[cat] || 0) + Number(g.valor || 0);
-      });
-
-      const gastosPorCategoria = Object.entries(categoriasDespesas).map(([name, value]) => ({
-        name,
-        value
-      }));
-
-      // =====================================================
-      // AUDITORIA: Evolução mensal com dados REAIS do banco
-      // Buscar fechamentos mensais ou calcular em tempo real
-      // =====================================================
-      const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      // Buscar fechamentos mensais para evolução
       const anoAtual = new Date().getFullYear();
       const mesAtual = new Date().getMonth();
       
-      // Buscar fechamentos mensais
       const { data: fechamentosMensais } = await supabase
         .from("company_monthly_closures")
         .select("*")
         .eq("ano", anoAtual)
         .order("mes", { ascending: true });
 
-      // Construir evolução mensal a partir de fechamentos reais
+      // Construir evolução mensal
+      const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
       const evolucaoMensal = meses.slice(0, mesAtual + 1).map((mes, index) => {
         const fechamento = fechamentosMensais?.find(f => f.mes === index + 1);
         
         if (fechamento) {
-          // Usar dados do fechamento
           return {
             mes,
             receitas: Number(fechamento.total_receitas || 0) / 100,
@@ -190,83 +144,84 @@ export default function DashboardEmpresarial() {
           };
         }
         
-        // Para o mês atual, usar dados calculados
+        // Mês atual - usar stats do hook
         if (index === mesAtual) {
           return {
             mes,
-            receitas: totalReceitas / 100,
-            despesas: totalDespesas / 100,
-            lucro: lucroLiquido / 100
+            receitas: stats.totalReceitas / 100,
+            despesas: stats.totalGastos / 100,
+            lucro: stats.saldo / 100
           };
         }
         
-        // Sem dados para este mês
         return { mes, receitas: 0, despesas: 0, lucro: 0 };
-      }).filter(m => m.receitas > 0 || m.despesas > 0); // Mostrar apenas meses com dados
+      }).filter(m => m.receitas > 0 || m.despesas > 0);
 
-      // Calcular crescimento real (comparar com mês anterior)
+      // Calcular crescimento
       let crescimentoReceita = 0;
       let crescimentoDespesas = 0;
       
       if (fechamentosMensais && fechamentosMensais.length > 0) {
-        const mesAnterior = fechamentosMensais.find(f => f.mes === mesAtual); // mês anterior (0-indexed vs 1-indexed)
-        if (mesAnterior && totalReceitas > 0) {
+        const mesAnterior = fechamentosMensais.find(f => f.mes === mesAtual);
+        if (mesAnterior && stats.totalReceitas > 0) {
           const receitaAnterior = Number(mesAnterior.total_receitas || 0);
           const despesaAnterior = Number(mesAnterior.total_gastos_fixos || 0) + Number(mesAnterior.total_gastos_extras || 0);
           
           if (receitaAnterior > 0) {
-            crescimentoReceita = ((totalReceitas - receitaAnterior) / receitaAnterior) * 100;
+            crescimentoReceita = ((stats.totalReceitas - receitaAnterior) / receitaAnterior) * 100;
           }
           if (despesaAnterior > 0) {
-            crescimentoDespesas = ((totalDespesas - despesaAnterior) / despesaAnterior) * 100;
+            crescimentoDespesas = ((stats.totalGastos - despesaAnterior) / despesaAnterior) * 100;
           }
         }
       }
 
       return {
-        totalReceitas,
-        totalDespesas,
-        totalGastosFixos,
-        totalGastosExtras,
-        totalPago,
-        totalPendente,
-        totalAtrasado,
-        lucroLiquido,
-        margem,
         funcionarios: funcionarios || 0,
         alunos: alunos || 0,
-        gastosPorCategoria,
         evolucaoMensal,
         crescimentoReceita,
         crescimentoDespesas,
-        alertas: [
-          ...(lucroLiquido < 0 ? [{ titulo: "Lucro Negativo", descricao: "As despesas superaram as receitas este mês" }] : []),
-          ...(totalAtrasado > 0 ? [{ titulo: "Pagamentos Atrasados", descricao: `R$ ${(totalAtrasado / 100).toLocaleString('pt-BR')} em despesas atrasadas` }] : [])
-        ]
       };
     },
-    refetchInterval: 10000, // Atualiza a cada 10 segundos
+    refetchInterval: 10000,
   });
+
+  // Agrupar gastos por categoria (do hook)
+  const gastosPorCategoria = [...fixedExpenses, ...extraExpenses].reduce((acc, g) => {
+    const cat = g.categoria || (g.type === 'fixed' ? 'Fixos' : 'Extras');
+    const existing = acc.find(c => c.name === cat);
+    if (existing) {
+      existing.value += Number(g.valor || 0);
+    } else {
+      acc.push({ name: cat, value: Number(g.valor || 0) });
+    }
+    return acc;
+  }, [] as { name: string; value: number }[]);
+
+  // Alertas baseados nos stats do hook
+  const alertas = [
+    ...(stats.saldo < 0 ? [{ titulo: "Lucro Negativo", descricao: "As despesas superaram as receitas este mês" }] : []),
+    ...(stats.totalAtrasado > 0 ? [{ titulo: "Pagamentos Atrasados", descricao: `R$ ${(stats.totalAtrasado / 100).toLocaleString('pt-BR')} em despesas atrasadas` }] : [])
+  ];
 
   // Realtime subscription
   useEffect(() => {
     const channel = supabase
       .channel('dashboard-empresarial-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_fixed_expenses' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_extra_expenses' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'transactions' }, () => refetch())
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'contas_pagar' }, () => refetch())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'entradas' }, () => refetchComplementares())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_fixed_expenses' }, () => refetchComplementares())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'company_extra_expenses' }, () => refetchComplementares())
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetch]);
+  }, [refetchComplementares]);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
-    await refetch();
+    await refetchComplementares();
     setTimeout(() => setIsRefreshing(false), 500);
   };
 
@@ -274,8 +229,13 @@ export default function DashboardEmpresarial() {
     return new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
-    }).format(value);
+    }).format(value / 100); // Dividir por 100 pois valores estão em centavos
   };
+
+  // Margem de lucro
+  const margem = stats.totalReceitas > 0 
+    ? ((stats.saldo / stats.totalReceitas) * 100).toFixed(1) 
+    : "0";
 
   return (
     <div className="min-h-screen bg-background p-6 space-y-6">
@@ -287,7 +247,7 @@ export default function DashboardEmpresarial() {
             Dashboard Empresarial
           </h1>
           <p className="text-muted-foreground mt-1">
-            Visão 360º • 2 CNPJs ativos • Tempo Real
+            Visão 360º • 2 CNPJs ativos • Tempo Real • Sincronizado com Finanças Empresa
           </p>
         </div>
         
@@ -315,69 +275,74 @@ export default function DashboardEmpresarial() {
         </div>
       </div>
 
-      {/* KPIs Principais */}
+      {/* KPIs Principais - USANDO STATS DO HOOK */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <MetricCard
           title="Receita Total"
-          value={formatCurrency(financeiro?.totalReceitas || 0)}
-          change={financeiro?.crescimentoReceita}
+          value={formatCurrency(stats.totalReceitas)}
+          change={dadosComplementares?.crescimentoReceita}
           icon={DollarSign}
           color="primary"
         />
         <MetricCard
           title="Despesas Totais"
-          value={formatCurrency(financeiro?.totalDespesas || 0)}
-          change={financeiro?.crescimentoDespesas}
+          value={formatCurrency(stats.totalGastos)}
+          change={dadosComplementares?.crescimentoDespesas}
           icon={CreditCard}
-          description={`Fixos: ${formatCurrency(financeiro?.totalGastosFixos || 0)} | Extras: ${formatCurrency(financeiro?.totalGastosExtras || 0)}`}
+          description={`Fixos: ${formatCurrency(stats.totalGastosFixos)} | Extras: ${formatCurrency(stats.totalGastosExtras)}`}
         />
         <MetricCard
           title="Lucro Líquido"
-          value={formatCurrency(financeiro?.lucroLiquido || 0)}
+          value={formatCurrency(stats.saldo)}
           icon={Banknote}
-          description={`Margem: ${financeiro?.margem}%`}
-          color={(financeiro?.lucroLiquido || 0) >= 0 ? "green" : "red"}
+          description={`Margem: ${margem}%`}
+          color={stats.saldo >= 0 ? "green" : "red"}
         />
         <MetricCard
           title="Funcionários Ativos"
-          value={String(financeiro?.funcionarios || 0)}
+          value={String(dadosComplementares?.funcionarios || 0)}
           icon={Users}
-          description={`${financeiro?.alunos || 0} alunos ativos`}
+          description={`${dadosComplementares?.alunos || 0} alunos ativos`}
         />
       </div>
 
-      {/* Detalhamento de Despesas */}
+      {/* Detalhamento de Despesas - USANDO STATS DO HOOK */}
       <Card className="border-primary/20">
         <CardHeader className="pb-2">
           <CardTitle className="text-lg flex items-center gap-2">
             <Wallet className="h-5 w-5 text-primary" />
-            Composição das Despesas
+            Composição das Despesas (Sincronizado com Finanças Empresa)
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="p-4 bg-red-500/10 rounded-lg border border-red-500/20">
               <p className="text-sm text-muted-foreground">Gastos Fixos</p>
-              <p className="text-xl font-bold text-red-500">{formatCurrency(financeiro?.totalGastosFixos || 0)}</p>
+              <p className="text-xl font-bold text-red-500">{formatCurrency(stats.totalGastosFixos)}</p>
+              <p className="text-xs text-muted-foreground">{stats.qtdGastosFixos} itens</p>
             </div>
             <div className="p-4 bg-orange-500/10 rounded-lg border border-orange-500/20">
               <p className="text-sm text-muted-foreground">Gastos Extras</p>
-              <p className="text-xl font-bold text-orange-500">{formatCurrency(financeiro?.totalGastosExtras || 0)}</p>
+              <p className="text-xl font-bold text-orange-500">{formatCurrency(stats.totalGastosExtras)}</p>
+              <p className="text-xs text-muted-foreground">{stats.qtdGastosExtras} itens</p>
             </div>
             <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
               <p className="text-sm text-muted-foreground">✅ Pagos</p>
-              <p className="text-xl font-bold text-green-500">{formatCurrency(financeiro?.totalPago || 0)}</p>
+              <p className="text-xl font-bold text-green-500">{formatCurrency(stats.totalPago)}</p>
+              <p className="text-xs text-muted-foreground">{stats.qtdPago} itens</p>
             </div>
             <div className="p-4 bg-yellow-500/10 rounded-lg border border-yellow-500/20">
               <p className="text-sm text-muted-foreground">⏳ Pendentes</p>
-              <p className="text-xl font-bold text-yellow-500">{formatCurrency(financeiro?.totalPendente || 0)}</p>
+              <p className="text-xl font-bold text-yellow-500">{formatCurrency(stats.totalPendente)}</p>
+              <p className="text-xs text-muted-foreground">{stats.qtdPendente} itens</p>
             </div>
           </div>
-          {(financeiro?.totalAtrasado || 0) > 0 && (
+          {stats.totalAtrasado > 0 && (
             <div className="mt-4 p-4 bg-red-500/20 rounded-lg border border-red-500/50 animate-pulse">
               <p className="text-sm font-medium text-red-400 flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
-                Despesas Atrasadas: <span className="text-red-500 font-bold">{formatCurrency(financeiro?.totalAtrasado || 0)}</span>
+                Despesas Atrasadas: <span className="text-red-500 font-bold">{formatCurrency(stats.totalAtrasado)}</span>
+                ({stats.qtdAtrasado} itens)
               </p>
             </div>
           )}
@@ -385,7 +350,7 @@ export default function DashboardEmpresarial() {
       </Card>
 
       {/* Alertas */}
-      {financeiro?.alertas && financeiro.alertas.length > 0 && (
+      {alertas.length > 0 && (
         <Card className="border-yellow-500/50 bg-yellow-500/5">
           <CardHeader className="pb-3">
             <CardTitle className="flex items-center gap-2 text-yellow-500">
@@ -395,7 +360,7 @@ export default function DashboardEmpresarial() {
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
-              {financeiro.alertas.map((alerta, idx) => (
+              {alertas.map((alerta, idx) => (
                 <div key={idx} className="flex items-start gap-2 p-3 bg-yellow-500/10 rounded-lg">
                   <AlertCircle className="h-4 w-4 text-yellow-500 mt-0.5 shrink-0" />
                   <div>
@@ -418,11 +383,11 @@ export default function DashboardEmpresarial() {
               <BarChart3 className="h-5 w-5 text-primary" />
               Evolução Financeira
             </CardTitle>
-            <CardDescription>Receitas vs Despesas nos últimos 6 meses</CardDescription>
+            <CardDescription>Receitas vs Despesas nos últimos meses</CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <AreaChart data={financeiro?.evolucaoMensal || []}>
+              <AreaChart data={dadosComplementares?.evolucaoMensal || []}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                 <XAxis dataKey="mes" stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} />
                 <YAxis stroke="#ffffff" tick={{ fill: "#ffffff", fontWeight: "bold" }} />
@@ -435,7 +400,7 @@ export default function DashboardEmpresarial() {
                     fontWeight: "bold",
                   }} 
                   labelStyle={{ color: "#ffffff", fontWeight: "bold" }}
-                  formatter={(value: number) => formatCurrency(value)}
+                  formatter={(value: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value)}
                 />
                 <Legend formatter={(value) => <span className="text-white font-bold">{value}</span>} />
                 <Area type="monotone" dataKey="receitas" stackId="1" stroke="#22c55e" fill="#22c55e" fillOpacity={0.3} name="Receitas" />
@@ -459,7 +424,7 @@ export default function DashboardEmpresarial() {
             <ResponsiveContainer width="100%" height={300}>
               <RechartsPie>
                 <Pie
-                  data={financeiro?.gastosPorCategoria || []}
+                  data={gastosPorCategoria}
                   cx="50%"
                   cy="50%"
                   labelLine={false}
@@ -468,7 +433,7 @@ export default function DashboardEmpresarial() {
                   fill="#8884d8"
                   dataKey="value"
                 >
-                  {(financeiro?.gastosPorCategoria || []).map((entry, index) => (
+                  {gastosPorCategoria.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                   ))}
                 </Pie>
@@ -504,16 +469,16 @@ export default function DashboardEmpresarial() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Receita</span>
-                <span className="font-medium text-green-500">{formatCurrency((financeiro?.totalReceitas || 0) * 0.65)}</span>
+                <span className="font-medium text-green-500">{formatCurrency(stats.totalReceitas * 0.65)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Despesas</span>
-                <span className="font-medium text-red-500">{formatCurrency((financeiro?.totalDespesas || 0) * 0.6)}</span>
+                <span className="font-medium text-red-500">{formatCurrency(stats.totalGastos * 0.6)}</span>
               </div>
               <div className="pt-2 border-t flex justify-between items-center">
                 <span className="font-medium">Lucro Líquido</span>
                 <span className="font-bold text-primary">
-                  {formatCurrency(((financeiro?.totalReceitas || 0) * 0.65) - ((financeiro?.totalDespesas || 0) * 0.6))}
+                  {formatCurrency((stats.totalReceitas * 0.65) - (stats.totalGastos * 0.6))}
                 </span>
               </div>
             </div>
@@ -534,16 +499,16 @@ export default function DashboardEmpresarial() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Receita</span>
-                <span className="font-medium text-green-500">{formatCurrency((financeiro?.totalReceitas || 0) * 0.35)}</span>
+                <span className="font-medium text-green-500">{formatCurrency(stats.totalReceitas * 0.35)}</span>
               </div>
               <div className="flex justify-between items-center">
                 <span className="text-sm text-muted-foreground">Despesas</span>
-                <span className="font-medium text-red-500">{formatCurrency((financeiro?.totalDespesas || 0) * 0.4)}</span>
+                <span className="font-medium text-red-500">{formatCurrency(stats.totalGastos * 0.4)}</span>
               </div>
               <div className="pt-2 border-t flex justify-between items-center">
                 <span className="font-medium">Lucro Líquido</span>
                 <span className="font-bold text-purple-500">
-                  {formatCurrency(((financeiro?.totalReceitas || 0) * 0.35) - ((financeiro?.totalDespesas || 0) * 0.4))}
+                  {formatCurrency((stats.totalReceitas * 0.35) - (stats.totalGastos * 0.4))}
                 </span>
               </div>
             </div>
