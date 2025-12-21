@@ -1,5 +1,15 @@
+// ============================================
+// SYNAPSE v15.0 - WEBHOOK CURSO QUÍMICA
+// DIRETRIZ #1: PERFORMANCE - Resposta imediata
+// DIRETRIZ #2: SEGURANÇA - Rate limiting + auth
+// ============================================
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+// Declare EdgeRuntime for background tasks
+declare const EdgeRuntime: {
+  waitUntil: (promise: Promise<unknown>) => void;
+};
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -579,6 +589,11 @@ async function updateDailyMetrics(transaction: any) {
   }
 }
 
+// ============================================
+// DIRETRIZ #1: PERFORMANCE - Resposta imediata
+// O webhook responde ANTES do processamento pesado
+// EdgeRuntime.waitUntil permite processar em background
+// ============================================
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -588,6 +603,7 @@ const handler = async (req: Request): Promise<Response> => {
                    req.headers.get("cf-connecting-ip") || 
                    "unknown";
   const userAgent = req.headers.get("user-agent") || "unknown";
+  const requestId = `req_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
   try {
     const url = new URL(req.url);
@@ -601,19 +617,20 @@ const handler = async (req: Request): Promise<Response> => {
       source = "hotmart";
     }
 
-    // Rate limiting
+    // Rate limiting - verificação rápida
     const rateLimit = await checkRateLimit(source, clientIP);
     if (!rateLimit.allowed) {
-      await logAuditEvent("rate_limit_exceeded", {
-        ip_address: clientIP,
-        user_agent: userAgent,
-        metadata: { source }
-      });
-      
-      await logSecurityEvent("rate_limit_exceeded", {
-        source,
-        ip: clientIP,
-      });
+      // Log em background
+      EdgeRuntime.waitUntil(
+        Promise.all([
+          logAuditEvent("rate_limit_exceeded", {
+            ip_address: clientIP,
+            user_agent: userAgent,
+            metadata: { source, requestId }
+          }),
+          logSecurityEvent("rate_limit_exceeded", { source, ip: clientIP })
+        ])
+      );
       
       return new Response(
         JSON.stringify({ success: false, error: "Rate limit exceeded" }),
@@ -632,17 +649,20 @@ const handler = async (req: Request): Promise<Response> => {
     // Verify webhook signatures
     if (source === "hotmart") {
       if (!verifyHotmartSignature(req, hottok)) {
-        await logAuditEvent("invalid_webhook_signature", {
-          ip_address: clientIP,
-          user_agent: userAgent,
-          metadata: { source: "hotmart", reason: "Invalid or missing hottok" }
-        });
-        
-        await logSecurityEvent("invalid_signature", {
-          source: "hotmart",
-          ip: clientIP,
-          reason: "Invalid or missing hottok",
-        });
+        EdgeRuntime.waitUntil(
+          Promise.all([
+            logAuditEvent("invalid_webhook_signature", {
+              ip_address: clientIP,
+              user_agent: userAgent,
+              metadata: { source: "hotmart", reason: "Invalid or missing hottok", requestId }
+            }),
+            logSecurityEvent("invalid_signature", {
+              source: "hotmart",
+              ip: clientIP,
+              reason: "Invalid or missing hottok",
+            })
+          ])
+        );
         
         return new Response(
           JSON.stringify({ success: false, error: "Invalid webhook signature" }),
@@ -657,37 +677,63 @@ const handler = async (req: Request): Promise<Response> => {
       source = "hotmart";
     }
 
-    const transaction = await processWebhook(payload, source, clientIP, userAgent);
+    // ============================================
+    // RESPOSTA IMEDIATA - Não espera processamento
+    // ============================================
+    console.log(`[CURSO-QUIMICA] ${requestId} Webhook received from ${source}, processing in background...`);
 
+    // PROCESSAMENTO EM BACKGROUND - não bloqueia resposta
+    EdgeRuntime.waitUntil(
+      (async () => {
+        try {
+          const transaction = await processWebhook(payload, source, clientIP, userAgent);
+          console.log(`[CURSO-QUIMICA] ${requestId} Background processing completed. Transaction: ${transaction?.id}`);
+        } catch (bgError: any) {
+          console.error(`[CURSO-QUIMICA] ${requestId} Background processing failed:`, bgError.message);
+          await logSecurityEvent("background_processing_error", {
+            requestId,
+            error: bgError.message,
+            source,
+          });
+        }
+      })()
+    );
+
+    // RESPOSTA IMEDIATA - webhook confirma recebimento
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Webhook processed successfully",
-        transaction_id: transaction?.id 
+        message: "Webhook received, processing in background",
+        request_id: requestId 
       }),
       { 
         status: 200, 
         headers: { 
           "Content-Type": "application/json",
           "X-RateLimit-Remaining": String(rateLimit.remaining),
+          "X-Request-Id": requestId,
           ...corsHeaders 
         } 
       }
     );
 
   } catch (error: any) {
-    console.error("[CURSO-QUIMICA] Webhook error:", error.message);
+    console.error(`[CURSO-QUIMICA] Webhook error:`, error.message);
     
-    await logAuditEvent("webhook_error", {
-      ip_address: clientIP,
-      user_agent: userAgent,
-      metadata: { error: error.message }
-    });
-    
-    await logSecurityEvent("webhook_error", {
-      ip: clientIP,
-      error: error.message,
-    });
+    // Log em background
+    EdgeRuntime.waitUntil(
+      Promise.all([
+        logAuditEvent("webhook_error", {
+          ip_address: clientIP,
+          user_agent: userAgent,
+          metadata: { error: error.message }
+        }),
+        logSecurityEvent("webhook_error", {
+          ip: clientIP,
+          error: error.message,
+        })
+      ])
+    );
     
     return new Response(
       JSON.stringify({ 

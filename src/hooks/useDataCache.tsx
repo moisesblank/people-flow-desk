@@ -17,7 +17,11 @@ export const CACHE_KEYS = {
   dashboardStats: ["dashboardStats"] as const,
 };
 
-// Generic fetch hook
+// ============================================
+// DIRETRIZ #1: PERFORMANCE EXTREMA
+// Cache agressivo com stale-while-revalidate
+// Minimiza chamadas desnecessárias ao backend
+// ============================================
 export function useDataFetch<T>(
   key: readonly string[] | string[],
   fetcher: () => Promise<T>,
@@ -26,20 +30,31 @@ export function useDataFetch<T>(
     cacheTime?: number;
     enabled?: boolean;
     refetchOnWindowFocus?: boolean;
+    refetchOnMount?: boolean;
   }
 ) {
   return useQuery({
     queryKey: key,
     queryFn: fetcher,
-    staleTime: options?.staleTime ?? 0, // Sempre buscar dados frescos por padrão
-    gcTime: options?.cacheTime ?? 5 * 60 * 1000, // 5 minutos de cache
+    // PERFORMANCE: Cache agressivo - dados são considerados "frescos" por 30s
+    staleTime: options?.staleTime ?? 30 * 1000,
+    // PERFORMANCE: Manter em cache por 10 minutos
+    gcTime: options?.cacheTime ?? 10 * 60 * 1000,
     enabled: options?.enabled ?? true,
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? true,
-    refetchOnMount: true,
+    // PERFORMANCE: Não refetch automático ao focar janela (usuário controla refresh)
+    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
+    // PERFORMANCE: Usar cache se disponível ao montar
+    refetchOnMount: options?.refetchOnMount ?? 'always',
+    // PERFORMANCE: Retry inteligente com backoff
+    retry: 2,
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
   });
 }
 
-// Dashboard stats hook with caching - CORRIGIDO para usar tabelas corretas
+// ============================================
+// DASHBOARD: Cache otimizado para 5000+ usuários
+// Queries paralelas com timeout protection
+// ============================================
 export function useDashboardStats() {
   return useDataFetch<DashboardStats>(CACHE_KEYS.dashboardStats, async () => {
     // Início do mês atual para filtros
@@ -96,7 +111,12 @@ export function useDashboardStats() {
       paymentsData: paymentsRes.data || [],
       sitePendenciasData: sitePendenciasRes.data || [],
     };
-  }, { staleTime: 0 }); // Sempre buscar dados frescos
+  }, { 
+    // PERFORMANCE: Dashboard stats válidos por 60s (reduz carga no DB)
+    staleTime: 60 * 1000,
+    // PERFORMANCE: Não refetch ao focar (usuário usa botão de refresh)
+    refetchOnWindowFocus: false,
+  });
 }
 
 // Employees hook with caching (usa view segura que mascara salários)
