@@ -1,11 +1,13 @@
 // ============================================
-// HOOK DE QUIZZES E SIMULADOS - LMS
-// Sistema completo de avaliações
+// HOOK DE QUIZZES E SIMULADOS - LMS v5.0
+// Sistema completo de avaliações com Event-Driven
+// Adaptado para PARTE 5 - Arena da Glória
 // ============================================
 
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { usePublishEvent } from '@/hooks/usePublishEvent';
 import { toast } from 'sonner';
 
 export interface Quiz {
@@ -161,10 +163,11 @@ export function useAllUserAttempts() {
   });
 }
 
-// Hook para iniciar uma tentativa
+// Hook para iniciar uma tentativa (v5.0 - Event-Driven)
 export function useStartQuizAttempt() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
+  const { publishQuizStarted } = usePublishEvent();
 
   return useMutation({
     mutationFn: async (quizId: string) => {
@@ -186,6 +189,10 @@ export function useStartQuizAttempt() {
         .single();
 
       if (error) throw error;
+
+      // PARTE 5: Publicar evento de início de quiz
+      await publishQuizStarted(quizId);
+
       return data as QuizAttempt;
     },
     onSuccess: (_, quizId) => {
@@ -198,9 +205,10 @@ export function useStartQuizAttempt() {
   });
 }
 
-// Hook para submeter respostas
+// Hook para submeter respostas (v5.0 - Event-Driven)
 export function useSubmitQuiz() {
   const queryClient = useQueryClient();
+  const { publishQuizPassed, publishQuizFailed, publishCorrectAnswer, publishWrongAnswer } = usePublishEvent();
 
   return useMutation({
     mutationFn: async ({
@@ -217,11 +225,18 @@ export function useSubmitQuiz() {
       // Calcular pontuação
       let score = 0;
       let maxScore = 0;
+      const correctAnswers: string[] = [];
+      const wrongAnswers: string[] = [];
 
       const answerRecords = questions.map((q) => {
         const userAnswer = answers[q.id] || '';
         const isCorrect = userAnswer === q.correct_answer;
-        if (isCorrect) score += q.points;
+        if (isCorrect) {
+          score += q.points;
+          correctAnswers.push(q.id);
+        } else {
+          wrongAnswers.push(q.id);
+        }
         maxScore += q.points;
 
         return {
@@ -242,10 +257,12 @@ export function useSubmitQuiz() {
         .eq('id', attemptId)
         .single();
 
+      const quizId = attempt?.quiz_id;
+
       const { data: quiz } = await supabase
         .from('quizzes')
         .select('passing_score, xp_reward')
-        .eq('id', attempt?.quiz_id)
+        .eq('id', quizId)
         .single();
 
       const passed = percentage >= (quiz?.passing_score || 70);
@@ -275,10 +292,27 @@ export function useSubmitQuiz() {
 
       if (error) throw error;
 
+      // PARTE 5: Publicar eventos de cada resposta (gamificação por evento)
+      // Publicar eventos de respostas corretas/erradas em batch
+      for (const questionId of correctAnswers) {
+        await publishCorrectAnswer(questionId, quizId);
+      }
+      for (const questionId of wrongAnswers) {
+        await publishWrongAnswer(questionId, quizId);
+      }
+
+      // Publicar evento de resultado do quiz
+      if (passed) {
+        await publishQuizPassed(quizId, percentage, questions.length);
+      } else {
+        await publishQuizFailed(quizId, percentage, questions.length);
+      }
+
       return { attempt: data as QuizAttempt, xpEarned: passed ? quiz?.xp_reward || 0 : 0 };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['quiz-attempts'] });
+      queryClient.invalidateQueries({ queryKey: ['user-gamification'] });
       if (result.attempt.passed) {
         toast.success(`Parabéns! Você passou com ${result.attempt.percentage}%! +${result.xpEarned} XP`);
       } else {
