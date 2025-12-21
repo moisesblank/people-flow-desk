@@ -3,7 +3,7 @@
 // Componente de texto editável inline
 // ============================================
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Check, X, Edit3 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,8 @@ interface EditableTextProps {
   placeholder?: string;
 }
 
-export function EditableText({
+// Corrigido com forwardRef para compatibilidade com refs externas
+export const EditableText = memo(forwardRef<HTMLDivElement, EditableTextProps>(function EditableText({
   value,
   onSave,
   isEditMode,
@@ -28,7 +29,7 @@ export function EditableText({
   as: Component = "span",
   multiline = false,
   placeholder = "Clique para editar...",
-}: EditableTextProps) {
+}, ref) {
   const [isEditing, setIsEditing] = useState(false);
   const [tempValue, setTempValue] = useState(value);
   const inputRef = useRef<HTMLTextAreaElement | HTMLInputElement>(null);
@@ -124,6 +125,7 @@ export function EditableText({
 
   return (
     <motion.div
+      ref={ref}
       className="relative inline-block group cursor-pointer"
       onClick={() => setIsEditing(true)}
       whileHover={{ scale: 1.02 }}
@@ -145,4 +147,6 @@ export function EditableText({
       </motion.div>
     </motion.div>
   );
-}
+}));
+
+EditableText.displayName = 'EditableText';
