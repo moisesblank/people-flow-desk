@@ -1,9 +1,10 @@
 // ============================================
-// MOISÉS MEDEIROS v15.0 - MASTER MODE WRAPPER
+// MOISÉS MEDEIROS v16.0 - MASTER MODE WRAPPER
 // Wrapper global para o sistema de edição MASTER
 // Integra todos os componentes de edição em tempo real
 // + Menu Contextual (Adicionar, Duplicar, Remover)
 // + Undo/Redo + Delete Button Universal
+// + Editor de URLs/Destinos (Ctrl+Click)
 // Owner: moisesblank@gmail.com
 // ============================================
 
@@ -17,6 +18,7 @@ import { PasteIndicator } from './PasteIndicator';
 import { MasterContextMenu } from './MasterContextMenu';
 import { MasterAddModal } from './MasterAddModal';
 import { MasterUndoIndicator } from './MasterUndoIndicator';
+import { MasterURLEditor } from './MasterURLEditor';
 import { EditModeToggle } from '@/components/editor/EditModeToggle';
 import { toast } from 'sonner';
 
@@ -218,6 +220,9 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
       
       {/* Menu contextual (clique direito) */}
       <MasterContextMenu />
+      
+      {/* Editor de URLs/Destinos (Ctrl+Click) */}
+      <MasterURLEditor />
       
       {/* Modal para adicionar novos itens */}
       <MasterAddModal
