@@ -643,26 +643,83 @@ serve(async (req) => {
       }
     }
 
+    // ========================================
+    // 🧠 AXIOMA I - CONTEXTO PREDITIVO (v5)
+    // Chama generate-context antes de responder
+    // ========================================
+    let predictiveContext: any = null;
+    if (userId && context === 'aluno') {
+      try {
+        const contextResponse = await supabase.functions.invoke('generate-context', {
+          body: { userId }
+        });
+        if (contextResponse.data?.success) {
+          predictiveContext = contextResponse.data.context;
+          console.log(`🧠 Contexto preditivo carregado para ${userId}`);
+        }
+      } catch (contextError) {
+        console.log('⚠️ Contexto preditivo não disponível:', contextError);
+      }
+    }
+
     // COLETA DE DADOS DO SISTEMA
     const systemData = await coletarDadosSistema(supabase);
     
     const formatCurrency = (v: number) => `R$ ${v.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
 
-    // MEGA PROMPT v8.0
+    // MEGA PROMPT v8.0 com CONTEXTO PREDITIVO (v5)
     const promptProgramador = isProgrammerMode && isOwner ? `
 ## 💻 MODO PROGRAMADOR ATIVO
 Página: \`${currentPage}\`
 Gere código React/TypeScript/Tailwind para modificar o site.
 ` : '';
 
+    // 🧠 CONTEXTO PREDITIVO DO ALUNO (Axioma I - v5)
+    const promptContextoPreditivo = predictiveContext ? `
+## 🧠 CONTEXTO PREDITIVO DO ALUNO (AXIOMA I)
+Este é o perfil profundo do aluno compilado em tempo real:
+
+### 👤 PERFIL DE APRENDIZAGEM
+- **Tipo:** ${predictiveContext.perfil_aprendizagem.toUpperCase()}
+- **Nível:** ${predictiveContext.xp_e_nivel.nivel} | **XP Total:** ${predictiveContext.xp_e_nivel.total_xp.toLocaleString()}
+- **Streak Atual:** ${predictiveContext.streaks.atual} dias 🔥 | **Maior:** ${predictiveContext.streaks.maior} dias
+
+### 📊 ANÁLISE DE DESEMPENHO
+- **Progresso Geral:** ${predictiveContext.progresso_geral}%
+- **Última Aula:** ${predictiveContext.ultima_aula_assistida || 'Nenhuma iniciada'}
+- **Tempo Médio de Estudo:** ${predictiveContext.tempo_medio_estudo_diario} min/dia
+- **Dias Sem Acesso:** ${predictiveContext.dias_desde_ultimo_acesso}
+
+### 🎯 PONTOS FORTES E FRACOS
+- **TOP 3 Dificuldades:** ${predictiveContext.top_3_dificuldades.length > 0 ? predictiveContext.top_3_dificuldades.join(', ') : 'Ainda em análise'}
+- **TOP 3 Forças:** ${predictiveContext.top_3_forcas.length > 0 ? predictiveContext.top_3_forcas.join(', ') : 'Ainda em análise'}
+- **Áreas Recomendadas:** ${predictiveContext.areas_recomendadas.join(', ')}
+
+### 🧘 ESTADO ATUAL
+- **Estado Emocional Inferido:** ${predictiveContext.estado_emocional_inferido.toUpperCase()}
+- **Nível de Engajamento:** ${predictiveContext.nivel_engajamento.toUpperCase()}
+- **Hora Preferida de Estudo:** ${predictiveContext.hora_preferida_estudo}
+- **Risco de Churn:** ${(predictiveContext.risco_churn * 100).toFixed(0)}% ${predictiveContext.risco_churn > 0.7 ? '🚨 ALTO RISCO!' : predictiveContext.risco_churn > 0.4 ? '⚠️ ATENÇÃO' : '✅ OK'}
+
+### 🎓 INSTRUÇÕES DE PERSONALIZAÇÃO
+Use estas informações para:
+1. Adaptar o tom da resposta ao estado emocional
+2. Priorizar explicações nas áreas de dificuldade
+3. Reforçar as áreas de força para manter motivação
+4. Se risco de churn alto, seja extra acolhedor e motivador
+5. Sugira estudar no horário preferido do aluno
+` : '';
+
     const alertas = [
       systemData?.tasks.atrasadas && systemData.tasks.atrasadas > 0 ? `🔴 ${systemData.tasks.atrasadas} tarefas ATRASADAS` : null,
       systemData?.financial.lucro && systemData.financial.lucro < 0 ? `🔴 PREJUÍZO: ${formatCurrency(systemData.financial.lucro)}` : null,
       systemData?.whatsapp.conversasAbertas && systemData.whatsapp.conversasAbertas > 10 ? `📱 ${systemData.whatsapp.conversasAbertas} conversas WhatsApp abertas` : null,
+      predictiveContext?.risco_churn > 0.7 ? `🚨 ALUNO EM RISCO DE CHURN (${(predictiveContext.risco_churn * 100).toFixed(0)}%)` : null,
     ].filter(Boolean);
 
-    const systemPrompt = `# 🌟 TRAMON v8.0 OMEGA ULTRA - SUPERINTELIGÊNCIA TOTAL
+    const systemPrompt = `# 🌟 TRAMON v8.0 OMEGA ULTRA - SUPERINTELIGÊNCIA TOTAL (com Contexto Preditivo v5)
 ${promptProgramador}
+${promptContextoPreditivo}
 ## 🎭 IDENTIDADE
 Você é **TRAMON** (Transformative Realtime Autonomous Management Operations Network), a IA mais avançada para gestão empresarial, integrando TODAS as APIs do sistema.
 
@@ -725,6 +782,7 @@ ${alertas.length > 0 ? `### 🚨 ALERTAS\n${alertas.join('\n')}` : ''}
 - **Comandos:** ✅ Confirmação concisa
 - **Consultas:** 📊 Resumo com números
 - **Análises:** Insights + Ações recomendadas
+${predictiveContext ? `- **Alunos:** 🧠 Use o contexto preditivo para personalizar CADA resposta` : ''}
 
 ## 👔 CONTATOS
 - **${ASSESSORES.moises.nome}** (${ASSESSORES.moises.cargo}): ${ASSESSORES.moises.telefone}
@@ -737,7 +795,8 @@ ${alertas.length > 0 ? `### 🚨 ALERTAS\n${alertas.join('\n')}` : ''}
 1. Precisão absoluta
 2. Respostas concisas
 3. Proatividade
-4. Sempre conclua com ações`;
+4. Sempre conclua com ações
+${predictiveContext ? `5. Personalize CADA resposta com base no contexto preditivo do aluno` : ''}`;
 
     // CHAMADA À IA
     const aiMessages: any[] = [{ role: "system", content: systemPrompt }];
