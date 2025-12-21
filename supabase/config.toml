@@ -125,3 +125,13 @@ verify_jwt = false
 
 [functions.atualizar-status-alunos]
 verify_jwt = false
+
+# ============================================
+# 🔥 DOGMA III & IV - EDGE FUNCTIONS SEGURAS
+# ============================================
+
+[functions.secure-video-url]
+verify_jwt = true
+
+[functions.secure-api-proxy]
+verify_jwt = true

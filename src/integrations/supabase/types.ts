@@ -2108,6 +2108,48 @@ export type Database = {
         }
         Relationships: []
       }
+      content_access_log: {
+        Row: {
+          action: string
+          blocked_reason: string | null
+          content_id: string
+          content_type: string
+          created_at: string | null
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          success: boolean | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          blocked_reason?: string | null
+          content_id: string
+          content_type: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          blocked_reason?: string | null
+          content_id?: string
+          content_type?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          success?: boolean | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       content_history: {
         Row: {
           changed_at: string | null
@@ -2792,6 +2834,39 @@ export type Database = {
           id?: string
           nome?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      encrypted_secrets: {
+        Row: {
+          created_at: string | null
+          encrypted_value: string
+          expires_at: string | null
+          id: string
+          nonce: string
+          secret_name: string
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          encrypted_value: string
+          expires_at?: string | null
+          id?: string
+          nonce: string
+          secret_name: string
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          encrypted_value?: string
+          expires_at?: string | null
+          id?: string
+          nonce?: string
+          secret_name?: string
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -7889,6 +7964,45 @@ export type Database = {
         }
         Relationships: []
       }
+      video_signed_urls: {
+        Row: {
+          created_at: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown
+          max_uses: number | null
+          signed_url: string
+          used_count: number | null
+          user_agent: string | null
+          user_id: string
+          video_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          max_uses?: number | null
+          signed_url: string
+          used_count?: number | null
+          user_agent?: string | null
+          user_id: string
+          video_id: string
+        }
+        Update: {
+          created_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          max_uses?: number | null
+          signed_url?: string
+          used_count?: number | null
+          user_agent?: string | null
+          user_id?: string
+          video_id?: string
+        }
+        Relationships: []
+      }
       webhook_diagnostics: {
         Row: {
           created_at: string | null
@@ -9244,6 +9358,7 @@ export type Database = {
         Returns: boolean
       }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
+      cleanup_expired_signed_urls: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
@@ -9269,6 +9384,10 @@ export type Database = {
       current_user_email: { Args: never; Returns: string }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
       generate_2fa_code: { Args: never; Returns: string }
+      generate_signed_video_url: {
+        Args: { p_expires_minutes?: number; p_video_id: string }
+        Returns: Json
+      }
       get_all_users_last_access: {
         Args: never
         Returns: {
@@ -9472,6 +9591,10 @@ export type Database = {
       }
       validate_session_token: {
         Args: { p_session_token: string }
+        Returns: boolean
+      }
+      validate_signed_video_url: {
+        Args: { p_token: string; p_video_id: string }
         Returns: boolean
       }
       verify_2fa_code: { Args: { p_code: string }; Returns: boolean }
