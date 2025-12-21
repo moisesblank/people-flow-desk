@@ -122,69 +122,69 @@ const Home = () => {
         <HeroSection />
         
         {/* All other sections lazy loaded */}
-        <LazySection>
+        <LazyMount>
           <RealtimeStats variant="section" />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <MainApprovedArt />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <VideoSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <ProfessorSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <AppExclusivoSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <FirstPlaceShowcase />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <ApprovedCarousel />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <VideoFeedbackCarousel />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <TestimonialsSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <FeaturesSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <MaterialSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <AIAutomationsSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <CoursesSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <FAQSection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <EpicCTASection />
-        </LazySection>
+        </LazyMount>
         
-        <LazySection>
+        <LazyMount>
           <FuturisticFooter />
-        </LazySection>
+        </LazyMount>
       </motion.div>
     </div>
   );
