@@ -22,6 +22,7 @@ import { ProfessorSection } from "@/components/landing/ProfessorSection";
 import { ApprovedStudentsSection } from "@/components/landing/ApprovedStudentsSection";
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { VideoFeedbackCarousel } from "@/components/landing/VideoFeedbackCarousel";
+import { ApprovedCarousel } from "@/components/landing/ApprovedCarousel";
 
 // ============================================
 // BACKGROUND ANIMADO ULTRA
@@ -87,7 +88,7 @@ const Home = () => {
           <MaterialSection />
           <AIAutomationsSection />
           <CoursesSection />
-          <ApprovedStudentsSection />
+          <ApprovedCarousel />
           <TestimonialsSection />
           <VideoFeedbackCarousel />
           <FAQSection />
