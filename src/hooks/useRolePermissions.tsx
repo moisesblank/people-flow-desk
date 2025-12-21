@@ -79,7 +79,33 @@ export type SystemArea =
   | "area-beta"
   | "area-gratuita"
   | "comunidade"
-  | "portal-beta";
+  | "portal-beta"
+  // ===== CENTRAL DO ALUNO - QUÍMICA ENEM =====
+  | "aluno-dashboard"
+  | "aluno-cronograma"
+  | "aluno-videoaulas"
+  | "aluno-materiais"
+  | "aluno-resumos"
+  | "aluno-mapas-mentais"
+  | "aluno-questoes"
+  | "aluno-simulados"
+  | "aluno-redacao"
+  | "aluno-desempenho"
+  | "aluno-ranking"
+  | "aluno-conquistas"
+  | "aluno-tutoria"
+  | "aluno-forum"
+  | "aluno-lives"
+  | "aluno-duvidas"
+  | "aluno-revisao"
+  | "aluno-laboratorio"
+  | "aluno-calculadora"
+  | "aluno-tabela-periodica"
+  | "aluno-flashcards"
+  | "aluno-metas"
+  | "aluno-agenda"
+  | "aluno-certificados"
+  | "aluno-perfil";
 
 // Mapeamento de URLs para áreas
 const URL_TO_AREA: Record<string, SystemArea> = {
@@ -138,13 +164,39 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/area-gratuita": "area-gratuita",
   "/comunidade": "comunidade",
   "/portal-beta": "portal-beta",
+  // ===== CENTRAL DO ALUNO - QUÍMICA ENEM =====
+  "/aluno/dashboard": "aluno-dashboard",
+  "/aluno/cronograma": "aluno-cronograma",
+  "/aluno/videoaulas": "aluno-videoaulas",
+  "/aluno/materiais": "aluno-materiais",
+  "/aluno/resumos": "aluno-resumos",
+  "/aluno/mapas-mentais": "aluno-mapas-mentais",
+  "/aluno/questoes": "aluno-questoes",
+  "/aluno/simulados": "aluno-simulados",
+  "/aluno/redacao": "aluno-redacao",
+  "/aluno/desempenho": "aluno-desempenho",
+  "/aluno/ranking": "aluno-ranking",
+  "/aluno/conquistas": "aluno-conquistas",
+  "/aluno/tutoria": "aluno-tutoria",
+  "/aluno/forum": "aluno-forum",
+  "/aluno/lives": "aluno-lives",
+  "/aluno/duvidas": "aluno-duvidas",
+  "/aluno/revisao": "aluno-revisao",
+  "/aluno/laboratorio": "aluno-laboratorio",
+  "/aluno/calculadora": "aluno-calculadora",
+  "/aluno/tabela-periodica": "aluno-tabela-periodica",
+  "/aluno/flashcards": "aluno-flashcards",
+  "/aluno/metas": "aluno-metas",
+  "/aluno/agenda": "aluno-agenda",
+  "/aluno/certificados": "aluno-certificados",
+  "/aluno/perfil": "aluno-perfil",
 };
 
 // ============================================
 // CONFIGURAÇÃO DE PERMISSÕES POR CARGO
 // ============================================
 const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
-  // OWNER - ACESSO TOTAL A TUDO
+  // OWNER - ACESSO TOTAL A TUDO (incluindo área do aluno)
   owner: [
     "dashboard", "dashboard-executivo", "tarefas", "integracoes", "calendario",
     "funcionarios", "area-professor", "gestao-equipe", "marketing", "lancamento",
@@ -154,7 +206,16 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "relatorios", "guia", "laboratorio", "site-programador", "pessoal", "vida-pessoal",
     "permissoes", "configuracoes", "monitoramento", "central-whatsapp", "diagnostico-whatsapp",
     "auditoria-acessos", "central-monitoramento", "central-ias", "central-metricas", "documentos",
-    "dashboard-empresarial", "receitas-empresariais", "rh-funcionarios", "arquivos-empresariais", "fluxo-caixa", "contas-pagar", "contas-receber"
+    "dashboard-empresarial", "receitas-empresariais", "rh-funcionarios", "arquivos-empresariais", 
+    "fluxo-caixa", "contas-pagar", "contas-receber",
+    // ÁREAS DE ALUNOS (OWNER VÊ TUDO)
+    "area-beta", "area-gratuita", "comunidade", "portal-beta",
+    "aluno-dashboard", "aluno-cronograma", "aluno-videoaulas", "aluno-materiais",
+    "aluno-resumos", "aluno-mapas-mentais", "aluno-questoes", "aluno-simulados",
+    "aluno-redacao", "aluno-desempenho", "aluno-ranking", "aluno-conquistas",
+    "aluno-tutoria", "aluno-forum", "aluno-lives", "aluno-duvidas",
+    "aluno-revisao", "aluno-laboratorio", "aluno-calculadora", "aluno-tabela-periodica",
+    "aluno-flashcards", "aluno-metas", "aluno-agenda", "aluno-certificados", "aluno-perfil"
   ],
 
   // ADMIN - Igual owner mas sem vida pessoal e monitoramento
@@ -221,10 +282,17 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "relatorios", "guia"
   ],
 
-  // BETA - ALUNO PAGANTE (365 dias de acesso)
+  // BETA - ALUNO PAGANTE (365 dias) - ACESSO COMPLETO À ÁREA DO ALUNO
   beta: [
     "portal-beta", "area-beta", "cursos", "simulados", 
-    "portal-aluno", "comunidade", "guia"
+    "portal-aluno", "comunidade", "guia",
+    // CENTRAL DO ALUNO COMPLETA
+    "aluno-dashboard", "aluno-cronograma", "aluno-videoaulas", "aluno-materiais",
+    "aluno-resumos", "aluno-mapas-mentais", "aluno-questoes", "aluno-simulados",
+    "aluno-redacao", "aluno-desempenho", "aluno-ranking", "aluno-conquistas",
+    "aluno-tutoria", "aluno-forum", "aluno-lives", "aluno-duvidas",
+    "aluno-revisao", "aluno-laboratorio", "aluno-calculadora", "aluno-tabela-periodica",
+    "aluno-flashcards", "aluno-metas", "aluno-agenda", "aluno-certificados", "aluno-perfil"
   ],
 
   // ALUNO GRATUITO - Apenas área pré-login
