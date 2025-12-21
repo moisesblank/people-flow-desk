@@ -23,6 +23,7 @@ import { ApprovedStudentsSection } from "@/components/landing/ApprovedStudentsSe
 import { FeaturesSection } from "@/components/landing/FeaturesSection";
 import { VideoFeedbackCarousel } from "@/components/landing/VideoFeedbackCarousel";
 import { ApprovedCarousel } from "@/components/landing/ApprovedCarousel";
+import { FirstPlaceShowcase } from "@/components/landing/FirstPlaceShowcase";
 
 // ============================================
 // BACKGROUND ANIMADO ULTRA
@@ -84,6 +85,7 @@ const Home = () => {
           <RealtimeStats variant="section" />
           <VideoSection />
           <ProfessorSection />
+          <FirstPlaceShowcase />
           <FeaturesSection />
           <MaterialSection />
           <AIAutomationsSection />

@@ -1,0 +1,389 @@
+// ============================================
+// FIRST PLACE SHOWCASE - SEÇÃO DESTAQUE 1º LUGARES
+// Design futurista premium
+// ============================================
+
+import { motion } from "framer-motion";
+import { Crown, Trophy, Star, Sparkles, GraduationCap, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
+import primeiroLugar1 from "@/assets/aprovados/primeiro-lugar-1.png";
+import primeiroLugar2 from "@/assets/aprovados/primeiro-lugar-2.png";
+
+// Dados dos primeiros lugares
+const champions = [
+  {
+    id: 1,
+    image: primeiroLugar1,
+    nome: "Lucas Heitor",
+    universidade: "UFRN",
+    curso: "Medicina",
+    ano: "2K25",
+    posicao: "1º LUGAR GERAL",
+    depoimento: "O método do Prof. Moisés me levou ao topo! Química deixou de ser um problema e virou minha arma secreta."
+  },
+  {
+    id: 2,
+    image: primeiroLugar2,
+    nome: "Yasmin Cordeiro",
+    universidade: "UFPB",
+    curso: "Medicina",
+    ano: "2K25",
+    posicao: "1º LUGAR GERAL",
+    depoimento: "Conquistei meu sonho! A metodologia inovadora do curso me preparou como ninguém. Aprovação garantida!"
+  },
+];
+
+// Partículas flutuantes
+const FloatingParticles = () => (
+  <div className="absolute inset-0 overflow-hidden pointer-events-none">
+    {[...Array(30)].map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute"
+        style={{
+          left: `${Math.random() * 100}%`,
+          top: `${Math.random() * 100}%`,
+        }}
+        animate={{
+          y: [0, -30, 0],
+          opacity: [0.3, 1, 0.3],
+          scale: [1, 1.2, 1],
+        }}
+        transition={{
+          duration: 4 + Math.random() * 3,
+          repeat: Infinity,
+          delay: Math.random() * 2,
+        }}
+      >
+        {i % 3 === 0 ? (
+          <Star className="w-3 h-3 text-amber-400" />
+        ) : i % 3 === 1 ? (
+          <Sparkles className="w-2 h-2 text-pink-400" />
+        ) : (
+          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-amber-400 to-pink-500" />
+        )}
+      </motion.div>
+    ))}
+  </div>
+);
+
+// Card do campeão
+const ChampionCard = ({ champion, index }: { champion: typeof champions[0]; index: number }) => (
+  <motion.div
+    initial={{ opacity: 0, y: 50, scale: 0.9 }}
+    whileInView={{ opacity: 1, y: 0, scale: 1 }}
+    transition={{ delay: index * 0.2, duration: 0.7 }}
+    viewport={{ once: true }}
+    whileHover={{ y: -10, scale: 1.02 }}
+    className="relative group"
+  >
+    {/* Glow intenso */}
+    <motion.div
+      className="absolute -inset-4 rounded-3xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"
+      style={{
+        background: index === 0 
+          ? 'radial-gradient(circle, rgba(251,191,36,0.4) 0%, rgba(220,38,38,0.2) 50%, transparent 70%)'
+          : 'radial-gradient(circle, rgba(236,72,153,0.4) 0%, rgba(147,51,234,0.2) 50%, transparent 70%)',
+        filter: 'blur(40px)',
+      }}
+      animate={{
+        scale: [1, 1.1, 1],
+      }}
+      transition={{ duration: 3, repeat: Infinity }}
+    />
+
+    {/* Card principal */}
+    <div className="relative bg-gradient-to-br from-black/80 via-slate-900/90 to-black/80 rounded-3xl border-2 border-amber-500/30 overflow-hidden backdrop-blur-xl p-1">
+      {/* Borda gradiente animada */}
+      <motion.div
+        className="absolute inset-0 rounded-3xl"
+        style={{
+          background: `conic-gradient(from 0deg, ${index === 0 ? '#f59e0b, #ef4444, #f59e0b' : '#ec4899, #8b5cf6, #ec4899'})`,
+          padding: '2px',
+        }}
+        animate={{ rotate: 360 }}
+        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+      />
+
+      <div className="relative bg-gradient-to-br from-black via-slate-900 to-black rounded-3xl overflow-hidden">
+        {/* Coroa animada no topo */}
+        <motion.div
+          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
+          animate={{ 
+            y: [0, -5, 0],
+            rotateZ: [-5, 5, -5]
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="relative">
+            <Crown className="w-16 h-16 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]" fill="rgba(251,191,36,0.3)" />
+            <motion.div
+              className="absolute inset-0"
+              animate={{ opacity: [0.5, 1, 0.5] }}
+              transition={{ duration: 1, repeat: Infinity }}
+            >
+              <Crown className="w-16 h-16 text-amber-300" />
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Badge 1º Lugar */}
+        <motion.div
+          className="absolute top-6 left-1/2 -translate-x-1/2 z-10"
+          initial={{ scale: 0 }}
+          whileInView={{ scale: 1 }}
+          transition={{ delay: 0.5, type: "spring" }}
+        >
+          <div className="px-6 py-2 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-sm shadow-2xl shadow-amber-500/50 flex items-center gap-2">
+            <Trophy className="w-4 h-4" />
+            {champion.posicao}
+            <Trophy className="w-4 h-4" />
+          </div>
+        </motion.div>
+
+        {/* Imagem do aprovado */}
+        <div className="relative pt-14">
+          <motion.div
+            className="relative aspect-[4/5] overflow-hidden"
+            whileHover={{ scale: 1.05 }}
+            transition={{ duration: 0.5 }}
+          >
+            <img
+              src={champion.image}
+              alt={champion.nome}
+              className="w-full h-full object-cover"
+            />
+            
+            {/* Overlay gradiente */}
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+          </motion.div>
+
+          {/* Info overlay */}
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-gradient-to-t from-black via-black/90 to-transparent">
+            {/* Universidade e Curso */}
+            <motion.div
+              className="flex items-center justify-center gap-4 mb-4"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div className="px-4 py-2 rounded-full bg-gradient-to-r from-red-600 to-pink-600 flex items-center gap-2">
+                <GraduationCap className="w-4 h-4 text-white" />
+                <span className="text-white font-bold text-sm">{champion.curso}</span>
+              </div>
+              <div className="px-4 py-2 rounded-full bg-gradient-to-r from-blue-600 to-purple-600">
+                <span className="text-white font-bold text-sm">{champion.universidade}</span>
+              </div>
+            </motion.div>
+
+            {/* Nome */}
+            <motion.h3
+              className="text-2xl md:text-3xl font-black text-center bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent mb-2"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.4 }}
+            >
+              {champion.nome}
+            </motion.h3>
+
+            {/* Ano */}
+            <motion.div
+              className="text-center text-gray-400 font-bold mb-4"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.5 }}
+            >
+              {champion.ano}
+            </motion.div>
+
+            {/* Depoimento */}
+            <motion.p
+              className="text-gray-300 text-center text-sm italic leading-relaxed"
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              transition={{ delay: 0.6 }}
+            >
+              "{champion.depoimento}"
+            </motion.p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    {/* Estrelas ao redor */}
+    {[...Array(5)].map((_, i) => (
+      <motion.div
+        key={i}
+        className="absolute"
+        style={{
+          left: `${20 + Math.random() * 60}%`,
+          top: `${10 + Math.random() * 80}%`,
+        }}
+        animate={{
+          scale: [0, 1, 0],
+          opacity: [0, 1, 0],
+          rotate: [0, 180, 360],
+        }}
+        transition={{
+          duration: 2,
+          repeat: Infinity,
+          delay: i * 0.4,
+        }}
+      >
+        <Star className="w-4 h-4 text-amber-400" fill="rgba(251,191,36,0.5)" />
+      </motion.div>
+    ))}
+  </motion.div>
+);
+
+export const FirstPlaceShowcase = () => {
+  return (
+    <section className="relative py-20 overflow-hidden">
+      {/* Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
+      
+      {/* Glow central */}
+      <motion.div
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px]"
+        style={{
+          background: 'radial-gradient(ellipse, rgba(251,191,36,0.15) 0%, rgba(220,38,38,0.1) 30%, transparent 60%)',
+          filter: 'blur(80px)',
+        }}
+        animate={{
+          scale: [1, 1.2, 1],
+          opacity: [0.5, 0.8, 0.5],
+        }}
+        transition={{ duration: 5, repeat: Infinity }}
+      />
+
+      <FloatingParticles />
+
+      <div className="container mx-auto px-4 relative z-10">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center mb-16"
+        >
+          {/* Badge épico */}
+          <motion.div
+            initial={{ scale: 0, rotate: -10 }}
+            whileInView={{ scale: 1, rotate: 0 }}
+            transition={{ type: "spring", duration: 0.8 }}
+            className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-amber-500/20 via-yellow-500/30 to-amber-500/20 border-2 border-amber-500/50 mb-8"
+          >
+            <Crown className="w-6 h-6 text-amber-400" />
+            <span className="text-lg font-black text-amber-300 tracking-wider">OS PRIMEIROS LUGARES TAMBÉM SÃO NOSSOS</span>
+            <Crown className="w-6 h-6 text-amber-400" />
+          </motion.div>
+
+          {/* Título principal */}
+          <motion.h2
+            className="text-5xl md:text-7xl font-black mb-6"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+          >
+            <span className="bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-400 bg-clip-text text-transparent drop-shadow-[0_0_30px_rgba(251,191,36,0.5)]">
+              CAMPEÕES
+            </span>
+            <br />
+            <span className="text-white text-4xl md:text-5xl">ABSOLUTOS</span>
+          </motion.h2>
+
+          <motion.p
+            className="text-gray-400 text-lg max-w-2xl mx-auto"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            Não apenas aprovamos em medicina — conquistamos o <span className="text-amber-400 font-bold">1º LUGAR</span> nas maiores universidades federais do Brasil!
+          </motion.p>
+        </motion.div>
+
+        {/* Cards dos campeões */}
+        <div className="grid md:grid-cols-2 gap-8 lg:gap-16 max-w-5xl mx-auto mb-16">
+          {champions.map((champion, index) => (
+            <ChampionCard key={champion.id} champion={champion} index={index} />
+          ))}
+        </div>
+
+        {/* Botão Área do Aluno em destaque */}
+        <motion.div
+          initial={{ opacity: 0, y: 30 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          className="text-center"
+        >
+          <motion.p
+            className="text-gray-400 mb-6 text-lg"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+          >
+            Já é aluno? Acesse agora sua área exclusiva
+          </motion.p>
+          
+          <Link to="/auth">
+            <motion.div
+              className="inline-block relative group"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              {/* Glow pulsante épico */}
+              <motion.div
+                className="absolute -inset-2 rounded-2xl"
+                style={{
+                  background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #f59e0b)',
+                  backgroundSize: '300% 100%',
+                }}
+                animate={{
+                  backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'],
+                  opacity: [0.5, 0.8, 0.5],
+                }}
+                transition={{ duration: 3, repeat: Infinity }}
+              />
+              <motion.div
+                className="absolute -inset-4 rounded-2xl opacity-50 blur-xl"
+                style={{
+                  background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899)',
+                }}
+                animate={{
+                  opacity: [0.3, 0.6, 0.3],
+                }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              
+              <Button 
+                size="lg"
+                className="relative px-12 py-8 text-xl font-black rounded-xl bg-gradient-to-r from-amber-600 via-red-600 to-pink-600 hover:from-amber-500 hover:via-red-500 hover:to-pink-500 text-white border-0 shadow-2xl shadow-red-500/50"
+              >
+                <Zap className="w-7 h-7 mr-3 animate-pulse" />
+                ÁREA DO ALUNO
+                <motion.div
+                  className="ml-3"
+                  animate={{ x: [0, 5, 0] }}
+                  transition={{ duration: 1, repeat: Infinity }}
+                >
+                  →
+                </motion.div>
+              </Button>
+            </motion.div>
+          </Link>
+
+          {/* Selo de garantia */}
+          <motion.div
+            className="mt-8 flex items-center justify-center gap-3 text-gray-500"
+            initial={{ opacity: 0 }}
+            whileInView={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-sm">Acesso seguro e criptografado</span>
+          </motion.div>
+        </motion.div>
+      </div>
+    </section>
+  );
+};
