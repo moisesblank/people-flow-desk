@@ -10,7 +10,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { useGodMode } from '@/contexts/GodModeContext';
 import { useMasterActions } from '@/hooks/useMasterActions';
 import { MasterActionConfirmDialog } from './MasterActionConfirmDialog';
-import { Plus, Copy, Trash2, ChevronRight, FileText, Users, DollarSign, Calendar, BookOpen, BarChart3, Bell, Target, X, Loader2, GraduationCap, Briefcase } from 'lucide-react';
+import { Plus, Copy, Trash2, ChevronRight, FileText, Users, DollarSign, Calendar, BookOpen, BarChart3, Bell, Target, X, Loader2, GraduationCap, Briefcase, Link2, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -469,6 +469,30 @@ export function MasterContextMenu() {
                   )}
                 </AnimatePresence>
               </div>
+
+              {/* EDITAR DESTINO/URL */}
+              <button
+                onClick={() => {
+                  if (menuPosition?.targetElement) {
+                    // Disparar evento para abrir o editor de URL
+                    window.dispatchEvent(new CustomEvent('master-edit-url', {
+                      detail: {
+                        element: menuPosition.targetElement,
+                        rect: menuPosition.targetElement.getBoundingClientRect()
+                      }
+                    }));
+                    setMenuPosition(null);
+                    toast.info('🔗 Ctrl+Click em qualquer link para editar destino', {
+                      description: 'Ou use o editor que apareceu'
+                    });
+                  }
+                }}
+                className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-cyan-500/10 rounded-lg transition-all"
+              >
+                <Link2 className="w-4 h-4 text-cyan-500" />
+                <span className="text-sm font-medium">Editar Destino</span>
+                <kbd className="ml-auto text-[10px] bg-muted px-1.5 py-0.5 rounded">Ctrl+Click</kbd>
+              </button>
 
               {/* DUPLICAR */}
               <button
