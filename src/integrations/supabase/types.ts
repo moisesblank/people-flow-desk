@@ -10732,6 +10732,15 @@ export type Database = {
         }
         Returns: Json
       }
+      update_item_status_v2: {
+        Args: {
+          p_data_pagamento?: string
+          p_item_id: string
+          p_item_type: string
+          p_new_status: string
+        }
+        Returns: Json
+      }
       update_user_activity: { Args: never; Returns: undefined }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
       upsert_hotmart_transaction: {
