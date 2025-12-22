@@ -12721,6 +12721,18 @@ export type Database = {
         Returns: Json
       }
       get_dashboard_stats_realtime: { Args: never; Returns: Json }
+      get_dead_click_stats: {
+        Args: { p_days?: number }
+        Returns: {
+          resolved_reports: number
+          top_page: string
+          top_page_count: number
+          total_reports: number
+          unique_pages: number
+          unique_selectors: number
+          unresolved_reports: number
+        }[]
+      }
       get_entity_attachments: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: {
@@ -12809,6 +12821,18 @@ export type Database = {
         Args: { p_url: string; p_user_id?: string }
         Returns: Json
       }
+      get_url_access_stats: {
+        Args: { p_days?: number }
+        Returns: {
+          allowed_accesses: number
+          denial_rate: number
+          denied_accesses: number
+          top_denied_count: number
+          top_denied_path: string
+          total_accesses: number
+          unique_users: number
+        }[]
+      }
       get_user_chat_ban_status: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: {
@@ -12876,6 +12900,7 @@ export type Database = {
       is_funcionario: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_matrix_admin: { Args: never; Returns: boolean }
       is_owner:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id?: string }; Returns: boolean }
@@ -12999,6 +13024,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_url_access: {
+        Args: {
+          p_allowed: boolean
+          p_domain: string
+          p_ip?: unknown
+          p_path: string
+          p_reason: string
+          p_redirect_to?: string
+          p_url: string
+          p_user_agent?: string
+          p_user_id?: string
+          p_user_role?: string
+        }
+        Returns: undefined
+      }
       mark_webhook_processed:
         | {
             Args: {
@@ -13095,6 +13135,10 @@ export type Database = {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
       }
+      resolve_dead_click: {
+        Args: { p_notes?: string; p_report_id: string; p_resolved_by: string }
+        Returns: boolean
+      }
       revoke_beta_access: { Args: { _user_id: string }; Returns: Json }
       revoke_other_sessions_v2:
         | { Args: { p_current_session_id?: string }; Returns: number }
@@ -13109,6 +13153,16 @@ export type Database = {
       revoke_user_sessions: {
         Args: { p_keep_session_token: string; p_user_id: string }
         Returns: number
+      }
+      run_ui_audit: {
+        Args: never
+        Returns: {
+          audit_name: string
+          audit_type: string
+          count: number
+          details: Json
+          status: string
+        }[]
       }
       security_cleanup_job: { Args: never; Returns: undefined }
       send_chat_message_v2: {
