@@ -10585,6 +10585,50 @@ export type Database = {
           },
         ]
       }
+      user_bookmarks: {
+        Row: {
+          book_id: string
+          color: string | null
+          created_at: string
+          id: string
+          note: string | null
+          page_number: number
+          sort_order: number | null
+          title: string | null
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          page_number: number
+          sort_order?: number | null
+          title?: string | null
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          note?: string | null
+          page_number?: number
+          sort_order?: number | null
+          title?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_bookmarks_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_devices: {
         Row: {
           browser: string | null
