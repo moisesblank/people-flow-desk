@@ -26,7 +26,7 @@ Isso **NÃO** é a ordem de aplicação!
 | 6 | Edge | `sna-gateway` | `sna-gateway/index.ts` | ⏳ |
 | 7 | Edge | `sna-worker` | `sna-worker/index.ts` | ⏳ |
 
-**TOTAL: 7 itens (4 SQL + 3 Edge Functions)**
+**TOTAL: 11 itens (5 SQL + 6 Edge Functions)**
 
 ### 🔴 POR QUE ESSA ORDEM?
 
@@ -34,6 +34,20 @@ Isso **NÃO** é a ordem de aplicação!
 2. **Edge Functions depois** = Código que usa as tabelas
 
 Se inverter = ERRO!
+
+---
+
+## 🔥 NOVOS ARQUIVOS - VIDEO FORTRESS (PROTEÇÃO DE VÍDEOS)
+
+| # | Tipo | Arquivo | Função | Status |
+|---|------|---------|--------|--------|
+| 8 | SQL | `20251222500000_video_fortress_ultra.sql` | Proteção de vídeos | ⏳ |
+| 9 | Edge | `video-authorize` | Autorização + Signed URL | ⏳ |
+| 10 | Edge | `video-heartbeat` | Manter sessão viva | ⏳ |
+| 11 | Edge | `video-violation` | Registrar violações | ⏳ |
+
+### Arquivos Frontend (AUTOMÁTICOS - não precisa fazer nada):
+- `src/hooks/useVideoFortress.ts` ✅ Já no código
 
 ---
 
