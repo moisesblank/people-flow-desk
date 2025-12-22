@@ -228,5 +228,8 @@ verify_jwt = false
 [functions.genesis-upload]
 verify_jwt = true
 
+[functions.genesis-book-upload]
+verify_jwt = true
+
 [functions.book-page-signed-url]
 verify_jwt = true
