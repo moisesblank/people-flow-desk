@@ -157,46 +157,46 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
     setUploadProgress(10);
 
     try {
-      // 1. Upload do PDF para o bucket
-      const fileName = `${Date.now()}_${selectedFile.name}`;
-      const filePath = `books/raw/${fileName}`;
+      // Usar edge function genesis-book-upload diretamente
+      const formDataUpload = new FormData();
+      formDataUpload.append('file', selectedFile);
+      formDataUpload.append('title', form.title);
+      if (form.subtitle) formDataUpload.append('subtitle', form.subtitle);
+      if (form.description) formDataUpload.append('description', form.description);
+      formDataUpload.append('category', form.category);
+      if (form.tags) formDataUpload.append('tags', form.tags);
+      formDataUpload.append('isPublished', 'true');
 
-      setUploadProgress(20);
+      setUploadProgress(30);
 
-      const { error: uploadError } = await supabase.storage
-        .from('ena-assets-raw')
-        .upload(filePath, selectedFile);
+      // Chamar edge function
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const { data: sessionData } = await supabase.auth.getSession();
+      
+      if (!sessionData?.session?.access_token) {
+        throw new Error('Não autenticado');
+      }
 
-      if (uploadError) throw uploadError;
+      const response = await fetch(`${supabaseUrl}/functions/v1/genesis-book-upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${sessionData.session.access_token}`,
+        },
+        body: formDataUpload,
+      });
 
-      setUploadProgress(50);
+      setUploadProgress(70);
 
-      // 2. Criar registro no banco
-      const { data: book, error: dbError } = await supabase
-        .from('web_books')
-        .insert([{
-          title: form.title,
-          subtitle: form.subtitle || null,
-          description: form.description || null,
-          category: form.category as "exercicios" | "fisico_quimica" | "mapas_mentais" | "outros" | "previsao_final" | "quimica_geral" | "quimica_organica" | "resumos" | "revisao_ciclica" | "simulados",
-          status: 'queued' as const,
-          original_path: filePath,
-          original_filename: selectedFile.name,
-          original_size_bytes: selectedFile.size,
-          tags: form.tags ? form.tags.split(',').map(t => t.trim()) : [],
-        }])
-        .select()
-        .single();
+      const result = await response.json();
 
-      if (dbError) throw dbError;
-
-      setUploadProgress(80);
-
-      // 3. TODO: Criar job de processamento (quando edge function estiver pronta)
-      // await supabase.functions.invoke('process-book-pdf', { body: { bookId: book.id } });
+      if (!response.ok || !result.success) {
+        throw new Error(result.error || 'Erro ao processar livro');
+      }
 
       setUploadProgress(100);
-      toast.success('Livro enviado para processamento!');
+      toast.success('Livro enviado para processamento!', {
+        description: `Job ID: ${result.jobId?.substring(0, 8)}...`,
+      });
       onSuccess();
       onClose();
 
@@ -205,7 +205,7 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
       setSelectedFile(null);
     } catch (err) {
       console.error('[UploadDialog] Erro:', err);
-      toast.error('Erro ao enviar livro');
+      toast.error(err instanceof Error ? err.message : 'Erro ao enviar livro');
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
