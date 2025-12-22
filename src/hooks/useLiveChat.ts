@@ -1,14 +1,14 @@
 // ============================================
-// 🔥 HOOK: useLiveChat
-// Chat em tempo real para lives - 5.000 simultâneos
-// Supabase Realtime + Rate Limiting + Moderação
-// Design 2300 - Futurista e Performático
+// 🔥 HOOK: useLiveChat v2.0 - ULTRA EDITION
+// Chat em tempo real para lives - 5.000+ simultâneos
+// Supabase Realtime + Rate Limiting + Moderação REAL
+// Design 2300 - Futurista, Performático, Seguro
 // ============================================
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useChatRateLimit, useChatModeration } from './useChatRateLimit';
+import { useChatRateLimit, useChatModeration, type ModeratorActions } from './useChatRateLimit';
 import { RealtimeChannel } from '@supabase/supabase-js';
 
 // ============================================
@@ -37,6 +37,13 @@ export interface ChatUser {
   timeoutUntil?: string;
 }
 
+export interface ChatSettings {
+  slow_mode: boolean;
+  slow_mode_interval: number;
+  subscribers_only: boolean;
+  chat_enabled: boolean;
+}
+
 export interface LiveChatState {
   messages: ChatMessage[];
   isConnected: boolean;
@@ -44,7 +51,12 @@ export interface LiveChatState {
   error: string | null;
   viewerCount: number;
   isSlowMode: boolean;
+  slowModeInterval: number;
   pinnedMessage: ChatMessage | null;
+  isBanned: boolean;
+  isTimedOut: boolean;
+  timeoutUntil: string | null;
+  chatEnabled: boolean;
 }
 
 export interface UseLiveChatReturn {
@@ -55,7 +67,7 @@ export interface UseLiveChatReturn {
   /** Rate limiter */
   rateLimit: ReturnType<typeof useChatRateLimit>;
   /** Ações de moderação (apenas para mods/admins) */
-  moderation: ReturnType<typeof useChatModeration>;
+  moderation: ModeratorActions;
   /** Carregar mais mensagens (paginação) */
   loadMoreMessages: () => Promise<void>;
   /** Verificar se usuário é moderador */
@@ -64,6 +76,10 @@ export interface UseLiveChatReturn {
   isAdmin: boolean;
   /** Reconectar ao chat */
   reconnect: () => void;
+  /** Scroll para última mensagem */
+  scrollToBottom: () => void;
+  /** Verificar se há mais mensagens antigas */
+  hasMoreMessages: boolean;
 }
 
 // ============================================
@@ -73,6 +89,7 @@ const MESSAGES_PER_PAGE = 50;
 const MAX_MESSAGES_IN_MEMORY = 200;
 const RECONNECT_DELAY = 3000;
 const MAX_RECONNECT_ATTEMPTS = 5;
+const BAN_CHECK_INTERVAL = 30000; // 30 segundos
 
 // ============================================
 // HOOK PRINCIPAL
@@ -88,23 +105,32 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
     error: null,
     viewerCount: 0,
     isSlowMode: false,
+    slowModeInterval: 2000,
     pinnedMessage: null,
+    isBanned: false,
+    isTimedOut: false,
+    timeoutUntil: null,
+    chatEnabled: true,
   });
 
   // Referências
   const channelRef = useRef<RealtimeChannel | null>(null);
   const reconnectAttempts = useRef(0);
-  const reconnectTimer = useRef<NodeJS.Timeout | null>(null);
+  const reconnectTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const banCheckTimer = useRef<ReturnType<typeof setInterval> | null>(null);
+  const hasMoreRef = useRef(true);
 
-  // Rate limiter
+  // Rate limiter - configurado dinamicamente com slow mode
   const rateLimit = useChatRateLimit({
-    minInterval: 2000,  // 2 segundos
-    maxMessages: 10,    // 10 por minuto
-    windowSize: 60000,  // 1 minuto
-    maxChars: 280,      // 280 caracteres
+    minInterval: state.isSlowMode ? state.slowModeInterval : 2000,
+    maxMessages: 15,
+    windowSize: 60000,
+    maxChars: 500,
     slowMode: state.isSlowMode,
-    isTimedOut: false,
-    timeoutRemaining: 0,
+    isTimedOut: state.isTimedOut,
+    timeoutRemaining: state.timeoutUntil 
+      ? Math.max(0, new Date(state.timeoutUntil).getTime() - Date.now()) 
+      : 0,
   });
 
   // Moderação
@@ -115,6 +141,7 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
     if (!profile) return 'viewer';
     // @ts-ignore - profile pode ter role
     const role = profile.role || 'viewer';
+    if (profile.email === 'moisesblank@gmail.com') return 'owner';
     return role as ChatMessage['user_role'];
   }, [profile]);
 
@@ -125,6 +152,101 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
   const isAdmin = useMemo(() => {
     return ['owner', 'admin'].includes(userRole);
   }, [userRole]);
+
+  // ============================================
+  // VERIFICAR BAN/TIMEOUT DO USUÁRIO
+  // ============================================
+  const checkUserBanStatus = useCallback(async () => {
+    if (!user || !liveId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('live_chat_bans')
+        .select('*')
+        .eq('live_id', liveId)
+        .eq('user_id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') { // PGRST116 = not found
+        console.error('[CHAT] Erro ao verificar ban:', error);
+        return;
+      }
+
+      if (data) {
+        const now = new Date();
+        
+        if (data.is_ban) {
+          setState(prev => ({
+            ...prev,
+            isBanned: true,
+            isTimedOut: false,
+            timeoutUntil: null,
+          }));
+        } else if (data.timeout_until) {
+          const timeoutEnd = new Date(data.timeout_until);
+          if (timeoutEnd > now) {
+            setState(prev => ({
+              ...prev,
+              isBanned: false,
+              isTimedOut: true,
+              timeoutUntil: data.timeout_until,
+            }));
+            // Aplicar timeout no rate limiter
+            rateLimit.applyTimeout(timeoutEnd.getTime() - now.getTime());
+          } else {
+            // Timeout expirou
+            setState(prev => ({
+              ...prev,
+              isBanned: false,
+              isTimedOut: false,
+              timeoutUntil: null,
+            }));
+          }
+        }
+      } else {
+        // Sem ban/timeout
+        setState(prev => ({
+          ...prev,
+          isBanned: false,
+          isTimedOut: false,
+          timeoutUntil: null,
+        }));
+      }
+    } catch (err) {
+      console.error('[CHAT] Erro:', err);
+    }
+  }, [user, liveId, rateLimit]);
+
+  // ============================================
+  // CARREGAR CONFIGURAÇÕES DO CHAT
+  // ============================================
+  const loadChatSettings = useCallback(async () => {
+    if (!liveId) return;
+
+    try {
+      const { data, error } = await supabase
+        .from('live_chat_settings')
+        .select('*')
+        .eq('live_id', liveId)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        console.error('[CHAT] Erro ao carregar settings:', error);
+        return;
+      }
+
+      if (data) {
+        setState(prev => ({
+          ...prev,
+          isSlowMode: data.slow_mode ?? false,
+          slowModeInterval: data.slow_mode_interval ?? 2000,
+          chatEnabled: data.chat_enabled ?? true,
+        }));
+      }
+    } catch (err) {
+      console.error('[CHAT] Erro:', err);
+    }
+  }, [liveId]);
 
   // ============================================
   // CARREGAR MENSAGENS INICIAIS
@@ -149,17 +271,25 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
 
       if (error) {
         console.error('[CHAT] Erro ao carregar mensagens:', error);
-        setState(prev => ({ ...prev, error: error.message }));
+        setState(prev => ({ ...prev, error: error.message, isLoading: false }));
         return;
       }
 
       if (data) {
         const messages = data.reverse() as ChatMessage[];
+        
+        // Verificar se há mais mensagens
+        hasMoreRef.current = data.length === MESSAGES_PER_PAGE;
+        
+        // Encontrar mensagem pinada
+        const pinned = messages.find(m => m.is_pinned) || null;
+        
         setState(prev => ({
           ...prev,
           messages: before 
             ? [...messages, ...prev.messages].slice(-MAX_MESSAGES_IN_MEMORY)
             : messages,
+          pinnedMessage: pinned || prev.pinnedMessage,
           isLoading: false,
           error: null,
         }));
@@ -178,7 +308,7 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
   // CARREGAR MAIS MENSAGENS (PAGINAÇÃO)
   // ============================================
   const loadMoreMessages = useCallback(async () => {
-    if (state.messages.length === 0) return;
+    if (state.messages.length === 0 || !hasMoreRef.current) return;
     const oldestMessage = state.messages[0];
     await loadMessages(oldestMessage.created_at);
   }, [state.messages, loadMessages]);
@@ -192,7 +322,12 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
     console.log('[CHAT] 📡 Conectando ao Realtime...');
 
     const channel = supabase
-      .channel(`live-chat-${liveId}`)
+      .channel(`live-chat-${liveId}`, {
+        config: {
+          presence: { key: user?.id || 'anonymous' },
+        },
+      })
+      // Novas mensagens
       .on(
         'postgres_changes',
         {
@@ -208,9 +343,11 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
           setState(prev => ({
             ...prev,
             messages: [...prev.messages, newMessage].slice(-MAX_MESSAGES_IN_MEMORY),
+            pinnedMessage: newMessage.is_pinned ? newMessage : prev.pinnedMessage,
           }));
         }
       )
+      // Atualizações de mensagens (delete, pin)
       .on(
         'postgres_changes',
         {
@@ -222,19 +359,58 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
         (payload) => {
           const updatedMessage = payload.new as ChatMessage;
           
+          setState(prev => {
+            // Atualizar mensagem na lista
+            const newMessages = prev.messages.map(msg =>
+              msg.id === updatedMessage.id ? updatedMessage : msg
+            );
+            
+            // Atualizar pinned message
+            let newPinned = prev.pinnedMessage;
+            if (updatedMessage.is_pinned) {
+              newPinned = updatedMessage;
+            } else if (prev.pinnedMessage?.id === updatedMessage.id) {
+              newPinned = null;
+            }
+            
+            return {
+              ...prev,
+              messages: newMessages,
+              pinnedMessage: newPinned,
+            };
+          });
+        }
+      )
+      // Atualizações de settings (slow mode)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'live_chat_settings',
+          filter: `live_id=eq.${liveId}`,
+        },
+        (payload) => {
+          const settings = payload.new as ChatSettings;
           setState(prev => ({
             ...prev,
-            messages: prev.messages.map(msg =>
-              msg.id === updatedMessage.id ? updatedMessage : msg
-            ),
-            pinnedMessage: updatedMessage.is_pinned ? updatedMessage : prev.pinnedMessage,
+            isSlowMode: settings.slow_mode,
+            slowModeInterval: settings.slow_mode_interval,
+            chatEnabled: settings.chat_enabled,
           }));
         }
       )
+      // Presence (contador de viewers)
       .on('presence', { event: 'sync' }, () => {
         const presenceState = channel.presenceState();
         const viewerCount = Object.keys(presenceState).length;
         setState(prev => ({ ...prev, viewerCount }));
+      })
+      .on('presence', { event: 'join' }, ({ key, newPresences }) => {
+        console.log('[CHAT] 👋 Usuário entrou:', key);
+      })
+      .on('presence', { event: 'leave' }, ({ key, leftPresences }) => {
+        console.log('[CHAT] 👋 Usuário saiu:', key);
       })
       .subscribe(async (status) => {
         console.log('[CHAT] Status:', status);
@@ -244,10 +420,14 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
           reconnectAttempts.current = 0;
 
           // Track presence
-          await channel.track({
-            user_id: user?.id,
-            online_at: new Date().toISOString(),
-          });
+          if (user) {
+            await channel.track({
+              user_id: user.id,
+              // @ts-ignore
+              user_name: profile?.name || 'Anônimo',
+              online_at: new Date().toISOString(),
+            });
+          }
         } else if (status === 'CLOSED' || status === 'CHANNEL_ERROR') {
           setState(prev => ({ ...prev, isConnected: false }));
           handleReconnect();
@@ -255,7 +435,7 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
       });
 
     channelRef.current = channel;
-  }, [liveId, user?.id]);
+  }, [liveId, user, profile]);
 
   // ============================================
   // RECONECTAR
@@ -265,7 +445,7 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
       console.error('[CHAT] ❌ Máximo de tentativas de reconexão atingido');
       setState(prev => ({ 
         ...prev, 
-        error: 'Conexão perdida. Recarregue a página.' 
+        error: 'Conexão perdida. Clique em reconectar.' 
       }));
       return;
     }
@@ -288,6 +468,7 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
       supabase.removeChannel(channelRef.current);
       channelRef.current = null;
     }
+    setState(prev => ({ ...prev, error: null }));
     connectToRealtime();
   }, [connectToRealtime]);
 
@@ -297,6 +478,25 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
   const sendMessage = useCallback(async (content: string): Promise<boolean> => {
     if (!user || !profile || !liveId) {
       console.error('[CHAT] Usuário não autenticado');
+      setState(prev => ({ ...prev, error: 'Faça login para enviar mensagens' }));
+      return false;
+    }
+
+    // Verificar se está banido
+    if (state.isBanned) {
+      setState(prev => ({ ...prev, error: 'Você foi banido deste chat' }));
+      return false;
+    }
+
+    // Verificar se está em timeout
+    if (state.isTimedOut) {
+      setState(prev => ({ ...prev, error: 'Você está em timeout' }));
+      return false;
+    }
+
+    // Verificar se chat está habilitado
+    if (!state.chatEnabled) {
+      setState(prev => ({ ...prev, error: 'O chat está desativado' }));
       return false;
     }
 
@@ -309,9 +509,10 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
 
     // Verificar rate limit
     if (!rateLimit.checkCanSend()) {
+      const seconds = Math.ceil(rateLimit.state.cooldownRemaining / 1000);
       setState(prev => ({ 
         ...prev, 
-        error: `Aguarde ${Math.ceil(rateLimit.state.cooldownRemaining / 1000)}s para enviar outra mensagem` 
+        error: `Aguarde ${seconds}s para enviar outra mensagem` 
       }));
       return false;
     }
@@ -321,9 +522,9 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
         live_id: liveId,
         user_id: user.id,
         // @ts-ignore
-        user_name: profile.name || profile.email || 'Anônimo',
+        user_name: profile.name || profile.full_name || profile.email?.split('@')[0] || 'Anônimo',
         // @ts-ignore
-        user_avatar: profile.avatar_url,
+        user_avatar: profile.avatar_url || null,
         user_role: userRole,
         content: content.trim(),
         is_deleted: false,
@@ -336,7 +537,14 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
 
       if (error) {
         console.error('[CHAT] Erro ao enviar:', error);
-        setState(prev => ({ ...prev, error: 'Erro ao enviar mensagem' }));
+        
+        // Verificar se é erro de RLS (banido)
+        if (error.code === '42501') {
+          setState(prev => ({ ...prev, error: 'Você não tem permissão para enviar mensagens' }));
+          await checkUserBanStatus();
+        } else {
+          setState(prev => ({ ...prev, error: 'Erro ao enviar mensagem' }));
+        }
         return false;
       }
 
@@ -350,18 +558,28 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
       setState(prev => ({ ...prev, error: 'Erro ao enviar mensagem' }));
       return false;
     }
-  }, [user, profile, liveId, userRole, rateLimit]);
+  }, [user, profile, liveId, userRole, rateLimit, state.isBanned, state.isTimedOut, state.chatEnabled, checkUserBanStatus]);
+
+  // ============================================
+  // SCROLL TO BOTTOM
+  // ============================================
+  const scrollToBottom = useCallback(() => {
+    // Emitir evento customizado para o componente de UI
+    window.dispatchEvent(new CustomEvent('chat-scroll-bottom'));
+  }, []);
 
   // ============================================
   // EFEITOS
   // ============================================
   
-  // Carregar mensagens iniciais
+  // Carregar dados iniciais
   useEffect(() => {
     if (liveId) {
       loadMessages();
+      loadChatSettings();
+      checkUserBanStatus();
     }
-  }, [liveId, loadMessages]);
+  }, [liveId, loadMessages, loadChatSettings, checkUserBanStatus]);
 
   // Conectar ao Realtime
   useEffect(() => {
@@ -378,6 +596,19 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
       }
     };
   }, [connectToRealtime]);
+
+  // Verificar ban/timeout periodicamente
+  useEffect(() => {
+    if (user && liveId) {
+      banCheckTimer.current = setInterval(checkUserBanStatus, BAN_CHECK_INTERVAL);
+    }
+
+    return () => {
+      if (banCheckTimer.current) {
+        clearInterval(banCheckTimer.current);
+      }
+    };
+  }, [user, liveId, checkUserBanStatus]);
 
   // Atualizar slow mode no rate limiter
   useEffect(() => {
@@ -397,6 +628,8 @@ export function useLiveChat(liveId: string): UseLiveChatReturn {
     isModerator,
     isAdmin,
     reconnect,
+    scrollToBottom,
+    hasMoreMessages: hasMoreRef.current,
   };
 }
 

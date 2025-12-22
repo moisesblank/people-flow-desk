@@ -46,6 +46,7 @@ import {
   YouTubeLiveWidget
 } from "@/components/youtube";
 import { useYouTubeLive, useYouTubeChannel } from "@/hooks/useYouTubeLive";
+import { LiveChatPanel } from "@/components/chat";
 
 // Componente de Live Card
 function LiveCard({ live, isUpcoming = false }: { live: any; isUpcoming?: boolean }) {
@@ -500,11 +501,18 @@ export default function Lives() {
           <TabsContent value="ao-vivo" className="space-y-6">
             {currentLive ? (
               <div className="grid lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
+                {/* Player de Vídeo */}
+                <div className="lg:col-span-2 space-y-4">
                   <YouTubeLivePlayer videoId={currentLive.video_id} />
-                </div>
-                <div>
                   <YouTubeChannelStats />
+                </div>
+                
+                {/* Chat em Tempo Real - 5.000 simultâneos */}
+                <div className="lg:col-span-1">
+                  <LiveChatPanel 
+                    liveId={currentLive.id} 
+                    className="h-[600px]"
+                  />
                 </div>
               </div>
             ) : (

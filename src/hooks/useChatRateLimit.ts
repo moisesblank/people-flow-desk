@@ -1,11 +1,13 @@
 // ============================================
-// 🔥 HOOK: useChatRateLimit
+// 🔥 HOOK: useChatRateLimit v2.0 - ULTRA EDITION
 // Rate limiting inteligente para chat de lives
-// Suporte a 5.000 usuários simultâneos
-// Design 2300 - Futurista e Performático
+// Suporte a 5.000+ usuários simultâneos
+// Design 2300 - Futurista, Performático, Seguro
 // ============================================
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from './useAuth';
 
 // ============================================
 // CONFIGURAÇÕES DO RATE LIMITER
@@ -68,18 +70,33 @@ export interface UseChatRateLimitReturn {
 // ============================================
 const DEFAULT_CONFIG: RateLimitConfig = {
   minInterval: 2000,      // 2 segundos entre mensagens
-  maxMessages: 10,        // Máximo 10 mensagens por janela
+  maxMessages: 15,        // Máximo 15 mensagens por janela
   windowSize: 60000,      // Janela de 1 minuto
-  maxChars: 280,          // Limite Twitter-style
+  maxChars: 500,          // 500 caracteres max
   slowMode: false,
   isTimedOut: false,
   timeoutRemaining: 0,
 };
 
-// Palavras bloqueadas (básico - expandir conforme necessário)
+// ============================================
+// PALAVRAS BLOQUEADAS (EXPANDIDO)
+// ============================================
 const BLOCKED_WORDS = [
-  'spam',
-  // Adicionar mais conforme necessário
+  'spam', 'scam', 'golpe', 'fraude', 'fake',
+  'nude', 'nudes', 'porn', 'porno', 'xxx',
+  'merda', 'porra', 'caralho', 'puta', 'viado',
+  'nazista', 'nazi', 'hitler', 'kkk',
+  'pix', 'deposito', 'dinheiro facil', 'investimento garantido',
+  'whats', 'telegram', '@', 'http', 'www.',
+];
+
+// Padrões de spam mais sofisticados
+const SPAM_PATTERNS = [
+  /(.)\1{5,}/,                    // Caracteres repetidos
+  /^[A-Z\s]{20,}$/,              // Tudo maiúsculo longo
+  /(.{3,})\1{2,}/,               // Sequências repetidas
+  /[!?]{3,}/,                     // Muita pontuação
+  /(ha){5,}|(ks){5,}|(rs){5,}/i, // Risadas excessivas
 ];
 
 // ============================================
@@ -100,8 +117,8 @@ export function useChatRateLimit(
     cooldownRemaining: 0,
     messageCount: 0,
     isSlowMode: config.current.slowMode,
-    isTimedOut: false,
-    timeoutRemaining: 0,
+    isTimedOut: config.current.isTimedOut,
+    timeoutRemaining: config.current.timeoutRemaining,
   });
 
   // Histórico de mensagens (timestamps)
@@ -111,10 +128,13 @@ export function useChatRateLimit(
   const lastSendTime = useRef<number>(0);
   
   // Timer do cooldown
-  const cooldownTimer = useRef<NodeJS.Timeout | null>(null);
+  const cooldownTimer = useRef<ReturnType<typeof setInterval> | null>(null);
   
   // Timer do timeout
-  const timeoutTimer = useRef<NodeJS.Timeout | null>(null);
+  const timeoutTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  
+  // Update interval timer
+  const updateIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // ============================================
   // LIMPAR MENSAGENS ANTIGAS DA JANELA
@@ -203,10 +223,11 @@ export function useChatRateLimit(
       if (remaining <= 0) {
         if (cooldownTimer.current) {
           clearInterval(cooldownTimer.current);
+          cooldownTimer.current = null;
         }
         setState(prev => ({
           ...prev,
-          canSend: true,
+          canSend: !prev.isTimedOut,
           cooldownRemaining: 0,
         }));
       } else {
@@ -226,9 +247,15 @@ export function useChatRateLimit(
     lastSendTime.current = 0;
     if (cooldownTimer.current) {
       clearInterval(cooldownTimer.current);
+      cooldownTimer.current = null;
     }
     if (timeoutTimer.current) {
       clearTimeout(timeoutTimer.current);
+      timeoutTimer.current = null;
+    }
+    if (updateIntervalRef.current) {
+      clearInterval(updateIntervalRef.current);
+      updateIntervalRef.current = null;
     }
     setState({
       canSend: true,
@@ -266,6 +293,14 @@ export function useChatRateLimit(
   // APLICAR TIMEOUT
   // ============================================
   const applyTimeout = useCallback((durationMs: number) => {
+    // Limpar timers existentes
+    if (timeoutTimer.current) {
+      clearTimeout(timeoutTimer.current);
+    }
+    if (updateIntervalRef.current) {
+      clearInterval(updateIntervalRef.current);
+    }
+
     setState(prev => ({
       ...prev,
       isTimedOut: true,
@@ -275,10 +310,13 @@ export function useChatRateLimit(
 
     // Timer para atualizar countdown
     const startTime = Date.now();
-    const updateInterval = setInterval(() => {
+    updateIntervalRef.current = setInterval(() => {
       const remaining = durationMs - (Date.now() - startTime);
       if (remaining <= 0) {
-        clearInterval(updateInterval);
+        if (updateIntervalRef.current) {
+          clearInterval(updateIntervalRef.current);
+          updateIntervalRef.current = null;
+        }
         setState(prev => ({
           ...prev,
           isTimedOut: false,
@@ -294,7 +332,10 @@ export function useChatRateLimit(
     }, 1000);
 
     timeoutTimer.current = setTimeout(() => {
-      clearInterval(updateInterval);
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+        updateIntervalRef.current = null;
+      }
       setState(prev => ({
         ...prev,
         isTimedOut: false,
@@ -305,7 +346,7 @@ export function useChatRateLimit(
   }, []);
 
   // ============================================
-  // VALIDAR MENSAGEM
+  // VALIDAR MENSAGEM (ULTRA SEGURO)
   // ============================================
   const validateMessage = useCallback((message: string): { valid: boolean; error?: string } => {
     // Verificar se está vazia
@@ -313,7 +354,12 @@ export function useChatRateLimit(
       return { valid: false, error: 'Mensagem não pode estar vazia' };
     }
 
-    // Verificar tamanho
+    // Verificar tamanho mínimo
+    if (message.trim().length < 2) {
+      return { valid: false, error: 'Mensagem muito curta' };
+    }
+
+    // Verificar tamanho máximo
     if (message.length > config.current.maxChars) {
       return { 
         valid: false, 
@@ -322,16 +368,24 @@ export function useChatRateLimit(
     }
 
     // Verificar palavras bloqueadas
-    const lowerMessage = message.toLowerCase();
+    const lowerMessage = message.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
     for (const word of BLOCKED_WORDS) {
       if (lowerMessage.includes(word)) {
         return { valid: false, error: 'Mensagem contém conteúdo não permitido' };
       }
     }
 
-    // Verificar spam (muitos caracteres repetidos)
-    if (/(.)\1{10,}/.test(message)) {
-      return { valid: false, error: 'Mensagem parece ser spam' };
+    // Verificar padrões de spam
+    for (const pattern of SPAM_PATTERNS) {
+      if (pattern.test(message)) {
+        return { valid: false, error: 'Mensagem parece ser spam' };
+      }
+    }
+
+    // Verificar se é apenas emojis/símbolos
+    const textOnly = message.replace(/[\p{Emoji}\p{Symbol}\s]/gu, '');
+    if (textOnly.length === 0 && message.length > 10) {
+      return { valid: false, error: 'Mensagem deve conter texto' };
     }
 
     return { valid: true };
@@ -348,8 +402,26 @@ export function useChatRateLimit(
       if (timeoutTimer.current) {
         clearTimeout(timeoutTimer.current);
       }
+      if (updateIntervalRef.current) {
+        clearInterval(updateIntervalRef.current);
+      }
     };
   }, []);
+
+  // ============================================
+  // SINCRONIZAR CONFIG EXTERNA
+  // ============================================
+  useEffect(() => {
+    if (customConfig) {
+      config.current = { ...config.current, ...customConfig };
+      setState(prev => ({
+        ...prev,
+        isSlowMode: config.current.slowMode,
+        isTimedOut: config.current.isTimedOut,
+        timeoutRemaining: config.current.timeoutRemaining,
+      }));
+    }
+  }, [customConfig?.slowMode, customConfig?.isTimedOut, customConfig?.timeoutRemaining]);
 
   return {
     state,
@@ -365,60 +437,425 @@ export function useChatRateLimit(
 }
 
 // ============================================
-// HOOK PARA MODERAÇÃO
+// HOOK PARA MODERAÇÃO v2.0 - IMPLEMENTAÇÃO REAL
 // ============================================
 export interface ModeratorActions {
   /** Dar timeout em um usuário */
-  timeoutUser: (userId: string, durationMs: number, reason?: string) => Promise<void>;
+  timeoutUser: (userId: string, durationMs: number, reason?: string) => Promise<boolean>;
   /** Banir usuário do chat */
-  banUser: (userId: string, reason?: string) => Promise<void>;
+  banUser: (userId: string, reason?: string) => Promise<boolean>;
   /** Desbanir usuário */
-  unbanUser: (userId: string) => Promise<void>;
+  unbanUser: (userId: string) => Promise<boolean>;
   /** Deletar mensagem */
-  deleteMessage: (messageId: string) => Promise<void>;
+  deleteMessage: (messageId: string) => Promise<boolean>;
   /** Ativar slow mode global */
-  enableGlobalSlowMode: () => Promise<void>;
+  enableGlobalSlowMode: () => Promise<boolean>;
   /** Desativar slow mode global */
-  disableGlobalSlowMode: () => Promise<void>;
+  disableGlobalSlowMode: () => Promise<boolean>;
   /** Limpar todo o chat */
-  clearChat: () => Promise<void>;
+  clearChat: () => Promise<boolean>;
+  /** Pin de mensagem */
+  pinMessage: (messageId: string) => Promise<boolean>;
+  /** Unpin de mensagem */
+  unpinMessage: (messageId: string) => Promise<boolean>;
+  /** Estado de loading */
+  isLoading: boolean;
+  /** Erro atual */
+  error: string | null;
 }
 
 export function useChatModeration(liveId: string): ModeratorActions {
-  const timeoutUser = useCallback(async (userId: string, durationMs: number, reason?: string) => {
-    console.log(`[MODERAÇÃO] Timeout: ${userId} por ${durationMs}ms. Razão: ${reason}`);
-    // TODO: Implementar chamada ao Supabase
-  }, []);
+  const { user, profile } = useAuth();
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const banUser = useCallback(async (userId: string, reason?: string) => {
-    console.log(`[MODERAÇÃO] Ban: ${userId}. Razão: ${reason}`);
-    // TODO: Implementar chamada ao Supabase
-  }, [liveId]);
+  // Verificar se é moderador
+  const isModerator = useMemo(() => {
+    if (!profile) return false;
+    // @ts-ignore
+    const role = profile.role as string;
+    return ['owner', 'admin', 'moderator'].includes(role);
+  }, [profile]);
 
-  const unbanUser = useCallback(async (userId: string) => {
-    console.log(`[MODERAÇÃO] Unban: ${userId}`);
-    // TODO: Implementar chamada ao Supabase
-  }, [liveId]);
+  // ============================================
+  // TIMEOUT USER
+  // ============================================
+  const timeoutUser = useCallback(async (
+    userId: string, 
+    durationMs: number, 
+    reason?: string
+  ): Promise<boolean> => {
+    if (!isModerator || !user) {
+      setError('Sem permissão para dar timeout');
+      return false;
+    }
 
-  const deleteMessage = useCallback(async (messageId: string) => {
-    console.log(`[MODERAÇÃO] Delete message: ${messageId}`);
-    // TODO: Implementar chamada ao Supabase
-  }, []);
+    setIsLoading(true);
+    setError(null);
 
-  const enableGlobalSlowMode = useCallback(async () => {
-    console.log(`[MODERAÇÃO] Slow mode ativado para live: ${liveId}`);
-    // TODO: Implementar chamada ao Supabase
-  }, [liveId]);
+    try {
+      const timeoutUntil = new Date(Date.now() + durationMs).toISOString();
+      
+      const { error: insertError } = await supabase
+        .from('live_chat_bans')
+        .upsert({
+          live_id: liveId,
+          user_id: userId,
+          banned_by: user.id,
+          is_ban: false,
+          timeout_until: timeoutUntil,
+          reason: reason || 'Timeout por moderador',
+        }, {
+          onConflict: 'live_id,user_id'
+        });
 
-  const disableGlobalSlowMode = useCallback(async () => {
-    console.log(`[MODERAÇÃO] Slow mode desativado para live: ${liveId}`);
-    // TODO: Implementar chamada ao Supabase
-  }, [liveId]);
+      if (insertError) {
+        console.error('[MODERAÇÃO] Erro timeout:', insertError);
+        setError('Erro ao aplicar timeout');
+        return false;
+      }
 
-  const clearChat = useCallback(async () => {
-    console.log(`[MODERAÇÃO] Chat limpo para live: ${liveId}`);
-    // TODO: Implementar chamada ao Supabase
-  }, [liveId]);
+      console.log(`[MODERAÇÃO] ✅ Timeout aplicado: ${userId} por ${durationMs}ms`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [liveId, user, isModerator]);
+
+  // ============================================
+  // BAN USER
+  // ============================================
+  const banUser = useCallback(async (userId: string, reason?: string): Promise<boolean> => {
+    if (!isModerator || !user) {
+      setError('Sem permissão para banir');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error: insertError } = await supabase
+        .from('live_chat_bans')
+        .upsert({
+          live_id: liveId,
+          user_id: userId,
+          banned_by: user.id,
+          is_ban: true,
+          timeout_until: null, // Ban permanente
+          reason: reason || 'Banido por moderador',
+        }, {
+          onConflict: 'live_id,user_id'
+        });
+
+      if (insertError) {
+        console.error('[MODERAÇÃO] Erro ban:', insertError);
+        setError('Erro ao banir usuário');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Usuário banido: ${userId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [liveId, user, isModerator]);
+
+  // ============================================
+  // UNBAN USER
+  // ============================================
+  const unbanUser = useCallback(async (userId: string): Promise<boolean> => {
+    if (!isModerator || !user) {
+      setError('Sem permissão');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error: deleteError } = await supabase
+        .from('live_chat_bans')
+        .delete()
+        .eq('live_id', liveId)
+        .eq('user_id', userId);
+
+      if (deleteError) {
+        console.error('[MODERAÇÃO] Erro unban:', deleteError);
+        setError('Erro ao desbanir');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Usuário desbanido: ${userId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [liveId, user, isModerator]);
+
+  // ============================================
+  // DELETE MESSAGE
+  // ============================================
+  const deleteMessage = useCallback(async (messageId: string): Promise<boolean> => {
+    if (!isModerator) {
+      setError('Sem permissão');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error: updateError } = await supabase
+        .from('live_chat_messages')
+        .update({ 
+          is_deleted: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', messageId);
+
+      if (updateError) {
+        console.error('[MODERAÇÃO] Erro delete:', updateError);
+        setError('Erro ao deletar mensagem');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Mensagem deletada: ${messageId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isModerator]);
+
+  // ============================================
+  // PIN MESSAGE
+  // ============================================
+  const pinMessage = useCallback(async (messageId: string): Promise<boolean> => {
+    if (!isModerator) {
+      setError('Sem permissão');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Primeiro, desafixar todas as mensagens da live
+      await supabase
+        .from('live_chat_messages')
+        .update({ is_pinned: false })
+        .eq('live_id', liveId)
+        .eq('is_pinned', true);
+
+      // Fixar a nova mensagem
+      const { error: updateError } = await supabase
+        .from('live_chat_messages')
+        .update({ 
+          is_pinned: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', messageId);
+
+      if (updateError) {
+        console.error('[MODERAÇÃO] Erro pin:', updateError);
+        setError('Erro ao fixar mensagem');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Mensagem fixada: ${messageId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [liveId, isModerator]);
+
+  // ============================================
+  // UNPIN MESSAGE
+  // ============================================
+  const unpinMessage = useCallback(async (messageId: string): Promise<boolean> => {
+    if (!isModerator) {
+      setError('Sem permissão');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error: updateError } = await supabase
+        .from('live_chat_messages')
+        .update({ 
+          is_pinned: false,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', messageId);
+
+      if (updateError) {
+        console.error('[MODERAÇÃO] Erro unpin:', updateError);
+        setError('Erro ao desafixar mensagem');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Mensagem desafixada: ${messageId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [isModerator]);
+
+  // ============================================
+  // ENABLE GLOBAL SLOW MODE
+  // ============================================
+  const enableGlobalSlowMode = useCallback(async (): Promise<boolean> => {
+    if (!isModerator) {
+      setError('Sem permissão');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error: upsertError } = await supabase
+        .from('live_chat_settings')
+        .upsert({
+          live_id: liveId,
+          slow_mode: true,
+          slow_mode_interval: 5000, // 5 segundos
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'live_id'
+        });
+
+      if (upsertError) {
+        console.error('[MODERAÇÃO] Erro slow mode:', upsertError);
+        setError('Erro ao ativar slow mode');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Slow mode ativado para live: ${liveId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [liveId, isModerator]);
+
+  // ============================================
+  // DISABLE GLOBAL SLOW MODE
+  // ============================================
+  const disableGlobalSlowMode = useCallback(async (): Promise<boolean> => {
+    if (!isModerator) {
+      setError('Sem permissão');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const { error: upsertError } = await supabase
+        .from('live_chat_settings')
+        .upsert({
+          live_id: liveId,
+          slow_mode: false,
+          updated_at: new Date().toISOString()
+        }, {
+          onConflict: 'live_id'
+        });
+
+      if (upsertError) {
+        console.error('[MODERAÇÃO] Erro slow mode:', upsertError);
+        setError('Erro ao desativar slow mode');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Slow mode desativado para live: ${liveId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [liveId, isModerator]);
+
+  // ============================================
+  // CLEAR CHAT
+  // ============================================
+  const clearChat = useCallback(async (): Promise<boolean> => {
+    if (!isModerator) {
+      setError('Sem permissão');
+      return false;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      // Soft delete - marca todas como deletadas
+      const { error: updateError } = await supabase
+        .from('live_chat_messages')
+        .update({ 
+          is_deleted: true,
+          updated_at: new Date().toISOString()
+        })
+        .eq('live_id', liveId)
+        .eq('is_deleted', false);
+
+      if (updateError) {
+        console.error('[MODERAÇÃO] Erro clear chat:', updateError);
+        setError('Erro ao limpar chat');
+        return false;
+      }
+
+      console.log(`[MODERAÇÃO] ✅ Chat limpo para live: ${liveId}`);
+      return true;
+
+    } catch (err) {
+      console.error('[MODERAÇÃO] Erro:', err);
+      setError('Erro interno');
+      return false;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [liveId, isModerator]);
 
   return {
     timeoutUser,
@@ -428,6 +865,10 @@ export function useChatModeration(liveId: string): ModeratorActions {
     enableGlobalSlowMode,
     disableGlobalSlowMode,
     clearChat,
+    pinMessage,
+    unpinMessage,
+    isLoading,
+    error,
   };
 }
 
