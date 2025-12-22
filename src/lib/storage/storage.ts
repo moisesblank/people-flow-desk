@@ -764,16 +764,16 @@ export const BUCKET_DEFINITIONS: Record<BucketKey, BucketDefinition> = {
     ttlLevel: "ULTRA_SENSITIVE",
   },
   
-  // === GESTÃO (Funcionários) ===
+  // === GESTÃO ===
   GESTAO_DOCS: {
     name: "gestao-docs",
     accessLevel: "protected",
     public: false,
     maxFileSize: 50 * 1024 * 1024,
     allowedMimeTypes: ["application/pdf", "image/*", "application/msword", "application/vnd.openxmlformats-officedocument.*"],
-    pathPattern: "gestao/{category}/{timestamp}-{rand}.{ext}",
+    pathPattern: "gestao/{department}/{timestamp}-{rand}.{ext}",
     requiresAuth: true,
-    allowedRoles: ["owner", "admin", "funcionario"],
+    allowedRoles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"],
     isPremium: false,
     isProtected: true,
     watermarkRequired: false,
@@ -786,9 +786,9 @@ export const BUCKET_DEFINITIONS: Record<BucketKey, BucketDefinition> = {
     name: "gestao-reports",
     accessLevel: "protected",
     public: false,
-    maxFileSize: 50 * 1024 * 1024,
-    allowedMimeTypes: ["application/pdf", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
-    pathPattern: "gestao/reports/{year}/{month}/{timestamp}-{rand}.{ext}",
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+    pathPattern: "gestao/reports/{report_type}/{timestamp}.{ext}",
     requiresAuth: true,
     allowedRoles: ["owner", "admin"],
     isPremium: false,
@@ -803,9 +803,9 @@ export const BUCKET_DEFINITIONS: Record<BucketKey, BucketDefinition> = {
     name: "gestao-exports",
     accessLevel: "protected",
     public: false,
-    maxFileSize: 100 * 1024 * 1024,
-    allowedMimeTypes: ["*/*"],
-    pathPattern: "gestao/exports/{type}/{timestamp}-{rand}.{ext}",
+    maxFileSize: 500 * 1024 * 1024, // 500MB
+    allowedMimeTypes: ["application/zip", "text/csv", "application/json"],
+    pathPattern: "gestao/exports/{user_id}/{timestamp}.{ext}",
     requiresAuth: true,
     allowedRoles: ["owner", "admin"],
     isPremium: false,
@@ -1440,17 +1440,228 @@ export async function secureList(
 }
 
 // ============================================
+// FUNÇÕES UTILITÁRIAS AVANÇADAS
+// ============================================
+
+/**
+ * Retorna o nome do bucket pela chave
+ */
+export function getBucket(key: BucketKey): string {
+  return BUCKETS[key];
+}
+
+/**
+ * Retorna a definição de um bucket pela chave
+ */
+export function getBucketDefinitionByKey(key: BucketKey): BucketDefinition {
+  return BUCKET_DEFINITIONS[key];
+}
+
+/**
+ * Gera o path para um arquivo usando a chave do bucket
+ */
+export function generateFilePath(
+  bucketKey: BucketKey,
+  params: Record<string, string>
+): string {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  let path = def.pathPattern;
+
+  // Substituir placeholders fornecidos
+  Object.entries(params).forEach(([key, value]) => {
+    path = path.replace(`{${key}}`, value);
+  });
+
+  // Substituir placeholders padrão
+  const now = new Date();
+  path = path.replace("{timestamp}", now.getTime().toString());
+  path = path.replace("{year}", now.getFullYear().toString());
+  path = path.replace("{month}", (now.getMonth() + 1).toString().padStart(2, "0"));
+  path = path.replace("{day}", now.getDate().toString().padStart(2, "0"));
+  path = path.replace("{rand}", Math.random().toString(36).substring(2, 10));
+
+  return path;
+}
+
+/**
+ * Valida se um arquivo pode ser enviado para um bucket (por chave)
+ */
+export function validateFileForBucket(
+  bucketKey: BucketKey,
+  file: { size: number; type: string }
+): { valid: boolean; error?: string } {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+
+  // Verificar tamanho
+  if (file.size > def.maxFileSize) {
+    const maxMB = Math.round(def.maxFileSize / (1024 * 1024));
+    return { valid: false, error: `Arquivo muito grande. Máximo: ${maxMB}MB` };
+  }
+
+  // Verificar MIME type
+  const allowedTypes = def.allowedMimeTypes;
+  const typeAllowed = allowedTypes.some(allowed => {
+    if (allowed === "*/*") return true;
+    if (allowed.endsWith("/*")) {
+      const prefix = allowed.replace("/*", "");
+      return file.type.startsWith(prefix);
+    }
+    return file.type === allowed;
+  });
+
+  if (!typeAllowed) {
+    return { valid: false, error: `Tipo de arquivo não permitido: ${file.type}` };
+  }
+
+  return { valid: true };
+}
+
+/**
+ * Verifica se um usuário pode acessar um bucket (por chave)
+ */
+export function canAccessBucketByKey(
+  bucketKey: BucketKey,
+  userRole: string | null,
+  userEmail?: string | null
+): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+
+  // Owner MASTER pode tudo
+  if (userRole === "owner" || userEmail?.toLowerCase() === OWNER_EMAIL) {
+    return true;
+  }
+
+  // Verificar se bucket permite qualquer role
+  if (def.allowedRoles.includes("*")) {
+    return true;
+  }
+
+  // Verificar role específica
+  if (!userRole) return false;
+
+  return def.allowedRoles.includes(userRole);
+}
+
+/**
+ * Verifica se um bucket requer proteção SANCTUM
+ */
+export function requiresSanctumProtection(bucketKey: BucketKey): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  return def.isPremium && def.isProtected;
+}
+
+/**
+ * Verifica se um bucket requer watermark (por chave)
+ */
+export function requiresWatermarkByKey(bucketKey: BucketKey): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  return def.watermarkRequired;
+}
+
+/**
+ * Verifica se um bucket requer auditoria
+ */
+export function requiresAudit(bucketKey: BucketKey): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  return def.auditRequired;
+}
+
+/**
+ * Verifica se um bucket requer criptografia
+ */
+export function requiresEncryption(bucketKey: BucketKey): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  return def.encryptionRequired;
+}
+
+/**
+ * Extrai a extensão de um nome de arquivo
+ */
+export function getFileExtension(filename: string): string {
+  return filename.split(".").pop()?.toLowerCase() || "";
+}
+
+/**
+ * Gera um nome de arquivo seguro (sanitizado)
+ */
+export function sanitizeFileName(filename: string): string {
+  return filename
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Retorna todos os buckets de um nível de acesso
+ */
+export function getBucketsByAccessLevel(level: BucketAccessLevel): BucketKey[] {
+  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
+    key => BUCKET_DEFINITIONS[key].accessLevel === level
+  );
+}
+
+/**
+ * Retorna todos os buckets premium
+ */
+export function getPremiumBuckets(): BucketKey[] {
+  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
+    key => BUCKET_DEFINITIONS[key].isPremium
+  );
+}
+
+/**
+ * Retorna todos os buckets protegidos por SANCTUM
+ */
+export function getSanctumProtectedBuckets(): BucketKey[] {
+  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
+    key => requiresSanctumProtection(key)
+  );
+}
+
+/**
+ * Audita todos os buckets e retorna estatísticas
+ */
+export function auditBuckets(): {
+  total: number;
+  public: number;
+  protected: number;
+  premium: number;
+  private: number;
+  requiresAuth: number;
+  requiresWatermark: number;
+  requiresAudit: number;
+  requiresEncryption: number;
+} {
+  const buckets = Object.values(BUCKET_DEFINITIONS);
+  return {
+    total: buckets.length,
+    public: buckets.filter(b => b.accessLevel === "public").length,
+    protected: buckets.filter(b => b.accessLevel === "protected").length,
+    premium: buckets.filter(b => b.accessLevel === "premium").length,
+    private: buckets.filter(b => b.accessLevel === "private").length,
+    requiresAuth: buckets.filter(b => b.requiresAuth).length,
+    requiresWatermark: buckets.filter(b => b.watermarkRequired).length,
+    requiresAudit: buckets.filter(b => b.auditRequired).length,
+    requiresEncryption: buckets.filter(b => b.encryptionRequired).length,
+  };
+}
+
+// ============================================
 // EXPORTS
 // ============================================
 
-export const STORAGE_OMEGA_VERSION = '3.0.0';
+export const STORAGE_OMEGA_VERSION = '3.2.0';
 
 export default {
+  // Constantes
   BUCKETS,
   BUCKET_DEFINITIONS,
   SENSITIVE_BUCKETS,
   SIGNED_URL_TTL,
   OWNER_EMAIL,
+  
+  // Funções por nome de bucket
   isOwner,
   getBucketDefinition,
   isSensitiveBucket,
@@ -1460,6 +1671,27 @@ export default {
   isValidMimeType,
   isValidFileSize,
   generateSecurePath,
+  
+  // Funções por chave de bucket
+  getBucket,
+  getBucketDefinitionByKey,
+  generateFilePath,
+  validateFileForBucket,
+  canAccessBucketByKey,
+  requiresSanctumProtection,
+  requiresWatermarkByKey,
+  requiresAudit,
+  requiresEncryption,
+  
+  // Utilitários
+  getFileExtension,
+  sanitizeFileName,
+  getBucketsByAccessLevel,
+  getPremiumBuckets,
+  getSanctumProtectedBuckets,
+  auditBuckets,
+  
+  // Operações
   logStorageAccess,
   getSecureSignedUrl,
   secureUpload,
