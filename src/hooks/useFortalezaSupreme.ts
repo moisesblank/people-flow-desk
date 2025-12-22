@@ -10,13 +10,17 @@ import { useAuth } from '@/hooks/useAuth';
 import {
   checkUrlAccess,
   checkRateLimit,
+  checkRateLimitExtended,
   logSecurityEvent,
+  logAudit,
   getSecurityDashboard,
   detectSuspiciousActivity,
+  detectScreenCapture,
   checkClientRateLimit,
   SECURITY_CONFIG,
   type UrlAccessResult,
   type RateLimitResult,
+  type RateLimitResultExtended,
   type SecurityDashboard,
 } from '@/lib/security/fortalezaSupreme';
 
@@ -402,15 +406,173 @@ export function useSecurityStatus() {
 }
 
 // ============================================
-// EXPORTAÇÕES
+// HOOK: useAuditLogger (NOVO)
+// Logger de auditoria dedicado
+// ============================================
+
+export function useAuditLogger() {
+  const location = useLocation();
+
+  const log = useCallback(async (
+    action: string,
+    category: string = 'general',
+    tableName?: string,
+    recordId?: string,
+    oldData?: Record<string, unknown>,
+    newData?: Record<string, unknown>
+  ) => {
+    return await logAudit(action, category, tableName, recordId, oldData, newData, {
+      url: location.pathname,
+    });
+  }, [location.pathname]);
+
+  const logCreate = useCallback((table: string, recordId: string, data: Record<string, unknown>) => {
+    return log('create', 'data', table, recordId, undefined, data);
+  }, [log]);
+
+  const logUpdate = useCallback((table: string, recordId: string, oldData: Record<string, unknown>, newData: Record<string, unknown>) => {
+    return log('update', 'data', table, recordId, oldData, newData);
+  }, [log]);
+
+  const logDelete = useCallback((table: string, recordId: string, data: Record<string, unknown>) => {
+    return log('delete', 'data', table, recordId, data, undefined);
+  }, [log]);
+
+  const logAccess = useCallback((table: string, action: string, recordCount?: number) => {
+    return log('access', 'data', table, undefined, undefined, { action, recordCount });
+  }, [log]);
+
+  return { log, logCreate, logUpdate, logDelete, logAccess };
+}
+
+// ============================================
+// HOOK: useScreenCaptureProtection (NOVO)
+// Proteção anti-captura de tela
+// ============================================
+
+export function useScreenCaptureProtection(enabled: boolean = true) {
+  const { user } = useAuth();
+  const [captureAttempted, setCaptureAttempted] = useState(false);
+  const [attemptCount, setAttemptCount] = useState(0);
+
+  useEffect(() => {
+    if (!enabled) return;
+
+    const handleCapture = () => {
+      setCaptureAttempted(true);
+      setAttemptCount(prev => prev + 1);
+      
+      // Log do evento (fire-and-forget)
+      logSecurityEvent('screen_capture_attempted', user?.id, 'warning', {
+        attemptCount: attemptCount + 1,
+        timestamp: new Date().toISOString(),
+      });
+    };
+
+    const cleanup = detectScreenCapture(handleCapture);
+
+    return cleanup;
+  }, [enabled, user?.id, attemptCount]);
+
+  const resetAttempt = useCallback(() => {
+    setCaptureAttempted(false);
+  }, []);
+
+  return { captureAttempted, attemptCount, resetAttempt };
+}
+
+// ============================================
+// HOOK: useRateLimiterExtended (NOVO)
+// Rate limiter com blockedUntil
+// ============================================
+
+export function useRateLimiterExtended(endpoint: string) {
+  const { user, role } = useAuth();
+  const [isLimited, setIsLimited] = useState(false);
+  const [blockedUntil, setBlockedUntil] = useState<Date | null>(null);
+  const [retryAfter, setRetryAfter] = useState(0);
+  const [remaining, setRemaining] = useState(60);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+
+  const checkLimit = useCallback(async (): Promise<boolean> => {
+    // Se já está bloqueado, verificar se ainda está
+    if (blockedUntil && new Date() < blockedUntil) {
+      return false;
+    }
+
+    const identifier = user?.id || 'anonymous';
+    const userRole = role || 'anonymous';
+
+    // Verificação client-side primeiro
+    const clientAllowed = checkClientRateLimit(
+      `${identifier}:${endpoint}`,
+      SECURITY_CONFIG.RATE_LIMIT.API.requests,
+      SECURITY_CONFIG.RATE_LIMIT.API.windowMs
+    );
+
+    if (!clientAllowed) {
+      setIsLimited(true);
+      setRetryAfter(60);
+      return false;
+    }
+
+    // Verificação server-side com blockedUntil
+    const result = await checkRateLimitExtended(identifier, endpoint, userRole);
+    
+    setIsLimited(!result.allowed);
+    setRetryAfter(result.retry_after);
+    setRemaining(result.remaining);
+    
+    if (result.blocked_until) {
+      setBlockedUntil(new Date(result.blocked_until));
+    }
+
+    if (!result.allowed) {
+      if (timerRef.current) clearInterval(timerRef.current);
+      timerRef.current = setInterval(() => {
+        setRetryAfter(prev => {
+          if (prev <= 1) {
+            setIsLimited(false);
+            setBlockedUntil(null);
+            if (timerRef.current) clearInterval(timerRef.current);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+
+      logSecurityEvent('rate_limit_exceeded', user?.id, 'warning', {
+        endpoint,
+        role: userRole,
+        blocked_until: result.blocked_until,
+      });
+    }
+
+    return result.allowed;
+  }, [user?.id, role, endpoint, blockedUntil]);
+
+  useEffect(() => {
+    return () => {
+      if (timerRef.current) clearInterval(timerRef.current);
+    };
+  }, []);
+
+  return { isLimited, blockedUntil, retryAfter, remaining, checkLimit };
+}
+
+// ============================================
+// EXPORTAÇÕES v4.1
 // ============================================
 
 export default {
   useUrlAccessGuard,
   useRateLimiter,
+  useRateLimiterExtended,
   useSecurityDashboard,
   useThreatDetection,
   useSecurityLogger,
+  useAuditLogger,
   useSessionSecurity,
   useSecurityStatus,
+  useScreenCaptureProtection,
 };
