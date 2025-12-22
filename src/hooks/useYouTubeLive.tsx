@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
+import { getFortressYouTubeUrl } from "@/components/video";
 
 // ============================================
 // TYPES
@@ -299,7 +300,8 @@ export const useYouTubeLivePlayer = (videoId?: string) => {
     isLive: !!activeLive || videoDetails?.isLive,
     concurrentViewers: activeLive?.concurrentViewers || 0,
     title: activeLive?.title || videoDetails?.title,
-    embedUrl: targetVideoId ? `https://www.youtube.com/embed/${targetVideoId}?autoplay=1&rel=0&modestbranding=1` : null,
+    // ✅ FORTRESS: URL protegida com parâmetros de segurança
+    embedUrl: targetVideoId ? getFortressYouTubeUrl(targetVideoId, true) : null,
     watchUrl: targetVideoId ? `https://www.youtube.com/watch?v=${targetVideoId}` : null,
     isLoading: currentLiveQuery.isLoading,
     refetch: currentLiveQuery.refetch,

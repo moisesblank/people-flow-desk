@@ -195,16 +195,16 @@ serve(async (req: Request) => {
     });
 
     // ============================================
-    // 4. BUSCAR OU CRIAR RISK SCORE
+    // 4. BUSCAR OU CRIAR RISK SCORE (usando nomes corretos das colunas)
     // ============================================
     const { data: riskData } = await supabase
       .from("video_user_risk_scores")
-      .select("current_score, violation_count")
+      .select("total_risk_score, total_violations")
       .eq("user_id", session.user_id)
       .maybeSingle();
 
-    let currentScore = riskData?.current_score || 0;
-    let violationCount = riskData?.violation_count || 0;
+    let currentScore = riskData?.total_risk_score || 0;
+    let violationCount = riskData?.total_violations || 0;
 
     // ============================================
     // 5. PROCESSAR VIOLAÇÃO
@@ -248,7 +248,7 @@ serve(async (req: Request) => {
     }
 
     // ============================================
-    // 6. ATUALIZAR SCORE (SE NÃO IMUNE)
+    // 6. ATUALIZAR SCORE (SE NÃO IMUNE) - usando nomes corretos
     // ============================================
     if (!isImmune && scoreIncrement > 0) {
       try {
@@ -256,10 +256,10 @@ serve(async (req: Request) => {
           .from("video_user_risk_scores")
           .upsert({
             user_id: session.user_id,
-            current_score: newScore,
-            violation_count: violationCount + 1,
+            total_risk_score: newScore,
+            total_violations: violationCount + 1,
             last_violation_at: new Date().toISOString(),
-            last_violation_type: violation_type,
+            current_risk_level: newScore >= 200 ? 'critical' : newScore >= 100 ? 'high' : newScore >= 50 ? 'medium' : 'low',
           }, { 
             onConflict: "user_id" 
           });
