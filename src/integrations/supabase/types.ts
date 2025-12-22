@@ -12601,6 +12601,7 @@ export type Database = {
       is_beta: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_domain_authorized: { Args: { p_domain: string }; Returns: boolean }
       is_funcionario: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
