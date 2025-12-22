@@ -46,6 +46,7 @@ import {
   YouTubeLiveWidget
 } from "@/components/youtube";
 import { useYouTubeLive, useYouTubeChannel } from "@/hooks/useYouTubeLive";
+import { LiveChatPanel } from "@/components/chat";
 
 // Componente de Live Card
 function LiveCard({ live, isUpcoming = false }: { live: any; isUpcoming?: boolean }) {
@@ -499,12 +500,46 @@ export default function Lives() {
           
           <TabsContent value="ao-vivo" className="space-y-6">
             {currentLive ? (
-              <div className="grid lg:grid-cols-3 gap-6">
-                <div className="lg:col-span-2">
-                  <YouTubeLivePlayer videoId={currentLive.video_id} />
+              <div className="grid lg:grid-cols-4 gap-6">
+                {/* Player de Vídeo - 3 colunas */}
+                <div className="lg:col-span-3 space-y-4">
+                  <YouTubeLivePlayer videoId={currentLive.video_id} showChat={false} />
+                  
+                  {/* Stats do canal */}
+                  <YouTubeChannelStats compact />
                 </div>
-                <div>
-                  <YouTubeChannelStats />
+                
+                {/* Chat em Tempo Real - 1 coluna */}
+                <div className="lg:col-span-1">
+                  <motion.div
+                    initial={{ opacity: 0, x: 20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.2 }}
+                  >
+                    <Card className="h-[600px] flex flex-col overflow-hidden border-red-500/20">
+                      <CardHeader className="p-3 border-b bg-gradient-to-r from-red-500/10 to-pink-500/10">
+                        <CardTitle className="text-sm flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <MessageCircle className="h-4 w-4 text-red-500" />
+                            Chat ao Vivo
+                          </div>
+                          <Badge variant="outline" className="text-xs">
+                            <Users className="h-3 w-3 mr-1" />
+                            {currentLive.max_viewers?.toLocaleString() || 0}
+                          </Badge>
+                        </CardTitle>
+                      </CardHeader>
+                      <CardContent className="flex-1 p-0 overflow-hidden">
+                        {/* Chat interno - suporta 5.000 simultâneos */}
+                        <LiveChatPanel 
+                          liveId={currentLive.id} 
+                          className="h-full border-0 rounded-none"
+                          maxHeight="calc(100% - 60px)"
+                          showViewerCount={false}
+                        />
+                      </CardContent>
+                    </Card>
+                  </motion.div>
                 </div>
               </div>
             ) : (
