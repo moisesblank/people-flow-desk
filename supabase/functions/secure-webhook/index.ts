@@ -290,46 +290,55 @@ serve(async (req) => {
     // 4. VALIDAR ASSINATURA
     // ============================================
     
-    const signatureHeader = req.headers.get(config.signatureHeader);
     let validationResult: ValidationResult;
+    const signatureHeader = req.headers.get(config.signatureHeader);
     
     switch (config.signatureType) {
       case 'token_match':
         validationResult = validateTokenMatch(signatureHeader, secret);
         break;
+        
+      case 'hmac_sha256':
+        validationResult = await validateHmacSha256(rawBody, signatureHeader, secret);
+        break;
+        
       case 'stripe':
         validationResult = await validateStripeSignature(
           rawBody, 
           signatureHeader, 
           secret,
-          config.maxAgeSeconds
+          config.maxAgeSeconds || 300
         );
         break;
-      case 'hmac_sha256':
+        
       default:
-        validationResult = await validateHmacSha256(rawBody, signatureHeader, secret);
-        break;
+        validationResult = { valid: false, error: 'Tipo de validação desconhecido' };
     }
     
+    // Se inválido, rejeitar e registrar
     if (!validationResult.valid) {
-      console.error(`[Webhook ${requestId}] Validação falhou: ${validationResult.error}`);
+      console.warn(`[Webhook ${requestId}] ❌ Validação falhou: ${validationResult.error}`);
       
-      // Log security event
-      await supabase.from('security_events').insert({
-        event_type: 'webhook_validation_failed',
-        severity: 'warning',
-        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-        user_agent: req.headers.get('user-agent'),
-        payload: {
+      // Registrar tentativa inválida
+      const clientIP = req.headers.get('cf-connecting-ip') || 
+                       req.headers.get('x-forwarded-for')?.split(',')[0] || 
+                       'unknown';
+      
+      await supabase.rpc('log_security_event', {
+        p_event_type: 'webhook_invalid_signature',
+        p_risk_score: 70,
+        p_details: {
           provider: config.provider,
           error: validationResult.error,
+          ip: clientIP,
           request_id: requestId,
+          correlation_id: correlationId,
         },
       });
       
       return new Response(JSON.stringify({ 
         success: false, 
-        error: 'Validação de assinatura falhou',
+        error: 'Assinatura inválida',
         request_id: requestId 
       }), {
         status: 401,
@@ -337,34 +346,55 @@ serve(async (req) => {
       });
     }
     
-    console.log(`[Webhook ${requestId}] Assinatura validada com sucesso`);
+    console.log(`[Webhook ${requestId}] ✅ Assinatura válida`);
     
     // ============================================
     // 5. VERIFICAR IDEMPOTÊNCIA
     // ============================================
     
-    const eventId = (payload.id as string) || 
-                    (payload.transaction as string) || 
-                    (payload.event_id as string) ||
-                    requestId;
+    const eventId = String(
+      payload.id || 
+      payload.event_id || 
+      payload.transaction_id || 
+      (payload.data as Record<string, unknown>)?.id || 
+      crypto.randomUUID()
+    );
     
-    const idempotencyKey = `${config.provider}:${eventId}`;
+    const eventType = String(
+      payload.event || 
+      payload.type || 
+      payload.status || 
+      'unknown'
+    );
     
-    // Verificar se já processamos este evento
-    const { data: existingEvent } = await supabase
-      .from('webhooks_queue')
-      .select('id, status')
-      .eq('idempotency_key', idempotencyKey)
-      .maybeSingle();
+    const clientIP = req.headers.get('cf-connecting-ip') || 
+                     req.headers.get('x-forwarded-for')?.split(',')[0];
     
-    if (existingEvent) {
-      console.log(`[Webhook ${requestId}] Evento duplicado: ${idempotencyKey}`);
-      return new Response(JSON.stringify({ 
-        success: true, 
-        message: 'Evento já processado',
-        event_id: existingEvent.id,
-        status: existingEvent.status,
-        request_id: requestId 
+    const { data: idempotencyCheck, error: idempotencyError } = await supabase.rpc('check_webhook_idempotency', {
+      p_provider: config.provider,
+      p_event_id: eventId,
+      p_event_type: eventType,
+      p_payload: payload,
+      p_ip_address: clientIP || null,
+      p_signature_valid: true,
+    });
+    
+    if (idempotencyError) {
+      console.error(`[Webhook ${requestId}] Erro de idempotência:`, idempotencyError);
+    }
+    
+    if (idempotencyCheck?.is_duplicate) {
+      console.log(`[Webhook ${requestId}] ⚡ Evento duplicado: ${eventId}`);
+      
+      const duration = Date.now() - startTime;
+      
+      return new Response(JSON.stringify({
+        success: true,
+        message: 'Evento já processado (idempotente)',
+        event_id: eventId,
+        original_id: idempotencyCheck.original_id,
+        processing_time_ms: duration,
+        request_id: requestId,
       }), {
         status: 200,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -372,84 +402,114 @@ serve(async (req) => {
     }
     
     // ============================================
-    // 6. INSERIR NA FILA
+    // 6. PROCESSAR EVENTO
     // ============================================
     
-    const { data: queueEntry, error: queueError } = await supabase
-      .from('webhooks_queue')
-      .insert({
-        source: config.provider,
-        event_type: (payload.event as string) || (payload.type as string) || 'unknown',
-        idempotency_key: idempotencyKey,
-        payload: payload,
-        headers: Object.fromEntries(req.headers.entries()),
-        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-        correlation_id: correlationId,
-        status: 'pending',
-      })
-      .select('id')
-      .single();
+    console.log(`[Webhook ${requestId}] Processando: ${eventType} (${eventId})`);
     
-    if (queueError) {
-      console.error(`[Webhook ${requestId}] Erro ao inserir na fila:`, queueError);
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: 'Erro ao processar webhook',
-        request_id: requestId 
-      }), {
-        status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+    let processResult: ProcessingResult = {
+      success: true,
+      message: 'Evento recebido e registrado',
+      event_id: eventId,
+    };
+    
+    // Routing baseado em tipo de evento
+    const eventTypeLower = eventType.toLowerCase();
+    
+    // Eventos de compra (Hotmart)
+    if (
+      eventTypeLower.includes('purchase_approved') ||
+      eventTypeLower.includes('purchase_complete') ||
+      eventTypeLower === 'approved' ||
+      eventTypeLower === 'completed'
+    ) {
+      processResult.message = 'Compra aprovada - processamento iniciado';
+    }
+    
+    // Eventos de pagamento (Stripe)
+    else if (
+      eventTypeLower === 'checkout.session.completed' ||
+      eventTypeLower === 'invoice.paid' ||
+      eventTypeLower === 'payment_intent.succeeded'
+    ) {
+      processResult.message = 'Pagamento Stripe processado';
+    }
+    
+    // Eventos de reembolso
+    else if (
+      eventTypeLower.includes('refund') ||
+      eventTypeLower.includes('chargeback')
+    ) {
+      processResult.message = 'Reembolso registrado';
+      
+      // Log de segurança para reembolsos
+      await supabase.rpc('log_security_event', {
+        p_event_type: 'webhook_processed',
+        p_risk_score: 30,
+        p_details: {
+          type: 'refund',
+          provider: config.provider,
+          event_id: eventId,
+        },
       });
     }
     
-    const processingTime = Date.now() - startTime;
-    
-    console.log(`[Webhook ${requestId}] Sucesso em ${processingTime}ms - Queue ID: ${queueEntry.id}`);
-    
     // ============================================
-    // 7. RESPOSTA DE SUCESSO
+    // 7. MARCAR COMO PROCESSADO
     // ============================================
     
-    const result: ProcessingResult = {
-      success: true,
-      message: 'Webhook recebido e enfileirado',
-      event_id: queueEntry.id,
-      processing_time_ms: processingTime,
-    };
+    await supabase.rpc('mark_webhook_processed', {
+      p_provider: config.provider,
+      p_event_id: eventId,
+      p_status: processResult.success ? 'processed' : 'failed',
+      p_response: processResult,
+    });
+    
+    const duration = Date.now() - startTime;
+    
+    console.log(`[Webhook ${requestId}] ✅ Concluído em ${duration}ms`);
+    
+    // ============================================
+    // 8. RESPOSTA DE SUCESSO
+    // ============================================
     
     return new Response(JSON.stringify({
-      ...result,
+      success: processResult.success,
+      message: processResult.message,
+      event_id: eventId,
+      event_type: eventType,
+      provider: config.provider,
+      processing_time_ms: duration,
       request_id: requestId,
+      correlation_id: correlationId,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
     
   } catch (error) {
-    const processingTime = Date.now() - startTime;
-    console.error(`[Webhook ${requestId}] Erro crítico:`, error);
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
+    const duration = Date.now() - startTime;
     
-    // Log security event
-    try {
-      await supabase.from('security_events').insert({
-        event_type: 'webhook_critical_error',
-        severity: 'error',
-        ip_address: req.headers.get('x-forwarded-for') || 'unknown',
-        user_agent: req.headers.get('user-agent'),
-        payload: {
-          error: error instanceof Error ? error.message : 'Unknown error',
-          request_id: requestId,
-          processing_time_ms: processingTime,
-        },
-      });
-    } catch (logError) {
-      console.error(`[Webhook ${requestId}] Erro ao logar:`, logError);
-    }
+    console.error(`[Webhook ${requestId}] ❌ Erro:`, error);
     
-    return new Response(JSON.stringify({ 
-      success: false, 
-      error: 'Erro interno do servidor',
-      request_id: requestId 
+    // Registrar erro
+    await supabase.rpc('log_security_event', {
+      p_event_type: 'webhook_processed',
+      p_risk_score: 50,
+      p_details: {
+        type: 'processing_error',
+        error: errorMessage,
+        request_id: requestId,
+        processing_time_ms: duration,
+      },
+    });
+    
+    return new Response(JSON.stringify({
+      success: false,
+      error: 'Erro interno de processamento',
+      request_id: requestId,
+      processing_time_ms: duration,
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
