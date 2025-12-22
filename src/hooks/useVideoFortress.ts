@@ -14,15 +14,25 @@ import { toast } from 'sonner';
 // TIPOS
 // ============================================
 export type VideoSessionStatus = 'active' | 'expired' | 'revoked' | 'ended';
+
+// Tipos de violação que existem no banco de dados
 export type VideoViolationType = 
   | 'devtools_open' | 'screenshot_attempt' | 'screen_recording'
   | 'multiple_sessions' | 'invalid_domain' | 'expired_token'
   | 'keyboard_shortcut' | 'context_menu' | 'drag_attempt'
   | 'copy_attempt' | 'visibility_abuse' | 'iframe_manipulation'
-  | 'network_tampering' | 'extension_detected' | 'automation_detected'
-  | 'debugger_detected' | 'console_open' | 'unknown';
+  | 'network_tampering' | 'unknown';
+
+// Tipos internos para detecção (mapeados para 'unknown' ao enviar ao banco)
+type InternalViolationType = VideoViolationType | 'extension_detected' | 'automation_detected' | 'debugger_detected' | 'console_open';
 
 export type ViolationAction = 'none' | 'warn' | 'degrade' | 'pause' | 'revoke';
+
+// Função para mapear tipos internos para tipos do banco
+function mapViolationType(type: InternalViolationType): VideoViolationType {
+  const internalTypes = ['extension_detected', 'automation_detected', 'debugger_detected', 'console_open'];
+  return internalTypes.includes(type) ? 'unknown' : type as VideoViolationType;
+}
 
 export interface VideoSession {
   sessionId: string;
@@ -425,7 +435,7 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
         // eslint-disable-next-line no-debugger
         debugger;
         if (performance.now() - start > 100) {
-          reportViolation('debugger_detected', 5);
+          reportViolation('devtools_open', 5, { method: 'debugger_timing' });
         }
       };
 
@@ -434,7 +444,7 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
         const element = new Image();
         Object.defineProperty(element, 'id', {
           get: function() {
-            reportViolation('console_open', 2);
+            reportViolation('devtools_open', 2, { method: 'console_object' });
             return 'devtools-check';
           }
         });
@@ -544,7 +554,7 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
         // Detectar extensões conhecidas de download/gravação
         const suspiciousElements = document.querySelectorAll('[id*="video-download"], [class*="video-download"], [data-extension]');
         if (suspiciousElements.length > 0) {
-          reportViolation('extension_detected', 4, { count: suspiciousElements.length });
+          reportViolation('unknown', 4, { reason: 'extension_detected', count: suspiciousElements.length });
         }
       };
 
