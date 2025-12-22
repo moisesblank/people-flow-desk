@@ -122,7 +122,7 @@ export const Navbar = memo(() => {
         }`}>
           <div className="container mx-auto px-4 flex items-center justify-between">
             <Link to="/">
-              <img src={logoMoises} alt="Moisés Medeiros" className="h-10 md:h-12" />
+              <img src={logoMoises} alt="Moisés Medeiros" width={115} height={48} className="h-10 md:h-12" decoding="async" />
             </Link>
             
             {/* Desktop */}
@@ -186,9 +186,12 @@ export const Navbar = memo(() => {
             <motion.img 
               src={logoMoises} 
               alt="Moisés Medeiros" 
+              width={115}
+              height={48}
               className="h-10 md:h-12"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
+              decoding="async"
               style={{
                 filter: scrolled 
                   ? "drop-shadow(0 0 15px rgba(220, 38, 38, 0.3))" 
