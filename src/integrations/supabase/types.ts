@@ -11808,13 +11808,8 @@ export type Database = {
       audit_rls_coverage: {
         Args: never
         Returns: {
-          has_delete_policy: boolean
-          has_insert_policy: boolean
-          has_select_policy: boolean
-          has_update_policy: boolean
+          has_rls: boolean
           policy_count: number
-          risk_level: string
-          rls_enabled: boolean
           table_name: string
         }[]
       }
@@ -11961,7 +11956,9 @@ export type Database = {
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
-      cleanup_old_security_events: { Args: never; Returns: number }
+      cleanup_old_security_events:
+        | { Args: never; Returns: number }
+        | { Args: { p_days?: number }; Returns: number }
       cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
       cleanup_old_webhooks: { Args: never; Returns: number }
@@ -12347,12 +12344,16 @@ export type Database = {
           }
         | {
             Args: {
-              p_error?: string
+              p_error: string
               p_event_id: string
               p_provider: string
-              p_response?: Json
-              p_status?: string
+              p_response: Json
+              p_status: string
             }
+            Returns: boolean
+          }
+        | {
+            Args: { p_result?: string; p_webhook_id: string }
             Returns: boolean
           }
       mask_email: { Args: { p_email: string }; Returns: string }
@@ -12402,10 +12403,12 @@ export type Database = {
         Returns: boolean
       }
       revoke_beta_access: { Args: { _user_id: string }; Returns: Json }
-      revoke_other_sessions_v2: {
-        Args: { p_current_session_token: string; p_user_id: string }
-        Returns: number
-      }
+      revoke_other_sessions_v2:
+        | { Args: { p_current_session_id?: string }; Returns: number }
+        | {
+            Args: { p_current_session_token: string; p_user_id: string }
+            Returns: number
+          }
       revoke_user_session: {
         Args: { p_reason?: string; p_session_id: string }
         Returns: boolean
@@ -12583,6 +12586,8 @@ export type Database = {
         }
         Returns: string
       }
+      sna_realtime_stats: { Args: never; Returns: Json }
+      sna_system_health: { Args: never; Returns: Json }
       update_expense_status: {
         Args: {
           p_data_pagamento?: string
@@ -12644,7 +12649,19 @@ export type Database = {
         Args: { p_session_token: string }
         Returns: boolean
       }
-      validate_session_v2: { Args: { p_session_token: string }; Returns: Json }
+      validate_session_v2:
+        | {
+            Args: { p_session_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.validate_session_v2(p_session_token => text), public.validate_session_v2(p_session_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
+        | {
+            Args: { p_session_token: string }
+            Returns: {
+              error: true
+            } & "Could not choose the best candidate function between: public.validate_session_v2(p_session_token => text), public.validate_session_v2(p_session_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
+          }
       validate_signed_video_url: {
         Args: { p_token: string; p_video_id: string }
         Returns: boolean
