@@ -16,17 +16,20 @@ Isso **NÃO** é a ordem de aplicação!
 
 ## 📊 RESUMO RÁPIDO (APLIQUE NESTA ORDEM!)
 
-| # | Tipo | Arquivo | Aparece na tela como | Status |
-|---|------|---------|---------------------|--------|
-| 1 | SQL | `20251222000001_live_chat_system.sql` | `20251222000001_live_chat_system.sql` | ⏳ |
-| 2 | SQL | `20251222000002_performance_indexes.sql` | `20251222000002_performance_indexes.sql` | ⏳ |
-| 3 | SQL | `20251222200000_security_fortress_ultra.sql` | `20251222200000_security_fortress_ultra.sql` | ⏳ |
-| 4 | SQL | `20251222400000_sna_omega_complete.sql` | `20251222400000_sna_omega_complete.sql` | ⏳ |
-| 5 | Edge | `secure-webhook-ultra` | `secure-webhook-ultra/index.ts` | ⏳ |
-| 6 | Edge | `sna-gateway` | `sna-gateway/index.ts` | ⏳ |
-| 7 | Edge | `sna-worker` | `sna-worker/index.ts` | ⏳ |
+| # | Tipo | Arquivo | Função | Status |
+|---|------|---------|--------|--------|
+| 1 | SQL | `20251222000001_live_chat_system.sql` | Chat ao vivo | ⏳ |
+| 2 | SQL | `20251222000002_performance_indexes.sql` | Índices | ⏳ |
+| 3 | SQL | `20251222200000_security_fortress_ultra.sql` | Segurança | ⏳ |
+| 4 | SQL | `20251222400000_sna_omega_complete.sql` | IA/Automação | ⏳ |
+| 5 | SQL | `20251222600000_video_fortress_omega.sql` | 🆕 Vídeo OMEGA | ⏳ |
+| 6 | Edge | `secure-webhook-ultra` | Webhooks seguros | ⏳ |
+| 7 | Edge | `sna-gateway` | Gateway IA | ⏳ |
+| 8 | Edge | `sna-worker` | Worker IA | ⏳ |
+| 9 | Edge | `video-authorize-omega` | 🆕 Autorização vídeo | ⏳ |
+| 10 | Edge | `video-violation-omega` | 🆕 Violações vídeo | ⏳ |
 
-**TOTAL: 11 itens (5 SQL + 6 Edge Functions)**
+**TOTAL: 10 itens (5 SQL + 5 Edge Functions)**
 
 ### 🔴 POR QUE ESSA ORDEM?
 
@@ -37,18 +40,18 @@ Se inverter = ERRO!
 
 ---
 
-## 🔥 VIDEO FORTRESS ULTRA v3.0 (PROTEÇÃO DE VÍDEOS)
+## 🔥 VIDEO FORTRESS OMEGA v5.0 (PROTEÇÃO DE VÍDEOS)
 
-| # | Tipo | Arquivo | Função | Status |
-|---|------|---------|--------|--------|
-| 8 | SQL | `20251222500000_video_fortress_ultra.sql` | 5 tabelas, 7 funções, RLS | ⏳ |
-| 9 | Edge | `video-authorize` | Autorização + Signed URL + Panda API | ⏳ |
-| 10 | Edge | `video-heartbeat` | Heartbeat 30s + validação | ⏳ |
-| 11 | Edge | `video-violation` | Registro + risk score + ações | ⏳ |
+| # | Arquivo | Função |
+|---|---------|--------|
+| 5 | `20251222600000_video_fortress_omega.sql` | 5 tabelas, 8 funções, RLS |
+| 9 | `video-authorize-omega/index.ts` | Autorização + Signed URL + SANCTUM |
+| 10 | `video-violation-omega/index.ts` | Risk score + bypass + ações graduais |
 
 ### Arquivos Frontend (AUTOMÁTICOS - não precisa fazer nada):
-- `src/components/video/UltraFortressPlayer.tsx` ✅ 900+ linhas - Player definitivo
-- `src/hooks/useVideoFortress.ts` ✅ 400+ linhas - Hook de integração
+- `src/hooks/useVideoFortressOmega.ts` ✅ Hook OMEGA integrado
+- `src/components/video/OmegaFortressPlayer.tsx` ✅ Player OMEGA definitivo
+- `src/hooks/useVideoFortress.ts` ✅ Hook de integração
 - `src/components/video/index.ts` ✅ Exportações centralizadas
 
 ---
@@ -59,30 +62,18 @@ Se inverter = ERRO!
 
 A Lovable aplica esses sozinha. **NÃO FAÇA NADA** com eles:
 
-| Arquivo | Por que ignorar |
-|---------|-----------------|
-| `src/components/chat/LiveChatPanel.tsx` | Frontend - automático |
-| `src/components/security/SecurityDashboard.tsx` | Frontend - automático |
-| `src/contexts/SecurityContext.tsx` | Frontend - automático |
-| `src/hooks/useAIAutomation.ts` | Frontend - automático |
-| `src/hooks/useChatRateLimit.ts` | Frontend - automático |
-| `src/hooks/useLiveChat.ts` | Frontend - automático |
-| `src/hooks/useRolePermissions.ts` | Frontend - automático |
-| `src/hooks/useSecurityGuard.ts` | Frontend - automático |
-| Qualquer outro `src/*` | Frontend - automático |
-
-### Migrações SQL antigas = JÁ APLICADAS
-
-❌ Qualquer SQL com data **ANTES** de `20251222` já foi aplicado.
-✅ Só aplique os 4 SQLs que começam com `20251222`.
+| Padrão | Ação |
+|--------|------|
+| `src/*` | 🚫 IGNORE (automático) |
+| Migrações antigas (antes de 20251222) | 🚫 IGNORE (já aplicado) |
 
 ### REGRA SIMPLES:
 
 | Começa com... | Ação |
 |---------------|------|
 | `src/` | 🚫 IGNORE |
-| `supabase/migrations/20251222*` | ✅ APLIQUE (são 4) |
-| `supabase/functions/sna-*` ou `secure-webhook-ultra` | ✅ APLIQUE (são 3) |
+| `supabase/migrations/20251222*` | ✅ APLIQUE (são 5) |
+| `supabase/functions/*-omega` ou `sna-*` | ✅ APLIQUE (são 5) |
 | Qualquer outra coisa | 🚫 IGNORE |
 
 ---
@@ -113,22 +104,66 @@ Aplique a migração SQL do sistema SNA de automação com IA.
 Arquivo: supabase/migrations/20251222400000_sna_omega_complete.sql
 ```
 
-### PASSO 5 - Deploy Gateway IA
+### PASSO 5 - Video Fortress OMEGA 🆕
+```
+Aplique a migração SQL do Video Fortress OMEGA v5.0.
+Arquivo: supabase/migrations/20251222600000_video_fortress_omega.sql
+```
+
+### PASSO 6 - Deploy Gateway IA
 ```
 Faça deploy da Edge Function sna-gateway.
 Pasta: supabase/functions/sna-gateway/
 ```
 
-### PASSO 6 - Deploy Worker IA
+### PASSO 7 - Deploy Worker IA
 ```
 Faça deploy da Edge Function sna-worker.
 Pasta: supabase/functions/sna-worker/
 ```
 
-### PASSO 7 - Deploy Webhook Seguro
+### PASSO 8 - Deploy Webhook Seguro
 ```
 Faça deploy da Edge Function secure-webhook-ultra.
 Pasta: supabase/functions/secure-webhook-ultra/
+```
+
+### PASSO 9 - Deploy Video Authorize OMEGA 🆕
+```
+Faça deploy da Edge Function video-authorize-omega.
+Pasta: supabase/functions/video-authorize-omega/
+```
+
+### PASSO 10 - Deploy Video Violation OMEGA 🆕
+```
+Faça deploy da Edge Function video-violation-omega.
+Pasta: supabase/functions/video-violation-omega/
+```
+
+---
+
+## 🚀 COMANDO ÚNICO (ALTERNATIVA RÁPIDA)
+
+Cole este comando na Lovable para aplicar TUDO de uma vez:
+
+```
+Por favor, aplique todas as migrações SQL e Edge Functions do projeto na seguinte ordem:
+
+FASE 1 - SQL (executar no Supabase SQL Editor):
+1. supabase/migrations/20251222000001_live_chat_system.sql
+2. supabase/migrations/20251222000002_performance_indexes.sql
+3. supabase/migrations/20251222200000_security_fortress_ultra.sql
+4. supabase/migrations/20251222400000_sna_omega_complete.sql
+5. supabase/migrations/20251222600000_video_fortress_omega.sql
+
+FASE 2 - Edge Functions (fazer deploy):
+6. supabase/functions/sna-gateway
+7. supabase/functions/sna-worker
+8. supabase/functions/secure-webhook-ultra
+9. supabase/functions/video-authorize-omega
+10. supabase/functions/video-violation-omega
+
+Os arquivos src/* são automáticos e não precisam de ação manual.
 ```
 
 ---
@@ -142,4 +177,4 @@ Quando aplicar cada passo, atualize esta lista:
 
 ---
 
-**Última atualização:** 22/12/2024
+**Última atualização:** 22/12/2024 — Video Fortress OMEGA v5.0

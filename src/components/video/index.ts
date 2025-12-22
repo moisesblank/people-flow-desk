@@ -1,13 +1,23 @@
 // ============================================
-// 🔥 VIDEO COMPONENTS - ÍNDICE CENTRAL
+// 🔥🛡️ VIDEO COMPONENTS - ÍNDICE CENTRAL 🛡️🔥
 // Exporta todos os componentes de vídeo protegidos
 // ============================================
 
-// Player ULTRA DEFINITIVO (ANO 2300) - USE ESTE!
+// ============================================
+// 🏆 OMEGA FORTRESS PLAYER v5.0 (DEFINITIVO)
+// O player mais avançado — USE ESTE!
+// ============================================
+export { OmegaFortressPlayer } from "./OmegaFortressPlayer";
+
+// ============================================
+// VERSÕES ANTERIORES (mantidas por compatibilidade)
+// ============================================
+
+// Player ULTRA (v4.0 SANCTUM Edition)
 export { UltraFortressPlayer } from "./UltraFortressPlayer";
 export type { UltraFortressPlayerProps } from "./UltraFortressPlayer";
 
-// Player Fortress (versão anterior)
+// Player Fortress (v3.0)
 export { FortressVideoPlayer } from "./FortressVideoPlayer";
 export type { FortressVideoPlayerProps } from "./FortressVideoPlayer";
 
@@ -27,19 +37,26 @@ export {
 } from "./ProtectedVideoWrapper";
 
 // ============================================
-// RECOMENDAÇÃO DE USO:
+// 📊 RECOMENDAÇÃO DE USO (v5.0):
 // 
-// 🥇 UltraFortressPlayer - Para aulas/conteúdo pago
-//    - Integração completa com backend
-//    - Sessão única, heartbeat, violações
-//    - Watermark dinâmica com CPF
-//    - DRM via Panda Video
+// 🏆 OmegaFortressPlayer (v5.0) - DEFINITIVO
+//    ✅ Integração TOTAL com backend SANCTUM
+//    ✅ Bypass inteligente para agentes/admins
+//    ✅ Detecção GRADUAL (não punitiva)
+//    ✅ Watermark dinâmica + anti-crop
+//    ✅ Sessão única + heartbeat + violações
+//    ✅ DRM via Panda Video
+//    ✅ Suporte YouTube como fallback
 //
-// 🥈 FortressVideoPlayer - Para vídeos públicos/preview
+// 🥇 UltraFortressPlayer (v4.0) - SANCTUM Edition
+//    - Versão anterior do OMEGA
+//    - Ainda funcional, mas prefira OMEGA
+//
+// 🥈 FortressVideoPlayer (v3.0) - Básico
 //    - Proteção frontend apenas
-//    - Sem integração com backend
+//    - Use para vídeos públicos/preview
 //
-// 🥉 FortressPlayerWrapper - Para wrap de qualquer player
+// 🥉 FortressPlayerWrapper - Wrapper genérico
 //    - Adiciona camadas de proteção
 //    - Use com iframes customizados
 // ============================================
