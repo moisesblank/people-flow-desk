@@ -42,7 +42,7 @@ interface WebBookLibraryProps {
 // ============================================
 
 const CATEGORIES = [
-  { value: '', label: 'Todas as categorias' },
+  { value: 'all', label: 'Todas as categorias' },
   { value: 'quimica_geral', label: '⚗️ Química Geral' },
   { value: 'quimica_organica', label: '🧪 Química Orgânica' },
   { value: 'fisico_quimica', label: '📊 Físico-Química' },
@@ -164,7 +164,7 @@ export const WebBookLibrary = memo(function WebBookLibrary({
 }: WebBookLibraryProps) {
   const { books, isLoading, error, loadBooks } = useWebBookLibrary();
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
 
   // Filtrar livros
   const filteredBooks = books.filter(book => {
@@ -172,7 +172,7 @@ export const WebBookLibrary = memo(function WebBookLibrary({
       book.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
       book.author.toLowerCase().includes(searchQuery.toLowerCase());
     
-    const matchesCategory = !selectedCategory || book.category === selectedCategory;
+    const matchesCategory = selectedCategory === 'all' || book.category === selectedCategory;
     
     return matchesSearch && matchesCategory;
   });
