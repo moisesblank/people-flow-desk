@@ -12171,6 +12171,7 @@ export type Database = {
       is_owner:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id?: string }; Returns: boolean }
+      is_sna_admin: { Args: never; Returns: boolean }
       is_user_banned_from_chat: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
@@ -12336,6 +12337,16 @@ export type Database = {
         }
         Returns: string
       }
+      sna_cache_get: { Args: { p_cache_key: string }; Returns: Json }
+      sna_cache_set: {
+        Args: {
+          p_cache_key: string
+          p_original_cost_usd?: number
+          p_ttl_seconds?: number
+          p_value: Json
+        }
+        Returns: boolean
+      }
       sna_check_budget: {
         Args: {
           p_estimated_cost?: number
@@ -12414,6 +12425,15 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      sna_cleanup: {
+        Args: {
+          p_cache_cleanup?: boolean
+          p_job_retention_days?: number
+          p_rate_limit_cleanup?: boolean
+          p_tool_run_retention_days?: number
+        }
+        Returns: Json
+      }
       sna_complete_job: {
         Args: {
           p_cost_usd?: number
@@ -12458,6 +12478,27 @@ export type Database = {
           p_retry_delay_override?: number
         }
         Returns: Json
+      }
+      sna_get_metrics: {
+        Args: { p_hours?: number; p_include_details?: boolean }
+        Returns: Json
+      }
+      sna_log_tool_run: {
+        Args: {
+          p_cache_hit?: boolean
+          p_correlation_id?: string
+          p_cost_usd?: number
+          p_error_message?: string
+          p_job_id?: string
+          p_latency_ms?: number
+          p_model?: string
+          p_ok?: boolean
+          p_provider: string
+          p_tokens_in?: number
+          p_tokens_out?: number
+          p_tool_name: string
+        }
+        Returns: string
       }
       update_expense_status: {
         Args: {
