@@ -421,6 +421,11 @@ export const ROLE_DESCRIPTIONS: Record<FullAppRole, string> = {
 
 // OWNER_EMAIL já exportado no topo do arquivo
 
+// Roles que são "funcionários ou acima" (usados para bypass de segurança)
+const FUNCIONARIO_OR_ABOVE_ROLES: FullAppRole[] = [
+  'owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'employee', 'marketing', 'contabilidade', 'afiliado'
+];
+
 interface RolePermissionsResult {
   role: FullAppRole | null;
   isLoading: boolean;
@@ -431,6 +436,7 @@ interface RolePermissionsResult {
   isGodMode: boolean;
   canEdit: boolean;
   canViewAll: boolean;
+  isFuncionarioOrAbove: boolean; // SANCTUM: Para bypass de proteção de vídeo
   userEmail: string | null;
   roleLabel: string;
   roleColor: string;
@@ -488,6 +494,12 @@ export function useRolePermissions(): RolePermissionsResult {
   const isGodMode = isOwner;
   const canEdit = isOwner;
   const canViewAll = isOwner || isAdmin;
+  
+  // SANCTUM 2.0: Verifica se é funcionário ou acima (bypass de proteção de vídeo)
+  const isFuncionarioOrAbove = useMemo(() => {
+    if (!role) return false;
+    return FUNCIONARIO_OR_ABOVE_ROLES.includes(role);
+  }, [role]);
 
   // Obtém as áreas permitidas para o role atual
   const allowedAreas = useMemo(() => {
@@ -528,6 +540,7 @@ export function useRolePermissions(): RolePermissionsResult {
     isGodMode,
     canEdit,
     canViewAll,
+    isFuncionarioOrAbove,
     userEmail,
     roleLabel: role ? ROLE_LABELS[role] : "Usuário",
     roleColor: role ? ROLE_COLORS[role] : "bg-gray-500 text-white",
@@ -547,4 +560,4 @@ export function useHasAccess(area: SystemArea): boolean {
 }
 
 // Exporta as constantes para uso em outros componentes
-export { ROLE_PERMISSIONS, URL_TO_AREA };
+export { ROLE_PERMISSIONS, URL_TO_AREA, FUNCIONARIO_OR_ABOVE_ROLES };
