@@ -335,14 +335,24 @@ Os **NOVOS** que eu criei são apenas **7 arquivos** (4 SQL + 3 Edge Functions).
 
 **TOTAL:** 3 Edge Functions para deploy
 
-### 🟢 JÁ APLICADO AUTOMATICAMENTE (Não precisa fazer nada)
+### 🟢 AUTOMÁTICO (Lovable faz sozinha - NÃO FAÇA NADA)
 
-Os seguintes arquivos já estão no código e serão aplicados quando o Lovable fizer o build:
-- `src/hooks/useAIAutomation.ts`
-- `src/components/admin/AIControlCenter.tsx`
-- `src/hooks/useSecurityGuard.ts`
-- `src/contexts/SecurityContext.tsx`
-- `src/components/chat/LiveChatPanel.tsx`
+**REGRA:** Qualquer arquivo que começa com `src/` é aplicado automaticamente.
+
+| Arquivo | Status |
+|---------|--------|
+| `src/hooks/useAIAutomation.ts` | ✅ Automático |
+| `src/hooks/useSecurityGuard.ts` | ✅ Automático |
+| `src/hooks/useChatRateLimit.ts` | ✅ Automático |
+| `src/hooks/useLiveChat.ts` | ✅ Automático |
+| `src/hooks/useRolePermissions.ts` | ✅ Automático |
+| `src/contexts/SecurityContext.tsx` | ✅ Automático |
+| `src/components/chat/LiveChatPanel.tsx` | ✅ Automático |
+| `src/components/security/SecurityDashboard.tsx` | ✅ Automático |
+| `src/components/admin/AIControlCenter.tsx` | ✅ Automático |
+| **Qualquer outro `src/*`** | ✅ Automático |
+
+**Por que?** Esses são arquivos de frontend (React). Quando você faz qualquer alteração no Lovable, ela recompila tudo automaticamente.
 
 ---
 

@@ -37,11 +37,37 @@ Se inverter = ERRO!
 
 ---
 
-## 🔴 O QUE NÃO APLICAR
+## 🔴 O QUE NÃO APLICAR (IGNORE ESSES!)
 
-❌ Qualquer arquivo que NÃO esteja nesta lista
-❌ Arquivos de código frontend (.tsx, .ts em src/) - Esses a Lovable sincroniza automaticamente
-❌ Migrações SQL antigas (qualquer uma com data antes de 20251222)
+### Arquivos que começam com `src/` = AUTOMÁTICO
+
+A Lovable aplica esses sozinha. **NÃO FAÇA NADA** com eles:
+
+| Arquivo | Por que ignorar |
+|---------|-----------------|
+| `src/components/chat/LiveChatPanel.tsx` | Frontend - automático |
+| `src/components/security/SecurityDashboard.tsx` | Frontend - automático |
+| `src/contexts/SecurityContext.tsx` | Frontend - automático |
+| `src/hooks/useAIAutomation.ts` | Frontend - automático |
+| `src/hooks/useChatRateLimit.ts` | Frontend - automático |
+| `src/hooks/useLiveChat.ts` | Frontend - automático |
+| `src/hooks/useRolePermissions.ts` | Frontend - automático |
+| `src/hooks/useSecurityGuard.ts` | Frontend - automático |
+| Qualquer outro `src/*` | Frontend - automático |
+
+### Migrações SQL antigas = JÁ APLICADAS
+
+❌ Qualquer SQL com data **ANTES** de `20251222` já foi aplicado.
+✅ Só aplique os 4 SQLs que começam com `20251222`.
+
+### REGRA SIMPLES:
+
+| Começa com... | Ação |
+|---------------|------|
+| `src/` | 🚫 IGNORE |
+| `supabase/migrations/20251222*` | ✅ APLIQUE (são 4) |
+| `supabase/functions/sna-*` ou `secure-webhook-ultra` | ✅ APLIQUE (são 3) |
+| Qualquer outra coisa | 🚫 IGNORE |
 
 ---
 
