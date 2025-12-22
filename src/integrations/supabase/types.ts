@@ -7330,6 +7330,545 @@ export type Database = {
         }
         Relationships: []
       }
+      sna_budgets: {
+        Row: {
+          action_on_limit: string | null
+          created_at: string
+          critical_sent_at: string | null
+          critical_threshold: number | null
+          id: string
+          is_active: boolean | null
+          is_soft_limit: boolean | null
+          limit_requests: number | null
+          limit_tokens: number | null
+          limit_usd: number
+          period: string
+          period_end: string
+          period_start: string
+          request_count: number
+          scope: string
+          scope_id: string
+          spent_usd: number
+          throttle_factor: number | null
+          token_count: number
+          updated_at: string
+          warn_sent_at: string | null
+          warn_threshold: number | null
+        }
+        Insert: {
+          action_on_limit?: string | null
+          created_at?: string
+          critical_sent_at?: string | null
+          critical_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_soft_limit?: boolean | null
+          limit_requests?: number | null
+          limit_tokens?: number | null
+          limit_usd: number
+          period: string
+          period_end: string
+          period_start: string
+          request_count?: number
+          scope: string
+          scope_id: string
+          spent_usd?: number
+          throttle_factor?: number | null
+          token_count?: number
+          updated_at?: string
+          warn_sent_at?: string | null
+          warn_threshold?: number | null
+        }
+        Update: {
+          action_on_limit?: string | null
+          created_at?: string
+          critical_sent_at?: string | null
+          critical_threshold?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_soft_limit?: boolean | null
+          limit_requests?: number | null
+          limit_tokens?: number | null
+          limit_usd?: number
+          period?: string
+          period_end?: string
+          period_start?: string
+          request_count?: number
+          scope?: string
+          scope_id?: string
+          spent_usd?: number
+          throttle_factor?: number | null
+          token_count?: number
+          updated_at?: string
+          warn_sent_at?: string | null
+          warn_threshold?: number | null
+        }
+        Relationships: []
+      }
+      sna_cache: {
+        Row: {
+          cache_key: string
+          cache_type: string | null
+          cached_value: Json
+          compressed: boolean | null
+          created_at: string
+          expires_at: string
+          hit_count: number | null
+          id: string
+          last_hit_at: string | null
+          original_cost_usd: number | null
+          saved_cost_usd: number | null
+        }
+        Insert: {
+          cache_key: string
+          cache_type?: string | null
+          cached_value: Json
+          compressed?: boolean | null
+          created_at?: string
+          expires_at: string
+          hit_count?: number | null
+          id?: string
+          last_hit_at?: string | null
+          original_cost_usd?: number | null
+          saved_cost_usd?: number | null
+        }
+        Update: {
+          cache_key?: string
+          cache_type?: string | null
+          cached_value?: Json
+          compressed?: boolean | null
+          created_at?: string
+          expires_at?: string
+          hit_count?: number | null
+          id?: string
+          last_hit_at?: string | null
+          original_cost_usd?: number | null
+          saved_cost_usd?: number | null
+        }
+        Relationships: []
+      }
+      sna_feature_flags: {
+        Row: {
+          allowed_roles: string[] | null
+          allowed_users: string[] | null
+          blocked_users: string[] | null
+          category: string | null
+          change_log: Json[] | null
+          conditions: Json | null
+          config: Json | null
+          created_at: string
+          default_value: Json | null
+          description: string | null
+          flag_key: string
+          id: string
+          is_enabled: boolean
+          rollout_percentage: number | null
+          rollout_strategy: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          allowed_roles?: string[] | null
+          allowed_users?: string[] | null
+          blocked_users?: string[] | null
+          category?: string | null
+          change_log?: Json[] | null
+          conditions?: Json | null
+          config?: Json | null
+          created_at?: string
+          default_value?: Json | null
+          description?: string | null
+          flag_key: string
+          id?: string
+          is_enabled?: boolean
+          rollout_percentage?: number | null
+          rollout_strategy?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          allowed_roles?: string[] | null
+          allowed_users?: string[] | null
+          blocked_users?: string[] | null
+          category?: string | null
+          change_log?: Json[] | null
+          conditions?: Json | null
+          config?: Json | null
+          created_at?: string
+          default_value?: Json | null
+          description?: string | null
+          flag_key?: string
+          id?: string
+          is_enabled?: boolean
+          rollout_percentage?: number | null
+          rollout_strategy?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      sna_healthchecks: {
+        Row: {
+          capabilities: Json | null
+          created_at: string
+          endpoint: string | null
+          error_message: string | null
+          error_rate: number | null
+          id: string
+          latency_ms: number | null
+          ok: boolean
+          previous_ok: boolean | null
+          region: string | null
+          response_preview: string | null
+          service: string
+          status_changed: boolean | null
+          status_code: number | null
+          throughput_rps: number | null
+        }
+        Insert: {
+          capabilities?: Json | null
+          created_at?: string
+          endpoint?: string | null
+          error_message?: string | null
+          error_rate?: number | null
+          id?: string
+          latency_ms?: number | null
+          ok: boolean
+          previous_ok?: boolean | null
+          region?: string | null
+          response_preview?: string | null
+          service: string
+          status_changed?: boolean | null
+          status_code?: number | null
+          throughput_rps?: number | null
+        }
+        Update: {
+          capabilities?: Json | null
+          created_at?: string
+          endpoint?: string | null
+          error_message?: string | null
+          error_rate?: number | null
+          id?: string
+          latency_ms?: number | null
+          ok?: boolean
+          previous_ok?: boolean | null
+          region?: string | null
+          response_preview?: string | null
+          service?: string
+          status_changed?: boolean | null
+          status_code?: number | null
+          throughput_rps?: number | null
+        }
+        Relationships: []
+      }
+      sna_jobs: {
+        Row: {
+          actual_cost_usd: number | null
+          attempts: number
+          base_delay_seconds: number | null
+          completed_at: string | null
+          correlation_id: string | null
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          error: Json | null
+          estimated_cost_usd: number | null
+          id: string
+          idempotency_key: string
+          input: Json
+          job_type: string
+          lock_token: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          metadata: Json | null
+          model: string | null
+          output: Json | null
+          parent_job_id: string | null
+          priority: number
+          processing_time_ms: number | null
+          provider: string | null
+          queue_time_ms: number | null
+          result_summary: string | null
+          retry_strategy: string | null
+          root_job_id: string | null
+          run_after: string
+          started_at: string | null
+          status: string
+          step_number: number | null
+          success: boolean | null
+          tags: string[] | null
+          tenant_id: string | null
+          timeout_seconds: number | null
+          tokens_in: number | null
+          tokens_out: number | null
+          total_steps: number | null
+          updated_at: string
+        }
+        Insert: {
+          actual_cost_usd?: number | null
+          attempts?: number
+          base_delay_seconds?: number | null
+          completed_at?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          error?: Json | null
+          estimated_cost_usd?: number | null
+          id?: string
+          idempotency_key: string
+          input?: Json
+          job_type: string
+          lock_token?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          metadata?: Json | null
+          model?: string | null
+          output?: Json | null
+          parent_job_id?: string | null
+          priority?: number
+          processing_time_ms?: number | null
+          provider?: string | null
+          queue_time_ms?: number | null
+          result_summary?: string | null
+          retry_strategy?: string | null
+          root_job_id?: string | null
+          run_after?: string
+          started_at?: string | null
+          status?: string
+          step_number?: number | null
+          success?: boolean | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          timeout_seconds?: number | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          total_steps?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actual_cost_usd?: number | null
+          attempts?: number
+          base_delay_seconds?: number | null
+          completed_at?: string | null
+          correlation_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          deadline?: string | null
+          error?: Json | null
+          estimated_cost_usd?: number | null
+          id?: string
+          idempotency_key?: string
+          input?: Json
+          job_type?: string
+          lock_token?: string | null
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          metadata?: Json | null
+          model?: string | null
+          output?: Json | null
+          parent_job_id?: string | null
+          priority?: number
+          processing_time_ms?: number | null
+          provider?: string | null
+          queue_time_ms?: number | null
+          result_summary?: string | null
+          retry_strategy?: string | null
+          root_job_id?: string | null
+          run_after?: string
+          started_at?: string | null
+          status?: string
+          step_number?: number | null
+          success?: boolean | null
+          tags?: string[] | null
+          tenant_id?: string | null
+          timeout_seconds?: number | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          total_steps?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sna_jobs_parent_job_id_fkey"
+            columns: ["parent_job_id"]
+            isOneToOne: false
+            referencedRelation: "sna_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sna_jobs_root_job_id_fkey"
+            columns: ["root_job_id"]
+            isOneToOne: false
+            referencedRelation: "sna_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sna_rate_limits: {
+        Row: {
+          cost_usd: number
+          endpoint: string
+          id: string
+          identifier: string
+          identifier_type: string | null
+          last_request_at: string | null
+          max_cost_usd: number | null
+          max_requests: number
+          max_tokens: number | null
+          penalty_reason: string | null
+          penalty_until: string | null
+          request_count: number
+          token_count: number
+          window_size_seconds: number
+          window_start: string
+        }
+        Insert: {
+          cost_usd?: number
+          endpoint: string
+          id?: string
+          identifier: string
+          identifier_type?: string | null
+          last_request_at?: string | null
+          max_cost_usd?: number | null
+          max_requests?: number
+          max_tokens?: number | null
+          penalty_reason?: string | null
+          penalty_until?: string | null
+          request_count?: number
+          token_count?: number
+          window_size_seconds?: number
+          window_start: string
+        }
+        Update: {
+          cost_usd?: number
+          endpoint?: string
+          id?: string
+          identifier?: string
+          identifier_type?: string | null
+          last_request_at?: string | null
+          max_cost_usd?: number | null
+          max_requests?: number
+          max_tokens?: number | null
+          penalty_reason?: string | null
+          penalty_until?: string | null
+          request_count?: number
+          token_count?: number
+          window_size_seconds?: number
+          window_start?: string
+        }
+        Relationships: []
+      }
+      sna_tool_runs: {
+        Row: {
+          cache_hit: boolean | null
+          cache_key: string | null
+          correlation_id: string | null
+          cost_usd: number | null
+          created_at: string
+          endpoint: string | null
+          error_code: string | null
+          error_message: string | null
+          http_status: number | null
+          id: string
+          ip_address: unknown
+          job_id: string | null
+          latency_ms: number | null
+          model: string | null
+          ok: boolean
+          operation: string | null
+          provider: string
+          request_hash: string | null
+          request_summary: Json | null
+          response_summary: Json | null
+          span_id: string | null
+          tokens_cached: number | null
+          tokens_in: number | null
+          tokens_out: number | null
+          tool_name: string
+          trace_id: string | null
+          ttfb_ms: number | null
+          user_agent: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          cache_hit?: boolean | null
+          cache_key?: string | null
+          correlation_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          endpoint?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          ip_address?: unknown
+          job_id?: string | null
+          latency_ms?: number | null
+          model?: string | null
+          ok?: boolean
+          operation?: string | null
+          provider: string
+          request_hash?: string | null
+          request_summary?: Json | null
+          response_summary?: Json | null
+          span_id?: string | null
+          tokens_cached?: number | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          tool_name: string
+          trace_id?: string | null
+          ttfb_ms?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          cache_hit?: boolean | null
+          cache_key?: string | null
+          correlation_id?: string | null
+          cost_usd?: number | null
+          created_at?: string
+          endpoint?: string | null
+          error_code?: string | null
+          error_message?: string | null
+          http_status?: number | null
+          id?: string
+          ip_address?: unknown
+          job_id?: string | null
+          latency_ms?: number | null
+          model?: string | null
+          ok?: boolean
+          operation?: string | null
+          provider?: string
+          request_hash?: string | null
+          request_summary?: Json | null
+          response_summary?: Json | null
+          span_id?: string | null
+          tokens_cached?: number | null
+          tokens_in?: number | null
+          tokens_out?: number | null
+          tool_name?: string
+          trace_id?: string | null
+          ttfb_ms?: number | null
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sna_tool_runs_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "sna_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_media_history: {
         Row: {
           engagement_rate: number | null
