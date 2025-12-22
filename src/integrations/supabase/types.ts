@@ -11824,6 +11824,44 @@ export type Database = {
         | "quarantine"
       security_severity: "debug" | "info" | "warning" | "error" | "critical"
       session_status: "active" | "expired" | "revoked" | "suspicious"
+      sna_agent_role:
+        | "router"
+        | "tutor"
+        | "curator"
+        | "moderator"
+        | "marketing"
+        | "operations"
+        | "financial"
+        | "support"
+      sna_job_status:
+        | "pending"
+        | "scheduled"
+        | "running"
+        | "succeeded"
+        | "failed"
+        | "dead"
+        | "cancelled"
+        | "paused"
+      sna_priority:
+        | "p0_critical"
+        | "p1_urgent"
+        | "p2_high"
+        | "p3_normal"
+        | "p4_low"
+        | "p5_batch"
+      sna_provider:
+        | "gemini_flash"
+        | "gemini_pro"
+        | "gpt5"
+        | "gpt5_mini"
+        | "gpt5_nano"
+        | "claude_opus"
+        | "perplexity"
+        | "firecrawl"
+        | "elevenlabs"
+        | "whisper"
+        | "dall_e"
+        | "internal"
       threat_level:
         | "none"
         | "low"
@@ -12066,6 +12104,48 @@ export const Constants = {
       ],
       security_severity: ["debug", "info", "warning", "error", "critical"],
       session_status: ["active", "expired", "revoked", "suspicious"],
+      sna_agent_role: [
+        "router",
+        "tutor",
+        "curator",
+        "moderator",
+        "marketing",
+        "operations",
+        "financial",
+        "support",
+      ],
+      sna_job_status: [
+        "pending",
+        "scheduled",
+        "running",
+        "succeeded",
+        "failed",
+        "dead",
+        "cancelled",
+        "paused",
+      ],
+      sna_priority: [
+        "p0_critical",
+        "p1_urgent",
+        "p2_high",
+        "p3_normal",
+        "p4_low",
+        "p5_batch",
+      ],
+      sna_provider: [
+        "gemini_flash",
+        "gemini_pro",
+        "gpt5",
+        "gpt5_mini",
+        "gpt5_nano",
+        "claude_opus",
+        "perplexity",
+        "firecrawl",
+        "elevenlabs",
+        "whisper",
+        "dall_e",
+        "internal",
+      ],
       threat_level: ["none", "low", "medium", "high", "critical", "emergency"],
     },
   },
