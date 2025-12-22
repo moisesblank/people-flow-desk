@@ -12336,6 +12336,105 @@ export type Database = {
         }
         Returns: string
       }
+      sna_check_budget: {
+        Args: {
+          p_estimated_cost?: number
+          p_scope?: string
+          p_scope_id?: string
+        }
+        Returns: Json
+      }
+      sna_check_feature: {
+        Args: { p_context?: Json; p_flag_key: string; p_user_id?: string }
+        Returns: Json
+      }
+      sna_check_rate_limit: {
+        Args: {
+          p_cost?: number
+          p_endpoint: string
+          p_identifier: string
+          p_tokens?: number
+        }
+        Returns: Json
+      }
+      sna_claim_jobs: {
+        Args: {
+          p_job_types?: string[]
+          p_limit?: number
+          p_max_priority?: number
+          p_worker_id: string
+        }
+        Returns: {
+          actual_cost_usd: number | null
+          attempts: number
+          base_delay_seconds: number | null
+          completed_at: string | null
+          correlation_id: string | null
+          created_at: string
+          created_by: string | null
+          deadline: string | null
+          error: Json | null
+          estimated_cost_usd: number | null
+          id: string
+          idempotency_key: string
+          input: Json
+          job_type: string
+          lock_token: string | null
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          metadata: Json | null
+          model: string | null
+          output: Json | null
+          parent_job_id: string | null
+          priority: number
+          processing_time_ms: number | null
+          provider: string | null
+          queue_time_ms: number | null
+          result_summary: string | null
+          retry_strategy: string | null
+          root_job_id: string | null
+          run_after: string
+          started_at: string | null
+          status: string
+          step_number: number | null
+          success: boolean | null
+          tags: string[] | null
+          tenant_id: string | null
+          timeout_seconds: number | null
+          tokens_in: number | null
+          tokens_out: number | null
+          total_steps: number | null
+          updated_at: string
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "sna_jobs"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
+      sna_complete_job: {
+        Args: {
+          p_cost_usd?: number
+          p_job_id: string
+          p_output?: Json
+          p_result_summary?: string
+          p_tokens_in?: number
+          p_tokens_out?: number
+        }
+        Returns: Json
+      }
+      sna_consume_budget: {
+        Args: {
+          p_cost_usd: number
+          p_request_count?: number
+          p_scope: string
+          p_scope_id: string
+          p_token_count?: number
+        }
+        Returns: boolean
+      }
       sna_create_job: {
         Args: {
           p_deadline?: string
@@ -12349,6 +12448,14 @@ export type Database = {
           p_run_after?: string
           p_tags?: string[]
           p_timeout_seconds?: number
+        }
+        Returns: Json
+      }
+      sna_fail_job: {
+        Args: {
+          p_error?: Json
+          p_job_id: string
+          p_retry_delay_override?: number
         }
         Returns: Json
       }
