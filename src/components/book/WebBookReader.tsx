@@ -330,62 +330,61 @@ export const WebBookReader = memo(({
   }, [currentPage, goToPage]);
 
   // ============================================
+  // CLICK NAS BORDAS
+  // ============================================
+  const handleContainerClick = useCallback((e: React.MouseEvent) => {
+    if (!containerRef.current) return;
+    const rect = containerRef.current.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const EDGE_CLICK_WIDTH = 80;
+
+    if (x < EDGE_CLICK_WIDTH) {
+      prevPage();
+    } else if (x > rect.width - EDGE_CLICK_WIDTH) {
+      nextPage();
+    }
+  }, [prevPage, nextPage]);
+
+  // ============================================
   // ZOOM E ROTAÇÃO
   // ============================================
   const handleZoomIn = useCallback(() => {
-    setZoom(prev => Math.min(prev + 25, 200));
+    setZoom(z => Math.min(z + 25, 200));
   }, []);
 
   const handleZoomOut = useCallback(() => {
-    setZoom(prev => Math.max(prev - 25, 50));
+    setZoom(z => Math.max(z - 25, 50));
   }, []);
 
   const handleRotate = useCallback(() => {
-    setRotation(prev => (prev + 90) % 360);
-  }, []);
-
-  const toggleFullscreen = useCallback(() => {
-    setIsFullscreen(prev => !prev);
+    setRotation(r => (r + 90) % 360);
   }, []);
 
   // ============================================
-  // EFFECTS
+  // FULLSCREEN
   // ============================================
-  useEffect(() => {
-    fetchBookData();
-  }, [fetchBookData]);
-
-  useEffect(() => {
-    if (book && currentPage) {
-      fetchPageUrl(currentPage);
-      fetchAnnotations();
+  const toggleFullscreen = useCallback(async () => {
+    if (!containerRef.current) return;
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error("Erro ao alternar fullscreen:", err);
     }
-  }, [book, currentPage, fetchPageUrl, fetchAnnotations]);
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (hasUnsavedChanges) {
-        saveProgress();
-      }
-    }, AUTO_SAVE_INTERVAL_MS);
-
-    return () => clearInterval(interval);
-  }, [hasUnsavedChanges, saveProgress]);
-
-  useEffect(() => {
-    return () => {
-      if (pageRefreshTimeoutRef.current) {
-        clearTimeout(pageRefreshTimeoutRef.current);
-      }
-      saveProgress();
-    };
-  }, [saveProgress]);
+  }, []);
 
   // ============================================
   // KEYBOARD NAVIGATION
   // ============================================
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      if (!book) return;
+
       switch (e.key) {
         case "ArrowLeft":
           prevPage();
@@ -393,36 +392,100 @@ export const WebBookReader = memo(({
         case "ArrowRight":
           nextPage();
           break;
+        case "Home":
+          goToPage(1);
+          break;
+        case "End":
+          goToPage(book.totalPages);
+          break;
+        case "+":
+        case "=":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleZoomIn();
+          }
+          break;
+        case "-":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleZoomOut();
+          }
+          break;
+        case "f":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            toggleFullscreen();
+          }
+          break;
         case "Escape":
-          if (isFullscreen) toggleFullscreen();
+          if (isFullscreen) {
+            toggleFullscreen();
+          } else {
+            onClose?.();
+          }
           break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [prevPage, nextPage, isFullscreen, toggleFullscreen]);
+  }, [book, prevPage, nextPage, goToPage, handleZoomIn, handleZoomOut, toggleFullscreen, isFullscreen, onClose]);
 
   // ============================================
-  // RENDER
+  // EFEITOS
+  // ============================================
+  useEffect(() => {
+    fetchBookData();
+    return () => {
+      if (pageRefreshTimeoutRef.current) {
+        clearTimeout(pageRefreshTimeoutRef.current);
+      }
+    };
+  }, [fetchBookData]);
+
+  useEffect(() => {
+    if (book && currentPage > 0) {
+      fetchPageUrl(currentPage);
+      fetchAnnotations();
+    }
+  }, [book, currentPage, fetchPageUrl, fetchAnnotations]);
+
+  useEffect(() => {
+    if (book) {
+      const interval = setInterval(saveProgress, AUTO_SAVE_INTERVAL_MS);
+      return () => clearInterval(interval);
+    }
+  }, [book, saveProgress]);
+
+  // ============================================
+  // RENDER - LOADING
   // ============================================
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-screen bg-background">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <span className="ml-2 text-muted-foreground">Carregando livro...</span>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background">
+        <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+        <p className="text-muted-foreground">Carregando livro...</p>
       </div>
     );
   }
 
-  if (error) {
+  // ============================================
+  // RENDER - ERROR
+  // ============================================
+  if (error || !book) {
     return (
-      <div className="flex flex-col items-center justify-center h-screen bg-background">
-        <AlertTriangle className="w-12 h-12 text-destructive mb-4" />
-        <p className="text-destructive font-medium">{error}</p>
-        <Button onClick={fetchBookData} className="mt-4">
-          Tentar novamente
-        </Button>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-background p-8">
+        <AlertTriangle className="w-16 h-16 text-destructive mb-4" />
+        <h2 className="text-xl font-semibold mb-2">Erro ao carregar livro</h2>
+        <p className="text-muted-foreground text-center mb-4">{error || "Livro não encontrado"}</p>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onClose}>
+            Voltar
+          </Button>
+          <Button onClick={fetchBookData}>
+            Tentar novamente
+          </Button>
+        </div>
       </div>
     );
   }
