@@ -90,7 +90,8 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
     );
   }
 
-  const embedSrc = `https://www.youtube.com/embed/${activeVideoId}?autoplay=${autoplay ? 1 : 0}&rel=0&modestbranding=1&mute=${isMuted ? 1 : 0}&vq=hd1080&showinfo=0&iv_load_policy=3`;
+  // ✅ FORTRESS: Usar URL protegida com parâmetros de segurança
+  const embedSrc = getFortressYouTubeUrl(activeVideoId, autoplay) + `&mute=${isMuted ? 1 : 0}`;
   const chatSrc = `https://www.youtube.com/live_chat?v=${activeVideoId}&embed_domain=${window.location.hostname}`;
 
   return (
