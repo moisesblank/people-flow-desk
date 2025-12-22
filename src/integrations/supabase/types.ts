@@ -1049,6 +1049,121 @@ export type Database = {
         }
         Relationships: []
       }
+      book_access_logs: {
+        Row: {
+          book_id: string | null
+          created_at: string
+          device_fingerprint: string | null
+          event_type: string
+          id: string
+          ip_hash: string | null
+          is_violation: boolean | null
+          metadata: Json | null
+          page_number: number | null
+          session_id: string | null
+          threat_score: number | null
+          ua_hash: string | null
+          user_cpf: string | null
+          user_email: string | null
+          user_id: string | null
+          violation_type: string | null
+        }
+        Insert: {
+          book_id?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          is_violation?: boolean | null
+          metadata?: Json | null
+          page_number?: number | null
+          session_id?: string | null
+          threat_score?: number | null
+          ua_hash?: string | null
+          user_cpf?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          violation_type?: string | null
+        }
+        Update: {
+          book_id?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          is_violation?: boolean | null
+          metadata?: Json | null
+          page_number?: number | null
+          session_id?: string | null
+          threat_score?: number | null
+          ua_hash?: string | null
+          user_cpf?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          violation_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_access_logs_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_chat_messages: {
+        Row: {
+          book_id: string
+          content: string
+          context_text: string | null
+          created_at: string
+          id: string
+          metadata: Json | null
+          model_used: string | null
+          page_number: number | null
+          role: string
+          tokens_used: number | null
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          content: string
+          context_text?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used?: string | null
+          page_number?: number | null
+          role: string
+          tokens_used?: number | null
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          content?: string
+          context_text?: string | null
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          model_used?: string | null
+          page_number?: number | null
+          role?: string
+          tokens_used?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_chat_messages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branding_settings: {
         Row: {
           company_name: string | null
@@ -10278,6 +10393,81 @@ export type Database = {
           },
         ]
       }
+      user_annotations: {
+        Row: {
+          annotation_type: Database["public"]["Enums"]["annotation_type"]
+          book_id: string
+          color: string | null
+          content: string | null
+          created_at: string
+          drawing_data: string | null
+          height: number | null
+          id: string
+          is_deleted: boolean | null
+          metadata: Json | null
+          page_id: string | null
+          page_number: number
+          position_x: number | null
+          position_y: number | null
+          updated_at: string
+          user_id: string
+          width: number | null
+        }
+        Insert: {
+          annotation_type?: Database["public"]["Enums"]["annotation_type"]
+          book_id: string
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          drawing_data?: string | null
+          height?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          metadata?: Json | null
+          page_id?: string | null
+          page_number: number
+          position_x?: number | null
+          position_y?: number | null
+          updated_at?: string
+          user_id: string
+          width?: number | null
+        }
+        Update: {
+          annotation_type?: Database["public"]["Enums"]["annotation_type"]
+          book_id?: string
+          color?: string | null
+          content?: string | null
+          created_at?: string
+          drawing_data?: string | null
+          height?: number | null
+          id?: string
+          is_deleted?: boolean | null
+          metadata?: Json | null
+          page_id?: string | null
+          page_number?: number
+          position_x?: number | null
+          position_y?: number | null
+          updated_at?: string
+          user_id?: string
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_annotations_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_annotations_page_id_fkey"
+            columns: ["page_id"]
+            isOneToOne: false
+            referencedRelation: "web_book_pages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_badges: {
         Row: {
           badge_id: string
@@ -10317,6 +10507,59 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      user_book_progress: {
+        Row: {
+          book_id: string
+          completed_at: string | null
+          created_at: string
+          current_page: number
+          id: string
+          is_completed: boolean | null
+          last_read_at: string
+          pages_read: number[] | null
+          progress_percent: number | null
+          total_reading_time_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          completed_at?: string | null
+          created_at?: string
+          current_page?: number
+          id?: string
+          is_completed?: boolean | null
+          last_read_at?: string
+          pages_read?: number[] | null
+          progress_percent?: number | null
+          total_reading_time_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          completed_at?: string | null
+          created_at?: string
+          current_page?: number
+          id?: string
+          is_completed?: boolean | null
+          last_read_at?: string
+          pages_read?: number[] | null
+          progress_percent?: number | null
+          total_reading_time_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_book_progress_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
             referencedColumns: ["id"]
           },
         ]
@@ -11112,6 +11355,179 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      web_book_pages: {
+        Row: {
+          anchor_id: string | null
+          book_id: string
+          chapter_title: string | null
+          content_json: Json | null
+          created_at: string
+          file_size_bytes: number | null
+          has_burned_watermark: boolean
+          height: number | null
+          id: string
+          image_format: string
+          image_path: string
+          page_number: number
+          section_title: string | null
+          text_content: string | null
+          thumbnail_path: string | null
+          watermark_hash: string | null
+          width: number | null
+        }
+        Insert: {
+          anchor_id?: string | null
+          book_id: string
+          chapter_title?: string | null
+          content_json?: Json | null
+          created_at?: string
+          file_size_bytes?: number | null
+          has_burned_watermark?: boolean
+          height?: number | null
+          id?: string
+          image_format?: string
+          image_path: string
+          page_number: number
+          section_title?: string | null
+          text_content?: string | null
+          thumbnail_path?: string | null
+          watermark_hash?: string | null
+          width?: number | null
+        }
+        Update: {
+          anchor_id?: string | null
+          book_id?: string
+          chapter_title?: string | null
+          content_json?: Json | null
+          created_at?: string
+          file_size_bytes?: number | null
+          has_burned_watermark?: boolean
+          height?: number | null
+          id?: string
+          image_format?: string
+          image_path?: string
+          page_number?: number
+          section_title?: string | null
+          text_content?: string | null
+          thumbnail_path?: string | null
+          watermark_hash?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_book_pages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      web_books: {
+        Row: {
+          author: string | null
+          avg_reading_time_seconds: number | null
+          category: Database["public"]["Enums"]["web_book_category"]
+          content_structure: Json | null
+          course_id: string | null
+          cover_path: string | null
+          cover_url: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          drm_level: string | null
+          error_message: string | null
+          id: string
+          is_premium: boolean
+          job_id: string | null
+          original_bucket: string
+          original_filename: string | null
+          original_path: string
+          original_size_bytes: number | null
+          processed_at: string | null
+          required_roles: string[]
+          status: Database["public"]["Enums"]["web_book_status"]
+          subtitle: string | null
+          summary: Json | null
+          tags: string[] | null
+          title: string
+          total_pages: number | null
+          transmuted_bucket: string | null
+          unique_readers: number | null
+          updated_at: string
+          view_count: number | null
+          watermark_enabled: boolean
+        }
+        Insert: {
+          author?: string | null
+          avg_reading_time_seconds?: number | null
+          category?: Database["public"]["Enums"]["web_book_category"]
+          content_structure?: Json | null
+          course_id?: string | null
+          cover_path?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          drm_level?: string | null
+          error_message?: string | null
+          id?: string
+          is_premium?: boolean
+          job_id?: string | null
+          original_bucket?: string
+          original_filename?: string | null
+          original_path: string
+          original_size_bytes?: number | null
+          processed_at?: string | null
+          required_roles?: string[]
+          status?: Database["public"]["Enums"]["web_book_status"]
+          subtitle?: string | null
+          summary?: Json | null
+          tags?: string[] | null
+          title: string
+          total_pages?: number | null
+          transmuted_bucket?: string | null
+          unique_readers?: number | null
+          updated_at?: string
+          view_count?: number | null
+          watermark_enabled?: boolean
+        }
+        Update: {
+          author?: string | null
+          avg_reading_time_seconds?: number | null
+          category?: Database["public"]["Enums"]["web_book_category"]
+          content_structure?: Json | null
+          course_id?: string | null
+          cover_path?: string | null
+          cover_url?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          drm_level?: string | null
+          error_message?: string | null
+          id?: string
+          is_premium?: boolean
+          job_id?: string | null
+          original_bucket?: string
+          original_filename?: string | null
+          original_path?: string
+          original_size_bytes?: number | null
+          processed_at?: string | null
+          required_roles?: string[]
+          status?: Database["public"]["Enums"]["web_book_status"]
+          subtitle?: string | null
+          summary?: Json | null
+          tags?: string[] | null
+          title?: string
+          total_pages?: number | null
+          transmuted_bucket?: string | null
+          unique_readers?: number | null
+          updated_at?: string
+          view_count?: number | null
+          watermark_enabled?: boolean
+        }
+        Relationships: []
       }
       webhook_diagnostics: {
         Row: {
@@ -12947,11 +13363,23 @@ export type Database = {
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
       fn_check_sanctum_lock: { Args: { p_user_id: string }; Returns: boolean }
       fn_decay_sanctum_scores: { Args: never; Returns: number }
+      fn_delete_annotation: { Args: { p_annotation_id: string }; Returns: Json }
       fn_get_asset_manifest: {
         Args: { p_asset_id: string; p_user_id: string }
         Returns: Json
       }
+      fn_get_book_for_reader: { Args: { p_book_id: string }; Returns: Json }
       fn_get_sanctum_stats: { Args: never; Returns: Json }
+      fn_get_user_annotations: {
+        Args: { p_book_id: string; p_page_number?: number }
+        Returns: Json
+      }
+      fn_is_beta_or_owner: { Args: never; Returns: boolean }
+      fn_is_owner: { Args: never; Returns: boolean }
+      fn_list_books_for_category: {
+        Args: { p_category?: string }
+        Returns: Json
+      }
       fn_register_sanctum_violation: {
         Args: {
           p_asset_id?: string
@@ -12964,6 +13392,30 @@ export type Database = {
           p_user_email: string
           p_user_id: string
           p_violation_type: string
+        }
+        Returns: Json
+      }
+      fn_save_annotation: {
+        Args: {
+          p_annotation_type: string
+          p_book_id: string
+          p_color?: string
+          p_content?: string
+          p_drawing_data?: string
+          p_height?: number
+          p_metadata?: Json
+          p_page_number: number
+          p_position_x?: number
+          p_position_y?: number
+          p_width?: number
+        }
+        Returns: Json
+      }
+      fn_update_reading_progress: {
+        Args: {
+          p_book_id: string
+          p_current_page: number
+          p_reading_time_seconds?: number
         }
         Returns: Json
       }
@@ -13804,6 +14256,14 @@ export type Database = {
     }
     Enums: {
       ai_content_type: "summary" | "flashcards" | "quiz" | "mindmap"
+      annotation_type:
+        | "highlight"
+        | "drawing"
+        | "note"
+        | "bookmark"
+        | "circle"
+        | "underline"
+        | "arrow"
       app_role:
         | "owner"
         | "admin"
@@ -13995,6 +14455,24 @@ export type Database = {
         | "network_tampering"
         | "unknown"
       violation_severity: "low" | "medium" | "high" | "critical"
+      web_book_category:
+        | "quimica_geral"
+        | "quimica_organica"
+        | "fisico_quimica"
+        | "revisao_ciclica"
+        | "previsao_final"
+        | "exercicios"
+        | "simulados"
+        | "resumos"
+        | "mapas_mentais"
+        | "outros"
+      web_book_status:
+        | "draft"
+        | "queued"
+        | "processing"
+        | "ready"
+        | "error"
+        | "archived"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -14123,6 +14601,15 @@ export const Constants = {
   public: {
     Enums: {
       ai_content_type: ["summary", "flashcards", "quiz", "mindmap"],
+      annotation_type: [
+        "highlight",
+        "drawing",
+        "note",
+        "bookmark",
+        "circle",
+        "underline",
+        "arrow",
+      ],
       app_role: [
         "owner",
         "admin",
@@ -14322,6 +14809,26 @@ export const Constants = {
         "unknown",
       ],
       violation_severity: ["low", "medium", "high", "critical"],
+      web_book_category: [
+        "quimica_geral",
+        "quimica_organica",
+        "fisico_quimica",
+        "revisao_ciclica",
+        "previsao_final",
+        "exercicios",
+        "simulados",
+        "resumos",
+        "mapas_mentais",
+        "outros",
+      ],
+      web_book_status: [
+        "draft",
+        "queued",
+        "processing",
+        "ready",
+        "error",
+        "archived",
+      ],
     },
   },
 } as const
