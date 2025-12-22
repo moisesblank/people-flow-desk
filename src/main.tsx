@@ -1,20 +1,25 @@
-// ============================================
-// ⚡ MATRIZ DIGITAL - ENTRADA SAGRADA ⚡
-// Evangelho da Velocidade Inicializado
-// ============================================
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║   🏛️ MATRIZ DIGITAL - ENTRADA SAGRADA                                       ║
+// ║   Constituição SYNAPSE Enforced                                             ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
 
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 
-// ⚡ DOGMA X: Inicializar sistema de performance antes de tudo
+// 🏛️ CONSTITUIÇÃO: Carrega as leis ANTES de tudo
+import { logConstitutionStatus } from "@/lib/constitution";
+
+// ⚡ DOGMA X: Inicializar sistema de performance
 import { initEvangelhoCompleto } from "@/lib/performance";
 
-// Inicializa o Evangelho da Velocidade
+// Inicializa o sistema
 if (typeof window !== 'undefined') {
+  // 🏛️ Log da Constituição
+  logConstitutionStatus();
+  
   // Performance observer para métricas críticas
   if ('PerformanceObserver' in window) {
-    // Monitorar Long Tasks (DOGMA IX)
     try {
       const longTaskObserver = new PerformanceObserver((list) => {
         for (const entry of list.getEntries()) {
@@ -29,7 +34,7 @@ if (typeof window !== 'undefined') {
     }
   }
 
-  // Registrar Service Worker (DOGMA VII)
+  // Registrar Service Worker (Artigo 13-15)
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker.register('/sw.js')
@@ -47,5 +52,6 @@ if (root) {
 
 // Log de inicialização
 console.log('╔══════════════════════════════════════════════════════════╗');
-console.log('║      ⚡ MATRIZ DIGITAL v10.3 - EVANGELHO ATIVO ⚡         ║');
+console.log('║   🏛️ MATRIZ DIGITAL v10.4 - CONSTITUIÇÃO ATIVA          ║');
+console.log('║   LEI I: Performance (43 Artigos) - ENFORCED            ║');
 console.log('╚══════════════════════════════════════════════════════════╝');
