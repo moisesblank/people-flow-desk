@@ -43,22 +43,24 @@ export const ACCESS_CONTROL_VERSION = "4.0.0";
  */
 export type AppRole =
   // 👑 MASTER
-  | "owner"         // MASTER - PODE TUDO
+  | "owner"          // MASTER - PODE TUDO
   // 👔 GESTÃO (funcionários)
-  | "admin"         // Administrador
-  | "funcionario"   // Funcionário padrão
-  | "employee"      // Alias para funcionário
-  | "suporte"       // Suporte ao cliente
-  | "coordenacao"   // Coordenação pedagógica
-  | "monitoria"     // Monitor/Tutor
-  | "marketing"     // Equipe de marketing
-  | "contabilidade" // Contabilidade
-  | "professor"     // Professor convidado
+  | "admin"          // Administrador
+  | "funcionario"    // Funcionário padrão
+  | "employee"       // Alias para funcionário
+  | "suporte"        // Suporte ao cliente
+  | "coordenacao"    // Coordenação pedagógica
+  | "monitoria"      // Monitor/Tutor
+  | "marketing"      // Equipe de marketing
+  | "contabilidade"  // Contabilidade
+  | "professor"      // Professor convidado
+  | "afiliado"       // Afiliado externo
   // 👨‍🎓 ALUNOS
-  | "beta"          // Aluno pagante (365 dias)
-  | "aluno"         // Aluno regular
+  | "beta"           // Aluno pagante (365 dias)
+  | "aluno"          // Aluno regular
+  | "aluno_gratuito" // Aluno cadastro gratuito
   // 🌐 VISITANTES
-  | "viewer";       // Não pagante (cadastro grátis)
+  | "viewer";        // Não pagante (cadastro grátis)
 
 /**
  * Domínios/Áreas do sistema
@@ -151,8 +153,10 @@ export const ROLE_TO_CATEGORY: Record<AppRole, AccessCategory> = {
   marketing: "gestao",
   contabilidade: "gestao",
   professor: "gestao",
+  afiliado: "gestao",
   beta: "beta",
   aluno: "beta",
+  aluno_gratuito: "gratuito",
   viewer: "gratuito",
 };
 
@@ -324,6 +328,30 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     canEdit: false,
     canDelete: false,
     canExport: false,
+    canImport: false,
+    canManageUsers: false,
+    canAccessFinance: false,
+    canAccessOwnerArea: false,
+  },
+  // 🌐 ALUNO GRATUITO (Cadastro Grátis)
+  aluno_gratuito: {
+    areas: ["publico", "comunidade"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    canExport: false,
+    canImport: false,
+    canManageUsers: false,
+    canAccessFinance: false,
+    canAccessOwnerArea: false,
+  },
+  // 🤝 AFILIADO (Parceiro)
+  afiliado: {
+    areas: ["publico", "gestao"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    canExport: true,
     canImport: false,
     canManageUsers: false,
     canAccessFinance: false,
@@ -648,16 +676,55 @@ export function isPublicHost(hostname?: string): boolean {
 }
 
 /**
+ * Verifica se está em ambiente de desenvolvimento/preview
+ */
+export function isDevHost(hostname?: string): boolean {
+  const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
+  return h === "localhost" || h.includes("lovableproject.com") || h.includes("127.0.0.1");
+}
+
+/**
  * Obtém o domínio atual
  */
-export function getCurrentDomain(): "gestao" | "pro" | "public" | "unknown" {
+export function getCurrentDomain(): "gestao" | "pro" | "public" | "dev" | "unknown" {
   if (typeof window === "undefined") return "unknown";
   const h = window.location.hostname.toLowerCase();
   if (isGestaoHost(h)) return "gestao";
   if (isProHost(h)) return "pro";
   if (isPublicHost(h)) return "public";
-  // Localhost e preview
+  if (isDevHost(h)) return "dev";
   return "unknown";
+}
+
+/**
+ * Valida se um role pode acessar o domínio atual
+ * Regra: funcionários só acessam gestao.*, alunos só acessam pro.*
+ */
+export function validateDomainAccess(role: AppRole | string | null, email?: string | null): boolean {
+  // Owner pode tudo
+  if (isOwner(email, role)) return true;
+  
+  // Dev mode permite tudo
+  const domain = getCurrentDomain();
+  if (domain === "dev" || domain === "unknown") return true;
+  
+  if (!role) return domain === "public";
+  
+  const category = getRoleCategory(role);
+  
+  switch (domain) {
+    case "gestao":
+      // Apenas roles de gestão podem acessar gestao.*
+      return category === "owner" || category === "gestao";
+    case "pro":
+      // Roles de aluno ou gestão podem acessar pro.*
+      return category === "owner" || category === "gestao" || category === "beta" || category === "gratuito";
+    case "public":
+      // Qualquer um pode acessar área pública
+      return true;
+    default:
+      return true;
+  }
 }
 
 // ============================================
