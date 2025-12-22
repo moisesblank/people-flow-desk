@@ -113,8 +113,40 @@ export {
 // RE-EXPORTS PARA COMPATIBILIDADE
 // ============================================
 
-// Alias para manter compatibilidade com código antigo
 export { 
   logSecurityEvent as logSecurityEvent,
   SECURITY_CONFIG,
+  type RateLimitEndpoint,
 } from '@/lib/security/fortalezaSupreme';
+
+// ============================================
+// CONTENT PROTECTION (NOVO v4.1)
+// ============================================
+
+export {
+  useContentProtection,
+  useContentLogger,
+  logContentAccess,
+  type ContentType,
+  type ContentAction,
+} from '@/hooks/useContentProtection';
+
+// ============================================
+// ROLE PERMISSIONS
+// ============================================
+
+export {
+  useRolePermissions,
+  OWNER_EMAIL,
+  URL_TO_AREA,
+  ROLE_LABELS,
+  FULL_ROLE_LABELS,
+  ROLE_DESCRIPTIONS,
+  ROLE_PERMISSIONS,
+  isGestaoHost,
+  isProHost,
+  isPublicHost,
+  type UserRole,
+  type FullAppRole,
+  type SystemArea,
+} from '@/hooks/useRolePermissions';
