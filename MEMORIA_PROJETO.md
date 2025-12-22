@@ -2,6 +2,50 @@
 
 > **DOCUMENTO SAGRADO** - Atualizado em: 22/12/2025
 > **Assistente:** MESTRE (IA Claude - Cursor)
+> **ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS**
+
+---
+
+## 🔥🔥🔥 REGRA MANDATÓRIA — OBEDECER SEMPRE E EM TEMPO REAL 🔥🔥🔥
+
+### 📍 MAPA DE URLs DEFINITIVO (REGRA SUPREMA)
+
+| Quem | URL | Validação | Descrição |
+|------|-----|-----------|-----------|
+| 🌐 **NÃO PAGANTE** | `pro.moisesmedeiros.com.br/` | Cadastro gratuito | Área comum do site + `/comunidade` |
+| 👨‍🎓 **ALUNO BETA** | `pro.moisesmedeiros.com.br/alunos` | `role='beta'` + acesso válido | PAGANTE - Acesso a tudo do portal + comunidade |
+| 👔 **FUNCIONÁRIO** | `gestao.moisesmedeiros.com.br/gestao` | `role='funcionario'` | Funcionários com permissões específicas |
+| 👑 **PROPRIETÁRIO** | **TODAS** | `role='owner'` | **MASTER** = `moisesblank@gmail.com` = PODE TUDO |
+
+### Regras de Acesso
+
+1. **🌐 NÃO PAGANTE (viewer)**:
+   - Cadastro gratuito = acesso livre a `pro.moisesmedeiros.com.br/` e `/comunidade`
+   - Não tem acesso a `/alunos` (área BETA)
+
+2. **👨‍🎓 ALUNO BETA (beta)**:
+   - `role='beta'` obrigatório
+   - Acesso a TUDO inerente a `/alunos` + `/comunidade`
+   - Vem de **PAGAMENTO** ou criado por **owner/admin**
+   - Owner/Admin podem: criar, importar, exportar alunos
+
+3. **👔 FUNCIONÁRIO (funcionario)**:
+   - Acessam `gestao.moisesmedeiros.com.br/gestao`
+   - Cada subcategoria tem permissões específicas:
+     - `suporte`, `coordenacao`, `monitoria`, `marketing`, `contabilidade`, `professor`
+   - Não acessam áreas `/alunos`
+
+4. **👑 OWNER MASTER**:
+   - Email: `moisesblank@gmail.com`
+   - Função: `owner` (MASTER)
+   - **PODE TUDO EM TEMPO REAL**
+   - Acesso a TODAS as URLs e funcionalidades
+
+### Arquivos que implementam esta regra:
+- `src/core/urlAccessControl.ts` — Lógica de controle de acesso
+- `src/core/routes.ts` — Definições de rotas (150+ rotas)
+- `src/core/nav/navRouteMap.ts` — Mapeamento de navegação
+- `src/core/SafeComponents.tsx` — Componentes seguros
 
 ---
 
