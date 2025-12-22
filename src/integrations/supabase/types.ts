@@ -12011,6 +12011,42 @@ export type Database = {
         Returns: Json
       }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
+      fortress_rate_limit: {
+        Args: {
+          p_block_seconds?: number
+          p_endpoint: string
+          p_identifier: string
+          p_max_requests?: number
+          p_window_seconds?: number
+        }
+        Returns: Json
+      }
+      fortress_rls_audit: {
+        Args: never
+        Returns: {
+          policies: number
+          risk: string
+          rls_on: boolean
+          tbl: string
+        }[]
+      }
+      fortress_session_revoke_others: {
+        Args: { p_current_token: string; p_user_id: string }
+        Returns: number
+      }
+      fortress_session_validate: {
+        Args: { p_session_token: string }
+        Returns: Json
+      }
+      fortress_webhook_check: {
+        Args: {
+          p_event_id: string
+          p_event_type?: string
+          p_payload?: Json
+          p_provider: string
+        }
+        Returns: Json
+      }
       generate_2fa_code: { Args: never; Returns: string }
       generate_signed_video_url: {
         Args: { p_expires_minutes?: number; p_video_id: string }
