@@ -1,24 +1,37 @@
 # 🧠 MEMÓRIA DO PROJETO - GESTÃO MOISÉS MEDEIROS
 
-> **DOCUMENTO SAGRADO** - Atualizado em: 20/12/2025
+> **DOCUMENTO SAGRADO** - Atualizado em: 22/12/2025
+> **Versão**: OMEGA v3.0 - MELHORADO UM MILHÃO DE VEZES
 
 ---
 
-## 📌 DECISÃO ESTRATÉGICA PRINCIPAL
+## 🚨 REGRA MANDATÓRIA E OBRIGATÓRIA SOBERANA
 
-### O DOMÍNIO PRINCIPAL SERÁ ESTA PLATAFORMA
+> **READAPTAR O QUE TEMOS E SEMPRE MELHORAR... ESSA É A ÚNICA REGRA OBRIGATÓRIA E MANDATÓRIA.**
+> 
+> - A GENTE NÃO EXCLUI, SÓ EM EXTREMA NECESSIDADE E AUTORIZAÇÃO
+> - SÓ SERÁ EXCLUÍDO ALGO DA PLATAFORMA SE O OWNER AUTORIZAR
+> - O MÁXIMO AQUI É CRIAR E READAPTAR O QUE JÁ TEM
+> - A GENTE SÓ AVANÇA, MELHORA, CRIA E READAPTA
+> - ESTAMOS EM 2300: DESIGNER FUTURISTA, FACILIDADE, PRATICIDADE, INTELIGÊNCIA, AUTOMAÇÃO
 
-```
-moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
-```
+---
 
-**DECISÃO TOMADA:** O site de gestão Lovable será o site PRINCIPAL da marca.
+## 📍 MAPA DE URLs DEFINITIVO (REGRA SUPREMA)
 
-**O QUE ISSO SIGNIFICA:**
-- O domínio `moisesmedeiros.com.br` apontará para o Lovable Cloud
-- O WordPress atual será descontinuado ou migrado
-- Esta plataforma será a "cara" da empresa
-- Landing page + Sistema de gestão = TUDO EM UM LUGAR
+### Tabela de Acesso
+
+| Quem | URL Base | Validação | Descrição |
+|------|----------|-----------|-----------|
+| 🌐 **NÃO PAGANTE** | `pro.moisesmedeiros.com.br/` | `role='viewer'` | Área comum + `/comunidade` |
+| 👨‍🎓 **ALUNO BETA** | `pro.moisesmedeiros.com.br/alunos` | `role='beta'` | PAGANTE - Tudo do portal |
+| 👔 **FUNCIONÁRIO** | `gestao.moisesmedeiros.com.br/gestao` | `role='funcionario'` | Área de gestão |
+| 👑 **OWNER** | **TODAS** | `role='owner'` | MASTER - PODE TUDO |
+
+### Owner Master (IMUTÁVEL)
+- **Email**: `moisesblank@gmail.com`
+- **Função**: `owner` (MASTER)
+- **Acesso**: PODE TUDO EM TEMPO REAL
 
 ---
 
@@ -31,17 +44,92 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 | **Empresa 1** | MMM CURSO DE QUÍMICA LTDA (CNPJ: 53.829.761/0001-17) |
 | **Empresa 2** | CURSO QUÍMICA MOISES MEDEIROS (CNPJ: 44.979.308/0001-04) |
 | **Domínio Principal** | moisesmedeiros.com.br |
-| **Área do Aluno Atual** | app.moisesmedeiros.com.br (WordPress) |
 
 ---
 
-## 🌐 ESTRUTURA DE DOMÍNIOS (APÓS MIGRAÇÃO)
+## 🔐 MATRIZ DE PERMISSÕES POR ROLE
+
+| Role | Áreas Permitidas | Criar | Editar | Deletar | Exportar | Importar |
+|------|------------------|-------|--------|---------|----------|----------|
+| `owner` | **TODAS** | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `admin` | gestao, comunidade | ✅ | ✅ | ✅ | ✅ | ✅ |
+| `funcionario` | gestao | ✅ | ✅ | ❌ | ✅ | ❌ |
+| `suporte` | gestao | ❌ | ✅ | ❌ | ✅ | ❌ |
+| `coordenacao` | gestao | ✅ | ✅ | ❌ | ✅ | ❌ |
+| `monitoria` | gestao | ❌ | ✅ | ❌ | ❌ | ❌ |
+| `marketing` | gestao | ✅ | ✅ | ❌ | ✅ | ✅ |
+| `contabilidade` | gestao | ❌ | ✅ | ❌ | ✅ | ✅ |
+| `professor` | gestao | ✅ | ✅ | ❌ | ✅ | ✅ |
+| `beta` | alunos, comunidade | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `aluno` | alunos, comunidade | ❌ | ❌ | ❌ | ❌ | ❌ |
+| `viewer` | comunidade | ❌ | ❌ | ❌ | ❌ | ❌ |
+
+---
+
+## 📁 ARQUIVOS DE CONTROLE DE ACESSO
+
+| Arquivo | Função |
+|---------|--------|
+| `src/core/urlAccessControl.ts` | Controle de acesso por URL e role |
+| `src/core/routes.ts` | Definição de 150+ rotas |
+| `src/core/nav/navRouteMap.ts` | Mapeamento de 100+ itens de navegação |
+| `src/hooks/useRolePermissions.tsx` | Hook de permissões (implementação) |
+| `src/config/matriz-urls.ts` | Matriz sagrada de URLs |
+
+---
+
+## 📍 ROTAS POR ÁREA
+
+### 🌐 Área Pública (Qualquer um)
+```
+/, /site, /auth, /termos, /privacidade, /area-gratuita, /cadastro, /login, /recuperar-senha
+```
+
+### 🌐 Comunidade (Não pagante + Beta)
+```
+/comunidade, /comunidade/forum, /comunidade/posts, /comunidade/membros, /comunidade/eventos, /comunidade/chat
+```
+
+### 👨‍🎓 Portal do Aluno Beta (Pagante)
+```
+/alunos, /alunos/dashboard, /alunos/cronograma, /alunos/videoaulas, /alunos/materiais,
+/alunos/resumos, /alunos/mapas-mentais, /alunos/questoes, /alunos/simulados, /alunos/redacao,
+/alunos/desempenho, /alunos/ranking, /alunos/conquistas, /alunos/tutoria, /alunos/forum,
+/alunos/lives, /alunos/duvidas, /alunos/revisao, /alunos/laboratorio, /alunos/calculadora,
+/alunos/tabela-periodica, /alunos/flashcards, /alunos/metas, /alunos/agenda, /alunos/certificados,
+/alunos/perfil, /alunos/cursos, /alunos/aulas, /alunos/progresso, /alunos/historico
+```
+
+### 👔 Gestão (Funcionários)
+```
+/gestao, /gestao/dashboard, /gestao/dashboard-executivo, /gestao/tarefas, /gestao/integracoes,
+/gestao/calendario, /gestao/funcionarios, /gestao/documentos, /gestao/perfil, /gestao/guia,
+/gestao/marketing, /gestao/lancamento, /gestao/metricas, /gestao/arquivos, /gestao/area-professor,
+/gestao/planejamento-aula, /gestao/laboratorio, /gestao/turmas-online, /gestao/turmas-presenciais,
+/gestao/cursos, /gestao/simulados, /gestao/lives, /gestao/entradas, /gestao/financas-empresa,
+/gestao/financas-pessoais, /gestao/pagamentos, /gestao/contabilidade, /gestao/transacoes-hotmart,
+/gestao/gestao-alunos, /gestao/portal-aluno, /gestao/relatorios, /gestao/afiliados,
+/gestao/permissoes, /gestao/configuracoes, /gestao/gestao-equipe, /gestao/gestao-site,
+/gestao/gestao-dispositivos, /gestao/auditoria-acessos, /gestao/empresas/*
+```
+
+### 👑 Owner Only
+```
+/gestao/central-monitoramento, /gestao/diagnostico-whatsapp, /gestao/diagnostico-webhooks,
+/gestao/site-programador, /gestao/central-diagnostico, /gestao/vida-pessoal, /gestao/pessoal,
+/gestao/master, /gestao/owner, /central-diagnostico
+```
+
+---
+
+## 🌐 ESTRUTURA DE DOMÍNIOS
 
 | Subdomínio | Destino | Status |
 |------------|---------|--------|
 | `moisesmedeiros.com.br` | Lovable Cloud (Landing + Gestão) | 🔄 MIGRAR |
 | `www.moisesmedeiros.com.br` | Redireciona para principal | 🔄 MIGRAR |
-| `app.moisesmedeiros.com.br` | Área do Aluno (WordPress) | ⏸️ MANTER POR AGORA |
+| `pro.moisesmedeiros.com.br` | Portal do Aluno | ✅ ATIVO |
+| `gestao.moisesmedeiros.com.br` | Área de Gestão | ✅ ATIVO |
 
 ---
 
@@ -68,39 +156,16 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 
 ---
 
-## 📊 CAPACIDADES DO SISTEMA
+## 📊 MÉTRICAS DO SISTEMA
 
-| Recurso | Disponível | Em Uso |
-|---------|------------|--------|
-| Database | 8 GB | 27 MB (0.3%) |
-| Storage | 100 GB | 67 MB (0.07%) |
-| Tabelas | Ilimitado | 186 |
-| Usuários simultâneos | 5.000+ | ~5 |
-| Edge Functions | Ilimitado | 30+ |
-
----
-
-## ✅ CHECKLIST DE MIGRAÇÃO
-
-### ANTES DE MIGRAR
-- [ ] Fazer backup completo do WordPress
-- [ ] Exportar lista de emails/alunos
-- [ ] Documentar todas as páginas do site atual
-- [ ] Testar landing page no Lovable
-- [ ] Configurar emails transacionais
-
-### DURANTE A MIGRAÇÃO
-- [ ] Adicionar domínio no Lovable
-- [ ] Atualizar DNS no Cloudflare
-- [ ] Aguardar propagação (até 48h)
-- [ ] Testar acesso via domínio
-
-### APÓS A MIGRAÇÃO
-- [ ] Verificar SSL ativo
-- [ ] Testar todas as páginas
-- [ ] Verificar formulários
-- [ ] Monitorar erros por 48h
-- [ ] Comunicar equipe
+| Métrica | Valor |
+|---------|-------|
+| **Rotas totais** | 150+ |
+| **Itens de navegação** | 100+ |
+| **Roles definidas** | 13 |
+| **Áreas de acesso** | 5 (público, comunidade, aluno, gestão, owner) |
+| **Edge Functions** | 30+ |
+| **Tabelas** | 186 |
 
 ---
 
@@ -111,6 +176,7 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 3. **NUNCA** desativar RLS nas tabelas
 4. **SEMPRE** manter backup antes de mudanças críticas
 5. **SEMPRE** testar em ambiente de preview antes de publicar
+6. **SEMPRE** verificar email do Owner para acesso MASTER
 
 ---
 
@@ -118,8 +184,16 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 
 | Data | Decisão | Responsável |
 |------|---------|-------------|
+| 22/12/2025 | Mapa de URLs OMEGA v3.0 definitivo | Owner |
+| 22/12/2025 | Criação de `src/core/` para controle centralizado | Sistema |
 | 20/12/2025 | Domínio principal será Lovable Cloud | Owner |
 
 ---
 
-*Documento mantido pelo sistema SYNAPSE v15.0*
+**✅ STATUS: PRONTO — MELHORADO UM MILHÃO DE VEZES!**
+
+**ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS!**
+
+---
+
+*Documento mantido pelo sistema SYNAPSE OMEGA v5.0*
