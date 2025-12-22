@@ -10203,6 +10203,182 @@ export type Database = {
         }
         Relationships: []
       }
+      video_access_logs: {
+        Row: {
+          action: Database["public"]["Enums"]["video_action_type"]
+          course_id: string | null
+          created_at: string
+          details: Json | null
+          device_fingerprint: string | null
+          duration_seconds: number | null
+          id: number
+          ip_address: unknown
+          lesson_id: string | null
+          position_seconds: number | null
+          provider: string | null
+          provider_video_id: string | null
+          session_id: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["video_action_type"]
+          course_id?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          duration_seconds?: number | null
+          id?: number
+          ip_address?: unknown
+          lesson_id?: string | null
+          position_seconds?: number | null
+          provider?: string | null
+          provider_video_id?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["video_action_type"]
+          course_id?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          duration_seconds?: number | null
+          id?: number
+          ip_address?: unknown
+          lesson_id?: string | null
+          position_seconds?: number | null
+          provider?: string | null
+          provider_video_id?: string | null
+          session_id?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_access_logs_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "video_play_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      video_domain_whitelist: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          description: string | null
+          domain: string
+          id: string
+          is_active: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain: string
+          id?: string
+          is_active?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          domain?: string
+          id?: string
+          is_active?: boolean | null
+        }
+        Relationships: []
+      }
+      video_play_sessions: {
+        Row: {
+          completion_percentage: number | null
+          country_code: string | null
+          course_id: string | null
+          created_at: string
+          device_fingerprint: string | null
+          ended_at: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown
+          last_heartbeat_at: string
+          lesson_id: string | null
+          max_position_seconds: number | null
+          provider: string
+          provider_video_id: string
+          revoke_reason: string | null
+          revoked_at: string | null
+          risk_score: number | null
+          session_code: string
+          session_token: string
+          status: Database["public"]["Enums"]["video_session_status"]
+          total_watch_time_seconds: number | null
+          user_agent: string | null
+          user_id: string
+          violation_count: number | null
+          watermark_hash: string
+          watermark_text: string
+        }
+        Insert: {
+          completion_percentage?: number | null
+          country_code?: string | null
+          course_id?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          ended_at?: string | null
+          expires_at: string
+          id?: string
+          ip_address?: unknown
+          last_heartbeat_at?: string
+          lesson_id?: string | null
+          max_position_seconds?: number | null
+          provider?: string
+          provider_video_id: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          risk_score?: number | null
+          session_code: string
+          session_token: string
+          status?: Database["public"]["Enums"]["video_session_status"]
+          total_watch_time_seconds?: number | null
+          user_agent?: string | null
+          user_id: string
+          violation_count?: number | null
+          watermark_hash: string
+          watermark_text: string
+        }
+        Update: {
+          completion_percentage?: number | null
+          country_code?: string | null
+          course_id?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          ended_at?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          last_heartbeat_at?: string
+          lesson_id?: string | null
+          max_position_seconds?: number | null
+          provider?: string
+          provider_video_id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          risk_score?: number | null
+          session_code?: string
+          session_token?: string
+          status?: Database["public"]["Enums"]["video_session_status"]
+          total_watch_time_seconds?: number | null
+          user_agent?: string | null
+          user_id?: string
+          violation_count?: number | null
+          watermark_hash?: string
+          watermark_text?: string
+        }
+        Relationships: []
+      }
       video_signed_urls: {
         Row: {
           created_at: string | null
@@ -10241,6 +10417,131 @@ export type Database = {
           video_id?: string
         }
         Relationships: []
+      }
+      video_user_risk_scores: {
+        Row: {
+          ban_reason: string | null
+          banned_at: string | null
+          banned_until: string | null
+          created_at: string
+          current_risk_level: string | null
+          first_violation_at: string | null
+          is_banned: boolean | null
+          last_calculated_at: string | null
+          last_violation_at: string | null
+          sessions_revoked_count: number | null
+          temporary_bans_count: number | null
+          total_risk_score: number | null
+          total_violations: number | null
+          updated_at: string
+          user_id: string
+          violations_last_24h: number | null
+          violations_last_7d: number | null
+          warnings_count: number | null
+        }
+        Insert: {
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_until?: string | null
+          created_at?: string
+          current_risk_level?: string | null
+          first_violation_at?: string | null
+          is_banned?: boolean | null
+          last_calculated_at?: string | null
+          last_violation_at?: string | null
+          sessions_revoked_count?: number | null
+          temporary_bans_count?: number | null
+          total_risk_score?: number | null
+          total_violations?: number | null
+          updated_at?: string
+          user_id: string
+          violations_last_24h?: number | null
+          violations_last_7d?: number | null
+          warnings_count?: number | null
+        }
+        Update: {
+          ban_reason?: string | null
+          banned_at?: string | null
+          banned_until?: string | null
+          created_at?: string
+          current_risk_level?: string | null
+          first_violation_at?: string | null
+          is_banned?: boolean | null
+          last_calculated_at?: string | null
+          last_violation_at?: string | null
+          sessions_revoked_count?: number | null
+          temporary_bans_count?: number | null
+          total_risk_score?: number | null
+          total_violations?: number | null
+          updated_at?: string
+          user_id?: string
+          violations_last_24h?: number | null
+          violations_last_7d?: number | null
+          warnings_count?: number | null
+        }
+        Relationships: []
+      }
+      video_violations: {
+        Row: {
+          action_taken: string | null
+          created_at: string
+          details: Json | null
+          device_fingerprint: string | null
+          element_targeted: string | null
+          id: string
+          ip_address: unknown
+          key_pressed: string | null
+          lesson_id: string | null
+          provider_video_id: string | null
+          session_id: string | null
+          severity: number
+          user_agent: string | null
+          user_id: string
+          violation_type: Database["public"]["Enums"]["video_violation_type"]
+        }
+        Insert: {
+          action_taken?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          element_targeted?: string | null
+          id?: string
+          ip_address?: unknown
+          key_pressed?: string | null
+          lesson_id?: string | null
+          provider_video_id?: string | null
+          session_id?: string | null
+          severity?: number
+          user_agent?: string | null
+          user_id: string
+          violation_type: Database["public"]["Enums"]["video_violation_type"]
+        }
+        Update: {
+          action_taken?: string | null
+          created_at?: string
+          details?: Json | null
+          device_fingerprint?: string | null
+          element_targeted?: string | null
+          id?: string
+          ip_address?: unknown
+          key_pressed?: string | null
+          lesson_id?: string | null
+          provider_video_id?: string | null
+          session_id?: string | null
+          severity?: number
+          user_agent?: string | null
+          user_id?: string
+          violation_type?: Database["public"]["Enums"]["video_violation_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "video_violations_session_id_fkey"
+            columns: ["session_id"]
+            isOneToOne: false
+            referencedRelation: "video_play_sessions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       webhook_diagnostics: {
         Row: {
@@ -12009,8 +12310,30 @@ export type Database = {
         }
         Returns: string
       }
+      create_video_session: {
+        Args: {
+          p_course_id?: string
+          p_device_fingerprint?: string
+          p_ip_address?: unknown
+          p_lesson_id?: string
+          p_provider?: string
+          p_provider_video_id?: string
+          p_ttl_minutes?: number
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       current_user_email: { Args: never; Returns: string }
       deactivate_device: { Args: { p_device_id: string }; Returns: Json }
+      end_video_session: {
+        Args: {
+          p_completion_percentage?: number
+          p_final_position?: number
+          p_session_token: string
+        }
+        Returns: Json
+      }
       extend_beta_access: {
         Args: { _additional_days: number; _user_id: string }
         Returns: Json
@@ -12060,6 +12383,7 @@ export type Database = {
         Args: { p_expires_minutes?: number; p_video_id: string }
         Returns: Json
       }
+      generate_video_session_code: { Args: never; Returns: string }
       get_all_users_last_access: {
         Args: never
         Returns: {
@@ -12244,6 +12568,10 @@ export type Database = {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_video_domain_authorized: {
+        Args: { p_domain: string }
+        Returns: boolean
+      }
       log_activity: {
         Args: {
           _action: string
@@ -12406,6 +12734,18 @@ export type Database = {
         Returns: string
       }
       register_user_logout: { Args: never; Returns: undefined }
+      register_video_violation: {
+        Args: {
+          p_details?: Json
+          p_ip_address?: unknown
+          p_key_pressed?: string
+          p_session_token: string
+          p_severity?: number
+          p_user_agent?: string
+          p_violation_type: Database["public"]["Enums"]["video_violation_type"]
+        }
+        Returns: Json
+      }
       remove_chat_ban: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
@@ -12692,6 +13032,10 @@ export type Database = {
         }[]
       }
       verify_2fa_code: { Args: { p_code: string }; Returns: boolean }
+      video_session_heartbeat: {
+        Args: { p_position_seconds?: number; p_session_token: string }
+        Returns: Json
+      }
       webhook_check_duplicate: {
         Args: {
           p_event_id: string
@@ -12857,6 +13201,36 @@ export type Database = {
         | "high"
         | "critical"
         | "emergency"
+      video_action_type:
+        | "authorize"
+        | "play_start"
+        | "play_resume"
+        | "pause"
+        | "seek"
+        | "quality_change"
+        | "speed_change"
+        | "heartbeat"
+        | "buffer_start"
+        | "buffer_end"
+        | "complete"
+        | "error"
+        | "violation"
+      video_session_status: "active" | "expired" | "revoked" | "ended"
+      video_violation_type:
+        | "devtools_open"
+        | "screenshot_attempt"
+        | "screen_recording"
+        | "multiple_sessions"
+        | "invalid_domain"
+        | "expired_token"
+        | "keyboard_shortcut"
+        | "context_menu"
+        | "drag_attempt"
+        | "copy_attempt"
+        | "visibility_abuse"
+        | "iframe_manipulation"
+        | "network_tampering"
+        | "unknown"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -13135,6 +13509,38 @@ export const Constants = {
         "internal",
       ],
       threat_level: ["none", "low", "medium", "high", "critical", "emergency"],
+      video_action_type: [
+        "authorize",
+        "play_start",
+        "play_resume",
+        "pause",
+        "seek",
+        "quality_change",
+        "speed_change",
+        "heartbeat",
+        "buffer_start",
+        "buffer_end",
+        "complete",
+        "error",
+        "violation",
+      ],
+      video_session_status: ["active", "expired", "revoked", "ended"],
+      video_violation_type: [
+        "devtools_open",
+        "screenshot_attempt",
+        "screen_recording",
+        "multiple_sessions",
+        "invalid_domain",
+        "expired_token",
+        "keyboard_shortcut",
+        "context_menu",
+        "drag_attempt",
+        "copy_attempt",
+        "visibility_abuse",
+        "iframe_manipulation",
+        "network_tampering",
+        "unknown",
+      ],
     },
   },
 } as const
