@@ -3166,6 +3166,131 @@ export type Database = {
         }
         Relationships: []
       }
+      ena_asset_pages: {
+        Row: {
+          asset_id: string
+          created_at: string
+          file_size_bytes: number | null
+          format: string
+          has_burned_watermark: boolean
+          height: number | null
+          id: string
+          page_number: number
+          storage_path: string
+          watermark_hash: string | null
+          width: number | null
+        }
+        Insert: {
+          asset_id: string
+          created_at?: string
+          file_size_bytes?: number | null
+          format?: string
+          has_burned_watermark?: boolean
+          height?: number | null
+          id?: string
+          page_number: number
+          storage_path: string
+          watermark_hash?: string | null
+          width?: number | null
+        }
+        Update: {
+          asset_id?: string
+          created_at?: string
+          file_size_bytes?: number | null
+          format?: string
+          has_burned_watermark?: boolean
+          height?: number | null
+          id?: string
+          page_number?: number
+          storage_path?: string
+          watermark_hash?: string | null
+          width?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ena_asset_pages_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "ena_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ena_assets: {
+        Row: {
+          asset_type: Database["public"]["Enums"]["asset_type"]
+          course_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          drm_level: string | null
+          error_message: string | null
+          file_size_bytes: number | null
+          id: string
+          is_premium: boolean
+          lesson_id: string | null
+          original_bucket: string
+          original_path: string
+          processed_at: string | null
+          required_roles: string[]
+          status: Database["public"]["Enums"]["asset_status"]
+          title: string
+          total_pages: number | null
+          transmuted_bucket: string | null
+          updated_at: string
+          watermark_enabled: boolean
+          watermark_template: string | null
+        }
+        Insert: {
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          drm_level?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          is_premium?: boolean
+          lesson_id?: string | null
+          original_bucket?: string
+          original_path: string
+          processed_at?: string | null
+          required_roles?: string[]
+          status?: Database["public"]["Enums"]["asset_status"]
+          title: string
+          total_pages?: number | null
+          transmuted_bucket?: string | null
+          updated_at?: string
+          watermark_enabled?: boolean
+          watermark_template?: string | null
+        }
+        Update: {
+          asset_type?: Database["public"]["Enums"]["asset_type"]
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          drm_level?: string | null
+          error_message?: string | null
+          file_size_bytes?: number | null
+          id?: string
+          is_premium?: boolean
+          lesson_id?: string | null
+          original_bucket?: string
+          original_path?: string
+          processed_at?: string | null
+          required_roles?: string[]
+          status?: Database["public"]["Enums"]["asset_status"]
+          title?: string
+          total_pages?: number | null
+          transmuted_bucket?: string | null
+          updated_at?: string
+          watermark_enabled?: boolean
+          watermark_template?: string | null
+        }
+        Relationships: []
+      }
       encrypted_secrets: {
         Row: {
           created_at: string | null
@@ -7077,6 +7202,193 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      sanctum_asset_access: {
+        Row: {
+          asset_id: string | null
+          asset_type: string | null
+          created_at: string
+          device_fingerprint: string | null
+          domain: string | null
+          event_type: string
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          route: string | null
+          session_id: string | null
+          severity: number | null
+          ua_hash: string | null
+          user_email: string | null
+          user_id: string | null
+          user_role: string | null
+          violation_detected: boolean | null
+          violation_type: string | null
+        }
+        Insert: {
+          asset_id?: string | null
+          asset_type?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          domain?: string | null
+          event_type: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          route?: string | null
+          session_id?: string | null
+          severity?: number | null
+          ua_hash?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+          violation_detected?: boolean | null
+          violation_type?: string | null
+        }
+        Update: {
+          asset_id?: string | null
+          asset_type?: string | null
+          created_at?: string
+          device_fingerprint?: string | null
+          domain?: string | null
+          event_type?: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          route?: string | null
+          session_id?: string | null
+          severity?: number | null
+          ua_hash?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+          violation_detected?: boolean | null
+          violation_type?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sanctum_asset_access_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "ena_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sanctum_jobs_queue: {
+        Row: {
+          asset_id: string | null
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          error_stack: string | null
+          id: string
+          input_data: Json
+          job_type: string
+          locked_at: string | null
+          locked_by: string | null
+          max_attempts: number
+          output_data: Json | null
+          priority: number
+          scheduled_for: string
+          started_at: string | null
+          status: Database["public"]["Enums"]["sanctum_job_status"]
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          error_stack?: string | null
+          id?: string
+          input_data?: Json
+          job_type: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          output_data?: Json | null
+          priority?: number
+          scheduled_for?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["sanctum_job_status"]
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          error_stack?: string | null
+          id?: string
+          input_data?: Json
+          job_type?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_attempts?: number
+          output_data?: Json | null
+          priority?: number
+          scheduled_for?: string
+          started_at?: string | null
+          status?: Database["public"]["Enums"]["sanctum_job_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sanctum_jobs_queue_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "ena_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sanctum_risk_state: {
+        Row: {
+          created_at: string
+          id: string
+          last_violation_at: string | null
+          last_violation_type: string | null
+          lock_count: number
+          lock_reason: string | null
+          locked_until: string | null
+          metadata: Json | null
+          risk_score: number
+          total_violations: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          last_violation_at?: string | null
+          last_violation_type?: string | null
+          lock_count?: number
+          lock_reason?: string | null
+          locked_until?: string | null
+          metadata?: Json | null
+          risk_score?: number
+          total_violations?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          last_violation_at?: string | null
+          last_violation_type?: string | null
+          lock_count?: number
+          lock_reason?: string | null
+          locked_until?: string | null
+          metadata?: Json | null
+          risk_score?: number
+          total_violations?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
       }
       security_access_attempts: {
         Row: {
@@ -12633,6 +12945,12 @@ export type Database = {
         Returns: Json
       }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
+      fn_check_sanctum_lock: { Args: { p_user_id: string }; Returns: boolean }
+      fn_decay_sanctum_scores: { Args: never; Returns: number }
+      fn_get_asset_manifest: {
+        Args: { p_asset_id: string; p_user_id: string }
+        Returns: Json
+      }
       fortress_cleanup_rate_limits: { Args: never; Returns: number }
       fortress_cleanup_security_events: { Args: never; Returns: number }
       fortress_cleanup_sessions: { Args: never; Returns: number }
@@ -13483,6 +13801,8 @@ export type Database = {
         | "aluno"
         | "beta"
         | "aluno_gratuito"
+      asset_status: "pending" | "processing" | "ready" | "error" | "archived"
+      asset_type: "pdf" | "ebook" | "worksheet" | "video" | "image" | "audio"
       attack_type:
         | "brute_force"
         | "credential_stuffing"
@@ -13549,6 +13869,12 @@ export type Database = {
       flashcard_rating: "again" | "hard" | "good" | "easy"
       flashcard_state: "new" | "learning" | "review" | "relearning"
       question_difficulty: "easy" | "medium" | "hard"
+      sanctum_job_status:
+        | "pending"
+        | "running"
+        | "completed"
+        | "failed"
+        | "cancelled"
       sector_type:
         | "Coordenação"
         | "Suporte"
@@ -13652,6 +13978,7 @@ export type Database = {
         | "iframe_manipulation"
         | "network_tampering"
         | "unknown"
+      violation_severity: "low" | "medium" | "high" | "critical"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -13794,6 +14121,8 @@ export const Constants = {
         "beta",
         "aluno_gratuito",
       ],
+      asset_status: ["pending", "processing", "ready", "error", "archived"],
+      asset_type: ["pdf", "ebook", "worksheet", "video", "image", "audio"],
       attack_type: [
         "brute_force",
         "credential_stuffing",
@@ -13864,6 +14193,13 @@ export const Constants = {
       flashcard_rating: ["again", "hard", "good", "easy"],
       flashcard_state: ["new", "learning", "review", "relearning"],
       question_difficulty: ["easy", "medium", "hard"],
+      sanctum_job_status: [
+        "pending",
+        "running",
+        "completed",
+        "failed",
+        "cancelled",
+      ],
       sector_type: [
         "Coordenação",
         "Suporte",
@@ -13969,6 +14305,7 @@ export const Constants = {
         "network_tampering",
         "unknown",
       ],
+      violation_severity: ["low", "medium", "high", "critical"],
     },
   },
 } as const
