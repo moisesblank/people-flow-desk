@@ -229,6 +229,25 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 
 ---
 
+## 🚫 REGRA SOBRE ARQUIVOS NA DIREITA DO CURSOR
+
+> **ATENÇÃO OWNER:**
+
+❌ Os arquivos que aparecem na **direita do Cursor** são **TODOS os arquivos do projeto**
+❌ **NÃO** são os arquivos que você precisa aplicar
+❌ **NÃO** aplique arquivos aleatoriamente
+
+✅ Para saber **O QUE APLICAR**, consulte APENAS:
+1. O arquivo `PENDENTES_APLICAR.md` na raiz do projeto
+2. Ou siga os passos numerados nesta memória (abaixo)
+
+### Por que isso acontece?
+
+O projeto tem **182 migrações SQL** antigas + **61 Edge Functions** que já existiam.
+Os **NOVOS** que eu criei são apenas **7 arquivos** (4 SQL + 3 Edge Functions).
+
+---
+
 ## 📌 REGRA DO MESTRE — COMUNICAÇÃO COM O OWNER
 
 > **OBRIGATÓRIO SEMPRE SEGUIR:**
@@ -239,6 +258,8 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 4. **LEMBRAR:** Supabase já está vinculado ao Lovable — Owner pode colar direto no chat da Lovable
 5. **NUNCA** assumir que o Owner sabe onde ir — ser **EXPLÍCITO** sempre
 6. **SEMPRE** perguntar se deu certo antes de seguir para próximo passo
+7. **NUNCA** indicar que o Owner deve olhar a direita do Cursor — sempre dar os passos direto
+8. **SEMPRE** que houver algo novo para aplicar, atualizar `PENDENTES_APLICAR.md`
 
 ### FORMATO PADRÃO DE ENTREGA:
 
