@@ -12518,7 +12518,12 @@ export type Database = {
       }
       get_user_chat_ban_status: {
         Args: { p_live_id: string; p_user_id: string }
-        Returns: Json
+        Returns: {
+          is_banned: boolean
+          is_timed_out: boolean
+          reason: string
+          timeout_until: string
+        }[]
       }
       get_user_devices: { Args: { p_user_id?: string }; Returns: Json }
       get_user_role: {
