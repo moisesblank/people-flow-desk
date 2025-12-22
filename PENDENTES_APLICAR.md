@@ -3,6 +3,8 @@
 **IMPORTANTE:** Esta é a ÚNICA lista de arquivos que você precisa aplicar.
 Tudo o mais já foi aplicado ou são arquivos antigos.
 
+**ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS**
+
 ---
 
 ## ⚠️ SOBRE A ORDEM NA TELA
@@ -22,14 +24,18 @@ Isso **NÃO** é a ordem de aplicação!
 | 2 | SQL | `20251222000002_performance_indexes.sql` | Índices | ⏳ |
 | 3 | SQL | `20251222200000_security_fortress_ultra.sql` | Segurança | ⏳ |
 | 4 | SQL | `20251222400000_sna_omega_complete.sql` | IA/Automação | ⏳ |
-| 5 | SQL | `20251222600000_video_fortress_omega.sql` | 🆕 Vídeo OMEGA | ⏳ |
-| 6 | Edge | `secure-webhook-ultra` | Webhooks seguros | ⏳ |
-| 7 | Edge | `sna-gateway` | Gateway IA | ⏳ |
-| 8 | Edge | `sna-worker` | Worker IA | ⏳ |
-| 9 | Edge | `video-authorize-omega` | 🆕 Autorização vídeo | ⏳ |
-| 10 | Edge | `video-violation-omega` | 🆕 Violações vídeo | ⏳ |
+| 5 | SQL | `20251222600000_video_fortress_omega.sql` | Vídeo OMEGA | ⏳ |
+| 6 | SQL | `20251222700000_matriz_funcoes_omega.sql` | Matriz de Funções | ⏳ |
+| 7 | SQL | `20251222800000_sanctum_pdf_omega.sql` | 🆕 SANCTUM PDF | ⏳ |
+| 8 | Edge | `secure-webhook-ultra` | Webhooks seguros | ⏳ |
+| 9 | Edge | `sna-gateway` | Gateway IA | ⏳ |
+| 10 | Edge | `sna-worker` | Worker IA | ⏳ |
+| 11 | Edge | `video-authorize-omega` | Autorização vídeo | ⏳ |
+| 12 | Edge | `video-violation-omega` | Violações vídeo | ⏳ |
+| 13 | Edge | `sanctum-asset-manifest` | 🆕 Manifest PDF | ⏳ |
+| 14 | Edge | `sanctum-report-violation` | 🆕 Violações PDF | ⏳ |
 
-**TOTAL: 10 itens (5 SQL + 5 Edge Functions)**
+**TOTAL: 14 itens (7 SQL + 7 Edge Functions)**
 
 ### 🔴 POR QUE ESSA ORDEM?
 
@@ -40,209 +46,148 @@ Se inverter = ERRO!
 
 ---
 
+## 📍 MAPA DE URLs DEFINITIVO (REGRA MANDATÓRIA)
+
+| Quem | URL | Validação |
+|------|-----|-----------|
+| 🌐 **NÃO PAGANTE** | `pro.moisesmedeiros.com.br/` | Cadastro gratuito |
+| 👨‍🎓 **ALUNO BETA** | `pro.moisesmedeiros.com.br/alunos` | `role='beta'` |
+| 👔 **FUNCIONÁRIO** | `gestao.moisesmedeiros.com.br/gestao` | `role='funcionario'` |
+| 👑 **OWNER** | **TODAS** | `role='owner'` = `moisesblank@gmail.com` |
+
+---
+
+## 🌌 SANCTUM 3.0 — PROTECT PDF OMEGA (NOVO!)
+
+### Arquivos SQL
+
+| # | Arquivo | Função |
+|---|---------|--------|
+| 7 | `20251222800000_sanctum_pdf_omega.sql` | 5 tabelas, 6 funções, RLS |
+
+### Tabelas Criadas
+
+- `ena_assets` — Assets protegidos (PDFs, textos, imagens)
+- `ena_asset_pages` — Páginas transmutadas (webp/avif)
+- `sanctum_jobs_queue` — Fila de transmutação
+- `sanctum_risk_state` — Estado de risco por usuário
+- `sanctum_asset_access` — Log forense de acessos
+
+### Funções SQL
+
+- `fn_apply_sanctum_risk` — Aplica risco após violação
+- `fn_check_sanctum_lock` — Verifica se usuário está bloqueado
+- `fn_decay_sanctum_scores` — Decay diário de scores
+- `fn_get_asset_manifest` — Retorna manifest com permissões
+- `fn_register_sanctum_violation` — Registra violação
+- `fn_get_sanctum_stats` — Estatísticas para dashboard
+
+### Edge Functions
+
+| # | Arquivo | Função |
+|---|---------|--------|
+| 13 | `sanctum-asset-manifest/index.ts` | Manifest + Signed URLs |
+| 14 | `sanctum-report-violation/index.ts` | Reportar violações |
+
+### Arquivos Frontend (JÁ CRIADOS)
+
+Estes arquivos JÁ ESTÃO no projeto e serão aplicados automaticamente:
+
+- `src/hooks/useSanctumCore.ts` — Hook de segurança
+- `src/components/security/SanctumWatermark.tsx` — Watermark dinâmica
+- `src/components/security/SanctumProtectedContent.tsx` — Wrapper universal
+- `src/components/security/HologramText.tsx` — Texto em canvas
+- `src/components/pdf/SecurePdfViewerOmega.tsx` — Viewer por imagens
+- `src/styles/sanctum.css` — CSS de proteção
+
+---
+
 ## 🔥 VIDEO FORTRESS OMEGA v5.0 (PROTEÇÃO DE VÍDEOS)
 
 | # | Arquivo | Função |
 |---|---------|--------|
 | 5 | `20251222600000_video_fortress_omega.sql` | 5 tabelas, 8 funções, RLS |
-| 9 | `video-authorize-omega/index.ts` | Autorização + Signed URL + SANCTUM |
-| 10 | `video-violation-omega/index.ts` | Risk score + bypass + ações graduais |
-
-### Arquivos Frontend (AUTOMÁTICOS - não precisa fazer nada):
-- `src/hooks/useVideoFortressOmega.ts` ✅ Hook OMEGA integrado
-- `src/components/video/OmegaFortressPlayer.tsx` ✅ Player OMEGA definitivo
-- `src/hooks/useVideoFortress.ts` ✅ Hook de integração
-- `src/components/video/index.ts` ✅ Exportações centralizadas
+| 11 | `video-authorize-omega/index.ts` | Autorização + Signed URL + SANCTUM |
+| 12 | `video-violation-omega/index.ts` | Risk score + bypass + ações graduais |
 
 ---
 
-## 🔴 O QUE NÃO APLICAR (IGNORE ESSES!)
+## 🧠 SNA OMEGA (AUTOMAÇÃO IA)
 
-### Arquivos que começam com `src/` = AUTOMÁTICO
-
-A Lovable aplica esses sozinha. **NÃO FAÇA NADA** com eles:
-
-| Padrão | Ação |
-|--------|------|
-| `src/*` | 🚫 IGNORE (automático) |
-| Migrações antigas (antes de 20251222) | 🚫 IGNORE (já aplicado) |
-
-### REGRA SIMPLES:
-
-| Começa com... | Ação |
-|---------------|------|
-| `src/` | 🚫 IGNORE |
-| `supabase/migrations/20251222*` | ✅ APLIQUE (são 5) |
-| `supabase/functions/*-omega` ou `sna-*` | ✅ APLIQUE (são 5) |
-| Qualquer outra coisa | 🚫 IGNORE |
-
----
-
-## 📝 PASSOS NA ORDEM (COLE NA LOVABLE)
-
-### PASSO 1 - Chat ao Vivo
-```
-Aplique a migração SQL do sistema de chat ao vivo.
-Arquivo: supabase/migrations/20251222000001_live_chat_system.sql
-```
-
-### PASSO 2 - Performance
-```
-Aplique a migração SQL dos índices de performance.
-Arquivo: supabase/migrations/20251222000002_performance_indexes.sql
-```
-
-### PASSO 3 - Segurança
-```
-Aplique a migração SQL do sistema de segurança.
-Arquivo: supabase/migrations/20251222200000_security_fortress_ultra.sql
-```
-
-### PASSO 4 - Automação IA
-```
-Aplique a migração SQL do sistema SNA de automação com IA.
-Arquivo: supabase/migrations/20251222400000_sna_omega_complete.sql
-```
-
-### PASSO 5 - Video Fortress OMEGA 🆕
-```
-Aplique a migração SQL do Video Fortress OMEGA v5.0.
-Arquivo: supabase/migrations/20251222600000_video_fortress_omega.sql
-```
-
-### PASSO 6 - Deploy Gateway IA
-```
-Faça deploy da Edge Function sna-gateway.
-Pasta: supabase/functions/sna-gateway/
-```
-
-### PASSO 7 - Deploy Worker IA
-```
-Faça deploy da Edge Function sna-worker.
-Pasta: supabase/functions/sna-worker/
-```
-
-### PASSO 8 - Deploy Webhook Seguro
-```
-Faça deploy da Edge Function secure-webhook-ultra.
-Pasta: supabase/functions/secure-webhook-ultra/
-```
-
-### PASSO 9 - Deploy Video Authorize OMEGA 🆕
-```
-Faça deploy da Edge Function video-authorize-omega.
-Pasta: supabase/functions/video-authorize-omega/
-```
-
-### PASSO 10 - Deploy Video Violation OMEGA 🆕
-```
-Faça deploy da Edge Function video-violation-omega.
-Pasta: supabase/functions/video-violation-omega/
-```
-
----
-
-## 🚀 COMANDO ÚNICO (ALTERNATIVA RÁPIDA)
-
-Cole este comando na Lovable para aplicar TUDO de uma vez:
-
-```
-Por favor, aplique todas as migrações SQL e Edge Functions do projeto na seguinte ordem:
-
-FASE 1 - SQL (executar no Supabase SQL Editor):
-1. supabase/migrations/20251222000001_live_chat_system.sql
-2. supabase/migrations/20251222000002_performance_indexes.sql
-3. supabase/migrations/20251222200000_security_fortress_ultra.sql
-4. supabase/migrations/20251222400000_sna_omega_complete.sql
-5. supabase/migrations/20251222600000_video_fortress_omega.sql
-
-FASE 2 - Edge Functions (fazer deploy):
-6. supabase/functions/sna-gateway
-7. supabase/functions/sna-worker
-8. supabase/functions/secure-webhook-ultra
-9. supabase/functions/video-authorize-omega
-10. supabase/functions/video-violation-omega
-
-Os arquivos src/* são automáticos e não precisam de ação manual.
-```
-
----
-
-## ✅ MARCAR COMO CONCLUÍDO
-
-Quando aplicar cada passo, atualize esta lista:
-- ⏳ = Pendente
-- ✅ = Concluído
-- ❌ = Erro (precisa refazer)
-
----
-
----
-
-## 🔥🛡️ MATRIZ UNIFICADA DE FUNCIONALIDADES OMEGA v2.0 🛡️🔥
-
-Sistema completo de ZERO CLIQUES MORTOS + Mapa de URLs Definitivo.
-
-### SQL (APLICAR NO SUPABASE):
-| # | Arquivo | Função | Status |
-|---|---------|--------|--------|
-| 11 | `20251222700000_matriz_funcoes_omega.sql` | 4 tabelas + 5 funções | ⏳ |
-
-### Arquivos Frontend (AUTOMÁTICOS):
 | # | Arquivo | Função |
 |---|---------|--------|
-| 1 | `src/core/routes.ts` | 95 rotas centralizadas |
-| 2 | `src/core/actions.ts` | 100+ ações tipadas |
-| 3 | `src/core/storage.ts` | 18 buckets configurados |
-| 4 | `src/core/functionMatrix.ts` | Registry de funções |
-| 5 | `src/core/SafeComponents.tsx` | **12 componentes seguros** |
-| 6 | `src/core/nav/navRouteMap.ts` | 75 itens de menu |
-| 7 | `src/core/urlAccessControl.ts` | 🆕 **Mapa de URLs Definitivo** |
-| 8 | `src/core/deadClickReporter.ts` | 🆕 **Detecção de dead clicks** |
-| 9 | `src/core/index.ts` | Índice central |
-| 10 | `src/pages/CentralDiagnostico.tsx` | Página de diagnóstico |
-
-### Para adicionar a rota no App.tsx:
-```tsx
-const CentralDiagnostico = lazy(() => import("./pages/CentralDiagnostico"));
-
-<Route 
-  path="/central-diagnostico" 
-  element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} 
-/>
-```
+| 4 | `20251222400000_sna_omega_complete.sql` | Jobs, budgets, healthchecks |
+| 9 | `sna-gateway/index.ts` | Gateway IA com rate limit |
+| 10 | `sna-worker/index.ts` | Worker assíncrono |
 
 ---
 
-## 🚀 COMANDO ÚNICO DEFINITIVO
+## 🛡️ SECURITY FORTRESS ULTRA
 
-Cole este comando na Lovable para aplicar **TUDO** de uma vez:
+| # | Arquivo | Função |
+|---|---------|--------|
+| 3 | `20251222200000_security_fortress_ultra.sql` | Sessões, audit, RLS |
+| 8 | `secure-webhook-ultra/index.ts` | Webhooks com HMAC |
+
+---
+
+## 🚀 COMANDO ÚNICO DEFINITIVO (COLE NA LOVABLE)
 
 ```
-Por favor, aplique TODAS as migrações SQL e Edge Functions na ordem:
+Aplique as seguintes migrations SQL na ordem:
 
-FASE 1 - SQL (Supabase SQL Editor):
 1. supabase/migrations/20251222000001_live_chat_system.sql
 2. supabase/migrations/20251222000002_performance_indexes.sql
 3. supabase/migrations/20251222200000_security_fortress_ultra.sql
 4. supabase/migrations/20251222400000_sna_omega_complete.sql
 5. supabase/migrations/20251222600000_video_fortress_omega.sql
 6. supabase/migrations/20251222700000_matriz_funcoes_omega.sql
+7. supabase/migrations/20251222800000_sanctum_pdf_omega.sql
 
-FASE 2 - Edge Functions (Deploy):
-7. supabase/functions/sna-gateway
-8. supabase/functions/sna-worker
-9. supabase/functions/secure-webhook-ultra
-10. supabase/functions/video-authorize-omega
-11. supabase/functions/video-violation-omega
+Depois deploy as Edge Functions:
+8. supabase/functions/secure-webhook-ultra
+9. supabase/functions/sna-gateway
+10. supabase/functions/sna-worker
+11. supabase/functions/video-authorize-omega
+12. supabase/functions/video-violation-omega
+13. supabase/functions/sanctum-asset-manifest
+14. supabase/functions/sanctum-report-violation
 
-FASE 3 - Adicionar rota no App.tsx:
-const CentralDiagnostico = lazy(() => import("./pages/CentralDiagnostico"));
-<Route path="/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
+Os arquivos do frontend já estão no projeto e serão compilados automaticamente.
 
-FRONTEND: Arquivos src/* são automáticos!
+REGRAS:
+- Owner (moisesblank@gmail.com) ignora TODAS as restrições
+- PDF original NUNCA chega ao client
+- Texto premium renderizado em canvas (não selecionável)
+- Watermark dinâmica com nome + CPF + timestamp
+- Violações escalam até lock temporário (24h max)
 ```
 
 ---
 
-**Última atualização:** 22/12/2024 — Matriz OMEGA v2.0 + Video Fortress OMEGA v5.0
+## ✅ CHECKLIST DE APLICAÇÃO
+
+| # | Item | Status |
+|---|------|--------|
+| 1 | SQL Live Chat | ⏳ |
+| 2 | SQL Performance | ⏳ |
+| 3 | SQL Security | ⏳ |
+| 4 | SQL SNA Omega | ⏳ |
+| 5 | SQL Video Fortress | ⏳ |
+| 6 | SQL Matriz Funções | ⏳ |
+| 7 | SQL SANCTUM PDF | ⏳ |
+| 8 | Edge secure-webhook-ultra | ⏳ |
+| 9 | Edge sna-gateway | ⏳ |
+| 10 | Edge sna-worker | ⏳ |
+| 11 | Edge video-authorize-omega | ⏳ |
+| 12 | Edge video-violation-omega | ⏳ |
+| 13 | Edge sanctum-asset-manifest | ⏳ |
+| 14 | Edge sanctum-report-violation | ⏳ |
+
+Marque ✅ após aplicar cada item.
+
+---
+
+**Última atualização:** 22/12/2025
+
+**ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS!**
