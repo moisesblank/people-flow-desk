@@ -257,9 +257,10 @@ export function useSNAConstitutionExtended() {
   
   const cacheGet = useCallback(async <T>(key: string): Promise<T | null> => {
     try {
-      const { data, error } = await supabase.rpc('sna_cache_get', {
-        p_cache_key: key,
-      });
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { data, error } = await supabase.rpc('sna_cache_get' as any, {
+        p_key: key,
+      } as any);
 
       if (error || !data) return null;
       const result = data as Record<string, unknown>;
@@ -275,11 +276,12 @@ export function useSNAConstitutionExtended() {
     ttlSeconds: number = 3600
   ): Promise<boolean> => {
     try {
-      const { error } = await supabase.rpc('sna_cache_set', {
-        p_cache_key: key,
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const { error } = await supabase.rpc('sna_cache_set' as any, {
+        p_key: key,
         p_value: value as Json,
         p_ttl_seconds: ttlSeconds,
-      });
+      } as any);
 
       return !error;
     } catch {

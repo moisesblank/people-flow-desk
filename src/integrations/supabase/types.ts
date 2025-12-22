@@ -13741,10 +13741,17 @@ export type Database = {
         }
         Returns: Json
       }
-      end_video_session_omega: {
-        Args: { p_session_token: string }
-        Returns: boolean
-      }
+      end_video_session_omega:
+        | {
+            Args: {
+              p_final_position?: number
+              p_reason?: string
+              p_session_id: string
+              p_total_watched?: number
+            }
+            Returns: Json
+          }
+        | { Args: { p_session_token: string }; Returns: boolean }
       extend_beta_access: {
         Args: { _additional_days: number; _user_id: string }
         Returns: Json
@@ -14333,20 +14340,32 @@ export type Database = {
         }
         Returns: Json
       }
-      register_video_violation_omega: {
-        Args: {
-          p_details?: Json
-          p_session_token: string
-          p_severity?: number
-          p_violation_type: string
-        }
-        Returns: {
-          action_taken: string
-          is_revoked: boolean
-          risk_score: number
-          success: boolean
-        }[]
-      }
+      register_video_violation_omega:
+        | {
+            Args: {
+              p_description?: string
+              p_device_fingerprint?: string
+              p_metadata?: Json
+              p_session_id: string
+              p_severity?: number
+              p_violation_type: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_details?: Json
+              p_session_token: string
+              p_severity?: number
+              p_violation_type: string
+            }
+            Returns: {
+              action_taken: string
+              is_revoked: boolean
+              risk_score: number
+              success: boolean
+            }[]
+          }
       remove_chat_ban: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
@@ -14390,7 +14409,7 @@ export type Database = {
         }
         Returns: string
       }
-      sna_cache_get: { Args: { p_cache_key: string }; Returns: Json }
+      sna_cache_get: { Args: { p_key: string }; Returns: Json }
       sna_cache_set: {
         Args: {
           p_cache_key: string
@@ -14656,16 +14675,25 @@ export type Database = {
         Args: { p_position_seconds?: number; p_session_token: string }
         Returns: Json
       }
-      video_session_heartbeat_omega: {
-        Args: { p_position_seconds?: number; p_session_token: string }
-        Returns: {
-          is_valid: boolean
-          message: string
-          new_expires_at: string
-          sanctum_immune: boolean
-          success: boolean
-        }[]
-      }
+      video_session_heartbeat_omega:
+        | {
+            Args: {
+              p_current_position?: number
+              p_session_id: string
+              p_status?: string
+            }
+            Returns: Json
+          }
+        | {
+            Args: { p_position_seconds?: number; p_session_token: string }
+            Returns: {
+              is_valid: boolean
+              message: string
+              new_expires_at: string
+              sanctum_immune: boolean
+              success: boolean
+            }[]
+          }
       webhook_check_duplicate: {
         Args: {
           p_event_id: string
