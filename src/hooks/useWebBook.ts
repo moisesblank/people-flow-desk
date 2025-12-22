@@ -1,12 +1,14 @@
 // ============================================
-// 📚 LIVROS DO MOISA - Hook Principal
-// Sistema de Livro Web Interativo
+// 📚 LIVROS DO MOISA - Hook Principal v2.0
+// Sistema de Livro Web com SANCTUM Integration
+// Signed URLs + Prefetch + Rate Limiting
 // ============================================
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { SANCTUM_OMEGA_CONFIG } from '@/hooks/useSanctumOmega';
 
 // ============================================
 // TIPOS
@@ -91,11 +93,17 @@ export interface WebBookListItem {
 }
 
 // ============================================
-// CONSTANTES
+// CONSTANTES - PERFORMANCE
 // ============================================
 
 const PROGRESS_SAVE_INTERVAL = 30000; // 30 segundos
-const BUCKET_URL = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/ena-assets-transmuted`;
+const URL_CACHE_TTL = 25000; // 25 segundos (antes de expirar)
+const PREFETCH_AHEAD = 3; // Prefetch 3 páginas à frente
+const MAX_CACHED_URLS = 10;
+const OWNER_EMAIL = "moisesblank@gmail.com";
+
+// Cache de URLs assinadas
+const urlCache = new Map<string, { url: string; expiresAt: number }>();
 
 // ============================================
 // HOOK: useWebBook
@@ -108,9 +116,17 @@ export function useWebBook(bookId?: string) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [signedUrls, setSignedUrls] = useState<Map<number, string>>(new Map());
+  const [threatScore, setThreatScore] = useState(0);
   
   const readingStartRef = useRef<number>(Date.now());
   const lastSaveRef = useRef<number>(Date.now());
+  const prefetchingRef = useRef<Set<number>>(new Set());
+
+  // Verificar se é owner
+  const isOwner = useMemo(() => {
+    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  }, [user?.email]);
 
   // Carregar livro
   const loadBook = useCallback(async () => {
@@ -138,6 +154,15 @@ export function useWebBook(bookId?: string) {
 
       // Carregar anotações
       await loadAnnotationsInternal();
+      
+      // Pré-buscar URL da página atual
+      if (result.pages && result.pages.length > 0) {
+        const startPage = result.progress?.currentPage || 1;
+        await fetchSignedUrl(startPage);
+        
+        // Prefetch próximas páginas
+        prefetchPages(startPage);
+      }
     } catch (err) {
       console.error('[WebBook] Erro ao carregar:', err);
       setError('Erro ao carregar livro');
@@ -145,6 +170,85 @@ export function useWebBook(bookId?: string) {
       setIsLoading(false);
     }
   }, [bookId, user?.id]);
+
+  // Buscar signed URL com cache
+  const fetchSignedUrl = useCallback(async (pageNumber: number): Promise<string | null> => {
+    if (!bookId) return null;
+
+    const cacheKey = `${bookId}_${pageNumber}`;
+    const cached = urlCache.get(cacheKey);
+    
+    if (cached && cached.expiresAt > Date.now()) {
+      return cached.url;
+    }
+
+    try {
+      // Calcular páginas para prefetch
+      const prefetchPages: number[] = [];
+      for (let i = 1; i <= PREFETCH_AHEAD; i++) {
+        const nextPage = pageNumber + i;
+        const nextCacheKey = `${bookId}_${nextPage}`;
+        if (!urlCache.has(nextCacheKey) && !prefetchingRef.current.has(nextPage)) {
+          prefetchPages.push(nextPage);
+        }
+      }
+
+      const { data, error } = await supabase.functions.invoke('book-page-signed-url', {
+        body: { 
+          bookId, 
+          pageNumber,
+          prefetch: prefetchPages 
+        }
+      });
+
+      if (error) throw error;
+
+      if (data?.success && data.url) {
+        const expiresAt = new Date(data.expiresAt).getTime();
+        
+        // Cachear URL principal
+        urlCache.set(cacheKey, { url: data.url, expiresAt });
+        setSignedUrls(prev => new Map(prev).set(pageNumber, data.url));
+
+        // Cachear URLs de prefetch
+        if (data.prefetchUrls) {
+          Object.entries(data.prefetchUrls).forEach(([page, url]) => {
+            const key = `${bookId}_${page}`;
+            urlCache.set(key, { url: url as string, expiresAt: expiresAt + 30000 });
+            setSignedUrls(prev => new Map(prev).set(Number(page), url as string));
+          });
+        }
+
+        // Limpar cache antigo
+        if (urlCache.size > MAX_CACHED_URLS) {
+          const entries = Array.from(urlCache.entries());
+          entries
+            .sort((a, b) => a[1].expiresAt - b[1].expiresAt)
+            .slice(0, entries.length - MAX_CACHED_URLS)
+            .forEach(([key]) => urlCache.delete(key));
+        }
+
+        return data.url;
+      }
+    } catch (err) {
+      console.error('[WebBook] Erro ao buscar signed URL:', err);
+    }
+
+    return null;
+  }, [bookId]);
+
+  // Prefetch de páginas
+  const prefetchPages = useCallback((fromPage: number) => {
+    for (let i = 1; i <= PREFETCH_AHEAD; i++) {
+      const targetPage = fromPage + i;
+      if (!prefetchingRef.current.has(targetPage)) {
+        prefetchingRef.current.add(targetPage);
+        fetchSignedUrl(targetPage).finally(() => {
+          prefetchingRef.current.delete(targetPage);
+        });
+      }
+    }
+  }, [fetchSignedUrl]);
 
   // Carregar anotações
   const loadAnnotationsInternal = useCallback(async () => {
@@ -173,7 +277,6 @@ export function useWebBook(bookId?: string) {
     const now = Date.now();
     const timeSinceLastSave = now - lastSaveRef.current;
     
-    // Só salvar se passou tempo suficiente ou é forçado
     if (!force && timeSinceLastSave < PROGRESS_SAVE_INTERVAL) return;
 
     const readingTime = Math.floor((now - readingStartRef.current) / 1000);
@@ -211,16 +314,57 @@ export function useWebBook(bookId?: string) {
     }
   }, [bookId, user?.id, bookData]);
 
+  // Reportar violação SANCTUM
+  const reportViolation = useCallback(async (type: string, metadata?: Record<string, unknown>) => {
+    if (isOwner) return; // Owner não registra violações
+
+    const severity = SANCTUM_OMEGA_CONFIG.severityMap[type] || 5;
+    const newScore = threatScore + severity;
+    setThreatScore(newScore);
+
+    // Threshold de logout
+    if (newScore >= 50) {
+      toast.error('Atividade suspeita detectada. Sessão encerrada.');
+      await supabase.auth.signOut();
+      return;
+    }
+
+    // Log da violação
+    try {
+      await supabase.from('book_access_logs').insert([{
+        user_id: user?.id,
+        user_email: user?.email,
+        book_id: bookId,
+        page_number: currentPage,
+        event_type: 'violation',
+        is_violation: true,
+        violation_type: type,
+        threat_score: newScore,
+        metadata
+      }]);
+    } catch (err) {
+      console.warn('[WebBook] Erro ao reportar violação:', err);
+    }
+  }, [bookId, currentPage, user, threatScore, isOwner]);
+
   // Navegar para página
-  const goToPage = useCallback((page: number) => {
+  const goToPage = useCallback(async (page: number) => {
     if (!bookData?.book) return;
     
     const maxPage = bookData.book.totalPages;
     const newPage = Math.max(1, Math.min(page, maxPage));
     
     setCurrentPage(newPage);
+    
+    // Buscar signed URL
+    await fetchSignedUrl(newPage);
+    
+    // Prefetch próximas
+    prefetchPages(newPage);
+    
+    // Salvar progresso
     saveProgress(newPage);
-  }, [bookData, saveProgress]);
+  }, [bookData, saveProgress, fetchSignedUrl, prefetchPages]);
 
   // Próxima página
   const nextPage = useCallback(() => {
@@ -294,23 +438,45 @@ export function useWebBook(bookId?: string) {
     }
   }, []);
 
-  // Obter URL da página
+  // Obter URL da página (usa signed URL ou fallback)
   const getPageUrl = useCallback((page: WebBookPage): string => {
-    return `${BUCKET_URL}/${page.imagePath}`;
-  }, []);
+    const signedUrl = signedUrls.get(page.pageNumber);
+    if (signedUrl) return signedUrl;
+    
+    // Fallback para URL pública (owner only)
+    if (isOwner) {
+      const baseUrl = `${import.meta.env.VITE_SUPABASE_URL}/storage/v1/object/public/ena-assets-transmuted`;
+      return `${baseUrl}/${page.imagePath}`;
+    }
+    
+    return '';
+  }, [signedUrls, isOwner]);
 
   // Obter URL da thumbnail
   const getThumbnailUrl = useCallback((page: WebBookPage): string => {
     if (page.thumbnailPath) {
-      return `${BUCKET_URL}/${page.thumbnailPath}`;
+      const signedUrl = signedUrls.get(page.pageNumber);
+      if (signedUrl) return signedUrl.replace(page.imagePath, page.thumbnailPath);
     }
     return getPageUrl(page);
-  }, [getPageUrl]);
+  }, [getPageUrl, signedUrls]);
 
   // Obter anotações da página atual
   const getPageAnnotations = useCallback((pageNumber: number): Annotation[] => {
     return annotations.filter(a => a.pageNumber === pageNumber);
   }, [annotations]);
+
+  // Gerar texto de watermark
+  const getWatermarkText = useCallback((): string => {
+    if (isOwner || !bookData?.watermark) return '';
+    
+    const w = bookData.watermark;
+    const cpfMask = w.userCpf 
+      ? `***.***${w.userCpf.slice(-6, -3)}-${w.userCpf.slice(-2)}`
+      : '***';
+    
+    return `${w.userName || 'Aluno'} • ${cpfMask} • ${w.seed?.slice(0, 8) || ''}`;
+  }, [bookData, isOwner]);
 
   // Efeito: carregar livro quando bookId mudar
   useEffect(() => {
@@ -338,6 +504,22 @@ export function useWebBook(bookId?: string) {
     return () => clearInterval(interval);
   }, [currentPage, saveProgress]);
 
+  // Efeito: refresh de URL antes de expirar
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (bookId && currentPage) {
+        const cacheKey = `${bookId}_${currentPage}`;
+        const cached = urlCache.get(cacheKey);
+        
+        if (cached && cached.expiresAt - Date.now() < URL_CACHE_TTL) {
+          fetchSignedUrl(currentPage);
+        }
+      }
+    }, URL_CACHE_TTL);
+
+    return () => clearInterval(interval);
+  }, [bookId, currentPage, fetchSignedUrl]);
+
   return {
     // Estado
     bookData,
@@ -345,6 +527,7 @@ export function useWebBook(bookId?: string) {
     isLoading,
     error,
     annotations,
+    threatScore,
 
     // Navegação
     goToPage,
@@ -359,6 +542,11 @@ export function useWebBook(bookId?: string) {
     // URLs
     getPageUrl,
     getThumbnailUrl,
+    fetchSignedUrl,
+
+    // Sanctum
+    reportViolation,
+    getWatermarkText,
 
     // Ações
     loadBook,
@@ -367,7 +555,7 @@ export function useWebBook(bookId?: string) {
     // Helpers
     totalPages: bookData?.book?.totalPages || 0,
     progressPercent: bookData?.progress?.progressPercent || 0,
-    isOwner: bookData?.isOwner || false,
+    isOwner,
     watermark: bookData?.watermark
   };
 }

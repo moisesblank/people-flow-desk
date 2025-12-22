@@ -1,11 +1,11 @@
 // ============================================
-// 📖 LIVROS DO MOISA - Visualizador de Livro Web
-// Leitor interativo com proteção SANCTUM
+// 📖 LIVROS DO MOISA - Visualizador v2.0
+// Leitor interativo com SANCTUM Integration
+// Signed URLs + Prefetch + Proteção Total
 // ============================================
 
 import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { useWebBook } from '@/hooks/useWebBook';
-import { useContentProtection } from '@/hooks/useContentProtection';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   ChevronLeft, 
@@ -15,17 +15,19 @@ import {
   Maximize2,
   Minimize2,
   BookOpen,
-  Bookmark,
-  Highlighter,
   List,
   X,
-  Loader2
+  Loader2,
+  Shield,
+  AlertTriangle,
+  MessageCircle
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
-import { Progress } from '@/components/ui/progress';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { toast } from 'sonner';
 
 // ============================================
 // TIPOS
@@ -38,45 +40,80 @@ interface WebBookViewerProps {
 }
 
 // ============================================
-// WATERMARK OVERLAY
+// SANCTUM WATERMARK OVERLAY
+// Com padrão de marca d'água distribuído
 // ============================================
 
-const WatermarkOverlay = memo(function WatermarkOverlay({
-  watermark,
+const SanctumWatermark = memo(function SanctumWatermark({
+  text,
   isOwner
 }: {
-  watermark?: { userName?: string; userEmail?: string; userCpf?: string; seed: string };
+  text: string;
   isOwner?: boolean;
 }) {
-  if (isOwner || !watermark?.userName) return null;
-
-  const maskCpf = (cpf?: string) => {
-    if (!cpf) return '***';
-    return `***.***.${cpf.slice(-6, -3)}-${cpf.slice(-2)}`;
-  };
+  if (isOwner || !text) return null;
 
   return (
     <div 
       className="absolute inset-0 pointer-events-none select-none z-20 overflow-hidden"
-      style={{ userSelect: 'none' }}
+      style={{ 
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+        MozUserSelect: 'none',
+      }}
     >
-      {/* Padrão de marcas d'água */}
-      {[...Array(6)].map((_, i) => (
-        <div
-          key={i}
-          className="absolute text-foreground/5 text-xs font-mono whitespace-nowrap transform rotate-[-30deg]"
-          style={{
-            top: `${15 + i * 18}%`,
-            left: `${(i % 2) * 20}%`,
-          }}
+      {/* Padrão de marcas d'água diagonal */}
+      <div className="absolute inset-0 grid grid-cols-3 gap-12 p-8 opacity-[0.06]">
+        {Array.from({ length: 18 }).map((_, i) => (
+          <div
+            key={i}
+            className="text-foreground font-mono text-xs whitespace-nowrap transform rotate-[-30deg] select-none"
+            style={{ 
+              fontSize: '11px',
+              letterSpacing: '0.05em'
+            }}
+          >
+            {text}
+          </div>
+        ))}
+      </div>
+      
+      {/* Marca central grande */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.04]">
+        <div 
+          className="text-foreground font-mono text-2xl whitespace-nowrap transform rotate-[-30deg] select-none"
+          style={{ letterSpacing: '0.1em' }}
         >
-          {watermark.userName} • {maskCpf(watermark.userCpf)} • {watermark.seed.slice(0, 8)}
+          {text}
         </div>
-      ))}
+      </div>
     </div>
   );
 });
-WatermarkOverlay.displayName = 'WatermarkOverlay';
+SanctumWatermark.displayName = 'SanctumWatermark';
+
+// ============================================
+// PROTECTION BADGE
+// ============================================
+
+const ProtectionBadge = memo(function ProtectionBadge({ isOwner }: { isOwner: boolean }) {
+  if (isOwner) {
+    return (
+      <Badge variant="outline" className="gap-1 text-green-500 border-green-500/30">
+        <Shield className="w-3 h-3" />
+        OWNER
+      </Badge>
+    );
+  }
+  
+  return (
+    <Badge variant="outline" className="gap-1 text-primary border-primary/30">
+      <Shield className="w-3 h-3" />
+      PROTEGIDO
+    </Badge>
+  );
+});
+ProtectionBadge.displayName = 'ProtectionBadge';
 
 // ============================================
 // SUMÁRIO SIDEBAR
@@ -95,7 +132,6 @@ const TableOfContents = memo(function TableOfContents({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  // Agrupar por capítulos
   const chapters = pages.reduce((acc, page) => {
     const chapter = page.chapterTitle || 'Páginas';
     if (!acc[chapter]) acc[chapter] = [];
@@ -180,11 +216,10 @@ export const WebBookViewer = memo(function WebBookViewer({
     totalPages,
     progressPercent,
     isOwner,
-    watermark
+    getWatermarkText,
+    reportViolation,
+    threatScore
   } = useWebBook(bookId);
-
-  // Proteção de conteúdo
-  useContentProtection('lesson', bookId, true);
 
   // Estado local
   const [zoom, setZoom] = useState(1);
@@ -197,6 +232,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   // Página atual
   const currentPageData = bookData?.pages?.[currentPage - 1];
   const currentPageUrl = currentPageData ? getPageUrl(currentPageData) : '';
+  const watermarkText = getWatermarkText();
 
   // Fullscreen
   const toggleFullscreen = useCallback(async () => {
@@ -211,14 +247,67 @@ export const WebBookViewer = memo(function WebBookViewer({
     }
   }, []);
 
+  // SANCTUM: Bloquear ações perigosas
+  useEffect(() => {
+    if (isOwner) return; // Owner não tem bloqueios
+
+    const handleContextMenu = (e: MouseEvent) => {
+      e.preventDefault();
+      reportViolation('context_menu');
+      toast.warning('Ação bloqueada pelo SANCTUM');
+    };
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const blocked = [
+        e.ctrlKey && e.key === 's',
+        e.ctrlKey && e.key === 'p',
+        e.ctrlKey && e.key === 'c',
+        e.ctrlKey && e.key === 'u',
+        e.key === 'F12',
+        e.key === 'PrintScreen',
+      ];
+
+      if (blocked.some(Boolean)) {
+        e.preventDefault();
+        reportViolation('keyboard_shortcut', { key: e.key, ctrl: e.ctrlKey });
+        toast.warning('Ação bloqueada pelo SANCTUM');
+      }
+    };
+
+    const handleBeforePrint = () => {
+      reportViolation('print_attempt');
+      toast.error('Impressão bloqueada pelo SANCTUM');
+    };
+
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      reportViolation('copy_attempt');
+      toast.warning('Cópia bloqueada pelo SANCTUM');
+    };
+
+    document.addEventListener('contextmenu', handleContextMenu);
+    document.addEventListener('keydown', handleKeyDown);
+    document.addEventListener('copy', handleCopy);
+    window.addEventListener('beforeprint', handleBeforePrint);
+
+    return () => {
+      document.removeEventListener('contextmenu', handleContextMenu);
+      document.removeEventListener('keydown', handleKeyDown);
+      document.removeEventListener('copy', handleCopy);
+      window.removeEventListener('beforeprint', handleBeforePrint);
+    };
+  }, [isOwner, reportViolation]);
+
   // Keyboard navigation
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       switch (e.key) {
         case 'ArrowRight':
         case ' ':
-          e.preventDefault();
-          nextPage();
+          if (!e.ctrlKey) {
+            e.preventDefault();
+            nextPage();
+          }
           break;
         case 'ArrowLeft':
           e.preventDefault();
@@ -241,6 +330,11 @@ export const WebBookViewer = memo(function WebBookViewer({
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [nextPage, previousPage, goToPage, totalPages, showToc, onClose]);
 
+  // Reset image loading on page change
+  useEffect(() => {
+    setImageLoading(true);
+  }, [currentPage]);
+
   // Loading state
   if (isLoading) {
     return (
@@ -255,7 +349,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   if (error || !bookData?.success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
-        <BookOpen className="w-12 h-12 text-muted-foreground" />
+        <AlertTriangle className="w-12 h-12 text-destructive" />
         <h3 className="text-lg font-semibold">Erro ao carregar livro</h3>
         <p className="text-muted-foreground">{error || bookData?.error}</p>
         {onClose && (
@@ -275,6 +369,11 @@ export const WebBookViewer = memo(function WebBookViewer({
         isFullscreen && "fixed inset-0 z-50",
         className
       )}
+      style={{
+        // Anti-screenshot CSS
+        WebkitUserSelect: 'none',
+        userSelect: 'none',
+      }}
     >
       {/* Header */}
       <header className="flex items-center justify-between px-4 py-2 border-b border-border bg-background/80 backdrop-blur-sm">
@@ -286,13 +385,24 @@ export const WebBookViewer = memo(function WebBookViewer({
             <h1 className="font-semibold text-sm md:text-base line-clamp-1">
               {bookData.book?.title}
             </h1>
-            <p className="text-xs text-muted-foreground">
-              {bookData.book?.author}
-            </p>
+            <div className="flex items-center gap-2">
+              <p className="text-xs text-muted-foreground">
+                {bookData.book?.author}
+              </p>
+              <ProtectionBadge isOwner={isOwner} />
+            </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
+          {/* Threat indicator */}
+          {threatScore > 0 && !isOwner && (
+            <Badge variant="destructive" className="gap-1">
+              <AlertTriangle className="w-3 h-3" />
+              {threatScore}
+            </Badge>
+          )}
+
           {/* Zoom controls */}
           <div className="hidden md:flex items-center gap-1 bg-muted rounded-lg px-2">
             <Button 
@@ -364,11 +474,7 @@ export const WebBookViewer = memo(function WebBookViewer({
         {/* Página */}
         <div 
           className="h-full flex items-center justify-center p-4 overflow-auto"
-          style={{
-            // Anti print-screen CSS
-            WebkitUserSelect: 'none',
-            userSelect: 'none',
-          }}
+          onDragStart={(e) => e.preventDefault()}
         >
           <AnimatePresence mode="wait">
             <motion.div
@@ -381,27 +487,30 @@ export const WebBookViewer = memo(function WebBookViewer({
               style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
             >
               {imageLoading && (
-                <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg">
+                <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg min-w-[300px] min-h-[400px]">
                   <Loader2 className="w-8 h-8 animate-spin text-primary" />
                 </div>
               )}
               
-              <img
-                src={currentPageUrl}
-                alt={`Página ${currentPage}`}
-                className="max-h-[calc(100vh-200px)] w-auto rounded-lg shadow-2xl"
-                style={{
-                  // Proteções
-                  pointerEvents: 'none',
-                }}
-                onLoad={() => setImageLoading(false)}
-                onError={() => setImageLoading(false)}
-                draggable={false}
-                onContextMenu={(e) => e.preventDefault()}
-              />
+              {currentPageUrl ? (
+                <img
+                  src={currentPageUrl}
+                  alt={`Página ${currentPage}`}
+                  className="max-h-[calc(100vh-200px)] w-auto rounded-lg shadow-2xl"
+                  style={{ pointerEvents: 'none' }}
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => setImageLoading(false)}
+                  draggable={false}
+                  onContextMenu={(e) => e.preventDefault()}
+                />
+              ) : (
+                <div className="flex items-center justify-center bg-muted rounded-lg min-w-[300px] min-h-[400px]">
+                  <BookOpen className="w-12 h-12 text-muted-foreground" />
+                </div>
+              )}
 
-              {/* Watermark overlay */}
-              <WatermarkOverlay watermark={watermark} isOwner={isOwner} />
+              {/* SANCTUM Watermark overlay */}
+              <SanctumWatermark text={watermarkText} isOwner={isOwner} />
             </motion.div>
           </AnimatePresence>
         </div>
@@ -423,7 +532,7 @@ export const WebBookViewer = memo(function WebBookViewer({
             <Slider
               value={[currentPage]}
               min={1}
-              max={totalPages}
+              max={totalPages || 1}
               step={1}
               onValueChange={([value]) => goToPage(value)}
               className="w-full"
@@ -451,6 +560,16 @@ export const WebBookViewer = memo(function WebBookViewer({
           </div>
         </div>
       </footer>
+
+      {/* Chat flutuante (placeholder) */}
+      <Button
+        variant="default"
+        size="icon"
+        className="fixed bottom-24 right-6 w-12 h-12 rounded-full shadow-lg z-40"
+        onClick={() => toast.info('Chat em breve!')}
+      >
+        <MessageCircle className="w-5 h-5" />
+      </Button>
     </div>
   );
 });
