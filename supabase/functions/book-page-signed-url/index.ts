@@ -1,15 +1,22 @@
+// ============================================
+// 🛡️ Ω3: BOOK PAGE SIGNED URL v2.0
+// TTL CURTO (30s) + FINGERPRINT + LOGGING
+// ============================================
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
-const URL_TTL_SECONDS = 30;
+const URL_TTL_SECONDS = 30; // TTL curto para segurança
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-device-fingerprint",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Cache-Control": "no-store",
+  "Cache-Control": "no-store, no-cache, must-revalidate",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
 };
 
 serve(async (req: Request) => {
@@ -97,13 +104,22 @@ serve(async (req: Request) => {
       );
     }
 
-    // Logar acesso
+    // Logar acesso com fingerprint
+    const deviceFingerprint = req.headers.get("x-device-fingerprint") || null;
+    const userAgent = req.headers.get("user-agent") || null;
+    
     await supabase.from("book_access_logs").insert({
       user_id: user.id,
       user_email: user.email,
       book_id: bookId,
       page_number: pageNumber,
       event_type: "page_view",
+      device_fingerprint: deviceFingerprint,
+      ua_hash: userAgent ? btoa(userAgent).slice(0, 32) : null,
+      metadata: {
+        signedUrlTTL: URL_TTL_SECONDS,
+        requestedAt: new Date().toISOString(),
+      },
     });
 
     return new Response(
