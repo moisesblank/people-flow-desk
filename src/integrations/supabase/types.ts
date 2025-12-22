@@ -4551,15 +4551,54 @@ export type Database = {
           },
         ]
       }
+      live_chat_bans: {
+        Row: {
+          banned_by: string | null
+          created_at: string | null
+          id: string
+          is_ban: boolean | null
+          live_id: string
+          reason: string | null
+          timeout_until: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          banned_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_ban?: boolean | null
+          live_id: string
+          reason?: string | null
+          timeout_until?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          banned_by?: string | null
+          created_at?: string | null
+          id?: string
+          is_ban?: boolean | null
+          live_id?: string
+          reason?: string | null
+          timeout_until?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       live_chat_messages: {
         Row: {
           avatar_url: string | null
           created_at: string
           id: string
+          is_deleted: boolean | null
           is_highlighted: boolean | null
           is_moderator: boolean | null
+          is_pinned: boolean | null
           live_id: string
           message: string
+          updated_at: string | null
           user_id: string
           user_name: string
         }
@@ -4567,10 +4606,13 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           is_highlighted?: boolean | null
           is_moderator?: boolean | null
+          is_pinned?: boolean | null
           live_id: string
           message: string
+          updated_at?: string | null
           user_id: string
           user_name: string
         }
@@ -4578,12 +4620,51 @@ export type Database = {
           avatar_url?: string | null
           created_at?: string
           id?: string
+          is_deleted?: boolean | null
           is_highlighted?: boolean | null
           is_moderator?: boolean | null
+          is_pinned?: boolean | null
           live_id?: string
           message?: string
+          updated_at?: string | null
           user_id?: string
           user_name?: string
+        }
+        Relationships: []
+      }
+      live_chat_settings: {
+        Row: {
+          chat_enabled: boolean | null
+          created_at: string | null
+          follower_only: boolean | null
+          id: string
+          live_id: string
+          slow_mode: boolean | null
+          slow_mode_interval: number | null
+          subscriber_only: boolean | null
+          updated_at: string | null
+        }
+        Insert: {
+          chat_enabled?: boolean | null
+          created_at?: string | null
+          follower_only?: boolean | null
+          id?: string
+          live_id: string
+          slow_mode?: boolean | null
+          slow_mode_interval?: number | null
+          subscriber_only?: boolean | null
+          updated_at?: string | null
+        }
+        Update: {
+          chat_enabled?: boolean | null
+          created_at?: string | null
+          follower_only?: boolean | null
+          id?: string
+          live_id?: string
+          slow_mode?: boolean | null
+          slow_mode_interval?: number | null
+          subscriber_only?: boolean | null
+          updated_at?: string | null
         }
         Relationships: []
       }
