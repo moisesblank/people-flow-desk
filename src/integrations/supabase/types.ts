@@ -12011,6 +12011,9 @@ export type Database = {
         Returns: Json
       }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
+      fortress_cleanup_rate_limits: { Args: never; Returns: number }
+      fortress_cleanup_security_events: { Args: never; Returns: number }
+      fortress_cleanup_sessions: { Args: never; Returns: number }
       fortress_rate_limit: {
         Args: {
           p_block_seconds?: number
