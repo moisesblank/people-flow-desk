@@ -13810,14 +13810,41 @@ export type Database = {
         }
         Returns: Json
       }
-      fn_update_reading_progress: {
+      fn_save_book_annotation: {
         Args: {
+          p_annotation_type: string
           p_book_id: string
-          p_current_page: number
-          p_reading_time_seconds?: number
+          p_color?: string
+          p_content?: string
+          p_drawing_data?: string
+          p_height?: number
+          p_metadata?: Json
+          p_page_number: number
+          p_position_x?: number
+          p_position_y?: number
+          p_selected_text?: string
+          p_width?: number
         }
         Returns: Json
       }
+      fn_update_reading_progress:
+        | {
+            Args: {
+              p_book_id: string
+              p_current_page: number
+              p_reading_time_seconds?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_book_id: string
+              p_current_page: number
+              p_reading_time_seconds?: number
+              p_session_id?: string
+            }
+            Returns: Json
+          }
       fortress_cleanup_rate_limits: { Args: never; Returns: number }
       fortress_cleanup_security_events: { Args: never; Returns: number }
       fortress_cleanup_sessions: { Args: never; Returns: number }
