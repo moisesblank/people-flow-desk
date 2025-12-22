@@ -20,11 +20,17 @@ export * from './LEI_II_DISPOSITIVOS';
 export { default as LEI_II } from './LEI_II_DISPOSITIVOS';
 
 // ============================================
+// LEI IV - SNA OMEGA (TESE PhD)
+// 48 Artigos cobrindo orquestração de IAs
+// ============================================
+export * from './LEI_IV_SNA_OMEGA';
+export { default as LEI_IV } from './LEI_IV_SNA_OMEGA';
+
+// ============================================
 // FUTURAS LEIS (Placeholders)
 // ============================================
 
-// LEI III - SEGURANÇA (a ser implementada)
-// LEI IV - UX/DESIGN (a ser implementada)
+// LEI III - SEGURANÇA (a ser implementada separadamente)
 // LEI V - ACESSIBILIDADE (a ser implementada)
 // LEI VI - SEO (a ser implementada)
 
