@@ -12121,14 +12121,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      audit_rls_coverage: {
-        Args: never
-        Returns: {
-          has_rls: boolean
-          policy_count: number
-          table_name: string
-        }[]
-      }
       audit_rls_coverage_v2: {
         Args: never
         Returns: {
@@ -12285,6 +12277,7 @@ export type Database = {
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
       cleanup_expired_sessions: { Args: never; Returns: number }
       cleanup_expired_sessions_v2: { Args: never; Returns: number }
+      cleanup_expired_sessions_v3: { Args: never; Returns: number }
       cleanup_expired_signed_urls: { Args: never; Returns: number }
       cleanup_expired_timeouts: { Args: never; Returns: number }
       cleanup_expired_video_sessions: { Args: never; Returns: number }
