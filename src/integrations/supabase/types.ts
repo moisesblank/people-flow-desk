@@ -11845,6 +11845,10 @@ export type Database = {
         Args: { p_url: string; p_user_id?: string }
         Returns: boolean
       }
+      can_access_url_v3: {
+        Args: { p_url: string; p_user_id?: string }
+        Returns: boolean
+      }
       can_edit_content: { Args: { _user_id?: string }; Returns: boolean }
       can_manage_documents: { Args: { _user_id?: string }; Returns: boolean }
       can_use_god_mode: { Args: { _user_id?: string }; Returns: boolean }
@@ -11991,6 +11995,14 @@ export type Database = {
           session_id: string
           session_token: string
         }[]
+      }
+      create_user_session: {
+        Args: {
+          p_device_hash: string
+          p_device_name?: string
+          p_device_type?: string
+        }
+        Returns: string
       }
       current_user_email: { Args: never; Returns: string }
       deactivate_device: { Args: { p_device_id: string }; Returns: Json }
@@ -12175,6 +12187,7 @@ export type Database = {
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_owner_v2: { Args: { p_user_id: string }; Returns: boolean }
+      is_admin_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
@@ -12212,6 +12225,18 @@ export type Database = {
       }
       log_blocked_access: {
         Args: { p_ip?: string; p_reason: string; p_resource: string }
+        Returns: string
+      }
+      log_content_access: {
+        Args: {
+          p_action: string
+          p_content_id: string
+          p_content_title?: string
+          p_content_type: string
+          p_duration_seconds?: number
+          p_metadata?: Json
+          p_progress_percent?: number
+        }
         Returns: string
       }
       log_report_access: {
@@ -12341,6 +12366,10 @@ export type Database = {
       revoke_other_sessions_v2: {
         Args: { p_current_session_token: string; p_user_id: string }
         Returns: number
+      }
+      revoke_user_session: {
+        Args: { p_reason?: string; p_session_id: string }
+        Returns: boolean
       }
       security_cleanup_job: { Args: never; Returns: undefined }
       send_chat_message_v2: {
