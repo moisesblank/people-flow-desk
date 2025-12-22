@@ -1,6 +1,6 @@
 // ============================================
-// 🔥 CENTRAL DE DIAGNÓSTICO — PROVA DE QUE TUDO PEGA
-// Zero Cliques Mortos Audit System
+// 🔥🛡️ CENTRAL DE DIAGNÓSTICO OMEGA — PROVA DE QUE TUDO PEGA 🛡️🔥
+// Zero Cliques Mortos Audit System v2.0
 // ============================================
 
 import React, { useState, useCallback, useEffect } from "react";
@@ -20,12 +20,21 @@ import {
   Activity,
   FileText,
   Zap,
+  Globe,
+  Users,
+  BarChart3,
+  Bug,
+  ShieldCheck,
+  Eye,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 // Core imports
 import { ROUTES, ROUTE_DEFINITIONS, RouteKey } from "@/core/routes";
@@ -33,6 +42,8 @@ import { ACTIONS, ActionKey } from "@/core/actions";
 import { BUCKETS, BucketKey, BUCKET_DEFINITIONS } from "@/core/storage";
 import { FUNCTION_MATRIX, auditAllFunctions, FunctionSpec } from "@/core/functionMatrix";
 import { NAV_ROUTE_MAP, NAV_STATUS, auditNavRouteMap, NavItemKey } from "@/core/nav/navRouteMap";
+import { auditPageClickables } from "@/core/deadClickReporter";
+import { DOMAIN_CONFIG, detectDomain, PUBLIC_ROUTES, GESTAO_ROUTES, ALUNO_ROUTES } from "@/core/urlAccessControl";
 
 // ============================================
 // TIPOS

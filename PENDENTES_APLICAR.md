@@ -179,21 +179,28 @@ Quando aplicar cada passo, atualize esta lista:
 
 ---
 
-## 🔥 MATRIZ UNIFICADA DE FUNCIONALIDADES (ZERO CLIQUES MORTOS)
+## 🔥🛡️ MATRIZ UNIFICADA DE FUNCIONALIDADES OMEGA v2.0 🛡️🔥
 
-Esta seção é sobre o sistema de centralização de rotas, ações e storage.
+Sistema completo de ZERO CLIQUES MORTOS + Mapa de URLs Definitivo.
+
+### SQL (APLICAR NO SUPABASE):
+| # | Arquivo | Função | Status |
+|---|---------|--------|--------|
+| 11 | `20251222700000_matriz_funcoes_omega.sql` | 4 tabelas + 5 funções | ⏳ |
 
 ### Arquivos Frontend (AUTOMÁTICOS):
 | # | Arquivo | Função |
 |---|---------|--------|
-| 1 | `src/core/routes.ts` | 95+ rotas centralizadas |
+| 1 | `src/core/routes.ts` | 95 rotas centralizadas |
 | 2 | `src/core/actions.ts` | 100+ ações tipadas |
 | 3 | `src/core/storage.ts` | 18 buckets configurados |
 | 4 | `src/core/functionMatrix.ts` | Registry de funções |
-| 5 | `src/core/SafeComponents.tsx` | Componentes seguros |
-| 6 | `src/core/nav/navRouteMap.ts` | Mapa de navegação |
-| 7 | `src/core/index.ts` | Índice central |
-| 8 | `src/pages/CentralDiagnostico.tsx` | Página de diagnóstico |
+| 5 | `src/core/SafeComponents.tsx` | **12 componentes seguros** |
+| 6 | `src/core/nav/navRouteMap.ts` | 75 itens de menu |
+| 7 | `src/core/urlAccessControl.ts` | 🆕 **Mapa de URLs Definitivo** |
+| 8 | `src/core/deadClickReporter.ts` | 🆕 **Detecção de dead clicks** |
+| 9 | `src/core/index.ts` | Índice central |
+| 10 | `src/pages/CentralDiagnostico.tsx` | Página de diagnóstico |
 
 ### Para adicionar a rota no App.tsx:
 ```tsx
@@ -207,4 +214,35 @@ const CentralDiagnostico = lazy(() => import("./pages/CentralDiagnostico"));
 
 ---
 
-**Última atualização:** 22/12/2024 — Matriz Unificada + Video Fortress OMEGA v5.0
+## 🚀 COMANDO ÚNICO DEFINITIVO
+
+Cole este comando na Lovable para aplicar **TUDO** de uma vez:
+
+```
+Por favor, aplique TODAS as migrações SQL e Edge Functions na ordem:
+
+FASE 1 - SQL (Supabase SQL Editor):
+1. supabase/migrations/20251222000001_live_chat_system.sql
+2. supabase/migrations/20251222000002_performance_indexes.sql
+3. supabase/migrations/20251222200000_security_fortress_ultra.sql
+4. supabase/migrations/20251222400000_sna_omega_complete.sql
+5. supabase/migrations/20251222600000_video_fortress_omega.sql
+6. supabase/migrations/20251222700000_matriz_funcoes_omega.sql
+
+FASE 2 - Edge Functions (Deploy):
+7. supabase/functions/sna-gateway
+8. supabase/functions/sna-worker
+9. supabase/functions/secure-webhook-ultra
+10. supabase/functions/video-authorize-omega
+11. supabase/functions/video-violation-omega
+
+FASE 3 - Adicionar rota no App.tsx:
+const CentralDiagnostico = lazy(() => import("./pages/CentralDiagnostico"));
+<Route path="/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
+
+FRONTEND: Arquivos src/* são automáticos!
+```
+
+---
+
+**Última atualização:** 22/12/2024 — Matriz OMEGA v2.0 + Video Fortress OMEGA v5.0
