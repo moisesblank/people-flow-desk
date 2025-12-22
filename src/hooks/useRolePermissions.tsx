@@ -1,20 +1,37 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - ROLE PERMISSIONS HOOK
+// 🔥 MOISÉS MEDEIROS v10.0 - ROLE PERMISSIONS HOOK
 // Sistema de Permissões por Cargo Completo
-// ARQUITETURA DE DOMÍNIOS (LEI IV - SOBERANIA DO ARQUITETO):
-// - gestao.moisesmedeiros.com.br → Funcionários
-// - pro.moisesmedeiros.com.br → Alunos Beta
-// - Owner (moisesblank@gmail.com) → Acesso Total SUPREMO
+// ============================================
+// 📌 REGRA MATRIZ - ARQUITETURA DE DOMÍNIOS:
+// ┌─────────────────────────────────────────────────────────────────┐
+// │ CATEGORIA        │ URL                                 │ ACESSO │
+// ├─────────────────────────────────────────────────────────────────┤
+// │ OWNER (Master)   │ TODOS                               │ SUPREMO│
+// │ GESTÃO           │ gestao.moisesmedeiros.com.br        │ Func.  │
+// │ BETA (Alunos)    │ pro.moisesmedeiros.com.br/alunos    │ Pagante│
+// │ ÁREA GRATUITA    │ pro.moisesmedeiros.com.br           │ Público│
+// └─────────────────────────────────────────────────────────────────┘
+// Owner: moisesblank@gmail.com → Acesso Total SUPREMO
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { 
+  MATRIZ_URLS, 
+  MATRIZ_PATHS, 
+  ROLE_TO_CATEGORIA, 
+  validarAcessoUrl,
+  type CategoriaAcesso 
+} from "@/config/matriz-urls";
 
 // ============================================
-// CONSTANTES GLOBAIS - LEI IV
+// CONSTANTES GLOBAIS - LEI IV (SOBERANIA DO ARQUITETO)
 // ============================================
 export const OWNER_EMAIL = "moisesblank@gmail.com";
+
+// Re-exportar constantes da matriz para uso externo
+export { MATRIZ_URLS, MATRIZ_PATHS };
 
 // ============================================
 // FUNÇÕES DE DETECÇÃO DE DOMÍNIO
@@ -41,6 +58,26 @@ export function getCurrentDomain(): "gestao" | "pro" | "public" | "unknown" {
   if (isProHost(h)) return "pro";
   if (isPublicHost(h)) return "public";
   return "unknown";
+}
+
+// ============================================
+// FUNÇÃO DE VALIDAÇÃO DE ACESSO POR DOMÍNIO
+// ============================================
+export function validarAcessoPorDominio(
+  role: string | null,
+  pathname: string
+): { permitido: boolean; redirecionarPara?: string; motivo?: string } {
+  if (typeof window === "undefined") return { permitido: true };
+  
+  const hostname = window.location.hostname;
+  const categoria: CategoriaAcesso = role ? (ROLE_TO_CATEGORIA[role] || "publico") : "publico";
+  
+  // Owner tem bypass total
+  if (categoria === "owner") {
+    return { permitido: true };
+  }
+  
+  return validarAcessoUrl(categoria, pathname, hostname);
 }
 
 // Tipos de roles do sistema
