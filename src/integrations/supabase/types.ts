@@ -10505,6 +10505,15 @@ export type Database = {
           user_id: string
         }[]
       }
+      analyze_slow_queries: {
+        Args: never
+        Returns: {
+          calls: number
+          mean_time: number
+          query_text: string
+          total_time: number
+        }[]
+      }
       auto_cleanup_for_load: { Args: never; Returns: undefined }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
