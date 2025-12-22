@@ -1117,7 +1117,9 @@ export type Database = {
       book_chat_messages: {
         Row: {
           book_id: string
+          chapter_title: string | null
           content: string
+          content_reference: Json | null
           context_text: string | null
           created_at: string
           id: string
@@ -1126,11 +1128,14 @@ export type Database = {
           page_number: number | null
           role: string
           tokens_used: number | null
+          topic: string | null
           user_id: string
         }
         Insert: {
           book_id: string
+          chapter_title?: string | null
           content: string
+          content_reference?: Json | null
           context_text?: string | null
           created_at?: string
           id?: string
@@ -1139,11 +1144,14 @@ export type Database = {
           page_number?: number | null
           role: string
           tokens_used?: number | null
+          topic?: string | null
           user_id: string
         }
         Update: {
           book_id?: string
+          chapter_title?: string | null
           content?: string
+          content_reference?: Json | null
           context_text?: string | null
           created_at?: string
           id?: string
@@ -1152,6 +1160,7 @@ export type Database = {
           page_number?: number | null
           role?: string
           tokens_used?: number | null
+          topic?: string | null
           user_id?: string
         }
         Relationships: [
@@ -10401,14 +10410,18 @@ export type Database = {
           content: string | null
           created_at: string
           drawing_data: string | null
+          drawing_data_compressed: string | null
           height: number | null
           id: string
           is_deleted: boolean | null
+          is_synced: boolean | null
           metadata: Json | null
           page_id: string | null
           page_number: number
           position_x: number | null
           position_y: number | null
+          stroke_width: number | null
+          sync_version: number | null
           updated_at: string
           user_id: string
           width: number | null
@@ -10420,14 +10433,18 @@ export type Database = {
           content?: string | null
           created_at?: string
           drawing_data?: string | null
+          drawing_data_compressed?: string | null
           height?: number | null
           id?: string
           is_deleted?: boolean | null
+          is_synced?: boolean | null
           metadata?: Json | null
           page_id?: string | null
           page_number: number
           position_x?: number | null
           position_y?: number | null
+          stroke_width?: number | null
+          sync_version?: number | null
           updated_at?: string
           user_id: string
           width?: number | null
@@ -10439,14 +10456,18 @@ export type Database = {
           content?: string | null
           created_at?: string
           drawing_data?: string | null
+          drawing_data_compressed?: string | null
           height?: number | null
           id?: string
           is_deleted?: boolean | null
+          is_synced?: boolean | null
           metadata?: Json | null
           page_id?: string | null
           page_number?: number
           position_x?: number | null
           position_y?: number | null
+          stroke_width?: number | null
+          sync_version?: number | null
           updated_at?: string
           user_id?: string
           width?: number | null
