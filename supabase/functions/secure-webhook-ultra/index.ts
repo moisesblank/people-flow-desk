@@ -471,26 +471,47 @@ serve(async (req) => {
     
     console.log(`[Webhook ${requestId}] ✅ Concluído em ${duration}ms`);
     
+    // ============================================
+    // 8. RESPOSTA DE SUCESSO
+    // ============================================
+    
     return new Response(JSON.stringify({
-      success: true,
+      success: processResult.success,
       message: processResult.message,
       event_id: eventId,
+      event_type: eventType,
+      provider: config.provider,
       processing_time_ms: duration,
       request_id: requestId,
+      correlation_id: correlationId,
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
     });
     
   } catch (error) {
+    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
     const duration = Date.now() - startTime;
+    
     console.error(`[Webhook ${requestId}] ❌ Erro:`, error);
+    
+    // Registrar erro
+    await supabase.rpc('log_security_event', {
+      p_event_type: 'webhook_processed',
+      p_risk_score: 50,
+      p_details: {
+        type: 'processing_error',
+        error: errorMessage,
+        request_id: requestId,
+        processing_time_ms: duration,
+      },
+    });
     
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Erro interno',
-      processing_time_ms: duration,
+      error: 'Erro interno de processamento',
       request_id: requestId,
+      processing_time_ms: duration,
     }), {
       status: 500,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
