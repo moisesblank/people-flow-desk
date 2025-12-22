@@ -200,7 +200,7 @@ const USER_ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     ],
     canAccessAll: false,
   },
-  // 👨‍🎓 BETA - Aluno pagante com acesso ativo
+  // 👨‍🎓 BETA - Aluno pagante com acesso ativo (Hotmart/Owner/Admin)
   beta: {
     role: 'beta',
     label: 'Aluno BETA',
@@ -208,6 +208,7 @@ const USER_ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
       'public', 'home', 'landing', 'auth', 'area_gratuita',
       'alunos', 'videoaulas', 'questoes', 'simulados', 'flashcards',
       'ranking', 'desempenho', 'conquistas', 'tutoria',
+      'comunidade', // ✅ BETA também acessa comunidade
     ],
     canAccessAll: false,
   },
@@ -322,6 +323,7 @@ export const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     'public', 'home', 'landing', 'auth', 'area_gratuita',
     'alunos', 'videoaulas', 'questoes', 'simulados', 'flashcards',
     'ranking', 'desempenho', 'conquistas', 'tutoria',
+    'comunidade', // ✅ BETA acessa comunidade
   ],
   aluno_gratuito: [
     'public', 'home', 'landing', 'auth', 'area_gratuita', 'comunidade',

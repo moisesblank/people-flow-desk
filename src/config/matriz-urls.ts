@@ -1,31 +1,42 @@
 // ============================================
-// 🔥 REGRA MATRIZ v1.0 - ARQUITETURA DE URLs
+// 🔥 REGRA MATRIZ v2.0 - ARQUITETURA DE URLs
+// ATUALIZADO: 2024-12-22 - Design 2300
 // ============================================
 // DOCUMENTAÇÃO OFICIAL DO SISTEMA DE ROTAS E ACESSOS
 // ============================================
 
-// 🎯 REGRA MATRIZ - MAPEAMENTO DE URLs POR CATEGORIA
+// 📍 MAPA DE URLs DEFINITIVO (LEI IV - SNA OMEGA)
 // 
-// ┌─────────────────────────────────────────────────────────────────────────┐
-// │ CATEGORIA        │ URL BASE                              │ ACESSO      │
-// ├─────────────────────────────────────────────────────────────────────────┤
-// │ OWNER (Master)   │ TODOS OS DOMÍNIOS                     │ SUPREMO     │
-// │ GESTÃO           │ https://gestao.moisesmedeiros.com.br  │ Funcionários│
-// │ BETA (Alunos)    │ http://pro.moisesmedeiros.com.br/alunos│ Pagantes   │
-// │ ÁREA GRATUITA    │ https://pro.moisesmedeiros.com.br     │ Público     │
-// └─────────────────────────────────────────────────────────────────────────┘
+// ┌──────────────────────────────────────────────────────────────────────────────────────┐
+// │ QUEM                │ URL                                    │ VALIDAÇÃO            │
+// ├──────────────────────────────────────────────────────────────────────────────────────┤
+// │ 🌐 NÃO PAGANTE      │ pro.moisesmedeiros.com.br              │ Cadastro gratuito    │
+// │                     │ pro.moisesmedeiros.com.br/comunidade   │ + associações        │
+// ├──────────────────────────────────────────────────────────────────────────────────────┤
+// │ 👨‍🎓 ALUNO BETA       │ pro.moisesmedeiros.com.br/alunos/*     │ role='beta' +        │
+// │   (PAGANTE)         │ + /comunidade                          │ acesso válido        │
+// │                     │ (Hotmart/Owner/Admin podem criar)      │                      │
+// ├──────────────────────────────────────────────────────────────────────────────────────┤
+// │ 👔 FUNCIONÁRIO      │ gestao.moisesmedeiros.com.br/gestao    │ role='funcionario'   │
+// │                     │ (categorias de permissão específicas)  │ + permissões         │
+// ├──────────────────────────────────────────────────────────────────────────────────────┤
+// │ 👑 OWNER (MASTER)   │ TODAS AS URLs                          │ role='owner'         │
+// │   moisesblank@      │ Acesso TOTAL em tempo real             │ MOISESBLANK@GMAIL    │
+// │   gmail.com         │ Pode criar/importar/exportar tudo      │ .COM                 │
+// └──────────────────────────────────────────────────────────────────────────────────────┘
 // 
-// 📋 HIERARQUIA DE ACESSOS:
-// 1. OWNER (moisesblank@gmail.com) → Acesso TOTAL a qualquer domínio/área
-// 2. FUNCIONÁRIOS (gestão) → Apenas domínio gestao.*
-// 3. ALUNOS BETA (pagantes) → Área /alunos em pro.*
-// 4. NÃO PAGANTES (gratuitos) → Apenas área pública em pro.*
+// 📋 HIERARQUIA DE ACESSOS (do maior para menor):
+// 1. 👑 OWNER (moisesblank@gmail.com) → Acesso TOTAL a TUDO, SEMPRE
+// 2. 👔 FUNCIONÁRIOS (gestão) → gestao.moisesmedeiros.com.br/* conforme permissões
+// 3. 👨‍🎓 ALUNOS BETA (pagantes) → /alunos/* + /comunidade em pro.*
+// 4. 🌐 NÃO PAGANTES (gratuitos) → / + /comunidade em pro.*
 // 
 // 🔐 VALIDAÇÕES:
-// - Cada acesso é validado por domínio + role + autenticação
-// - Owner tem bypass total
-// - Beta SEMPRE redireciona para pro.moisesmedeiros.com.br/alunos
-// - Gestão SEMPRE redireciona para gestao.*
+// - Cada acesso valida: domínio + role + autenticação + access_expires_at
+// - Owner = bypass total (MOISESBLANK@GMAIL.COM)
+// - Beta vem de: pagamento Hotmart OU criado por Owner/Admin
+// - Beta acessa /alunos/* E /comunidade
+// - Gestão requer role funcionario+
 
 // ============================================
 // CONSTANTES DA MATRIZ
