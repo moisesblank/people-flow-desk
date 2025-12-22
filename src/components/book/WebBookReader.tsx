@@ -24,6 +24,12 @@ import {
   BookOpen,
   MessageCircle,
   X,
+  List,
+  PenTool,
+  Highlighter,
+  Eraser,
+  Bookmark,
+  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { 
@@ -32,6 +38,13 @@ import {
   TooltipTrigger,
   TooltipProvider,
 } from "@/components/ui/tooltip";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 import { SanctumProtectedContent } from "@/components/security/SanctumProtectedContent";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -122,6 +135,14 @@ interface WebBookReaderProps {
 const OWNER_EMAIL = "moisesblank@gmail.com";
 const PAGE_REFRESH_INTERVAL_MS = 45000;
 const AUTO_SAVE_INTERVAL_MS = 30000;
+const EDGE_CLICK_WIDTH = 80;
+
+const TOOLS = {
+  NONE: "none",
+  PEN: "pen",
+  HIGHLIGHTER: "highlighter",
+  ERASER: "eraser",
+} as const;
 
 const COLORS = [
   "#FFD700",
@@ -163,8 +184,11 @@ export const WebBookReader = memo(({
   const [isFullscreen, setIsFullscreen] = useState(false);
   
   const [annotations, setAnnotations] = useState<Annotation[]>([]);
+  const [selectedTool, setSelectedTool] = useState<string>(TOOLS.NONE);
+  const [selectedColor, setSelectedColor] = useState(COLORS[0]);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   
+  const [showTOC, setShowTOC] = useState(false);
   const [showChat, setShowChat] = useState(false);
   
   const containerRef = useRef<HTMLDivElement>(null);
@@ -490,166 +514,323 @@ export const WebBookReader = memo(({
     );
   }
 
-  const progressPercent = book ? Math.round((currentPage / book.totalPages) * 100) : 0;
-
+  // ============================================
+  // RENDER - PRINCIPAL
+  // ============================================
   return (
     <TooltipProvider>
-      <SanctumProtectedContent>
-        <div 
+      <SanctumProtectedContent className={cn("web-book-reader", className)}>
+        <div
           ref={containerRef}
           className={cn(
-            "relative w-full h-screen bg-background overflow-hidden flex flex-col",
-            isFullscreen && "fixed inset-0 z-50",
-            className
+            "flex flex-col h-screen bg-background",
+            isFullscreen && "fixed inset-0 z-50"
           )}
         >
+          {/* ============================================ */}
           {/* HEADER */}
+          {/* ============================================ */}
           <header className="flex items-center justify-between px-4 py-2 bg-card border-b shrink-0">
             <div className="flex items-center gap-3">
-              {onClose && (
-                <Button variant="ghost" size="icon" onClick={onClose}>
-                  <X className="w-5 h-5" />
-                </Button>
-              )}
-              <BookOpen className="w-5 h-5 text-primary" />
-              <div>
-                <h1 className="text-sm font-semibold line-clamp-1">{book?.title}</h1>
-                <p className="text-xs text-muted-foreground">{book?.author}</p>
+              <Button 
+                variant="ghost" 
+                size="icon"
+                onClick={onClose}
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              <div className="flex items-center gap-2">
+                <BookOpen className="w-5 h-5 text-primary" />
+                <div className="hidden sm:block">
+                  <h1 className="font-semibold text-sm truncate max-w-[200px] lg:max-w-[400px]">
+                    {book.title}
+                  </h1>
+                  <p className="text-xs text-muted-foreground">{book.author}</p>
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={handleZoomOut}>
-                    <ZoomOut className="w-4 h-4" />
+            <div className="flex items-center gap-1">
+              {/* Sumário */}
+              <Sheet open={showTOC} onOpenChange={setShowTOC}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <List className="w-4 h-4" />
                   </Button>
-                </TooltipTrigger>
-                <TooltipContent>Diminuir zoom</TooltipContent>
-              </Tooltip>
+                </SheetTrigger>
+                <SheetContent side="left">
+                  <SheetHeader>
+                    <SheetTitle>Sumário</SheetTitle>
+                  </SheetHeader>
+                  <div className="mt-4">
+                    {pages.filter(p => p.chapterTitle).map((page) => (
+                      <button
+                        key={page.pageNumber}
+                        className="w-full text-left px-3 py-2 hover:bg-accent rounded-lg transition-colors"
+                        onClick={() => {
+                          goToPage(page.pageNumber);
+                          setShowTOC(false);
+                        }}
+                      >
+                        <span className="font-medium">{page.chapterTitle}</span>
+                        <span className="text-xs text-muted-foreground ml-2">
+                          p. {page.pageNumber}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </SheetContent>
+              </Sheet>
 
-              <span className="text-sm text-muted-foreground min-w-[3rem] text-center">
-                {zoom}%
-              </span>
+              {/* Zoom */}
+              <div className="hidden md:flex items-center gap-1 px-2 border-l border-r">
+                <Button variant="ghost" size="icon" onClick={handleZoomOut} disabled={zoom <= 50}>
+                  <ZoomOut className="w-4 h-4" />
+                </Button>
+                <span className="text-xs font-medium w-10 text-center">{zoom}%</span>
+                <Button variant="ghost" size="icon" onClick={handleZoomIn} disabled={zoom >= 200}>
+                  <ZoomIn className="w-4 h-4" />
+                </Button>
+              </div>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={handleZoomIn}>
-                    <ZoomIn className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Aumentar zoom</TooltipContent>
-              </Tooltip>
+              {/* Rotação */}
+              <Button variant="ghost" size="icon" onClick={handleRotate}>
+                <RotateCw className="w-4 h-4" />
+              </Button>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={handleRotate}>
-                    <RotateCw className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Rotacionar</TooltipContent>
-              </Tooltip>
+              {/* Fullscreen */}
+              <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
+                {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+              </Button>
 
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" onClick={toggleFullscreen}>
-                    {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{isFullscreen ? "Sair da tela cheia" : "Tela cheia"}</TooltipContent>
-              </Tooltip>
-
-              {book?.allowChat && (
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button 
-                      variant={showChat ? "secondary" : "ghost"} 
-                      size="icon" 
-                      onClick={() => setShowChat(!showChat)}
-                    >
-                      <MessageCircle className="w-4 h-4" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>Chat com IA</TooltipContent>
-                </Tooltip>
+              {/* Indicador de salvamento */}
+              {hasUnsavedChanges ? (
+                <span className="text-xs text-muted-foreground">Salvando...</span>
+              ) : (
+                <span className="text-xs text-green-600 flex items-center gap-1">
+                  <Check className="w-3 h-3" /> Salvo
+                </span>
               )}
             </div>
           </header>
 
-          {/* MAIN CONTENT */}
-          <main className="flex-1 relative overflow-hidden">
-            {/* Navigation Edges */}
-            <button
-              onClick={prevPage}
-              disabled={currentPage <= 1}
-              className="absolute left-0 top-0 h-full w-20 z-10 flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity disabled:opacity-0"
+          {/* ============================================ */}
+          {/* ÁREA DE VISUALIZAÇÃO */}
+          {/* ============================================ */}
+          <main 
+            className="flex-1 relative overflow-hidden bg-muted/30"
+            onClick={handleContainerClick}
+          >
+            {/* Área de click - Anterior */}
+            <div 
+              className="absolute left-0 top-0 bottom-0 w-20 z-10 cursor-pointer hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 hover:opacity-100"
+              onClick={(e) => { e.stopPropagation(); prevPage(); }}
             >
               <ChevronLeft className="w-8 h-8 text-foreground/50" />
-            </button>
+            </div>
 
-            <button
-              onClick={nextPage}
-              disabled={currentPage >= (book?.totalPages || 1)}
-              className="absolute right-0 top-0 h-full w-20 z-10 flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity disabled:opacity-0"
+            {/* Área de click - Próximo */}
+            <div 
+              className="absolute right-0 top-0 bottom-0 w-20 z-10 cursor-pointer hover:bg-black/5 transition-colors flex items-center justify-center opacity-0 hover:opacity-100"
+              onClick={(e) => { e.stopPropagation(); nextPage(); }}
             >
               <ChevronRight className="w-8 h-8 text-foreground/50" />
-            </button>
+            </div>
 
-            {/* Page Display */}
-            <div className="w-full h-full flex items-center justify-center overflow-auto p-4">
-              {isPageLoading ? (
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
-              ) : currentPageUrl ? (
-                <div
-                  style={{
-                    transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                    transition: "transform 0.2s ease",
-                  }}
-                >
+            {/* Conteúdo da página */}
+            <div className="absolute inset-20 flex items-center justify-center">
+              <div
+                className="relative transition-transform duration-200"
+                style={{
+                  transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+                  transformOrigin: "center center",
+                }}
+              >
+                {isPageLoading && (
+                  <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10 rounded-lg">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  </div>
+                )}
+
+                {currentPageUrl && (
                   <img
                     src={currentPageUrl}
-                    alt={`Página ${currentPage}`}
-                    className="max-w-full max-h-full object-contain shadow-lg"
+                    alt={`Página ${currentPage} de ${book.totalPages}`}
+                    className="max-w-full max-h-[calc(100vh-200px)] rounded-lg shadow-xl"
+                    loading="eager"
+                    decoding="async"
                     draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                    style={{
+                      pointerEvents: "none",
+                      userSelect: "none",
+                    }}
                   />
-                </div>
-              ) : (
-                <p className="text-muted-foreground">Página não disponível</p>
-              )}
+                )}
 
-              {/* Watermark Overlay */}
-              {watermark?.enabled && !isOwner && (
-                <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
-                  <div className="absolute inset-0 flex flex-wrap gap-32 rotate-[-30deg] scale-150">
-                    {Array.from({ length: 20 }).map((_, i) => (
-                      <span key={i} className="text-foreground text-sm whitespace-nowrap">
-                        {watermark.userName || watermark.userEmail} • {watermark.userCpf}
-                      </span>
+                {/* Watermark Overlay */}
+                {watermark?.enabled && !isOwner && (
+                  <div className="absolute inset-0 pointer-events-none overflow-hidden opacity-10">
+                    <div className="absolute inset-0 flex flex-wrap gap-32 rotate-[-30deg] scale-150">
+                      {Array.from({ length: 20 }).map((_, i) => (
+                        <span key={i} className="text-foreground text-sm whitespace-nowrap">
+                          {watermark.userName || watermark.userEmail} • {watermark.userCpf}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </main>
+
+          {/* ============================================ */}
+          {/* FOOTER - NAVEGAÇÃO */}
+          {/* ============================================ */}
+          <footer className="flex items-center justify-between px-4 py-2 bg-card border-t shrink-0">
+            <div className="flex items-center gap-2">
+              {/* Ferramentas de anotação */}
+              {book.allowAnnotations && (
+                <div className="flex items-center gap-1 border-r pr-2 mr-2">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={selectedTool === TOOLS.PEN ? "default" : "ghost"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSelectedTool(selectedTool === TOOLS.PEN ? TOOLS.NONE : TOOLS.PEN)}
+                      >
+                        <PenTool className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Caneta</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={selectedTool === TOOLS.HIGHLIGHTER ? "default" : "ghost"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSelectedTool(selectedTool === TOOLS.HIGHLIGHTER ? TOOLS.NONE : TOOLS.HIGHLIGHTER)}
+                      >
+                        <Highlighter className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Marcador</TooltipContent>
+                  </Tooltip>
+
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant={selectedTool === TOOLS.ERASER ? "default" : "ghost"}
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => setSelectedTool(selectedTool === TOOLS.ERASER ? TOOLS.NONE : TOOLS.ERASER)}
+                      >
+                        <Eraser className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>Borracha</TooltipContent>
+                  </Tooltip>
+
+                  {/* Cores */}
+                  <div className="flex items-center gap-0.5 ml-1">
+                    {COLORS.slice(0, 4).map((color) => (
+                      <button
+                        key={color}
+                        className={cn(
+                          "w-5 h-5 rounded-full border-2 transition-transform",
+                          selectedColor === color ? "border-foreground scale-110" : "border-transparent"
+                        )}
+                        style={{ backgroundColor: color }}
+                        onClick={() => setSelectedColor(color)}
+                      />
                     ))}
                   </div>
                 </div>
               )}
             </div>
-          </main>
 
-          {/* FOOTER */}
-          <footer className="flex items-center justify-between px-4 py-2 bg-card border-t shrink-0">
-            <span className="text-sm text-muted-foreground">
-              Página {currentPage} de {book?.totalPages || 0}
-            </span>
+            {/* Navegação central */}
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={prevPage}
+                disabled={currentPage <= 1}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
 
-            <div className="flex-1 mx-4">
-              <div className="h-1 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary transition-all duration-300"
-                  style={{ width: `${progressPercent}%` }}
+              <div className="flex items-center gap-2 px-3">
+                <input
+                  type="number"
+                  value={currentPage}
+                  onChange={(e) => goToPage(parseInt(e.target.value) || 1)}
+                  className="w-12 h-8 text-center text-sm border rounded bg-background"
+                  min={1}
+                  max={book.totalPages}
                 />
+                <span className="text-sm text-muted-foreground">
+                  de {book.totalPages}
+                </span>
               </div>
+
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-8 w-8"
+                onClick={nextPage}
+                disabled={currentPage >= book.totalPages}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
             </div>
 
-            <span className="text-sm text-muted-foreground">
-              {progressPercent}%
-            </span>
+            {/* Ações direita */}
+            <div className="flex items-center gap-2">
+              {/* Bookmark */}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Bookmark className="w-4 h-4" />
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent>Marcar página</TooltipContent>
+              </Tooltip>
+
+              {/* Chat */}
+              {book.allowChat && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button 
+                      variant={showChat ? "default" : "ghost"} 
+                      size="icon" 
+                      className="h-8 w-8"
+                      onClick={() => setShowChat(!showChat)}
+                    >
+                      <MessageCircle className="w-4 h-4" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>Perguntar ao TRAMON</TooltipContent>
+                </Tooltip>
+              )}
+
+              {/* Barra de progresso */}
+              <div className="hidden sm:flex items-center gap-2 ml-2 border-l pl-2">
+                <div className="w-24 h-2 bg-muted rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-primary transition-all duration-300"
+                    style={{ width: `${((currentPage / book.totalPages) * 100).toFixed(0)}%` }}
+                  />
+                </div>
+                <span className="text-xs text-muted-foreground">
+                  {((currentPage / book.totalPages) * 100).toFixed(0)}%
+                </span>
+              </div>
+            </div>
           </footer>
         </div>
       </SanctumProtectedContent>
@@ -658,3 +839,5 @@ export const WebBookReader = memo(({
 });
 
 WebBookReader.displayName = "WebBookReader";
+
+export default WebBookReader;
