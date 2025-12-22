@@ -11138,6 +11138,16 @@ export type Database = {
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       can_view_financial: { Args: { _user_id: string }; Returns: boolean }
       can_view_personal: { Args: { _user_id: string }; Returns: boolean }
+      check_advanced_rate_limit: {
+        Args: {
+          p_block_seconds?: number
+          p_endpoint: string
+          p_identifier: string
+          p_max_requests?: number
+          p_window_seconds?: number
+        }
+        Returns: Json
+      }
       check_and_update_overdue_expenses: { Args: never; Returns: undefined }
       check_api_rate_limit: {
         Args: {
@@ -11192,6 +11202,17 @@ export type Database = {
           redirect_to: string
         }[]
       }
+      check_webhook_idempotency: {
+        Args: {
+          p_event_id: string
+          p_event_type?: string
+          p_ip_address?: unknown
+          p_payload?: Json
+          p_provider: string
+          p_signature_valid?: boolean
+        }
+        Returns: Json
+      }
       check_webhook_idempotency_v2: {
         Args: {
           p_event_id: string
@@ -11229,6 +11250,7 @@ export type Database = {
       cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
       cleanup_rate_limits_v3: { Args: never; Returns: number }
+      cleanup_security_data: { Args: never; Returns: Json }
       cleanup_security_data_v3: { Args: never; Returns: Json }
       complete_event: {
         Args: {
@@ -11394,6 +11416,10 @@ export type Database = {
       }
       get_security_dashboard_v3: { Args: never; Returns: Json }
       get_system_load: { Args: never; Returns: Json }
+      get_url_access_result: {
+        Args: { p_url: string; p_user_id?: string }
+        Returns: Json
+      }
       get_user_chat_ban_status: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: {
@@ -11482,6 +11508,19 @@ export type Database = {
         Args: { p_report_params?: Json; p_report_type: string }
         Returns: string
       }
+      log_security_audit: {
+        Args: {
+          p_action: string
+          p_category?: string
+          p_metadata?: Json
+          p_new_data?: Json
+          p_old_data?: Json
+          p_record_id?: string
+          p_severity?: string
+          p_table_name?: string
+        }
+        Returns: string
+      }
       log_security_event: {
         Args: {
           p_description?: string
@@ -11521,6 +11560,15 @@ export type Database = {
           p_table_name: string
         }
         Returns: undefined
+      }
+      mark_webhook_processed: {
+        Args: {
+          p_error?: string
+          p_event_id: string
+          p_provider: string
+          p_response?: Json
+        }
+        Returns: boolean
       }
       mask_email: { Args: { p_email: string }; Returns: string }
       mask_phone: { Args: { p_phone: string }; Returns: string }
