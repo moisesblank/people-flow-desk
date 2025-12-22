@@ -499,13 +499,17 @@ export function maskCPF(cpf: string): string {
 // ============================================
 
 export const SECURITY_CONFIG = {
-  // Rate Limiting por tipo de operação
+  // Rate Limiting por tipo de operação (EXPANDIDO v4.1)
   RATE_LIMIT: {
-    AUTH: { requests: 5, windowMs: 60000, burst: 3 },
+    AUTH: { requests: 5, windowMs: 60000, burst: 3, blockMs: 300000 },
     API: { requests: 100, windowMs: 60000, burst: 20 },
     UPLOAD: { requests: 10, windowMs: 60000, burst: 5 },
     SEARCH: { requests: 20, windowMs: 60000, burst: 10 },
-    DOWNLOAD: { requests: 30, windowMs: 60000, burst: 10 },
+    DOWNLOAD: { requests: 5, windowMs: 60000, burst: 3, blockMs: 60000 },
+    CHAT: { requests: 20, windowMs: 10000, burst: 5 },
+    VIDEO_URL: { requests: 10, windowMs: 60000, burst: 3, blockMs: 120000 },
+    LIVE: { requests: 30, windowMs: 60000, burst: 10 },
+    CONTENT_ACCESS: { requests: 50, windowMs: 60000, burst: 15 },
   },
   
   // Sessão
@@ -545,6 +549,9 @@ export const SECURITY_CONFIG = {
     MAX_SIZE: 1000,
   },
 } as const;
+
+// Tipos para rate limit endpoint
+export type RateLimitEndpoint = keyof typeof SECURITY_CONFIG.RATE_LIMIT;
 
 // ============================================
 // MELHORIA 1: logAudit() - Auditoria Dedicada
