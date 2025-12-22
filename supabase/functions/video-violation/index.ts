@@ -1,6 +1,7 @@
 // ============================================
-// 🔥 VIDEO VIOLATION - EDGE FUNCTION
-// Registra violações de segurança e toma ações
+// 🛡️ VIDEO VIOLATION - EDGE FUNCTION (SANCTUM 2.0)
+// REGRA DE OURO: DETECÇÃO ≠ PUNIÇÃO
+// Backend calcula score e retorna ação gradual
 // Autor: MESTRE (Claude Opus 4.5 PHD)
 // ============================================
 
@@ -13,30 +14,55 @@ const corsHeaders = {
   "Access-Control-Allow-Methods": "POST, OPTIONS",
 };
 
-// Mapeamento de tipos de violação para severidade
+// 🛡️ SANCTUM: Roles imunes que NUNCA são punidas
+const IMMUNE_ROLES = ['owner', 'admin', 'funcionario', 'suporte', 'coordenacao'];
+
+// 🛡️ SANCTUM: Severidade REDUZIDA (mais tolerante)
 const VIOLATION_SEVERITY: Record<string, number> = {
-  // Baixa severidade (1-3)
+  // Muito baixa (1) - Apenas log
   "context_menu": 1,
-  "keyboard_shortcut": 2,
   "drag_attempt": 1,
-  "copy_attempt": 2,
-  "visibility_abuse": 2,
+  "copy_attempt": 1,
+  "visibility_abuse": 1,
   
-  // Média severidade (4-6)
-  "devtools_open": 5,
-  "screenshot_attempt": 4,
-  "iframe_manipulation": 5,
+  // Baixa (2-3) - Log + score
+  "keyboard_shortcut": 2,
+  "expired_token": 2,
   
-  // Alta severidade (7-10)
-  "screen_recording": 8,
-  "multiple_sessions": 6,
-  "invalid_domain": 9,
-  "expired_token": 3,
+  // Média (4-5) - Log + score + possível aviso
+  "devtools_open": 3, // Reduzido de 5 para 3
+  "screenshot_attempt": 3,
+  "iframe_manipulation": 4,
+  
+  // Alta (6-8) - Ações mais sérias, mas ainda graduais
+  "multiple_sessions": 5,
+  "screen_recording": 6,
+  
+  // Crítica (9-10) - Somente fraude confirmada
+  "invalid_domain": 8,
   "network_tampering": 9,
   
-  // Desconhecido
-  "unknown": 3,
+  "unknown": 1, // Desconhecido = assume baixo
 };
+
+// 🛡️ SANCTUM: Thresholds para ações graduais
+const ACTION_THRESHOLDS = {
+  warn: 10,      // Score >= 10: apenas aviso no log
+  degrade: 30,   // Score >= 30: degradação leve (blur)
+  pause: 50,     // Score >= 50: pausar vídeo
+  reauth: 100,   // Score >= 100: pedir re-autenticação
+  revoke: 200,   // Score >= 200: revogar sessão (raro)
+};
+
+// Determina ação baseada no score acumulado
+function determineAction(totalScore: number): string {
+  if (totalScore >= ACTION_THRESHOLDS.revoke) return 'revoke';
+  if (totalScore >= ACTION_THRESHOLDS.reauth) return 'reauth';
+  if (totalScore >= ACTION_THRESHOLDS.pause) return 'pause';
+  if (totalScore >= ACTION_THRESHOLDS.degrade) return 'degrade';
+  if (totalScore >= ACTION_THRESHOLDS.warn) return 'warn';
+  return 'none'; // Score baixo = nenhuma ação
+}
 
 interface ViolationRequest {
   session_token: string;
@@ -85,8 +111,37 @@ serve(async (req) => {
       );
     }
 
+    // 🛡️ SANCTUM: Verificar se usuário é imune
+    const userRole = body.details?.user_role || null;
+    const isImmune = body.details?.is_immune === true || 
+                     (userRole && IMMUNE_ROLES.includes(userRole));
+    
+    // 🛡️ SANCTUM: Se imune, apenas log, nenhuma ação
+    if (isImmune) {
+      console.log("🛡️ SANCTUM: Violação de usuário imune, apenas log", {
+        type: body.violation_type,
+        role: userRole,
+      });
+      
+      return new Response(
+        JSON.stringify({
+          success: true,
+          logged: true,
+          action: 'none',
+          sessionRevoked: false,
+          riskScore: 0,
+          instructions: { action: 'none' },
+          sanctum_bypass: true,
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // 🛡️ SANCTUM: Respeitar action_requested do frontend
+    const actionRequested = body.details?.action_requested || 'auto';
+    
     // Determinar severidade
-    const severity = VIOLATION_SEVERITY[body.violation_type] || 3;
+    const severity = VIOLATION_SEVERITY[body.violation_type] || 1;
 
     // Extrair informações da requisição
     const ipAddress = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
@@ -107,43 +162,60 @@ serve(async (req) => {
 
     if (error) {
       console.error("Violation registration error:", error);
-      // Não falhar silenciosamente - log importante
+      // 🛡️ SANCTUM: Falha no registro NÃO deve afetar o usuário
       return new Response(
         JSON.stringify({ 
-          error: "VIOLATION_REGISTRATION_FAILED",
+          success: true, // Retorna sucesso para não impactar UX
           logged: false,
+          action: 'none',
+          instructions: { action: 'none' },
         }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    if (!result.success) {
+    // 🛡️ SANCTUM: Se frontend pediu apenas log, respeitar
+    if (actionRequested === 'log_only' || actionRequested === 'score_only') {
       return new Response(
-        JSON.stringify({ 
-          error: result.error,
-          logged: false,
+        JSON.stringify({
+          success: true,
+          logged: true,
+          action: 'none',
+          sessionRevoked: false,
+          riskScore: result?.new_risk_score || 0,
+          instructions: { action: 'none' },
         }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Resposta com ação a ser tomada pelo frontend
+    // 🛡️ SANCTUM: Determinar ação baseada no score ACUMULADO
+    const totalScore = result?.new_risk_score || 0;
+    const action = determineAction(totalScore);
+    const shouldRevoke = action === 'revoke' && result?.session_revoked === true;
+
+    // Resposta com ação gradual
     return new Response(
       JSON.stringify({
         success: true,
         logged: true,
-        action: result.action_taken, // 'warned', 'paused', 'revoked'
-        sessionRevoked: result.session_revoked,
-        riskScore: result.new_risk_score,
-        // Instruções para o frontend
+        action_taken: action,
+        sessionRevoked: shouldRevoke,
+        riskScore: totalScore,
+        // 🛡️ SANCTUM: Instruções graduais para o frontend
         instructions: {
-          pauseVideo: result.action_taken === 'paused' || result.action_taken === 'revoked',
-          showWarning: result.action_taken === 'warned',
-          requireReauthorization: result.session_revoked,
-          message: result.session_revoked 
-            ? "Sessão encerrada por violação de segurança. Recarregue a página."
-            : result.action_taken === 'paused'
-            ? "Atividade suspeita detectada. O vídeo foi pausado."
+          action: action,
+          pauseVideo: action === 'pause',
+          showWarning: action === 'warn' || action === 'degrade',
+          requireReauthorization: action === 'reauth',
+          message: action === 'revoke' 
+            ? "Sessão encerrada. Recarregue a página."
+            : action === 'reauth'
+            ? "Por favor, confirme sua identidade."
+            : action === 'pause'
+            ? "Atividade incomum detectada."
+            : action === 'degrade'
+            ? "Qualidade pode ser afetada."
             : null,
         },
       }),

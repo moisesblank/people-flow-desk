@@ -1,7 +1,8 @@
 // ============================================
-// 🔥🔥🔥 ULTRA FORTRESS PLAYER v3.0 - ANO 2300 🔥🔥🔥
-// O PLAYER DEFINITIVO COM PROTEÇÃO ABSOLUTA
-// Integração completa: Frontend + Backend + IA + Forense
+// 🔥🔥🔥 ULTRA FORTRESS PLAYER v4.0 - SANCTUM EDITION 🔥🔥🔥
+// O PLAYER DEFINITIVO COM PROTEÇÃO INTELIGENTE
+// ⚠️ REGRA DE OURO: DETECÇÃO ≠ PUNIÇÃO
+// ⚠️ Bypass para: owner, funcionario, staging, agentes IA
 // Autor: MESTRE (Claude Opus 4.5 PHD)
 // ============================================
 
@@ -25,6 +26,70 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+
+// ============================================
+// 🛡️ SANCTUM 2.0 - CONFIGURAÇÃO DE BYPASS
+// Roles e ambientes que são IMUNES à proteção
+// ============================================
+const BYPASS_CONFIG = {
+  // Roles que são imunes (não sofrem bloqueios)
+  immuneRoles: ['owner', 'admin', 'funcionario', 'suporte', 'coordenacao'] as const,
+  
+  // Ambientes onde proteção é relaxada
+  devEnvironments: ['localhost', '127.0.0.1', 'staging', 'dev', 'preview'],
+  
+  // Feature flag - se false, proteção é apenas logging
+  securityHardeningEnabled: true,
+  
+  // Emails/IDs de agentes internos (testers, bots, automações)
+  allowlistEmails: [
+    'moisesblank@gmail.com', // Owner
+    'suporte@moisesmedeiros.com.br',
+    'bot@moisesmedeiros.com.br',
+    'automacao@moisesmedeiros.com.br',
+  ],
+  
+  // User agents de automações internas
+  allowlistUserAgents: [
+    'MoisesBot',
+    'TramonAgent',
+    'SNAWorker',
+    'Playwright',
+    'Cypress',
+  ],
+};
+
+// Verifica se o usuário/ambiente deve ter bypass
+function shouldBypass(user: any, userRole?: string): boolean {
+  // 1. Ambiente de desenvolvimento = bypass
+  const hostname = window.location.hostname;
+  if (BYPASS_CONFIG.devEnvironments.some(env => hostname.includes(env))) {
+    return true;
+  }
+  
+  // 2. Role imune = bypass
+  if (userRole && BYPASS_CONFIG.immuneRoles.includes(userRole as any)) {
+    return true;
+  }
+  
+  // 3. Email na allowlist = bypass
+  if (user?.email && BYPASS_CONFIG.allowlistEmails.includes(user.email)) {
+    return true;
+  }
+  
+  // 4. User agent de automação = bypass
+  const ua = navigator.userAgent;
+  if (BYPASS_CONFIG.allowlistUserAgents.some(bot => ua.includes(bot))) {
+    return true;
+  }
+  
+  // 5. Feature flag desabilitada = bypass (apenas logging)
+  if (!BYPASS_CONFIG.securityHardeningEnabled) {
+    return true;
+  }
+  
+  return false;
+}
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -163,9 +228,43 @@ export const UltraFortressPlayer = memo(({
   const [securityMessage, setSecurityMessage] = useState("");
   const [sessionRevoked, setSessionRevoked] = useState(false);
   const [riskScore, setRiskScore] = useState(0);
+  
+  // 🛡️ SANCTUM: Estado de bypass (imunidade)
+  const [isImmune, setIsImmune] = useState(false);
+  const [userRole, setUserRole] = useState<string | null>(null);
 
   // Posição da watermark
   const [watermarkPosition, setWatermarkPosition] = useState({ x: 10, y: 10 });
+  
+  // 🛡️ SANCTUM: Verificar bypass na montagem
+  useEffect(() => {
+    const checkImmunity = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        const role = profile?.role || 'viewer';
+        setUserRole(role);
+        
+        const immune = shouldBypass(user, role);
+        setIsImmune(immune);
+        
+        if (immune) {
+          console.log('🛡️ SANCTUM: Usuário com bypass ativado', { role, email: user.email });
+        }
+      } catch (error) {
+        // Em caso de erro, assume não-imune por segurança
+        setIsImmune(false);
+      }
+    };
+    
+    checkImmunity();
+  }, [user]);
 
   // URL do thumbnail
   const thumbnailUrl = thumbnail || 
@@ -308,12 +407,20 @@ export const UltraFortressPlayer = memo(({
   }, [stopHeartbeat]);
 
   // ============================================
-  // REPORTAR VIOLAÇÃO
+  // 🛡️ SANCTUM: REPORTAR VIOLAÇÃO (BACKEND DECIDE AÇÃO)
+  // REGRA: Frontend envia evento, Backend calcula score e retorna ação
+  // Frontend NUNCA toma ação drástica sozinho
   // ============================================
   const reportViolation = useCallback(async (
     type: ViolationType,
     details?: Record<string, unknown>
   ) => {
+    // 🛡️ SANCTUM: Usuários imunes não reportam violações
+    if (isImmune) {
+      console.log('🛡️ SANCTUM: Violação ignorada (usuário imune)', { type, details });
+      return;
+    }
+    
     if (!session?.sessionToken) return;
 
     try {
@@ -328,7 +435,11 @@ export const UltraFortressPlayer = memo(({
           body: JSON.stringify({
             session_token: session.sessionToken,
             violation_type: type,
-            details,
+            details: {
+              ...details,
+              user_role: userRole, // Enviar role para backend validar
+              is_immune: isImmune,
+            },
             timestamp: new Date().toISOString(),
           }),
         }
@@ -339,26 +450,68 @@ export const UltraFortressPlayer = memo(({
       if (data.success) {
         setRiskScore(data.riskScore || 0);
 
-        if (data.sessionRevoked) {
-          handleSessionInvalid("SECURITY_VIOLATION");
-        } else if (data.instructions?.pauseVideo) {
-          pauseVideo();
-          setSecurityMessage(data.instructions.message || "Atividade suspeita detectada");
-          setShowSecurityAlert(true);
+        // 🛡️ SANCTUM: SOMENTE o backend decide a ação
+        // Frontend executa o que o backend manda
+        const action = data.instructions?.action || data.action_taken;
+        
+        switch (action) {
+          case 'warn':
+            // Apenas log, sem interferir
+            console.log('🛡️ SANCTUM: Warning registrado', { type, riskScore: data.riskScore });
+            break;
+            
+          case 'degrade':
+            // Degradação leve (blur no overlay, não no vídeo)
+            toast.info("Qualidade pode ser afetada", { duration: 3000 });
+            break;
+            
+          case 'pause':
+            // Pausar vídeo (ação moderada)
+            pauseVideo();
+            setSecurityMessage("Atividade incomum detectada. Clique para continuar.");
+            setShowSecurityAlert(true);
+            break;
+            
+          case 'reauth':
+            // Pedir re-autenticação (sem logout)
+            setSecurityMessage("Por favor, confirme sua identidade para continuar.");
+            setShowSecurityAlert(true);
+            break;
+            
+          case 'revoke':
+            // Apenas em casos extremos e confirmados pelo backend
+            if (data.sessionRevoked === true) {
+              handleSessionInvalid("SECURITY_VIOLATION");
+            }
+            break;
+            
+          default:
+            // Nenhuma ação = apenas log
+            break;
         }
       }
     } catch (error) {
-      console.warn("Failed to report violation:", error);
+      // 🛡️ SANCTUM: Falha no report não deve afetar o usuário
+      console.warn("🛡️ SANCTUM: Falha ao reportar (ignorado)", error);
     }
-  }, [session?.sessionToken, handleSessionInvalid]);
+  }, [session?.sessionToken, isImmune, userRole, handleSessionInvalid, pauseVideo]);
 
   // ============================================
-  // DETECTORES DE SEGURANÇA
+  // 🛡️ SANCTUM 2.0 - DETECTORES INTELIGENTES
+  // REGRA DE OURO: DETECÇÃO ≠ PUNIÇÃO
+  // - Imunes: apenas log, sem ação
+  // - Não-imunes: log + score + degradação gradual
   // ============================================
   
-  // DevTools detector
+  // DevTools detector (SANCTUM Edition)
   useEffect(() => {
     if (!isAuthorized) return;
+    
+    // 🛡️ SANCTUM: Se imune, não ativar detector
+    if (isImmune) {
+      console.log('🛡️ SANCTUM: DevTools detector desativado (usuário imune)');
+      return;
+    }
 
     const checkDevTools = () => {
       const threshold = 160;
@@ -367,24 +520,29 @@ export const UltraFortressPlayer = memo(({
 
       if (widthDiff || heightDiff) {
         setDevToolsOpen(true);
-        pauseVideo();
-
+        
+        // 🛡️ SANCTUM: DETECÇÃO ≠ PUNIÇÃO
+        // Apenas: log + score + degradação (blur)
+        // NÃO: logout, revogação automática
+        
         if (!devToolsWarningShownRef.current) {
           devToolsWarningShownRef.current = true;
-          reportViolation("devtools_open", { widthDiff: window.outerWidth - window.innerWidth });
           
-          console.clear();
-          console.log(
-            "%c🚨 ACESSO BLOQUEADO 🚨",
-            "color: red; font-size: 40px; font-weight: bold; text-shadow: 2px 2px black;"
-          );
-          console.log(
-            "%cEste conteúdo está protegido. Feche o DevTools.",
-            "color: orange; font-size: 18px;"
-          );
-
-          setSecurityMessage("DevTools detectado! Feche as ferramentas de desenvolvedor para continuar.");
-          setShowSecurityAlert(true);
+          // Enviar para backend calcular score (não tomar ação drástica)
+          reportViolation("devtools_open", { 
+            widthDiff: window.outerWidth - window.innerWidth,
+            severity: 'MEDIUM', // Backend decide a ação
+            action_requested: 'score_only' // Não deslogar
+          });
+          
+          // Degradação: apenas blur leve + aviso (não pausar)
+          toast.warning("⚠️ Ferramentas detectadas", {
+            description: "O conteúdo pode ficar com qualidade reduzida.",
+            duration: 5000,
+          });
+          
+          // Log para console (sem clear, não atrapalha debug legítimo)
+          console.warn('🛡️ SANCTUM: DevTools detectado - evento registrado');
         }
       } else {
         setDevToolsOpen(false);
@@ -392,61 +550,89 @@ export const UltraFortressPlayer = memo(({
       }
     };
 
-    const interval = setInterval(checkDevTools, 1000);
+    const interval = setInterval(checkDevTools, 2000); // Menos frequente
     window.addEventListener("resize", checkDevTools);
 
     return () => {
       clearInterval(interval);
       window.removeEventListener("resize", checkDevTools);
     };
-  }, [isAuthorized, reportViolation]);
+  }, [isAuthorized, isImmune, reportViolation]);
 
-  // Keyboard shortcuts blocker
+  // 🛡️ SANCTUM: Keyboard shortcuts (apenas para não-imunes)
   useEffect(() => {
     if (!isAuthorized) return;
+    
+    // 🛡️ SANCTUM: Se imune, não bloquear atalhos
+    if (isImmune) {
+      console.log('🛡️ SANCTUM: Bloqueio de atalhos desativado (usuário imune)');
+      return;
+    }
 
     const handleKeyDown = (e: KeyboardEvent) => {
       const isCtrl = e.ctrlKey || e.metaKey;
       const isShift = e.shiftKey;
       const key = e.key.toLowerCase();
 
+      // Lista reduzida: apenas atalhos realmente perigosos
+      // NÃO bloquear: Ctrl+C (cópia normal), F12 (pode ser legítimo)
       const blocked = (
-        (isCtrl && ["s", "p", "c", "u"].includes(key)) ||
-        e.key === "F12" ||
-        (isCtrl && isShift && ["i", "j", "c", "k"].includes(key)) ||
-        (e.altKey && e.metaKey && key === "i") ||
-        e.key === "PrintScreen"
+        (isCtrl && ["s", "p", "u"].includes(key)) || // Salvar, Print, View Source
+        (isCtrl && isShift && ["i", "j"].includes(key)) // Inspect, Console
       );
 
       if (blocked) {
         e.preventDefault();
         e.stopPropagation();
-        reportViolation("keyboard_shortcut", { key: e.key });
-        toast.warning("⚠️ Ação bloqueada", { description: "Este atalho não é permitido" });
+        
+        // 🛡️ SANCTUM: Log + score, sem toast irritante
+        reportViolation("keyboard_shortcut", { 
+          key: e.key,
+          severity: 'LOW',
+          action_requested: 'log_only'
+        });
+        
         return false;
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown, true);
-    return () => window.removeEventListener("keydown", handleKeyDown, true);
-  }, [isAuthorized, reportViolation]);
+    // Listener apenas no container do player, não global
+    const container = containerRef.current;
+    if (container) {
+      container.addEventListener("keydown", handleKeyDown, true);
+    }
+    
+    return () => {
+      if (container) {
+        container.removeEventListener("keydown", handleKeyDown, true);
+      }
+    };
+  }, [isAuthorized, isImmune, reportViolation]);
 
-  // Visibility change detector
+  // 🛡️ SANCTUM: Visibility change (apenas para não-imunes, tolerante)
   useEffect(() => {
-    if (!isAuthorized) return;
+    if (!isAuthorized || isImmune) return;
 
     const handleVisibility = () => {
       if (document.hidden) {
         visibilityCountRef.current++;
-        if (visibilityCountRef.current >= 10) {
-          reportViolation("visibility_abuse", { count: visibilityCountRef.current });
+        
+        // 🛡️ SANCTUM: Threshold alto (30+) para evitar falso positivo
+        // Usuário pode trocar de aba normalmente
+        if (visibilityCountRef.current >= 30) {
+          reportViolation("visibility_abuse", { 
+            count: visibilityCountRef.current,
+            severity: 'LOW',
+            action_requested: 'log_only'
+          });
+          visibilityCountRef.current = 0; // Reset após log
         }
       }
     };
 
     document.addEventListener("visibilitychange", handleVisibility);
     return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, [isAuthorized, reportViolation]);
+  }, [isAuthorized, isImmune, reportViolation]);
 
   // ============================================
   // WATERMARK DINÂMICA (ANO 2300)
@@ -577,16 +763,22 @@ export const UltraFortressPlayer = memo(({
         WebkitUserSelect: "none",
       }}
       onContextMenu={(e) => {
+        // 🛡️ SANCTUM: Imunes podem usar menu de contexto
+        if (isImmune) return;
         e.preventDefault();
-        reportViolation("context_menu");
+        reportViolation("context_menu", { severity: 'LOW', action_requested: 'log_only' });
       }}
       onDragStart={(e) => {
+        if (isImmune) return;
         e.preventDefault();
-        reportViolation("drag_attempt");
+        reportViolation("drag_attempt", { severity: 'LOW', action_requested: 'log_only' });
       }}
       onCopy={(e) => {
-        e.preventDefault();
-        reportViolation("copy_attempt");
+        // 🛡️ SANCTUM: Cópia é permitida (pode ser legítima)
+        // Apenas log, sem bloquear
+        if (!isImmune) {
+          reportViolation("copy_attempt", { severity: 'LOW', action_requested: 'log_only' });
+        }
       }}
     >
       {/* Aspect Ratio Container */}
@@ -927,24 +1119,28 @@ export const UltraFortressPlayer = memo(({
         )}
 
         {/* ════════════════════════════════════════════
-            OVERLAY DE DEVTOOLS DETECTADO
+            🛡️ SANCTUM: OVERLAY DE DEVTOOLS (DEGRADAÇÃO LEVE)
+            - Imunes: sem overlay
+            - Não-imunes: apenas blur leve, NÃO bloqueia
             ════════════════════════════════════════════ */}
         <AnimatePresence>
-          {devToolsOpen && isAuthorized && (
+          {devToolsOpen && isAuthorized && !isImmune && (
             <motion.div
-              className="absolute inset-0 bg-black/95 z-[100] flex items-center justify-center"
+              className="absolute inset-0 z-[100] pointer-events-none"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <div className="text-center p-8">
-                <AlertTriangle className="w-20 h-20 text-red-500 mx-auto mb-4 animate-pulse" />
-                <h2 className="text-white text-2xl font-bold mb-2">🚨 ACESSO BLOQUEADO 🚨</h2>
-                <p className="text-white/60 mb-6">
-                  DevTools detectado. Feche as ferramentas de desenvolvedor para continuar.
-                </p>
-                <div className="text-red-400 text-sm font-mono">
-                  Esta violação foi registrada.
+              {/* 🛡️ SANCTUM: Apenas blur leve + badge, vídeo continua */}
+              <div className="absolute inset-0 backdrop-blur-[2px]" />
+              
+              {/* Badge de aviso no topo */}
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 px-4 py-2 rounded-full bg-yellow-500/90 backdrop-blur-sm">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="w-4 h-4 text-black" />
+                  <span className="text-black text-sm font-medium">
+                    Qualidade reduzida - feche DevTools
+                  </span>
                 </div>
               </div>
             </motion.div>

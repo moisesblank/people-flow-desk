@@ -1,10 +1,47 @@
-# 🔥🔥🔥 VIDEO FORTRESS ULTRA v3.0 — RELATÓRIO FINAL 🔥🔥🔥
+# 🛡️🔥 VIDEO FORTRESS ULTRA v4.0 — SANCTUM EDITION 🔥🛡️
 
 **Data:** 2024-12-22  
 **Autor:** MESTRE (Claude Opus 4.5 PHD)  
 **Status:** ✅ **PRONTO PARA PRODUÇÃO**  
 **Build:** ✅ **PASSOU SEM ERROS**  
-**Capacidade:** ✅ **5.000+ USUÁRIOS SIMULTÂNEOS**
+**Capacidade:** ✅ **5.000+ USUÁRIOS SIMULTÂNEOS**  
+**Protocolo:** 🛡️ **SANCTUM 2.0 — DETECÇÃO ≠ PUNIÇÃO**
+
+---
+
+## 🛡️ PROTOCOLO SANCTUM 2.0 IMPLEMENTADO
+
+### Regra de Ouro: DETECÇÃO ≠ PUNIÇÃO
+
+| Princípio | Implementação |
+|-----------|---------------|
+| **Nunca auto-logout** | ✅ MutationObserver/DevTools não deslogam |
+| **Score gradual** | ✅ warn → degrade → pause → reauth → revoke |
+| **Bypass para agentes** | ✅ owner, funcionario, suporte, automações |
+| **Backend decide** | ✅ Frontend envia evento, backend retorna ação |
+| **Ambiente dev relaxado** | ✅ localhost, staging = bypass |
+
+### Roles Imunes (NUNCA são punidas)
+
+```typescript
+['owner', 'admin', 'funcionario', 'suporte', 'coordenacao']
+```
+
+### Thresholds de Ação (MUITO mais altos)
+
+| Ação | Score Anterior | Score SANCTUM | Diferença |
+|------|----------------|---------------|-----------|
+| warn | 0 | 30 | +30 |
+| degrade | - | 60 | NOVO |
+| pause | 50 | 100 | +50 |
+| revoke | 100 | 200 + sev >= 9 | +100 |
+
+### Emails/Agentes na Allowlist
+
+```typescript
+['moisesblank@gmail.com', 'suporte@...', 'bot@...', 'automacao@...']
+['MoisesBot', 'TramonAgent', 'SNAWorker', 'Playwright', 'Cypress']
+```
 
 ---
 

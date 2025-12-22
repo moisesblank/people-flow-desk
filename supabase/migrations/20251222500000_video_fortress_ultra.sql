@@ -488,7 +488,8 @@ BEGIN
 END;
 $$;
 
--- 7.4 Registrar violação
+-- 7.4 Registrar violação (SANCTUM 2.0 - DETECÇÃO ≠ PUNIÇÃO)
+-- Thresholds mais altos, ações graduais
 CREATE OR REPLACE FUNCTION public.register_video_violation(
     p_session_token TEXT,
     p_violation_type video_violation_type,
@@ -504,9 +505,11 @@ SECURITY DEFINER
 AS $$
 DECLARE
     v_session RECORD;
+    v_user_role TEXT;
     v_new_risk_score INTEGER;
-    v_action_taken TEXT := 'warned';
+    v_action_taken TEXT := 'none';
     v_should_revoke BOOLEAN := FALSE;
+    v_is_immune BOOLEAN := FALSE;
 BEGIN
     -- Buscar sessão
     SELECT * INTO v_session
@@ -517,15 +520,53 @@ BEGIN
         RETURN jsonb_build_object('success', false, 'error', 'SESSION_NOT_FOUND');
     END IF;
     
-    -- Calcular novo risk score
-    v_new_risk_score := v_session.risk_score + (p_severity * 10);
+    -- 🛡️ SANCTUM: Verificar se usuário é imune
+    SELECT role INTO v_user_role
+    FROM public.profiles
+    WHERE id = v_session.user_id;
     
-    -- Determinar ação
-    IF v_new_risk_score >= 100 OR p_severity >= 8 THEN
-        v_action_taken := 'revoked';
+    v_is_immune := v_user_role IN ('owner', 'admin', 'funcionario', 'suporte', 'coordenacao');
+    
+    -- 🛡️ SANCTUM: Usuários imunes = apenas log, sem score
+    IF v_is_immune THEN
+        -- Apenas registrar para auditoria, sem impacto
+        INSERT INTO public.video_access_logs (
+            user_id, session_id, action, lesson_id, provider_video_id, ip_address, user_agent,
+            details
+        ) VALUES (
+            v_session.user_id, v_session.id, 'violation', v_session.lesson_id, v_session.provider_video_id,
+            p_ip_address, p_user_agent,
+            jsonb_build_object('type', p_violation_type, 'severity', p_severity, 'sanctum_bypass', true, 'role', v_user_role)
+        );
+        
+        RETURN jsonb_build_object(
+            'success', true,
+            'action_taken', 'none',
+            'session_revoked', false,
+            'new_risk_score', 0,
+            'sanctum_bypass', true
+        );
+    END IF;
+    
+    -- Calcular novo risk score (incremento mais suave)
+    v_new_risk_score := v_session.risk_score + (p_severity * 5); -- Era *10, agora *5
+    
+    -- 🛡️ SANCTUM: Thresholds MUITO mais altos para ações
+    -- warn: score >= 30 (antes era implícito)
+    -- degrade: score >= 60
+    -- pause: score >= 100 (antes era 50)
+    -- revoke: score >= 200 E severidade >= 9 (antes era 100)
+    IF v_new_risk_score >= 200 AND p_severity >= 9 THEN
+        v_action_taken := 'revoke';
         v_should_revoke := TRUE;
-    ELSIF v_new_risk_score >= 50 THEN
-        v_action_taken := 'paused';
+    ELSIF v_new_risk_score >= 100 THEN
+        v_action_taken := 'pause';
+    ELSIF v_new_risk_score >= 60 THEN
+        v_action_taken := 'degrade';
+    ELSIF v_new_risk_score >= 30 THEN
+        v_action_taken := 'warn';
+    ELSE
+        v_action_taken := 'none'; -- Score baixo = sem ação
     END IF;
     
     -- Registrar violação
@@ -555,28 +596,29 @@ BEGIN
         p_user_agent
     );
     
-    -- Atualizar sessão
+    -- Atualizar sessão (só revoga se v_should_revoke = true)
     UPDATE public.video_play_sessions
     SET 
         risk_score = v_new_risk_score,
         violation_count = violation_count + 1,
         status = CASE WHEN v_should_revoke THEN 'revoked'::video_session_status ELSE status END,
         revoked_at = CASE WHEN v_should_revoke THEN now() ELSE revoked_at END,
-        revoke_reason = CASE WHEN v_should_revoke THEN 'SECURITY_VIOLATION' ELSE revoke_reason END
+        revoke_reason = CASE WHEN v_should_revoke THEN 'SECURITY_VIOLATION_CONFIRMED' ELSE revoke_reason END
     WHERE id = v_session.id;
     
-    -- Atualizar risk score do usuário
+    -- Atualizar risk score do usuário (thresholds mais altos)
     INSERT INTO public.video_user_risk_scores (user_id, total_risk_score, total_violations, last_violation_at, first_violation_at)
-    VALUES (v_session.user_id, p_severity * 10, 1, now(), now())
+    VALUES (v_session.user_id, p_severity * 5, 1, now(), now())
     ON CONFLICT (user_id) DO UPDATE SET
-        total_risk_score = video_user_risk_scores.total_risk_score + (p_severity * 10),
+        total_risk_score = video_user_risk_scores.total_risk_score + (p_severity * 5),
         total_violations = video_user_risk_scores.total_violations + 1,
         violations_last_24h = video_user_risk_scores.violations_last_24h + 1,
         last_violation_at = now(),
+        -- 🛡️ SANCTUM: Thresholds de nível muito mais altos
         current_risk_level = CASE 
-            WHEN video_user_risk_scores.total_risk_score + (p_severity * 10) >= 500 THEN 'critical'
-            WHEN video_user_risk_scores.total_risk_score + (p_severity * 10) >= 200 THEN 'high'
-            WHEN video_user_risk_scores.total_risk_score + (p_severity * 10) >= 50 THEN 'medium'
+            WHEN video_user_risk_scores.total_risk_score + (p_severity * 5) >= 1000 THEN 'critical'
+            WHEN video_user_risk_scores.total_risk_score + (p_severity * 5) >= 500 THEN 'high'
+            WHEN video_user_risk_scores.total_risk_score + (p_severity * 5) >= 200 THEN 'medium'
             ELSE 'low'
         END,
         updated_at = now();
@@ -588,7 +630,7 @@ BEGIN
     ) VALUES (
         v_session.user_id, v_session.id, 'violation', v_session.lesson_id, v_session.provider_video_id,
         p_ip_address, p_user_agent,
-        jsonb_build_object('type', p_violation_type, 'severity', p_severity, 'action', v_action_taken)
+        jsonb_build_object('type', p_violation_type, 'severity', p_severity, 'action', v_action_taken, 'score', v_new_risk_score)
     );
     
     RETURN jsonb_build_object(
