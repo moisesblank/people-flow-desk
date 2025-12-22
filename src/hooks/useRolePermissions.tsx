@@ -1,5 +1,5 @@
 // ============================================
-// 🔥 MOISÉS MEDEIROS v10.0 - ROLE PERMISSIONS HOOK
+// 🔥 MOISÉS MEDEIROS v11.0 - ROLE PERMISSIONS HOOK
 // Sistema de Permissões por Cargo Completo
 // ============================================
 // 📌 REGRA MATRIZ - ARQUITETURA DE DOMÍNIOS:
@@ -24,6 +24,18 @@ import {
   validarAcessoUrl,
   type CategoriaAcesso 
 } from "@/config/matriz-urls";
+import {
+  isOwner as isOwnerFn,
+  isImmune,
+  isGestaoRole,
+  getRolePermissions as getCoreRolePermissions,
+  validateAccess,
+  getPostLoginRedirect,
+  getAccessDeniedRedirect,
+  type AppRole,
+  type SystemDomain,
+  type AccessCategory,
+} from "@/core/urlAccessControl";
 
 // ============================================
 // CONSTANTES GLOBAIS - LEI IV (SOBERANIA DO ARQUITETO)
