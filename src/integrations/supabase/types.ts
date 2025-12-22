@@ -13370,10 +13370,9 @@ export type Database = {
       }
       fn_get_book_for_reader: { Args: { p_book_id: string }; Returns: Json }
       fn_get_sanctum_stats: { Args: never; Returns: Json }
-      fn_get_user_annotations: {
-        Args: { p_book_id: string; p_page_number?: number }
-        Returns: Json
-      }
+      fn_get_user_annotations:
+        | { Args: { p_book_id: string }; Returns: Json }
+        | { Args: { p_book_id: string; p_page_number?: number }; Returns: Json }
       fn_is_beta_or_owner: { Args: never; Returns: boolean }
       fn_is_owner: { Args: never; Returns: boolean }
       fn_list_books_for_category: {
