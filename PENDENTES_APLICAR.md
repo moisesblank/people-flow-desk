@@ -177,4 +177,34 @@ Quando aplicar cada passo, atualize esta lista:
 
 ---
 
-**Última atualização:** 22/12/2024 — Video Fortress OMEGA v5.0
+---
+
+## 🔥 MATRIZ UNIFICADA DE FUNCIONALIDADES (ZERO CLIQUES MORTOS)
+
+Esta seção é sobre o sistema de centralização de rotas, ações e storage.
+
+### Arquivos Frontend (AUTOMÁTICOS):
+| # | Arquivo | Função |
+|---|---------|--------|
+| 1 | `src/core/routes.ts` | 95+ rotas centralizadas |
+| 2 | `src/core/actions.ts` | 100+ ações tipadas |
+| 3 | `src/core/storage.ts` | 18 buckets configurados |
+| 4 | `src/core/functionMatrix.ts` | Registry de funções |
+| 5 | `src/core/SafeComponents.tsx` | Componentes seguros |
+| 6 | `src/core/nav/navRouteMap.ts` | Mapa de navegação |
+| 7 | `src/core/index.ts` | Índice central |
+| 8 | `src/pages/CentralDiagnostico.tsx` | Página de diagnóstico |
+
+### Para adicionar a rota no App.tsx:
+```tsx
+const CentralDiagnostico = lazy(() => import("./pages/CentralDiagnostico"));
+
+<Route 
+  path="/central-diagnostico" 
+  element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} 
+/>
+```
+
+---
+
+**Última atualização:** 22/12/2024 — Matriz Unificada + Video Fortress OMEGA v5.0
