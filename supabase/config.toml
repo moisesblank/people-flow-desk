@@ -209,3 +209,14 @@ verify_jwt = true
 
 [functions.video-violation-omega]
 verify_jwt = false
+
+# ============================================
+# 🌌🔥 SANCTUM OMEGA ULTRA v3.0
+# Proteção de Conteúdo Nível NASA
+# ============================================
+
+[functions.sanctum-asset-manifest]
+verify_jwt = true
+
+[functions.sanctum-report-violation]
+verify_jwt = false

@@ -12951,6 +12951,22 @@ export type Database = {
         Args: { p_asset_id: string; p_user_id: string }
         Returns: Json
       }
+      fn_get_sanctum_stats: { Args: never; Returns: Json }
+      fn_register_sanctum_violation: {
+        Args: {
+          p_asset_id?: string
+          p_domain?: string
+          p_ip_hash?: string
+          p_metadata?: Json
+          p_route?: string
+          p_severity: number
+          p_ua_hash?: string
+          p_user_email: string
+          p_user_id: string
+          p_violation_type: string
+        }
+        Returns: Json
+      }
       fortress_cleanup_rate_limits: { Args: never; Returns: number }
       fortress_cleanup_security_events: { Args: never; Returns: number }
       fortress_cleanup_sessions: { Args: never; Returns: number }
