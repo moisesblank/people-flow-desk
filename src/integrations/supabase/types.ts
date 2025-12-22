@@ -13482,6 +13482,10 @@ export type Database = {
         Returns: boolean
       }
       apply_risk_score_decay: { Args: never; Returns: number }
+      assert_role: {
+        Args: { _required_role: string; _user_id: string }
+        Returns: boolean
+      }
       audit_rls_coverage_v2: {
         Args: never
         Returns: {
@@ -13498,6 +13502,15 @@ export type Database = {
       auto_cleanup_for_load: { Args: never; Returns: undefined }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
+        Returns: boolean
+      }
+      can_access_resource: {
+        Args: {
+          p_action?: string
+          p_resource_id?: string
+          p_resource_type: string
+          p_user_id: string
+        }
         Returns: boolean
       }
       can_access_sanctuary: { Args: { p_user_id: string }; Returns: boolean }
@@ -14121,6 +14134,7 @@ export type Database = {
       is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_domain_authorized: { Args: { p_domain: string }; Returns: boolean }
       is_funcionario: { Args: { p_user_id?: string }; Returns: boolean }
+      is_funcionario_or_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_matrix_admin: { Args: never; Returns: boolean }
@@ -14136,6 +14150,16 @@ export type Database = {
       is_video_domain_authorized: {
         Args: { p_domain: string }
         Returns: boolean
+      }
+      log_access_attempt: {
+        Args: {
+          p_action: string
+          p_allowed: boolean
+          p_reason?: string
+          p_resource: string
+          p_user_id: string
+        }
+        Returns: string
       }
       log_activity: {
         Args: {
