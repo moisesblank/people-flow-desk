@@ -11105,6 +11105,19 @@ export type Database = {
           total_time: number
         }[]
       }
+      audit_rls_coverage: {
+        Args: never
+        Returns: {
+          has_delete_policy: boolean
+          has_insert_policy: boolean
+          has_select_policy: boolean
+          has_update_policy: boolean
+          policy_count: number
+          risk_level: string
+          rls_enabled: boolean
+          table_name: string
+        }[]
+      }
       audit_rls_coverage_v2: {
         Args: never
         Returns: {
@@ -11240,6 +11253,7 @@ export type Database = {
         }[]
       }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
+      cleanup_expired_sessions: { Args: never; Returns: number }
       cleanup_expired_sessions_v2: { Args: never; Returns: number }
       cleanup_expired_signed_urls: { Args: never; Returns: number }
       cleanup_expired_timeouts: { Args: never; Returns: number }
@@ -11247,8 +11261,10 @@ export type Database = {
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
+      cleanup_old_security_events: { Args: never; Returns: number }
       cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      cleanup_rate_limits: { Args: never; Returns: number }
       cleanup_rate_limits_v3: { Args: never; Returns: number }
       cleanup_security_data: { Args: never; Returns: Json }
       cleanup_security_data_v3: { Args: never; Returns: Json }
@@ -11561,15 +11577,26 @@ export type Database = {
         }
         Returns: undefined
       }
-      mark_webhook_processed: {
-        Args: {
-          p_error?: string
-          p_event_id: string
-          p_provider: string
-          p_response?: Json
-        }
-        Returns: boolean
-      }
+      mark_webhook_processed:
+        | {
+            Args: {
+              p_error?: string
+              p_event_id: string
+              p_provider: string
+              p_response?: Json
+            }
+            Returns: boolean
+          }
+        | {
+            Args: {
+              p_error?: string
+              p_event_id: string
+              p_provider: string
+              p_response?: Json
+              p_status?: string
+            }
+            Returns: boolean
+          }
       mask_email: { Args: { p_email: string }; Returns: string }
       mask_phone: { Args: { p_phone: string }; Returns: string }
       materialize_fixed_expense: {
