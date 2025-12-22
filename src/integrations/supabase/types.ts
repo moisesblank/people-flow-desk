@@ -12261,6 +12261,7 @@ export type Database = {
       cleanup_expired_sessions_v2: { Args: never; Returns: number }
       cleanup_expired_signed_urls: { Args: never; Returns: number }
       cleanup_expired_timeouts: { Args: never; Returns: number }
+      cleanup_expired_video_sessions: { Args: never; Returns: number }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
@@ -12326,6 +12327,7 @@ export type Database = {
       }
       current_user_email: { Args: never; Returns: string }
       deactivate_device: { Args: { p_device_id: string }; Returns: Json }
+      decay_video_risk_scores: { Args: never; Returns: number }
       end_video_session: {
         Args: {
           p_completion_percentage?: number
@@ -12528,6 +12530,18 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"]
       }
       get_user_role_v2: { Args: { p_user_id?: string }; Returns: string }
+      get_video_metrics: {
+        Args: { p_days?: number }
+        Returns: {
+          active_sessions: number
+          avg_watch_seconds: number
+          immune_sessions: number
+          revoked_sessions: number
+          total_sessions: number
+          total_violations: number
+          unique_users: number
+        }[]
+      }
       grant_beta_access: {
         Args: { _days?: number; _user_id: string }
         Returns: Json
@@ -12568,6 +12582,7 @@ export type Database = {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_video_admin: { Args: never; Returns: boolean }
       is_video_domain_authorized: {
         Args: { p_domain: string }
         Returns: boolean
