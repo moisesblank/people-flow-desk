@@ -11826,6 +11826,7 @@ export type Database = {
           error_message: string | null
           id: string
           is_premium: boolean
+          is_published: boolean
           job_id: string | null
           original_bucket: string
           original_filename: string | null
@@ -11860,6 +11861,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           is_premium?: boolean
+          is_published?: boolean
           job_id?: string | null
           original_bucket?: string
           original_filename?: string | null
@@ -11894,6 +11896,7 @@ export type Database = {
           error_message?: string | null
           id?: string
           is_premium?: boolean
+          is_published?: boolean
           job_id?: string | null
           original_bucket?: string
           original_filename?: string | null
@@ -13755,7 +13758,12 @@ export type Database = {
         Args: { p_asset_id: string; p_user_id: string }
         Returns: Json
       }
+      fn_get_book_annotations: {
+        Args: { p_book_id: string; p_page_number?: number }
+        Returns: Json
+      }
       fn_get_book_for_reader: { Args: { p_book_id: string }; Returns: Json }
+      fn_get_book_stats: { Args: never; Returns: Json }
       fn_get_book_watermark: { Args: never; Returns: Json }
       fn_get_sanctum_stats: { Args: never; Returns: Json }
       fn_get_user_annotations:
@@ -13765,7 +13773,12 @@ export type Database = {
       fn_is_book_owner: { Args: never; Returns: boolean }
       fn_is_owner: { Args: never; Returns: boolean }
       fn_list_books_for_category: {
-        Args: { p_category?: string }
+        Args: {
+          p_category?: string
+          p_limit?: number
+          p_offset?: number
+          p_search?: string
+        }
         Returns: Json
       }
       fn_log_book_access: {
@@ -13827,24 +13840,15 @@ export type Database = {
         }
         Returns: Json
       }
-      fn_update_reading_progress:
-        | {
-            Args: {
-              p_book_id: string
-              p_current_page: number
-              p_reading_time_seconds?: number
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_book_id: string
-              p_current_page: number
-              p_reading_time_seconds?: number
-              p_session_id?: string
-            }
-            Returns: Json
-          }
+      fn_update_reading_progress: {
+        Args: {
+          p_book_id: string
+          p_current_page: number
+          p_reading_time_seconds?: number
+          p_session_id?: string
+        }
+        Returns: Json
+      }
       fortress_cleanup_rate_limits: { Args: never; Returns: number }
       fortress_cleanup_security_events: { Args: never; Returns: number }
       fortress_cleanup_sessions: { Args: never; Returns: number }
