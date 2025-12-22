@@ -5681,6 +5681,42 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_metrics: {
+        Row: {
+          cache_hit_ratio: number | null
+          concurrent_users: number | null
+          endpoint: string | null
+          error_count: number | null
+          id: string
+          measured_at: string | null
+          metric_type: string
+          response_time_ms: number | null
+          success_count: number | null
+        }
+        Insert: {
+          cache_hit_ratio?: number | null
+          concurrent_users?: number | null
+          endpoint?: string | null
+          error_count?: number | null
+          id?: string
+          measured_at?: string | null
+          metric_type: string
+          response_time_ms?: number | null
+          success_count?: number | null
+        }
+        Update: {
+          cache_hit_ratio?: number | null
+          concurrent_users?: number | null
+          endpoint?: string | null
+          error_count?: number | null
+          id?: string
+          measured_at?: string | null
+          metric_type?: string
+          response_time_ms?: number | null
+          success_count?: number | null
+        }
+        Relationships: []
+      }
       permission_audit_logs: {
         Row: {
           action: string
@@ -6564,6 +6600,81 @@ export type Database = {
           },
         ]
       }
+      rate_limit_config: {
+        Row: {
+          burst_limit: number | null
+          cooldown_seconds: number | null
+          created_at: string | null
+          endpoint: string
+          id: string
+          is_active: boolean | null
+          requests_per_hour: number | null
+          requests_per_minute: number | null
+          role: string | null
+        }
+        Insert: {
+          burst_limit?: number | null
+          cooldown_seconds?: number | null
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          is_active?: boolean | null
+          requests_per_hour?: number | null
+          requests_per_minute?: number | null
+          role?: string | null
+        }
+        Update: {
+          burst_limit?: number | null
+          cooldown_seconds?: number | null
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          is_active?: boolean | null
+          requests_per_hour?: number | null
+          requests_per_minute?: number | null
+          role?: string | null
+        }
+        Relationships: []
+      }
+      rate_limit_realtime: {
+        Row: {
+          created_at: string | null
+          endpoint: string
+          id: string
+          identifier: string
+          is_throttled: boolean | null
+          last_request_at: string | null
+          request_count: number | null
+          throttle_until: string | null
+          violation_count: number | null
+          window_start: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          endpoint: string
+          id?: string
+          identifier: string
+          is_throttled?: boolean | null
+          last_request_at?: string | null
+          request_count?: number | null
+          throttle_until?: string | null
+          violation_count?: number | null
+          window_start?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          endpoint?: string
+          id?: string
+          identifier?: string
+          is_throttled?: boolean | null
+          last_request_at?: string | null
+          request_count?: number | null
+          throttle_until?: string | null
+          violation_count?: number | null
+          window_start?: string | null
+        }
+        Relationships: []
+      }
       rate_limit_state: {
         Row: {
           blocked_until: string | null
@@ -7089,6 +7200,57 @@ export type Database = {
           risk_score?: number
           user_agent?: string | null
           user_email?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      security_log_immutable: {
+        Row: {
+          action_taken: Database["public"]["Enums"]["security_action"] | null
+          created_at: string | null
+          details: Json | null
+          device_fingerprint: string | null
+          event_type: string
+          id: string
+          ip_address: unknown
+          risk_score: number | null
+          session_id: string | null
+          severity: string | null
+          threat_level: Database["public"]["Enums"]["threat_level"] | null
+          url: string | null
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action_taken?: Database["public"]["Enums"]["security_action"] | null
+          created_at?: string | null
+          details?: Json | null
+          device_fingerprint?: string | null
+          event_type: string
+          id?: string
+          ip_address?: unknown
+          risk_score?: number | null
+          session_id?: string | null
+          severity?: string | null
+          threat_level?: Database["public"]["Enums"]["threat_level"] | null
+          url?: string | null
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action_taken?: Database["public"]["Enums"]["security_action"] | null
+          created_at?: string | null
+          details?: Json | null
+          device_fingerprint?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown
+          risk_score?: number | null
+          session_id?: string | null
+          severity?: string | null
+          threat_level?: Database["public"]["Enums"]["threat_level"] | null
+          url?: string | null
+          user_agent?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -7880,6 +8042,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      threat_intelligence: {
+        Row: {
+          blocked_until: string | null
+          created_at: string | null
+          device_fingerprint: string | null
+          id: string
+          ip_address: unknown
+          last_violation_at: string | null
+          metadata: Json | null
+          risk_score: number | null
+          threat_level: Database["public"]["Enums"]["threat_level"] | null
+          total_violations: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          blocked_until?: string | null
+          created_at?: string | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          last_violation_at?: string | null
+          metadata?: Json | null
+          risk_score?: number | null
+          threat_level?: Database["public"]["Enums"]["threat_level"] | null
+          total_violations?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          blocked_until?: string | null
+          created_at?: string | null
+          device_fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          last_violation_at?: string | null
+          metadata?: Json | null
+          risk_score?: number | null
+          threat_level?: Database["public"]["Enums"]["threat_level"] | null
+          total_violations?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       tiktok_metrics: {
         Row: {
@@ -8701,6 +8908,48 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      url_access_rules: {
+        Row: {
+          allowed_roles: string[]
+          created_at: string | null
+          description: string | null
+          domain: string
+          id: string
+          is_active: boolean | null
+          max_risk_score: number | null
+          priority: number | null
+          require_mfa: boolean | null
+          require_valid_subscription: boolean | null
+          url_pattern: string
+        }
+        Insert: {
+          allowed_roles: string[]
+          created_at?: string | null
+          description?: string | null
+          domain: string
+          id?: string
+          is_active?: boolean | null
+          max_risk_score?: number | null
+          priority?: number | null
+          require_mfa?: boolean | null
+          require_valid_subscription?: boolean | null
+          url_pattern: string
+        }
+        Update: {
+          allowed_roles?: string[]
+          created_at?: string | null
+          description?: string | null
+          domain?: string
+          id?: string
+          is_active?: boolean | null
+          max_risk_score?: number | null
+          priority?: number | null
+          require_mfa?: boolean | null
+          require_valid_subscription?: boolean | null
+          url_pattern?: string
         }
         Relationships: []
       }
@@ -10869,6 +11118,22 @@ export type Database = {
         }
         Returns: Json
       }
+      check_rate_limit_v3: {
+        Args: { p_endpoint: string; p_identifier: string; p_role?: string }
+        Returns: {
+          allowed: boolean
+          remaining: number
+          retry_after: number
+        }[]
+      }
+      check_url_access_v3: {
+        Args: { p_domain?: string; p_url: string; p_user_id: string }
+        Returns: {
+          allowed: boolean
+          reason: string
+          redirect_to: string
+        }[]
+      }
       check_webhook_idempotency_v2: {
         Args: {
           p_event_id: string
@@ -10906,6 +11171,7 @@ export type Database = {
       cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
       cleanup_rate_limits_v3: { Args: never; Returns: number }
+      cleanup_security_data_v3: { Args: never; Returns: Json }
       complete_event: {
         Args: {
           p_error_message?: string
@@ -11068,6 +11334,7 @@ export type Database = {
           nome: string
         }[]
       }
+      get_security_dashboard_v3: { Args: never; Returns: Json }
       get_system_load: { Args: never; Returns: Json }
       get_user_chat_ban_status: {
         Args: { p_live_id: string; p_user_id: string }
@@ -11173,6 +11440,15 @@ export type Database = {
           p_ip_address?: unknown
           p_risk_score?: number
           p_user_agent?: string
+          p_user_id?: string
+        }
+        Returns: string
+      }
+      log_security_v3: {
+        Args: {
+          p_details?: Json
+          p_event_type: string
+          p_severity?: string
           p_user_id?: string
         }
         Returns: string
@@ -11325,6 +11601,17 @@ export type Database = {
         | "aluno"
         | "beta"
         | "aluno_gratuito"
+      attack_type:
+        | "brute_force"
+        | "credential_stuffing"
+        | "session_hijacking"
+        | "privilege_escalation"
+        | "sql_injection"
+        | "xss_attempt"
+        | "ddos"
+        | "bot_attack"
+        | "api_abuse"
+        | "data_exfiltration"
       employee_status: "ativo" | "ferias" | "afastado" | "inativo"
       event_name:
         | "payment.succeeded"
@@ -11391,8 +11678,23 @@ export type Database = {
         | "Vendas"
         | "Design"
         | "Gestão"
+      security_action:
+        | "allow"
+        | "challenge"
+        | "rate_limit"
+        | "block_temp"
+        | "block_perm"
+        | "alert_admin"
+        | "quarantine"
       security_severity: "debug" | "info" | "warning" | "error" | "critical"
       session_status: "active" | "expired" | "revoked" | "suspicious"
+      threat_level:
+        | "none"
+        | "low"
+        | "medium"
+        | "high"
+        | "critical"
+        | "emergency"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -11535,6 +11837,18 @@ export const Constants = {
         "beta",
         "aluno_gratuito",
       ],
+      attack_type: [
+        "brute_force",
+        "credential_stuffing",
+        "session_hijacking",
+        "privilege_escalation",
+        "sql_injection",
+        "xss_attempt",
+        "ddos",
+        "bot_attack",
+        "api_abuse",
+        "data_exfiltration",
+      ],
       employee_status: ["ativo", "ferias", "afastado", "inativo"],
       event_name: [
         "payment.succeeded",
@@ -11605,8 +11919,18 @@ export const Constants = {
         "Design",
         "Gestão",
       ],
+      security_action: [
+        "allow",
+        "challenge",
+        "rate_limit",
+        "block_temp",
+        "block_perm",
+        "alert_admin",
+        "quarantine",
+      ],
       security_severity: ["debug", "info", "warning", "error", "critical"],
       session_status: ["active", "expired", "revoked", "suspicious"],
+      threat_level: ["none", "low", "medium", "high", "critical", "emergency"],
     },
   },
 } as const
