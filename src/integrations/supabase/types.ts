@@ -10562,6 +10562,8 @@ export type Database = {
       }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
       cleanup_expired_signed_urls: { Args: never; Returns: number }
+      cleanup_expired_timeouts: { Args: never; Returns: number }
+      cleanup_old_chat_messages: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
@@ -10729,6 +10731,15 @@ export type Database = {
         }[]
       }
       get_system_load: { Args: never; Returns: Json }
+      get_user_chat_ban_status: {
+        Args: { p_live_id: string; p_user_id: string }
+        Returns: {
+          is_banned: boolean
+          is_timed_out: boolean
+          reason: string
+          timeout_until: string
+        }[]
+      }
       get_user_devices: { Args: { p_user_id?: string }; Returns: Json }
       get_user_role: {
         Args: { _user_id: string }
@@ -10767,6 +10778,10 @@ export type Database = {
       is_owner:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id?: string }; Returns: boolean }
+      is_user_banned_from_chat: {
+        Args: { p_live_id: string; p_user_id: string }
+        Returns: boolean
+      }
       log_activity: {
         Args: {
           _action: string
