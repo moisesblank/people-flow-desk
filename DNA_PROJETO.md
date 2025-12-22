@@ -79,19 +79,70 @@ CREATE TYPE public.user_role AS ENUM (
 );
 ```
 
-## URLs por Role
+## URLs por Role (REGRA MATRIZ INVIOLÁVEL)
 
-| Role | URL Principal | Acesso |
-|------|---------------|--------|
-| **owner** | Todas | 👑 SUPREMO |
-| **funcionario** | `gestao.moisesmedeiros.com.br` | 👔 Por categoria |
-| **beta** | `pro.moisesmedeiros.com.br/alunos` | 👨‍🎓 Conteúdo pago |
-| **aluno_gratuito** | `pro.moisesmedeiros.com.br` | 🌐 Área gratuita |
+| Role | URL Principal | Acesso | Nomenclatura Interna |
+|------|---------------|--------|----------------------|
+| **owner** | Todas as URLs | 👑 SUPREMO | OWNER |
+| **funcionario** | `https://gestao.moisesmedeiros.com.br/` | 👔 Por categoria | GESTÃO |
+| **beta** | `https://pro.moisesmedeiros.com.br/alunos` | 👨‍🎓 Conteúdo pago | ALUNO BETA |
+| **aluno_gratuito** | `https://pro.moisesmedeiros.com.br/` | 🌐 Área gratuita | NÃO PAGANTE |
+
+## Mapa de URLs Definitivo
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                    MAPA DE URLS - REGRA MATRIZ                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  🌐 PÚBLICO (Qualquer pessoa)                                   │
+│  └── https://pro.moisesmedeiros.com.br/                         │
+│      └── HOME, Landing, Área Gratuita                           │
+│      └── Criar conta = Acesso livre (NÃO PAGANTE)               │
+│                                                                 │
+│  👨‍🎓 ALUNO BETA (Pagou = Acesso ativo)                           │
+│  └── https://pro.moisesmedeiros.com.br/alunos                   │
+│      └── Dashboard, Videoaulas, Questões, Simulados             │
+│      └── Flashcards, Ranking, IA, etc.                          │
+│      └── VALIDAR: role='beta' E access_expires_at > now()       │
+│                                                                 │
+│  👔 FUNCIONÁRIO (Equipe)                                        │
+│  └── https://gestao.moisesmedeiros.com.br/                      │
+│      └── Gestão, Finanças, Relatórios, Equipe                   │
+│      └── VALIDAR: role='funcionario' + permissões específicas   │
+│                                                                 │
+│  👑 OWNER (Moises)                                              │
+│  └── TODAS AS URLS                                              │
+│      └── Acesso ABSOLUTO a tudo                                 │
+│      └── role='owner'                                           │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
 
 ## Redirecionamentos
 
 ```
-www.moisesmedeiros.com.br → pro.moisesmedeiros.com.br (HOME)
+www.moisesmedeiros.com.br → https://pro.moisesmedeiros.com.br/ (HOME)
+moisesmedeiros.com.br     → https://pro.moisesmedeiros.com.br/ (HOME)
+```
+
+## Validação de Acesso (OBRIGATÓRIO)
+
+```typescript
+// SEMPRE validar antes de renderizar qualquer rota protegida
+
+// Para /alunos/* (Conteúdo BETA)
+const canAccessBeta = 
+  profile.role === 'owner' || 
+  (profile.role === 'beta' && new Date(profile.access_expires_at) > new Date());
+
+// Para /gestao/* (Funcionários)
+const canAccessGestao = 
+  profile.role === 'owner' || 
+  profile.role === 'funcionario';
+
+// Para /* (Área Gratuita)
+const canAccessPublic = true; // Qualquer um pode acessar
 ```
 
 ---
