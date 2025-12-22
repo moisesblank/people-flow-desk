@@ -4667,6 +4667,7 @@ export type Database = {
           updated_at: string | null
           user_id: string
           user_name: string
+          user_role: string
         }
         Insert: {
           avatar_url?: string | null
@@ -4681,6 +4682,7 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           user_name: string
+          user_role?: string
         }
         Update: {
           avatar_url?: string | null
@@ -4695,38 +4697,45 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           user_name?: string
+          user_role?: string
         }
         Relationships: []
       }
       live_chat_settings: {
         Row: {
+          blocked_words: string[] | null
           chat_enabled: boolean | null
           created_at: string | null
           follower_only: boolean | null
           id: string
           live_id: string
+          min_account_age_days: number
           slow_mode: boolean | null
           slow_mode_interval: number | null
           subscriber_only: boolean | null
           updated_at: string | null
         }
         Insert: {
+          blocked_words?: string[] | null
           chat_enabled?: boolean | null
           created_at?: string | null
           follower_only?: boolean | null
           id?: string
           live_id: string
+          min_account_age_days?: number
           slow_mode?: boolean | null
           slow_mode_interval?: number | null
           subscriber_only?: boolean | null
           updated_at?: string | null
         }
         Update: {
+          blocked_words?: string[] | null
           chat_enabled?: boolean | null
           created_at?: string | null
           follower_only?: boolean | null
           id?: string
           live_id?: string
+          min_account_age_days?: number
           slow_mode?: boolean | null
           slow_mode_interval?: number | null
           subscriber_only?: boolean | null
@@ -11854,13 +11863,9 @@ export type Database = {
         Returns: boolean
       }
       check_beta_access: { Args: { _user_id: string }; Returns: Json }
-      check_chat_rate_limit: {
-        Args: {
-          p_interval_seconds?: number
-          p_live_id: string
-          p_user_id: string
-        }
-        Returns: boolean
+      check_chat_rate_limit_v2: {
+        Args: { p_live_id: string; p_user_id: string; p_window_ms?: number }
+        Returns: Json
       }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
@@ -12063,6 +12068,7 @@ export type Database = {
           isSetofReturn: true
         }
       }
+      get_live_chat_stats: { Args: { p_live_id: string }; Returns: Json }
       get_masked_location: {
         Args: { p_address: string; p_latitude: number; p_longitude: number }
         Returns: Json
@@ -12328,11 +12334,11 @@ export type Database = {
         Returns: number
       }
       security_cleanup_job: { Args: never; Returns: undefined }
-      send_chat_message: {
+      send_chat_message_v2: {
         Args: {
-          p_avatar_url?: string
           p_live_id: string
           p_message: string
+          p_user_avatar?: string
           p_user_name?: string
         }
         Returns: string
