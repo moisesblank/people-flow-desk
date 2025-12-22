@@ -53,6 +53,72 @@ export type Database = {
         }
         Relationships: []
       }
+      active_sessions: {
+        Row: {
+          city: string | null
+          country_code: string | null
+          created_at: string
+          device_hash: string
+          device_name: string | null
+          device_type: string | null
+          expires_at: string
+          id: string
+          ip_address: unknown
+          is_current: boolean | null
+          last_activity_at: string
+          mfa_verified: boolean | null
+          revoked_at: string | null
+          revoked_reason: string | null
+          risk_score: number | null
+          session_token: string
+          status: Database["public"]["Enums"]["session_status"]
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_hash: string
+          device_name?: string | null
+          device_type?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          is_current?: boolean | null
+          last_activity_at?: string
+          mfa_verified?: boolean | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          risk_score?: number | null
+          session_token?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          device_hash?: string
+          device_name?: string | null
+          device_type?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: unknown
+          is_current?: boolean | null
+          last_activity_at?: string
+          mfa_verified?: boolean | null
+          revoked_at?: string | null
+          revoked_reason?: string | null
+          risk_score?: number | null
+          session_token?: string
+          status?: Database["public"]["Enums"]["session_status"]
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       activity_log: {
         Row: {
           action: string
@@ -6498,6 +6564,42 @@ export type Database = {
           },
         ]
       }
+      rate_limit_state: {
+        Row: {
+          blocked_until: string | null
+          created_at: string
+          endpoint: string
+          id: string
+          identifier: string
+          request_count: number | null
+          total_blocked_count: number | null
+          updated_at: string
+          window_start: string
+        }
+        Insert: {
+          blocked_until?: string | null
+          created_at?: string
+          endpoint: string
+          id?: string
+          identifier: string
+          request_count?: number | null
+          total_blocked_count?: number | null
+          updated_at?: string
+          window_start?: string
+        }
+        Update: {
+          blocked_until?: string | null
+          created_at?: string
+          endpoint?: string
+          id?: string
+          identifier?: string
+          request_count?: number | null
+          total_blocked_count?: number | null
+          updated_at?: string
+          window_start?: string
+        }
+        Relationships: []
+      }
       reagents: {
         Row: {
           cas_number: string | null
@@ -6814,6 +6916,75 @@ export type Database = {
         }
         Relationships: []
       }
+      security_audit_log: {
+        Row: {
+          action: string
+          action_category: string
+          city: string | null
+          correlation_id: string | null
+          country_code: string | null
+          created_at: string
+          id: string
+          ip_address: unknown
+          metadata: Json | null
+          new_data: Json | null
+          old_data: Json | null
+          record_id: string | null
+          request_id: string | null
+          session_id: string | null
+          severity: Database["public"]["Enums"]["security_severity"]
+          table_name: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action: string
+          action_category?: string
+          city?: string | null
+          correlation_id?: string | null
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          severity?: Database["public"]["Enums"]["security_severity"]
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action?: string
+          action_category?: string
+          city?: string | null
+          correlation_id?: string | null
+          country_code?: string | null
+          created_at?: string
+          id?: string
+          ip_address?: unknown
+          metadata?: Json | null
+          new_data?: Json | null
+          old_data?: Json | null
+          record_id?: string | null
+          request_id?: string | null
+          session_id?: string | null
+          severity?: Database["public"]["Enums"]["security_severity"]
+          table_name?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       security_events: {
         Row: {
           created_at: string
@@ -6856,6 +7027,69 @@ export type Database = {
           severity?: string
           source?: string
           user_agent?: string | null
+        }
+        Relationships: []
+      }
+      security_events_v2: {
+        Row: {
+          asn: string | null
+          city: string | null
+          country_code: string | null
+          created_at: string
+          details: Json | null
+          event_type: string
+          fingerprint: string | null
+          id: string
+          ip_address: unknown
+          is_blocked: boolean | null
+          resolution_notes: string | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          risk_score: number
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asn?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          is_blocked?: boolean | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_score?: number
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asn?: string | null
+          city?: string | null
+          country_code?: string | null
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          fingerprint?: string | null
+          id?: string
+          ip_address?: unknown
+          is_blocked?: boolean | null
+          resolution_notes?: string | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          risk_score?: number
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
@@ -9101,6 +9335,60 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events_v2: {
+        Row: {
+          attempts: number | null
+          event_id: string
+          event_type: string | null
+          id: string
+          ip_address: unknown
+          last_error: string | null
+          max_attempts: number | null
+          payload: Json | null
+          processed_at: string | null
+          provider: string
+          received_at: string
+          response: Json | null
+          signature_algorithm: string | null
+          signature_valid: boolean | null
+          status: string
+        }
+        Insert: {
+          attempts?: number | null
+          event_id: string
+          event_type?: string | null
+          id?: string
+          ip_address?: unknown
+          last_error?: string | null
+          max_attempts?: number | null
+          payload?: Json | null
+          processed_at?: string | null
+          provider: string
+          received_at?: string
+          response?: Json | null
+          signature_algorithm?: string | null
+          signature_valid?: boolean | null
+          status?: string
+        }
+        Update: {
+          attempts?: number | null
+          event_id?: string
+          event_type?: string | null
+          id?: string
+          ip_address?: unknown
+          last_error?: string | null
+          max_attempts?: number | null
+          payload?: Json | null
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          response?: Json | null
+          signature_algorithm?: string | null
+          signature_valid?: boolean | null
+          status?: string
+        }
+        Relationships: []
+      }
       webhook_rate_limits: {
         Row: {
           created_at: string
@@ -10514,12 +10802,29 @@ export type Database = {
           total_time: number
         }[]
       }
+      audit_rls_coverage_v2: {
+        Args: never
+        Returns: {
+          has_delete_policy: boolean
+          has_insert_policy: boolean
+          has_select_policy: boolean
+          has_update_policy: boolean
+          policy_count: number
+          risk_level: string
+          rls_enabled: boolean
+          table_name: string
+        }[]
+      }
       auto_cleanup_for_load: { Args: never; Returns: undefined }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
       }
       can_access_sanctuary: { Args: { p_user_id: string }; Returns: boolean }
+      can_access_url_v2: {
+        Args: { p_url: string; p_user_id?: string }
+        Returns: boolean
+      }
       can_edit_content: { Args: { _user_id?: string }; Returns: boolean }
       can_manage_documents: { Args: { _user_id?: string }; Returns: boolean }
       can_use_god_mode: { Args: { _user_id?: string }; Returns: boolean }
@@ -10554,6 +10859,27 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_rate_limit_v2: {
+        Args: {
+          p_block_seconds?: number
+          p_endpoint: string
+          p_identifier: string
+          p_max_requests?: number
+          p_window_seconds?: number
+        }
+        Returns: Json
+      }
+      check_webhook_idempotency_v2: {
+        Args: {
+          p_event_id: string
+          p_event_type?: string
+          p_ip_address?: unknown
+          p_payload?: Json
+          p_provider: string
+          p_signature_valid?: boolean
+        }
+        Returns: Json
+      }
       claim_next_event: {
         Args: {
           p_consumer_name: string
@@ -10570,13 +10896,16 @@ export type Database = {
         }[]
       }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
+      cleanup_expired_sessions_v2: { Args: never; Returns: number }
       cleanup_expired_signed_urls: { Args: never; Returns: number }
       cleanup_expired_timeouts: { Args: never; Returns: number }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
+      cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      cleanup_rate_limits_v3: { Args: never; Returns: number }
       complete_event: {
         Args: {
           p_error_message?: string
@@ -10758,6 +11087,7 @@ export type Database = {
         Args: { _user_id?: string }
         Returns: Database["public"]["Enums"]["app_role"]
       }
+      get_user_role_v2: { Args: { p_user_id?: string }; Returns: string }
       grant_beta_access: {
         Args: { _days?: number; _user_id: string }
         Returns: Json
@@ -10784,6 +11114,8 @@ export type Database = {
         Returns: boolean
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
+      is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_owner:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id?: string }; Returns: boolean }
@@ -10798,6 +11130,19 @@ export type Database = {
           _old_value?: Json
           _record_id?: string
           _table_name?: string
+        }
+        Returns: string
+      }
+      log_audit_v2: {
+        Args: {
+          p_action: string
+          p_category?: string
+          p_metadata?: Json
+          p_new_data?: Json
+          p_old_data?: Json
+          p_record_id?: string
+          p_severity?: Database["public"]["Enums"]["security_severity"]
+          p_table_name?: string
         }
         Returns: string
       }
@@ -10817,6 +11162,18 @@ export type Database = {
           p_payload?: Json
           p_severity?: string
           p_source?: string
+        }
+        Returns: string
+      }
+      log_security_event_v2: {
+        Args: {
+          p_details?: Json
+          p_event_type: string
+          p_fingerprint?: string
+          p_ip_address?: unknown
+          p_risk_score?: number
+          p_user_agent?: string
+          p_user_id?: string
         }
         Returns: string
       }
@@ -10871,6 +11228,10 @@ export type Database = {
       }
       register_user_logout: { Args: never; Returns: undefined }
       revoke_beta_access: { Args: { _user_id: string }; Returns: Json }
+      revoke_other_sessions_v2: {
+        Args: { p_current_session_token: string; p_user_id: string }
+        Returns: number
+      }
       security_cleanup_job: { Args: never; Returns: undefined }
       send_chat_message: {
         Args: {
@@ -10942,6 +11303,7 @@ export type Database = {
         Args: { p_session_token: string }
         Returns: boolean
       }
+      validate_session_v2: { Args: { p_session_token: string }; Returns: Json }
       validate_signed_video_url: {
         Args: { p_token: string; p_video_id: string }
         Returns: boolean
@@ -11029,6 +11391,8 @@ export type Database = {
         | "Vendas"
         | "Design"
         | "Gestão"
+      security_severity: "debug" | "info" | "warning" | "error" | "critical"
+      session_status: "active" | "expired" | "revoked" | "suspicious"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -11241,6 +11605,8 @@ export const Constants = {
         "Design",
         "Gestão",
       ],
+      security_severity: ["debug", "info", "warning", "error", "critical"],
+      session_status: ["active", "expired", "revoked", "suspicious"],
     },
   },
 } as const
