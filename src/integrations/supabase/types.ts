@@ -10316,8 +10316,9 @@ export type Database = {
           device_fingerprint: string | null
           ended_at: string | null
           expires_at: string
+          heartbeat_count: number | null
           id: string
-          ip_address: unknown
+          ip: unknown
           last_heartbeat_at: string
           lesson_id: string | null
           max_position_seconds: number | null
@@ -10326,10 +10327,12 @@ export type Database = {
           revoke_reason: string | null
           revoked_at: string | null
           risk_score: number | null
+          sanctum_bypass_reason: string | null
+          sanctum_immune: boolean | null
           session_code: string
           session_token: string
           status: Database["public"]["Enums"]["video_session_status"]
-          total_watch_time_seconds: number | null
+          total_watch_seconds: number | null
           user_agent: string | null
           user_id: string
           violation_count: number | null
@@ -10344,8 +10347,9 @@ export type Database = {
           device_fingerprint?: string | null
           ended_at?: string | null
           expires_at: string
+          heartbeat_count?: number | null
           id?: string
-          ip_address?: unknown
+          ip?: unknown
           last_heartbeat_at?: string
           lesson_id?: string | null
           max_position_seconds?: number | null
@@ -10354,10 +10358,12 @@ export type Database = {
           revoke_reason?: string | null
           revoked_at?: string | null
           risk_score?: number | null
+          sanctum_bypass_reason?: string | null
+          sanctum_immune?: boolean | null
           session_code: string
           session_token: string
           status?: Database["public"]["Enums"]["video_session_status"]
-          total_watch_time_seconds?: number | null
+          total_watch_seconds?: number | null
           user_agent?: string | null
           user_id: string
           violation_count?: number | null
@@ -10372,8 +10378,9 @@ export type Database = {
           device_fingerprint?: string | null
           ended_at?: string | null
           expires_at?: string
+          heartbeat_count?: number | null
           id?: string
-          ip_address?: unknown
+          ip?: unknown
           last_heartbeat_at?: string
           lesson_id?: string | null
           max_position_seconds?: number | null
@@ -10382,10 +10389,12 @@ export type Database = {
           revoke_reason?: string | null
           revoked_at?: string | null
           risk_score?: number | null
+          sanctum_bypass_reason?: string | null
+          sanctum_immune?: boolean | null
           session_code?: string
           session_token?: string
           status?: Database["public"]["Enums"]["video_session_status"]
-          total_watch_time_seconds?: number | null
+          total_watch_seconds?: number | null
           user_agent?: string | null
           user_id?: string
           violation_count?: number | null
@@ -10440,10 +10449,16 @@ export type Database = {
           banned_until: string | null
           created_at: string
           current_risk_level: string | null
+          current_score: number | null
+          decay_rate_per_day: number | null
           first_violation_at: string | null
           is_banned: boolean | null
           last_calculated_at: string | null
+          last_decay_at: string | null
           last_violation_at: string | null
+          last_violation_type: string | null
+          max_score_ever: number | null
+          session_revoke_count: number | null
           sessions_revoked_count: number | null
           temporary_bans_count: number | null
           total_risk_score: number | null
@@ -10460,10 +10475,16 @@ export type Database = {
           banned_until?: string | null
           created_at?: string
           current_risk_level?: string | null
+          current_score?: number | null
+          decay_rate_per_day?: number | null
           first_violation_at?: string | null
           is_banned?: boolean | null
           last_calculated_at?: string | null
+          last_decay_at?: string | null
           last_violation_at?: string | null
+          last_violation_type?: string | null
+          max_score_ever?: number | null
+          session_revoke_count?: number | null
           sessions_revoked_count?: number | null
           temporary_bans_count?: number | null
           total_risk_score?: number | null
@@ -10480,10 +10501,16 @@ export type Database = {
           banned_until?: string | null
           created_at?: string
           current_risk_level?: string | null
+          current_score?: number | null
+          decay_rate_per_day?: number | null
           first_violation_at?: string | null
           is_banned?: boolean | null
           last_calculated_at?: string | null
+          last_decay_at?: string | null
           last_violation_at?: string | null
+          last_violation_type?: string | null
+          max_score_ever?: number | null
+          session_revoke_count?: number | null
           sessions_revoked_count?: number | null
           temporary_bans_count?: number | null
           total_risk_score?: number | null
@@ -12121,6 +12148,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      apply_risk_score_decay: { Args: never; Returns: number }
       audit_rls_coverage_v2: {
         Args: never
         Returns: {
@@ -12343,6 +12371,28 @@ export type Database = {
           p_user_id: string
         }
         Returns: Json
+      }
+      create_video_session_omega: {
+        Args: {
+          p_device_fingerprint?: string
+          p_ip?: unknown
+          p_lesson_id: string
+          p_provider: string
+          p_provider_video_id: string
+          p_sanctum_bypass_reason?: string
+          p_sanctum_immune?: boolean
+          p_ttl_minutes?: number
+          p_user_agent?: string
+          p_user_id: string
+          p_watermark_text?: string
+        }
+        Returns: {
+          expires_at: string
+          sanctum_status: string
+          session_code: string
+          session_id: string
+          session_token: string
+        }[]
       }
       current_user_email: { Args: never; Returns: string }
       deactivate_device: { Args: { p_device_id: string }; Returns: Json }
@@ -13101,6 +13151,16 @@ export type Database = {
         Args: { p_position_seconds?: number; p_session_token: string }
         Returns: Json
       }
+      video_session_heartbeat_omega: {
+        Args: { p_position_seconds?: number; p_session_token: string }
+        Returns: {
+          is_valid: boolean
+          message: string
+          new_expires_at: string
+          sanctum_immune: boolean
+          success: boolean
+        }[]
+      }
       webhook_check_duplicate: {
         Args: {
           p_event_id: string
@@ -13280,6 +13340,13 @@ export type Database = {
         | "complete"
         | "error"
         | "violation"
+        | "none"
+        | "warn"
+        | "degrade"
+        | "reauth"
+        | "revoke"
+        | "bypassed"
+      video_provider: "panda" | "youtube" | "vimeo" | "cloudflare"
       video_session_status: "active" | "expired" | "revoked" | "ended"
       video_violation_type:
         | "devtools_open"
@@ -13588,7 +13655,14 @@ export const Constants = {
         "complete",
         "error",
         "violation",
+        "none",
+        "warn",
+        "degrade",
+        "reauth",
+        "revoke",
+        "bypassed",
       ],
+      video_provider: ["panda", "youtube", "vimeo", "cloudflare"],
       video_session_status: ["active", "expired", "revoked", "ended"],
       video_violation_type: [
         "devtools_open",
