@@ -97,11 +97,14 @@ const GestaoDispositivos = lazy(() => import("./pages/GestaoDispositivos"));
 // ===== CENTRAL DO ALUNO - QUÍMICA ENEM =====
 const AlunosRouteSwitcher = lazy(() => import("./pages/AlunosRouteSwitcher"));
 const AlunoDashboard = lazy(() => import("./pages/aluno/AlunoDashboard"));
+const AlunoLivroWeb = lazy(() => import("./pages/aluno/AlunoLivroWeb"));
 const AlunoVideoaulas = lazy(() => import("./pages/aluno/AlunoVideoaulas"));
 const AlunoQuestoes = lazy(() => import("./pages/aluno/AlunoQuestoes"));
 const AlunoSimulados = lazy(() => import("./pages/aluno/AlunoSimulados"));
 const AlunoRanking = lazy(() => import("./pages/RankingPage"));
 const AlunoTabelaPeriodica = lazy(() => import("./pages/aluno/AlunoTabelaPeriodica"));
+// Gestão de Livros (Owner)
+const GestaoLivrosWeb = lazy(() => import("./pages/gestao/GestaoLivrosWeb"));
 // Placeholders - Named exports
 const AlunoCronograma = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCronograma })));
 const AlunoMateriais = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoMateriais })));
@@ -294,8 +297,10 @@ const AppContent = memo(() => {
           {/* ===== CENTRAL DO ALUNO - QUÍMICA ENEM ===== */}
           {/* /alunos é inteligente: no domínio de gestão vira Gestão de Alunos; no domínio do aluno vira Portal */}
           <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
+          <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
           <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
           <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
+          <Route path="/gestao/livros-web" element={<ProtectedPage><GestaoLivrosWeb /></ProtectedPage>} />
           <Route path="/alunos/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
           <Route path="/alunos/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
           <Route path="/alunos/resumos" element={<ProtectedPage><AlunoResumos /></ProtectedPage>} />

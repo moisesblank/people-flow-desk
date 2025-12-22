@@ -54,6 +54,7 @@ export const COMMUNITY_ROUTES: RouteDefinition[] = [
 export const STUDENT_ROUTES: RouteDefinition[] = [
   { path: "/alunos", domain: "alunos", title: "Portal do Aluno", requiresAuth: true },
   { path: "/alunos/dashboard", domain: "alunos", title: "Dashboard", requiresAuth: true },
+  { path: "/alunos/livro-web", domain: "alunos", title: "Livro Web", requiresAuth: true },
   { path: "/alunos/cronograma", domain: "alunos", title: "Cronograma", requiresAuth: true },
   { path: "/alunos/videoaulas", domain: "alunos", title: "Videoaulas", requiresAuth: true },
   { path: "/alunos/materiais", domain: "alunos", title: "Materiais", requiresAuth: true },
