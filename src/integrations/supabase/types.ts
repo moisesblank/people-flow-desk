@@ -12256,6 +12256,17 @@ export type Database = {
         }
         Returns: Json
       }
+      check_webhook_idempotency_v3: {
+        Args: {
+          p_event_id: string
+          p_event_type?: string
+          p_ip_address?: string
+          p_payload?: Json
+          p_provider: string
+          p_signature_valid?: boolean
+        }
+        Returns: Json
+      }
       claim_next_event: {
         Args: {
           p_consumer_name: string
@@ -12343,6 +12354,8 @@ export type Database = {
       current_user_email: { Args: never; Returns: string }
       deactivate_device: { Args: { p_device_id: string }; Returns: Json }
       decay_video_risk_scores: { Args: never; Returns: number }
+      do_cleanup_expired_sessions: { Args: never; Returns: number }
+      do_cleanup_rate_limits: { Args: never; Returns: number }
       end_video_session: {
         Args: {
           p_completion_percentage?: number
@@ -12813,6 +12826,10 @@ export type Database = {
         Args: { p_reason?: string; p_session_id: string }
         Returns: boolean
       }
+      revoke_user_sessions: {
+        Args: { p_keep_session_token: string; p_user_id: string }
+        Returns: number
+      }
       security_cleanup_job: { Args: never; Returns: undefined }
       send_chat_message_v2: {
         Args: {
@@ -13062,6 +13079,7 @@ export type Database = {
               error: true
             } & "Could not choose the best candidate function between: public.validate_session_v2(p_session_token => text), public.validate_session_v2(p_session_token => uuid). Try renaming the parameters or the function itself in the database so function overloading can be resolved"
           }
+      validate_session_v3: { Args: { p_session_token: string }; Returns: Json }
       validate_signed_video_url: {
         Args: { p_token: string; p_video_id: string }
         Returns: boolean
