@@ -13,19 +13,27 @@ export * from './LEI_I_PERFORMANCE';
 export { default as LEI_I } from './LEI_I_PERFORMANCE';
 
 // ============================================
+// LEI II - DISPOSITIVOS
+// 43 Artigos cobrindo compatibilidade universal
+// ============================================
+export * from './LEI_II_DISPOSITIVOS';
+export { default as LEI_II } from './LEI_II_DISPOSITIVOS';
+
+// ============================================
 // FUTURAS LEIS (Placeholders)
 // ============================================
 
-// LEI II - SEGURANÇA (a ser implementada)
-// LEI III - UX/DESIGN (a ser implementada)
-// LEI IV - ACESSIBILIDADE (a ser implementada)
-// LEI V - SEO (a ser implementada)
+// LEI III - SEGURANÇA (a ser implementada)
+// LEI IV - UX/DESIGN (a ser implementada)
+// LEI V - ACESSIBILIDADE (a ser implementada)
+// LEI VI - SEO (a ser implementada)
 
 // ============================================
 // ENFORCEMENT GLOBAL
 // ============================================
 
 import { LEI_I_PERFORMANCE } from './LEI_I_PERFORMANCE';
+import { LEI_II_DISPOSITIVOS } from './LEI_II_DISPOSITIVOS';
 
 /**
  * Verifica se todas as leis estão ativas
@@ -33,17 +41,26 @@ import { LEI_I_PERFORMANCE } from './LEI_I_PERFORMANCE';
 export function checkConstitutionStatus(): {
   active: boolean;
   laws: { name: string; articles: number; active: boolean }[];
+  totalArticles: number;
 } {
+  const laws = [
+    {
+      name: 'LEI I - Performance',
+      articles: LEI_I_PERFORMANCE.ARTICLES_COUNT,
+      active: true,
+    },
+    {
+      name: 'LEI II - Dispositivos',
+      articles: LEI_II_DISPOSITIVOS.ARTICLES_COUNT,
+      active: true,
+    },
+    // Futuras leis serão adicionadas aqui
+  ];
+  
   return {
-    active: true,
-    laws: [
-      {
-        name: 'LEI I - Performance',
-        articles: LEI_I_PERFORMANCE.ARTICLES_COUNT,
-        active: true,
-      },
-      // Futuras leis serão adicionadas aqui
-    ],
+    active: laws.every(l => l.active),
+    laws,
+    totalArticles: laws.reduce((a, b) => a + b.articles, 0),
   };
 }
 
@@ -61,13 +78,13 @@ ${status.laws.map(law =>
   `║  ${law.active ? '✅' : '❌'} ${law.name.padEnd(30)} (${law.articles} artigos)  ║`
 ).join('\n')}
 ╠══════════════════════════════════════════════════════════╣
-║  Total de Artigos: ${status.laws.reduce((a, b) => a + b.articles, 0).toString().padEnd(35)}║
+║  Total de Artigos: ${String(status.totalArticles).padEnd(35)}║
 ║  Status: ${status.active ? 'TODAS LEIS ATIVAS' : 'ATENÇÃO: Leis inativas!'}              ║
 ╚══════════════════════════════════════════════════════════╝
   `.trim());
 }
 
-// Auto-log no carregamento (apenas em dev)
-if (typeof window !== 'undefined' && import.meta.env?.DEV) {
+// Auto-log no carregamento
+if (typeof window !== 'undefined') {
   logConstitutionStatus();
 }
