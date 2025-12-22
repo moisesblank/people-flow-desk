@@ -66,13 +66,14 @@ export interface RolePermissions {
 // ============================================
 
 export const URL_TO_AREA: Record<string, SystemArea> = {
-  // Públicas
+  // Públicas (pro.moisesmedeiros.com.br/ - NÃO PAGANTE)
   '/': 'home',
   '/site': 'landing',
   '/auth': 'auth',
   '/termos': 'public',
   '/privacidade': 'public',
   '/area-gratuita': 'area_gratuita',
+  '/comunidade': 'comunidade', // ✅ Nova rota pública para não pagantes
   // Alunos BETA (pro.moisesmedeiros.com.br/alunos/*)
   '/alunos': 'alunos',
   '/alunos/dashboard': 'alunos',
@@ -210,21 +211,21 @@ const USER_ROLE_PERMISSIONS: Record<UserRole, RolePermissions> = {
     ],
     canAccessAll: false,
   },
-  // 🌐 ALUNO GRATUITO - Apenas área gratuita
+  // 🌐 ALUNO GRATUITO - Apenas área gratuita + comunidade
   aluno_gratuito: {
     role: 'aluno_gratuito',
     label: 'Aluno Gratuito',
     areas: [
-      'public', 'home', 'landing', 'auth', 'area_gratuita',
+      'public', 'home', 'landing', 'auth', 'area_gratuita', 'comunidade',
     ],
     canAccessAll: false,
   },
-  // 👀 VIEWER - Apenas visualização pública
+  // 👀 VIEWER - Apenas visualização pública + comunidade
   viewer: {
     role: 'viewer',
     label: 'Visitante',
     areas: [
-      'public', 'home', 'landing', 'auth',
+      'public', 'home', 'landing', 'auth', 'comunidade',
     ],
     canAccessAll: false,
   },
@@ -323,7 +324,7 @@ export const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     'ranking', 'desempenho', 'conquistas', 'tutoria',
   ],
   aluno_gratuito: [
-    'public', 'home', 'landing', 'auth', 'area_gratuita',
+    'public', 'home', 'landing', 'auth', 'area_gratuita', 'comunidade',
   ],
 };
 

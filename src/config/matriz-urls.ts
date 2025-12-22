@@ -36,10 +36,13 @@ export const MATRIZ_URLS = {
   GESTAO: "https://gestao.moisesmedeiros.com.br",
   
   // URL base de alunos (beta)
-  ALUNOS: "http://pro.moisesmedeiros.com.br/alunos",
+  ALUNOS: "https://pro.moisesmedeiros.com.br/alunos",
   
-  // URL pública (área gratuita)
+  // URL pública (área gratuita + comunidade)
   PUBLICA: "https://pro.moisesmedeiros.com.br",
+  
+  // URL comunidade (não pagantes)
+  COMUNIDADE: "https://pro.moisesmedeiros.com.br/comunidade",
   
   // Domínio principal (redireciona para pro)
   PRINCIPAL: "https://www.moisesmedeiros.com.br",
@@ -57,6 +60,9 @@ export const MATRIZ_PATHS = {
   
   // Path home (área pública)
   HOME: "/",
+  
+  // Path comunidade (não pagantes)
+  COMUNIDADE: "/comunidade",
 } as const;
 
 // ============================================
