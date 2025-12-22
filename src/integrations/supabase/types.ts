@@ -11796,6 +11796,15 @@ export type Database = {
           total_time: number
         }[]
       }
+      apply_chat_timeout: {
+        Args: {
+          p_duration_minutes?: number
+          p_live_id: string
+          p_reason?: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       audit_rls_coverage: {
         Args: never
         Returns: {
@@ -12126,12 +12135,7 @@ export type Database = {
       }
       get_user_chat_ban_status: {
         Args: { p_live_id: string; p_user_id: string }
-        Returns: {
-          is_banned: boolean
-          is_timed_out: boolean
-          reason: string
-          timeout_until: string
-        }[]
+        Returns: Json
       }
       get_user_devices: { Args: { p_user_id?: string }; Returns: Json }
       get_user_role: {
@@ -12328,6 +12332,10 @@ export type Database = {
         Returns: string
       }
       register_user_logout: { Args: never; Returns: undefined }
+      remove_chat_ban: {
+        Args: { p_live_id: string; p_user_id: string }
+        Returns: boolean
+      }
       revoke_beta_access: { Args: { _user_id: string }; Returns: Json }
       revoke_other_sessions_v2: {
         Args: { p_current_session_token: string; p_user_id: string }
