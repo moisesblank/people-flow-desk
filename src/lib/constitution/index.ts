@@ -58,22 +58,22 @@ const LEI_IV_ACTIVE = true;
 export const URL_MAP = {
   NAO_PAGANTE: {
     host: 'pro.moisesmedeiros.com.br',
-    path: '/',
-    validacao: 'Criar conta = acesso livre',
+    paths: ['/', '/comunidade'],
+    validacao: 'Criar conta = acesso livre (home + comunidade)',
   },
   ALUNO_BETA: {
     host: 'pro.moisesmedeiros.com.br',
-    path: '/alunos/*',
+    paths: ['/alunos/*'],
     validacao: "role='beta' + access_expires_at válido",
   },
   FUNCIONARIO: {
     host: 'gestao.moisesmedeiros.com.br',
-    path: '/*',
+    paths: ['/*'],
     validacao: "role='funcionario' | 'admin' | 'owner'",
   },
   OWNER: {
     host: 'TODAS',
-    path: '/*',
+    paths: ['/*'],
     validacao: "role='owner' (MOISESBLANK@GMAIL.COM)",
   },
 } as const;
@@ -159,6 +159,12 @@ export function validateUrlAccess(url: string, role: string, hostname: string): 
   // Verificar host
   const isGestao = hostname.includes('gestao.');
   const isPro = hostname.includes('pro.');
+  
+  // Rotas públicas (permitidas para todos)
+  const publicRoutes = ['/', '/auth', '/termos', '/privacidade', '/comunidade', '/area-gratuita', '/site'];
+  if (publicRoutes.includes(url)) {
+    return { allowed: true, reason: 'Rota pública' };
+  }
   
   // Gestão requer funcionário+
   if (isGestao && !['funcionario', 'admin', 'owner'].includes(role)) {

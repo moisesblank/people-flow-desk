@@ -11844,6 +11844,10 @@ export type Database = {
         Args: { p_url: string; p_user_id?: string }
         Returns: boolean
       }
+      can_access_url_v4: {
+        Args: { p_url: string; p_user_id?: string }
+        Returns: boolean
+      }
       can_edit_content: { Args: { _user_id?: string }; Returns: boolean }
       can_manage_documents: { Args: { _user_id?: string }; Returns: boolean }
       can_use_god_mode: { Args: { _user_id?: string }; Returns: boolean }
@@ -12665,6 +12669,14 @@ export type Database = {
       validate_signed_video_url: {
         Args: { p_token: string; p_video_id: string }
         Returns: boolean
+      }
+      validate_url_access_v2: {
+        Args: { p_hostname: string; p_url: string; p_user_id?: string }
+        Returns: {
+          allowed: boolean
+          reason: string
+          required_role: string
+        }[]
       }
       verify_2fa_code: { Args: { p_code: string }; Returns: boolean }
       webhook_check_duplicate: {
