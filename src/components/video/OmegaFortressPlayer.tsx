@@ -1,18 +1,22 @@
 // ============================================
-// 🔥 OMEGA FORTRESS PLAYER - O PLAYER DEFINITIVO
-// Sistema de Proteção de Vídeos ULTRA v2.0
-// 7 CAMADAS DE PROTEÇÃO
+// 🔥 OMEGA FORTRESS PLAYER v3.0 - ULTRA SECURED
+// Sistema de Proteção de Vídeos MÁXIMO
+// 7 CAMADAS DE PROTEÇÃO + SANCTUM 2.0
+// Design 2300 - Futurista
 // ============================================
 
-import { useState, useRef, useEffect, useCallback, memo } from "react";
+import { useState, useRef, useEffect, useCallback, memo, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, Pause, Settings, Loader2, Volume2, VolumeX, 
-  Maximize, Shield, Lock, AlertTriangle, Eye
+  Maximize, Shield, Lock, AlertTriangle, Eye, Zap,
+  ChevronRight, Crown, ShieldCheck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useVideoFortress, VideoViolationType } from "@/hooks/useVideoFortress";
+import { useVideoFortress, VideoViolationType, ViolationAction } from "@/hooks/useVideoFortress";
 import { useAuth } from "@/hooks/useAuth";
+import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { useDeviceConstitution } from "@/hooks/useDeviceConstitution";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -28,7 +32,7 @@ import {
 // ============================================
 export interface OmegaFortressPlayerProps {
   videoId: string;
-  type?: "youtube" | "panda";
+  type?: "youtube" | "panda" | "vimeo";
   title?: string;
   thumbnail?: string;
   className?: string;
@@ -37,8 +41,10 @@ export interface OmegaFortressPlayerProps {
   courseId?: string;
   showSecurityBadge?: boolean;
   showWatermark?: boolean;
+  showRiskIndicator?: boolean;
   onComplete?: () => void;
   onProgress?: (progress: number) => void;
+  onError?: (error: string) => void;
 }
 
 // Velocidades e qualidades
@@ -53,6 +59,7 @@ const PLAYBACK_SPEEDS = [
 
 const VIDEO_QUALITIES = [
   { label: "Auto", value: "auto" },
+  { label: "4K", value: "hd2160" },
   { label: "1080p HD", value: "hd1080" },
   { label: "720p", value: "hd720" },
   { label: "480p", value: "large" },
@@ -70,6 +77,7 @@ const FORTRESS_YT_PARAMS = {
   vq: "hd1080",
   enablejsapi: "1",
   origin: typeof window !== 'undefined' ? window.location.origin : '',
+  cc_load_policy: "0",
 };
 
 // ============================================
@@ -86,10 +94,18 @@ export const OmegaFortressPlayer = memo(({
   courseId,
   showSecurityBadge = true,
   showWatermark = true,
+  showRiskIndicator = false,
   onComplete,
   onProgress,
+  onError,
 }: OmegaFortressPlayerProps) => {
   const { user } = useAuth();
+  const { isOwner, isAdmin, isBeta, roleLabel, isFuncionarioOrAbove } = useRolePermissions();
+  const { isMobile, isTouch } = useDeviceConstitution();
+  
+  // Verificar imunidade
+  const isImmuneUser = isOwner || isAdmin || isFuncionarioOrAbove;
+  
   const containerRef = useRef<HTMLDivElement>(null);
   const playerRef = useRef<any>(null);
 
@@ -103,8 +119,9 @@ export const OmegaFortressPlayer = memo(({
   const [showControls, setShowControls] = useState(true);
   const [imageLoaded, setImageLoaded] = useState(false);
   const [violationWarning, setViolationWarning] = useState<string | null>(null);
+  const [showSecurityInfo, setShowSecurityInfo] = useState(false);
 
-  // Hook de proteção
+  // Hook de proteção FORTRESS
   const {
     session,
     isLoading: sessionLoading,
@@ -115,13 +132,18 @@ export const OmegaFortressPlayer = memo(({
     sendHeartbeat,
     watermarkData,
     riskScore,
+    riskLevel,
+    isImmune,
+    protectionStats,
   } = useVideoFortress({
     videoId,
     lessonId,
     courseId,
     provider: type,
     enableHeartbeat: true,
-    enableViolationDetection: true,
+    enableViolationDetection: !isImmuneUser,
+    enableAntiDevTools: !isImmuneUser,
+    enableAntiScreenshot: !isImmuneUser,
     onSessionRevoked: () => {
       setIsPlaying(false);
       setViolationWarning('Sessão encerrada em outro dispositivo');
@@ -130,28 +152,50 @@ export const OmegaFortressPlayer = memo(({
       setIsPlaying(false);
       toast.info('Sessão expirada. Recarregue para continuar.');
     },
-    onViolation: (violationType, action) => {
-      if (action === 'pause' || action === 'revoke') {
-        setIsPlaying(false);
-        pauseVideo();
-      }
-      if (action === 'warn') {
-        setViolationWarning('Atividade suspeita detectada');
-        setTimeout(() => setViolationWarning(null), 5000);
+    onViolation: handleViolation,
+    onRiskLevelChange: (level) => {
+      if (level === 'critical') {
+        toast.error('🚨 Risco crítico detectado!');
       }
     },
   });
 
-  // URLs
-  const thumbnailUrl = thumbnail || 
-    (type === "youtube" ? `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg` : null);
+  // Handler de violações
+  function handleViolation(violationType: VideoViolationType, action: ViolationAction) {
+    if (action === 'pause' || action === 'revoke') {
+      setIsPlaying(false);
+      pauseVideo();
+    }
+    if (action === 'warn') {
+      setViolationWarning('Atividade suspeita detectada');
+      setTimeout(() => setViolationWarning(null), 5000);
+    }
+  }
 
-  const embedUrl = type === "youtube"
-    ? `https://www.youtube.com/embed/${videoId}?${new URLSearchParams({
-        ...FORTRESS_YT_PARAMS,
-        autoplay: autoplay ? "1" : "0",
-      }).toString()}`
-    : `https://player-vz-${videoId.split('-')[0]}.tv.pandavideo.com.br/embed/?v=${videoId}`;
+  // URLs
+  const thumbnailUrl = useMemo(() => {
+    if (thumbnail) return thumbnail;
+    if (type === "youtube") return `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;
+    return null;
+  }, [thumbnail, type, videoId]);
+
+  const embedUrl = useMemo(() => {
+    const params = new URLSearchParams({
+      ...FORTRESS_YT_PARAMS,
+      autoplay: autoplay ? "1" : "0",
+    }).toString();
+    
+    switch (type) {
+      case "youtube":
+        return `https://www.youtube.com/embed/${videoId}?${params}`;
+      case "panda":
+        return `https://player-vz-${videoId.split('-')[0]}.tv.pandavideo.com.br/embed/?v=${videoId}`;
+      case "vimeo":
+        return `https://player.vimeo.com/video/${videoId}?dnt=1&title=0&byline=0&portrait=0`;
+      default:
+        return "";
+    }
+  }, [type, videoId, autoplay]);
 
   // ============================================
   // INICIALIZAÇÃO
@@ -203,7 +247,7 @@ export const OmegaFortressPlayer = memo(({
         events: {
           onReady: (e: any) => {
             setIsLoading(false);
-            e.target.setPlaybackQuality("hd1080");
+            e.target.setPlaybackQuality(currentQuality);
             if (autoplay) {
               e.target.playVideo();
               setIsPlaying(true);
@@ -213,9 +257,16 @@ export const OmegaFortressPlayer = memo(({
             switch (e.data) {
               case 1: setIsPlaying(true); setIsLoading(false); break;
               case 2: setIsPlaying(false); break;
-              case 0: setIsPlaying(false); onComplete?.(); endSession(); break;
+              case 0: 
+                setIsPlaying(false); 
+                onComplete?.(); 
+                endSession(); 
+                break;
               case 3: setIsLoading(true); break;
             }
+          },
+          onError: (e: any) => {
+            onError?.(`YouTube Error: ${e.data}`);
           },
         },
       });
@@ -229,7 +280,7 @@ export const OmegaFortressPlayer = memo(({
         playerRef.current = null;
       }
     };
-  }, [videoId, type, showThumbnail, autoplay, session, onComplete, endSession]);
+  }, [videoId, type, showThumbnail, autoplay, session, onComplete, endSession, currentQuality, onError]);
 
   // Progress tracking
   useEffect(() => {
@@ -258,7 +309,7 @@ export const OmegaFortressPlayer = memo(({
     const container = containerRef.current;
     if (container) {
       container.addEventListener("mousemove", handleMouseMove);
-      container.addEventListener("touchstart", handleMouseMove);
+      container.addEventListener("touchstart", handleMouseMove, { passive: true });
     }
 
     return () => {
@@ -323,13 +374,24 @@ export const OmegaFortressPlayer = memo(({
   }, []);
 
   // ============================================
-  // PROTEÇÕES CSS
+  // ESTILOS DE PROTEÇÃO
   // ============================================
   const protectionStyles: React.CSSProperties = {
     userSelect: "none",
     WebkitUserSelect: "none",
     pointerEvents: "auto",
+    WebkitTouchCallout: "none",
   };
+
+  // Risk level colors
+  const riskColors = useMemo(() => {
+    switch (riskLevel) {
+      case 'critical': return 'bg-red-500';
+      case 'high': return 'bg-orange-500';
+      case 'medium': return 'bg-yellow-500';
+      default: return 'bg-green-500';
+    }
+  }, [riskLevel]);
 
   // ============================================
   // RENDER
@@ -337,7 +399,11 @@ export const OmegaFortressPlayer = memo(({
   return (
     <div
       ref={containerRef}
-      className={cn("relative group bg-black rounded-xl overflow-hidden", className)}
+      className={cn(
+        "relative group bg-black rounded-xl overflow-hidden",
+        "ring-1 ring-white/10",
+        className
+      )}
       style={protectionStyles}
       onContextMenu={(e) => { e.preventDefault(); reportViolation('context_menu', 1); }}
       onDragStart={(e) => e.preventDefault()}
@@ -350,31 +416,55 @@ export const OmegaFortressPlayer = memo(({
         {showThumbnail && thumbnailUrl && (
           <div className="absolute inset-0 cursor-pointer z-10" onClick={handlePlayPause}>
             {!imageLoaded && (
-              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black animate-pulse" />
+              <div className="absolute inset-0 bg-gradient-to-br from-gray-900 via-gray-800 to-black animate-pulse" />
             )}
             <img
               src={thumbnailUrl}
               alt={title}
               loading="lazy"
+              decoding="async"
               onLoad={() => setImageLoaded(true)}
-              className={cn("w-full h-full object-cover transition-opacity", imageLoaded ? "opacity-100" : "opacity-0")}
+              className={cn(
+                "w-full h-full object-cover transition-opacity duration-500",
+                imageLoaded ? "opacity-100" : "opacity-0"
+              )}
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/50" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-black/60" />
             
-            {/* Play Button */}
+            {/* Play Button - Design 2300 */}
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.button
-                className="w-20 h-20 md:w-24 md:h-24 rounded-full bg-red-600 hover:bg-red-700 flex items-center justify-center shadow-2xl"
+                className={cn(
+                  "w-20 h-20 md:w-24 md:h-24 rounded-full",
+                  "bg-gradient-to-br from-primary via-primary/90 to-primary/70",
+                  "hover:from-primary/90 hover:to-primary",
+                  "flex items-center justify-center",
+                  "shadow-[0_0_60px_rgba(var(--primary-rgb),0.4)]",
+                  "ring-4 ring-white/20"
+                )}
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.95 }}
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.3 }}
               >
                 <Play className="w-8 h-8 md:w-10 md:h-10 text-white ml-1" fill="white" />
               </motion.button>
             </div>
 
-            {/* Title */}
+            {/* Title + Badge Owner/Admin */}
             <div className="absolute bottom-0 left-0 right-0 p-4">
-              <h3 className="text-white font-semibold text-sm md:text-base truncate">{title}</h3>
+              <div className="flex items-center gap-2 mb-2">
+                {isImmune && (
+                  <div className="flex items-center gap-1 px-2 py-0.5 bg-gradient-to-r from-amber-500 to-yellow-500 rounded-full">
+                    <Crown className="w-3 h-3 text-white" />
+                    <span className="text-[10px] font-bold text-white uppercase">Acesso Master</span>
+                  </div>
+                )}
+              </div>
+              <h3 className="text-white font-semibold text-sm md:text-base truncate drop-shadow-lg">
+                {title}
+              </h3>
             </div>
           </div>
         )}
@@ -388,12 +478,20 @@ export const OmegaFortressPlayer = memo(({
         <AnimatePresence>
           {(isLoading || sessionLoading) && !showThumbnail && (
             <motion.div
-              className="absolute inset-0 flex items-center justify-center bg-black/70 z-20"
+              className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 z-20 gap-4"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             >
-              <Loader2 className="w-12 h-12 text-primary animate-spin" />
+              <div className="relative">
+                <Loader2 className="w-12 h-12 text-primary animate-spin" />
+                <motion.div
+                  className="absolute inset-0 rounded-full border-2 border-primary/30"
+                  animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0, 0.5] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                />
+              </div>
+              <span className="text-white/70 text-sm">Iniciando sessão segura...</span>
             </motion.div>
           )}
         </AnimatePresence>
@@ -402,23 +500,29 @@ export const OmegaFortressPlayer = memo(({
         <AnimatePresence>
           {violationWarning && (
             <motion.div
-              className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-red-600/90 text-white px-4 py-2 rounded-lg flex items-center gap-2"
-              initial={{ opacity: 0, y: -20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
+              className="absolute top-4 left-1/2 -translate-x-1/2 z-50"
+              initial={{ opacity: 0, y: -20, scale: 0.9 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -20, scale: 0.9 }}
             >
-              <AlertTriangle className="w-4 h-4" />
-              <span className="text-sm font-medium">{violationWarning}</span>
+              <div className="bg-red-600/95 text-white px-4 py-2 rounded-lg flex items-center gap-2 shadow-lg backdrop-blur-sm">
+                <AlertTriangle className="w-4 h-4 animate-pulse" />
+                <span className="text-sm font-medium">{violationWarning}</span>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
 
-        {/* Watermark Dinâmica */}
+        {/* Watermark Dinâmica - ULTRA */}
         {showWatermark && watermarkData && !showThumbnail && (
-          <WatermarkOverlay text={watermarkData.text} />
+          <WatermarkOverlay 
+            text={watermarkData.text} 
+            mode={watermarkData.mode as 'moving' | 'static' | 'diagonal'} 
+            isImmune={isImmune}
+          />
         )}
 
-        {/* Escudos de Proteção */}
+        {/* Escudos de Proteção - Invisíveis */}
         <div className="absolute top-0 left-0 right-0 h-[60px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
         <div className="absolute bottom-0 left-0 right-0 h-[70px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
         <div className="absolute top-0 bottom-0 left-0 w-[80px] z-40 pointer-events-auto" onClick={(e) => e.stopPropagation()} />
@@ -435,54 +539,117 @@ export const OmegaFortressPlayer = memo(({
                 exit={{ opacity: 0 }}
               >
                 {/* Top gradient */}
-                <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/70 to-transparent" />
+                <div className="absolute top-0 left-0 right-0 h-24 bg-gradient-to-b from-black/80 to-transparent" />
                 
                 {/* Top bar */}
                 <div className="absolute top-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-auto">
                   <div className="flex items-center gap-2">
                     {showSecurityBadge && (
-                      <div className="flex items-center gap-1.5 bg-green-600/80 px-2 py-1 rounded-full">
-                        <Shield className="w-3 h-3 text-white" />
+                      <motion.div 
+                        className="flex items-center gap-1.5 bg-green-600/90 px-2 py-1 rounded-full cursor-pointer"
+                        whileHover={{ scale: 1.05 }}
+                        onClick={() => setShowSecurityInfo(!showSecurityInfo)}
+                      >
+                        <ShieldCheck className="w-3 h-3 text-white" />
                         <span className="text-[10px] text-white font-medium">PROTEGIDO</span>
-                      </div>
+                      </motion.div>
                     )}
                     {session && (
-                      <div className="flex items-center gap-1 bg-white/10 px-2 py-1 rounded-full">
+                      <div className="flex items-center gap-1 bg-white/10 backdrop-blur-sm px-2 py-1 rounded-full">
                         <Lock className="w-3 h-3 text-white/70" />
-                        <span className="text-[10px] text-white/70">{session.sessionCode}</span>
+                        <span className="text-[10px] text-white/70 font-mono">{session.sessionCode}</span>
                       </div>
+                    )}
+                    {showRiskIndicator && !isImmune && (
+                      <div className={cn("w-2 h-2 rounded-full animate-pulse", riskColors)} />
                     )}
                   </div>
                   <span className="text-xs text-white/60 truncate max-w-[200px]">{title}</span>
                 </div>
 
+                {/* Security Info Panel */}
+                <AnimatePresence>
+                  {showSecurityInfo && (
+                    <motion.div
+                      className="absolute top-14 left-3 bg-black/90 backdrop-blur-md rounded-lg p-3 pointer-events-auto z-50"
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -20 }}
+                    >
+                      <h4 className="text-white font-semibold text-xs mb-2 flex items-center gap-2">
+                        <Shield className="w-3 h-3 text-green-500" />
+                        Status de Segurança
+                      </h4>
+                      <div className="space-y-1 text-[10px] text-white/70">
+                        <div className="flex justify-between gap-4">
+                          <span>Nível de Risco:</span>
+                          <span className={cn("font-medium", {
+                            'text-green-400': riskLevel === 'low',
+                            'text-yellow-400': riskLevel === 'medium',
+                            'text-orange-400': riskLevel === 'high',
+                            'text-red-400': riskLevel === 'critical',
+                          })}>{riskLevel.toUpperCase()}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span>Heartbeats:</span>
+                          <span className="text-white">{protectionStats.heartbeatsSent}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span>Violações Bloqueadas:</span>
+                          <span className="text-white">{protectionStats.violationsBlocked}</span>
+                        </div>
+                        {isImmune && (
+                          <div className="mt-2 pt-2 border-t border-white/10 text-amber-400">
+                            <Crown className="w-3 h-3 inline mr-1" />
+                            SANCTUM: Imunidade Ativa
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
                 {/* Center play/pause */}
                 <div className="absolute inset-0 flex items-center justify-center pointer-events-auto">
                   <motion.button
-                    className="w-16 h-16 rounded-full bg-white/20 backdrop-blur-sm hover:bg-white/30 flex items-center justify-center"
+                    className="w-16 h-16 rounded-full bg-white/10 backdrop-blur-md hover:bg-white/20 flex items-center justify-center ring-1 ring-white/20"
                     onClick={handlePlayPause}
                     whileHover={{ scale: 1.1 }}
                     whileTap={{ scale: 0.9 }}
                   >
                     {isPlaying ? (
-                      <Pause className="w-8 h-8 text-white" fill="white" />
+                      <Pause className="w-7 h-7 text-white" fill="white" />
                     ) : (
-                      <Play className="w-8 h-8 text-white ml-1" fill="white" />
+                      <Play className="w-7 h-7 text-white ml-1" fill="white" />
                     )}
                   </motion.button>
                 </div>
 
                 {/* Bottom gradient */}
-                <div className="absolute bottom-0 left-0 right-0 h-24 bg-gradient-to-t from-black/70 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 h-28 bg-gradient-to-t from-black/90 to-transparent" />
 
                 {/* Bottom controls */}
                 <div className="absolute bottom-0 left-0 right-0 p-3 flex items-center justify-between pointer-events-auto">
                   <div className="flex items-center gap-2">
-                    <button onClick={handlePlayPause} className="p-2 rounded-lg hover:bg-white/20 transition-colors">
-                      {isPlaying ? <Pause className="w-5 h-5 text-white" /> : <Play className="w-5 h-5 text-white" />}
+                    <button 
+                      onClick={handlePlayPause} 
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      {isPlaying ? (
+                        <Pause className="w-5 h-5 text-white" />
+                      ) : (
+                        <Play className="w-5 h-5 text-white" />
+                      )}
                     </button>
-                    <button onClick={handleMuteToggle} className="p-2 rounded-lg hover:bg-white/20 transition-colors">
-                      {isMuted ? <VolumeX className="w-5 h-5 text-white" /> : <Volume2 className="w-5 h-5 text-white" />}
+                    <button 
+                      onClick={handleMuteToggle} 
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
+                      {isMuted ? (
+                        <VolumeX className="w-5 h-5 text-white" />
+                      ) : (
+                        <Volume2 className="w-5 h-5 text-white" />
+                      )}
                     </button>
                   </div>
 
@@ -493,32 +660,55 @@ export const OmegaFortressPlayer = memo(({
                           <Settings className="w-5 h-5 text-white" />
                         </button>
                       </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="bg-black/90 border-white/10">
-                        <DropdownMenuLabel className="text-white/70 text-xs">Velocidade</DropdownMenuLabel>
+                      <DropdownMenuContent align="end" className="bg-black/95 border-white/10 backdrop-blur-md">
+                        <DropdownMenuLabel className="text-white/70 text-xs">
+                          <Zap className="w-3 h-3 inline mr-1" />
+                          Velocidade
+                        </DropdownMenuLabel>
                         {PLAYBACK_SPEEDS.map((speed) => (
                           <DropdownMenuItem
                             key={speed.value}
                             onClick={() => handleSpeedChange(speed.value)}
-                            className={cn("text-white hover:bg-white/10", currentSpeed === speed.value && "bg-primary/20")}
+                            className={cn(
+                              "text-white hover:bg-white/10", 
+                              currentSpeed === speed.value && "bg-primary/20 text-primary"
+                            )}
                           >
+                            <ChevronRight className={cn(
+                              "w-3 h-3 mr-2 opacity-0",
+                              currentSpeed === speed.value && "opacity-100"
+                            )} />
                             {speed.label}
                           </DropdownMenuItem>
                         ))}
                         <DropdownMenuSeparator className="bg-white/10" />
-                        <DropdownMenuLabel className="text-white/70 text-xs">Qualidade</DropdownMenuLabel>
+                        <DropdownMenuLabel className="text-white/70 text-xs">
+                          <Eye className="w-3 h-3 inline mr-1" />
+                          Qualidade
+                        </DropdownMenuLabel>
                         {VIDEO_QUALITIES.map((quality) => (
                           <DropdownMenuItem
                             key={quality.value}
                             onClick={() => handleQualityChange(quality.value)}
-                            className={cn("text-white hover:bg-white/10", currentQuality === quality.value && "bg-primary/20")}
+                            className={cn(
+                              "text-white hover:bg-white/10", 
+                              currentQuality === quality.value && "bg-primary/20 text-primary"
+                            )}
                           >
+                            <ChevronRight className={cn(
+                              "w-3 h-3 mr-2 opacity-0",
+                              currentQuality === quality.value && "opacity-100"
+                            )} />
                             {quality.label}
                           </DropdownMenuItem>
                         ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
-                    <button onClick={handleFullscreen} className="p-2 rounded-lg hover:bg-white/20 transition-colors">
+                    <button 
+                      onClick={handleFullscreen} 
+                      className="p-2 rounded-lg hover:bg-white/20 transition-colors"
+                    >
                       <Maximize className="w-5 h-5 text-white" />
                     </button>
                   </div>
@@ -529,7 +719,7 @@ export const OmegaFortressPlayer = memo(({
         )}
       </div>
 
-      {/* CSS de proteção específico */}
+      {/* CSS de proteção */}
       <style>{`
         .player-container iframe {
           pointer-events: auto !important;
@@ -537,6 +727,9 @@ export const OmegaFortressPlayer = memo(({
         .player-container iframe::-webkit-media-controls-download-button,
         .player-container iframe::-webkit-media-controls-watch-youtube-button {
           display: none !important;
+        }
+        @media print {
+          .player-container { display: none !important; }
         }
       `}</style>
     </div>
@@ -546,34 +739,70 @@ export const OmegaFortressPlayer = memo(({
 OmegaFortressPlayer.displayName = "OmegaFortressPlayer";
 
 // ============================================
-// WATERMARK COMPONENT
+// WATERMARK COMPONENT - ULTRA
 // ============================================
-const WatermarkOverlay = memo(({ text }: { text: string }) => {
+interface WatermarkProps {
+  text: string;
+  mode: 'moving' | 'static' | 'diagonal';
+  isImmune?: boolean;
+}
+
+const WatermarkOverlay = memo(({ text, mode, isImmune }: WatermarkProps) => {
   const [position, setPosition] = useState({ x: 10, y: 15 });
 
   useEffect(() => {
+    if (mode === 'static') return;
+
     const positions = [
       { x: 10, y: 15 }, { x: 70, y: 20 }, { x: 20, y: 50 },
       { x: 65, y: 55 }, { x: 15, y: 80 }, { x: 75, y: 85 },
+      { x: 40, y: 35 }, { x: 55, y: 70 },
     ];
     let index = 0;
 
     const interval = setInterval(() => {
       index = (index + 1) % positions.length;
       setPosition(positions[index]);
-    }, 15000);
+    }, 12000); // 12 segundos
 
     return () => clearInterval(interval);
-  }, []);
+  }, [mode]);
+
+  if (mode === 'static') {
+    return (
+      <div className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden">
+        <div className="absolute bottom-4 right-4">
+          <span className="font-mono tracking-wider text-[10px] text-white/5 whitespace-nowrap">
+            {text}
+          </span>
+        </div>
+      </div>
+    );
+  }
+
+  if (mode === 'diagonal') {
+    return (
+      <div className="absolute inset-0 z-50 pointer-events-none select-none overflow-hidden">
+        <div 
+          className="absolute inset-0 flex items-center justify-center"
+          style={{ transform: 'rotate(-30deg)' }}
+        >
+          <span className="font-mono tracking-[0.3em] text-xs text-white/[0.03] whitespace-nowrap">
+            {text}
+          </span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <motion.div
       className="absolute z-50 pointer-events-none select-none"
       animate={{ left: `${position.x}%`, top: `${position.y}%` }}
-      transition={{ duration: 3, ease: "easeInOut" }}
+      transition={{ duration: 4, ease: "easeInOut" }}
     >
       <div className="flex flex-col items-center gap-0.5">
-        <span className="font-mono tracking-[0.15em] text-[10px] sm:text-xs text-white/10 whitespace-nowrap">
+        <span className="font-mono tracking-[0.15em] text-[10px] sm:text-xs text-white/[0.07] whitespace-nowrap drop-shadow-sm">
           {text}
         </span>
       </div>

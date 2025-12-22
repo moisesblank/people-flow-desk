@@ -1,11 +1,13 @@
 // ============================================
-// 🔥 USE VIDEO FORTRESS - Hook Completo
-// Sistema de Proteção de Vídeos ULTRA
+// 🔥 USE VIDEO FORTRESS v3.0 - ULTRA SECURED
+// Sistema de Proteção de Vídeos MÁXIMO
+// Integrado com useRolePermissions + SANCTUM
 // ============================================
 
-import { useState, useCallback, useRef, useEffect } from 'react';
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { toast } from 'sonner';
 
 // ============================================
@@ -17,7 +19,10 @@ export type VideoViolationType =
   | 'multiple_sessions' | 'invalid_domain' | 'expired_token'
   | 'keyboard_shortcut' | 'context_menu' | 'drag_attempt'
   | 'copy_attempt' | 'visibility_abuse' | 'iframe_manipulation'
-  | 'network_tampering' | 'unknown';
+  | 'network_tampering' | 'extension_detected' | 'automation_detected'
+  | 'debugger_detected' | 'console_open' | 'unknown';
+
+export type ViolationAction = 'none' | 'warn' | 'degrade' | 'pause' | 'revoke';
 
 export interface VideoSession {
   sessionId: string;
@@ -27,23 +32,29 @@ export interface VideoSession {
   watermark: {
     text: string;
     hash: string;
-    mode: 'moving' | 'static';
+    mode: 'moving' | 'static' | 'diagonal';
   };
   revokedPrevious: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
 }
 
 export interface VideoFortressConfig {
   lessonId?: string;
   courseId?: string;
-  provider?: 'youtube' | 'panda';
+  provider?: 'youtube' | 'panda' | 'vimeo';
   videoId: string;
   ttlMinutes?: number;
   enableHeartbeat?: boolean;
   heartbeatInterval?: number;
   enableViolationDetection?: boolean;
+  enableAntiDevTools?: boolean;
+  enableAntiScreenshot?: boolean;
+  enableAntiExtensions?: boolean;
+  sanctumBypass?: boolean; // Para roles imunes
   onSessionRevoked?: () => void;
   onSessionExpired?: () => void;
-  onViolation?: (type: VideoViolationType, action: string) => void;
+  onViolation?: (type: VideoViolationType, action: ViolationAction) => void;
+  onRiskLevelChange?: (level: 'low' | 'medium' | 'high' | 'critical') => void;
 }
 
 interface UseVideoFortressReturn {
@@ -52,25 +63,57 @@ interface UseVideoFortressReturn {
   error: string | null;
   isActive: boolean;
   riskScore: number;
+  riskLevel: 'low' | 'medium' | 'high' | 'critical';
+  isImmune: boolean; // SANCTUM: roles imunes
   startSession: () => Promise<boolean>;
   endSession: (position?: number, completion?: number) => Promise<void>;
   reportViolation: (type: VideoViolationType, severity?: number, details?: Record<string, any>) => Promise<void>;
   sendHeartbeat: (position?: number) => Promise<void>;
-  watermarkData: { text: string; hash: string } | null;
+  pauseVideo: () => void;
+  resumeVideo: () => void;
+  watermarkData: { text: string; hash: string; mode: string } | null;
+  protectionStats: {
+    violationsBlocked: number;
+    heartbeatsSent: number;
+    sessionDuration: number;
+  };
 }
+
+// ============================================
+// CONSTANTES
+// ============================================
+const IMMUNE_ROLES = ['owner', 'admin', 'funcionario', 'suporte', 'coordenacao'];
+const SANCTUM_THRESHOLDS = {
+  warn: 30,
+  degrade: 60,
+  pause: 100,
+  revoke: 200,
+};
 
 // ============================================
 // HOOK PRINCIPAL
 // ============================================
 export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressReturn => {
   const { user } = useAuth();
+  const { role, isOwner, isAdmin, isFuncionarioOrAbove } = useRolePermissions();
+  
   const [session, setSession] = useState<VideoSession | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [riskScore, setRiskScore] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [protectionStats, setProtectionStats] = useState({
+    violationsBlocked: 0,
+    heartbeatsSent: 0,
+    sessionDuration: 0,
+  });
   
   const heartbeatRef = useRef<NodeJS.Timeout | null>(null);
   const sessionTokenRef = useRef<string | null>(null);
+  const sessionStartRef = useRef<number | null>(null);
+  const cleanupRef = useRef<(() => void) | null>(null);
+  const pauseCallbackRef = useRef<(() => void) | null>(null);
+  const resumeCallbackRef = useRef<(() => void) | null>(null);
 
   const {
     lessonId,
@@ -79,12 +122,38 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
     videoId,
     ttlMinutes = 5,
     enableHeartbeat = true,
-    heartbeatInterval = 30000, // 30 segundos
+    heartbeatInterval = 30000,
     enableViolationDetection = true,
+    enableAntiDevTools = true,
+    enableAntiScreenshot = true,
+    enableAntiExtensions = true,
+    sanctumBypass,
     onSessionRevoked,
     onSessionExpired,
     onViolation,
+    onRiskLevelChange,
   } = config;
+
+  // ============================================
+  // SANCTUM: Verificar imunidade por role
+  // ============================================
+  const isImmune = useMemo(() => {
+    if (sanctumBypass) return true;
+    if (isOwner || isAdmin) return true;
+    if (isFuncionarioOrAbove) return true;
+    return IMMUNE_ROLES.includes(role || '');
+  }, [role, isOwner, isAdmin, isFuncionarioOrAbove, sanctumBypass]);
+
+  // ============================================
+  // CALCULAR RISK LEVEL
+  // ============================================
+  const riskLevel = useMemo((): 'low' | 'medium' | 'high' | 'critical' => {
+    if (isImmune) return 'low';
+    if (riskScore >= 1000) return 'critical';
+    if (riskScore >= 500) return 'high';
+    if (riskScore >= 200) return 'medium';
+    return 'low';
+  }, [riskScore, isImmune]);
 
   // ============================================
   // CRIAR SESSÃO
@@ -99,7 +168,6 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
     setError(null);
 
     try {
-      // Obter fingerprint do dispositivo
       const deviceFingerprint = await generateDeviceFingerprint();
       
       const { data, error: rpcError } = await supabase.rpc('create_video_session', {
@@ -132,35 +200,46 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
         sessionCode: result.session_code,
         sessionToken: result.session_token,
         expiresAt: result.expires_at,
-        watermark: result.watermark,
+        watermark: {
+          ...result.watermark,
+          mode: isImmune ? 'static' : 'moving',
+        },
         revokedPrevious: result.revoked_previous || 0,
+        riskLevel: 'low',
       };
 
       setSession(newSession);
       sessionTokenRef.current = newSession.sessionToken;
+      sessionStartRef.current = Date.now();
 
-      // Iniciar heartbeat se habilitado
+      // Notificar sobre sessões revogadas
+      if (newSession.revokedPrevious > 0) {
+        toast.info(`📱 ${newSession.revokedPrevious} sessão(ões) anterior(es) encerrada(s)`);
+      }
+
+      // Iniciar heartbeat
       if (enableHeartbeat) {
         startHeartbeat();
       }
 
-      // Iniciar detecção de violações
-      if (enableViolationDetection) {
-        startViolationDetection();
+      // Iniciar proteções (se não for imune)
+      if (enableViolationDetection && !isImmune) {
+        cleanupRef.current = startViolationDetection();
       }
 
+      console.log('[VideoFortress] ✅ Sessão criada:', newSession.sessionCode);
       return true;
     } catch (err: any) {
-      console.error('[VideoFortress] Erro ao criar sessão:', err);
+      console.error('[VideoFortress] ❌ Erro ao criar sessão:', err);
       setError(err.message);
       return false;
     } finally {
       setIsLoading(false);
     }
-  }, [user, videoId, lessonId, courseId, provider, ttlMinutes, enableHeartbeat, enableViolationDetection]);
+  }, [user, videoId, lessonId, courseId, provider, ttlMinutes, enableHeartbeat, enableViolationDetection, isImmune]);
 
   // ============================================
-  // HEARTBEAT
+  // HEARTBEAT - Manter sessão viva
   // ============================================
   const sendHeartbeat = useCallback(async (position?: number): Promise<void> => {
     if (!sessionTokenRef.current) return;
@@ -175,18 +254,22 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
       
       const result = data as Record<string, any>;
       
+      setProtectionStats(prev => ({
+        ...prev,
+        heartbeatsSent: prev.heartbeatsSent + 1,
+        sessionDuration: sessionStartRef.current ? Math.floor((Date.now() - sessionStartRef.current) / 1000) : 0,
+      }));
+      
       if (!result.success) {
         if (result.error === 'SESSION_REVOKED') {
-          stopHeartbeat();
+          handleSessionEnd('revoked');
           toast.warning('⚠️ Sessão encerrada', {
             description: 'Você iniciou outra sessão em outro dispositivo.',
           });
           onSessionRevoked?.();
-          setSession(null);
         } else if (result.error === 'SESSION_EXPIRED') {
-          stopHeartbeat();
+          handleSessionEnd('expired');
           onSessionExpired?.();
-          setSession(null);
         }
       }
     } catch (err) {
@@ -211,10 +294,19 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
   // ============================================
   // FINALIZAR SESSÃO
   // ============================================
+  const handleSessionEnd = useCallback((reason: 'ended' | 'revoked' | 'expired') => {
+    stopHeartbeat();
+    cleanupRef.current?.();
+    setSession(null);
+    sessionTokenRef.current = null;
+    console.log(`[VideoFortress] Sessão finalizada: ${reason}`);
+  }, [stopHeartbeat]);
+
   const endSession = useCallback(async (position?: number, completion?: number): Promise<void> => {
     if (!sessionTokenRef.current) return;
 
     stopHeartbeat();
+    cleanupRef.current?.();
 
     try {
       await supabase.rpc('end_video_session', {
@@ -231,14 +323,25 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
   }, [stopHeartbeat]);
 
   // ============================================
-  // REPORTAR VIOLAÇÃO
+  // REPORTAR VIOLAÇÃO - SANCTUM 2.0
   // ============================================
   const reportViolation = useCallback(async (
     type: VideoViolationType,
     severity: number = 1,
     details?: Record<string, any>
   ): Promise<void> => {
+    // SANCTUM: Usuários imunes apenas logam, sem penalidade
+    if (isImmune) {
+      console.log(`[VideoFortress/SANCTUM] 🛡️ Violação ignorada (role imune): ${type}`);
+      return;
+    }
+
     if (!sessionTokenRef.current) return;
+
+    setProtectionStats(prev => ({
+      ...prev,
+      violationsBlocked: prev.violationsBlocked + 1,
+    }));
 
     try {
       const { data, error: rpcError } = await supabase.rpc('register_video_violation', {
@@ -253,120 +356,275 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
       const result = data as Record<string, any>;
       
       if (result.success) {
-        setRiskScore(result.new_risk_score || 0);
+        const newScore = result.new_risk_score || 0;
+        setRiskScore(newScore);
         
-        if (result.action_taken && result.action_taken !== 'none') {
-          onViolation?.(type, result.action_taken);
+        const action = result.action_taken as ViolationAction;
+        if (action && action !== 'none') {
+          onViolation?.(type, action);
           
-          if (result.action_taken === 'warn') {
-            toast.warning('⚠️ Atividade suspeita detectada');
-          } else if (result.action_taken === 'pause') {
-            toast.error('🛑 Vídeo pausado por segurança');
-          } else if (result.session_revoked) {
-            toast.error('🚫 Sessão encerrada por violação de segurança');
-            stopHeartbeat();
-            setSession(null);
+          // Notificar sobre nível de risco
+          if (newScore >= SANCTUM_THRESHOLDS.pause) {
+            onRiskLevelChange?.('critical');
+          } else if (newScore >= SANCTUM_THRESHOLDS.degrade) {
+            onRiskLevelChange?.('high');
+          } else if (newScore >= SANCTUM_THRESHOLDS.warn) {
+            onRiskLevelChange?.('medium');
+          }
+          
+          // Ações baseadas no resultado
+          switch (action) {
+            case 'warn':
+              toast.warning('⚠️ Atividade suspeita detectada', {
+                description: 'Comportamento sendo monitorado.',
+              });
+              break;
+            case 'degrade':
+              toast.warning('🔻 Qualidade reduzida por segurança');
+              break;
+            case 'pause':
+              toast.error('🛑 Vídeo pausado por segurança');
+              setIsPaused(true);
+              pauseCallbackRef.current?.();
+              break;
+          }
+          
+          if (result.session_revoked) {
+            toast.error('🚫 Sessão encerrada por violação');
+            handleSessionEnd('revoked');
           }
         }
       }
     } catch (err) {
       console.error('[VideoFortress] Erro ao reportar violação:', err);
     }
-  }, [onViolation, stopHeartbeat]);
+  }, [isImmune, onViolation, onRiskLevelChange, handleSessionEnd]);
 
   // ============================================
-  // DETECÇÃO DE VIOLAÇÕES
+  // DETECÇÃO DE VIOLAÇÕES - ULTRA
   // ============================================
   const startViolationDetection = useCallback(() => {
-    // Detectar DevTools
-    const checkDevTools = () => {
-      const threshold = 160;
-      const widthDiff = window.outerWidth - window.innerWidth > threshold;
-      const heightDiff = window.outerHeight - window.innerHeight > threshold;
-      
-      if (widthDiff || heightDiff) {
-        reportViolation('devtools_open', 3);
-      }
-    };
+    const cleanupFns: (() => void)[] = [];
 
-    // Bloquear atalhos perigosos
+    // 1. DevTools Detection (múltiplos métodos)
+    if (enableAntiDevTools) {
+      // Método 1: Diferença de dimensões
+      const checkDevTools = () => {
+        const threshold = 160;
+        const widthDiff = window.outerWidth - window.innerWidth > threshold;
+        const heightDiff = window.outerHeight - window.innerHeight > threshold;
+        
+        if (widthDiff || heightDiff) {
+          reportViolation('devtools_open', 3, { method: 'dimension' });
+        }
+      };
+
+      // Método 2: Debugger detection
+      const checkDebugger = () => {
+        const start = performance.now();
+        // eslint-disable-next-line no-debugger
+        debugger;
+        if (performance.now() - start > 100) {
+          reportViolation('debugger_detected', 5);
+        }
+      };
+
+      // Método 3: Console.log timing
+      const checkConsole = () => {
+        const element = new Image();
+        Object.defineProperty(element, 'id', {
+          get: function() {
+            reportViolation('console_open', 2);
+            return 'devtools-check';
+          }
+        });
+        console.log('%c', element as any);
+      };
+
+      const devToolsInterval = setInterval(() => {
+        checkDevTools();
+        // checkConsole(); // Comentado pois pode causar spam
+      }, 3000);
+
+      cleanupFns.push(() => clearInterval(devToolsInterval));
+    }
+
+    // 2. Keyboard Shortcuts Blocking
     const handleKeydown = (e: KeyboardEvent) => {
       const isCtrl = e.ctrlKey || e.metaKey;
       const isShift = e.shiftKey;
+      const isAlt = e.altKey;
       const key = e.key.toLowerCase();
 
-      if (isCtrl && (key === 's' || key === 'p' || key === 'u')) {
-        e.preventDefault();
-        reportViolation('keyboard_shortcut', 2, { key: e.key });
-      }
-      
+      // F12
       if (e.key === 'F12') {
         e.preventDefault();
-        reportViolation('devtools_open', 3);
+        reportViolation('devtools_open', 3, { key: 'F12' });
+        return;
       }
-      
-      if (isCtrl && isShift && (key === 'i' || key === 'j' || key === 'c')) {
+
+      // Ctrl+Shift+I/J/C (DevTools)
+      if (isCtrl && isShift && ['i', 'j', 'c'].includes(key)) {
         e.preventDefault();
-        reportViolation('devtools_open', 4);
+        reportViolation('devtools_open', 4, { key: `Ctrl+Shift+${key.toUpperCase()}` });
+        return;
+      }
+
+      // Ctrl+S/P/U (Save/Print/Source)
+      if (isCtrl && ['s', 'p', 'u'].includes(key)) {
+        e.preventDefault();
+        reportViolation('keyboard_shortcut', 2, { key: `Ctrl+${key.toUpperCase()}` });
+        return;
+      }
+
+      // Ctrl+Shift+S (Screenshot em alguns sistemas)
+      if (isCtrl && isShift && key === 's') {
+        e.preventDefault();
+        reportViolation('screenshot_attempt', 4);
+        return;
       }
     };
 
-    // Bloquear menu de contexto
+    const handleKeyup = (e: KeyboardEvent) => {
+      if (e.key === 'PrintScreen') {
+        reportViolation('screenshot_attempt', 5);
+        toast.error('📸 Captura de tela detectada!', {
+          description: 'Esta ação foi registrada.',
+        });
+      }
+    };
+
+    window.addEventListener('keydown', handleKeydown);
+    window.addEventListener('keyup', handleKeyup);
+    cleanupFns.push(() => {
+      window.removeEventListener('keydown', handleKeydown);
+      window.removeEventListener('keyup', handleKeyup);
+    });
+
+    // 3. Context Menu Blocking
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
       reportViolation('context_menu', 1);
     };
 
-    // Detectar print screen
-    const handleKeyup = (e: KeyboardEvent) => {
-      if (e.key === 'PrintScreen') {
-        reportViolation('screenshot_attempt', 5);
-        toast.error('📸 Captura de tela detectada e registrada!');
-      }
-    };
+    document.addEventListener('contextmenu', handleContextMenu);
+    cleanupFns.push(() => document.removeEventListener('contextmenu', handleContextMenu));
 
-    // Detectar visibility change (anti-gravação)
+    // 4. Visibility Change (Tab switching)
     const handleVisibilityChange = () => {
       if (document.hidden) {
         reportViolation('visibility_abuse', 1, { reason: 'tab_hidden' });
       }
     };
 
-    // Listeners
-    window.addEventListener('keydown', handleKeydown);
-    window.addEventListener('keyup', handleKeyup);
-    document.addEventListener('contextmenu', handleContextMenu);
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    
-    const devToolsInterval = setInterval(checkDevTools, 2000);
+    cleanupFns.push(() => document.removeEventListener('visibilitychange', handleVisibilityChange));
 
-    return () => {
-      window.removeEventListener('keydown', handleKeydown);
-      window.removeEventListener('keyup', handleKeyup);
-      document.removeEventListener('contextmenu', handleContextMenu);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      clearInterval(devToolsInterval);
+    // 5. Copy/Drag Prevention
+    const handleCopy = (e: ClipboardEvent) => {
+      e.preventDefault();
+      reportViolation('copy_attempt', 2);
     };
-  }, [reportViolation]);
 
-  // Cleanup ao desmontar
+    const handleDragStart = (e: DragEvent) => {
+      e.preventDefault();
+      reportViolation('drag_attempt', 1);
+    };
+
+    document.addEventListener('copy', handleCopy);
+    document.addEventListener('dragstart', handleDragStart);
+    cleanupFns.push(() => {
+      document.removeEventListener('copy', handleCopy);
+      document.removeEventListener('dragstart', handleDragStart);
+    });
+
+    // 6. Extension Detection (Chrome/Firefox)
+    if (enableAntiExtensions) {
+      const checkExtensions = () => {
+        // Detectar extensões conhecidas de download/gravação
+        const suspiciousElements = document.querySelectorAll('[id*="video-download"], [class*="video-download"], [data-extension]');
+        if (suspiciousElements.length > 0) {
+          reportViolation('extension_detected', 4, { count: suspiciousElements.length });
+        }
+      };
+
+      const extensionInterval = setInterval(checkExtensions, 10000);
+      cleanupFns.push(() => clearInterval(extensionInterval));
+    }
+
+    // 7. Automation Detection
+    const detectAutomation = () => {
+      const isAutomated = 
+        (navigator as any).webdriver ||
+        (window as any).__selenium_unwrapped ||
+        (window as any).__webdriver_evaluate ||
+        (document as any).__webdriver_unwrapped;
+      
+      if (isAutomated) {
+        reportViolation('unknown', 8, { reason: 'automation_detected' });
+      }
+    };
+
+    detectAutomation();
+    const automationInterval = setInterval(detectAutomation, 30000);
+    cleanupFns.push(() => clearInterval(automationInterval));
+
+    // Retornar função de cleanup
+    return () => {
+      cleanupFns.forEach(fn => fn());
+    };
+  }, [enableAntiDevTools, enableAntiExtensions, reportViolation]);
+
+  // ============================================
+  // CONTROLES DE VÍDEO
+  // ============================================
+  const pauseVideo = useCallback(() => {
+    setIsPaused(true);
+    pauseCallbackRef.current?.();
+  }, []);
+
+  const resumeVideo = useCallback(() => {
+    if (riskLevel === 'critical') {
+      toast.error('Não é possível continuar. Risco muito alto.');
+      return;
+    }
+    setIsPaused(false);
+    resumeCallbackRef.current?.();
+  }, [riskLevel]);
+
+  // ============================================
+  // CLEANUP
+  // ============================================
   useEffect(() => {
     return () => {
       stopHeartbeat();
+      cleanupRef.current?.();
     };
   }, [stopHeartbeat]);
 
+  // ============================================
+  // RETURN
+  // ============================================
   return {
     session,
     isLoading,
     error,
-    isActive: !!session && session.expiresAt > new Date().toISOString(),
+    isActive: !!session && session.expiresAt > new Date().toISOString() && !isPaused,
     riskScore,
+    riskLevel,
+    isImmune,
     startSession,
     endSession,
     reportViolation,
     sendHeartbeat,
-    watermarkData: session ? { text: session.watermark.text, hash: session.watermark.hash } : null,
+    pauseVideo,
+    resumeVideo,
+    watermarkData: session ? {
+      text: session.watermark.text,
+      hash: session.watermark.hash,
+      mode: session.watermark.mode,
+    } : null,
+    protectionStats,
   };
 };
 
@@ -377,10 +635,27 @@ async function generateDeviceFingerprint(): Promise<string> {
   const components = [
     navigator.userAgent,
     navigator.language,
+    navigator.languages?.join(','),
     screen.width + 'x' + screen.height,
+    screen.colorDepth,
     new Date().getTimezoneOffset(),
     navigator.hardwareConcurrency || 0,
+    (navigator as any).deviceMemory || 0,
+    navigator.platform,
+    (performance as any).memory?.jsHeapSizeLimit || 0,
   ];
+  
+  // Canvas fingerprint
+  try {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    if (ctx) {
+      ctx.textBaseline = 'top';
+      ctx.font = '14px Arial';
+      ctx.fillText('VideoFortress', 2, 2);
+      components.push(canvas.toDataURL());
+    }
+  } catch (e) {}
   
   const fingerprint = components.join('|');
   const encoder = new TextEncoder();
