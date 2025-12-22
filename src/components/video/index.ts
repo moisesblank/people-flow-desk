@@ -1,7 +1,8 @@
 // ============================================
-// 🔥 SISTEMA DE VÍDEO FORTALEZA v3.0 - EXPORTS
+// 🔥 SISTEMA DE VÍDEO FORTALEZA v5.0 - EXPORTS
 // Todos os componentes de proteção de vídeo
 // Sistema unificado para 5000+ usuários simultâneos
+// SANCTUM 2.0 OMEGA
 // ============================================
 
 // ============================================
@@ -12,6 +13,19 @@ export {
   OmegaFortressPlayer,
   type OmegaFortressPlayerProps 
 } from "./OmegaFortressPlayer";
+
+// ============================================
+// 🛡️ HOOK OMEGA (NOVO v5.0)
+// Hook com SANCTUM 2.0 + bypass inteligente
+// ============================================
+export { 
+  useVideoFortressOmega,
+  SANCTUM_CONFIG,
+  checkSanctumBypass,
+  type VideoSessionOmega,
+  type VideoFortressOmegaState,
+  type ViolationType,
+} from "@/hooks/useVideoFortressOmega";
 
 // ============================================
 // 🛡️ FORTRESS VIDEO PLAYER (LEGADO)
