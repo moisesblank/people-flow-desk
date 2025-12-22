@@ -315,7 +315,7 @@ export function useWebBook(bookId?: string) {
   }, [bookId, user?.id, bookData]);
 
   // Reportar violação SANCTUM
-  const reportViolation = useCallback(async (type: string, metadata?: Record<string, unknown>) => {
+  const reportViolation = useCallback(async (type: string, metadata?: Record<string, string | number | boolean | null>) => {
     if (isOwner) return; // Owner não registra violações
 
     const severity = SANCTUM_OMEGA_CONFIG.severityMap[type] || 5;
