@@ -1,11 +1,11 @@
 // ============================================
-// 🔥 COMPONENTE: LiveChatPanel v2.0 - ULTRA EDITION
-// Chat em tempo real para lives - 5.000+ simultâneos
-// Design 2300 - Futurista, Glassmorphism, Neon
-// Performance MÁXIMA + UX Fluida
+// 🔥 COMPONENTE: LiveChatPanel v3.0 - ULTRA DEFINITIVO
+// Chat em tempo real - 5.000+ simultâneos
+// Design 2300 - Glassmorphism Extremo + Neon
+// Performance MÁXIMA + UX Premium
 // ============================================
 
-import { useState, useRef, useEffect, useCallback, memo, forwardRef } from 'react';
+import { useState, useRef, useEffect, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Send,
@@ -27,11 +27,10 @@ import {
   Zap,
   Sparkles,
   ChevronDown,
-  AlertTriangle,
   Loader2,
-  CheckCircle,
-  XCircle,
   Radio,
+  Crown,
+  Star,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -72,50 +71,78 @@ interface LiveChatPanelProps {
   liveId: string;
   className?: string;
   compact?: boolean;
-  theme?: 'dark' | 'light' | 'neon';
 }
+
+// ============================================
+// CONFIGURAÇÕES DE CORES POR ROLE
+// ============================================
+const ROLE_CONFIG = {
+  owner: {
+    badge: 'bg-gradient-to-r from-amber-400 via-yellow-500 to-orange-500',
+    text: 'text-amber-400',
+    ring: 'ring-amber-500',
+    icon: Crown,
+    label: 'DONO',
+    glow: 'shadow-amber-500/50',
+  },
+  admin: {
+    badge: 'bg-gradient-to-r from-red-500 to-pink-500',
+    text: 'text-red-400',
+    ring: 'ring-red-500',
+    icon: Shield,
+    label: 'ADMIN',
+    glow: 'shadow-red-500/30',
+  },
+  moderator: {
+    badge: 'bg-gradient-to-r from-purple-500 to-indigo-500',
+    text: 'text-purple-400',
+    ring: 'ring-purple-500',
+    icon: ShieldAlert,
+    label: 'MOD',
+    glow: 'shadow-purple-500/30',
+  },
+  beta: {
+    badge: 'bg-gradient-to-r from-cyan-500 to-blue-500',
+    text: 'text-cyan-400',
+    ring: 'ring-cyan-500',
+    icon: Star,
+    label: 'BETA',
+    glow: 'shadow-cyan-500/30',
+  },
+  viewer: {
+    badge: 'bg-gray-600',
+    text: 'text-white/80',
+    ring: 'ring-white/20',
+    icon: null,
+    label: null,
+    glow: '',
+  },
+} as const;
 
 // ============================================
 // COMPONENTE DE BADGE POR ROLE
 // ============================================
 const RoleBadge = memo(({ role }: { role: ChatMessage['user_role'] }) => {
-  switch (role) {
-    case 'owner':
-      return (
-        <Badge className="bg-gradient-to-r from-amber-500 via-yellow-500 to-orange-500 text-black text-[10px] px-1.5 py-0 font-bold shadow-lg shadow-amber-500/30">
-          <Sparkles className="h-2.5 w-2.5 mr-0.5 animate-pulse" />
-          DONO
-        </Badge>
-      );
-    case 'admin':
-      return (
-        <Badge className="bg-gradient-to-r from-red-500 to-pink-500 text-white text-[10px] px-1.5 py-0 font-bold">
-          <Shield className="h-2.5 w-2.5 mr-0.5" />
-          ADMIN
-        </Badge>
-      );
-    case 'moderator':
-      return (
-        <Badge className="bg-gradient-to-r from-purple-500 to-indigo-500 text-white text-[10px] px-1.5 py-0">
-          <ShieldAlert className="h-2.5 w-2.5 mr-0.5" />
-          MOD
-        </Badge>
-      );
-    case 'beta':
-      return (
-        <Badge className="bg-gradient-to-r from-cyan-500 to-blue-500 text-white text-[10px] px-1.5 py-0">
-          <Zap className="h-2.5 w-2.5 mr-0.5" />
-          BETA
-        </Badge>
-      );
-    default:
-      return null;
-  }
+  const config = ROLE_CONFIG[role];
+  if (!config.icon || !config.label) return null;
+  
+  const Icon = config.icon;
+  
+  return (
+    <Badge className={cn(
+      config.badge,
+      "text-white text-[10px] px-1.5 py-0 font-bold shadow-lg",
+      config.glow
+    )}>
+      <Icon className="h-2.5 w-2.5 mr-0.5" />
+      {config.label}
+    </Badge>
+  );
 });
 RoleBadge.displayName = 'RoleBadge';
 
 // ============================================
-// COMPONENTE DE MENSAGEM INDIVIDUAL
+// COMPONENTE DE MENSAGEM
 // ============================================
 const ChatMessageItem = memo(({ 
   message, 
@@ -134,40 +161,40 @@ const ChatMessageItem = memo(({
   onBan: (userId: string) => void;
   onPin: (id: string, isPinned: boolean) => void;
 }) => {
+  const config = ROLE_CONFIG[message.user_role];
+  
   if (message.is_deleted) {
     return (
-      <div className="px-3 py-1 opacity-40 italic text-xs text-muted-foreground flex items-center gap-1">
-        <XCircle className="h-3 w-3" />
-        Mensagem removida por moderador
+      <div className="px-3 py-1.5 opacity-40 italic text-xs text-white/50 flex items-center gap-1.5">
+        <Trash2 className="h-3 w-3" />
+        Mensagem removida
       </div>
     );
   }
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -10, scale: 0.95 }}
+      initial={{ opacity: 0, x: -20, scale: 0.95 }}
       animate={{ opacity: 1, x: 0, scale: 1 }}
-      transition={{ duration: 0.2, ease: 'easeOut' }}
+      transition={{ duration: 0.2, ease: [0.25, 0.46, 0.45, 0.94] }}
       className={cn(
-        "group px-3 py-2.5 hover:bg-white/5 transition-all duration-200",
-        message.is_pinned && "bg-gradient-to-r from-amber-500/10 to-transparent border-l-2 border-amber-500 shadow-inner"
+        "group px-4 py-3 transition-all duration-300",
+        "hover:bg-white/5",
+        message.is_pinned && "bg-gradient-to-r from-amber-500/15 via-amber-500/10 to-transparent border-l-2 border-amber-500"
       )}
     >
-      <div className="flex items-start gap-2.5">
-        {/* Avatar com anel de status */}
-        <div className="relative">
+      <div className="flex items-start gap-3">
+        {/* Avatar com efeitos */}
+        <div className="relative flex-shrink-0">
           <Avatar className={cn(
-            "h-8 w-8 ring-2 transition-all",
-            message.user_role === 'owner' && "ring-amber-500 shadow-lg shadow-amber-500/30",
-            message.user_role === 'admin' && "ring-red-500",
-            message.user_role === 'moderator' && "ring-purple-500",
-            message.user_role === 'beta' && "ring-cyan-500",
-            message.user_role === 'viewer' && "ring-white/20"
+            "h-9 w-9 ring-2 transition-all duration-300",
+            config.ring,
+            message.user_role === 'owner' && "shadow-lg shadow-amber-500/40"
           )}>
             <AvatarImage src={message.user_avatar} />
             <AvatarFallback className={cn(
-              "text-[10px] font-bold",
-              message.user_role === 'owner' && "bg-gradient-to-br from-amber-500 to-orange-600 text-black",
+              "text-[11px] font-bold text-white",
+              message.user_role === 'owner' && "bg-gradient-to-br from-amber-500 to-orange-600",
               message.user_role === 'admin' && "bg-gradient-to-br from-red-500 to-pink-600",
               message.user_role === 'moderator' && "bg-gradient-to-br from-purple-500 to-indigo-600",
               message.user_role === 'beta' && "bg-gradient-to-br from-cyan-500 to-blue-600",
@@ -176,33 +203,40 @@ const ChatMessageItem = memo(({
               {message.user_name?.slice(0, 2).toUpperCase()}
             </AvatarFallback>
           </Avatar>
+          
+          {/* Indicador de owner */}
           {message.user_role === 'owner' && (
-            <div className="absolute -top-1 -right-1 w-3 h-3 bg-amber-500 rounded-full animate-pulse" />
+            <motion.div 
+              className="absolute -top-1 -right-1 w-4 h-4 bg-gradient-to-r from-amber-400 to-orange-500 rounded-full flex items-center justify-center"
+              animate={{ scale: [1, 1.2, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              <Crown className="h-2.5 w-2.5 text-black" />
+            </motion.div>
           )}
         </div>
 
         {/* Conteúdo */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-1.5 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className={cn(
-              "font-semibold text-sm truncate max-w-[120px]",
-              message.user_role === 'owner' && "text-amber-400",
-              message.user_role === 'admin' && "text-red-400",
-              message.user_role === 'moderator' && "text-purple-400",
-              message.user_role === 'beta' && "text-cyan-400",
-              message.user_role === 'viewer' && "text-white/90"
+              "font-semibold text-sm truncate max-w-[140px]",
+              config.text
             )}>
               {message.user_name}
             </span>
+            
             <RoleBadge role={message.user_role} />
+            
             {message.is_pinned && (
-              <Tooltip>
-                <TooltipTrigger>
-                  <Pin className="h-3 w-3 text-amber-500 animate-pulse" />
-                </TooltipTrigger>
-                <TooltipContent>Mensagem fixada</TooltipContent>
-              </Tooltip>
+              <motion.div
+                animate={{ rotate: [0, 10, -10, 0] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Pin className="h-3.5 w-3.5 text-amber-500" />
+              </motion.div>
             )}
+            
             <span className="text-[10px] text-white/30 ml-auto">
               {formatDistanceToNow(new Date(message.created_at), { 
                 addSuffix: false, 
@@ -210,41 +244,41 @@ const ChatMessageItem = memo(({
               })}
             </span>
           </div>
-          <p className="text-sm text-white/85 break-words mt-1 leading-relaxed">
+          
+          <p className="text-sm text-white/85 break-words mt-1.5 leading-relaxed">
             {message.content}
           </p>
         </div>
 
-        {/* Ações de moderação */}
+        {/* Menu de moderação */}
         {isModerator && !isLoading && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-white/10"
+                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-all duration-200 hover:bg-white/10"
               >
-                <MoreVertical className="h-3.5 w-3.5 text-white/60" />
+                <MoreVertical className="h-4 w-4 text-white/50" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-44 bg-black/90 backdrop-blur-xl border-white/10">
+            <DropdownMenuContent 
+              align="end" 
+              className="w-48 bg-black/95 backdrop-blur-xl border-white/10"
+            >
               <DropdownMenuItem 
                 onClick={() => onPin(message.id, message.is_pinned)}
                 className="text-white/80 focus:text-white focus:bg-white/10"
               >
                 {message.is_pinned ? (
-                  <>
-                    <PinOff className="h-4 w-4 mr-2" />
-                    Desafixar
-                  </>
+                  <><PinOff className="h-4 w-4 mr-2" /> Desafixar</>
                 ) : (
-                  <>
-                    <Pin className="h-4 w-4 mr-2" />
-                    Fixar mensagem
-                  </>
+                  <><Pin className="h-4 w-4 mr-2" /> Fixar mensagem</>
                 )}
               </DropdownMenuItem>
+              
               <DropdownMenuSeparator className="bg-white/10" />
+              
               <DropdownMenuItem 
                 onClick={() => onDelete(message.id)}
                 className="text-white/80 focus:text-white focus:bg-white/10"
@@ -252,6 +286,7 @@ const ChatMessageItem = memo(({
                 <Trash2 className="h-4 w-4 mr-2" />
                 Deletar
               </DropdownMenuItem>
+              
               <DropdownMenuItem 
                 onClick={() => onTimeout(message.user_id)}
                 className="text-amber-400 focus:text-amber-300 focus:bg-amber-500/10"
@@ -259,6 +294,7 @@ const ChatMessageItem = memo(({
                 <Timer className="h-4 w-4 mr-2" />
                 Timeout 5min
               </DropdownMenuItem>
+              
               <DropdownMenuItem 
                 onClick={() => onBan(message.user_id)}
                 className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
@@ -282,7 +318,6 @@ export const LiveChatPanel = memo(({
   liveId, 
   className, 
   compact = false,
-  theme = 'dark'
 }: LiveChatPanelProps) => {
   const [inputValue, setInputValue] = useState('');
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -305,21 +340,22 @@ export const LiveChatPanel = memo(({
     hasMoreMessages,
   } = useLiveChat(liveId);
 
-  // Auto-scroll para novas mensagens
+  // Auto-scroll
   useEffect(() => {
     if (state.messages.length > lastMessageCount.current) {
       lastMessageCount.current = state.messages.length;
       if (isAutoScrolling.current && scrollRef.current) {
         requestAnimationFrame(() => {
-          if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-          }
+          scrollRef.current?.scrollTo({
+            top: scrollRef.current.scrollHeight,
+            behavior: 'smooth'
+          });
         });
       }
     }
   }, [state.messages.length]);
 
-  // Listener para scroll to bottom via evento
+  // Scroll event listener
   useEffect(() => {
     const handleScrollEvent = () => {
       if (scrollRef.current) {
@@ -333,7 +369,6 @@ export const LiveChatPanel = memo(({
     return () => window.removeEventListener('chat-scroll-bottom', handleScrollEvent);
   }, []);
 
-  // Handler de scroll para detectar posição
   const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
     const target = e.target as HTMLDivElement;
     const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 100;
@@ -341,19 +376,15 @@ export const LiveChatPanel = memo(({
     setShowScrollButton(!isAtBottom && state.messages.length > 10);
   }, [state.messages.length]);
 
-  // Scroll to bottom
   const scrollToBottom = useCallback(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollTo({
-        top: scrollRef.current.scrollHeight,
-        behavior: 'smooth'
-      });
-      isAutoScrolling.current = true;
-      setShowScrollButton(false);
-    }
+    scrollRef.current?.scrollTo({
+      top: scrollRef.current.scrollHeight,
+      behavior: 'smooth'
+    });
+    isAutoScrolling.current = true;
+    setShowScrollButton(false);
   }, []);
 
-  // Enviar mensagem
   const handleSend = useCallback(async () => {
     if (!inputValue.trim()) return;
     
@@ -365,7 +396,6 @@ export const LiveChatPanel = memo(({
     }
   }, [inputValue, sendMessage]);
 
-  // Handler de tecla Enter
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -373,22 +403,16 @@ export const LiveChatPanel = memo(({
     }
   }, [handleSend]);
 
-  // Ações de moderação com feedback
+  // Ações de moderação
   const handleDelete = useCallback(async (messageId: string) => {
-    const success = await moderation.deleteMessage(messageId);
-    if (!success && moderation.error) {
-      console.error(moderation.error);
-    }
+    await moderation.deleteMessage(messageId);
   }, [moderation]);
 
   const handleTimeout = useCallback(async (userId: string) => {
-    const success = await moderation.timeoutUser(userId, 5 * 60 * 1000, 'Timeout por moderador');
-    if (!success && moderation.error) {
-      console.error(moderation.error);
-    }
+    await moderation.timeoutUser(userId, 5 * 60 * 1000, 'Timeout por moderador');
   }, [moderation]);
 
-  const handleBan = useCallback(async (userId: string) => {
+  const handleBan = useCallback((userId: string) => {
     setConfirmAction({ type: 'ban', userId });
   }, []);
 
@@ -416,7 +440,7 @@ export const LiveChatPanel = memo(({
     setConfirmAction(null);
   }, [moderation]);
 
-  // Calcular tempo restante de cooldown
+  // Estados derivados
   const cooldownSeconds = Math.ceil(rateLimit.state.cooldownRemaining / 1000);
   const canSend = rateLimit.state.canSend && inputValue.trim().length > 0 && !state.isBanned && !state.isTimedOut && state.chatEnabled;
   const charPercent = (inputValue.length / rateLimit.config.maxChars) * 100;
@@ -426,58 +450,74 @@ export const LiveChatPanel = memo(({
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, ease: 'easeOut' }}
+        transition={{ duration: 0.4, ease: [0.25, 0.46, 0.45, 0.94] }}
         className={cn(
           "flex flex-col rounded-2xl overflow-hidden relative",
-          "bg-gradient-to-b from-black/70 via-black/80 to-black/90",
-          "backdrop-blur-2xl border border-white/10",
+          "bg-gradient-to-b from-black/80 via-black/85 to-black/90",
+          "backdrop-blur-3xl border border-white/10",
           "shadow-2xl shadow-black/60",
           compact ? "h-[400px]" : "h-[600px]",
           className
         )}
       >
-        {/* Efeito de borda brilhante */}
-        <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-primary/20 via-transparent to-cyan-500/20 opacity-50 pointer-events-none" />
+        {/* Efeito de brilho nas bordas */}
+        <div className="absolute inset-0 rounded-2xl pointer-events-none">
+          <div className="absolute inset-0 rounded-2xl bg-gradient-to-r from-cyan-500/10 via-transparent to-purple-500/10 opacity-60" />
+          <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/20 to-transparent" />
+        </div>
         
         {/* Header */}
-        <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10 bg-gradient-to-r from-white/5 to-transparent">
-          <div className="flex items-center gap-2">
+        <div className="relative flex items-center justify-between px-4 py-3 border-b border-white/10">
+          <div className="flex items-center gap-3">
             <div className="relative">
-              <MessageCircle className="h-5 w-5 text-primary" />
+              <div className="p-2 rounded-xl bg-gradient-to-br from-primary/20 to-cyan-500/20">
+                <MessageCircle className="h-5 w-5 text-primary" />
+              </div>
               {state.isConnected && (
-                <div className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+                <motion.div 
+                  className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-black"
+                  animate={{ scale: [1, 1.2, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
               )}
             </div>
-            <span className="font-bold text-white">Chat ao Vivo</span>
-            {state.isSlowMode && (
-              <Badge variant="secondary" className="bg-amber-500/20 text-amber-400 text-xs border border-amber-500/30">
-                <Clock className="h-3 w-3 mr-1 animate-pulse" />
-                Slow Mode
-              </Badge>
-            )}
+            
+            <div>
+              <h3 className="font-bold text-white text-sm">Chat ao Vivo</h3>
+              {state.isSlowMode && (
+                <div className="flex items-center gap-1 text-[10px] text-amber-400">
+                  <Clock className="h-2.5 w-2.5" />
+                  Slow Mode
+                </div>
+              )}
+            </div>
           </div>
           
-          <div className="flex items-center gap-3">
-            {/* Live indicator */}
-            <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-red-500/20 border border-red-500/30">
-              <Radio className="h-3 w-3 text-red-500 animate-pulse" />
-              <span className="text-xs font-medium text-red-400">LIVE</span>
-            </div>
+          <div className="flex items-center gap-2">
+            {/* Live badge */}
+            <motion.div 
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-500/20 border border-red-500/30"
+              animate={{ opacity: [1, 0.7, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              <Radio className="h-3 w-3 text-red-500" />
+              <span className="text-[10px] font-bold text-red-400 uppercase">LIVE</span>
+            </motion.div>
             
-            {/* Contador de viewers */}
+            {/* Viewers */}
             <Tooltip>
               <TooltipTrigger asChild>
-                <div className="flex items-center gap-1.5 text-sm text-white/70 bg-white/5 px-2 py-1 rounded-lg">
-                  <Users className="h-4 w-4" />
-                  <span className="font-medium">{state.viewerCount.toLocaleString()}</span>
+                <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/5 border border-white/10">
+                  <Users className="h-3.5 w-3.5 text-white/60" />
+                  <span className="text-xs font-semibold text-white/80">
+                    {state.viewerCount.toLocaleString()}
+                  </span>
                 </div>
               </TooltipTrigger>
-              <TooltipContent>
-                {state.viewerCount.toLocaleString()} espectadores online
-              </TooltipContent>
+              <TooltipContent>{state.viewerCount} online</TooltipContent>
             </Tooltip>
 
-            {/* Status de conexão */}
+            {/* Status */}
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button
@@ -485,40 +525,40 @@ export const LiveChatPanel = memo(({
                   size="icon"
                   className={cn(
                     "h-8 w-8 rounded-lg",
-                    state.isConnected ? "bg-green-500/10" : "bg-red-500/10"
+                    state.isConnected ? "text-green-500" : "text-red-500"
                   )}
                   onClick={!state.isConnected ? reconnect : undefined}
                 >
                   {state.isConnected ? (
-                    <Wifi className="h-4 w-4 text-green-500" />
+                    <Wifi className="h-4 w-4" />
                   ) : (
-                    <WifiOff className="h-4 w-4 text-red-500" />
+                    <WifiOff className="h-4 w-4" />
                   )}
                 </Button>
               </TooltipTrigger>
               <TooltipContent>
-                {state.isConnected ? 'Conectado' : 'Desconectado - Clique para reconectar'}
+                {state.isConnected ? 'Conectado' : 'Clique para reconectar'}
               </TooltipContent>
             </Tooltip>
 
-            {/* Controles de moderação */}
+            {/* Admin controls */}
             {isAdmin && (
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg hover:bg-white/10">
+                  <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
                     <Shield className="h-4 w-4 text-purple-400" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="w-48 bg-black/95 backdrop-blur-xl border-white/10">
                   <DropdownMenuItem 
-                    onClick={moderation.enableGlobalSlowMode}
+                    onClick={() => moderation.enableGlobalSlowMode()}
                     className="text-white/80 focus:text-white focus:bg-white/10"
                   >
                     <Clock className="h-4 w-4 mr-2 text-amber-400" />
                     Ativar Slow Mode
                   </DropdownMenuItem>
                   <DropdownMenuItem 
-                    onClick={moderation.disableGlobalSlowMode}
+                    onClick={() => moderation.disableGlobalSlowMode()}
                     className="text-white/80 focus:text-white focus:bg-white/10"
                   >
                     <Zap className="h-4 w-4 mr-2 text-cyan-400" />
@@ -530,7 +570,7 @@ export const LiveChatPanel = memo(({
                     className="text-red-400 focus:text-red-300 focus:bg-red-500/10"
                   >
                     <Trash2 className="h-4 w-4 mr-2" />
-                    Limpar Todo Chat
+                    Limpar Chat
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -547,7 +587,7 @@ export const LiveChatPanel = memo(({
               exit={{ height: 0, opacity: 0 }}
               className="border-b border-amber-500/20 bg-gradient-to-r from-amber-500/10 to-transparent"
             >
-              <div className="px-4 py-2.5 flex items-start gap-2.5">
+              <div className="px-4 py-3 flex items-start gap-3">
                 <Pin className="h-4 w-4 text-amber-500 mt-0.5 flex-shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2">
@@ -556,7 +596,7 @@ export const LiveChatPanel = memo(({
                     </span>
                     <RoleBadge role={state.pinnedMessage.user_role} />
                   </div>
-                  <p className="text-sm text-white/80 line-clamp-2 mt-0.5">
+                  <p className="text-sm text-white/80 line-clamp-2 mt-1">
                     {state.pinnedMessage.content}
                   </p>
                 </div>
@@ -583,7 +623,7 @@ export const LiveChatPanel = memo(({
               animate={{ height: 'auto', opacity: 1 }}
               exit={{ height: 0, opacity: 0 }}
               className={cn(
-                "border-b px-4 py-2.5 flex items-center gap-2",
+                "border-b px-4 py-3 flex items-center gap-2",
                 state.isBanned 
                   ? "bg-red-500/10 border-red-500/30" 
                   : "bg-amber-500/10 border-amber-500/30"
@@ -592,13 +632,13 @@ export const LiveChatPanel = memo(({
               {state.isBanned ? (
                 <>
                   <Ban className="h-4 w-4 text-red-500" />
-                  <span className="text-sm text-red-400">Você foi banido deste chat</span>
+                  <span className="text-sm text-red-400 font-medium">Você foi banido deste chat</span>
                 </>
               ) : (
                 <>
                   <Timer className="h-4 w-4 text-amber-500" />
-                  <span className="text-sm text-amber-400">
-                    Você está em timeout. Aguarde para enviar mensagens.
+                  <span className="text-sm text-amber-400 font-medium">
+                    Você está em timeout
                   </span>
                 </>
               )}
@@ -620,18 +660,21 @@ export const LiveChatPanel = memo(({
                   variant="ghost"
                   size="sm"
                   onClick={loadMoreMessages}
-                  className="text-xs text-white/50 hover:text-white hover:bg-white/10"
+                  className="text-xs text-white/50 hover:text-white hover:bg-white/10 gap-2"
                 >
-                  <RefreshCw className="h-3 w-3 mr-1.5" />
-                  Carregar mensagens anteriores
+                  <RefreshCw className="h-3 w-3" />
+                  Carregar anteriores
                 </Button>
               </div>
             )}
 
             {/* Loading */}
             {state.isLoading && (
-              <div className="flex flex-col items-center justify-center py-12 gap-3">
-                <Loader2 className="h-8 w-8 text-primary animate-spin" />
+              <div className="flex flex-col items-center justify-center py-16 gap-4">
+                <div className="relative">
+                  <Loader2 className="h-10 w-10 text-primary animate-spin" />
+                  <div className="absolute inset-0 blur-xl bg-primary/30" />
+                </div>
                 <p className="text-sm text-white/50">Carregando chat...</p>
               </div>
             )}
@@ -654,14 +697,14 @@ export const LiveChatPanel = memo(({
               </AnimatePresence>
             </div>
 
-            {/* Sem mensagens */}
+            {/* Vazio */}
             {!state.isLoading && state.messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-white/40">
-                <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center mb-4">
-                  <MessageCircle className="h-8 w-8 opacity-50" />
+              <div className="flex flex-col items-center justify-center py-20 text-white/40">
+                <div className="w-20 h-20 rounded-2xl bg-white/5 flex items-center justify-center mb-4">
+                  <MessageCircle className="h-10 w-10 opacity-40" />
                 </div>
-                <p className="text-sm font-medium">Nenhuma mensagem ainda</p>
-                <p className="text-xs mt-1">Seja o primeiro a comentar!</p>
+                <p className="text-sm font-medium">Nenhuma mensagem</p>
+                <p className="text-xs mt-1 text-white/30">Seja o primeiro a comentar!</p>
               </div>
             )}
           </ScrollArea>
@@ -673,14 +716,14 @@ export const LiveChatPanel = memo(({
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: 10 }}
-                className="absolute bottom-2 left-1/2 -translate-x-1/2"
+                className="absolute bottom-3 left-1/2 -translate-x-1/2"
               >
                 <Button
                   size="sm"
                   onClick={scrollToBottom}
-                  className="rounded-full shadow-lg bg-primary/90 hover:bg-primary"
+                  className="rounded-full shadow-xl bg-primary hover:bg-primary/90 gap-1.5"
                 >
-                  <ChevronDown className="h-4 w-4 mr-1" />
+                  <ChevronDown className="h-4 w-4" />
                   Novas mensagens
                 </Button>
               </motion.div>
@@ -699,28 +742,28 @@ export const LiveChatPanel = memo(({
             >
               <div className="flex items-center gap-2 text-red-400 text-sm">
                 <AlertCircle className="h-4 w-4 flex-shrink-0" />
-                <span>{state.error}</span>
+                {state.error}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Input */}
-        <div className="relative p-3 border-t border-white/10 bg-gradient-to-r from-white/5 to-transparent">
-          {/* Cooldown indicator */}
+        <div className="relative p-4 border-t border-white/10 bg-gradient-to-r from-white/5 to-transparent">
+          {/* Cooldown */}
           <AnimatePresence>
             {!rateLimit.state.canSend && !state.isBanned && !state.isTimedOut && (
               <motion.div
-                initial={{ opacity: 0, y: 5 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: 5 }}
-                className="flex items-center gap-2 text-xs text-amber-400 mb-2 px-1"
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                exit={{ opacity: 0, height: 0 }}
+                className="flex items-center gap-2 text-xs text-amber-400 mb-3"
               >
-                <Clock className="h-3 w-3 animate-pulse" />
-                Aguarde {cooldownSeconds}s para enviar outra mensagem
-                <div className="flex-1 h-1 bg-white/10 rounded-full overflow-hidden">
+                <Clock className="h-3.5 w-3.5 animate-pulse" />
+                <span>Aguarde {cooldownSeconds}s</span>
+                <div className="flex-1 h-1.5 bg-white/10 rounded-full overflow-hidden">
                   <motion.div 
-                    className="h-full bg-amber-500"
+                    className="h-full bg-gradient-to-r from-amber-500 to-orange-500"
                     initial={{ width: '100%' }}
                     animate={{ width: '0%' }}
                     transition={{ duration: cooldownSeconds, ease: 'linear' }}
@@ -730,7 +773,7 @@ export const LiveChatPanel = memo(({
             )}
           </AnimatePresence>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <div className="relative flex-1">
               <Input
                 ref={inputRef}
@@ -738,46 +781,43 @@ export const LiveChatPanel = memo(({
                 onChange={(e) => setInputValue(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={
-                  state.isBanned 
-                    ? "Você está banido..." 
-                    : state.isTimedOut
-                    ? "Você está em timeout..."
-                    : !state.chatEnabled
-                    ? "Chat desativado..."
-                    : "Digite sua mensagem..."
+                  state.isBanned ? "Você está banido..." 
+                  : state.isTimedOut ? "Você está em timeout..."
+                  : !state.chatEnabled ? "Chat desativado..."
+                  : "Digite sua mensagem..."
                 }
                 disabled={state.isBanned || state.isTimedOut || !state.isConnected || !state.chatEnabled}
                 maxLength={rateLimit.config.maxChars}
                 className={cn(
                   "flex-1 bg-white/5 border-white/10 text-white placeholder:text-white/30",
                   "focus:ring-2 focus:ring-primary/40 focus:border-primary/50",
-                  "rounded-xl pr-12 transition-all duration-200",
+                  "rounded-xl pr-14 h-11 transition-all duration-200",
                   "disabled:opacity-50 disabled:cursor-not-allowed"
                 )}
               />
               
-              {/* Indicador de caracteres circular */}
+              {/* Indicador de caracteres */}
               {inputValue.length > 0 && (
                 <div className="absolute right-3 top-1/2 -translate-y-1/2">
-                  <div className="relative w-6 h-6">
-                    <svg className="w-6 h-6 -rotate-90">
+                  <div className="relative w-7 h-7">
+                    <svg className="w-7 h-7 -rotate-90">
                       <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
+                        cx="14"
+                        cy="14"
+                        r="11"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
                         className="text-white/10"
                       />
                       <circle
-                        cx="12"
-                        cy="12"
-                        r="10"
+                        cx="14"
+                        cy="14"
+                        r="11"
                         fill="none"
                         stroke="currentColor"
                         strokeWidth="2"
-                        strokeDasharray={`${(charPercent / 100) * 62.83} 62.83`}
+                        strokeDasharray={`${(charPercent / 100) * 69} 69`}
                         className={cn(
                           "transition-all duration-200",
                           charPercent > 90 ? "text-red-400" : 
@@ -795,23 +835,23 @@ export const LiveChatPanel = memo(({
               onClick={handleSend}
               disabled={!canSend}
               className={cn(
-                "rounded-xl h-10 w-10 p-0",
+                "rounded-xl h-11 w-11 p-0",
                 "bg-gradient-to-r from-primary to-cyan-500",
                 "hover:from-primary/90 hover:to-cyan-500/90",
                 "disabled:opacity-30 disabled:cursor-not-allowed",
                 "shadow-lg shadow-primary/30 hover:shadow-primary/50",
-                "transition-all duration-200"
+                "transition-all duration-300"
               )}
             >
-              <Send className="h-4 w-4" />
+              <Send className="h-5 w-5" />
             </Button>
           </div>
 
-          {/* Contador de caracteres */}
+          {/* Contador */}
           {inputValue.length > 0 && (
-            <div className="flex justify-end mt-1.5 px-1">
+            <div className="flex justify-end mt-2">
               <span className={cn(
-                "text-[10px] font-medium transition-colors",
+                "text-[10px] font-medium",
                 charPercent > 90 ? "text-red-400" : 
                 charPercent > 70 ? "text-amber-400" : 
                 "text-white/30"
@@ -832,8 +872,8 @@ export const LiveChatPanel = memo(({
             </AlertDialogTitle>
             <AlertDialogDescription className="text-white/60">
               {confirmAction?.type === 'ban' 
-                ? 'Tem certeza que deseja banir este usuário? Ele não poderá mais enviar mensagens neste chat.'
-                : 'Tem certeza que deseja limpar todas as mensagens do chat? Esta ação não pode ser desfeita.'
+                ? 'Tem certeza? O usuário não poderá mais enviar mensagens.'
+                : 'Tem certeza? Todas as mensagens serão removidas.'
               }
             </AlertDialogDescription>
           </AlertDialogHeader>
