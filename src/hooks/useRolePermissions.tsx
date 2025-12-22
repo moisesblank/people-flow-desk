@@ -1,13 +1,47 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - ROLE PERMISSIONS HOOK
 // Sistema de Permissões por Cargo Completo
-// Cargos: Owner, Coordenação, Suporte, Monitoria, 
-//         Afiliados, Marketing, Administrativo, Contabilidade
+// ARQUITETURA DE DOMÍNIOS (LEI IV - SOBERANIA DO ARQUITETO):
+// - gestao.moisesmedeiros.com.br → Funcionários
+// - pro.moisesmedeiros.com.br → Alunos Beta
+// - Owner (moisesblank@gmail.com) → Acesso Total SUPREMO
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+
+// ============================================
+// CONSTANTES GLOBAIS - LEI IV
+// ============================================
+export const OWNER_EMAIL = "moisesblank@gmail.com";
+
+// ============================================
+// FUNÇÕES DE DETECÇÃO DE DOMÍNIO
+// ============================================
+export function isGestaoHost(hostname?: string): boolean {
+  const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
+  return h.startsWith("gestao.") || h.includes("gestao.");
+}
+
+export function isProHost(hostname?: string): boolean {
+  const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
+  return h.startsWith("pro.") || h.includes("pro.");
+}
+
+export function isPublicHost(hostname?: string): boolean {
+  const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
+  return h.startsWith("www.") || h === "moisesmedeiros.com.br";
+}
+
+export function getCurrentDomain(): "gestao" | "pro" | "public" | "unknown" {
+  if (typeof window === "undefined") return "unknown";
+  const h = window.location.hostname.toLowerCase();
+  if (isGestaoHost(h)) return "gestao";
+  if (isProHost(h)) return "pro";
+  if (isPublicHost(h)) return "public";
+  return "unknown";
+}
 
 // Tipos de roles do sistema
 export type FullAppRole = 
@@ -348,7 +382,7 @@ export const ROLE_DESCRIPTIONS: Record<FullAppRole, string> = {
   aluno_gratuito: "Acesso exclusivo à área gratuita (pré-login).",
 };
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// OWNER_EMAIL já exportado no topo do arquivo
 
 interface RolePermissionsResult {
   role: FullAppRole | null;

@@ -1,20 +1,24 @@
 // ============================================
-// HOOK DE REDIRECIONAMENTO POR ROLE
-// Owner/Gestão → /dashboard
-// Beta (aluno pago) → /alunos (Central do Aluno)
+// MOISÉS MEDEIROS v10.0 - HOOK DE REDIRECIONAMENTO POR ROLE
+// ARQUITETURA DE DOMÍNIOS (LEI IV - SOBERANIA DO ARQUITETO):
+// - gestao.moisesmedeiros.com.br → Funcionários → /dashboard
+// - pro.moisesmedeiros.com.br → Alunos Beta → /alunos
+// - Owner (moisesblank@gmail.com) → /dashboard (acesso total)
 // ============================================
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { OWNER_EMAIL, isGestaoHost, isProHost } from "@/hooks/useRolePermissions";
 
 type RedirectRole = "owner" | "admin" | "beta" | "aluno_gratuito" | "gestao" | "other";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
-
-// Roles que vão para área de gestão
-const GESTAO_ROLES = ["owner", "admin", "coordenacao", "suporte", "monitoria", "financeiro", "rh", "marketing", "employee"];
+// Roles que vão para área de gestão (funcionários)
+const GESTAO_ROLES = [
+  "owner", "admin", "coordenacao", "suporte", "monitoria", 
+  "financeiro", "rh", "marketing", "contabilidade", "afiliado", "employee"
+];
 
 // Roles que vão para área de aluno
 const ALUNO_ROLES = ["beta", "aluno_gratuito"];
@@ -27,7 +31,7 @@ export function useRoleBasedRedirect() {
   const getRedirectPath = async (): Promise<string> => {
     if (!user) return "/auth";
 
-    // Owner sempre vai para dashboard de gestão
+    // Owner sempre vai para dashboard de gestão (ACESSO SUPREMO)
     if (user.email?.toLowerCase() === OWNER_EMAIL) {
       return "/dashboard";
     }
@@ -47,11 +51,18 @@ export function useRoleBasedRedirect() {
       const role = data?.role || "employee";
 
       // Se for aluno pago (beta), vai para central do aluno
+      // Independente do domínio - aluno beta SEMPRE vai para /alunos
       if (ALUNO_ROLES.includes(role)) {
         return "/alunos";
       }
 
-      // Gestão e outros vão para dashboard
+      // Funcionários (gestão) vão para dashboard
+      // Owner e Admin também vão para dashboard
+      if (GESTAO_ROLES.includes(role)) {
+        return "/dashboard";
+      }
+
+      // Fallback para dashboard
       return "/dashboard";
     } catch (err) {
       console.error("[REDIRECT] Erro:", err);
@@ -85,6 +96,7 @@ export function useUserHomePath() {
         return;
       }
 
+      // Owner sempre vai para dashboard
       if (user.email?.toLowerCase() === OWNER_EMAIL) {
         setHomePath("/dashboard");
         return;
@@ -98,6 +110,8 @@ export function useUserHomePath() {
           .maybeSingle();
 
         const role = data?.role || "employee";
+        
+        // Alunos vão para /alunos, funcionários para /dashboard
         setHomePath(ALUNO_ROLES.includes(role) ? "/alunos" : "/dashboard");
       } catch {
         setHomePath("/dashboard");
