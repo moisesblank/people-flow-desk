@@ -1,10 +1,11 @@
 // ============================================
-// 🛡️ FORTALEZA SUPREME v3.0 - HOOK
+// 🛡️ FORTALEZA SUPREME v4.0 - HOOKS
 // Sistema de Segurança PHD-Level 2300
+// Otimizado para 5000+ usuários e 3G
 // ============================================
 
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import {
   checkUrlAccess,
@@ -27,11 +28,27 @@ import {
 export function useUrlAccessGuard() {
   const { user } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
   const [accessResult, setAccessResult] = useState<UrlAccessResult | null>(null);
   const [isChecking, setIsChecking] = useState(true);
+  const lastPathRef = useRef<string>('');
 
   useEffect(() => {
+    // Evitar verificações duplicadas
+    if (lastPathRef.current === location.pathname && accessResult) {
+      return;
+    }
+    lastPathRef.current = location.pathname;
+
     const checkAccess = async () => {
+      // Rotas públicas não precisam de verificação
+      const publicPaths = ['/', '/auth', '/login', '/registro', '/termos', '/privacidade', '/area-gratuita'];
+      if (publicPaths.some(p => location.pathname === p || location.pathname.startsWith(p + '/'))) {
+        setAccessResult({ allowed: true, reason: 'Public route', redirect_to: null });
+        setIsChecking(false);
+        return;
+      }
+
       if (!user?.id) {
         setAccessResult({ allowed: false, reason: 'Not authenticated', redirect_to: '/auth' });
         setIsChecking(false);
@@ -44,18 +61,23 @@ export function useUrlAccessGuard() {
       setAccessResult(result);
       setIsChecking(false);
 
-      // Log de acesso negado
+      // Log de acesso negado (fire-and-forget)
       if (!result.allowed) {
-        await logSecurityEvent('unauthorized_access', user.id, 'warning', {
+        logSecurityEvent('unauthorized_access', user.id, 'warning', {
           url: location.pathname,
           domain,
           reason: result.reason,
         });
+
+        // Redirecionar se necessário
+        if (result.redirect_to) {
+          navigate(result.redirect_to, { replace: true });
+        }
       }
     };
 
     checkAccess();
-  }, [user?.id, location.pathname]);
+  }, [user?.id, location.pathname, navigate]);
 
   return { accessResult, isChecking };
 }
@@ -71,8 +93,16 @@ export function useRateLimiter(endpoint: string) {
   const [retryAfter, setRetryAfter] = useState(0);
   const [remaining, setRemaining] = useState(60);
   const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastCheckRef = useRef<number>(0);
 
   const checkLimit = useCallback(async (): Promise<boolean> => {
+    // Debounce: evitar múltiplas verificações em menos de 1s
+    const now = Date.now();
+    if (now - lastCheckRef.current < 1000) {
+      return !isLimited;
+    }
+    lastCheckRef.current = now;
+
     const identifier = user?.id || 'anonymous';
     const userRole = role || 'anonymous';
 
@@ -110,15 +140,15 @@ export function useRateLimiter(endpoint: string) {
         });
       }, 1000);
 
-      // Log do rate limit
-      await logSecurityEvent('rate_limit_exceeded', user?.id, 'warning', {
+      // Log do rate limit (fire-and-forget)
+      logSecurityEvent('rate_limit_exceeded', user?.id, 'warning', {
         endpoint,
         role: userRole,
       });
     }
 
     return result.allowed;
-  }, [user?.id, role, endpoint]);
+  }, [user?.id, role, endpoint, isLimited]);
 
   useEffect(() => {
     return () => {
@@ -138,12 +168,17 @@ export function useSecurityDashboard(refreshInterval: number = 30000) {
   const [dashboard, setDashboard] = useState<SecurityDashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const isMountedRef = useRef(true);
 
   const refresh = useCallback(async () => {
+    if (!isMountedRef.current) return;
+    
     setIsLoading(true);
     setError(null);
     
     const data = await getSecurityDashboard();
+    
+    if (!isMountedRef.current) return;
     
     if (data) {
       setDashboard(data);
@@ -155,10 +190,15 @@ export function useSecurityDashboard(refreshInterval: number = 30000) {
   }, []);
 
   useEffect(() => {
+    isMountedRef.current = true;
     refresh();
     
     const interval = setInterval(refresh, refreshInterval);
-    return () => clearInterval(interval);
+    
+    return () => {
+      isMountedRef.current = false;
+      clearInterval(interval);
+    };
   }, [refresh, refreshInterval]);
 
   return { dashboard, isLoading, error, refresh };
@@ -174,6 +214,7 @@ export function useThreatDetection() {
   const [threatLevel, setThreatLevel] = useState<'none' | 'low' | 'medium' | 'high'>('none');
   const [riskScore, setRiskScore] = useState(0);
   const [reasons, setReasons] = useState<string[]>([]);
+  const hasLoggedRef = useRef(false);
 
   useEffect(() => {
     const checkThreats = () => {
@@ -192,8 +233,9 @@ export function useThreatDetection() {
         setThreatLevel('none');
       }
 
-      // Log se suspeito
-      if (result.suspicious && user?.id) {
+      // Log apenas uma vez se suspeito (evitar spam)
+      if (result.suspicious && user?.id && !hasLoggedRef.current) {
+        hasLoggedRef.current = true;
         logSecurityEvent('suspicious_activity_detected', user.id, 'warning', {
           riskScore: result.riskScore,
           reasons: result.reasons,
@@ -201,9 +243,11 @@ export function useThreatDetection() {
       }
     };
 
-    // Verificar periodicamente
+    // Verificar imediatamente
     checkThreats();
-    const interval = setInterval(checkThreats, 60000);
+    
+    // Verificar periodicamente (a cada 60s)
+    const interval = setInterval(checkThreats, SECURITY_CONFIG.THREAT_DETECTION.CHECK_INTERVAL_MS);
 
     return () => clearInterval(interval);
   }, [user?.id]);
@@ -227,17 +271,17 @@ export function useSecurityLogger() {
     return await logSecurityEvent(eventType, user?.id, severity, {
       ...details,
       timestamp: new Date().toISOString(),
-      url: window.location.href,
-      userAgent: navigator.userAgent,
+      url: typeof window !== 'undefined' ? window.location.href : '',
+      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent : '',
     });
   }, [user?.id]);
 
-  const logLogin = useCallback((success: boolean) => {
-    return log(success ? 'login_success' : 'login_failed', success ? 'info' : 'warning');
+  const logLogin = useCallback((success: boolean, method?: string) => {
+    return log(success ? 'login_success' : 'login_failed', success ? 'info' : 'warning', { method });
   }, [log]);
 
-  const logLogout = useCallback(() => {
-    return log('logout', 'info');
+  const logLogout = useCallback((reason?: string) => {
+    return log('logout', 'info', { reason });
   }, [log]);
 
   const logAccessDenied = useCallback((resource: string, reason: string) => {
@@ -248,7 +292,113 @@ export function useSecurityLogger() {
     return log('suspicious_activity', 'warning', { activity, ...details });
   }, [log]);
 
-  return { log, logLogin, logLogout, logAccessDenied, logSuspiciousActivity };
+  const logDataAccess = useCallback((table: string, action: string, recordCount?: number) => {
+    return log('data_access', 'info', { table, action, recordCount });
+  }, [log]);
+
+  return { 
+    log, 
+    logLogin, 
+    logLogout, 
+    logAccessDenied, 
+    logSuspiciousActivity,
+    logDataAccess 
+  };
+}
+
+// ============================================
+// HOOK: useSessionSecurity
+// Segurança de sessão integrada
+// ============================================
+
+export function useSessionSecurity() {
+  const { user, signOut } = useAuth();
+  const [isSecure, setIsSecure] = useState(true);
+  const [lastActivity, setLastActivity] = useState(Date.now());
+  const idleTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Resetar timer de inatividade
+  const resetIdleTimer = useCallback(() => {
+    setLastActivity(Date.now());
+    
+    if (idleTimeoutRef.current) {
+      clearTimeout(idleTimeoutRef.current);
+    }
+
+    // Configurar timeout de inatividade
+    idleTimeoutRef.current = setTimeout(() => {
+      if (user) {
+        logSecurityEvent('session_idle_timeout', user.id, 'info');
+        signOut();
+      }
+    }, SECURITY_CONFIG.SESSION.IDLE_TIMEOUT_MS);
+  }, [user, signOut]);
+
+  // Monitorar atividade do usuário
+  useEffect(() => {
+    if (!user) return;
+
+    const events = ['mousedown', 'keydown', 'touchstart', 'scroll'];
+    
+    const handleActivity = () => resetIdleTimer();
+    
+    events.forEach(event => {
+      window.addEventListener(event, handleActivity, { passive: true });
+    });
+
+    resetIdleTimer();
+
+    return () => {
+      events.forEach(event => {
+        window.removeEventListener(event, handleActivity);
+      });
+      if (idleTimeoutRef.current) {
+        clearTimeout(idleTimeoutRef.current);
+      }
+    };
+  }, [user, resetIdleTimer]);
+
+  // Verificar visibilidade da página
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        resetIdleTimer();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [resetIdleTimer]);
+
+  return { isSecure, lastActivity, resetIdleTimer };
+}
+
+// ============================================
+// HOOK: useSecurityStatus
+// Status geral de segurança
+// ============================================
+
+export function useSecurityStatus() {
+  const { threatLevel, riskScore } = useThreatDetection();
+  const { isSecure } = useSessionSecurity();
+
+  const status = useMemo(() => {
+    if (riskScore >= 70 || !isSecure) return 'danger';
+    if (riskScore >= 50 || threatLevel === 'medium') return 'warning';
+    if (riskScore >= 30 || threatLevel === 'low') return 'caution';
+    return 'secure';
+  }, [riskScore, threatLevel, isSecure]);
+
+  const message = useMemo(() => {
+    switch (status) {
+      case 'danger': return 'Atividade suspeita detectada';
+      case 'warning': return 'Monitorando atividade';
+      case 'caution': return 'Verificação de segurança';
+      default: return 'Conexão segura';
+    }
+  }, [status]);
+
+  return { status, message, threatLevel, riskScore, isSecure };
 }
 
 // ============================================
@@ -261,4 +411,6 @@ export default {
   useSecurityDashboard,
   useThreatDetection,
   useSecurityLogger,
+  useSessionSecurity,
+  useSecurityStatus,
 };
