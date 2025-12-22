@@ -36,7 +36,9 @@ export {
   // Funções principais
   checkUrlAccess,
   checkRateLimit,
+  checkRateLimitExtended,
   logSecurityEvent as logSecuritySupreme,
+  logAudit,
   getSecurityDashboard,
   cleanupSecurityData,
   
@@ -46,6 +48,7 @@ export {
   
   // Detecção de ameaças
   detectSuspiciousActivity,
+  detectScreenCapture,
   
   // Sanitização e validação
   sanitizeInput,
@@ -71,6 +74,7 @@ export {
   type AttackType,
   type UrlAccessResult,
   type RateLimitResult,
+  type RateLimitResultExtended,
   type SecurityDashboard as SecurityDashboardType,
   type ThreatIntelligence,
   type SecurityEvent,
@@ -83,11 +87,14 @@ export {
 export {
   useUrlAccessGuard,
   useRateLimiter,
+  useRateLimiterExtended,
   useSecurityDashboard,
   useThreatDetection,
   useSecurityLogger,
+  useAuditLogger,
   useSessionSecurity,
   useSecurityStatus,
+  useScreenCaptureProtection,
 } from '@/hooks/useFortalezaSupreme';
 
 // ============================================

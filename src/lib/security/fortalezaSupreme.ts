@@ -547,6 +547,142 @@ export const SECURITY_CONFIG = {
 } as const;
 
 // ============================================
+// MELHORIA 1: logAudit() - Auditoria Dedicada
+// ============================================
+
+export async function logAudit(
+  action: string,
+  category: string = 'general',
+  tableName?: string,
+  recordId?: string,
+  oldData?: Record<string, unknown>,
+  newData?: Record<string, unknown>,
+  metadata: Record<string, unknown> = {}
+): Promise<string | null> {
+  try {
+    // Usar logSecurityEvent como fallback - mais robusto
+    const details = {
+      action,
+      category,
+      table_name: tableName,
+      record_id: recordId,
+      old_data: oldData ? JSON.parse(JSON.stringify(oldData)) : null,
+      new_data: newData ? JSON.parse(JSON.stringify(newData)) : null,
+      ...metadata,
+      timestamp: new Date().toISOString(),
+      url: typeof window !== 'undefined' ? window.location.href : '',
+    };
+
+    return await logSecurityEvent('audit', undefined, 'info', details);
+  } catch (err) {
+    console.warn('[FORTALEZA] Audit exception (non-critical):', err);
+    return null;
+  }
+}
+
+// ============================================
+// MELHORIA 2: detectScreenCapture() - Anti-Screenshot/Gravação
+// ============================================
+
+export function detectScreenCapture(callback: () => void): () => void {
+  // Detectar tecla Print Screen
+  const handleKeyDown = (e: KeyboardEvent) => {
+    if (
+      e.key === 'PrintScreen' ||
+      (e.metaKey && e.shiftKey && (e.key === '3' || e.key === '4')) || // Mac screenshot
+      (e.ctrlKey && e.key === 'PrintScreen') // Windows
+    ) {
+      callback();
+      e.preventDefault();
+    }
+  };
+
+  // Detectar Picture-in-Picture (possível gravação)
+  const handlePiP = () => {
+    if (document.pictureInPictureElement) {
+      callback();
+    }
+  };
+
+  // Detectar visibilidade (gravar com OBS pode disparar isso)
+  const handleVisibility = () => {
+    if (document.visibilityState === 'hidden') {
+      // Log silencioso - não bloquear
+    }
+  };
+
+  if (typeof window !== 'undefined') {
+    window.addEventListener('keydown', handleKeyDown, { capture: true });
+    document.addEventListener('enterpictureinpicture', handlePiP);
+    document.addEventListener('visibilitychange', handleVisibility);
+  }
+
+  // Retorna função de cleanup
+  return () => {
+    if (typeof window !== 'undefined') {
+      window.removeEventListener('keydown', handleKeyDown, { capture: true });
+      document.removeEventListener('enterpictureinpicture', handlePiP);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    }
+  };
+}
+
+// ============================================
+// MELHORIA 3: Rate Limit com blockedUntil
+// ============================================
+
+export interface RateLimitResultExtended extends RateLimitResult {
+  blocked_until?: string;
+  retry_after_seconds?: number;
+}
+
+const rateLimitExtendedCache = new Map<string, { result: RateLimitResultExtended; timestamp: number }>();
+
+export async function checkRateLimitExtended(
+  identifier: string,
+  endpoint: string,
+  role: string = 'anonymous'
+): Promise<RateLimitResultExtended> {
+  const cacheKey = `${identifier}:${endpoint}`;
+  
+  // Verificar cache com blockedUntil
+  const cached = rateLimitExtendedCache.get(cacheKey);
+  if (cached) {
+    // Se ainda está bloqueado, retornar do cache
+    if (cached.result.blocked_until) {
+      const blockedUntil = new Date(cached.result.blocked_until);
+      if (blockedUntil > new Date()) {
+        return cached.result;
+      }
+    }
+    // Cache normal de 1s
+    if (Date.now() - cached.timestamp < 1000) {
+      return cached.result;
+    }
+  }
+  
+  try {
+    // Usar a função existente check_rate_limit_v3
+    const baseResult = await checkRateLimit(identifier, endpoint, role);
+    
+    // Estender com blocked_until calculado
+    const result: RateLimitResultExtended = {
+      ...baseResult,
+      blocked_until: baseResult.retry_after > 0 
+        ? new Date(Date.now() + baseResult.retry_after * 1000).toISOString() 
+        : undefined,
+      retry_after_seconds: baseResult.retry_after,
+    };
+    
+    rateLimitExtendedCache.set(cacheKey, { result, timestamp: Date.now() });
+    return result;
+  } catch (err) {
+    console.error('[FORTALEZA] Rate limit extended exception:', err);
+    return { allowed: true, remaining: 60, retry_after: 0 };
+  }
+}
+
+// ============================================
 // UTILS PARA PERFORMANCE
 // ============================================
 
@@ -576,14 +712,16 @@ export function throttle<T extends (...args: any[]) => any>(
 }
 
 // ============================================
-// EXPORTAÇÃO PADRÃO
+// EXPORTAÇÃO PADRÃO v4.1
 // ============================================
 
 export default {
   // Funções principais
   checkUrlAccess,
   checkRateLimit,
+  checkRateLimitExtended,
   logSecurityEvent,
+  logAudit,
   getSecurityDashboard,
   cleanupSecurityData,
   
@@ -593,6 +731,7 @@ export default {
   
   // Detecção de ameaças
   detectSuspiciousActivity,
+  detectScreenCapture,
   
   // Sanitização
   sanitizeInput,
