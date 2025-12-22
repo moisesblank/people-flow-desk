@@ -1,227 +1,376 @@
 /* ============================================
-   🌌 SANCTUM CSS — PROTEÇÃO VISUAL ANO 2300
-   ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
-   ============================================ */
+ * 🌌🔥 SANCTUM CSS OMEGA — ESTILOS DE PROTEÇÃO NÍVEL NASA 🔥🌌
+ * ANO 2300 — BLINDAGEM VISUAL ABSOLUTA
+ * ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+ * ============================================
+ *
+ * 📍 MAPA DE URLs DEFINITIVO:
+ *   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
+ *   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
+ *   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+ *   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+ *
+ * ============================================ */
 
 /* ============================================
-   1. SUPERFÍCIE PROTEGIDA
-   ============================================ */
+ * VARIÁVEIS CSS
+ * ============================================ */
+:root {
+  --sanctum-watermark-opacity: 0.08;
+  --sanctum-watermark-color: currentColor;
+  --sanctum-watermark-font-size: clamp(10px, 1.2vw, 14px);
+  --sanctum-watermark-rotation: -25deg;
+  --sanctum-blur-amount: 20px;
+  --sanctum-transition-duration: 0.3s;
+  --sanctum-z-index-watermark: 999999;
+  --sanctum-z-index-overlay: 999998;
+  --sanctum-z-index-content: 1;
+}
 
+/* ============================================
+ * SUPERFÍCIE PROTEGIDA BASE
+ * ============================================ */
 .sanctum-protected-surface {
-  user-select: none;
-  -webkit-user-select: none;
-  -moz-user-select: none;
-  -ms-user-select: none;
-  -webkit-touch-callout: none;
   position: relative;
-}
-
-.sanctum-protected-surface * {
-  user-select: none !important;
-  -webkit-user-select: none !important;
-}
-
-/* ============================================
-   2. WATERMARK DINÂMICA
-   ============================================ */
-
-.sanctum-watermark {
-  position: fixed;
-  inset: 0;
-  z-index: 999999;
-  pointer-events: none;
-  opacity: 0.10;
-  transform: translateZ(0);
-  overflow: hidden;
-  will-change: transform;
-}
-
-.sanctum-watermark-inner {
-  position: absolute;
-  inset: -50%;
-  transform: rotate(-25deg);
-  font-size: clamp(10px, 1.8vw, 36px);
-  line-height: 4;
-  white-space: pre;
-  letter-spacing: 0.1em;
-  font-family: "SF Mono", "Cascadia Mono", "Fira Code", monospace;
-  color: currentColor;
-  animation: sanctum-watermark-float 60s linear infinite;
-}
-
-@keyframes sanctum-watermark-float {
-  0% {
-    transform: rotate(-25deg) translateY(0);
-  }
-  100% {
-    transform: rotate(-25deg) translateY(-20%);
-  }
-}
-
-/* ============================================
-   3. PDF VIEWER PROTEGIDO
-   ============================================ */
-
-.sanctum-pdf-viewer {
-  user-select: none;
-  -webkit-user-select: none;
-}
-
-.sanctum-pdf-viewer img {
-  pointer-events: none;
-  user-select: none;
-  -webkit-user-select: none;
-  -webkit-user-drag: none;
-}
-
-/* Desabilitar drag de imagens */
-.sanctum-pdf-viewer img,
-.sanctum-protected-surface img {
-  -webkit-user-drag: none;
-  -khtml-user-drag: none;
-  -moz-user-drag: none;
-  -o-user-drag: none;
-  user-drag: none;
-}
-
-/* ============================================
-   4. HOLOGRAM TEXT (CANVAS)
-   ============================================ */
-
-.hologram-text-container {
-  user-select: none;
-  -webkit-user-select: none;
-  position: relative;
-}
-
-.hologram-text-container canvas {
-  pointer-events: none;
-}
-
-/* ============================================
-   5. BLOQUEIO DE IMPRESSÃO
-   ============================================ */
-
-@media print {
-  /* Esconder TODO o conteúdo protegido */
-  .sanctum-protected-surface,
-  .sanctum-protected-surface *,
-  .sanctum-pdf-viewer,
-  .sanctum-pdf-viewer *,
-  .hologram-text-container,
-  .hologram-text-container * {
-    display: none !important;
-    visibility: hidden !important;
-  }
-  
-  /* Mensagem de bloqueio */
-  body::before {
-    content: "";
-    display: block;
-    position: fixed;
-    inset: 0;
-    background: white;
-    z-index: 999999;
-  }
-  
-  body::after {
-    content: "⚠️ IMPRESSÃO NÃO PERMITIDA ⚠️\A\A Este documento é protegido por direitos autorais.\A A impressão foi bloqueada.\A\A Prof. Moisés Medeiros\A moisesmedeiros.com.br";
-    display: block;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    font-size: 24px;
-    text-align: center;
-    padding: 60px;
-    color: #dc2626;
-    font-weight: bold;
-    white-space: pre-wrap;
-    z-index: 9999999;
-    background: white;
-    border: 4px solid #dc2626;
-    border-radius: 16px;
-    max-width: 80%;
-  }
-}
-
-/* ============================================
-   6. ANTI-SELEÇÃO GLOBAL (quando aplicado)
-   ============================================ */
-
-.no-select {
   user-select: none !important;
   -webkit-user-select: none !important;
   -moz-user-select: none !important;
   -ms-user-select: none !important;
+  -webkit-touch-callout: none !important;
+  -webkit-tap-highlight-color: transparent !important;
 }
 
-.no-drag {
-  -webkit-user-drag: none !important;
-  -khtml-user-drag: none !important;
-  -moz-user-drag: none !important;
-  -o-user-drag: none !important;
-  user-drag: none !important;
+.sanctum-protected-surface::selection {
+  background: transparent !important;
+}
+
+.sanctum-protected-surface *::selection {
+  background: transparent !important;
 }
 
 /* ============================================
-   7. OVERLAY ANTI-SCREENSHOT (camada visual)
-   ============================================ */
-
-.sanctum-anti-screenshot-overlay {
+ * WATERMARK CONTAINER
+ * ============================================ */
+.sanctum-watermark-container {
   position: fixed;
-  inset: 0;
-  z-index: 999998;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
   pointer-events: none;
-  background: 
-    linear-gradient(
-      45deg, 
-      transparent 49.5%, 
-      rgba(0, 0, 0, 0.02) 49.5%, 
-      rgba(0, 0, 0, 0.02) 50.5%, 
-      transparent 50.5%
-    );
-  background-size: 4px 4px;
+  z-index: var(--sanctum-z-index-watermark);
+  opacity: var(--sanctum-watermark-opacity);
+  color: var(--sanctum-watermark-color);
+  mix-blend-mode: multiply;
+}
+
+/* Dark mode adjustment */
+@media (prefers-color-scheme: dark) {
+  .sanctum-watermark-container {
+    mix-blend-mode: screen;
+    opacity: 0.06;
+  }
+}
+
+/* ============================================
+ * WATERMARK CELLS
+ * ============================================ */
+.sanctum-watermark-cell {
+  position: absolute;
+  white-space: nowrap;
+  font-size: var(--sanctum-watermark-font-size);
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 1px rgba(0, 0, 0, 0.1);
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-select: none;
+  transform: rotate(var(--sanctum-watermark-rotation));
+  animation: sanctum-watermark-drift 60s ease-in-out infinite;
+}
+
+@keyframes sanctum-watermark-drift {
+  0%, 100% {
+    transform: translateY(0) rotate(var(--sanctum-watermark-rotation));
+  }
+  50% {
+    transform: translateY(10px) rotate(calc(var(--sanctum-watermark-rotation) + 2deg));
+  }
+}
+
+/* ============================================
+ * WATERMARK OVERLAY CENTRAL
+ * ============================================ */
+.sanctum-watermark-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  white-space: nowrap;
+  font-size: clamp(16px, 3vw, 32px);
+  font-weight: 700;
+  opacity: 0.03;
+  letter-spacing: 0.5em;
+  text-transform: uppercase;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ============================================
+ * WATERMARK DE CANTO
+ * ============================================ */
+.sanctum-watermark-corner {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  opacity: 0.15;
+  font-family: monospace;
+  pointer-events: none;
+  user-select: none;
+}
+
+/* ============================================
+ * BLUR QUANDO INATIVO
+ * ============================================ */
+.sanctum-blurred {
+  filter: blur(var(--sanctum-blur-amount)) !important;
+  transition: filter var(--sanctum-transition-duration) ease-in-out;
+}
+
+.sanctum-blurred .sanctum-watermark-container {
+  opacity: 0;
+}
+
+/* ============================================
+ * ANTI-SCREENSHOT OVERLAY
+ * ============================================ */
+.sanctum-anti-screenshot-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 30;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.01) 2px,
+    rgba(0, 0, 0, 0.01) 4px
+  );
   mix-blend-mode: multiply;
 }
 
 /* ============================================
-   8. ANIMAÇÕES SUAVES
-   ============================================ */
+ * VISUALIZADOR DE PDF
+ * ============================================ */
+.secure-pdf-viewer {
+  background: var(--background);
+  border-radius: 8px;
+}
 
-.sanctum-pdf-viewer,
+.secure-pdf-viewer img {
+  pointer-events: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+  -khtml-user-drag: none !important;
+  -moz-user-drag: none !important;
+  -o-user-drag: none !important;
+}
+
+/* ============================================
+ * HOLOGRAM TEXT (Canvas)
+ * ============================================ */
+.hologram-text-container {
+  position: relative;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+.hologram-canvas {
+  display: block;
+  width: 100%;
+  pointer-events: none;
+}
+
+.hologram-shield {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  background: transparent;
+  z-index: 1;
+}
+
+/* ============================================
+ * 🚫 BLOQUEIO TOTAL DE IMPRESSÃO 🚫
+ * ============================================ */
+@media print {
+  /* Esconder TODO o conteúdo protegido */
+  .sanctum-protected-surface,
+  .sanctum-protected-surface *,
+  [data-sanctum-protected],
+  [data-sanctum-protected] *,
+  .secure-pdf-viewer,
+  .secure-pdf-viewer *,
+  .hologram-text-container,
+  .hologram-text-container * {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+    width: 0 !important;
+    height: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Mensagem de bloqueio */
+  body::before {
+    content: "";
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: white !important;
+    z-index: 999999998 !important;
+  }
+
+  body::after {
+    content: "⚠️ IMPRESSÃO BLOQUEADA ⚠️\A\A━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\A\AEste documento é protegido por direitos autorais.\AA impressão foi bloqueada para proteger o conteúdo.\A\AProf. Moisés Medeiros\Amoisesmedeiros.com.br\A\A━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\A\ACódigo de Rastreio: SANCTUM-BLOCK-PRINT\A© 2024-2025 Todos os direitos reservados";
+    display: block !important;
+    position: fixed !important;
+    top: 50% !important;
+    left: 50% !important;
+    transform: translate(-50%, -50%) !important;
+    font-size: 18px !important;
+    line-height: 1.8 !important;
+    text-align: center !important;
+    padding: 60px !important;
+    color: #dc2626 !important;
+    font-weight: bold !important;
+    white-space: pre-wrap !important;
+    z-index: 999999999 !important;
+    background: white !important;
+    border: 4px solid #dc2626 !important;
+    border-radius: 16px !important;
+    max-width: 80% !important;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+    font-family: system-ui, -apple-system, sans-serif !important;
+  }
+
+  /* Remover absolutamente tudo exceto a mensagem */
+  html > *:not(body) {
+    display: none !important;
+  }
+}
+
+/* ============================================
+ * ANIMAÇÕES DE LOADING
+ * ============================================ */
+@keyframes sanctum-pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.sanctum-loading {
+  animation: sanctum-pulse 1.5s ease-in-out infinite;
+}
+
+/* ============================================
+ * RESPONSIVIDADE
+ * ============================================ */
+@media (max-width: 768px) {
+  :root {
+    --sanctum-watermark-font-size: clamp(8px, 2vw, 12px);
+    --sanctum-watermark-opacity: 0.06;
+  }
+
+  .sanctum-watermark-overlay {
+    font-size: clamp(12px, 2.5vw, 20px);
+    letter-spacing: 0.3em;
+  }
+}
+
+@media (max-width: 480px) {
+  :root {
+    --sanctum-watermark-font-size: 8px;
+  }
+
+  .sanctum-watermark-corner {
+    display: none;
+  }
+}
+
+/* ============================================
+ * MODO ESCURO
+ * ============================================ */
+@media (prefers-color-scheme: dark) {
+  .sanctum-anti-screenshot-overlay {
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, 0.01) 2px,
+      rgba(255, 255, 255, 0.01) 4px
+    );
+    mix-blend-mode: screen;
+  }
+}
+
+/* ============================================
+ * OTIMIZAÇÕES DE PERFORMANCE
+ * ============================================ */
 .sanctum-protected-surface {
-  transition: opacity 0.2s ease;
+  will-change: filter;
+}
+
+.sanctum-watermark-container {
+  will-change: opacity;
+  contain: layout style;
+}
+
+.sanctum-watermark-cell {
+  contain: layout style paint;
 }
 
 /* ============================================
-   9. RESPONSIVIDADE
-   ============================================ */
-
-@media (max-width: 640px) {
-  .sanctum-watermark-inner {
-    font-size: 10px;
-    line-height: 5;
+ * ACESSIBILIDADE
+ * ============================================ */
+@media (prefers-reduced-motion: reduce) {
+  .sanctum-watermark-cell {
+    animation: none;
   }
-  
-  .sanctum-pdf-viewer .flex.items-center.gap-2 {
-    flex-wrap: wrap;
-    gap: 4px;
+
+  .sanctum-blurred {
+    transition: none;
   }
 }
 
-/* ============================================
-   10. DARK MODE
-   ============================================ */
-
-.dark .sanctum-watermark {
-  opacity: 0.08;
+/* Screen reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
 }
-
-.dark .sanctum-watermark-inner {
-  color: rgba(255, 255, 255, 0.9);
-}
-
-/* ============================================
-   ✅ SANCTUM CSS — PROTEÇÃO VISUAL INSTALADA
-   ============================================ */

@@ -1,71 +1,137 @@
 // ============================================
-// 🌌 HOLOGRAM TEXT — TEXTO EM CANVAS (NÃO SELECIONÁVEL)
-// Renderiza texto premium em canvas para evitar cópia
+// 🌌🔥 HOLOGRAM TEXT OMEGA — TEXTO INCOPIÁVEL NÍVEL NASA 🔥🌌
+// ANO 2300 — RENDERIZAÇÃO EM CANVAS ANTI-SELEÇÃO
 // ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
 // ============================================
+//
+// Renderiza texto em canvas, impossível de selecionar/copiar
+// Mantém acessibilidade via elemento oculto para screen readers
+//
+// 📍 MAPA DE URLs DEFINITIVO:
+//   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
+//   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
+//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+//   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+//
+// ============================================
 
-import React, { useEffect, useRef, memo } from "react";
+import React, { useEffect, useRef, memo, useMemo, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
+// ============================================
+// TIPOS E INTERFACES
+// ============================================
 interface HologramTextProps {
   text: string;
   font?: string;
+  fontSize?: number;
+  fontWeight?: number;
   color?: string;
   lineHeight?: number;
+  letterSpacing?: number;
+  textAlign?: CanvasTextAlign;
+  padding?: number;
+  maxWidth?: number;
   className?: string;
+  enableAccessibility?: boolean;
+  antiAlias?: boolean;
+  highDPI?: boolean;
 }
 
-// Função auxiliar para quebrar texto em linhas
+interface TextLine {
+  text: string;
+  y: number;
+}
+
+// ============================================
+// CONSTANTES
+// ============================================
+const OWNER_EMAIL = "moisesblank@gmail.com";
+const DEFAULT_FONT_SIZE = 16;
+const DEFAULT_LINE_HEIGHT = 1.6;
+const DEFAULT_PADDING = 16;
+const DPI_SCALE = typeof window !== "undefined" ? window.devicePixelRatio || 1 : 1;
+
+// ============================================
+// UTILITÁRIOS
+// ============================================
 function wrapText(
-  ctx: CanvasRenderingContext2D, 
-  text: string, 
-  x: number, 
-  y: number, 
-  maxWidth: number, 
+  ctx: CanvasRenderingContext2D,
+  text: string,
+  maxWidth: number,
   lineHeight: number
-): number {
+): TextLine[] {
+  const lines: TextLine[] = [];
   const paragraphs = text.split("\n");
-  let currentY = y;
-  
+  let currentY = 0;
+
   for (const paragraph of paragraphs) {
     if (paragraph.trim() === "") {
       currentY += lineHeight;
       continue;
     }
-    
+
     const words = paragraph.split(" ");
-    let line = "";
-    
-    for (let n = 0; n < words.length; n++) {
-      const testLine = line + words[n] + " ";
+    let currentLine = "";
+
+    for (const word of words) {
+      const testLine = currentLine ? `${currentLine} ${word}` : word;
       const metrics = ctx.measureText(testLine);
-      
-      if (metrics.width > maxWidth && n > 0) {
-        ctx.fillText(line.trim(), x, currentY);
-        line = words[n] + " ";
+
+      if (metrics.width > maxWidth && currentLine) {
+        lines.push({ text: currentLine, y: currentY });
         currentY += lineHeight;
+        currentLine = word;
       } else {
-        line = testLine;
+        currentLine = testLine;
       }
     }
-    ctx.fillText(line.trim(), x, currentY);
-    currentY += lineHeight;
+
+    if (currentLine) {
+      lines.push({ text: currentLine, y: currentY });
+      currentY += lineHeight;
+    }
   }
-  
-  return currentY;
+
+  return lines;
 }
 
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export const HologramText = memo(({
   text,
-  font = "16px Inter, system-ui, sans-serif",
-  color = "#0f172a",
-  lineHeight = 24,
-  className
+  font = "Inter, system-ui, sans-serif",
+  fontSize = DEFAULT_FONT_SIZE,
+  fontWeight = 400,
+  color = "#1a1a1a",
+  lineHeight = DEFAULT_LINE_HEIGHT,
+  letterSpacing = 0,
+  textAlign = "left",
+  padding = DEFAULT_PADDING,
+  maxWidth,
+  className,
+  enableAccessibility = true,
+  antiAlias = true,
+  highDPI = true,
 }: HologramTextProps) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const { profile } = useAuth();
 
-  useEffect(() => {
+  // Verificar se é owner
+  const isOwner = useMemo(() => {
+    return (
+      profile?.role === "owner" ||
+      profile?.email?.toLowerCase() === OWNER_EMAIL
+    );
+  }, [profile]);
+
+  // Renderizar canvas para não-owners
+  const renderCanvas = useCallback(() => {
+    if (isOwner) return; // Skip para owner
+    
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
@@ -73,75 +139,186 @@ export const HologramText = memo(({
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
 
-    // Suporte a high DPI
-    const dpr = window.devicePixelRatio || 1;
-    const rect = container.getBoundingClientRect();
-    const width = Math.max(1, rect.width);
-    
+    // Calcular dimensões
+    const containerWidth = container.clientWidth || 800;
+    const effectiveMaxWidth = maxWidth || containerWidth - padding * 2;
+    const scale = highDPI ? DPI_SCALE : 1;
+
+    // Configurar fonte para medição
+    const fontString = `${fontWeight} ${fontSize}px ${font}`;
+    ctx.font = fontString;
+
+    // Calcular linhas
+    const pixelLineHeight = fontSize * lineHeight;
+    const lines = wrapText(ctx, text, effectiveMaxWidth, pixelLineHeight);
+
     // Calcular altura necessária
-    ctx.font = font;
-    const tempHeight = 10000; // Altura temporária para calcular
-    canvas.width = width * dpr;
-    canvas.height = tempHeight * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    
-    // Calcular altura real do texto
-    const finalY = wrapText(ctx, text, 0, lineHeight, width - 20, lineHeight);
-    const actualHeight = finalY + lineHeight;
-    
-    // Redimensionar canvas para altura real
-    canvas.width = width * dpr;
-    canvas.height = actualHeight * dpr;
-    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    
-    // Renderizar texto
-    ctx.clearRect(0, 0, width, actualHeight);
-    ctx.font = font;
+    const totalHeight = lines.length * pixelLineHeight + padding * 2;
+
+    // Configurar canvas com DPI alto
+    canvas.width = containerWidth * scale;
+    canvas.height = totalHeight * scale;
+    canvas.style.width = `${containerWidth}px`;
+    canvas.style.height = `${totalHeight}px`;
+
+    // Escalar para DPI
+    ctx.scale(scale, scale);
+
+    // Limpar canvas
+    ctx.clearRect(0, 0, containerWidth, totalHeight);
+
+    // Configurar renderização
+    if (antiAlias) {
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+    }
+
+    // Configurar fonte e cor
+    ctx.font = fontString;
     ctx.fillStyle = color;
+    ctx.textAlign = textAlign;
     ctx.textBaseline = "top";
+
+    // Aplicar letter-spacing simulado
+    if (letterSpacing !== 0) {
+      ctx.letterSpacing = `${letterSpacing}px`;
+    }
+
+    // Calcular posição X baseada no alinhamento
+    let startX = padding;
+    if (textAlign === "center") {
+      startX = containerWidth / 2;
+    } else if (textAlign === "right") {
+      startX = containerWidth - padding;
+    }
+
+    // Renderizar linhas
+    for (const line of lines) {
+      ctx.fillText(line.text, startX, padding + line.y);
+    }
+  }, [
+    text,
+    font,
+    fontSize,
+    fontWeight,
+    color,
+    lineHeight,
+    letterSpacing,
+    textAlign,
+    padding,
+    maxWidth,
+    antiAlias,
+    highDPI,
+    isOwner,
+  ]);
+
+  // Renderizar ao montar e quando mudar
+  useEffect(() => {
+    if (isOwner) return; // Skip para owner
     
-    wrapText(ctx, text, 10, 10, width - 20, lineHeight);
-    
-    // Atualizar altura do container
-    canvas.style.height = `${actualHeight}px`;
-    
-  }, [text, font, color, lineHeight]);
+    renderCanvas();
+
+    // Re-renderizar em resize
+    const handleResize = () => {
+      requestAnimationFrame(renderCanvas);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, [renderCanvas, isOwner]);
+
+  // Se for owner, renderizar texto normal
+  if (isOwner) {
+    return (
+      <div className={cn("hologram-text-owner", className)}>
+        <div
+          style={{
+            fontFamily: font,
+            fontSize: `${fontSize}px`,
+            fontWeight,
+            color,
+            lineHeight,
+            letterSpacing: `${letterSpacing}px`,
+            textAlign,
+            padding: `${padding}px`,
+            whiteSpace: "pre-wrap",
+            maxWidth: maxWidth ? `${maxWidth}px` : undefined,
+          }}
+        >
+          {text}
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div 
+    <div
       ref={containerRef}
-      className={cn("hologram-text-container", className)} 
-      style={{ 
-        position: "relative", 
+      className={cn(
+        "hologram-text-container relative",
+        className
+      )}
+      style={{
         userSelect: "none",
-        width: "100%",
-        minHeight: 100
+        WebkitUserSelect: "none",
+        msUserSelect: "none",
+        MozUserSelect: "none",
+        WebkitTouchCallout: "none",
       }}
+      onContextMenu={(e) => e.preventDefault()}
+      onCopy={(e) => e.preventDefault()}
+      onCut={(e) => e.preventDefault()}
+      onDragStart={(e) => e.preventDefault()}
     >
-      <canvas 
-        ref={canvasRef} 
-        style={{ 
-          width: "100%", 
-          height: "auto",
-          display: "block"
+      {/* Canvas com o texto renderizado */}
+      <canvas
+        ref={canvasRef}
+        className="hologram-canvas"
+        style={{
+          display: "block",
+          width: "100%",
+          pointerEvents: "none",
         }}
       />
-      
-      {/* Texto real fora da tela para acessibilidade (screen readers) */}
-      <div 
-        style={{ 
-          position: "absolute", 
-          left: "-99999px", 
-          top: "-99999px",
-          width: 1,
-          height: 1,
-          overflow: "hidden"
+
+      {/* Texto acessível para screen readers (invisível) */}
+      {enableAccessibility && (
+        <div
+          className="sr-only"
+          aria-hidden="false"
+          role="article"
+          aria-label="Conteúdo do texto"
+          style={{
+            position: "absolute",
+            left: "-99999px",
+            top: "-99999px",
+            width: "1px",
+            height: "1px",
+            overflow: "hidden",
+            clip: "rect(0, 0, 0, 0)",
+            clipPath: "inset(50%)",
+            whiteSpace: "nowrap",
+          }}
+        >
+          {text}
+        </div>
+      )}
+
+      {/* Overlay anti-inspeção */}
+      <div
+        className="hologram-shield"
+        aria-hidden="true"
+        style={{
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          pointerEvents: "none",
+          background: "transparent",
+          zIndex: 1,
         }}
-        aria-hidden="false"
-        role="article"
-      >
-        {text}
-      </div>
+      />
     </div>
   );
 });

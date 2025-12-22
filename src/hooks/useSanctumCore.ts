@@ -1,48 +1,187 @@
 // ============================================
-// 🌌 SANCTUM CORE HOOK — SENTINELA DE SEGURANÇA
-// Detecta violações e reporta ao backend
+// 🌌🔥 SANCTUM CORE OMEGA — SENTINELA DE SEGURANÇA NÍVEL NASA 🔥🌌
+// ANO 2300 — DETECÇÃO E RESPOSTA ULTRASSÔNICA
 // ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
 // ============================================
+//
+// 📍 MAPA DE URLs DEFINITIVO:
+//   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
+//   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
+//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+//   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+//
+// IMPORTANTE: Detecção ≠ Punição imediata
+// Usamos escalonamento de risco baseado em padrões
+//
+// ============================================
 
-import { useCallback, useEffect, useRef } from "react";
-import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/lib/supabase";
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
-interface SanctumContext {
+// ============================================
+// TIPOS E INTERFACES
+// ============================================
+export interface SanctumContext {
   resourceId: string;
-  resourceType: "pdf" | "web_text" | "image" | "video";
+  resourceType: "pdf" | "web_text" | "image" | "video" | "ebook" | "worksheet";
 }
 
-interface Threat {
-  type: string;
+export interface Threat {
+  type: ThreatType;
   severity: number;
   meta?: Record<string, unknown>;
 }
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+export type ThreatType =
+  | "devtools_key_attempt"
+  | "devtools_probable"
+  | "devtools_debugger_detected"
+  | "print_shortcut_attempt"
+  | "copy_shortcut_attempt"
+  | "contextmenu_blocked"
+  | "copy_event_blocked"
+  | "drag_attempt_blocked"
+  | "selection_attempt_blocked"
+  | "printscreen_attempt"
+  | "automation_webdriver"
+  | "automation_phantom"
+  | "automation_nightwatch"
+  | "dom_mutation_detected"
+  | "dom_tampering_detected"
+  | "visibility_change_suspicious"
+  | "focus_blur_suspicious"
+  | "iframe_injection_detected"
+  | "script_injection_detected"
+  | "console_access_detected"
+  | "protected_surface_opened"
+  | "sanctum_punish"
+  | "screenshot_extension_detected"
+  | "screen_capture_detected"
+  | "video_download_attempt"
+  | "network_inspection_detected"
+  | "source_view_attempt";
 
+// ============================================
+// CONSTANTES DE CONFIGURAÇÃO
+// ============================================
+const OWNER_EMAIL = "moisesblank@gmail.com";
+const RATE_LIMIT_MS = 300;
+const DEVTOOLS_CHECK_INTERVAL_MS = 1500;
+const VISIBILITY_THRESHOLD = 10;
+const DOM_MUTATION_THRESHOLD = 100;
+const CONSOLE_CHECK_INTERVAL_MS = 3000;
+
+// Mapeamento de severidade por tipo de ameaça
+const THREAT_SEVERITY_MAP: Record<ThreatType, number> = {
+  devtools_key_attempt: 35,
+  devtools_probable: 55,
+  devtools_debugger_detected: 70,
+  print_shortcut_attempt: 30,
+  copy_shortcut_attempt: 25,
+  contextmenu_blocked: 10,
+  copy_event_blocked: 20,
+  drag_attempt_blocked: 15,
+  selection_attempt_blocked: 10,
+  printscreen_attempt: 40,
+  automation_webdriver: 95,
+  automation_phantom: 95,
+  automation_nightwatch: 95,
+  dom_mutation_detected: 15,
+  dom_tampering_detected: 50,
+  visibility_change_suspicious: 20,
+  focus_blur_suspicious: 15,
+  iframe_injection_detected: 80,
+  script_injection_detected: 90,
+  console_access_detected: 45,
+  protected_surface_opened: 0,
+  sanctum_punish: 100,
+  screenshot_extension_detected: 60,
+  screen_capture_detected: 65,
+  video_download_attempt: 75,
+  network_inspection_detected: 55,
+  source_view_attempt: 40,
+};
+
+// Limite de tentativas antes de punição por tipo
+const PUNISHMENT_THRESHOLDS: Partial<Record<ThreatType, number>> = {
+  devtools_key_attempt: 30,
+  devtools_probable: 3,
+  print_shortcut_attempt: 20,
+  copy_shortcut_attempt: 25,
+  contextmenu_blocked: 40,
+  copy_event_blocked: 30,
+  drag_attempt_blocked: 30,
+  selection_attempt_blocked: 50,
+  dom_mutation_detected: 150,
+  visibility_change_suspicious: 15,
+  focus_blur_suspicious: 20,
+  console_access_detected: 5,
+};
+
+// ============================================
+// HOOK PRINCIPAL
+// ============================================
 export function useSanctumCore(ctx: SanctumContext) {
   const { profile, session, signOut } = useAuth();
-  const isOwner = profile?.role === "owner" || profile?.email?.toLowerCase() === OWNER_EMAIL;
+  const [isLocked, setIsLocked] = useState(false);
+  const [riskScore, setRiskScore] = useState(0);
+  
+  // Verificar se é owner (MASTER)
+  const isOwner = 
+    profile?.role === "owner" || 
+    profile?.email?.toLowerCase() === OWNER_EMAIL;
+  
+  // Contadores de violações
   const counters = useRef<Record<string, number>>({});
   const lastSend = useRef<number>(0);
+  const sessionId = useRef<string>(crypto.randomUUID());
+  const startTime = useRef<number>(Date.now());
 
-  // Incrementar contador de tentativas
-  const bump = useCallback((k: string, add = 1) => {
-    counters.current[k] = (counters.current[k] ?? 0) + add;
-    return counters.current[k];
+  // ============================================
+  // FUNÇÕES UTILITÁRIAS
+  // ============================================
+  
+  // Incrementar contador
+  const bump = useCallback((key: string, add = 1): number => {
+    counters.current[key] = (counters.current[key] ?? 0) + add;
+    return counters.current[key];
   }, []);
 
-  // Reportar violação ao backend
+  // Obter contagem atual
+  const getCount = useCallback((key: string): number => {
+    return counters.current[key] ?? 0;
+  }, []);
+
+  // Reset contador
+  const resetCounter = useCallback((key: string) => {
+    counters.current[key] = 0;
+  }, []);
+
+  // ============================================
+  // REPORTAR VIOLAÇÃO AO BACKEND
+  // ============================================
   const reportViolation = useCallback(async (t: Threat) => {
     const now = Date.now();
-    if (now - lastSend.current < 500) return; // Rate limit
+    
+    // Rate limiting
+    if (now - lastSend.current < RATE_LIMIT_MS && t.severity < 50) {
+      return;
+    }
     lastSend.current = now;
 
+    // Atualizar risk score local
+    setRiskScore(prev => Math.min(prev + t.severity, 500));
+
     try {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      if (!supabaseUrl) {
+        console.warn("[Sanctum] VITE_SUPABASE_URL não configurado");
+        return;
+      }
+
       const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sanctum-report-violation`,
+        `${supabaseUrl}/functions/v1/sanctum-report-violation`,
         {
           method: "POST",
           headers: {
@@ -53,147 +192,439 @@ export function useSanctumCore(ctx: SanctumContext) {
             violationType: t.type,
             severity: t.severity,
             assetId: ctx.resourceId,
-            metadata: { ...t.meta, resourceType: ctx.resourceType }
-          })
+            metadata: {
+              ...t.meta,
+              resourceType: ctx.resourceType,
+              sessionId: sessionId.current,
+              elapsedMs: Date.now() - startTime.current,
+              path: window.location.pathname,
+              host: window.location.host,
+              userAgent: navigator.userAgent,
+              screenRes: `${screen.width}x${screen.height}`,
+              windowRes: `${window.innerWidth}x${window.innerHeight}`,
+              counters: { ...counters.current },
+            },
+          }),
         }
       );
 
       if (response.ok) {
         const data = await response.json();
-        
-        // Se foi bloqueado, fazer logout
+
+        // Se backend indicou bloqueio
         if (data?.locked) {
-          toast.error("Sua conta foi temporariamente bloqueada por atividade suspeita.");
+          setIsLocked(true);
+          toast.error("Sua conta foi temporariamente bloqueada por atividade suspeita.", {
+            duration: 10000,
+          });
           await signOut();
         }
       }
     } catch (err) {
-      console.error("[Sanctum] Erro ao reportar:", err);
+      console.error("[Sanctum] Erro ao reportar violação:", err);
     }
   }, [ctx.resourceId, ctx.resourceType, session?.access_token, signOut]);
 
-  // Punir (logout forçado)
+  // ============================================
+  // PUNIÇÃO (LOGOUT FORÇADO)
+  // ============================================
   const punish = useCallback(async (severity: number, reason: string) => {
     if (isOwner) return;
-    await reportViolation({ type: "sanctum_punish", severity, meta: { reason } });
-    toast.error("Atividade suspeita detectada. Você será desconectado.");
+
+    console.warn(`[Sanctum] PUNIÇÃO: ${reason} (severity: ${severity})`);
+    
+    await reportViolation({
+      type: "sanctum_punish",
+      severity,
+      meta: { reason, finalCounters: { ...counters.current } },
+    });
+
+    toast.error("Atividade suspeita detectada. Você será desconectado.", {
+      duration: 8000,
+    });
+
+    setIsLocked(true);
     await signOut();
   }, [isOwner, reportViolation, signOut]);
 
-  // Handler de keydown
+  // ============================================
+  // HANDLERS DE EVENTOS
+  // ============================================
+
+  // Handler de teclas
   const onKeyDown = useCallback((e: KeyboardEvent) => {
     if (isOwner) return;
 
-    const k = e.key.toLowerCase();
+    const key = e.key.toLowerCase();
     const isCtrl = e.ctrlKey || e.metaKey;
+    const isShift = e.shiftKey;
 
-    // DevTools keys
-    const devtools =
+    // === DEVTOOLS ===
+    const devtoolsKeys =
       e.key === "F12" ||
-      (isCtrl && e.shiftKey && ["i", "j", "c"].includes(k)) ||
-      (isCtrl && ["u", "s"].includes(k));
+      (isCtrl && isShift && ["i", "j", "c", "k"].includes(key)) ||
+      (isCtrl && ["u"].includes(key));
 
-    // Print
-    const print = isCtrl && k === "p";
+    // === PRINT ===
+    const printKeys = isCtrl && key === "p";
 
-    // Copy
-    const copy = isCtrl && ["c", "x", "a"].includes(k);
+    // === COPY/CUT/SELECT ALL ===
+    const copyKeys = isCtrl && ["c", "x", "a"].includes(key);
 
-    if (devtools || print || copy) {
+    // === SAVE ===
+    const saveKeys = isCtrl && key === "s";
+
+    // === PRINTSCREEN ===
+    const printScreen = key === "printscreen" || e.key === "PrintScreen";
+
+    if (devtoolsKeys || printKeys || copyKeys || saveKeys || printScreen) {
       e.preventDefault();
       e.stopPropagation();
 
-      const type = devtools ? "devtools_key_attempt" : print ? "print_shortcut_attempt" : "copy_shortcut_attempt";
-      const sev = devtools ? 35 : print ? 30 : 25;
-      const n = bump(type);
+      let type: ThreatType;
+      if (devtoolsKeys) type = "devtools_key_attempt";
+      else if (printKeys) type = "print_shortcut_attempt";
+      else if (copyKeys) type = "copy_shortcut_attempt";
+      else if (saveKeys) type = "source_view_attempt";
+      else type = "printscreen_attempt";
 
-      void reportViolation({ type, severity: sev, meta: { count: n, key: k } });
+      const count = bump(type);
+      const severity = THREAT_SEVERITY_MAP[type];
+      const threshold = PUNISHMENT_THRESHOLDS[type];
 
-      if (n >= 50) void punish(95, `${type}>=50`);
+      void reportViolation({
+        type,
+        severity,
+        meta: { count, key, ctrl: isCtrl, shift: isShift },
+      });
+
+      if (threshold && count >= threshold) {
+        void punish(severity + 10, `${type}>=${threshold}`);
+      }
     }
   }, [isOwner, bump, reportViolation, punish]);
 
-  // Handler de context menu
+  // Handler de menu de contexto
   const onContextMenu = useCallback((e: Event) => {
     if (isOwner) return;
     e.preventDefault();
-    const n = bump("contextmenu_blocked");
-    void reportViolation({ type: "contextmenu_blocked", severity: 10, meta: { count: n } });
-    if (n >= 50) void punish(90, "contextmenu>=50");
+    e.stopPropagation();
+
+    const count = bump("contextmenu_blocked");
+    void reportViolation({
+      type: "contextmenu_blocked",
+      severity: THREAT_SEVERITY_MAP.contextmenu_blocked,
+      meta: { count },
+    });
+
+    const threshold = PUNISHMENT_THRESHOLDS.contextmenu_blocked!;
+    if (count >= threshold) {
+      void punish(85, `contextmenu>=${threshold}`);
+    }
   }, [isOwner, bump, reportViolation, punish]);
 
-  // Handler de copy
+  // Handler de cópia
   const onCopy = useCallback((e: ClipboardEvent) => {
     if (isOwner) return;
     e.preventDefault();
-    e.clipboardData?.setData("text/plain", "");
-    const n = bump("copy_event_blocked");
-    void reportViolation({ type: "copy_event_blocked", severity: 20, meta: { count: n } });
-    if (n >= 50) void punish(92, "copy_event>=50");
-  }, [isOwner, bump, reportViolation, punish]);
+    e.stopPropagation();
 
-  // Heurística de DevTools (diferença de tamanho da janela)
-  const devtoolsHeuristic = useCallback(() => {
-    if (isOwner) return;
-    const w = Math.abs(window.outerWidth - window.innerWidth);
-    const h = Math.abs(window.outerHeight - window.innerHeight);
-    if (w > 160 || h > 160) {
-      const n = bump("devtools_probable");
-      void reportViolation({ type: "devtools_probable", severity: 55, meta: { count: n, w, h } });
-      if (n >= 3) void punish(80, "devtools_probable_repeat");
+    // Limpar clipboard
+    if (e.clipboardData) {
+      e.clipboardData.setData("text/plain", "© Prof. Moisés Medeiros - Conteúdo Protegido");
+    }
+
+    const count = bump("copy_event_blocked");
+    void reportViolation({
+      type: "copy_event_blocked",
+      severity: THREAT_SEVERITY_MAP.copy_event_blocked,
+      meta: { count },
+    });
+
+    const threshold = PUNISHMENT_THRESHOLDS.copy_event_blocked!;
+    if (count >= threshold) {
+      void punish(88, `copy>=${threshold}`);
     }
   }, [isOwner, bump, reportViolation, punish]);
 
-  // Registrar superfície protegida (log de acesso)
+  // Handler de drag
+  const onDragStart = useCallback((e: DragEvent) => {
+    if (isOwner) return;
+    e.preventDefault();
+    e.stopPropagation();
+
+    const count = bump("drag_attempt_blocked");
+    void reportViolation({
+      type: "drag_attempt_blocked",
+      severity: THREAT_SEVERITY_MAP.drag_attempt_blocked,
+      meta: { count },
+    });
+  }, [isOwner, bump, reportViolation]);
+
+  // Handler de seleção
+  const onSelectStart = useCallback((e: Event) => {
+    if (isOwner) return;
+    e.preventDefault();
+
+    const count = bump("selection_attempt_blocked");
+    if (count % 10 === 0) {
+      void reportViolation({
+        type: "selection_attempt_blocked",
+        severity: THREAT_SEVERITY_MAP.selection_attempt_blocked,
+        meta: { count },
+      });
+    }
+  }, [isOwner, bump, reportViolation]);
+
+  // Handler de mudança de visibilidade
+  const onVisibilityChange = useCallback(() => {
+    if (isOwner) return;
+    if (document.hidden) {
+      const count = bump("visibility_change_suspicious");
+      if (count > 5 && count % 5 === 0) {
+        void reportViolation({
+          type: "visibility_change_suspicious",
+          severity: THREAT_SEVERITY_MAP.visibility_change_suspicious,
+          meta: { count },
+        });
+      }
+
+      const threshold = PUNISHMENT_THRESHOLDS.visibility_change_suspicious!;
+      if (count >= threshold) {
+        void punish(75, `visibility>=${threshold}`);
+      }
+    }
+  }, [isOwner, bump, reportViolation, punish]);
+
+  // ============================================
+  // HEURÍSTICAS DE DETECÇÃO
+  // ============================================
+
+  // Detector de DevTools (heurística de tamanho)
+  const checkDevTools = useCallback(() => {
+    if (isOwner) return;
+
+    const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+    const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+
+    // DevTools provavelmente aberto
+    if (widthDiff > 160 || heightDiff > 160) {
+      const count = bump("devtools_probable");
+      void reportViolation({
+        type: "devtools_probable",
+        severity: THREAT_SEVERITY_MAP.devtools_probable,
+        meta: { count, widthDiff, heightDiff },
+      });
+
+      const threshold = PUNISHMENT_THRESHOLDS.devtools_probable!;
+      if (count >= threshold) {
+        void punish(85, `devtools_probable>=${threshold}`);
+      }
+    }
+  }, [isOwner, bump, reportViolation, punish]);
+
+  // Detector de console access
+  const checkConsoleAccess = useCallback(() => {
+    if (isOwner) return;
+
+    // Método 1: Verificar se console foi sobrescrito
+    const originalLog = console.log;
+    let consoleDetected = false;
+
+    try {
+      const element = new Image();
+      Object.defineProperty(element, "id", {
+        get: function () {
+          consoleDetected = true;
+          return "sanctum-trap";
+        },
+      });
+
+      console.debug(element);
+      console.clear();
+    } catch {
+      // Ignorar erros
+    }
+
+    if (consoleDetected) {
+      const count = bump("console_access_detected");
+      void reportViolation({
+        type: "console_access_detected",
+        severity: THREAT_SEVERITY_MAP.console_access_detected,
+        meta: { count },
+      });
+
+      const threshold = PUNISHMENT_THRESHOLDS.console_access_detected!;
+      if (count >= threshold) {
+        void punish(80, `console>=${threshold}`);
+      }
+    }
+  }, [isOwner, bump, reportViolation, punish]);
+
+  // Detector de automação
+  const checkAutomation = useCallback(() => {
+    if (isOwner) return;
+
+    const nav = navigator as Record<string, unknown>;
+
+    // Selenium, Puppeteer, etc.
+    if (nav.webdriver === true) {
+      void reportViolation({
+        type: "automation_webdriver",
+        severity: THREAT_SEVERITY_MAP.automation_webdriver,
+      });
+      void punish(95, "navigator.webdriver");
+      return;
+    }
+
+    // PhantomJS
+    if ((window as Record<string, unknown>).callPhantom || 
+        (window as Record<string, unknown>)._phantom) {
+      void reportViolation({
+        type: "automation_phantom",
+        severity: THREAT_SEVERITY_MAP.automation_phantom,
+      });
+      void punish(95, "PhantomJS");
+      return;
+    }
+
+    // Nightwatch
+    if ((window as Record<string, unknown>).nightwatch) {
+      void reportViolation({
+        type: "automation_nightwatch",
+        severity: THREAT_SEVERITY_MAP.automation_nightwatch,
+      });
+      void punish(95, "Nightwatch");
+    }
+  }, [isOwner, reportViolation, punish]);
+
+  // ============================================
+  // REGISTRAR SUPERFÍCIE PROTEGIDA
+  // ============================================
   const registerProtectedSurface = useCallback(() => {
-    void reportViolation({ 
-      type: "protected_surface_opened", 
-      severity: 0, 
-      meta: { path: window.location.pathname } 
+    void reportViolation({
+      type: "protected_surface_opened",
+      severity: 0,
+      meta: {
+        path: window.location.pathname,
+        timestamp: new Date().toISOString(),
+      },
     });
   }, [reportViolation]);
 
-  // Setup de listeners
+  // ============================================
+  // SETUP DE LISTENERS
+  // ============================================
   useEffect(() => {
+    // Owner é imune
     if (!profile || isOwner) return;
 
-    // Detectar automação (Selenium, Puppeteer, etc.)
-    if ((navigator as unknown as { webdriver?: boolean }).webdriver) {
-      void reportViolation({ type: "automation_webdriver", severity: 95 });
-      void punish(95, "navigator.webdriver");
-    }
+    // Verificar automação imediatamente
+    checkAutomation();
 
     // Event listeners
-    window.addEventListener("keydown", onKeyDown, { capture: true });
+    window.addEventListener("keydown", onKeyDown, { capture: true, passive: false });
     document.addEventListener("contextmenu", onContextMenu, { capture: true });
     document.addEventListener("copy", onCopy, { capture: true });
+    document.addEventListener("cut", onCopy, { capture: true });
+    document.addEventListener("dragstart", onDragStart, { capture: true });
+    document.addEventListener("selectstart", onSelectStart, { capture: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
-    // MutationObserver para detectar tampering no DOM
-    const observer = new MutationObserver((mutations) => {
-      const n = bump("dom_mutation", mutations.length);
-      if (n >= 50) {
-        void reportViolation({ type: "dom_mutation_detected", severity: 15, meta: { count: n } });
+    // MutationObserver para tampering
+    const mutationObserver = new MutationObserver((mutations) => {
+      const count = bump("dom_mutation", mutations.length);
+
+      // Verificar injeção de scripts
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as Element;
+            if (el.tagName === "SCRIPT" && !el.getAttribute("data-sanctum-allowed")) {
+              void reportViolation({
+                type: "script_injection_detected",
+                severity: THREAT_SEVERITY_MAP.script_injection_detected,
+                meta: { src: (el as HTMLScriptElement).src },
+              });
+            }
+            if (el.tagName === "IFRAME" && !el.getAttribute("data-sanctum-allowed")) {
+              void reportViolation({
+                type: "iframe_injection_detected",
+                severity: THREAT_SEVERITY_MAP.iframe_injection_detected,
+                meta: { src: (el as HTMLIFrameElement).src },
+              });
+            }
+          }
+        });
+      });
+
+      // Log se muitas mutações
+      if (count >= DOM_MUTATION_THRESHOLD && count % 50 === 0) {
+        void reportViolation({
+          type: "dom_mutation_detected",
+          severity: THREAT_SEVERITY_MAP.dom_mutation_detected,
+          meta: { count },
+        });
       }
-      if (n >= 100) void punish(85, "dom_mutation>=100");
+
+      if (count >= 200) {
+        void punish(80, "dom_mutation>=200");
+      }
     });
-    observer.observe(document.documentElement, { childList: true, subtree: true });
 
-    // Intervalo para heurística de devtools
-    const interval = setInterval(devtoolsHeuristic, 2000);
+    mutationObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      characterData: true,
+    });
 
+    // Intervalos de verificação
+    const devtoolsInterval = setInterval(checkDevTools, DEVTOOLS_CHECK_INTERVAL_MS);
+    const consoleInterval = setInterval(checkConsoleAccess, CONSOLE_CHECK_INTERVAL_MS);
+
+    // Cleanup
     return () => {
       window.removeEventListener("keydown", onKeyDown, { capture: true });
       document.removeEventListener("contextmenu", onContextMenu, { capture: true });
       document.removeEventListener("copy", onCopy, { capture: true });
-      observer.disconnect();
-      clearInterval(interval);
+      document.removeEventListener("cut", onCopy, { capture: true });
+      document.removeEventListener("dragstart", onDragStart, { capture: true });
+      document.removeEventListener("selectstart", onSelectStart, { capture: true });
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      mutationObserver.disconnect();
+      clearInterval(devtoolsInterval);
+      clearInterval(consoleInterval);
     };
-  }, [profile, isOwner, onKeyDown, onContextMenu, onCopy, devtoolsHeuristic, reportViolation, punish, bump]);
-
-  return { 
-    registerProtectedSurface, 
+  }, [
+    profile,
     isOwner,
-    reportViolation 
+    onKeyDown,
+    onContextMenu,
+    onCopy,
+    onDragStart,
+    onSelectStart,
+    onVisibilityChange,
+    checkAutomation,
+    checkDevTools,
+    checkConsoleAccess,
+    reportViolation,
+    punish,
+    bump,
+  ]);
+
+  // ============================================
+  // RETORNO DO HOOK
+  // ============================================
+  return {
+    registerProtectedSurface,
+    isOwner,
+    isLocked,
+    riskScore,
+    reportViolation,
+    getCount,
+    resetCounter,
+    sessionId: sessionId.current,
   };
 }
 
