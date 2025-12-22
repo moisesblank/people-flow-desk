@@ -146,8 +146,11 @@ export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
             <img
               src={logoMoises}
               alt="Prof. Moisés Medeiros"
+              width={192}
+              height={80}
               className="relative w-40 h-40 md:w-48 md:h-48 object-contain"
               loading="eager"
+              decoding="async"
             />
           </div>
         </motion.div>
