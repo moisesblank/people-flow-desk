@@ -626,44 +626,59 @@ async function wfCronograma(
   supabase: SupabaseClient,
   input: Record<string, unknown>
 ): Promise<WorkflowResult> {
-  const { subjects, hours_per_day = 4, days = 7, exam_date } = input as {
+  const { exam_date, subjects, hours_per_day = 4, user_id } = input as {
+    exam_date?: string;
     subjects?: string[];
     hours_per_day?: number;
-    days?: number;
-    exam_date?: string;
+    user_id?: string;
   };
+
+  // Calcular dias até a prova
+  const daysUntilExam = exam_date 
+    ? Math.ceil((new Date(exam_date).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+    : 30;
 
   const subjectList = subjects || ['Química Geral', 'Química Orgânica', 'Físico-Química'];
 
-  const prompt = `Crie um cronograma de estudos otimizado.
-Considere: ${hours_per_day}h/dia, ${days} dias, matérias: ${subjectList.join(', ')}.
-${exam_date ? `Data do exame: ${exam_date}` : ''}
+  const prompt = `Crie um cronograma de estudos científico para vestibular de Medicina.
 
-Retorne em formato JSON:
+Dados:
+- Dias até a prova: ${daysUntilExam}
+- Matérias: ${subjectList.join(', ')}
+- Horas/dia: ${hours_per_day}
+
+Retorne JSON com:
 {
-  "schedule": [
+  "meta": { "total_hours": N, "weeks": N },
+  "weekly_plan": [
     {
-      "day": 1,
-      "date": "2024-01-15",
-      "tasks": [
-        { "subject": "Química Orgânica", "duration": 60, "topic": "Nomenclatura", "priority": "high" }
-      ]
+      "week": 1,
+      "focus": "Tema principal",
+      "days": {
+        "monday": [{ "time": "08:00-10:00", "subject": "...", "activity": "..." }]
+      }
     }
   ],
-  "summary": "Resumo do cronograma",
+  "revision_schedule": { "intervals": [1,3,7,14,30] },
   "tips": ["Dica 1", "Dica 2"]
-}`;
+}
 
-  const response = await callAI('gpt5_mini', [
-    { role: 'system', content: 'Crie cronogramas de estudo otimizados. Retorne APENAS JSON.' },
+Use técnicas:
+- Repetição espaçada
+- Intercalação
+- Blocos de 90min + pausas
+- Manhã: conteúdo novo, Tarde: exercícios`;
+
+  const response = await callAI('gemini_pro', [
+    { role: 'system', content: 'Especialista em planejamento de estudos. Retorne APENAS JSON.' },
     { role: 'user', content: prompt }
   ], { temperature: 0.3 });
 
-  let schedule = null;
+  let cronograma = null;
   try {
     const jsonMatch = response.content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      schedule = JSON.parse(jsonMatch[0]);
+      cronograma = JSON.parse(jsonMatch[0]);
     }
   } catch {
     return { success: false, error: 'Falha ao parsear cronograma' };
@@ -671,11 +686,11 @@ Retorne em formato JSON:
 
   return {
     success: true,
-    output: schedule || { schedule: [] },
+    output: { cronograma, days_until_exam: daysUntilExam },
     cost_usd: response.cost_usd,
     tokens_in: response.tokens_in,
     tokens_out: response.tokens_out,
-    result_summary: `Cronograma: ${schedule?.schedule?.length || 0} dias`
+    result_summary: `Cronograma: ${cronograma?.meta?.weeks || 0} semanas`
   };
 }
 
@@ -683,29 +698,40 @@ async function wfResumo(
   supabase: SupabaseClient,
   input: Record<string, unknown>
 ): Promise<WorkflowResult> {
-  const { content, max_length = 500 } = input as {
-    content: string;
+  const { content, format = 'bullet', max_length = 500 } = input as { 
+    content: string; 
+    format?: 'bullet' | 'paragraph' | 'outline';
     max_length?: number;
   };
 
-  const prompt = `Resuma o seguinte conteúdo em no máximo ${max_length} palavras.
-Seja claro, objetivo e mantenha os pontos principais.
+  const prompt = `Resuma o seguinte conteúdo no formato ${format}:
 
-Conteúdo:
-${content}`;
+${content.slice(0, 10000)}
+
+Formato de saída:
+- bullet: lista com bullets
+- paragraph: 2-3 parágrafos
+- outline: estrutura hierárquica
+
+Inclua:
+- Conceitos-chave em **negrito**
+- Conexões com vestibular
+- Dica de memorização
+
+Máximo ${max_length} palavras.`;
 
   const response = await callAI('gemini_flash', [
-    { role: 'system', content: 'Você é um especialista em criar resumos educativos claros e concisos.' },
+    { role: 'system', content: 'Crie resumos concisos e didáticos.' },
     { role: 'user', content: prompt }
   ], { temperature: 0.3 });
 
   return {
     success: true,
-    output: { summary: response.content },
+    output: { summary: response.content, format },
     cost_usd: response.cost_usd,
     tokens_in: response.tokens_in,
     tokens_out: response.tokens_out,
-    result_summary: `Resumo gerado (${response.content.split(' ').length} palavras)`
+    result_summary: `Resumo ${format} gerado`
   };
 }
 
@@ -716,48 +742,49 @@ async function wfExercicios(
   const { topic, count = 5, difficulty = 'medium' } = input as {
     topic: string;
     count?: number;
-    difficulty?: string;
+    difficulty?: 'easy' | 'medium' | 'hard';
   };
 
-  const prompt = `Crie ${count} exercícios de ${difficulty} dificuldade sobre: "${topic}"
+  const prompt = `Gere ${count} questões de vestibular sobre: "${topic}"
+Dificuldade: ${difficulty}
 
-Retorne JSON:
+JSON:
 {
-  "exercises": [
+  "questions": [
     {
-      "question": "Enunciado da questão",
-      "options": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
+      "statement": "Enunciado completo",
+      "alternatives": ["A) ...", "B) ...", "C) ...", "D) ...", "E) ..."],
       "correct": "A",
       "explanation": "Explicação detalhada",
-      "difficulty": "${difficulty}",
-      "topic": "${topic}"
+      "topic": "${topic}",
+      "difficulty": "${difficulty}"
     }
   ]
 }`;
 
-  const response = await callAI('gpt5_mini', [
-    { role: 'system', content: 'Crie exercícios no estilo de vestibulares de medicina. Retorne APENAS JSON.' },
+  const response = await callAI('gpt5', [
+    { role: 'system', content: 'Crie questões no estilo FUVEST/UNICAMP. Retorne APENAS JSON.' },
     { role: 'user', content: prompt }
   ], { temperature: 0.5 });
 
-  let exercises = [];
+  let questions: Array<Record<string, unknown>> = [];
   try {
     const jsonMatch = response.content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      exercises = parsed.exercises || [];
+      questions = parsed.questions || [];
     }
   } catch {
-    return { success: false, error: 'Falha ao parsear exercícios' };
+    return { success: false, error: 'Falha ao parsear questões' };
   }
 
   return {
     success: true,
-    output: { exercises_created: exercises.length, exercises },
+    output: { questions, count: questions.length },
     cost_usd: response.cost_usd,
     tokens_in: response.tokens_in,
     tokens_out: response.tokens_out,
-    result_summary: `${exercises.length} exercícios criados`
+    result_summary: `${questions.length} questões geradas`
   };
 }
 
@@ -769,13 +796,55 @@ async function wfImportUrl(
   supabase: SupabaseClient,
   input: Record<string, unknown>
 ): Promise<WorkflowResult> {
-  const { url } = input as { url: string };
-  
-  // TODO: Implementar scraping real
+  const { url, admin_id } = input as { url: string; admin_id?: string };
+
+  // Extrair via Firecrawl
+  const firecrawlKey = Deno.env.get('FIRECRAWL_API_KEY');
+  if (!firecrawlKey) {
+    return { success: false, error: 'FIRECRAWL_API_KEY não configurada' };
+  }
+
+  const extractResponse = await fetch('https://api.firecrawl.dev/v1/scrape', {
+    method: 'POST',
+    headers: { 'Authorization': `Bearer ${firecrawlKey}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({ url, formats: ['markdown'] })
+  });
+
+  if (!extractResponse.ok) {
+    return { success: false, error: `Firecrawl error: ${extractResponse.status}` };
+  }
+
+  const extractedData = await extractResponse.json();
+  const content = extractedData.data?.markdown || '';
+
+  if (!content) {
+    return { success: false, error: 'Nenhum conteúdo extraído' };
+  }
+
+  // Processar com IA
+  const response = await callAI('gpt5', [
+    { role: 'system', content: 'Extraia questões de vestibular. Retorne JSON com array "questions".' },
+    { role: 'user', content: `Extraia questões:\n\n${content.slice(0, 15000)}` }
+  ]);
+
+  let questions: Array<Record<string, unknown>> = [];
+  try {
+    const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      questions = parsed.questions || [];
+    }
+  } catch {
+    // Pode não ter questões
+  }
+
   return {
     success: true,
-    output: { message: 'URL import not yet implemented', url },
-    result_summary: 'Import URL placeholder'
+    output: { questions_imported: questions.length, url, questions },
+    cost_usd: response.cost_usd,
+    tokens_in: response.tokens_in,
+    tokens_out: response.tokens_out,
+    result_summary: `${questions.length} questões importadas de ${url}`
   };
 }
 
@@ -783,13 +852,12 @@ async function wfImportPdf(
   supabase: SupabaseClient,
   input: Record<string, unknown>
 ): Promise<WorkflowResult> {
-  const { file_url } = input as { file_url: string };
-  
-  // TODO: Implementar parsing real
+  const { file_path, admin_id } = input as { file_path: string; admin_id?: string };
+
+  // TODO: Implementar extração de PDF via storage
   return {
-    success: true,
-    output: { message: 'PDF import not yet implemented', file_url },
-    result_summary: 'Import PDF placeholder'
+    success: false,
+    error: 'WF-IMPORT-PDF: Implementação pendente'
   };
 }
 
@@ -798,12 +866,11 @@ async function wfTranscribe(
   input: Record<string, unknown>
 ): Promise<WorkflowResult> {
   const { audio_url } = input as { audio_url: string };
-  
-  // TODO: Implementar transcrição real
+
+  // TODO: Implementar via Whisper API (ElevenLabs)
   return {
-    success: true,
-    output: { message: 'Transcription not yet implemented', audio_url },
-    result_summary: 'Transcribe placeholder'
+    success: false,
+    error: 'WF-TRANSCRIBE: Implementação pendente'
   };
 }
 
@@ -815,48 +882,58 @@ async function wfLiveSummary(
   supabase: SupabaseClient,
   input: Record<string, unknown>
 ): Promise<WorkflowResult> {
-  const { questions, live_id } = input as {
-    questions: string[];
-    live_id: string;
+  const { live_id, window_minutes = 5, questions } = input as { 
+    live_id: string; 
+    window_minutes?: number;
+    questions?: string[];
   };
 
-  const prompt = `Analise as perguntas da live e agrupe por tema.
-Identifique as dúvidas mais comuns.
+  // Se não tiver perguntas, buscar do banco
+  let chatMessages: string[] = questions || [];
+  
+  if (chatMessages.length === 0) {
+    const windowStart = new Date(Date.now() - window_minutes * 60 * 1000).toISOString();
 
-Perguntas:
-${questions.join('\n')}
+    const { data: messages } = await supabase
+      .from('live_chat_messages')
+      .select('content, user_name')
+      .eq('live_id', live_id)
+      .gte('created_at', windowStart)
+      .is('is_deleted', false)
+      .order('created_at')
+      .limit(100);
 
-Retorne JSON:
-{
-  "themes": [
-    { "name": "Tema", "questions": ["q1", "q2"], "summary": "Resumo" }
-  ],
-  "most_common": ["Dúvida mais comum 1", "Dúvida 2"],
-  "suggestions": ["Sugestão para próxima aula"]
-}`;
+    if (!messages || messages.length === 0) {
+      return { success: true, output: { message: 'Sem mensagens na janela' } };
+    }
+
+    chatMessages = messages.map(m => `${m.user_name}: ${m.content}`);
+  }
+
+  const chatLog = chatMessages.join('\n');
 
   const response = await callAI('gemini_flash', [
-    { role: 'system', content: 'Analise perguntas de lives educacionais. Retorne APENAS JSON.' },
-    { role: 'user', content: prompt }
+    { role: 'system', content: 'Analise chat de aula ao vivo. Retorne JSON.' },
+    { role: 'user', content: `Analise e retorne JSON com top_questions, hot_topics, alerts:\n\n${chatLog}` }
   ], { temperature: 0.3 });
 
-  let analysis = null;
+  let summary = null;
   try {
     const jsonMatch = response.content.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
-      analysis = JSON.parse(jsonMatch[0]);
+      summary = JSON.parse(jsonMatch[0]);
     }
   } catch {
-    analysis = { themes: [], error: 'Parse failed' };
+    summary = { raw: response.content };
   }
 
   return {
     success: true,
-    output: { ...analysis, live_id },
+    output: { summary, messages_analyzed: chatMessages.length, live_id },
     cost_usd: response.cost_usd,
     tokens_in: response.tokens_in,
     tokens_out: response.tokens_out,
-    result_summary: `Live summary: ${analysis?.themes?.length || 0} temas`
+    result_summary: `${chatMessages.length} mensagens analisadas`
   };
 }
 
@@ -864,12 +941,35 @@ async function wfLiveHighlight(
   supabase: SupabaseClient,
   input: Record<string, unknown>
 ): Promise<WorkflowResult> {
-  const { transcript, live_id } = input as {
-    transcript: string;
-    live_id: string;
+  const { live_id, message_ids, transcript } = input as { 
+    live_id: string; 
+    message_ids?: string[];
+    transcript?: string;
   };
 
-  const prompt = `Extraia os momentos mais importantes desta transcrição de live:
+  // Modo 1: Destacar mensagens específicas
+  if (message_ids && message_ids.length > 0) {
+    const { error } = await supabase
+      .from('live_chat_messages')
+      .update({ is_pinned: true })
+      .in('id', message_ids);
+
+    if (error) {
+      return { success: false, error: error.message };
+    }
+
+    return {
+      success: true,
+      output: { highlighted: message_ids.length },
+      result_summary: `${message_ids.length} mensagens destacadas`
+    };
+  }
+
+  // Modo 2: Extrair highlights de transcrição
+  if (transcript) {
+    const response = await callAI('gemini_flash', [
+      { role: 'system', content: 'Extraia highlights de transcrições. Retorne APENAS JSON.' },
+      { role: 'user', content: `Extraia os momentos mais importantes desta transcrição de live:
 
 ${transcript.slice(0, 5000)}
 
@@ -880,31 +980,30 @@ Retorne JSON:
   ],
   "key_concepts": ["Conceito 1", "Conceito 2"],
   "action_items": ["Revisar X", "Estudar Y"]
-}`;
+}` }
+    ], { temperature: 0.3 });
 
-  const response = await callAI('gemini_flash', [
-    { role: 'system', content: 'Extraia highlights de transcrições. Retorne APENAS JSON.' },
-    { role: 'user', content: prompt }
-  ], { temperature: 0.3 });
-
-  let highlights = null;
-  try {
-    const jsonMatch = response.content.match(/\{[\s\S]*\}/);
-    if (jsonMatch) {
-      highlights = JSON.parse(jsonMatch[0]);
+    let highlights = null;
+    try {
+      const jsonMatch = response.content.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        highlights = JSON.parse(jsonMatch[0]);
+      }
+    } catch {
+      highlights = { highlights: [], error: 'Parse failed' };
     }
-  } catch {
-    highlights = { highlights: [], error: 'Parse failed' };
+
+    return {
+      success: true,
+      output: { ...highlights, live_id },
+      cost_usd: response.cost_usd,
+      tokens_in: response.tokens_in,
+      tokens_out: response.tokens_out,
+      result_summary: `Highlights: ${highlights?.highlights?.length || 0}`
+    };
   }
 
-  return {
-    success: true,
-    output: { ...highlights, live_id },
-    cost_usd: response.cost_usd,
-    tokens_in: response.tokens_in,
-    tokens_out: response.tokens_out,
-    result_summary: `Highlights: ${highlights?.highlights?.length || 0}`
-  };
+  return { success: false, error: 'Informe message_ids ou transcript' };
 }
 
 // ============================================================
