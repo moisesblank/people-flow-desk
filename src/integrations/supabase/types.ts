@@ -10447,6 +10447,14 @@ export type Database = {
         Returns: boolean
       }
       check_beta_access: { Args: { _user_id: string }; Returns: Json }
+      check_chat_rate_limit: {
+        Args: {
+          p_interval_seconds?: number
+          p_live_id: string
+          p_user_id: string
+        }
+        Returns: boolean
+      }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
@@ -10759,6 +10767,15 @@ export type Database = {
       register_user_logout: { Args: never; Returns: undefined }
       revoke_beta_access: { Args: { _user_id: string }; Returns: Json }
       security_cleanup_job: { Args: never; Returns: undefined }
+      send_chat_message: {
+        Args: {
+          p_avatar_url?: string
+          p_live_id: string
+          p_message: string
+          p_user_name?: string
+        }
+        Returns: string
+      }
       update_expense_status: {
         Args: {
           p_data_pagamento?: string
