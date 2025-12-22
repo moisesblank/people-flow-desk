@@ -7447,6 +7447,96 @@ export type Database = {
         }
         Relationships: []
       }
+      sna_conversations: {
+        Row: {
+          agent_type: string
+          course_id: string | null
+          created_at: string
+          id: string
+          last_message_at: string | null
+          last_message_preview: string | null
+          lesson_id: string | null
+          message_count: number | null
+          status: string | null
+          title: string | null
+          total_cost_usd: number | null
+          total_tokens: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agent_type?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          lesson_id?: string | null
+          message_count?: number | null
+          status?: string | null
+          title?: string | null
+          total_cost_usd?: number | null
+          total_tokens?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agent_type?: string
+          course_id?: string | null
+          created_at?: string
+          id?: string
+          last_message_at?: string | null
+          last_message_preview?: string | null
+          lesson_id?: string | null
+          message_count?: number | null
+          status?: string | null
+          title?: string | null
+          total_cost_usd?: number | null
+          total_tokens?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      sna_embeddings: {
+        Row: {
+          chunk_index: number | null
+          content: string
+          content_hash: string
+          created_at: string
+          embedding: Json | null
+          id: string
+          metadata: Json | null
+          source_id: string
+          source_type: string
+          tags: string[] | null
+        }
+        Insert: {
+          chunk_index?: number | null
+          content: string
+          content_hash: string
+          created_at?: string
+          embedding?: Json | null
+          id?: string
+          metadata?: Json | null
+          source_id: string
+          source_type: string
+          tags?: string[] | null
+        }
+        Update: {
+          chunk_index?: number | null
+          content?: string
+          content_hash?: string
+          created_at?: string
+          embedding?: Json | null
+          id?: string
+          metadata?: Json | null
+          source_id?: string
+          source_type?: string
+          tags?: string[] | null
+        }
+        Relationships: []
+      }
       sna_feature_flags: {
         Row: {
           allowed_roles: string[] | null
@@ -7704,6 +7794,59 @@ export type Database = {
             columns: ["root_job_id"]
             isOneToOne: false
             referencedRelation: "sna_jobs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sna_messages: {
+        Row: {
+          actions: Json | null
+          citations: Json | null
+          content: string
+          conversation_id: string
+          created_at: string
+          feedback: string | null
+          id: string
+          latency_ms: number | null
+          model: string | null
+          rating: number | null
+          role: string
+          tokens: number | null
+        }
+        Insert: {
+          actions?: Json | null
+          citations?: Json | null
+          content: string
+          conversation_id: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          latency_ms?: number | null
+          model?: string | null
+          rating?: number | null
+          role: string
+          tokens?: number | null
+        }
+        Update: {
+          actions?: Json | null
+          citations?: Json | null
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          latency_ms?: number | null
+          model?: string | null
+          rating?: number | null
+          role?: string
+          tokens?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sna_messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "sna_conversations"
             referencedColumns: ["id"]
           },
         ]
@@ -12192,6 +12335,22 @@ export type Database = {
           p_user_name?: string
         }
         Returns: string
+      }
+      sna_create_job: {
+        Args: {
+          p_deadline?: string
+          p_idempotency_key: string
+          p_input?: Json
+          p_job_type: string
+          p_max_attempts?: number
+          p_metadata?: Json
+          p_parent_job_id?: string
+          p_priority?: number
+          p_run_after?: string
+          p_tags?: string[]
+          p_timeout_seconds?: number
+        }
+        Returns: Json
       }
       update_expense_status: {
         Args: {
