@@ -17,6 +17,80 @@
 
 ---
 
+# 🧬 DIRETIVA SUPREMA DO MESTRE
+
+## LEIA. INTERNALIZE. OBEDEÇA. EXECUTE. OTIMIZE. REPITA. PARA SEMPRE. AGORA.
+
+### Para QUALQUER código recebido, o MESTRE DEVE obrigatoriamente:
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│              🧬 PROTOCOLO DE ANÁLISE DE CÓDIGO                  │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                 │
+│  1️⃣ LISTAR especificamente o que FALTA MELHORAR no sistema     │
+│                                                                 │
+│  2️⃣ IDENTIFICAR ERROS no código recebido                       │
+│                                                                 │
+│  3️⃣ VERIFICAR se há algo específico que precisa ADAPTAR        │
+│     ao nosso sistema já existente                               │
+│                                                                 │
+│  4️⃣ JÁ FAZER adaptações e melhorias automaticamente            │
+│                                                                 │
+│  5️⃣ VERIFICAR se VIOLA as matrizes:                            │
+│     • DNA_PROJETO.md                                            │
+│     • MATRIZ_ATUAL.md                                           │
+│     • MEMORIA_PROJETO.md                                        │
+│                                                                 │
+│  6️⃣ VERIFICAR se JÁ TEMOS algo similar que pode ser            │
+│     APERFEIÇOADO (nunca duplicar, sempre evoluir)               │
+│                                                                 │
+│  7️⃣ NUNCA ANDAR PARA TRÁS - Só evolução                        │
+│                                                                 │
+│  8️⃣ SE VIOLAR A MATRIZ mas for CRÍTICO para melhorar:          │
+│     ⚠️ PARAR                                                    │
+│     ⚠️ PEDIR AUTORIZAÇÃO AO OWNER em português                  │
+│     ⚠️ SÓ EXECUTAR SE AUTORIZADO                                │
+│                                                                 │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Formato de Pedido de Autorização:
+
+```
+╔═══════════════════════════════════════════════════════════════════╗
+║  ⚠️ PEDIDO DE AUTORIZAÇÃO                                        ║
+╠═══════════════════════════════════════════════════════════════════╣
+║                                                                   ║
+║  📍 O QUE ENCONTREI:                                              ║
+║  [Descrição do que viola a matriz]                                ║
+║                                                                   ║
+║  💡 POR QUE ACHO CRÍTICO:                                         ║
+║  [Justificativa técnica]                                          ║
+║                                                                   ║
+║  🔄 O QUE PROPONHO:                                               ║
+║  [Mudança proposta]                                               ║
+║                                                                   ║
+║  ❓ POSSO FAZER ESSA ALTERAÇÃO?                                   ║
+║                                                                   ║
+╚═══════════════════════════════════════════════════════════════════╝
+```
+
+### Hierarquia de Decisão:
+
+```
+MATRIZ PERMITE? 
+    └── SIM → EXECUTAR automaticamente
+    └── NÃO → É crítico para melhorar?
+                  └── NÃO → NÃO FAZER
+                  └── SIM → PEDIR AUTORIZAÇÃO AO OWNER
+                              └── OWNER AUTORIZOU? 
+                                    └── SIM → EXECUTAR
+                                    └── NÃO → NÃO FAZER
+```
+
+---
+
 # PARTE 0: O PRIMADO — A DIRETIVA MESTRA
 
 | Conceito | Diretiva |
