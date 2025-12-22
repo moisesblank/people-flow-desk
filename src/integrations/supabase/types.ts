@@ -9584,6 +9584,60 @@ export type Database = {
         }
         Relationships: []
       }
+      webhook_events: {
+        Row: {
+          attempts: number | null
+          event_id: string
+          event_type: string | null
+          id: string
+          ip_address: unknown
+          last_error: string | null
+          max_attempts: number | null
+          payload: Json | null
+          processed_at: string | null
+          provider: string
+          received_at: string
+          response: Json | null
+          signature_algorithm: string | null
+          signature_valid: boolean | null
+          status: string
+        }
+        Insert: {
+          attempts?: number | null
+          event_id: string
+          event_type?: string | null
+          id?: string
+          ip_address?: unknown
+          last_error?: string | null
+          max_attempts?: number | null
+          payload?: Json | null
+          processed_at?: string | null
+          provider: string
+          received_at?: string
+          response?: Json | null
+          signature_algorithm?: string | null
+          signature_valid?: boolean | null
+          status?: string
+        }
+        Update: {
+          attempts?: number | null
+          event_id?: string
+          event_type?: string | null
+          id?: string
+          ip_address?: unknown
+          last_error?: string | null
+          max_attempts?: number | null
+          payload?: Json | null
+          processed_at?: string | null
+          provider?: string
+          received_at?: string
+          response?: Json | null
+          signature_algorithm?: string | null
+          signature_valid?: boolean | null
+          status?: string
+        }
+        Relationships: []
+      }
       webhook_events_v2: {
         Row: {
           attempts: number | null
@@ -11070,6 +11124,10 @@ export type Database = {
         Returns: boolean
       }
       can_access_sanctuary: { Args: { p_user_id: string }; Returns: boolean }
+      can_access_url: {
+        Args: { p_url: string; p_user_id?: string }
+        Returns: boolean
+      }
       can_access_url_v2: {
         Args: { p_url: string; p_user_id?: string }
         Returns: boolean
@@ -11382,7 +11440,9 @@ export type Database = {
       }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_owner_v2: { Args: { p_user_id: string }; Returns: boolean }
+      is_beta_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_owner:
         | { Args: never; Returns: boolean }
