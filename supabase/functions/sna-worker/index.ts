@@ -12,8 +12,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
-
 // ============================================================
 // TIPOS
 // ============================================================
@@ -42,6 +40,12 @@ interface JobResult {
 }
 
 type JobHandler = (job: Job, supabase: SupabaseClient) => Promise<JobResult>;
+
+// ============================================================
+// CONFIGURAÇÃO
+// ============================================================
+
+const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 
 // ============================================================
 // REGISTRY DE HANDLERS
@@ -109,6 +113,21 @@ serve(async (req) => {
     let jobsFailed = 0;
     let totalCostUsd = 0;
 
+    // Cleanup automático
+    const { data: cleanupResult } = await supabase.rpc('sna_cleanup', {
+      p_job_retention_days: 30,
+      p_tool_run_retention_days: 7,
+      p_cache_cleanup: true,
+      p_rate_limit_cleanup: true
+    });
+    
+    if (cleanupResult) {
+      const cleaned = cleanupResult as Record<string, number>;
+      if (Object.values(cleaned).some(v => v > 0)) {
+        console.log(`🧹 Cleanup: ${JSON.stringify(cleaned)}`);
+      }
+    }
+
     // Modo single job (para reprocessamento)
     if (single_job_id) {
       const { data: singleJob } = await supabase
@@ -162,7 +181,8 @@ serve(async (req) => {
       return new Response(JSON.stringify({
         worker_id: workerId,
         jobs_processed: 0,
-        message: 'No jobs available'
+        message: 'No jobs available',
+        cleanup: cleanupResult
       }), {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
@@ -225,7 +245,7 @@ serve(async (req) => {
 
 async function processJob(job: Job, supabase: SupabaseClient, workerId: string): Promise<JobResult> {
   const startTime = Date.now();
-  console.log(`🔄 Processing job ${job.id} (${job.job_type}) attempt ${job.attempts}`);
+  console.log(`🔄 Processing job ${job.id} (${job.job_type}) attempt ${job.attempts} [${workerId}]`);
 
   const handler = JOB_HANDLERS[job.job_type];
   
