@@ -12402,6 +12402,7 @@ export type Database = {
         Returns: Json
       }
       generate_2fa_code: { Args: never; Returns: string }
+      generate_session_code: { Args: never; Returns: string }
       generate_signed_video_url: {
         Args: { p_expires_minutes?: number; p_video_id: string }
         Returns: Json
