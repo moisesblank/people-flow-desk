@@ -160,6 +160,7 @@ const menuGroups: MenuGroup[] = [
     color: "from-cyan-600/80 via-blue-600/80",
     items: [
       { title: "Dashboard Aluno", url: "/alunos", icon: LayoutDashboard, area: "aluno-dashboard", badge: "HOME" },
+      { title: "Livro Web", url: "/alunos/livro-web", icon: BookOpen, area: "aluno-livro-web", badge: "NOVO" },
       { title: "Meu Cronograma", url: "/alunos/cronograma", icon: CalendarDays, area: "aluno-cronograma" },
       { title: "Videoaulas", url: "/alunos/videoaulas", icon: Video, area: "aluno-videoaulas", badge: "HD" },
       { title: "Materiais PDF", url: "/alunos/materiais", icon: FileDown, area: "aluno-materiais" },
