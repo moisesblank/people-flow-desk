@@ -5,19 +5,35 @@ Tudo o mais já foi aplicado ou são arquivos antigos.
 
 ---
 
-## 📊 RESUMO RÁPIDO
+## ⚠️ SOBRE A ORDEM NA TELA
 
-| # | Tipo | Arquivo | Função | Status |
-|---|------|---------|--------|--------|
-| 1 | SQL | `20251222000001_live_chat_system.sql` | Chat ao vivo | ⏳ PENDENTE |
-| 2 | SQL | `20251222000002_performance_indexes.sql` | Índices performance | ⏳ PENDENTE |
-| 3 | SQL | `20251222200000_security_fortress_ultra.sql` | Segurança total | ⏳ PENDENTE |
-| 4 | SQL | `20251222400000_sna_omega_complete.sql` | Automação IA | ⏳ PENDENTE |
-| 5 | Edge | `sna-gateway` | Gateway IA | ⏳ PENDENTE |
-| 6 | Edge | `sna-worker` | Worker IA | ⏳ PENDENTE |
-| 7 | Edge | `secure-webhook-ultra` | Webhook seguro | ⏳ PENDENTE |
+A tela do Cursor/Lovable mostra os arquivos em **ORDEM ALFABÉTICA**.
+Isso **NÃO** é a ordem de aplicação!
+
+**SEMPRE siga a ordem numérica abaixo (1, 2, 3...).**
+
+---
+
+## 📊 RESUMO RÁPIDO (APLIQUE NESTA ORDEM!)
+
+| # | Tipo | Arquivo | Aparece na tela como | Status |
+|---|------|---------|---------------------|--------|
+| 1 | SQL | `20251222000001_live_chat_system.sql` | `20251222000001_live_chat_system.sql` | ⏳ |
+| 2 | SQL | `20251222000002_performance_indexes.sql` | `20251222000002_performance_indexes.sql` | ⏳ |
+| 3 | SQL | `20251222200000_security_fortress_ultra.sql` | `20251222200000_security_fortress_ultra.sql` | ⏳ |
+| 4 | SQL | `20251222400000_sna_omega_complete.sql` | `20251222400000_sna_omega_complete.sql` | ⏳ |
+| 5 | Edge | `secure-webhook-ultra` | `secure-webhook-ultra/index.ts` | ⏳ |
+| 6 | Edge | `sna-gateway` | `sna-gateway/index.ts` | ⏳ |
+| 7 | Edge | `sna-worker` | `sna-worker/index.ts` | ⏳ |
 
 **TOTAL: 7 itens (4 SQL + 3 Edge Functions)**
+
+### 🔴 POR QUE ESSA ORDEM?
+
+1. **SQL primeiro** = Cria as tabelas no banco de dados
+2. **Edge Functions depois** = Código que usa as tabelas
+
+Se inverter = ERRO!
 
 ---
 

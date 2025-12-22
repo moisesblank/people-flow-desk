@@ -229,19 +229,38 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 
 ---
 
-## 🚫 REGRA SOBRE ARQUIVOS NA DIREITA DO CURSOR
+## 🚫 REGRA SOBRE ARQUIVOS NA TELA DO CURSOR/LOVABLE
 
 > **ATENÇÃO OWNER:**
 
-❌ Os arquivos que aparecem na **direita do Cursor** são **TODOS os arquivos do projeto**
-❌ **NÃO** são os arquivos que você precisa aplicar
-❌ **NÃO** aplique arquivos aleatoriamente
+### O que você vê na tela:
+- A tela mostra os arquivos em **ORDEM ALFABÉTICA**
+- Isso **NÃO** é a ordem de aplicação!
+- Pode parecer confuso, mas são os mesmos arquivos que eu listo
 
-✅ Para saber **O QUE APLICAR**, consulte APENAS:
-1. O arquivo `PENDENTES_APLICAR.md` na raiz do projeto
-2. Ou siga os passos numerados nesta memória (abaixo)
+### Correspondência entre a tela e minha lista:
 
-### Por que isso acontece?
+| O que aparece na tela | É qual item da minha lista |
+|-----------------------|---------------------------|
+| `sna-gateway/index.ts` | Item 6 - Edge Gateway IA |
+| `sna-worker/index.ts` | Item 7 - Edge Worker IA |
+| `secure-webhook-ultra/index.ts` | Item 5 - Edge Webhook |
+| `20251222000001_live_chat_system.sql` | Item 1 - SQL Chat |
+| `20251222000002_performance_indexes.sql` | Item 2 - SQL Performance |
+| `20251222200000_security_fortress_ultra.sql` | Item 3 - SQL Segurança |
+| `20251222400000_sna_omega_complete.sql` | Item 4 - SQL Automação IA |
+
+### ⚠️ A ORDEM IMPORTA!
+
+**SEMPRE aplicar SQL primeiro, Edge Functions depois!**
+Se aplicar Edge Function antes do SQL = ERRO (código precisa das tabelas)
+
+### ✅ Para saber O QUE APLICAR e EM QUE ORDEM:
+1. Consulte `PENDENTES_APLICAR.md` na raiz do projeto
+2. Ou siga os passos numerados nesta memória
+3. **NUNCA** aplicar na ordem alfabética da tela
+
+### Por que tantos arquivos na tela?
 
 O projeto tem **182 migrações SQL** antigas + **61 Edge Functions** que já existiam.
 Os **NOVOS** que eu criei são apenas **7 arquivos** (4 SQL + 3 Edge Functions).
