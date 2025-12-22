@@ -11960,6 +11960,7 @@ export type Database = {
       cleanup_old_security_events: { Args: never; Returns: number }
       cleanup_old_security_events_v2: { Args: never; Returns: number }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
+      cleanup_old_webhooks: { Args: never; Returns: number }
       cleanup_rate_limits: { Args: never; Returns: number }
       cleanup_rate_limits_v3: { Args: never; Returns: number }
       cleanup_security_data: { Args: never; Returns: Json }
@@ -12581,6 +12582,23 @@ export type Database = {
         Returns: boolean
       }
       verify_2fa_code: { Args: { p_code: string }; Returns: boolean }
+      webhook_check_duplicate: {
+        Args: {
+          p_event_id: string
+          p_event_type?: string
+          p_payload?: Json
+          p_provider: string
+        }
+        Returns: Json
+      }
+      webhook_mark_done: {
+        Args: { p_event_id: string; p_provider: string; p_response?: Json }
+        Returns: boolean
+      }
+      webhook_mark_failed: {
+        Args: { p_error?: string; p_event_id: string; p_provider: string }
+        Returns: boolean
+      }
     }
     Enums: {
       ai_content_type: "summary" | "flashcards" | "quiz" | "mindmap"
