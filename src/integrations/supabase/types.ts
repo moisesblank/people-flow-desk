@@ -2645,6 +2645,66 @@ export type Database = {
         }
         Relationships: []
       }
+      dead_click_reports: {
+        Row: {
+          action_expected: string | null
+          component_name: string | null
+          created_at: string
+          device_info: Json | null
+          element_selector: string
+          element_text: string | null
+          element_type: string
+          id: string
+          issues: string[] | null
+          page_path: string
+          page_url: string
+          resolution_notes: string | null
+          resolved: boolean
+          resolved_at: string | null
+          resolved_by: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          action_expected?: string | null
+          component_name?: string | null
+          created_at?: string
+          device_info?: Json | null
+          element_selector: string
+          element_text?: string | null
+          element_type: string
+          id?: string
+          issues?: string[] | null
+          page_path: string
+          page_url: string
+          resolution_notes?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          action_expected?: string | null
+          component_name?: string | null
+          created_at?: string
+          device_info?: Json | null
+          element_selector?: string
+          element_text?: string | null
+          element_type?: string
+          id?: string
+          issues?: string[] | null
+          page_path?: string
+          page_url?: string
+          resolution_notes?: string | null
+          resolved?: boolean
+          resolved_at?: string | null
+          resolved_by?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       dead_letter_queue: {
         Row: {
           created_at: string
@@ -9545,6 +9605,117 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_audit_events: {
+        Row: {
+          component_name: string | null
+          created_at: string
+          error_message: string | null
+          event_name: string
+          event_type: string
+          function_id: string | null
+          id: number
+          metadata: Json | null
+          page_path: string
+          session_id: string | null
+          status: string
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          component_name?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_name: string
+          event_type: string
+          function_id?: string | null
+          id?: number
+          metadata?: Json | null
+          page_path: string
+          session_id?: string | null
+          status?: string
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          component_name?: string | null
+          created_at?: string
+          error_message?: string | null
+          event_name?: string
+          event_type?: string
+          function_id?: string | null
+          id?: number
+          metadata?: Json | null
+          page_path?: string
+          session_id?: string | null
+          status?: string
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
+      ui_function_registry: {
+        Row: {
+          abuse_controls: string[] | null
+          action_key: string | null
+          auth_required: boolean
+          backend_handlers: Json
+          backend_mode: string
+          created_at: string
+          description: string | null
+          domain: string
+          function_id: string
+          id: string
+          name: string
+          rls_tables: string[] | null
+          roles_allowed: string[]
+          route_key: string | null
+          status: string
+          storage_operations: Json | null
+          ui_triggers: Json
+          updated_at: string
+        }
+        Insert: {
+          abuse_controls?: string[] | null
+          action_key?: string | null
+          auth_required?: boolean
+          backend_handlers?: Json
+          backend_mode?: string
+          created_at?: string
+          description?: string | null
+          domain: string
+          function_id: string
+          id?: string
+          name: string
+          rls_tables?: string[] | null
+          roles_allowed?: string[]
+          route_key?: string | null
+          status?: string
+          storage_operations?: Json | null
+          ui_triggers?: Json
+          updated_at?: string
+        }
+        Update: {
+          abuse_controls?: string[] | null
+          action_key?: string | null
+          auth_required?: boolean
+          backend_handlers?: Json
+          backend_mode?: string
+          created_at?: string
+          description?: string | null
+          domain?: string
+          function_id?: string
+          id?: string
+          name?: string
+          rls_tables?: string[] | null
+          roles_allowed?: string[]
+          route_key?: string | null
+          status?: string
+          storage_operations?: Json | null
+          ui_triggers?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       universal_attachments: {
         Row: {
           ai_insights: Json | null
@@ -9614,6 +9785,51 @@ export type Database = {
           title?: string | null
           updated_at?: string | null
           uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      url_access_logs: {
+        Row: {
+          allowed: boolean
+          created_at: string
+          domain: string
+          id: number
+          ip: unknown
+          path: string
+          reason: string
+          redirect_to: string | null
+          url: string
+          user_agent: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          allowed: boolean
+          created_at?: string
+          domain: string
+          id?: number
+          ip?: unknown
+          path: string
+          reason: string
+          redirect_to?: string | null
+          url: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          allowed?: boolean
+          created_at?: string
+          domain?: string
+          id?: number
+          ip?: unknown
+          path?: string
+          reason?: string
+          redirect_to?: string | null
+          url?: string
+          user_agent?: string | null
+          user_id?: string | null
+          user_role?: string | null
         }
         Relationships: []
       }
@@ -12309,6 +12525,7 @@ export type Database = {
       cleanup_expired_signed_urls: { Args: never; Returns: number }
       cleanup_expired_timeouts: { Args: never; Returns: number }
       cleanup_expired_video_sessions: { Args: never; Returns: number }
+      cleanup_expired_video_sessions_omega: { Args: never; Returns: number }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
@@ -12406,6 +12623,10 @@ export type Database = {
           p_session_token: string
         }
         Returns: Json
+      }
+      end_video_session_omega: {
+        Args: { p_session_token: string }
+        Returns: boolean
       }
       extend_beta_access: {
         Args: { _additional_days: number; _user_id: string }
@@ -12855,6 +13076,20 @@ export type Database = {
           p_violation_type: Database["public"]["Enums"]["video_violation_type"]
         }
         Returns: Json
+      }
+      register_video_violation_omega: {
+        Args: {
+          p_details?: Json
+          p_session_token: string
+          p_severity?: number
+          p_violation_type: string
+        }
+        Returns: {
+          action_taken: string
+          is_revoked: boolean
+          risk_score: number
+          success: boolean
+        }[]
       }
       remove_chat_ban: {
         Args: { p_live_id: string; p_user_id: string }
