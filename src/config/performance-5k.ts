@@ -14,17 +14,23 @@ export const LIVE_5K_CONFIG = {
   // CHAT RATE LIMITING (CRÍTICO)
   // ============================================
   CHAT: {
-    /** Intervalo mínimo entre mensagens (ms) */
+    /** Intervalo mínimo entre mensagens - NORMAL (ms) */
     MIN_MESSAGE_INTERVAL: 2000, // 1 msg a cada 2s
+    
+    /** Intervalo em SLOW MODE - pico de usuários (ms) */
+    SLOW_MODE_INTERVAL: 5000, // 1 msg a cada 5s
+    
+    /** Threshold para ativar slow mode automaticamente */
+    SLOW_MODE_THRESHOLD_VIEWERS: 1000,
     
     /** Máximo de mensagens por minuto por usuário */
     MAX_MESSAGES_PER_MINUTE: 20,
     
     /** Tamanho máximo de mensagem (caracteres) */
-    MAX_MESSAGE_LENGTH: 200,
+    MAX_MESSAGE_LENGTH: 280,
     
     /** Máximo de mensagens exibidas no chat (virtualização) */
-    MAX_VISIBLE_MESSAGES: 100,
+    MAX_VISIBLE_MESSAGES: 150,
     
     /** Intervalo de limpeza de mensagens antigas (ms) */
     CLEANUP_INTERVAL: 30000,
@@ -34,6 +40,15 @@ export const LIVE_5K_CONFIG = {
     
     /** Limite de reactions por segundo */
     MAX_REACTIONS_PER_SECOND: 5,
+    
+    /** Retenção de mensagens (ms) - 24 horas */
+    MESSAGE_RETENTION_MS: 86400000,
+    
+    /** Batch size para persistência */
+    BATCH_PERSIST_SIZE: 50,
+    
+    /** Intervalo de batch persist (ms) */
+    BATCH_PERSIST_INTERVAL: 10000,
   },
   
   // ============================================

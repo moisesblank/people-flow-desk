@@ -4551,6 +4551,42 @@ export type Database = {
           },
         ]
       }
+      live_chat_messages: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          id: string
+          is_highlighted: boolean | null
+          is_moderator: boolean | null
+          live_id: string
+          message: string
+          user_id: string
+          user_name: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_highlighted?: boolean | null
+          is_moderator?: boolean | null
+          live_id: string
+          message: string
+          user_id: string
+          user_name: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          id?: string
+          is_highlighted?: boolean | null
+          is_moderator?: boolean | null
+          live_id?: string
+          message?: string
+          user_id?: string
+          user_name?: string
+        }
+        Relationships: []
+      }
       logs_integracao_detalhado: {
         Row: {
           acoes_executadas: Json | null

@@ -18,6 +18,13 @@ import {
   trimReactions,
   generateReactionId,
 } from '@/config/performance-5k';
+import { 
+  moderateMessage, 
+  checkAutoSlowMode, 
+  getCurrentMessageInterval,
+  getUserModerationState 
+} from '@/lib/chat/chatModeration';
+import { addMessageToBuffer, loadRecentMessages } from '@/lib/chat/chatPersistence';
 
 // ============================================
 // TIPOS INTERNOS
@@ -30,6 +37,11 @@ interface UseLiveClassReturn extends LiveState {
     canSend: boolean;
     cooldownSeconds: number;
     messagesRemaining: number;
+  };
+  slowModeActive: boolean;
+  moderationInfo: {
+    isBanned: boolean;
+    warningCount: number;
   };
 }
 
@@ -87,23 +99,49 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
   const cleanupIntervalRef = useRef<NodeJS.Timeout | null>(null);
   
   // ============================================
-  // RATE LIMIT INFO (memoizado)
+  // SLOW MODE & MODERAÇÃO
+  // ============================================
+  const [slowModeActive, setSlowModeActive] = useState(false);
+  
+  // Verificar slow mode baseado em viewers
+  useEffect(() => {
+    const isSlowMode = checkAutoSlowMode(state.viewers);
+    setSlowModeActive(isSlowMode);
+  }, [state.viewers]);
+  
+  // Info de moderação do usuário atual
+  const moderationInfo = useMemo(() => {
+    if (!user?.id) return { isBanned: false, warningCount: 0 };
+    const modState = getUserModerationState(user.id);
+    return {
+      isBanned: modState.isBanned,
+      warningCount: modState.warningCount
+    };
+  }, [user?.id]);
+  
+  // ============================================
+  // RATE LIMIT INFO (memoizado com slow mode)
   // ============================================
   const rateLimitInfo = useMemo(() => {
     const now = Date.now();
     const recentMessages = messagesInWindow.filter(
       t => now - t < 60000 // últimos 60 segundos
     );
-    const rateLimit = checkChatRateLimit(lastMessageTime, recentMessages.length);
     
-    const cooldownMs = Math.max(0, rateLimit.nextMessageAt - now);
+    // Usar intervalo atual (normal ou slow mode)
+    const currentInterval = getCurrentMessageInterval();
+    const nextMessageAt = lastMessageTime + currentInterval;
+    const canSendBasedOnInterval = now >= nextMessageAt;
+    const canSendBasedOnVolume = recentMessages.length < LIVE_5K_CONFIG.CHAT.MAX_MESSAGES_PER_MINUTE;
+    
+    const cooldownMs = Math.max(0, nextMessageAt - now);
     
     return {
-      canSend: rateLimit.canSendMessage,
+      canSend: canSendBasedOnInterval && canSendBasedOnVolume && !moderationInfo.isBanned,
       cooldownSeconds: Math.ceil(cooldownMs / 1000),
       messagesRemaining: LIVE_5K_CONFIG.CHAT.MAX_MESSAGES_PER_MINUTE - recentMessages.length,
     };
-  }, [lastMessageTime, messagesInWindow]);
+  }, [lastMessageTime, messagesInWindow, moderationInfo.isBanned]);
   
   // ============================================
   // BATCH RENDERING (otimização para 5K)
@@ -230,17 +268,37 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
       return;
     }
     
-    const trimmedContent = content.trim().slice(0, LIVE_5K_CONFIG.CHAT.MAX_MESSAGE_LENGTH);
-    if (!trimmedContent) return;
-    
     // Verificar rate limit
     if (!rateLimitInfo.canSend) {
-      if (rateLimitInfo.cooldownSeconds > 0) {
-        toast.error(`Aguarde ${rateLimitInfo.cooldownSeconds}s para enviar outra mensagem`);
+      if (moderationInfo.isBanned) {
+        toast.error('Você está banido do chat');
+      } else if (rateLimitInfo.cooldownSeconds > 0) {
+        const msg = slowModeActive 
+          ? `Slow mode ativo! Aguarde ${rateLimitInfo.cooldownSeconds}s`
+          : `Aguarde ${rateLimitInfo.cooldownSeconds}s para enviar outra mensagem`;
+        toast.error(msg);
       } else {
         toast.error('Limite de mensagens atingido. Aguarde um momento.');
       }
       return;
+    }
+    
+    // MODERAÇÃO: sanitizar e validar mensagem
+    const modResult = moderateMessage(content, user.id);
+    
+    if (!modResult.isAllowed) {
+      if (modResult.violations.length > 0) {
+        toast.error(modResult.violations[0]);
+      }
+      return;
+    }
+    
+    const sanitizedContent = modResult.sanitizedMessage;
+    if (!sanitizedContent) return;
+    
+    // Mostrar warnings (mas permitir envio)
+    if (modResult.violations.length > 0 && modResult.severity !== 'high') {
+      toast.warning(`Aviso: ${modResult.violations.join(', ')}`);
     }
     
     const message: LiveMessage = {
@@ -248,7 +306,7 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
       user_id: user.id,
       user_name: userProfile?.nome || 'Aluno',
       avatar_url: userProfile?.avatar_url || undefined,
-      message: trimmedContent,
+      message: sanitizedContent,
       created_at: new Date().toISOString(),
     };
     
@@ -260,6 +318,9 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
     // Adicionar mensagem localmente (otimistic update)
     queueMessage(message);
     
+    // Adicionar ao buffer de persistência
+    addMessageToBuffer(classId, message);
+    
     // Broadcast para outros usuários
     channelRef.current.send({
       type: 'broadcast',
@@ -267,7 +328,7 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
       payload: message,
     });
     
-  }, [user, userProfile, rateLimitInfo, queueMessage]);
+  }, [user, userProfile, rateLimitInfo, queueMessage, classId, slowModeActive, moderationInfo.isBanned]);
   
   // ============================================
   // ENVIAR REACTION
@@ -301,9 +362,22 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
   // LIFECYCLE
   // ============================================
   
-  // Conectar ao montar
+  // Conectar ao montar e carregar histórico
   useEffect(() => {
     connectRealtime();
+    
+    // Carregar histórico de mensagens
+    if (classId) {
+      loadRecentMessages(classId).then(history => {
+        if (history.length > 0) {
+          setState(prev => ({
+            ...prev,
+            messages: trimMessages([...history, ...prev.messages])
+          }));
+          console.log(`[LiveClass] 📜 ${history.length} mensagens do histórico carregadas`);
+        }
+      });
+    }
     
     return () => {
       // Cleanup na desmontagem
@@ -318,7 +392,7 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
         clearInterval(cleanupIntervalRef.current);
       }
     };
-  }, [connectRealtime]);
+  }, [connectRealtime, classId]);
   
   // Cleanup periódico de reactions antigas
   useEffect(() => {
@@ -355,6 +429,8 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
     sendMessage,
     sendReaction,
     rateLimitInfo,
+    slowModeActive,
+    moderationInfo,
   };
 }
 
