@@ -1,33 +1,42 @@
 // ============================================
-// ⚡ MATRIZ DIGITAL - ROTEADOR /alunos (Gestão vs Portal)
-// Futuro 2300: roteamento inteligente por role + domínio
-// HIERARQUIA: Beta = Aluno Pagante → vê Portal do Aluno
-//             Owner/Admin → vê Gestão de Alunos
+// ⚡ MATRIZ DIGITAL v10.0 - ROTEADOR /alunos (Gestão vs Portal)
+// ARQUITETURA DE DOMÍNIOS:
+// - gestao.moisesmedeiros.com.br → Funcionários (Gestão de Alunos)
+// - pro.moisesmedeiros.com.br → Alunos Beta (Central do Aluno)
+// - www/moisesmedeiros.com.br → Área pública (Home)
+// HIERARQUIA: 
+//   Owner (moisesblank@gmail.com) = Acesso total a tudo
+//   Beta = Aluno Pagante → vê Portal do Aluno
+//   Funcionários (gestão) → vê Gestão de Alunos
 // ============================================
 
 import { useMemo } from "react";
 import { Navigate } from "react-router-dom";
 import { Helmet } from "react-helmet";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
-import { useRolePermissions } from "@/hooks/useRolePermissions";
+import { useRolePermissions, isGestaoHost, isProHost, isPublicHost } from "@/hooks/useRolePermissions";
 
 // Importa as duas experiências
 import AlunoDashboard from "@/pages/aluno/AlunoDashboard";
 import Alunos from "@/pages/Alunos";
 
-function isGestaoHost(hostname: string) {
-  return hostname.toLowerCase().startsWith("gestao.");
-}
-
 export default function AlunosRouteSwitcher() {
   const { isAdminOrOwner, isLoading: adminLoading } = useAdminCheck();
-  const { role, isLoading: roleLoading, isBeta } = useRolePermissions();
+  const { role, isLoading: roleLoading, isBeta, isOwner } = useRolePermissions();
 
   const isLoading = adminLoading || roleLoading;
 
-  const gestao = useMemo(() => {
-    if (typeof window === "undefined") return false;
-    return isGestaoHost(window.location.hostname);
+  // Detectar domínio atual usando funções centralizadas
+  const { isGestao, isPro, isPublic } = useMemo(() => {
+    if (typeof window === "undefined") {
+      return { isGestao: false, isPro: false, isPublic: false };
+    }
+    const hostname = window.location.hostname;
+    return {
+      isGestao: isGestaoHost(hostname),
+      isPro: isProHost(hostname),
+      isPublic: isPublicHost(hostname),
+    };
   }, []);
 
   // Loading state
@@ -40,14 +49,50 @@ export default function AlunosRouteSwitcher() {
   }
 
   // ============================================
-  // HIERARQUIA DE VISUALIZAÇÃO:
-  // 1. BETA (aluno pagante) → SEMPRE vê Portal do Aluno
-  // 2. ADMIN/OWNER no domínio gestao.* → vê Gestão de Alunos
-  // 3. ADMIN/OWNER em outros domínios → vê Portal do Aluno
-  // 4. Outros roles → redirecionados para /app
+  // HIERARQUIA DE VISUALIZAÇÃO (LEI IV - SOBERANIA DO ARQUITETO):
+  // 1. OWNER → Acesso total a qualquer domínio
+  //    - gestao.* → Gestão de Alunos
+  //    - pro.* ou outros → Portal do Aluno (para visualizar experiência)
+  // 2. BETA (aluno pagante) → SEMPRE vê Portal do Aluno
+  // 3. FUNCIONÁRIOS no domínio gestao.* → Gestão de Alunos
+  // 4. Outros roles → redirecionados para /dashboard ou /app
   // ============================================
 
-  // BETA = Aluno pagante → sempre portal do aluno
+  // OWNER - ACESSO SUPREMO (LEI IV)
+  if (isOwner) {
+    // Owner no domínio gestão → vê Gestão de Alunos
+    if (isGestao) {
+      return (
+        <>
+          <Helmet>
+            <title>Gestão de Alunos | Matriz Digital</title>
+            <meta
+              name="description"
+              content="Gestão de alunos: lista, filtros, status, auditoria e sincronização inteligente."
+            />
+            <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"} />
+          </Helmet>
+          <Alunos />
+        </>
+      );
+    }
+    // Owner em pro.* ou outros domínios → vê Portal do Aluno (para testar experiência)
+    return (
+      <>
+        <Helmet>
+          <title>Dashboard do Aluno | Química ENEM</title>
+          <meta
+            name="description"
+            content="Sua central de estudos com videoaulas, questões, simulados e progresso gamificado."
+          />
+          <link rel="canonical" href={typeof window !== "undefined" ? `${window.location.origin}/alunos` : "/alunos"} />
+        </Helmet>
+        <AlunoDashboard />
+      </>
+    );
+  }
+
+  // BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
   if (isBeta) {
     return (
       <>
@@ -64,8 +109,8 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-  // ADMIN/OWNER no domínio de gestão → Gestão de Alunos
-  if (isAdminOrOwner && gestao) {
+  // ADMIN/FUNCIONÁRIOS no domínio de gestão → Gestão de Alunos
+  if (isAdminOrOwner && isGestao) {
     return (
       <>
         <Helmet>
@@ -81,7 +126,7 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-  // ADMIN/OWNER fora do domínio gestão → pode ver portal do aluno também
+  // ADMIN fora do domínio gestão (ex: pro.*) → pode ver portal do aluno para testes
   if (isAdminOrOwner) {
     return (
       <>
@@ -98,6 +143,6 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-  // Outros roles sem permissão → redireciona para /app
-  return <Navigate to="/app" replace />;
+  // Outros roles sem permissão → redireciona para dashboard ou app
+  return <Navigate to="/dashboard" replace />;
 }
