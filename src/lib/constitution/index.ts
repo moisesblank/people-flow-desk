@@ -48,33 +48,43 @@ const LEI_IV_ARTICLES = 48;
 const LEI_IV_ACTIVE = true;
 
 /**
- * 📍 MAPA DE URLs DEFINITIVO (Reexportado para conveniência)
+ * 📍 MAPA DE URLs DEFINITIVO v2.0 (LEI IV - SNA OMEGA)
+ * ATUALIZADO: 2024-12-22
  * 
- * 🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ → Criar conta = acesso livre
- * 👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos → role='beta' + acesso válido
- * 👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/ → role='funcionario'
- * 👑 OWNER: TODAS → role='owner' (MOISESBLANK@GMAIL.COM)
+ * 🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade → Cadastro gratuito
+ * 👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos/* + /comunidade → role='beta' + acesso válido
+ *    (Vem de pagamento Hotmart OU criado por Owner/Admin)
+ * 👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/* → role='funcionario' + permissões
+ * 👑 OWNER: TODAS → role='owner' (MOISESBLANK@GMAIL.COM) - ACESSO MASTER TOTAL
  */
 export const URL_MAP = {
   NAO_PAGANTE: {
     host: 'pro.moisesmedeiros.com.br',
-    paths: ['/', '/comunidade'],
-    validacao: 'Criar conta = acesso livre (home + comunidade)',
+    paths: ['/', '/comunidade', '/auth', '/termos', '/privacidade'],
+    validacao: 'Cadastro gratuito = acesso livre (home + comunidade + auth)',
+    descricao: 'Usuários não pagantes com cadastro gratuito',
   },
   ALUNO_BETA: {
     host: 'pro.moisesmedeiros.com.br',
-    paths: ['/alunos/*'],
+    paths: ['/alunos/*', '/comunidade'],
     validacao: "role='beta' + access_expires_at válido",
+    descricao: 'Aluno PAGANTE com acesso a tudo da área + comunidade. Origem: Hotmart/Owner/Admin',
+    origem: ['hotmart_purchase', 'owner_created', 'admin_created', 'import'],
   },
   FUNCIONARIO: {
     host: 'gestao.moisesmedeiros.com.br',
-    paths: ['/*'],
-    validacao: "role='funcionario' | 'admin' | 'owner'",
+    paths: ['/gestao/*', '/dashboard', '/*'],
+    validacao: "role='funcionario' | 'admin' | subcategorias",
+    descricao: 'Funcionários com permissões específicas por categoria',
+    subcategorias: ['coordenacao', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'],
   },
   OWNER: {
     host: 'TODAS',
     paths: ['/*'],
     validacao: "role='owner' (MOISESBLANK@GMAIL.COM)",
+    descricao: 'MASTER - Acesso TOTAL e irrestrito a TUDO em tempo real',
+    email: 'moisesblank@gmail.com',
+    poderes: ['criar', 'editar', 'excluir', 'importar', 'exportar', 'configurar', 'auditar'],
   },
 } as const;
 

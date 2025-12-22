@@ -67,31 +67,41 @@ export interface SecurityEvent {
 // ============================================
 
 export const URL_MAP = {
-  // 🌐 NÃO PAGANTE - pro.moisesmedeiros.com.br/
+  // 🌐 NÃO PAGANTE - pro.moisesmedeiros.com.br/ + /comunidade
   PUBLIC: {
     domain: 'pro.moisesmedeiros.com.br',
-    paths: ['/', '/auth', '/auth/*', '/termos', '/privacidade', '/area-gratuita', '/site', '/login', '/registro'],
-    roles: ['anonymous', 'beta', 'funcionario', 'owner'],
+    paths: ['/', '/auth', '/auth/*', '/termos', '/privacidade', '/area-gratuita', '/site', '/login', '/registro', '/comunidade'],
+    roles: ['anonymous', 'aluno_gratuito', 'beta', 'funcionario', 'owner'],
     requireSubscription: false,
-    description: 'Páginas públicas acessíveis a todos'
+    description: 'Páginas públicas + comunidade acessíveis a todos com cadastro gratuito'
   },
   
-  // 👨‍🎓 ALUNO BETA - pro.moisesmedeiros.com.br/alunos
+  // 🌐 COMUNIDADE - pro.moisesmedeiros.com.br/comunidade (acessível por TODOS cadastrados)
+  COMUNIDADE: {
+    domain: 'pro.moisesmedeiros.com.br',
+    paths: ['/comunidade', '/comunidade/*'],
+    roles: ['aluno_gratuito', 'beta', 'funcionario', 'owner'],
+    requireSubscription: false,
+    description: 'Comunidade acessível por não pagantes E pagantes'
+  },
+  
+  // 👨‍🎓 ALUNO BETA - pro.moisesmedeiros.com.br/alunos/* + /comunidade
+  // Origem: Hotmart (pagamento) OU criado por Owner/Admin
   ALUNO_BETA: {
     domain: 'pro.moisesmedeiros.com.br',
-    paths: ['/alunos', '/alunos/*', '/aulas', '/aulas/*', '/materiais', '/materiais/*', '/certificados', '/certificados/*'],
+    paths: ['/alunos', '/alunos/*', '/aulas', '/aulas/*', '/materiais', '/materiais/*', '/certificados', '/certificados/*', '/comunidade'],
     roles: ['beta', 'owner'],
     requireSubscription: true,
-    description: 'Área exclusiva para alunos com acesso beta válido'
+    description: 'Área exclusiva para alunos PAGANTES (beta) + comunidade. Criados via Hotmart/Owner/Admin'
   },
   
-  // 👔 FUNCIONÁRIO - gestao.moisesmedeiros.com.br/
+  // 👔 FUNCIONÁRIO - gestao.moisesmedeiros.com.br/* (com permissões por categoria)
   FUNCIONARIO: {
     domain: 'gestao.moisesmedeiros.com.br',
-    paths: ['/', '/*', '/dashboard', '/alunos-gestao', '/funcionarios', '/tarefas'],
-    roles: ['funcionario', 'coordenacao', 'admin', 'owner', 'employee', 'suporte', 'monitoria'],
+    paths: ['/', '/*', '/gestao', '/gestao/*', '/dashboard', '/alunos-gestao', '/funcionarios', '/tarefas'],
+    roles: ['funcionario', 'coordenacao', 'admin', 'owner', 'employee', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'],
     requireSubscription: false,
-    description: 'Área de gestão para funcionários'
+    description: 'Área de gestão para funcionários com permissões específicas por categoria'
   },
   
   // 💰 FINANCEIRO - gestao.moisesmedeiros.com.br/financeiro
@@ -103,13 +113,15 @@ export const URL_MAP = {
     description: 'Área financeira restrita'
   },
   
-  // 👑 OWNER - TODAS
+  // 👑 OWNER - TODAS (MOISESBLANK@GMAIL.COM = MASTER)
   OWNER: {
     domain: '*',
     paths: ['/*'],
     roles: ['owner'],
     requireSubscription: false,
-    description: 'Acesso total do proprietário'
+    description: 'Acesso TOTAL e irrestrito - MASTER (moisesblank@gmail.com)',
+    email: 'moisesblank@gmail.com',
+    poderes: ['criar', 'editar', 'excluir', 'importar', 'exportar', 'configurar', 'auditar']
   },
 } as const;
 
