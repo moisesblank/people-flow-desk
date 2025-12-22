@@ -37,17 +37,19 @@ Se inverter = ERRO!
 
 ---
 
-## 🔥 NOVOS ARQUIVOS - VIDEO FORTRESS (PROTEÇÃO DE VÍDEOS)
+## 🔥 VIDEO FORTRESS ULTRA v3.0 (PROTEÇÃO DE VÍDEOS)
 
 | # | Tipo | Arquivo | Função | Status |
 |---|------|---------|--------|--------|
-| 8 | SQL | `20251222500000_video_fortress_ultra.sql` | Proteção de vídeos | ⏳ |
-| 9 | Edge | `video-authorize` | Autorização + Signed URL | ⏳ |
-| 10 | Edge | `video-heartbeat` | Manter sessão viva | ⏳ |
-| 11 | Edge | `video-violation` | Registrar violações | ⏳ |
+| 8 | SQL | `20251222500000_video_fortress_ultra.sql` | 5 tabelas, 7 funções, RLS | ⏳ |
+| 9 | Edge | `video-authorize` | Autorização + Signed URL + Panda API | ⏳ |
+| 10 | Edge | `video-heartbeat` | Heartbeat 30s + validação | ⏳ |
+| 11 | Edge | `video-violation` | Registro + risk score + ações | ⏳ |
 
 ### Arquivos Frontend (AUTOMÁTICOS - não precisa fazer nada):
-- `src/hooks/useVideoFortress.ts` ✅ Já no código
+- `src/components/video/UltraFortressPlayer.tsx` ✅ 900+ linhas - Player definitivo
+- `src/hooks/useVideoFortress.ts` ✅ 400+ linhas - Hook de integração
+- `src/components/video/index.ts` ✅ Exportações centralizadas
 
 ---
 

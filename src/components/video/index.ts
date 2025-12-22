@@ -1,55 +1,45 @@
 // ============================================
-// 🔥 SISTEMA DE VÍDEO FORTALEZA - EXPORTS
-// Todos os componentes de proteção de vídeo
+// 🔥 VIDEO COMPONENTS - ÍNDICE CENTRAL
+// Exporta todos os componentes de vídeo protegidos
 // ============================================
 
-// Wrapper de Proteção (5 Camadas)
+// Player ULTRA DEFINITIVO (ANO 2300) - USE ESTE!
+export { UltraFortressPlayer } from "./UltraFortressPlayer";
+export type { UltraFortressPlayerProps } from "./UltraFortressPlayer";
+
+// Player Fortress (versão anterior)
+export { FortressVideoPlayer } from "./FortressVideoPlayer";
+export type { FortressVideoPlayerProps } from "./FortressVideoPlayer";
+
+// Wrapper de proteção
 export { 
   FortressPlayerWrapper,
   getFortressYouTubeUrl,
   getFortressPandaUrl,
-  FORTRESS_PLAYER_VARS
+  FORTRESS_PLAYER_VARS 
 } from "./FortressPlayerWrapper";
 
-// Player Completo com Controles Customizados
-export { 
-  FortressVideoPlayer,
-  type FortressVideoPlayerProps 
-} from "./FortressVideoPlayer";
-
-// Wrapper de Proteção Básico (legado)
+// Wrapper protegido simples
 export { 
   ProtectedVideoWrapper,
   getProtectedYouTubeUrl,
-  PROTECTED_PLAYER_VARS
+  PROTECTED_PLAYER_VARS 
 } from "./ProtectedVideoWrapper";
 
 // ============================================
-// GUIA DE USO
+// RECOMENDAÇÃO DE USO:
+// 
+// 🥇 UltraFortressPlayer - Para aulas/conteúdo pago
+//    - Integração completa com backend
+//    - Sessão única, heartbeat, violações
+//    - Watermark dinâmica com CPF
+//    - DRM via Panda Video
+//
+// 🥈 FortressVideoPlayer - Para vídeos públicos/preview
+//    - Proteção frontend apenas
+//    - Sem integração com backend
+//
+// 🥉 FortressPlayerWrapper - Para wrap de qualquer player
+//    - Adiciona camadas de proteção
+//    - Use com iframes customizados
 // ============================================
-/**
- * 🔥 FORTRESS VIDEO PLAYER (RECOMENDADO)
- * Player completo com todas as proteções + controles customizados
- * 
- * import { FortressVideoPlayer } from "@/components/video";
- * 
- * <FortressVideoPlayer
- *   videoId="dQw4w9WgXcQ"
- *   type="youtube"
- *   title="Meu Vídeo"
- *   showWatermark
- *   userData={{ nome: "João", cpf: "12345678901" }}
- * />
- * 
- * ─────────────────────────────────────────────
- * 
- * 🛡️ FORTRESS PLAYER WRAPPER
- * Apenas as proteções (para players customizados)
- * 
- * import { FortressPlayerWrapper } from "@/components/video";
- * 
- * <FortressPlayerWrapper showWatermark userData={...}>
- *   <iframe src="..." />
- * </FortressPlayerWrapper>
- * 
- */
