@@ -1052,56 +1052,80 @@ export type Database = {
       book_access_logs: {
         Row: {
           book_id: string | null
+          book_title: string | null
+          city: string | null
+          country_code: string | null
           created_at: string
           device_fingerprint: string | null
+          event_description: string | null
           event_type: string
           id: string
           ip_hash: string | null
           is_violation: boolean | null
           metadata: Json | null
           page_number: number | null
+          reading_session_id: string | null
+          region: string | null
           session_id: string | null
           threat_score: number | null
           ua_hash: string | null
           user_cpf: string | null
           user_email: string | null
           user_id: string | null
+          user_name: string | null
+          user_role: string | null
           violation_type: string | null
         }
         Insert: {
           book_id?: string | null
+          book_title?: string | null
+          city?: string | null
+          country_code?: string | null
           created_at?: string
           device_fingerprint?: string | null
+          event_description?: string | null
           event_type: string
           id?: string
           ip_hash?: string | null
           is_violation?: boolean | null
           metadata?: Json | null
           page_number?: number | null
+          reading_session_id?: string | null
+          region?: string | null
           session_id?: string | null
           threat_score?: number | null
           ua_hash?: string | null
           user_cpf?: string | null
           user_email?: string | null
           user_id?: string | null
+          user_name?: string | null
+          user_role?: string | null
           violation_type?: string | null
         }
         Update: {
           book_id?: string | null
+          book_title?: string | null
+          city?: string | null
+          country_code?: string | null
           created_at?: string
           device_fingerprint?: string | null
+          event_description?: string | null
           event_type?: string
           id?: string
           ip_hash?: string | null
           is_violation?: boolean | null
           metadata?: Json | null
           page_number?: number | null
+          reading_session_id?: string | null
+          region?: string | null
           session_id?: string | null
           threat_score?: number | null
           ua_hash?: string | null
           user_cpf?: string | null
           user_email?: string | null
           user_id?: string | null
+          user_name?: string | null
+          user_role?: string | null
           violation_type?: string | null
         }
         Relationships: [
@@ -1116,49 +1140,73 @@ export type Database = {
       }
       book_chat_messages: {
         Row: {
+          attachments: Json | null
           book_id: string
           chapter_title: string | null
           content: string
+          content_html: string | null
           content_reference: Json | null
           context_text: string | null
           created_at: string
+          feedback_text: string | null
           id: string
+          is_helpful: boolean | null
           metadata: Json | null
           model_used: string | null
           page_number: number | null
+          response_time_ms: number | null
           role: string
+          thread_id: string | null
+          tokens_input: number | null
+          tokens_output: number | null
           tokens_used: number | null
           topic: string | null
           user_id: string
         }
         Insert: {
+          attachments?: Json | null
           book_id: string
           chapter_title?: string | null
           content: string
+          content_html?: string | null
           content_reference?: Json | null
           context_text?: string | null
           created_at?: string
+          feedback_text?: string | null
           id?: string
+          is_helpful?: boolean | null
           metadata?: Json | null
           model_used?: string | null
           page_number?: number | null
+          response_time_ms?: number | null
           role: string
+          thread_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
           tokens_used?: number | null
           topic?: string | null
           user_id: string
         }
         Update: {
+          attachments?: Json | null
           book_id?: string
           chapter_title?: string | null
           content?: string
+          content_html?: string | null
           content_reference?: Json | null
           context_text?: string | null
           created_at?: string
+          feedback_text?: string | null
           id?: string
+          is_helpful?: boolean | null
           metadata?: Json | null
           model_used?: string | null
           page_number?: number | null
+          response_time_ms?: number | null
           role?: string
+          thread_id?: string | null
+          tokens_input?: number | null
+          tokens_output?: number | null
           tokens_used?: number | null
           topic?: string | null
           user_id?: string
@@ -1166,6 +1214,279 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "book_chat_messages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "book_chat_messages_thread_id_fkey"
+            columns: ["thread_id"]
+            isOneToOne: false
+            referencedRelation: "book_chat_threads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_chat_threads: {
+        Row: {
+          ai_model_used: string | null
+          book_id: string
+          created_at: string
+          id: string
+          initial_chapter: string | null
+          initial_page: number | null
+          initial_topic: string | null
+          is_active: boolean | null
+          message_count: number | null
+          title: string | null
+          total_tokens_used: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ai_model_used?: string | null
+          book_id: string
+          created_at?: string
+          id?: string
+          initial_chapter?: string | null
+          initial_page?: number | null
+          initial_topic?: string | null
+          is_active?: boolean | null
+          message_count?: number | null
+          title?: string | null
+          total_tokens_used?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ai_model_used?: string | null
+          book_id?: string
+          created_at?: string
+          id?: string
+          initial_chapter?: string | null
+          initial_page?: number | null
+          initial_topic?: string | null
+          is_active?: boolean | null
+          message_count?: number | null
+          title?: string | null
+          total_tokens_used?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_chat_threads_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_import_jobs: {
+        Row: {
+          book_id: string
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          current_page: number | null
+          current_step: string | null
+          duration_ms: number | null
+          error_code: string | null
+          error_message: string | null
+          error_stack: string | null
+          id: string
+          locked_at: string | null
+          locked_by: string | null
+          max_retries: number | null
+          next_retry_at: string | null
+          output_data: Json | null
+          priority: number | null
+          progress_percent: number | null
+          retry_count: number | null
+          started_at: string | null
+          status: string
+          total_pages: number | null
+          updated_at: string
+        }
+        Insert: {
+          book_id: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_page?: number | null
+          current_step?: string | null
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          error_stack?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_retries?: number | null
+          next_retry_at?: string | null
+          output_data?: Json | null
+          priority?: number | null
+          progress_percent?: number | null
+          retry_count?: number | null
+          started_at?: string | null
+          status?: string
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Update: {
+          book_id?: string
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          current_page?: number | null
+          current_step?: string | null
+          duration_ms?: number | null
+          error_code?: string | null
+          error_message?: string | null
+          error_stack?: string | null
+          id?: string
+          locked_at?: string | null
+          locked_by?: string | null
+          max_retries?: number | null
+          next_retry_at?: string | null
+          output_data?: Json | null
+          priority?: number | null
+          progress_percent?: number | null
+          retry_count?: number | null
+          started_at?: string | null
+          status?: string
+          total_pages?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_import_jobs_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_ratings: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          is_public: boolean | null
+          is_verified_reader: boolean | null
+          rating: number
+          review: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          is_verified_reader?: boolean | null
+          rating: number
+          review?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          is_verified_reader?: boolean | null
+          rating?: number
+          review?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_ratings_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_reading_sessions: {
+        Row: {
+          annotations_created: number | null
+          book_id: string
+          chat_messages_sent: number | null
+          created_at: string
+          device_fingerprint: string | null
+          device_type: string | null
+          duration_seconds: number | null
+          end_page: number | null
+          ended_at: string | null
+          heartbeat_at: string | null
+          id: string
+          ip_hash: string | null
+          is_active: boolean | null
+          pages_viewed: number[] | null
+          revoke_reason: string | null
+          start_page: number
+          started_at: string
+          user_id: string
+          violations_count: number | null
+          was_revoked: boolean | null
+          zoom_changes: number | null
+        }
+        Insert: {
+          annotations_created?: number | null
+          book_id: string
+          chat_messages_sent?: number | null
+          created_at?: string
+          device_fingerprint?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          end_page?: number | null
+          ended_at?: string | null
+          heartbeat_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_active?: boolean | null
+          pages_viewed?: number[] | null
+          revoke_reason?: string | null
+          start_page?: number
+          started_at?: string
+          user_id: string
+          violations_count?: number | null
+          was_revoked?: boolean | null
+          zoom_changes?: number | null
+        }
+        Update: {
+          annotations_created?: number | null
+          book_id?: string
+          chat_messages_sent?: number | null
+          created_at?: string
+          device_fingerprint?: string | null
+          device_type?: string | null
+          duration_seconds?: number | null
+          end_page?: number | null
+          ended_at?: string | null
+          heartbeat_at?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_active?: boolean | null
+          pages_viewed?: number[] | null
+          revoke_reason?: string | null
+          start_page?: number
+          started_at?: string
+          user_id?: string
+          violations_count?: number | null
+          was_revoked?: boolean | null
+          zoom_changes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_reading_sessions_book_id_fkey"
             columns: ["book_id"]
             isOneToOne: false
             referencedRelation: "web_books"
@@ -13425,6 +13746,7 @@ export type Database = {
         Args: { _additional_days: number; _user_id: string }
         Returns: Json
       }
+      fn_can_access_books: { Args: never; Returns: boolean }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
       fn_check_sanctum_lock: { Args: { p_user_id: string }; Returns: boolean }
       fn_decay_sanctum_scores: { Args: never; Returns: number }
@@ -13434,15 +13756,28 @@ export type Database = {
         Returns: Json
       }
       fn_get_book_for_reader: { Args: { p_book_id: string }; Returns: Json }
+      fn_get_book_watermark: { Args: never; Returns: Json }
       fn_get_sanctum_stats: { Args: never; Returns: Json }
       fn_get_user_annotations:
         | { Args: { p_book_id: string }; Returns: Json }
         | { Args: { p_book_id: string; p_page_number?: number }; Returns: Json }
       fn_is_beta_or_owner: { Args: never; Returns: boolean }
+      fn_is_book_owner: { Args: never; Returns: boolean }
       fn_is_owner: { Args: never; Returns: boolean }
       fn_list_books_for_category: {
         Args: { p_category?: string }
         Returns: Json
+      }
+      fn_log_book_access: {
+        Args: {
+          p_book_id: string
+          p_event_type: string
+          p_is_violation?: boolean
+          p_metadata?: Json
+          p_page_number?: number
+          p_threat_score?: number
+        }
+        Returns: string
       }
       fn_register_sanctum_violation: {
         Args: {
