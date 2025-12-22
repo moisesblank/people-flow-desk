@@ -222,7 +222,7 @@ verify_jwt = false
 
 # ============================================
 # 📚 LIVROS DO MOISA - Sistema de Livro Web
-# Genesis Upload + Signed URLs
+# Genesis Upload + Signed URLs + Chat AI
 # ============================================
 
 [functions.genesis-upload]
@@ -235,4 +235,7 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.book-page-manifest]
+verify_jwt = true
+
+[functions.book-chat-ai]
 verify_jwt = true
