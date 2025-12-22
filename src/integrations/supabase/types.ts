@@ -2316,11 +2316,16 @@ export type Database = {
           action: string
           blocked_reason: string | null
           content_id: string
+          content_title: string | null
           content_type: string
           created_at: string | null
+          device_hash: string | null
+          duration_seconds: number | null
           id: string
           ip_address: unknown
           metadata: Json | null
+          progress_percent: number | null
+          session_id: string | null
           success: boolean | null
           user_agent: string | null
           user_id: string | null
@@ -2329,11 +2334,16 @@ export type Database = {
           action: string
           blocked_reason?: string | null
           content_id: string
+          content_title?: string | null
           content_type: string
           created_at?: string | null
+          device_hash?: string | null
+          duration_seconds?: number | null
           id?: string
           ip_address?: unknown
           metadata?: Json | null
+          progress_percent?: number | null
+          session_id?: string | null
           success?: boolean | null
           user_agent?: string | null
           user_id?: string | null
@@ -2342,11 +2352,16 @@ export type Database = {
           action?: string
           blocked_reason?: string | null
           content_id?: string
+          content_title?: string | null
           content_type?: string
           created_at?: string | null
+          device_hash?: string | null
+          duration_seconds?: number | null
           id?: string
           ip_address?: unknown
           metadata?: Json | null
+          progress_percent?: number | null
+          session_id?: string | null
           success?: boolean | null
           user_agent?: string | null
           user_id?: string | null
@@ -12572,11 +12587,14 @@ export type Database = {
         Args: { p_session_token?: string }
         Returns: boolean
       }
+      is_admin: { Args: { p_user_id?: string }; Returns: boolean }
       is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
       is_admin_or_owner_v2: { Args: { p_user_id: string }; Returns: boolean }
       is_admin_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_beta: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_funcionario: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_owner:
@@ -12659,18 +12677,32 @@ export type Database = {
         }
         Returns: string
       }
-      log_security_event_v2: {
-        Args: {
-          p_details?: Json
-          p_event_type: string
-          p_fingerprint?: string
-          p_ip_address?: unknown
-          p_risk_score?: number
-          p_user_agent?: string
-          p_user_id?: string
-        }
-        Returns: string
-      }
+      log_security_event_v2:
+        | {
+            Args: {
+              p_details?: Json
+              p_event_type: string
+              p_fingerprint?: string
+              p_ip_address?: unknown
+              p_risk_score?: number
+              p_user_agent?: string
+              p_user_id?: string
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_description?: string
+              p_event_type: string
+              p_ip_address?: string
+              p_payload?: Json
+              p_severity?: string
+              p_source?: string
+              p_user_agent?: string
+              p_user_id?: string
+            }
+            Returns: string
+          }
       log_security_v3: {
         Args: {
           p_details?: Json
