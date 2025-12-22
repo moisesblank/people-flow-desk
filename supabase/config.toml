@@ -198,3 +198,11 @@ verify_jwt = true
 
 [functions.chat-tramon]
 verify_jwt = true
+
+# ============================================
+# 🔥🛡️ VIDEO AUTHORIZE OMEGA v5.0
+# SANCTUM 2.0 - Autorização de Vídeo
+# ============================================
+
+[functions.video-authorize-omega]
+verify_jwt = true
