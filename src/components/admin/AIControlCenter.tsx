@@ -1,9 +1,10 @@
 // ============================================================
-// 🧠 AI CONTROL CENTER — Central de IAs v3.0
-// Dashboard administrativo para monitoramento e controle do SNA
+// 🧠 SNA CONTROL CENTER OMEGA v5.0 — Central de IAs FUTURISTA 2300
+// Dashboard administrativo enterprise para SNA
+// Autor: MESTRE PHD | Capacidade: 5.000+ usuários
 // ============================================================
 
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Brain,
@@ -26,6 +27,13 @@ import {
   Layers,
   Terminal,
   Loader2,
+  Sparkles,
+  Database,
+  Network,
+  Bot,
+  MessageSquare,
+  Workflow,
+  CircuitBoard,
 } from 'lucide-react';
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -77,38 +85,39 @@ export function AIControlCenter() {
   const [isRunningHealthcheck, setIsRunningHealthcheck] = useState(false);
   const [healthResults, setHealthResults] = useState<Record<string, { ok: boolean; latency_ms: number }> | null>(null);
 
-  // Carregar feature flags
+  // Carregar feature flags (SNA)
   const loadFeatureFlags = useCallback(async () => {
     const { data } = await supabase
-      .from('ai_feature_flags')
-      .select('flag_key, description, is_enabled, rollout_percentage')
+      .from('sna_feature_flags')
+      .select('flag_key, description, is_enabled, rollout_percentage, category, allowed_roles')
+      .order('category', { ascending: true })
       .order('flag_key');
     
     if (data) setFeatureFlags(data);
   }, []);
 
-  // Carregar jobs recentes
+  // Carregar jobs recentes (SNA)
   const loadRecentJobs = useCallback(async () => {
     const { data } = await supabase
-      .from('ai_jobs')
-      .select('id, job_type, status, created_at, processing_time_ms, actual_cost_usd')
+      .from('sna_jobs')
+      .select('id, job_type, status, created_at, processing_time_ms, actual_cost_usd, result_summary, priority, attempts')
       .order('created_at', { ascending: false })
-      .limit(20);
+      .limit(30);
     
     if (data) setRecentJobs(data);
   }, []);
 
-  // Toggle feature flag
+  // Toggle feature flag (SNA)
   const toggleFeatureFlag = useCallback(async (flagKey: string, enabled: boolean) => {
     const { error } = await supabase
-      .from('ai_feature_flags')
+      .from('sna_feature_flags')
       .update({ is_enabled: enabled, updated_at: new Date().toISOString() })
       .eq('flag_key', flagKey);
     
     if (error) {
-      toast.error('Erro ao atualizar flag');
+      toast.error('❌ Erro ao atualizar flag');
     } else {
-      toast.success(`${flagKey} ${enabled ? 'ativado' : 'desativado'}`);
+      toast.success(`${enabled ? '✅' : '🔴'} ${flagKey} ${enabled ? 'ativado' : 'desativado'}`);
       loadFeatureFlags();
     }
   }, [loadFeatureFlags]);

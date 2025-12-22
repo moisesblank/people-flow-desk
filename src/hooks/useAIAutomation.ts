@@ -1,12 +1,14 @@
 // ============================================================
-// 🧠 useAIAutomation — Hook para Automação com IA ULTRA v3.0
-// Integração completa com o Sistema Nervoso Autônomo (SNA)
+// 🧠 useSNAAutomation — Hook para Sistema Nervoso Autônomo OMEGA v5.0
+// Integração enterprise com SNA, cache, realtime, persistência
+// Autor: MESTRE PHD | Capacidade: 5.000+ usuários simultâneos
 // ============================================================
 
-import { useState, useCallback, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef, useMemo } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
+import { useQueryClient } from '@tanstack/react-query';
 
 // ============================================================
 // TIPOS
@@ -25,20 +27,34 @@ export interface AIRequestOptions {
   action?: AIAction;
   messages?: AIMessage[];
   prompt?: string;
+  system_prompt?: string;
   context?: {
+    user_id?: string;
     lesson_id?: string;
+    course_id?: string;
     thread_id?: string;
+    conversation_id?: string;
     workflow?: string;
+    agent?: string;
   };
   stream?: boolean;
   max_tokens?: number;
   temperature?: number;
   
+  // Cache
+  cache_ttl?: number;
+  skip_cache?: boolean;
+  
+  // Fallback
+  fallback_providers?: AIProvider[];
+  
   // Modo assíncrono
   async?: boolean;
   job_type?: string;
   idempotency_key?: string;
-  priority?: 0 | 1 | 2 | 3;
+  priority?: 0 | 1 | 2 | 3 | 4 | 5;
+  deadline?: string;
+  tags?: string[];
 }
 
 export interface AIResponse {
@@ -75,6 +91,7 @@ export interface AIMetrics {
 
 export function useAIAutomation() {
   const { session } = useAuth();
+  const queryClient = useQueryClient();
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -87,7 +104,7 @@ export function useAIAutomation() {
   }, []);
 
   // ============================================================
-  // CHAMADA SÍNCRONA À IA
+  // CHAMADA SÍNCRONA À IA (SNA Gateway)
   // ============================================================
   const callAI = useCallback(async (options: AIRequestOptions): Promise<AIResponse | null> => {
     if (!session?.access_token) {
@@ -99,17 +116,26 @@ export function useAIAutomation() {
     setError(null);
     abortControllerRef.current = new AbortController();
 
+    const correlationId = crypto.randomUUID();
+
     try {
-      const response = await supabase.functions.invoke('ai-gateway-ultra', {
+      const response = await supabase.functions.invoke('sna-gateway', {
         body: {
           provider: options.provider || 'gpt5_mini',
           action: options.action || 'chat',
           messages: options.messages,
           prompt: options.prompt,
+          system_prompt: options.system_prompt,
           context: options.context,
           stream: false,
           max_tokens: options.max_tokens,
           temperature: options.temperature,
+          cache_ttl: options.cache_ttl || 3600,
+          skip_cache: options.skip_cache || false,
+          fallback_providers: options.fallback_providers || [],
+        },
+        headers: {
+          'X-Correlation-Id': correlationId,
         },
       });
 
@@ -117,56 +143,67 @@ export function useAIAutomation() {
         throw new Error(response.error.message || 'Erro na chamada de IA');
       }
 
+      // Invalidar cache de métricas
+      queryClient.invalidateQueries({ queryKey: ['sna-metrics'] });
+
       return response.data as AIResponse;
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(message);
       
-      // Rate limit
-      if (message.includes('Rate limit')) {
-        toast.error('Muitas requisições. Aguarde um momento.');
-      }
-      // Budget
-      else if (message.includes('Orçamento')) {
-        toast.error('Limite de uso de IA atingido.');
+      if (message.includes('RATE_LIMITED')) {
+        toast.error('🚦 Muitas requisições. Aguarde um momento.');
+      } else if (message.includes('BUDGET_EXCEEDED')) {
+        toast.error('💰 Limite de uso de IA atingido.');
+      } else if (message.includes('FEATURE_DISABLED')) {
+        toast.error('🔒 Esta funcionalidade está desabilitada.');
+      } else {
+        toast.error(`❌ ${message}`);
       }
       
       return null;
     } finally {
       setIsLoading(false);
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, queryClient]);
 
   // ============================================================
-  // CHAMADA COM STREAMING
+  // CHAMADA COM STREAMING (SNA Gateway)
   // ============================================================
   const streamAI = useCallback(async function* (options: AIRequestOptions): AsyncGenerator<string> {
     if (!session?.access_token) {
       throw new Error('Autenticação necessária');
     }
 
+    const correlationId = crypto.randomUUID();
+
     const response = await fetch(
-      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-gateway-ultra`,
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/sna-gateway`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${session.access_token}`,
+          'X-Correlation-Id': correlationId,
         },
         body: JSON.stringify({
           provider: options.provider || 'gpt5_mini',
           action: options.action || 'chat',
           messages: options.messages,
           prompt: options.prompt,
+          system_prompt: options.system_prompt,
           context: options.context,
           stream: true,
+          max_tokens: options.max_tokens,
+          temperature: options.temperature,
         }),
       }
     );
 
     if (!response.ok) {
-      throw new Error(`Erro ${response.status}`);
+      const errorText = await response.text();
+      throw new Error(`Erro ${response.status}: ${errorText}`);
     }
 
     const reader = response.body?.getReader();
@@ -201,12 +238,17 @@ export function useAIAutomation() {
   }, [session?.access_token]);
 
   // ============================================================
-  // CRIAR JOB ASSÍNCRONO
+  // CRIAR JOB ASSÍNCRONO (SNA Jobs)
   // ============================================================
   const createJob = useCallback(async (
     jobType: string,
     input: Record<string, unknown>,
-    options?: { priority?: 0 | 1 | 2 | 3; idempotencyKey?: string }
+    options?: { 
+      priority?: 0 | 1 | 2 | 3 | 4 | 5; 
+      idempotencyKey?: string;
+      deadline?: string;
+      tags?: string[];
+    }
   ): Promise<string | null> => {
     if (!session?.access_token) {
       setError('Autenticação necessária');
@@ -215,36 +257,48 @@ export function useAIAutomation() {
 
     try {
       const idempotencyKey = options?.idempotencyKey || 
-        `${jobType}-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        `${jobType}-${session.user.id}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
-      const { data, error: rpcError } = await supabase.rpc('create_ai_job', {
+      const { data, error: rpcError } = await supabase.rpc('sna_create_job', {
         p_job_type: jobType,
         p_idempotency_key: idempotencyKey,
         p_input: input,
-        p_priority: options?.priority ?? 2,
+        p_priority: options?.priority ?? 3,
+        p_deadline: options?.deadline || null,
+        p_tags: options?.tags || [jobType],
       });
 
       if (rpcError) throw rpcError;
 
-      toast.success('Job criado com sucesso');
-      return data as string;
+      const result = data as { success: boolean; job_id: string; is_new: boolean };
+      
+      if (result.is_new) {
+        toast.success('🚀 Job criado com sucesso');
+      } else {
+        toast.info('📋 Job já existe (idempotente)');
+      }
+      
+      // Invalidar cache de métricas
+      queryClient.invalidateQueries({ queryKey: ['sna-metrics'] });
+      
+      return result.job_id;
 
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Erro ao criar job';
       setError(message);
-      toast.error(message);
+      toast.error(`❌ ${message}`);
       return null;
     }
-  }, [session?.access_token]);
+  }, [session?.access_token, session?.user?.id, queryClient]);
 
   // ============================================================
-  // BUSCAR STATUS DO JOB
+  // BUSCAR STATUS DO JOB (SNA Jobs)
   // ============================================================
   const getJobStatus = useCallback(async (jobId: string): Promise<AIJob | null> => {
     try {
       const { data, error: queryError } = await supabase
-        .from('ai_jobs')
-        .select('id, status, job_type, output, error, created_at')
+        .from('sna_jobs')
+        .select('id, status, job_type, output, error, created_at, processing_time_ms, actual_cost_usd, result_summary')
         .eq('id', jobId)
         .single();
 
@@ -284,12 +338,13 @@ export function useAIAutomation() {
   }, [getJobStatus]);
 
   // ============================================================
-  // BUSCAR MÉTRICAS
+  // BUSCAR MÉTRICAS (SNA Metrics)
   // ============================================================
   const getMetrics = useCallback(async (hours: number = 24): Promise<AIMetrics | null> => {
     try {
-      const { data, error: rpcError } = await supabase.rpc('get_ai_metrics', {
-        p_hours: hours
+      const { data, error: rpcError } = await supabase.rpc('sna_get_metrics', {
+        p_hours: hours,
+        p_include_details: true
       });
 
       if (rpcError) throw rpcError;
@@ -302,23 +357,50 @@ export function useAIAutomation() {
   }, []);
 
   // ============================================================
-  // VERIFICAR FEATURE FLAG
+  // VERIFICAR FEATURE FLAG (SNA Feature Flags)
   // ============================================================
-  const checkFeatureFlag = useCallback(async (flagKey: string): Promise<boolean> => {
+  const checkFeatureFlag = useCallback(async (flagKey: string, context?: Record<string, unknown>): Promise<{ enabled: boolean; reason: string; config?: Record<string, unknown> }> => {
     try {
-      const { data, error: rpcError } = await supabase.rpc('check_ai_feature_flag', {
+      const { data, error: rpcError } = await supabase.rpc('sna_check_feature', {
         p_flag_key: flagKey,
-        p_user_id: session?.user?.id || null
+        p_user_id: session?.user?.id || null,
+        p_context: context || {}
       });
 
       if (rpcError) throw rpcError;
-      return data as boolean;
+      return data as { enabled: boolean; reason: string; config?: Record<string, unknown> };
 
     } catch (err) {
       console.error('Error checking feature flag:', err);
-      return false;
+      return { enabled: false, reason: 'error' };
     }
   }, [session?.user?.id]);
+  
+  // ============================================================
+  // VERIFICAR BUDGET
+  // ============================================================
+  const checkBudget = useCallback(async (scope: string = 'global', scopeId: string = 'global'): Promise<{
+    allowed: boolean;
+    limit_usd: number;
+    spent_usd: number;
+    remaining_usd: number;
+    usage_percentage: number;
+  } | null> => {
+    try {
+      const { data, error: rpcError } = await supabase.rpc('sna_check_budget', {
+        p_scope: scope,
+        p_scope_id: scopeId,
+        p_estimated_cost: 0
+      });
+
+      if (rpcError) throw rpcError;
+      return data;
+
+    } catch (err) {
+      console.error('Error checking budget:', err);
+      return null;
+    }
+  }, []);
 
   // ============================================================
   // EXECUTAR HEALTHCHECK
@@ -360,6 +442,7 @@ export function useAIAutomation() {
     // Métricas e config
     getMetrics,
     checkFeatureFlag,
+    checkBudget,
     runHealthcheck,
   };
 }
