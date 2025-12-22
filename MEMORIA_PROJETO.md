@@ -229,6 +229,29 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 
 ---
 
+## 📌 REGRA DO MESTRE — COMUNICAÇÃO COM O OWNER
+
+> **OBRIGATÓRIO SEMPRE SEGUIR:**
+
+1. **SEMPRE** que entregar código, dizer **EXATAMENTE** o que o Owner deve fazer
+2. **SEMPRE** indicar o **LOCAL EXATO** ou **LINK** de onde ir
+3. **SEMPRE** entregar em **ORDEM NUMÉRICA** (1, 2, 3...)
+4. **LEMBRAR:** Supabase já está vinculado ao Lovable — Owner pode colar direto no chat da Lovable
+5. **NUNCA** assumir que o Owner sabe onde ir — ser **EXPLÍCITO** sempre
+6. **SEMPRE** perguntar se deu certo antes de seguir para próximo passo
+
+### FORMATO PADRÃO DE ENTREGA:
+
+```
+📍 PASSO [N]: [TÍTULO]
+🔗 ONDE: [Local exato ou link]
+📝 O QUE FAZER: [Instruções claras]
+📋 CÓDIGO: [Se aplicável, o código para copiar]
+✅ CONFIRMAÇÃO: [O que esperar se deu certo]
+```
+
+---
+
 ## 📝 HISTÓRICO DE DECISÕES
 
 | Data | Decisão | Responsável |
@@ -283,57 +306,109 @@ Os seguintes arquivos já estão no código e serão aplicados quando o Lovable 
 
 ---
 
-## 🚶 PRÓXIMOS PASSOS (PASSO A PASSO PARA LEIGOS)
+## 🚶 PRÓXIMOS PASSOS PENDENTES (COLAR NA LOVABLE)
 
-### PASSO 1: Aplicar as Migrações SQL
-1. Abra o **Supabase Dashboard** (https://supabase.com/dashboard)
-2. Selecione seu projeto
-3. Vá em **SQL Editor** (menu esquerdo)
-4. Clique em **New Query**
-5. Copie o conteúdo do arquivo SQL
-6. Cole no editor
-7. Clique em **Run** (ou Ctrl+Enter)
-8. Repita para cada arquivo SQL
+> **COMO FUNCIONA:** O Owner copia o texto abaixo e cola no chat da Lovable.
+> O Supabase já está vinculado, então a Lovable aplica automaticamente.
 
-**ORDEM DE APLICAÇÃO:**
-1. Primeiro: `20251222000001_live_chat_system.sql`
-2. Segundo: `20251222000002_performance_indexes.sql`
-3. Terceiro: `20251222200000_security_fortress_ultra.sql`
-4. Quarto: `20251222400000_sna_omega_complete.sql`
+---
 
-### PASSO 2: Deploy das Edge Functions
-**OPÇÃO A - Via CLI (se tiver instalado):**
-```bash
-supabase functions deploy secure-webhook-ultra
-supabase functions deploy sna-gateway
-supabase functions deploy sna-worker
+### 📍 PASSO 1: MIGRAÇÃO SQL — CHAT AO VIVO
+🔗 **ONDE:** Cole no chat da Lovable
+📝 **O QUE FAZER:** Copie a mensagem abaixo e cole na Lovable
+📋 **MENSAGEM PARA COLAR:**
 ```
-
-**OPÇÃO B - Via Dashboard:**
-1. Vá em **Edge Functions** no Supabase Dashboard
-2. Clique em **New Function**
-3. Cole o código do arquivo `index.ts` de cada pasta
-4. Salve e faça deploy
-
-### PASSO 3: Configurar Cron do Worker
-1. Vá em **SQL Editor** no Supabase
-2. Execute:
-```sql
-SELECT cron.schedule(
-  'sna-worker-cron',
-  '* * * * *',
-  $$SELECT net.http_post(
-    url := 'https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/sna-worker',
-    headers := '{"Authorization": "Bearer <SERVICE_ROLE_KEY>"}'::jsonb,
-    body := '{}'::jsonb
-  );$$
-);
+Aplique esta migração SQL no Supabase para o sistema de chat ao vivo.
+O arquivo está em: supabase/migrations/20251222000001_live_chat_system.sql
 ```
+✅ **CONFIRMAÇÃO:** Lovable vai dizer que aplicou a migração
+⏳ **STATUS:** PENDENTE
 
-### PASSO 4: Testar
-1. Acesse o sistema normalmente
-2. Vá em Admin > Central de IAs
-3. Clique em "Healthcheck" para testar as IAs
+---
+
+### 📍 PASSO 2: MIGRAÇÃO SQL — ÍNDICES DE PERFORMANCE
+🔗 **ONDE:** Cole no chat da Lovable
+📝 **O QUE FAZER:** Copie a mensagem abaixo e cole na Lovable
+📋 **MENSAGEM PARA COLAR:**
+```
+Aplique esta migração SQL no Supabase para os índices de performance.
+O arquivo está em: supabase/migrations/20251222000002_performance_indexes.sql
+```
+✅ **CONFIRMAÇÃO:** Lovable vai dizer que aplicou a migração
+⏳ **STATUS:** PENDENTE
+
+---
+
+### 📍 PASSO 3: MIGRAÇÃO SQL — SEGURANÇA FORTALEZA
+🔗 **ONDE:** Cole no chat da Lovable
+📝 **O QUE FAZER:** Copie a mensagem abaixo e cole na Lovable
+📋 **MENSAGEM PARA COLAR:**
+```
+Aplique esta migração SQL no Supabase para o sistema de segurança completo.
+O arquivo está em: supabase/migrations/20251222200000_security_fortress_ultra.sql
+```
+✅ **CONFIRMAÇÃO:** Lovable vai dizer que aplicou a migração
+⏳ **STATUS:** PENDENTE
+
+---
+
+### 📍 PASSO 4: MIGRAÇÃO SQL — AUTOMAÇÃO IA (SNA)
+🔗 **ONDE:** Cole no chat da Lovable
+📝 **O QUE FAZER:** Copie a mensagem abaixo e cole na Lovable
+📋 **MENSAGEM PARA COLAR:**
+```
+Aplique esta migração SQL no Supabase para o Sistema Nervoso Autônomo (SNA) de Automação com IA.
+O arquivo está em: supabase/migrations/20251222400000_sna_omega_complete.sql
+```
+✅ **CONFIRMAÇÃO:** Lovable vai dizer que aplicou a migração
+⏳ **STATUS:** PENDENTE
+
+---
+
+### 📍 PASSO 5: EDGE FUNCTION — WEBHOOK SEGURO
+🔗 **ONDE:** Cole no chat da Lovable
+📝 **O QUE FAZER:** Copie a mensagem abaixo e cole na Lovable
+📋 **MENSAGEM PARA COLAR:**
+```
+Faça deploy da Edge Function de webhook seguro.
+O arquivo está em: supabase/functions/secure-webhook-ultra/index.ts
+```
+✅ **CONFIRMAÇÃO:** Lovable vai dizer que fez deploy
+⏳ **STATUS:** PENDENTE
+
+---
+
+### 📍 PASSO 6: EDGE FUNCTION — GATEWAY DE IA
+🔗 **ONDE:** Cole no chat da Lovable
+📝 **O QUE FAZER:** Copie a mensagem abaixo e cole na Lovable
+📋 **MENSAGEM PARA COLAR:**
+```
+Faça deploy da Edge Function do Gateway de IA (SNA Gateway).
+O arquivo está em: supabase/functions/sna-gateway/index.ts
+```
+✅ **CONFIRMAÇÃO:** Lovable vai dizer que fez deploy
+⏳ **STATUS:** PENDENTE
+
+---
+
+### 📍 PASSO 7: EDGE FUNCTION — WORKER DE IA
+🔗 **ONDE:** Cole no chat da Lovable
+📝 **O QUE FAZER:** Copie a mensagem abaixo e cole na Lovable
+📋 **MENSAGEM PARA COLAR:**
+```
+Faça deploy da Edge Function do Worker de IA (SNA Worker).
+O arquivo está em: supabase/functions/sna-worker/index.ts
+```
+✅ **CONFIRMAÇÃO:** Lovable vai dizer que fez deploy
+⏳ **STATUS:** PENDENTE
+
+---
+
+### 📍 PASSO 8: TESTAR O SISTEMA
+🔗 **ONDE:** No site, acesse Admin > Central de IAs
+📝 **O QUE FAZER:** Clique em "Healthcheck" para testar se as IAs estão funcionando
+✅ **CONFIRMAÇÃO:** Todos os serviços devem aparecer como "Online" (verde)
+⏳ **STATUS:** PENDENTE
 
 ---
 
