@@ -116,6 +116,13 @@ export function LiveChatPanel({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const {
+    state,
+    sendMessage,
+    moderation,
+    rateLimit,
+  } = useLiveChat({ liveId });
+
+  const {
     messages,
     isConnected,
     isLoading,
@@ -123,10 +130,11 @@ export function LiveChatPanel({
     viewerCount,
     isSending,
     cooldownSeconds,
-    sendMessage,
-    highlightMessage,
-    deleteMessage,
-  } = useLiveChat({ liveId });
+  } = state;
+
+  // Usar funções de moderação do hook integrado
+  const highlightMessage = moderation.pinMessage;
+  const deleteMessage = moderation.deleteMessage;
 
   // Auto-scroll para novas mensagens
   useEffect(() => {
