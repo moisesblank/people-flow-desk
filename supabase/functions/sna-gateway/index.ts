@@ -24,17 +24,12 @@ const PERPLEXITY_URL = 'https://api.perplexity.ai/chat/completions';
 // ============================================================
 
 interface SNARequest {
-  // Roteamento
   provider?: string;
   model?: string;
   action?: 'chat' | 'complete' | 'classify' | 'generate' | 'extract' | 'embed';
-  
-  // Payload
   messages?: Array<{ role: string; content: string }>;
   prompt?: string;
   system_prompt?: string;
-  
-  // Contexto
   context?: {
     user_id?: string;
     lesson_id?: string;
@@ -44,25 +39,17 @@ interface SNARequest {
     workflow?: string;
     agent?: string;
   };
-  
-  // Opções
   stream?: boolean;
   max_tokens?: number;
   temperature?: number;
   top_p?: number;
-  
-  // Job assíncrono
   async?: boolean;
   job_type?: string;
   idempotency_key?: string;
   priority?: number;
   deadline?: string;
-  
-  // Cache
   cache_ttl?: number;
   skip_cache?: boolean;
-  
-  // Fallback
   fallback_providers?: string[];
 }
 
@@ -85,36 +72,32 @@ const PROVIDERS: Record<string, ProviderConfig> = {
   lovable: {
     url: LOVABLE_AI_URL,
     models: {
-      'gemini-flash': { id: 'google/gemini-2.0-flash-exp', maxTokens: 4096, costIn: 0.075, costOut: 0.30 },
-      'gemini-pro': { id: 'google/gemini-pro-1.5', maxTokens: 8192, costIn: 1.25, costOut: 5.00 },
+      'gemini-flash': { id: 'google/gemini-2.5-flash', maxTokens: 4096, costIn: 0.075, costOut: 0.30 },
+      'gemini-pro': { id: 'google/gemini-2.5-pro', maxTokens: 8192, costIn: 1.25, costOut: 5.00 },
       'gpt5': { id: 'openai/gpt-5', maxTokens: 16384, costIn: 5.00, costOut: 15.00 },
       'gpt5-mini': { id: 'openai/gpt-5-mini', maxTokens: 8192, costIn: 0.15, costOut: 0.60 },
       'gpt5-nano': { id: 'openai/gpt-5-nano', maxTokens: 4096, costIn: 0.10, costOut: 0.40 },
-      'claude-opus': { id: 'anthropic/claude-opus-4', maxTokens: 16384, costIn: 15.00, costOut: 75.00 },
     },
     headers: (key) => ({ 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }),
   },
   perplexity: {
     url: PERPLEXITY_URL,
     models: {
-      'sonar': { id: 'llama-3.1-sonar-large-128k-online', maxTokens: 4096, costIn: 1.00, costOut: 1.00 },
+      'sonar': { id: 'sonar', maxTokens: 4096, costIn: 1.00, costOut: 1.00 },
     },
     headers: (key) => ({ 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json' }),
   },
 };
 
-// Mapeamento simplificado de provider para modelo
 const PROVIDER_MODEL_MAP: Record<string, { provider: string; model: string }> = {
   'gemini_flash': { provider: 'lovable', model: 'gemini-flash' },
   'gemini_pro': { provider: 'lovable', model: 'gemini-pro' },
   'gpt5': { provider: 'lovable', model: 'gpt5' },
   'gpt5_mini': { provider: 'lovable', model: 'gpt5-mini' },
   'gpt5_nano': { provider: 'lovable', model: 'gpt5-nano' },
-  'claude_opus': { provider: 'lovable', model: 'claude-opus' },
   'perplexity': { provider: 'perplexity', model: 'sonar' },
 };
 
-// Rate limits por workflow (req/min)
 const RATE_LIMITS: Record<string, number> = {
   'tutor': 30,
   'flashcards': 10,
@@ -131,164 +114,85 @@ const RATE_LIMITS: Record<string, number> = {
 // FUNÇÕES AUXILIARES
 // ============================================================
 
-function generateCacheKey(request: SNARequest): string {
-  const keyData = {
-    provider: request.provider,
-    model: request.model,
-    messages: request.messages,
-    prompt: request.prompt,
-    system_prompt: request.system_prompt,
-    temperature: request.temperature,
-  };
-  
-  return `sna:${btoa(JSON.stringify(keyData)).slice(0, 64)}`;
+function errorResponse(status: number, code: string, message: string, correlationId: string) {
+  return new Response(JSON.stringify({
+    error: code,
+    message,
+    correlation_id: correlationId
+  }), {
+    status,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+      'X-Correlation-Id': correlationId
+    }
+  });
 }
 
-async function checkRateLimit(
-  supabase: SupabaseClient,
-  userId: string,
-  workflow: string
-): Promise<{ allowed: boolean; remaining: number; resetAt: Date }> {
-  const limit = RATE_LIMITS[workflow] || RATE_LIMITS.default;
-  
-  const { data } = await supabase.rpc('sna_check_rate_limit', {
-    p_identifier: userId,
-    p_endpoint: `sna:${workflow}`,
-    p_cost: 0,
-    p_tokens: 0,
-  });
-  
-  if (data?.allowed === false) {
-    return {
-      allowed: false,
-      remaining: 0,
-      resetAt: new Date(data.reset_at),
-    };
+function getApiKey(provider: string): string | undefined {
+  switch (provider) {
+    case 'lovable':
+      return Deno.env.get('LOVABLE_API_KEY');
+    case 'perplexity':
+      return Deno.env.get('PERPLEXITY_API_KEY');
+    default:
+      return Deno.env.get('LOVABLE_API_KEY');
   }
-  
-  return {
-    allowed: true,
-    remaining: limit - (data?.current_requests || 0),
-    resetAt: new Date(data?.reset_at || Date.now() + 60000),
-  };
 }
 
-async function checkBudget(
-  supabase: SupabaseClient,
-  scope: string,
-  scopeId: string,
-  estimatedCost: number
-): Promise<{ allowed: boolean; reason?: string; remaining?: number }> {
-  const { data } = await supabase.rpc('sna_check_budget', {
-    p_scope: scope,
-    p_scope_id: scopeId,
-    p_estimated_cost: estimatedCost,
-  });
-  
-  if (!data?.allowed) {
-    return {
-      allowed: false,
-      reason: data?.action || 'budget_exceeded',
-      remaining: data?.remaining_usd || 0,
-    };
+function buildMessages(
+  messages?: Array<{ role: string; content: string }>,
+  prompt?: string,
+  system_prompt?: string,
+  context?: Record<string, unknown>
+): Array<{ role: string; content: string }> {
+  const result: Array<{ role: string; content: string }> = [];
+
+  if (system_prompt) {
+    result.push({ role: 'system', content: system_prompt });
+  } else {
+    result.push({
+      role: 'system',
+      content: `Você é o TRAMON, um assistente de IA especializado em educação e química para vestibulares de medicina.
+Responda de forma clara, precisa e didática. Use formatação Markdown quando apropriado.
+Mantenha respostas focadas e objetivas.`
+    });
   }
-  
-  return {
-    allowed: true,
-    remaining: data?.remaining_usd,
-  };
-}
 
-async function checkFeatureFlag(
-  supabase: SupabaseClient,
-  flagKey: string,
-  userId?: string
-): Promise<{ enabled: boolean; config?: Record<string, unknown> }> {
-  const { data } = await supabase.rpc('sna_check_feature', {
-    p_flag_key: flagKey,
-    p_user_id: userId || null,
-    p_context: {},
-  });
-  
-  return {
-    enabled: data?.enabled ?? false,
-    config: data?.config,
-  };
-}
-
-async function getCachedResponse(
-  supabase: SupabaseClient,
-  cacheKey: string
-): Promise<{ hit: boolean; value?: unknown; savedCost?: number }> {
-  const { data } = await supabase.rpc('sna_cache_get', {
-    p_cache_key: cacheKey,
-  });
-  
-  if (data?.hit) {
-    return {
-      hit: true,
-      value: data.value,
-      savedCost: data.saved_cost_usd,
-    };
+  if (context && Object.keys(context).length > 0) {
+    result.push({
+      role: 'system',
+      content: `Contexto adicional: ${JSON.stringify(context)}`
+    });
   }
-  
-  return { hit: false };
-}
 
-async function setCacheResponse(
-  supabase: SupabaseClient,
-  cacheKey: string,
-  value: unknown,
-  ttlSeconds: number,
-  costUsd: number
-): Promise<void> {
-  await supabase.rpc('sna_cache_set', {
-    p_cache_key: cacheKey,
-    p_value: value,
-    p_ttl_seconds: ttlSeconds,
-    p_original_cost_usd: costUsd,
-  });
-}
-
-async function logToolRun(
-  supabase: SupabaseClient,
-  params: {
-    toolName: string;
-    provider: string;
-    model?: string;
-    ok: boolean;
-    latencyMs: number;
-    tokensIn: number;
-    tokensOut: number;
-    costUsd: number;
-    jobId?: string;
-    correlationId?: string;
-    errorMessage?: string;
-    cacheHit?: boolean;
+  if (messages && messages.length > 0) {
+    result.push(...messages);
+  } else if (prompt) {
+    result.push({ role: 'user', content: prompt });
   }
-): Promise<void> {
-  await supabase.rpc('sna_log_tool_run', {
-    p_tool_name: params.toolName,
-    p_provider: params.provider,
-    p_model: params.model || null,
-    p_ok: params.ok,
-    p_latency_ms: params.latencyMs,
-    p_tokens_in: params.tokensIn,
-    p_tokens_out: params.tokensOut,
-    p_cost_usd: params.costUsd,
-    p_job_id: params.jobId || null,
-    p_correlation_id: params.correlationId || null,
-    p_error_message: params.errorMessage || null,
-    p_cache_hit: params.cacheHit || false,
-  });
+
+  return result;
 }
 
-function calculateCost(
-  tokensIn: number,
-  tokensOut: number,
-  modelConfig: { costIn: number; costOut: number }
-): number {
-  return (tokensIn * modelConfig.costIn + tokensOut * modelConfig.costOut) / 1_000_000;
+function generateCacheKey(
+  provider: string,
+  messages?: Array<{ role: string; content: string }>,
+  prompt?: string,
+  system_prompt?: string
+): string {
+  const content = JSON.stringify({ provider, messages, prompt, system_prompt });
+  let hash = 0;
+  for (let i = 0; i < content.length; i++) {
+    const char = content.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash;
+  }
+  return `sna_cache_${Math.abs(hash).toString(36)}`;
+}
+
+function estimateTokens(text: string): number {
+  return Math.ceil(text.length / 4);
 }
 
 // ============================================================
@@ -296,313 +200,384 @@ function calculateCost(
 // ============================================================
 
 serve(async (req) => {
-  // CORS preflight
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-  
+
   const startTime = Date.now();
-  const requestId = crypto.randomUUID();
-  const correlationId = req.headers.get('x-correlation-id') || requestId;
-  const idempotencyKey = req.headers.get('x-idempotency-key');
+  const correlationId = req.headers.get('x-correlation-id') || crypto.randomUUID();
   
-  // Criar cliente Supabase
-  const supabase = createClient(
-    Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-  );
-  
+  let supabase: SupabaseClient;
+  let userId: string | null = null;
+  let userRole: string | null = null;
+
   try {
-    // ============================================================
-    // 1. AUTENTICAÇÃO
-    // ============================================================
-    
+    supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    const body: SNARequest = await req.json();
+    const {
+      provider = 'gpt5_mini',
+      action = 'chat',
+      messages,
+      prompt,
+      system_prompt,
+      context = {},
+      stream = false,
+      max_tokens,
+      temperature = 0.7,
+      async: isAsync = false,
+      cache_ttl = 3600,
+      skip_cache = false,
+      fallback_providers = [],
+    } = body;
+
+    console.log(`🧠 SNA Gateway [${correlationId}]: ${provider}/${action} [stream=${stream}, async=${isAsync}]`);
+
+    // AUTENTICAÇÃO
     const authHeader = req.headers.get('Authorization');
-    let userId: string | null = null;
-    
-    if (authHeader) {
-      const token = authHeader.replace('Bearer ', '');
+    if (authHeader?.startsWith('Bearer ')) {
+      const token = authHeader.substring(7);
       const { data: { user } } = await supabase.auth.getUser(token);
       userId = user?.id || null;
+      
+      if (userId) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', userId)
+          .single();
+        userRole = profile?.role || null;
+      }
     }
+
+    if (!userId) {
+      const apiKey = req.headers.get('apikey');
+      if (apiKey !== Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
+        return errorResponse(401, 'AUTH_REQUIRED', 'Autenticação necessária', correlationId);
+      }
+      userId = context?.user_id || 'system';
+      userRole = 'system';
+    }
+
+    // FEATURE FLAG CHECK
+    const workflow = context?.workflow || action;
+    const featureKey = `sna.${context?.agent || 'default'}.enabled`;
     
-    // ============================================================
-    // 2. PARSE REQUEST
-    // ============================================================
-    
-    const body: SNARequest = await req.json();
-    const workflow = body.context?.workflow || body.action || 'default';
-    
-    console.log(`[SNA ${requestId}] Workflow: ${workflow}, Provider: ${body.provider || 'auto'}`);
-    
-    // ============================================================
-    // 3. FEATURE FLAG CHECK
-    // ============================================================
-    
-    const featureKey = `sna.${workflow.replace('_', '.')}.enabled`;
-    const featureCheck = await checkFeatureFlag(supabase, featureKey, userId || undefined);
-    
-    if (!featureCheck.enabled && workflow !== 'default') {
-      console.warn(`[SNA ${requestId}] Feature desabilitada: ${featureKey}`);
+    const { data: flagResult } = await supabase.rpc('sna_check_feature', {
+      p_flag_key: featureKey,
+      p_user_id: userId !== 'system' ? userId : null,
+      p_context: context
+    });
+
+    if (flagResult && !flagResult.enabled && flagResult.reason !== 'flag_not_found') {
+      console.warn(`⚠️ Feature disabled: ${featureKey} - ${flagResult.reason}`);
+      return errorResponse(403, 'FEATURE_DISABLED', `Funcionalidade desabilitada: ${flagResult.reason}`, correlationId);
+    }
+
+    // RATE LIMIT CHECK
+    const { data: rateLimitResult } = await supabase.rpc('sna_check_rate_limit', {
+      p_identifier: userId,
+      p_endpoint: workflow,
+      p_cost: 0,
+      p_tokens: 0
+    });
+
+    if (rateLimitResult && !rateLimitResult.allowed) {
+      console.warn(`⚠️ Rate limit: ${userId} on ${workflow}`);
       return new Response(JSON.stringify({
-        success: false,
-        error: 'Feature não disponível',
-        feature_key: featureKey,
-        request_id: requestId,
+        error: 'RATE_LIMITED',
+        message: 'Rate limit excedido',
+        details: {
+          current: rateLimitResult.current_requests,
+          limit: rateLimitResult.max_requests,
+          reset_at: rateLimitResult.reset_at,
+          reason: rateLimitResult.reason
+        }
       }), {
-        status: 403,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        status: 429,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'X-Correlation-Id': correlationId,
+          'X-RateLimit-Remaining': '0',
+          'X-RateLimit-Reset': rateLimitResult.reset_at,
+          'Retry-After': '60'
+        }
       });
     }
-    
-    // ============================================================
-    // 4. RATE LIMITING
-    // ============================================================
-    
-    if (userId) {
-      const rateCheck = await checkRateLimit(supabase, userId, workflow);
+
+    // BUDGET CHECK
+    const { data: budgetResult } = await supabase.rpc('sna_check_budget', {
+      p_scope: 'global',
+      p_scope_id: 'global',
+      p_estimated_cost: 0.01
+    });
+
+    if (budgetResult && !budgetResult.allowed) {
+      console.error(`💰 Budget exceeded: ${budgetResult.usage_percentage}%`);
       
-      if (!rateCheck.allowed) {
-        console.warn(`[SNA ${requestId}] Rate limit excedido para ${userId}`);
+      if (budgetResult.action === 'block') {
+        return errorResponse(402, 'BUDGET_EXCEEDED', 'Orçamento de IA excedido', correlationId);
+      }
+    }
+
+    // CACHE CHECK
+    if (!stream && !skip_cache && !isAsync) {
+      const cacheKey = generateCacheKey(provider, messages, prompt, system_prompt);
+      const { data: cacheResult } = await supabase.rpc('sna_cache_get', {
+        p_cache_key: cacheKey
+      });
+
+      if (cacheResult?.hit) {
+        console.log(`📦 Cache HIT: ${cacheKey.slice(0, 20)}...`);
+        
+        await supabase.rpc('sna_log_tool_run', {
+          p_tool_name: provider,
+          p_provider: 'cache',
+          p_ok: true,
+          p_latency_ms: Date.now() - startTime,
+          p_cache_hit: true,
+          p_correlation_id: correlationId
+        });
+
         return new Response(JSON.stringify({
-          success: false,
-          error: 'Rate limit excedido',
-          retry_after: Math.ceil((rateCheck.resetAt.getTime() - Date.now()) / 1000),
-          request_id: requestId,
+          status: 'success',
+          provider,
+          content: cacheResult.value.content,
+          usage: cacheResult.value.usage,
+          cached: true,
+          cache_hits: cacheResult.hit_count,
+          latency_ms: Date.now() - startTime
         }), {
-          status: 429,
-          headers: { 
-            'Content-Type': 'application/json',
-            'Retry-After': String(Math.ceil((rateCheck.resetAt.getTime() - Date.now()) / 1000)),
-            'X-RateLimit-Remaining': '0',
+          headers: {
             ...corsHeaders,
-          },
+            'Content-Type': 'application/json',
+            'X-Correlation-Id': correlationId,
+            'X-Cache': 'HIT'
+          }
         });
       }
     }
-    
-    // ============================================================
-    // 5. RESOLVER PROVIDER E MODELO
-    // ============================================================
-    
-    let providerKey = body.provider || 'gemini_flash';
-    let providerMapping = PROVIDER_MODEL_MAP[providerKey];
-    
-    if (!providerMapping) {
-      providerMapping = { provider: 'lovable', model: 'gemini-flash' };
+
+    // MODO ASSÍNCRONO
+    if (isAsync && body.job_type && body.idempotency_key) {
+      const { data: jobResult } = await supabase.rpc('sna_create_job', {
+        p_job_type: body.job_type,
+        p_idempotency_key: body.idempotency_key,
+        p_input: {
+          provider,
+          action,
+          messages,
+          prompt,
+          system_prompt,
+          context,
+          max_tokens,
+          temperature
+        },
+        p_priority: body.priority ?? 3,
+        p_deadline: body.deadline || null,
+        p_tags: [workflow, provider],
+        p_metadata: { correlation_id: correlationId, user_role: userRole }
+      });
+
+      console.log(`📥 Job created: ${jobResult?.job_id} [new=${jobResult?.is_new}]`);
+
+      return new Response(JSON.stringify({
+        status: 'queued',
+        job_id: jobResult?.job_id,
+        is_new: jobResult?.is_new,
+        message: jobResult?.is_new ? 'Job criado com sucesso' : 'Job já existe (idempotente)'
+      }), {
+        status: 202,
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'application/json',
+          'X-Correlation-Id': correlationId,
+          'X-Job-Id': jobResult?.job_id
+        }
+      });
     }
-    
-    const providerConfig = PROVIDERS[providerMapping.provider];
-    const modelConfig = providerConfig.models[providerMapping.model];
+
+    // RESOLVER PROVIDER E MODELO
+    const mapping = PROVIDER_MODEL_MAP[provider];
+    if (!mapping) {
+      return errorResponse(400, 'INVALID_PROVIDER', `Provider inválido: ${provider}`, correlationId);
+    }
+
+    const providerConfig = PROVIDERS[mapping.provider];
+    const modelConfig = providerConfig.models[mapping.model];
     
     if (!modelConfig) {
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Modelo não encontrado',
-        request_id: requestId,
-      }), {
-        status: 400,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+      return errorResponse(400, 'INVALID_MODEL', `Modelo inválido: ${mapping.model}`, correlationId);
     }
+
+    // CONSTRUIR MENSAGENS
+    const aiMessages = buildMessages(messages, prompt, system_prompt, context);
     
-    // ============================================================
-    // 6. BUDGET CHECK
-    // ============================================================
-    
-    const estimatedCost = 0.01; // Estimativa conservadora
-    const budgetCheck = await checkBudget(supabase, 'global', 'global', estimatedCost);
-    
-    if (!budgetCheck.allowed) {
-      console.error(`[SNA ${requestId}] Budget excedido: ${budgetCheck.reason}`);
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Orçamento excedido',
-        reason: budgetCheck.reason,
-        request_id: requestId,
-      }), {
-        status: 402,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      });
+    const aiRequest = {
+      model: modelConfig.id,
+      messages: aiMessages,
+      max_tokens: max_tokens || modelConfig.maxTokens,
+      temperature,
+      stream,
+    };
+
+    // OBTER API KEY
+    const apiKey = getApiKey(mapping.provider);
+    if (!apiKey) {
+      return errorResponse(500, 'CONFIG_ERROR', `API key não configurada para ${mapping.provider}`, correlationId);
     }
+
+    // EXECUTAR CHAMADA COM RETRY E FALLBACK
+    const providersToTry = [mapping.provider, ...fallback_providers.map(p => PROVIDER_MODEL_MAP[p]?.provider).filter(Boolean)];
     
-    // ============================================================
-    // 7. CACHE CHECK
-    // ============================================================
-    
-    let cacheKey: string | null = null;
-    
-    if (!body.skip_cache && !body.stream) {
-      cacheKey = generateCacheKey(body);
-      const cacheResult = await getCachedResponse(supabase, cacheKey);
-      
-      if (cacheResult.hit) {
-        console.log(`[SNA ${requestId}] ✅ Cache hit! Saved: $${cacheResult.savedCost?.toFixed(4)}`);
+    let lastError: Error | null = null;
+    let response: Response | null = null;
+    let usedProvider = mapping.provider;
+    let usedModel = mapping.model;
+
+    for (const tryProvider of providersToTry) {
+      try {
+        const tryConfig = PROVIDERS[tryProvider];
+        const tryApiKey = getApiKey(tryProvider);
         
-        await logToolRun(supabase, {
-          toolName: 'sna-gateway',
-          provider: providerMapping.provider,
-          model: modelConfig.id,
-          ok: true,
-          latencyMs: Date.now() - startTime,
-          tokensIn: 0,
-          tokensOut: 0,
-          costUsd: 0,
-          correlationId,
-          cacheHit: true,
-        });
+        if (!tryApiKey) continue;
+
+        const aiStartTime = Date.now();
         
-        return new Response(JSON.stringify({
-          success: true,
-          data: cacheResult.value,
-          cached: true,
-          saved_cost_usd: cacheResult.savedCost,
-          request_id: requestId,
-        }), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
+        response = await fetch(tryConfig.url, {
+          method: 'POST',
+          headers: tryConfig.headers(tryApiKey),
+          body: JSON.stringify({
+            ...aiRequest,
+            model: tryConfig.models[Object.keys(tryConfig.models)[0]].id
+          }),
         });
+
+        if (response.ok) {
+          usedProvider = tryProvider;
+          console.log(`✅ AI call success: ${tryProvider} in ${Date.now() - aiStartTime}ms`);
+          break;
+        } else {
+          console.warn(`⚠️ AI call failed: ${tryProvider} - ${response.status}`);
+          lastError = new Error(`Provider ${tryProvider}: ${response.status}`);
+        }
+      } catch (err) {
+        console.error(`❌ AI call error: ${tryProvider}`, err);
+        lastError = err instanceof Error ? err : new Error(String(err));
       }
     }
-    
-    // ============================================================
-    // 8. PREPARAR MENSAGENS
-    // ============================================================
-    
-    let messages = body.messages || [];
-    
-    if (body.system_prompt) {
-      messages = [{ role: 'system', content: body.system_prompt }, ...messages];
-    }
-    
-    if (body.prompt && messages.length === 0) {
-      messages = [{ role: 'user', content: body.prompt }];
-    }
-    
-    // ============================================================
-    // 9. CHAMAR API
-    // ============================================================
-    
-    const apiKey = Deno.env.get('LOVABLE_API_KEY') || Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
-    
-    const apiPayload = {
-      model: modelConfig.id,
-      messages,
-      max_tokens: Math.min(body.max_tokens || 4096, modelConfig.maxTokens),
-      temperature: body.temperature ?? 0.7,
-      top_p: body.top_p,
-      stream: body.stream || false,
-    };
-    
-    console.log(`[SNA ${requestId}] Chamando ${providerConfig.url} com modelo ${modelConfig.id}`);
-    
-    const apiResponse = await fetch(providerConfig.url, {
-      method: 'POST',
-      headers: providerConfig.headers(apiKey!),
-      body: JSON.stringify(apiPayload),
-    });
-    
-    if (!apiResponse.ok) {
-      const errorText = await apiResponse.text();
-      console.error(`[SNA ${requestId}] ❌ API Error: ${apiResponse.status}`, errorText);
-      
-      await logToolRun(supabase, {
-        toolName: 'sna-gateway',
-        provider: providerMapping.provider,
-        model: modelConfig.id,
-        ok: false,
-        latencyMs: Date.now() - startTime,
-        tokensIn: 0,
-        tokensOut: 0,
-        costUsd: 0,
-        correlationId,
-        errorMessage: errorText.slice(0, 500),
+
+    if (!response?.ok) {
+      await supabase.rpc('sna_log_tool_run', {
+        p_tool_name: provider,
+        p_provider: usedProvider,
+        p_model: usedModel,
+        p_ok: false,
+        p_latency_ms: Date.now() - startTime,
+        p_error_message: lastError?.message,
+        p_correlation_id: correlationId
       });
-      
-      return new Response(JSON.stringify({
-        success: false,
-        error: 'Erro na API de IA',
-        status: apiResponse.status,
-        request_id: requestId,
-      }), {
-        status: 502,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+
+      if (response?.status === 429) {
+        return errorResponse(429, 'PROVIDER_RATE_LIMITED', 'Rate limit do provider excedido', correlationId);
+      }
+      if (response?.status === 402) {
+        return errorResponse(402, 'PROVIDER_CREDITS', 'Créditos do provider esgotados', correlationId);
+      }
+      return errorResponse(502, 'PROVIDER_ERROR', `Erro em todos os providers: ${lastError?.message}`, correlationId);
+    }
+
+    // STREAMING RESPONSE
+    if (stream) {
+      await supabase.rpc('sna_log_tool_run', {
+        p_tool_name: provider,
+        p_provider: usedProvider,
+        p_model: usedModel,
+        p_ok: true,
+        p_latency_ms: Date.now() - startTime,
+        p_correlation_id: correlationId
+      });
+
+      return new Response(response.body, {
+        headers: {
+          ...corsHeaders,
+          'Content-Type': 'text/event-stream',
+          'X-Correlation-Id': correlationId,
+          'X-Provider': usedProvider,
+          'X-Model': usedModel,
+          'X-Cache': 'MISS'
+        }
       });
     }
+
+    // NON-STREAMING RESPONSE
+    const aiResponse = await response.json();
+    const content = aiResponse.choices?.[0]?.message?.content || '';
+    const usage = aiResponse.usage || {};
     
-    // ============================================================
-    // 10. PROCESSAR RESPOSTA
-    // ============================================================
-    
-    const result = await apiResponse.json();
-    const latencyMs = Date.now() - startTime;
-    
-    const tokensIn = result.usage?.prompt_tokens || 0;
-    const tokensOut = result.usage?.completion_tokens || 0;
-    const costUsd = calculateCost(tokensIn, tokensOut, modelConfig);
-    
-    console.log(`[SNA ${requestId}] ✅ Sucesso em ${latencyMs}ms - Tokens: ${tokensIn}/${tokensOut} - Custo: $${costUsd.toFixed(4)}`);
-    
-    // Log tool run
-    await logToolRun(supabase, {
-      toolName: 'sna-gateway',
-      provider: providerMapping.provider,
-      model: modelConfig.id,
-      ok: true,
-      latencyMs,
-      tokensIn,
-      tokensOut,
-      costUsd,
-      correlationId,
+    const tokensIn = usage.prompt_tokens || estimateTokens(JSON.stringify(aiMessages));
+    const tokensOut = usage.completion_tokens || estimateTokens(content);
+    const costUsd = (tokensIn * modelConfig.costIn + tokensOut * modelConfig.costOut) / 1000000;
+
+    // LOG COMPLETO
+    await supabase.rpc('sna_log_tool_run', {
+      p_tool_name: provider,
+      p_provider: usedProvider,
+      p_model: usedModel,
+      p_ok: true,
+      p_latency_ms: Date.now() - startTime,
+      p_tokens_in: tokensIn,
+      p_tokens_out: tokensOut,
+      p_cost_usd: costUsd,
+      p_correlation_id: correlationId
     });
-    
-    // ============================================================
-    // 11. CACHE RESPONSE
-    // ============================================================
-    
-    const responseData = {
-      content: result.choices?.[0]?.message?.content || '',
-      model: modelConfig.id,
-      usage: { prompt_tokens: tokensIn, completion_tokens: tokensOut, total_tokens: tokensIn + tokensOut },
-    };
-    
-    if (cacheKey && !body.stream) {
-      const cacheTtl = body.cache_ttl || 3600;
-      await setCacheResponse(supabase, cacheKey, responseData, cacheTtl, costUsd);
+
+    // CACHE RESPONSE
+    if (!skip_cache && cache_ttl > 0) {
+      const cacheKey = generateCacheKey(provider, messages, prompt, system_prompt);
+      await supabase.rpc('sna_cache_set', {
+        p_cache_key: cacheKey,
+        p_value: { content, usage: { input_tokens: tokensIn, output_tokens: tokensOut, cost_usd: costUsd } },
+        p_ttl_seconds: cache_ttl,
+        p_original_cost_usd: costUsd
+      });
     }
-    
-    // ============================================================
-    // 12. RETORNAR RESPOSTA
-    // ============================================================
-    
+
+    const totalTime = Date.now() - startTime;
+    console.log(`✅ SNA Gateway [${correlationId}]: ${provider} completed in ${totalTime}ms (cost: $${costUsd.toFixed(6)})`);
+
     return new Response(JSON.stringify({
-      success: true,
-      data: responseData,
+      status: 'success',
+      provider: usedProvider,
+      model: usedModel,
+      content,
+      usage: {
+        input_tokens: tokensIn,
+        output_tokens: tokensOut,
+        total_tokens: tokensIn + tokensOut,
+        cost_usd: costUsd
+      },
       cached: false,
-      cost_usd: costUsd,
-      latency_ms: latencyMs,
-      request_id: requestId,
-      correlation_id: correlationId,
+      latency_ms: totalTime
     }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      headers: {
+        ...corsHeaders,
+        'Content-Type': 'application/json',
+        'X-Correlation-Id': correlationId,
+        'X-Provider': usedProvider,
+        'X-Model': usedModel,
+        'X-Cache': 'MISS',
+        'X-Cost-USD': costUsd.toFixed(8),
+        'X-Latency-Ms': totalTime.toString()
+      }
     });
-    
+
   } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido';
-    const latencyMs = Date.now() - startTime;
-    
-    console.error(`[SNA ${requestId}] ❌ Erro crítico:`, error);
-    
-    return new Response(JSON.stringify({
-      success: false,
-      error: 'Erro interno do gateway',
-      message: errorMessage,
-      request_id: requestId,
-      latency_ms: latencyMs,
-    }), {
-      status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders },
-    });
+    console.error(`❌ SNA Gateway Error [${correlationId}]:`, error);
+    return errorResponse(500, 'INTERNAL_ERROR', error instanceof Error ? error.message : 'Erro interno', correlationId);
   }
 });
