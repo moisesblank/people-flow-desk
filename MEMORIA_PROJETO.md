@@ -249,5 +249,114 @@ moisesmedeiros.com.br → LOVABLE CLOUD (Esta plataforma)
 
 ---
 
+## 📋 ARQUIVOS PENDENTES PARA APLICAR NO LOVABLE/SUPABASE
+
+### 🔴 PRIORIDADE 1: MIGRAÇÕES SQL (Aplicar no Supabase Dashboard > SQL Editor)
+
+| Arquivo | Tamanho | Status | O que faz |
+|---------|---------|--------|-----------|
+| `20251222000001_live_chat_system.sql` | 13KB | ⏳ PENDENTE | Sistema de chat ao vivo |
+| `20251222000002_performance_indexes.sql` | 8KB | ⏳ PENDENTE | Índices de performance |
+| `20251222200000_security_fortress_ultra.sql` | 34KB | ⏳ PENDENTE | Segurança completa (RLS, sessões) |
+| `20251222400000_sna_omega_complete.sql` | 46KB | ⏳ PENDENTE | Automação IA (10 tabelas, 15 funções) |
+
+**TOTAL:** 4 arquivos SQL para aplicar
+
+### 🟡 PRIORIDADE 2: EDGE FUNCTIONS (Deploy via Supabase CLI ou Dashboard)
+
+| Pasta | Status | O que faz |
+|-------|--------|-----------|
+| `supabase/functions/secure-webhook-ultra/` | ⏳ PENDENTE | Webhook seguro |
+| `supabase/functions/sna-gateway/` | ⏳ PENDENTE | Gateway de IA |
+| `supabase/functions/sna-worker/` | ⏳ PENDENTE | Processador de jobs IA |
+
+**TOTAL:** 3 Edge Functions para deploy
+
+### 🟢 JÁ APLICADO AUTOMATICAMENTE (Não precisa fazer nada)
+
+Os seguintes arquivos já estão no código e serão aplicados quando o Lovable fizer o build:
+- `src/hooks/useAIAutomation.ts`
+- `src/components/admin/AIControlCenter.tsx`
+- `src/hooks/useSecurityGuard.ts`
+- `src/contexts/SecurityContext.tsx`
+- `src/components/chat/LiveChatPanel.tsx`
+
+---
+
+## 🚶 PRÓXIMOS PASSOS (PASSO A PASSO PARA LEIGOS)
+
+### PASSO 1: Aplicar as Migrações SQL
+1. Abra o **Supabase Dashboard** (https://supabase.com/dashboard)
+2. Selecione seu projeto
+3. Vá em **SQL Editor** (menu esquerdo)
+4. Clique em **New Query**
+5. Copie o conteúdo do arquivo SQL
+6. Cole no editor
+7. Clique em **Run** (ou Ctrl+Enter)
+8. Repita para cada arquivo SQL
+
+**ORDEM DE APLICAÇÃO:**
+1. Primeiro: `20251222000001_live_chat_system.sql`
+2. Segundo: `20251222000002_performance_indexes.sql`
+3. Terceiro: `20251222200000_security_fortress_ultra.sql`
+4. Quarto: `20251222400000_sna_omega_complete.sql`
+
+### PASSO 2: Deploy das Edge Functions
+**OPÇÃO A - Via CLI (se tiver instalado):**
+```bash
+supabase functions deploy secure-webhook-ultra
+supabase functions deploy sna-gateway
+supabase functions deploy sna-worker
+```
+
+**OPÇÃO B - Via Dashboard:**
+1. Vá em **Edge Functions** no Supabase Dashboard
+2. Clique em **New Function**
+3. Cole o código do arquivo `index.ts` de cada pasta
+4. Salve e faça deploy
+
+### PASSO 3: Configurar Cron do Worker
+1. Vá em **SQL Editor** no Supabase
+2. Execute:
+```sql
+SELECT cron.schedule(
+  'sna-worker-cron',
+  '* * * * *',
+  $$SELECT net.http_post(
+    url := 'https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/sna-worker',
+    headers := '{"Authorization": "Bearer <SERVICE_ROLE_KEY>"}'::jsonb,
+    body := '{}'::jsonb
+  );$$
+);
+```
+
+### PASSO 4: Testar
+1. Acesse o sistema normalmente
+2. Vá em Admin > Central de IAs
+3. Clique em "Healthcheck" para testar as IAs
+
+---
+
+## 📍 MAPA DE URLs DEFINITIVO (REGRA INVIOLÁVEL)
+
+| Quem | URL | Role | Validação |
+|------|-----|------|-----------|
+| 🌐 NÃO PAGANTE | pro.moisesmedeiros.com.br/ | NULL, viewer, aluno_gratuito | Criar conta = acesso livre |
+| 👨‍🎓 ALUNO BETA | pro.moisesmedeiros.com.br/alunos | beta | role='beta' + acesso válido |
+| 👔 FUNCIONÁRIO | gestao.moisesmedeiros.com.br/ | funcionario | role='funcionario' |
+| 👑 OWNER | TODAS | owner | role='owner' |
+
+---
+
+## 📦 MATRIZES IMPLEMENTADAS
+
+| Matriz | Status | Arquivos |
+|--------|--------|----------|
+| 🏎️ PERFORMANCE | ✅ Completa | Chat, índices, cache |
+| 🛡️ SEGURANÇA | ✅ Completa | RLS, sessões, 2FA |
+| 🧠 AUTOMAÇÃO IA | ✅ Completa | SNA Gateway, Worker, 18 workflows |
+
+---
+
 *Documento mantido pelo sistema SYNAPSE v15.0*
 *Última atualização: 22/12/2025 pelo MESTRE*
