@@ -1,0 +1,54 @@
+/* ============================================
+ * 🌌 WATERMARK CSS — ANO 2300
+ * Marca d'água dinâmica para conteúdo protegido
+ * ============================================ */
+
+.ena-watermark {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  pointer-events: none;
+  opacity: 0.14;
+  transform: translateZ(0);
+  will-change: opacity;
+  contain: layout style;
+}
+
+.ena-watermark-inner {
+  position: absolute;
+  inset: -40%;
+  transform: rotate(-25deg);
+  font-size: clamp(14px, 2.1vw, 44px);
+  line-height: 3.2;
+  white-space: pre;
+  letter-spacing: 0.06em;
+  font-family: "SF Mono", "Fira Code", "Consolas", monospace;
+  font-weight: 500;
+  color: currentColor;
+}
+
+/* Dark mode adjustment */
+@media (prefers-color-scheme: dark) {
+  .ena-watermark {
+    opacity: 0.08;
+  }
+}
+
+/* Mobile adjustment */
+@media (max-width: 768px) {
+  .ena-watermark {
+    opacity: 0.10;
+  }
+  
+  .ena-watermark-inner {
+    font-size: clamp(10px, 2vw, 24px);
+    line-height: 2.8;
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .ena-watermark {
+    animation: none;
+  }
+}
