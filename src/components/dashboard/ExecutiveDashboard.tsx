@@ -26,7 +26,7 @@ import {
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { useQuery } from "@tanstack/react-query";
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from "@/hooks/useSubspaceCommunication";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
@@ -84,10 +84,10 @@ export function ExecutiveDashboard() {
     return () => clearInterval(timer);
   }, []);
 
-  // Fetch all metrics
-  const { data: metrics, isLoading } = useQuery({
-    queryKey: ["executive-metrics"],
-    queryFn: async () => {
+  // Fetch all metrics - MIGRADO PARA useSubspaceQuery
+  const { data: metrics, isLoading } = useSubspaceQuery(
+    ["executive-metrics"],
+    async () => {
       // Fetch multiple metrics in parallel
       const [
         studentsResult,
@@ -127,7 +127,11 @@ export function ExecutiveDashboard() {
           : 0,
       };
     },
-  });
+    {
+      profile: 'dashboard',
+      persistKey: 'executive_metrics_v1',
+    }
+  );
 
   // Quick stats for the header
   const quickStats = [

@@ -14,7 +14,7 @@ import {
   BarChart3
 } from "lucide-react";
 import { motion } from "framer-motion";
-import { useQuery } from "@tanstack/react-query";
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from "@/hooks/useSubspaceCommunication";
 import { supabase } from "@/integrations/supabase/client";
 import professorImage from "@/assets/professor-moises.jpg";
 
@@ -24,10 +24,10 @@ import professorImage from "@/assets/professor-moises.jpg";
 // =====================================================
 
 export default function TurmasOnline() {
-  // Buscar alunos ativos do banco
-  const { data: alunosData } = useQuery({
-    queryKey: ["turmas-alunos-count"],
-    queryFn: async () => {
+  // Buscar alunos ativos do banco - MIGRADO PARA useSubspaceQuery
+  const { data: alunosData } = useSubspaceQuery(
+    ["turmas-alunos-count"],
+    async () => {
       const { count, error } = await supabase
         .from("alunos")
         .select("*", { count: "exact", head: true })
@@ -37,13 +37,17 @@ export default function TurmasOnline() {
         return 0;
       }
       return count || 0;
+    },
+    {
+      profile: 'semiStatic',
+      persistKey: 'turmas_alunos_count_v1',
     }
-  });
+  );
 
-  // Buscar cursos/turmas do banco
-  const { data: cursosData } = useQuery({
-    queryKey: ["turmas-cursos-count"],
-    queryFn: async () => {
+  // Buscar cursos/turmas do banco - MIGRADO PARA useSubspaceQuery
+  const { data: cursosData } = useSubspaceQuery(
+    ["turmas-cursos-count"],
+    async () => {
       const { data, error } = await supabase
         .from("courses")
         .select("*");
@@ -52,13 +56,17 @@ export default function TurmasOnline() {
         return [];
       }
       return data || [];
+    },
+    {
+      profile: 'semiStatic',
+      persistKey: 'turmas_cursos_v1',
     }
-  });
+  );
 
-  // Buscar aulas do banco
-  const { data: aulasData } = useQuery({
-    queryKey: ["turmas-aulas-count"],
-    queryFn: async () => {
+  // Buscar aulas do banco - MIGRADO PARA useSubspaceQuery
+  const { data: aulasData } = useSubspaceQuery(
+    ["turmas-aulas-count"],
+    async () => {
       const { count, error } = await supabase
         .from("lessons")
         .select("*", { count: "exact", head: true });
@@ -67,8 +75,12 @@ export default function TurmasOnline() {
         return 0;
       }
       return count || 0;
+    },
+    {
+      profile: 'semiStatic',
+      persistKey: 'turmas_aulas_count_v1',
     }
-  });
+  );
 
   // Valores REAIS do banco - sem mock
   const totalAlunos = alunosData || 0;

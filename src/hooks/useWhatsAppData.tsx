@@ -97,11 +97,11 @@ export function useWhatsAppTasks() {
   });
 }
 
-// Hook para finanças do WhatsApp
+// Hook para finanças do WhatsApp - MIGRADO PARA useSubspaceQuery
 export function useWhatsAppFinance(period?: 'today' | 'week' | 'month' | 'all') {
-  return useQuery({
-    queryKey: ['whatsapp-finance', period],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['whatsapp-finance', period || 'all'],
+    async () => {
       let query = supabase.from('command_finance').select('*');
       
       if (period === 'today') {
@@ -117,25 +117,33 @@ export function useWhatsAppFinance(period?: 'today' | 'week' | 'month' | 'all') 
       const { data, error } = await query.order('created_at', { ascending: false });
       if (error) throw error;
       return data as WhatsAppFinance[];
+    },
+    {
+      profile: 'dashboard',
+      persistKey: `whatsapp_finance_${period || 'all'}`,
     }
-  });
+  );
 }
 
-// Hook para conversas
+// Hook para conversas - MIGRADO PARA useSubspaceQuery
 export function useWhatsAppConversations() {
   const queryClient = useQueryClient();
   
-  const query = useQuery({
-    queryKey: ['whatsapp-conversations'],
-    queryFn: async () => {
+  const query = useSubspaceQuery(
+    ['whatsapp-conversations'],
+    async () => {
       const { data, error } = await supabase
         .from('whatsapp_conversations')
         .select('*')
         .order('last_message_at', { ascending: false });
       if (error) throw error;
       return data as WhatsAppConversation[];
+    },
+    {
+      profile: 'dashboard',
+      persistKey: 'whatsapp_conversations_v1',
     }
-  });
+  );
   
   // Realtime subscription
   useEffect(() => {
@@ -152,13 +160,13 @@ export function useWhatsAppConversations() {
   return query;
 }
 
-// Hook para mensagens de uma conversa
+// Hook para mensagens de uma conversa - MIGRADO PARA useSubspaceQuery
 export function useWhatsAppMessages(conversationId: string | null) {
   const queryClient = useQueryClient();
   
-  const query = useQuery({
-    queryKey: ['whatsapp-messages', conversationId],
-    queryFn: async () => {
+  const query = useSubspaceQuery(
+    ['whatsapp-messages', conversationId || 'none'],
+    async () => {
       if (!conversationId) return [];
       const { data, error } = await supabase
         .from('whatsapp_messages')
@@ -168,8 +176,12 @@ export function useWhatsAppMessages(conversationId: string | null) {
       if (error) throw error;
       return data as WhatsAppMessage[];
     },
-    enabled: !!conversationId
-  });
+    {
+      profile: 'realtime',
+      persistKey: `whatsapp_messages_${conversationId}`,
+      enabled: !!conversationId,
+    }
+  );
   
   // Realtime subscription
   useEffect(() => {
@@ -193,11 +205,11 @@ export function useWhatsAppMessages(conversationId: string | null) {
   return query;
 }
 
-// Hook para anexos de uma conversa
+// Hook para anexos de uma conversa - MIGRADO PARA useSubspaceQuery
 export function useWhatsAppAttachments(conversationId: string | null) {
-  return useQuery({
-    queryKey: ['whatsapp-attachments', conversationId],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['whatsapp-attachments', conversationId || 'none'],
+    async () => {
       if (!conversationId) return [];
       const { data, error } = await supabase
         .from('whatsapp_attachments')
@@ -207,15 +219,19 @@ export function useWhatsAppAttachments(conversationId: string | null) {
       if (error) throw error;
       return data as WhatsAppAttachment[];
     },
-    enabled: !!conversationId
-  });
+    {
+      profile: 'semiStatic',
+      persistKey: `whatsapp_attachments_${conversationId}`,
+      enabled: !!conversationId,
+    }
+  );
 }
 
-// Hook para estatísticas gerais
+// Hook para estatísticas gerais - MIGRADO PARA useSubspaceQuery
 export function useWhatsAppStats() {
-  return useQuery({
-    queryKey: ['whatsapp-stats'],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['whatsapp-stats'],
+    async () => {
       const today = new Date().toISOString().split('T')[0];
       
       const [
@@ -252,15 +268,19 @@ export function useWhatsAppStats() {
         vipConversas: vipConversations || 0
       };
     },
-    refetchInterval: 30000 // Atualiza a cada 30 segundos
-  });
+    {
+      profile: 'dashboard',
+      persistKey: 'whatsapp_stats_v1',
+      refetchInterval: 30000,
+    }
+  );
 }
 
-// Hook para diagnósticos
+// Hook para diagnósticos - MIGRADO PARA useSubspaceQuery
 export function useWebhookDiagnostics() {
-  return useQuery({
-    queryKey: ['webhook-diagnostics'],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['webhook-diagnostics'],
+    async () => {
       const { data, error } = await supabase
         .from('webhook_diagnostics')
         .select('*')
@@ -269,8 +289,12 @@ export function useWebhookDiagnostics() {
       if (error) throw error;
       return data;
     },
-    refetchInterval: 5000
-  });
+    {
+      profile: 'realtime',
+      persistKey: 'webhook_diagnostics_v1',
+      refetchInterval: 5000,
+    }
+  );
 }
 
 // Mutations
