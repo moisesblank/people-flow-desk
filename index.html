@@ -82,9 +82,14 @@
          DOGMA I + TESE 1.4: FONTES OTIMIZADAS
          Preload + font-display: optional (CLS = 0)
          WOFF2 only + fallback sistema
+         LCP TARGET: -40% via preload prioritário
          ============================================ -->
-    <!-- Font preload for fastest LCP -->
-    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2" as="font" type="font/woff2" crossorigin />
+    
+    <!-- 🚀 LCP CRITICAL: Preload da fonte principal (MAIOR IMPACTO LCP) -->
+    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
+    
+    <!-- 🚀 LCP CRITICAL: Preload Cabinet Grotesk (Headings - LCP candidate) -->
+    <link rel="preload" href="https://cdn.fontshare.com/wf/WVXDPDVMRQFQ4PWXFZBNKFSQFF46EIFL/4RL64BNDGDYXEDACEXBQLIPMPJJBXRCP/YQHZ3IQXC45FL6P5PHJBJ2J4QYOHFSZD.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
     
     <!-- TESE 1.4: font-display: optional para ZERO CLS -->
     <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" as="style" onload="this.onload=null;this.rel='stylesheet'" />

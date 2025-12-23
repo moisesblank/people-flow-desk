@@ -137,7 +137,12 @@ const AlunoAgenda = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m 
 const AlunoCertificados = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoCertificados })));
 const AlunoPerfil = lazy(() => import("./pages/ProfilePage"));
 
-// Lazy load heavy components (DOGMA VIII)
+// ============================================
+// 🚀 TTI OPTIMIZATION: Lazy load heavy components
+// Defer hydration de componentes não-críticos
+// ============================================
+
+// Lazy load heavy components (DOGMA VIII) - com prefetch inteligente
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
 const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
 const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
@@ -157,6 +162,15 @@ if (typeof window !== 'undefined') {
     queryClient.invalidateQueries();
     console.log('[MATRIZ] 🧹 Cache purificado');
   });
+  
+  // 🚀 PREFETCH: Carregar componentes pesados após TTI
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(() => {
+      // Prefetch componentes de admin após idle
+      import("@/components/ai/AITramonGlobal").catch(() => {});
+      import("@/components/editor/GodModePanel").catch(() => {});
+    }, { timeout: 5000 });
+  }
 }
 
 // ⚡ DOGMA I: Ultra-fast loading - CSS only, minimal DOM
