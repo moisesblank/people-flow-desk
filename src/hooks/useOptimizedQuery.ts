@@ -1,14 +1,14 @@
 // ============================================
-// ⚡ HOOK SAGRADO DE QUERIES OTIMIZADAS ⚡
-// DOGMA IV + V: Queries Sub-50ms + Cache
+// ⚡ HOOK SAGRADO DE QUERIES OTIMIZADAS v3500 ⚡
+// DOGMA IV + V: Queries Sub-50ms + Cache Quântico
 // ============================================
 
 import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
-import { CACHE_CONFIG, INVALIDATION_KEYS } from '@/lib/performance/cacheConfig';
+import { CACHE_PROFILES, INVALIDATION_KEYS } from '@/lib/performance/cacheConfig';
 
-// Tipo para configuração de cache
-type CacheType = keyof typeof CACHE_CONFIG;
+// Tipo para configuração de cache (usando CACHE_PROFILES v3500)
+type CacheType = keyof typeof CACHE_PROFILES;
 
 interface OptimizedQueryOptions<T> extends Omit<UseQueryOptions<T, Error>, 'queryKey' | 'queryFn'> {
   cacheType?: CacheType;
@@ -26,16 +26,15 @@ export function useOptimizedQuery<T>(
 ) {
   const { cacheType = 'list', enablePrefetch = false, ...queryOptions } = options;
   
-  // Aplicar configuração de cache baseada no tipo
-  const cacheConfig = CACHE_CONFIG[cacheType];
+  // Aplicar configuração de cache baseada no tipo (v3500)
+  const cacheConfig = CACHE_PROFILES[cacheType];
   
   const query = useQuery({
     queryKey,
     queryFn,
     staleTime: cacheConfig.staleTime,
     gcTime: cacheConfig.gcTime,
-    refetchOnWindowFocus: cacheConfig.refetchOnWindowFocus,
-    refetchOnMount: cacheConfig.refetchOnMount,
+    networkMode: 'offlineFirst', // v3500: Prioriza cache SEMPRE
     ...queryOptions,
   });
 
@@ -68,7 +67,7 @@ export function useSmartInvalidation() {
     await queryClient.prefetchQuery({
       queryKey,
       queryFn,
-      staleTime: CACHE_CONFIG.dashboard.staleTime,
+      staleTime: CACHE_PROFILES.dashboard.staleTime,
     });
   }, [queryClient]);
 
@@ -84,7 +83,7 @@ export function useBatchedQueries<T extends Record<string, () => Promise<unknown
   options: { enabled?: boolean; cacheType?: CacheType } = {}
 ) {
   const { enabled = true, cacheType = 'list' } = options;
-  const cacheConfig = CACHE_CONFIG[cacheType];
+  const cacheConfig = CACHE_PROFILES[cacheType];
   
   const queryKeys = useMemo(() => Object.keys(queries), [queries]);
   
@@ -95,6 +94,7 @@ export function useBatchedQueries<T extends Record<string, () => Promise<unknown
       enabled,
       staleTime: cacheConfig.staleTime,
       gcTime: cacheConfig.gcTime,
+      networkMode: 'offlineFirst', // v3500
     });
   });
 
@@ -125,7 +125,7 @@ export function useRoutePrefetch() {
           queryClient.prefetchQuery({
             queryKey: [route, key],
             queryFn: fn,
-            staleTime: CACHE_CONFIG.static.staleTime,
+            staleTime: CACHE_PROFILES.immutable.staleTime,
           });
         });
       });
@@ -135,7 +135,7 @@ export function useRoutePrefetch() {
           queryClient.prefetchQuery({
             queryKey: [route, key],
             queryFn: fn,
-            staleTime: CACHE_CONFIG.static.staleTime,
+            staleTime: CACHE_PROFILES.immutable.staleTime,
           });
         });
       }, 100);
