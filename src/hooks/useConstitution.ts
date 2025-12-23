@@ -1,9 +1,10 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║   🏛️ CONSTITUIÇÃO SYNAPSE - HOOKS DE ENFORCEMENT                            ║
-// ║   Hooks para garantir que as leis sejam sempre aplicadas                    ║
+// ║   🏛️ CONSTITUIÇÃO SYNAPSE - HOOKS DE ENFORCEMENT v5.0                       ║
+// ║   LEI I: Performance | LEI II: Dispositivos | LEI III: Segurança            ║
+// ║   Retorna: tier, shouldAnimate, imageQuality, rootMargin, overscan          ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
-import { useMemo, useCallback } from 'react';
+import { useMemo, useCallback, useState, useEffect } from 'react';
 import { 
   LEI_I_PERFORMANCE,
   getAnimationDuration,
@@ -16,13 +17,51 @@ import {
 } from '@/lib/constitution/LEI_I_PERFORMANCE';
 
 // ============================================
-// DETECÇÃO DE TIER (Artigos 16-18)
+// TIPOS CONSTITUCIONAIS
 // ============================================
 
-type PerformanceTier = 'critical' | 'low' | 'medium' | 'high' | 'ultra';
-type ConnectionType = 'slow' | 'mobile' | 'desktop';
+export type ConstitutionTier = 'critical' | 'low' | 'medium' | 'high' | 'ultra';
+export type ConnectionType = 'slow' | 'mobile' | 'desktop';
 
-function detectTier(): PerformanceTier {
+export interface ConstitutionConfig {
+  // Core (LEI I Art. Final)
+  tier: ConstitutionTier;
+  connection: ConnectionType;
+  shouldAnimate: boolean;
+  imageQuality: number;
+  rootMargin: string;
+  overscan: number;
+  
+  // Device (LEI II)
+  isMobile: boolean;
+  isTablet: boolean;
+  isDesktop: boolean;
+  isTouch: boolean;
+  
+  // Flags
+  isDataSaver: boolean;
+  prefersReducedMotion: boolean;
+  isSlowConnection: boolean;
+  isLowEnd: boolean;
+  
+  // Functions
+  animationDuration: (base: number) => number;
+  
+  // Config values
+  debounceMs: number;
+  throttleMs: number;
+  queryLimit: number;
+  
+  // Budgets & Targets
+  budgets: typeof LEI_I_PERFORMANCE.METRICS.BUDGETS;
+  targets: typeof LEI_I_PERFORMANCE.METRICS.TARGETS;
+}
+
+// ============================================
+// DETECÇÃO DE TIER (LEI I Art. 16-18)
+// ============================================
+
+function detectTier(): ConstitutionTier {
   if (typeof window === 'undefined') return 'medium';
   
   const connection = (navigator as any).connection;
@@ -74,13 +113,53 @@ function detectConnection(): ConnectionType {
   return 'desktop';
 }
 
+function detectDevice() {
+  if (typeof window === 'undefined') {
+    return { isMobile: false, isTablet: false, isDesktop: true, isTouch: false };
+  }
+  
+  const ua = navigator.userAgent;
+  const isMobile = /iPhone|iPod|Android.*Mobile/i.test(ua);
+  const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
+  const isDesktop = !isMobile && !isTablet;
+  const isTouch = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  
+  return { isMobile, isTablet, isDesktop, isTouch };
+}
+
 // ============================================
 // HOOK PRINCIPAL - useConstitution
 // ============================================
 
-export function useConstitution() {
-  const tier = useMemo(() => detectTier(), []);
-  const connection = useMemo(() => detectConnection(), []);
+export function useConstitution(): ConstitutionConfig {
+  // Estado inicial com detecção
+  const [tier, setTier] = useState<ConstitutionTier>(() => detectTier());
+  const [connection, setConnection] = useState<ConnectionType>(() => detectConnection());
+  
+  // Detectar mudanças de conexão em tempo real
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    
+    const handleConnectionChange = () => {
+      setTier(detectTier());
+      setConnection(detectConnection());
+    };
+    
+    const conn = (navigator as any).connection;
+    conn?.addEventListener?.('change', handleConnectionChange);
+    
+    window.addEventListener('online', handleConnectionChange);
+    window.addEventListener('offline', handleConnectionChange);
+    
+    return () => {
+      conn?.removeEventListener?.('change', handleConnectionChange);
+      window.removeEventListener('online', handleConnectionChange);
+      window.removeEventListener('offline', handleConnectionChange);
+    };
+  }, []);
+  
+  // Device detection (estável)
+  const device = useMemo(() => detectDevice(), []);
   
   // Artigo 19 - Reduced Motion
   const prefersReducedMotion = useMemo(() => {
@@ -105,19 +184,13 @@ export function useConstitution() {
   }, [tier, prefersReducedMotion]);
   
   // Artigo 9 - Qualidade de imagem
-  const getImgQuality = useCallback(() => {
-    return getImageQuality(tier);
-  }, [tier]);
+  const imgQuality = useMemo(() => getImageQuality(tier), [tier]);
   
   // Artigo 26 - Overscan
-  const getVirtualOverscan = useCallback(() => {
-    return getOverscan(tier);
-  }, [tier]);
+  const virtualOverscan = useMemo(() => getOverscan(tier), [tier]);
   
   // Artigo 5 - rootMargin
-  const getLazyRootMargin = useCallback(() => {
-    return getRootMargin(connection);
-  }, [connection]);
+  const lazyRootMargin = useMemo(() => getRootMargin(connection), [connection]);
   
   // Artigo 19 - Pode animar?
   const shouldAnimate = useMemo(() => {
@@ -126,54 +199,57 @@ export function useConstitution() {
   }, [tier, prefersReducedMotion]);
   
   // ============================================
-  // CONFIGURAÇÕES COMPLETAS
+  // CONFIGURAÇÃO COMPLETA MEMOIZADA
   // ============================================
   
-  const config = useMemo(() => ({
-    // Tier detectado
+  return useMemo<ConstitutionConfig>(() => ({
+    // Core
     tier,
     connection,
+    shouldAnimate,
+    imageQuality: imgQuality,
+    rootMargin: lazyRootMargin,
+    overscan: virtualOverscan,
+    
+    // Device
+    isMobile: device.isMobile,
+    isTablet: device.isTablet,
+    isDesktop: device.isDesktop,
+    isTouch: device.isTouch,
     
     // Flags
-    shouldAnimate,
     isDataSaver,
     prefersReducedMotion,
     isSlowConnection: connection === 'slow',
-    isMobile: connection === 'mobile',
     isLowEnd: tier === 'critical' || tier === 'low',
     
-    // Valores calculados
-    animationDuration: (base: number) => getAnimDuration(base),
-    imageQuality: getImgQuality(),
-    overscan: getVirtualOverscan(),
-    rootMargin: getLazyRootMargin(),
+    // Functions
+    animationDuration: getAnimDuration,
     
-    // Configurações da constituição
+    // Config values
     debounceMs: LEI_I_PERFORMANCE.TIMING.SEARCH_DEBOUNCE_MS,
     throttleMs: LEI_I_PERFORMANCE.TIMING.SCROLL_THROTTLE_MS,
     queryLimit: LEI_I_PERFORMANCE.DB.DEFAULT_QUERY_LIMIT,
     
-    // Budgets
+    // Budgets & Targets
     budgets: LEI_I_PERFORMANCE.METRICS.BUDGETS,
     targets: LEI_I_PERFORMANCE.METRICS.TARGETS,
-    
   }), [
     tier, 
     connection, 
     shouldAnimate, 
+    imgQuality,
+    lazyRootMargin,
+    virtualOverscan,
+    device,
     isDataSaver, 
     prefersReducedMotion,
     getAnimDuration,
-    getImgQuality,
-    getVirtualOverscan,
-    getLazyRootMargin,
   ]);
-  
-  return config;
 }
 
 // ============================================
-// HOOKS ESPECÍFICOS
+// HOOKS ESPECÍFICOS (LEI I)
 // ============================================
 
 /**
@@ -185,16 +261,32 @@ export function useConstitutionalAnimation() {
   return useMemo(() => ({
     shouldAnimate,
     duration: (base: number = 300) => animationDuration(base),
-    ease: tier === 'ultra' ? [0.4, 0, 0.2, 1] : [0.4, 0, 1, 1],
+    ease: tier === 'ultra' || tier === 'high' 
+      ? [0.4, 0, 0.2, 1]  // smooth
+      : [0.4, 0, 1, 1],    // fast
     skipAnimations: !shouldAnimate,
+    // Framer Motion props
+    motionProps: shouldAnimate ? {
+      initial: { opacity: 0, y: 20 },
+      animate: { opacity: 1, y: 0 },
+      exit: { opacity: 0, y: -10 },
+      transition: {
+        duration: animationDuration(300) / 1000,
+        ease: [0.4, 0, 0.2, 1],
+      },
+    } : {
+      initial: false,
+      animate: { opacity: 1, y: 0 },
+      transition: { duration: 0 },
+    },
   }), [shouldAnimate, animationDuration, tier]);
 }
 
 /**
- * Hook para imagens constitucionais
+ * Hook para imagens constitucionais (LEI I Art. 7-9)
  */
 export function useConstitutionalImage() {
-  const { imageQuality, isDataSaver, isSlowConnection } = useConstitution();
+  const { imageQuality, isDataSaver, isSlowConnection, tier } = useConstitution();
   
   return useMemo(() => ({
     quality: imageQuality,
@@ -202,11 +294,13 @@ export function useConstitutionalImage() {
     decoding: 'async' as const,
     shouldLoadImages: !isDataSaver,
     useBlurPlaceholder: !isSlowConnection,
-  }), [imageQuality, isDataSaver, isSlowConnection]);
+    maxWidth: tier === 'critical' ? 640 : tier === 'low' ? 768 : 1920,
+    format: isSlowConnection ? 'webp' : 'auto',
+  }), [imageQuality, isDataSaver, isSlowConnection, tier]);
 }
 
 /**
- * Hook para virtualização constitucional
+ * Hook para virtualização constitucional (LEI I Art. 25-26)
  */
 export function useConstitutionalVirtualization() {
   const { overscan, tier } = useConstitution();
@@ -215,12 +309,12 @@ export function useConstitutionalVirtualization() {
     overscan,
     threshold: LEI_I_PERFORMANCE.VIRTUAL.VIRTUALIZE_ABOVE,
     shouldVirtualize: (itemCount: number) => itemCount > LEI_I_PERFORMANCE.VIRTUAL.VIRTUALIZE_ABOVE,
-    itemHeight: tier === 'low' || tier === 'critical' ? 60 : 80,
+    itemHeight: tier === 'low' || tier === 'critical' ? 56 : 64,
   }), [overscan, tier]);
 }
 
 /**
- * Hook para lazy loading constitucional
+ * Hook para lazy loading constitucional (LEI I Art. 4-6)
  */
 export function useConstitutionalLazyLoad() {
   const { rootMargin, isSlowConnection } = useConstitution();
@@ -229,15 +323,15 @@ export function useConstitutionalLazyLoad() {
     rootMargin,
     threshold: 0.01,
     // Em conexões lentas, carrega mais cedo
-    prefetchDistance: isSlowConnection ? 800 : 400,
+    prefetchDistance: isSlowConnection ? '800px' : '400px',
   }), [rootMargin, isSlowConnection]);
 }
 
 /**
- * Hook para queries constitucionais
+ * Hook para queries constitucionais (LEI I Art. 10-12)
  */
 export function useConstitutionalQuery() {
-  const { queryLimit, isSlowConnection } = useConstitution();
+  const { queryLimit, isSlowConnection, tier } = useConstitution();
   
   return useMemo(() => ({
     limit: isSlowConnection ? Math.floor(queryLimit / 2) : queryLimit,
@@ -246,11 +340,25 @@ export function useConstitutionalQuery() {
     networkMode: 'offlineFirst' as const,
     refetchOnFocus: false,
     refetchOnReconnect: false,
-  }), [queryLimit, isSlowConnection]);
+    retry: tier === 'critical' ? 0 : 1,
+  }), [queryLimit, isSlowConnection, tier]);
+}
+
+/**
+ * Hook para cache React Query por tipo (LEI I Art. 10)
+ */
+export function useConstitutionalCacheConfig(type: 'realtime' | 'dashboard' | 'list' | 'static' | 'user') {
+  const { isSlowConnection } = useConstitution();
+  const baseConfig = LEI_I_PERFORMANCE.QUERY.CACHE_CONFIG[type];
+  
+  return useMemo(() => ({
+    staleTime: isSlowConnection ? baseConfig.staleTime * 2 : baseConfig.staleTime,
+    gcTime: isSlowConnection ? baseConfig.gcTime * 2 : baseConfig.gcTime,
+  }), [baseConfig, isSlowConnection]);
 }
 
 // ============================================
-// VALIDADORES
+// VALIDADORES (LEI I Art. 30-31)
 // ============================================
 
 /**
@@ -269,6 +377,24 @@ export function useValidateWebVital() {
   return useCallback((metric: keyof typeof LEI_I_PERFORMANCE.METRICS.TARGETS, value: number) => {
     return checkWebVital(metric, value);
   }, []);
+}
+
+/**
+ * Hook para CSS classes baseado no tier
+ */
+export function useConstitutionalClasses() {
+  const { tier, shouldAnimate, isSlowConnection, isMobile, isTouch } = useConstitution();
+  
+  return useMemo(() => {
+    const classes: string[] = [`perf-tier-${tier}`];
+    
+    if (!shouldAnimate) classes.push('perf-no-animations');
+    if (isSlowConnection) classes.push('perf-slow-connection');
+    if (isMobile) classes.push('perf-mobile');
+    if (isTouch) classes.push('perf-touch');
+    
+    return classes.join(' ');
+  }, [tier, shouldAnimate, isSlowConnection, isMobile, isTouch]);
 }
 
 export default useConstitution;
