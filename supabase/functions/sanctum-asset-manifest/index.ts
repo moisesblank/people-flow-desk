@@ -1,16 +1,30 @@
 // ============================================
-// SANCTUM OMEGA ULTRA v3.0
-// Edge Function: Asset Manifest
-// Proteção de Conteúdo Nível NASA
+// 🌌🔥 SANCTUM ASSET MANIFEST — EDGE FUNCTION NÍVEL NASA 🔥🌌
+// ANO 2300 — ENTREGA SEGURA DE MANIFEST COM URLs ASSINADAS
+// ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+// ============================================
+//
+// 📍 MAPA DE URLs DEFINITIVO:
+//   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
+//   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
+//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+//   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+//
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ============================================
+// CONSTANTES
+// ============================================
 const OWNER_EMAIL = "moisesblank@gmail.com";
-const SIGNED_URL_TTL_SECONDS = 120;
+const SIGNED_URL_TTL_SECONDS = 120; // 2 minutos
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 
+// ============================================
+// CORS HEADERS
+// ============================================
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -20,6 +34,9 @@ const corsHeaders = {
   "X-Frame-Options": "DENY",
 };
 
+// ============================================
+// TIPOS
+// ============================================
 interface PageData {
   page: number;
   url: string;
@@ -41,19 +58,21 @@ interface ManifestResponse {
   errorCode?: string;
 }
 
+// ============================================
+// FUNÇÃO PRINCIPAL
+// ============================================
 serve(async (req: Request) => {
-  console.log("[Sanctum Manifest] Request received:", req.method);
-
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    // Validate authorization
+    // ============================================
+    // 1) AUTENTICAÇÃO
+    // ============================================
     const authHeader = req.headers.get("Authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      console.warn("[Sanctum Manifest] No auth header");
       return new Response(
         JSON.stringify({ success: false, error: "Não autorizado", errorCode: "UNAUTHORIZED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -61,80 +80,99 @@ serve(async (req: Request) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
+
+    // Criar cliente Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Get user from token
+    // Verificar usuário
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
     if (authError || !user) {
-      console.warn("[Sanctum Manifest] Invalid token:", authError?.message);
       return new Response(
         JSON.stringify({ success: false, error: "Token inválido", errorCode: "UNAUTHORIZED" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("[Sanctum Manifest] User authenticated:", user.email);
-
-    // Get assetId from query or body
+    // ============================================
+    // 2) OBTER ASSET ID
+    // ============================================
     let assetId: string | null = null;
+
+    // Tentar obter de query params (GET)
     const url = new URL(req.url);
     assetId = url.searchParams.get("assetId");
 
+    // Tentar obter de body (POST)
     if (!assetId && req.method === "POST") {
       try {
         const body = await req.json();
         assetId = body.assetId;
       } catch {
-        console.warn("[Sanctum Manifest] Failed to parse body");
+        // Ignorar erro de parse
       }
     }
 
     if (!assetId) {
-      console.warn("[Sanctum Manifest] No assetId provided");
       return new Response(
         JSON.stringify({ success: false, error: "Asset ID não fornecido", errorCode: "BAD_REQUEST" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("[Sanctum Manifest] Fetching manifest for asset:", assetId);
-
-    // Call the database function
-    const { data: manifest, error: manifestError } = await supabase.rpc("fn_get_asset_manifest", {
-      p_user_id: user.id,
-      p_asset_id: assetId,
-    });
+    // ============================================
+    // 3) CHAMAR FUNÇÃO DE MANIFEST
+    // ============================================
+    const { data: manifest, error: manifestError } = await supabase.rpc(
+      "fn_get_asset_manifest",
+      {
+        p_user_id: user.id,
+        p_asset_id: assetId,
+      }
+    );
 
     if (manifestError) {
-      console.error("[Sanctum Manifest] RPC error:", manifestError);
+      console.error("[Sanctum Manifest] Erro RPC:", manifestError);
       return new Response(
         JSON.stringify({ success: false, error: "Erro interno", errorCode: "SERVER_ERROR" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Handle non-success responses from function
+    // ============================================
+    // 4) VERIFICAR RESULTADO
+    // ============================================
     if (!manifest?.success) {
       const errorCode = manifest?.errorCode || "UNKNOWN";
       let status = 500;
+
       switch (errorCode) {
-        case "LOCKED": status = 423; break;
-        case "UNAUTHORIZED": status = 403; break;
-        case "NOT_FOUND": status = 404; break;
-        case "NOT_READY": status = 503; break;
+        case "LOCKED":
+          status = 423; // Locked
+          break;
+        case "UNAUTHORIZED":
+          status = 403; // Forbidden
+          break;
+        case "NOT_FOUND":
+          status = 404;
+          break;
+        case "NOT_READY":
+          status = 503; // Service Unavailable
+          break;
       }
-      console.warn("[Sanctum Manifest] Access denied:", errorCode);
+
       return new Response(
-        JSON.stringify(manifest), 
+        JSON.stringify(manifest),
         { status, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("[Sanctum Manifest] Manifest retrieved, signing pages...");
-
-    // Sign URLs for each page
+    // ============================================
+    // 5) GERAR SIGNED URLs PARA CADA PÁGINA
+    // ============================================
     const pages = manifest.pages || [];
     const signedPages: PageData[] = [];
 
@@ -143,22 +181,28 @@ serve(async (req: Request) => {
         const { data: signedData, error: signError } = await supabase.storage
           .from(TRANSMUTED_BUCKET)
           .createSignedUrl(page.path, SIGNED_URL_TTL_SECONDS);
-        
-        if (!signError && signedData?.signedUrl) {
-          signedPages.push({ 
-            page: page.page, 
-            url: signedData.signedUrl, 
-            width: page.width, 
-            height: page.height 
+
+        if (signError) {
+          console.error(`[Sanctum] Erro ao assinar página ${page.page}:`, signError);
+          continue;
+        }
+
+        if (signedData?.signedUrl) {
+          signedPages.push({
+            page: page.page,
+            url: signedData.signedUrl,
+            width: page.width,
+            height: page.height,
           });
-        } else {
-          console.warn(`[Sanctum Manifest] Failed to sign page ${page.page}:`, signError?.message);
         }
       } catch (err) {
-        console.error(`[Sanctum Manifest] Exception signing page ${page.page}:`, err);
+        console.error(`[Sanctum] Exceção ao assinar página ${page.page}:`, err);
       }
     }
 
+    // ============================================
+    // 6) MONTAR RESPOSTA FINAL
+    // ============================================
     const expiresAt = new Date(Date.now() + SIGNED_URL_TTL_SECONDS * 1000).toISOString();
 
     const response: ManifestResponse = {
@@ -173,19 +217,21 @@ serve(async (req: Request) => {
       isOwner: manifest.isOwner || user.email?.toLowerCase() === OWNER_EMAIL,
     };
 
-    console.log("[Sanctum Manifest] Response ready, pages signed:", signedPages.length);
-
-    return new Response(JSON.stringify(response), {
-      status: 200,
-      headers: { 
-        ...corsHeaders, 
-        "Content-Type": "application/json", 
-        "X-Sanctum-Version": "3.0-omega" 
-      },
-    });
+    return new Response(
+      JSON.stringify(response),
+      {
+        status: 200,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "X-Sanctum-Version": "3.0-omega",
+        },
+      }
+    );
 
   } catch (err) {
-    console.error("[Sanctum Manifest] Fatal error:", err);
+    console.error("[Sanctum Manifest] Erro fatal:", err);
+    
     return new Response(
       JSON.stringify({ success: false, error: "Erro interno do servidor", errorCode: "SERVER_ERROR" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
