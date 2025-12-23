@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   RotateCcw, 
   ChevronLeft,
@@ -32,6 +33,7 @@ interface FlashcardProps {
 }
 
 export function Flashcard({ cards, onComplete }: FlashcardProps) {
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isFlipped, setIsFlipped] = useState(false);
   const [showHint, setShowHint] = useState(false);

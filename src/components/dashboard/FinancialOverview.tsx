@@ -49,11 +49,12 @@ export function FinancialOverview({
   const isWarning = expenseRatio >= 80 && expenseRatio < 100;
   const isDanger = expenseRatio >= 100;
 
+  const { gpuAnimationProps } = useQuantumReactivity();
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-2xl p-6"
+      {...gpuAnimationProps.fadeUp}
+      className="glass-card rounded-2xl p-6 will-change-transform transform-gpu"
     >
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">

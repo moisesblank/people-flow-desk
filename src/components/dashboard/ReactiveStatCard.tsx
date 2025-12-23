@@ -74,18 +74,19 @@ export function ReactiveStatCard({
     }
   };
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: delay * 0.1, duration: 0.3 }}
+      {...gpuAnimationProps.fadeUp}
+      transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: delay * 0.1 }}
       className={cn(
-        "relative p-4 rounded-xl bg-gradient-to-br border cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg",
+        "relative p-4 rounded-xl bg-gradient-to-br border cursor-pointer transition-all hover:scale-[1.02] hover:shadow-lg will-change-transform transform-gpu",
         styles.card
       )}
       onClick={handleClick}
-      whileHover={{ y: -2 }}
-      whileTap={{ scale: 0.98 }}
+      whileHover={shouldAnimate ? { y: -2 } : undefined}
+      whileTap={shouldAnimate ? { scale: 0.98 } : undefined}
     >
       {/* Live Indicator */}
       {isLive && (

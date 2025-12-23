@@ -54,12 +54,14 @@ export function CourseCard({
   const isFree = price === 0;
   const difficultyClass = difficultyColors[difficulty_level as keyof typeof difficultyColors] || difficultyColors.iniciante;
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <motion.div
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      {...gpuAnimationProps.fadeUp}
+      whileHover={shouldAnimate ? { y: -4 } : undefined}
+      whileTap={shouldAnimate ? { scale: 0.98 } : undefined}
+      className="will-change-transform transform-gpu"
     >
       <Card 
         className={cn(

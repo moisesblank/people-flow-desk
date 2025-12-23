@@ -66,9 +66,8 @@ export default function AlunoRanking() {
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header Hero */}
       <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="text-center space-y-4"
+        {...(shouldAnimate ? { initial: { opacity: 0, y: -20 }, animate: { opacity: 1, y: 0 } } : {})}
+        className="text-center space-y-4 will-change-transform transform-gpu"
       >
         <div className="flex items-center justify-center gap-3">
           <motion.div

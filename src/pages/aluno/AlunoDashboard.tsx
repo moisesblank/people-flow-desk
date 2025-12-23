@@ -69,9 +69,8 @@ export default function AlunoDashboard() {
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header Hero Futurista */}
       <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-blue-600 to-purple-700 p-6 md:p-8"
+        {...(shouldAnimate ? { initial: { opacity: 0, y: -20 }, animate: { opacity: 1, y: 0 } } : {})}
+        className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-blue-600 to-purple-700 p-6 md:p-8 will-change-transform transform-gpu"
       >
         {/* Partículas decorativas */}
         <div className="absolute inset-0 overflow-hidden">

@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import {
   Brain,
   TrendingUp,

@@ -179,6 +179,7 @@ export function QuickActionsGrid() {
   const navigate = useNavigate();
   const { role } = useAuth();
   const [showAIModal, setShowAIModal] = useState(false);
+  const { gpuAnimationProps } = useQuantumReactivity();
 
   // Filter actions based on user role
   const filteredActions = quickActions.filter(action => {
@@ -249,11 +250,10 @@ export function QuickActionsGrid() {
           return (
             <motion.button
               key={action.id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.03 }}
+              {...gpuAnimationProps.fadeUp}
+              transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: index * 0.03 }}
               onClick={() => navigate(action.path)}
-              className={`group p-4 rounded-xl border border-border/50 ${action.bgColor} transition-all duration-300 hover:border-border hover:shadow-lg hover:scale-105 text-left`}
+              className={`group p-4 rounded-xl border border-border/50 ${action.bgColor} transition-all duration-300 hover:border-border hover:shadow-lg hover:scale-105 text-left will-change-transform transform-gpu`}
             >
               <div className={`${action.color} mb-2`}>
                 <Icon className="h-6 w-6" />

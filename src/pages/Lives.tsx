@@ -6,6 +6,7 @@
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { Helmet } from "react-helmet";
 import {
   Youtube,
