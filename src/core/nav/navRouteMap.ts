@@ -1,15 +1,385 @@
 // ============================================
-// 🔥🛡️ NAV ROUTE MAP OMEGA v3.0 🛡️🔥
-// MAPEAMENTO DE NAVEGAÇÃO PARA ROTAS
+// 🔥 NAV ROUTE MAP — MAPA DE NAVEGAÇÃO DEFINITIVO OMEGA
+// Mapeia cada item de menu para sua rota e permissões
+// PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
 // ============================================
-// 100+ itens de navegação com RBAC completo
+//
+// 📍 MAPA DE URLs DEFINITIVO:
+// 🌐 NÃO PAGANTE: /comunidade (cadastro grátis)
+// 👨‍🎓 ALUNO BETA: /alunos (PAGANTE)
+// 👔 FUNCIONÁRIO: /gestao (funcionários)
+// 👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+//
 // ============================================
 
-import type { AppRole } from "../urlAccessControl";
+import { RouteKey } from "../routes";
 import { OWNER_EMAIL, isOwner } from "../urlAccessControl";
+import type { AppRole } from "../urlAccessControl";
 
 // ============================================
 // TIPOS
+// ============================================
+export type NavItemKey = 
+  // === COMUNIDADE (NÃO PAGANTE) ===
+  | "comunidade"
+  | "comunidade-forum"
+  | "comunidade-posts"
+  | "comunidade-membros"
+  | "comunidade-eventos"
+  | "comunidade-chat"
+
+  // === GESTÃO - Principal ===
+  | "gestao-dashboard"
+  | "gestao-dashboard-executivo"
+  | "gestao-tarefas"
+  | "gestao-integracoes"
+  | "gestao-calendario"
+  | "gestao-funcionarios"
+  | "gestao-documentos"
+  | "gestao-perfil"
+  | "gestao-guia"
+  
+  // === GESTÃO - Marketing ===
+  | "gestao-marketing"
+  | "gestao-lancamento"
+  | "gestao-metricas"
+  | "gestao-arquivos"
+  | "gestao-leads-whatsapp"
+  
+  // === GESTÃO - Aulas ===
+  | "gestao-area-professor"
+  | "gestao-planejamento-aula"
+  | "gestao-laboratorio"
+  | "gestao-turmas-online"
+  | "gestao-turmas-presenciais"
+  | "gestao-cursos"
+  | "gestao-simulados"
+  | "gestao-lives"
+  
+  // === GESTÃO - Finanças ===
+  | "gestao-entradas"
+  | "gestao-financas-empresa"
+  | "gestao-financas-pessoais"
+  | "gestao-pagamentos"
+  | "gestao-contabilidade"
+  | "gestao-transacoes-hotmart"
+  
+  // === GESTÃO - Alunos ===
+  | "gestao-alunos"
+  | "gestao-portal-aluno"
+  | "gestao-relatorios"
+  | "gestao-afiliados"
+  
+  // === GESTÃO - Admin ===
+  | "gestao-permissoes"
+  | "gestao-configuracoes"
+  | "gestao-equipe"
+  | "gestao-site"
+  | "gestao-dispositivos"
+  | "gestao-auditoria"
+  
+  // === GESTÃO - Owner ===
+  | "gestao-central-monitoramento"
+  | "gestao-monitoramento"
+  | "gestao-central-whatsapp"
+  | "gestao-whatsapp-live"
+  | "gestao-diagnostico-whatsapp"
+  | "gestao-diagnostico-webhooks"
+  | "gestao-central-metricas"
+  | "gestao-central-ias"
+  | "gestao-site-programador"
+  | "gestao-central-diagnostico"
+  | "gestao-vida-pessoal"
+  | "gestao-pessoal"
+  | "gestao-master"
+  | "gestao-owner"
+  
+  // === GESTÃO - Empresas ===
+  | "gestao-empresas-dashboard"
+  | "gestao-empresas-receitas"
+  | "gestao-empresas-arquivos"
+  | "gestao-empresas-rh"
+
+  // === PORTAL ALUNO BETA (PAGANTE) ===
+  | "alunos"
+  | "alunos-dashboard"
+  | "alunos-cronograma"
+  | "alunos-videoaulas"
+  | "alunos-materiais"
+  | "alunos-resumos"
+  | "alunos-mapas-mentais"
+  | "alunos-questoes"
+  | "alunos-simulados"
+  | "alunos-redacao"
+  | "alunos-desempenho"
+  | "alunos-ranking"
+  | "alunos-conquistas"
+  | "alunos-tutoria"
+  | "alunos-forum"
+  | "alunos-lives"
+  | "alunos-duvidas"
+  | "alunos-revisao"
+  | "alunos-laboratorio"
+  | "alunos-calculadora"
+  | "alunos-tabela-periodica"
+  | "alunos-flashcards"
+  | "alunos-metas"
+  | "alunos-agenda"
+  | "alunos-certificados"
+  | "alunos-perfil"
+  | "alunos-cursos"
+  | "alunos-aulas"
+  | "alunos-progresso"
+  | "alunos-historico"
+
+  // === LEGADO (REDIRECT) ===
+  | "dashboard"
+  | "dashboard-executivo"
+  | "tarefas"
+  | "integracoes"
+  | "calendario"
+  | "funcionarios"
+  | "documentos"
+  | "perfil"
+  | "guia"
+  | "marketing"
+  | "lancamento"
+  | "metricas"
+  | "arquivos"
+  | "leads-whatsapp"
+  | "area-professor"
+  | "planejamento-aula"
+  | "laboratorio"
+  | "turmas-online"
+  | "turmas-presenciais"
+  | "cursos"
+  | "simulados"
+  | "lives"
+  | "entradas"
+  | "financas-empresa"
+  | "financas-pessoais"
+  | "pagamentos"
+  | "contabilidade"
+  | "transacoes-hotmart"
+  | "gestao-alunos-legacy"
+  | "portal-aluno"
+  | "relatorios"
+  | "afiliados"
+  | "vida-pessoal"
+  | "pessoal"
+  | "permissoes"
+  | "configuracoes"
+  | "gestao-equipe-legacy"
+  | "gestao-site-legacy"
+  | "gestao-dispositivos-legacy"
+  | "auditoria-acessos"
+  | "central-monitoramento"
+  | "monitoramento"
+  | "central-whatsapp"
+  | "whatsapp-live"
+  | "diagnostico-whatsapp"
+  | "diagnostico-webhooks"
+  | "central-metricas"
+  | "central-ias"
+  | "site-programador"
+  | "empresas-dashboard"
+  | "empresas-receitas"
+  | "empresas-arquivos"
+  | "empresas-rh"
+  | "central-diagnostico";
+
+export type NavItemStatus = "active" | "disabled" | "coming_soon";
+
+export type UserRole = 
+  | "owner"       // MASTER — PODE TUDO
+  | "admin"       // Administrador
+  | "funcionario" // Funcionário genérico
+  | "suporte"     // Suporte ao cliente
+  | "coordenacao" // Coordenação
+  | "monitoria"   // Monitoria
+  | "afiliado"    // Afiliado
+  | "marketing"   // Marketing
+  | "contabilidade" // Contabilidade
+  | "professor"   // Professor
+  | "beta"        // ALUNO PAGANTE
+  | "aluno"       // Aluno (legacy)
+  | "viewer";     // Visitante cadastrado (NÃO PAGANTE)
+
+// ============================================
+// MAPA: NAV ITEM → ROTA
+// ============================================
+export const NAV_ROUTE_MAP: Record<NavItemKey, RouteKey> = {
+  // === COMUNIDADE (NÃO PAGANTE) ===
+  "comunidade": "COMUNIDADE",
+  "comunidade-forum": "COMUNIDADE_FORUM",
+  "comunidade-posts": "COMUNIDADE_POSTS",
+  "comunidade-membros": "COMUNIDADE_MEMBROS",
+  "comunidade-eventos": "COMUNIDADE_EVENTOS",
+  "comunidade-chat": "COMUNIDADE_CHAT",
+
+  // === GESTÃO - Principal ===
+  "gestao-dashboard": "GESTAO_DASHBOARD",
+  "gestao-dashboard-executivo": "GESTAO_DASHBOARD_EXECUTIVO",
+  "gestao-tarefas": "GESTAO_TAREFAS",
+  "gestao-integracoes": "GESTAO_INTEGRACOES",
+  "gestao-calendario": "GESTAO_CALENDARIO",
+  "gestao-funcionarios": "GESTAO_FUNCIONARIOS",
+  "gestao-documentos": "GESTAO_DOCUMENTOS",
+  "gestao-perfil": "GESTAO_PERFIL",
+  "gestao-guia": "GESTAO_GUIA",
+  
+  // === GESTÃO - Marketing ===
+  "gestao-marketing": "GESTAO_MARKETING",
+  "gestao-lancamento": "GESTAO_LANCAMENTO",
+  "gestao-metricas": "GESTAO_METRICAS",
+  "gestao-arquivos": "GESTAO_ARQUIVOS",
+  "gestao-leads-whatsapp": "GESTAO_LEADS_WHATSAPP",
+  
+  // === GESTÃO - Aulas ===
+  "gestao-area-professor": "GESTAO_AREA_PROFESSOR",
+  "gestao-planejamento-aula": "GESTAO_PLANEJAMENTO_AULA",
+  "gestao-laboratorio": "GESTAO_LABORATORIO",
+  "gestao-turmas-online": "GESTAO_TURMAS_ONLINE",
+  "gestao-turmas-presenciais": "GESTAO_TURMAS_PRESENCIAIS",
+  "gestao-cursos": "GESTAO_CURSOS",
+  "gestao-simulados": "GESTAO_SIMULADOS",
+  "gestao-lives": "GESTAO_LIVES",
+  
+  // === GESTÃO - Finanças ===
+  "gestao-entradas": "GESTAO_ENTRADAS",
+  "gestao-financas-empresa": "GESTAO_FINANCAS_EMPRESA",
+  "gestao-financas-pessoais": "GESTAO_FINANCAS_PESSOAIS",
+  "gestao-pagamentos": "GESTAO_PAGAMENTOS",
+  "gestao-contabilidade": "GESTAO_CONTABILIDADE",
+  "gestao-transacoes-hotmart": "GESTAO_TRANSACOES_HOTMART",
+  
+  // === GESTÃO - Alunos ===
+  "gestao-alunos": "GESTAO_ALUNOS",
+  "gestao-portal-aluno": "GESTAO_PORTAL_ALUNO",
+  "gestao-relatorios": "GESTAO_RELATORIOS",
+  "gestao-afiliados": "GESTAO_AFILIADOS",
+  
+  // === GESTÃO - Admin ===
+  "gestao-permissoes": "GESTAO_PERMISSOES",
+  "gestao-configuracoes": "GESTAO_CONFIGURACOES",
+  "gestao-equipe": "GESTAO_EQUIPE",
+  "gestao-site": "GESTAO_SITE",
+  "gestao-dispositivos": "GESTAO_DISPOSITIVOS",
+  "gestao-auditoria": "GESTAO_AUDITORIA",
+  
+  // === GESTÃO - Owner ===
+  "gestao-central-monitoramento": "GESTAO_CENTRAL_MONITORAMENTO",
+  "gestao-monitoramento": "GESTAO_MONITORAMENTO",
+  "gestao-central-whatsapp": "GESTAO_CENTRAL_WHATSAPP",
+  "gestao-whatsapp-live": "GESTAO_WHATSAPP_LIVE",
+  "gestao-diagnostico-whatsapp": "GESTAO_DIAGNOSTICO_WHATSAPP",
+  "gestao-diagnostico-webhooks": "GESTAO_DIAGNOSTICO_WEBHOOKS",
+  "gestao-central-metricas": "GESTAO_CENTRAL_METRICAS",
+  "gestao-central-ias": "GESTAO_CENTRAL_IAS",
+  "gestao-site-programador": "GESTAO_SITE_PROGRAMADOR",
+  "gestao-central-diagnostico": "GESTAO_CENTRAL_DIAGNOSTICO",
+  "gestao-vida-pessoal": "GESTAO_VIDA_PESSOAL",
+  "gestao-pessoal": "GESTAO_PESSOAL",
+  "gestao-master": "GESTAO_MASTER",
+  "gestao-owner": "GESTAO_OWNER",
+  
+  // === GESTÃO - Empresas ===
+  "gestao-empresas-dashboard": "GESTAO_EMPRESAS_DASHBOARD",
+  "gestao-empresas-receitas": "GESTAO_EMPRESAS_RECEITAS",
+  "gestao-empresas-arquivos": "GESTAO_EMPRESAS_ARQUIVOS",
+  "gestao-empresas-rh": "GESTAO_EMPRESAS_RH",
+
+  // === PORTAL ALUNO BETA (PAGANTE) ===
+  "alunos": "ALUNOS",
+  "alunos-dashboard": "ALUNOS_DASHBOARD",
+  "alunos-cronograma": "ALUNOS_CRONOGRAMA",
+  "alunos-videoaulas": "ALUNOS_VIDEOAULAS",
+  "alunos-materiais": "ALUNOS_MATERIAIS",
+  "alunos-resumos": "ALUNOS_RESUMOS",
+  "alunos-mapas-mentais": "ALUNOS_MAPAS_MENTAIS",
+  "alunos-questoes": "ALUNOS_QUESTOES",
+  "alunos-simulados": "ALUNOS_SIMULADOS",
+  "alunos-redacao": "ALUNOS_REDACAO",
+  "alunos-desempenho": "ALUNOS_DESEMPENHO",
+  "alunos-ranking": "ALUNOS_RANKING",
+  "alunos-conquistas": "ALUNOS_CONQUISTAS",
+  "alunos-tutoria": "ALUNOS_TUTORIA",
+  "alunos-forum": "ALUNOS_FORUM",
+  "alunos-lives": "ALUNOS_LIVES",
+  "alunos-duvidas": "ALUNOS_DUVIDAS",
+  "alunos-revisao": "ALUNOS_REVISAO",
+  "alunos-laboratorio": "ALUNOS_LABORATORIO",
+  "alunos-calculadora": "ALUNOS_CALCULADORA",
+  "alunos-tabela-periodica": "ALUNOS_TABELA_PERIODICA",
+  "alunos-flashcards": "ALUNOS_FLASHCARDS",
+  "alunos-metas": "ALUNOS_METAS",
+  "alunos-agenda": "ALUNOS_AGENDA",
+  "alunos-certificados": "ALUNOS_CERTIFICADOS",
+  "alunos-perfil": "ALUNOS_PERFIL",
+  "alunos-cursos": "ALUNOS_CURSOS",
+  "alunos-aulas": "ALUNOS_AULAS",
+  "alunos-progresso": "ALUNOS_PROGRESSO",
+  "alunos-historico": "ALUNOS_HISTORICO",
+
+  // === LEGADO (REDIRECT PARA NOVOS) ===
+  "dashboard": "DASHBOARD",
+  "dashboard-executivo": "DASHBOARD_EXECUTIVO",
+  "tarefas": "TAREFAS",
+  "integracoes": "INTEGRACOES",
+  "calendario": "CALENDARIO",
+  "funcionarios": "FUNCIONARIOS",
+  "documentos": "DOCUMENTOS",
+  "perfil": "PERFIL",
+  "guia": "GUIA",
+  "marketing": "MARKETING",
+  "lancamento": "LANCAMENTO",
+  "metricas": "METRICAS",
+  "arquivos": "ARQUIVOS",
+  "leads-whatsapp": "LEADS_WHATSAPP",
+  "area-professor": "AREA_PROFESSOR",
+  "planejamento-aula": "PLANEJAMENTO_AULA",
+  "laboratorio": "LABORATORIO",
+  "turmas-online": "TURMAS_ONLINE",
+  "turmas-presenciais": "TURMAS_PRESENCIAIS",
+  "cursos": "CURSOS",
+  "simulados": "SIMULADOS",
+  "lives": "LIVES",
+  "entradas": "ENTRADAS",
+  "financas-empresa": "FINANCAS_EMPRESA",
+  "financas-pessoais": "FINANCAS_PESSOAIS",
+  "pagamentos": "PAGAMENTOS",
+  "contabilidade": "CONTABILIDADE",
+  "transacoes-hotmart": "TRANSACOES_HOTMART",
+  "gestao-alunos-legacy": "GESTAO_ALUNOS_LEGACY",
+  "portal-aluno": "PORTAL_ALUNO",
+  "relatorios": "RELATORIOS",
+  "afiliados": "AFILIADOS",
+  "vida-pessoal": "VIDA_PESSOAL",
+  "pessoal": "PESSOAL",
+  "permissoes": "PERMISSOES",
+  "configuracoes": "CONFIGURACOES",
+  "gestao-equipe-legacy": "GESTAO_EQUIPE_LEGACY",
+  "gestao-site-legacy": "GESTAO_SITE_LEGACY",
+  "gestao-dispositivos-legacy": "GESTAO_DISPOSITIVOS_LEGACY",
+  "auditoria-acessos": "AUDITORIA_ACESSOS",
+  "central-monitoramento": "CENTRAL_MONITORAMENTO",
+  "monitoramento": "MONITORAMENTO",
+  "central-whatsapp": "CENTRAL_WHATSAPP",
+  "whatsapp-live": "WHATSAPP_LIVE",
+  "diagnostico-whatsapp": "DIAGNOSTICO_WHATSAPP",
+  "diagnostico-webhooks": "DIAGNOSTICO_WEBHOOKS",
+  "central-metricas": "CENTRAL_METRICAS",
+  "central-ias": "CENTRAL_IAS",
+  "site-programador": "SITE_PROGRAMADOR",
+  "empresas-dashboard": "EMPRESAS_DASHBOARD",
+  "empresas-receitas": "EMPRESAS_RECEITAS",
+  "empresas-arquivos": "EMPRESAS_ARQUIVOS",
+  "empresas-rh": "EMPRESAS_RH",
+  "central-diagnostico": "CENTRAL_DIAGNOSTICO",
+};
+
+// ============================================
+// INTERFACE NAV ITEM (COMPATIBILIDADE)
 // ============================================
 
 export interface NavItem {
@@ -216,7 +586,7 @@ export function canAccessNavItem(
   email?: string | null
 ): boolean {
   // Owner MASTER tem acesso total
-  if (isOwner(email, role)) {
+  if (isOwner(email, role as AppRole)) {
     return true;
   }
   
@@ -244,3 +614,8 @@ export function groupNavItems(items: NavItem[]): Record<string, NavItem[]> {
     return acc;
   }, {} as Record<string, NavItem[]>);
 }
+
+// ============================================
+// EXPORT DEFAULT
+// ============================================
+export default NAV_ROUTE_MAP;
