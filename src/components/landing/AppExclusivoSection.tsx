@@ -1,9 +1,11 @@
 // ============================================
 // APP EXCLUSIVO SECTION - FUTURISTIC 2300
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { motion } from "framer-motion";
 import { Smartphone, Apple, Download, Star, Zap, Shield, Rocket } from "lucide-react";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import appArte from "@/assets/app-exclusivo-arte.png";
 
 // Floating particles
@@ -74,6 +76,8 @@ const FeatureBadge = ({ icon: Icon, text, delay }: { icon: any; text: string; de
 );
 
 export const AppExclusivoSection = () => {
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
+  
   return (
     <section className="relative py-24 md:py-32 overflow-hidden bg-gradient-to-b from-black via-slate-950 to-black">
       {/* Epic background */}
@@ -83,28 +87,27 @@ export const AppExclusivoSection = () => {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom,rgba(147,51,234,0.1)_0%,transparent_60%)]" />
       </div>
 
-      <FloatingParticles />
-      <HolographicRings />
+      {/* Partículas e anéis apenas se animações habilitadas */}
+      {shouldAnimate && <FloatingParticles />}
+      {shouldAnimate && <HolographicRings />}
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Epic title */}
         <motion.div
           className="text-center mb-16"
-          initial={{ opacity: 0, y: -30 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
         >
           {/* Badge */}
           <motion.div
             className="inline-flex items-center gap-2 px-6 py-3 rounded-full bg-gradient-to-r from-red-600/20 via-purple-600/20 to-blue-600/20 border border-red-500/30 mb-8"
-            animate={{
+            animate={shouldAnimate ? {
               boxShadow: [
                 '0 0 20px rgba(220,38,38,0.3)',
                 '0 0 40px rgba(147,51,234,0.3)',
                 '0 0 20px rgba(30,64,175,0.3)',
                 '0 0 40px rgba(220,38,38,0.3)',
               ],
-            }}
+            } : undefined}
             transition={{ duration: 4, repeat: Infinity }}
           >
             <Smartphone className="w-5 h-5 text-red-400" />
@@ -117,9 +120,9 @@ export const AppExclusivoSection = () => {
             <span className="block text-white mb-2">SOMOS O</span>
             <motion.span
               className="block bg-gradient-to-r from-red-500 via-purple-500 to-blue-500 bg-clip-text text-transparent"
-              animate={{
+              animate={shouldAnimate ? {
                 backgroundPosition: ['0% 50%', '100% 50%', '0% 50%'],
-              }}
+              } : undefined}
               transition={{ duration: 5, repeat: Infinity }}
               style={{ backgroundSize: '200% 200%' }}
             >
@@ -128,9 +131,7 @@ export const AppExclusivoSection = () => {
             <span className="block text-white mt-2">COM APP</span>
             <motion.span
               className="block text-3xl md:text-5xl mt-2"
-              initial={{ opacity: 0 }}
-              whileInView={{ opacity: 1 }}
-              transition={{ delay: 0.5 }}
+              {...(shouldAnimate ? gpuAnimationProps.fadeIn : {})}
             >
               <span className="text-white/80">iOS</span>
               <span className="text-red-500 mx-4">&</span>
@@ -140,9 +141,7 @@ export const AppExclusivoSection = () => {
 
           <motion.p
             className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto"
-            initial={{ opacity: 0 }}
-            whileInView={{ opacity: 1 }}
-            transition={{ delay: 0.7 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeIn : {})}
           >
             Estude química de qualquer lugar, a qualquer hora. Tecnologia de ponta para sua aprovação.
           </motion.p>

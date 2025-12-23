@@ -2,11 +2,13 @@
 // VIDEO FEEDBACK CAROUSEL - EX-ALUNOS REAIS
 // Carrossel automático horizontal com vídeos do YouTube
 // COM PROTEÇÃO FORTALEZA DIGITAL
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePerformance } from "@/hooks/usePerformance";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Play, 
   ChevronLeft, 
@@ -261,6 +263,7 @@ const VideoModal = ({
 // Componente principal
 export const VideoFeedbackCarousel = () => {
   const { isSlowConnection } = usePerformance();
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
   const [selectedVideo, setSelectedVideo] = useState<typeof feedbackVideos[0] | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -301,7 +304,7 @@ export const VideoFeedbackCarousel = () => {
       <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950/50 to-black" />
       
       {/* Glow Effects - Disabled on slow connections (blur-[150px] is CPU-heavy) */}
-      {!isSlowConnection && (
+      {!isSlowConnection && shouldAnimate && (
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-pink-500/10 blur-[150px] pointer-events-none" />
       )}
 
@@ -309,8 +312,7 @@ export const VideoFeedbackCarousel = () => {
         {/* Header */}
         <div className="container mx-auto px-4 text-center mb-12">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
             viewport={{ once: true }}
             className="inline-flex items-center gap-2 px-5 py-2 rounded-full bg-gradient-to-r from-pink-500/20 to-purple-500/20 border border-pink-500/30 mb-6"
           >
@@ -320,9 +322,7 @@ export const VideoFeedbackCarousel = () => {
           </motion.div>
 
           <motion.h2
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.1 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
             viewport={{ once: true }}
             className="text-4xl md:text-5xl font-black mb-4"
           >
@@ -333,9 +333,7 @@ export const VideoFeedbackCarousel = () => {
           </motion.h2>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeIn : {})}
             viewport={{ once: true }}
             className="text-gray-400 max-w-2xl mx-auto flex items-center justify-center gap-2"
           >
