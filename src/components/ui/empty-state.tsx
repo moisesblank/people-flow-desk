@@ -1,9 +1,11 @@
 // ============================================
 // MOISES MEDEIROS v5.0 - EMPTY STATES
 // Pilar 3: Design Premium com ilustrações contextuais
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   FileQuestion, 
   Users, 
@@ -88,11 +90,11 @@ export function EmptyState({
   className
 }: EmptyStateProps) {
   const isCompact = variant === "compact";
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
+      {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
       className={cn(
         "flex flex-col items-center justify-center text-center",
         isCompact ? "py-8 px-4" : "py-16 px-6",
@@ -101,16 +103,16 @@ export function EmptyState({
     >
       {/* Animated Icon Container */}
       <motion.div
-        initial={{ scale: 0.8 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 0.1, type: "spring", stiffness: 200 }}
+        {...(shouldAnimate ? gpuAnimationProps.scaleIn : {})}
         className={cn(
           "relative rounded-full bg-muted/50 flex items-center justify-center mb-6",
           isCompact ? "w-16 h-16" : "w-24 h-24"
         )}
       >
         {/* Glow effect */}
-        <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl animate-pulse" />
+        {shouldAnimate && (
+          <div className="absolute inset-0 rounded-full bg-primary/10 blur-xl animate-pulse" />
+        )}
         
         <Icon 
           className={cn(
@@ -122,9 +124,7 @@ export function EmptyState({
 
       {/* Title */}
       <motion.h3
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 0.2 }}
+        {...(shouldAnimate ? gpuAnimationProps.fadeIn : {})}
         className={cn(
           "font-semibold text-foreground mb-2",
           isCompact ? "text-lg" : "text-xl"

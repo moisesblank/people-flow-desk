@@ -1,6 +1,7 @@
 // ============================================
 // SEÇÃO CURSOS & TRILHAS - VERSÃO 2500
 // Cards premium com efeitos holográficos
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { useState } from "react";
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 const courses = [
   {
@@ -244,49 +246,47 @@ const CourseCard = ({ course, index }: { course: typeof courses[0]; index: numbe
 };
 
 export const CoursesSection = () => {
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
+  
   return (
     <section id="cursos" className="relative py-32 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent" />
         
-        {/* Orbes de energia */}
-        <motion.div
-          className="absolute right-0 top-1/3 w-[600px] h-[600px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          animate={{
-            y: [0, 80, 0],
-            x: [0, -50, 0],
-          }}
-          transition={{ duration: 15, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute left-0 bottom-1/4 w-[500px] h-[500px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          animate={{
-            y: [0, -60, 0],
-          }}
-          transition={{ duration: 12, repeat: Infinity }}
-        />
+        {/* Orbes de energia - apenas se animações habilitadas */}
+        {shouldAnimate && (
+          <>
+            <motion.div
+              className="absolute right-0 top-1/3 w-[600px] h-[600px] rounded-full"
+              style={{
+                background: 'radial-gradient(circle, rgba(147, 51, 234, 0.15) 0%, transparent 70%)',
+                filter: 'blur(100px)',
+              }}
+              {...gpuAnimationProps.scaleIn}
+            />
+            <motion.div
+              className="absolute left-0 bottom-1/4 w-[500px] h-[500px] rounded-full"
+              style={{
+                background: 'radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%)',
+                filter: 'blur(100px)',
+              }}
+              {...gpuAnimationProps.scaleIn}
+            />
+          </>
+        )}
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
         <div className="text-center mb-20">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
             viewport={{ once: true }}
             className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-purple-900/30 border border-purple-700/40 mb-8"
           >
             <motion.div
-              animate={{ rotate: 360 }}
+              animate={shouldAnimate ? { rotate: 360 } : undefined}
               transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
             >
               <GraduationCap className="w-5 h-5 text-purple-400" />
@@ -295,8 +295,7 @@ export const CoursesSection = () => {
           </motion.div>
 
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
             viewport={{ once: true }}
             className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6"
           >
@@ -304,10 +303,8 @@ export const CoursesSection = () => {
           </motion.h2>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeIn : {})}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
             className="text-lg text-gray-400 max-w-2xl mx-auto"
           >
             Escolha o curso ideal para o seu objetivo. Todos com garantia de 30 dias e acesso vitalício.

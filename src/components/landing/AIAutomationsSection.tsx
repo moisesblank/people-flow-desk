@@ -1,10 +1,12 @@
 // ============================================
 // IA & AUTOMAÇÕES 2500 - TRAMON v8
 // Demonstração futurista das tecnologias
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Brain, Cpu, Zap, Sparkles, Bot, MessageSquare, 
   BarChart3, Shield, Rocket, ArrowRight,
@@ -338,6 +340,7 @@ const AutomationCard = ({
 
 export const AIAutomationsSection = () => {
   const [activeIndex, setActiveIndex] = useState(0);
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
 
   // Auto-rotate
   useEffect(() => {
@@ -353,31 +356,28 @@ export const AIAutomationsSection = () => {
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-purple-950/10 to-transparent" />
         
-        <motion.div
-          className="absolute right-0 top-1/4 w-[700px] h-[700px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(147, 51, 234, 0.12) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          animate={{
-            x: [0, 80, 0],
-            y: [0, -60, 0],
-          }}
-          transition={{ duration: 20, repeat: Infinity }}
-        />
+        {shouldAnimate && (
+          <motion.div
+            className="absolute right-0 top-1/4 w-[700px] h-[700px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(147, 51, 234, 0.12) 0%, transparent 70%)',
+              filter: 'blur(100px)',
+            }}
+            {...gpuAnimationProps.scaleIn}
+          />
+        )}
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
         <div className="text-center mb-20">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
             viewport={{ once: true }}
             className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-purple-900/30 border border-purple-700/40 mb-8"
           >
             <motion.div
-              animate={{ rotate: 360 }}
+              animate={shouldAnimate ? { rotate: 360 } : undefined}
               transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
             >
               <Cpu className="w-5 h-5 text-purple-400" />
@@ -386,8 +386,7 @@ export const AIAutomationsSection = () => {
           </motion.div>
 
           <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
             viewport={{ once: true }}
             className="text-4xl md:text-5xl lg:text-6xl font-black text-white mb-6"
           >
@@ -395,10 +394,8 @@ export const AIAutomationsSection = () => {
           </motion.h2>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
+            {...(shouldAnimate ? gpuAnimationProps.fadeIn : {})}
             viewport={{ once: true }}
-            transition={{ delay: 0.1 }}
             className="text-lg text-gray-400 max-w-2xl mx-auto"
           >
             Tecnologias quânticas avançadas trabalhando 24/7 para maximizar seu aprendizado

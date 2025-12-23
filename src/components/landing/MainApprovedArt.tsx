@@ -1,11 +1,13 @@
 // ============================================
 // ARTE PRINCIPAL DOS APROVADOS - DESTAQUE ÉPICO
 // A imagem que mais impressiona
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { motion } from "framer-motion";
 import { Crown, Trophy, Star, Sparkles, GraduationCap, Zap, Award, Target, Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import artePrincipal from "@/assets/arte-aprovados-principal.png";
 
 // Partículas de celebração
@@ -46,44 +48,42 @@ const CelebrationParticles = () => (
 );
 
 export const MainApprovedArt = () => {
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
+  
   return (
     <section className="relative py-16 md:py-24 overflow-hidden">
       {/* Background com gradiente épico */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
       
-      {/* Glows laterais */}
-      <motion.div
-        className="absolute -left-40 top-1/4 w-[600px] h-[600px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(220,38,38,0.25) 0%, transparent 60%)',
-          filter: 'blur(100px)',
-        }}
-        animate={{
-          x: [0, 50, 0],
-          opacity: [0.3, 0.6, 0.3],
-        }}
-        transition={{ duration: 8, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute -right-40 bottom-1/4 w-[600px] h-[600px] rounded-full"
-        style={{
-          background: 'radial-gradient(circle, rgba(251,191,36,0.2) 0%, transparent 60%)',
-          filter: 'blur(100px)',
-        }}
-        animate={{
-          x: [0, -50, 0],
-          opacity: [0.3, 0.6, 0.3],
-        }}
-        transition={{ duration: 8, repeat: Infinity, delay: 2 }}
-      />
+      {/* Glows laterais - desabilitados se shouldAnimate false */}
+      {shouldAnimate && (
+        <>
+          <motion.div
+            className="absolute -left-40 top-1/4 w-[600px] h-[600px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(220,38,38,0.25) 0%, transparent 60%)',
+              filter: 'blur(100px)',
+            }}
+            {...gpuAnimationProps.slideIn}
+          />
+          <motion.div
+            className="absolute -right-40 bottom-1/4 w-[600px] h-[600px] rounded-full"
+            style={{
+              background: 'radial-gradient(circle, rgba(251,191,36,0.2) 0%, transparent 60%)',
+              filter: 'blur(100px)',
+            }}
+            {...gpuAnimationProps.slideIn}
+          />
+        </>
+      )}
 
-      <CelebrationParticles />
+      {/* Partículas apenas se animações habilitadas */}
+      {shouldAnimate && <CelebrationParticles />}
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header épico */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
           viewport={{ once: true }}
           className="text-center mb-12"
         >

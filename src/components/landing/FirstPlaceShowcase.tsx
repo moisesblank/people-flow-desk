@@ -1,12 +1,14 @@
 // ============================================
 // FIRST PLACE SHOWCASE - SEÇÃO DESTAQUE 1º LUGARES
 // Design futurista premium
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { motion } from "framer-motion";
 import { Crown, Trophy, Star, Sparkles, GraduationCap, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import primeiroLugar1 from "@/assets/aprovados/primeiro-lugar-1.png";
 import primeiroLugar2 from "@/assets/aprovados/primeiro-lugar-2.png";
 
@@ -238,32 +240,31 @@ const ChampionCard = ({ champion, index }: { champion: typeof champions[0]; inde
 );
 
 export const FirstPlaceShowcase = () => {
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
+  
   return (
     <section className="relative py-20 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
       
-      {/* Glow central */}
-      <motion.div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px]"
-        style={{
-          background: 'radial-gradient(ellipse, rgba(251,191,36,0.15) 0%, rgba(220,38,38,0.1) 30%, transparent 60%)',
-          filter: 'blur(80px)',
-        }}
-        animate={{
-          scale: [1, 1.2, 1],
-          opacity: [0.5, 0.8, 0.5],
-        }}
-        transition={{ duration: 5, repeat: Infinity }}
-      />
+      {/* Glow central - disabled when shouldAnimate is false */}
+      {shouldAnimate && (
+        <motion.div
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[600px]"
+          style={{
+            background: 'radial-gradient(ellipse, rgba(251,191,36,0.15) 0%, rgba(220,38,38,0.1) 30%, transparent 60%)',
+            filter: 'blur(80px)',
+          }}
+          {...gpuAnimationProps.scaleIn}
+        />
+      )}
 
-      <FloatingParticles />
+      {shouldAnimate && <FloatingParticles />}
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
         <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          whileInView={{ opacity: 1, y: 0 }}
+          {...(shouldAnimate ? gpuAnimationProps.fadeUp : {})}
           viewport={{ once: true }}
           className="text-center mb-16"
         >
