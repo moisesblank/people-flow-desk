@@ -410,6 +410,21 @@ export function getActionDefinition(actionKey: ActionKey): ActionDefinition | nu
 }
 
 /**
+ * Alias para getActionDefinition
+ */
+export function getAction(actionKey: ActionKey): ActionDefinition | null {
+  return getActionDefinition(actionKey);
+}
+
+/**
+ * Verifica se uma ação requer confirmação
+ */
+export function requiresConfirmation(actionKey: ActionKey): boolean {
+  const action = ACTIONS[actionKey];
+  return action?.requiresConfirmation || false;
+}
+
+/**
  * Retorna todas as ações que um usuário pode executar
  */
 export function getUserActions(role: string | null): ActionKey[] {
@@ -450,20 +465,20 @@ export function auditActions(): {
   };
   
   let destructive = 0;
-  let requireConfirmation = 0;
+  let requireConfirmationCount = 0;
   
   keys.forEach(key => {
     const action = ACTIONS[key];
     byCategory[action.category]++;
     if (action.isDestructive) destructive++;
-    if (action.requiresConfirmation) requireConfirmation++;
+    if (action.requiresConfirmation) requireConfirmationCount++;
   });
   
   return {
     total: keys.length,
     byCategory,
     destructive,
-    requireConfirmation,
+    requireConfirmation: requireConfirmationCount,
   };
 }
 
