@@ -116,8 +116,21 @@ serve(async (req) => {
       }
     }
 
-    // Gerar timestamp para expiração (1 hora)
-    const expiresAt = Math.floor(Date.now() / 1000) + 3600;
+    // C061: Buscar TTL configurado do banco (padrão 15 minutos para vídeo)
+    let ttlSeconds = 900; // Default 15 minutos
+    try {
+      const { data: configData } = await supabase.rpc('get_content_ttl', { p_content_type: 'video' });
+      if (configData && typeof configData === 'number') {
+        ttlSeconds = configData;
+      }
+    } catch (e) {
+      console.warn('[get-panda-signed-url] Usando TTL padrão:', ttlSeconds);
+    }
+    
+    // Gerar timestamp para expiração com TTL configurado
+    const expiresAt = Math.floor(Date.now() / 1000) + ttlSeconds;
+    
+    console.log(`[get-panda-signed-url] TTL configurado: ${ttlSeconds}s`);
 
     // Criar hash de segurança (HMAC)
     const encoder = new TextEncoder();
@@ -143,25 +156,46 @@ serve(async (req) => {
 
     console.log(`[get-panda-signed-url] URL gerada para aula ${lessonId}`);
 
-    // Registrar acesso para analytics
+    // C064: Registrar acesso via função com detecção de anomalia
     try {
-      await supabase.from('content_access_log').insert({
-        user_id: user.id,
-        content_id: lessonId,
-        content_type: 'video',
-        action: 'signed_url_generated',
-        success: true,
-        metadata: { video_id: videoId, expires_at: expiresAt }
+      await supabase.rpc('log_content_access', {
+        p_user_id: user.id,
+        p_content_type: 'video',
+        p_content_id: lessonId,
+        p_action: 'signed_url_generated',
+        p_metadata: { 
+          video_id: videoId, 
+          expires_at: expiresAt,
+          ttl_seconds: ttlSeconds,
+          provider: 'panda'
+        }
       });
     } catch (logErr) {
       console.warn('[get-panda-signed-url] Erro ao registrar acesso:', logErr);
+    }
+    
+    // C062: Gerar dados de watermark
+    let watermarkData = null;
+    try {
+      const { data: wmData } = await supabase.rpc('generate_content_watermark', {
+        p_user_id: user.id,
+        p_content_id: lessonId,
+        p_content_type: 'video'
+      });
+      if (wmData && wmData.length > 0) {
+        watermarkData = wmData[0];
+      }
+    } catch (wmErr) {
+      console.warn('[get-panda-signed-url] Erro ao gerar watermark:', wmErr);
     }
 
     return new Response(
       JSON.stringify({ 
         signedUrl,
         expiresAt,
-        videoId 
+        videoId,
+        ttlSeconds,
+        watermark: watermarkData
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
