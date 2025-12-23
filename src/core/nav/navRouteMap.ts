@@ -574,11 +574,380 @@ export const ALL_NAV_ITEMS: NavItem[] = [
 ];
 
 // ============================================
-// FUNÇÕES DE ACESSO
+// MAPA: NAV ITEM → ROLES PERMITIDAS (RBAC)
+// ============================================
+export const NAV_RBAC: Record<NavItemKey, UserRole[]> = {
+  // === COMUNIDADE (NÃO PAGANTE + BETA) ===
+  "comunidade": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "beta", "aluno", "viewer"],
+  "comunidade-forum": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "beta", "aluno", "viewer"],
+  "comunidade-posts": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "beta", "aluno", "viewer"],
+  "comunidade-membros": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "beta", "aluno", "viewer"],
+  "comunidade-eventos": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "beta", "aluno", "viewer"],
+  "comunidade-chat": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "beta", "aluno", "viewer"],
+
+  // === GESTÃO - Principal ===
+  "gestao-dashboard": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"],
+  "gestao-dashboard-executivo": ["owner", "admin"],
+  "gestao-tarefas": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing"],
+  "gestao-integracoes": ["owner", "admin"],
+  "gestao-calendario": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "professor"],
+  "gestao-funcionarios": ["owner", "admin"],
+  "gestao-documentos": ["owner", "admin", "funcionario", "suporte", "coordenacao"],
+  "gestao-perfil": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"],
+  "gestao-guia": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"],
+  
+  // === GESTÃO - Marketing ===
+  "gestao-marketing": ["owner", "admin", "marketing"],
+  "gestao-lancamento": ["owner", "admin", "marketing"],
+  "gestao-metricas": ["owner", "admin", "marketing"],
+  "gestao-arquivos": ["owner", "admin", "funcionario", "marketing"],
+  "gestao-leads-whatsapp": ["owner", "admin", "marketing"],
+  
+  // === GESTÃO - Aulas ===
+  "gestao-area-professor": ["owner", "admin", "professor"],
+  "gestao-planejamento-aula": ["owner", "admin", "professor"],
+  "gestao-laboratorio": ["owner", "admin", "professor"],
+  "gestao-turmas-online": ["owner", "admin", "professor"],
+  "gestao-turmas-presenciais": ["owner", "admin", "professor"],
+  "gestao-cursos": ["owner", "admin", "professor"],
+  "gestao-simulados": ["owner", "admin", "professor"],
+  "gestao-lives": ["owner", "admin", "professor"],
+  
+  // === GESTÃO - Finanças ===
+  "gestao-entradas": ["owner", "admin", "contabilidade"],
+  "gestao-financas-empresa": ["owner", "admin", "contabilidade"],
+  "gestao-financas-pessoais": ["owner"],
+  "gestao-pagamentos": ["owner", "admin", "contabilidade"],
+  "gestao-contabilidade": ["owner", "admin", "contabilidade"],
+  "gestao-transacoes-hotmart": ["owner", "admin"],
+  
+  // === GESTÃO - Alunos ===
+  "gestao-alunos": ["owner", "admin", "suporte"],
+  "gestao-portal-aluno": ["owner", "admin"],
+  "gestao-relatorios": ["owner", "admin"],
+  "gestao-afiliados": ["owner", "admin", "afiliado"],
+  
+  // === GESTÃO - Admin ===
+  "gestao-permissoes": ["owner", "admin"],
+  "gestao-configuracoes": ["owner", "admin", "funcionario"],
+  "gestao-equipe": ["owner", "admin"],
+  "gestao-site": ["owner", "admin"],
+  "gestao-dispositivos": ["owner", "admin", "funcionario"],
+  "gestao-auditoria": ["owner", "admin"],
+  
+  // === GESTÃO - Owner ONLY ===
+  "gestao-central-monitoramento": ["owner"],
+  "gestao-monitoramento": ["owner", "admin"],
+  "gestao-central-whatsapp": ["owner", "admin"],
+  "gestao-whatsapp-live": ["owner", "admin"],
+  "gestao-diagnostico-whatsapp": ["owner"],
+  "gestao-diagnostico-webhooks": ["owner"],
+  "gestao-central-metricas": ["owner", "admin"],
+  "gestao-central-ias": ["owner", "admin"],
+  "gestao-site-programador": ["owner"],
+  "gestao-central-diagnostico": ["owner"],
+  "gestao-vida-pessoal": ["owner"],
+  "gestao-pessoal": ["owner"],
+  "gestao-master": ["owner"],
+  "gestao-owner": ["owner"],
+  
+  // === GESTÃO - Empresas ===
+  "gestao-empresas-dashboard": ["owner", "admin"],
+  "gestao-empresas-receitas": ["owner", "admin", "contabilidade"],
+  "gestao-empresas-arquivos": ["owner", "admin"],
+  "gestao-empresas-rh": ["owner", "admin"],
+
+  // === PORTAL ALUNO BETA (PAGANTE) ===
+  "alunos": ["owner", "admin", "beta", "aluno"],
+  "alunos-dashboard": ["owner", "admin", "beta", "aluno"],
+  "alunos-cronograma": ["owner", "admin", "beta", "aluno"],
+  "alunos-videoaulas": ["owner", "admin", "beta", "aluno"],
+  "alunos-materiais": ["owner", "admin", "beta", "aluno"],
+  "alunos-resumos": ["owner", "admin", "beta", "aluno"],
+  "alunos-mapas-mentais": ["owner", "admin", "beta", "aluno"],
+  "alunos-questoes": ["owner", "admin", "beta", "aluno"],
+  "alunos-simulados": ["owner", "admin", "beta", "aluno"],
+  "alunos-redacao": ["owner", "admin", "beta", "aluno"],
+  "alunos-desempenho": ["owner", "admin", "beta", "aluno"],
+  "alunos-ranking": ["owner", "admin", "beta", "aluno"],
+  "alunos-conquistas": ["owner", "admin", "beta", "aluno"],
+  "alunos-tutoria": ["owner", "admin", "beta", "aluno"],
+  "alunos-forum": ["owner", "admin", "beta", "aluno"],
+  "alunos-lives": ["owner", "admin", "beta", "aluno"],
+  "alunos-duvidas": ["owner", "admin", "beta", "aluno"],
+  "alunos-revisao": ["owner", "admin", "beta", "aluno"],
+  "alunos-laboratorio": ["owner", "admin", "beta", "aluno"],
+  "alunos-calculadora": ["owner", "admin", "beta", "aluno"],
+  "alunos-tabela-periodica": ["owner", "admin", "beta", "aluno"],
+  "alunos-flashcards": ["owner", "admin", "beta", "aluno"],
+  "alunos-metas": ["owner", "admin", "beta", "aluno"],
+  "alunos-agenda": ["owner", "admin", "beta", "aluno"],
+  "alunos-certificados": ["owner", "admin", "beta", "aluno"],
+  "alunos-perfil": ["owner", "admin", "beta", "aluno"],
+  "alunos-cursos": ["owner", "admin", "beta", "aluno"],
+  "alunos-aulas": ["owner", "admin", "beta", "aluno"],
+  "alunos-progresso": ["owner", "admin", "beta", "aluno"],
+  "alunos-historico": ["owner", "admin", "beta", "aluno"],
+
+  // === LEGADO ===
+  "dashboard": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "aluno", "beta"],
+  "dashboard-executivo": ["owner", "admin"],
+  "tarefas": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing"],
+  "integracoes": ["owner", "admin"],
+  "calendario": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "professor"],
+  "funcionarios": ["owner", "admin"],
+  "documentos": ["owner", "admin", "funcionario", "suporte", "coordenacao"],
+  "perfil": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "aluno", "beta"],
+  "guia": ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "afiliado", "marketing", "contabilidade", "professor", "aluno", "beta"],
+  "marketing": ["owner", "admin", "marketing"],
+  "lancamento": ["owner", "admin", "marketing"],
+  "metricas": ["owner", "admin", "marketing"],
+  "arquivos": ["owner", "admin", "funcionario", "marketing"],
+  "leads-whatsapp": ["owner", "admin", "marketing"],
+  "area-professor": ["owner", "admin", "professor"],
+  "planejamento-aula": ["owner", "admin", "professor"],
+  "laboratorio": ["owner", "admin", "professor", "aluno", "beta"],
+  "turmas-online": ["owner", "admin", "professor"],
+  "turmas-presenciais": ["owner", "admin", "professor"],
+  "cursos": ["owner", "admin", "professor"],
+  "simulados": ["owner", "admin", "professor", "aluno", "beta"],
+  "lives": ["owner", "admin", "professor", "aluno", "beta"],
+  "entradas": ["owner", "admin", "contabilidade"],
+  "financas-empresa": ["owner", "admin", "contabilidade"],
+  "financas-pessoais": ["owner", "admin", "funcionario"],
+  "pagamentos": ["owner", "admin", "contabilidade"],
+  "contabilidade": ["owner", "admin", "contabilidade"],
+  "transacoes-hotmart": ["owner", "admin"],
+  "gestao-alunos-legacy": ["owner", "admin", "suporte"],
+  "portal-aluno": ["owner", "admin", "aluno", "beta"],
+  "relatorios": ["owner", "admin"],
+  "afiliados": ["owner", "admin", "afiliado"],
+  "vida-pessoal": ["owner"],
+  "pessoal": ["owner"],
+  "permissoes": ["owner", "admin"],
+  "configuracoes": ["owner", "admin", "funcionario"],
+  "gestao-equipe-legacy": ["owner", "admin"],
+  "gestao-site-legacy": ["owner", "admin"],
+  "gestao-dispositivos-legacy": ["owner", "admin", "funcionario"],
+  "auditoria-acessos": ["owner", "admin"],
+  "central-monitoramento": ["owner"],
+  "monitoramento": ["owner", "admin"],
+  "central-whatsapp": ["owner", "admin"],
+  "whatsapp-live": ["owner", "admin"],
+  "diagnostico-whatsapp": ["owner"],
+  "diagnostico-webhooks": ["owner"],
+  "central-metricas": ["owner", "admin"],
+  "central-ias": ["owner", "admin"],
+  "site-programador": ["owner"],
+  "empresas-dashboard": ["owner", "admin"],
+  "empresas-receitas": ["owner", "admin", "contabilidade"],
+  "empresas-arquivos": ["owner", "admin"],
+  "empresas-rh": ["owner", "admin"],
+  "central-diagnostico": ["owner"],
+};
+
+// ============================================
+// MAPA: NAV ITEM → STATUS
+// ============================================
+export const NAV_STATUS: Record<NavItemKey, NavItemStatus> = {
+  // Comunidade
+  "comunidade": "active",
+  "comunidade-forum": "active",
+  "comunidade-posts": "active",
+  "comunidade-membros": "active",
+  "comunidade-eventos": "active",
+  "comunidade-chat": "active",
+
+  // Gestão - Principal
+  "gestao-dashboard": "active",
+  "gestao-dashboard-executivo": "active",
+  "gestao-tarefas": "active",
+  "gestao-integracoes": "active",
+  "gestao-calendario": "active",
+  "gestao-funcionarios": "active",
+  "gestao-documentos": "active",
+  "gestao-perfil": "active",
+  "gestao-guia": "active",
+  
+  // Gestão - Marketing
+  "gestao-marketing": "active",
+  "gestao-lancamento": "active",
+  "gestao-metricas": "active",
+  "gestao-arquivos": "active",
+  "gestao-leads-whatsapp": "active",
+  
+  // Gestão - Aulas
+  "gestao-area-professor": "active",
+  "gestao-planejamento-aula": "active",
+  "gestao-laboratorio": "active",
+  "gestao-turmas-online": "active",
+  "gestao-turmas-presenciais": "active",
+  "gestao-cursos": "active",
+  "gestao-simulados": "active",
+  "gestao-lives": "active",
+  
+  // Gestão - Finanças
+  "gestao-entradas": "active",
+  "gestao-financas-empresa": "active",
+  "gestao-financas-pessoais": "active",
+  "gestao-pagamentos": "active",
+  "gestao-contabilidade": "active",
+  "gestao-transacoes-hotmart": "active",
+  
+  // Gestão - Alunos
+  "gestao-alunos": "active",
+  "gestao-portal-aluno": "active",
+  "gestao-relatorios": "active",
+  "gestao-afiliados": "active",
+  
+  // Gestão - Admin
+  "gestao-permissoes": "active",
+  "gestao-configuracoes": "active",
+  "gestao-equipe": "active",
+  "gestao-site": "active",
+  "gestao-dispositivos": "active",
+  "gestao-auditoria": "active",
+  
+  // Gestão - Owner
+  "gestao-central-monitoramento": "active",
+  "gestao-monitoramento": "active",
+  "gestao-central-whatsapp": "active",
+  "gestao-whatsapp-live": "active",
+  "gestao-diagnostico-whatsapp": "active",
+  "gestao-diagnostico-webhooks": "active",
+  "gestao-central-metricas": "active",
+  "gestao-central-ias": "active",
+  "gestao-site-programador": "active",
+  "gestao-central-diagnostico": "active",
+  "gestao-vida-pessoal": "active",
+  "gestao-pessoal": "active",
+  "gestao-master": "active",
+  "gestao-owner": "active",
+  
+  // Gestão - Empresas
+  "gestao-empresas-dashboard": "active",
+  "gestao-empresas-receitas": "active",
+  "gestao-empresas-arquivos": "active",
+  "gestao-empresas-rh": "active",
+
+  // Portal Aluno
+  "alunos": "active",
+  "alunos-dashboard": "active",
+  "alunos-cronograma": "active",
+  "alunos-videoaulas": "active",
+  "alunos-materiais": "active",
+  "alunos-resumos": "active",
+  "alunos-mapas-mentais": "active",
+  "alunos-questoes": "active",
+  "alunos-simulados": "active",
+  "alunos-redacao": "active",
+  "alunos-desempenho": "active",
+  "alunos-ranking": "active",
+  "alunos-conquistas": "active",
+  "alunos-tutoria": "active",
+  "alunos-forum": "active",
+  "alunos-lives": "active",
+  "alunos-duvidas": "active",
+  "alunos-revisao": "active",
+  "alunos-laboratorio": "active",
+  "alunos-calculadora": "active",
+  "alunos-tabela-periodica": "active",
+  "alunos-flashcards": "active",
+  "alunos-metas": "active",
+  "alunos-agenda": "active",
+  "alunos-certificados": "active",
+  "alunos-perfil": "active",
+  "alunos-cursos": "active",
+  "alunos-aulas": "active",
+  "alunos-progresso": "active",
+  "alunos-historico": "active",
+
+  // Legado
+  "dashboard": "active",
+  "dashboard-executivo": "active",
+  "tarefas": "active",
+  "integracoes": "active",
+  "calendario": "active",
+  "funcionarios": "active",
+  "documentos": "active",
+  "perfil": "active",
+  "guia": "active",
+  "marketing": "active",
+  "lancamento": "active",
+  "metricas": "active",
+  "arquivos": "active",
+  "leads-whatsapp": "active",
+  "area-professor": "active",
+  "planejamento-aula": "active",
+  "laboratorio": "active",
+  "turmas-online": "active",
+  "turmas-presenciais": "active",
+  "cursos": "active",
+  "simulados": "active",
+  "lives": "active",
+  "entradas": "active",
+  "financas-empresa": "active",
+  "financas-pessoais": "active",
+  "pagamentos": "active",
+  "contabilidade": "active",
+  "transacoes-hotmart": "active",
+  "gestao-alunos-legacy": "active",
+  "portal-aluno": "active",
+  "relatorios": "active",
+  "afiliados": "active",
+  "vida-pessoal": "active",
+  "pessoal": "active",
+  "permissoes": "active",
+  "configuracoes": "active",
+  "gestao-equipe-legacy": "active",
+  "gestao-site-legacy": "active",
+  "gestao-dispositivos-legacy": "active",
+  "auditoria-acessos": "active",
+  "central-monitoramento": "active",
+  "monitoramento": "active",
+  "central-whatsapp": "active",
+  "whatsapp-live": "active",
+  "diagnostico-whatsapp": "active",
+  "diagnostico-webhooks": "active",
+  "central-metricas": "active",
+  "central-ias": "active",
+  "site-programador": "active",
+  "empresas-dashboard": "active",
+  "empresas-receitas": "active",
+  "empresas-arquivos": "active",
+  "empresas-rh": "active",
+  "central-diagnostico": "active",
+};
+
+// ============================================
+// FUNÇÕES DE ACESSO (RBAC)
 // ============================================
 
 /**
- * Verifica se um usuário pode acessar um item de navegação
+ * Retorna a rota para um item de navegação
+ */
+export function getRouteForNavItem(navItemKey: NavItemKey): RouteKey {
+  return NAV_ROUTE_MAP[navItemKey];
+}
+
+/**
+ * Verifica se um usuário tem acesso a um item de navegação (por NavItemKey)
+ * OWNER = MASTER = PODE TUDO
+ */
+export function canAccessNavItemByKey(navItemKey: NavItemKey, userRole: UserRole | null, email?: string | null): boolean {
+  // Owner MASTER pode tudo
+  if (userRole === "owner" || email?.toLowerCase() === "moisesblank@gmail.com") {
+    return true;
+  }
+  
+  if (!userRole) return false;
+  
+  const allowedRoles = NAV_RBAC[navItemKey];
+  return allowedRoles?.includes(userRole) ?? false;
+}
+
+/**
+ * Verifica se um usuário pode acessar um item de navegação (por NavItem)
  */
 export function canAccessNavItem(
   item: NavItem,
@@ -593,6 +962,22 @@ export function canAccessNavItem(
   if (!role) return false;
   
   return item.roles.includes(role as AppRole);
+}
+
+/**
+ * Retorna o status de um item de navegação
+ */
+export function getNavItemStatus(navItemKey: NavItemKey): NavItemStatus {
+  return NAV_STATUS[navItemKey];
+}
+
+/**
+ * Retorna todos os itens de navegação acessíveis por uma role
+ */
+export function getAccessibleNavItems(userRole: UserRole, email?: string | null): NavItemKey[] {
+  return (Object.keys(NAV_ROUTE_MAP) as NavItemKey[]).filter(
+    key => canAccessNavItemByKey(key, userRole, email) && getNavItemStatus(key) === "active"
+  );
 }
 
 /**
@@ -615,7 +1000,59 @@ export function groupNavItems(items: NavItem[]): Record<string, NavItem[]> {
   }, {} as Record<string, NavItem[]>);
 }
 
+/**
+ * Audita o mapa de navegação
+ */
+export function auditNavRouteMap(): {
+  total: number;
+  active: number;
+  disabled: number;
+  comingSoon: number;
+  orphans: NavItemKey[];
+} {
+  const items = Object.keys(NAV_ROUTE_MAP) as NavItemKey[];
+  
+  let active = 0;
+  let disabled = 0;
+  let comingSoon = 0;
+  const orphans: NavItemKey[] = [];
+  
+  items.forEach(key => {
+    const status = NAV_STATUS[key];
+    
+    if (status === "active") active++;
+    else if (status === "disabled") disabled++;
+    else if (status === "coming_soon") comingSoon++;
+    
+    // Verificar se rota existe
+    const routeKey = NAV_ROUTE_MAP[key];
+    if (!routeKey) {
+      orphans.push(key);
+    }
+  });
+  
+  return {
+    total: items.length,
+    active,
+    disabled,
+    comingSoon,
+    orphans,
+  };
+}
+
 // ============================================
-// EXPORT DEFAULT
+// EXPORTS
 // ============================================
-export default NAV_ROUTE_MAP;
+export default {
+  NAV_ROUTE_MAP,
+  NAV_RBAC,
+  NAV_STATUS,
+  getRouteForNavItem,
+  canAccessNavItem,
+  canAccessNavItemByKey,
+  getNavItemStatus,
+  getAccessibleNavItems,
+  getNavItemsForRole,
+  groupNavItems,
+  auditNavRouteMap,
+};
