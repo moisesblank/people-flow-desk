@@ -1,12 +1,18 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║   🏛️ CONSTITUIÇÃO SYNAPSE - LEI I Art. 25-26                                 ║
-// ║   VirtualList - Listas > 50 itens = virtualização obrigatória                ║
-// ║   Overscan por tier: critical=1, low=2, medium=3, high=5, ultra=8            ║
+// ║   🏛️ CONSTITUIÇÃO SYNAPSE - LEI I Art. 47-50                                 ║
+// ║   VirtualList - Listas > 40 itens = virtualização obrigatória                ║
+// ║   Overscan por tier: critical=1, legacy=2, standard=3, enhanced=4, etc       ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 import React, { memo, useCallback, useEffect, useRef, useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
-import { useConstitution } from '@/hooks/useConstitution';
+import { 
+  detectTier,
+  getOverscan,
+  canAnimate,
+  VIRTUAL_CONSTITUTION,
+  type PerformanceTier
+} from '@/lib/constitution/LEI_I_PERFORMANCE';
 
 // ============================================
 // TIPOS
@@ -25,7 +31,7 @@ interface VirtualListProps<T> {
   emptyMessage?: React.ReactNode;
   loadingMore?: boolean;
   onLoadMore?: () => void;
-  virtualizationThreshold?: number; // Padrão: 50 (LEI I Art. 25)
+  virtualizationThreshold?: number; // Padrão: 40 (LEI I Art. 47)
 }
 
 interface VirtualListState {
@@ -34,19 +40,8 @@ interface VirtualListState {
   endIndex: number;
 }
 
-// ============================================
-// CONFIGURAÇÃO POR TIER (LEI I Art. 26)
-// ============================================
-
-const OVERSCAN_BY_TIER = {
-  critical: 1,
-  low: 2,
-  medium: 3,
-  high: 5,
-  ultra: 8,
-} as const;
-
-const VIRTUALIZATION_THRESHOLD = 50; // LEI I Art. 25
+// 🏛️ LEI I Art. 47 - Threshold para virtualização
+const VIRTUALIZATION_THRESHOLD = VIRTUAL_CONSTITUTION.VIRTUALIZE_ABOVE;
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -68,10 +63,17 @@ function VirtualListInner<T>({
   virtualizationThreshold = VIRTUALIZATION_THRESHOLD,
 }: VirtualListProps<T>) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const { tier, overscan: tierOverscan, shouldAnimate } = useConstitution();
   
-  // Usar overscan do tier se não fornecido via props
-  const effectiveOverscan = propOverscan ?? OVERSCAN_BY_TIER[tier as keyof typeof OVERSCAN_BY_TIER] ?? tierOverscan;
+  // 🏛️ LEI I - Usar tier oficial da Constituição
+  const tier = useMemo(() => detectTier(), []);
+  const reducedMotion = useMemo(() => 
+    typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches, 
+    []
+  );
+  const shouldAnimate = canAnimate(tier, reducedMotion);
+  
+  // 🏛️ LEI I Art. 48 - Usar overscan do tier
+  const effectiveOverscan = propOverscan ?? getOverscan(tier);
   
   // Altura do container
   const [containerHeight, setContainerHeight] = useState(propContainerHeight ?? 400);
@@ -299,9 +301,10 @@ interface UseVirtualListOptions {
 
 export function useVirtualList<T>(items: T[], options: UseVirtualListOptions) {
   const { itemHeight, containerHeight = 400, overscan: propOverscan } = options;
-  const { tier, overscan: tierOverscan } = useConstitution();
   
-  const effectiveOverscan = propOverscan ?? OVERSCAN_BY_TIER[tier as keyof typeof OVERSCAN_BY_TIER] ?? tierOverscan;
+  // 🏛️ LEI I - Usar tier oficial
+  const tier = useMemo(() => detectTier(), []);
+  const effectiveOverscan = propOverscan ?? getOverscan(tier);
   
   const [scrollTop, setScrollTop] = useState(0);
   const rafRef = useRef<number>();
