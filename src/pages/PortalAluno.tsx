@@ -516,13 +516,12 @@ export default function PortalAluno() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <VideoPlayer
-                    src="https://sample-videos.com/video321/mp4/720/big_buck_bunny_720p_1mb.mp4"
-                    title="Aula 1: Boas-vindas"
-                    duration="5:00"
-                    onComplete={() => toast.success("Aula concluída!")}
-                    onProgress={() => {}}
-                  />
+                  {/* Click-to-Load: Vídeo só carrega após interação do usuário */}
+                  <div className="aspect-video bg-muted/30 rounded-lg flex items-center justify-center border border-border/50">
+                    <p className="text-muted-foreground text-sm text-center px-4">
+                      🎬 Vídeo de demonstração indisponível temporariamente
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
