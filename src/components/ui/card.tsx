@@ -3,16 +3,22 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface CardProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: "default" | "holo" | "holo-elevated" | "glass";
+  variant?: "default" | "holo" | "holo-elevated" | "glass" | "2300";
+  enableHover?: boolean;
 }
 
 const Card = React.forwardRef<HTMLDivElement, CardProps>(
-  ({ className, variant = "default", ...props }, ref) => {
+  ({ className, variant = "default", enableHover = true, ...props }, ref) => {
     const variants = {
       default: "rounded-lg border bg-card text-card-foreground shadow-sm",
       holo: "rounded-xl border border-ai-border bg-ai-surface text-card-foreground transition-all duration-200 hover:border-holo-cyan/30",
       "holo-elevated": "rounded-xl border border-ai-border bg-ai-surface text-card-foreground shadow-[0_0_30px_hsl(var(--holo-cyan)/0.1)] transition-all duration-200 hover:shadow-[0_0_40px_hsl(var(--holo-cyan)/0.15)] hover:border-holo-cyan/40",
       glass: "rounded-xl border border-border/50 bg-card/60 backdrop-blur-xl text-card-foreground shadow-2xl",
+      // 2300 UPGRADE - Borda viva + Elevação GPU (LEI I Art.19-21)
+      "2300": cn(
+        "rounded-xl border border-border/60 bg-card text-card-foreground",
+        enableHover && "card-2300"
+      ),
     };
     return (
       <div 

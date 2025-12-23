@@ -237,6 +237,20 @@ export default {
           "0%": { backgroundPosition: "0% 50%" },
           "100%": { backgroundPosition: "200% 50%" },
         },
+        // 2300 UPGRADE - Header & Cards microinteractions
+        "header-glow": {
+          "0%, 100%": { opacity: "0.4" },
+          "50%": { opacity: "0.7" },
+        },
+        "card-lift": {
+          "0%": { transform: "translateY(0) scale(1)" },
+          "100%": { transform: "translateY(-2px) scale(1.005)" },
+        },
+        "border-shimmer": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "50%": { backgroundPosition: "100% 50%" },
+          "100%": { backgroundPosition: "0% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -264,6 +278,9 @@ export default {
         "ping-slow": "ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite",
         "ping-slower": "ping-slower 3s cubic-bezier(0, 0, 0.2, 1) infinite",
         "border-flow": "border-flow 3s linear infinite",
+        // 2300 UPGRADE animations
+        "header-glow": "header-glow 4s ease-in-out infinite",
+        "border-shimmer": "border-shimmer 4s ease infinite",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
