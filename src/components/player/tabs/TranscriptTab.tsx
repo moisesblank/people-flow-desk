@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { FileText, Search, Copy, Check, Clock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';

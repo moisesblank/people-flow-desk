@@ -5,6 +5,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { Pencil, Save, Trash2, Clock, Plus, FileText } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';

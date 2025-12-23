@@ -5,6 +5,7 @@
 
 import { memo, ReactNode, useMemo } from 'react';
 import { motion, MotionProps } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { usePerformance, useOptimizedAnimations } from '@/hooks/usePerformance';
 import { cn } from '@/lib/utils';
 

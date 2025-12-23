@@ -5,6 +5,7 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useGamification, useUserAchievements, getLevelInfo } from '@/hooks/useGamification';

@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Shield, Users, Crown, User, Search, Loader2, AlertTriangle, Info, History, 
   Clock, ArrowRight, UserCog, Headphones, GraduationCap, Users2, 
@@ -166,6 +167,7 @@ function getRoleBadgeClass(role: string | null): string {
 
 export default function Permissoes() {
   const { user } = useAuth();
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);

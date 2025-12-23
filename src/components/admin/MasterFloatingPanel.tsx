@@ -7,6 +7,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { 
   Crown, Link2, Layers, Settings, Edit3,
   Eye, EyeOff, Wand2, RotateCcw, Redo2,

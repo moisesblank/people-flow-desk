@@ -4,6 +4,7 @@
 // ============================================
 
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { Trophy, Medal, Crown, Flame, User, Zap, Star, TrendingUp } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';

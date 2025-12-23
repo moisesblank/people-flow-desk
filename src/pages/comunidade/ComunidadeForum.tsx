@@ -6,6 +6,7 @@
 
 import { memo } from 'react';
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { MessageSquare, Users, TrendingUp, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';

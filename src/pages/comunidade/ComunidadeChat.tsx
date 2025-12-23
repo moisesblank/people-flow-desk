@@ -6,6 +6,7 @@
 
 import { memo, useState } from 'react';
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { MessageCircle, Send, Users, Hash } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';

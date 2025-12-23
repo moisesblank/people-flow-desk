@@ -5,6 +5,7 @@
 
 import { useState, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { Brain, Sparkles, RefreshCw, Copy, Check, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';

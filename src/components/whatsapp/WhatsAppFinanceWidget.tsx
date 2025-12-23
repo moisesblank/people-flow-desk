@@ -17,6 +17,7 @@ import { useWhatsAppFinance, useWhatsAppStats } from '@/hooks/useWhatsAppData';
 import { format, formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { Link } from 'react-router-dom';
 
 interface WhatsAppFinanceWidgetProps {
