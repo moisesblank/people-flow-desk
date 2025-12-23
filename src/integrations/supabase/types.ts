@@ -3117,6 +3117,57 @@ export type Database = {
           },
         ]
       }
+      critical_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          alert_type: string
+          auto_action_taken: string | null
+          created_at: string | null
+          current_value: number | null
+          id: string
+          message: string
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          threshold_value: number | null
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type: string
+          auto_action_taken?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          message: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          threshold_value?: number | null
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          alert_type?: string
+          auto_action_taken?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          id?: string
+          message?: string
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          threshold_value?: number | null
+          title?: string
+        }
+        Relationships: []
+      }
       custom_rules: {
         Row: {
           actions: Json | null
@@ -3447,6 +3498,57 @@ export type Database = {
           resolved_at?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      dr_tests: {
+        Row: {
+          completed_at: string | null
+          created_at: string | null
+          executed_by: string | null
+          id: string
+          issues_found: string[] | null
+          lessons_learned: string | null
+          metadata: Json | null
+          next_test_scheduled: string | null
+          rpo_actual_seconds: number | null
+          rto_actual_seconds: number | null
+          started_at: string
+          success: boolean | null
+          test_name: string
+          test_type: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string | null
+          executed_by?: string | null
+          id?: string
+          issues_found?: string[] | null
+          lessons_learned?: string | null
+          metadata?: Json | null
+          next_test_scheduled?: string | null
+          rpo_actual_seconds?: number | null
+          rto_actual_seconds?: number | null
+          started_at: string
+          success?: boolean | null
+          test_name: string
+          test_type: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string | null
+          executed_by?: string | null
+          id?: string
+          issues_found?: string[] | null
+          lessons_learned?: string | null
+          metadata?: Json | null
+          next_test_scheduled?: string | null
+          rpo_actual_seconds?: number | null
+          rto_actual_seconds?: number | null
+          started_at?: string
+          success?: boolean | null
+          test_name?: string
+          test_type?: string
         }
         Relationships: []
       }
@@ -7689,6 +7791,48 @@ export type Database = {
         }
         Relationships: []
       }
+      rollback_points: {
+        Row: {
+          can_rollback_to: boolean | null
+          created_at: string | null
+          created_by: string | null
+          database_snapshot_id: string | null
+          description: string | null
+          edge_functions_version: string | null
+          git_commit_hash: string | null
+          id: string
+          is_stable: boolean | null
+          rollback_time_estimate_seconds: number | null
+          version: string
+        }
+        Insert: {
+          can_rollback_to?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          database_snapshot_id?: string | null
+          description?: string | null
+          edge_functions_version?: string | null
+          git_commit_hash?: string | null
+          id?: string
+          is_stable?: boolean | null
+          rollback_time_estimate_seconds?: number | null
+          version: string
+        }
+        Update: {
+          can_rollback_to?: boolean | null
+          created_at?: string | null
+          created_by?: string | null
+          database_snapshot_id?: string | null
+          description?: string | null
+          edge_functions_version?: string | null
+          git_commit_hash?: string | null
+          id?: string
+          is_stable?: boolean | null
+          rollback_time_estimate_seconds?: number | null
+          version?: string
+        }
+        Relationships: []
+      }
       sales: {
         Row: {
           affiliate_id: number | null
@@ -9494,6 +9638,45 @@ export type Database = {
           status?: string
           transaction_type?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      system_capacity: {
+        Row: {
+          created_at: string | null
+          critical_threshold: number
+          current_value: number | null
+          id: string
+          is_healthy: boolean | null
+          last_updated_at: string | null
+          max_capacity: number
+          metric_name: string
+          notes: string | null
+          warning_threshold: number
+        }
+        Insert: {
+          created_at?: string | null
+          critical_threshold: number
+          current_value?: number | null
+          id?: string
+          is_healthy?: boolean | null
+          last_updated_at?: string | null
+          max_capacity: number
+          metric_name: string
+          notes?: string | null
+          warning_threshold: number
+        }
+        Update: {
+          created_at?: string | null
+          critical_threshold?: number
+          current_value?: number | null
+          id?: string
+          is_healthy?: boolean | null
+          last_updated_at?: string | null
+          max_capacity?: number
+          metric_name?: string
+          notes?: string | null
+          warning_threshold?: number
         }
         Relationships: []
       }
@@ -13851,6 +14034,17 @@ export type Database = {
           retry_after: number
         }[]
       }
+      check_system_capacity: {
+        Args: never
+        Returns: {
+          can_handle_5k: boolean
+          current_value: number
+          max_capacity: number
+          metric_name: string
+          status: string
+          usage_percent: number
+        }[]
+      }
       check_url_access_v3: {
         Args: { p_domain?: string; p_url: string; p_user_id: string }
         Returns: {
@@ -13959,6 +14153,27 @@ export type Database = {
         Returns: number
       }
       count_user_devices: { Args: { p_user_id?: string }; Returns: number }
+      create_critical_alert: {
+        Args: {
+          p_alert_type: string
+          p_current_value?: number
+          p_message: string
+          p_metadata?: Json
+          p_severity: string
+          p_threshold_value?: number
+          p_title: string
+        }
+        Returns: string
+      }
+      create_rollback_point: {
+        Args: {
+          p_description: string
+          p_git_commit?: string
+          p_is_stable?: boolean
+          p_version: string
+        }
+        Returns: string
+      }
       create_single_session: {
         Args: {
           _browser?: string
@@ -14655,6 +14870,18 @@ export type Database = {
         }
         Returns: Json
       }
+      register_dr_test: {
+        Args: {
+          p_issues?: string[]
+          p_lessons?: string
+          p_rpo_seconds: number
+          p_rto_seconds: number
+          p_success: boolean
+          p_test_name: string
+          p_test_type: string
+        }
+        Returns: string
+      }
       register_user_login: {
         Args: {
           _browser?: string
@@ -14912,6 +15139,10 @@ export type Database = {
       }
       sna_realtime_stats: { Args: never; Returns: Json }
       sna_system_health: { Args: never; Returns: Json }
+      update_capacity_metric: {
+        Args: { p_current_value: number; p_metric_name: string }
+        Returns: undefined
+      }
       update_deployment_gate: {
         Args: { p_details?: Json; p_gate_name: string; p_status: string }
         Returns: boolean
