@@ -1,12 +1,12 @@
 // ============================================
-// HOOK DE RANKING DE SIMULADOS
+// HOOK DE RANKING DE SIMULADOS - v5.0
+// 🌌 TESE 3: Cache localStorage = 0ms segunda visita
 // Pontuação: 10 pontos por questão correta
-// Lei I: Performance | Lei IV: Competição Justa
 // ============================================
 
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubspaceQuery } from './useSubspaceCommunication';
 
 interface SimuladoRankingEntry {
   id: string;
@@ -25,9 +25,9 @@ interface SimuladoRankingEntry {
 const POINTS_PER_QUESTION = 10;
 
 export function useSimuladoRanking() {
-  return useQuery({
-    queryKey: ['simulado-ranking'],
-    queryFn: async (): Promise<SimuladoRankingEntry[]> => {
+  return useSubspaceQuery<SimuladoRankingEntry[]>(
+    ['simulado-ranking'],
+    async (): Promise<SimuladoRankingEntry[]> => {
       // Buscar todas as tentativas de questões
       const { data: attempts, error } = await supabase
         .from('question_attempts')
@@ -93,18 +93,20 @@ export function useSimuladoRanking() {
 
       return rankingData;
     },
-    staleTime: 60000,
-    refetchInterval: 120000,
-  });
+    {
+      profile: 'dashboard', // 2 min staleTime, ranking muda frequentemente
+      persistKey: 'simulado_ranking_global',
+    }
+  );
 }
 
 // Hook para estatísticas pessoais de simulado
 export function useMySimuladoStats() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['my-simulado-stats', user?.id],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['my-simulado-stats', user?.id || ''],
+    async () => {
       const { data, error } = await supabase
         .from('question_attempts')
         .select('is_correct, created_at')
@@ -142,7 +144,12 @@ export function useMySimuladoStats() {
         todayQuestions: todayAttempts.length,
       };
     },
-    enabled: !!user?.id,
-    staleTime: 30000,
-  });
+    {
+      profile: 'user', // 5 min staleTime
+      persistKey: `my_simulado_stats_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
+
+console.log('[TESE 3] 🏆 useSimuladoRanking migrado para cache localStorage');

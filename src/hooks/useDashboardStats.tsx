@@ -1,10 +1,10 @@
 // ============================================
-// MASTER PRO ULTRA v4.0 - DASHBOARD REALTIME HOOK
-// Dados do dashboard com cruzamento automático
+// MASTER PRO ULTRA v5.0 - DASHBOARD REALTIME HOOK
+// 🌌 TESE 3: Cache localStorage = 0ms segunda visita
 // ============================================
 
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 interface DashboardStats {
   alunos_ativos: number;
@@ -20,9 +20,9 @@ interface DashboardStats {
 }
 
 export function useDashboardStats() {
-  return useQuery({
-    queryKey: ['dashboard-stats-realtime'],
-    queryFn: async (): Promise<DashboardStats> => {
+  return useSubspaceQuery<DashboardStats>(
+    ['dashboard-stats-realtime'],
+    async (): Promise<DashboardStats> => {
       // Tentar usar a nova função RPC otimizada
       const { data, error } = await supabase.rpc('get_dashboard_stats_realtime');
       
@@ -78,17 +78,18 @@ export function useDashboardStats() {
         updated_at: new Date().toISOString()
       };
     },
-    staleTime: 60 * 1000, // 1 minuto
-    refetchInterval: 60 * 1000, // Refetch a cada 1 minuto
-    refetchOnWindowFocus: true,
-  });
+    { 
+      profile: 'dashboard', // 2 min staleTime, sem persistência (dados muito dinâmicos)
+      persistKey: 'dashboard_stats_realtime'
+    }
+  );
 }
 
 // Hook para métricas em tempo real (mais frequente)
 export function useRealtimeMetrics() {
-  return useQuery({
-    queryKey: ['realtime-metrics'],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['realtime-metrics'],
+    async () => {
       const [online, tarefas, webhooks] = await Promise.all([
         supabase.from('profiles').select('id', { count: 'exact', head: true }).eq('is_online', true),
         supabase.from('calendar_tasks').select('id', { count: 'exact', head: true })
@@ -104,16 +105,15 @@ export function useRealtimeMetrics() {
         timestamp: new Date().toISOString()
       };
     },
-    staleTime: 30 * 1000, // 30 segundos
-    refetchInterval: 30 * 1000, // Refetch a cada 30 segundos
-  });
+    { profile: 'realtime' } // Sem cache, dados super dinâmicos
+  );
 }
 
 // Hook para view consolidada
 export function useDashboardConsolidado() {
-  return useQuery({
-    queryKey: ['dashboard-consolidado'],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['dashboard-consolidado'],
+    async () => {
       const { data, error } = await supabase
         .from('v_dashboard_consolidado')
         .select('*')
@@ -126,7 +126,11 @@ export function useDashboardConsolidado() {
       
       return data;
     },
-    staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000,
-  });
+    { 
+      profile: 'dashboard',
+      persistKey: 'dashboard_consolidado'
+    }
+  );
 }
+
+console.log('[TESE 3] 📊 useDashboardStats migrado para cache localStorage');
