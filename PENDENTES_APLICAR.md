@@ -97,6 +97,33 @@ supabase functions deploy sanctum-report-violation
 
 ---
 
+## 🛡️ ARQUIVOS FRONTEND — SECURITY OMEGA (NOVO!)
+
+| # | Arquivo | Descrição |
+|---|---------|-----------|
+| 1 | `src/lib/security/sanctumGate.ts` | SANCTUM GATE — O Porteiro Bancário |
+| 2 | `src/lib/security/webhookGuard.ts` | Proteção anti-falsificação webhooks |
+| 3 | `src/lib/security/contentShield.ts` | Proteção de conteúdo (vídeo/PDF) |
+| 4 | `src/lib/security/authGuard.ts` | Autenticação nível Bradesco |
+| 5 | `src/lib/security/index.ts` | Exports centralizados |
+| 6 | `src/hooks/useSecurity.ts` | Hook central de segurança |
+
+### 🎯 O QUE O SECURITY OMEGA FAZ:
+
+- ✅ **SANCTUM GATE** — Todo acesso passa pelo porteiro
+- ✅ **Progressive Lockout** — 5/10/20/50 tentativas = lock progressivo
+- ✅ **Rate Limiting** — Por IP, usuário, e ação
+- ✅ **HMAC Webhook** — Assinatura SHA-256 obrigatória
+- ✅ **Anti-Replay** — Timestamp + nonce verification
+- ✅ **Idempotency** — Não processar duplicados
+- ✅ **Content Shield** — Tokens curtos (30-120s) + watermark
+- ✅ **Session Control** — Máximo 2 dispositivos simultâneos
+- ✅ **Audit Log** — Toda ação registrada
+- ✅ **LOCKDOWN Mode** — Kill switches por flag
+- ✅ **OWNER BYPASS** — moisesblank@gmail.com = MASTER
+
+---
+
 ## ✅ VERIFICAÇÃO FINAL
 
 - [x] Build: **PASSOU** (exit code: 0)
