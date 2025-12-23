@@ -6,6 +6,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 export interface DailyGoalsData {
   questoes: { current: number; target: number };
@@ -51,16 +52,19 @@ async function fetchDailyGoals(userId: string): Promise<DailyGoalsData> {
   };
 }
 
+// 🌌 MIGRADO PARA useSubspaceQuery - Cache localStorage
 export function useStudentDailyGoals() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['student-daily-goals', user?.id],
-    queryFn: () => fetchDailyGoals(user!.id),
-    enabled: !!user?.id,
-    refetchInterval: 60000,
-    staleTime: 30000,
-  });
+  return useSubspaceQuery<DailyGoalsData>(
+    ['student-daily-goals', user?.id || 'anon'],
+    () => fetchDailyGoals(user!.id),
+    {
+      profile: 'dashboard', // 2min stale, atualiza frequente
+      persistKey: `student_daily_goals_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 async function fetchLastWatchedLesson(userId: string) {

@@ -10,6 +10,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePublishEvent } from "@/hooks/usePublishEvent";
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from "sonner";
 
 export interface PracticeQuestion {
@@ -45,16 +46,16 @@ export interface PracticeSession {
   startTime: number;
 }
 
-// Hook para buscar questões para prática
+// 🌌 Hook migrado para useSubspaceQuery - Cache localStorage
 export function usePracticeQuestions(options?: {
   subject?: string;
   topic?: string;
   difficulty?: string;
   limit?: number;
 }) {
-  return useQuery({
-    queryKey: ["practice-questions", options],
-    queryFn: async () => {
+  return useSubspaceQuery<PracticeQuestion[]>(
+    ["practice-questions", JSON.stringify(options || {})],
+    async () => {
       let query = supabase
         .from("quiz_questions")
         .select("*")
@@ -74,7 +75,11 @@ export function usePracticeQuestions(options?: {
         question_type: q.question_type as "multiple_choice" | "true_false" | "essay",
       })) as PracticeQuestion[];
     },
-  });
+    {
+      profile: 'semiStatic', // 10min stale, questões são estáveis
+      persistKey: `practice_questions_${JSON.stringify(options || {})}`,
+    }
+  );
 }
 
 // Hook para registrar tentativa de questão
