@@ -3,14 +3,21 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 export interface InputProps extends React.ComponentProps<"input"> {
-  variant?: "default" | "holo";
+  variant?: "default" | "holo" | "2300";
+  validationState?: "default" | "success" | "error";
 }
 
 const Input = React.forwardRef<HTMLInputElement, InputProps>(
-  ({ className, type, variant = "default", ...props }, ref) => {
+  ({ className, type, variant = "default", validationState = "default", ...props }, ref) => {
     const variants = {
       default: "border-input bg-background focus-visible:ring-ring",
       holo: "border-ai-border bg-ai-surface focus-visible:ring-holo-cyan/50 focus-visible:border-holo-cyan/50 placeholder:text-muted-foreground/60",
+      // 2300 UPGRADE - Foco premium com halo (LEI I)
+      "2300": cn(
+        "border-border/60 bg-card focus-visible:ring-primary/30 focus-visible:border-primary/50 input-2300",
+        validationState === "success" && "input-success",
+        validationState === "error" && "input-error"
+      ),
     };
     return (
       <input
