@@ -113,54 +113,23 @@ export function useGlobalDevToolsBlock() {
       }
     });
 
-    // Mostrar aviso
+    // 🏛️ LEI I: ZERO console spam em produção - apenas toast
     const showWarning = (type: 'devtools' | 'screenshot' | 'copy' = 'devtools') => {
       if (warningShownRef.current) return;
       warningShownRef.current = true;
       
-      console.clear();
-      
+      // Toast apenas - sem console spam (salva CPU)
       if (type === 'screenshot') {
-        console.log(
-          '%c📸 SCREENSHOT BLOQUEADO 📸',
-          'background: linear-gradient(90deg, #ef4444, #dc2626); color: white; font-size: 24px; font-weight: bold; padding: 20px 40px; border-radius: 10px;'
-        );
-        console.log(
-          '%cCaptura de tela não é permitida nesta plataforma.',
-          'color: #f87171; font-size: 14px; padding: 10px;'
-        );
-        toast.error('Screenshot bloqueado! Captura de tela não permitida.', {
-          duration: 3000,
-          icon: '🛡️',
-        });
+        toast.error('Screenshot bloqueado!', { duration: 2000, icon: '🛡️' });
       } else if (type === 'copy') {
-        console.log(
-          '%c📋 CÓPIA BLOQUEADA 📋',
-          'background: linear-gradient(90deg, #f59e0b, #d97706); color: white; font-size: 24px; font-weight: bold; padding: 20px 40px; border-radius: 10px;'
-        );
-        console.log(
-          '%cCópia de conteúdo não é permitida nesta plataforma.',
-          'color: #fbbf24; font-size: 14px; padding: 10px;'
-        );
-        toast.error('Cópia bloqueada! Este conteúdo é protegido.', {
-          duration: 3000,
-          icon: '🔒',
-        });
-      } else {
-        console.log(
-          '%c🛡️ ACESSO BLOQUEADO 🛡️',
-          'background: linear-gradient(90deg, #6366f1, #8b5cf6); color: white; font-size: 24px; font-weight: bold; padding: 20px 40px; border-radius: 10px;'
-        );
-        console.log(
-          '%cAs ferramentas de desenvolvedor estão desabilitadas nesta plataforma.',
-          'color: #a78bfa; font-size: 14px; padding: 10px;'
-        );
+        toast.error('Conteúdo protegido!', { duration: 2000, icon: '🔒' });
       }
+      // DevTools: silencioso (sem toast repetitivo)
       
-      // Reset após 5 segundos
+      // Reset após 10 segundos (reduz frequência)
       setTimeout(() => {
         warningShownRef.current = false;
-      }, 5000);
+      }, 10000);
     };
 
     // ═══════════════════════════════════════════════════════════
@@ -349,23 +318,17 @@ export function useGlobalDevToolsBlock() {
     const handleVisibilityChange = () => {
       if (isOwnerRef.current) return;
       
-      // Quando a página perde foco, pode ser indicativo de screenshot
-      if (document.hidden) {
-        console.log(
-          '%c👁️ ATIVIDADE MONITORADA 👁️',
-          'background: #f59e0b; color: black; font-size: 12px; padding: 5px 10px;'
-        );
-      }
+      // 🏛️ LEI I: Silencioso - sem console spam em visibility change
     };
 
-    // Bloqueio de clique direito global
+    // Bloqueio de clique direito global (silencioso)
     const handleContextMenu = (e: MouseEvent) => {
       if (isOwnerRef.current) return;
       e.preventDefault();
-      showWarning('devtools');
+      // 🏛️ LEI I: Sem warning repetitivo - apenas bloqueia
     };
 
-    // Detecção de DevTools aberto
+    // Detecção de DevTools aberto (silenciosa - salva CPU)
     const detectDevTools = () => {
       if (isOwnerRef.current) return;
       
@@ -374,18 +337,8 @@ export function useGlobalDevToolsBlock() {
       const heightCheck = window.outerHeight - window.innerHeight > threshold;
       
       if (widthCheck || heightCheck) {
-        showWarning('devtools');
-        
-        // Limpar console quando DevTools é detectado
-        console.clear();
-        console.log(
-          '%c⚠️ ATENÇÃO ⚠️',
-          'background: #ef4444; color: white; font-size: 20px; font-weight: bold; padding: 10px 20px;'
-        );
-        console.log(
-          '%cEsta área é protegida. O acesso não autorizado é monitorado.',
-          'color: #f87171; font-size: 12px;'
-        );
+        // 🏛️ LEI I: SILENCIOSO - sem console spam, sem clear
+        // Apenas marca internamente para uso futuro se necessário
       }
     };
 
@@ -503,8 +456,9 @@ export function useGlobalDevToolsBlock() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     // Verificar DevTools periodicamente
-    // 🏛️ LEI I: Aumentado de 1s para 3s para reduzir CPU usage
-    const devToolsInterval = setInterval(detectDevTools, 3000);
+    // 🏛️ LEI I: Aumentado de 3s para 10s para MÁXIMA economia de CPU
+    // A proteção por teclas já é suficiente - polling é backup
+    const devToolsInterval = setInterval(detectDevTools, 10000);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true);
