@@ -6,9 +6,10 @@
 // UPGRADE: Feedback melhorado, mensagens claras
 // ============================================
 
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate, Link } from "react-router-dom";
+import { CloudflareTurnstile, useTurnstile } from "@/components/security/CloudflareTurnstile";
 import { 
   Mail, 
   Lock, 
@@ -191,6 +192,9 @@ export default function Auth() {
   const [show2FA, setShow2FA] = useState(false);
   const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string } | null>(null);
   
+  // Estado para Cloudflare Turnstile (Anti-Bot)
+  const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
+  
   const [formData, setFormData] = useState({
     nome: "",
     email: "",
@@ -247,9 +251,31 @@ export default function Auth() {
       return;
     }
     
+    // Verificar Turnstile antes de prosseguir
+    if (!isTurnstileVerified || !turnstileToken) {
+      toast.error("Verificação de segurança necessária", {
+        description: "Por favor, complete a verificação anti-bot."
+      });
+      return;
+    }
+    
     setIsLoading(true);
 
     try {
+      // Validar token do Turnstile no backend
+      const { data: turnstileResult, error: turnstileError } = await supabase.functions.invoke('verify-turnstile', {
+        body: { token: turnstileToken }
+      });
+      
+      if (turnstileError || !turnstileResult?.success) {
+        toast.error("Verificação de segurança falhou", {
+          description: turnstileResult?.error || "Por favor, tente novamente."
+        });
+        resetTurnstile();
+        setIsLoading(false);
+        return;
+      }
+      
       const schema = isLogin ? simpleLoginSchema : simpleSignupSchema;
       const result = schema.safeParse(formData);
       
@@ -261,6 +287,7 @@ export default function Auth() {
           }
         });
         setErrors(fieldErrors);
+        resetTurnstile();
         setIsLoading(false);
         return;
       }
@@ -281,6 +308,7 @@ export default function Auth() {
               description: result.error.message
             });
           }
+          resetTurnstile();
           setIsLoading(false);
           return;
         }
@@ -314,6 +342,7 @@ export default function Auth() {
               description: result.error.message
             });
           }
+          resetTurnstile();
           setIsLoading(false);
           return;
         }
@@ -819,6 +848,16 @@ export default function Auth() {
                   </Label>
                 </div>
               )}
+
+              {/* Cloudflare Turnstile - Anti-Bot Protection */}
+              <div className="py-2">
+                <CloudflareTurnstile
+                  {...TurnstileProps}
+                  theme="dark"
+                  size="flexible"
+                  showStatus={true}
+                />
+              </div>
 
               <Button
                 type="submit"

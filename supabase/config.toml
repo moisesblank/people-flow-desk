@@ -239,3 +239,11 @@ verify_jwt = true
 
 [functions.book-chat-ai]
 verify_jwt = true
+
+# ============================================
+# 🛡️ CLOUDFLARE TURNSTILE - Anti-Bot Protection
+# LEI III - DOGMA SEGURANÇA
+# ============================================
+
+[functions.verify-turnstile]
+verify_jwt = false
