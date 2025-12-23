@@ -3264,6 +3264,99 @@ export type Database = {
         }
         Relationships: []
       }
+      deployment_gates: {
+        Row: {
+          created_at: string
+          gate_name: string
+          gate_type: string
+          id: string
+          is_active: boolean | null
+          is_blocking: boolean | null
+          last_check_at: string | null
+          last_details: Json | null
+          last_status: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          gate_name: string
+          gate_type: string
+          id?: string
+          is_active?: boolean | null
+          is_blocking?: boolean | null
+          last_check_at?: string | null
+          last_details?: Json | null
+          last_status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          gate_name?: string
+          gate_type?: string
+          id?: string
+          is_active?: boolean | null
+          is_blocking?: boolean | null
+          last_check_at?: string | null
+          last_details?: Json | null
+          last_status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      deployment_history: {
+        Row: {
+          branch: string | null
+          commit_hash: string | null
+          completed_at: string | null
+          deploy_type: string
+          deploy_version: string
+          deployed_by: string | null
+          environment: string
+          gates_failed: Json | null
+          gates_passed: Json | null
+          id: string
+          metadata: Json | null
+          notes: string | null
+          rollback_version: string | null
+          started_at: string
+          status: string
+        }
+        Insert: {
+          branch?: string | null
+          commit_hash?: string | null
+          completed_at?: string | null
+          deploy_type: string
+          deploy_version: string
+          deployed_by?: string | null
+          environment: string
+          gates_failed?: Json | null
+          gates_passed?: Json | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          rollback_version?: string | null
+          started_at?: string
+          status: string
+        }
+        Update: {
+          branch?: string | null
+          commit_hash?: string | null
+          completed_at?: string | null
+          deploy_type?: string
+          deploy_version?: string
+          deployed_by?: string | null
+          environment?: string
+          gates_failed?: Json | null
+          gates_passed?: Json | null
+          id?: string
+          metadata?: Json | null
+          notes?: string | null
+          rollback_version?: string | null
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
       dev_tasks: {
         Row: {
           created_at: string
@@ -13607,6 +13700,16 @@ export type Database = {
         Args: { _required_role: string; _user_id: string }
         Returns: boolean
       }
+      audit_rls_coverage: {
+        Args: never
+        Returns: {
+          has_rls: boolean
+          is_compliant: boolean
+          policy_count: number
+          risk_level: string
+          table_name: string
+        }[]
+      }
       audit_rls_coverage_v2: {
         Args: never
         Returns: {
@@ -13693,6 +13796,16 @@ export type Database = {
       check_chat_rate_limit_v2: {
         Args: { p_live_id: string; p_user_id: string; p_window_ms?: number }
         Returns: Json
+      }
+      check_deployment_gates: {
+        Args: never
+        Returns: {
+          can_deploy: boolean
+          gate_name: string
+          gate_type: string
+          is_blocking: boolean
+          status: string
+        }[]
       }
       check_device_limit: { Args: { p_user_id: string }; Returns: Json }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
@@ -14521,6 +14634,17 @@ export type Database = {
       }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
       refresh_realtime_stats: { Args: never; Returns: undefined }
+      register_deployment: {
+        Args: {
+          p_branch?: string
+          p_commit_hash?: string
+          p_environment: string
+          p_notes?: string
+          p_type: string
+          p_version: string
+        }
+        Returns: string
+      }
       register_device_with_limit: {
         Args: {
           p_browser?: string
@@ -14788,6 +14912,10 @@ export type Database = {
       }
       sna_realtime_stats: { Args: never; Returns: Json }
       sna_system_health: { Args: never; Returns: Json }
+      update_deployment_gate: {
+        Args: { p_details?: Json; p_gate_name: string; p_status: string }
+        Returns: boolean
+      }
       update_expense_status: {
         Args: {
           p_data_pagamento?: string
