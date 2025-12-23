@@ -13463,6 +13463,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      admin_requires_mfa: { Args: { p_user_id: string }; Returns: boolean }
       analyze_slow_queries: {
         Args: never
         Returns: {
@@ -13600,6 +13601,10 @@ export type Database = {
           reason: string
           redirect_to: string
         }[]
+      }
+      check_url_access_with_mfa: {
+        Args: { p_domain?: string; p_url: string; p_user_id: string }
+        Returns: Json
       }
       check_webhook_idempotency: {
         Args: {
