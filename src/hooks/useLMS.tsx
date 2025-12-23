@@ -1,13 +1,13 @@
 // ============================================
-// 🌌 LMS v5.0 - TESE 3: Cache localStorage
-// Cursos instantâneos na segunda visita
+// 🌌 LMS v5.0 - FASE 3: useOptimisticMutation
+// Cursos instantâneos na segunda visita + 0ms feedback
 // ============================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 interface Course {
   id: string;
@@ -207,11 +207,13 @@ export function useEnrollment(courseId: string | undefined) {
   );
 }
 
+// Hook para matrícula - MIGRADO PARA useOptimisticMutation
 export function useEnroll() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  return useMutation({
+  return useOptimisticMutation<Enrollment[], string, Enrollment>({
+    queryKey: ['enrollments', user?.id || ''],
     mutationFn: async (courseId: string) => {
       if (!user?.id) throw new Error('User not authenticated');
 
@@ -225,18 +227,26 @@ export function useEnroll() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Enrollment;
+    },
+    optimisticUpdate: (old, courseId) => {
+      const newEnrollment: Enrollment = {
+        id: `temp-${Date.now()}`,
+        user_id: user?.id || '',
+        course_id: courseId,
+        enrolled_at: new Date().toISOString(),
+        completed_at: null,
+        progress_percentage: 0,
+        status: 'active',
+        certificate_url: null,
+      };
+      return [...(old || []), newEnrollment];
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['enrollments'] });
       queryClient.invalidateQueries({ queryKey: ['enrollment'] });
-      toast.success('Matrícula realizada com sucesso!');
     },
-    onError: (error: Error) => {
-      toast.error('Erro ao realizar matrícula', {
-        description: error.message,
-      });
-    },
+    successMessage: 'Matrícula realizada com sucesso!',
+    errorMessage: 'Erro ao realizar matrícula',
   });
 }
 
@@ -323,22 +333,14 @@ export function useCourseProgress(courseId: string | undefined) {
   );
 }
 
+// Hook para atualizar progresso - MIGRADO PARA useOptimisticMutation
 export function useUpdateLessonProgress() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async ({
-      lessonId,
-      completed,
-      watchTimeSeconds,
-      lastPositionSeconds,
-    }: {
-      lessonId: string;
-      completed?: boolean;
-      watchTimeSeconds?: number;
-      lastPositionSeconds?: number;
-    }) => {
+  return useOptimisticMutation<LessonProgress | null, { lessonId: string; completed?: boolean; watchTimeSeconds?: number; lastPositionSeconds?: number }, LessonProgress>({
+    queryKey: ['lesson-progress', user?.id || '', ''],
+    mutationFn: async ({ lessonId, completed, watchTimeSeconds, lastPositionSeconds }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const updateData: Partial<LessonProgress> = {};
@@ -369,12 +371,30 @@ export function useUpdateLessonProgress() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as LessonProgress;
+    },
+    optimisticUpdate: (old, variables) => {
+      if (!old) {
+        return {
+          id: `temp-${Date.now()}`,
+          user_id: user?.id || '',
+          lesson_id: variables.lessonId,
+          completed: variables.completed || false,
+          completed_at: variables.completed ? new Date().toISOString() : null,
+          watch_time_seconds: variables.watchTimeSeconds || 0,
+          last_position_seconds: variables.lastPositionSeconds || 0,
+        };
+      }
+      return {
+        ...old,
+        completed: variables.completed ?? old.completed,
+        completed_at: variables.completed ? new Date().toISOString() : old.completed_at,
+        watch_time_seconds: variables.watchTimeSeconds ?? old.watch_time_seconds,
+        last_position_seconds: variables.lastPositionSeconds ?? old.last_position_seconds,
+      };
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['lesson-progress'] });
       queryClient.invalidateQueries({ queryKey: ['course-progress'] });
-      
       if (variables.completed) {
         toast.success('Aula concluída!');
       }
@@ -386,11 +406,11 @@ export function useUpdateLessonProgress() {
 // ADMIN MUTATIONS
 // ============================================
 
+// Hook para criar curso - MIGRADO PARA useOptimisticMutation
 export function useCreateCourse() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (course: Partial<Course>) => {
+  return useOptimisticMutation<Course[], Partial<Course>, Course>({
+    queryKey: ['courses', 'all'],
+    mutationFn: async (course) => {
       const { data, error } = await supabase
         .from('courses')
         .insert(course as any)
@@ -398,20 +418,37 @@ export function useCreateCourse() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Course;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
-      toast.success('Curso criado com sucesso!');
+    optimisticUpdate: (old, newCourse) => {
+      const tempCourse: Course = {
+        id: `temp-${Date.now()}`,
+        title: newCourse.title || '',
+        description: newCourse.description || null,
+        thumbnail_url: newCourse.thumbnail_url || null,
+        instructor_id: newCourse.instructor_id || null,
+        price: newCourse.price || 0,
+        is_published: newCourse.is_published || false,
+        category: newCourse.category || '',
+        difficulty_level: newCourse.difficulty_level || 'beginner',
+        estimated_hours: newCourse.estimated_hours || 0,
+        total_xp: newCourse.total_xp || 0,
+        created_at: new Date().toISOString(),
+      };
+      return [tempCourse, ...(old || [])];
     },
+    successMessage: 'Curso criado com sucesso!',
+    errorMessage: 'Erro ao criar curso',
   });
 }
 
+// Hook para atualizar curso - MIGRADO PARA useOptimisticMutation
 export function useUpdateCourse() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async ({ id, ...course }: Partial<Course> & { id: string }) => {
+  return useOptimisticMutation<Course[], Partial<Course> & { id: string }, Course>({
+    queryKey: ['courses', 'all'],
+    mutationFn: async ({ id, ...course }) => {
       const { data, error } = await supabase
         .from('courses')
         .update(course)
@@ -420,21 +457,26 @@ export function useUpdateCourse() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Course;
+    },
+    optimisticUpdate: (old, { id, ...updates }) => {
+      return (old || []).map(c => c.id === id ? { ...c, ...updates } : c);
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['courses'] });
       queryClient.invalidateQueries({ queryKey: ['course'] });
-      toast.success('Curso atualizado!');
     },
+    successMessage: 'Curso atualizado!',
+    errorMessage: 'Erro ao atualizar curso',
   });
 }
 
+// Hook para criar módulo - MIGRADO PARA useOptimisticMutation
 export function useCreateModule() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (module: Partial<Module>) => {
+  return useOptimisticMutation<Module[], Partial<Module>, Module>({
+    queryKey: ['modules'],
+    mutationFn: async (module) => {
       const { data, error } = await supabase
         .from('modules')
         .insert(module as any)
@@ -442,20 +484,34 @@ export function useCreateModule() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Module;
+    },
+    optimisticUpdate: (old, newModule) => {
+      const tempModule: Module = {
+        id: `temp-${Date.now()}`,
+        course_id: newModule.course_id || '',
+        title: newModule.title || '',
+        description: newModule.description || null,
+        position: newModule.position || 0,
+        xp_reward: newModule.xp_reward || 0,
+      };
+      return [...(old || []), tempModule];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course'] });
-      toast.success('Módulo criado!');
     },
+    successMessage: 'Módulo criado!',
+    errorMessage: 'Erro ao criar módulo',
   });
 }
 
+// Hook para criar aula - MIGRADO PARA useOptimisticMutation
 export function useCreateLesson() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (lesson: Partial<Lesson>) => {
+  return useOptimisticMutation<Lesson[], Partial<Lesson>, Lesson>({
+    queryKey: ['lessons'],
+    mutationFn: async (lesson) => {
       const { data, error } = await supabase
         .from('lessons')
         .insert(lesson as any)
@@ -463,11 +519,27 @@ export function useCreateLesson() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Lesson;
+    },
+    optimisticUpdate: (old, newLesson) => {
+      const tempLesson: Lesson = {
+        id: `temp-${Date.now()}`,
+        module_id: newLesson.module_id || '',
+        title: newLesson.title || '',
+        description: newLesson.description || null,
+        video_url: newLesson.video_url || null,
+        content: newLesson.content || null,
+        duration_minutes: newLesson.duration_minutes || 0,
+        position: newLesson.position || 0,
+        xp_reward: newLesson.xp_reward || 0,
+        is_free: newLesson.is_free || false,
+      };
+      return [...(old || []), tempLesson];
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['course'] });
-      toast.success('Aula criada!');
     },
+    successMessage: 'Aula criada!',
+    errorMessage: 'Erro ao criar aula',
   });
 }

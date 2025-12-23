@@ -89,25 +89,14 @@ export function useTransactions(filters?: {
   );
 }
 
-// Hook para criar transação
+// Hook para criar transação - MIGRADO PARA useOptimisticMutation
 export function useCreateTransaction() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async (data: {
-      description: string;
-      amount: number;
-      type: string;
-      status?: string;
-      due_date?: string;
-      category_id?: string;
-      account_id?: string;
-      is_personal?: boolean;
-      is_recurring?: boolean;
-      recurrence_type?: string;
-      notes?: string;
-    }) => {
+  return useOptimisticMutation<Transaction[], { description: string; amount: number; type: string; status?: string; due_date?: string; category_id?: string; account_id?: string; is_personal?: boolean; is_recurring?: boolean; recurrence_type?: string; notes?: string }, Transaction>({
+    queryKey: ["transactions", user?.id || 'anon', '{}'],
+    mutationFn: async (data) => {
       if (!user?.id) throw new Error("Usuário não autenticado");
 
       const { data: result, error } = await supabase
@@ -121,17 +110,36 @@ export function useCreateTransaction() {
         .single();
 
       if (error) throw error;
-      return result;
+      return result as Transaction;
+    },
+    optimisticUpdate: (old, newData) => {
+      const tempTransaction: Transaction = {
+        id: `temp-${Date.now()}`,
+        description: newData.description,
+        amount: newData.amount,
+        type: newData.type,
+        status: newData.status || 'pending',
+        due_date: newData.due_date || null,
+        paid_date: null,
+        category_id: newData.category_id || null,
+        account_id: newData.account_id || null,
+        is_personal: newData.is_personal || false,
+        is_recurring: newData.is_recurring || false,
+        recurrence_type: newData.recurrence_type || null,
+        notes: newData.notes || null,
+        attachment_url: null,
+        created_by: user?.id || null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      return [tempTransaction, ...(old || [])];
     },
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
       queryClient.invalidateQueries({ queryKey: ["financial-stats"] });
       const typeLabel = variables.type === "income" ? "Receita" : "Despesa";
       toast.success(`${typeLabel} registrada!`);
     },
-    onError: (error) => {
-      toast.error("Erro ao registrar transação: " + error.message);
-    },
+    errorMessage: "Erro ao registrar transação",
   });
 }
 

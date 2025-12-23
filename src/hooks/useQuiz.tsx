@@ -1,14 +1,14 @@
 // ============================================
 // HOOK DE QUIZZES E SIMULADOS - LMS v5.0
-// Sistema completo de avaliações com Event-Driven
+// FASE 3: useOptimisticMutation - 0ms feedback
 // Adaptado para PARTE 5 - Arena da Glória
 // ============================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePublishEvent } from '@/hooks/usePublishEvent';
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from 'sonner';
 
 export interface Quiz {
@@ -81,11 +81,11 @@ export function useQuizzes(courseId?: string, moduleId?: string) {
   );
 }
 
-// Hook para buscar um quiz específico com questões
+// Hook para buscar um quiz específico com questões - MIGRADO para useSubspaceQuery
 export function useQuiz(quizId: string | undefined) {
-  return useQuery({
-    queryKey: ['quiz', quizId],
-    queryFn: async () => {
+  return useSubspaceQuery<{ quiz: Quiz; questions: QuizQuestion[] } | null>(
+    ['quiz', quizId || 'none'],
+    async () => {
       if (!quizId) return null;
 
       const [quizRes, questionsRes] = await Promise.all([
@@ -112,19 +112,23 @@ export function useQuiz(quizId: string | undefined) {
         questions: questions as QuizQuestion[],
       };
     },
-    enabled: !!quizId,
-  });
+    {
+      profile: 'semiStatic',
+      persistKey: `quiz_detail_${quizId}`,
+      enabled: !!quizId,
+    }
+  );
 }
 
-// Hook para tentativas do usuário em um quiz específico
+// Hook para tentativas do usuário - MIGRADO para useSubspaceQuery
 export function useQuizAttempts(quizIdOrUserId: string | undefined, isUserId = false) {
   const { user } = useAuth();
   const userId = isUserId ? quizIdOrUserId : user?.id;
   const quizId = isUserId ? undefined : quizIdOrUserId;
 
-  return useQuery({
-    queryKey: ['quiz-attempts', quizId, userId, isUserId],
-    queryFn: async () => {
+  return useSubspaceQuery<QuizAttempt[]>(
+    ['quiz-attempts', quizId || 'all', userId || 'anon', String(isUserId)],
+    async () => {
       if (!userId) return [];
 
       let query = supabase
@@ -141,17 +145,21 @@ export function useQuizAttempts(quizIdOrUserId: string | undefined, isUserId = f
       if (error) throw error;
       return data as QuizAttempt[];
     },
-    enabled: !!userId,
-  });
+    {
+      profile: 'user',
+      persistKey: `quiz_attempts_${quizId || 'all'}_${userId}`,
+      enabled: !!userId,
+    }
+  );
 }
 
-// Hook para todas as tentativas do usuário (para widget)
+// Hook para todas as tentativas - MIGRADO para useSubspaceQuery
 export function useAllUserAttempts() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['all-quiz-attempts', user?.id],
-    queryFn: async () => {
+  return useSubspaceQuery<QuizAttempt[]>(
+    ['all-quiz-attempts', user?.id || 'anon'],
+    async () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
@@ -163,8 +171,12 @@ export function useAllUserAttempts() {
       if (error) throw error;
       return data as QuizAttempt[];
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user',
+      persistKey: `all_quiz_attempts_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 // Hook para iniciar uma tentativa (v5.0 - Event-Driven)
@@ -329,12 +341,11 @@ export function useSubmitQuiz() {
   });
 }
 
-// Hook para admin criar quiz
+// Hook para criar quiz - MIGRADO PARA useOptimisticMutation
 export function useCreateQuiz() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (quiz: Omit<Quiz, 'id' | 'created_at'>) => {
+  return useOptimisticMutation<Quiz[], Omit<Quiz, 'id' | 'created_at'>, Quiz>({
+    queryKey: ['quizzes', 'all', 'all'],
+    mutationFn: async (quiz) => {
       const { data, error } = await supabase
         .from('quizzes')
         .insert(quiz)
@@ -342,39 +353,59 @@ export function useCreateQuiz() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Quiz;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['quizzes'] });
-      toast.success('Quiz criado com sucesso!');
+    optimisticUpdate: (old, newQuiz) => {
+      const tempQuiz: Quiz = {
+        ...newQuiz,
+        id: `temp-${Date.now()}`,
+        created_at: new Date().toISOString(),
+      };
+      return [tempQuiz, ...(old || [])];
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Erro ao criar quiz');
-    },
+    successMessage: 'Quiz criado com sucesso!',
+    errorMessage: 'Erro ao criar quiz',
   });
 }
 
-// Hook para admin adicionar questão
+// Hook para adicionar questão - MIGRADO PARA useOptimisticMutation
 export function useAddQuestion() {
   const queryClient = useQueryClient();
 
-  return useMutation({
-    mutationFn: async (question: Omit<QuizQuestion, 'id'>) => {
+  return useOptimisticMutation<any[], Omit<QuizQuestion, 'id'>, any>({
+    queryKey: ['quiz-questions'],
+    mutationFn: async (question) => {
       const { data, error } = await supabase
         .from('quiz_questions')
-        .insert(question)
+        .insert({
+          quiz_id: question.quiz_id,
+          question_text: question.question_text,
+          question_type: question.question_type,
+          options: question.options,
+          correct_answer: question.correct_answer,
+          explanation: question.explanation,
+          points: question.points,
+          difficulty: question.difficulty,
+          topic: question.topic,
+          position: question.position,
+        })
         .select()
         .single();
 
       if (error) throw error;
       return data;
     },
+    optimisticUpdate: (old, newQuestion) => {
+      const tempQuestion = {
+        ...newQuestion,
+        id: `temp-${Date.now()}`,
+      };
+      return [...(old || []), tempQuestion];
+    },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['quiz', variables.quiz_id] });
-      toast.success('Questão adicionada!');
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Erro ao adicionar questão');
-    },
+    successMessage: 'Questão adicionada!',
+    errorMessage: 'Erro ao adicionar questão',
   });
 }
