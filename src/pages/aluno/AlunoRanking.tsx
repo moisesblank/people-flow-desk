@@ -1,7 +1,6 @@
 // ============================================
 // CENTRAL DO ALUNO - RANKING 2300
-// Química ENEM - Prof. Moisés Medeiros
-// FUTURISTA | GAMIFICADO | JOVEM
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { useState } from "react";
@@ -16,6 +15,7 @@ import {
   Sparkles, Target, Brain, ChevronUp
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 interface Aluno {
   posicao: number;
@@ -41,18 +41,22 @@ const rankingGeral: Aluno[] = [
   { posicao: 15, nome: "Você", xp: 4500, nivel: 8, streak: 12, variacao: "up", isCurrentUser: true },
 ];
 
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.05 } }
-};
-
-const item = {
-  hidden: { opacity: 0, x: -20 },
-  show: { opacity: 1, x: 0 }
-};
+// GPU-ONLY variants factory
+const getGpuVariants = (shouldAnimate: boolean) => ({
+  container: {
+    hidden: shouldAnimate ? { opacity: 0 } : {},
+    show: shouldAnimate ? { opacity: 1, transition: { staggerChildren: 0.05 } } : {}
+  },
+  item: {
+    hidden: shouldAnimate ? { opacity: 0, x: -20 } : {},
+    show: shouldAnimate ? { opacity: 1, x: 0 } : {}
+  }
+});
 
 export default function AlunoRanking() {
   const [periodo, setPeriodo] = useState("semanal");
+  const { shouldAnimate } = useQuantumReactivity();
+  const { container, item } = getGpuVariants(shouldAnimate);
 
   const top3 = rankingGeral.slice(0, 3);
   const restante = rankingGeral.slice(3);

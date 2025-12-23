@@ -1,6 +1,6 @@
 // ============================================
 // PLANILHA VIVA - STAT CARD REATIVO
-// Card de estatística com atualização em tempo real
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { motion, AnimatePresence } from "framer-motion";
@@ -8,6 +8,7 @@ import { LucideIcon } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { AnimatedCounter } from "@/components/employees/AnimatedCounter";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 interface ReactiveStatCardProps {
   title: string;

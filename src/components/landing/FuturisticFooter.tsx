@@ -1,7 +1,6 @@
 // ============================================
 // FOOTER FUTURISTA COMPLETO 2500
-// Links, redes sociais, info legal
-// Com efeitos holográficos e animações
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { motion } from "framer-motion";
@@ -12,6 +11,7 @@ import {
   Atom, Sparkles, Star, ChevronRight, Globe
 } from "lucide-react";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 const footerLinks = {
   cursos: [
@@ -49,6 +49,8 @@ const trustBadges = [
 ];
 
 export const FuturisticFooter = () => {
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <footer className="relative pt-32 pb-10 overflow-hidden">
       {/* Background épico */}
@@ -67,46 +69,51 @@ export const FuturisticFooter = () => {
           }}
         />
         
-        {/* Orbes de energia */}
-        <motion.div
-          className="absolute left-1/4 bottom-1/4 w-[500px] h-[500px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          animate={{
-            scale: [1, 1.3, 1],
-            opacity: [0.2, 0.4, 0.2],
-          }}
-          transition={{ duration: 10, repeat: Infinity }}
-        />
+        {/* Orbes de energia - conditionally rendered */}
+        {shouldAnimate && (
+          <motion.div
+            className="absolute left-1/4 bottom-1/4 w-[500px] h-[500px] rounded-full will-change-transform transform-gpu"
+            style={{
+              background: 'radial-gradient(circle, rgba(220, 38, 38, 0.1) 0%, transparent 70%)',
+              filter: 'blur(100px)',
+            }}
+            animate={{
+              scale: [1, 1.3, 1],
+              opacity: [0.2, 0.4, 0.2],
+            }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+        )}
         
         {/* Linha de energia no topo */}
-        <motion.div 
-          className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent"
-          animate={{ opacity: [0.3, 0.8, 0.3] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        />
+        {shouldAnimate && (
+          <motion.div 
+            className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-red-500/60 to-transparent will-change-transform transform-gpu"
+            animate={{ opacity: [0.3, 0.8, 0.3] }}
+            transition={{ duration: 3, repeat: Infinity }}
+          />
+        )}
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
-        {/* Newsletter section */}
+        {/* Newsletter section - GPU-ONLY */}
         <motion.div
-          initial={{ opacity: 0, y: 40 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
+          {...gpuAnimationProps.fadeUp}
           className="max-w-3xl mx-auto text-center mb-20"
         >
           <motion.div
-            className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-red-900/30 border border-red-700/40 mb-6"
-            whileHover={{ scale: 1.02 }}
+            className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-red-900/30 border border-red-700/40 mb-6 will-change-transform transform-gpu"
+            whileHover={shouldAnimate ? { scale: 1.02 } : undefined}
           >
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-            >
-              <Atom className="w-5 h-5 text-red-400" />
-            </motion.div>
+            {shouldAnimate && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+              >
+                <Atom className="w-5 h-5 text-red-400" />
+              </motion.div>
+            )}
+            {!shouldAnimate && <Atom className="w-5 h-5 text-red-400" />}
             <span className="text-sm font-bold text-red-400 tracking-wide">O FUTURO DA QUÍMICA - ANO 2500</span>
           </motion.div>
           
@@ -119,15 +126,17 @@ export const FuturisticFooter = () => {
           
           <Link to="/auth">
             <motion.div
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.97 }}
-              className="relative inline-block"
+              whileHover={shouldAnimate ? { scale: 1.03 } : undefined}
+              whileTap={shouldAnimate ? { scale: 0.97 } : undefined}
+              className="relative inline-block will-change-transform transform-gpu"
             >
-              <motion.div
-                className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-2xl blur-lg"
-                animate={{ opacity: [0.4, 0.7, 0.4] }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
+              {shouldAnimate && (
+                <motion.div
+                  className="absolute -inset-1 bg-gradient-to-r from-red-600 to-amber-600 rounded-2xl blur-lg"
+                  animate={{ opacity: [0.4, 0.7, 0.4] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                />
+              )}
               <button className="relative px-10 py-4 bg-gradient-to-r from-red-700 to-red-600 text-white font-black rounded-2xl flex items-center gap-3">
                 <Sparkles className="w-5 h-5" />
                 Começar Agora
@@ -153,7 +162,7 @@ export const FuturisticFooter = () => {
               Transformando sonhos em aprovações há mais de 15 anos com tecnologia do futuro.
             </p>
             
-            {/* Social links épicos */}
+            {/* Social links épicos - GPU-ONLY */}
             <div className="flex items-center gap-4">
               {socialLinks.map((social) => (
                 <motion.a
@@ -161,9 +170,9 @@ export const FuturisticFooter = () => {
                   href={social.href}
                   target="_blank"
                   rel="noopener noreferrer"
-                  whileHover={{ scale: 1.1, y: -3 }}
-                  whileTap={{ scale: 0.95 }}
-                  className="relative group"
+                  whileHover={shouldAnimate ? { scale: 1.1, y: -3 } : undefined}
+                  whileTap={shouldAnimate ? { scale: 0.95 } : undefined}
+                  className="relative group will-change-transform transform-gpu"
                 >
                   <motion.div
                     className="absolute -inset-1 rounded-xl blur-lg opacity-0 group-hover:opacity-60 transition-opacity"
@@ -177,12 +186,15 @@ export const FuturisticFooter = () => {
             </div>
           </div>
 
-          {/* Cursos */}
           <div>
             <h4 className="text-white font-black mb-6 text-lg">Cursos</h4>
             <ul className="space-y-4">
               {footerLinks.cursos.map((link) => (
-                <motion.li key={link.label} whileHover={{ x: 5 }}>
+                <motion.li 
+                  key={link.label} 
+                  whileHover={shouldAnimate ? { x: 5 } : undefined}
+                  className="will-change-transform transform-gpu"
+                >
                   <Link 
                     to={link.href}
                     className="text-gray-400 hover:text-white transition-colors text-sm flex items-center gap-2 group"

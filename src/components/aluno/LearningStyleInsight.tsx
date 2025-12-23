@@ -1,7 +1,6 @@
 // ============================================
 // LEARNING STYLE INSIGHT - SANTUÁRIO BETA v9.0
-// Insight de IA sobre o Estilo de Aprendizado
-// Personalização baseada em comportamento
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -9,6 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { motion } from "framer-motion";
 import { Brain, Eye, Headphones, BookOpen, Sparkles, Lightbulb } from "lucide-react";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 type LearningStyle = 'visual' | 'auditivo' | 'leitor' | 'cinesico';
 

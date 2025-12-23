@@ -1,7 +1,6 @@
 // ============================================
 // JORNADA PREDITIVA BETA - SANTUÁRIO v9.0
-// Dashboard Personalizado para Alunos BETA
-// IA, Gamificação e Experiência Transcendental
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -20,6 +19,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { usePerformanceFlags } from "@/hooks/usePerformanceFlags";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 // Componentes de IA do Santuário v9.0
 import { FocusTrack } from "./FocusTrack";
@@ -29,16 +29,20 @@ import { BestStudyTimeInsight } from "./BestStudyTimeInsight";
 import { StudentCommandCenter } from "./StudentCommandCenter";
 import { AdaptiveScheduler } from "./AdaptiveScheduler";
 
-// Animações
-const container = {
-  hidden: { opacity: 0 },
-  show: { opacity: 1, transition: { staggerChildren: 0.1 } }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
+// GPU-ONLY variants
+const getGpuVariants = (shouldAnimate: boolean) => ({
+  container: {
+    hidden: shouldAnimate ? { opacity: 0 } : {},
+    show: shouldAnimate ? {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    } : {}
+  },
+  item: {
+    hidden: shouldAnimate ? { opacity: 0, y: 20 } : {},
+    show: shouldAnimate ? { opacity: 1, y: 0 } : {}
+  }
+});
 
 // Tipos
 interface StudyStats {
@@ -125,6 +129,8 @@ const conquistas = [
 export function BetaStudentDashboard() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { shouldAnimate } = useQuantumReactivity();
+  const { container, item } = getGpuVariants(shouldAnimate);
   const [stats] = useState<StudyStats>(mockStats);
   const [showMotivation, setShowMotivation] = useState(true);
   
