@@ -3,9 +3,10 @@
 // SANTUÁRIO v9.0 - Lei I: Performance Máxima
 // ============================================
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 // Tipos
 export interface WeeklyRankingEntry {
@@ -59,15 +60,15 @@ export function useWeeklyRanking(options: UseWeeklyRankingOptions = {}) {
 
   const currentWeekStart = getWeekStart();
 
-  // Query principal: ranking semanal
+  // 🌌 Query migrada para useSubspaceQuery - Cache localStorage
   const {
     data: ranking,
     isLoading,
     error,
     refetch
-  } = useQuery({
-    queryKey: ['weekly-ranking', limit, currentWeekStart],
-    queryFn: async () => {
+  } = useSubspaceQuery<WeeklyRankingEntry[]>(
+    ['weekly-ranking', String(limit), currentWeekStart],
+    async () => {
       const { data, error } = await supabase
         .from('weekly_xp')
         .select(`
@@ -94,8 +95,11 @@ export function useWeeklyRanking(options: UseWeeklyRankingOptions = {}) {
 
       return rankedData;
     },
-    staleTime: 1000 * 60, // 1 minuto (ranking muda frequentemente)
-  });
+    {
+      profile: 'dashboard', // 2min stale, atualiza frequente
+      persistKey: `weekly_ranking_${currentWeekStart}`,
+    }
+  );
 
   // Query: posição do usuário atual (se não está no top)
   const { data: userRankData } = useQuery({

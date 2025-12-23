@@ -4,9 +4,10 @@
 // Análise específica para áreas de Química
 // ============================================
 
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 // Tipos
 export interface AreaPerformance {
@@ -74,15 +75,15 @@ export function useAreasAnalysis(options: UseAreasAnalysisOptions = {}) {
   const { user } = useAuth();
   const { includeInactive = false, minAttempts = 1 } = options;
 
-  // Query principal: desempenho por área
+  // 🌌 Query migrada para useSubspaceQuery - Cache localStorage
   const {
     data: areasPerformance,
     isLoading,
     error,
     refetch
-  } = useQuery({
-    queryKey: ['areas-analysis', user?.id, includeInactive, minAttempts],
-    queryFn: async (): Promise<AreaPerformance[]> => {
+  } = useSubspaceQuery<AreaPerformance[]>(
+    ['areas-analysis', user?.id || 'anon', String(includeInactive), String(minAttempts)],
+    async (): Promise<AreaPerformance[]> => {
       if (!user?.id) return [];
 
       // 1. Buscar todas as áreas de estudo
@@ -254,9 +255,12 @@ export function useAreasAnalysis(options: UseAreasAnalysisOptions = {}) {
         return new Date(b.lastAttempt).getTime() - new Date(a.lastAttempt).getTime();
       });
     },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutos
-  });
+    {
+      profile: 'user', // Cache por 5min, persistência
+      persistKey: `areas_analysis_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 
   // Query: estatísticas gerais
   const { data: stats } = useQuery({

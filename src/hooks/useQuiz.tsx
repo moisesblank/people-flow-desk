@@ -8,6 +8,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePublishEvent } from '@/hooks/usePublishEvent';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from 'sonner';
 
 export interface Quiz {
@@ -55,11 +56,11 @@ export interface QuizAttempt {
   completed_at: string | null;
 }
 
-// Hook para buscar quizzes de um curso/módulo
+// 🌌 Hook migrado para useSubspaceQuery - Cache localStorage
 export function useQuizzes(courseId?: string, moduleId?: string) {
-  return useQuery({
-    queryKey: ['quizzes', courseId, moduleId],
-    queryFn: async () => {
+  return useSubspaceQuery<Quiz[]>(
+    ['quizzes', courseId || 'all', moduleId || 'all'],
+    async () => {
       let query = supabase
         .from('quizzes')
         .select('*')
@@ -73,8 +74,11 @@ export function useQuizzes(courseId?: string, moduleId?: string) {
       if (error) throw error;
       return data as Quiz[];
     },
-    enabled: true,
-  });
+    {
+      profile: 'semiStatic', // 10min stale, conteúdo estável
+      persistKey: `quizzes_${courseId || 'all'}_${moduleId || 'all'}`,
+    }
+  );
 }
 
 // Hook para buscar um quiz específico com questões

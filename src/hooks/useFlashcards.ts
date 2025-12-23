@@ -7,6 +7,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 // Interface alinhada com a tabela study_flashcards
 export interface Flashcard {
@@ -83,13 +84,13 @@ function calculateFSRS(
   return { newStability, newDifficulty, interval };
 }
 
-// Hook: Flashcards pendentes para revisão (due today)
+// 🌌 Hook migrado para useSubspaceQuery - Cache localStorage
 export function useDueFlashcards() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['flashcards-due', user?.id],
-    queryFn: async (): Promise<Flashcard[]> => {
+  return useSubspaceQuery<Flashcard[]>(
+    ['flashcards-due', user?.id || 'anon'],
+    async (): Promise<Flashcard[]> => {
       const today = new Date().toISOString().split('T')[0];
       
       const { data, error } = await supabase
@@ -112,10 +113,12 @@ export function useDueFlashcards() {
         state: (card.state as Flashcard['state']) ?? 'new',
       }));
     },
-    enabled: !!user?.id,
-    staleTime: 30000,
-    refetchOnWindowFocus: true,
-  });
+    {
+      profile: 'dashboard', // 2min stale, atualiza frequente
+      persistKey: `flashcards_due_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 // Hook: Todos os flashcards (para Modo Cram)

@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 interface UserGamification {
   id: string;
@@ -106,10 +107,10 @@ export function useGamification() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  // Fetch user gamification data
-  const { data: gamification, isLoading: isLoadingGamification } = useQuery({
-    queryKey: ['user-gamification', user?.id],
-    queryFn: async () => {
+  // 🌌 Fetch user gamification data - useSubspaceQuery
+  const { data: gamification, isLoading: isLoadingGamification } = useSubspaceQuery<UserGamification | null>(
+    ['user-gamification', user?.id || 'anon'],
+    async () => {
       if (!user?.id) return null;
       
       const { data, error } = await supabase
@@ -121,8 +122,12 @@ export function useGamification() {
       if (error) throw error;
       return data as UserGamification | null;
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user', // 5min stale, dados do usuário
+      persistKey: `gamification_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 
   // Fetch all badges
   const { data: allBadges } = useQuery({

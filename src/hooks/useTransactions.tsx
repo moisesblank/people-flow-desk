@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from "sonner";
 
 export interface Transaction {
@@ -40,9 +41,10 @@ export function useTransactions(filters?: {
 }) {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ["transactions", user?.id, filters],
-    queryFn: async () => {
+  // 🌌 Query migrada para useSubspaceQuery - Cache localStorage
+  return useSubspaceQuery(
+    ["transactions", user?.id || 'anon', JSON.stringify(filters || {})],
+    async () => {
       if (!user?.id) return [];
 
       let query = supabase
@@ -79,8 +81,12 @@ export function useTransactions(filters?: {
       if (error) throw error;
       return data;
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user', // 5min stale, cache persistente
+      persistKey: `transactions_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 // Hook para criar transação

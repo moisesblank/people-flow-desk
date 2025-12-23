@@ -6,6 +6,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from 'sonner';
 
 // Tipos
@@ -66,15 +67,15 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
   const queryClient = useQueryClient();
   const { onlyPending = false, areaId, limit = 50 } = options;
 
-  // Query principal: buscar entradas do caderno de erros
+  // 🌌 Query migrada para useSubspaceQuery - Cache localStorage
   const {
     data: entries,
     isLoading,
     error,
     refetch
-  } = useQuery({
-    queryKey: ['error-notebook', user?.id, onlyPending, areaId, limit],
-    queryFn: async () => {
+  } = useSubspaceQuery<ErrorNotebookEntry[]>(
+    ['error-notebook', user?.id || 'anon', String(onlyPending), areaId || 'all', String(limit)],
+    async () => {
       if (!user?.id) return [];
 
       let query = supabase
@@ -118,9 +119,12 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
 
       return filteredData;
     },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 5, // 5 minutos de cache
-  });
+    {
+      profile: 'user', // 5min stale, persistente
+      persistKey: `error_notebook_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 
   // Query: estatísticas do caderno de erros
   const { data: stats } = useQuery({

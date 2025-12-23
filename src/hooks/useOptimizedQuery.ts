@@ -6,6 +6,7 @@
 import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { CACHE_PROFILES, INVALIDATION_KEYS } from '@/lib/performance/cacheConfig';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 // Tipo para configuração de cache (usando CACHE_PROFILES v3500)
 type CacheType = keyof typeof CACHE_PROFILES;
