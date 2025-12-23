@@ -723,6 +723,88 @@ export const LEI_I_PERFORMANCE = {
 // ============================================
 
 /**
+ * Detecta o tier de performance do dispositivo
+ */
+export function detectTier(): PerformanceTier {
+  if (typeof window === 'undefined') return 'standard';
+  
+  const nav = navigator as any;
+  const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
+  
+  // Coletar métricas
+  const cores = navigator.hardwareConcurrency || 2;
+  const memory = nav.deviceMemory || 2;
+  const saveData = connection?.saveData === true;
+  const effectiveType = connection?.effectiveType || '4g';
+  const downlink = connection?.downlink || 10;
+  
+  // Score inicial
+  let score = 50;
+  
+  // Cores
+  if (cores >= 8) score += 25;
+  else if (cores >= 6) score += 18;
+  else if (cores >= 4) score += 12;
+  else if (cores <= 2) score -= 20;
+  
+  // Memória
+  if (memory >= 8) score += 20;
+  else if (memory >= 4) score += 10;
+  else if (memory <= 2) score -= 25;
+  
+  // Conexão
+  if (downlink >= 50) score += 25;
+  else if (downlink >= 20) score += 18;
+  else if (downlink >= 5) score += 8;
+  else if (effectiveType === '3g') score -= 20;
+  else if (effectiveType === '2g' || effectiveType === 'slow-2g') score -= 40;
+  
+  // Penalidades
+  if (saveData) score -= 30;
+  
+  // Determinar tier
+  if (saveData || effectiveType === '2g') return 'critical';
+  if (effectiveType === '3g') return 'legacy';
+  if (score >= 85) return 'quantum';
+  if (score >= 70) return 'neural';
+  if (score >= 50) return 'enhanced';
+  if (score >= 30) return 'standard';
+  if (score >= 10) return 'legacy';
+  return 'critical';
+}
+
+/**
+ * Detecta tipo de conexão
+ */
+export function detectConnection(): ConnectionSpeed {
+  if (typeof window === 'undefined') return '4g';
+  if (!navigator.onLine) return 'offline';
+  
+  const conn = (navigator as any).connection;
+  if (!conn) return 'wifi';
+  
+  const { effectiveType, downlink = 10 } = conn;
+  
+  if (effectiveType === '2g' || effectiveType === 'slow-2g') return '2g';
+  if (effectiveType === '3g' || downlink < 5) return '3g';
+  if (effectiveType === '4g' && downlink < 20) return '4g';
+  if (downlink >= 50) return 'fiber';
+  return 'wifi';
+}
+
+/**
+ * Detecta tipo de dispositivo
+ */
+export function detectDevice(): 'desktop' | 'tablet' | 'mobile' {
+  if (typeof window === 'undefined') return 'desktop';
+  
+  const ua = navigator.userAgent;
+  if (/Tablet|iPad/i.test(ua)) return 'tablet';
+  if (/Mobile|Android|iPhone/i.test(ua)) return 'mobile';
+  return 'desktop';
+}
+
+/**
  * Verifica se um tier permite animações
  */
 export function canAnimate(tier: PerformanceTier, reducedMotion: boolean = false): boolean {
@@ -759,6 +841,20 @@ export function getRootMargin(tier: PerformanceTier): string {
 }
 
 /**
+ * Obtém threshold por tier
+ */
+export function getThreshold(tier: PerformanceTier): number {
+  return LAZY_CONSTITUTION.THRESHOLD_BY_TIER[tier];
+}
+
+/**
+ * Obtém cache config por tier
+ */
+export function getCacheConfig(tier: PerformanceTier) {
+  return QUERY_CONSTITUTION.CACHE_BY_TIER[tier];
+}
+
+/**
  * Verifica se deve usar Worker para tarefa
  */
 export function shouldUseWorker(task: string, size: number): boolean {
@@ -773,13 +869,6 @@ export function shouldUseWorker(task: string, size: number): boolean {
 export function isFeatureEnabled(tier: PerformanceTier, feature: string): boolean {
   const disabled = ANIMATION_CONSTITUTION.DISABLED_BY_TIER[tier];
   return !disabled.includes(feature);
-}
-
-/**
- * Obtém cache config por tier
- */
-export function getCacheConfig(tier: PerformanceTier) {
-  return QUERY_CONSTITUTION.CACHE_BY_TIER[tier];
 }
 
 /**
@@ -817,27 +906,86 @@ export function getStagger(tier: PerformanceTier): number {
   return ANIMATION_CONSTITUTION.STAGGER_BY_TIER[tier];
 }
 
+/**
+ * Obtém max width de imagem por tier
+ */
+export function getImageMaxWidth(tier: PerformanceTier): number {
+  return IMAGE_CONSTITUTION.MAX_WIDTH_BY_TIER[tier];
+}
+
+/**
+ * Obtém prefetch config por tier
+ */
+export function getPrefetchConfig(tier: PerformanceTier) {
+  return PRECONNECT_CONSTITUTION.PREFETCH_BY_TIER[tier];
+}
+
+/**
+ * Obtém item height por tier (para virtualização)
+ */
+export function getItemHeight(tier: PerformanceTier): number {
+  return VIRTUAL_CONSTITUTION.ITEM_HEIGHT_BY_TIER[tier];
+}
+
+/**
+ * Obtém throttle delay por tier
+ */
+export function getThrottleDelay(tier: PerformanceTier): number {
+  const delays: Record<PerformanceTier, number> = {
+    critical: 200,
+    legacy: 150,
+    standard: 100,
+    enhanced: 50,
+    neural: 32,
+    quantum: 16,
+  };
+  return delays[tier];
+}
+
+/**
+ * Obtém debounce delay por tier
+ */
+export function getDebounceDelay(tier: PerformanceTier): number {
+  const delays: Record<PerformanceTier, number> = {
+    critical: 500,
+    legacy: 400,
+    standard: 300,
+    enhanced: 200,
+    neural: 150,
+    quantum: 100,
+  };
+  return delays[tier];
+}
+
 // ============================================
 // LOG DE INICIALIZAÇÃO
 // ============================================
 
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
   console.log(`
-╔══════════════════════════════════════════════════════════════╗
-║     🏛️ CONSTITUIÇÃO SYNAPSE - LEI I: PERFORMANCE v2.0        ║
-╠══════════════════════════════════════════════════════════════╣
-║  Versão: ${LEI_I_PERFORMANCE.VERSION}                                             ║
-║  Artigos: ${LEI_I_PERFORMANCE.ARTICLES_COUNT}                                              ║
-║  Status: ATIVA E ENFORCED                                    ║
-║  Objetivo: 3G + Dispositivos Básicos = 100%                  ║
-╠══════════════════════════════════════════════════════════════╣
-║  ✅ Web Workers (8 tarefas offloaded)                        ║
-║  ✅ GPU Acceleration (transform/opacity only)                ║
-║  ✅ Quantum Cache (6 tiers estratificados)                   ║
-║  ✅ Optimistic Mutations (rollback automático)               ║
-║  ✅ Defer Hydration (requestIdleCallback)                    ║
-║  ✅ 15 Granular Chunks (LCP -40%, TTI -60%)                  ║
-╚══════════════════════════════════════════════════════════════╝
+╔══════════════════════════════════════════════════════════════════════════════╗
+║               🏛️ CONSTITUIÇÃO SYNAPSE - LEI I: PERFORMANCE v2.0              ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  📊 Versão: ${LEI_I_PERFORMANCE.VERSION} | Artigos: ${LEI_I_PERFORMANCE.ARTICLES_COUNT} | Títulos: 16                          ║
+║  🎯 DOGMA: Se roda em 3G, roda em QUALQUER lugar                             ║
+║  📈 Metas: LCP<2s | TTI<3s | CLS<0.1 | FCP<1.5s | INP<150ms                 ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  ⚡ TÍTULOS:                                                                  ║
+║  I. Bundle (5)    | II. Lazy (4)     | III. Imagens (5)  | IV. Query (7)    ║
+║  V. Workers (6)   | VI. GPU (6)      | VII. Animações (6)| VIII. Cache (7)  ║
+║  IX. Virtual (4)  | X. Preconnect (6)| XI. Métricas (4)  | XII. Memo (4)    ║
+║  XIII. Timing (4) | XIV. Database (4)| XV. Errors (4)    | XVI. Detection (4)║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  🔧 INTEGRAÇÕES v2.0:                                                         ║
+║  ✅ Web Workers (8 tarefas offloaded)                                         ║
+║  ✅ GPU Acceleration (transform/opacity only)                                 ║
+║  ✅ Quantum Cache (6 tiers estratificados)                                    ║
+║  ✅ Optimistic Mutations (rollback automático)                                ║
+║  ✅ Defer Hydration (requestIdleCallback)                                     ║
+║  ✅ 15 Granular Chunks (LCP -40%, TTI -60%)                                   ║
+╠══════════════════════════════════════════════════════════════════════════════╣
+║  🏆 6 TIERS: critical → legacy → standard → enhanced → neural → quantum      ║
+╚══════════════════════════════════════════════════════════════════════════════╝
   `.trim());
 }
 
