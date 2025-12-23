@@ -5,8 +5,8 @@
 
 import React, { Suspense, lazy, memo, useState, useEffect } from 'react';
 
-// Skeleton para gráficos
-const ChartSkeleton = memo(({ height = 300 }: { height?: number }) => (
+// Skeleton para gráficos - EXPORTADO
+export const ChartSkeleton = memo(({ height = 300 }: { height?: number }) => (
   <div 
     className="animate-pulse bg-muted/30 rounded-lg flex items-center justify-center"
     style={{ height }}
