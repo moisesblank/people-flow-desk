@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║   🏛️ CONSTITUIÇÃO SYNAPSE - HOOKS DE ENFORCEMENT v5.0                       ║
+// ║   🏛️ CONSTITUIÇÃO SYNAPSE - HOOKS DE ENFORCEMENT v5.1                       ║
 // ║   LEI I: Performance | LEI II: Dispositivos | LEI III: Segurança            ║
-// ║   Retorna: tier, shouldAnimate, imageQuality, rootMargin, overscan          ║
+// ║   Adaptado para LEI_I_PERFORMANCE v2.0                                       ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 import { useMemo, useCallback, useState, useEffect } from 'react';
@@ -13,14 +13,15 @@ import {
   getRootMargin,
   canAnimate,
   checkBudget,
-  checkWebVital,
+  checkWebVital3G,
+  type PerformanceTier,
 } from '@/lib/constitution/LEI_I_PERFORMANCE';
 
 // ============================================
 // TIPOS CONSTITUCIONAIS
 // ============================================
 
-export type ConstitutionTier = 'critical' | 'low' | 'medium' | 'high' | 'ultra';
+export type ConstitutionTier = PerformanceTier;
 export type ConnectionType = 'slow' | 'mobile' | 'desktop';
 
 export interface ConstitutionConfig {
@@ -54,15 +55,15 @@ export interface ConstitutionConfig {
   
   // Budgets & Targets
   budgets: typeof LEI_I_PERFORMANCE.METRICS.BUDGETS;
-  targets: typeof LEI_I_PERFORMANCE.METRICS.TARGETS;
+  targets: typeof LEI_I_PERFORMANCE.METRICS.TARGETS_3G;
 }
 
 // ============================================
-// DETECÇÃO DE TIER (LEI I Art. 16-18)
+// DETECÇÃO DE TIER (LEI I Art. 77-78)
 // ============================================
 
 function detectTier(): ConstitutionTier {
-  if (typeof window === 'undefined') return 'medium';
+  if (typeof window === 'undefined') return 'enhanced';
   
   const connection = (navigator as any).connection;
   const memory = (navigator as any).deviceMemory || 4;
@@ -76,22 +77,25 @@ function detectTier(): ConstitutionTier {
     return 'critical';
   }
   
-  // 3G = low
-  if (connection?.effectiveType === '3g') return 'low';
+  // 3G = legacy
+  if (connection?.effectiveType === '3g') return 'legacy';
   
-  // Hardware fraco = low
-  if (memory <= 2 || cores <= 2) return 'low';
+  // Hardware fraco = legacy
+  if (memory <= 2 || cores <= 2) return 'legacy';
   
-  // 4G + hardware médio = medium
-  if (connection?.effectiveType === '4g' && memory <= 4) return 'medium';
+  // 4G + hardware médio = standard
+  if (connection?.effectiveType === '4g' && memory <= 4) return 'standard';
   
-  // Hardware bom = high
-  if (cores >= 4 && memory >= 4) return 'high';
+  // Hardware bom = enhanced
+  if (cores >= 4 && memory >= 4 && memory < 8) return 'enhanced';
   
-  // Hardware top = ultra
-  if (cores >= 8 && memory >= 8) return 'ultra';
+  // Hardware muito bom = neural
+  if (cores >= 6 && memory >= 8) return 'neural';
   
-  return 'medium';
+  // Hardware top = quantum
+  if (cores >= 8 && memory >= 8) return 'quantum';
+  
+  return 'enhanced';
 }
 
 function detectConnection(): ConnectionType {
@@ -161,13 +165,13 @@ export function useConstitution(): ConstitutionConfig {
   // Device detection (estável)
   const device = useMemo(() => detectDevice(), []);
   
-  // Artigo 19 - Reduced Motion
+  // Artigo 34 - Reduced Motion
   const prefersReducedMotion = useMemo(() => {
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   }, []);
   
-  // Artigo 18 - Data Saver
+  // Artigo 80 - Data Saver
   const isDataSaver = useMemo(() => {
     if (typeof window === 'undefined') return false;
     return (navigator as any).connection?.saveData === true;
@@ -177,25 +181,25 @@ export function useConstitution(): ConstitutionConfig {
   // FUNÇÕES DE ENFORCEMENT
   // ============================================
   
-  // Artigo 21 - Duração de animação
+  // Artigo 35 - Duração de animação
   const getAnimDuration = useCallback((base: number) => {
     if (prefersReducedMotion) return 0;
     return getAnimationDuration(base, tier);
   }, [tier, prefersReducedMotion]);
   
-  // Artigo 9 - Qualidade de imagem
+  // Artigo 12 - Qualidade de imagem
   const imgQuality = useMemo(() => getImageQuality(tier), [tier]);
   
-  // Artigo 26 - Overscan
+  // Artigo 48 - Overscan
   const virtualOverscan = useMemo(() => getOverscan(tier), [tier]);
   
-  // Artigo 5 - rootMargin
-  const lazyRootMargin = useMemo(() => getRootMargin(connection), [connection]);
+  // Artigo 7 - rootMargin
+  const lazyRootMargin = useMemo(() => getRootMargin(tier), [tier]);
   
-  // Artigo 19 - Pode animar?
+  // Artigo 34 - Pode animar?
   const shouldAnimate = useMemo(() => {
     if (prefersReducedMotion) return false;
-    return canAnimate(tier);
+    return canAnimate(tier, prefersReducedMotion);
   }, [tier, prefersReducedMotion]);
   
   // ============================================
@@ -221,19 +225,19 @@ export function useConstitution(): ConstitutionConfig {
     isDataSaver,
     prefersReducedMotion,
     isSlowConnection: connection === 'slow',
-    isLowEnd: tier === 'critical' || tier === 'low',
+    isLowEnd: tier === 'critical' || tier === 'legacy' || tier === 'standard',
     
     // Functions
     animationDuration: getAnimDuration,
     
-    // Config values
-    debounceMs: LEI_I_PERFORMANCE.TIMING.SEARCH_DEBOUNCE_MS,
-    throttleMs: LEI_I_PERFORMANCE.TIMING.SCROLL_THROTTLE_MS,
-    queryLimit: LEI_I_PERFORMANCE.DB.DEFAULT_QUERY_LIMIT,
+    // Config values (LEI I v2.0 format)
+    debounceMs: LEI_I_PERFORMANCE.TIMING.DEBOUNCE.search,
+    throttleMs: LEI_I_PERFORMANCE.TIMING.THROTTLE.scroll,
+    queryLimit: LEI_I_PERFORMANCE.DB.LIMITS.default,
     
     // Budgets & Targets
     budgets: LEI_I_PERFORMANCE.METRICS.BUDGETS,
-    targets: LEI_I_PERFORMANCE.METRICS.TARGETS,
+    targets: LEI_I_PERFORMANCE.METRICS.TARGETS_3G,
   }), [
     tier, 
     connection, 
@@ -261,7 +265,7 @@ export function useConstitutionalAnimation() {
   return useMemo(() => ({
     shouldAnimate,
     duration: (base: number = 300) => animationDuration(base),
-    ease: tier === 'ultra' || tier === 'high' 
+    ease: tier === 'quantum' || tier === 'neural' 
       ? [0.4, 0, 0.2, 1]  // smooth
       : [0.4, 0, 1, 1],    // fast
     skipAnimations: !shouldAnimate,
@@ -283,7 +287,7 @@ export function useConstitutionalAnimation() {
 }
 
 /**
- * Hook para imagens constitucionais (LEI I Art. 7-9)
+ * Hook para imagens constitucionais (LEI I Art. 10-14)
  */
 export function useConstitutionalImage() {
   const { imageQuality, isDataSaver, isSlowConnection, tier } = useConstitution();
@@ -294,13 +298,13 @@ export function useConstitutionalImage() {
     decoding: 'async' as const,
     shouldLoadImages: !isDataSaver,
     useBlurPlaceholder: !isSlowConnection,
-    maxWidth: tier === 'critical' ? 640 : tier === 'low' ? 768 : 1920,
+    maxWidth: LEI_I_PERFORMANCE.IMAGE.MAX_WIDTH_BY_TIER[tier],
     format: isSlowConnection ? 'webp' : 'auto',
   }), [imageQuality, isDataSaver, isSlowConnection, tier]);
 }
 
 /**
- * Hook para virtualização constitucional (LEI I Art. 25-26)
+ * Hook para virtualização constitucional (LEI I Art. 47-50)
  */
 export function useConstitutionalVirtualization() {
   const { overscan, tier } = useConstitution();
@@ -309,47 +313,49 @@ export function useConstitutionalVirtualization() {
     overscan,
     threshold: LEI_I_PERFORMANCE.VIRTUAL.VIRTUALIZE_ABOVE,
     shouldVirtualize: (itemCount: number) => itemCount > LEI_I_PERFORMANCE.VIRTUAL.VIRTUALIZE_ABOVE,
-    itemHeight: tier === 'low' || tier === 'critical' ? 56 : 64,
+    itemHeight: LEI_I_PERFORMANCE.VIRTUAL.ITEM_HEIGHT_BY_TIER[tier],
   }), [overscan, tier]);
 }
 
 /**
- * Hook para lazy loading constitucional (LEI I Art. 4-6)
+ * Hook para lazy loading constitucional (LEI I Art. 6-9)
  */
 export function useConstitutionalLazyLoad() {
-  const { rootMargin, isSlowConnection } = useConstitution();
+  const { rootMargin, isSlowConnection, tier } = useConstitution();
   
   return useMemo(() => ({
     rootMargin,
-    threshold: 0.01,
+    threshold: LEI_I_PERFORMANCE.LAZY.THRESHOLD_BY_TIER[tier],
     // Em conexões lentas, carrega mais cedo
     prefetchDistance: isSlowConnection ? '800px' : '400px',
-  }), [rootMargin, isSlowConnection]);
+  }), [rootMargin, isSlowConnection, tier]);
 }
 
 /**
- * Hook para queries constitucionais (LEI I Art. 10-12)
+ * Hook para queries constitucionais (LEI I Art. 15-21)
  */
 export function useConstitutionalQuery() {
   const { queryLimit, isSlowConnection, tier } = useConstitution();
   
+  const cacheConfig = LEI_I_PERFORMANCE.QUERY.CACHE_BY_TIER[tier];
+  
   return useMemo(() => ({
     limit: isSlowConnection ? Math.floor(queryLimit / 2) : queryLimit,
-    staleTime: isSlowConnection ? 60_000 : 30_000,
-    gcTime: isSlowConnection ? 600_000 : 300_000,
-    networkMode: 'offlineFirst' as const,
-    refetchOnFocus: false,
-    refetchOnReconnect: false,
-    retry: tier === 'critical' ? 0 : 1,
-  }), [queryLimit, isSlowConnection, tier]);
+    staleTime: cacheConfig.staleTime,
+    gcTime: cacheConfig.gcTime,
+    networkMode: LEI_I_PERFORMANCE.QUERY.NETWORK_MODE,
+    refetchOnFocus: LEI_I_PERFORMANCE.QUERY.REFETCH_ON_FOCUS,
+    refetchOnReconnect: LEI_I_PERFORMANCE.QUERY.REFETCH_ON_RECONNECT,
+    retry: tier === 'critical' ? 0 : LEI_I_PERFORMANCE.QUERY.RETRY.count,
+  }), [queryLimit, isSlowConnection, tier, cacheConfig]);
 }
 
 /**
- * Hook para cache React Query por tipo (LEI I Art. 10)
+ * Hook para cache React Query por tipo (LEI I Art. 16)
  */
-export function useConstitutionalCacheConfig(type: 'realtime' | 'dashboard' | 'list' | 'static' | 'user') {
+export function useConstitutionalCacheConfig(type: 'immutable' | 'config' | 'dashboard' | 'list' | 'user' | 'realtime') {
   const { isSlowConnection } = useConstitution();
-  const baseConfig = LEI_I_PERFORMANCE.QUERY.CACHE_CONFIG[type];
+  const baseConfig = LEI_I_PERFORMANCE.QUERY.CACHE_BY_TYPE[type];
   
   return useMemo(() => ({
     staleTime: isSlowConnection ? baseConfig.staleTime * 2 : baseConfig.staleTime,
@@ -358,7 +364,7 @@ export function useConstitutionalCacheConfig(type: 'realtime' | 'dashboard' | 'l
 }
 
 // ============================================
-// VALIDADORES (LEI I Art. 30-31)
+// VALIDADORES (LEI I Art. 57-60)
 // ============================================
 
 /**
@@ -371,11 +377,11 @@ export function useValidateBudget() {
 }
 
 /**
- * Valida Core Web Vital
+ * Valida Core Web Vital para 3G
  */
 export function useValidateWebVital() {
-  return useCallback((metric: keyof typeof LEI_I_PERFORMANCE.METRICS.TARGETS, value: number) => {
-    return checkWebVital(metric, value);
+  return useCallback((metric: keyof typeof LEI_I_PERFORMANCE.METRICS.TARGETS_3G, value: number) => {
+    return checkWebVital3G(metric, value);
   }, []);
 }
 
@@ -395,6 +401,14 @@ export function useConstitutionalClasses() {
     
     return classes.join(' ');
   }, [tier, shouldAnimate, isSlowConnection, isMobile, isTouch]);
+}
+
+// ============================================
+// LOG DE INICIALIZAÇÃO
+// ============================================
+
+if (import.meta.env.DEV) {
+  console.log('[CONSTITUIÇÃO] ⚡ useConstitution v5.1 carregado (compatível com LEI I v2.0)');
 }
 
 export default useConstitution;
