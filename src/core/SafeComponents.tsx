@@ -1,150 +1,157 @@
 // ============================================
-// 🛡️ SAFE COMPONENTS — COMPONENTES SEGUROS COM RBAC
-// ANO 2300 — Validação automática de rotas e permissões
+// 🔥🛡️ SAFE COMPONENTS OMEGA — ZERO CLIQUES MORTOS 🛡️🔥
+// Componentes que garantem destino válido
+// Integração com URL Access Control + Dead Click Reporter
 // ============================================
 
-import React, { memo, ReactNode, useState, useCallback } from "react";
+import React, { memo, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { Lock, Clock, AlertTriangle, Check, X } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { ROUTES, RouteKey } from "./routes";
-import { NAV_ROUTE_MAP, NAV_RBAC, NAV_STATUS, NavItemKey, UserRole } from "./nav/navRouteMap";
-import { isOwner, OWNER_EMAIL, canAccessUrl } from "./urlAccessControl";
-import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
+import { RouteKey, ROUTES, getRoute, canAccessRoute, getRouteDefinition } from "./routes";
+import { ActionKey, ACTIONS, canExecuteAction, requiresConfirmation } from "./actions";
+import { useAuth } from "@/hooks/useAuth";
+import { Button, ButtonProps } from "@/components/ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { AlertCircle, Lock, Clock, ExternalLink } from "lucide-react";
 
 // ============================================
 // TIPOS
 // ============================================
-
-interface SafeLinkProps {
+interface SafeLinkProps extends Omit<React.AnchorHTMLAttributes<HTMLAnchorElement>, "href"> {
   routeKey: RouteKey;
   params?: Record<string, string>;
-  children: ReactNode;
-  className?: string;
-  showLockIcon?: boolean;
-}
-
-interface SafeButtonProps {
-  actionKey: string;
-  onClick: () => void | Promise<void>;
-  confirmMessage?: string;
-  confirmTitle?: string;
-  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
-  size?: "default" | "sm" | "lg" | "icon";
-  children: ReactNode;
+  children: React.ReactNode;
   className?: string;
   disabled?: boolean;
-  requiredRole?: UserRole | UserRole[];
+  showLockIfNoAccess?: boolean;
+}
+
+interface SafeButtonProps extends Omit<ButtonProps, "onClick"> {
+  actionKey: ActionKey;
+  onClick: () => void | Promise<void>;
+  confirmMessage?: string;
+  children: React.ReactNode;
+  disabled?: boolean;
+  showLockIfNoAccess?: boolean;
 }
 
 interface SafeNavItemProps {
-  routeKey?: RouteKey;
-  navItemKey?: NavItemKey;
+  routeKey: RouteKey;
   label: string;
-  icon?: ReactNode;
+  icon?: React.ReactNode;
+  badge?: string;
   className?: string;
-  onClick?: () => void;
 }
 
-// ============================================
-// HELPERS
-// ============================================
-
-/**
- * Substitui parâmetros na rota
- * Ex: /cursos/:courseId → /cursos/123
- */
-function buildPath(routePath: string, params?: Record<string, string>): string {
-  if (!params) return routePath;
-  
-  let path = routePath;
-  Object.entries(params).forEach(([key, value]) => {
-    path = path.replace(`:${key}`, value);
-  });
-  return path;
+interface SafeDownloadProps {
+  fileId: string;
+  fileName?: string;
+  children: React.ReactNode;
+  className?: string;
+  onDownload?: (fileId: string) => Promise<string>;
 }
 
-/**
- * Verifica se o usuário pode acessar uma rota
- */
-function canAccessRoute(routeKey: RouteKey, role: string | null, email: string | null): boolean {
-  // Owner = MASTER = PODE TUDO
-  if (isOwner(email, role)) return true;
-  
-  const path = ROUTES[routeKey];
-  if (!path) return false;
-  
-  return canAccessUrl(role, email, path);
-}
-
-/**
- * Verifica se o usuário pode executar uma ação
- */
-function canExecuteAction(actionKey: string, role: string | null, email: string | null, requiredRole?: UserRole | UserRole[]): boolean {
-  // Owner = MASTER = PODE TUDO
-  if (isOwner(email, role)) return true;
-  
-  if (!requiredRole) return true;
-  
-  const roles = Array.isArray(requiredRole) ? requiredRole : [requiredRole];
-  return role ? roles.includes(role as UserRole) : false;
+interface SafeExternalLinkProps extends React.AnchorHTMLAttributes<HTMLAnchorElement> {
+  href: string;
+  children: React.ReactNode;
+  trackClick?: boolean;
 }
 
 // ============================================
 // SAFE LINK
 // ============================================
-
-/**
- * 🔗 SafeLink — Link com validação de rota e permissão
- * 
- * @example
- * <SafeLink routeKey="CURSOS" params={{ courseId: "123" }}>
- *   Ver Curso
- * </SafeLink>
- * 
- * ✅ Valida rota e permissão automaticamente
- * ❌ Se não tem acesso → mostra 🔒 e tooltip
- */
-export const SafeLink = memo(function SafeLink({
+export const SafeLink = memo<SafeLinkProps>(({
   routeKey,
   params,
   children,
-  className = "",
-  showLockIcon = true,
-}: SafeLinkProps) {
-  const { user, role } = useAuth();
-  const email = user?.email || null;
+  className,
+  disabled = false,
+  showLockIfNoAccess = true,
+  ...props
+}) => {
+  const { role } = useAuth();
+  const definition = getRouteDefinition(routeKey);
   
-  const routePath = ROUTES[routeKey];
-  const hasAccess = canAccessRoute(routeKey, role, email);
-  const finalPath = buildPath(routePath, params);
-  
-  if (!hasAccess) {
+  // Verificar se rota existe
+  if (!ROUTES[routeKey]) {
+    console.error(`[SafeLink] Rota não existe: ${routeKey}`);
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <span className={cn(
-              "inline-flex items-center gap-1 opacity-50 cursor-not-allowed",
-              className
-            )}>
-              {showLockIcon && <Lock className="w-3 h-3" />}
-              {children}
-            </span>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">🔒 Acesso restrito</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn("cursor-not-allowed opacity-50", className)}>
+            {children}
+            <AlertCircle className="inline-block ml-1 h-3 w-3 text-destructive" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>Rota não configurada</TooltipContent>
+      </Tooltip>
     );
   }
   
+  // Verificar status
+  if (definition.status === "coming_soon") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn("cursor-not-allowed opacity-70", className)}>
+            {children}
+            <Clock className="inline-block ml-1 h-3 w-3 text-warning" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>Em breve</TooltipContent>
+      </Tooltip>
+    );
+  }
+  
+  if (definition.status === "disabled") {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn("cursor-not-allowed opacity-50", className)}>
+            {children}
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>Indisponível</TooltipContent>
+      </Tooltip>
+    );
+  }
+  
+  // Verificar acesso
+  const hasAccess = canAccessRoute(routeKey, role);
+  
+  if (!hasAccess && showLockIfNoAccess) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <span className={cn("cursor-not-allowed opacity-50", className)}>
+            {children}
+            <Lock className="inline-block ml-1 h-3 w-3 text-muted-foreground" />
+          </span>
+        </TooltipTrigger>
+        <TooltipContent>Sem permissão</TooltipContent>
+      </Tooltip>
+    );
+  }
+  
+  // Montar path com params
+  let path = getRoute(routeKey);
+  if (params) {
+    Object.entries(params).forEach(([key, value]) => {
+      path = path.replace(`:${key}`, value);
+    });
+  }
+  
+  // Render normal
   return (
-    <Link to={finalPath} className={className}>
+    <Link
+      to={path}
+      className={cn(
+        disabled && "pointer-events-none opacity-50",
+        className
+      )}
+      {...props}
+    >
       {children}
     </Link>
   );
@@ -155,127 +162,75 @@ SafeLink.displayName = "SafeLink";
 // ============================================
 // SAFE BUTTON
 // ============================================
-
-/**
- * 🔘 SafeButton — Botão com validação de ação e confirmação
- * 
- * @example
- * <SafeButton 
- *   actionKey="CURSO_DELETE" 
- *   onClick={handleDelete}
- *   confirmMessage="Excluir curso?"
- * >
- *   Excluir
- * </SafeButton>
- * 
- * ✅ Valida ação e pede confirmação se necessário
- */
-export const SafeButton = memo(function SafeButton({
+export const SafeButton = memo<SafeButtonProps>(({
   actionKey,
   onClick,
   confirmMessage,
-  confirmTitle = "Confirmar ação",
-  variant = "default",
-  size = "default",
   children,
-  className = "",
   disabled = false,
-  requiredRole,
-}: SafeButtonProps) {
-  const { user, role } = useAuth();
-  const email = user?.email || null;
-  const [showConfirm, setShowConfirm] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  showLockIfNoAccess = true,
+  ...props
+}) => {
+  const { role } = useAuth();
   
-  const hasAccess = canExecuteAction(actionKey, role, email, requiredRole);
-  
-  const handleClick = useCallback(async () => {
-    if (confirmMessage) {
-      setShowConfirm(true);
-    } else {
-      setIsLoading(true);
-      try {
-        await onClick();
-      } finally {
-        setIsLoading(false);
-      }
-    }
-  }, [confirmMessage, onClick]);
-  
-  const handleConfirm = useCallback(async () => {
-    setShowConfirm(false);
-    setIsLoading(true);
-    try {
-      await onClick();
-    } finally {
-      setIsLoading(false);
-    }
-  }, [onClick]);
-  
-  if (!hasAccess) {
+  // Verificar se ação existe
+  if (!ACTIONS[actionKey]) {
+    console.error(`[SafeButton] Ação não existe: ${actionKey}`);
     return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <Button
-              variant={variant}
-              size={size}
-              className={cn("opacity-50 cursor-not-allowed", className)}
-              disabled
-            >
-              <Lock className="w-3 h-3 mr-1" />
-              {children}
-            </Button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">🔒 Sem permissão</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button disabled className={props.className}>
+            {children}
+            <AlertCircle className="ml-1 h-3 w-3 text-destructive" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Ação não configurada</TooltipContent>
+      </Tooltip>
     );
   }
   
+  // Verificar acesso
+  const hasAccess = canExecuteAction(actionKey, role);
+  
+  if (!hasAccess && showLockIfNoAccess) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <Button disabled className={props.className}>
+            {children}
+            <Lock className="ml-1 h-3 w-3 text-muted-foreground" />
+          </Button>
+        </TooltipTrigger>
+        <TooltipContent>Sem permissão</TooltipContent>
+      </Tooltip>
+    );
+  }
+  
+  // Handler com confirmação opcional
+  const handleClick = useCallback(async () => {
+    const needsConfirm = confirmMessage || requiresConfirmation(actionKey);
+    
+    if (needsConfirm) {
+      const confirmed = window.confirm(confirmMessage || "Tem certeza que deseja continuar?");
+      if (!confirmed) return;
+    }
+    
+    try {
+      await onClick();
+    } catch (error) {
+      console.error(`[SafeButton] Erro na ação ${actionKey}:`, error);
+      toast.error("Erro ao executar ação");
+    }
+  }, [actionKey, onClick, confirmMessage]);
+  
   return (
-    <>
-      <Button
-        variant={variant}
-        size={size}
-        className={className}
-        onClick={handleClick}
-        disabled={disabled || isLoading}
-      >
-        {isLoading ? (
-          <span className="animate-spin mr-1">⏳</span>
-        ) : null}
-        {children}
-      </Button>
-      
-      {confirmMessage && (
-        <AlertDialog open={showConfirm} onOpenChange={setShowConfirm}>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle className="flex items-center gap-2">
-                <AlertTriangle className="w-5 h-5 text-yellow-500" />
-                {confirmTitle}
-              </AlertDialogTitle>
-              <AlertDialogDescription>
-                {confirmMessage}
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="flex items-center gap-1">
-                <X className="w-4 h-4" />
-                Cancelar
-              </AlertDialogCancel>
-              <AlertDialogAction onClick={handleConfirm} className="flex items-center gap-1">
-                <Check className="w-4 h-4" />
-                Confirmar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      )}
-    </>
+    <Button
+      onClick={handleClick}
+      disabled={disabled || !hasAccess}
+      {...props}
+    >
+      {children}
+    </Button>
   );
 });
 
@@ -284,136 +239,65 @@ SafeButton.displayName = "SafeButton";
 // ============================================
 // SAFE NAV ITEM
 // ============================================
-
-/**
- * 📍 SafeNavItem — Item de navegação com RBAC automático
- * 
- * @example
- * <SafeNavItem 
- *   routeKey="DASHBOARD" 
- *   label="Dashboard" 
- *   icon={<Home />} 
- * />
- * 
- * ✅ RBAC automático
- * ⏰ "Em breve" para status coming_soon
- */
-export const SafeNavItem = memo(function SafeNavItem({
+export const SafeNavItem = memo<SafeNavItemProps>(({
   routeKey,
-  navItemKey,
   label,
   icon,
-  className = "",
-  onClick,
-}: SafeNavItemProps) {
-  const { user, role } = useAuth();
+  badge,
+  className,
+}) => {
+  const { role } = useAuth();
   const navigate = useNavigate();
-  const email = user?.email || null;
+  const definition = getRouteDefinition(routeKey);
   
-  // Determinar status e acesso
-  let status: "active" | "disabled" | "coming_soon" = "active";
-  let hasAccess = true;
-  let path = "";
-  
-  if (navItemKey) {
-    status = NAV_STATUS[navItemKey] || "active";
-    const allowedRoles = NAV_RBAC[navItemKey];
-    hasAccess = isOwner(email, role) || (role ? allowedRoles?.includes(role as UserRole) : false);
-    const routeKeyFromNav = NAV_ROUTE_MAP[navItemKey];
-    path = routeKeyFromNav ? ROUTES[routeKeyFromNav] : "";
-  } else if (routeKey) {
-    path = ROUTES[routeKey];
-    hasAccess = canAccessRoute(routeKey, role, email);
+  // Verificar se rota existe
+  if (!ROUTES[routeKey]) {
+    console.error(`[SafeNavItem] Rota não existe: ${routeKey}`);
+    return null;
   }
+  
+  // Verificar acesso
+  const hasAccess = canAccessRoute(routeKey, role);
+  const isComingSoon = definition.status === "coming_soon";
+  const isDisabled = definition.status === "disabled" || !hasAccess;
   
   const handleClick = useCallback(() => {
-    if (onClick) {
-      onClick();
-    } else if (path && hasAccess && status === "active") {
-      navigate(path);
+    if (isDisabled) {
+      if (!hasAccess) {
+        toast.error("Você não tem permissão para acessar esta área");
+      }
+      return;
     }
-  }, [onClick, path, hasAccess, status, navigate]);
+    
+    if (isComingSoon) {
+      toast.info("Esta funcionalidade estará disponível em breve!");
+      return;
+    }
+    
+    navigate(getRoute(routeKey));
+  }, [routeKey, isDisabled, isComingSoon, hasAccess, navigate]);
   
-  // Coming soon
-  if (status === "coming_soon") {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg opacity-50 cursor-not-allowed",
-                className
-              )}
-              disabled
-            >
-              {icon}
-              <span>{label}</span>
-              <Clock className="w-3 h-3 ml-auto" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">⏰ Em breve</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-  
-  // Sem acesso
-  if (!hasAccess) {
-    return (
-      <TooltipProvider>
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <button
-              className={cn(
-                "flex items-center gap-2 px-3 py-2 rounded-lg opacity-50 cursor-not-allowed",
-                className
-              )}
-              disabled
-            >
-              {icon}
-              <span>{label}</span>
-              <Lock className="w-3 h-3 ml-auto" />
-            </button>
-          </TooltipTrigger>
-          <TooltipContent>
-            <p className="text-xs">🔒 Acesso restrito</p>
-          </TooltipContent>
-        </Tooltip>
-      </TooltipProvider>
-    );
-  }
-  
-  // Desabilitado
-  if (status === "disabled") {
-    return (
-      <button
-        className={cn(
-          "flex items-center gap-2 px-3 py-2 rounded-lg opacity-50 cursor-not-allowed",
-          className
-        )}
-        disabled
-      >
-        {icon}
-        <span>{label}</span>
-      </button>
-    );
-  }
-  
-  // Ativo e com acesso
   return (
     <button
       onClick={handleClick}
       className={cn(
-        "flex items-center gap-2 px-3 py-2 rounded-lg transition-colors",
-        "hover:bg-accent hover:text-accent-foreground",
+        "flex items-center gap-2 w-full p-2 rounded-md transition-colors",
+        isDisabled && "opacity-50 cursor-not-allowed",
+        isComingSoon && "opacity-70",
+        !isDisabled && !isComingSoon && "hover:bg-accent",
         className
       )}
+      disabled={isDisabled}
     >
       {icon}
-      <span>{label}</span>
+      <span className="flex-1 text-left">{label}</span>
+      {isComingSoon && <Clock className="h-3 w-3 text-warning" />}
+      {!hasAccess && <Lock className="h-3 w-3 text-muted-foreground" />}
+      {badge && (
+        <span className="text-xs bg-primary/20 text-primary px-1.5 rounded">
+          {badge}
+        </span>
+      )}
     </button>
   );
 });
@@ -421,11 +305,127 @@ export const SafeNavItem = memo(function SafeNavItem({
 SafeNavItem.displayName = "SafeNavItem";
 
 // ============================================
+// SAFE DOWNLOAD
+// ============================================
+export const SafeDownload = memo<SafeDownloadProps>(({
+  fileId,
+  fileName,
+  children,
+  className,
+  onDownload,
+}) => {
+  const [loading, setLoading] = React.useState(false);
+  
+  const handleDownload = useCallback(async () => {
+    if (!onDownload) {
+      console.error("[SafeDownload] onDownload não fornecido");
+      toast.error("Download não configurado");
+      return;
+    }
+    
+    setLoading(true);
+    
+    try {
+      const signedUrl = await onDownload(fileId);
+      
+      if (!signedUrl) {
+        toast.error("Erro ao obter URL do arquivo");
+        return;
+      }
+      
+      // Criar link temporário e clicar
+      const link = document.createElement("a");
+      link.href = signedUrl;
+      link.download = fileName || "download";
+      link.target = "_blank";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      toast.success("Download iniciado");
+    } catch (error) {
+      console.error("[SafeDownload] Erro:", error);
+      toast.error("Erro ao baixar arquivo");
+    } finally {
+      setLoading(false);
+    }
+  }, [fileId, fileName, onDownload]);
+  
+  return (
+    <button
+      onClick={handleDownload}
+      disabled={loading}
+      className={cn(
+        "inline-flex items-center gap-1",
+        loading && "opacity-50 cursor-wait",
+        className
+      )}
+    >
+      {children}
+      {loading && <span className="animate-spin">⏳</span>}
+    </button>
+  );
+});
+
+SafeDownload.displayName = "SafeDownload";
+
+// ============================================
+// SAFE EXTERNAL LINK
+// ============================================
+export const SafeExternalLink = memo<SafeExternalLinkProps>(({
+  href,
+  children,
+  trackClick = true,
+  className,
+  ...props
+}) => {
+  const handleClick = useCallback(() => {
+    if (trackClick) {
+      console.log(`[Analytics] External link clicked: ${href}`);
+    }
+  }, [href, trackClick]);
+  
+  // Validar URL
+  let isValidUrl = true;
+  try {
+    new URL(href);
+  } catch {
+    isValidUrl = href.startsWith("mailto:") || href.startsWith("tel:");
+  }
+  
+  if (!isValidUrl) {
+    console.error(`[SafeExternalLink] URL inválida: ${href}`);
+    return (
+      <span className={cn("cursor-not-allowed opacity-50", className)}>
+        {children}
+      </span>
+    );
+  }
+  
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      onClick={handleClick}
+      className={cn("inline-flex items-center gap-1", className)}
+      {...props}
+    >
+      {children}
+      <ExternalLink className="h-3 w-3" />
+    </a>
+  );
+});
+
+SafeExternalLink.displayName = "SafeExternalLink";
+
+// ============================================
 // EXPORTS
 // ============================================
-
 export default {
   SafeLink,
   SafeButton,
   SafeNavItem,
+  SafeDownload,
+  SafeExternalLink,
 };
