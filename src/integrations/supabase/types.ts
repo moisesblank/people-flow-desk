@@ -3875,6 +3875,47 @@ export type Database = {
         }
         Relationships: []
       }
+      ena_asset_access: {
+        Row: {
+          asset_id: string
+          expires_at: string | null
+          granted_at: string | null
+          id: string
+          revoke_reason: string | null
+          revoked_at: string | null
+          role_required: string | null
+          user_id: string | null
+        }
+        Insert: {
+          asset_id: string
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          role_required?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          asset_id?: string
+          expires_at?: string | null
+          granted_at?: string | null
+          id?: string
+          revoke_reason?: string | null
+          revoked_at?: string | null
+          role_required?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ena_asset_access_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "ena_assets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ena_asset_pages: {
         Row: {
           asset_id: string
@@ -14259,10 +14300,34 @@ export type Database = {
         Args: { _additional_days: number; _user_id: string }
         Returns: Json
       }
+      fn_apply_asset_violation: {
+        Args: {
+          p_device_hash?: string
+          p_severity?: number
+          p_user_id: string
+          p_violation_type: string
+        }
+        Returns: {
+          blocked_until: string
+          is_blocked: boolean
+          new_score: number
+        }[]
+      }
       fn_can_access_books: { Args: never; Returns: boolean }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
+      fn_check_premium_access: {
+        Args: { p_asset_id: string; p_device_hash?: string; p_user_id: string }
+        Returns: {
+          access_level: string
+          allowed: boolean
+          is_locked: boolean
+          lock_until: string
+          reason: string
+        }[]
+      }
       fn_check_sanctum_lock: { Args: { p_user_id: string }; Returns: boolean }
       fn_decay_sanctum_scores: { Args: never; Returns: number }
+      fn_decay_threat_scores: { Args: never; Returns: number }
       fn_delete_annotation: { Args: { p_annotation_id: string }; Returns: Json }
       fn_get_asset_manifest: {
         Args: { p_asset_id: string; p_user_id: string }
@@ -14290,6 +14355,16 @@ export type Database = {
           p_search?: string
         }
         Returns: Json
+      }
+      fn_log_asset_access: {
+        Args: {
+          p_action: string
+          p_asset_id: string
+          p_device_hash?: string
+          p_metadata?: Json
+          p_page_number?: number
+        }
+        Returns: string
       }
       fn_log_book_access: {
         Args: {
