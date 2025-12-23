@@ -1799,3 +1799,95 @@
   scroll-behavior: smooth;
   overscroll-behavior-y: contain;
 }
+
+/* ============================================
+   TESE 4: EFICIÊNCIA ENERGÉTICA - Classes Adaptativas
+   Aplicadas automaticamente pelo useEnergyEfficiency
+   ============================================ */
+
+/* Desabilita animações quando tier baixo */
+.no-animations,
+.no-animations * {
+  animation: none !important;
+  animation-duration: 0s !important;
+  transition-duration: 0.05s !important;
+}
+
+/* Desabilita blur em conexões lentas */
+.no-blur .glass,
+.no-blur .glass-card,
+.no-blur .glass-subtle,
+.no-blur .glass-premium,
+.no-blur [class*="backdrop-blur"] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: hsl(var(--card) / 0.98) !important;
+}
+
+/* Desabilita gradientes em conexões lentas */
+.no-gradients .bg-gradient-to-br,
+.no-gradients .bg-gradient-to-r,
+.no-gradients .bg-gradient-to-b,
+.no-gradients .bg-gradient-to-tr,
+.no-gradients .bg-gradient-to-bl,
+.no-gradients .hero-gradient,
+.no-gradients .gradient-mesh,
+.no-gradients [class*="from-"][class*="to-"] {
+  background: hsl(var(--card)) !important;
+}
+
+/* Desabilita sombras complexas */
+.no-shadows .shadow-glow,
+.no-shadows .shadow-glow-sm,
+.no-shadows .shadow-glow-lg,
+.no-shadows .neon-glow,
+.no-shadows .spider-glow,
+.no-shadows .heroic-glow,
+.no-shadows [class*="shadow-2xl"],
+.no-shadows [class*="shadow-lg"] {
+  box-shadow: none !important;
+}
+
+/* Desabilita efeitos de fundo */
+.no-bg-effects::before,
+.no-bg-effects::after {
+  display: none !important;
+}
+
+.no-bg-effects .particles,
+.no-bg-effects .floating-orbs,
+.no-bg-effects .ambient-effects {
+  display: none !important;
+}
+
+/* Performance tier indicators (dev only) */
+.perf-tier-critical { --perf-indicator: hsl(0 84% 60%); }
+.perf-tier-low { --perf-indicator: hsl(38 92% 50%); }
+.perf-tier-medium { --perf-indicator: hsl(48 96% 53%); }
+.perf-tier-high { --perf-indicator: hsl(142 76% 36%); }
+.perf-tier-ultra { --perf-indicator: hsl(262 83% 58%); }
+
+/* Mobile optimizations */
+.perf-mobile {
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.perf-touch button,
+.perf-touch a,
+.perf-touch [role="button"] {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Slow connection indicator */
+.perf-slow-connection img:not([loading="eager"]) {
+  content-visibility: auto;
+}
+
+/* Force hardware acceleration on slow devices */
+.perf-tier-critical .virtual-list-container,
+.perf-tier-low .virtual-list-container {
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
