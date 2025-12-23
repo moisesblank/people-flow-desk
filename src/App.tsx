@@ -93,6 +93,7 @@ const RHFuncionarios = lazy(() => import("./pages/empresas/RHFuncionarios"));
 const ReceitasEmpresariais = lazy(() => import("./pages/empresas/ReceitasEmpresariais"));
 const Perfil = lazy(() => import("./pages/Perfil"));
 const GestaoDispositivos = lazy(() => import("./pages/GestaoDispositivos"));
+const CentralDiagnostico = lazy(() => import("./pages/CentralDiagnostico"));
 
 // ===== CENTRAL DO ALUNO - QUÍMICA ENEM =====
 const AlunosRouteSwitcher = lazy(() => import("./pages/AlunosRouteSwitcher"));
@@ -293,6 +294,10 @@ const AppContent = memo(() => {
           
           {/* 🛡️ DOGMA XI: Gestão de Dispositivos */}
           <Route path="/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
+          
+          {/* 🔬 Central de Diagnóstico - Owner Only */}
+          <Route path="/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
+          <Route path="/gestao/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
           
           {/* ===== CENTRAL DO ALUNO - QUÍMICA ENEM ===== */}
           {/* /alunos é inteligente: no domínio de gestão vira Gestão de Alunos; no domínio do aluno vira Portal */}
