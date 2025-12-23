@@ -3,6 +3,7 @@ import { closestCenter, DndContext, DragEndEvent, DragOverlay, DragStartEvent, P
 import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { GripVertical, Copy, Check, Folder } from "lucide-react";
 import { toast } from "sonner";
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";

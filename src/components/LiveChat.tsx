@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { LIVE_5K_CONFIG, LiveMessage, LiveReaction } from '@/config/performance-5k';
 
 interface LiveChatProps {

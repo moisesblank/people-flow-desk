@@ -7,6 +7,7 @@
 import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { useWebBook } from '@/hooks/useWebBook';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   ChevronLeft, 
   ChevronRight, 

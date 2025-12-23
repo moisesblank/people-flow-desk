@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Building2, Plus, Check, Clock, AlertCircle, Trash2, Edit2,
   Filter, Calendar, Paperclip, Receipt, Wallet, DollarSign,
@@ -105,6 +106,7 @@ type ItemType = "gasto_fixo" | "gasto_extra" | "pagamento";
 
 export default function FinancasEmpresa() {
   const { user } = useAuth();
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
   
   // Hooks de dados
   const companyFinance = useCompanyFinanceHistory();

@@ -17,6 +17,7 @@ import { Users, Wifi, WifiOff, Clock, RefreshCw, Monitor, Smartphone, Tablet, Ac
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 
 interface UserActivity {
   id: string;

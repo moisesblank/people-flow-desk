@@ -8,6 +8,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { 
   Check, X, Link2, ExternalLink, Globe, 
   Navigation, Sparkles, Copy, RotateCcw,

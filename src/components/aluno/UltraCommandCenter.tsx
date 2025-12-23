@@ -7,6 +7,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -47,6 +48,7 @@ interface QuickAction {
 export function UltraCommandCenter() {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
   const { data: errorCount } = useErrorNotebookCount();
   const { gamification, levelInfo, userRank } = useGamification();
   const { data: dailyGoals, isLoading: goalsLoading } = useStudentDailyGoals();

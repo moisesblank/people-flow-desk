@@ -6,6 +6,7 @@
 import React, { memo, useState, useCallback } from 'react';
 import { useWebBookLibrary, WebBookListItem } from '@/hooks/useWebBook';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { 
   BookOpen, 
   Loader2, 

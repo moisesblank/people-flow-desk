@@ -7,6 +7,7 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { useGlobalRanking, useWeeklyRanking, useGamification } from '@/hooks/useGamification';
 import { useSimuladoRanking } from '@/hooks/useSimuladoRanking';
 import { useAuth } from '@/hooks/useAuth';

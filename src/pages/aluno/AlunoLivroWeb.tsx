@@ -5,6 +5,7 @@
 
 import { memo, useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { WebBookLibrary, WebBookViewer } from '@/components/books';
 import { BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';

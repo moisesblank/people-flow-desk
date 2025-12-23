@@ -4,6 +4,7 @@
 // ============================================
 
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { 
   Shield, 
   ShieldCheck, 
