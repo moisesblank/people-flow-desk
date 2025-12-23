@@ -4,10 +4,10 @@
 // Lei I: Performance | Lei II: Segurança | Lei IV: Poder
 // ============================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 // Interface alinhada com a tabela study_flashcards
 export interface Flashcard {
@@ -121,13 +121,13 @@ export function useDueFlashcards() {
   );
 }
 
-// Hook: Todos os flashcards (para Modo Cram)
+// 🌌 Hook: Todos os flashcards (para Modo Cram) - useSubspaceQuery
 export function useAllFlashcards() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['flashcards-all', user?.id],
-    queryFn: async (): Promise<Flashcard[]> => {
+  return useSubspaceQuery<Flashcard[]>(
+    ['flashcards-all', user?.id || 'anon'],
+    async (): Promise<Flashcard[]> => {
       const { data, error } = await supabase
         .from('study_flashcards')
         .select('*')
@@ -147,18 +147,21 @@ export function useAllFlashcards() {
         state: (card.state as Flashcard['state']) ?? 'new',
       }));
     },
-    enabled: !!user?.id,
-    staleTime: 60000,
-  });
+    {
+      profile: 'user',
+      persistKey: `flashcards_all_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
-// Hook: Contagem de flashcards pendentes
+// 🌌 Hook: Contagem de flashcards pendentes - useSubspaceQuery
 export function usePendingFlashcardsCount() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['flashcards-pending-count', user?.id],
-    queryFn: async (): Promise<number> => {
+  return useSubspaceQuery<number>(
+    ['flashcards-pending-count', user?.id || 'anon'],
+    async (): Promise<number> => {
       const today = new Date().toISOString().split('T')[0];
       
       const { count, error } = await supabase
@@ -170,28 +173,26 @@ export function usePendingFlashcardsCount() {
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!user?.id,
-    staleTime: 30000,
-    refetchInterval: 60000,
-  });
+    {
+      profile: 'dashboard',
+      persistKey: `flashcards_pending_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
-// Mutation: Reagendar flashcard após revisão
+// 🚀 Mutation: Reagendar flashcard após revisão - useOptimisticMutation
 export function useRescheduleFlashcard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  return useMutation({
+  return useOptimisticMutation<Flashcard[], { flashcardId: string; rating: Rating; currentStability: number; currentDifficulty: number }, { interval: number; newState: string }>({
+    queryKey: ['flashcards-due', user?.id || 'anon'],
     mutationFn: async ({
       flashcardId,
       rating,
       currentStability,
       currentDifficulty,
-    }: {
-      flashcardId: string;
-      rating: Rating;
-      currentStability: number;
-      currentDifficulty: number;
     }) => {
       // Buscar estado atual do card
       const { data: card } = await supabase
@@ -238,29 +239,26 @@ export function useRescheduleFlashcard() {
 
       return { interval, newState };
     },
+    optimisticUpdate: (oldData, { flashcardId }) => {
+      if (!oldData) return [];
+      // Remove o flashcard da lista de pendentes (UI instantânea)
+      return oldData.filter(card => card.id !== flashcardId);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['flashcards-due', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['flashcards-all', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['flashcards-pending-count', user?.id] });
     },
   });
 }
 
-// Mutation: Criar novo flashcard
+// 🚀 Mutation: Criar novo flashcard - useOptimisticMutation
 export function useCreateFlashcard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async ({
-      question,
-      answer,
-      areaId,
-    }: {
-      question: string;
-      answer: string;
-      areaId?: string;
-    }) => {
+  return useOptimisticMutation<Flashcard[], { question: string; answer: string; areaId?: string }, Flashcard>({
+    queryKey: ['flashcards-all', user?.id || 'anon'],
+    mutationFn: async ({ question, answer, areaId }) => {
       const { data, error } = await supabase
         .from('study_flashcards')
         .insert({
@@ -281,23 +279,44 @@ export function useCreateFlashcard() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Flashcard;
     },
+    optimisticUpdate: (oldData, { question, answer }) => {
+      const tempCard: Flashcard = {
+        id: `temp-${Date.now()}`,
+        user_id: user?.id || '',
+        area_id: null,
+        question,
+        answer,
+        due_date: new Date().toISOString().split('T')[0],
+        stability: 1.0,
+        difficulty: 0.3,
+        elapsed_days: 0,
+        scheduled_days: 0,
+        reps: 0,
+        lapses: 0,
+        state: 'new',
+        last_review: null,
+        created_at: new Date().toISOString(),
+      };
+      return [tempCard, ...(oldData || [])];
+    },
+    successMessage: 'Flashcard criado!',
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flashcards-due', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['flashcards-all', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['flashcards-pending-count', user?.id] });
     },
   });
 }
 
-// Mutation: Deletar flashcard
+// 🚀 Mutation: Deletar flashcard - useOptimisticMutation
 export function useDeleteFlashcard() {
   const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async (flashcardId: string) => {
+  return useOptimisticMutation<Flashcard[], string, void>({
+    queryKey: ['flashcards-all', user?.id || 'anon'],
+    mutationFn: async (flashcardId) => {
       const { error } = await supabase
         .from('study_flashcards')
         .delete()
@@ -306,21 +325,25 @@ export function useDeleteFlashcard() {
 
       if (error) throw error;
     },
+    optimisticUpdate: (oldData, flashcardId) => {
+      if (!oldData) return [];
+      return oldData.filter(card => card.id !== flashcardId);
+    },
+    successMessage: 'Flashcard excluído!',
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flashcards-due', user?.id] });
-      queryClient.invalidateQueries({ queryKey: ['flashcards-all', user?.id] });
       queryClient.invalidateQueries({ queryKey: ['flashcards-pending-count', user?.id] });
     },
   });
 }
 
-// Hook: Estatísticas de flashcards
+// 🌌 Hook: Estatísticas de flashcards - useSubspaceQuery
 export function useFlashcardStats() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['flashcard-stats', user?.id],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['flashcard-stats', user?.id || 'anon'],
+    async () => {
       const today = new Date().toISOString().split('T')[0];
 
       const { data: allCards } = await supabase
@@ -362,7 +385,10 @@ export function useFlashcardStats() {
         retention: totalReps > 0 ? Math.round((1 - totalLapses / totalReps) * 100) : 100,
       };
     },
-    enabled: !!user?.id,
-    staleTime: 60000,
-  });
+    {
+      profile: 'dashboard',
+      persistKey: `flashcard_stats_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }

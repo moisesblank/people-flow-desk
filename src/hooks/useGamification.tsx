@@ -1,8 +1,8 @@
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 interface UserGamification {
   id: string;
@@ -129,10 +129,10 @@ export function useGamification() {
     }
   );
 
-  // Fetch all badges
-  const { data: allBadges } = useQuery({
-    queryKey: ['badges'],
-    queryFn: async () => {
+  // 🌌 Fetch all badges - useSubspaceQuery
+  const { data: allBadges } = useSubspaceQuery<Badge[]>(
+    ['badges'],
+    async () => {
       const { data, error } = await supabase
         .from('badges')
         .select('*')
@@ -141,12 +141,16 @@ export function useGamification() {
       if (error) throw error;
       return data as Badge[];
     },
-  });
+    {
+      profile: 'immutable', // Badges raramente mudam
+      persistKey: 'all_badges_v1',
+    }
+  );
 
-  // Fetch user badges
-  const { data: userBadges } = useQuery({
-    queryKey: ['user-badges', user?.id],
-    queryFn: async () => {
+  // 🌌 Fetch user badges - useSubspaceQuery
+  const { data: userBadges } = useSubspaceQuery<UserBadge[]>(
+    ['user-badges', user?.id || 'anon'],
+    async () => {
       if (!user?.id) return [];
       
       const { data, error } = await supabase
@@ -160,13 +164,17 @@ export function useGamification() {
       if (error) throw error;
       return data as UserBadge[];
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user',
+      persistKey: `user_badges_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 
-  // Fetch XP history
-  const { data: xpHistory } = useQuery({
-    queryKey: ['xp-history', user?.id],
-    queryFn: async () => {
+  // 🌌 Fetch XP history - useSubspaceQuery
+  const { data: xpHistory } = useSubspaceQuery<XPHistoryEntry[]>(
+    ['xp-history', user?.id || 'anon'],
+    async () => {
       if (!user?.id) return [];
       
       const { data, error } = await supabase
@@ -179,13 +187,17 @@ export function useGamification() {
       if (error) throw error;
       return data as XPHistoryEntry[];
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'dashboard',
+      persistKey: `xp_history_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 
-  // Fetch leaderboard
-  const { data: leaderboard, isLoading: isLoadingLeaderboard } = useQuery({
-    queryKey: ['leaderboard'],
-    queryFn: async () => {
+  // 🌌 Fetch leaderboard - useSubspaceQuery
+  const { data: leaderboard, isLoading: isLoadingLeaderboard } = useSubspaceQuery<LeaderboardEntry[]>(
+    ['leaderboard'],
+    async () => {
       const { data, error } = await supabase
         .from('user_gamification')
         .select(`
@@ -201,21 +213,16 @@ export function useGamification() {
       if (error) throw error;
       return data as LeaderboardEntry[];
     },
-  });
+    {
+      profile: 'semiStatic',
+      persistKey: 'leaderboard_v1',
+    }
+  );
 
-  // Add XP mutation
-  const addXPMutation = useMutation({
-    mutationFn: async ({ 
-      amount, 
-      source, 
-      sourceId, 
-      description 
-    }: { 
-      amount: number; 
-      source: string; 
-      sourceId?: string; 
-      description?: string;
-    }) => {
+  // 🚀 Add XP mutation - useOptimisticMutation (Feedback Instantâneo)
+  const addXPMutation = useOptimisticMutation<UserGamification | null, { amount: number; source: string; sourceId?: string; description?: string }, number>({
+    queryKey: ['user-gamification', user?.id || 'anon'],
+    mutationFn: async ({ amount, source, sourceId, description }) => {
       if (!user?.id) throw new Error('User not authenticated');
 
       const { data, error } = await supabase.rpc('add_user_xp', {
@@ -229,8 +236,14 @@ export function useGamification() {
       if (error) throw error;
       return data;
     },
+    optimisticUpdate: (oldData, variables) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        total_xp: oldData.total_xp + variables.amount,
+      };
+    },
     onSuccess: (newTotalXP) => {
-      queryClient.invalidateQueries({ queryKey: ['user-gamification'] });
       queryClient.invalidateQueries({ queryKey: ['xp-history'] });
       queryClient.invalidateQueries({ queryKey: ['leaderboard'] });
       
@@ -240,8 +253,9 @@ export function useGamification() {
     },
   });
 
-  // Update streak mutation
-  const updateStreakMutation = useMutation({
+  // 🚀 Update streak mutation - useOptimisticMutation
+  const updateStreakMutation = useOptimisticMutation<UserGamification | null, void, number>({
+    queryKey: ['user-gamification', user?.id || 'anon'],
     mutationFn: async () => {
       if (!user?.id) throw new Error('User not authenticated');
 
@@ -252,8 +266,12 @@ export function useGamification() {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-gamification'] });
+    optimisticUpdate: (oldData) => {
+      if (!oldData) return oldData;
+      return {
+        ...oldData,
+        current_streak: oldData.current_streak + 1,
+      };
     },
   });
 
@@ -282,9 +300,9 @@ export function useGamification() {
 }
 
 export function useLeaderboard(limit = 10) {
-  return useQuery({
-    queryKey: ['leaderboard', limit],
-    queryFn: async () => {
+  return useSubspaceQuery<LeaderboardEntry[]>(
+    ['leaderboard', limit.toString()],
+    async () => {
       const { data, error } = await supabase
         .from('user_gamification')
         .select(`
@@ -300,7 +318,11 @@ export function useLeaderboard(limit = 10) {
       if (error) throw error;
       return data as LeaderboardEntry[];
     },
-  });
+    {
+      profile: 'semiStatic',
+      persistKey: `leaderboard_${limit}`,
+    }
+  );
 }
 
 // Hook para conquistas do usuário
@@ -323,9 +345,9 @@ interface UserAchievement {
 export function useUserAchievements() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['user-achievements', user?.id],
-    queryFn: async () => {
+  return useSubspaceQuery<UserAchievement[]>(
+    ['user-achievements', user?.id || 'anon'],
+    async () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
@@ -351,15 +373,19 @@ export function useUserAchievements() {
       if (error) throw error;
       return data as UserAchievement[];
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user',
+      persistKey: `user_achievements_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
-// Hook: Ranking Global (Panteão Eterno)
+// 🌌 Hook: Ranking Global (Panteão Eterno) - useSubspaceQuery
 export function useGlobalRanking() {
-  return useQuery({
-    queryKey: ['global-ranking'],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['global-ranking'],
+    async () => {
       const { data, error } = await supabase
         .from('user_gamification')
         .select(`
@@ -384,16 +410,18 @@ export function useGlobalRanking() {
         streak: entry.current_streak || 0,
       }));
     },
-    staleTime: 60000,
-    refetchInterval: 120000,
-  });
+    {
+      profile: 'semiStatic',
+      persistKey: 'global_ranking_v1',
+    }
+  );
 }
 
-// Hook: Ranking Semanal (Arena da Semana)
+// 🌌 Hook: Ranking Semanal (Arena da Semana) - useSubspaceQuery
 export function useWeeklyRanking() {
-  return useQuery({
-    queryKey: ['weekly-ranking'],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['weekly-ranking'],
+    async () => {
       // Pegar início da semana (domingo)
       const now = new Date();
       const startOfWeek = new Date(now);
@@ -476,7 +504,9 @@ export function useWeeklyRanking() {
         };
       });
     },
-    staleTime: 60000,
-    refetchInterval: 120000,
-  });
+    {
+      profile: 'semiStatic',
+      persistKey: 'weekly_ranking_v1',
+    }
+  );
 }
