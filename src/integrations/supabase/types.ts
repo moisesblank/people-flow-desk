@@ -2849,6 +2849,39 @@ export type Database = {
         }
         Relationships: []
       }
+      content_security_config: {
+        Row: {
+          allowed_domains: string[] | null
+          content_type: string
+          created_at: string
+          id: string
+          max_concurrent_sessions: number | null
+          require_watermark: boolean | null
+          ttl_seconds: number
+          updated_at: string
+        }
+        Insert: {
+          allowed_domains?: string[] | null
+          content_type: string
+          created_at?: string
+          id?: string
+          max_concurrent_sessions?: number | null
+          require_watermark?: boolean | null
+          ttl_seconds?: number
+          updated_at?: string
+        }
+        Update: {
+          allowed_domains?: string[] | null
+          content_type?: string
+          created_at?: string
+          id?: string
+          max_concurrent_sessions?: number | null
+          require_watermark?: boolean | null
+          ttl_seconds?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       contexto_compartilhado_ias: {
         Row: {
           ativo: boolean | null
@@ -13936,6 +13969,18 @@ export type Database = {
         Returns: Json
       }
       generate_2fa_code: { Args: never; Returns: string }
+      generate_content_watermark: {
+        Args: {
+          p_content_id: string
+          p_content_type: string
+          p_user_id: string
+        }
+        Returns: {
+          timestamp_bucket: number
+          watermark_hash: string
+          watermark_text: string
+        }[]
+      }
       generate_correlation_id: { Args: never; Returns: string }
       generate_session_code: { Args: never; Returns: string }
       generate_signed_video_url: {
@@ -13980,6 +14025,7 @@ export type Database = {
         }[]
       }
       get_cached_dashboard_stats: { Args: never; Returns: Json }
+      get_content_ttl: { Args: { p_content_type: string }; Returns: number }
       get_dashboard_cached: {
         Args: { p_force_refresh?: boolean }
         Returns: Json
@@ -14218,18 +14264,29 @@ export type Database = {
         Args: { p_ip?: string; p_reason: string; p_resource: string }
         Returns: string
       }
-      log_content_access: {
-        Args: {
-          p_action: string
-          p_content_id: string
-          p_content_title?: string
-          p_content_type: string
-          p_duration_seconds?: number
-          p_metadata?: Json
-          p_progress_percent?: number
-        }
-        Returns: string
-      }
+      log_content_access:
+        | {
+            Args: {
+              p_action: string
+              p_content_id: string
+              p_content_title?: string
+              p_content_type: string
+              p_duration_seconds?: number
+              p_metadata?: Json
+              p_progress_percent?: number
+            }
+            Returns: string
+          }
+        | {
+            Args: {
+              p_action: string
+              p_content_id: string
+              p_content_type: string
+              p_metadata?: Json
+              p_user_id: string
+            }
+            Returns: string
+          }
       log_report_access: {
         Args: { p_report_params?: Json; p_report_type: string }
         Returns: string
@@ -14684,6 +14741,10 @@ export type Database = {
           p_source?: string
         }
         Returns: string
+      }
+      validate_content_domain: {
+        Args: { p_content_type: string; p_request_domain: string }
+        Returns: boolean
       }
       validate_session_token: {
         Args: { p_session_token: string }
