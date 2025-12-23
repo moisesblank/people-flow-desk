@@ -5693,6 +5693,36 @@ export type Database = {
         }
         Relationships: []
       }
+      live_metrics_cache: {
+        Row: {
+          id: string
+          last_message_at: string | null
+          live_id: string
+          message_count: number | null
+          peak_viewers: number | null
+          updated_at: string | null
+          viewer_count: number | null
+        }
+        Insert: {
+          id?: string
+          last_message_at?: string | null
+          live_id: string
+          message_count?: number | null
+          peak_viewers?: number | null
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Update: {
+          id?: string
+          last_message_at?: string | null
+          live_id?: string
+          message_count?: number | null
+          peak_viewers?: number | null
+          updated_at?: string | null
+          viewer_count?: number | null
+        }
+        Relationships: []
+      }
       logs_integracao_detalhado: {
         Row: {
           acoes_executadas: Json | null
@@ -14314,6 +14344,20 @@ export type Database = {
         }[]
       }
       fn_can_access_books: { Args: never; Returns: boolean }
+      fn_chat_cleanup_5k: { Args: never; Returns: number }
+      fn_chat_rate_limit_5k: {
+        Args: {
+          p_live_id: string
+          p_max_per_min?: number
+          p_max_per_sec?: number
+          p_user_id: string
+        }
+        Returns: {
+          allowed: boolean
+          cooldown_ms: number
+          reason: string
+        }[]
+      }
       fn_check_overdue_expenses: { Args: never; Returns: undefined }
       fn_check_premium_access: {
         Args: { p_asset_id: string; p_device_hash?: string; p_user_id: string }
@@ -14425,6 +14469,7 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_system_health_5k: { Args: never; Returns: Json }
       fn_update_reading_progress: {
         Args: {
           p_book_id: string
