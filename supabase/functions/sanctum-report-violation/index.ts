@@ -1,14 +1,28 @@
 // ============================================
-// SANCTUM OMEGA ULTRA v3.0
-// Edge Function: Report Violation
-// Sistema de Detecção de Pirataria
+// 🌌🔥 SANCTUM REPORT VIOLATION — EDGE FUNCTION NÍVEL NASA 🔥🌌
+// ANO 2300 — RECEPÇÃO SEGURA DE VIOLAÇÕES
+// ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+// ============================================
+//
+// 📍 MAPA DE URLs DEFINITIVO:
+//   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
+//   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
+//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+//   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER - IMUNE)
+//
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
+// ============================================
+// CONSTANTES
+// ============================================
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
+// ============================================
+// CORS HEADERS
+// ============================================
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -17,6 +31,9 @@ const corsHeaders = {
   "X-Content-Type-Options": "nosniff",
 };
 
+// ============================================
+// TIPOS
+// ============================================
 interface ViolationPayload {
   violationType: string;
   severity: number;
@@ -33,7 +50,9 @@ interface ViolationResponse {
   error?: string;
 }
 
-// Hash function for privacy (LGPD compliant)
+// ============================================
+// UTILITÁRIOS
+// ============================================
 async function hashString(str: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(str);
@@ -42,17 +61,17 @@ async function hashString(str: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 32);
 }
 
+// ============================================
+// FUNÇÃO PRINCIPAL
+// ============================================
 serve(async (req: Request) => {
-  console.log("[Sanctum Violation] Request received:", req.method);
-
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Only POST allowed
+  // Apenas POST
   if (req.method !== "POST") {
-    console.warn("[Sanctum Violation] Method not allowed:", req.method);
     return new Response(
       JSON.stringify({ success: false, error: "Método não permitido" }),
       { status: 405, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -60,12 +79,13 @@ serve(async (req: Request) => {
   }
 
   try {
-    // Parse payload
+    // ============================================
+    // 1) PARSE DO BODY
+    // ============================================
     let payload: ViolationPayload;
     try {
       payload = await req.json();
     } catch {
-      console.warn("[Sanctum Violation] Invalid JSON");
       return new Response(
         JSON.stringify({ success: false, error: "JSON inválido" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -75,16 +95,15 @@ serve(async (req: Request) => {
     const { violationType, severity = 10, assetId, metadata = {} } = payload;
 
     if (!violationType) {
-      console.warn("[Sanctum Violation] Missing violationType");
       return new Response(
         JSON.stringify({ success: false, error: "violationType obrigatório" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    console.log("[Sanctum Violation] Processing:", violationType, "severity:", severity);
-
-    // Get user from auth header (optional - can report anonymous violations)
+    // ============================================
+    // 2) AUTENTICAÇÃO (opcional - pode ser anônimo)
+    // ============================================
     const authHeader = req.headers.get("Authorization");
     let userId: string | null = null;
     let userEmail: string | null = null;
@@ -96,86 +115,107 @@ serve(async (req: Request) => {
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "");
       const { data: { user } } = await supabase.auth.getUser(token);
+      
       if (user) {
         userId = user.id;
         userEmail = user.email || null;
-        console.log("[Sanctum Violation] User identified:", userEmail);
       }
     }
 
-    // OWNER BYPASS - moisesblank@gmail.com is IMMUNE
+    // ============================================
+    // 3) OWNER BYPASS (IMUNIDADE TOTAL)
+    // ============================================
     if (userEmail?.toLowerCase() === OWNER_EMAIL) {
-      console.log("[Sanctum Violation] Owner bypass - immune");
+      const response: ViolationResponse = {
+        success: true,
+        locked: false,
+        immune: true,
+      };
+      
       return new Response(
-        JSON.stringify({ success: true, locked: false, immune: true }),
+        JSON.stringify(response),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Extract and hash client info for privacy
+    // ============================================
+    // 4) HASH DE IP E USER-AGENT (PRIVACIDADE)
+    // ============================================
     const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
-      || req.headers.get("cf-connecting-ip") 
-      || "unknown";
+                   || req.headers.get("cf-connecting-ip") 
+                   || "unknown";
     const userAgent = req.headers.get("user-agent") || "unknown";
     
     const ipHash = await hashString(clientIp + "sanctum-salt-2300");
     const uaHash = await hashString(userAgent + "sanctum-salt-2300");
-    
+
+    // ============================================
+    // 5) EXTRAIR CONTEXTO
+    // ============================================
     const domain = req.headers.get("host") || req.headers.get("origin") || "";
     const route = req.headers.get("referer") || "";
 
-    console.log("[Sanctum Violation] Registering violation in database...");
-
-    // Call database function to register violation
-    const { data: result, error: rpcError } = await supabase.rpc("fn_register_sanctum_violation", {
-      p_user_id: userId,
-      p_user_email: userEmail,
-      p_violation_type: violationType,
-      p_severity: severity,
-      p_asset_id: assetId || null,
-      p_domain: domain,
-      p_route: route,
-      p_ip_hash: ipHash,
-      p_ua_hash: uaHash,
-      p_metadata: { 
-        ...metadata, 
-        timestamp: new Date().toISOString(), 
-        clientIpPartial: clientIp.split(".").slice(0, 2).join(".") + ".*.*" 
-      },
-    });
+    // ============================================
+    // 6) CHAMAR FUNÇÃO DE REGISTRO
+    // ============================================
+    const { data: result, error: rpcError } = await supabase.rpc(
+      "fn_register_sanctum_violation",
+      {
+        p_user_id: userId,
+        p_user_email: userEmail,
+        p_violation_type: violationType,
+        p_severity: severity,
+        p_asset_id: assetId || null,
+        p_domain: domain,
+        p_route: route,
+        p_ip_hash: ipHash,
+        p_ua_hash: uaHash,
+        p_metadata: {
+          ...metadata,
+          timestamp: new Date().toISOString(),
+          clientIpPartial: clientIp.split(".").slice(0, 2).join(".") + ".*.*",
+        },
+      }
+    );
 
     if (rpcError) {
-      console.error("[Sanctum Violation] RPC error:", rpcError);
+      console.error("[Sanctum Violation] Erro RPC:", rpcError);
+      
+      // Mesmo com erro, não bloquear o usuário - log para investigação
       return new Response(
         JSON.stringify({ success: false, locked: false, error: "Erro interno" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const isLocked = result?.locked || false;
-    console.log("[Sanctum Violation] Violation registered, locked:", isLocked);
-
+    // ============================================
+    // 7) RESPOSTA
+    // ============================================
     const response: ViolationResponse = {
       success: true,
-      locked: isLocked,
+      locked: result?.locked || false,
       violationType,
       severity,
     };
 
-    // Return 423 Locked if user is now locked
-    const statusCode = isLocked ? 423 : 200;
+    // Status code baseado no lock
+    const statusCode = result?.locked ? 423 : 200;
 
-    return new Response(JSON.stringify(response), {
-      status: statusCode,
-      headers: { 
-        ...corsHeaders, 
-        "Content-Type": "application/json", 
-        "X-Sanctum-Version": "3.0-omega" 
-      },
-    });
+    return new Response(
+      JSON.stringify(response),
+      {
+        status: statusCode,
+        headers: {
+          ...corsHeaders,
+          "Content-Type": "application/json",
+          "X-Sanctum-Version": "3.0-omega",
+        },
+      }
+    );
 
   } catch (err) {
-    console.error("[Sanctum Violation] Fatal error:", err);
+    console.error("[Sanctum Violation] Erro fatal:", err);
+    
     return new Response(
       JSON.stringify({ success: false, locked: false, error: "Erro interno do servidor" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
