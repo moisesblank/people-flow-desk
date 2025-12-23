@@ -6,6 +6,7 @@
 
 import { useState, useMemo, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import {
   TrendingUp,
   TrendingDown,
@@ -241,6 +242,7 @@ export default function DashboardExecutivo() {
   const { data: stats, isLoading, refetch } = useDashboardStats();
   const [period, setPeriod] = useState("month");
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -616,11 +618,11 @@ export default function DashboardExecutivo() {
         </Card>
       </div>
 
-      {/* Meu Site - WordPress em Tempo Real */}
+      {/* Meu Site - WordPress em Tempo Real - GPU optimized */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...gpuAnimationProps.fadeUp}
         transition={{ delay: 0.3 }}
+        className="will-change-transform transform-gpu"
       >
         <div className="flex items-center gap-3 mb-4">
           <div className="p-2 rounded-lg bg-primary/10">

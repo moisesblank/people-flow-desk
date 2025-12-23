@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Calculator, 
   Sparkles, 
@@ -289,14 +290,15 @@ export default function Contabilidade() {
     }
   };
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
+        {/* Header - GPU optimized */}
         <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          {...gpuAnimationProps.fadeUp}
+          className="mb-8 will-change-transform transform-gpu"
         >
           <div className="space-y-2">
             <motion.div className="flex items-center gap-2 text-primary">
@@ -312,12 +314,11 @@ export default function Contabilidade() {
           </div>
         </motion.header>
 
-        {/* Main Stats */}
+        {/* Main Stats - GPU optimized */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.1 }}
-          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8"
+          className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8 will-change-transform transform-gpu"
         >
           <div className="glass-card rounded-2xl p-6">
             <div className="flex items-center gap-3 mb-2">
@@ -357,12 +358,11 @@ export default function Contabilidade() {
           </div>
         </motion.section>
 
-        {/* ROI / CAC Section */}
+        {/* ROI / CAC Section - GPU optimized */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.2 }}
-          className="grid gap-4 md:grid-cols-3 mb-8"
+          className="grid gap-4 md:grid-cols-3 mb-8 will-change-transform transform-gpu"
         >
           <div className="glass-card rounded-2xl p-6 border-l-4 border-l-[hsl(var(--stats-green))]">
             <div className="flex items-center justify-between mb-2">
@@ -400,13 +400,12 @@ export default function Contabilidade() {
           </div>
         </motion.section>
 
-        {/* Chart */}
+        {/* Chart - GPU optimized */}
         {chartData.length > 0 && (
           <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...gpuAnimationProps.fadeUp}
             transition={{ delay: 0.3 }}
-            className="glass-card rounded-2xl p-6 mb-8"
+            className="glass-card rounded-2xl p-6 mb-8 will-change-transform transform-gpu"
           >
             <h3 className="text-lg font-semibold text-foreground mb-6">Evolução Financeira</h3>
             <div className="h-[250px]">

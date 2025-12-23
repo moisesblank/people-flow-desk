@@ -7,6 +7,7 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { MobileDashboard } from "@/components/mobile/MobileDashboard";
@@ -166,6 +167,7 @@ export default function Dashboard() {
   
   // PLANILHA VIVA: Inicializar sistema reativo
   const { data: reactiveData } = useReactiveData();
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
 
   // Auto-clear cache on first load for owner
   useEffect(() => {
@@ -714,13 +716,12 @@ export default function Dashboard() {
           />
         </section>
 
-        {/* Upcoming Tasks */}
+        {/* Upcoming Tasks - GPU optimized */}
         {processedData?.upcomingTasks && processedData.upcomingTasks.length > 0 && (
           <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...gpuAnimationProps.fadeUp}
             transition={{ delay: 0.6 }}
-            className="glass-card rounded-3xl p-6 mb-8"
+            className="glass-card rounded-3xl p-6 mb-8 will-change-transform transform-gpu"
           >
             <div className="flex items-center gap-3 mb-4">
               <Calendar className="h-5 w-5 text-primary" />

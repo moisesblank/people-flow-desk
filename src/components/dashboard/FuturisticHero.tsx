@@ -6,6 +6,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Zap, 
   Brain, 
@@ -406,11 +407,12 @@ export function FuturisticHero({
     return "Boa noite";
   };
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <motion.section
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      className="relative overflow-hidden rounded-3xl min-h-[380px] bg-gradient-to-br from-background via-card to-background border border-border/50"
+      {...gpuAnimationProps.fadeIn}
+      className="relative overflow-hidden rounded-3xl min-h-[380px] bg-gradient-to-br from-background via-card to-background border border-border/50 will-change-transform transform-gpu"
     >
       {/* Background Effects */}
       <CyberParticles />
