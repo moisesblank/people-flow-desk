@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
 // ║                                                                              ║
 // ║   🏛️ CONSTITUIÇÃO SYNAPSE - LEI I: PERFORMANCE v2.0                          ║
-// ║   Código Imutável do Sistema - 82 Artigos                                    ║
+// ║   Código Imutável do Sistema - 82 Artigos + 16 Títulos                       ║
 // ║                                                                              ║
 // ║   Esta lei é MANDATÓRIA e deve ser aplicada em TODO código.                  ║
 // ║   Objetivo: Rodar perfeitamente em 3G e celulares básicos.                   ║
@@ -13,9 +13,14 @@
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
 // ============================================
-// TIPOS DE TIER
+// TIPOS DE TIER - ÚNICA FONTE DE VERDADE
 // ============================================
 
+/**
+ * 6 TIERS OFICIAIS DA CONSTITUIÇÃO
+ * USAR ESTES EM TODO O CÓDIGO
+ * critical → legacy → standard → enhanced → neural → quantum
+ */
 export type PerformanceTier = 
   | 'quantum'    // Top 5% - Fibra + Desktop i9/M3
   | 'neural'     // Top 15% - Fibra/4G+ + Desktop/Mobile bom
@@ -31,6 +36,8 @@ export type ConnectionSpeed =
   | '3g'         // 1-5 Mbps
   | '2g'         // <1 Mbps
   | 'offline';   // Sem conexão
+
+export type DeviceType = 'desktop' | 'tablet' | 'mobile';
 
 // ============================================
 // TÍTULO I - FUNDAMENTOS DO BUNDLE (Artigos 1-5)
@@ -103,7 +110,7 @@ export const LAZY_CONSTITUTION = {
     enhanced: "500px",    // 4G bom
     neural: "300px",      // WiFi
     quantum: "200px",     // Fibra
-  },
+  } as Record<PerformanceTier, string>,
   
   // Artigo 8° - Threshold por tier
   THRESHOLD_BY_TIER: {
@@ -113,7 +120,7 @@ export const LAZY_CONSTITUTION = {
     enhanced: 0.1,
     neural: 0.15,
     quantum: 0.25,
-  },
+  } as Record<PerformanceTier, number>,
   
   // Artigo 9° - Suspense fallback SEMPRE < 1KB
   FALLBACK_MAX_SIZE_KB: 1,
@@ -142,7 +149,7 @@ export const IMAGE_CONSTITUTION = {
     enhanced: 75,
     neural: 85,
     quantum: 95,
-  },
+  } as Record<PerformanceTier, number>,
   
   // Artigo 13° - maxWidth por tier
   MAX_WIDTH_BY_TIER: {
@@ -152,7 +159,7 @@ export const IMAGE_CONSTITUTION = {
     enhanced: 1024,
     neural: 1280,
     quantum: 1920,
-  },
+  } as Record<PerformanceTier, number>,
   
   // Artigo 14° - Formatos modernos
   FORMATS: {
@@ -176,7 +183,7 @@ export const QUERY_CONSTITUTION = {
     enhanced: { staleTime: 2 * 60 * 1000, gcTime: 15 * 60 * 1000 },        // 2min/15min
     neural: { staleTime: 60 * 1000, gcTime: 10 * 60 * 1000 },              // 1min/10min
     quantum: { staleTime: 30 * 1000, gcTime: 5 * 60 * 1000 },              // 30s/5min
-  },
+  } as Record<PerformanceTier, { staleTime: number; gcTime: number }>,
   
   // Artigo 16° - Cache por tipo de dados
   CACHE_BY_TYPE: {
@@ -308,7 +315,7 @@ export const ANIMATION_CONSTITUTION = {
     enhanced: 0.7,
     neural: 0.9,
     quantum: 1.0,
-  },
+  } as Record<PerformanceTier, number>,
   
   // Artigo 36° - Stagger por tier
   STAGGER_BY_TIER: {
@@ -318,7 +325,7 @@ export const ANIMATION_CONSTITUTION = {
     enhanced: 40,
     neural: 60,
     quantum: 80,
-  },
+  } as Record<PerformanceTier, number>,
   
   // Artigo 37° - Easing por tier
   EASING_BY_TIER: {
@@ -328,7 +335,7 @@ export const ANIMATION_CONSTITUTION = {
     enhanced: "cubic-bezier(0.4, 0, 0.2, 1)",
     neural: "cubic-bezier(0.4, 0, 0.2, 1)",
     quantum: "cubic-bezier(0.16, 1, 0.3, 1)",
-  },
+  } as Record<PerformanceTier, string>,
   
   // Artigo 38° - Features desabilitadas por tier
   DISABLED_BY_TIER: {
@@ -414,7 +421,7 @@ export const VIRTUAL_CONSTITUTION = {
     enhanced: 4,
     neural: 6,
     quantum: 10,
-  },
+  } as Record<PerformanceTier, number>,
   
   // Artigo 49° - Item height por tier
   ITEM_HEIGHT_BY_TIER: {
@@ -424,7 +431,7 @@ export const VIRTUAL_CONSTITUTION = {
     enhanced: 64,
     neural: 72,
     quantum: 80,
-  },
+  } as Record<PerformanceTier, number>,
   
   // Artigo 50° - Window virtualization
   USE_WINDOW_VIRTUALIZATION: true,
@@ -463,7 +470,7 @@ export const PRECONNECT_CONSTITUTION = {
     enhanced: { enabled: true, maxConcurrent: 3, routeDepth: 2 },
     neural: { enabled: true, maxConcurrent: 4, routeDepth: 3 },
     quantum: { enabled: true, maxConcurrent: 6, routeDepth: 4 },
-  },
+  } as Record<PerformanceTier, { enabled: boolean; maxConcurrent: number; routeDepth: number }>,
   
   // Artigo 55° - Link prefetch via IntersectionObserver
   OBSERVE_LINKS: true,
@@ -639,7 +646,7 @@ export const DETECTION_CONSTITUTION = {
     standard: { min: 30 },
     legacy: { min: 10 },
     critical: { min: 0 },
-  },
+  } as Record<PerformanceTier, { min: number }>,
   
   // Artigo 78° - Score factors
   SCORE_FACTORS: {
@@ -705,6 +712,8 @@ export const LEI_I_PERFORMANCE = {
   // Metadata
   VERSION: "2.0.0",
   ARTICLES_COUNT: 82,
+  TITLES_COUNT: 16,
+  TIERS: ['critical', 'legacy', 'standard', 'enhanced', 'neural', 'quantum'] as const,
   CREATED_AT: "2024-12-22",
   UPDATED_AT: "2024-12-23",
   PURPOSE: "Garantir performance máxima em 3G e dispositivos básicos",
@@ -724,6 +733,7 @@ export const LEI_I_PERFORMANCE = {
 
 /**
  * Detecta o tier de performance do dispositivo
+ * FUNÇÃO CENTRAL - USE ESTA EM TODO O CÓDIGO
  */
 export function detectTier(): PerformanceTier {
   if (typeof window === 'undefined') return 'standard';
@@ -738,33 +748,31 @@ export function detectTier(): PerformanceTier {
   const effectiveType = connection?.effectiveType || '4g';
   const downlink = connection?.downlink || 10;
   
+  // Override imediato para casos críticos
+  if (saveData || effectiveType === '2g' || effectiveType === 'slow-2g') return 'critical';
+  if (effectiveType === '3g' && (cores <= 2 || memory <= 2)) return 'critical';
+  if (effectiveType === '3g') return 'legacy';
+  
   // Score inicial
   let score = 50;
   
-  // Cores
+  // Cores (+25 max)
   if (cores >= 8) score += 25;
   else if (cores >= 6) score += 18;
   else if (cores >= 4) score += 12;
   else if (cores <= 2) score -= 20;
   
-  // Memória
+  // Memória (+20 max)
   if (memory >= 8) score += 20;
   else if (memory >= 4) score += 10;
   else if (memory <= 2) score -= 25;
   
-  // Conexão
+  // Conexão (+25 max)
   if (downlink >= 50) score += 25;
   else if (downlink >= 20) score += 18;
   else if (downlink >= 5) score += 8;
-  else if (effectiveType === '3g') score -= 20;
-  else if (effectiveType === '2g' || effectiveType === 'slow-2g') score -= 40;
   
-  // Penalidades
-  if (saveData) score -= 30;
-  
-  // Determinar tier
-  if (saveData || effectiveType === '2g') return 'critical';
-  if (effectiveType === '3g') return 'legacy';
+  // Determinar tier baseado no score
   if (score >= 85) return 'quantum';
   if (score >= 70) return 'neural';
   if (score >= 50) return 'enhanced';
@@ -795,7 +803,7 @@ export function detectConnection(): ConnectionSpeed {
 /**
  * Detecta tipo de dispositivo
  */
-export function detectDevice(): 'desktop' | 'tablet' | 'mobile' {
+export function detectDevice(): DeviceType {
   if (typeof window === 'undefined') return 'desktop';
   
   const ua = navigator.userAgent;
@@ -957,20 +965,51 @@ export function getDebounceDelay(tier: PerformanceTier): number {
   return delays[tier];
 }
 
+/**
+ * Verifica se tier é low-end (critical, legacy ou standard)
+ */
+export function isLowEndTier(tier: PerformanceTier): boolean {
+  return ['critical', 'legacy', 'standard'].includes(tier);
+}
+
+/**
+ * Obtém budgets de performance por tier
+ */
+export function getBudgetsByTier(tier: PerformanceTier) {
+  const multipliers: Record<PerformanceTier, number> = {
+    critical: 0.4,
+    legacy: 0.6,
+    standard: 0.8,
+    enhanced: 1.0,
+    neural: 1.2,
+    quantum: 1.5,
+  };
+  const m = multipliers[tier];
+  return {
+    jsMax: Math.round(METRICS_CONSTITUTION.BUDGETS.jsMax * m),
+    cssMax: Math.round(METRICS_CONSTITUTION.BUDGETS.cssMax * m),
+    imagesMax: Math.round(METRICS_CONSTITUTION.BUDGETS.imagesMax * m),
+    fontsMax: Math.round(METRICS_CONSTITUTION.BUDGETS.fontsMax * m),
+    totalMax: Math.round(METRICS_CONSTITUTION.BUDGETS.totalMax * m),
+  };
+}
+
 // ============================================
 // LOG DE INICIALIZAÇÃO
 // ============================================
 
 if (typeof window !== 'undefined' && import.meta.env.DEV) {
+  const tier = detectTier();
   console.log(`
 ╔══════════════════════════════════════════════════════════════════════════════╗
 ║               🏛️ CONSTITUIÇÃO SYNAPSE - LEI I: PERFORMANCE v2.0              ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  📊 Versão: ${LEI_I_PERFORMANCE.VERSION} | Artigos: ${LEI_I_PERFORMANCE.ARTICLES_COUNT} | Títulos: 16                          ║
+║  📊 Versão: ${LEI_I_PERFORMANCE.VERSION} | Artigos: ${LEI_I_PERFORMANCE.ARTICLES_COUNT} | Títulos: ${LEI_I_PERFORMANCE.TITLES_COUNT}                          ║
 ║  🎯 DOGMA: Se roda em 3G, roda em QUALQUER lugar                             ║
 ║  📈 Metas: LCP<2s | TTI<3s | CLS<0.1 | FCP<1.5s | INP<150ms                 ║
+║  ⚡ TIER DETECTADO: ${tier.toUpperCase().padEnd(10)}                                            ║
 ╠══════════════════════════════════════════════════════════════════════════════╣
-║  ⚡ TÍTULOS:                                                                  ║
+║  🏛️ TÍTULOS:                                                                  ║
 ║  I. Bundle (5)    | II. Lazy (4)     | III. Imagens (5)  | IV. Query (7)    ║
 ║  V. Workers (6)   | VI. GPU (6)      | VII. Animações (6)| VIII. Cache (7)  ║
 ║  IX. Virtual (4)  | X. Preconnect (6)| XI. Métricas (4)  | XII. Memo (4)    ║

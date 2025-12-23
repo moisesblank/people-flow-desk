@@ -2,6 +2,7 @@
 // ⚡ EVANGELHO DA VELOCIDADE v2.0 ⚡
 // DOGMA III: O RITUAL DO LAZY LOADING INTELIGENTE
 // Componente de imagem ultra-otimizado
+// 🏛️ LEI I Art. 10-14 - Imagens Sagradas
 // ============================================
 
 import React, { memo, useState, useEffect, useRef, useMemo } from "react";
@@ -11,7 +12,12 @@ import {
   getImageFormatSupport,
   generateBlurPlaceholder 
 } from "@/lib/performance/compressionUtils";
-import { usePerformanceTier } from "@/hooks/useEvangelhoVelocidade";
+import { 
+  detectTier,
+  getImageQuality,
+  getRootMargin,
+  type PerformanceTier 
+} from "@/lib/constitution/LEI_I_PERFORMANCE";
 
 interface SacredImageProps {
   src: string;
@@ -30,11 +36,11 @@ interface SacredImageProps {
 }
 
 /**
- * DOGMA III.1, III.3 - Imagem otimizada com lazy loading e LQIP
+ * 🏛️ LEI I Art. 10-14 - Imagem otimizada com lazy loading e LQIP
  * - loading="lazy" nativo para below-the-fold
  * - Placeholder blur/color enquanto carrega
  * - Formatos modernos (AVIF/WebP) com fallback
- * - Otimização baseada em performance tier
+ * - Otimização baseada em performance tier (6 tiers)
  */
 export const SacredImage = memo(function SacredImage({
   src,
@@ -55,13 +61,14 @@ export const SacredImage = memo(function SacredImage({
   const [hasError, setHasError] = useState(false);
   const [isInView, setIsInView] = useState(priority);
   const imgRef = useRef<HTMLDivElement>(null);
-  const { tier } = usePerformanceTier();
   
-  // Calcular qualidade baseada no tier
+  // 🏛️ LEI I - Usar tier oficial da Constituição
+  const tier = useMemo(() => detectTier(), []);
+  
+  // Calcular qualidade baseada no tier (LEI I Art. 12)
   const effectiveQuality = useMemo(() => {
     if (quality) return quality;
-    const qualityMap = { divine: 90, blessed: 80, mortal: 70, challenged: 60 };
-    return qualityMap[tier];
+    return getImageQuality(tier);
   }, [quality, tier]);
   
   // URL otimizada com formato moderno
@@ -79,16 +86,15 @@ export const SacredImage = memo(function SacredImage({
     return generateBlurPlaceholder(placeholderColor);
   }, [placeholderColor]);
   
-  // DOGMA III.1 - Intersection Observer para lazy loading
+  // 🏛️ LEI I Art. 7 - Intersection Observer para lazy loading
   useEffect(() => {
     if (priority || isInView) return;
     
     const element = imgRef.current;
     if (!element) return;
     
-    // Margem maior para conexões lentas (preload antecipado)
-    const marginMap = { divine: '100px', blessed: '200px', mortal: '400px', challenged: '600px' };
-    const rootMargin = marginMap[tier];
+    // 🏛️ LEI I Art. 7 - rootMargin por tier oficial
+    const rootMargin = getRootMargin(tier);
     
     const observer = new IntersectionObserver(
       ([entry]) => {
