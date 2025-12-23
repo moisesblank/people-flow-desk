@@ -1,16 +1,16 @@
 // ============================================
 // TESTAMENTO DA SINGULARIDADE v5.0
-// HOOK DE PRÁTICA DE QUESTÕES
-// Sistema de prática com Event-Driven Architecture
+// HOOK DE PRÁTICA DE QUESTÕES - FASE 3
+// Sistema de prática com useOptimisticMutation
 // PARTE 5 - Arena da Glória
 // ============================================
 
 import { useState, useCallback } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { usePublishEvent } from "@/hooks/usePublishEvent";
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from "sonner";
 
 export interface PracticeQuestion {
@@ -82,30 +82,20 @@ export function usePracticeQuestions(options?: {
   );
 }
 
-// Hook para registrar tentativa de questão
+// Hook para registrar tentativa - MIGRADO PARA useOptimisticMutation
 export function useQuestionAttempt() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { publishCorrectAnswer, publishWrongAnswer } = usePublishEvent();
 
-  return useMutation({
-    mutationFn: async ({
-      questionId,
-      userAnswer,
-      correctAnswer,
-      timeSpent,
-    }: {
-      questionId: string;
-      userAnswer: string;
-      correctAnswer: string;
-      timeSpent?: number;
-    }) => {
+  return useOptimisticMutation<{ totalCorrect: number; totalWrong: number } | null, { questionId: string; userAnswer: string; correctAnswer: string; timeSpent?: number }, { isCorrect: boolean; questionId: string; userAnswer: string }>({
+    queryKey: ['question-attempts-stats', user?.id || 'anon'],
+    mutationFn: async ({ questionId, userAnswer, correctAnswer }) => {
       if (!user?.id) throw new Error("Usuário não autenticado");
 
       const isCorrect = userAnswer === correctAnswer;
 
       // PARTE 5: Publicar evento (Sistema Nervoso Divino)
-      // O evento c-grant-xp irá processar o XP automaticamente
       if (isCorrect) {
         await publishCorrectAnswer(questionId);
       } else {
@@ -114,15 +104,23 @@ export function useQuestionAttempt() {
 
       return { isCorrect, questionId, userAnswer };
     },
+    optimisticUpdate: (old, variables) => {
+      const isCorrect = variables.userAnswer === variables.correctAnswer;
+      if (!old) {
+        return { totalCorrect: isCorrect ? 1 : 0, totalWrong: isCorrect ? 0 : 1 };
+      }
+      return {
+        totalCorrect: old.totalCorrect + (isCorrect ? 1 : 0),
+        totalWrong: old.totalWrong + (isCorrect ? 0 : 1),
+      };
+    },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ["user-gamification"] });
       if (result.isCorrect) {
         toast.success("Resposta correta! +10 XP");
       }
     },
-    onError: (error: Error) => {
-      toast.error(error.message || "Erro ao registrar resposta");
-    },
+    errorMessage: "Erro ao registrar resposta",
   });
 }
 
@@ -230,13 +228,13 @@ export function usePracticeSession(questions: PracticeQuestion[]) {
   };
 }
 
-// Hook para histórico de prática do usuário
+// Hook para histórico - MIGRADO para useSubspaceQuery
 export function usePracticeHistory() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ["practice-history", user?.id],
-    queryFn: async () => {
+  return useSubspaceQuery<{ totalAttempts: number; correctCount: number; wrongCount: number; accuracy: number }>(
+    ["practice-history", user?.id || 'anon'],
+    async () => {
       if (!user?.id) return { totalAttempts: 0, correctCount: 0, wrongCount: 0, accuracy: 0 };
 
       const { data, error } = await supabase
@@ -253,6 +251,10 @@ export function usePracticeHistory() {
 
       return { totalAttempts, correctCount, wrongCount, accuracy };
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user',
+      persistKey: `practice_history_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }

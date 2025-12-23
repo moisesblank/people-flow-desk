@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { toast } from 'sonner';
 import { getFortressYouTubeUrl } from "@/components/video";
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 // ============================================
 // TYPES
@@ -119,16 +119,17 @@ export const useYouTubeLive = () => {
     });
   };
 
+  // Sync channel - MIGRADO PARA useOptimisticMutation
   const useSyncChannel = () => {
-    return useMutation({
+    return useOptimisticMutation<ChannelStats | null, void, any>({
+      queryKey: ['youtube-channel-stats'],
       mutationFn: () => callYouTubeAPI('sync_channel'),
+      optimisticUpdate: (old) => old, // Mantém dados atuais durante sync
       onSuccess: () => {
-        toast.success('Canal sincronizado com sucesso!');
         queryClient.invalidateQueries({ queryKey: ['youtube'] });
       },
-      onError: (error: any) => {
-        toast.error(`Erro ao sincronizar: ${error.message}`);
-      },
+      successMessage: 'Canal sincronizado com sucesso!',
+      errorMessage: 'Erro ao sincronizar canal',
     });
   };
 
