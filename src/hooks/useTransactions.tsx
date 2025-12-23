@@ -202,9 +202,13 @@ export function useDeleteTransaction() {
 export function useFinancialStats(dateRange?: { start: Date; end: Date }) {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ["financial-stats", user?.id, dateRange],
-    queryFn: async () => {
+  const dateKey = dateRange
+    ? `${dateRange.start.toISOString().slice(0, 10)}_${dateRange.end.toISOString().slice(0, 10)}`
+    : 'all';
+
+  return useSubspaceQuery(
+    ["financial-stats", user?.id || 'anon', dateKey],
+    async () => {
       if (!user?.id) return null;
 
       let query = supabase
@@ -254,8 +258,12 @@ export function useFinancialStats(dateRange?: { start: Date; end: Date }) {
         savingsRate: income > 0 ? ((income - expense) / income) * 100 : 0,
       };
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user',
+      persistKey: `financial_stats_${user?.id}_${dateKey}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 // Função auxiliar para formatar moeda

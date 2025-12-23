@@ -1,5 +1,5 @@
-import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { useSubspaceQuery } from '@/hooks/useSubspaceCommunication';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -17,9 +17,9 @@ import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 
 const DiagnosticoWhatsApp = () => {
   // Buscar diagnósticos
-  const { data: diagnostics = [], isLoading, refetch } = useQuery({
-    queryKey: ['webhook-diagnostics'],
-    queryFn: async () => {
+  const { data: diagnostics = [], isLoading, refetch } = useSubspaceQuery(
+    ['webhook-diagnostics'],
+    async () => {
       const { data } = await supabase
         .from('webhook_diagnostics')
         .select('*')
@@ -27,24 +27,30 @@ const DiagnosticoWhatsApp = () => {
         .limit(100);
       return data || [];
     },
-    refetchInterval: 10000
-  });
+    {
+      profile: 'realtime',
+      persistKey: 'webhook_diagnostics_v1',
+      refetchInterval: 10_000,
+      persistToLocalStorage: true,
+      persistTTL: 10 * 60_000,
+    }
+  );
 
   // Estatísticas do dia
-  const { data: todayStats } = useQuery({
-    queryKey: ['webhook-stats-today'],
-    queryFn: async () => {
+  const { data: todayStats } = useSubspaceQuery(
+    ['webhook-stats-today'],
+    async () => {
       const today = new Date().toISOString().split('T')[0];
       const { data: messages } = await supabase
         .from('whatsapp_messages')
         .select('id, direction, message_type')
         .gte('created_at', today);
-      
+
       const { data: attachments } = await supabase
         .from('whatsapp_attachments')
         .select('id, download_status')
         .gte('created_at', today);
-      
+
       const { data: conversations } = await supabase
         .from('whatsapp_conversations')
         .select('id, session_mode')
@@ -60,8 +66,14 @@ const DiagnosticoWhatsApp = () => {
         activeSessions: conversations?.filter(c => c.session_mode === 'ASSISTOR_ON').length || 0
       };
     },
-    refetchInterval: 30000
-  });
+    {
+      profile: 'dashboard',
+      persistKey: 'webhook_stats_today_v1',
+      refetchInterval: 30_000,
+      persistToLocalStorage: true,
+      persistTTL: 30 * 60_000,
+    }
+  );
 
   // Último evento
   const lastEvent = diagnostics[0];

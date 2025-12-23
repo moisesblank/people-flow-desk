@@ -80,16 +80,42 @@ export function useSubspaceQuery<T>(
     persistKey?: string;
     enabled?: boolean;
     onSuccess?: (data: T) => void;
+
+    // Overrides (para wrappers v3500 manterem semântica)
+    staleTime?: number;
+    gcTime?: number;
+    persistToLocalStorage?: boolean;
+    persistTTL?: number;
+    refetchInterval?: number;
+    refetchOnWindowFocus?: boolean;
+    refetchOnMount?: boolean | 'always';
+    retry?: number;
   } = {}
 ) {
-  const { 
-    profile = 'dashboard', 
-    persistKey, 
+  const {
+    profile = 'dashboard',
+    persistKey,
     enabled = true,
-    onSuccess 
+    onSuccess,
+    staleTime,
+    gcTime,
+    persistToLocalStorage,
+    persistTTL,
+    refetchInterval,
+    refetchOnWindowFocus = false,
+    refetchOnMount,
+    retry = 1,
   } = options;
   
-  const config = SUBSPACE_CACHE_PROFILES[profile];
+  const baseConfig = SUBSPACE_CACHE_PROFILES[profile];
+  const config = {
+    ...baseConfig,
+    staleTime: staleTime ?? baseConfig.staleTime,
+    gcTime: gcTime ?? baseConfig.gcTime,
+    persistToLocalStorage: persistToLocalStorage ?? baseConfig.persistToLocalStorage,
+    persistTTL: persistTTL ?? baseConfig.persistTTL,
+  };
+
   const cacheKey = persistKey || queryKey.join('_');
   
   // Carregar do localStorage se disponível (dados instantâneos!)
@@ -115,6 +141,10 @@ export function useSubspaceQuery<T>(
     gcTime: config.gcTime,
     networkMode: 'offlineFirst',
     enabled,
+    refetchInterval,
+    refetchOnWindowFocus,
+    ...(refetchOnMount !== undefined ? { refetchOnMount } : {}),
+    retry,
     // 🔥 TESE 3.1: Dados do localStorage como placeholder instantâneo
     ...(initialData !== null && initialData !== undefined ? { initialData } : {}),
   });

@@ -4,10 +4,9 @@
 // Com fallback para dados demo quando necessário
 // ============================================
 
-import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useEffect, useState, useCallback } from "react";
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery } from './useSubspaceCommunication';
 
 export interface YouTubeMetrics {
   id: string;
@@ -465,9 +464,9 @@ const DEMO_DATA: IntegratedData = {
 export function useIntegratedMetrics() {
   const [useDemo, setUseDemo] = useState(false);
 
-  const { data, isLoading, error, refetch } = useQuery({
-    queryKey: ["integrated-metrics"],
-    queryFn: async (): Promise<IntegratedData> => {
+  const { data, isLoading, error, refetch } = useSubspaceQuery<IntegratedData>(
+    ["integrated-metrics"],
+    async (): Promise<IntegratedData> => {
       const today = new Date().toISOString().split('T')[0];
       const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 

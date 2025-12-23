@@ -1,7 +1,7 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { CalendarTask, DashboardStats } from "@/types/calendar";
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery } from './useSubspaceCommunication';
 
 // Cache keys
 export const CACHE_KEYS = {
@@ -31,25 +31,28 @@ export function useDataFetch<T>(
     cacheTime?: number;
     enabled?: boolean;
     refetchOnWindowFocus?: boolean;
-    refetchOnMount?: boolean;
+    refetchOnMount?: boolean | 'always';
   }
 ) {
-  return useQuery({
-    queryKey: key,
-    queryFn: fetcher,
-    // PERFORMANCE: Cache agressivo - dados são considerados "frescos" por 30s
-    staleTime: options?.staleTime ?? 30 * 1000,
-    // PERFORMANCE: Manter em cache por 10 minutos
-    gcTime: options?.cacheTime ?? 10 * 60 * 1000,
-    enabled: options?.enabled ?? true,
-    // PERFORMANCE: Não refetch automático ao focar janela (usuário controla refresh)
-    refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
-    // PERFORMANCE: Usar cache se disponível ao montar
-    refetchOnMount: options?.refetchOnMount ?? 'always',
-    // PERFORMANCE: Retry inteligente com backoff
-    retry: 2,
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-  });
+  const keyArr = (Array.isArray(key) ? key : [String(key)]) as string[];
+  const persistKey = keyArr.join('_');
+
+  return useSubspaceQuery<T>(
+    keyArr,
+    fetcher,
+    {
+      profile: 'semiStatic',
+      persistKey,
+      enabled: options?.enabled ?? true,
+      staleTime: options?.staleTime ?? 30_000,
+      gcTime: options?.cacheTime ?? 10 * 60_000,
+      persistToLocalStorage: true,
+      persistTTL: Math.max(options?.cacheTime ?? 10 * 60_000, 60_000),
+      refetchOnWindowFocus: options?.refetchOnWindowFocus ?? false,
+      refetchOnMount: options?.refetchOnMount,
+      retry: 1,
+    }
+  );
 }
 
 // ============================================

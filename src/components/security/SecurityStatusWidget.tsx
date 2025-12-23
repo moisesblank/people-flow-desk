@@ -22,7 +22,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { useNavigate } from 'react-router-dom';
-import { useQuery } from '@tanstack/react-query';
+import { useSubspaceQuery } from '@/hooks/useSubspaceCommunication';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -39,18 +39,17 @@ export function SecurityStatusWidget() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { data: mfaSettings } = useQuery({
-    queryKey: ['mfa-settings', user?.id],
-    queryFn: async () => {
+  const { data: mfaSettings } = useSubspaceQuery(
+    ['mfa-settings', user?.id || 'anon'],
+    async () => {
       if (!user?.id) return null;
       try {
-        // Select only allowed columns (totp_secret and backup_codes are revoked)
         const { data, error } = await supabase
           .from('user_mfa_settings')
           .select('id, user_id, mfa_enabled, mfa_type, phone_number, last_verified_at, created_at, updated_at')
           .eq('user_id', user.id)
           .maybeSingle();
-        
+
         if (error && error.code !== 'PGRST116') {
           console.warn('MFA settings query error:', error.message);
           return null;
@@ -61,8 +60,12 @@ export function SecurityStatusWidget() {
         return null;
       }
     },
-    enabled: !!user?.id
-  });
+    {
+      profile: 'user',
+      persistKey: `mfa_settings_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 
   const securityChecks: SecurityCheck[] = [
     {

@@ -301,21 +301,27 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
 export function useErrorNotebookCount() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['error-notebook-count', user?.id],
-    queryFn: async () => {
+  return useSubspaceQuery<number>(
+    ['error-notebook-count', user?.id || 'anon'],
+    async () => {
       if (!user?.id) return 0;
 
       const { count, error } = await supabase
         .from('error_notebook')
-        .select('*', { count: 'exact', head: true })
+        .select('question_id', { count: 'exact', head: true })
         .eq('user_id', user.id)
         .eq('mastered', false);
 
       if (error) throw error;
       return count || 0;
     },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60, // 1 minuto
-  });
+    {
+      profile: 'dashboard',
+      persistKey: `error_notebook_count_${user?.id}`,
+      enabled: !!user?.id,
+      staleTime: 60_000,
+      persistToLocalStorage: true,
+      persistTTL: 10 * 60_000,
+    }
+  );
 }
