@@ -1,9 +1,11 @@
 # 📋 PENDENTES PARA APLICAR — COMANDO ÚNICO DEFINITIVO
 
 ## 🔥 ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS 🔥
+## 🌌 ANO 2300 — DESIGN FUTURISTA COM RENDIMENTO 3500 🌌
 
 **Data de Atualização:** 22/12/2024
 **Status:** ✅ BUILD PASSOU — PRONTO PARA APLICAR
+**Última Adição:** ⚡ PERFORMANCE OMEGA ULTRA
 
 ---
 
@@ -52,7 +54,7 @@ supabase functions deploy sanctum-report-violation
 
 ---
 
-## 📁 ARQUIVOS FRONTEND CRIADOS/ATUALIZADOS
+## 📁 ARQUIVOS FRONTEND — SANCTUM (SEGURANÇA)
 
 | # | Arquivo | Descrição |
 |---|---------|-----------|
@@ -64,6 +66,34 @@ supabase functions deploy sanctum-report-violation
 | 6 | `src/components/pdf/SecurePdfViewerOmega.tsx` | Visualizador blindado |
 | 7 | `src/styles/sanctum.css` | CSS de proteção |
 | 8 | `src/index.css` | Import do sanctum.css |
+
+---
+
+## ⚡ ARQUIVOS FRONTEND — PERFORMANCE OMEGA (NOVO!)
+
+| # | Arquivo | Descrição |
+|---|---------|-----------|
+| 1 | `src/lib/performance/performanceFlags.ts` | Sistema central de flags |
+| 2 | `src/components/performance/ClickToLoadVideo.tsx` | Player lazy (zero download antes do clique) |
+| 3 | `src/components/performance/OptimizedImage.tsx` | Imagem com lazy load + blur |
+| 4 | `src/components/performance/LazyChart.tsx` | Recharts lazy (-445KB) |
+| 5 | `src/components/performance/LazyMotion.tsx` | Framer Motion lazy (-123KB) |
+| 6 | `src/components/performance/PerformanceOverlay.tsx` | Monitor de métricas |
+| 7 | `src/components/performance/index.ts` | Exports centralizados |
+| 8 | `src/hooks/usePerformance.ts` | Hook de métricas e controle |
+| 9 | `src/styles/performance.css` | CSS de otimização |
+| 10 | `src/main.tsx` | Inicialização do perfFlags |
+
+### 🎯 O QUE O PERFORMANCE OMEGA FAZ:
+
+- ✅ **Detecção automática de device/rede** (6 tiers: quantum → lite)
+- ✅ **Auto Lite Mode em 3G** (desativa animações pesadas)
+- ✅ **Click-to-Load Video** (vídeo só carrega no clique)
+- ✅ **Lazy Charts** (Recharts só na viewport)
+- ✅ **Lazy Motion** (Framer Motion sob demanda)
+- ✅ **Core Web Vitals** (monitora LCP, FCP, CLS, etc)
+- ✅ **Respeita prefers-reduced-motion**
+- ✅ **Feature flags para controle granular**
 
 ---
 

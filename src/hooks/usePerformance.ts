@@ -1,239 +1,272 @@
 // ============================================
-// SYNAPSE v15.0 - PERFORMANCE HOOKS
-// Mobile-first, 3G-optimized
+// 🌌🔥 USE PERFORMANCE — HOOK CENTRAL NÍVEL NASA 🔥🌌
+// ANO 2300 — MONITORAMENTO E CONTROLE TOTAL
+// ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
 // ============================================
 
-import { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
+import { perfFlags, PerformanceConfig, DeviceCapabilities } from "@/lib/performance/performanceFlags";
 
 // ============================================
-// NETWORK DETECTION - Detecta 3G/slow connections
+// TIPOS
 // ============================================
-interface NetworkInfo {
-  isSlowConnection: boolean;
+export interface PerformanceMetrics {
+  // Core Web Vitals
+  lcp: number | null;
+  fid: number | null;
+  cls: number | null;
+  inp: number | null;
+  fcp: number | null;
+  ttfb: number | null;
+  
+  // Custom
+  tti: number | null;
+  tbt: number | null;
+  
+  // Resource
+  jsSize: number;
+  cssSize: number;
+  imageSize: number;
+  totalSize: number;
+  requestCount: number;
+  
+  // Timing
+  domContentLoaded: number | null;
+  windowLoad: number | null;
+  
+  // Status
+  isGood: boolean;
+  score: number;
+}
+
+interface UsePerformanceReturn {
+  // Config
+  config: PerformanceConfig;
+  capabilities: DeviceCapabilities;
+  
+  // Métricas
+  metrics: PerformanceMetrics | null;
+  
+  // Actions
+  enableLiteMode: () => void;
+  disableLiteMode: () => void;
+  toggleLiteMode: () => void;
+  setConfig: <K extends keyof PerformanceConfig>(key: K, value: PerformanceConfig[K]) => void;
+  resetConfig: () => void;
+  refreshMetrics: () => void;
+  
+  // Helpers
+  shouldLoadFeature: (feature: 'charts' | 'motion' | 'ambient' | 'ultra') => boolean;
+  isLiteMode: boolean;
+  isLowEnd: boolean;
   isMobile: boolean;
-  effectiveType: string;
-  saveData: boolean;
+  connectionType: DeviceCapabilities['connection'];
 }
 
-export function useNetworkInfo(): NetworkInfo {
-  const [info, setInfo] = useState<NetworkInfo>({
-    isSlowConnection: false,
-    isMobile: typeof window !== 'undefined' && window.innerWidth < 768,
-    effectiveType: '4g',
-    saveData: false,
-  });
+// ============================================
+// COLETAR MÉTRICAS
+// ============================================
+function collectMetrics(): PerformanceMetrics {
+  const metrics: PerformanceMetrics = {
+    lcp: null,
+    fid: null,
+    cls: null,
+    inp: null,
+    fcp: null,
+    ttfb: null,
+    tti: null,
+    tbt: null,
+    jsSize: 0,
+    cssSize: 0,
+    imageSize: 0,
+    totalSize: 0,
+    requestCount: 0,
+    domContentLoaded: null,
+    windowLoad: null,
+    isGood: true,
+    score: 100,
+  };
 
-  useEffect(() => {
-    const updateInfo = () => {
-      const nav = navigator as any;
-      const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
-      
-      const isMobile = window.innerWidth < 768;
-      const effectiveType = connection?.effectiveType || '4g';
-      const saveData = connection?.saveData || false;
-      const isSlowConnection = ['slow-2g', '2g', '3g'].includes(effectiveType) || saveData;
+  if (typeof window === 'undefined' || typeof performance === 'undefined') {
+    return metrics;
+  }
 
-      setInfo({ isSlowConnection, isMobile, effectiveType, saveData });
-    };
+  // Navigation Timing
+  const navTiming = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming | undefined;
+  
+  if (navTiming) {
+    metrics.ttfb = navTiming.responseStart - navTiming.requestStart;
+    metrics.domContentLoaded = navTiming.domContentLoadedEventEnd - navTiming.navigationStart;
+    metrics.windowLoad = navTiming.loadEventEnd - navTiming.navigationStart;
+  }
 
-    updateInfo();
+  // Resource Timing
+  const resources = performance.getEntriesByType('resource') as PerformanceResourceTiming[];
+  
+  resources.forEach(resource => {
+    const size = resource.transferSize || 0;
+    metrics.totalSize += size;
+    metrics.requestCount++;
     
-    const nav = navigator as any;
-    const connection = nav.connection || nav.mozConnection || nav.webkitConnection;
-    connection?.addEventListener?.('change', updateInfo);
-    window.addEventListener('resize', updateInfo);
-
-    return () => {
-      connection?.removeEventListener?.('change', updateInfo);
-      window.removeEventListener('resize', updateInfo);
-    };
-  }, []);
-
-  return info;
-}
-
-// ============================================
-// LAZY LOAD HOOK - Intersection Observer
-// ============================================
-interface LazyLoadOptions {
-  rootMargin?: string;
-  threshold?: number;
-}
-
-export function useLazyLoad(options: LazyLoadOptions = {}) {
-  const { rootMargin = '200px', threshold = 0.01 } = options;
-  const ref = useRef<HTMLElement | null>(null);
-  const [isIntersecting, setIsIntersecting] = useState(false);
-
-  useEffect(() => {
-    const element = ref.current;
-    if (!element || isIntersecting) return;
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setIsIntersecting(true);
-          observer.disconnect();
-        }
-      },
-      { rootMargin, threshold }
-    );
-
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [rootMargin, threshold, isIntersecting]);
-
-  return { ref, isIntersecting };
-}
-
-// ============================================
-// DEBOUNCE HOOK - Prevents excessive calls
-// ============================================
-export function useDebounce<T>(value: T, delay: number): T {
-  const [debouncedValue, setDebouncedValue] = useState(value);
-
-  useEffect(() => {
-    const timer = setTimeout(() => setDebouncedValue(value), delay);
-    return () => clearTimeout(timer);
-  }, [value, delay]);
-
-  return debouncedValue;
-}
-
-// ============================================
-// THROTTLE CALLBACK - Limits function calls
-// ============================================
-export function useThrottle<T extends (...args: any[]) => any>(
-  callback: T,
-  delay: number
-): T {
-  const lastRan = useRef(Date.now());
-  const timeoutRef = useRef<NodeJS.Timeout>();
-
-  return useCallback(
-    ((...args: Parameters<T>) => {
-      const now = Date.now();
-      if (now - lastRan.current >= delay) {
-        lastRan.current = now;
-        callback(...args);
-      } else {
-        clearTimeout(timeoutRef.current);
-        timeoutRef.current = setTimeout(() => {
-          lastRan.current = Date.now();
-          callback(...args);
-        }, delay - (now - lastRan.current));
-      }
-    }) as T,
-    [callback, delay]
-  );
-}
-
-// ============================================
-// REDUCED MOTION - Respects user preferences
-// ============================================
-export function useReducedMotion(): boolean {
-  const [reducedMotion, setReducedMotion] = useState(false);
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia('(prefers-reduced-motion: reduce)');
-    setReducedMotion(mediaQuery.matches);
-
-    const handler = (e: MediaQueryListEvent) => setReducedMotion(e.matches);
-    mediaQuery.addEventListener('change', handler);
-    return () => mediaQuery.removeEventListener('change', handler);
-  }, []);
-
-  return reducedMotion;
-}
-
-// ============================================
-// VIEWPORT SIZE - Responsive breakpoints
-// ============================================
-export function useViewport() {
-  const [viewport, setViewport] = useState({
-    width: typeof window !== 'undefined' ? window.innerWidth : 1200,
-    height: typeof window !== 'undefined' ? window.innerHeight : 800,
-    isMobile: typeof window !== 'undefined' && window.innerWidth < 768,
-    isTablet: typeof window !== 'undefined' && window.innerWidth >= 768 && window.innerWidth < 1024,
-    isDesktop: typeof window !== 'undefined' && window.innerWidth >= 1024,
+    if (resource.initiatorType === 'script') {
+      metrics.jsSize += size;
+    } else if (resource.initiatorType === 'css' || resource.initiatorType === 'link') {
+      metrics.cssSize += size;
+    } else if (resource.initiatorType === 'img') {
+      metrics.imageSize += size;
+    }
   });
 
-  useEffect(() => {
-    let rafId: number;
-    const updateViewport = () => {
-      cancelAnimationFrame(rafId);
-      rafId = requestAnimationFrame(() => {
-        setViewport({
-          width: window.innerWidth,
-          height: window.innerHeight,
-          isMobile: window.innerWidth < 768,
-          isTablet: window.innerWidth >= 768 && window.innerWidth < 1024,
-          isDesktop: window.innerWidth >= 1024,
-        });
-      });
-    };
+  // Paint Timing
+  const paintEntries = performance.getEntriesByType('paint');
+  const fcpEntry = paintEntries.find(entry => entry.name === 'first-contentful-paint');
+  if (fcpEntry) {
+    metrics.fcp = fcpEntry.startTime;
+  }
 
-    window.addEventListener('resize', updateViewport, { passive: true });
-    return () => {
-      window.removeEventListener('resize', updateViewport);
-      cancelAnimationFrame(rafId);
-    };
-  }, []);
+  // LCP via PerformanceObserver (se disponível nos entries)
+  try {
+    const lcpEntries = performance.getEntriesByType('largest-contentful-paint');
+    if (lcpEntries.length > 0) {
+      const lastEntry = lcpEntries[lcpEntries.length - 1] as PerformanceEntry & { startTime: number };
+      metrics.lcp = lastEntry.startTime;
+    }
+  } catch {
+    // LCP pode não estar disponível
+  }
 
-  return viewport;
+  // Layout Shift (CLS)
+  try {
+    const layoutShiftEntries = performance.getEntriesByType('layout-shift');
+    metrics.cls = layoutShiftEntries.reduce((sum, entry) => {
+      const layoutEntry = entry as PerformanceEntry & { hadRecentInput?: boolean; value?: number };
+      if (!layoutEntry.hadRecentInput && layoutEntry.value) {
+        return sum + layoutEntry.value;
+      }
+      return sum;
+    }, 0);
+  } catch {
+    // CLS pode não estar disponível
+  }
+
+  // Calcular score
+  let score = 100;
+  
+  // Penalidades baseadas em thresholds
+  if (metrics.lcp !== null) {
+    if (metrics.lcp > 4000) score -= 30;
+    else if (metrics.lcp > 2500) score -= 15;
+  }
+  
+  if (metrics.fcp !== null) {
+    if (metrics.fcp > 3000) score -= 20;
+    else if (metrics.fcp > 1800) score -= 10;
+  }
+  
+  if (metrics.cls !== null) {
+    if (metrics.cls > 0.25) score -= 25;
+    else if (metrics.cls > 0.1) score -= 10;
+  }
+  
+  if (metrics.ttfb !== null) {
+    if (metrics.ttfb > 600) score -= 15;
+    else if (metrics.ttfb > 200) score -= 5;
+  }
+  
+  // Penalizar por tamanho
+  if (metrics.jsSize > 500000) score -= 10;
+  if (metrics.totalSize > 2000000) score -= 10;
+  if (metrics.requestCount > 100) score -= 5;
+
+  metrics.score = Math.max(0, score);
+  metrics.isGood = score >= 70;
+
+  return metrics;
 }
 
 // ============================================
-// PERFORMANCE CONTEXT - Global performance state
-// Alias: usePerformance (for backward compatibility)
+// HOOK PRINCIPAL
 // ============================================
-export function usePerformanceMode() {
-  const network = useNetworkInfo();
-  const reducedMotion = useReducedMotion();
-  const viewport = useViewport();
+export function usePerformance(): UsePerformanceReturn {
+  const [config, setConfigState] = useState<PerformanceConfig>(perfFlags.getConfig());
+  const [capabilities] = useState<DeviceCapabilities>(perfFlags.getCapabilities());
+  const [metrics, setMetrics] = useState<PerformanceMetrics | null>(null);
+  
+  const metricsCollected = useRef(false);
+
+  // Subscribe para mudanças de config
+  useEffect(() => {
+    const unsubscribe = perfFlags.subscribe((newConfig) => {
+      setConfigState(newConfig);
+    });
+    return unsubscribe;
+  }, []);
+
+  // Coletar métricas após load
+  useEffect(() => {
+    if (metricsCollected.current) return;
+
+    const collect = () => {
+      metricsCollected.current = true;
+      setMetrics(collectMetrics());
+    };
+
+    if (document.readyState === 'complete') {
+      // Aguardar um pouco para garantir que todas as métricas estão disponíveis
+      setTimeout(collect, 1000);
+    } else {
+      window.addEventListener('load', () => setTimeout(collect, 1000), { once: true });
+    }
+  }, []);
+
+  // Actions
+  const enableLiteMode = useCallback(() => {
+    perfFlags.enableLiteMode();
+  }, []);
+
+  const disableLiteMode = useCallback(() => {
+    perfFlags.disableLiteMode();
+  }, []);
+
+  const toggleLiteMode = useCallback(() => {
+    perfFlags.toggleLiteMode();
+  }, []);
+
+  const setConfig = useCallback(<K extends keyof PerformanceConfig>(
+    key: K, 
+    value: PerformanceConfig[K]
+  ) => {
+    perfFlags.set(key, value);
+  }, []);
+
+  const resetConfig = useCallback(() => {
+    perfFlags.reset();
+  }, []);
+
+  const refreshMetrics = useCallback(() => {
+    setMetrics(collectMetrics());
+  }, []);
+
+  const shouldLoadFeature = useCallback((feature: 'charts' | 'motion' | 'ambient' | 'ultra') => {
+    return perfFlags.shouldLoadHeavyFeature(feature);
+  }, []);
 
   return {
-    // Should use lightweight mode?
-    isLightMode: network.isSlowConnection || network.saveData || reducedMotion,
-    // Should disable animations?
-    disableAnimations: reducedMotion || network.isSlowConnection,
-    shouldReduceMotion: reducedMotion || network.isSlowConnection,
-    // Should load lower quality images?
-    useLowQualityImages: network.isSlowConnection || network.saveData,
-    // Device info
-    isMobile: viewport.isMobile,
-    isTablet: viewport.isTablet,
-    isDesktop: viewport.isDesktop,
-    // Low-end device detection
-    isLowEndDevice: network.isSlowConnection || network.saveData,
-    // Animation duration based on connection
-    animationDuration: network.isSlowConnection ? 100 : 200,
-    // Connection type
-    connectionType: network.effectiveType,
-    // Metrics placeholder
-    metrics: { fps: 60 },
-    // Network info
-    ...network,
+    config,
+    capabilities,
+    metrics,
+    enableLiteMode,
+    disableLiteMode,
+    toggleLiteMode,
+    setConfig,
+    resetConfig,
+    refreshMetrics,
+    shouldLoadFeature,
+    isLiteMode: config.liteMode,
+    isLowEnd: capabilities.isLowEnd,
+    isMobile: capabilities.isMobile,
+    connectionType: capabilities.connection,
   };
 }
 
-// Alias for backward compatibility
-export const usePerformance = usePerformanceMode;
-
-// ============================================
-// OPTIMIZED ANIMATIONS - Reduced animations for mobile/slow
-// ============================================
-export function useOptimizedAnimations() {
-  const { shouldReduceMotion, isMobile, isLowEndDevice } = usePerformance();
-  
-  return useMemo(() => ({
-    // Should skip animations entirely
-    skipAnimations: shouldReduceMotion || isLowEndDevice,
-    // Reduced duration for mobile
-    duration: shouldReduceMotion ? 0 : isMobile ? 0.15 : 0.25,
-    // Simple easing
-    ease: [0.25, 0.1, 0.25, 1],
-    // Stagger delay for lists
-    stagger: shouldReduceMotion ? 0 : 0.03,
-  }), [shouldReduceMotion, isMobile, isLowEndDevice]);
-}
+export default usePerformance;
