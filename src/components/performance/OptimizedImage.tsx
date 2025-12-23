@@ -1,6 +1,6 @@
 // ============================================
-// 🏛️ CONSTITUIÇÃO SYNAPSE - OptimizedImage
-// Imagem otimizada nível NASA - Lazy Load + WebP + Placeholder
+// 🏛️ CONSTITUIÇÃO SYNAPSE - OptimizedImage v3500
+// TESE 1.4: Formato AVIF + WebP fallback + Responsive
 // LEI I Art. 7-9: SEMPRE loading="lazy" decoding="async" width height alt
 // ============================================
 
@@ -15,7 +15,7 @@ interface OptimizedImageProps {
   src: string;
   alt: string;
   
-  // Dimensões
+  // Dimensões (OBRIGATÓRIO para CLS = 0)
   width?: number;
   height?: number;
   aspectRatio?: string;
@@ -25,13 +25,14 @@ interface OptimizedImageProps {
   placeholder?: "blur" | "empty" | "skeleton";
   blurDataURL?: string;
   
-  // Formato
-  format?: "auto" | "webp" | "avif" | "original";
+  // Formato (TESE 1.4: AVIF > WebP > Original)
+  format?: "auto" | "avif" | "webp" | "original";
   quality?: number;
   
-  // Responsive
+  // Responsive (TESE 1.4: srcset obrigatório)
   sizes?: string;
   srcSet?: string;
+  responsiveSizes?: number[]; // Ex: [320, 640, 768, 1024, 1280, 1920]
   
   // Estilo
   className?: string;
@@ -48,14 +49,22 @@ interface OptimizedImageProps {
 }
 
 // ============================================
-// PLACEHOLDERS
+// CONSTANTES TESE 1.4
 // ============================================
+const DEFAULT_RESPONSIVE_SIZES = [320, 640, 768, 1024, 1280, 1920];
+
 const BLUR_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 10 10'%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' fill='%23374151' filter='url(%23b)'/%3E%3C/svg%3E`;
 
 const ERROR_PLACEHOLDER = `data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2'%3E%3Crect x='3' y='3' width='18' height='18' rx='2'/%3E%3Cline x1='9' y1='9' x2='15' y2='15'/%3E%3Cline x1='15' y1='9' x2='9' y2='15'/%3E%3C/svg%3E`;
 
+// Detectar suporte a AVIF/WebP (cached)
+const supportsAVIF = typeof window !== 'undefined' && 
+  document.createElement('canvas').toDataURL('image/avif').indexOf('data:image/avif') === 0;
+const supportsWebP = typeof window !== 'undefined' && 
+  document.createElement('canvas').toDataURL('image/webp').indexOf('data:image/webp') === 0;
+
 // ============================================
-// COMPONENTE PRINCIPAL
+// COMPONENTE PRINCIPAL - TESE 1.4
 // ============================================
 export const OptimizedImage = memo(function OptimizedImage({
   src,
@@ -70,6 +79,7 @@ export const OptimizedImage = memo(function OptimizedImage({
   quality,
   sizes,
   srcSet,
+  responsiveSizes = DEFAULT_RESPONSIVE_SIZES,
   className,
   objectFit = "cover",
   objectPosition = "center",
@@ -129,9 +139,10 @@ export const OptimizedImage = memo(function OptimizedImage({
   }, [onError]);
 
   // ============================================
-  // GERAR SRC OTIMIZADO
+  // GERAR SRC OTIMIZADO (TESE 1.4)
+  // Prioridade: AVIF > WebP > Original
   // ============================================
-  const getOptimizedSrc = useCallback((originalSrc: string): string => {
+  const getOptimizedSrc = useCallback((originalSrc: string, targetWidth?: number): string => {
     // Data URL ou blob - retornar original
     if (originalSrc.startsWith("data:") || originalSrc.startsWith("blob:")) {
       return originalSrc;
@@ -141,8 +152,17 @@ export const OptimizedImage = memo(function OptimizedImage({
     if (originalSrc.includes("supabase") && originalSrc.includes("/storage/")) {
       try {
         const url = new URL(originalSrc);
-        if (width) url.searchParams.set("width", String(width));
+        if (targetWidth || width) url.searchParams.set("width", String(targetWidth || width));
         if (finalQuality) url.searchParams.set("quality", String(finalQuality));
+        
+        // TESE 1.4: Formato otimizado
+        if (format === "auto") {
+          if (supportsAVIF) url.searchParams.set("format", "avif");
+          else if (supportsWebP) url.searchParams.set("format", "webp");
+        } else if (format !== "original") {
+          url.searchParams.set("format", format);
+        }
+        
         return url.toString();
       } catch {
         return originalSrc;
@@ -150,10 +170,26 @@ export const OptimizedImage = memo(function OptimizedImage({
     }
 
     return originalSrc;
-  }, [width, finalQuality]);
+  }, [width, finalQuality, format]);
+
+  // TESE 1.4: Gerar srcSet responsivo automaticamente
+  const generateSrcSet = useCallback((): string | undefined => {
+    if (srcSet) return srcSet; // Usar srcSet manual se fornecido
+    
+    // Só gera para Supabase storage
+    if (!src.includes("supabase") || !src.includes("/storage/")) return undefined;
+    
+    return responsiveSizes
+      .map(size => `${getOptimizedSrc(src, size)} ${size}w`)
+      .join(", ");
+  }, [src, srcSet, responsiveSizes, getOptimizedSrc]);
 
   const finalSrc = getOptimizedSrc(src);
+  const finalSrcSet = generateSrcSet();
   const finalBlurDataURL = blurDataURL || BLUR_PLACEHOLDER;
+  
+  // TESE 1.4: Sizes padrão responsivo
+  const finalSizes = sizes || "(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw";
 
   // Container styles
   const containerStyle: React.CSSProperties = {
@@ -194,17 +230,18 @@ export const OptimizedImage = memo(function OptimizedImage({
         </div>
       )}
 
-      {/* Imagem real (só carrega quando em view) */}
+      {/* Imagem real (só carrega quando em view) - TESE 1.4 */}
       {isInView && !hasError && (
         <img
           src={finalSrc}
           alt={alt}
           width={width}
           height={height}
-          sizes={sizes}
-          srcSet={srcSet}
+          sizes={finalSizes}
+          srcSet={finalSrcSet}
           loading={priority ? "eager" : "lazy"}
           decoding="async"
+          fetchPriority={priority ? "high" : "auto"}
           onLoad={handleLoad}
           onError={handleError}
           role={role}
