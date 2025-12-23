@@ -32,7 +32,16 @@ export function NeuralNetworkBackground({
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animationRef = useRef<number>(0);
   const mouseRef = useRef({ x: 0, y: 0 });
-
+  const isPausedRef = useRef(false);
+  
+  // 🏛️ LEI I Art. 19-21: Pausar quando tab inativa (proibido JS infinito)
+  useEffect(() => {
+    const handleVisibility = () => {
+      isPausedRef.current = document.hidden;
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
   const config = useMemo(() => ({
     low: { nodes: 30, speed: 0.3, maxDistance: 100 },
     medium: { nodes: 50, speed: 0.5, maxDistance: 150 },
@@ -90,8 +99,13 @@ export function NeuralNetworkBackground({
       canvas.addEventListener("mousemove", handleMouseMove);
     }
 
-    // Animation loop
+    // Animation loop - 🏛️ LEI I: Pause quando tab inativa
     const animate = () => {
+      // Skip frame se tab não está visível
+      if (isPausedRef.current) {
+        animationRef.current = requestAnimationFrame(animate);
+        return;
+      }
       ctx.clearRect(0, 0, canvas.offsetWidth, canvas.offsetHeight);
 
       // Update and draw nodes
