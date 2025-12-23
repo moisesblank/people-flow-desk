@@ -13565,6 +13565,7 @@ export type Database = {
         Args: { p_live_id: string; p_user_id: string; p_window_ms?: number }
         Returns: Json
       }
+      check_device_limit: { Args: { p_user_id: string }; Returns: Json }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_rate_limit: {
         Args: {
@@ -14114,10 +14115,15 @@ export type Database = {
             Returns: boolean
           }
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
-      increment_metrica_diaria: {
-        Args: { p_campo: string; p_data: string; p_valor: number }
-        Returns: undefined
-      }
+      increment_metrica_diaria:
+        | {
+            Args: { p_campo: string; p_data: string; p_valor: number }
+            Returns: undefined
+          }
+        | {
+            Args: { p_campo: string; p_data: string; p_valor: number }
+            Returns: undefined
+          }
       invalidate_session: {
         Args: { p_session_token?: string }
         Returns: boolean
