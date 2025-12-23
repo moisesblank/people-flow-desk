@@ -1,290 +1,823 @@
 // ============================================
-// 🔥 STORAGE.TS — BUCKETS DO SISTEMA (REGISTRO CENTRALIZADO)
-// Todos os buckets de storage do Supabase
-// PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+// 🔥🌌 STORAGE.TS — FORTALEZA DE ARMAZENAMENTO OMEGA 🌌🔥
+// ANO 2300 — PROTEÇÃO NÍVEL NASA
+// ZERO URLs PERSISTIDAS — ZERO VAZAMENTOS
+// ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+// ============================================
+//
+// 📍 MAPA DE URLs DEFINITIVO:
+//   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
+//   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
+//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+//   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+//
 // ============================================
 
-import type { UserRole } from "./nav/navRouteMap";
+// ============================================
+// CONSTANTES DE SEGURANÇA
+// ============================================
+export const OWNER_EMAIL = "moisesblank@gmail.com";
+export const SIGNED_URL_TTL_SECONDS = 120; // URLs expiram em 2 minutos
+export const MAX_FILE_SIZE_DEFAULT = 100 * 1024 * 1024; // 100MB
 
 // ============================================
 // TIPOS
 // ============================================
+export type BucketKey = keyof typeof BUCKETS;
 
-export type BucketKey = keyof typeof STORAGE_BUCKETS;
+export type BucketAccessLevel = "public" | "private" | "protected" | "premium";
 
 export interface BucketDefinition {
-  id: string;
   name: string;
+  accessLevel: BucketAccessLevel;
+  public: boolean;
+  maxFileSize: number;
+  allowedMimeTypes: string[];
+  pathPattern: string;
+  metadataTable?: string;
+  requiresAuth: boolean;
+  allowedRoles: string[];
+  isPremium: boolean;
+  isProtected: boolean;
+  watermarkRequired: boolean;
+  auditRequired: boolean;
+  encryptionRequired: boolean;
   description: string;
-  isPublic: boolean;
-  allowedRoles: readonly string[];
-  maxFileSize: number; // em MB
-  allowedTypes: readonly string[];
-  path: string;
+}
+
+export interface FileUploadResult {
+  success: boolean;
+  path?: string;
+  bucket?: string;
+  error?: string;
+  metadata?: Record<string, unknown>;
+}
+
+export interface SecureDownloadResult {
+  success: boolean;
+  signedUrl?: string;
+  expiresAt?: Date;
+  error?: string;
 }
 
 // ============================================
-// BUCKETS DO SISTEMA
+// BUCKETS DO SISTEMA — CATÁLOGO COMPLETO
 // ============================================
+export const BUCKETS = {
+  // === PÚBLICOS (Qualquer um pode ver) ===
+  AVATARS: "avatars",
+  COURSE_THUMBNAILS: "course-thumbnails",
+  LESSON_THUMBNAILS: "lesson-thumbnails",
+  PUBLIC_ASSETS: "public-assets",
+  SITE_IMAGES: "site-images",
+  MARKETING_ASSETS: "marketing-assets",
+  
+  // === COMUNIDADE (Cadastro gratuito) ===
+  COMMUNITY_AVATARS: "community-avatars",
+  COMMUNITY_POSTS: "community-posts",
+  
+  // === PROTEGIDOS (Requer autenticação) ===
+  DOCUMENTOS: "documentos",
+  ARQUIVOS: "arquivos",
+  EMPLOYEE_DOCS: "employee-docs",
+  STUDENT_DOCS: "student-docs",
+  CONTRACTS: "contracts",
+  INVOICES: "invoices",
+  RECEIPTS: "receipts",
+  REPORTS: "reports",
+  EXPORTS: "exports",
+  IMPORTS: "imports",
+  BACKUPS: "backups",
+  TEMP: "temp",
+  
+  // === PREMIUM (role=beta/owner) — SANCTUM PROTECTION ===
+  COURSE_MATERIALS: "course-materials",
+  LESSON_MATERIALS: "lesson-materials",
+  CERTIFICATES: "certificates",
+  PREMIUM_PDFS: "premium-pdfs",
+  PREMIUM_EBOOKS: "premium-ebooks",
+  PREMIUM_WORKSHEETS: "premium-worksheets",
+  
+  // === 🌌 SANCTUM 3.0 — FORTALEZA MÁXIMA ===
+  ENA_ASSETS_RAW: "ena-assets-raw",
+  ENA_ASSETS_TRANSMUTED: "ena-assets-transmuted",
+  ENA_ASSETS_ENCRYPTED: "ena-assets-encrypted",
+  
+  // === GESTÃO (Funcionários) ===
+  GESTAO_DOCS: "gestao-docs",
+  GESTAO_REPORTS: "gestao-reports",
+  GESTAO_EXPORTS: "gestao-exports",
+} as const;
 
-export const STORAGE_BUCKETS = {
-  // === AVATARES ===
+// ============================================
+// DEFINIÇÕES COMPLETAS DE BUCKETS
+// ============================================
+export const BUCKET_DEFINITIONS: Record<BucketKey, BucketDefinition> = {
+  // === PÚBLICOS ===
   AVATARS: {
-    id: "avatars",
-    name: "Avatares",
-    description: "Fotos de perfil dos usuários",
-    isPublic: true,
-    allowedRoles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor", "beta", "aluno", "viewer"],
-    maxFileSize: 2,
-    allowedTypes: ["image/jpeg", "image/png", "image/webp"],
-    path: "avatars",
+    name: "avatars",
+    accessLevel: "public",
+    public: true,
+    maxFileSize: 5 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
+    pathPattern: "{user_id}/{timestamp}-{rand}.{ext}",
+    metadataTable: "profiles",
+    requiresAuth: true,
+    allowedRoles: ["*"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
+    description: "Avatares de usuários",
   },
-  
-  // === CURSOS ===
   COURSE_THUMBNAILS: {
-    id: "course-thumbnails",
-    name: "Thumbnails de Cursos",
-    description: "Imagens de capa dos cursos",
-    isPublic: true,
-    allowedRoles: ["owner", "admin", "professor"],
-    maxFileSize: 5,
-    allowedTypes: ["image/jpeg", "image/png", "image/webp"],
-    path: "course-thumbnails",
+    name: "course-thumbnails",
+    accessLevel: "public",
+    public: true,
+    maxFileSize: 10 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    pathPattern: "{course_id}/{timestamp}-{rand}.{ext}",
+    metadataTable: "courses",
+    requiresAuth: false,
+    allowedRoles: ["*"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
+    description: "Thumbnails de cursos",
   },
-  COURSE_VIDEOS: {
-    id: "course-videos",
-    name: "Vídeos de Cursos",
-    description: "Vídeos das aulas",
-    isPublic: false,
-    allowedRoles: ["owner", "admin", "professor"],
-    maxFileSize: 500,
-    allowedTypes: ["video/mp4", "video/webm"],
-    path: "course-videos",
+  LESSON_THUMBNAILS: {
+    name: "lesson-thumbnails",
+    accessLevel: "public",
+    public: true,
+    maxFileSize: 10 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    pathPattern: "{lesson_id}/{timestamp}-{rand}.{ext}",
+    metadataTable: "lessons",
+    requiresAuth: false,
+    allowedRoles: ["*"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
+    description: "Thumbnails de aulas",
   },
-  COURSE_MATERIALS: {
-    id: "course-materials",
-    name: "Materiais de Cursos",
-    description: "PDFs, documentos e materiais complementares",
-    isPublic: false,
-    allowedRoles: ["owner", "admin", "professor"],
-    maxFileSize: 50,
-    allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-    path: "course-materials",
+  PUBLIC_ASSETS: {
+    name: "public-assets",
+    accessLevel: "public",
+    public: true,
+    maxFileSize: 50 * 1024 * 1024,
+    allowedMimeTypes: ["image/*", "video/*"],
+    pathPattern: "{category}/{timestamp}-{rand}.{ext}",
+    requiresAuth: false,
+    allowedRoles: ["*"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
+    description: "Assets públicos do site",
+  },
+  SITE_IMAGES: {
+    name: "site-images",
+    accessLevel: "public",
+    public: true,
+    maxFileSize: 20 * 1024 * 1024,
+    allowedMimeTypes: ["image/*"],
+    pathPattern: "site/{section}/{timestamp}-{rand}.{ext}",
+    requiresAuth: false,
+    allowedRoles: ["*"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
+    description: "Imagens do site",
+  },
+  MARKETING_ASSETS: {
+    name: "marketing-assets",
+    accessLevel: "public",
+    public: true,
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["image/*", "video/*", "application/pdf"],
+    pathPattern: "marketing/{campaign}/{timestamp}-{rand}.{ext}",
+    requiresAuth: false,
+    allowedRoles: ["owner", "admin", "marketing"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Assets de marketing",
   },
   
-  // === LIVROS ===
-  BOOKS: {
-    id: "books",
-    name: "Livros",
-    description: "Livros digitais (PDF, EPUB)",
-    isPublic: false,
+  // === COMUNIDADE ===
+  COMMUNITY_AVATARS: {
+    name: "community-avatars",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 5 * 1024 * 1024,
+    allowedMimeTypes: ["image/jpeg", "image/png", "image/webp"],
+    pathPattern: "community/{user_id}/{timestamp}.{ext}",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta", "aluno", "viewer"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
+    description: "Avatares da comunidade",
+  },
+  COMMUNITY_POSTS: {
+    name: "community-posts",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 20 * 1024 * 1024,
+    allowedMimeTypes: ["image/*"],
+    pathPattern: "posts/{user_id}/{post_id}/{timestamp}.{ext}",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta", "aluno", "viewer"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
+    description: "Imagens de posts da comunidade",
+  },
+  
+  // === PROTEGIDOS (Gestão) ===
+  DOCUMENTOS: {
+    name: "documentos",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 50 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "image/*", "application/msword", "application/vnd.openxmlformats-officedocument.*"],
+    pathPattern: "{user_id}/{category}/{timestamp}-{rand}.{ext}",
+    metadataTable: "documents",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "funcionario"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Documentos gerais",
+  },
+  ARQUIVOS: {
+    name: "arquivos",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["*/*"],
+    pathPattern: "{user_id}/{folder}/{timestamp}-{rand}.{ext}",
+    metadataTable: "files",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "funcionario"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Arquivos gerais",
+  },
+  EMPLOYEE_DOCS: {
+    name: "employee-docs",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 50 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "image/*"],
+    pathPattern: "{employee_id}/{doc_type}/{timestamp}-{rand}.{ext}",
+    metadataTable: "employee_documents",
+    requiresAuth: true,
     allowedRoles: ["owner", "admin"],
-    maxFileSize: 100,
-    allowedTypes: ["application/pdf", "application/epub+zip"],
-    path: "books",
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: true,
+    description: "Documentos de funcionários",
   },
-  BOOK_PAGES: {
-    id: "book-pages",
-    name: "Páginas de Livros",
-    description: "Páginas processadas dos livros",
-    isPublic: false,
+  STUDENT_DOCS: {
+    name: "student-docs",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 50 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "image/*"],
+    pathPattern: "{student_id}/{doc_type}/{timestamp}-{rand}.{ext}",
+    metadataTable: "student_documents",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "suporte"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Documentos de alunos",
+  },
+  CONTRACTS: {
+    name: "contracts",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 20 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf"],
+    pathPattern: "{entity_type}/{entity_id}/{timestamp}-{rand}.pdf",
+    metadataTable: "contracts",
+    requiresAuth: true,
     allowedRoles: ["owner", "admin"],
-    maxFileSize: 10,
-    allowedTypes: ["image/png", "image/jpeg", "image/webp"],
-    path: "book-pages",
-  },
-  
-  // === DOCUMENTOS ===
-  DOCUMENTS: {
-    id: "documents",
-    name: "Documentos",
-    description: "Documentos gerais do sistema",
-    isPublic: false,
-    allowedRoles: ["owner", "admin", "funcionario", "coordenacao"],
-    maxFileSize: 20,
-    allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
-    path: "documents",
-  },
-  
-  // === FINANCEIRO ===
-  RECEIPTS: {
-    id: "receipts",
-    name: "Comprovantes",
-    description: "Comprovantes de pagamento",
-    isPublic: false,
-    allowedRoles: ["owner", "admin", "contabilidade"],
-    maxFileSize: 10,
-    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
-    path: "receipts",
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: true,
+    description: "Contratos",
   },
   INVOICES: {
-    id: "invoices",
-    name: "Notas Fiscais",
-    description: "Notas fiscais emitidas",
-    isPublic: false,
+    name: "invoices",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 10 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf"],
+    pathPattern: "{year}/{month}/{invoice_id}.pdf",
+    metadataTable: "invoices",
+    requiresAuth: true,
     allowedRoles: ["owner", "admin", "contabilidade"],
-    maxFileSize: 10,
-    allowedTypes: ["application/pdf", "application/xml"],
-    path: "invoices",
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Notas fiscais",
   },
-  
-  // === MARKETING ===
-  MARKETING_ASSETS: {
-    id: "marketing-assets",
-    name: "Assets de Marketing",
-    description: "Imagens e vídeos para marketing",
-    isPublic: true,
-    allowedRoles: ["owner", "admin", "marketing"],
-    maxFileSize: 100,
-    allowedTypes: ["image/jpeg", "image/png", "image/webp", "video/mp4", "image/gif"],
-    path: "marketing-assets",
+  RECEIPTS: {
+    name: "receipts",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 10 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "image/*"],
+    pathPattern: "{year}/{month}/{receipt_id}.{ext}",
+    metadataTable: "receipts",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "contabilidade"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Recibos",
   },
-  LANDING_PAGES: {
-    id: "landing-pages",
-    name: "Landing Pages",
-    description: "Assets de landing pages",
-    isPublic: true,
-    allowedRoles: ["owner", "admin", "marketing"],
-    maxFileSize: 20,
-    allowedTypes: ["image/jpeg", "image/png", "image/webp", "image/svg+xml"],
-    path: "landing-pages",
-  },
-  
-  // === ALUNOS ===
-  STUDENT_SUBMISSIONS: {
-    id: "student-submissions",
-    name: "Envios de Alunos",
-    description: "Arquivos enviados pelos alunos",
-    isPublic: false,
-    allowedRoles: ["owner", "admin", "professor", "beta", "aluno"],
-    maxFileSize: 20,
-    allowedTypes: ["application/pdf", "image/jpeg", "image/png"],
-    path: "student-submissions",
-  },
-  CERTIFICATES: {
-    id: "certificates",
-    name: "Certificados",
-    description: "Certificados gerados",
-    isPublic: false,
-    allowedRoles: ["owner", "admin", "beta", "aluno"],
-    maxFileSize: 5,
-    allowedTypes: ["application/pdf"],
-    path: "certificates",
-  },
-  
-  // === SISTEMA ===
-  BACKUPS: {
-    id: "backups",
-    name: "Backups",
-    description: "Backups do sistema",
-    isPublic: false,
-    allowedRoles: ["owner"],
-    maxFileSize: 1000,
-    allowedTypes: ["application/zip", "application/gzip"],
-    path: "backups",
-  },
-  LOGS: {
-    id: "logs",
-    name: "Logs",
-    description: "Logs do sistema exportados",
-    isPublic: false,
+  REPORTS: {
+    name: "reports",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 50 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+    pathPattern: "{report_type}/{year}/{month}/{timestamp}-{rand}.{ext}",
+    metadataTable: "generated_reports",
+    requiresAuth: true,
     allowedRoles: ["owner", "admin"],
-    maxFileSize: 100,
-    allowedTypes: ["text/plain", "application/json"],
-    path: "logs",
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Relatórios gerados",
+  },
+  EXPORTS: {
+    name: "exports",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 200 * 1024 * 1024,
+    allowedMimeTypes: ["application/zip", "text/csv", "application/json"],
+    pathPattern: "{user_id}/exports/{timestamp}-{rand}.{ext}",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Exportações",
+  },
+  IMPORTS: {
+    name: "imports",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 200 * 1024 * 1024,
+    allowedMimeTypes: ["application/zip", "text/csv", "application/json", "application/vnd.ms-excel"],
+    pathPattern: "{user_id}/imports/{timestamp}-{rand}.{ext}",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Importações",
+  },
+  BACKUPS: {
+    name: "backups",
+    accessLevel: "private",
+    public: false,
+    maxFileSize: 1024 * 1024 * 1024,
+    allowedMimeTypes: ["application/zip", "application/gzip"],
+    pathPattern: "{backup_type}/{year}/{month}/{day}/{timestamp}.{ext}",
+    requiresAuth: true,
+    allowedRoles: ["owner"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: true,
+    description: "Backups do sistema",
   },
   TEMP: {
-    id: "temp",
-    name: "Temporário",
+    name: "temp",
+    accessLevel: "private",
+    public: false,
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["*/*"],
+    pathPattern: "{user_id}/{session_id}/{rand}.{ext}",
+    requiresAuth: true,
+    allowedRoles: ["*"],
+    isPremium: false,
+    isProtected: false,
+    watermarkRequired: false,
+    auditRequired: false,
+    encryptionRequired: false,
     description: "Arquivos temporários",
-    isPublic: false,
-    allowedRoles: ["owner", "admin", "funcionario"],
-    maxFileSize: 50,
-    allowedTypes: ["*/*"],
-    path: "temp",
   },
-  
-  // === WHATSAPP ===
-  WHATSAPP_ATTACHMENTS: {
-    id: "whatsapp-attachments",
-    name: "Anexos WhatsApp",
-    description: "Anexos recebidos via WhatsApp",
-    isPublic: false,
+
+  // === PREMIUM (ALUNO BETA) — SANCTUM PROTECTED ===
+  COURSE_MATERIALS: {
+    name: "course-materials",
+    accessLevel: "premium",
+    public: false,
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "application/zip", "video/*", "audio/*"],
+    pathPattern: "{course_id}/materials/{timestamp}-{rand}.{ext}",
+    metadataTable: "course_materials",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta", "professor"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Materiais de cursos (PREMIUM)",
+  },
+  LESSON_MATERIALS: {
+    name: "lesson-materials",
+    accessLevel: "premium",
+    public: false,
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "application/zip", "video/*", "audio/*"],
+    pathPattern: "{lesson_id}/materials/{timestamp}-{rand}.{ext}",
+    metadataTable: "lesson_materials",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta", "professor"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Materiais de aulas (PREMIUM)",
+  },
+  CERTIFICATES: {
+    name: "certificates",
+    accessLevel: "premium",
+    public: false,
+    maxFileSize: 10 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf"],
+    pathPattern: "{user_id}/certs/{course_id}-{timestamp}.pdf",
+    metadataTable: "certificates",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Certificados (PREMIUM)",
+  },
+  PREMIUM_PDFS: {
+    name: "premium-pdfs",
+    accessLevel: "premium",
+    public: false,
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf"],
+    pathPattern: "{category}/{asset_id}/original.pdf",
+    metadataTable: "ena_assets",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: true,
+    description: "PDFs premium (SANCTUM)",
+  },
+  PREMIUM_EBOOKS: {
+    name: "premium-ebooks",
+    accessLevel: "premium",
+    public: false,
+    maxFileSize: 200 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "application/epub+zip"],
+    pathPattern: "{ebook_id}/{timestamp}.{ext}",
+    metadataTable: "ebooks",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: true,
+    description: "E-books premium (SANCTUM)",
+  },
+  PREMIUM_WORKSHEETS: {
+    name: "premium-worksheets",
+    accessLevel: "premium",
+    public: false,
+    maxFileSize: 50 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "image/*"],
+    pathPattern: "{worksheet_id}/{timestamp}.{ext}",
+    metadataTable: "worksheets",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Listas de exercícios premium (SANCTUM)",
+  },
+
+  // === 🌌 SANCTUM 3.0 — FORTALEZA MÁXIMA ===
+  ENA_ASSETS_RAW: {
+    name: "ena-assets-raw",
+    accessLevel: "private",
+    public: false,
+    maxFileSize: 500 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "application/epub+zip"],
+    pathPattern: "{asset_id}/original.{ext}",
+    metadataTable: "ena_assets",
+    requiresAuth: true,
+    allowedRoles: ["owner"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: true,
+    description: "Assets originais (NUNCA EXPOR)",
+  },
+  ENA_ASSETS_TRANSMUTED: {
+    name: "ena-assets-transmuted",
+    accessLevel: "premium",
+    public: false,
+    maxFileSize: 20 * 1024 * 1024,
+    allowedMimeTypes: ["image/webp", "image/avif", "image/png"],
+    pathPattern: "{asset_id}/pages/{page_index}.webp",
+    metadataTable: "ena_asset_pages",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "beta", "funcionario"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: true,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Páginas transmutadas (SANCTUM)",
+  },
+  ENA_ASSETS_ENCRYPTED: {
+    name: "ena-assets-encrypted",
+    accessLevel: "private",
+    public: false,
+    maxFileSize: 500 * 1024 * 1024,
+    allowedMimeTypes: ["application/octet-stream"],
+    pathPattern: "{asset_id}/encrypted.bin",
+    metadataTable: "ena_assets",
+    requiresAuth: true,
+    allowedRoles: ["owner"],
+    isPremium: true,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: true,
+    description: "Assets criptografados (MÁXIMA SEGURANÇA)",
+  },
+
+  // === GESTÃO ===
+  GESTAO_DOCS: {
+    name: "gestao-docs",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 50 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "image/*", "application/msword", "application/vnd.openxmlformats-officedocument.*"],
+    pathPattern: "gestao/{department}/{timestamp}-{rand}.{ext}",
+    requiresAuth: true,
+    allowedRoles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"],
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Documentos de gestão",
+  },
+  GESTAO_REPORTS: {
+    name: "gestao-reports",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 100 * 1024 * 1024,
+    allowedMimeTypes: ["application/pdf", "application/vnd.ms-excel", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"],
+    pathPattern: "gestao/reports/{report_type}/{timestamp}.{ext}",
+    requiresAuth: true,
     allowedRoles: ["owner", "admin"],
-    maxFileSize: 50,
-    allowedTypes: ["*/*"],
-    path: "whatsapp-attachments",
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Relatórios de gestão",
   },
-  
-  // === EMPRESAS ===
-  COMPANY_DOCUMENTS: {
-    id: "company-documents",
-    name: "Documentos de Empresas",
-    description: "Documentos das empresas",
-    isPublic: false,
+  GESTAO_EXPORTS: {
+    name: "gestao-exports",
+    accessLevel: "protected",
+    public: false,
+    maxFileSize: 500 * 1024 * 1024,
+    allowedMimeTypes: ["application/zip", "text/csv", "application/json"],
+    pathPattern: "gestao/exports/{user_id}/{timestamp}.{ext}",
+    requiresAuth: true,
     allowedRoles: ["owner", "admin"],
-    maxFileSize: 50,
-    allowedTypes: ["application/pdf", "application/msword", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"],
-    path: "company-documents",
+    isPremium: false,
+    isProtected: true,
+    watermarkRequired: false,
+    auditRequired: true,
+    encryptionRequired: false,
+    description: "Exportações de gestão",
   },
-} as const;
+};
 
 // ============================================
 // HELPERS
 // ============================================
 
 /**
+ * Gera um ID aleatório
+ */
+function generateRandomId(length = 8): string {
+  return Math.random().toString(36).substring(2, 2 + length);
+}
+
+/**
+ * Extrai a extensão de um arquivo
+ */
+function getFileExtension(filename: string): string {
+  const parts = filename.split(".");
+  return parts.length > 1 ? parts.pop()!.toLowerCase() : "";
+}
+
+/**
+ * Gera o path do arquivo baseado no pattern do bucket
+ */
+export function generateFilePath(
+  bucketKey: BucketKey,
+  params: Record<string, string>,
+  filename: string
+): string {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  if (!def) throw new Error(`Bucket não encontrado: ${bucketKey}`);
+
+  let path = def.pathPattern;
+  
+  // Substituir placeholders
+  const now = new Date();
+  const replacements: Record<string, string> = {
+    ...params,
+    timestamp: now.getTime().toString(),
+    rand: generateRandomId(),
+    ext: getFileExtension(filename),
+    year: now.getFullYear().toString(),
+    month: (now.getMonth() + 1).toString().padStart(2, "0"),
+    day: now.getDate().toString().padStart(2, "0"),
+  };
+
+  Object.entries(replacements).forEach(([key, value]) => {
+    path = path.replace(`{${key}}`, value);
+  });
+
+  return path;
+}
+
+/**
+ * Valida se um arquivo pode ser enviado para um bucket
+ */
+export function validateFileForBucket(
+  bucketKey: BucketKey,
+  file: File
+): { valid: boolean; error?: string } {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  if (!def) {
+    return { valid: false, error: `Bucket não encontrado: ${bucketKey}` };
+  }
+
+  // Verificar tamanho
+  if (file.size > def.maxFileSize) {
+    const maxSizeMB = Math.round(def.maxFileSize / (1024 * 1024));
+    return { valid: false, error: `Arquivo muito grande. Máximo: ${maxSizeMB}MB` };
+  }
+
+  // Verificar MIME type
+  const allowedTypes = def.allowedMimeTypes;
+  if (!allowedTypes.includes("*/*")) {
+    const isAllowed = allowedTypes.some((type) => {
+      if (type.endsWith("/*")) {
+        const category = type.split("/")[0];
+        return file.type.startsWith(`${category}/`);
+      }
+      return file.type === type;
+    });
+
+    if (!isAllowed) {
+      return { valid: false, error: `Tipo de arquivo não permitido: ${file.type}` };
+    }
+  }
+
+  return { valid: true };
+}
+
+/**
  * Verifica se um usuário pode acessar um bucket
  */
-export function canAccessBucket(bucketKey: BucketKey, role: string | null): boolean {
-  const bucket = STORAGE_BUCKETS[bucketKey];
-  if (!bucket) return false;
-  
-  if (role === "owner") return true;
-  
-  return role ? (bucket.allowedRoles as readonly string[]).includes(role) : false;
+export function canAccessBucket(
+  bucketKey: BucketKey,
+  userRole: string | null,
+  userEmail?: string | null
+): boolean {
+  // Owner MASTER pode tudo
+  if (userRole === "owner" || userEmail?.toLowerCase() === OWNER_EMAIL) {
+    return true;
+  }
+
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  if (!def) return false;
+
+  // Buckets públicos
+  if (def.accessLevel === "public") return true;
+
+  // Requer autenticação
+  if (!userRole) return false;
+
+  // Verificar role
+  if (def.allowedRoles.includes("*")) return true;
+  return def.allowedRoles.includes(userRole);
+}
+
+/**
+ * Verifica se um bucket requer proteção SANCTUM
+ */
+export function isSanctumProtected(bucketKey: BucketKey): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  return def?.isProtected && def?.watermarkRequired;
+}
+
+/**
+ * Verifica se um bucket é premium
+ */
+export function isPremiumBucket(bucketKey: BucketKey): boolean {
+  return BUCKET_DEFINITIONS[bucketKey]?.isPremium ?? false;
 }
 
 /**
  * Retorna a definição de um bucket
  */
 export function getBucketDefinition(bucketKey: BucketKey): BucketDefinition | null {
-  return STORAGE_BUCKETS[bucketKey] || null;
+  return BUCKET_DEFINITIONS[bucketKey] ?? null;
+}
+
+/**
+ * Retorna o nome do bucket
+ */
+export function getBucketName(bucketKey: BucketKey): string {
+  return BUCKETS[bucketKey];
 }
 
 /**
  * Retorna todos os buckets que um usuário pode acessar
  */
-export function getUserBuckets(role: string | null): BucketKey[] {
-  if (!role) return [];
-  
-  return (Object.keys(STORAGE_BUCKETS) as BucketKey[]).filter(key => 
-    canAccessBucket(key, role)
+export function getUserBuckets(userRole: string | null, userEmail?: string | null): BucketKey[] {
+  return (Object.keys(BUCKETS) as BucketKey[]).filter((key) =>
+    canAccessBucket(key, userRole, userEmail)
   );
 }
 
 /**
- * Verifica se um tipo de arquivo é permitido em um bucket
+ * Retorna buckets por nível de acesso
  */
-export function isFileTypeAllowed(bucketKey: BucketKey, mimeType: string): boolean {
-  const bucket = STORAGE_BUCKETS[bucketKey];
-  if (!bucket) return false;
-  
-  const allowedTypes = bucket.allowedTypes as readonly string[];
-  if (allowedTypes.includes("*/*")) return true;
-  
-  return allowedTypes.includes(mimeType);
-}
-
-/**
- * Verifica se o tamanho do arquivo é permitido
- */
-export function isFileSizeAllowed(bucketKey: BucketKey, sizeInBytes: number): boolean {
-  const bucket = STORAGE_BUCKETS[bucketKey];
-  if (!bucket) return false;
-  
-  const sizeInMB = sizeInBytes / (1024 * 1024);
-  return sizeInMB <= bucket.maxFileSize;
+export function getBucketsByAccessLevel(level: BucketAccessLevel): BucketKey[] {
+  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
+    (key) => BUCKET_DEFINITIONS[key].accessLevel === level
+  );
 }
 
 /**
@@ -293,32 +826,55 @@ export function isFileSizeAllowed(bucketKey: BucketKey, sizeInBytes: number): bo
 export function auditBuckets(): {
   total: number;
   public: number;
+  protected: number;
+  premium: number;
   private: number;
-  totalMaxSize: number;
+  sanctumProtected: number;
+  totalMaxSizeMB: number;
 } {
-  const keys = Object.keys(STORAGE_BUCKETS) as BucketKey[];
-  
+  const keys = Object.keys(BUCKET_DEFINITIONS) as BucketKey[];
+
   let publicCount = 0;
+  let protectedCount = 0;
+  let premiumCount = 0;
   let privateCount = 0;
+  let sanctumCount = 0;
   let totalMaxSize = 0;
-  
-  keys.forEach(key => {
-    const bucket = STORAGE_BUCKETS[key];
-    if (bucket.isPublic) publicCount++;
-    else privateCount++;
-    totalMaxSize += bucket.maxFileSize;
+
+  keys.forEach((key) => {
+    const def = BUCKET_DEFINITIONS[key];
+    
+    switch (def.accessLevel) {
+      case "public":
+        publicCount++;
+        break;
+      case "protected":
+        protectedCount++;
+        break;
+      case "premium":
+        premiumCount++;
+        break;
+      case "private":
+        privateCount++;
+        break;
+    }
+
+    if (isSanctumProtected(key)) sanctumCount++;
+    totalMaxSize += def.maxFileSize;
   });
-  
+
   return {
     total: keys.length,
     public: publicCount,
+    protected: protectedCount,
+    premium: premiumCount,
     private: privateCount,
-    totalMaxSize,
+    sanctumProtected: sanctumCount,
+    totalMaxSizeMB: Math.round(totalMaxSize / (1024 * 1024)),
   };
 }
 
 // ============================================
 // EXPORTS
 // ============================================
-
-export default STORAGE_BUCKETS;
+export default BUCKETS;

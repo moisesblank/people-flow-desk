@@ -23,8 +23,13 @@ export { ACTIONS, canExecuteAction, getActionDefinition, getUserActions, getActi
 export type { ActionKey, ActionDefinition, ActionCategory } from "./actions";
 
 // === STORAGE ===
-export { STORAGE_BUCKETS, getBucketDefinition, getUserBuckets, isFileTypeAllowed, isFileSizeAllowed, auditBuckets } from "./storage";
-export type { BucketKey, BucketDefinition } from "./storage";
+export { 
+  BUCKETS, BUCKET_DEFINITIONS, getBucketDefinition, getUserBuckets, 
+  canAccessBucket, validateFileForBucket, generateFilePath,
+  isSanctumProtected, isPremiumBucket, getBucketName, getBucketsByAccessLevel,
+  auditBuckets, OWNER_EMAIL as STORAGE_OWNER_EMAIL, SIGNED_URL_TTL_SECONDS
+} from "./storage";
+export type { BucketKey, BucketDefinition, BucketAccessLevel, FileUploadResult, SecureDownloadResult } from "./storage";
 
 // === MATRIX DE FUNÇÕES ===
 export * from "./functionMatrix";
