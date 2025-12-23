@@ -481,7 +481,230 @@ export function getPerformanceClasses(): string {
   return classes.join(' ');
 }
 
-// Log em dev
-if (import.meta.env.DEV) {
-  console.log('[CONSTITUIÇÃO] ⚡ Performance Flags v3 carregado');
+// ============================================
+// LITE MODE CONFIG
+// ============================================
+const LITE_CONFIG: Partial<PerformanceConfig> = {
+  liteMode: true,
+  enableMotion: false,
+  enableAmbientFx: false,
+  enableUltraEffects: false,
+  enableBlur: false,
+  enableShadows: false,
+  enableGradients: false,
+  enableParticles: false,
+  imageQuality: 50,
+  chartsSimplified: true,
+  prefetchEnabled: false,
+  prefetchMargin: '1000px',
+  animationDuration: 0,
+  animationStagger: 0,
+};
+
+// ============================================
+// CLASSE PRINCIPAL - SINGLETON MANAGER
+// ============================================
+class PerformanceFlagsManager {
+  private config: PerformanceConfig;
+  private capabilities: DeviceCapabilities;
+  private listeners: Set<(config: PerformanceConfig) => void> = new Set();
+  private initialized = false;
+
+  constructor() {
+    this.capabilities = detectDeviceCapabilities();
+    this.config = getPerformanceConfig();
+  }
+
+  // Inicializar (chamar no app start)
+  init(): void {
+    if (this.initialized) return;
+    this.initialized = true;
+
+    // Auto-aplicar lite mode se necessário
+    if (this.config.autoLiteMode && this.capabilities.isLowEnd) {
+      this.enableLiteMode();
+      if (import.meta.env.DEV) {
+        console.log('[PERF] 🔋 Lite Mode ativado automaticamente');
+      }
+    }
+
+    // Observar mudanças de conexão
+    const navWithConnection = navigator as Navigator & { connection?: NetworkInformation };
+    if (typeof navigator !== 'undefined' && navWithConnection.connection) {
+      navWithConnection.connection.addEventListener('change', () => {
+        this.capabilities = detectDeviceCapabilities(true);
+        if (this.config.autoLiteMode && this.capabilities.isLowEnd && !this.config.liteMode) {
+          this.enableLiteMode();
+        }
+      });
+    }
+
+    // Observar prefers-reduced-motion
+    if (typeof window !== 'undefined') {
+      window.matchMedia('(prefers-reduced-motion: reduce)').addEventListener('change', (e) => {
+        if (e.matches) {
+          this.set('enableMotion', false);
+        }
+      });
+    }
+
+    // Log inicial em dev
+    if (import.meta.env.DEV) {
+      console.log(`[PERF] ⚡ Tier: ${this.capabilities.tier} (${this.capabilities.score}/120)`);
+      console.log(`[PERF] 📶 Connection: ${this.capabilities.connection}`);
+      console.log(`[PERF] 🔋 Lite: ${this.config.liteMode ? 'ON' : 'OFF'}`);
+    }
+  }
+
+  // Obter valor
+  get<K extends keyof PerformanceConfig>(key: K): PerformanceConfig[K] {
+    return this.config[key];
+  }
+
+  // Definir valor
+  set<K extends keyof PerformanceConfig>(key: K, value: PerformanceConfig[K]): void {
+    this.config[key] = value;
+    savePerformanceConfig({ [key]: value });
+    this.notify();
+  }
+
+  // Obter config completa
+  getConfig(): Readonly<PerformanceConfig> {
+    return { ...this.config };
+  }
+
+  // Obter capabilities
+  getCapabilities(): Readonly<DeviceCapabilities> {
+    return { ...this.capabilities };
+  }
+
+  // Ativar Lite Mode
+  enableLiteMode(): void {
+    this.config = { ...this.config, ...LITE_CONFIG };
+    savePerformanceConfig(this.config);
+    this.notify();
+    this.applyLiteModeCSS(true);
+  }
+
+  // Desativar Lite Mode
+  disableLiteMode(): void {
+    this.config = { ...getPerformanceConfig(true), liteMode: false };
+    savePerformanceConfig(this.config);
+    this.notify();
+    this.applyLiteModeCSS(false);
+  }
+
+  // Toggle Lite Mode
+  toggleLiteMode(): void {
+    if (this.config.liteMode) {
+      this.disableLiteMode();
+    } else {
+      this.enableLiteMode();
+    }
+  }
+
+  // Aplicar CSS de Lite Mode
+  private applyLiteModeCSS(enable: boolean): void {
+    if (typeof document === 'undefined') return;
+
+    const existingStyle = document.getElementById('perf-lite-mode');
+    if (existingStyle) {
+      existingStyle.remove();
+    }
+
+    if (enable) {
+      const style = document.createElement('style');
+      style.id = 'perf-lite-mode';
+      style.textContent = `
+        /* 🔋 LITE MODE — Performance Máxima */
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+        .backdrop-blur, .backdrop-blur-sm, .backdrop-blur-md, .backdrop-blur-lg, .backdrop-blur-xl {
+          backdrop-filter: none !important;
+          -webkit-backdrop-filter: none !important;
+        }
+        .shadow-lg, .shadow-xl, .shadow-2xl {
+          box-shadow: 0 1px 3px rgba(0,0,0,0.1) !important;
+        }
+        [data-perf-effect], .perf-effect, .ambient-effect {
+          display: none !important;
+        }
+      `;
+      document.head.appendChild(style);
+    }
+  }
+
+  // Notificar listeners
+  private notify(): void {
+    this.listeners.forEach(fn => fn(this.config));
+  }
+
+  // Subscribe para mudanças
+  subscribe(fn: (config: PerformanceConfig) => void): () => void {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+
+  // Checar se deve carregar feature pesada
+  shouldLoadHeavyFeature(feature: 'charts' | 'motion' | 'ambient' | 'ultra'): boolean {
+    if (this.config.liteMode) return false;
+
+    switch (feature) {
+      case 'charts':
+        return this.config.chartsEnabled;
+      case 'motion':
+        return this.config.enableMotion && !this.capabilities.reducedMotion;
+      case 'ambient':
+        return this.config.enableAmbientFx && !this.capabilities.isLowEnd;
+      case 'ultra':
+        return this.config.enableUltraEffects && this.capabilities.tier === 'quantum';
+      default:
+        return true;
+    }
+  }
+
+  // Reset para defaults
+  reset(): void {
+    if (typeof localStorage !== 'undefined') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+    cachedConfig = null;
+    cachedCapabilities = null;
+    this.config = getPerformanceConfig(true);
+    this.capabilities = detectDeviceCapabilities(true);
+    this.notify();
+    this.applyLiteModeCSS(false);
+  }
 }
+
+// ============================================
+// SINGLETON EXPORT
+// ============================================
+export const perfFlags = new PerformanceFlagsManager();
+
+// ============================================
+// HOOKS HELPERS (para uso direto sem React)
+// ============================================
+export function useLiteMode(): boolean {
+  return perfFlags.get('liteMode');
+}
+
+export function useMotionEnabled(): boolean {
+  return perfFlags.shouldLoadHeavyFeature('motion');
+}
+
+export function useChartsEnabled(): boolean {
+  return perfFlags.shouldLoadHeavyFeature('charts');
+}
+
+// ============================================
+// INICIALIZAÇÃO AUTOMÁTICA
+// ============================================
+if (typeof window !== 'undefined') {
+  perfFlags.init();
+}
+
+export default perfFlags;
