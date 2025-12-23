@@ -13632,40 +13632,40 @@ export type Database = {
     Views: {
       alunos_safe: {
         Row: {
-          cidade: string | null
+          cpf: string | null
           created_at: string | null
           curso_id: string | null
           data_matricula: string | null
           email: string | null
-          estado: string | null
-          fonte: string | null
           id: string | null
           nome: string | null
           status: string | null
+          telefone: string | null
+          updated_at: string | null
         }
         Insert: {
-          cidade?: string | null
+          cpf?: never
           created_at?: string | null
           curso_id?: string | null
           data_matricula?: string | null
-          email?: string | null
-          estado?: string | null
-          fonte?: string | null
+          email?: never
           id?: string | null
           nome?: string | null
           status?: string | null
+          telefone?: never
+          updated_at?: string | null
         }
         Update: {
-          cidade?: string | null
+          cpf?: never
           created_at?: string | null
           curso_id?: string | null
           data_matricula?: string | null
-          email?: string | null
-          estado?: string | null
-          fonte?: string | null
+          email?: never
           id?: string | null
           nome?: string | null
           status?: string | null
+          telefone?: never
+          updated_at?: string | null
         }
         Relationships: [
           {
