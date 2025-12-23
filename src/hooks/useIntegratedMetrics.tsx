@@ -647,10 +647,14 @@ export function useIntegratedMetrics() {
         return DEMO_DATA;
       }
     },
-    refetchInterval: 30000, // Refresh every 30 seconds for more real-time feel
-    staleTime: 15000,
-    retry: 1
-  });
+    {
+      profile: 'realtime',
+      persistKey: 'integrated_metrics_v1',
+      refetchInterval: 30000,
+      staleTime: 15000,
+      retry: 1
+    }
+  );
 
   // Setup realtime subscriptions
   useEffect(() => {
