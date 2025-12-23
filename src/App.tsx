@@ -1,6 +1,6 @@
 // ============================================
-// ⚡ MATRIZ DIGITAL - APP CORE ⚡
-// Evangelho da Velocidade v2.0 Aplicado
+// ⚡ MATRIZ DIGITAL - APP CORE v5.0 ⚡
+// ULTRA PERFORMANCE 3G - 5000 usuários simultâneos
 // 🛡️ Evangelho da Segurança v2.0 Integrado
 // 🛡️ DOGMA XI: Controle de Dispositivos
 // ============================================
@@ -8,6 +8,7 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import "@/styles/performance.css"; // ⚡ ULTRA PERFORMANCE CSS
 import { QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";

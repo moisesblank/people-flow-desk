@@ -1,0 +1,361 @@
+/* ╔══════════════════════════════════════════════════════════════════════════════╗ */
+/* ║   ⚡ ULTRA PERFORMANCE CSS v5.0 ⚡                                            ║ */
+/* ║   Otimizações globais para 3G + dispositivos fracos                          ║ */
+/* ╚══════════════════════════════════════════════════════════════════════════════╝ */
+
+/* ============================================ */
+/* TIER-BASED PERFORMANCE OVERRIDES            */
+/* ============================================ */
+
+/* CRITICAL TIER: Modo de sobrevivência */
+.perf-tier-critical {
+  /* Desabilita TUDO que consome GPU */
+  --tw-blur: none !important;
+  --tw-drop-shadow: none !important;
+}
+
+.perf-tier-critical *,
+.perf-tier-critical *::before,
+.perf-tier-critical *::after {
+  /* Zero animações */
+  animation: none !important;
+  animation-duration: 0.001ms !important;
+  transition: none !important;
+  transition-duration: 0.001ms !important;
+  
+  /* Sem efeitos GPU */
+  filter: none !important;
+  backdrop-filter: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  
+  /* Otimizações de renderização */
+  will-change: auto !important;
+  contain: layout style;
+}
+
+.perf-tier-critical img {
+  image-rendering: optimizeSpeed;
+}
+
+/* LOW TIER: Mínimo essencial */
+.perf-tier-low * {
+  animation-duration: 50ms !important;
+  transition-duration: 50ms !important;
+  backdrop-filter: none !important;
+}
+
+.perf-tier-low [class*="blur-"] {
+  filter: none !important;
+  background-color: hsl(var(--background) / 0.95) !important;
+}
+
+.perf-tier-low [class*="shadow-"] {
+  box-shadow: 0 1px 2px hsl(var(--foreground) / 0.1) !important;
+}
+
+/* MEDIUM TIER: Efeitos leves */
+.perf-tier-medium [class*="blur-3xl"],
+.perf-tier-medium [class*="blur-2xl"] {
+  filter: blur(8px) !important;
+}
+
+.perf-tier-medium .animate-pulse {
+  animation-duration: 3s !important;
+}
+
+/* HIGH/ULTRA TIER: Full experience */
+.perf-tier-high,
+.perf-tier-ultra {
+  /* GPU acceleration para elementos animados */
+  --gpu-optimize: translateZ(0);
+}
+
+/* ============================================ */
+/* FEATURE FLAGS CSS                           */
+/* ============================================ */
+
+/* NO ANIMATIONS FLAG */
+.perf-no-animations * {
+  animation: none !important;
+  transition: none !important;
+}
+
+/* NO BLUR FLAG */
+.perf-no-blur [class*="blur"],
+.perf-no-blur [class*="backdrop-blur"] {
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.perf-no-blur [class*="backdrop-blur"] {
+  background-color: hsl(var(--background) / 0.95) !important;
+}
+
+/* NO SHADOWS FLAG */
+.perf-no-shadows [class*="shadow"] {
+  box-shadow: none !important;
+}
+
+/* NO PARTICLES FLAG */
+.perf-no-particles .perf-particles,
+.perf-no-particles .perf-ambient-only,
+.perf-no-particles [data-perf="particles"],
+.perf-no-particles [data-perf="ambient"] {
+  display: none !important;
+  visibility: hidden !important;
+}
+
+/* NO GRADIENTS FLAG */
+.perf-no-gradients [class*="bg-gradient-to"] {
+  background: hsl(var(--primary)) !important;
+}
+
+/* REDUCED MOTION (User preference) */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+  
+  .animate-spin,
+  .animate-pulse,
+  .animate-bounce,
+  .animate-float {
+    animation: none !important;
+  }
+}
+
+/* ============================================ */
+/* AMBIENT-ONLY ELEMENTS                       */
+/* Elementos decorativos que consomem GPU      */
+/* ============================================ */
+
+.perf-ambient-only {
+  /* Marcado para remoção em low-end */
+  contain: strict;
+}
+
+.perf-tier-critical .perf-ambient-only,
+.perf-tier-low .perf-ambient-only,
+.perf-no-particles .perf-ambient-only {
+  display: none !important;
+  content-visibility: hidden !important;
+}
+
+/* ============================================ */
+/* GPU ACCELERATION HINTS                      */
+/* ============================================ */
+
+.perf-gpu {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  perspective: 1000px;
+}
+
+.perf-tier-critical .perf-gpu,
+.perf-tier-low .perf-gpu {
+  /* Remove GPU acceleration em low-end (economiza memória) */
+  transform: none;
+  will-change: auto;
+}
+
+/* ============================================ */
+/* CONTENT VISIBILITY (Below-fold optimization)*/
+/* ============================================ */
+
+.perf-lazy-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+.perf-lazy-card {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 200px;
+}
+
+.perf-lazy-list-item {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 60px;
+}
+
+/* ============================================ */
+/* IMAGE OPTIMIZATION                          */
+/* ============================================ */
+
+.perf-tier-critical img,
+.perf-tier-low img {
+  /* Renderização mais rápida */
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: optimizeSpeed;
+}
+
+/* Placeholder enquanto carrega */
+img[loading="lazy"]:not([src]) {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 0%,
+    hsl(var(--muted-foreground) / 0.1) 50%,
+    hsl(var(--muted)) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.perf-tier-critical img[loading="lazy"]:not([src]),
+.perf-tier-low img[loading="lazy"]:not([src]) {
+  /* Sem animação de skeleton em low-end */
+  animation: none;
+  background: hsl(var(--muted));
+}
+
+/* ============================================ */
+/* FONT OPTIMIZATION                           */
+/* ============================================ */
+
+.perf-tier-critical,
+.perf-tier-low {
+  /* Renderização mais rápida de texto */
+  text-rendering: optimizeSpeed;
+  -webkit-font-smoothing: auto;
+}
+
+/* ============================================ */
+/* SCROLL OPTIMIZATION                         */
+/* ============================================ */
+
+.perf-tier-critical,
+.perf-tier-low {
+  /* Scroll mais suave em hardware fraco */
+  scroll-behavior: auto !important;
+  -webkit-overflow-scrolling: auto;
+}
+
+.perf-tier-high,
+.perf-tier-ultra {
+  /* Touch scrolling suave */
+  -webkit-overflow-scrolling: touch;
+}
+
+/* ============================================ */
+/* LOADING STATES (Ultra-light)                */
+/* ============================================ */
+
+.perf-spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid hsl(var(--primary) / 0.3);
+  border-top-color: hsl(var(--primary));
+  border-radius: 50%;
+  animation: perf-spin 0.8s linear infinite;
+}
+
+.perf-tier-critical .perf-spinner,
+.perf-tier-low .perf-spinner {
+  /* Spinner estático em low-end */
+  animation: none;
+  border-width: 3px;
+}
+
+@keyframes perf-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ============================================ */
+/* SKELETON LOADERS                            */
+/* ============================================ */
+
+.perf-skeleton {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted)) 25%,
+    hsl(var(--muted-foreground) / 0.15) 50%,
+    hsl(var(--muted)) 75%
+  );
+  background-size: 200% 100%;
+  animation: perf-skeleton-wave 1.5s ease-in-out infinite;
+  border-radius: 4px;
+}
+
+@keyframes perf-skeleton-wave {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.perf-tier-critical .perf-skeleton,
+.perf-tier-low .perf-skeleton {
+  animation: none;
+  background: hsl(var(--muted));
+}
+
+/* ============================================ */
+/* BUTTON STATES (Optimized)                   */
+/* ============================================ */
+
+.perf-tier-critical button:active,
+.perf-tier-low button:active {
+  /* Feedback visual imediato sem animação */
+  opacity: 0.7;
+  transform: none;
+}
+
+.perf-tier-medium button:active {
+  transform: scale(0.98);
+}
+
+/* ============================================ */
+/* FOCUS STATES (A11y compliant)               */
+/* ============================================ */
+
+.perf-tier-critical *:focus-visible,
+.perf-tier-low *:focus-visible {
+  /* Focus simples mas visível */
+  outline: 2px solid hsl(var(--primary));
+  outline-offset: 2px;
+  box-shadow: none;
+}
+
+/* ============================================ */
+/* PRINT OPTIMIZATION                          */
+/* ============================================ */
+
+@media print {
+  .perf-ambient-only,
+  .perf-particles,
+  .perf-spinner,
+  [data-perf="ambient"],
+  [data-perf="particles"] {
+    display: none !important;
+  }
+  
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* ============================================ */
+/* DATA SAVER MODE                             */
+/* ============================================ */
+
+@media (prefers-reduced-data: reduce) {
+  .perf-ambient-only,
+  .perf-particles,
+  [data-perf="ambient"],
+  [data-perf="video-autoplay"] {
+    display: none !important;
+  }
+  
+  img {
+    image-rendering: optimizeSpeed;
+  }
+}
