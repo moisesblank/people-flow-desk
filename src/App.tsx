@@ -121,7 +121,7 @@ const AlunoMapasMentais = lazy(() => import("./pages/aluno/AlunoPlaceholders").t
 const AlunoRedacao = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoRedacao })));
 const AlunoDesempenho = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoDesempenho })));
 const AlunoConquistas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoConquistas })));
-const AlunoTutoria = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoTutoria })));
+const TutoriaIA = lazy(() => import("./pages/aluno/TutoriaIA"));
 const AlunoForum = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoForum })));
 const AlunoLives = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoLives })));
 const AlunoDuvidas = lazy(() => import("./pages/aluno/AlunoPlaceholders").then(m => ({ default: m.AlunoDuvidas })));
@@ -343,7 +343,7 @@ const AppContent = memo(() => {
           <Route path="/alunos/desempenho" element={<ProtectedPage><AlunoDesempenho /></ProtectedPage>} />
           <Route path="/alunos/ranking" element={<ProtectedPage><AlunoRanking /></ProtectedPage>} />
           <Route path="/alunos/conquistas" element={<ProtectedPage><AlunoConquistas /></ProtectedPage>} />
-          <Route path="/alunos/tutoria" element={<ProtectedPage><AlunoTutoria /></ProtectedPage>} />
+          <Route path="/alunos/tutoria" element={<ProtectedPage><TutoriaIA /></ProtectedPage>} />
           <Route path="/alunos/forum" element={<ProtectedPage><AlunoForum /></ProtectedPage>} />
           <Route path="/alunos/lives" element={<ProtectedPage><AlunoLives /></ProtectedPage>} />
           <Route path="/alunos/duvidas" element={<ProtectedPage><AlunoDuvidas /></ProtectedPage>} />

@@ -109,6 +109,20 @@ export default {
           "4": "hsl(var(--chart-4))",
           "5": "hsl(var(--chart-5))",
         },
+        holo: {
+          cyan: "hsl(var(--holo-cyan))",
+          purple: "hsl(var(--holo-purple))",
+          pink: "hsl(var(--holo-pink))",
+          blue: "hsl(var(--holo-blue))",
+          green: "hsl(var(--holo-green))",
+        },
+        ai: {
+          glow: "hsl(var(--ai-glow))",
+          accent: "hsl(var(--ai-accent))",
+          surface: "hsl(var(--ai-surface))",
+          "surface-hover": "hsl(var(--ai-surface-hover))",
+          border: "hsl(var(--ai-border))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",

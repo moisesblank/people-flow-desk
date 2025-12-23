@@ -103,6 +103,26 @@
     /* God Mode */
     --god-mode-purple: 280 80% 60%;
     --god-mode-pink: 328 100% 60%;
+    
+    /* ============================================
+       FUTURISTIC 2300 - Holographic Tokens
+       ============================================ */
+    --holo-cyan: 185 100% 50%;
+    --holo-purple: 280 100% 60%;
+    --holo-pink: 320 100% 60%;
+    --holo-blue: 210 100% 55%;
+    --holo-green: 160 100% 45%;
+    
+    /* AI Tutor specific */
+    --ai-glow: 185 100% 50%;
+    --ai-accent: 280 90% 60%;
+    --ai-surface: 220 40% 8%;
+    --ai-surface-hover: 220 40% 12%;
+    --ai-border: 220 40% 20%;
+    
+    /* Holographic gradients */
+    --gradient-holo: linear-gradient(135deg, hsl(185 100% 50% / 0.1), hsl(280 100% 60% / 0.1), hsl(320 100% 60% / 0.1));
+    --gradient-holo-intense: linear-gradient(135deg, hsl(185 100% 50% / 0.3), hsl(280 100% 60% / 0.3));
   }
 
   .dark {
