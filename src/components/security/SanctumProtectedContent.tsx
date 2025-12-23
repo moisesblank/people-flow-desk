@@ -1,107 +1,285 @@
 // ============================================
-// 🛡️ Ω3: SANCTUM PROTECTED CONTENT WRAPPER v2.0
-// PROTEÇÃO VISUAL + ANTI-CÓPIA + BLUR GRADUAL
+// 🌌🔥 SANCTUM PROTECTED CONTENT OMEGA — FORTALEZA ABSOLUTA 🔥🌌
+// ANO 2300 — PROTEÇÃO NÍVEL NASA PARA CONTEÚDO PREMIUM
+// ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+// ============================================
+//
+// 📍 MAPA DE URLs DEFINITIVO:
+//   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
+//   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
+//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+//   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+//
 // ============================================
 
-import React, { memo, useEffect, ReactNode } from 'react';
-import { cn } from '@/lib/utils';
-import { AlertTriangle, Lock, ShieldAlert } from 'lucide-react';
+import React, { useEffect, memo, useRef, useState, ReactNode } from "react";
+import { useSanctumCore } from "@/hooks/useSanctumCore";
+import { SanctumWatermark } from "./SanctumWatermark";
+import { cn } from "@/lib/utils";
+import { Loader2, Shield, Lock, AlertTriangle, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
 
 // ============================================
-// TIPOS
+// TIPOS E INTERFACES
 // ============================================
+type ResourceType = "pdf" | "web_text" | "image" | "video" | "ebook" | "worksheet";
+
+interface ProtectionConfig {
+  watermark: boolean;
+  blockCopy: boolean;
+  blockPrint: boolean;
+  blockDevTools: boolean;
+  blockDrag: boolean;
+  blockSelection: boolean;
+  blockContextMenu: boolean;
+  blurOnInactive: boolean;
+  showLoadingState: boolean;
+  showSecurityBadge: boolean;
+}
 
 interface SanctumProtectedContentProps {
-  children: ReactNode;
+  resourceId?: string;
+  resourceType?: ResourceType;
+  children: React.ReactNode;
+  config?: Partial<ProtectionConfig>;
   className?: string;
-  /** Props legadas para compatibilidade */
+  onAccessGranted?: () => void;
+  onAccessDenied?: (reason: string) => void;
+  fallback?: React.ReactNode;
+  loading?: boolean;
+  // Props legadas para compatibilidade
   disableRightClick?: boolean;
   disableSelection?: boolean;
   disableCopy?: boolean;
-  /** Desabilitar proteção (para owner/admin) */
   disabled?: boolean;
-  /** Mostrar indicador de ameaça */
   showThreatIndicator?: boolean;
-  /** Score de ameaça externo (opcional) */
   threatScore?: number;
-  /** Se deve aplicar blur */
   shouldBlur?: boolean;
-  /** Se pode acessar */
   canAccess?: boolean;
-  /** Tempo restante de penalidade */
   remainingPenalty?: number;
 }
 
 // ============================================
+// CONFIGURAÇÃO PADRÃO
+// ============================================
+const DEFAULT_CONFIG: ProtectionConfig = {
+  watermark: true,
+  blockCopy: true,
+  blockPrint: true,
+  blockDevTools: true,
+  blockDrag: true,
+  blockSelection: true,
+  blockContextMenu: true,
+  blurOnInactive: true,
+  showLoadingState: true,
+  showSecurityBadge: false,
+};
+
+// ============================================
+// ESTILOS DE PROTEÇÃO CSS-IN-JS
+// ============================================
+const protectionStyles: React.CSSProperties = {
+  userSelect: "none",
+  WebkitUserSelect: "none",
+  msUserSelect: "none",
+  MozUserSelect: "none" as React.CSSProperties["MozUserSelect"],
+  WebkitTouchCallout: "none",
+  WebkitTapHighlightColor: "transparent",
+};
+
+// ============================================
 // COMPONENTE PRINCIPAL
 // ============================================
-
-export const SanctumProtectedContent = memo(function SanctumProtectedContent({
+export const SanctumProtectedContent = memo(({
+  resourceId = "default",
+  resourceType = "web_text",
   children,
+  config: userConfig,
   className,
+  onAccessGranted,
+  onAccessDenied,
+  fallback,
+  loading = false,
+  // Props legadas
   disableRightClick = true,
   disableSelection = true,
   disableCopy = true,
   disabled = false,
   showThreatIndicator = false,
-  threatScore = 0,
-  shouldBlur = false,
-  canAccess = true,
+  threatScore: externalThreatScore,
+  shouldBlur: externalShouldBlur,
+  canAccess: externalCanAccess = true,
   remainingPenalty,
-}: SanctumProtectedContentProps) {
-  
-  // Aplicar estilos anti-cópia globais
-  useEffect(() => {
-    if (disabled) return;
+}: SanctumProtectedContentProps) => {
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [isBlurred, setIsBlurred] = useState(false);
+  const [isReady, setIsReady] = useState(false);
+  const [accessError, setAccessError] = useState<string | null>(null);
 
-    const styleId = 'sanctum-protection-styles';
-    let style = document.getElementById(styleId) as HTMLStyleElement | null;
-    
-    if (!style) {
-      style = document.createElement('style');
-      style.id = styleId;
-      style.textContent = `
-        .sanctum-protected {
-          -webkit-user-select: none !important;
-          -moz-user-select: none !important;
-          -ms-user-select: none !important;
-          user-select: none !important;
-          -webkit-touch-callout: none !important;
-        }
-        .sanctum-protected img {
-          pointer-events: none !important;
-          -webkit-user-drag: none !important;
-        }
-        .sanctum-protected ::selection {
-          background: transparent !important;
-        }
-        .sanctum-blur-overlay {
-          backdrop-filter: blur(20px) !important;
-          -webkit-backdrop-filter: blur(20px) !important;
-        }
-        @media print {
-          .sanctum-protected {
-            display: none !important;
-          }
-          body::after {
-            content: "Impressão não permitida" !important;
-            display: block !important;
-            font-size: 48px !important;
-            text-align: center !important;
-            padding: 100px !important;
-          }
-        }
-      `;
-      document.head.appendChild(style);
+  // Mesclar configurações
+  const config = { ...DEFAULT_CONFIG, ...userConfig };
+
+  // Hook de segurança
+  const {
+    registerProtectedSurface,
+    isOwner,
+    isLocked,
+    riskScore,
+    sessionId,
+  } = useSanctumCore({ resourceId, resourceType });
+
+  // Usar valor externo ou interno
+  const effectiveThreatScore = externalThreatScore ?? riskScore;
+  const effectiveShouldBlur = externalShouldBlur ?? isBlurred;
+  const effectiveCanAccess = externalCanAccess && !isLocked;
+
+  // ============================================
+  // VERIFICAÇÃO DE ACESSO
+  // ============================================
+  useEffect(() => {
+    if (disabled) {
+      setIsReady(true);
+      return;
     }
 
-    return () => {
-      // Não remover estilo no cleanup para evitar flickering
-    };
-  }, [disabled]);
+    const checkAccess = async () => {
+      try {
+        // Se está bloqueado, negar acesso
+        if (isLocked) {
+          setAccessError("Sua conta foi temporariamente bloqueada.");
+          onAccessDenied?.("locked");
+          return;
+        }
 
-  // Se não pode acessar, mostrar tela de bloqueio
-  if (!canAccess) {
+        // Se risco muito alto, alertar
+        if (riskScore > 200 && !isOwner) {
+          toast.warning("Atividade suspeita detectada. Por favor, não tente copiar o conteúdo.");
+        }
+
+        // Registrar acesso
+        registerProtectedSurface();
+
+        // Acesso concedido
+        setIsReady(true);
+        onAccessGranted?.();
+      } catch {
+        setAccessError("Erro ao verificar acesso.");
+        onAccessDenied?.("error");
+      }
+    };
+
+    checkAccess();
+  }, [disabled, isLocked, isOwner, riskScore, registerProtectedSurface, onAccessGranted, onAccessDenied]);
+
+  // ============================================
+  // BLUR QUANDO INATIVO
+  // ============================================
+  useEffect(() => {
+    if (!config.blurOnInactive || isOwner || disabled) return;
+
+    const handleVisibilityChange = () => {
+      if (document.hidden) {
+        setIsBlurred(true);
+      } else {
+        setTimeout(() => setIsBlurred(false), 500);
+      }
+    };
+
+    const handleBlur = () => {
+      setIsBlurred(true);
+    };
+
+    const handleFocus = () => {
+      setTimeout(() => setIsBlurred(false), 300);
+    };
+
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+    window.addEventListener("blur", handleBlur);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      window.removeEventListener("blur", handleBlur);
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [config.blurOnInactive, isOwner, disabled]);
+
+  // ============================================
+  // BLOQUEIO DE IMPRESSÃO
+  // ============================================
+  useEffect(() => {
+    if (!config.blockPrint || isOwner || disabled) return;
+
+    const handleBeforePrint = () => {
+      if (containerRef.current) {
+        containerRef.current.style.visibility = "hidden";
+      }
+    };
+
+    const handleAfterPrint = () => {
+      if (containerRef.current) {
+        containerRef.current.style.visibility = "visible";
+      }
+    };
+
+    window.addEventListener("beforeprint", handleBeforePrint);
+    window.addEventListener("afterprint", handleAfterPrint);
+
+    return () => {
+      window.removeEventListener("beforeprint", handleBeforePrint);
+      window.removeEventListener("afterprint", handleAfterPrint);
+    };
+  }, [config.blockPrint, isOwner, disabled]);
+
+  // ============================================
+  // HANDLER DE PRINT MEDIA
+  // ============================================
+  useEffect(() => {
+    if (!config.blockPrint || isOwner || disabled) return;
+
+    const style = document.createElement("style");
+    style.id = "sanctum-print-block";
+    style.textContent = `
+      @media print {
+        [data-sanctum-protected] {
+          display: none !important;
+          visibility: hidden !important;
+        }
+        
+        body::after {
+          content: "⚠️ IMPRESSÃO BLOQUEADA ⚠️\\A\\AEste conteúdo é protegido por direitos autorais.\\A\\AProf. Moisés Medeiros\\Amoisesmedeiros.com.br";
+          display: block !important;
+          position: fixed !important;
+          top: 50% !important;
+          left: 50% !important;
+          transform: translate(-50%, -50%) !important;
+          font-size: 24px !important;
+          text-align: center !important;
+          padding: 40px !important;
+          color: #dc2626 !important;
+          font-weight: bold !important;
+          white-space: pre-wrap !important;
+          z-index: 999999999 !important;
+          background: white !important;
+          border: 4px solid #dc2626 !important;
+          border-radius: 16px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+
+    return () => {
+      const existing = document.getElementById("sanctum-print-block");
+      if (existing) {
+        existing.remove();
+      }
+    };
+  }, [config.blockPrint, isOwner, disabled]);
+
+  // ============================================
+  // RENDER DE ERRO / BLOQUEIO
+  // ============================================
+  if (accessError || !effectiveCanAccess) {
     return (
       <div className={cn(
         "flex flex-col items-center justify-center min-h-[400px] p-8 bg-destructive/5 border border-destructive/20 rounded-lg",
@@ -112,13 +290,28 @@ export const SanctumProtectedContent = memo(function SanctumProtectedContent({
           Acesso Temporariamente Bloqueado
         </h2>
         <p className="text-muted-foreground text-center max-w-md mb-4">
-          Atividade suspeita foi detectada. Por segurança, o acesso foi temporariamente restrito.
+          {accessError || "Atividade suspeita foi detectada. Por segurança, o acesso foi temporariamente restrito."}
         </p>
         {remainingPenalty && (
           <p className="text-sm text-muted-foreground">
             Tempo restante: <strong>{remainingPenalty} minutos</strong>
           </p>
         )}
+        {fallback}
+      </div>
+    );
+  }
+
+  // ============================================
+  // RENDER DE LOADING
+  // ============================================
+  if ((loading || !isReady) && config.showLoadingState && !disabled) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[200px] p-8">
+        <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+        <p className="text-sm text-muted-foreground">
+          Carregando conteúdo protegido...
+        </p>
       </div>
     );
   }
@@ -129,42 +322,55 @@ export const SanctumProtectedContent = memo(function SanctumProtectedContent({
   }
 
   // Calcular nível para indicador
-  const threatLevel = threatScore >= 80 ? 'L4_block' 
-    : threatScore >= 50 ? 'L3_logout'
-    : threatScore >= 30 ? 'L2_blur'
-    : threatScore >= 10 ? 'L1_warning'
+  const threatLevel = effectiveThreatScore >= 80 ? 'L4_block' 
+    : effectiveThreatScore >= 50 ? 'L3_logout'
+    : effectiveThreatScore >= 30 ? 'L2_blur'
+    : effectiveThreatScore >= 10 ? 'L1_warning'
     : 'none';
 
+  // ============================================
+  // RENDER PRINCIPAL
+  // ============================================
   return (
-    <div 
+    <div
+      ref={containerRef}
       className={cn(
         "sanctum-protected relative",
         disableSelection && "select-none",
         className
       )}
-      onContextMenu={(e) => disableRightClick && e.preventDefault()}
-      onCopy={(e) => disableCopy && e.preventDefault()}
-      onCut={(e) => disableCopy && e.preventDefault()}
-      onDragStart={(e) => e.preventDefault()}
+      style={!isOwner ? protectionStyles : undefined}
+      data-sanctum-protected="true"
+      data-sanctum-session={sessionId}
+      data-sanctum-resource={resourceId}
+      onContextMenu={(e) => {
+        if ((config.blockContextMenu || disableRightClick) && !isOwner) {
+          e.preventDefault();
+        }
+      }}
+      onDragStart={(e) => {
+        if (config.blockDrag && !isOwner) {
+          e.preventDefault();
+        }
+      }}
+      onCopy={(e) => {
+        if ((config.blockCopy || disableCopy) && !isOwner) {
+          e.preventDefault();
+        }
+      }}
+      onCut={(e) => {
+        if ((config.blockCopy || disableCopy) && !isOwner) {
+          e.preventDefault();
+        }
+      }}
     >
-      {/* Conteúdo */}
-      <div className={cn(
-        "transition-all duration-300",
-        shouldBlur && "blur-lg pointer-events-none"
-      )}>
-        {children}
-      </div>
-
-      {/* Overlay de blur */}
-      {shouldBlur && (
-        <div className="absolute inset-0 sanctum-blur-overlay flex flex-col items-center justify-center z-50 bg-background/80">
-          <ShieldAlert className="w-12 h-12 text-amber-500 mb-4 animate-pulse" />
-          <p className="text-lg font-semibold text-foreground mb-2">
-            Conteúdo Temporariamente Oculto
-          </p>
-          <p className="text-sm text-muted-foreground text-center max-w-md">
-            Comportamento incomum detectado. Aguarde alguns segundos.
-          </p>
+      {/* Badge de segurança */}
+      {config.showSecurityBadge && (
+        <div className="absolute top-2 right-2 z-50">
+          <div className="flex items-center gap-1 px-2 py-1 bg-primary/10 rounded-full text-xs text-primary">
+            <Shield className="w-3 h-3" />
+            Protegido
+          </div>
         </div>
       )}
 
@@ -178,103 +384,62 @@ export const SanctumProtectedContent = memo(function SanctumProtectedContent({
           threatLevel === 'L4_block' && "bg-red-700/20 text-red-700",
         )}>
           <AlertTriangle className="w-3 h-3" />
-          <span>{threatScore}</span>
+          <span>{effectiveThreatScore}</span>
         </div>
+      )}
+
+      {/* Watermark dinâmica (não aparece para owner) */}
+      {config.watermark && !isOwner && (
+        <SanctumWatermark sessionId={sessionId} />
+      )}
+
+      {/* Overlay de blur quando inativo */}
+      {effectiveShouldBlur && !isOwner && (
+        <div 
+          className="absolute inset-0 z-40 backdrop-blur-xl bg-background/80 flex items-center justify-center"
+          style={{ pointerEvents: "all" }}
+        >
+          <div className="text-center p-6">
+            <ShieldAlert className="w-16 h-16 text-amber-500 mx-auto mb-4 animate-pulse" />
+            <p className="text-lg font-semibold text-foreground mb-2">
+              Conteúdo Temporariamente Oculto
+            </p>
+            <p className="text-sm text-muted-foreground mt-2">
+              Comportamento incomum detectado. Aguarde alguns segundos.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Conteúdo protegido */}
+      <div className={cn(
+        "transition-all duration-300",
+        effectiveShouldBlur && !isOwner && "blur-lg pointer-events-none"
+      )}>
+        {children}
+      </div>
+
+      {/* Anti-screenshot overlay (visual noise muito sutil) */}
+      {!isOwner && (
+        <div
+          className="absolute inset-0 pointer-events-none z-30"
+          style={{
+            background: `repeating-linear-gradient(
+              0deg,
+              transparent,
+              transparent 2px,
+              rgba(0,0,0,0.001) 2px,
+              rgba(0,0,0,0.001) 4px
+            )`,
+            mixBlendMode: "overlay",
+          }}
+          aria-hidden="true"
+        />
       )}
     </div>
   );
 });
 
 SanctumProtectedContent.displayName = "SanctumProtectedContent";
-
-// ============================================
-// WATERMARK COMPONENT
-// ============================================
-
-interface SanctumWatermarkProps {
-  text: string;
-  cpf?: string;
-  email?: string;
-  timestamp?: string;
-  sessionId?: string;
-  isOwner?: boolean;
-  className?: string;
-}
-
-export const SanctumWatermark = memo(function SanctumWatermark({
-  text,
-  cpf,
-  email,
-  timestamp,
-  sessionId,
-  isOwner = false,
-  className,
-}: SanctumWatermarkProps) {
-  // Owner não vê watermark
-  if (isOwner || !text) return null;
-
-  // Texto completo da watermark (mascarado por segurança)
-  const fullText = [
-    cpf && `CPF: ${cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.**$4')}`,
-    email && email.replace(/(.{2})(.*)(@.*)/, '$1***$3'),
-    timestamp,
-    sessionId && `#${sessionId.slice(0, 8)}`,
-  ].filter(Boolean).join(' • ') || text;
-
-  return (
-    <div 
-      className={cn(
-        "absolute inset-0 pointer-events-none select-none z-30 overflow-hidden",
-        className
-      )}
-      style={{ 
-        userSelect: 'none',
-        WebkitUserSelect: 'none',
-        MozUserSelect: 'none',
-      }}
-      aria-hidden="true"
-    >
-      {/* Grade diagonal de watermarks */}
-      <div className="absolute inset-0 grid grid-cols-3 gap-16 p-8 opacity-[0.04]">
-        {Array.from({ length: 15 }).map((_, i) => (
-          <div
-            key={i}
-            className="text-foreground font-mono text-[10px] whitespace-nowrap transform rotate-[-35deg] select-none"
-            style={{ letterSpacing: '0.05em' }}
-          >
-            {fullText}
-          </div>
-        ))}
-      </div>
-      
-      {/* Watermark central grande */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-[0.03]">
-        <div 
-          className="text-foreground font-mono text-xl whitespace-nowrap transform rotate-[-35deg] select-none tracking-wider"
-        >
-          {fullText}
-        </div>
-      </div>
-
-      {/* Watermark invisível (forense) */}
-      <div 
-        className="absolute opacity-0 text-[1px]"
-        style={{ 
-          left: '-9999px',
-          color: 'rgba(0,0,0,0.001)',
-        }}
-        data-watermark={btoa(JSON.stringify({ text, cpf, email, timestamp, sessionId }))}
-      >
-        {fullText}
-      </div>
-    </div>
-  );
-});
-
-SanctumWatermark.displayName = "SanctumWatermark";
-
-// ============================================
-// EXPORTS
-// ============================================
 
 export default SanctumProtectedContent;
