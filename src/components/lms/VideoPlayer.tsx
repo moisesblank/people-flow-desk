@@ -193,9 +193,12 @@ export function VideoPlayer({
           ref={videoRef}
           src={src}
           className="w-full aspect-video"
+          preload="none"
+          poster="/placeholder.svg"
           onTimeUpdate={handleTimeUpdate}
           onLoadedMetadata={handleLoadedMetadata}
           onClick={togglePlay}
+          aria-label={`Vídeo: ${title}`}
         />
 
         {/* Play Overlay */}
@@ -210,7 +213,9 @@ export function VideoPlayer({
             <motion.button
               {...animationProps}
               onClick={togglePlay}
-              className="p-5 rounded-full bg-primary/90 text-primary-foreground"
+              className="p-5 rounded-full bg-primary/90 text-primary-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
+              aria-label={`Reproduzir vídeo: ${title}`}
+              tabIndex={0}
             >
               <Play className="h-10 w-10" />
             </motion.button>
