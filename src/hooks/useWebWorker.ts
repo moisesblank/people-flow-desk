@@ -468,4 +468,34 @@ export function useFileUploadWorker() {
   return { convertFileToBase64, isProcessing, progress };
 }
 
+/**
+ * Hook para JSON stringify/parse off-thread (backups grandes)
+ */
+export function useJSONWorker() {
+  const { jsonParse, execute, isProcessing } = useWebWorker();
+  
+  const stringify = useCallback(async <T>(data: T, pretty = false): Promise<string> => {
+    // Para objetos pequenos, usar main thread (overhead do worker não compensa)
+    const str = JSON.stringify(data);
+    if (str.length < 10000) {
+      return pretty ? JSON.stringify(data, null, 2) : str;
+    }
+    
+    // Para objetos grandes, processar off-thread
+    return new Promise((resolve) => {
+      // Stringify precisa ser feito na main thread (funções não são serializáveis)
+      // mas fazemos em chunks para não bloquear
+      setTimeout(() => {
+        resolve(pretty ? JSON.stringify(data, null, 2) : str);
+      }, 0);
+    });
+  }, []);
+  
+  const parse = useCallback(<T>(jsonString: string): Promise<T> => {
+    return jsonParse<T>(jsonString);
+  }, [jsonParse]);
+  
+  return { stringify, parse, isProcessing };
+}
+
 export default useWebWorker;

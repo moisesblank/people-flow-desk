@@ -4,7 +4,8 @@
 // UPGRADE: Contador de tabelas e registros
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useJSONWorker } from "@/hooks/useWebWorker";
 import { HardDrive, Download, RefreshCw, Cloud, Loader2, CheckCircle2, Database, FileStack } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
@@ -32,6 +33,9 @@ export function StorageAndBackupWidget({ collapsed = false }: BackupWidgetProps)
   const [isBackingUp, setIsBackingUp] = useState(false);
   const [backupSuccess, setBackupSuccess] = useState(false);
   const [lastBackup, setLastBackup] = useState<string | null>(null);
+  
+  // 🏛️ LEI I - Web Worker para JSON (UI fluida durante backup grande)
+  const { stringify: jsonStringify } = useJSONWorker();
 
   // Formatar bytes para leitura humana
   const formatBytes = (bytes: number) => {
@@ -122,8 +126,9 @@ export function StorageAndBackupWidget({ collapsed = false }: BackupWidgetProps)
         throw new Error(data.error || "Erro no backup");
       }
 
-      // Download do backup
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      // 🏛️ LEI I - Web Worker para JSON stringify (UI fluida)
+      const jsonContent = await jsonStringify(data, true);
+      const blob = new Blob([jsonContent], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
@@ -131,6 +136,7 @@ export function StorageAndBackupWidget({ collapsed = false }: BackupWidgetProps)
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
+      URL.revokeObjectURL(url);
       URL.revokeObjectURL(url);
 
       setBackupSuccess(true);

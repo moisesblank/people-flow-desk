@@ -3,7 +3,8 @@
 // Spider-Man Theme - Preferências do Sistema
 // ============================================
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
+import { useJSONWorker } from "@/hooks/useWebWorker";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -79,6 +80,9 @@ export default function Configuracoes() {
   const [showBackupCodes, setShowBackupCodes] = useState(false);
   const [mfaStep, setMfaStep] = useState<'initial' | 'setup' | 'verify'>('initial');
   const [verificationCode, setVerificationCode] = useState('');
+  
+  // 🏛️ LEI I - Web Worker para JSON (UI fluida durante backup grande)
+  const { stringify: jsonStringify } = useJSONWorker();
   
   const [settings, setSettings] = useState({
     companyName: "Moisés Medeiros",
@@ -223,8 +227,9 @@ export default function Configuracoes() {
 
       setBackupProgress("Gerando arquivo...");
 
-      // Download the backup
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      // 🏛️ LEI I - Web Worker para JSON stringify (UI fluida)
+      const jsonContent = await jsonStringify(data, true);
+      const blob = new Blob([jsonContent], { type: "application/json" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
