@@ -72,7 +72,7 @@ const AppHeader = memo(({
   }, []);
 
   return (
-    <header className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40">
+    <header className="h-14 flex items-center gap-4 px-4 border-b border-border bg-background/80 backdrop-blur-sm sticky top-0 z-40 header-2300">
       <SidebarTrigger className="-ml-1" />
       
       <Button
@@ -102,6 +102,7 @@ const AppHeader = memo(({
             size="icon"
             onClick={handleClearCache}
             disabled={isCacheClearing}
+            className="header-btn-glow micro-hover"
           >
             <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
           </Button>
@@ -111,7 +112,7 @@ const AppHeader = memo(({
       
       <Tooltip>
         <TooltipTrigger asChild>
-          <Button variant="ghost" size="icon" onClick={() => setIsTeamChatOpen(true)}>
+          <Button variant="ghost" size="icon" onClick={() => setIsTeamChatOpen(true)} className="header-btn-glow micro-hover">
             <MessageSquare className="h-4 w-4" />
           </Button>
         </TooltipTrigger>

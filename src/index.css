@@ -490,6 +490,98 @@
   .focus-ring-holo:focus-visible {
     @apply outline-none ring-2 ring-holo-cyan/50 ring-offset-2 ring-offset-background;
   }
+
+  /* ============================================
+     2300 UPGRADE - Header & Cards Premium
+     GPU-only: transform, opacity (LEI I Art.19-21)
+     ============================================ */
+  
+  /* Header 2300 - Glow sutil */
+  .header-2300 {
+    @apply relative;
+  }
+  .header-2300::after {
+    content: '';
+    @apply absolute inset-x-0 -bottom-px h-px;
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      hsl(var(--primary) / 0.4) 25%, 
+      hsl(var(--holo-cyan) / 0.3) 50%, 
+      hsl(var(--primary) / 0.4) 75%, 
+      transparent 100%
+    );
+    opacity: 0.6;
+  }
+  
+  /* Card 2300 - Borda viva + Elevação GPU */
+  .card-2300 {
+    @apply relative transition-transform duration-200 ease-out;
+    will-change: transform;
+  }
+  .card-2300:hover {
+    transform: translateY(-2px);
+  }
+  .card-2300::before {
+    content: '';
+    @apply absolute -inset-px rounded-xl opacity-0 transition-opacity duration-300 pointer-events-none;
+    background: linear-gradient(135deg, 
+      hsl(var(--primary) / 0.3) 0%, 
+      hsl(var(--holo-cyan) / 0.2) 50%, 
+      hsl(var(--primary) / 0.3) 100%
+    );
+    background-size: 200% 200%;
+    z-index: -1;
+  }
+  .card-2300:hover::before {
+    opacity: 1;
+    animation: border-shimmer 4s ease infinite;
+  }
+
+  /* Microfeedback hover (GPU-only) */
+  .micro-hover {
+    @apply transition-all duration-150 ease-out;
+    will-change: transform, opacity;
+  }
+  .micro-hover:hover {
+    transform: translateY(-1px);
+    opacity: 0.95;
+  }
+  .micro-hover:active {
+    transform: translateY(0) scale(0.98);
+  }
+
+  /* Header button glow on hover */
+  .header-btn-glow {
+    @apply relative transition-all duration-200;
+  }
+  .header-btn-glow::after {
+    content: '';
+    @apply absolute inset-0 rounded-lg opacity-0 transition-opacity duration-200 pointer-events-none;
+    background: radial-gradient(circle at center, hsl(var(--primary) / 0.15) 0%, transparent 70%);
+  }
+  .header-btn-glow:hover::after {
+    opacity: 1;
+  }
+
+  @keyframes border-shimmer {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  /* Reduced Motion - Desativa tudo */
+  @media (prefers-reduced-motion: reduce) {
+    .card-2300:hover,
+    .micro-hover:hover,
+    .header-btn-glow:hover::after {
+      transform: none;
+      animation: none;
+    }
+    .card-2300::before,
+    .header-2300::after {
+      animation: none;
+    }
+  }
   /* ============================================
      STAT CARDS - SPIDER-MAN THEME
      ============================================ */
