@@ -1,12 +1,13 @@
 // ============================================
-// UPGRADE v10 - FASE 4: TASKS COM KANBAN
-// Hook para gestão de tarefas avançada
+// UPGRADE v11 - FASE 4: TASKS COM KANBAN
+// 🌌 TESE 3: Cache localStorage = 0ms segunda visita
 // ============================================
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
+import { useSubspaceQuery } from "./useSubspaceCommunication";
 
 export interface Task {
   id: string;
@@ -41,16 +42,16 @@ export const TASK_PRIORITIES: { value: TaskPriority; label: string; color: strin
   { value: "urgent", label: "Urgente", color: "text-destructive" },
 ];
 
-// Hook para buscar tarefas
+// Hook para buscar tarefas - Com Cache localStorage
 export function useTasks(filters?: {
   status?: TaskStatus;
   priority?: TaskPriority;
 }) {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ["tasks", user?.id, filters],
-    queryFn: async () => {
+  return useSubspaceQuery<Task[]>(
+    ["tasks", user?.id || '', filters?.status || '', filters?.priority || ''],
+    async () => {
       if (!user?.id) return [];
 
       let query = supabase
@@ -70,8 +71,12 @@ export function useTasks(filters?: {
       if (error) throw error;
       return data as Task[];
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user', // 5 min staleTime, persiste 1h
+      persistKey: `tasks_${user?.id}_${filters?.status || 'all'}_${filters?.priority || 'all'}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 // Hook para tarefas agrupadas por status (Kanban)

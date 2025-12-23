@@ -1,7 +1,13 @@
+// ============================================
+// 🌌 LMS v5.0 - TESE 3: Cache localStorage
+// Cursos instantâneos na segunda visita
+// ============================================
+
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { toast } from 'sonner';
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 interface Course {
   id: string;
@@ -69,13 +75,13 @@ interface LessonProgress {
 }
 
 // ============================================
-// COURSES HOOKS
+// COURSES HOOKS - Com Cache localStorage
 // ============================================
 
 export function useCourses(options?: { published?: boolean }) {
-  return useQuery({
-    queryKey: ['courses', options],
-    queryFn: async () => {
+  return useSubspaceQuery<Course[]>(
+    ['courses', options?.published?.toString() || 'all'],
+    async () => {
       let query = supabase
         .from('courses')
         .select(`
@@ -92,13 +98,17 @@ export function useCourses(options?: { published?: boolean }) {
       if (error) throw error;
       return data as Course[];
     },
-  });
+    {
+      profile: 'semiStatic', // 30 min staleTime, persiste 24h no localStorage
+      persistKey: `courses_${options?.published ?? 'all'}`,
+    }
+  );
 }
 
 export function useCourse(courseId: string | undefined) {
-  return useQuery({
-    queryKey: ['course', courseId],
-    queryFn: async () => {
+  return useSubspaceQuery<Course | null>(
+    ['course', courseId || ''],
+    async () => {
       if (!courseId) return null;
 
       const { data, error } = await supabase
@@ -128,20 +138,24 @@ export function useCourse(courseId: string | undefined) {
 
       return data as Course | null;
     },
-    enabled: !!courseId,
-  });
+    {
+      profile: 'immutable', // Cursos raramente mudam, cache 7 dias
+      persistKey: `course_detail_${courseId}`,
+      enabled: !!courseId,
+    }
+  );
 }
 
 // ============================================
-// ENROLLMENTS HOOKS
+// ENROLLMENTS HOOKS - Com Cache localStorage
 // ============================================
 
 export function useEnrollments() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['enrollments', user?.id],
-    queryFn: async () => {
+  return useSubspaceQuery<Enrollment[]>(
+    ['enrollments', user?.id || ''],
+    async () => {
       if (!user?.id) return [];
 
       const { data, error } = await supabase
@@ -159,16 +173,20 @@ export function useEnrollments() {
       if (error) throw error;
       return data as Enrollment[];
     },
-    enabled: !!user?.id,
-  });
+    {
+      profile: 'user', // 5 min staleTime, persiste 1h
+      persistKey: `enrollments_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 export function useEnrollment(courseId: string | undefined) {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['enrollment', user?.id, courseId],
-    queryFn: async () => {
+  return useSubspaceQuery<Enrollment | null>(
+    ['enrollment', user?.id || '', courseId || ''],
+    async () => {
       if (!user?.id || !courseId) return null;
 
       const { data, error } = await supabase
@@ -181,8 +199,12 @@ export function useEnrollment(courseId: string | undefined) {
       if (error) throw error;
       return data as Enrollment | null;
     },
-    enabled: !!user?.id && !!courseId,
-  });
+    {
+      profile: 'user',
+      persistKey: `enrollment_${user?.id}_${courseId}`,
+      enabled: !!user?.id && !!courseId,
+    }
+  );
 }
 
 export function useEnroll() {
@@ -219,15 +241,15 @@ export function useEnroll() {
 }
 
 // ============================================
-// LESSON PROGRESS HOOKS
+// LESSON PROGRESS HOOKS - Com Cache localStorage
 // ============================================
 
 export function useLessonProgress(lessonId: string | undefined) {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['lesson-progress', user?.id, lessonId],
-    queryFn: async () => {
+  return useSubspaceQuery<LessonProgress | null>(
+    ['lesson-progress', user?.id || '', lessonId || ''],
+    async () => {
       if (!user?.id || !lessonId) return null;
 
       const { data, error } = await supabase
@@ -240,16 +262,20 @@ export function useLessonProgress(lessonId: string | undefined) {
       if (error) throw error;
       return data as LessonProgress | null;
     },
-    enabled: !!user?.id && !!lessonId,
-  });
+    {
+      profile: 'user',
+      persistKey: `lesson_progress_${user?.id}_${lessonId}`,
+      enabled: !!user?.id && !!lessonId,
+    }
+  );
 }
 
 export function useCourseProgress(courseId: string | undefined) {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['course-progress', user?.id, courseId],
-    queryFn: async () => {
+  return useSubspaceQuery<{ completed: number; total: number; percentage: number }>(
+    ['course-progress', user?.id || '', courseId || ''],
+    async () => {
       if (!user?.id || !courseId) return { completed: 0, total: 0, percentage: 0 };
 
       // Get all lessons for this course
@@ -289,8 +315,12 @@ export function useCourseProgress(courseId: string | undefined) {
 
       return { completed, total, percentage };
     },
-    enabled: !!user?.id && !!courseId,
-  });
+    {
+      profile: 'user',
+      persistKey: `course_progress_${user?.id}_${courseId}`,
+      enabled: !!user?.id && !!courseId,
+    }
+  );
 }
 
 export function useUpdateLessonProgress() {
