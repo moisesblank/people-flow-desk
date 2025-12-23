@@ -503,7 +503,8 @@ export function useGlobalDevToolsBlock() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     // Verificar DevTools periodicamente
-    const devToolsInterval = setInterval(detectDevTools, 1000);
+    // 🏛️ LEI I: Aumentado de 1s para 3s para reduzir CPU usage
+    const devToolsInterval = setInterval(detectDevTools, 3000);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true);

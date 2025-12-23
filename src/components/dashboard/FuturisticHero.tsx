@@ -34,6 +34,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { usePerformanceFlags } from "@/hooks/usePerformanceFlags";
 
 interface FuturisticHeroProps {
   pendingTasks: number;
@@ -141,8 +142,11 @@ function ScanLine() {
   );
 }
 
-// Glowing Orbs Background
-function GlowingOrbs() {
+// Glowing Orbs Background - 🏛️ LEI I: Desligado em lite mode
+function GlowingOrbs({ enabled }: { enabled: boolean }) {
+  // Não renderiza em lite mode (blur-3xl é pesado)
+  if (!enabled) return null;
+  
   return (
     <>
       <motion.div
@@ -376,6 +380,7 @@ export function FuturisticHero({
 }: FuturisticHeroProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const flags = usePerformanceFlags(); // 🏛️ LEI I
   const [currentTime, setCurrentTime] = useState(new Date());
 
   useEffect(() => {
@@ -411,7 +416,7 @@ export function FuturisticHero({
       <CyberParticles />
       <HolographicGrid />
       <ScanLine />
-      <GlowingOrbs />
+      <GlowingOrbs enabled={flags.ui_ambient_fx} />
       <NeuralNetwork />
 
       {/* Content */}

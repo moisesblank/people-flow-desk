@@ -19,6 +19,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { usePerformanceFlags } from "@/hooks/usePerformanceFlags";
 
 // Componentes de IA do Santuário v9.0
 import { FocusTrack } from "./FocusTrack";
@@ -168,8 +169,8 @@ export function BetaStudentDashboard() {
         animate={{ opacity: 1, y: 0 }}
         className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-cyan-600 via-blue-600 to-purple-700 p-6 md:p-8"
       >
-        {/* Partículas decorativas */}
-        <div className="absolute inset-0 overflow-hidden">
+        {/* Partículas decorativas - 🏛️ LEI I: Desligado em lite mode via CSS */}
+        <div className="absolute inset-0 overflow-hidden perf-ambient-only">
           <div className="absolute top-10 left-10 w-32 h-32 bg-white/10 rounded-full blur-3xl animate-pulse" />
           <div className="absolute bottom-10 right-10 w-40 h-40 bg-cyan-400/20 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }} />
           <div className="absolute top-1/2 left-1/2 w-24 h-24 bg-purple-400/10 rounded-full blur-2xl animate-float" />
