@@ -137,7 +137,6 @@ export function StorageAndBackupWidget({ collapsed = false }: BackupWidgetProps)
       a.click();
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
-      URL.revokeObjectURL(url);
 
       setBackupSuccess(true);
       setLastBackup(new Date().toISOString());
