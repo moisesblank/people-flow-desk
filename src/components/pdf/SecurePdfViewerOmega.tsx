@@ -209,91 +209,93 @@ export const SecurePdfViewerOmega = memo(({
 
       // Agendar renovação do manifest antes de expirar
       if (data.expiresAt) {
-        const expiresIn = new Date(data.expiresAt).getTime() - Date.now() - MANIFEST_REFRESH_BUFFER_MS;
-        if (expiresIn > 0) {
-          refreshTimeoutRef.current = setTimeout(() => {
-            fetchManifest();
-          }, expiresIn);
+        const expiresAt = new Date(data.expiresAt).getTime();
+        const now = Date.now();
+        const refreshIn = Math.max(0, expiresAt - now - MANIFEST_REFRESH_BUFFER_MS);
+
+        if (refreshTimeoutRef.current) {
+          clearTimeout(refreshTimeoutRef.current);
         }
+
+        refreshTimeoutRef.current = setTimeout(() => {
+          fetchManifest();
+        }, refreshIn);
       }
-    } catch (error) {
-      console.error("[SecurePdfViewerOmega] Erro ao buscar manifest:", error);
+    } catch (err) {
+      console.error("[SecurePdfViewer] Erro:", err);
       setState("error");
-      setErrorInfo({ code: "SERVER_ERROR", message: String(error) });
+      setErrorInfo({ code: "SERVER_ERROR", message: err instanceof Error ? err.message : "Erro desconhecido" });
       onError?.("SERVER_ERROR");
     }
   }, [assetId, session?.access_token, onLoadComplete, onError]);
 
-  // ============================================
-  // EFFECTS
-  // ============================================
+  // Carregar manifest ao montar
   useEffect(() => {
-    if (assetId && session?.access_token) {
-      fetchManifest();
-    }
-
+    fetchManifest();
     return () => {
       if (refreshTimeoutRef.current) {
         clearTimeout(refreshTimeoutRef.current);
       }
     };
-  }, [assetId, session?.access_token, fetchManifest]);
-
-  // Notificar mudança de página
-  useEffect(() => {
-    onPageChange?.(currentPage + 1);
-  }, [currentPage, onPageChange]);
+  }, [fetchManifest]);
 
   // ============================================
-  // HANDLERS
+  // NAVEGAÇÃO
   // ============================================
-  const handlePrevPage = useCallback(() => {
-    setCurrentPage((p) => Math.max(0, p - 1));
-    setImageLoading(true);
-  }, []);
-
-  const handleNextPage = useCallback(() => {
+  const goToPage = useCallback((page: number) => {
     if (!manifest) return;
-    setCurrentPage((p) => Math.min(manifest.totalPages - 1, p + 1));
+    const newPage = Math.max(0, Math.min(page, manifest.totalPages - 1));
+    setCurrentPage(newPage);
     setImageLoading(true);
-  }, [manifest]);
+    onPageChange?.(newPage + 1);
+  }, [manifest, onPageChange]);
 
+  const nextPage = useCallback(() => {
+    goToPage(currentPage + 1);
+  }, [currentPage, goToPage]);
+
+  const prevPage = useCallback(() => {
+    goToPage(currentPage - 1);
+  }, [currentPage, goToPage]);
+
+  // ============================================
+  // ZOOM
+  // ============================================
   const handleZoomIn = useCallback(() => {
-    setZoom((z) => Math.min(maxZoom, z + zoomStep));
-  }, [maxZoom, zoomStep]);
+    setZoom((z) => Math.min(z + zoomStep, maxZoom));
+  }, [zoomStep, maxZoom]);
 
   const handleZoomOut = useCallback(() => {
-    setZoom((z) => Math.max(minZoom, z - zoomStep));
-  }, [minZoom, zoomStep]);
+    setZoom((z) => Math.max(z - zoomStep, minZoom));
+  }, [zoomStep, minZoom]);
 
+  const handleZoomReset = useCallback(() => {
+    setZoom(initialZoom);
+  }, [initialZoom]);
+
+  // ============================================
+  // ROTAÇÃO
+  // ============================================
   const handleRotate = useCallback(() => {
     setRotation((r) => (r + 90) % 360);
   }, []);
 
-  const handleFullscreen = useCallback(() => {
+  // ============================================
+  // FULLSCREEN
+  // ============================================
+  const toggleFullscreen = useCallback(async () => {
     if (!containerRef.current) return;
-
-    if (!isFullscreen) {
-      containerRef.current.requestFullscreen?.();
-      setIsFullscreen(true);
-    } else {
-      document.exitFullscreen?.();
-      setIsFullscreen(false);
+    try {
+      if (!document.fullscreenElement) {
+        await containerRef.current.requestFullscreen();
+        setIsFullscreen(true);
+      } else {
+        await document.exitFullscreen();
+        setIsFullscreen(false);
+      }
+    } catch (err) {
+      console.error("Erro ao alternar fullscreen:", err);
     }
-  }, [isFullscreen]);
-
-  const handleRetry = useCallback(() => {
-    setErrorInfo(null);
-    fetchManifest();
-  }, [fetchManifest]);
-
-  const handleImageLoad = useCallback(() => {
-    setImageLoading(false);
-  }, []);
-
-  const handleImageError = useCallback(() => {
-    setImageLoading(false);
-    toast.error("Erro ao carregar página. Tente novamente.");
   }, []);
 
   // ============================================
@@ -305,222 +307,251 @@ export const SecurePdfViewerOmega = memo(({
 
       switch (e.key) {
         case "ArrowLeft":
-          handlePrevPage();
+          prevPage();
           break;
         case "ArrowRight":
-          handleNextPage();
+          nextPage();
           break;
         case "+":
         case "=":
-          handleZoomIn();
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleZoomIn();
+          }
           break;
         case "-":
-          handleZoomOut();
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleZoomOut();
+          }
           break;
-        case "r":
-        case "R":
-          handleRotate();
+        case "0":
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            handleZoomReset();
+          }
           break;
         case "f":
-        case "F":
-          handleFullscreen();
+          if (e.ctrlKey || e.metaKey) {
+            e.preventDefault();
+            toggleFullscreen();
+          }
           break;
       }
     };
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [state, handlePrevPage, handleNextPage, handleZoomIn, handleZoomOut, handleRotate, handleFullscreen]);
+  }, [state, prevPage, nextPage, handleZoomIn, handleZoomOut, handleZoomReset, toggleFullscreen]);
 
   // ============================================
-  // RENDER: LOADING
+  // RENDER DE ERRO
   // ============================================
-  if (state === "loading") {
+  if (state === "error" || state === "locked" || state === "expired" || state === "not_found") {
+    const errorData = errorInfo?.code ? ERROR_MESSAGES[errorInfo.code] : ERROR_MESSAGES.SERVER_ERROR;
+    const ErrorIcon = errorData.icon;
+
     return (
-      <div className={cn("flex items-center justify-center min-h-[400px] bg-muted/30 rounded-lg", className)}>
-        <div className="flex flex-col items-center gap-4">
-          <Loader2 className="w-12 h-12 animate-spin text-primary" />
-          <p className="text-muted-foreground">Carregando documento seguro...</p>
-        </div>
+      <div className={cn(
+        "flex flex-col items-center justify-center min-h-[400px] p-8",
+        "bg-muted/30 rounded-lg border border-border",
+        className
+      )}>
+        <ErrorIcon className="w-16 h-16 text-muted-foreground mb-4" />
+        <h3 className="text-lg font-semibold mb-2">{errorData.title}</h3>
+        <p className="text-sm text-muted-foreground text-center mb-4 max-w-md">
+          {errorData.description}
+        </p>
+        <Button variant="outline" onClick={fetchManifest}>
+          <RefreshCw className="w-4 h-4 mr-2" />
+          Tentar Novamente
+        </Button>
       </div>
     );
   }
 
   // ============================================
-  // RENDER: ERROR STATES
+  // RENDER DE LOADING
   // ============================================
-  if (state !== "ready") {
-    const errorData = ERROR_MESSAGES[errorInfo?.code || "SERVER_ERROR"];
-    const IconComponent = errorData?.icon || AlertTriangle;
-
+  if (state === "loading" || !manifest) {
     return (
-      <div className={cn("flex items-center justify-center min-h-[400px] bg-muted/30 rounded-lg", className)}>
-        <div className="flex flex-col items-center gap-4 text-center max-w-md px-6">
-          <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center">
-            <IconComponent className="w-8 h-8 text-destructive" />
-          </div>
-          <h3 className="text-xl font-semibold text-foreground">{errorData?.title}</h3>
-          <p className="text-muted-foreground">{errorData?.description}</p>
-          {state === "error" && (
-            <Button onClick={handleRetry} variant="outline" className="gap-2">
-              <RefreshCw className="w-4 h-4" />
-              Tentar Novamente
-            </Button>
-          )}
-        </div>
+      <div className={cn(
+        "flex flex-col items-center justify-center min-h-[400px] p-8",
+        "bg-muted/30 rounded-lg border border-border",
+        className
+      )}>
+        <Loader2 className="w-12 h-12 animate-spin text-primary mb-4" />
+        <p className="text-sm text-muted-foreground">Carregando documento protegido...</p>
       </div>
     );
   }
 
   // ============================================
-  // RENDER: VIEWER
+  // DADOS DA PÁGINA ATUAL
   // ============================================
-  const currentPageData = manifest?.pages?.[currentPage];
+  const currentPageData = manifest.pages[currentPage];
+  const hasNextPage = currentPage < manifest.totalPages - 1;
+  const hasPrevPage = currentPage > 0;
 
+  // ============================================
+  // RENDER PRINCIPAL
+  // ============================================
   return (
     <SanctumProtectedContent
       resourceId={assetId}
       resourceType="pdf"
+      className={cn("secure-pdf-viewer", className)}
       config={{
         watermark: !isOwner,
         blockCopy: true,
         blockPrint: true,
-        blockContextMenu: true,
-        blurOnInactive: !isOwner,
+        blockDrag: true,
+        blockSelection: true,
+        blurOnInactive: true,
       }}
-      className={cn("relative", className)}
     >
       <div
         ref={containerRef}
-        className="flex flex-col bg-background rounded-lg overflow-hidden border border-border"
-      >
-        {/* Header com título */}
-        {title && (
-          <div className="flex items-center gap-2 px-4 py-3 border-b border-border bg-muted/50">
-            <BookOpen className="w-5 h-5 text-primary" />
-            <h2 className="font-medium text-foreground truncate">{title}</h2>
-          </div>
+        className={cn(
+          "flex flex-col bg-muted/20 rounded-lg border border-border overflow-hidden",
+          isFullscreen && "fixed inset-0 z-50 rounded-none"
         )}
-
-        {/* Área do documento */}
-        <div
-          className="relative flex-1 overflow-auto bg-muted/20 min-h-[500px]"
-          style={{ cursor: "default" }}
-        >
-          {/* Loading da imagem */}
-          {imageLoading && (
-            <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
-              <Loader2 className="w-8 h-8 animate-spin text-primary" />
-            </div>
-          )}
-
-          {/* Imagem da página */}
-          {currentPageData?.url && (
-            <div
-              className="flex items-center justify-center p-4"
-              style={{
-                minHeight: "100%",
-              }}
-            >
-              <img
-                src={currentPageData.url}
-                alt={`Página ${currentPage + 1}`}
-                onLoad={handleImageLoad}
-                onError={handleImageError}
-                draggable={false}
-                className="max-w-full shadow-lg select-none pointer-events-none"
-                style={{
-                  transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
-                  transformOrigin: "center center",
-                  transition: "transform 0.2s ease-out",
-                }}
-              />
-            </div>
-          )}
-        </div>
-
-        {/* Controles */}
+      >
+        {/* Header com título e controles */}
         {showControls && (
-          <div className="flex items-center justify-between px-4 py-3 border-t border-border bg-muted/50">
-            {/* Navegação de páginas */}
+          <div className="flex items-center justify-between p-3 bg-background border-b border-border">
             <div className="flex items-center gap-2">
-              <Button
-                variant="outline"
-                size="icon"
-                onClick={handlePrevPage}
-                disabled={currentPage === 0}
-                title="Página anterior (←)"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </Button>
+              <BookOpen className="w-5 h-5 text-primary" />
+              <span className="font-medium text-sm truncate max-w-[200px]">
+                {title || manifest.title || "Documento"}
+              </span>
+            </div>
 
-              {showPageIndicator && manifest && (
-                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                  {currentPage + 1} / {manifest.totalPages}
-                </span>
+            <div className="flex items-center gap-1">
+              {/* Controles de zoom */}
+              {showZoomControls && (
+                <>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleZoomOut}
+                    disabled={zoom <= minZoom}
+                  >
+                    <ZoomOut className="w-4 h-4" />
+                  </Button>
+                  <span className="text-xs font-medium w-12 text-center">{zoom}%</span>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={handleZoomIn}
+                    disabled={zoom >= maxZoom}
+                  >
+                    <ZoomIn className="w-4 h-4" />
+                  </Button>
+                </>
               )}
 
+              {/* Rotação */}
               <Button
-                variant="outline"
+                variant="ghost"
                 size="icon"
-                onClick={handleNextPage}
-                disabled={!manifest || currentPage >= manifest.totalPages - 1}
-                title="Próxima página (→)"
+                className="h-8 w-8"
+                onClick={handleRotate}
               >
-                <ChevronRight className="w-4 h-4" />
+                <RotateCw className="w-4 h-4" />
+              </Button>
+
+              {/* Fullscreen */}
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-8 w-8"
+                onClick={toggleFullscreen}
+              >
+                <Maximize2 className="w-4 h-4" />
               </Button>
             </div>
-
-            {/* Controles de zoom e rotação */}
-            {showZoomControls && (
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleZoomOut}
-                  disabled={zoom <= minZoom}
-                  title="Diminuir zoom (-)"
-                >
-                  <ZoomOut className="w-4 h-4" />
-                </Button>
-
-                <span className="text-sm text-muted-foreground min-w-[50px] text-center">
-                  {zoom}%
-                </span>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleZoomIn}
-                  disabled={zoom >= maxZoom}
-                  title="Aumentar zoom (+)"
-                >
-                  <ZoomIn className="w-4 h-4" />
-                </Button>
-
-                <div className="w-px h-6 bg-border mx-2" />
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleRotate}
-                  title="Girar 90° (R)"
-                >
-                  <RotateCw className="w-4 h-4" />
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="icon"
-                  onClick={handleFullscreen}
-                  title="Tela cheia (F)"
-                >
-                  <Maximize2 className="w-4 h-4" />
-                </Button>
-              </div>
-            )}
           </div>
         )}
+
+        {/* Área de visualização */}
+        <div 
+          className="flex-1 overflow-auto p-4 flex items-center justify-center bg-muted/10"
+          style={{ minHeight: "500px" }}
+        >
+          <div
+            className="relative transition-transform duration-200"
+            style={{
+              transform: `scale(${zoom / 100}) rotate(${rotation}deg)`,
+              transformOrigin: "center center",
+            }}
+          >
+            {/* Loading da imagem */}
+            {imageLoading && (
+              <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+              </div>
+            )}
+
+            {/* Imagem da página */}
+            {currentPageData && (
+              <img
+                src={currentPageData.url}
+                alt={`Página ${currentPage + 1} de ${manifest.totalPages}`}
+                className="max-w-full h-auto rounded-lg shadow-lg"
+                loading="lazy"
+                decoding="async"
+                draggable={false}
+                onContextMenu={(e) => e.preventDefault()}
+                onLoad={() => setImageLoading(false)}
+                onError={() => {
+                  setImageLoading(false);
+                  toast.error("Erro ao carregar página. Tente recarregar.");
+                }}
+                style={{
+                  pointerEvents: "none",
+                  userSelect: "none",
+                }}
+              />
+            )}
+          </div>
+        </div>
+
+        {/* Footer com navegação */}
+        {showPageIndicator && manifest.totalPages > 1 && (
+          <div className="flex items-center justify-center gap-4 p-3 bg-background border-t border-border">
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={prevPage}
+              disabled={!hasPrevPage}
+            >
+              <ChevronLeft className="w-4 h-4" />
+            </Button>
+            <span className="text-sm font-medium">
+              Página {currentPage + 1} de {manifest.totalPages}
+            </span>
+            <Button
+              variant="outline"
+              size="icon"
+              className="h-8 w-8"
+              onClick={nextPage}
+              disabled={!hasNextPage}
+            >
+              <ChevronRight className="w-4 h-4" />
+            </Button>
+          </div>
+        )}
+
+        {/* Watermark seed (invisível, para auditoria) */}
+        <div
+          className="sr-only"
+          aria-hidden="true"
+          data-watermark-seed={manifest.watermarkSeed}
+        />
       </div>
     </SanctumProtectedContent>
   );
