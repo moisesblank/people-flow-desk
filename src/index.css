@@ -569,7 +569,158 @@
     100% { background-position: 0% 50%; }
   }
 
-  /* Reduced Motion - Desativa tudo */
+  /* ============================================
+     2300 INPUTS - Foco Premium + Validação
+     ============================================ */
+  .input-2300 {
+    @apply transition-all duration-200;
+  }
+  .input-2300:focus {
+    box-shadow: 0 0 0 3px hsl(var(--primary) / 0.15), 0 0 20px hsl(var(--primary) / 0.1);
+  }
+  .input-2300.input-success {
+    @apply border-success;
+    box-shadow: 0 0 0 3px hsl(var(--success) / 0.15);
+  }
+  .input-2300.input-error {
+    @apply border-destructive;
+    box-shadow: 0 0 0 3px hsl(var(--destructive) / 0.15);
+    animation: error-shake 0.4s ease-out;
+  }
+
+  /* ============================================
+     2300 BADGES - Status com pulso sutil
+     ============================================ */
+  .badge-pulse {
+    @apply relative;
+  }
+  .badge-pulse::before {
+    content: '';
+    @apply absolute inset-0 rounded-full opacity-50;
+    background: inherit;
+    animation: badge-ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+  }
+  
+  .badge-status-online {
+    @apply bg-success/20 text-success border-success/30;
+  }
+  .badge-status-online::after {
+    content: '';
+    @apply absolute -right-0.5 -top-0.5 w-2 h-2 rounded-full bg-success;
+    animation: badge-dot-pulse 2s ease-in-out infinite;
+  }
+
+  .badge-status-syncing {
+    @apply bg-info/20 text-info border-info/30;
+  }
+  .badge-status-syncing::after {
+    content: '';
+    @apply absolute -right-0.5 -top-0.5 w-2 h-2 rounded-full bg-info;
+    animation: badge-dot-pulse 1s ease-in-out infinite;
+  }
+
+  .badge-status-ai {
+    @apply bg-holo-cyan/20 text-holo-cyan border-holo-cyan/30;
+  }
+  .badge-status-ai::after {
+    content: '';
+    @apply absolute -right-0.5 -top-0.5 w-2 h-2 rounded-full bg-holo-cyan;
+    animation: badge-dot-pulse 1.5s ease-in-out infinite;
+  }
+
+  @keyframes badge-ping {
+    0% { transform: scale(1); opacity: 0.5; }
+    75%, 100% { transform: scale(1.5); opacity: 0; }
+  }
+
+  @keyframes badge-dot-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.6; transform: scale(0.8); }
+  }
+
+  /* ============================================
+     2300 SKELETON - Shimmer Premium
+     ============================================ */
+  .skeleton-2300 {
+    @apply bg-muted/60;
+    background: linear-gradient(
+      90deg,
+      hsl(var(--muted) / 0.6) 0%,
+      hsl(var(--muted) / 0.8) 20%,
+      hsl(var(--muted-foreground) / 0.15) 50%,
+      hsl(var(--muted) / 0.8) 80%,
+      hsl(var(--muted) / 0.6) 100%
+    );
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.5s ease-in-out infinite;
+  }
+
+  @keyframes skeleton-shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ============================================
+     2300 HERO AMBIENT - SVG/CSS Effect
+     ============================================ */
+  .hero-ambient-2300 {
+    @apply absolute inset-0 overflow-hidden pointer-events-none;
+  }
+  .hero-ambient-2300::before {
+    content: '';
+    @apply absolute -top-1/4 -right-1/4 w-1/2 h-1/2 rounded-full opacity-30;
+    background: radial-gradient(circle, hsl(var(--primary) / 0.4) 0%, transparent 70%);
+    filter: blur(80px);
+    animation: ambient-float 8s ease-in-out infinite;
+  }
+  .hero-ambient-2300::after {
+    content: '';
+    @apply absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 rounded-full opacity-20;
+    background: radial-gradient(circle, hsl(var(--holo-cyan) / 0.3) 0%, transparent 70%);
+    filter: blur(80px);
+    animation: ambient-float 10s ease-in-out infinite reverse;
+  }
+
+  @keyframes ambient-float {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33% { transform: translate(5%, 5%) scale(1.05); }
+    66% { transform: translate(-3%, 3%) scale(0.98); }
+  }
+
+  /* ============================================
+     2300 PLAYER - Poster + Play Button
+     ============================================ */
+  .player-2300 {
+    @apply relative overflow-hidden rounded-xl cursor-pointer group;
+  }
+  .player-2300-poster {
+    @apply w-full h-full object-cover transition-transform duration-500;
+  }
+  .player-2300:hover .player-2300-poster {
+    transform: scale(1.02);
+  }
+  .player-2300-overlay {
+    @apply absolute inset-0 bg-black/40 flex items-center justify-center transition-all duration-300;
+  }
+  .player-2300:hover .player-2300-overlay {
+    @apply bg-black/30;
+  }
+  .player-2300-play {
+    @apply w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center;
+    @apply bg-white/20 backdrop-blur-md border border-white/30;
+    @apply transition-all duration-300;
+    box-shadow: 0 0 30px hsl(var(--primary) / 0.3);
+  }
+  .player-2300:hover .player-2300-play {
+    transform: scale(1.1);
+    box-shadow: 0 0 50px hsl(var(--primary) / 0.5);
+    @apply bg-primary/80;
+  }
+  .player-2300-play svg {
+    @apply w-6 h-6 md:w-8 md:h-8 text-white ml-1;
+  }
+
+  /* Reduced Motion - Desativa tudo 2300 */
   @media (prefers-reduced-motion: reduce) {
     .card-2300:hover,
     .micro-hover:hover,
@@ -578,7 +729,20 @@
       animation: none;
     }
     .card-2300::before,
-    .header-2300::after {
+    .header-2300::after,
+    .badge-pulse::before,
+    .badge-status-online::after,
+    .badge-status-syncing::after,
+    .badge-status-ai::after,
+    .skeleton-2300,
+    .hero-ambient-2300::before,
+    .hero-ambient-2300::after,
+    .player-2300:hover .player-2300-poster,
+    .player-2300:hover .player-2300-play {
+      animation: none;
+      transform: none;
+    }
+    .input-2300.input-error {
       animation: none;
     }
   }

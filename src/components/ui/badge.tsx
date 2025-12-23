@@ -20,6 +20,10 @@ const badgeVariants = cva(
         "holo-purple": "border-holo-purple/30 bg-holo-purple/10 text-holo-purple",
         "holo-pink": "border-holo-pink/30 bg-holo-pink/10 text-holo-pink",
         "holo-glow": "border-holo-cyan/50 bg-holo-cyan/15 text-holo-cyan shadow-[0_0_10px_hsl(var(--holo-cyan)/0.3)]",
+        // 2300 UPGRADE - Status badges com pulso
+        "status-online": "relative badge-status-online",
+        "status-syncing": "relative badge-status-syncing",
+        "status-ai": "relative badge-status-ai",
       },
     },
     defaultVariants: {
@@ -28,10 +32,21 @@ const badgeVariants = cva(
   },
 );
 
-export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {}
+export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, VariantProps<typeof badgeVariants> {
+  pulse?: boolean;
+}
 
-function Badge({ className, variant, ...props }: BadgeProps) {
-  return <div className={cn(badgeVariants({ variant }), className)} {...props} />;
+function Badge({ className, variant, pulse = false, ...props }: BadgeProps) {
+  return (
+    <div 
+      className={cn(
+        badgeVariants({ variant }), 
+        pulse && "badge-pulse",
+        className
+      )} 
+      {...props} 
+    />
+  );
 }
 
 export { Badge, badgeVariants };
