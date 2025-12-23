@@ -1,7 +1,15 @@
 // ============================================
-// 🏛️ CONSTITUIÇÃO SYNAPSE - FEATURE FLAGS
-// Governança central de features por performance tier
+// 🏛️ CONSTITUIÇÃO SYNAPSE - FEATURE FLAGS (LEGACY BRIDGE)
+// Mantém compatibilidade com código antigo
+// Redireciona para performanceFlags.ts v3
 // ============================================
+
+import { 
+  getPerformanceConfig, 
+  detectDeviceCapabilities,
+  type PerformanceConfig,
+  type DeviceCapabilities 
+} from './performanceFlags';
 
 export interface PerformanceFlags {
   /** Modo economia total - ativa automaticamente em 3G/2G/saveData/lowEnd */
@@ -16,7 +24,7 @@ export interface PerformanceFlags {
 
 /**
  * Calcula flags de performance baseado no dispositivo/conexão
- * @returns Flags que governam features visuais
+ * @deprecated Use getPerformanceConfig() de performanceFlags.ts
  */
 export function getPerformanceFlags(
   isSlowConnection: boolean,
@@ -24,49 +32,38 @@ export function getPerformanceFlags(
   reducedMotion: boolean,
   saveData: boolean
 ): PerformanceFlags {
-  // Lite mode ativa automaticamente em 3G/2G/saveData/lowEnd
-  const perf_mode_lite = isSlowConnection || isLowEndDevice || saveData;
+  const config = getPerformanceConfig();
   
   return {
-    perf_mode_lite,
-    // Motion: desliga em lite mode ou se usuário pediu reduced motion
-    ui_futuristic_motion: !perf_mode_lite && !reducedMotion,
-    // Ambient FX: desliga em lite mode (blur é pesado)
-    ui_ambient_fx: !perf_mode_lite && !reducedMotion,
-    // Ultra: NUNCA auto-liga, só manual pelo owner
-    ui_ultra: false,
+    perf_mode_lite: config.liteMode,
+    ui_futuristic_motion: config.enableMotion,
+    ui_ambient_fx: config.enableAmbientFx,
+    ui_ultra: config.enableUltraEffects,
   };
 }
 
 /**
  * Detecta se dispositivo é low-end baseado em hardware
+ * @deprecated Use detectDeviceCapabilities().isLowEnd de performanceFlags.ts
  */
 export function detectLowEndDevice(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  
-  const cores = navigator.hardwareConcurrency || 4;
-  const memory = (navigator as any).deviceMemory || 4;
-  
-  // Low-end: ≤2 cores OU ≤2GB RAM
-  return cores <= 2 || memory <= 2;
+  return detectDeviceCapabilities().isLowEnd;
 }
 
 /**
  * Detecta se conexão é lenta (3G ou pior)
+ * @deprecated Use detectDeviceCapabilities().connection de performanceFlags.ts
  */
 export function detectSlowConnection(): boolean {
-  if (typeof navigator === 'undefined') return false;
-  
-  const connection = (navigator as any).connection;
-  if (!connection) return false;
-  
-  const effectiveType = connection.effectiveType || '4g';
-  const saveData = connection.saveData || false;
-  
-  return ['slow-2g', '2g', '3g'].includes(effectiveType) || saveData;
+  const conn = detectDeviceCapabilities().connection;
+  return conn === '3g' || conn === '2g' || conn === 'slow' || conn === 'offline';
 }
+
+// Re-export para compatibilidade
+export { getPerformanceConfig, detectDeviceCapabilities };
+export type { PerformanceConfig, DeviceCapabilities };
 
 // 🏛️ LEI I: Sem console.log em produção
 if (import.meta.env.DEV) {
-  console.log('[CONSTITUIÇÃO] ⚡ Feature Flags carregados');
+  console.log('[CONSTITUIÇÃO] ⚡ Feature Flags (bridge) carregados');
 }
