@@ -18,6 +18,7 @@ interface YouTubeLivePlayerProps {
   autoplay?: boolean;
   showChat?: boolean;
   className?: string;
+  clickToLoad?: boolean; // NEW: Click to load mode
   onViewerCountChange?: (count: number) => void;
 }
 
@@ -26,6 +27,7 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
   autoplay = true,
   showChat = true,
   className,
+  clickToLoad = false, // Default: auto-load for lives
   onViewerCountChange,
 }) => {
   const { 
@@ -42,6 +44,7 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showChatPanel, setShowChatPanel] = useState(showChat);
   const [isMuted, setIsMuted] = useState(false);
+  const [isActivated, setIsActivated] = useState(!clickToLoad); // NEW: Click-to-load state
 
   // Atualizar contador de viewers
   useEffect(() => {
@@ -165,15 +168,52 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
           "relative bg-black",
           showChatPanel ? "lg:flex-1" : "w-full"
         )}>
-          <FortressPlayerWrapper className="aspect-video" showSecurityBadge>
-            <iframe
-              src={embedSrc}
-              className="w-full h-full"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-              title={title || 'YouTube Live'}
-            />
-          </FortressPlayerWrapper>
+          {/* Click-to-load: Show poster until activated */}
+          {!isActivated ? (
+            <div className="aspect-video relative bg-gradient-to-br from-ai-surface to-background">
+              {/* YouTube thumbnail */}
+              <img
+                src={`https://i.ytimg.com/vi/${activeVideoId}/hqdefault.jpg`}
+                alt={title || "Live thumbnail"}
+                className="absolute inset-0 w-full h-full object-cover"
+                loading="lazy"
+                decoding="async"
+              />
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
+              {/* Play button */}
+              <button
+                onClick={() => setIsActivated(true)}
+                className="absolute inset-0 flex items-center justify-center group focus:outline-none focus-visible:ring-2 focus-visible:ring-holo-cyan"
+                aria-label={`Assistir live: ${title}`}
+              >
+                <motion.div
+                  className="flex items-center justify-center w-20 h-20 rounded-full bg-red-600/90 text-white shadow-[0_0_30px_rgba(220,38,38,0.4)]"
+                  whileHover={{ scale: 1.1 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Play className="w-10 h-10 ml-1" fill="currentColor" />
+                </motion.div>
+              </button>
+              {/* Live badge on poster */}
+              {isLive && (
+                <div className="absolute top-4 left-4 flex items-center gap-2 bg-red-600/90 text-white px-3 py-1.5 rounded-full text-sm font-medium">
+                  <span className="w-2 h-2 bg-white rounded-full animate-pulse" />
+                  AO VIVO
+                </div>
+              )}
+            </div>
+          ) : (
+            <FortressPlayerWrapper className="aspect-video" showSecurityBadge>
+              <iframe
+                src={embedSrc}
+                className="w-full h-full"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+                title={title || 'YouTube Live'}
+              />
+            </FortressPlayerWrapper>
+          )}
 
           {/* Live indicator overlay */}
           {isLive && (
