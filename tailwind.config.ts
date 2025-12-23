@@ -155,12 +155,24 @@ export default {
           from: { opacity: "0", transform: "translateY(20px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
+        "fade-down": {
+          from: { opacity: "0", transform: "translateY(-10px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
         "scale-in": {
           from: { opacity: "0", transform: "scale(0.95)" },
           to: { opacity: "1", transform: "scale(1)" },
         },
+        "scale-out": {
+          from: { opacity: "1", transform: "scale(1)" },
+          to: { opacity: "0", transform: "scale(0.95)" },
+        },
         "slide-in-right": {
           from: { opacity: "0", transform: "translateX(20px)" },
+          to: { opacity: "1", transform: "translateX(0)" },
+        },
+        "slide-in-left": {
+          from: { opacity: "0", transform: "translateX(-20px)" },
           to: { opacity: "1", transform: "translateX(0)" },
         },
         "pulse-glow": {
@@ -182,7 +194,25 @@ export default {
         "dash": {
           to: { strokeDashoffset: "0" },
         },
-        // Animações ULTRA LEVES para video player 2300
+        // 2300 Microinteractions - GPU only (transform/opacity)
+        "holo-pulse": {
+          "0%, 100%": { opacity: "0.5", transform: "scale(1)" },
+          "50%": { opacity: "0.8", transform: "scale(1.02)" },
+        },
+        "holo-glow": {
+          "0%, 100%": { opacity: "0.3" },
+          "50%": { opacity: "0.6" },
+        },
+        "success-pop": {
+          "0%": { opacity: "0", transform: "scale(0.8)" },
+          "50%": { transform: "scale(1.05)" },
+          "100%": { opacity: "1", transform: "scale(1)" },
+        },
+        "error-shake": {
+          "0%, 100%": { transform: "translateX(0)" },
+          "20%, 60%": { transform: "translateX(-4px)" },
+          "40%, 80%": { transform: "translateX(4px)" },
+        },
         "spin-slow": {
           from: { transform: "rotate(0deg)" },
           to: { transform: "rotate(360deg)" },
@@ -203,25 +233,37 @@ export default {
           "0%": { transform: "scale(1)", opacity: "0.5" },
           "75%, 100%": { transform: "scale(2)", opacity: "0" },
         },
+        "border-flow": {
+          "0%": { backgroundPosition: "0% 50%" },
+          "100%": { backgroundPosition: "200% 50%" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        "fade-in": "fade-in 0.5s ease-out forwards",
-        "fade-up": "fade-up 0.6s ease-out",
-        "scale-in": "scale-in 0.3s ease-out forwards",
-        "slide-in-right": "slide-in-right 0.4s ease-out",
+        "fade-in": "fade-in 0.3s ease-out forwards",
+        "fade-up": "fade-up 0.4s ease-out",
+        "fade-down": "fade-down 0.3s ease-out",
+        "scale-in": "scale-in 0.2s ease-out forwards",
+        "scale-out": "scale-out 0.2s ease-out forwards",
+        "slide-in-right": "slide-in-right 0.3s ease-out",
+        "slide-in-left": "slide-in-left 0.3s ease-out",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
         "float": "float 3s ease-in-out infinite",
         "shimmer": "shimmer 2s linear infinite",
         "web-swing": "web-swing 3s ease-in-out infinite",
         "dash": "dash 3s ease-in-out forwards",
-        // Animações ULTRA LEVES para video player 2300
+        // 2300 Animations
+        "holo-pulse": "holo-pulse 3s ease-in-out infinite",
+        "holo-glow": "holo-glow 2s ease-in-out infinite",
+        "success-pop": "success-pop 0.4s ease-out forwards",
+        "error-shake": "error-shake 0.4s ease-out",
         "spin-slow": "spin-slow 15s linear infinite",
         "gradient-x": "gradient-x 3s ease infinite",
         "pulse-slow": "pulse-slow 4s ease-in-out infinite",
         "ping-slow": "ping-slow 2s cubic-bezier(0, 0, 0.2, 1) infinite",
         "ping-slower": "ping-slower 3s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "border-flow": "border-flow 3s linear infinite",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',

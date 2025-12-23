@@ -368,7 +368,7 @@
   }
 
   /* ============================================
-     ANIMATIONS
+     ANIMATIONS - GPU ONLY (transform/opacity)
      ============================================ */
   @keyframes fade-in {
     from { opacity: 0; transform: translateY(10px); }
@@ -377,6 +377,11 @@
 
   @keyframes fade-up {
     from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes fade-down {
+    from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
   }
 
@@ -415,16 +420,76 @@
     50% { transform: rotate(5deg); }
   }
 
-  .animate-fade-in { animation: fade-in 0.5s ease-out; }
-  .animate-fade-up { animation: fade-up 0.6s ease-out; }
-  .animate-scale-in { animation: scale-in 0.3s ease-out; }
+  /* 2300 Microinteractions */
+  @keyframes holo-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.02); }
+  }
+
+  @keyframes success-pop {
+    0% { opacity: 0; transform: scale(0.8); }
+    50% { transform: scale(1.05); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+
+  @keyframes error-shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-4px); }
+    40%, 80% { transform: translateX(4px); }
+  }
+
+  @keyframes border-glow {
+    0%, 100% { border-color: hsl(var(--holo-cyan) / 0.3); }
+    50% { border-color: hsl(var(--holo-cyan) / 0.6); }
+  }
+
+  .animate-fade-in { animation: fade-in 0.3s ease-out; }
+  .animate-fade-up { animation: fade-up 0.4s ease-out; }
+  .animate-fade-down { animation: fade-down 0.3s ease-out; }
+  .animate-scale-in { animation: scale-in 0.2s ease-out; }
   .animate-pulse-glow { animation: pulse-glow 2s ease-in-out infinite; }
   .animate-shimmer { animation: shimmer 2s linear infinite; }
   .animate-float { animation: float 3s ease-in-out infinite; }
   .animate-spin-slow { animation: spin-slow 8s linear infinite; }
   .animate-bounce-soft { animation: bounce-soft 2s ease-in-out infinite; }
   .animate-web-swing { animation: web-swing 3s ease-in-out infinite; }
+  
+  /* 2300 Animation Classes */
+  .animate-holo-pulse { animation: holo-pulse 3s ease-in-out infinite; }
+  .animate-success-pop { animation: success-pop 0.4s ease-out forwards; }
+  .animate-error-shake { animation: error-shake 0.4s ease-out; }
+  .animate-border-glow { animation: border-glow 2s ease-in-out infinite; }
 
+  /* Microinteraction utilities */
+  .hover-lift {
+    @apply transition-transform duration-200;
+  }
+  .hover-lift:hover {
+    transform: translateY(-2px);
+  }
+
+  .hover-scale {
+    @apply transition-transform duration-150;
+  }
+  .hover-scale:hover {
+    transform: scale(1.02);
+  }
+
+  .press-scale:active {
+    transform: scale(0.98);
+  }
+
+  .hover-glow-holo {
+    @apply transition-shadow duration-200;
+  }
+  .hover-glow-holo:hover {
+    box-shadow: 0 0 25px hsl(var(--holo-cyan) / 0.25);
+  }
+
+  /* Focus ring 2300 */
+  .focus-ring-holo:focus-visible {
+    @apply outline-none ring-2 ring-holo-cyan/50 ring-offset-2 ring-offset-background;
+  }
   /* ============================================
      STAT CARDS - SPIDER-MAN THEME
      ============================================ */
