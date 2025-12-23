@@ -691,7 +691,7 @@
      2300 PLAYER - Poster + Play Button
      ============================================ */
   .player-2300 {
-    @apply relative overflow-hidden rounded-xl cursor-pointer group;
+    @apply relative overflow-hidden rounded-xl cursor-pointer;
   }
   .player-2300-poster {
     @apply w-full h-full object-cover transition-transform duration-500;
