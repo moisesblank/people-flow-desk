@@ -10,6 +10,7 @@ import { useFuturisticUI } from "@/hooks/useFuturisticUI";
 import { TutoriaHero } from "@/components/tutoria/TutoriaHero";
 import { TutoriaModeSelector } from "@/components/tutoria/TutoriaModeSelector";
 import { TutoriaChat } from "@/components/tutoria/TutoriaChat";
+import { AmbientGlow } from "@/components/ui/ambient-glow";
 import { useAuth } from "@/hooks/useAuth";
 import { Helmet } from "react-helmet";
 
@@ -50,12 +51,8 @@ const TutoriaIA = memo(function TutoriaIA() {
         className="container mx-auto px-4 py-6 space-y-6 max-w-4xl"
         {...containerAnim}
       >
-        {/* Ambient FX - Top gradient (feature flag controlled) */}
-        {ui.enableAmbient && (
-          <div className="fixed top-0 left-0 right-0 h-40 pointer-events-none z-0">
-            <div className="absolute inset-0 bg-gradient-to-b from-holo-cyan/5 via-holo-purple/3 to-transparent" />
-          </div>
-        )}
+        {/* Ambient FX - Controlled by feature flag */}
+        <AmbientGlow variant="top" intensity="subtle" color="holo" />
         
         {/* Hero Section */}
         <TutoriaHero userName={userName} />
