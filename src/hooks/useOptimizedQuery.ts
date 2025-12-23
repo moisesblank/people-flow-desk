@@ -3,10 +3,10 @@
 // DOGMA IV + V: Queries Sub-50ms + Cache Quântico
 // ============================================
 
-import { useQuery, useQueryClient, UseQueryOptions } from '@tanstack/react-query';
+import { useQueryClient, UseQueryOptions } from '@tanstack/react-query';
 import { useCallback, useMemo } from 'react';
 import { CACHE_PROFILES, INVALIDATION_KEYS } from '@/lib/performance/cacheConfig';
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery } from './useSubspaceCommunication';
 
 // Tipo para configuração de cache (usando CACHE_PROFILES v3500)
 type CacheType = keyof typeof CACHE_PROFILES;
@@ -30,16 +30,21 @@ export function useOptimizedQuery<T>(
   // Aplicar configuração de cache baseada no tipo (v3500)
   const cacheConfig = CACHE_PROFILES[cacheType];
   
-  const query = useQuery({
+  return useSubspaceQuery<T>(
     queryKey,
     queryFn,
-    staleTime: cacheConfig.staleTime,
-    gcTime: cacheConfig.gcTime,
-    networkMode: 'offlineFirst', // v3500: Prioriza cache SEMPRE
-    ...queryOptions,
-  });
-
-  return query;
+    {
+      profile: 'semiStatic',
+      persistKey: queryKey.join('_'),
+      staleTime: cacheConfig.staleTime,
+      gcTime: cacheConfig.gcTime,
+      persistToLocalStorage: true,
+      persistTTL: Math.max(cacheConfig.gcTime, 60_000),
+      refetchOnWindowFocus: false,
+      retry: 1,
+      ...queryOptions,
+    } as any
+  );
 }
 
 /**
@@ -89,14 +94,20 @@ export function useBatchedQueries<T extends Record<string, () => Promise<unknown
   const queryKeys = useMemo(() => Object.keys(queries), [queries]);
   
   const results = queryKeys.map(key => {
-    return useQuery({
-      queryKey: [key],
-      queryFn: queries[key],
-      enabled,
-      staleTime: cacheConfig.staleTime,
-      gcTime: cacheConfig.gcTime,
-      networkMode: 'offlineFirst', // v3500
-    });
+    return useSubspaceQuery(
+      [key],
+      queries[key],
+      {
+        profile: 'semiStatic',
+        persistKey: `batched_${key}`,
+        enabled,
+        staleTime: cacheConfig.staleTime,
+        gcTime: cacheConfig.gcTime,
+        persistToLocalStorage: true,
+        persistTTL: Math.max(cacheConfig.gcTime, 60_000),
+        retry: 1,
+      }
+    );
   });
 
   const isLoading = results.some(r => r.isLoading);

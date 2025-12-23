@@ -96,53 +96,67 @@ async function fetchLastWatchedLesson(userId: string) {
 export function useLastWatchedLesson() {
   const { user } = useAuth();
 
-  return useQuery({
-    queryKey: ['last-watched-lesson', user?.id],
-    queryFn: () => fetchLastWatchedLesson(user!.id),
-    enabled: !!user?.id,
-  });
+  return useSubspaceQuery(
+    ['last-watched-lesson', user?.id || 'anon'],
+    () => fetchLastWatchedLesson(user!.id),
+    {
+      profile: 'user',
+      persistKey: `last_watched_lesson_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
 
 export function usePendingFlashcards() {
   const { user } = useAuth();
-  return useQuery({
-    queryKey: ['pending-flashcards', user?.id],
-    queryFn: async () => {
+
+  return useSubspaceQuery(
+    ['pending-flashcards', user?.id || 'anon'],
+    async () => {
       const today = new Date().toISOString().split('T')[0];
-      
-      // Cards devido hoje
+
       const { data: dueCards } = await supabase
         .from('study_flashcards')
         .select('id, state')
         .eq('user_id', user!.id)
         .lte('due_date', today);
-      
+
       const cards = dueCards || [];
       const newCards = cards.filter(c => c.state === 'new').length;
-      
-      return { 
-        count: cards.length, 
-        dueToday: cards.length - newCards, 
-        newCards 
+
+      return {
+        count: cards.length,
+        dueToday: cards.length - newCards,
+        newCards
       };
     },
-    enabled: !!user?.id,
-    staleTime: 30000,
-    refetchInterval: 60000,
-  });
+    {
+      profile: 'dashboard',
+      persistKey: `pending_flashcards_${user?.id}`,
+      enabled: !!user?.id,
+      refetchInterval: 60_000,
+      staleTime: 30_000,
+      persistToLocalStorage: true,
+      persistTTL: 15 * 60_000,
+    }
+  );
 }
 
 export function useStudentInsights() {
   const { user } = useAuth();
-  return useQuery({
-    queryKey: ['student-insights', user?.id],
-    queryFn: async () => ({
+
+  return useSubspaceQuery(
+    ['student-insights', user?.id || 'anon'],
+    async () => ({
       weakestArea: { name: 'Estequiometria', accuracy: 45 },
       strongestArea: { name: 'Química Orgânica', accuracy: 78 },
       recentAccuracy: 65,
       suggestion: 'Foque na revisão de erros! É 3x mais eficiente que estudar conteúdo novo.'
     }),
-    enabled: !!user?.id,
-    staleTime: 300000,
-  });
+    {
+      profile: 'semiStatic',
+      persistKey: `student_insights_${user?.id}`,
+      enabled: !!user?.id,
+    }
+  );
 }
