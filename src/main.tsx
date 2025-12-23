@@ -2,7 +2,22 @@
 // ║   🏛️ MATRIZ DIGITAL - ENTRADA SAGRADA                                       ║
 // ║   Evangelho da Velocidade v15.0 + Performance Omega                         ║
 // ║   ANO 2300 — DESIGN FUTURISTA COM RENDIMENTO 3500                           ║
+// ║   TESE 1: PROTOCOLO GÊNESIS DE CARREGAMENTO                                 ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
+
+// ============================================
+// TIPOS PARA WEB VITALS (Performance API)
+// ============================================
+interface LayoutShift extends PerformanceEntry {
+  value: number;
+  hadRecentInput: boolean;
+}
+
+interface PerformanceEventTiming extends PerformanceEntry {
+  processingStart: number;
+  processingEnd: number;
+  duration: number;
+}
 
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
@@ -47,30 +62,89 @@ if (typeof window !== 'undefined') {
       // Long task não suportado
     }
     
-    // Monitorar LCP (Largest Contentful Paint)
+    // ============================================
+    // 📊 TESE 1.1 - MÉTRICAS ALVO 3500
+    // LCP < 1.2s | INP < 75ms | CLS = 0 | TTFB < 100ms
+    // ============================================
+    
+    // Monitorar LCP (Largest Contentful Paint) - ALVO: < 1200ms
     try {
       const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
-        console.log(`[PERF] 🎨 LCP: ${lastEntry.startTime.toFixed(0)}ms`);
+        const lcp = lastEntry.startTime;
+        const status = lcp < 1200 ? '✅' : lcp < 2500 ? '⚠️' : '❌';
+        console.log(`[PERF-3500] 🎨 LCP: ${lcp.toFixed(0)}ms ${status} (alvo: <1200ms)`);
+        if (lcp >= 1200) {
+          console.warn('[PERF-3500] LCP acima do limite 3500! Otimizar imagens/fontes críticas.');
+        }
       });
       lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
     } catch {
       // LCP não suportado
     }
 
-    // Monitorar FID (First Input Delay)
+    // Monitorar INP (Interaction to Next Paint) - ALVO: < 75ms
     try {
-      const fidObserver = new PerformanceObserver((list) => {
+      const inpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         entries.forEach((entry) => {
-          const fidEntry = entry as PerformanceEventTiming;
-          console.log(`[PERF] 👆 FID: ${(fidEntry.processingStart - fidEntry.startTime).toFixed(0)}ms`);
+          const inpEntry = entry as PerformanceEventTiming;
+          const duration = inpEntry.duration;
+          const status = duration < 75 ? '✅' : duration < 200 ? '⚠️' : '❌';
+          console.log(`[PERF-3500] ⚡ INP: ${duration.toFixed(0)}ms ${status} (alvo: <75ms)`);
         });
       });
-      fidObserver.observe({ entryTypes: ['first-input'] });
+      inpObserver.observe({ entryTypes: ['event'], durationThreshold: 16 } as PerformanceObserverInit);
     } catch {
-      // FID não suportado
+      // INP não suportado - usar FID como fallback
+      try {
+        const fidObserver = new PerformanceObserver((list) => {
+          const entries = list.getEntries();
+          entries.forEach((entry) => {
+            const fidEntry = entry as PerformanceEventTiming;
+            const fid = fidEntry.processingStart - fidEntry.startTime;
+            const status = fid < 75 ? '✅' : fid < 100 ? '⚠️' : '❌';
+            console.log(`[PERF-3500] 👆 FID: ${fid.toFixed(0)}ms ${status} (alvo: <75ms)`);
+          });
+        });
+        fidObserver.observe({ entryTypes: ['first-input'] });
+      } catch {
+        // FID não suportado
+      }
+    }
+
+    // Monitorar CLS (Cumulative Layout Shift) - ALVO: 0
+    let clsValue = 0;
+    try {
+      const clsObserver = new PerformanceObserver((list) => {
+        for (const entry of list.getEntries()) {
+          const layoutShift = entry as LayoutShift;
+          if (!layoutShift.hadRecentInput) {
+            clsValue += layoutShift.value;
+          }
+        }
+        const status = clsValue === 0 ? '✅' : clsValue < 0.1 ? '⚠️' : '❌';
+        console.log(`[PERF-3500] 📐 CLS: ${clsValue.toFixed(4)} ${status} (alvo: 0)`);
+        if (clsValue > 0) {
+          console.warn('[PERF-3500] CLS detectado! Verificar dimensões de imagens/fontes.');
+        }
+      });
+      clsObserver.observe({ entryTypes: ['layout-shift'] });
+    } catch {
+      // CLS não suportado
+    }
+
+    // Monitorar TTFB (Time to First Byte) - ALVO: < 100ms
+    try {
+      const navEntry = performance.getEntriesByType('navigation')[0] as PerformanceNavigationTiming;
+      if (navEntry) {
+        const ttfb = navEntry.responseStart - navEntry.requestStart;
+        const status = ttfb < 100 ? '✅' : ttfb < 200 ? '⚠️' : '❌';
+        console.log(`[PERF-3500] 🚀 TTFB: ${ttfb.toFixed(0)}ms ${status} (alvo: <100ms)`);
+      }
+    } catch {
+      // TTFB não disponível
     }
   }
 
