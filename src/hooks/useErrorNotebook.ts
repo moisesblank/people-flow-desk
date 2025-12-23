@@ -3,10 +3,10 @@
 // SANTUÁRIO v9.0 - Lei I: Performance Máxima
 // ============================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from 'sonner';
 
 // Tipos
@@ -126,10 +126,10 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
     }
   );
 
-  // Query: estatísticas do caderno de erros
-  const { data: stats } = useQuery({
-    queryKey: ['error-notebook-stats', user?.id],
-    queryFn: async (): Promise<ErrorNotebookStats> => {
+  // Query: estatísticas do caderno de erros - MIGRADO PARA useSubspaceQuery
+  const { data: stats } = useSubspaceQuery<ErrorNotebookStats>(
+    ['error-notebook-stats', user?.id || 'anon'],
+    async (): Promise<ErrorNotebookStats> => {
       if (!user?.id) {
         return {
           totalErrors: 0,
@@ -196,12 +196,17 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
         recentErrors
       };
     },
-    enabled: !!user?.id,
-    staleTime: 1000 * 60 * 2, // 2 minutos
-  });
+    {
+      profile: 'user',
+      persistKey: `error_notebook_stats_${user?.id}`,
+      enabled: !!user?.id,
+      staleTime: 1000 * 60 * 2,
+    }
+  );
 
-  // Mutation: marcar questão como dominada
-  const markAsMastered = useMutation({
+  // Mutation: marcar questão como dominada - MIGRADO PARA useOptimisticMutation
+  const markAsMastered = useOptimisticMutation<ErrorNotebookEntry[], string, string>({
+    queryKey: ['error-notebook', user?.id || ''],
     mutationFn: async (questionId: string) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
 
@@ -217,20 +222,20 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
       if (error) throw error;
       return questionId;
     },
-    onSuccess: (questionId) => {
-      // Invalidar cache
-      queryClient.invalidateQueries({ queryKey: ['error-notebook'] });
-      queryClient.invalidateQueries({ queryKey: ['error-notebook-stats'] });
-      toast.success('Questão marcada como dominada! 🎯');
+    optimisticUpdate: (old, questionId) => {
+      return (old || []).map(entry =>
+        entry.question_id === questionId 
+          ? { ...entry, mastered: true, mastered_at: new Date().toISOString() }
+          : entry
+      );
     },
-    onError: (error) => {
-      console.error('Erro ao marcar questão:', error);
-      toast.error('Erro ao marcar questão como dominada');
-    }
+    successMessage: 'Questão marcada como dominada! 🎯',
+    errorMessage: 'Erro ao marcar questão como dominada',
   });
 
-  // Mutation: resetar status de dominada (para revisar novamente)
-  const resetMastered = useMutation({
+  // Mutation: resetar status de dominada - MIGRADO PARA useOptimisticMutation
+  const resetMastered = useOptimisticMutation<ErrorNotebookEntry[], string, string>({
+    queryKey: ['error-notebook', user?.id || ''],
     mutationFn: async (questionId: string) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
 
@@ -246,15 +251,15 @@ export function useErrorNotebook(options: UseErrorNotebookOptions = {}) {
       if (error) throw error;
       return questionId;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['error-notebook'] });
-      queryClient.invalidateQueries({ queryKey: ['error-notebook-stats'] });
-      toast.info('Questão voltou para revisão');
+    optimisticUpdate: (old, questionId) => {
+      return (old || []).map(entry =>
+        entry.question_id === questionId 
+          ? { ...entry, mastered: false, mastered_at: null }
+          : entry
+      );
     },
-    onError: (error) => {
-      console.error('Erro ao resetar questão:', error);
-      toast.error('Erro ao resetar questão');
-    }
+    successMessage: 'Questão voltou para revisão',
+    errorMessage: 'Erro ao resetar questão',
   });
 
   // Helpers

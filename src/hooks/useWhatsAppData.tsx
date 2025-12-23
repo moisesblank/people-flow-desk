@@ -2,10 +2,10 @@
 // HOOK PARA DADOS DO WHATSAPP - INTEGRAÇÃO COM TODA A PLATAFORMA
 // ==============================================================================
 
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 
 // Tipos
 export interface WhatsAppTask {
@@ -82,19 +82,20 @@ export interface WhatsAppAttachment {
   download_status: string;
 }
 
-// Hook para tarefas do WhatsApp
+// Hook para tarefas do WhatsApp - MIGRADO PARA useSubspaceQuery
 export function useWhatsAppTasks() {
-  return useQuery({
-    queryKey: ['whatsapp-tasks'],
-    queryFn: async () => {
+  return useSubspaceQuery(
+    ['whatsapp-tasks'],
+    async () => {
       const { data, error } = await supabase
         .from('command_tasks')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
       return data as WhatsAppTask[];
-    }
-  });
+    },
+    { profile: 'dashboard', persistKey: 'whatsapp_tasks_v1' }
+  );
 }
 
 // Hook para finanças do WhatsApp - MIGRADO PARA useSubspaceQuery
@@ -297,21 +298,21 @@ export function useWebhookDiagnostics() {
   );
 }
 
-// Mutations
+// Mutations - MIGRADO PARA useOptimisticMutation
 export function useUpdateConversation() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<WhatsAppConversation> }) => {
+  return useOptimisticMutation<WhatsAppConversation[], { id: string; updates: Partial<WhatsAppConversation> }, void>({
+    queryKey: ['whatsapp-conversations'],
+    mutationFn: async ({ id, updates }) => {
       const { error } = await supabase
         .from('whatsapp_conversations')
         .update(updates)
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-conversations'] });
-    }
+    optimisticUpdate: (old, { id, updates }) => {
+      return (old || []).map(c => c.id === id ? { ...c, ...updates } : c);
+    },
+    errorMessage: 'Erro ao atualizar conversa',
   });
 }
 
