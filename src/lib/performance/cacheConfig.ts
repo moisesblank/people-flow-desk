@@ -1,98 +1,117 @@
 // ============================================
-// ⚡ EVANGELHO DA VELOCIDADE v2.0 ⚡
-// DOGMA V: A ONIPRESENÇA DO CACHE
-// Configuração ultra-otimizada do TanStack Query
+// ⚡ EVANGELHO DA VELOCIDADE v3500 ⚡
+// DOGMA V: CACHE QUÂNTICO ABSOLUTO
+// Performance ANO 3500 em dispositivo 3G
 // ============================================
 
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { ReactNode } from "react";
+import { QueryClient } from "@tanstack/react-query";
 
 /**
- * DOGMA V.2 - Configuração de Cache do TanStack Query
- * 
- * staleTime: Quanto tempo dados são considerados "frescos"
- * gcTime: Quanto tempo dados ficam em memória após não serem usados
+ * DOGMA V.3500 - Cache Estratificado por Conexão
+ * Otimizado para funcionar FULL em 3G
  */
-export const CACHE_CONFIG = {
-  // Dados que mudam frequentemente (1 minuto fresh, 5 minutos cache)
-  realtime: {
-    staleTime: 1 * 60 * 1000,      // 1 minuto
-    gcTime: 5 * 60 * 1000,         // 5 minutos
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
+export const CACHE_CONFIG_3500 = {
+  // 🔴 CONEXÃO 2G/3G - Cache agressivo
+  slow: {
+    staleTime: 10 * 60 * 1000,      // 10 minutos fresh (evita requests)
+    gcTime: 60 * 60 * 1000,          // 1 hora em memória
+    refetchOnWindowFocus: false,     // NUNCA refetch em focus
+    refetchOnMount: false,           // NUNCA refetch em mount
+    refetchOnReconnect: false,       // NUNCA refetch em reconnect
+    retry: 1,                        // 1 retry apenas
+    retryDelay: 5000,                // 5s delay (rede lenta)
   },
   
-  // Dados de dashboard (2 minutos fresh, 15 minutos cache)
-  dashboard: {
-    staleTime: 2 * 60 * 1000,      // 2 minutos
-    gcTime: 15 * 60 * 1000,        // 15 minutos
+  // 🟡 CONEXÃO 4G - Cache balanceado
+  medium: {
+    staleTime: 2 * 60 * 1000,       // 2 minutos fresh
+    gcTime: 15 * 60 * 1000,         // 15 minutos cache
     refetchOnWindowFocus: false,
     refetchOnMount: false,
+    refetchOnReconnect: false,
+    retry: 2,
+    retryDelay: 2000,
   },
   
-  // Dados de listagem (30 segundos fresh, 10 minutos cache)
-  list: {
-    staleTime: 30 * 1000,          // 30 segundos
-    gcTime: 10 * 60 * 1000,        // 10 minutos
+  // 🟢 CONEXÃO WiFi/Fibra - Performance máxima
+  fast: {
+    staleTime: 30 * 1000,           // 30 segundos fresh
+    gcTime: 10 * 60 * 1000,         // 10 minutos cache
     refetchOnWindowFocus: false,
     refetchOnMount: 'always' as const,
-  },
-  
-  // Dados estáticos (5 minutos fresh, 30 minutos cache)
-  static: {
-    staleTime: 5 * 60 * 1000,      // 5 minutos
-    gcTime: 30 * 60 * 1000,        // 30 minutos
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
-  },
-  
-  // Dados de usuário (1 minuto fresh, 10 minutos cache)
-  user: {
-    staleTime: 1 * 60 * 1000,      // 1 minuto
-    gcTime: 10 * 60 * 1000,        // 10 minutos
-    refetchOnWindowFocus: true,
-    refetchOnMount: true,
-  },
-  
-  // Dados de configuração (10 minutos fresh, 1 hora cache)
-  config: {
-    staleTime: 10 * 60 * 1000,     // 10 minutos
-    gcTime: 60 * 60 * 1000,        // 1 hora
-    refetchOnWindowFocus: false,
-    refetchOnMount: false,
+    refetchOnReconnect: true,
+    retry: 2,
+    retryDelay: 1000,
   },
 } as const;
 
 /**
- * DOGMA V.2 - QueryClient otimizado
+ * Detecta velocidade de conexão
+ */
+export function detectConnectionSpeed(): 'slow' | 'medium' | 'fast' {
+  if (typeof navigator === 'undefined') return 'medium';
+  
+  const connection = (navigator as any).connection;
+  if (!connection) return 'medium';
+  
+  const effectiveType = connection.effectiveType;
+  const saveData = connection.saveData;
+  
+  // Data saver = sempre slow
+  if (saveData) return 'slow';
+  
+  // Mapeamento de tipo de conexão
+  switch (effectiveType) {
+    case 'slow-2g':
+    case '2g':
+    case '3g':
+      return 'slow';
+    case '4g':
+      return connection.downlink < 5 ? 'medium' : 'fast';
+    default:
+      return 'fast';
+  }
+}
+
+/**
+ * DOGMA V.3500 - QueryClient Quântico
+ * Adapta-se automaticamente à velocidade da conexão
  */
 export function createSacredQueryClient(): QueryClient {
+  const speed = detectConnectionSpeed();
+  const config = CACHE_CONFIG_3500[speed];
+  
+  console.log(`[DOGMA V.3500] 🚀 Cache mode: ${speed.toUpperCase()}`);
+  
   return new QueryClient({
     defaultOptions: {
       queries: {
-        // Default: Dados frescos por 30 segundos
-        staleTime: 30 * 1000,
-        // Default: Cache por 10 minutos
-        gcTime: 10 * 60 * 1000,
-        // Retry inteligente com backoff exponencial
-        retry: 2,
-        retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 10000),
-        // Refetch on focus para dados críticos
-        refetchOnWindowFocus: false,
-        // Usar cache ao montar
-        refetchOnMount: 'always',
-        // Não refetch em reconexão (usuário pode estar em 3G)
-        refetchOnReconnect: false,
-        // Network mode para otimizar requests
-        networkMode: 'offlineFirst',
+        staleTime: config.staleTime,
+        gcTime: config.gcTime,
+        refetchOnWindowFocus: config.refetchOnWindowFocus,
+        refetchOnMount: config.refetchOnMount,
+        refetchOnReconnect: config.refetchOnReconnect,
+        
+        // 🔥 OTIMIZAÇÕES 3500
+        networkMode: 'offlineFirst',  // Prioriza cache SEMPRE
+        
+        // Retry inteligente com backoff
+        retry: config.retry,
+        retryDelay: (attemptIndex) => 
+          Math.min(config.retryDelay * (2 ** attemptIndex), 30000),
+        
+        // Placeholder enquanto carrega (evita loading flash)
+        placeholderData: (previousData: any) => previousData,
+        
+        // Estrutura de erro otimizada
+        throwOnError: false,
       },
       mutations: {
-        // Retry mutations com backoff
         retry: 1,
-        retryDelay: 1000,
-        // Log de erros
+        retryDelay: config.retryDelay,
+        networkMode: 'offlineFirst',
         onError: (error) => {
-          console.error('[DOGMA V] Mutation error:', error);
+          console.error('[DOGMA V.3500] Mutation error:', error);
         },
       },
     },
@@ -100,109 +119,216 @@ export function createSacredQueryClient(): QueryClient {
 }
 
 /**
- * DOGMA V.1 - Headers de Cache para CDN
- * Usar em Edge Functions para assets
+ * DOGMA V.3500 - Configuração de Cache por Tipo de Dados
  */
-export const CDN_CACHE_HEADERS = {
-  // Assets estáticos (imagens, fontes) - 1 ano
-  static: {
-    'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
-    'CDN-Cache-Control': 'public, max-age=31536000',
-    'Vercel-CDN-Cache-Control': 'public, max-age=31536000',
+export const CACHE_PROFILES = {
+  // Dados que NUNCA mudam (cursos, estrutura)
+  immutable: {
+    staleTime: Infinity,
+    gcTime: Infinity,
   },
   
-  // CSS e JS com hash - 1 ano
-  hashedAssets: {
-    'Cache-Control': 'public, max-age=31536000, s-maxage=31536000, immutable',
-    'CDN-Cache-Control': 'public, max-age=31536000',
+  // Dados de configuração (10 minutos)
+  config: {
+    staleTime: 10 * 60 * 1000,
+    gcTime: 60 * 60 * 1000,
   },
   
-  // HTML - revalidar sempre
+  // Dados de dashboard (2-5 minutos dependendo da conexão)
+  dashboard: {
+    staleTime: 2 * 60 * 1000,
+    gcTime: 15 * 60 * 1000,
+  },
+  
+  // Listas paginadas (30 segundos - 2 minutos)
+  list: {
+    staleTime: 30 * 1000,
+    gcTime: 10 * 60 * 1000,
+  },
+  
+  // Dados de usuário (1 minuto)
+  user: {
+    staleTime: 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+  },
+  
+  // Dados em tempo real (sem cache)
+  realtime: {
+    staleTime: 0,
+    gcTime: 0,
+    refetchInterval: 5000,
+  },
+} as const;
+
+/**
+ * DOGMA V.3500 - Headers de Cache CDN
+ */
+export const CDN_CACHE_HEADERS_3500 = {
+  // Assets estáticos com hash - IMUTÁVEL (1 ano)
+  immutable: {
+    'Cache-Control': 'public, max-age=31536000, immutable',
+    'CDN-Cache-Control': 'public, max-age=31536000, immutable',
+    'Vercel-CDN-Cache-Control': 'public, max-age=31536000, immutable',
+  },
+  
+  // HTML - Stale-while-revalidate (1h cache, 24h stale)
   html: {
     'Cache-Control': 'public, max-age=0, s-maxage=3600, stale-while-revalidate=86400',
-    'CDN-Cache-Control': 'public, max-age=3600',
+    'CDN-Cache-Control': 'public, max-age=3600, stale-while-revalidate=86400',
   },
   
-  // API pública - 1 minuto
-  api: {
-    'Cache-Control': 'public, max-age=60, s-maxage=60, stale-while-revalidate=300',
-    'CDN-Cache-Control': 'public, max-age=60',
+  // API Pública - 1 minuto com stale
+  apiPublic: {
+    'Cache-Control': 'public, max-age=60, s-maxage=300, stale-while-revalidate=600',
+    'CDN-Cache-Control': 'public, max-age=300',
   },
   
-  // API privada - não cachear
-  privateApi: {
+  // API Privada - NO CACHE
+  apiPrivate: {
     'Cache-Control': 'private, no-cache, no-store, must-revalidate',
-    'CDN-Cache-Control': 'private, no-cache',
+    'Pragma': 'no-cache',
+    'Expires': '0',
   },
   
-  // Imagens dinâmicas - 1 hora
-  dynamicImages: {
-    'Cache-Control': 'public, max-age=3600, s-maxage=86400, stale-while-revalidate=86400',
-    'CDN-Cache-Control': 'public, max-age=86400',
+  // Imagens - 1 semana + stale
+  images: {
+    'Cache-Control': 'public, max-age=604800, stale-while-revalidate=2592000',
+    'CDN-Cache-Control': 'public, max-age=604800',
+  },
+  
+  // Fontes - 1 ano (nunca mudam)
+  fonts: {
+    'Cache-Control': 'public, max-age=31536000, immutable',
   },
 } as const;
 
 /**
- * Utilitário para aplicar headers de cache
- */
-export function applyCacheHeaders(
-  type: keyof typeof CDN_CACHE_HEADERS
-): Record<string, string> {
-  return CDN_CACHE_HEADERS[type];
-}
-
-/**
- * DOGMA V.2 - Hook para invalidação inteligente de cache
+ * DOGMA V.3500 - Chaves de Invalidação Inteligente
  */
 export const INVALIDATION_KEYS = {
-  // Invalidar tudo relacionado a alunos
   students: ['alunos', 'students', 'dashboardStats'],
-  // Invalidar tudo relacionado a finanças
   financial: ['entradas', 'contas_pagar', 'comissoes', 'dashboardStats', 'contabilidade'],
-  // Invalidar tudo relacionado a funcionários
   employees: ['employees', 'employees_safe', 'dashboardStats'],
-  // Invalidar dashboard
   dashboard: ['dashboardStats', 'metricas'],
-  // Invalidar afiliados
   affiliates: ['affiliates', 'comissoes', 'dashboardStats'],
-  // Invalidar tarefas
   tasks: ['calendarTasks', 'calendar_tasks', 'dashboardStats'],
-  // Invalidar transações Hotmart
   hotmart: ['transacoes', 'transacoes_hotmart', 'alunos', 'entradas', 'dashboardStats'],
+  all: ['*'], // Nuclear option
 } as const;
 
 /**
- * Prefetch de queries críticas
+ * DOGMA V.3500 - Prefetch de Queries Críticas
  */
 export async function prefetchCriticalQueries(queryClient: QueryClient): Promise<void> {
-  // Lista de queries a serem pré-carregadas
+  const speed = detectConnectionSpeed();
+  
+  // Em conexão lenta, NÃO prefetch (economiza dados)
+  if (speed === 'slow') {
+    console.log('[DOGMA V.3500] ⏸️ Prefetch desabilitado (conexão lenta)');
+    return;
+  }
+  
   const criticalQueries = [
-    ['dashboardStats'],
-    ['profiles', 'current'],
+    { key: ['dashboardStats'], profile: CACHE_PROFILES.dashboard },
+    { key: ['profiles', 'current'], profile: CACHE_PROFILES.user },
   ];
 
   await Promise.allSettled(
-    criticalQueries.map(queryKey => 
+    criticalQueries.map(({ key, profile }) => 
       queryClient.prefetchQuery({
-        queryKey,
-        staleTime: CACHE_CONFIG.dashboard.staleTime,
+        queryKey: key,
+        staleTime: profile.staleTime,
       })
     )
   );
+  
+  console.log('[DOGMA V.3500] ✅ Queries críticas prefetched');
 }
 
 /**
- * Limpar cache antigo periodicamente
+ * DOGMA V.3500 - Limpeza Automática de Cache
  */
 export function setupCacheCleanup(queryClient: QueryClient): () => void {
+  const speed = detectConnectionSpeed();
+  
+  // Em conexão lenta, limpeza menos frequente (mantém cache)
+  const cleanupInterval = speed === 'slow' ? 30 * 60 * 1000 : 5 * 60 * 1000;
+  const maxAge = speed === 'slow' ? 60 * 60 * 1000 : 30 * 60 * 1000;
+  
   const interval = setInterval(() => {
-    // Remover queries não usadas há mais de 30 minutos
+    const now = Date.now();
+    let cleaned = 0;
+    
     queryClient.getQueryCache().findAll().forEach(query => {
-      if (query.state.dataUpdatedAt < Date.now() - 30 * 60 * 1000) {
+      if (query.state.dataUpdatedAt < now - maxAge) {
         queryClient.removeQueries({ queryKey: query.queryKey });
+        cleaned++;
       }
     });
-  }, 5 * 60 * 1000); // A cada 5 minutos
+    
+    if (cleaned > 0) {
+      console.log(`[DOGMA V.3500] 🧹 ${cleaned} queries removidas do cache`);
+    }
+  }, cleanupInterval);
 
   return () => clearInterval(interval);
 }
+
+/**
+ * DOGMA V.3500 - LocalStorage Cache Layer
+ * Persiste dados críticos para acesso offline/3G
+ */
+export const persistentCache = {
+  set: <T>(key: string, data: T, ttlMs: number = 30 * 60 * 1000) => {
+    try {
+      const item = {
+        data,
+        expiry: Date.now() + ttlMs,
+        version: '3500',
+      };
+      localStorage.setItem(`cache_${key}`, JSON.stringify(item));
+    } catch (e) {
+      console.warn('[DOGMA V.3500] LocalStorage cheio, limpando...');
+      // Limpa itens expirados
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('cache_'))
+        .forEach(k => {
+          try {
+            const item = JSON.parse(localStorage.getItem(k) || '{}');
+            if (item.expiry && item.expiry < Date.now()) {
+              localStorage.removeItem(k);
+            }
+          } catch {}
+        });
+    }
+  },
+  
+  get: <T>(key: string): T | null => {
+    try {
+      const item = localStorage.getItem(`cache_${key}`);
+      if (!item) return null;
+      
+      const parsed = JSON.parse(item);
+      if (parsed.expiry < Date.now()) {
+        localStorage.removeItem(`cache_${key}`);
+        return null;
+      }
+      
+      return parsed.data as T;
+    } catch {
+      return null;
+    }
+  },
+  
+  remove: (key: string) => {
+    localStorage.removeItem(`cache_${key}`);
+  },
+  
+  clear: () => {
+    Object.keys(localStorage)
+      .filter(k => k.startsWith('cache_'))
+      .forEach(k => localStorage.removeItem(k));
+  },
+};
+
+console.log('[DOGMA V.3500] ⚡ Cache Quântico inicializado');
