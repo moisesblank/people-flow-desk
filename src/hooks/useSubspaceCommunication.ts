@@ -160,27 +160,30 @@ export function useSubspaceQuery<T>(
 // TESE 3.1: MUTAÇÃO OTIMISTA (AÇÃO INSTANTÂNEA)
 // ============================================
 
-interface OptimisticMutationOptions<TData, TVariables, TContext> {
-  mutationFn: (variables: TVariables) => Promise<TData>;
+interface OptimisticMutationOptions<TCacheData, TVariables, TMutationResult = unknown, TContext = { previousData: TCacheData | undefined }> {
+  mutationFn: (variables: TVariables) => Promise<TMutationResult>;
   // Chave da query a ser atualizada otimisticamente
   queryKey: string[];
   // Função para atualizar o cache otimisticamente
-  optimisticUpdate: (oldData: TData | undefined, variables: TVariables) => TData;
+  optimisticUpdate: (oldData: TCacheData | undefined, variables: TVariables) => TCacheData;
   // Mensagem de sucesso (opcional)
   successMessage?: string;
   // Mensagem de erro (opcional)
   errorMessage?: string;
   // Callbacks
-  onSuccess?: (data: TData, variables: TVariables) => void;
+  onSuccess?: (data: TMutationResult, variables: TVariables) => void;
   onError?: (error: Error, variables: TVariables, context: TContext | undefined) => void;
 }
 
 /**
  * Hook de Mutação Otimista
  * TESE 3.1: UI atualiza INSTANTANEAMENTE, reverte apenas em erro
+ * TCacheData = tipo dos dados no cache (ex: Task[])
+ * TVariables = tipo das variáveis da mutation (ex: { id: string, title: string })
+ * TMutationResult = tipo retornado pela mutation (ex: Task)
  */
-export function useOptimisticMutation<TData, TVariables, TContext = { previousData: TData | undefined }>(
-  options: OptimisticMutationOptions<TData, TVariables, TContext>
+export function useOptimisticMutation<TCacheData, TVariables, TMutationResult = unknown, TContext = { previousData: TCacheData | undefined }>(
+  options: OptimisticMutationOptions<TCacheData, TVariables, TMutationResult, TContext>
 ) {
   const queryClient = useQueryClient();
   const { 
@@ -202,10 +205,10 @@ export function useOptimisticMutation<TData, TVariables, TContext = { previousDa
       await queryClient.cancelQueries({ queryKey });
       
       // Snapshot do estado anterior (para rollback)
-      const previousData = queryClient.getQueryData<TData>(queryKey);
+      const previousData = queryClient.getQueryData<TCacheData>(queryKey);
       
       // 🚀 ATUALIZAÇÃO OTIMISTA - UI muda AGORA
-      queryClient.setQueryData<TData>(queryKey, (old) => 
+      queryClient.setQueryData<TCacheData>(queryKey, (old) => 
         optimisticUpdate(old, variables)
       );
       
@@ -225,7 +228,7 @@ export function useOptimisticMutation<TData, TVariables, TContext = { previousDa
     },
     
     // ✅ EM SUCESSO: Sincronizar com servidor
-    onSuccess: (data: TData, variables: TVariables) => {
+    onSuccess: (data: TMutationResult, variables: TVariables) => {
       if (successMessage) {
         toast.success(successMessage);
       }
@@ -238,7 +241,6 @@ export function useOptimisticMutation<TData, TVariables, TContext = { previousDa
     },
   });
 }
-
 // ============================================
 // TESE 3.2: SELEÇÃO DE COLUNAS CIRÚRGICA
 // ============================================

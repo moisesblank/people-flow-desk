@@ -3,10 +3,10 @@
 // Hook para gestão financeira completa
 // ============================================
 
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
-import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from "sonner";
 
 export interface Transaction {
@@ -135,25 +135,13 @@ export function useCreateTransaction() {
   });
 }
 
-// Hook para atualizar transação
+// Hook para atualizar transação - MIGRADO PARA useOptimisticMutation
 export function useUpdateTransaction() {
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async ({
-      id,
-      ...data
-    }: {
-      id: string;
-      description?: string;
-      amount?: number;
-      type?: string;
-      status?: string;
-      due_date?: string;
-      paid_date?: string;
-      category_id?: string;
-      notes?: string;
-    }) => {
+  return useOptimisticMutation<Transaction[], { id: string; description?: string; amount?: number; type?: string; status?: string; due_date?: string; paid_date?: string; category_id?: string; notes?: string }, Transaction>({
+    queryKey: ["transactions", user?.id || 'anon', '{}'],
+    mutationFn: async ({ id, ...data }) => {
       const { data: result, error } = await supabase
         .from("transactions")
         .update({ ...data, updated_at: new Date().toISOString() })
@@ -162,39 +150,31 @@ export function useUpdateTransaction() {
         .single();
 
       if (error) throw error;
-      return result;
+      return result as Transaction;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-stats"] });
-      toast.success("Transação atualizada!");
+    optimisticUpdate: (old, { id, ...updates }) => {
+      return (old || []).map(t => t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t);
     },
-    onError: (error) => {
-      toast.error("Erro ao atualizar transação: " + error.message);
-    },
+    successMessage: "Transação atualizada!",
+    errorMessage: "Erro ao atualizar transação",
   });
 }
 
-// Hook para deletar transação
+// Hook para deletar transação - MIGRADO PARA useOptimisticMutation
 export function useDeleteTransaction() {
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async (id: string) => {
-      const { error } = await supabase
-        .from("transactions")
-        .delete()
-        .eq("id", id);
+  return useOptimisticMutation<Transaction[], string, void>({
+    queryKey: ["transactions", user?.id || 'anon', '{}'],
+    mutationFn: async (id) => {
+      const { error } = await supabase.from("transactions").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["transactions"] });
-      queryClient.invalidateQueries({ queryKey: ["financial-stats"] });
-      toast.success("Transação excluída!");
+    optimisticUpdate: (old, id) => {
+      return (old || []).filter(t => t.id !== id);
     },
-    onError: (error) => {
-      toast.error("Erro ao excluir transação: " + error.message);
-    },
+    successMessage: "Transação excluída!",
+    errorMessage: "Erro ao excluir transação",
   });
 }
 

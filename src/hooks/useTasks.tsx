@@ -3,11 +3,11 @@
 // 🌌 TESE 3: Cache localStorage = 0ms segunda visita
 // ============================================
 
-import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { toast } from "sonner";
-import { useSubspaceQuery } from "./useSubspaceCommunication";
+import { useSubspaceQuery, useOptimisticMutation } from "./useSubspaceCommunication";
 
 export interface Task {
   id: string;
@@ -91,20 +91,13 @@ export function useTasksKanban() {
   return { columns, isLoading };
 }
 
-// Hook para criar tarefa
+// Hook para criar tarefa - MIGRADO PARA useOptimisticMutation
 export function useCreateTask() {
-  const queryClient = useQueryClient();
   const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async (data: {
-      title: string;
-      description?: string;
-      status?: string;
-      priority?: string;
-      due_date?: string;
-      assigned_to_user?: string;
-    }) => {
+  return useOptimisticMutation<Task[], { title: string; description?: string; status?: string; priority?: string; due_date?: string; assigned_to_user?: string }, Task>({
+    queryKey: ["tasks", user?.id || '', '', ''],
+    mutationFn: async (data) => {
       if (!user?.id) throw new Error("Usuário não autenticado");
 
       const { data: result, error } = await supabase
@@ -122,35 +115,37 @@ export function useCreateTask() {
         .single();
 
       if (error) throw error;
-      return result;
+      return result as Task;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Tarefa criada!");
+    optimisticUpdate: (old: any, newTask) => {
+      const optimisticTask: Task = {
+        id: `temp-${Date.now()}`,
+        title: newTask.title,
+        description: newTask.description || null,
+        status: newTask.status || "todo",
+        priority: newTask.priority || "medium",
+        due_date: newTask.due_date || null,
+        assigned_to: null,
+        assigned_to_user: newTask.assigned_to_user || null,
+        created_by: null,
+        completed_at: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      };
+      return [optimisticTask, ...(old || [])];
     },
-    onError: (error) => {
-      toast.error("Erro ao criar tarefa: " + error.message);
-    },
+    successMessage: "Tarefa criada!",
+    errorMessage: "Erro ao criar tarefa",
   });
 }
 
-// Hook para atualizar tarefa
+// Hook para atualizar tarefa - MIGRADO PARA useOptimisticMutation
 export function useUpdateTask() {
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async ({
-      id,
-      ...data
-    }: {
-      id: string;
-      title?: string;
-      description?: string;
-      status?: string;
-      priority?: string;
-      due_date?: string;
-      completed_at?: string;
-    }) => {
+  return useOptimisticMutation<Task[], { id: string; title?: string; description?: string; status?: string; priority?: string; due_date?: string; completed_at?: string }, Task>({
+    queryKey: ["tasks", user?.id || '', '', ''],
+    mutationFn: async ({ id, ...data }) => {
       const { data: result, error } = await supabase
         .from("tasks")
         .update({ ...data, updated_at: new Date().toISOString() })
@@ -159,43 +154,43 @@ export function useUpdateTask() {
         .single();
 
       if (error) throw error;
-      return result;
+      return result as Task;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Tarefa atualizada!");
+    optimisticUpdate: (old: any, { id, ...updates }) => {
+      return (old || []).map((task: Task) =>
+        task.id === id ? { ...task, ...updates, updated_at: new Date().toISOString() } : task
+      );
     },
-    onError: (error) => {
-      toast.error("Erro ao atualizar tarefa: " + error.message);
-    },
+    successMessage: "Tarefa atualizada!",
+    errorMessage: "Erro ao atualizar tarefa",
   });
 }
 
-// Hook para deletar tarefa
+// Hook para deletar tarefa - MIGRADO PARA useOptimisticMutation
 export function useDeleteTask() {
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async (id: string) => {
+  return useOptimisticMutation<Task[], string, void>({
+    queryKey: ["tasks", user?.id || '', '', ''],
+    mutationFn: async (id) => {
       const { error } = await supabase.from("tasks").delete().eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
-      toast.success("Tarefa excluída!");
+    optimisticUpdate: (old: any, id) => {
+      return (old || []).filter((task: Task) => task.id !== id);
     },
-    onError: (error) => {
-      toast.error("Erro ao excluir tarefa: " + error.message);
-    },
+    successMessage: "Tarefa excluída!",
+    errorMessage: "Erro ao excluir tarefa",
   });
 }
 
-// Hook para mover tarefa (Kanban drag & drop)
+// Hook para mover tarefa (Kanban drag & drop) - MIGRADO PARA useOptimisticMutation
 export function useMoveTask() {
-  const queryClient = useQueryClient();
+  const { user } = useAuth();
 
-  return useMutation({
-    mutationFn: async ({ id, status }: { id: string; status: TaskStatus }) => {
+  return useOptimisticMutation<Task[], { id: string; status: TaskStatus }, Task>({
+    queryKey: ["tasks", user?.id || '', '', ''],
+    mutationFn: async ({ id, status }) => {
       const update: Record<string, string> = {
         status,
         updated_at: new Date().toISOString(),
@@ -213,14 +208,21 @@ export function useMoveTask() {
         .single();
 
       if (error) throw error;
-      return data;
+      return data as Task;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+    optimisticUpdate: (old: any, { id, status }) => {
+      return (old || []).map((task: Task) =>
+        task.id === id 
+          ? { 
+              ...task, 
+              status, 
+              updated_at: new Date().toISOString(),
+              completed_at: status === "done" ? new Date().toISOString() : task.completed_at
+            } 
+          : task
+      );
     },
-    onError: (error) => {
-      toast.error("Erro ao mover tarefa: " + error.message);
-    },
+    errorMessage: "Erro ao mover tarefa",
   });
 }
 
