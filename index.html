@@ -154,6 +154,7 @@
     
     <!-- Remove loader when app is ready -->
     <script>
+      // Remove loader on load event
       window.addEventListener('load', function() {
         var loader = document.getElementById('initial-loader');
         if (loader) {
@@ -161,6 +162,15 @@
           setTimeout(function() { loader.remove(); }, 300);
         }
       });
+      // 🛡️ SAFETY TIMEOUT: Remove loader after 5s even if load event fails
+      setTimeout(function() {
+        var loader = document.getElementById('initial-loader');
+        if (loader) {
+          console.log('[LOADER] Safety timeout - forcing remove');
+          loader.classList.add('fade-out');
+          setTimeout(function() { loader.remove(); }, 300);
+        }
+      }, 5000);
     </script>
     
     <!-- Service Worker registration (async, non-blocking) -->

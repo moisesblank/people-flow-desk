@@ -55,12 +55,21 @@ export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
   const { isMobile, isSlowConnection, disableAnimations } = usePerformance();
   const [phase, setPhase] = useState(0);
 
-  // Skip intro em conexões lentas
+  // Skip intro em conexões lentas + SAFETY TIMEOUT
   useEffect(() => {
+    // 🛡️ SAFETY: Garante que a intro SEMPRE complete em no máximo 5s
+    const safetyTimer = setTimeout(() => {
+      console.log('[INTRO] Safety timeout - forcing complete');
+      onComplete();
+    }, 5000);
+
     if (disableAnimations || isSlowConnection) {
       // Skip direto em 3G/conexões lentas
       const timer = setTimeout(onComplete, 500);
-      return () => clearTimeout(timer);
+      return () => {
+        clearTimeout(timer);
+        clearTimeout(safetyTimer);
+      };
     }
 
     // Timeline otimizada - mais rápida
@@ -72,7 +81,10 @@ export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
       setTimeout(onComplete, 3500),
     ];
 
-    return () => timers.forEach(clearTimeout);
+    return () => {
+      timers.forEach(clearTimeout);
+      clearTimeout(safetyTimer);
+    };
   }, [onComplete, disableAnimations, isSlowConnection]);
 
   // Versão ultra-lite para mobile
