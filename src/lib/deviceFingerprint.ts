@@ -148,8 +148,68 @@ function getAudioFingerprint(): string {
   }
 }
 
-// Hash usando Web Crypto API (otimizado)
+// 🏛️ LEI I - Hash usando Web Worker quando disponível (off-thread)
+let hashWorkerAvailable = true;
+let hashWorker: Worker | null = null;
+const hashPending = new Map<string, { resolve: (v: string) => void; reject: (e: Error) => void }>();
+
+function getHashWorker(): Worker | null {
+  if (!hashWorker && typeof Worker !== 'undefined' && hashWorkerAvailable) {
+    try {
+      const code = `
+        self.onmessage = async (e) => {
+          const { id, data } = e.data;
+          try {
+            const encoder = new TextEncoder();
+            const buffer = encoder.encode(data);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            self.postMessage({ id, hash });
+          } catch (err) {
+            self.postMessage({ id, error: err.message });
+          }
+        };
+      `;
+      const blob = new Blob([code], { type: 'application/javascript' });
+      hashWorker = new Worker(URL.createObjectURL(blob));
+      hashWorker.onmessage = (e) => {
+        const { id, hash, error } = e.data;
+        const pending = hashPending.get(id);
+        if (pending) {
+          hashPending.delete(id);
+          if (error) pending.reject(new Error(error));
+          else pending.resolve(hash);
+        }
+      };
+    } catch {
+      hashWorkerAvailable = false;
+    }
+  }
+  return hashWorker;
+}
+
 async function hashString(str: string): Promise<string> {
+  // Tentar usar worker (off-thread)
+  const worker = getHashWorker();
+  if (worker) {
+    return new Promise((resolve, reject) => {
+      const id = `hash_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+      hashPending.set(id, { resolve, reject });
+      worker.postMessage({ id, data: str });
+      // Timeout de 2s para fallback
+      setTimeout(() => {
+        if (hashPending.has(id)) {
+          hashPending.delete(id);
+          hashStringFallback(str).then(resolve).catch(reject);
+        }
+      }, 2000);
+    });
+  }
+  return hashStringFallback(str);
+}
+
+async function hashStringFallback(str: string): Promise<string> {
   try {
     const encoder = new TextEncoder();
     const data = encoder.encode(str);

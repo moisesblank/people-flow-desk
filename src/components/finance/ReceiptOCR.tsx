@@ -4,6 +4,7 @@
 // ============================================
 
 import { useState, useCallback } from "react";
+import { useFileUploadWorker } from "@/hooks/useWebWorker";
 import { motion } from "framer-motion";
 import {
   Camera,
@@ -51,6 +52,9 @@ export function ReceiptOCR({ onExtracted, buttonVariant = "outline", buttonSize 
   const [result, setResult] = useState<OCRResult | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  
+  // 🏛️ LEI I - Web Worker para Base64
+  const { convertFileToBase64: workerFileToBase64 } = useFileUploadWorker();
 
   const handleFileSelect = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -78,17 +82,8 @@ export function ReceiptOCR({ onExtracted, buttonVariant = "outline", buttonSize 
     setProgress(10);
 
     try {
-      // Convert file to base64
-      const base64 = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => {
-          const result = reader.result as string;
-          const base64Data = result.split(",")[1];
-          resolve(base64Data);
-        };
-        reader.onerror = reject;
-        reader.readAsDataURL(selectedFile);
-      });
+      // 🏛️ LEI I - Web Worker para Base64 (UI fluida durante processamento)
+      const base64 = await workerFileToBase64(selectedFile);
 
       setProgress(30);
 
