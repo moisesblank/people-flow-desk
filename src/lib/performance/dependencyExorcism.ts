@@ -366,7 +366,13 @@ export function initDependencyExorcism(): void {
     });
   }
 
-  console.log('[DOGMA VIII] ⚡ Exorcismo de dependências inicializado');
+  // 🏛️ LEI I: Log só em DEV
+  if (import.meta.env.DEV) {
+    console.log('[DOGMA VIII] ⚡ Exorcismo de dependências inicializado');
+  }
 }
 
-console.log('[DOGMA VIII] ⚡ Módulo de exorcismo de dependências carregado');
+// 🏛️ LEI I: Sem console.log em produção
+if (import.meta.env.DEV) {
+  console.log('[DOGMA VIII] ⚡ Módulo de exorcismo de dependências carregado');
+}

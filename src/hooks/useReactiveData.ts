@@ -30,11 +30,12 @@ export function useReactiveData() {
     // Subscrever a mudanças em tempo real
     const unsubscribe = subscribeRealtime();
 
-    // Refresh para dados externos a cada 10s (conforme requisito)
+    // Refresh para dados externos a cada 30s (otimizado para 3G)
+    // 🏛️ LEI I: Reduzido de 10s para 30s para economizar requisições
     const externalInterval = setInterval(() => {
-      console.log('[useReactiveData] Sync externo (10s)');
+      // Sem console.log em produção
       fetchFromDB();
-    }, 10000);
+    }, 30000);
 
     return () => {
       unsubscribe();

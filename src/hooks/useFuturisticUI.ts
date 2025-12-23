@@ -1,19 +1,11 @@
 // ============================================
 // SYNAPSE v15.0 - Futuristic UI Feature Flags
 // Performance-first: respects reduced motion, lite mode
+// 🏛️ LEI I: Usa flags centralizados
 // ============================================
 
 import { useMemo } from "react";
-import { usePerformance } from "@/hooks/usePerformance";
-
-// Feature flags - can be controlled via sna_feature_flags or local
-const UI_FLAGS = {
-  ui_futuristic_core: true,      // Base tokens and styles
-  ui_futuristic_motion: true,    // Microanimations
-  ui_ambient_fx: true,           // Ambient holographic effects
-  ui_particles: false,           // Heavy particles (off by default)
-  ui_ultra: false,               // Ultra effects (hardware dependent)
-} as const;
+import { usePerformanceFlags } from "@/hooks/usePerformanceFlags";
 
 export interface FuturisticUIConfig {
   // Flags
@@ -35,36 +27,29 @@ export interface FuturisticUIConfig {
 }
 
 export function useFuturisticUI(): FuturisticUIConfig {
-  const { 
-    shouldReduceMotion, 
-    isSlowConnection, 
-    isLowEndDevice 
-  } = usePerformance();
+  // 🏛️ LEI I: Usa flags centralizados
+  const flags = usePerformanceFlags();
   
   return useMemo(() => {
-    // Respect user preferences and device capabilities
-    const isLiteMode = isLowEndDevice || isSlowConnection;
-    const canAnimate = !shouldReduceMotion && !isLiteMode;
-    
-    // Flag states (respect lite mode)
-    const enableCore = UI_FLAGS.ui_futuristic_core;
-    const enableMotion = UI_FLAGS.ui_futuristic_motion && canAnimate;
-    const enableAmbient = UI_FLAGS.ui_ambient_fx && canAnimate && !isLiteMode;
-    const enableParticles = UI_FLAGS.ui_particles && canAnimate && !isLiteMode;
-    const enableUltra = UI_FLAGS.ui_ultra && canAnimate && !isLiteMode && !isSlowConnection;
+    // Flag states from centralized governance
+    const enableCore = true;
+    const enableMotion = flags.ui_futuristic_motion;
+    const enableAmbient = flags.ui_ambient_fx;
+    const enableParticles = false; // Sempre off (pesado)
+    const enableUltra = flags.ui_ultra;
     
     // Computed values
-    const shouldAnimate = enableMotion && canAnimate;
-    const shouldUseBlur = !isLiteMode; // Blur is expensive on low-end
+    const shouldAnimate = enableMotion;
+    const shouldUseBlur = !flags.perf_mode_lite;
     
-    // Animation duration multiplier based on device
+    // Animation duration multiplier based on lite mode
     const animationDuration = (base: number): number => {
-      if (shouldReduceMotion) return 0;
-      if (isLiteMode) return base * 0.5;
+      if (!enableMotion) return 0;
+      if (flags.perf_mode_lite) return base * 0.5;
       return base;
     };
     
-    // Dynamic CSS classes
+    // Dynamic CSS classes - NO BLUR in lite mode
     const glassClass = shouldUseBlur 
       ? "bg-ai-surface/80 backdrop-blur-xl border border-ai-border/50" 
       : "bg-ai-surface/95 border border-ai-border/50";
@@ -90,7 +75,7 @@ export function useFuturisticUI(): FuturisticUIConfig {
       glowClass,
       holoGradientClass,
     };
-  }, [shouldReduceMotion, isSlowConnection, isLowEndDevice]);
+  }, [flags]);
 }
 
 // Utility hook for animation props
