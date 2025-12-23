@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Globe, 
   Sparkles, 
@@ -232,14 +233,15 @@ export default function GestaoSite() {
     return option ? <Badge className={option.color}>{option.label}</Badge> : null;
   };
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
+        {/* Header - GPU optimized */}
         <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-8"
+          {...gpuAnimationProps.fadeUp}
+          className="mb-8 will-change-transform transform-gpu"
         >
           <div className="space-y-2">
             <motion.div className="flex items-center gap-2 text-primary">
@@ -255,12 +257,11 @@ export default function GestaoSite() {
           </div>
         </motion.header>
 
-        {/* Progress & Stats */}
+        {/* Progress & Stats - GPU optimized */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-2xl p-6 mb-8"
+          className="glass-card rounded-2xl p-6 mb-8 will-change-transform transform-gpu"
         >
           <div className="flex items-center justify-between mb-4">
             <h3 className="font-semibold text-foreground">Progresso Geral</h3>

@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   FileText, 
   Sparkles, 
@@ -324,14 +325,15 @@ export default function Relatorios() {
     "hsl(320, 70%, 50%)",
   ];
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
+        {/* Header - GPU optimized */}
         <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+          {...gpuAnimationProps.fadeUp}
+          className="mb-10 will-change-transform transform-gpu"
         >
           <div className="space-y-2">
             <motion.div className="flex items-center gap-2 text-primary">
@@ -347,12 +349,11 @@ export default function Relatorios() {
           </div>
         </motion.header>
 
-        {/* Month Selector */}
+        {/* Month Selector - GPU optimized */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.1 }}
-          className="mb-8 flex items-center gap-4"
+          className="mb-8 flex items-center gap-4 will-change-transform transform-gpu"
         >
           <Calendar className="h-5 w-5 text-muted-foreground" />
           <Select value={selectedMonth} onValueChange={setSelectedMonth}>
@@ -370,13 +371,12 @@ export default function Relatorios() {
           {isLoading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
         </motion.div>
 
-        {/* Summary Cards */}
+        {/* Summary Cards - GPU optimized */}
         {reportData && (
           <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...gpuAnimationProps.fadeUp}
             transition={{ delay: 0.2 }}
-            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8"
+            className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8 will-change-transform transform-gpu"
           >
             <div className="glass-card rounded-2xl p-6">
               <div className="flex items-center gap-3 mb-3">
@@ -534,13 +534,12 @@ export default function Relatorios() {
           )}
         </section>
 
-        {/* Financial Health Indicator */}
+        {/* Financial Health Indicator - GPU optimized */}
         {reportData && (
           <motion.section
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
+            {...gpuAnimationProps.fadeUp}
             transition={{ delay: 0.4 }}
-            className="glass-card rounded-2xl p-6 mb-8"
+            className="glass-card rounded-2xl p-6 mb-8 will-change-transform transform-gpu"
           >
             <h3 className="text-lg font-semibold text-foreground mb-6">Saúde Financeira</h3>
             <div className="grid gap-4 md:grid-cols-4">

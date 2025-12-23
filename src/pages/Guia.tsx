@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   BookOpen, 
   Sparkles, 
@@ -204,14 +205,15 @@ export default function Guia() {
     },
   ];
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-5xl">
-        {/* Header */}
+        {/* Header - GPU optimized */}
         <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+          {...gpuAnimationProps.fadeUp}
+          className="mb-10 will-change-transform transform-gpu"
         >
           <div className="space-y-2">
             <motion.div className="flex items-center gap-2 text-primary">
@@ -227,12 +229,11 @@ export default function Guia() {
           </div>
         </motion.header>
 
-        {/* Roles Info */}
+        {/* Roles Info - GPU optimized */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.1 }}
-          className="glass-card rounded-2xl p-6 mb-8"
+          className="glass-card rounded-2xl p-6 mb-8 will-change-transform transform-gpu"
         >
           <div className="flex items-center gap-3 mb-4">
             <div className="p-2 rounded-lg bg-primary/10">
@@ -262,12 +263,11 @@ export default function Guia() {
           </div>
         </motion.section>
 
-        {/* Modules */}
+        {/* Modules - GPU optimized */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.2 }}
-          className="mb-8"
+          className="mb-8 will-change-transform transform-gpu"
         >
           <h2 className="text-xl font-semibold text-foreground mb-6 flex items-center gap-2">
             <BookOpen className="h-5 w-5 text-primary" />
@@ -320,12 +320,11 @@ export default function Guia() {
           </div>
         </motion.section>
 
-        {/* FAQ */}
+        {/* FAQ - GPU optimized */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.3 }}
-          className="glass-card rounded-2xl p-6"
+          className="glass-card rounded-2xl p-6 will-change-transform transform-gpu"
         >
           <div className="flex items-center gap-3 mb-6">
             <div className="p-2 rounded-lg bg-primary/10">

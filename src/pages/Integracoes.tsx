@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Sparkles, 
   Brain, 
@@ -218,21 +219,21 @@ export default function Integracoes() {
     }
   };
 
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
+
   return (
     <div className="p-4 md:p-8 lg:p-12">
       <div className="mx-auto max-w-7xl">
-        {/* Header */}
+        {/* Header - GPU optimized */}
         <motion.header 
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="mb-10"
+          {...gpuAnimationProps.fadeUp}
+          className="mb-10 will-change-transform transform-gpu"
         >
           <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
             <div className="space-y-2">
               <motion.div 
                 className="flex items-center gap-3"
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
+                {...gpuAnimationProps.slideIn}
               >
                 <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
                   <Brain className="h-4 w-4 text-primary" />
@@ -260,12 +261,11 @@ export default function Integracoes() {
           </div>
         </motion.header>
 
-        {/* Platform Status Cards */}
+        {/* Platform Status Cards - GPU optimized */}
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.1 }}
-          className="grid gap-4 md:grid-cols-3 mb-8"
+          className="grid gap-4 md:grid-cols-3 mb-8 will-change-transform transform-gpu"
         >
           {/* Lovable Cloud Status */}
           <div className="glass-card rounded-xl p-5 bg-gradient-to-br from-pink-500/10 to-purple-500/10 border border-pink-500/20">

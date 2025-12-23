@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion } from 'framer-motion';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 
 interface ReactiveDashboardSectionProps {
   className?: string;
@@ -37,6 +38,7 @@ export function ReactiveDashboardSection({
   compact = false 
 }: ReactiveDashboardSectionProps) {
   const { data, loading, error, forceRefresh } = useReactiveData();
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
 
   if (error) {
     return (
@@ -79,11 +81,11 @@ export function ReactiveDashboardSection({
         )}
       </div>
 
-      {/* KPIs Financeiros */}
+      {/* KPIs Financeiros - GPU optimized */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...gpuAnimationProps.fadeUp}
         transition={{ delay: 0.1 }}
+        className="will-change-transform transform-gpu"
       >
         <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <DollarSign className="w-4 h-4" />
@@ -124,11 +126,11 @@ export function ReactiveDashboardSection({
         </ReactiveKPIGrid>
       </motion.section>
 
-      {/* Contadores */}
+      {/* Contadores - GPU optimized */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...gpuAnimationProps.fadeUp}
         transition={{ delay: 0.2 }}
+        className="will-change-transform transform-gpu"
       >
         <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <Users className="w-4 h-4" />
@@ -167,9 +169,9 @@ export function ReactiveDashboardSection({
       {/* KPIs de Performance */}
       {!compact && (
         <motion.section
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
+          {...gpuAnimationProps.fadeUp}
           transition={{ delay: 0.3 }}
+          className="will-change-transform transform-gpu"
         >
           <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
             <BarChart3 className="w-4 h-4" />
@@ -205,11 +207,11 @@ export function ReactiveDashboardSection({
         </motion.section>
       )}
 
-      {/* Tarefas */}
+      {/* Tarefas - GPU optimized */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...gpuAnimationProps.fadeUp}
         transition={{ delay: 0.4 }}
+        className="will-change-transform transform-gpu"
       >
         <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4" />
@@ -240,11 +242,11 @@ export function ReactiveDashboardSection({
         </ReactiveKPIGrid>
       </motion.section>
 
-      {/* Metas */}
+      {/* Metas - GPU optimized */}
       <motion.section
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...gpuAnimationProps.fadeUp}
         transition={{ delay: 0.5 }}
+        className="will-change-transform transform-gpu"
       >
         <h3 className="text-sm font-medium text-muted-foreground mb-3 flex items-center gap-2">
           <Target className="w-4 h-4" />
