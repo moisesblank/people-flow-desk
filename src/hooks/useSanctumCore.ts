@@ -375,170 +375,224 @@ export function useSanctumCore(ctx: SanctumContext) {
     }
   }, [isOwner, bump, reportViolation]);
 
-  // Handler de visibilidade
+  // Handler de mudança de visibilidade
   const onVisibilityChange = useCallback(() => {
     if (isOwner) return;
     if (document.hidden) {
       const count = bump("visibility_change_suspicious");
-      if (count >= VISIBILITY_THRESHOLD) {
+      if (count > 5 && count % 5 === 0) {
         void reportViolation({
           type: "visibility_change_suspicious",
           severity: THREAT_SEVERITY_MAP.visibility_change_suspicious,
-          meta: { count, hidden: true },
+          meta: { count },
         });
       }
-    }
-  }, [isOwner, bump, reportViolation]);
-
-  // ============================================
-  // DETECÇÃO DE DEVTOOLS
-  // ============================================
-  const checkDevTools = useCallback(() => {
-    if (isOwner) return;
-
-    const widthThreshold = window.outerWidth - window.innerWidth > 160;
-    const heightThreshold = window.outerHeight - window.innerHeight > 160;
-
-    if (widthThreshold || heightThreshold) {
-      const count = bump("devtools_probable");
-      void reportViolation({
-        type: "devtools_probable",
-        severity: THREAT_SEVERITY_MAP.devtools_probable,
-        meta: { count, widthDiff: window.outerWidth - window.innerWidth, heightDiff: window.outerHeight - window.innerHeight },
-      });
-
-      const threshold = PUNISHMENT_THRESHOLDS.devtools_probable!;
+      const threshold = PUNISHMENT_THRESHOLDS.visibility_change_suspicious!;
       if (count >= threshold) {
-        void punish(90, `devtools_open>=${threshold}`);
+        void punish(75, `visibility>=${threshold}`);
       }
     }
   }, [isOwner, bump, reportViolation, punish]);
 
   // ============================================
-  // DETECÇÃO DE AUTOMAÇÃO
+  // HEURÍSTICAS DE DETECÇÃO
   // ============================================
+
+  // Detector de DevTools (heurística de tamanho)
+  const checkDevTools = useCallback(() => {
+    if (isOwner) return;
+
+    const widthDiff = Math.abs(window.outerWidth - window.innerWidth);
+    const heightDiff = Math.abs(window.outerHeight - window.innerHeight);
+
+    // DevTools provavelmente aberto
+    if (widthDiff > 160 || heightDiff > 160) {
+      const count = bump("devtools_probable");
+      void reportViolation({
+        type: "devtools_probable",
+        severity: THREAT_SEVERITY_MAP.devtools_probable,
+        meta: { count, widthDiff, heightDiff },
+      });
+
+      const threshold = PUNISHMENT_THRESHOLDS.devtools_probable!;
+      if (count >= threshold) {
+        void punish(85, `devtools_probable>=${threshold}`);
+      }
+    }
+  }, [isOwner, bump, reportViolation, punish]);
+
+  // Detector de console access
+  const checkConsoleAccess = useCallback(() => {
+    if (isOwner) return;
+
+    let consoleDetected = false;
+
+    try {
+      const element = new Image();
+      Object.defineProperty(element, "id", {
+        get: function () {
+          consoleDetected = true;
+          return "sanctum-trap";
+        },
+      });
+      console.debug(element);
+      console.clear();
+    } catch {
+      // Ignorar erros
+    }
+
+    if (consoleDetected) {
+      const count = bump("console_access_detected");
+      void reportViolation({
+        type: "console_access_detected",
+        severity: THREAT_SEVERITY_MAP.console_access_detected,
+        meta: { count },
+      });
+
+      const threshold = PUNISHMENT_THRESHOLDS.console_access_detected!;
+      if (count >= threshold) {
+        void punish(80, `console>=${threshold}`);
+      }
+    }
+  }, [isOwner, bump, reportViolation, punish]);
+
+  // Detector de automação
   const checkAutomation = useCallback(() => {
     if (isOwner) return;
 
-    const nav = navigator as Navigator & {
-      webdriver?: boolean;
-      __selenium_unwrapped?: unknown;
-      __webdriver_evaluate?: unknown;
-      __driver_evaluate?: unknown;
-    };
+    const nav = navigator as unknown as Record<string, unknown>;
+    const win = window as unknown as Record<string, unknown>;
 
-    const win = window as Window & {
-      callPhantom?: unknown;
-      _phantom?: unknown;
-      phantom?: unknown;
-      __nightmare?: unknown;
-      domAutomation?: unknown;
-      domAutomationController?: unknown;
-    };
-
-    // WebDriver
-    if (nav.webdriver) {
+    // Selenium, Puppeteer, etc.
+    if (nav.webdriver === true) {
       void reportViolation({
         type: "automation_webdriver",
         severity: THREAT_SEVERITY_MAP.automation_webdriver,
-        meta: { detected: "webdriver" },
       });
-      void punish(100, "automation_webdriver");
+      void punish(95, "navigator.webdriver");
       return;
     }
 
     // PhantomJS
-    if (win.callPhantom || win._phantom || win.phantom) {
+    if (win.callPhantom || win._phantom) {
       void reportViolation({
         type: "automation_phantom",
         severity: THREAT_SEVERITY_MAP.automation_phantom,
-        meta: { detected: "phantom" },
       });
-      void punish(100, "automation_phantom");
+      void punish(95, "PhantomJS");
       return;
     }
 
-    // Nightmare
-    if (win.__nightmare) {
+    // Nightwatch
+    if (win.nightwatch) {
       void reportViolation({
         type: "automation_nightwatch",
         severity: THREAT_SEVERITY_MAP.automation_nightwatch,
-        meta: { detected: "nightmare" },
       });
-      void punish(100, "automation_nightmare");
+      void punish(95, "Nightwatch");
     }
   }, [isOwner, reportViolation, punish]);
 
   // ============================================
-  // SETUP DE EVENTOS E INTERVALOS
+  // REGISTRAR SUPERFÍCIE PROTEGIDA
+  // ============================================
+  const registerProtectedSurface = useCallback(() => {
+    void reportViolation({
+      type: "protected_surface_opened",
+      severity: 0,
+      meta: {
+        path: window.location.pathname,
+        timestamp: new Date().toISOString(),
+      },
+    });
+  }, [reportViolation]);
+
+  // ============================================
+  // SETUP DE LISTENERS
   // ============================================
   useEffect(() => {
-    if (isOwner) return;
+    // Owner é imune
+    if (!user || isOwner) return;
 
-    // Adicionar listeners
-    document.addEventListener("keydown", onKeyDown, true);
-    document.addEventListener("contextmenu", onContextMenu, true);
-    document.addEventListener("copy", onCopy, true);
-    document.addEventListener("cut", onCopy, true);
-    document.addEventListener("dragstart", onDragStart, true);
-    document.addEventListener("selectstart", onSelectStart, true);
-    document.addEventListener("visibilitychange", onVisibilityChange);
-
-    // Intervalos de verificação
-    const devToolsInterval = setInterval(checkDevTools, DEVTOOLS_CHECK_INTERVAL_MS);
-    
-    // Verificação inicial de automação
+    // Verificar automação imediatamente
     checkAutomation();
 
-    // CSS de proteção
-    const style = document.createElement("style");
-    style.id = "sanctum-protection-css";
-    style.textContent = `
-      .sanctum-protected {
-        -webkit-user-select: none !important;
-        -moz-user-select: none !important;
-        -ms-user-select: none !important;
-        user-select: none !important;
-        -webkit-touch-callout: none !important;
-        -webkit-user-drag: none !important;
-      }
-      .sanctum-protected img {
-        pointer-events: none !important;
-        -webkit-user-drag: none !important;
-      }
-      @media print {
-        .sanctum-protected {
-          display: none !important;
-          visibility: hidden !important;
-        }
-        body::before {
-          content: "Impressão não autorizada - Prof. Moisés Medeiros";
-          position: fixed;
-          top: 50%;
-          left: 50%;
-          transform: translate(-50%, -50%);
-          font-size: 2rem;
-          color: red;
-          z-index: 999999;
-        }
-      }
-    `;
-    document.head.appendChild(style);
+    // Event listeners
+    window.addEventListener("keydown", onKeyDown, { capture: true, passive: false });
+    document.addEventListener("contextmenu", onContextMenu, { capture: true });
+    document.addEventListener("copy", onCopy, { capture: true });
+    document.addEventListener("cut", onCopy, { capture: true });
+    document.addEventListener("dragstart", onDragStart, { capture: true });
+    document.addEventListener("selectstart", onSelectStart, { capture: true });
+    document.addEventListener("visibilitychange", onVisibilityChange);
 
+    // MutationObserver para tampering
+    const mutationObserver = new MutationObserver((mutations) => {
+      const count = bump("dom_mutation", mutations.length);
+
+      // Verificar injeção de scripts
+      mutations.forEach((mutation) => {
+        mutation.addedNodes.forEach((node) => {
+          if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as Element;
+            if (el.tagName === "SCRIPT" && !el.getAttribute("data-sanctum-allowed")) {
+              void reportViolation({
+                type: "script_injection_detected",
+                severity: THREAT_SEVERITY_MAP.script_injection_detected,
+                meta: { src: (el as HTMLScriptElement).src },
+              });
+            }
+            if (el.tagName === "IFRAME" && !el.getAttribute("data-sanctum-allowed")) {
+              void reportViolation({
+                type: "iframe_injection_detected",
+                severity: THREAT_SEVERITY_MAP.iframe_injection_detected,
+                meta: { src: (el as HTMLIFrameElement).src },
+              });
+            }
+          }
+        });
+      });
+
+      // Log se muitas mutações
+      if (count >= DOM_MUTATION_THRESHOLD && count % 50 === 0) {
+        void reportViolation({
+          type: "dom_mutation_detected",
+          severity: THREAT_SEVERITY_MAP.dom_mutation_detected,
+          meta: { count },
+        });
+      }
+
+      if (count >= 200) {
+        void punish(80, "dom_mutation>=200");
+      }
+    });
+
+    mutationObserver.observe(document.documentElement, {
+      childList: true,
+      subtree: true,
+      attributes: true,
+      characterData: true,
+    });
+
+    // Intervalos de verificação
+    const devtoolsInterval = setInterval(checkDevTools, DEVTOOLS_CHECK_INTERVAL_MS);
+    const consoleInterval = setInterval(checkConsoleAccess, CONSOLE_CHECK_INTERVAL_MS);
+
+    // Cleanup
     return () => {
-      document.removeEventListener("keydown", onKeyDown, true);
-      document.removeEventListener("contextmenu", onContextMenu, true);
-      document.removeEventListener("copy", onCopy, true);
-      document.removeEventListener("cut", onCopy, true);
-      document.removeEventListener("dragstart", onDragStart, true);
-      document.removeEventListener("selectstart", onSelectStart, true);
+      window.removeEventListener("keydown", onKeyDown, { capture: true });
+      document.removeEventListener("contextmenu", onContextMenu, { capture: true });
+      document.removeEventListener("copy", onCopy, { capture: true });
+      document.removeEventListener("cut", onCopy, { capture: true });
+      document.removeEventListener("dragstart", onDragStart, { capture: true });
+      document.removeEventListener("selectstart", onSelectStart, { capture: true });
       document.removeEventListener("visibilitychange", onVisibilityChange);
-      clearInterval(devToolsInterval);
-      
-      const existingStyle = document.getElementById("sanctum-protection-css");
-      if (existingStyle) existingStyle.remove();
+      mutationObserver.disconnect();
+      clearInterval(devtoolsInterval);
+      clearInterval(consoleInterval);
     };
   }, [
+    user,
     isOwner,
     onKeyDown,
     onContextMenu,
@@ -546,27 +600,27 @@ export function useSanctumCore(ctx: SanctumContext) {
     onDragStart,
     onSelectStart,
     onVisibilityChange,
-    checkDevTools,
     checkAutomation,
+    checkDevTools,
+    checkConsoleAccess,
+    reportViolation,
+    punish,
+    bump,
   ]);
 
   // ============================================
   // RETORNO DO HOOK
   // ============================================
   return {
+    registerProtectedSurface,
+    isOwner,
     isLocked,
     riskScore,
-    isOwner,
-    sessionId: sessionId.current,
-    bump,
+    reportViolation,
     getCount,
     resetCounter,
-    reportViolation,
-    punish,
+    sessionId: sessionId.current,
   };
 }
 
-// ============================================
-// EXPORTS
-// ============================================
 export default useSanctumCore;
