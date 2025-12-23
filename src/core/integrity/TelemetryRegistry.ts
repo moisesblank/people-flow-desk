@@ -88,12 +88,12 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'correlationId' | 't
       const sanitizedNew = sanitizeSensitiveData(event.newData);
       const sanitizedMeta = sanitizeSensitiveData(event.metadata);
       
-      await supabase.from('audit_logs').insert([{
+      await supabase.from('audit_logs').insert({
         action: `${event.functionId}:${event.action}`,
         table_name: event.tableName,
         record_id: event.recordId,
-        old_data: sanitizedOld as Record<string, unknown>,
-        new_data: sanitizedNew as Record<string, unknown>,
+        old_data: (sanitizedOld ?? null) as import('@/integrations/supabase/types').Json,
+        new_data: (sanitizedNew ?? null) as import('@/integrations/supabase/types').Json,
         metadata: {
           ...sanitizedMeta,
           correlation_id: fullEvent.correlationId,
@@ -102,7 +102,7 @@ export async function logAuditEvent(event: Omit<AuditEvent, 'correlationId' | 't
           duration_ms: event.durationMs,
           success: event.success,
           error: event.errorMessage,
-        },
+        } as import('@/integrations/supabase/types').Json,
         user_id: event.userId,
       });
     } catch (err) {
