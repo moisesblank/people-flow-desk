@@ -1592,20 +1592,55 @@
   }
 }
 
-/* Slow connection optimizations */
+/* ============================================
+   LEI I - PERFORMANCE 3G: prefers-reduced-data
+   Desabilita efeitos pesados quando saveData ativo
+   ============================================ */
 @media (prefers-reduced-data: reduce) {
-  /* Remove background images */
+  /* Remove background images e gradientes */
   .bg-gradient-to-br,
   .bg-gradient-to-r,
-  .hero-gradient {
-    background: hsl(var(--background)) !important;
+  .bg-gradient-to-b,
+  .hero-gradient,
+  .gradient-mesh {
+    background: hsl(var(--card)) !important;
   }
   
-  /* Remove decorative animations */
+  /* Remove todas as sombras de glow */
+  .shadow-glow,
+  .shadow-glow-sm,
+  .shadow-glow-lg,
+  .neon-glow,
+  .spider-glow,
+  .heroic-glow {
+    box-shadow: none !important;
+  }
+  
+  /* Remove backdrop-filter (muito pesado) */
+  .glass,
+  .glass-card,
+  .glass-subtle,
+  .glass-premium,
+  [class*="backdrop-blur"] {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    background: hsl(var(--card) / 0.98) !important;
+  }
+  
+  /* Remove animações decorativas */
   .animate-float,
   .animate-pulse-glow,
-  .animate-shimmer {
+  .animate-shimmer,
+  .animate-glow,
+  .animate-spin-slow {
     animation: none !important;
+  }
+  
+  /* Simplifica transições */
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0.1s !important;
   }
 }
 
