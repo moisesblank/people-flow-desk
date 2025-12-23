@@ -6,6 +6,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   CreditCard, Sparkles, Plus, Check, Clock, AlertCircle, Trash2, Edit2,
   Filter, Calendar, Paperclip, FileText, Download, Eye, Receipt, Wallet,
