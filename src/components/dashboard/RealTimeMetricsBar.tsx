@@ -25,7 +25,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from "@/hooks/useSubspaceCommunication";
 import type { LucideIcon } from "lucide-react";
 
 interface MetricItem {
@@ -62,10 +62,10 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
   const [latency, setLatency] = useState(0);
   const [isConnected, setIsConnected] = useState(true);
 
-  // Query para métricas em tempo real
-  const { data: metrics, refetch, isLoading } = useQuery({
-    queryKey: ["realtime-metrics-bar"],
-    queryFn: async () => {
+  // Query para métricas em tempo real - MIGRADO PARA useSubspaceQuery
+  const { data: metrics, refetch, isLoading } = useSubspaceQuery<MetricItem[]>(
+    ["realtime-metrics-bar"],
+    async () => {
       const startTime = Date.now();
       const hoje = new Date();
       const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1).toISOString();
@@ -158,9 +158,13 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
 
       return metricsArray;
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
-    staleTime: 10000,
-  });
+    {
+      profile: 'realtime',
+      persistKey: 'realtime_metrics_bar_v1',
+      refetchInterval: 30000,
+      staleTime: 10000,
+    }
+  );
 
   // Atualizar relógio a cada segundo
   useEffect(() => {

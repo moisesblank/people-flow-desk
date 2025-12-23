@@ -78,88 +78,47 @@ export const useYouTubeLive = () => {
   // GET CHANNEL STATS
   // ----------------------------------------
   const useChannelStats = () => {
-    return useQuery({
-      queryKey: ['youtube-channel-stats'],
-      queryFn: () => callYouTubeAPI('get_channel_stats'),
-      staleTime: 5 * 60 * 1000, // 5 minutos
-      refetchInterval: 10 * 60 * 1000, // Atualiza a cada 10 minutos
+    return useSubspaceQuery(['youtube-channel-stats'], () => callYouTubeAPI('get_channel_stats'), {
+      profile: 'semiStatic', persistKey: 'yt_channel_stats', staleTime: 5 * 60 * 1000, refetchInterval: 10 * 60 * 1000,
     });
   };
 
-  // ----------------------------------------
-  // GET VIDEOS
-  // ----------------------------------------
   const useVideos = (maxResults = 10) => {
-    return useQuery({
-      queryKey: ['youtube-videos', maxResults],
-      queryFn: () => callYouTubeAPI('get_videos', { maxResults }),
-      staleTime: 5 * 60 * 1000,
+    return useSubspaceQuery(['youtube-videos', String(maxResults)], () => callYouTubeAPI('get_videos', { maxResults }), {
+      profile: 'semiStatic', persistKey: `yt_videos_${maxResults}`, staleTime: 5 * 60 * 1000,
     });
   };
 
-  // ----------------------------------------
-  // GET LIVE STATUS (com polling)
-  // ----------------------------------------
   const useLiveStatus = (enabled = true) => {
-    return useQuery({
-      queryKey: ['youtube-live-status'],
-      queryFn: () => callYouTubeAPI('check_live_status'),
-      enabled,
-      staleTime: 30 * 1000, // 30 segundos
-      refetchInterval: 60 * 1000, // Atualiza a cada 1 minuto
+    return useSubspaceQuery(['youtube-live-status'], () => callYouTubeAPI('check_live_status'), {
+      profile: 'realtime', persistKey: 'yt_live_status', enabled, staleTime: 30 * 1000, refetchInterval: 60 * 1000,
     });
   };
 
-  // ----------------------------------------
-  // GET CURRENT LIVE
-  // ----------------------------------------
   const useCurrentLive = () => {
-    return useQuery({
-      queryKey: ['youtube-current-live'],
-      queryFn: () => callYouTubeAPI('get_current_live'),
-      staleTime: 30 * 1000,
-      refetchInterval: 30 * 1000, // Atualiza viewers a cada 30s
+    return useSubspaceQuery(['youtube-current-live'], () => callYouTubeAPI('get_current_live'), {
+      profile: 'realtime', persistKey: 'yt_current_live', staleTime: 30 * 1000, refetchInterval: 30 * 1000,
     });
   };
 
-  // ----------------------------------------
-  // GET UPCOMING LIVES
-  // ----------------------------------------
   const useUpcomingLives = () => {
-    return useQuery({
-      queryKey: ['youtube-upcoming-lives'],
-      queryFn: () => callYouTubeAPI('get_upcoming_lives'),
-      staleTime: 5 * 60 * 1000,
+    return useSubspaceQuery(['youtube-upcoming-lives'], () => callYouTubeAPI('get_upcoming_lives'), {
+      profile: 'semiStatic', persistKey: 'yt_upcoming_lives', staleTime: 5 * 60 * 1000,
     });
   };
 
-  // ----------------------------------------
-  // GET VIDEO DETAILS
-  // ----------------------------------------
   const useVideoDetails = (videoId: string | null) => {
-    return useQuery({
-      queryKey: ['youtube-video', videoId],
-      queryFn: () => callYouTubeAPI('get_video_details', { videoId }),
-      enabled: !!videoId,
-      staleTime: 60 * 1000,
+    return useSubspaceQuery(['youtube-video', videoId || 'none'], () => callYouTubeAPI('get_video_details', { videoId }), {
+      profile: 'semiStatic', persistKey: `yt_video_${videoId}`, enabled: !!videoId, staleTime: 60 * 1000,
     });
   };
 
-  // ----------------------------------------
-  // GET LIVE STREAMS
-  // ----------------------------------------
   const useLiveStreams = () => {
-    return useQuery({
-      queryKey: ['youtube-live-streams'],
-      queryFn: () => callYouTubeAPI('get_live_streams'),
-      staleTime: 30 * 1000,
-      refetchInterval: 60 * 1000,
+    return useSubspaceQuery(['youtube-live-streams'], () => callYouTubeAPI('get_live_streams'), {
+      profile: 'realtime', persistKey: 'yt_live_streams', staleTime: 30 * 1000, refetchInterval: 60 * 1000,
     });
   };
 
-  // ----------------------------------------
-  // SYNC CHANNEL (mutation)
-  // ----------------------------------------
   const useSyncChannel = () => {
     return useMutation({
       mutationFn: () => callYouTubeAPI('sync_channel'),
@@ -173,43 +132,20 @@ export const useYouTubeLive = () => {
     });
   };
 
-  // ----------------------------------------
-  // GET LIVES FROM DATABASE
-  // ----------------------------------------
   const useLivesFromDB = () => {
-    return useQuery({
-      queryKey: ['youtube-lives-db'],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('youtube_lives')
-          .select('*')
-          .order('scheduled_start', { ascending: true });
-        
-        if (error) throw error;
-        return data;
-      },
-      staleTime: 30 * 1000,
-    });
+    return useSubspaceQuery(['youtube-lives-db'], async () => {
+      const { data, error } = await supabase.from('youtube_lives').select('*').order('scheduled_start', { ascending: true });
+      if (error) throw error;
+      return data;
+    }, { profile: 'dashboard', persistKey: 'yt_lives_db', staleTime: 30 * 1000 });
   };
 
-  // ----------------------------------------
-  // GET METRICS FROM DATABASE
-  // ----------------------------------------
   const useMetricsFromDB = () => {
-    return useQuery({
-      queryKey: ['youtube-metrics-db'],
-      queryFn: async () => {
-        const { data, error } = await supabase
-          .from('youtube_metrics')
-          .select('*')
-          .order('created_at', { ascending: false })
-          .limit(30);
-        
-        if (error) throw error;
-        return data;
-      },
-      staleTime: 5 * 60 * 1000,
-    });
+    return useSubspaceQuery(['youtube-metrics-db'], async () => {
+      const { data, error } = await supabase.from('youtube_metrics').select('*').order('created_at', { ascending: false }).limit(30);
+      if (error) throw error;
+      return data;
+    }, { profile: 'semiStatic', persistKey: 'yt_metrics_db', staleTime: 5 * 60 * 1000 });
   };
 
   // ----------------------------------------

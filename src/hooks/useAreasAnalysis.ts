@@ -262,10 +262,10 @@ export function useAreasAnalysis(options: UseAreasAnalysisOptions = {}) {
     }
   );
 
-  // Query: estatísticas gerais
-  const { data: stats } = useQuery({
-    queryKey: ['areas-analysis-stats', user?.id, areasPerformance],
-    queryFn: (): AreasAnalysisStats => {
+  // Query: estatísticas gerais - MIGRADO PARA useSubspaceQuery
+  const { data: stats } = useSubspaceQuery<AreasAnalysisStats>(
+    ['areas-analysis-stats', user?.id || 'anon'],
+    async (): Promise<AreasAnalysisStats> => {
       if (!areasPerformance || areasPerformance.length === 0) {
         return {
           totalAreas: 0,
@@ -348,11 +348,15 @@ export function useAreasAnalysis(options: UseAreasAnalysisOptions = {}) {
         weakestArea,
         averageAccuracy,
         totalXP,
-        recommendations: recommendations.slice(0, 5) // Top 5 recomendações
+        recommendations: recommendations.slice(0, 5)
       };
     },
-    enabled: !!areasPerformance,
-  });
+    {
+      profile: 'user',
+      persistKey: `areas_stats_${user?.id}`,
+      enabled: !!areasPerformance,
+    }
+  );
 
   // Helpers
   const getAreaById = (areaId: string) => 

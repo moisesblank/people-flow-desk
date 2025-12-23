@@ -20,7 +20,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from "@/hooks/useSubspaceCommunication";
 import { useAuth } from "@/hooks/useAuth";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
 import { ChemistryTip, AnimatedAtom } from "@/components/chemistry/ChemistryVisuals";
@@ -77,9 +77,9 @@ function formatCurrency(cents: number): string {
 
 // Componente de Lucro Líquido Empresarial - vinculado em tempo real
 function LucroLiquidoCard() {
-  const { data: lucroData } = useQuery({
-    queryKey: ["lucro-liquido-empresa"],
-    queryFn: async () => {
+  const { data: lucroData } = useSubspaceQuery(
+    ["lucro-liquido-empresa"],
+    async () => {
       const [entradas, gastosFixos, gastosExtras] = await Promise.all([
         supabase.from("entradas").select("valor"),
         supabase.from("company_fixed_expenses").select("valor"),
@@ -92,8 +92,12 @@ function LucroLiquidoCard() {
       
       return { lucro: receitas - fixos - extras, receitas, despesas: fixos + extras };
     },
-    refetchInterval: 30000,
-  });
+    {
+      profile: 'dashboard',
+      persistKey: 'lucro_liquido_empresa_v1',
+      refetchInterval: 30000,
+    }
+  );
 
   const formatReal = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
   const lucro = lucroData?.lucro || 0;
