@@ -4,6 +4,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   ChevronDown, 
   Sparkles, 
@@ -204,6 +205,7 @@ const FAQItem = ({ faq, index, isOpen, onToggle }: {
 
 export const FAQSection = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
 
   return (
     <section id="faq" className="relative py-24 overflow-hidden">
@@ -216,19 +218,23 @@ export const FAQSection = () => {
         backgroundSize: '50px 50px'
       }} />
 
-      {/* Floating Orbs */}
-      <motion.div
-        className="absolute top-20 left-10 w-64 h-64 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }}
-        animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
-        transition={{ duration: 8, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute bottom-20 right-10 w-72 h-72 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }}
-        animate={{ y: [0, -30, 0], x: [0, -20, 0] }}
-        transition={{ duration: 10, repeat: Infinity }}
-      />
+      {/* Floating Orbs - conditionally rendered */}
+      {shouldAnimate && (
+        <>
+          <motion.div
+            className="absolute top-20 left-10 w-64 h-64 rounded-full will-change-transform transform-gpu"
+            style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }}
+            animate={{ y: [0, 30, 0], x: [0, 20, 0] }}
+            transition={{ duration: 8, repeat: Infinity }}
+          />
+          <motion.div
+            className="absolute bottom-20 right-10 w-72 h-72 rounded-full will-change-transform transform-gpu"
+            style={{ background: 'radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%)', filter: 'blur(60px)' }}
+            animate={{ y: [0, -30, 0], x: [0, -20, 0] }}
+            transition={{ duration: 10, repeat: Infinity }}
+          />
+        </>
+      )}
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
