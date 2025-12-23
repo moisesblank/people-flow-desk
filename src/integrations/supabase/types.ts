@@ -11954,6 +11954,7 @@ export type Database = {
       webhook_events: {
         Row: {
           attempts: number | null
+          correlation_id: string | null
           event_id: string
           event_type: string | null
           id: string
@@ -11971,6 +11972,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number | null
+          correlation_id?: string | null
           event_id: string
           event_type?: string | null
           id?: string
@@ -11988,6 +11990,7 @@ export type Database = {
         }
         Update: {
           attempts?: number | null
+          correlation_id?: string | null
           event_id?: string
           event_type?: string | null
           id?: string
@@ -12008,6 +12011,7 @@ export type Database = {
       webhook_events_v2: {
         Row: {
           attempts: number | null
+          correlation_id: string | null
           event_id: string
           event_type: string | null
           id: string
@@ -12025,6 +12029,7 @@ export type Database = {
         }
         Insert: {
           attempts?: number | null
+          correlation_id?: string | null
           event_id: string
           event_type?: string | null
           id?: string
@@ -12042,6 +12047,7 @@ export type Database = {
         }
         Update: {
           attempts?: number | null
+          correlation_id?: string | null
           event_id?: string
           event_type?: string | null
           id?: string
@@ -12091,6 +12097,7 @@ export type Database = {
       }
       webhooks_queue: {
         Row: {
+          correlation_id: string | null
           created_at: string
           error_message: string | null
           event: string
@@ -12105,6 +12112,7 @@ export type Database = {
           status: string
         }
         Insert: {
+          correlation_id?: string | null
           created_at?: string
           error_message?: string | null
           event: string
@@ -12119,6 +12127,7 @@ export type Database = {
           status?: string
         }
         Update: {
+          correlation_id?: string | null
           created_at?: string
           error_message?: string | null
           event?: string
@@ -13639,6 +13648,18 @@ export type Database = {
         }
         Returns: Json
       }
+      check_webhook_idempotency_v4: {
+        Args: {
+          p_correlation_id?: string
+          p_event_id: string
+          p_event_type?: string
+          p_ip_address?: string
+          p_payload?: Json
+          p_provider: string
+          p_signature_valid?: boolean
+        }
+        Returns: Json
+      }
       claim_next_event: {
         Args: {
           p_consumer_name: string
@@ -13915,6 +13936,7 @@ export type Database = {
         Returns: Json
       }
       generate_2fa_code: { Args: never; Returns: string }
+      generate_correlation_id: { Args: never; Returns: string }
       generate_session_code: { Args: never; Returns: string }
       generate_signed_video_url: {
         Args: { p_expires_minutes?: number; p_video_id: string }

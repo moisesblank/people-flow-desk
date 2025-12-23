@@ -70,6 +70,8 @@ function generateExternalEventId(source: string, payload: Record<string, unknown
 
 serve(async (req) => {
   const startTime = Date.now();
+  // C044: Gerar Correlation-ID para rastreabilidade
+  const correlationId = crypto.randomUUID();
   
   // Handle CORS
   if (req.method === 'OPTIONS') {
@@ -241,6 +243,7 @@ serve(async (req) => {
           event,
           payload,
           external_event_id: externalEventId,
+          correlation_id: correlationId, // C044: Correlation-ID
           status: 'pending'
         }, {
           onConflict: 'source,external_event_id,event',
@@ -273,6 +276,7 @@ serve(async (req) => {
           source,
           event,
           payload,
+          correlation_id: correlationId, // C044: Correlation-ID
           status: 'pending'
         })
         .select()
@@ -298,10 +302,11 @@ serve(async (req) => {
       return new Response(JSON.stringify({ 
         status: 'error', 
         message: 'Failed to queue webhook',
-        error: error.message 
+        error: error.message,
+        correlation_id: correlationId // C044
       }), { 
         status: 500, 
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Correlation-ID': correlationId } 
       });
     }
 
@@ -318,12 +323,13 @@ serve(async (req) => {
       status: 'queued',
       queue_id: data?.id,
       external_event_id: externalEventId,
+      correlation_id: correlationId, // C044
       source,
       event,
       processing_time_ms: processingTime
     }), { 
       status: 202, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      headers: { ...corsHeaders, 'Content-Type': 'application/json', 'X-Correlation-ID': correlationId } 
     });
 
   } catch (error) {
