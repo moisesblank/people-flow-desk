@@ -367,7 +367,7 @@ export function canExecuteAction(actionKey: ActionKey, role: string | null): boo
   
   if (role === "owner") return true;
   
-  return role ? action.requiredRoles.includes(role as UserRole) : false;
+  return role ? (action.requiredRoles as readonly string[]).includes(role) : false;
 }
 
 /**
