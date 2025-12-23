@@ -10,6 +10,7 @@ import { LoadingState } from "@/components/LoadingState";
 import { OwnerStudentDashboard } from "@/components/aluno/OwnerStudentDashboard";
 import { BetaStudentDashboard } from "@/components/aluno/BetaStudentDashboard";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { AlertTriangle, Shield } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,8 @@ import { useNavigate } from "react-router-dom";
  * - BETA: Jornada preditiva personalizada
  */
 export default function AlunoUniversalDashboard() {
+  const { gpuAnimationProps } = useQuantumReactivity();
+
   const { user, isLoading: authLoading } = useAuth();
   const { role, isLoading: roleLoading, isOwner } = useRolePermissions();
   const isBeta = role === 'beta';
@@ -33,10 +36,9 @@ export default function AlunoUniversalDashboard() {
   if (authLoading || roleLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <motion.div 
-          initial={{ opacity: 0, scale: 0.9 }}
-          animate={{ opacity: 1, scale: 1 }}
-          className="text-center space-y-4"
+        <motion.div
+          {...gpuAnimationProps.scaleIn}
+          className="text-center space-y-4 will-change-transform transform-gpu"
         >
           <div className="relative">
             <div className="w-20 h-20 rounded-full bg-gradient-to-br from-cyan-500 to-purple-600 animate-pulse mx-auto" />
@@ -56,10 +58,7 @@ export default function AlunoUniversalDashboard() {
   if (!user) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background p-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-        >
+        <motion.div {...gpuAnimationProps.fadeUp} className="will-change-transform transform-gpu">
           <Card className="max-w-md">
             <CardContent className="pt-6 text-center space-y-4">
               <div className="w-16 h-16 rounded-full bg-destructive/20 flex items-center justify-center mx-auto">
@@ -94,10 +93,7 @@ export default function AlunoUniversalDashboard() {
   // Acesso não autorizado - O fantasma na máquina
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 1, scale: 1 }}
-      >
+      <motion.div {...gpuAnimationProps.scaleIn} className="will-change-transform transform-gpu">
         <Card className="max-w-md">
           <CardContent className="pt-6 text-center space-y-4">
             <div className="w-16 h-16 rounded-full bg-amber-500/20 flex items-center justify-center mx-auto">

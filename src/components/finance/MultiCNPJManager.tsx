@@ -6,6 +6,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import {
   Building2,
   Plus,
@@ -110,6 +111,8 @@ function formatCurrency(cents: number): string {
 }
 
 export function MultiCNPJManager() {
+  const { gpuAnimationProps } = useQuantumReactivity();
+
   const [companies, setCompanies] = useState<Company[]>(mockCompanies);
   const [selectedCompany, setSelectedCompany] = useState<Company | null>(null);
   const [showValues, setShowValues] = useState(true);
@@ -245,11 +248,9 @@ export function MultiCNPJManager() {
               {companies.map((company, index) => (
                 <motion.div
                   key={company.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  transition={{ delay: index * 0.1 }}
-                  className="p-4 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer"
+                  {...gpuAnimationProps.fadeUp}
+                  transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: index * 0.1 }}
+                  className="p-4 rounded-xl border border-border/50 bg-muted/20 hover:bg-muted/40 transition-all cursor-pointer will-change-transform transform-gpu"
                   onClick={() => setSelectedCompany(company)}
                 >
                   <div className="flex items-start justify-between">

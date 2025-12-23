@@ -14,6 +14,7 @@ import {
   Calendar, BarChart2, CheckCircle2, Lock
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 interface Simulado {
   id: string;
@@ -42,6 +43,8 @@ const tipoConfig = {
 };
 
 export default function AlunoSimulados() {
+  const { gpuAnimationProps } = useQuantumReactivity();
+
   const [tab, setTab] = useState("disponiveis");
 
   const estatisticas = {
@@ -54,10 +57,9 @@ export default function AlunoSimulados() {
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header com Stats */}
-      <motion.div 
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="grid md:grid-cols-4 gap-4"
+      <motion.div
+        {...gpuAnimationProps.fadeUp}
+        className="grid md:grid-cols-4 gap-4 will-change-transform transform-gpu"
       >
         <Card className="bg-gradient-to-br from-blue-500/10 to-cyan-500/10 border-blue-500/20">
           <CardContent className="p-4 flex items-center gap-3">
@@ -120,9 +122,9 @@ export default function AlunoSimulados() {
           {simulados.filter(s => !s.realizado).map((simulado, index) => (
             <motion.div
               key={simulado.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              {...gpuAnimationProps.fadeUp}
+              transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: index * 0.1 }}
+              className="will-change-transform transform-gpu"
             >
               <Card className={`transition-all hover:shadow-lg ${simulado.bloqueado ? "opacity-60" : ""}`}>
                 <CardContent className="p-6">
@@ -170,9 +172,9 @@ export default function AlunoSimulados() {
           {simulados.filter(s => s.realizado).map((simulado, index) => (
             <motion.div
               key={simulado.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
+              {...gpuAnimationProps.fadeUp}
+              transition={{ ...(gpuAnimationProps.fadeUp.transition ?? {}), delay: index * 0.1 }}
+              className="will-change-transform transform-gpu"
             >
               <Card className="border-l-4 border-l-green-500">
                 <CardContent className="p-6">

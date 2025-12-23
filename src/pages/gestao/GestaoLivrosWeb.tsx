@@ -4,7 +4,6 @@
 // ============================================
 
 import { memo, useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { 
   BookOpen, 
   Plus, 
