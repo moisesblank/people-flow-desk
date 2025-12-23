@@ -100,3 +100,23 @@ export type {
   SignupOptions,
   RecoveryOptions,
 } from "./authGuard";
+
+// ============================================
+// CLOUDFLARE PRO INTEGRATION — NÍVEL PENTAGON
+// ============================================
+export {
+  validateCloudflareRequest,
+  extractCloudflareContext,
+  checkCloudflareRateLimit,
+  getSecureResponseHeaders,
+  DEFAULT_CLOUDFLARE_CONFIG,
+  SECURITY_HEADERS,
+  RECOMMENDED_WAF_RULES,
+  RECOMMENDED_PAGE_RULES,
+} from "./cloudflareIntegration";
+
+export type {
+  CloudflareHeaders,
+  CloudflareContext,
+  CloudflareSecurityConfig,
+} from "./cloudflareIntegration";
