@@ -38,8 +38,8 @@ const ADAPTIVE_CONFIG: Record<ConstitutionTier, {
     gradients: false,
     shadows: false,
   },
-  low: {
-    imageQuality: 50,
+  legacy: {
+    imageQuality: 45,
     maxImageWidth: 640,
     videoAutoplay: false,
     animations: false,
@@ -50,8 +50,20 @@ const ADAPTIVE_CONFIG: Record<ConstitutionTier, {
     gradients: false,
     shadows: true,
   },
-  medium: {
-    imageQuality: 70,
+  standard: {
+    imageQuality: 60,
+    maxImageWidth: 800,
+    videoAutoplay: false,
+    animations: true,
+    backgroundEffects: false,
+    staleTimeMultiplier: 3,
+    prefetchEnabled: true,
+    blurEffects: false,
+    gradients: true,
+    shadows: true,
+  },
+  enhanced: {
+    imageQuality: 75,
     maxImageWidth: 1024,
     videoAutoplay: true,
     animations: true,
@@ -62,9 +74,9 @@ const ADAPTIVE_CONFIG: Record<ConstitutionTier, {
     gradients: true,
     shadows: true,
   },
-  high: {
+  neural: {
     imageQuality: 85,
-    maxImageWidth: 1920,
+    maxImageWidth: 1280,
     videoAutoplay: true,
     animations: true,
     backgroundEffects: true,
@@ -74,9 +86,9 @@ const ADAPTIVE_CONFIG: Record<ConstitutionTier, {
     gradients: true,
     shadows: true,
   },
-  ultra: {
+  quantum: {
     imageQuality: 95,
-    maxImageWidth: 2560,
+    maxImageWidth: 1920,
     videoAutoplay: true,
     animations: true,
     backgroundEffects: true,
@@ -149,7 +161,7 @@ export function useEnergyEfficiency() {
    * Retorna srcset adaptativo para imagens responsivas
    */
   const getAdaptiveSrcSet = useCallback((baseUrl: string): string => {
-    const widths = tier === 'critical' || tier === 'low'
+    const widths = tier === 'critical' || tier === 'legacy'
       ? [320, 480, 640] // 3G: poucos tamanhos, menores
       : [320, 640, 768, 1024, 1280, 1920]; // 4G+: todos os tamanhos
     
@@ -177,8 +189,8 @@ export function useEnergyEfficiency() {
   const getAdaptiveCacheConfig = useCallback((baseStaleTime: number = 30000) => ({
     staleTime: baseStaleTime * config.staleTimeMultiplier,
     gcTime: baseStaleTime * config.staleTimeMultiplier * 10,
-    refetchOnWindowFocus: tier === 'ultra' || tier === 'high',
-    refetchOnMount: tier !== 'critical' && tier !== 'low',
+    refetchOnWindowFocus: tier === 'quantum' || tier === 'neural',
+    refetchOnMount: tier !== 'critical' && tier !== 'legacy',
     refetchOnReconnect: tier !== 'critical',
   }), [config, tier]);
   
