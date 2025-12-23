@@ -130,7 +130,8 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
 import { FileUpload } from "@/components/FileUpload";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOptimisticMutation } from "@/hooks/useSubspaceCommunication";
 import { buscarArquivos, deleteFile, toggleIaLer, processarArquivoComIA, formatFileSize, getFileCategory, uploadFile } from "@/lib/fileUpload";
 import { MinimizableSection, useMinimizable } from "@/components/ui/minimizable-section";
 import { FortressPlayerWrapper } from "@/components/video/FortressPlayerWrapper";
@@ -569,9 +570,14 @@ export default function ArquivosEmpresariais() {
     }
   };
 
-  const toggleIAMutation = useMutation({
-    mutationFn: ({ id, iaLer }: { id: string; iaLer: boolean }) => toggleIaLer(id, iaLer),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: ['arquivos-empresa'] })
+  // FASE 3 - useOptimisticMutation (0ms)
+  const toggleIAMutation = useOptimisticMutation<ArquivoUniversal[], { id: string; iaLer: boolean }, void>({
+    queryKey: ['arquivos-empresa'],
+    mutationFn: ({ id, iaLer }) => toggleIaLer(id, iaLer),
+    optimisticUpdate: (old, { id, iaLer }) => {
+      return (old || []).map(a => a.id === id ? { ...a, ia_ler: iaLer } : a);
+    },
+    errorMessage: 'Erro ao alterar IA',
   });
 
   // ═══════════════════════════════════════════════════════════════
