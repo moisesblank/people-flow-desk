@@ -4,7 +4,7 @@
 // Performance ANO 3500 em qualquer dispositivo
 // ============================================
 
-const CACHE_VERSION = 'v3500.1';
+const CACHE_VERSION = 'v3500.2';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
