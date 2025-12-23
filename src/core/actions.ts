@@ -301,6 +301,38 @@ export const ACTIONS = {
     audit: true,
   },
   
+  // === ARQUIVOS ===
+  FILE_UPLOAD: {
+    id: "FILE_UPLOAD",
+    label: "Enviar Arquivo",
+    description: "Fazer upload de arquivo",
+    category: "system",
+    requiredRoles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor", "beta", "aluno"],
+    requiresConfirmation: false,
+    isDestructive: false,
+    audit: true,
+  },
+  FILE_DOWNLOAD: {
+    id: "FILE_DOWNLOAD",
+    label: "Baixar Arquivo",
+    description: "Fazer download de arquivo",
+    category: "system",
+    requiredRoles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor", "beta", "aluno"],
+    requiresConfirmation: false,
+    isDestructive: false,
+    audit: true,
+  },
+  FILE_DELETE: {
+    id: "FILE_DELETE",
+    label: "Excluir Arquivo",
+    description: "Excluir arquivo permanentemente",
+    category: "system",
+    requiredRoles: ["owner", "admin"],
+    requiresConfirmation: true,
+    isDestructive: true,
+    audit: true,
+  },
+  
   // === SISTEMA ===
   BACKUP_CREATE: {
     id: "BACKUP_CREATE",
