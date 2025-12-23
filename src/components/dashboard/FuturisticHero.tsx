@@ -234,11 +234,12 @@ function AIStatusBadge() {
     return () => clearInterval(interval);
   }, []);
 
+  // 2300 UPGRADE - Status configs com CSS classes
   const config = {
-    analyzing: { color: "text-blue-400", bg: "bg-blue-500/20", border: "border-blue-500/40", label: "Analisando dados..." },
-    processing: { color: "text-yellow-400", bg: "bg-yellow-500/20", border: "border-yellow-500/40", label: "Processando IA..." },
-    ready: { color: "text-emerald-400", bg: "bg-emerald-500/20", border: "border-emerald-500/40", label: "Sistema operacional" },
-    syncing: { color: "text-purple-400", bg: "bg-purple-500/20", border: "border-purple-500/40", label: "Sincronizando..." },
+    analyzing: { color: "text-blue-400", bg: "bg-blue-500/20", border: "border-blue-500/40", label: "Analisando dados...", statusClass: "badge-status-syncing" },
+    processing: { color: "text-yellow-400", bg: "bg-yellow-500/20", border: "border-yellow-500/40", label: "Processando IA...", statusClass: "badge-status-syncing" },
+    ready: { color: "text-emerald-400", bg: "bg-emerald-500/20", border: "border-emerald-500/40", label: "Sistema operacional", statusClass: "badge-status-online" },
+    syncing: { color: "text-holo-cyan", bg: "bg-holo-cyan/20", border: "border-holo-cyan/40", label: "IA Ativa", statusClass: "badge-status-ai" },
   };
 
   const c = config[status];

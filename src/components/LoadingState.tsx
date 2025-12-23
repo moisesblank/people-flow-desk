@@ -3,7 +3,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
 
 interface LoadingStateProps {
-  variant?: "spinner" | "skeleton" | "dots" | "pulse";
+  variant?: "spinner" | "skeleton" | "dots" | "pulse" | "2300";
   message?: string;
   className?: string;
   size?: "sm" | "md" | "lg";
@@ -69,7 +69,28 @@ export function LoadingState({
     );
   }
 
-  // Skeleton variant
+  // 2300 UPGRADE - Skeleton Premium Shimmer
+  if (variant === "2300") {
+    return (
+      <div className={cn("space-y-4", className)}>
+        <div className="flex items-center gap-4">
+          <Skeleton variant="2300" className="h-12 w-12 rounded-full" />
+          <div className="space-y-2 flex-1">
+            <Skeleton variant="2300" className="h-4 w-3/4" />
+            <Skeleton variant="2300" className="h-3 w-1/2" />
+          </div>
+        </div>
+        <Skeleton variant="2300" className="h-32 w-full rounded-xl" />
+        <div className="grid grid-cols-3 gap-4">
+          <Skeleton variant="2300" className="h-20 rounded-xl" />
+          <Skeleton variant="2300" className="h-20 rounded-xl" />
+          <Skeleton variant="2300" className="h-20 rounded-xl" />
+        </div>
+      </div>
+    );
+  }
+
+  // Skeleton variant (default)
   return (
     <div className={cn("space-y-4", className)}>
       <div className="flex items-center gap-4">

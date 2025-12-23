@@ -97,7 +97,7 @@ export function SynapseStatusWidget() {
   };
 
   return (
-    <Card className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
+    <Card variant="2300" className="border-primary/20 bg-gradient-to-br from-card to-primary/5">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center justify-between text-base">
           <div className="flex items-center gap-2">
@@ -106,7 +106,7 @@ export function SynapseStatusWidget() {
             </div>
             SYNAPSE v14.0
           </div>
-          <Badge className={getStatusColor(systemHealth >= 80 ? 'online' : systemHealth >= 50 ? 'warning' : 'offline')}>
+          <Badge variant={systemHealth >= 80 ? 'status-online' : systemHealth >= 50 ? 'status-syncing' : 'destructive'}>
             {systemHealth}% Health
           </Badge>
         </CardTitle>
