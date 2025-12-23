@@ -61,7 +61,8 @@ export interface PerformanceConfig {
   logPerformanceMetrics: boolean;
 }
 
-export type PerformanceTier = 'quantum' | 'neural' | 'enhanced' | 'standard' | 'legacy' | 'lite';
+// 🏛️ LEI I v2.0 - 6 tiers oficiais
+export type PerformanceTier = 'quantum' | 'neural' | 'enhanced' | 'standard' | 'legacy' | 'critical';
 
 export interface DeviceCapabilities {
   tier: PerformanceTier;
@@ -202,7 +203,7 @@ const TIER_CONFIGS: Record<PerformanceTier, Partial<PerformanceConfig>> = {
     animationStagger: 0,
     prefetchEnabled: false,
   },
-  lite: {
+  critical: {
     liteMode: true,
     enableMotion: false,
     enableAmbientFx: false,
@@ -327,10 +328,10 @@ export function detectDeviceCapabilities(forceRefresh = false): DeviceCapabiliti
   else if (score >= 60) tier = 'enhanced';
   else if (score >= 35) tier = 'standard';
   else if (score >= 15) tier = 'legacy';
-  else tier = 'lite';
+  else tier = 'critical';
   
   // Low-end?
-  const isLowEnd = tier === 'legacy' || tier === 'lite' || 
+  const isLowEnd = tier === 'legacy' || tier === 'critical' || 
                    connection === '3g' || connection === '2g' || saveData;
   
   cachedCapabilities = {

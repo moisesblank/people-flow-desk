@@ -340,7 +340,7 @@ export const PerformanceOverlay = memo(({
             tier === 'enhanced' && "text-green-500",
             tier === 'standard' && "text-yellow-500",
             tier === 'legacy' && "text-orange-500",
-            tier === 'lite' && "text-red-500"
+            tier === 'critical' && "text-red-500"
           )}>
             {tier}
           </span>

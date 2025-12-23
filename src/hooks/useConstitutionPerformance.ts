@@ -46,8 +46,8 @@ export function useConstitutionPerformance() {
   return useMemo(() => {
     const { tier, flags, animation, image, lazy, connection, device } = state;
     
-    // Flags simplificadas
-    const isLowEnd = tier === 'critical' || tier === 'low';
+    // Flags simplificadas - usando tiers oficiais LEI I v2.0
+    const isLowEnd = tier === 'critical' || tier === 'legacy' || tier === 'standard';
     const isCritical = tier === 'critical';
     const shouldAnimate = flags.enableAnimations && !flags.reduceMotion;
     const shouldBlur = flags.enableBlur;
@@ -159,7 +159,7 @@ export function useConstitutionPerformance() {
       getParticleCount: (baseCount: number) => {
         if (isCritical) return 0;
         if (isLowEnd) return Math.floor(baseCount * 0.3);
-        if (tier === 'medium') return Math.floor(baseCount * 0.6);
+        if (tier === 'enhanced') return Math.floor(baseCount * 0.6);
         return baseCount;
       },
     };
