@@ -80,18 +80,21 @@ export function SystemHealthIndicator() {
       color: "text-[hsl(var(--stats-green))]",
       bgColor: "bg-[hsl(var(--stats-green))]/10",
       label: "Operacional",
+      badgeVariant: "status-online" as const,
     },
     degraded: {
       icon: AlertTriangle,
       color: "text-yellow-500",
       bgColor: "bg-yellow-500/10",
       label: "Degradado",
+      badgeVariant: "status-syncing" as const,
     },
     down: {
       icon: XCircle,
       color: "text-red-500",
       bgColor: "bg-red-500/10",
       label: "Offline",
+      badgeVariant: "destructive" as const,
     },
   };
 
@@ -126,8 +129,9 @@ export function SystemHealthIndicator() {
             {isChecking ? "Verificando..." : config.label}
           </span>
           {!isChecking && overallStatus === "healthy" && (
-            <span className="text-[10px] text-muted-foreground">
-              {health.latency}ms
+            <span className="relative flex items-center gap-1 text-[10px] text-muted-foreground">
+              <span className="absolute -left-1 w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+              <span className="pl-2">{health.latency}ms</span>
             </span>
           )}
         </motion.button>
