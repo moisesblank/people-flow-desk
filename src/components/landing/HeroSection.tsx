@@ -1,6 +1,6 @@
 // ============================================
 // HERO SECTION 2500 - ULTRA PERFORMANCE
-// Mobile-first, 3G-optimized
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { useState, useEffect, memo } from "react";
@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePerformance } from "@/hooks/usePerformance";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 // ============================================
 // BACKGROUND ESTÁTICO - Zero animações pesadas
@@ -111,6 +112,7 @@ HeroBadge.displayName = "HeroBadge";
 // ============================================
 export const HeroSection = memo(() => {
   const { isMobile, disableAnimations } = usePerformance();
+  const { gpuAnimationProps, shouldAnimate, throttle } = useQuantumReactivity();
   const [typedText, setTypedText] = useState("");
   const fullText = "Sua aprovação começa aqui!";
 
@@ -211,11 +213,9 @@ export const HeroSection = memo(() => {
       <div className="container mx-auto px-4 relative z-10">
         <div className="max-w-4xl mx-auto text-center lg:text-left lg:max-w-none lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center">
           
-          {/* Conteúdo principal */}
+          {/* Conteúdo principal - GPU-ONLY animation */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            {...gpuAnimationProps.fadeUp}
             className="text-center lg:text-left"
           >
             <HeroBadge animate={true} />
@@ -226,28 +226,26 @@ export const HeroSection = memo(() => {
               <span className="block mt-2 text-transparent bg-clip-text bg-gradient-to-r from-red-500 via-amber-500 to-red-500">
                 começa aqui!
               </span>
-              <motion.span
-                className="inline-block w-1 h-10 md:h-14 bg-gradient-to-b from-red-500 to-amber-500 ml-1 rounded-full"
-                animate={{ opacity: [1, 0, 1] }}
-                transition={{ duration: 0.8, repeat: Infinity }}
-              />
+              {shouldAnimate && (
+                <motion.span
+                  className="inline-block w-1 h-10 md:h-14 bg-gradient-to-b from-red-500 to-amber-500 ml-1 rounded-full will-change-transform transform-gpu"
+                  animate={{ opacity: [1, 0, 1] }}
+                  transition={{ duration: 0.8, repeat: Infinity }}
+                />
+              )}
             </h1>
 
-            {/* Subheadline */}
+            {/* Subheadline - GPU-ONLY */}
             <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.4 }}
+              {...gpuAnimationProps.fadeIn}
               className="text-lg md:text-xl lg:text-2xl text-gray-300 mb-8 max-w-2xl mx-auto lg:mx-0"
             >
               O método que já aprovou <span className="text-red-400 font-black">mais de 10.000 alunos</span> em Medicina nas melhores universidades do Brasil.
             </motion.p>
 
-            {/* CTAs */}
+            {/* CTAs - GPU-ONLY */}
             <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
+              {...gpuAnimationProps.fadeUp}
               className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-center lg:justify-start mb-8"
             >
               <Link to="/auth">
@@ -274,11 +272,9 @@ export const HeroSection = memo(() => {
               </a>
             </motion.div>
 
-            {/* Stats */}
+            {/* Stats - GPU-ONLY */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
+              {...gpuAnimationProps.fadeIn}
               className="grid grid-cols-3 gap-2 md:gap-4 mb-6"
             >
               {stats.map((stat) => (
@@ -286,11 +282,9 @@ export const HeroSection = memo(() => {
               ))}
             </motion.div>
 
-            {/* Trust indicators */}
+            {/* Trust indicators - GPU-ONLY */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.7 }}
+              {...gpuAnimationProps.fadeIn}
               className="flex flex-wrap items-center justify-center lg:justify-start gap-4 md:gap-6"
             >
               {trustItems.map((item) => (
@@ -302,11 +296,9 @@ export const HeroSection = memo(() => {
             </motion.div>
           </motion.div>
 
-          {/* Visual lateral - apenas desktop */}
+          {/* Visual lateral - GPU-ONLY slideIn */}
           <motion.div
-            initial={{ opacity: 0, x: 50 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.3, duration: 0.6 }}
+            {...gpuAnimationProps.slideIn}
             className="hidden lg:block relative"
           >
             <div className="relative rounded-3xl overflow-hidden border border-white/10 bg-gradient-to-br from-gray-900/80 to-black/80 aspect-[4/5]">
@@ -343,20 +335,22 @@ export const HeroSection = memo(() => {
         </div>
       </div>
 
-      {/* Scroll indicator */}
-      <motion.div
-        className="absolute bottom-8 left-1/2 -translate-x-1/2"
-        animate={{ y: [0, 10, 0] }}
-        transition={{ duration: 2, repeat: Infinity }}
-      >
-        <div className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-2">
-          <motion.div
-            className="w-1 h-2 bg-red-500 rounded-full"
-            animate={{ y: [0, 12, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          />
-        </div>
-      </motion.div>
+      {/* Scroll indicator - GPU-ONLY transform */}
+      {shouldAnimate && (
+        <motion.div
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 will-change-transform transform-gpu"
+          animate={{ y: [0, 10, 0] }}
+          transition={{ duration: 2, repeat: Infinity }}
+        >
+          <div className="w-6 h-10 rounded-full border-2 border-white/20 flex items-start justify-center p-2">
+            <motion.div
+              className="w-1 h-2 bg-red-500 rounded-full will-change-transform transform-gpu"
+              animate={{ y: [0, 12, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+          </div>
+        </motion.div>
+      )}
     </section>
   );
 });
