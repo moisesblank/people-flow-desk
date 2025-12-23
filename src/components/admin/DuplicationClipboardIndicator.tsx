@@ -1,7 +1,6 @@
 // ============================================
 // MOISÉS MEDEIROS v11.0 - DUPLICATION CLIPBOARD INDICATOR
-// Indicador Visual de Item na Área de Transferência
-// Owner: moisesblank@gmail.com
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { useState, useEffect } from 'react';
@@ -12,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { useDuplicationClipboard } from '@/contexts/DuplicationClipboardContext';
 import { useMasterDuplication } from '@/hooks/useMasterDuplication';
 import { cn } from '@/lib/utils';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 
 const ENTITY_LABELS: Record<string, string> = {
   course: 'Curso',

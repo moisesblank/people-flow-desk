@@ -1,6 +1,5 @@
 // ============================================
-// FINANCIAL OVERVIEW - Resumo Financeiro Visual
-// Visão clara da saúde financeira - CLICÁVEL
+// FINANCIAL OVERVIEW - GPU-ONLY animations
 // ============================================
 
 import { motion } from "framer-motion";
@@ -16,6 +15,7 @@ import {
   ChevronRight
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 interface FinancialOverviewProps {
   income: number;
@@ -40,6 +40,7 @@ export function FinancialOverview({
   pendingPayments 
 }: FinancialOverviewProps) {
   const navigate = useNavigate();
+  const { shouldAnimate } = useQuantumReactivity();
   const profit = income - expenses;
   const profitMargin = income > 0 ? (profit / income) * 100 : 0;
   const expenseRatio = income > 0 ? (expenses / income) * 100 : 0;
@@ -73,12 +74,12 @@ export function FinancialOverview({
 
       {/* Main Values - CLICÁVEIS */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-        {/* Income - Clicável */}
+        {/* Income - GPU-ONLY hover */}
         <motion.button
           onClick={() => navigate("/entradas")}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="p-4 rounded-xl bg-[hsl(var(--stats-green))]/5 border border-[hsl(var(--stats-green))]/20 hover:border-[hsl(var(--stats-green))]/40 transition-all text-left group"
+          whileHover={shouldAnimate ? { scale: 1.02 } : undefined}
+          whileTap={shouldAnimate ? { scale: 0.98 } : undefined}
+          className="p-4 rounded-xl bg-[hsl(var(--stats-green))]/5 border border-[hsl(var(--stats-green))]/20 hover:border-[hsl(var(--stats-green))]/40 transition-all text-left group will-change-transform transform-gpu"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Receitas</span>
@@ -89,12 +90,12 @@ export function FinancialOverview({
           </p>
         </motion.button>
 
-        {/* Expenses - Clicável */}
+        {/* Expenses - GPU-ONLY hover */}
         <motion.button
           onClick={() => navigate("/financas-empresa")}
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          className="p-4 rounded-xl bg-[hsl(var(--stats-purple))]/5 border border-[hsl(var(--stats-purple))]/20 hover:border-[hsl(var(--stats-purple))]/40 transition-all text-left group"
+          whileHover={shouldAnimate ? { scale: 1.02 } : undefined}
+          whileTap={shouldAnimate ? { scale: 0.98 } : undefined}
+          className="p-4 rounded-xl bg-[hsl(var(--stats-purple))]/5 border border-[hsl(var(--stats-purple))]/20 hover:border-[hsl(var(--stats-purple))]/40 transition-all text-left group will-change-transform transform-gpu"
         >
           <div className="flex items-center justify-between mb-2">
             <span className="text-sm text-muted-foreground">Despesas</span>

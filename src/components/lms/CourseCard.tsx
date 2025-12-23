@@ -1,3 +1,4 @@
+// GPU-ONLY animations via useQuantumReactivity
 import { motion } from 'framer-motion';
 import { Clock, Users, Star, Play, Lock, BookOpen } from 'lucide-react';
 import { Card, CardContent, CardFooter } from '@/components/ui/card';
@@ -5,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 
 interface CourseCardProps {
   id: string;

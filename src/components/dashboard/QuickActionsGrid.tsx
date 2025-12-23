@@ -1,6 +1,5 @@
 // ============================================
-// QUICK ACTIONS GRID v2.0 - Ações Rápidas Visual
-// Acesso rápido com IA e automação integrada
+// QUICK ACTIONS GRID v2.0 - GPU-ONLY animations
 // ============================================
 
 import { motion } from "framer-motion";
@@ -37,6 +36,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 interface QuickAction {
   id: string;

@@ -1,8 +1,6 @@
 // ============================================
 // MOISÉS MEDEIROS v16.0 - MASTER CONFIRM DIALOG
-// Diálogo de confirmação universal para exclusões
-// "TEM CERTEZA?" com botões SIM/NÃO claros
-// Owner exclusivo: moisesblank@gmail.com
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { useState } from 'react';
@@ -16,6 +14,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 
 interface MasterConfirmDialogProps {
   isOpen: boolean;

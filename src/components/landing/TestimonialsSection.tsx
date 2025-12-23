@@ -1,6 +1,6 @@
 // ============================================
 // DEPOIMENTOS REAIS - VERSÃO 2500 ULTRA
-// Feedbacks reais de WhatsApp + Carousel
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { useState, useEffect, useRef } from "react";
@@ -12,6 +12,7 @@ import {
   Instagram, Youtube, Users, Zap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 // Imagens reais de depoimentos
 import depoimentoWhatsapp1 from "@/assets/testimonials/depoimento-whatsapp-1.jpg";
@@ -360,6 +361,7 @@ export const TestimonialsSection = () => {
   const [isAutoPlaying, setIsAutoPlaying] = useState(true);
   const sectionRef = useRef(null);
   const isInView = useInView(sectionRef, { once: true });
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
 
   useEffect(() => {
     if (!isAutoPlaying) return;
@@ -387,48 +389,57 @@ export const TestimonialsSection = () => {
       <div className="absolute inset-0">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-green-950/10 to-transparent" />
         
-        {/* Orbes de energia */}
-        <motion.div
-          className="absolute left-0 top-1/4 w-[700px] h-[700px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(34, 197, 94, 0.12) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          animate={{ scale: [1, 1.3, 1], x: [0, 100, 0] }}
-          transition={{ duration: 20, repeat: Infinity }}
-        />
-        <motion.div
-          className="absolute right-0 bottom-1/4 w-[600px] h-[600px] rounded-full"
-          style={{
-            background: 'radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, transparent 70%)',
-            filter: 'blur(100px)',
-          }}
-          animate={{ y: [0, -80, 0] }}
-          transition={{ duration: 15, repeat: Infinity }}
-        />
+        {/* Orbes de energia - conditionally rendered */}
+        {shouldAnimate && (
+          <>
+            <motion.div
+              className="absolute left-0 top-1/4 w-[700px] h-[700px] rounded-full will-change-transform transform-gpu"
+              style={{
+                background: 'radial-gradient(circle, rgba(34, 197, 94, 0.12) 0%, transparent 70%)',
+                filter: 'blur(100px)',
+              }}
+              animate={{ scale: [1, 1.3, 1], x: [0, 100, 0] }}
+              transition={{ duration: 20, repeat: Infinity }}
+            />
+            <motion.div
+              className="absolute right-0 bottom-1/4 w-[600px] h-[600px] rounded-full will-change-transform transform-gpu"
+              style={{
+                background: 'radial-gradient(circle, rgba(147, 51, 234, 0.1) 0%, transparent 70%)',
+                filter: 'blur(100px)',
+              }}
+              animate={{ y: [0, -80, 0] }}
+              transition={{ duration: 15, repeat: Infinity }}
+            />
+          </>
+        )}
       </div>
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header épico */}
         <div className="text-center mb-16">
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
-            animate={isInView ? { opacity: 1, y: 0 } : {}}
+            {...gpuAnimationProps.fadeUp}
             className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-gradient-to-r from-green-900/40 to-emerald-900/40 border border-green-700/40 mb-8"
           >
-            <motion.div
-              animate={{ scale: [1, 1.3, 1] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Heart className="w-5 h-5 text-red-400" fill="currentColor" />
-            </motion.div>
+            {shouldAnimate && (
+              <motion.div
+                animate={{ scale: [1, 1.3, 1] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              >
+                <Heart className="w-5 h-5 text-red-400" fill="currentColor" />
+              </motion.div>
+            )}
+            {!shouldAnimate && <Heart className="w-5 h-5 text-red-400" fill="currentColor" />}
             <span className="text-sm font-bold text-green-400 tracking-wide">DEPOIMENTOS 100% REAIS</span>
-            <motion.div
-              animate={{ rotate: 360 }}
-              transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-            >
-              <Sparkles className="w-5 h-5 text-amber-400" />
-            </motion.div>
+            {shouldAnimate && (
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+              >
+                <Sparkles className="w-5 h-5 text-amber-400" />
+              </motion.div>
+            )}
+            {!shouldAnimate && <Sparkles className="w-5 h-5 text-amber-400" />}
           </motion.div>
 
           <motion.h2

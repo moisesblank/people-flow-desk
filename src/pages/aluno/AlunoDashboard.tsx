@@ -1,7 +1,6 @@
 // ============================================
 // CENTRAL DO ALUNO - DASHBOARD 2300
-// Química ENEM - Prof. Moisés Medeiros
-// FUTURISTA | GAMIFICADO | JOVEM
+// GPU-ONLY animations via useQuantumReactivity
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -16,6 +15,7 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 interface StudyStats {
   horasEstudadas: number;
@@ -30,21 +30,25 @@ interface StudyStats {
   xpProximoNivel: number;
 }
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.1 }
+// GPU-ONLY variants
+const getGpuVariants = (shouldAnimate: boolean) => ({
+  container: {
+    hidden: shouldAnimate ? { opacity: 0 } : {},
+    show: shouldAnimate ? {
+      opacity: 1,
+      transition: { staggerChildren: 0.1 }
+    } : {}
+  },
+  item: {
+    hidden: shouldAnimate ? { opacity: 0, y: 20 } : {},
+    show: shouldAnimate ? { opacity: 1, y: 0 } : {}
   }
-};
-
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
+});
 
 export default function AlunoDashboard() {
   const navigate = useNavigate();
+  const { shouldAnimate } = useQuantumReactivity();
+  const { container, item } = getGpuVariants(shouldAnimate);
   const [stats] = useState<StudyStats>({
     horasEstudadas: 47,
     aulasAssistidas: 32,
