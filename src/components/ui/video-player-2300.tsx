@@ -67,7 +67,7 @@ export const VideoPlayer2300 = memo(function VideoPlayer2300({
   return (
     <div
       className={cn(
-        "player-2300",
+        "player-2300 group",
         aspectRatioClass[aspectRatio],
         className
       )}
