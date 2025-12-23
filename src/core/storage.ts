@@ -242,7 +242,7 @@ export function canAccessBucket(bucketKey: BucketKey, role: string | null): bool
   
   if (role === "owner") return true;
   
-  return role ? bucket.allowedRoles.includes(role as UserRole) : false;
+  return role ? (bucket.allowedRoles as readonly string[]).includes(role) : false;
 }
 
 /**
@@ -270,9 +270,10 @@ export function isFileTypeAllowed(bucketKey: BucketKey, mimeType: string): boole
   const bucket = STORAGE_BUCKETS[bucketKey];
   if (!bucket) return false;
   
-  if (bucket.allowedTypes.includes("*/*")) return true;
+  const allowedTypes = bucket.allowedTypes as readonly string[];
+  if (allowedTypes.includes("*/*")) return true;
   
-  return bucket.allowedTypes.includes(mimeType);
+  return allowedTypes.includes(mimeType);
 }
 
 /**
