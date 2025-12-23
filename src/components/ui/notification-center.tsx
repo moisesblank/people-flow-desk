@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Bell, 
   Check, 
@@ -69,6 +70,8 @@ function NotificationItem({
   onMarkAsRead: (id: string) => void;
   onDelete: (id: string) => void;
 }) {
+  const { gpuAnimationProps } = useQuantumReactivity();
+
   const Icon = notificationIcons[notification.type];
   const colorClass = notificationColors[notification.type];
   
@@ -87,11 +90,9 @@ function NotificationItem({
 
   return (
     <motion.div
-      initial={{ opacity: 0, x: -20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: 20 }}
+      {...gpuAnimationProps.fadeUp}
       className={cn(
-        "p-4 rounded-xl border transition-all",
+        "p-4 rounded-xl border transition-all will-change-transform transform-gpu",
         notification.read 
           ? "bg-card/30 border-border/30" 
           : "bg-card/60 border-border/50 shadow-sm"
@@ -162,6 +163,8 @@ export function NotificationCenter({
   onDelete,
   onClearAll,
 }: NotificationCenterProps) {
+  const { gpuAnimationProps } = useQuantumReactivity();
+
   const [isOpen, setIsOpen] = useState(false);
   const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -177,9 +180,8 @@ export function NotificationCenter({
           <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <motion.span
-              initial={{ scale: 0 }}
-              animate={{ scale: 1 }}
-              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center"
+              {...gpuAnimationProps.scaleIn}
+              className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-primary text-primary-foreground text-xs font-medium flex items-center justify-center will-change-transform transform-gpu"
             >
               {unreadCount > 9 ? "9+" : unreadCount}
             </motion.span>
