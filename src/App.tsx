@@ -95,6 +95,13 @@ const Perfil = lazy(() => import("./pages/Perfil"));
 const GestaoDispositivos = lazy(() => import("./pages/GestaoDispositivos"));
 const CentralDiagnostico = lazy(() => import("./pages/CentralDiagnostico"));
 
+// ===== COMUNIDADE (NÃO PAGANTE + BETA) =====
+const ComunidadeForum = lazy(() => import("./pages/comunidade/ComunidadeForum"));
+const ComunidadePosts = lazy(() => import("./pages/comunidade/ComunidadePosts"));
+const ComunidadeMembros = lazy(() => import("./pages/comunidade/ComunidadeMembros"));
+const ComunidadeEventos = lazy(() => import("./pages/comunidade/ComunidadeEventos"));
+const ComunidadeChat = lazy(() => import("./pages/comunidade/ComunidadeChat"));
+
 // ===== CENTRAL DO ALUNO - QUÍMICA ENEM =====
 const AlunosRouteSwitcher = lazy(() => import("./pages/AlunosRouteSwitcher"));
 const AlunoDashboard = lazy(() => import("./pages/aluno/AlunoDashboard"));
@@ -223,89 +230,109 @@ const AppContent = memo(() => {
       {/* Routes with optimized Suspense */}
       <Suspense fallback={<PageLoader />}>
         <Routes>
-          {/* Public routes - SSG candidates (DOGMA VII) */}
+          {/* ========================================== */}
+          {/* 🌐 ROTAS PÚBLICAS (SEM AUTH) */}
+          {/* ========================================== */}
           <Route path="/" element={<Home />} />
           <Route path="/site" element={<LandingPage />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/termos" element={<TermosDeUso />} />
           <Route path="/privacidade" element={<PoliticaPrivacidade />} />
           <Route path="/area-gratuita" element={<AreaGratuita />} />
+          
+          {/* ========================================== */}
+          {/* 🌐 COMUNIDADE (NÃO PAGANTE + BETA) */}
+          {/* pro.moisesmedeiros.com.br/comunidade */}
+          {/* ========================================== */}
           <Route path="/comunidade" element={<Comunidade />} />
+          <Route path="/comunidade/forum" element={<ProtectedPage><ComunidadeForum /></ProtectedPage>} />
+          <Route path="/comunidade/posts" element={<ProtectedPage><ComunidadePosts /></ProtectedPage>} />
+          <Route path="/comunidade/membros" element={<ProtectedPage><ComunidadeMembros /></ProtectedPage>} />
+          <Route path="/comunidade/eventos" element={<ProtectedPage><ComunidadeEventos /></ProtectedPage>} />
+          <Route path="/comunidade/chat" element={<ProtectedPage><ComunidadeChat /></ProtectedPage>} />
           
-          {/* Protected routes with layout */}
-          <Route path="/app" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
-          <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
-          <Route path="/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
-          <Route path="/financas-pessoais" element={<ProtectedPage><FinancasPessoais /></ProtectedPage>} />
-          <Route path="/financas-empresa" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
-          <Route path="/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
-          <Route path="/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
-          <Route path="/gestao-alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
-          <Route path="/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
-          <Route path="/configuracoes" element={<ProtectedPage><Configuracoes /></ProtectedPage>} />
-          <Route path="/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
-          <Route path="/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />
-          <Route path="/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
-          <Route path="/pagamentos" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
-          <Route path="/contabilidade" element={<ProtectedPage><Contabilidade /></ProtectedPage>} />
-          <Route path="/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
-          <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
-          <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
-          <Route path="/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
-          <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
-          <Route path="/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
-          <Route path="/cursos/:courseId" element={<ProtectedPage><CursoDetalhe /></ProtectedPage>} />
-          <Route path="/cursos/:courseId/aula/:lessonId" element={<ProtectedPage><Aula /></ProtectedPage>} />
-          <Route path="/marketing" element={<ProtectedPage><Marketing /></ProtectedPage>} />
-          <Route path="/lancamento" element={<ProtectedPage><Lancamento /></ProtectedPage>} />
-          <Route path="/metricas" element={<ProtectedPage><Metricas /></ProtectedPage>} />
-          <Route path="/arquivos" element={<ProtectedPage><Arquivos /></ProtectedPage>} />
-          <Route path="/documentos" element={<ProtectedPage><Documentos /></ProtectedPage>} />
-          <Route path="/planejamento-aula" element={<ProtectedPage><PlanejamentoAula /></ProtectedPage>} />
-          <Route path="/turmas-online" element={<ProtectedPage><TurmasOnline /></ProtectedPage>} />
-          <Route path="/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
-          <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
-          <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
-          <Route path="/perfil" element={<ProtectedPage><Perfil /></ProtectedPage>} />
-          <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
-          <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
-          <Route path="/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
-          <Route path="/laboratorio" element={<ProtectedPage><Laboratorio /></ProtectedPage>} />
-          <Route path="/vida-pessoal" element={<ProtectedPage><VidaPessoal /></ProtectedPage>} />
-          <Route path="/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
-          <Route path="/leads-whatsapp" element={<ProtectedPage><LeadsWhatsApp /></ProtectedPage>} />
-          <Route path="/central-whatsapp" element={<ProtectedPage><CentralWhatsApp /></ProtectedPage>} />
-          <Route path="/whatsapp-live" element={<ProtectedPage><WhatsAppLive /></ProtectedPage>} />
-          <Route path="/diagnostico-whatsapp" element={<ProtectedPage><DiagnosticoWhatsApp /></ProtectedPage>} />
-          <Route path="/diagnostico-webhooks" element={<ProtectedPage><DiagnosticoWebhooks /></ProtectedPage>} />
-          <Route path="/central-metricas" element={<ProtectedPage><CentralMetricas /></ProtectedPage>} />
-          <Route path="/auditoria-acessos" element={<ProtectedPage><AuditoriaAcessos /></ProtectedPage>} />
-          <Route path="/central-monitoramento" element={<ProtectedPage><CentralMonitoramento /></ProtectedPage>} />
-          <Route path="/central-ias" element={<ProtectedPage><CentralIAs /></ProtectedPage>} />
-          <Route path="/transacoes-hotmart" element={<ProtectedPage><TransacoesHotmart /></ProtectedPage>} />
-          <Route path="/lives" element={<ProtectedPage><Lives /></ProtectedPage>} />
+          {/* ========================================== */}
+          {/* 👔 GESTÃO - PREFIXO /gestao/ (FUNCIONÁRIOS) */}
+          {/* gestao.moisesmedeiros.com.br/gestao/* */}
+          {/* ========================================== */}
+          <Route path="/gestao/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+          <Route path="/gestao/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
+          <Route path="/gestao/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
+          <Route path="/gestao/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
+          <Route path="/gestao/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
+          <Route path="/gestao/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
+          <Route path="/gestao/documentos" element={<ProtectedPage><Documentos /></ProtectedPage>} />
+          <Route path="/gestao/perfil" element={<ProtectedPage><Perfil /></ProtectedPage>} />
+          <Route path="/gestao/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />
           
-          {/* Rotas Empresariais */}
-          {/* DashboardEmpresarial removido - acessar via /financas-empresa */}
-          <Route path="/empresas/dashboard" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
-          <Route path="/empresas/receitas" element={<ProtectedPage><ReceitasEmpresariais /></ProtectedPage>} />
-          <Route path="/empresas/arquivos" element={<ProtectedPage><ArquivosEmpresariais /></ProtectedPage>} />
-          <Route path="/empresas/rh" element={<ProtectedPage><RHFuncionarios /></ProtectedPage>} />
+          {/* Gestão - Marketing */}
+          <Route path="/gestao/marketing" element={<ProtectedPage><Marketing /></ProtectedPage>} />
+          <Route path="/gestao/lancamento" element={<ProtectedPage><Lancamento /></ProtectedPage>} />
+          <Route path="/gestao/metricas" element={<ProtectedPage><Metricas /></ProtectedPage>} />
+          <Route path="/gestao/arquivos" element={<ProtectedPage><Arquivos /></ProtectedPage>} />
+          <Route path="/gestao/leads-whatsapp" element={<ProtectedPage><LeadsWhatsApp /></ProtectedPage>} />
           
-          {/* 🛡️ DOGMA XI: Gestão de Dispositivos */}
-          <Route path="/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
-          
-          {/* 🔬 Central de Diagnóstico - Owner Only */}
-          <Route path="/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
-          <Route path="/gestao/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
-          
-          {/* ===== CENTRAL DO ALUNO - QUÍMICA ENEM ===== */}
-          {/* /alunos é inteligente: no domínio de gestão vira Gestão de Alunos; no domínio do aluno vira Portal */}
-          <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
-          <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
-          <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
-          <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
+          {/* Gestão - Aulas */}
+          <Route path="/gestao/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
+          <Route path="/gestao/planejamento-aula" element={<ProtectedPage><PlanejamentoAula /></ProtectedPage>} />
+          <Route path="/gestao/laboratorio" element={<ProtectedPage><Laboratorio /></ProtectedPage>} />
+          <Route path="/gestao/turmas-online" element={<ProtectedPage><TurmasOnline /></ProtectedPage>} />
+          <Route path="/gestao/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
+          <Route path="/gestao/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
+          <Route path="/gestao/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
+          <Route path="/gestao/lives" element={<ProtectedPage><Lives /></ProtectedPage>} />
           <Route path="/gestao/livros-web" element={<ProtectedPage><GestaoLivrosWeb /></ProtectedPage>} />
+          
+          {/* Gestão - Finanças */}
+          <Route path="/gestao/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
+          <Route path="/gestao/financas-empresa" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+          <Route path="/gestao/financas-pessoais" element={<ProtectedPage><FinancasPessoais /></ProtectedPage>} />
+          <Route path="/gestao/pagamentos" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+          <Route path="/gestao/contabilidade" element={<ProtectedPage><Contabilidade /></ProtectedPage>} />
+          <Route path="/gestao/transacoes-hotmart" element={<ProtectedPage><TransacoesHotmart /></ProtectedPage>} />
+          
+          {/* Gestão - Alunos */}
+          <Route path="/gestao/gestao-alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
+          <Route path="/gestao/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
+          <Route path="/gestao/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
+          <Route path="/gestao/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
+          
+          {/* Gestão - Admin/Config */}
+          <Route path="/gestao/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
+          <Route path="/gestao/configuracoes" element={<ProtectedPage><Configuracoes /></ProtectedPage>} />
+          <Route path="/gestao/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
+          <Route path="/gestao/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
+          <Route path="/gestao/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
+          <Route path="/gestao/auditoria-acessos" element={<ProtectedPage><AuditoriaAcessos /></ProtectedPage>} />
+          
+          {/* Gestão - Owner Only */}
+          <Route path="/gestao/central-monitoramento" element={<ProtectedPage><CentralMonitoramento /></ProtectedPage>} />
+          <Route path="/gestao/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
+          <Route path="/gestao/central-whatsapp" element={<ProtectedPage><CentralWhatsApp /></ProtectedPage>} />
+          <Route path="/gestao/whatsapp-live" element={<ProtectedPage><WhatsAppLive /></ProtectedPage>} />
+          <Route path="/gestao/diagnostico-whatsapp" element={<ProtectedPage><DiagnosticoWhatsApp /></ProtectedPage>} />
+          <Route path="/gestao/diagnostico-webhooks" element={<ProtectedPage><DiagnosticoWebhooks /></ProtectedPage>} />
+          <Route path="/gestao/central-metricas" element={<ProtectedPage><CentralMetricas /></ProtectedPage>} />
+          <Route path="/gestao/central-ias" element={<ProtectedPage><CentralIAs /></ProtectedPage>} />
+          <Route path="/gestao/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
+          <Route path="/gestao/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
+          <Route path="/gestao/vida-pessoal" element={<ProtectedPage><VidaPessoal /></ProtectedPage>} />
+          <Route path="/gestao/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
+          
+          {/* Gestão - Empresas */}
+          <Route path="/gestao/empresas/dashboard" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+          <Route path="/gestao/empresas/receitas" element={<ProtectedPage><ReceitasEmpresariais /></ProtectedPage>} />
+          <Route path="/gestao/empresas/arquivos" element={<ProtectedPage><ArquivosEmpresariais /></ProtectedPage>} />
+          <Route path="/gestao/empresas/rh" element={<ProtectedPage><RHFuncionarios /></ProtectedPage>} />
+          
+          {/* ========================================== */}
+          {/* 👨‍🎓 CENTRAL DO ALUNO BETA (PAGANTE) */}
+          {/* pro.moisesmedeiros.com.br/alunos/* */}
+          {/* ========================================== */}
+          <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
+          <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
+          <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
+          <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
           <Route path="/alunos/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
           <Route path="/alunos/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
           <Route path="/alunos/resumos" element={<ProtectedPage><AlunoResumos /></ProtectedPage>} />
@@ -329,6 +356,68 @@ const AppContent = memo(() => {
           <Route path="/alunos/agenda" element={<ProtectedPage><AlunoAgenda /></ProtectedPage>} />
           <Route path="/alunos/certificados" element={<ProtectedPage><AlunoCertificados /></ProtectedPage>} />
           <Route path="/alunos/perfil" element={<ProtectedPage><AlunoPerfil /></ProtectedPage>} />
+          
+          {/* ========================================== */}
+          {/* 🔄 ROTAS LEGADAS (COMPATIBILIDADE) */}
+          {/* Mantidas para não quebrar links antigos */}
+          {/* ========================================== */}
+          <Route path="/app" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+          <Route path="/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
+          <Route path="/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
+          <Route path="/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
+          <Route path="/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
+          <Route path="/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
+          <Route path="/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
+          <Route path="/documentos" element={<ProtectedPage><Documentos /></ProtectedPage>} />
+          <Route path="/perfil" element={<ProtectedPage><Perfil /></ProtectedPage>} />
+          <Route path="/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />
+          <Route path="/marketing" element={<ProtectedPage><Marketing /></ProtectedPage>} />
+          <Route path="/lancamento" element={<ProtectedPage><Lancamento /></ProtectedPage>} />
+          <Route path="/metricas" element={<ProtectedPage><Metricas /></ProtectedPage>} />
+          <Route path="/arquivos" element={<ProtectedPage><Arquivos /></ProtectedPage>} />
+          <Route path="/leads-whatsapp" element={<ProtectedPage><LeadsWhatsApp /></ProtectedPage>} />
+          <Route path="/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
+          <Route path="/planejamento-aula" element={<ProtectedPage><PlanejamentoAula /></ProtectedPage>} />
+          <Route path="/laboratorio" element={<ProtectedPage><Laboratorio /></ProtectedPage>} />
+          <Route path="/turmas-online" element={<ProtectedPage><TurmasOnline /></ProtectedPage>} />
+          <Route path="/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
+          <Route path="/cursos" element={<ProtectedPage><Cursos /></ProtectedPage>} />
+          <Route path="/cursos/:courseId" element={<ProtectedPage><CursoDetalhe /></ProtectedPage>} />
+          <Route path="/cursos/:courseId/aula/:lessonId" element={<ProtectedPage><Aula /></ProtectedPage>} />
+          <Route path="/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
+          <Route path="/lives" element={<ProtectedPage><Lives /></ProtectedPage>} />
+          <Route path="/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
+          <Route path="/financas-empresa" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+          <Route path="/financas-pessoais" element={<ProtectedPage><FinancasPessoais /></ProtectedPage>} />
+          <Route path="/pagamentos" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+          <Route path="/contabilidade" element={<ProtectedPage><Contabilidade /></ProtectedPage>} />
+          <Route path="/transacoes-hotmart" element={<ProtectedPage><TransacoesHotmart /></ProtectedPage>} />
+          <Route path="/gestao-alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
+          <Route path="/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
+          <Route path="/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
+          <Route path="/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
+          <Route path="/permissoes" element={<ProtectedPage><Permissoes /></ProtectedPage>} />
+          <Route path="/configuracoes" element={<ProtectedPage><Configuracoes /></ProtectedPage>} />
+          <Route path="/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
+          <Route path="/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
+          <Route path="/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
+          <Route path="/auditoria-acessos" element={<ProtectedPage><AuditoriaAcessos /></ProtectedPage>} />
+          <Route path="/central-monitoramento" element={<ProtectedPage><CentralMonitoramento /></ProtectedPage>} />
+          <Route path="/monitoramento" element={<ProtectedPage><Monitoramento /></ProtectedPage>} />
+          <Route path="/central-whatsapp" element={<ProtectedPage><CentralWhatsApp /></ProtectedPage>} />
+          <Route path="/whatsapp-live" element={<ProtectedPage><WhatsAppLive /></ProtectedPage>} />
+          <Route path="/diagnostico-whatsapp" element={<ProtectedPage><DiagnosticoWhatsApp /></ProtectedPage>} />
+          <Route path="/diagnostico-webhooks" element={<ProtectedPage><DiagnosticoWebhooks /></ProtectedPage>} />
+          <Route path="/central-metricas" element={<ProtectedPage><CentralMetricas /></ProtectedPage>} />
+          <Route path="/central-ias" element={<ProtectedPage><CentralIAs /></ProtectedPage>} />
+          <Route path="/site-programador" element={<ProtectedPage><SiteProgramador /></ProtectedPage>} />
+          <Route path="/central-diagnostico" element={<ProtectedPage><CentralDiagnostico /></ProtectedPage>} />
+          <Route path="/vida-pessoal" element={<ProtectedPage><VidaPessoal /></ProtectedPage>} />
+          <Route path="/pessoal" element={<ProtectedPage><Pessoal /></ProtectedPage>} />
+          <Route path="/empresas/dashboard" element={<ProtectedPage><FinancasEmpresa /></ProtectedPage>} />
+          <Route path="/empresas/receitas" element={<ProtectedPage><ReceitasEmpresariais /></ProtectedPage>} />
+          <Route path="/empresas/arquivos" element={<ProtectedPage><ArquivosEmpresariais /></ProtectedPage>} />
+          <Route path="/empresas/rh" element={<ProtectedPage><RHFuncionarios /></ProtectedPage>} />
           
           {/* Catch all */}
           <Route path="*" element={<NotFound />} />
