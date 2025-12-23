@@ -1,264 +1,673 @@
 // ============================================
-// 🔥 FUNCTION MATRIX — MATRIZ DE FUNÇÕES DO SISTEMA
-// Mapeia funções/permissões por role
-// PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+// 🔥 FUNCTION MATRIX — O CÉREBRO DO SISTEMA
+// Single Source of Truth para todas as funções
 // ============================================
 
-import type { UserRole } from "./nav/navRouteMap";
+import { RouteKey, ROUTES, ROUTE_DEFINITIONS } from "./routes";
+import { ActionKey, ACTIONS } from "./actions";
+import { BucketKey, BUCKETS } from "./storage";
 
 // ============================================
 // TIPOS
 // ============================================
 
-export type PermissionKey = keyof typeof PERMISSIONS;
+export type FunctionDomain = 
+  | "gestao"
+  | "marketing"
+  | "aulas"
+  | "financas"
+  | "negocios"
+  | "laboratorio"
+  | "pessoal"
+  | "admin"
+  | "owner"
+  | "aluno"
+  | "empresas"
+  | "auth"
+  | "system";
 
-export interface PermissionDefinition {
-  id: string;
-  label: string;
-  description: string;
-  category: PermissionCategory;
+export type FunctionStatus = "active" | "disabled" | "coming_soon" | "deprecated";
+
+export type UITriggerType = 
+  | "nav"
+  | "button"
+  | "card"
+  | "link"
+  | "icon"
+  | "tableRow"
+  | "formSubmit"
+  | "upload"
+  | "download"
+  | "menu"
+  | "submenu"
+  | "context_menu"
+  | "keyboard_shortcut";
+
+export type BackendMode = 
+  | "supabase-client"
+  | "rpc"
+  | "edge-function"
+  | "third-party"
+  | "hybrid";
+
+export interface UITrigger {
+  type: UITriggerType;
+  label?: string;
+  component?: string;
+  selectorHint?: string;
+  icon?: string;
+  shortcut?: string;
 }
 
-export type PermissionCategory = 
-  | "crud"
-  | "admin"
-  | "finance"
-  | "content"
-  | "user"
-  | "system"
-  | "view";
+export interface BackendHandler {
+  name: string;
+  supabase?: {
+    tables?: string[];
+    views?: string[];
+    rpcs?: string[];
+  };
+  edgeFunctions?: string[];
+  thirdParty?: string[];
+}
+
+export interface StorageOperation {
+  bucket: BucketKey;
+  operations: ("upload" | "download" | "signedUrl" | "delete")[];
+  pathPattern: string;
+  metadataTable?: string;
+}
+
+export interface SecuritySpec {
+  authRequired: boolean;
+  rolesAllowed: string[];
+  rlsTables: string[];
+  storagePolicies: string[];
+  abuseControls: ("rate-limit" | "captcha" | "idempotency" | "csrf" | "replay-protection")[];
+}
+
+export interface ObservabilitySpec {
+  auditEventNames: string[];
+  metrics: string[];
+  logs: ("info" | "warn" | "error")[];
+}
+
+export interface UXSpec {
+  emptyStates: boolean;
+  loadingStates: boolean;
+  errorStates: boolean;
+  offline3gStrategy: ("skeleton" | "retry" | "cache" | "defer" | "compress")[];
+}
+
+export interface TestSpec {
+  unit: boolean;
+  integration: boolean;
+  e2e: boolean;
+  smoke: boolean;
+}
 
 // ============================================
-// PERMISSÕES DO SISTEMA
+// FUNÇÃO — O ÁTOMO DO SISTEMA
 // ============================================
 
-export const PERMISSIONS = {
-  // === CRUD ===
-  CREATE: { id: "CREATE", label: "Criar", description: "Criar itens", category: "crud" },
-  READ: { id: "READ", label: "Ler", description: "Visualizar itens", category: "crud" },
-  UPDATE: { id: "UPDATE", label: "Editar", description: "Editar itens", category: "crud" },
-  DELETE: { id: "DELETE", label: "Excluir", description: "Excluir itens", category: "crud" },
-  
-  // === ADMIN ===
-  MANAGE_USERS: { id: "MANAGE_USERS", label: "Gerenciar Usuários", description: "Gerenciar usuários do sistema", category: "admin" },
-  MANAGE_ROLES: { id: "MANAGE_ROLES", label: "Gerenciar Roles", description: "Atribuir e revogar roles", category: "admin" },
-  MANAGE_PERMISSIONS: { id: "MANAGE_PERMISSIONS", label: "Gerenciar Permissões", description: "Configurar permissões", category: "admin" },
-  VIEW_AUDIT: { id: "VIEW_AUDIT", label: "Ver Auditoria", description: "Visualizar logs de auditoria", category: "admin" },
-  
-  // === FINANCE ===
-  VIEW_FINANCE: { id: "VIEW_FINANCE", label: "Ver Finanças", description: "Visualizar dados financeiros", category: "finance" },
-  MANAGE_FINANCE: { id: "MANAGE_FINANCE", label: "Gerenciar Finanças", description: "Gerenciar transações financeiras", category: "finance" },
-  EXPORT_FINANCE: { id: "EXPORT_FINANCE", label: "Exportar Finanças", description: "Exportar relatórios financeiros", category: "finance" },
-  
-  // === CONTENT ===
-  MANAGE_COURSES: { id: "MANAGE_COURSES", label: "Gerenciar Cursos", description: "Gerenciar cursos e aulas", category: "content" },
-  MANAGE_LESSONS: { id: "MANAGE_LESSONS", label: "Gerenciar Aulas", description: "Gerenciar aulas", category: "content" },
-  MANAGE_MATERIALS: { id: "MANAGE_MATERIALS", label: "Gerenciar Materiais", description: "Gerenciar materiais", category: "content" },
-  PUBLISH_CONTENT: { id: "PUBLISH_CONTENT", label: "Publicar Conteúdo", description: "Publicar conteúdo", category: "content" },
-  
-  // === USER ===
-  MANAGE_STUDENTS: { id: "MANAGE_STUDENTS", label: "Gerenciar Alunos", description: "Gerenciar alunos", category: "user" },
-  IMPORT_STUDENTS: { id: "IMPORT_STUDENTS", label: "Importar Alunos", description: "Importar lista de alunos", category: "user" },
-  EXPORT_STUDENTS: { id: "EXPORT_STUDENTS", label: "Exportar Alunos", description: "Exportar lista de alunos", category: "user" },
-  
-  // === SYSTEM ===
-  VIEW_DIAGNOSTICS: { id: "VIEW_DIAGNOSTICS", label: "Ver Diagnósticos", description: "Ver diagnósticos do sistema", category: "system" },
-  MANAGE_BACKUPS: { id: "MANAGE_BACKUPS", label: "Gerenciar Backups", description: "Criar e restaurar backups", category: "system" },
-  MANAGE_CACHE: { id: "MANAGE_CACHE", label: "Gerenciar Cache", description: "Limpar e gerenciar cache", category: "system" },
-  VIEW_LOGS: { id: "VIEW_LOGS", label: "Ver Logs", description: "Visualizar logs do sistema", category: "system" },
-  
-  // === VIEW ===
-  VIEW_DASHBOARD: { id: "VIEW_DASHBOARD", label: "Ver Dashboard", description: "Visualizar dashboard", category: "view" },
-  VIEW_REPORTS: { id: "VIEW_REPORTS", label: "Ver Relatórios", description: "Visualizar relatórios", category: "view" },
-  VIEW_ANALYTICS: { id: "VIEW_ANALYTICS", label: "Ver Analytics", description: "Visualizar analytics", category: "view" },
-} as const;
+export interface FunctionSpec {
+  id: string;
+  name: string;
+  description?: string;
+  domain: FunctionDomain;
+  status: FunctionStatus;
+  ui: {
+    triggers: UITrigger[];
+  };
+  route?: {
+    key: RouteKey;
+    params?: string[];
+  };
+  action?: {
+    key: ActionKey;
+  };
+  backend: {
+    mode: BackendMode;
+    handlers: BackendHandler[];
+  };
+  storage?: StorageOperation[];
+  security: SecuritySpec;
+  observability: ObservabilitySpec;
+  ux: UXSpec;
+  tests: TestSpec;
+}
 
 // ============================================
-// MATRIZ DE PERMISSÕES POR ROLE
+// MATRIZ DE FUNÇÕES (REGISTRY)
 // ============================================
 
-export const FUNCTION_MATRIX: Record<UserRole, PermissionKey[]> = {
-  // 👑 OWNER - TUDO
-  owner: Object.keys(PERMISSIONS) as PermissionKey[],
-  
-  // 👔 ADMIN
-  admin: [
-    "CREATE", "READ", "UPDATE", "DELETE",
-    "MANAGE_USERS", "MANAGE_ROLES", "VIEW_AUDIT",
-    "VIEW_FINANCE", "MANAGE_FINANCE", "EXPORT_FINANCE",
-    "MANAGE_COURSES", "MANAGE_LESSONS", "MANAGE_MATERIALS", "PUBLISH_CONTENT",
-    "MANAGE_STUDENTS", "IMPORT_STUDENTS", "EXPORT_STUDENTS",
-    "VIEW_DIAGNOSTICS", "VIEW_LOGS",
-    "VIEW_DASHBOARD", "VIEW_REPORTS", "VIEW_ANALYTICS",
-  ],
-  
-  // 👔 FUNCIONÁRIO
-  funcionario: [
-    "CREATE", "READ", "UPDATE",
-    "VIEW_DASHBOARD", "VIEW_REPORTS",
-  ],
-  
-  // 👔 SUPORTE
-  suporte: [
-    "READ", "UPDATE",
-    "MANAGE_STUDENTS",
-    "VIEW_DASHBOARD",
-  ],
-  
-  // 👔 COORDENAÇÃO
-  coordenacao: [
-    "CREATE", "READ", "UPDATE",
-    "MANAGE_COURSES", "MANAGE_LESSONS", "MANAGE_MATERIALS",
-    "VIEW_DASHBOARD", "VIEW_REPORTS",
-  ],
-  
-  // 👔 MONITORIA
-  monitoria: [
-    "READ", "UPDATE",
-    "VIEW_DASHBOARD",
-  ],
-  
-  // 👔 MARKETING
-  marketing: [
-    "CREATE", "READ", "UPDATE",
-    "VIEW_ANALYTICS",
-    "VIEW_DASHBOARD", "VIEW_REPORTS",
-  ],
-  
-  // 👔 CONTABILIDADE
-  contabilidade: [
-    "READ", "UPDATE",
-    "VIEW_FINANCE", "MANAGE_FINANCE", "EXPORT_FINANCE",
-    "VIEW_DASHBOARD", "VIEW_REPORTS",
-  ],
-  
-  // 👔 PROFESSOR
-  professor: [
-    "CREATE", "READ", "UPDATE",
-    "MANAGE_COURSES", "MANAGE_LESSONS", "MANAGE_MATERIALS",
-    "VIEW_DASHBOARD",
-  ],
-  
-  // 👔 AFILIADO
-  afiliado: [
-    "READ",
-    "VIEW_DASHBOARD", "VIEW_REPORTS",
-  ],
-  
-  // 👨‍🎓 BETA (Aluno Pagante)
-  beta: [
-    "READ",
-    "VIEW_DASHBOARD",
-  ],
-  
-  // 👨‍🎓 ALUNO
-  aluno: [
-    "READ",
-    "VIEW_DASHBOARD",
-  ],
-  
-  // 🌐 VIEWER
-  viewer: [
-    "READ",
-  ],
-};
+export const FUNCTION_MATRIX: FunctionSpec[] = [
+  // ============================================
+  // NAVEGAÇÃO PRINCIPAL
+  // ============================================
+  {
+    id: "F.NAV.DASHBOARD",
+    name: "Ir para Dashboard",
+    domain: "gestao",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "nav", label: "Dashboard", component: "SidebarNavDnd", selectorHint: "nav-dashboard" },
+      ],
+    },
+    route: { key: "DASHBOARD" },
+    backend: {
+      mode: "supabase-client",
+      handlers: [{ name: "dashboardService.getStats", supabase: { views: ["dashboard_stats"] } }],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["*"],
+      rlsTables: ["profiles"],
+      storagePolicies: [],
+      abuseControls: [],
+    },
+    observability: {
+      auditEventNames: ["page_view:dashboard"],
+      metrics: ["dashboard_load_time"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: true,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["skeleton", "cache"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: true },
+  },
+
+  // ============================================
+  // CURSOS
+  // ============================================
+  {
+    id: "F.CURSOS.LIST",
+    name: "Listar Cursos",
+    domain: "aulas",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "nav", label: "Cursos", component: "SidebarNavDnd", selectorHint: "nav-cursos" },
+      ],
+    },
+    route: { key: "CURSOS" },
+    backend: {
+      mode: "supabase-client",
+      handlers: [{ 
+        name: "coursesService.listCourses", 
+        supabase: { tables: ["courses", "lessons"], views: ["courses_with_stats"] } 
+      }],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["owner", "admin", "professor"],
+      rlsTables: ["courses", "lessons"],
+      storagePolicies: ["course-thumbnails"],
+      abuseControls: [],
+    },
+    observability: {
+      auditEventNames: ["page_view:cursos"],
+      metrics: ["courses_list_time"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: true,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["skeleton", "cache"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: true },
+  },
+  {
+    id: "F.CURSOS.CREATE",
+    name: "Criar Curso",
+    domain: "aulas",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "button", label: "Novo Curso", component: "CursosPage", selectorHint: "btn-novo-curso" },
+      ],
+    },
+    action: { key: "CURSO_CREATE" },
+    backend: {
+      mode: "supabase-client",
+      handlers: [{ 
+        name: "coursesService.createCourse", 
+        supabase: { tables: ["courses"] } 
+      }],
+    },
+    storage: [{
+      bucket: "COURSE_THUMBNAILS",
+      operations: ["upload"],
+      pathPattern: "{course_id}/{timestamp}-{rand}.{ext}",
+      metadataTable: "courses",
+    }],
+    security: {
+      authRequired: true,
+      rolesAllowed: ["owner", "admin", "professor"],
+      rlsTables: ["courses"],
+      storagePolicies: ["course-thumbnails"],
+      abuseControls: ["rate-limit"],
+    },
+    observability: {
+      auditEventNames: ["curso:created"],
+      metrics: ["courses_created"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: false,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["defer"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: false },
+  },
+
+  // ============================================
+  // ALUNOS
+  // ============================================
+  {
+    id: "F.ALUNOS.LIST",
+    name: "Listar Alunos",
+    domain: "negocios",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "nav", label: "Alunos", component: "SidebarNavDnd", selectorHint: "nav-alunos" },
+      ],
+    },
+    route: { key: "GESTAO_ALUNOS" },
+    backend: {
+      mode: "supabase-client",
+      handlers: [{ 
+        name: "studentsService.listStudents", 
+        supabase: { tables: ["alunos_perfil", "profiles"], views: ["students_with_progress"] } 
+      }],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["owner", "admin", "suporte"],
+      rlsTables: ["alunos_perfil", "profiles"],
+      storagePolicies: [],
+      abuseControls: [],
+    },
+    observability: {
+      auditEventNames: ["page_view:alunos"],
+      metrics: ["students_list_time"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: true,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["skeleton", "cache"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: true },
+  },
+
+  // ============================================
+  // FUNCIONÁRIOS
+  // ============================================
+  {
+    id: "F.FUNCIONARIOS.LIST",
+    name: "Listar Funcionários",
+    domain: "gestao",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "nav", label: "Funcionários", component: "SidebarNavDnd", selectorHint: "nav-funcionarios" },
+      ],
+    },
+    route: { key: "FUNCIONARIOS" },
+    backend: {
+      mode: "supabase-client",
+      handlers: [{ 
+        name: "employeesService.listEmployees", 
+        supabase: { tables: ["employees", "user_roles"] } 
+      }],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["owner", "admin"],
+      rlsTables: ["employees", "user_roles"],
+      storagePolicies: ["employee-docs"],
+      abuseControls: [],
+    },
+    observability: {
+      auditEventNames: ["page_view:funcionarios"],
+      metrics: ["employees_list_time"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: true,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["skeleton", "cache"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: true },
+  },
+
+  // ============================================
+  // FINANÇAS
+  // ============================================
+  {
+    id: "F.FINANCAS.EMPRESA",
+    name: "Finanças da Empresa",
+    domain: "financas",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "nav", label: "Finanças", component: "SidebarNavDnd", selectorHint: "nav-financas-empresa" },
+      ],
+    },
+    route: { key: "FINANCAS_EMPRESA" },
+    backend: {
+      mode: "supabase-client",
+      handlers: [{ 
+        name: "financeService.getCompanyFinances", 
+        supabase: { tables: ["transacoes", "receitas_empresa", "despesas_fixas_empresa", "despesas_extras_empresa"] } 
+      }],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["owner", "admin", "contabilidade"],
+      rlsTables: ["transacoes", "receitas_empresa", "despesas_fixas_empresa"],
+      storagePolicies: ["invoices", "receipts"],
+      abuseControls: [],
+    },
+    observability: {
+      auditEventNames: ["page_view:financas_empresa"],
+      metrics: ["finance_load_time"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: true,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["skeleton", "cache"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: true },
+  },
+
+  // ============================================
+  // UPLOAD/DOWNLOAD (ARQUIVOS)
+  // ============================================
+  {
+    id: "F.ARQUIVOS.UPLOAD",
+    name: "Upload de Arquivo",
+    domain: "system",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "upload", label: "Enviar", component: "FileUploader", selectorHint: "btn-upload" },
+        { type: "button", label: "Anexar", component: "AttachmentButton", selectorHint: "btn-anexar" },
+      ],
+    },
+    action: { key: "FILE_UPLOAD" },
+    backend: {
+      mode: "hybrid",
+      handlers: [
+        { name: "filesService.uploadFile", supabase: { tables: ["files"] } },
+        { name: "storage-signed-url", edgeFunctions: ["storage-signed-url"] },
+      ],
+    },
+    storage: [{
+      bucket: "ARQUIVOS",
+      operations: ["upload", "signedUrl"],
+      pathPattern: "{user_id}/{folder}/{timestamp}-{rand}.{ext}",
+      metadataTable: "files",
+    }],
+    security: {
+      authRequired: true,
+      rolesAllowed: ["*"],
+      rlsTables: ["files"],
+      storagePolicies: ["arquivos"],
+      abuseControls: ["rate-limit"],
+    },
+    observability: {
+      auditEventNames: ["file:uploaded"],
+      metrics: ["files_uploaded", "upload_size_bytes"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: false,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["defer", "compress"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: false },
+  },
+  {
+    id: "F.ARQUIVOS.DOWNLOAD",
+    name: "Download de Arquivo",
+    domain: "system",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "download", label: "Baixar", component: "FileDownloadButton", selectorHint: "btn-download" },
+        { type: "icon", label: "Download", component: "FileRow", selectorHint: "icon-download" },
+      ],
+    },
+    action: { key: "FILE_DOWNLOAD" },
+    backend: {
+      mode: "edge-function",
+      handlers: [
+        { name: "storage-signed-url", edgeFunctions: ["storage-signed-url"] },
+      ],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["*"],
+      rlsTables: ["files"],
+      storagePolicies: ["arquivos"],
+      abuseControls: ["rate-limit"],
+    },
+    observability: {
+      auditEventNames: ["file:downloaded"],
+      metrics: ["files_downloaded", "download_size_bytes"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: false,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["retry"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: false },
+  },
+
+  // ============================================
+  // LIVES
+  // ============================================
+  {
+    id: "F.LIVES.LIST",
+    name: "Listar Lives",
+    domain: "aulas",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "nav", label: "Lives", component: "SidebarNavDnd", selectorHint: "nav-lives" },
+      ],
+    },
+    route: { key: "LIVES" },
+    backend: {
+      mode: "supabase-client",
+      handlers: [{ 
+        name: "livesService.listLives", 
+        supabase: { tables: ["lives", "live_chat_messages"] } 
+      }],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["*"],
+      rlsTables: ["lives", "live_chat_messages"],
+      storagePolicies: [],
+      abuseControls: [],
+    },
+    observability: {
+      auditEventNames: ["page_view:lives"],
+      metrics: ["lives_list_time"],
+      logs: ["info"],
+    },
+    ux: {
+      emptyStates: true,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["skeleton", "cache"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: true },
+  },
+
+  // ============================================
+  // OWNER - DIAGNÓSTICO
+  // ============================================
+  {
+    id: "F.OWNER.DIAGNOSTICO",
+    name: "Central de Diagnóstico",
+    domain: "owner",
+    status: "active",
+    ui: {
+      triggers: [
+        { type: "nav", label: "Diagnóstico", component: "SidebarNavDnd", selectorHint: "nav-diagnostico" },
+      ],
+    },
+    route: { key: "CENTRAL_MONITORAMENTO" },
+    backend: {
+      mode: "hybrid",
+      handlers: [
+        { name: "diagnosticoService.runAudits", supabase: { tables: ["audit_logs"], rpcs: ["run_full_audit"] } },
+        { name: "healthcheck", edgeFunctions: ["healthcheck"] },
+      ],
+    },
+    security: {
+      authRequired: true,
+      rolesAllowed: ["owner"],
+      rlsTables: ["audit_logs"],
+      storagePolicies: [],
+      abuseControls: [],
+    },
+    observability: {
+      auditEventNames: ["diagnostico:executed"],
+      metrics: ["diagnostico_duration", "diagnostico_pass_rate"],
+      logs: ["info", "warn", "error"],
+    },
+    ux: {
+      emptyStates: false,
+      loadingStates: true,
+      errorStates: true,
+      offline3gStrategy: ["retry"],
+    },
+    tests: { unit: true, integration: true, e2e: true, smoke: true },
+  },
+];
 
 // ============================================
 // HELPERS
 // ============================================
 
 /**
- * Verifica se uma role tem uma permissão
+ * Retorna uma função pelo ID
  */
-export function hasPermission(role: UserRole | null, permission: PermissionKey): boolean {
-  if (!role) return false;
-  if (role === "owner") return true;
-  
-  const permissions = FUNCTION_MATRIX[role];
-  return permissions?.includes(permission) || false;
+export function getFunctionById(id: string): FunctionSpec | undefined {
+  return FUNCTION_MATRIX.find(f => f.id === id);
 }
 
 /**
- * Retorna todas as permissões de uma role
+ * Retorna todas as funções de um domínio
  */
-export function getRolePermissions(role: UserRole | null): PermissionKey[] {
-  if (!role) return [];
-  return FUNCTION_MATRIX[role] || [];
+export function getFunctionsByDomain(domain: FunctionDomain): FunctionSpec[] {
+  return FUNCTION_MATRIX.filter(f => f.domain === domain);
 }
 
 /**
- * Verifica se uma role tem todas as permissões especificadas
+ * Retorna todas as funções ativas
  */
-export function hasAllPermissions(role: UserRole | null, permissions: PermissionKey[]): boolean {
-  return permissions.every(p => hasPermission(role, p));
+export function getActiveFunctions(): FunctionSpec[] {
+  return FUNCTION_MATRIX.filter(f => f.status === "active");
 }
 
 /**
- * Verifica se uma role tem alguma das permissões especificadas
+ * Retorna funções que usam uma rota específica
  */
-export function hasAnyPermission(role: UserRole | null, permissions: PermissionKey[]): boolean {
-  return permissions.some(p => hasPermission(role, p));
+export function getFunctionsByRoute(routeKey: RouteKey): FunctionSpec[] {
+  return FUNCTION_MATRIX.filter(f => f.route?.key === routeKey);
 }
 
 /**
- * Retorna roles que têm uma permissão específica
+ * Retorna funções que usam uma ação específica
  */
-export function getRolesWithPermission(permission: PermissionKey): UserRole[] {
-  return (Object.entries(FUNCTION_MATRIX) as [UserRole, PermissionKey[]][])
-    .filter(([_, perms]) => perms.includes(permission))
-    .map(([role]) => role);
+export function getFunctionsByAction(actionKey: ActionKey): FunctionSpec[] {
+  return FUNCTION_MATRIX.filter(f => f.action?.key === actionKey);
 }
 
 /**
- * Audita a matriz de funções
+ * Verifica se uma função tem todos os requisitos
  */
-export function auditFunctionMatrix(): {
-  totalPermissions: number;
-  totalRoles: number;
-  coverage: Record<UserRole, number>;
-  byCategory: Record<PermissionCategory, number>;
+export function validateFunction(func: FunctionSpec): { valid: boolean; errors: string[] } {
+  const errors: string[] = [];
+
+  // Verificar rota
+  if (func.route?.key && !ROUTES[func.route.key]) {
+    errors.push(`Rota não existe: ${func.route.key}`);
+  }
+
+  // Verificar ação
+  if (func.action?.key && !ACTIONS[func.action.key]) {
+    errors.push(`Ação não existe: ${func.action.key}`);
+  }
+
+  // Verificar storage
+  if (func.storage) {
+    func.storage.forEach(s => {
+      if (!BUCKETS[s.bucket]) {
+        errors.push(`Bucket não existe: ${s.bucket}`);
+      }
+    });
+  }
+
+  // Verificar triggers
+  if (func.ui.triggers.length === 0) {
+    errors.push("Nenhum trigger de UI definido");
+  }
+
+  // Verificar handlers
+  if (func.backend.handlers.length === 0) {
+    errors.push("Nenhum handler de backend definido");
+  }
+
+  return { valid: errors.length === 0, errors };
+}
+
+/**
+ * Audita todas as funções
+ */
+export function auditAllFunctions(): {
+  total: number;
+  valid: number;
+  invalid: number;
+  errors: Array<{ id: string; errors: string[] }>;
 } {
-  const totalPermissions = Object.keys(PERMISSIONS).length;
-  const totalRoles = Object.keys(FUNCTION_MATRIX).length;
-  
-  const coverage: Record<string, number> = {};
-  (Object.entries(FUNCTION_MATRIX) as [UserRole, PermissionKey[]][]).forEach(([role, perms]) => {
-    coverage[role] = Math.round((perms.length / totalPermissions) * 100);
+  let valid = 0;
+  let invalid = 0;
+  const errors: Array<{ id: string; errors: string[] }> = [];
+
+  FUNCTION_MATRIX.forEach(func => {
+    const result = validateFunction(func);
+    if (result.valid) {
+      valid++;
+    } else {
+      invalid++;
+      errors.push({ id: func.id, errors: result.errors });
+    }
   });
-  
-  const byCategory: Record<PermissionCategory, number> = {
-    crud: 0,
-    admin: 0,
-    finance: 0,
-    content: 0,
-    user: 0,
-    system: 0,
-    view: 0,
-  };
-  
-  (Object.values(PERMISSIONS) as PermissionDefinition[]).forEach(perm => {
-    byCategory[perm.category]++;
-  });
-  
-  return {
-    totalPermissions,
-    totalRoles,
-    coverage: coverage as Record<UserRole, number>,
-    byCategory,
-  };
+
+  return { total: FUNCTION_MATRIX.length, valid, invalid, errors };
 }
 
 // ============================================
 // EXPORTS
 // ============================================
-
-export default {
-  PERMISSIONS,
-  FUNCTION_MATRIX,
-  hasPermission,
-  getRolePermissions,
-  hasAllPermissions,
-  hasAnyPermission,
-  getRolesWithPermission,
-  auditFunctionMatrix,
-};
+export default FUNCTION_MATRIX;
