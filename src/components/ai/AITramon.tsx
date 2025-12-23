@@ -5,6 +5,7 @@
 // ============================================
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useFileUploadWorker } from "@/hooks/useWebWorker";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Crown,
@@ -108,6 +109,9 @@ export function AITramon() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  
+  // 🏛️ LEI I - Web Worker para Base64
+  const { convertFileToBase64: workerFileToBase64 } = useFileUploadWorker();
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
   const hasAccess = canAccessTramon;
@@ -152,7 +156,7 @@ Sou **TRAMON v3.0**, sua superinteligência empresarial com **VISÃO COMPUTACION
   }, [isOpen, user, messages.length, hasAccess]);
 
   // Função de upload de imagem
-  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -168,15 +172,19 @@ Sou **TRAMON v3.0**, sua superinteligência empresarial com **VISÃO COMPUTACION
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
+    // 🏛️ LEI I - Web Worker para Base64 (UI fluida durante upload 5MB)
+    try {
+      const base64Raw = await workerFileToBase64(file);
+      const mimeType = file.type || 'image/jpeg';
+      const base64 = `data:${mimeType};base64,${base64Raw}`;
       setSelectedImage(base64);
       setImagePreview(base64);
       toast.success("Imagem carregada! Envie uma mensagem para analisá-la.");
-    };
-    reader.readAsDataURL(file);
-  }, []);
+    } catch (err) {
+      toast.error("Erro ao processar imagem");
+      console.error('[AITramon] File processing error:', err);
+    }
+  }, [workerFileToBase64]);
 
   const removeImage = useCallback(() => {
     setSelectedImage(null);

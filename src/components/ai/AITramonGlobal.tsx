@@ -5,6 +5,7 @@
 // ============================================
 
 import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useFileUploadWorker } from "@/hooks/useWebWorker";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Crown, X, Send, Sparkles, Brain, TrendingUp, DollarSign, Users,
@@ -98,6 +99,9 @@ export function AITramonGlobal() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  
+  // 🏛️ LEI I - Web Worker para Base64
+  const { convertFileToBase64: workerFileToBase64 } = useFileUploadWorker();
 
   // Speech-to-text (Web Speech API)
   // Tipagem via `any` para compatibilidade entre browsers (webkitSpeechRecognition)
@@ -190,7 +194,7 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
   // ========================================
   // 📤 HANDLERS
   // ========================================
-  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -204,15 +208,19 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
       return;
     }
 
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const base64 = event.target?.result as string;
+    // 🏛️ LEI I - Web Worker para Base64 (UI fluida durante upload 5MB)
+    try {
+      const base64Raw = await workerFileToBase64(file);
+      const mimeType = file.type || 'image/jpeg';
+      const base64 = `data:${mimeType};base64,${base64Raw}`;
       setSelectedImage(base64);
       setImagePreview(base64);
       toast.success("📸 Imagem carregada!");
-    };
-    reader.readAsDataURL(file);
-  }, []);
+    } catch (err) {
+      toast.error("Erro ao processar imagem");
+      console.error('[AITramonGlobal] File processing error:', err);
+    }
+  }, [workerFileToBase64]);
 
   const removeImage = useCallback(() => {
     setSelectedImage(null);

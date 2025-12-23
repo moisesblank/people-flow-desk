@@ -5,6 +5,7 @@
 // ============================================
 
 import { useState, useEffect, useMemo, useCallback } from "react";
+import { useCSVExportWorker } from "@/hooks/useWebWorker";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Users, UserPlus, Check, Clock, AlertCircle, Trash2, Edit2,
@@ -532,31 +533,27 @@ export default function RHFuncionarios() {
     }
   };
 
-  const handleExport = () => {
-    const csv = [
-      ["Nome", "Email", "Telefone", "Função", "Setor", "Status", "Data Admissão", "Salário"],
-      ...filteredEmployees.map(e => [
-        e.nome,
-        e.email,
-        e.telefone || "",
-        e.funcao,
-        e.setor,
-        e.status,
-        e.data_admissao || "",
-        e.salario ? (e.salario / 100).toFixed(2) : "",
-      ])
-    ].map(row => row.join(",")).join("\n");
+  // 🏛️ LEI I - Web Worker para CSV (UI fluida)
+  const { exportToCSV: workerExportCSV, isProcessing: isExportingCSV } = useCSVExportWorker();
 
-    const blob = new Blob([csv], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `funcionarios_${format(new Date(), "yyyy-MM-dd")}.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
+  const handleExport = useCallback(async () => {
+    const headers = ["Nome", "Email", "Telefone", "Função", "Setor", "Status", "Data Admissão", "Salário"];
+    const rows = filteredEmployees.map(e => [
+      e.nome,
+      e.email,
+      e.telefone || "",
+      e.funcao,
+      e.setor,
+      e.status,
+      e.data_admissao || "",
+      e.salario ? (e.salario / 100).toFixed(2) : "",
+    ]);
+
+    // 🏛️ LEI I - Processamento off-thread (UI nunca congela)
+    await workerExportCSV(`funcionarios_${format(new Date(), "yyyy-MM-dd")}`, headers, rows);
 
     toast.success("Exportado!", { description: "Arquivo CSV gerado com sucesso." });
-  };
+  }, [filteredEmployees, workerExportCSV]);
 
   // ═══════════════════════════════════════════════════════════════
   // RENDER: CARDS DE KPI

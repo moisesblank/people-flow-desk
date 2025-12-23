@@ -3,7 +3,8 @@
 // FASE 8: Relatórios PDF Avançados
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useCSVExportWorker } from "@/hooks/useWebWorker";
 import { motion } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -156,51 +157,59 @@ export default function Relatorios() {
     }
   };
 
-  const exportToCSV = (type: string) => {
+  // 🏛️ LEI I - Web Worker para CSV (UI fluida)
+  const { exportToCSV: workerExportCSV, isProcessing: isExportingCSV } = useCSVExportWorker();
+
+  const exportToCSV = useCallback(async (type: string) => {
     if (!reportData) return;
 
-    let csvContent = "";
+    let headers: string[] = [];
+    let rows: (string | number | null)[][] = [];
     let filename = "";
 
     if (type === "financeiro") {
-      filename = `relatorio-financeiro-${selectedMonth}.csv`;
-      csvContent = "Categoria,Valor\n";
-      csvContent += `Receitas,${formatCurrency(reportData.income)}\n`;
-      csvContent += `Gastos Pessoais Fixos,${formatCurrency(reportData.personalFixed)}\n`;
-      csvContent += `Gastos Pessoais Extras,${formatCurrency(reportData.personalExtra)}\n`;
-      csvContent += `Gastos Empresa Fixos,${formatCurrency(reportData.companyFixed)}\n`;
-      csvContent += `Gastos Empresa Extras,${formatCurrency(reportData.companyExtra)}\n`;
-      csvContent += `Lucro Líquido,${formatCurrency(reportData.lucroLiquido)}\n`;
+      filename = `relatorio-financeiro-${selectedMonth}`;
+      headers = ["Categoria", "Valor"];
+      rows = [
+        ["Receitas", formatCurrency(reportData.income)],
+        ["Gastos Pessoais Fixos", formatCurrency(reportData.personalFixed)],
+        ["Gastos Pessoais Extras", formatCurrency(reportData.personalExtra)],
+        ["Gastos Empresa Fixos", formatCurrency(reportData.companyFixed)],
+        ["Gastos Empresa Extras", formatCurrency(reportData.companyExtra)],
+        ["Lucro Líquido", formatCurrency(reportData.lucroLiquido)],
+      ];
     } else if (type === "funcionarios") {
-      filename = `relatorio-funcionarios-${selectedMonth}.csv`;
-      csvContent = "Nome,Função,Setor,Status,Salário\n";
-      reportData.employees.forEach((emp: any) => {
-        csvContent += `${emp.nome},${emp.funcao},${emp.setor || "N/A"},${emp.status || "N/A"},${formatCurrency(emp.salario)}\n`;
-      });
+      filename = `relatorio-funcionarios-${selectedMonth}`;
+      headers = ["Nome", "Função", "Setor", "Status", "Salário"];
+      rows = reportData.employees.map((emp: any) => [
+        emp.nome,
+        emp.funcao,
+        emp.setor || "N/A",
+        emp.status || "N/A",
+        formatCurrency(emp.salario),
+      ]);
     } else if (type === "vendas") {
-      filename = `relatorio-afiliados-${selectedMonth}.csv`;
-      csvContent = "Nome,Email,Total Vendas,Comissão Total\n";
-      reportData.affiliates.forEach((aff: any) => {
-        csvContent += `${aff.nome},${aff.email || "N/A"},${aff.total_vendas || 0},${formatCurrency(aff.comissao_total || 0)}\n`;
-      });
+      filename = `relatorio-afiliados-${selectedMonth}`;
+      headers = ["Nome", "Email", "Total Vendas", "Comissão Total"];
+      rows = reportData.affiliates.map((aff: any) => [
+        aff.nome,
+        aff.email || "N/A",
+        aff.total_vendas || 0,
+        formatCurrency(aff.comissao_total || 0),
+      ]);
     } else {
       toast({ title: "Aviso", description: "Exportação CSV não disponível para este relatório", variant: "default" });
       return;
     }
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = filename;
-    link.click();
-    URL.revokeObjectURL(url);
+    // 🏛️ LEI I - Processamento off-thread (UI nunca congela)
+    await workerExportCSV(filename, headers, rows);
 
     toast({
       title: "Exportado!",
       description: `Relatório ${type} exportado com sucesso.`,
     });
-  };
+  }, [reportData, selectedMonth, workerExportCSV, toast]);
 
   // PDF Export handlers
   const exportToPDF = async (type: "financeiro" | "funcionarios" | "tarefas" | "ponto" | "laboratorio" | "executivo") => {

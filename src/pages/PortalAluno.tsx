@@ -3,7 +3,8 @@
 // Spider-Man Theme - Gestão de Alunos LMS
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
+import { useCSVExportWorker } from "@/hooks/useWebWorker";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -179,7 +180,10 @@ export default function PortalAluno() {
     }
   };
 
-  const exportToCSV = () => {
+  // 🏛️ LEI I - Web Worker para CSV (UI fluida)
+  const { exportToCSV: workerExportCSV, isProcessing: isExportingCSV } = useCSVExportWorker();
+
+  const exportToCSV = useCallback(async () => {
     const headers = ['Nome', 'Email', 'Curso', 'Status', 'Data de Cadastro'];
     const rows = filteredStudents.map(s => [
       s.nome,
@@ -189,18 +193,11 @@ export default function PortalAluno() {
       s.created_at ? format(new Date(s.created_at), 'dd/MM/yyyy') : ''
     ]);
 
-    const csvContent = [headers, ...rows]
-      .map(row => row.map(cell => `"${cell}"`).join(','))
-      .join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = URL.createObjectURL(blob);
-    link.download = `alunos_${format(new Date(), 'yyyy-MM-dd')}.csv`;
-    link.click();
+    // 🏛️ LEI I - Processamento off-thread (UI nunca congela)
+    await workerExportCSV(`alunos_${format(new Date(), 'yyyy-MM-dd')}`, headers, rows);
     
     toast.success('Relatório exportado com sucesso!');
-  };
+  }, [filteredStudents, workerExportCSV]);
 
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
