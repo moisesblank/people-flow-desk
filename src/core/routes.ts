@@ -460,3 +460,280 @@ export function getRouteTitle(path: string): string {
   const route = findRoute(path);
   return route?.title ?? "Página";
 }
+
+// ============================================
+// ROUTE_DEFINITIONS (METADATA COMPLETO)
+// ============================================
+export const ROUTE_DEFINITIONS: Record<string, RouteDefinition> = {
+  // === PÚBLICAS ===
+  HOME: { path: "/", title: "Home", authRequired: false, status: "active", domain: "public" },
+  SITE: { path: "/site", title: "Site", authRequired: false, status: "active", domain: "public" },
+  AUTH: { path: "/auth", title: "Login", authRequired: false, status: "active", domain: "auth" },
+  TERMOS: { path: "/termos", title: "Termos de Uso", authRequired: false, status: "active", domain: "public" },
+  PRIVACIDADE: { path: "/privacidade", title: "Privacidade", authRequired: false, status: "active", domain: "public" },
+  AREA_GRATUITA: { path: "/area-gratuita", title: "Área Gratuita", authRequired: false, status: "active", domain: "public" },
+  CADASTRO: { path: "/cadastro", title: "Cadastro", authRequired: false, status: "active", domain: "auth" },
+  LOGIN: { path: "/login", title: "Login", authRequired: false, status: "active", domain: "auth" },
+  RECUPERAR_SENHA: { path: "/recuperar-senha", title: "Recuperar Senha", authRequired: false, status: "active", domain: "auth" },
+
+  // === COMUNIDADE ===
+  COMUNIDADE: { path: "/comunidade", title: "Comunidade", authRequired: true, roles: ["owner", "admin", "beta", "aluno", "viewer"], status: "active", domain: "comunidade" },
+  COMUNIDADE_FORUM: { path: "/comunidade/forum", title: "Fórum", authRequired: true, roles: ["owner", "admin", "beta", "aluno", "viewer"], status: "active", domain: "comunidade" },
+  COMUNIDADE_POSTS: { path: "/comunidade/posts", title: "Posts", authRequired: true, roles: ["owner", "admin", "beta", "aluno", "viewer"], status: "active", domain: "comunidade" },
+  COMUNIDADE_MEMBROS: { path: "/comunidade/membros", title: "Membros", authRequired: true, roles: ["owner", "admin", "beta", "aluno", "viewer"], status: "active", domain: "comunidade" },
+  COMUNIDADE_EVENTOS: { path: "/comunidade/eventos", title: "Eventos", authRequired: true, roles: ["owner", "admin", "beta", "aluno", "viewer"], status: "active", domain: "comunidade" },
+  COMUNIDADE_CHAT: { path: "/comunidade/chat", title: "Chat", authRequired: true, roles: ["owner", "admin", "beta", "aluno", "viewer"], status: "active", domain: "comunidade" },
+
+  // === PORTAL DO ALUNO BETA ===
+  ALUNOS: { path: "/alunos", title: "Central do Aluno", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_DASHBOARD: { path: "/alunos/dashboard", title: "Dashboard do Aluno", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_LIVRO_WEB: { path: "/alunos/livro-web", title: "Livro Web", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_CRONOGRAMA: { path: "/alunos/cronograma", title: "Cronograma", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_VIDEOAULAS: { path: "/alunos/videoaulas", title: "Videoaulas", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_MATERIAIS: { path: "/alunos/materiais", title: "Materiais", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_RESUMOS: { path: "/alunos/resumos", title: "Resumos", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_MAPAS_MENTAIS: { path: "/alunos/mapas-mentais", title: "Mapas Mentais", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_QUESTOES: { path: "/alunos/questoes", title: "Questões", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_SIMULADOS: { path: "/alunos/simulados", title: "Simulados", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_REDACAO: { path: "/alunos/redacao", title: "Redação", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_DESEMPENHO: { path: "/alunos/desempenho", title: "Desempenho", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_RANKING: { path: "/alunos/ranking", title: "Ranking", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_CONQUISTAS: { path: "/alunos/conquistas", title: "Conquistas", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_TUTORIA: { path: "/alunos/tutoria", title: "Tutoria IA", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_FORUM: { path: "/alunos/forum", title: "Fórum", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_LIVES: { path: "/alunos/lives", title: "Lives", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_DUVIDAS: { path: "/alunos/duvidas", title: "Dúvidas", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_REVISAO: { path: "/alunos/revisao", title: "Revisão", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_LABORATORIO: { path: "/alunos/laboratorio", title: "Laboratório Virtual", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_CALCULADORA: { path: "/alunos/calculadora", title: "Calculadora", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_TABELA_PERIODICA: { path: "/alunos/tabela-periodica", title: "Tabela Periódica", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_FLASHCARDS: { path: "/alunos/flashcards", title: "Flashcards", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_METAS: { path: "/alunos/metas", title: "Metas", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_AGENDA: { path: "/alunos/agenda", title: "Agenda", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_CERTIFICADOS: { path: "/alunos/certificados", title: "Certificados", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_PERFIL: { path: "/alunos/perfil", title: "Meu Perfil", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_CURSOS: { path: "/alunos/cursos", title: "Cursos", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_AULAS: { path: "/alunos/aulas", title: "Aulas", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_PROGRESSO: { path: "/alunos/progresso", title: "Progresso", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+  ALUNOS_HISTORICO: { path: "/alunos/historico", title: "Histórico", authRequired: true, roles: ["owner", "admin", "beta", "aluno"], status: "active", domain: "aluno" },
+
+  // === GESTÃO ===
+  GESTAO: { path: "/gestao", title: "Gestão", authRequired: true, roles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"], status: "active", domain: "gestao" },
+  GESTAO_DASHBOARD: { path: "/gestao/dashboard", title: "Dashboard", authRequired: true, roles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"], status: "active", domain: "gestao" },
+  GESTAO_DASHBOARD_EXECUTIVO: { path: "/gestao/dashboard-executivo", title: "Dashboard Executivo", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  GESTAO_TAREFAS: { path: "/gestao/tarefas", title: "Tarefas", authRequired: true, roles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing"], status: "active", domain: "gestao" },
+  GESTAO_INTEGRACOES: { path: "/gestao/integracoes", title: "Integrações", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  GESTAO_CALENDARIO: { path: "/gestao/calendario", title: "Calendário", authRequired: true, roles: ["owner", "admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "professor"], status: "active", domain: "gestao" },
+  GESTAO_FUNCIONARIOS: { path: "/gestao/funcionarios", title: "Funcionários", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  GESTAO_DOCUMENTOS: { path: "/gestao/documentos", title: "Documentos", authRequired: true, roles: ["owner", "admin", "funcionario", "suporte", "coordenacao"], status: "active", domain: "gestao" },
+  GESTAO_PERFIL: { path: "/gestao/perfil", title: "Meu Perfil", authRequired: true, status: "active", domain: "gestao" },
+  GESTAO_GUIA: { path: "/gestao/guia", title: "Guia", authRequired: true, status: "active", domain: "gestao" },
+  GESTAO_MARKETING: { path: "/gestao/marketing", title: "Marketing", authRequired: true, roles: ["owner", "admin", "marketing"], status: "active", domain: "marketing" },
+  GESTAO_LANCAMENTO: { path: "/gestao/lancamento", title: "Lançamento", authRequired: true, roles: ["owner", "admin", "marketing"], status: "active", domain: "marketing" },
+  GESTAO_METRICAS: { path: "/gestao/metricas", title: "Métricas", authRequired: true, roles: ["owner", "admin", "marketing"], status: "active", domain: "marketing" },
+  GESTAO_ARQUIVOS: { path: "/gestao/arquivos", title: "Arquivos", authRequired: true, roles: ["owner", "admin", "funcionario", "marketing"], status: "active", domain: "gestao" },
+  GESTAO_AREA_PROFESSOR: { path: "/gestao/area-professor", title: "Área do Professor", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_PLANEJAMENTO_AULA: { path: "/gestao/planejamento-aula", title: "Planejamento de Aula", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_LABORATORIO: { path: "/gestao/laboratorio", title: "Laboratório", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_TURMAS_ONLINE: { path: "/gestao/turmas-online", title: "Turmas Online", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_TURMAS_PRESENCIAIS: { path: "/gestao/turmas-presenciais", title: "Turmas Presenciais", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_CURSOS: { path: "/gestao/cursos", title: "Cursos", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_SIMULADOS: { path: "/gestao/simulados", title: "Simulados", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_LIVES: { path: "/gestao/lives", title: "Lives", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  GESTAO_ENTRADAS: { path: "/gestao/entradas", title: "Entradas", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  GESTAO_FINANCAS_EMPRESA: { path: "/gestao/financas-empresa", title: "Finanças da Empresa", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  GESTAO_FINANCAS_PESSOAIS: { path: "/gestao/financas-pessoais", title: "Finanças Pessoais", authRequired: true, roles: ["owner"], status: "active", domain: "financas" },
+  GESTAO_PAGAMENTOS: { path: "/gestao/pagamentos", title: "Pagamentos", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  GESTAO_CONTABILIDADE: { path: "/gestao/contabilidade", title: "Contabilidade", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  GESTAO_TRANSACOES_HOTMART: { path: "/gestao/transacoes-hotmart", title: "Transações Hotmart", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "financas" },
+  GESTAO_ALUNOS: { path: "/gestao/gestao-alunos", title: "Gestão de Alunos", authRequired: true, roles: ["owner", "admin", "suporte"], status: "active", domain: "gestao" },
+  GESTAO_PORTAL_ALUNO: { path: "/gestao/portal-aluno", title: "Portal do Aluno", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  GESTAO_RELATORIOS: { path: "/gestao/relatorios", title: "Relatórios", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  GESTAO_AFILIADOS: { path: "/gestao/afiliados", title: "Afiliados", authRequired: true, roles: ["owner", "admin", "afiliado"], status: "active", domain: "gestao" },
+  GESTAO_PERMISSOES: { path: "/gestao/permissoes", title: "Permissões", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  GESTAO_CONFIGURACOES: { path: "/gestao/configuracoes", title: "Configurações", authRequired: true, roles: ["owner", "admin", "funcionario"], status: "active", domain: "admin" },
+  GESTAO_EQUIPE: { path: "/gestao/gestao-equipe", title: "Gestão de Equipe", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  GESTAO_SITE: { path: "/gestao/gestao-site", title: "Gestão do Site", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  GESTAO_DISPOSITIVOS: { path: "/gestao/gestao-dispositivos", title: "Gestão de Dispositivos", authRequired: true, roles: ["owner", "admin", "funcionario"], status: "active", domain: "admin" },
+  GESTAO_AUDITORIA: { path: "/gestao/auditoria-acessos", title: "Auditoria de Acessos", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  GESTAO_CENTRAL_MONITORAMENTO: { path: "/gestao/central-monitoramento", title: "Central de Monitoramento", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  GESTAO_MONITORAMENTO: { path: "/gestao/monitoramento", title: "Monitoramento", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  GESTAO_CENTRAL_WHATSAPP: { path: "/gestao/central-whatsapp", title: "Central WhatsApp", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  GESTAO_WHATSAPP_LIVE: { path: "/gestao/whatsapp-live", title: "WhatsApp Live", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  GESTAO_DIAGNOSTICO_WHATSAPP: { path: "/gestao/diagnostico-whatsapp", title: "Diagnóstico WhatsApp", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  GESTAO_DIAGNOSTICO_WEBHOOKS: { path: "/gestao/diagnostico-webhooks", title: "Diagnóstico Webhooks", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  GESTAO_CENTRAL_METRICAS: { path: "/gestao/central-metricas", title: "Central de Métricas", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  GESTAO_CENTRAL_IAS: { path: "/gestao/central-ias", title: "Central de IAs", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  GESTAO_LEADS_WHATSAPP: { path: "/gestao/leads-whatsapp", title: "Leads WhatsApp", authRequired: true, roles: ["owner", "admin", "marketing"], status: "active", domain: "owner" },
+  GESTAO_SITE_PROGRAMADOR: { path: "/gestao/site-programador", title: "Site Programador", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  GESTAO_CENTRAL_DIAGNOSTICO: { path: "/gestao/central-diagnostico", title: "Central de Diagnóstico", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  GESTAO_VIDA_PESSOAL: { path: "/gestao/vida-pessoal", title: "Vida Pessoal", authRequired: true, roles: ["owner"], status: "active", domain: "pessoal" },
+  GESTAO_PESSOAL: { path: "/gestao/pessoal", title: "Pessoal", authRequired: true, roles: ["owner"], status: "active", domain: "pessoal" },
+  GESTAO_MASTER: { path: "/gestao/master", title: "Master", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  GESTAO_OWNER: { path: "/gestao/owner", title: "Owner", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  GESTAO_EMPRESAS_DASHBOARD: { path: "/gestao/empresas/dashboard", title: "Dashboard Empresarial", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "empresas" },
+  GESTAO_EMPRESAS_RECEITAS: { path: "/gestao/empresas/receitas", title: "Receitas Empresariais", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "empresas" },
+  GESTAO_EMPRESAS_ARQUIVOS: { path: "/gestao/empresas/arquivos", title: "Arquivos Empresariais", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "empresas" },
+  GESTAO_EMPRESAS_RH: { path: "/gestao/empresas/rh", title: "RH", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "empresas" },
+
+  // === ROTAS LEGADAS ===
+  DASHBOARD: { path: "/dashboard", title: "Dashboard", authRequired: true, status: "active", domain: "gestao" },
+  APP: { path: "/app", title: "Dashboard", authRequired: true, status: "active", domain: "gestao" },
+  DASHBOARD_EXECUTIVO: { path: "/dashboard-executivo", title: "Dashboard Executivo", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  TAREFAS: { path: "/tarefas", title: "Tarefas", authRequired: true, status: "active", domain: "gestao" },
+  INTEGRACOES: { path: "/integracoes", title: "Integrações", authRequired: true, status: "active", domain: "gestao" },
+  CALENDARIO: { path: "/calendario", title: "Calendário", authRequired: true, status: "active", domain: "gestao" },
+  FUNCIONARIOS: { path: "/funcionarios", title: "Funcionários", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  DOCUMENTOS: { path: "/documentos", title: "Documentos", authRequired: true, status: "active", domain: "gestao" },
+  PERFIL: { path: "/perfil", title: "Perfil", authRequired: true, status: "active", domain: "gestao" },
+  GUIA: { path: "/guia", title: "Guia", authRequired: true, status: "active", domain: "gestao" },
+  MARKETING: { path: "/marketing", title: "Marketing", authRequired: true, roles: ["owner", "admin", "marketing"], status: "active", domain: "marketing" },
+  LANCAMENTO: { path: "/lancamento", title: "Lançamento", authRequired: true, roles: ["owner", "admin", "marketing"], status: "active", domain: "marketing" },
+  METRICAS: { path: "/metricas", title: "Métricas", authRequired: true, status: "active", domain: "marketing" },
+  ARQUIVOS: { path: "/arquivos", title: "Arquivos", authRequired: true, status: "active", domain: "marketing" },
+  AREA_PROFESSOR: { path: "/area-professor", title: "Área do Professor", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  PLANEJAMENTO_AULA: { path: "/planejamento-aula", title: "Planejamento de Aula", authRequired: true, roles: ["owner", "admin", "professor"], status: "active", domain: "aulas" },
+  LABORATORIO: { path: "/laboratorio", title: "Laboratório", authRequired: true, status: "active", domain: "aulas" },
+  TURMAS_ONLINE: { path: "/turmas-online", title: "Turmas Online", authRequired: true, status: "active", domain: "aulas" },
+  TURMAS_PRESENCIAIS: { path: "/turmas-presenciais", title: "Turmas Presenciais", authRequired: true, status: "active", domain: "aulas" },
+  CURSOS: { path: "/cursos", title: "Cursos", authRequired: true, status: "active", domain: "aulas" },
+  CURSO_DETALHE: { path: "/cursos/:courseId", title: "Detalhe do Curso", authRequired: true, status: "active", domain: "aulas" },
+  AULA: { path: "/cursos/:courseId/aula/:lessonId", title: "Aula", authRequired: true, status: "active", domain: "aulas" },
+  SIMULADOS: { path: "/simulados", title: "Simulados", authRequired: true, status: "active", domain: "aulas" },
+  LIVES: { path: "/lives", title: "Lives", authRequired: true, status: "active", domain: "aulas" },
+  ENTRADAS: { path: "/entradas", title: "Entradas", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  FINANCAS_EMPRESA: { path: "/financas-empresa", title: "Finanças da Empresa", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  FINANCAS_PESSOAIS: { path: "/financas-pessoais", title: "Finanças Pessoais", authRequired: true, status: "active", domain: "financas" },
+  PAGAMENTOS: { path: "/pagamentos", title: "Pagamentos", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  CONTABILIDADE: { path: "/contabilidade", title: "Contabilidade", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "financas" },
+  TRANSACOES_HOTMART: { path: "/transacoes-hotmart", title: "Transações Hotmart", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "financas" },
+  GESTAO_ALUNOS_LEGACY: { path: "/gestao-alunos", title: "Gestão de Alunos", authRequired: true, roles: ["owner", "admin", "suporte"], status: "active", domain: "gestao" },
+  PORTAL_ALUNO: { path: "/portal-aluno", title: "Portal do Aluno", authRequired: true, status: "active", domain: "aluno" },
+  RELATORIOS: { path: "/relatorios", title: "Relatórios", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "gestao" },
+  AFILIADOS: { path: "/afiliados", title: "Afiliados", authRequired: true, roles: ["owner", "admin", "afiliado"], status: "active", domain: "gestao" },
+  VIDA_PESSOAL: { path: "/vida-pessoal", title: "Vida Pessoal", authRequired: true, status: "active", domain: "pessoal" },
+  PESSOAL: { path: "/pessoal", title: "Pessoal", authRequired: true, status: "active", domain: "pessoal" },
+  PERMISSOES: { path: "/permissoes", title: "Permissões", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  CONFIGURACOES: { path: "/configuracoes", title: "Configurações", authRequired: true, status: "active", domain: "admin" },
+  GESTAO_EQUIPE_LEGACY: { path: "/gestao-equipe", title: "Gestão de Equipe", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  GESTAO_SITE_LEGACY: { path: "/gestao-site", title: "Gestão do Site", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  GESTAO_DISPOSITIVOS_LEGACY: { path: "/gestao-dispositivos", title: "Gestão de Dispositivos", authRequired: true, status: "active", domain: "admin" },
+  AUDITORIA_ACESSOS: { path: "/auditoria-acessos", title: "Auditoria de Acessos", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "admin" },
+  CENTRAL_MONITORAMENTO: { path: "/central-monitoramento", title: "Central de Monitoramento", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  MONITORAMENTO: { path: "/monitoramento", title: "Monitoramento", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  CENTRAL_WHATSAPP: { path: "/central-whatsapp", title: "Central WhatsApp", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  WHATSAPP_LIVE: { path: "/whatsapp-live", title: "WhatsApp Live", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  DIAGNOSTICO_WHATSAPP: { path: "/diagnostico-whatsapp", title: "Diagnóstico WhatsApp", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  DIAGNOSTICO_WEBHOOKS: { path: "/diagnostico-webhooks", title: "Diagnóstico Webhooks", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  CENTRAL_METRICAS: { path: "/central-metricas", title: "Central de Métricas", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  CENTRAL_IAS: { path: "/central-ias", title: "Central de IAs", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "owner" },
+  LEADS_WHATSAPP: { path: "/leads-whatsapp", title: "Leads WhatsApp", authRequired: true, roles: ["owner", "admin", "marketing"], status: "active", domain: "owner" },
+  SITE_PROGRAMADOR: { path: "/site-programador", title: "Site Programador", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  EMPRESAS_DASHBOARD: { path: "/empresas/dashboard", title: "Dashboard Empresarial", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "empresas" },
+  EMPRESAS_RECEITAS: { path: "/empresas/receitas", title: "Receitas Empresariais", authRequired: true, roles: ["owner", "admin", "contabilidade"], status: "active", domain: "empresas" },
+  EMPRESAS_ARQUIVOS: { path: "/empresas/arquivos", title: "Arquivos Empresariais", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "empresas" },
+  EMPRESAS_RH: { path: "/empresas/rh", title: "RH", authRequired: true, roles: ["owner", "admin"], status: "active", domain: "empresas" },
+  CENTRAL_DIAGNOSTICO: { path: "/central-diagnostico", title: "Central de Diagnóstico", authRequired: true, roles: ["owner"], status: "active", domain: "owner" },
+  NOT_FOUND: { path: "*", title: "Página não encontrada", authRequired: false, status: "active", domain: "public" },
+  EM_DESENVOLVIMENTO: { path: "/em-desenvolvimento", title: "Em Desenvolvimento", authRequired: true, status: "coming_soon", domain: "gestao" },
+  SEM_PERMISSAO: { path: "/sem-permissao", title: "Sem Permissão", authRequired: true, status: "active", domain: "gestao" },
+};
+
+// ============================================
+// HELPERS AVANÇADOS
+// ============================================
+
+/**
+ * Retorna o path de uma rota
+ */
+export function getRoute(key: RouteKey): string {
+  return ROUTES[key];
+}
+
+/**
+ * Retorna o path de uma rota com parâmetros substituídos
+ */
+export function getRouteWithParams(key: RouteKey, params: Record<string, string>): string {
+  let path: string = ROUTES[key];
+  Object.entries(params).forEach(([paramKey, value]) => {
+    path = path.replace(`:${paramKey}`, value);
+  });
+  return path;
+}
+
+/**
+ * Verifica se uma rota existe
+ */
+export function isValidRoute(path: string): boolean {
+  return Object.values(ROUTES).includes(path as typeof ROUTES[RouteKey]);
+}
+
+/**
+ * Retorna a definição de uma rota pelo key
+ */
+export function getRouteDefinition(key: string): RouteDefinition | undefined {
+  return ROUTE_DEFINITIONS[key];
+}
+
+/**
+ * Verifica se o usuário tem acesso a uma rota
+ * OWNER = MASTER = PODE TUDO
+ */
+export function canAccessRoute(key: string, userRole?: string | null, email?: string | null): boolean {
+  // Owner MASTER pode tudo
+  if (userRole === "owner" || email?.toLowerCase() === "moisesblank@gmail.com") {
+    return true;
+  }
+  
+  const def = ROUTE_DEFINITIONS[key];
+  if (!def) return false;
+  
+  if (!def.authRequired) return true;
+  if (!def.roles) return true;
+  if (!userRole) return false;
+  
+  return def.roles.includes(userRole);
+}
+
+/**
+ * Retorna todas as rotas de um domínio pelo key
+ */
+export function getRouteKeysByDomain(domain: RouteDomain): string[] {
+  return Object.keys(ROUTE_DEFINITIONS).filter(
+    key => ROUTE_DEFINITIONS[key].domain === domain
+  );
+}
+
+/**
+ * Retorna a URL correta para redirect baseado no role
+ */
+export function getRedirectUrl(role: string | null, email?: string | null): string {
+  // Owner vai para gestão
+  if (role === "owner" || email?.toLowerCase() === "moisesblank@gmail.com") {
+    return ROUTES.GESTAO_DASHBOARD;
+  }
+  
+  // Funcionários vão para gestão
+  const funcionarioRoles = ["admin", "funcionario", "suporte", "coordenacao", "monitoria", "marketing", "contabilidade", "professor"];
+  if (role && funcionarioRoles.includes(role)) {
+    return ROUTES.GESTAO_DASHBOARD;
+  }
+  
+  // Alunos beta vão para portal do aluno
+  if (role === "beta" || role === "aluno") {
+    return ROUTES.ALUNOS_DASHBOARD;
+  }
+  
+  // Viewers vão para comunidade
+  if (role === "viewer") {
+    return ROUTES.COMUNIDADE;
+  }
+  
+  // Default
+  return ROUTES.COMUNIDADE;
+}
+
+// ============================================
+// EXPORTS
+// ============================================
+export default ROUTES;
