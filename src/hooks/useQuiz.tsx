@@ -4,7 +4,7 @@
 // Adaptado para PARTE 5 - Arena da Glória
 // ============================================
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { usePublishEvent } from '@/hooks/usePublishEvent';
