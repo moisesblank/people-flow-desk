@@ -31,6 +31,16 @@ export const OptimizedImage = memo(function OptimizedImage({
   const [isInView, setIsInView] = useState(priority);
   const imgRef = useRef<HTMLImageElement>(null);
 
+  // Detectar conexão lenta para ajustar rootMargin
+  const [rootMargin] = useState(() => {
+    if (typeof navigator === 'undefined') return "300px";
+    const conn = (navigator as any).connection;
+    if (!conn) return "300px";
+    if (conn.saveData) return "800px"; // Data saver = prefetch agressivo
+    if (['slow-2g', '2g', '3g'].includes(conn.effectiveType)) return "600px"; // 3G
+    return "300px"; // 4G/WiFi
+  });
+
   useEffect(() => {
     if (priority || isInView) return;
 
@@ -41,12 +51,12 @@ export const OptimizedImage = memo(function OptimizedImage({
           observer.disconnect();
         }
       },
-      { rootMargin: "200px", threshold: 0.01 }
+      { rootMargin, threshold: 0.01 }
     );
 
     if (imgRef.current) observer.observe(imgRef.current);
     return () => observer.disconnect();
-  }, [priority, isInView]);
+  }, [priority, isInView, rootMargin]);
 
   const handleLoad = () => {
     setIsLoaded(true);

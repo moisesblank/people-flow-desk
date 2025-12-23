@@ -1,9 +1,10 @@
 // ============================================
 // MOISÉS MEDEIROS v8.0 - VIDEO PLAYER LMS
 // FORTALEZA DIGITAL - Player com proteção total
+// LEI I: Animações governadas por prefers-reduced-motion
 // ============================================
 
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
   Play, 
@@ -29,6 +30,7 @@ import {
 } from "@/components/ui/popover";
 import { toast } from "@/hooks/use-toast";
 import { FortressPlayerWrapper } from "@/components/video/FortressPlayerWrapper";
+import { useReducedMotion } from "@/hooks/usePerformance";
 
 interface Note {
   id: string;
@@ -53,6 +55,7 @@ export function VideoPlayer({
   onProgress 
 }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const reducedMotion = useReducedMotion(); // LEI I - Animações governadas
   const [isPlaying, setIsPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
   const [videoDuration, setVideoDuration] = useState(0);
@@ -62,6 +65,11 @@ export function VideoPlayer({
   const [notes, setNotes] = useState<Note[]>([]);
   const [newNote, setNewNote] = useState("");
   const [showNoteInput, setShowNoteInput] = useState(false);
+  
+  // Animações condicionais (LEI I - Artigo 20)
+  const animationProps = useMemo(() => 
+    reducedMotion ? {} : { whileHover: { scale: 1.1 }, whileTap: { scale: 0.95 } }
+  , [reducedMotion]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
@@ -199,14 +207,13 @@ export function VideoPlayer({
               exit={{ opacity: 0 }}
               className="absolute inset-0 flex items-center justify-center bg-black/30"
             >
-              <motion.button
-                whileHover={{ scale: 1.1 }}
-                whileTap={{ scale: 0.95 }}
-                onClick={togglePlay}
-                className="p-5 rounded-full bg-primary/90 text-primary-foreground"
-              >
-                <Play className="h-10 w-10" />
-              </motion.button>
+            <motion.button
+              {...animationProps}
+              onClick={togglePlay}
+              className="p-5 rounded-full bg-primary/90 text-primary-foreground"
+            >
+              <Play className="h-10 w-10" />
+            </motion.button>
             </motion.div>
           )}
         </AnimatePresence>
@@ -379,8 +386,8 @@ export function VideoPlayer({
             {notes.map((note) => (
               <motion.button
                 key={note.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={reducedMotion ? undefined : { opacity: 0, y: 10 }}
+                animate={reducedMotion ? undefined : { opacity: 1, y: 0 }}
                 onClick={() => goToNote(note.timestamp)}
                 className="w-full text-left p-3 rounded-lg bg-secondary/50 hover:bg-secondary transition-colors"
               >
