@@ -1,8 +1,9 @@
 // ============================================
-// ⚡ MATRIZ DIGITAL - APP CORE v5.0 ⚡
+// ⚡ MATRIZ DIGITAL - APP CORE v5.1 ⚡
 // ULTRA PERFORMANCE 3G - 5000 usuários simultâneos
 // 🛡️ Evangelho da Segurança v2.0 Integrado
 // 🛡️ DOGMA XI: Controle de Dispositivos
+// ⚡ PERFORMANCE PROVIDER INTEGRADO
 // ============================================
 
 import { Toaster } from "@/components/ui/toaster";
@@ -26,6 +27,7 @@ import { SessionGuard } from "@/components/security/SessionGuard";
 import { DeviceGuard } from "@/components/security/DeviceGuard";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
+import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
 
 // ⚡ DOGMA V: QueryClient otimizado com cache sagrado
 import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
@@ -431,28 +433,31 @@ const AppContent = memo(() => {
 });
 AppContent.displayName = 'AppContent';
 
-// ⚡ App Principal - Estrutura de providers otimizada
+// ⚡ App Principal - Estrutura de providers otimizada + PERFORMANCE PROVIDER
 const App = memo(() => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <LiveSheetProvider>
-        <ReactiveFinanceProvider>
-          <GodModeProvider>
-            <DuplicationClipboardProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AppContent />
-                  <DuplicationClipboardIndicator />
-                </BrowserRouter>
-              </TooltipProvider>
-            </DuplicationClipboardProvider>
-          </GodModeProvider>
-        </ReactiveFinanceProvider>
-      </LiveSheetProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <PerformanceProvider>
+    <PerformanceStyles />
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <LiveSheetProvider>
+          <ReactiveFinanceProvider>
+            <GodModeProvider>
+              <DuplicationClipboardProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <AppContent />
+                    <DuplicationClipboardIndicator />
+                  </BrowserRouter>
+                </TooltipProvider>
+              </DuplicationClipboardProvider>
+            </GodModeProvider>
+          </ReactiveFinanceProvider>
+        </LiveSheetProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </PerformanceProvider>
 ));
 App.displayName = 'App';
 
