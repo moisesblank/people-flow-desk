@@ -17,6 +17,7 @@ import {
   type ReactNode
 } from 'react';
 import { useConstitution } from '@/hooks/useConstitution';
+import type { HTMLMotionProps, Transition, Easing } from 'framer-motion';
 
 // ============================================
 // TIPOS
@@ -45,23 +46,23 @@ export interface QuantumReactivityConfig {
   getVirtualConfig: () => VirtualConfig;
 }
 
-export interface GPUAnimationProps {
-  // GPU-ONLY: transform + opacity (TESE 2.2)
-  fadeIn: FramerMotionProps;
-  fadeUp: FramerMotionProps;
-  scaleIn: FramerMotionProps;
-  slideIn: FramerMotionProps;
-  // Disabled state
-  none: FramerMotionProps;
-}
+// Tipo compatível com framer-motion
+type GPUMotionConfig = {
+  initial?: { opacity?: number; y?: number; x?: number; scale?: number } | false;
+  animate?: { opacity?: number; y?: number; x?: number; scale?: number };
+  exit?: { opacity?: number; y?: number; x?: number; scale?: number };
+  transition?: {
+    duration?: number;
+    ease?: Easing;
+  };
+};
 
-interface FramerMotionProps {
-  initial?: object | boolean;
-  animate?: object;
-  exit?: object;
-  transition?: object;
-  whileHover?: object;
-  whileTap?: object;
+export interface GPUAnimationProps {
+  fadeIn: GPUMotionConfig;
+  fadeUp: GPUMotionConfig;
+  scaleIn: GPUMotionConfig;
+  slideIn: GPUMotionConfig;
+  none: Record<string, never>;
 }
 
 interface VirtualConfig {
@@ -149,7 +150,7 @@ export function useQuantumReactivity(): QuantumReactivityConfig {
   const gpuAnimationProps = useMemo<GPUAnimationProps>(() => {
     const { shouldAnimate, animationDuration } = constitution;
     const duration = animationDuration(250) / 1000;
-    const ease = [0.4, 0, 0.2, 1]; // Material easing
+    const ease: Easing = [0.4, 0, 0.2, 1]; // Material easing - cubic bezier tuple
     
     if (!shouldAnimate) {
       return {
