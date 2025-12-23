@@ -4,8 +4,9 @@
 // COM PROTEÇÃO FORTALEZA DIGITAL
 // ============================================
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { usePerformance } from "@/hooks/usePerformance";
 import { 
   Play, 
   ChevronLeft, 
@@ -259,6 +260,7 @@ const VideoModal = ({
 
 // Componente principal
 export const VideoFeedbackCarousel = () => {
+  const { isSlowConnection } = usePerformance();
   const [selectedVideo, setSelectedVideo] = useState<typeof feedbackVideos[0] | null>(null);
   const [scrollPosition, setScrollPosition] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -298,8 +300,10 @@ export const VideoFeedbackCarousel = () => {
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950/50 to-black" />
       
-      {/* Glow Effects */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-pink-500/10 blur-[150px] pointer-events-none" />
+      {/* Glow Effects - Disabled on slow connections (blur-[150px] is CPU-heavy) */}
+      {!isSlowConnection && (
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] rounded-full bg-pink-500/10 blur-[150px] pointer-events-none" />
+      )}
 
       <div className="relative z-10">
         {/* Header */}
