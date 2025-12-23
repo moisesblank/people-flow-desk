@@ -2,7 +2,7 @@
 // HOOK PARA DADOS DO WHATSAPP - INTEGRAÇÃO COM TODA A PLATAFORMA
 // ==============================================================================
 
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useEffect } from 'react';
 import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
@@ -316,11 +316,14 @@ export function useUpdateConversation() {
   });
 }
 
+// ============================================
+// FASE 3 COMPLETA - useOptimisticMutation (0ms)
+// ============================================
+
 export function useCreateWhatsAppTask() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (data: { title: string; description?: string; priority?: string; conversationId?: string }) => {
+  return useOptimisticMutation<WhatsAppTask[], { title: string; description?: string; priority?: string; conversationId?: string }, void>({
+    queryKey: ['whatsapp-tasks'],
+    mutationFn: async (data) => {
       const { error } = await supabase.from('command_tasks').insert({
         title: data.title,
         description: data.description,
@@ -331,24 +334,32 @@ export function useCreateWhatsAppTask() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-stats'] });
-    }
+    optimisticUpdate: (old, data) => [
+      ...(old || []),
+      {
+        id: `temp-${Date.now()}`,
+        title: data.title,
+        description: data.description || null,
+        status: 'todo',
+        priority: data.priority || 'med',
+        due_date: null,
+        owner: null,
+        source: 'ui',
+        related_conversation_id: data.conversationId || null,
+        created_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    ],
+    successMessage: 'Tarefa criada!',
+    errorMessage: 'Erro ao criar tarefa',
   });
 }
 
 export function useCreateWhatsAppFinance() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (data: { 
-      amount: number; 
-      type: string; 
-      description: string; 
-      counterparty?: string;
-      conversationId?: string 
-    }) => {
+  return useOptimisticMutation<WhatsAppFinance[], { amount: number; type: string; description: string; counterparty?: string; conversationId?: string }, void>({
+    queryKey: ['whatsapp-finance'],
+    mutationFn: async (data) => {
       const { error } = await supabase.from('command_finance').insert({
         amount: data.amount,
         type: data.type,
@@ -361,42 +372,57 @@ export function useCreateWhatsAppFinance() {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-finance'] });
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-stats'] });
-    }
+    optimisticUpdate: (old, data) => [
+      ...(old || []),
+      {
+        id: `temp-${Date.now()}`,
+        type: data.type,
+        amount: data.amount,
+        currency: 'BRL',
+        date: new Date().toISOString().split('T')[0],
+        counterparty: data.counterparty || null,
+        description: data.description,
+        status: data.type === 'expense' ? 'paid' : 'open',
+        tags: null,
+        source: 'ui',
+        related_conversation_id: data.conversationId || null,
+        created_by: null,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      }
+    ],
+    successMessage: 'Lançamento criado!',
+    errorMessage: 'Erro ao criar lançamento',
   });
 }
 
 export function useUpdateWhatsAppTask() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async ({ id, updates }: { id: string; updates: Partial<WhatsAppTask> }) => {
+  return useOptimisticMutation<WhatsAppTask[], { id: string; updates: Partial<WhatsAppTask> }, void>({
+    queryKey: ['whatsapp-tasks'],
+    mutationFn: async ({ id, updates }) => {
       const { error } = await supabase
         .from('command_tasks')
         .update({ ...updates, updated_at: new Date().toISOString() })
         .eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-stats'] });
-    }
+    optimisticUpdate: (old, { id, updates }) => {
+      return (old || []).map(t => t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t);
+    },
+    successMessage: 'Tarefa atualizada!',
+    errorMessage: 'Erro ao atualizar tarefa',
   });
 }
 
 export function useDeleteWhatsAppTask() {
-  const queryClient = useQueryClient();
-  
-  return useMutation({
-    mutationFn: async (id: string) => {
+  return useOptimisticMutation<WhatsAppTask[], string, void>({
+    queryKey: ['whatsapp-tasks'],
+    mutationFn: async (id) => {
       const { error } = await supabase.from('command_tasks').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-tasks'] });
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-stats'] });
-    }
+    optimisticUpdate: (old, id) => (old || []).filter(t => t.id !== id),
+    successMessage: 'Tarefa excluída!',
+    errorMessage: 'Erro ao excluir tarefa',
   });
 }

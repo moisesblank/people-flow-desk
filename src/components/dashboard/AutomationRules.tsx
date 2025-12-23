@@ -49,7 +49,8 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOptimisticMutation } from "@/hooks/useSubspaceCommunication";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -205,15 +206,14 @@ export function AutomationRules() {
     },
   });
 
+  // ============================================
+  // FASE 3 COMPLETA - useOptimisticMutation (0ms)
+  // ============================================
+  
   // Create/Update mutation
-  const saveMutation = useMutation({
-    mutationFn: async (data: {
-      rule_name: string;
-      rule_type: string;
-      trigger_event: string;
-      actions: any[];
-      conditions: any[];
-    }) => {
+  const saveMutation = useOptimisticMutation<AutomationRule[], { rule_name: string; rule_type: string; trigger_event: string; actions: any[]; conditions: any[] }, void>({
+    queryKey: ["automation-rules"],
+    mutationFn: async (data) => {
       if (editingRule) {
         const { error } = await supabase
           .from("custom_rules")
@@ -239,46 +239,50 @@ export function AutomationRules() {
         if (error) throw error;
       }
     },
+    optimisticUpdate: (old, data) => {
+      if (editingRule) {
+        return (old || []).map(r => r.id === editingRule.id ? { ...r, ...data } : r);
+      }
+      return [...(old || []), { id: `temp-${Date.now()}`, ...data, is_active: true, priority: 0, execution_count: 0, last_triggered_at: null, created_at: new Date().toISOString() } as AutomationRule];
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["automation-rules"] });
-      toast.success(editingRule ? "Regra atualizada!" : "Regra criada!");
       setIsCreateOpen(false);
       setEditingRule(null);
       resetForm();
     },
-    onError: (error) => {
-      toast.error("Erro ao salvar regra");
-      console.error(error);
-    },
+    successMessage: editingRule ? "Regra atualizada!" : "Regra criada!",
+    errorMessage: "Erro ao salvar regra",
   });
 
   // Toggle mutation
-  const toggleMutation = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
+  const toggleMutation = useOptimisticMutation<AutomationRule[], { id: string; is_active: boolean }, void>({
+    queryKey: ["automation-rules"],
+    mutationFn: async ({ id, is_active }) => {
       const { error } = await supabase
         .from("custom_rules")
         .update({ is_active })
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["automation-rules"] });
+    optimisticUpdate: (old, { id, is_active }) => {
+      return (old || []).map(r => r.id === id ? { ...r, is_active } : r);
     },
+    errorMessage: "Erro ao alterar status",
   });
 
   // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (id: string) => {
+  const deleteMutation = useOptimisticMutation<AutomationRule[], string, void>({
+    queryKey: ["automation-rules"],
+    mutationFn: async (id) => {
       const { error } = await supabase
         .from("custom_rules")
         .delete()
         .eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["automation-rules"] });
-      toast.success("Regra excluída!");
-    },
+    optimisticUpdate: (old, id) => (old || []).filter(r => r.id !== id),
+    successMessage: "Regra excluída!",
+    errorMessage: "Erro ao excluir regra",
   });
 
   const resetForm = () => {

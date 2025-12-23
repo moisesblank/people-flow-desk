@@ -5,7 +5,8 @@
 // ============================================
 
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOptimisticMutation } from "@/hooks/useSubspaceCommunication";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   FileText,
@@ -312,9 +313,12 @@ export function GeneralDocumentsManager() {
     },
   });
 
-  // Delete mutation
-  const deleteMutation = useMutation({
-    mutationFn: async (doc: Document) => {
+  // ============================================
+  // FASE 3 COMPLETA - useOptimisticMutation (0ms)
+  // ============================================
+  const deleteMutation = useOptimisticMutation<Document[], Document, void>({
+    queryKey: ["general-documents"],
+    mutationFn: async (doc) => {
       // Extrair path do arquivo
       let path = doc.file_url;
       if (path.includes('/storage/v1/object/public/arquivos/')) {
@@ -330,14 +334,10 @@ export function GeneralDocumentsManager() {
         .eq("id", doc.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["general-documents"] });
-      toast.success("Documento excluído!");
-      setDeleteDoc(null);
-    },
-    onError: (err: any) => {
-      toast.error("Erro ao excluir: " + err.message);
-    },
+    optimisticUpdate: (old, doc) => (old || []).filter(d => d.id !== doc.id),
+    onSuccess: () => setDeleteDoc(null),
+    successMessage: "Documento excluído!",
+    errorMessage: "Erro ao excluir documento",
   });
 
   // Bulk delete

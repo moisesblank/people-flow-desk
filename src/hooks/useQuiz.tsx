@@ -179,14 +179,14 @@ export function useAllUserAttempts() {
   );
 }
 
-// Hook para iniciar uma tentativa (v5.0 - Event-Driven)
+// Hook para iniciar uma tentativa (v5.0 - Event-Driven + FASE 3)
 export function useStartQuizAttempt() {
-  const queryClient = useQueryClient();
   const { user } = useAuth();
   const { publishQuizStarted } = usePublishEvent();
 
-  return useMutation({
-    mutationFn: async (quizId: string) => {
+  return useOptimisticMutation<QuizAttempt[], string, QuizAttempt>({
+    queryKey: ['quiz-attempts'],
+    mutationFn: async (quizId) => {
       if (!user?.id) throw new Error('Usuário não autenticado');
 
       const { data, error } = await supabase
@@ -211,33 +211,36 @@ export function useStartQuizAttempt() {
 
       return data as QuizAttempt;
     },
-    onSuccess: (_, quizId) => {
-      queryClient.invalidateQueries({ queryKey: ['quiz-attempts', quizId] });
-      toast.success('Tentativa iniciada!');
-    },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Erro ao iniciar tentativa');
-    },
+    optimisticUpdate: (old, quizId) => [
+      ...(old || []),
+      {
+        id: `temp-${Date.now()}`,
+        quiz_id: quizId,
+        user_id: user?.id || '',
+        score: 0,
+        max_score: 0,
+        percentage: 0,
+        passed: false,
+        time_spent_seconds: 0,
+        answers: {},
+        created_at: new Date().toISOString(),
+        started_at: new Date().toISOString(),
+        completed_at: null
+      } as QuizAttempt
+    ],
+    successMessage: 'Tentativa iniciada!',
+    errorMessage: 'Erro ao iniciar tentativa',
   });
 }
 
-// Hook para submeter respostas (v5.0 - Event-Driven)
+// Hook para submeter respostas (v5.0 - Event-Driven + FASE 3)
 export function useSubmitQuiz() {
   const queryClient = useQueryClient();
   const { publishQuizPassed, publishQuizFailed, publishCorrectAnswer, publishWrongAnswer } = usePublishEvent();
 
-  return useMutation({
-    mutationFn: async ({
-      attemptId,
-      answers,
-      questions,
-      timeSpent,
-    }: {
-      attemptId: string;
-      answers: Record<string, string>;
-      questions: QuizQuestion[];
-      timeSpent: number;
-    }) => {
+  return useOptimisticMutation<QuizAttempt[], { attemptId: string; answers: Record<string, string>; questions: QuizQuestion[]; timeSpent: number }, { attempt: QuizAttempt; xpEarned: number }>({
+    queryKey: ['quiz-attempts'],
+    mutationFn: async ({ attemptId, answers, questions, timeSpent }) => {
       // Calcular pontuação
       let score = 0;
       let maxScore = 0;
@@ -309,7 +312,6 @@ export function useSubmitQuiz() {
       if (error) throw error;
 
       // PARTE 5: Publicar eventos de cada resposta (gamificação por evento)
-      // Publicar eventos de respostas corretas/erradas em batch
       for (const questionId of correctAnswers) {
         await publishCorrectAnswer(questionId, quizId);
       }
@@ -326,8 +328,14 @@ export function useSubmitQuiz() {
 
       return { attempt: data as QuizAttempt, xpEarned: passed ? quiz?.xp_reward || 0 : 0 };
     },
+    optimisticUpdate: (old, { attemptId }) => {
+      return (old || []).map(a => 
+        a.id === attemptId 
+          ? { ...a, completed_at: new Date().toISOString() } 
+          : a
+      );
+    },
     onSuccess: (result) => {
-      queryClient.invalidateQueries({ queryKey: ['quiz-attempts'] });
       queryClient.invalidateQueries({ queryKey: ['user-gamification'] });
       if (result.attempt.passed) {
         toast.success(`Parabéns! Você passou com ${result.attempt.percentage}%! +${result.xpEarned} XP`);
@@ -335,9 +343,7 @@ export function useSubmitQuiz() {
         toast.info(`Você obteve ${result.attempt.percentage}%. Tente novamente!`);
       }
     },
-    onError: (error: Error) => {
-      toast.error(error.message || 'Erro ao submeter quiz');
-    },
+    errorMessage: 'Erro ao submeter quiz',
   });
 }
 

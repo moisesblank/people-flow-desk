@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useOptimisticMutation } from '@/hooks/useSubspaceCommunication';
 import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -191,24 +192,30 @@ const CentralWhatsApp = () => {
   }, [selectedConversation, messages.length]);
 
   // ==============================================================================
-  // MUTATIONS
+  // MUTATIONS - FASE 3 useOptimisticMutation (0ms)
   // ==============================================================================
-  const updateConversation = useMutation({
-    mutationFn: async (data: { id: string; updates: Partial<Conversation> }) => {
+  const updateConversation = useOptimisticMutation<Conversation[], { id: string; updates: Partial<Conversation> }, void>({
+    queryKey: ['whatsapp-conversations'],
+    mutationFn: async (data) => {
       const { error } = await supabase
         .from('whatsapp_conversations')
         .update(data.updates)
         .eq('id', data.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-conversations'] });
-      toast.success('Conversa atualizada!');
-    }
+    optimisticUpdate: (old, { id, updates }) => {
+      return (old || []).map(c => c.id === id ? { ...c, ...updates } : c);
+    },
+    successMessage: 'Conversa atualizada!',
+    errorMessage: 'Erro ao atualizar conversa',
   });
 
-  const createTask = useMutation({
-    mutationFn: async (data: { title: string; description?: string; priority: string }) => {
+  // ============================================
+  // FASE 3 - useOptimisticMutation (0ms)
+  // ============================================
+  const createTask = useOptimisticMutation<any[], { title: string; description?: string; priority: string }, void>({
+    queryKey: ['whatsapp-tasks'],
+    mutationFn: async (data) => {
       const { error } = await supabase.from('command_tasks').insert({
         title: data.title,
         description: data.description,
@@ -219,15 +226,18 @@ const CentralWhatsApp = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-stats'] });
-      toast.success('Tarefa criada!');
-      setShowTaskDialog(false);
-    }
+    optimisticUpdate: (old, data) => [
+      ...(old || []),
+      { id: `temp-${Date.now()}`, ...data, status: 'todo', created_at: new Date().toISOString() }
+    ],
+    onSuccess: () => setShowTaskDialog(false),
+    successMessage: 'Tarefa criada!',
+    errorMessage: 'Erro ao criar tarefa',
   });
 
-  const createFinance = useMutation({
-    mutationFn: async (data: { amount: number; type: string; description: string; counterparty?: string }) => {
+  const createFinance = useOptimisticMutation<any[], { amount: number; type: string; description: string; counterparty?: string }, void>({
+    queryKey: ['whatsapp-finance'],
+    mutationFn: async (data) => {
       const { error } = await supabase.from('command_finance').insert({
         amount: data.amount,
         type: data.type,
@@ -239,11 +249,13 @@ const CentralWhatsApp = () => {
       });
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['whatsapp-stats'] });
-      toast.success('Lançamento criado!');
-      setShowFinanceDialog(false);
-    }
+    optimisticUpdate: (old, data) => [
+      ...(old || []),
+      { id: `temp-${Date.now()}`, ...data, status: 'open', created_at: new Date().toISOString() }
+    ],
+    onSuccess: () => setShowFinanceDialog(false),
+    successMessage: 'Lançamento criado!',
+    errorMessage: 'Erro ao criar lançamento',
   });
 
   // ==============================================================================

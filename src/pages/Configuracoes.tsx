@@ -51,7 +51,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Badge } from "@/components/ui/badge";
 import { useOnboarding } from "@/components/onboarding/OnboardingManager";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useOptimisticMutation } from "@/hooks/useSubspaceCommunication";
 import { LogoUploader } from "@/components/settings/LogoUploader";
 import { NotificationSettings } from "@/components/settings/NotificationSettings";
 import { Separator } from "@/components/ui/separator";
@@ -125,8 +126,13 @@ export default function Configuracoes() {
     return codes;
   };
 
+  // ============================================
+  // FASE 3 COMPLETA - useOptimisticMutation (0ms)
+  // ============================================
+  
   // Enable MFA mutation
-  const enableMfaMutation = useMutation({
+  const enableMfaMutation = useOptimisticMutation<any, void, { backupCodes: string[] }>({
+    queryKey: ['mfa-settings'],
     mutationFn: async () => {
       if (!user?.id) throw new Error('Usuário não encontrado');
       const backupCodes = generateBackupCodes();
@@ -142,19 +148,18 @@ export default function Configuracoes() {
       if (error) throw error;
       return { backupCodes };
     },
+    optimisticUpdate: (old) => ({ ...old, mfa_enabled: true }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mfa-settings'] });
-      toast.success("2FA Ativado com sucesso!");
       setMfaStep('initial');
       setVerificationCode('');
     },
-    onError: () => {
-      toast.error("Erro ao ativar 2FA");
-    }
+    successMessage: "2FA Ativado com sucesso!",
+    errorMessage: "Erro ao ativar 2FA",
   });
 
   // Disable MFA mutation  
-  const disableMfaMutation = useMutation({
+  const disableMfaMutation = useOptimisticMutation<any, void, void>({
+    queryKey: ['mfa-settings'],
     mutationFn: async () => {
       if (!user?.id) throw new Error('Usuário não encontrado');
       const { error } = await supabase
@@ -163,10 +168,9 @@ export default function Configuracoes() {
         .eq('user_id', user.id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['mfa-settings'] });
-      toast.success("2FA Desativado");
-    }
+    optimisticUpdate: (old) => ({ ...old, mfa_enabled: false }),
+    successMessage: "2FA Desativado",
+    errorMessage: "Erro ao desativar 2FA",
   });
 
   const handleCopyCode = (code: string) => {
