@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import {
   Target,
   Plus,
@@ -90,6 +91,7 @@ const priorityColors: Record<string, string> = {
 
 export function FinancialGoalsWidget() {
   const { user } = useAuth();
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
   const [goals, setGoals] = useState<FinancialGoal[]>([]);
   const [loading, setLoading] = useState(true);
   const [isDialogOpen, setIsDialogOpen] = useState(false);

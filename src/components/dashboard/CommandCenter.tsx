@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Brain, 
   Cpu, 
@@ -25,6 +26,7 @@ interface SystemMetric {
 
 export function CommandCenter() {
   const [isExpanded, setIsExpanded] = useState(false);
+  const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
 
   const systemMetrics: SystemMetric[] = [
     { name: "Banco de Dados", value: 19, max: 50, unit: "tabelas", status: "healthy", icon: Database },
@@ -53,9 +55,8 @@ export function CommandCenter() {
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="glass-card rounded-2xl p-6 relative overflow-hidden"
+      {...gpuAnimationProps.fadeUp}
+      className="glass-card rounded-2xl p-6 relative overflow-hidden will-change-transform transform-gpu"
     >
       {/* Background Pattern */}
       <div className="absolute inset-0 opacity-5 pointer-events-none">

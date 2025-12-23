@@ -9,6 +9,7 @@ import { Link } from "react-router-dom";
 import { Menu, X, Rocket, Atom, Sparkles, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePerformance } from "@/hooks/usePerformance";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
 const navLinks = [
