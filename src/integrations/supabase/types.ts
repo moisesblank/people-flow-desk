@@ -1049,6 +1049,42 @@ export type Database = {
         }
         Relationships: []
       }
+      blocked_ips: {
+        Row: {
+          blocked_at: string
+          blocked_by: string | null
+          expires_at: string | null
+          id: string
+          ip_address: unknown
+          is_permanent: boolean | null
+          metadata: Json | null
+          reason: string
+          violation_count: number | null
+        }
+        Insert: {
+          blocked_at?: string
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address: unknown
+          is_permanent?: boolean | null
+          metadata?: Json | null
+          reason: string
+          violation_count?: number | null
+        }
+        Update: {
+          blocked_at?: string
+          blocked_by?: string | null
+          expires_at?: string | null
+          id?: string
+          ip_address?: unknown
+          is_permanent?: boolean | null
+          metadata?: Json | null
+          reason?: string
+          violation_count?: number | null
+        }
+        Relationships: []
+      }
       book_access_logs: {
         Row: {
           book_id: string | null
@@ -11775,6 +11811,48 @@ export type Database = {
           },
         ]
       }
+      waf_config: {
+        Row: {
+          action: string
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          pattern: string
+          priority: number | null
+          rule_name: string
+          rule_type: string
+          updated_at: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          pattern: string
+          priority?: number | null
+          rule_name: string
+          rule_type: string
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          pattern?: string
+          priority?: number | null
+          rule_name?: string
+          rule_type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       web_book_pages: {
         Row: {
           anchor_id: string | null
@@ -13543,6 +13621,14 @@ export type Database = {
         }[]
       }
       auto_cleanup_for_load: { Args: never; Returns: undefined }
+      block_ip_auto: {
+        Args: {
+          p_duration_hours?: number
+          p_ip_address: unknown
+          p_reason: string
+        }
+        Returns: string
+      }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
@@ -13617,6 +13703,22 @@ export type Database = {
           p_window_minutes?: number
         }
         Returns: boolean
+      }
+      check_rate_limit_unified: {
+        Args: {
+          p_endpoint: string
+          p_identifier: string
+          p_limit?: number
+          p_window_seconds?: number
+        }
+        Returns: {
+          allowed: boolean
+          current_count: number
+          is_penalized: boolean
+          penalty_multiplier: number
+          remaining: number
+          reset_at: string
+        }[]
       }
       check_rate_limit_v2: {
         Args: {
@@ -14213,6 +14315,7 @@ export type Database = {
       is_funcionario_or_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_ip_blocked: { Args: { p_ip_address: unknown }; Returns: boolean }
       is_matrix_admin: { Args: never; Returns: boolean }
       is_owner:
         | { Args: never; Returns: boolean }
