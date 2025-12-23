@@ -48,7 +48,7 @@ export function usePerformanceTier(): UltraTier {
  */
 export function useIsLowEnd(): boolean {
   const state = useUltraPerformance();
-  return state.tier === 'critical' || state.tier === 'low';
+  return state.tier === 'critical' || state.tier === 'legacy' || state.tier === 'standard';
 }
 
 /**
@@ -173,18 +173,19 @@ export function useConditionalRender() {
   const state = useUltraPerformance();
   
   return useCallback((options: {
-    ultra?: React.ReactNode;
-    high?: React.ReactNode;
-    medium?: React.ReactNode;
-    low?: React.ReactNode;
+    quantum?: React.ReactNode;
+    neural?: React.ReactNode;
+    enhanced?: React.ReactNode;
+    standard?: React.ReactNode;
+    legacy?: React.ReactNode;
     critical?: React.ReactNode;
     fallback?: React.ReactNode;
   }): React.ReactNode => {
     const tierContent = options[state.tier];
     if (tierContent !== undefined) return tierContent;
     
-    // Fallback hierárquico
-    const tierOrder: UltraTier[] = ['ultra', 'high', 'medium', 'low', 'critical'];
+    // Fallback hierárquico - 6 tiers oficiais
+    const tierOrder: UltraTier[] = ['quantum', 'neural', 'enhanced', 'standard', 'legacy', 'critical'];
     const currentIndex = tierOrder.indexOf(state.tier);
     
     // Tenta tiers acima

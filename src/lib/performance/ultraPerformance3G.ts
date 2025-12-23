@@ -11,12 +11,28 @@
 // TIER DETECTION - Ultra preciso
 // ============================================
 
+/**
+ * 🏛️ LEI I v2.0 - 6 TIERS OFICIAIS DA CONSTITUIÇÃO
+ * critical → legacy → standard → enhanced → neural → quantum
+ * MANTENDO ALIAS para retrocompatibilidade
+ */
 export type UltraTier = 
-  | 'ultra'      // Fibra + Top hardware
-  | 'high'       // WiFi/4G+ + Hardware bom
-  | 'medium'     // 4G + Hardware médio
-  | 'low'        // 3G + Hardware básico
-  | 'critical';  // 2G/SaveData + Hardware fraco
+  | 'quantum'    // Top 5% - Fibra + Desktop i9/M3
+  | 'neural'     // Top 15% - Fibra/4G+ + Desktop/Mobile bom
+  | 'enhanced'   // Top 35% - 4G + Mobile médio
+  | 'standard'   // Top 60% - 4G fraco + Mobile básico
+  | 'legacy'     // Top 85% - 3G + Mobile antigo
+  | 'critical';  // Bottom 15% - 2G/SaveData + Hardware fraco
+
+// Alias para retrocompatibilidade
+export type LegacyTier = 'ultra' | 'high' | 'medium' | 'low' | 'critical';
+const TIER_ALIAS: Record<LegacyTier, UltraTier> = {
+  ultra: 'quantum',
+  high: 'neural',
+  medium: 'enhanced',
+  low: 'legacy',
+  critical: 'critical',
+};
 
 export interface UltraPerformanceState {
   tier: UltraTier;
@@ -108,6 +124,9 @@ function getDeviceInfo() {
   return { cores, memory, isLowEnd, isMobile, dpr };
 }
 
+/**
+ * 🏛️ LEI I v2.0 - Detecta tier usando nomenclatura oficial
+ */
 function detectTier(connection: ReturnType<typeof getConnectionInfo>, device: ReturnType<typeof getDeviceInfo>): UltraTier {
   const { effectiveType, saveData, downlink, rtt } = connection;
   const { isLowEnd, cores, memory } = device;
@@ -117,23 +136,28 @@ function detectTier(connection: ReturnType<typeof getConnectionInfo>, device: Re
     return 'critical';
   }
   
-  // LOW: 3G ou hardware fraco
+  // LEGACY: 3G ou hardware fraco
   if (effectiveType === '3g' || isLowEnd || cores <= 2 || memory <= 2) {
-    return 'low';
+    return 'legacy';
   }
   
-  // MEDIUM: 4G fraco ou hardware médio
+  // STANDARD: 4G fraco ou hardware médio
   if (downlink < 5 || rtt > 150 || memory <= 4) {
-    return 'medium';
+    return 'standard';
   }
   
-  // HIGH: 4G bom
+  // ENHANCED: 4G bom
   if (downlink < 20 || effectiveType === '4g') {
-    return 'high';
+    return 'enhanced';
   }
   
-  // ULTRA: Fibra/WiFi + hardware top
-  return 'ultra';
+  // NEURAL: WiFi bom
+  if (downlink < 50) {
+    return 'neural';
+  }
+  
+  // QUANTUM: Fibra/WiFi + hardware top
+  return 'quantum';
 }
 
 function getReducedMotion(): boolean {
@@ -145,6 +169,7 @@ function getReducedMotion(): boolean {
 // TIER CONFIGURATIONS - Ultra detalhado
 // ============================================
 
+// 🏛️ LEI I v2.0 - Configurações por tier oficial
 const TIER_CONFIG: Record<UltraTier, Omit<UltraPerformanceState, 'tier' | 'connection' | 'device'>> = {
   critical: {
     flags: {
@@ -185,7 +210,8 @@ const TIER_CONFIG: Record<UltraTier, Omit<UltraPerformanceState, 'tier' | 'conne
     },
   },
   
-  low: {
+  
+  legacy: {
     flags: {
       enableAnimations: false,
       enableBlur: false,
@@ -224,7 +250,7 @@ const TIER_CONFIG: Record<UltraTier, Omit<UltraPerformanceState, 'tier' | 'conne
     },
   },
   
-  medium: {
+  standard: {
     flags: {
       enableAnimations: true,
       enableBlur: false,
@@ -263,7 +289,8 @@ const TIER_CONFIG: Record<UltraTier, Omit<UltraPerformanceState, 'tier' | 'conne
     },
   },
   
-  high: {
+  
+  enhanced: {
     flags: {
       enableAnimations: true,
       enableBlur: true,
@@ -302,7 +329,46 @@ const TIER_CONFIG: Record<UltraTier, Omit<UltraPerformanceState, 'tier' | 'conne
     },
   },
   
-  ultra: {
+  neural: {
+    flags: {
+      enableAnimations: true,
+      enableBlur: true,
+      enableShadows: true,
+      enableParticles: false,
+      enableVideoAutoplay: true,
+      enablePrefetch: true,
+      enableHDImages: true,
+      enableGradients: true,
+      reduceMotion: false,
+    },
+    budgets: {
+      jsMax: 800_000,
+      cssMax: 150_000,
+      imagesMax: 1_500_000,
+      fontsMax: 180_000,
+      requestsMax: 60,
+    },
+    cache: {
+      staleTime: 60 * 1000,
+      gcTime: 10 * 60 * 1000,
+    },
+    animation: {
+      duration: 300,
+      stagger: 60,
+      easing: 'cubic-bezier(0.4, 0, 0.2, 1)',
+    },
+    image: {
+      quality: 85,
+      maxWidth: 1920,
+      format: 'avif',
+    },
+    lazy: {
+      rootMargin: '300px',
+      threshold: 0.15,
+    },
+  },
+  
+  quantum: {
     flags: {
       enableAnimations: true,
       enableBlur: true,
@@ -398,7 +464,7 @@ export function detectUltraPerformance(forceRefresh = false): UltraPerformanceSt
 
 export function isLowEndExperience(): boolean {
   const state = detectUltraPerformance();
-  return state.tier === 'critical' || state.tier === 'low';
+  return state.tier === 'critical' || state.tier === 'legacy' || state.tier === 'standard';
 }
 
 export function shouldAnimate(): boolean {
