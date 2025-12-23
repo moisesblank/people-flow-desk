@@ -659,52 +659,45 @@ export const BUCKET_DEFINITIONS: Record<BucketKey, BucketDefinition> = {
 };
 
 // ============================================
-// HELPERS
+// HELPERS — FUNÇÕES UTILITÁRIAS
 // ============================================
 
 /**
- * Gera um ID aleatório
+ * Retorna o nome do bucket
  */
-function generateRandomId(length = 8): string {
-  return Math.random().toString(36).substring(2, 2 + length);
+export function getBucket(key: BucketKey): string {
+  return BUCKETS[key];
 }
 
 /**
- * Extrai a extensão de um arquivo
+ * Retorna a definição de um bucket
  */
-function getFileExtension(filename: string): string {
-  const parts = filename.split(".");
-  return parts.length > 1 ? parts.pop()!.toLowerCase() : "";
+export function getBucketDefinition(key: BucketKey): BucketDefinition {
+  return BUCKET_DEFINITIONS[key];
 }
 
 /**
- * Gera o path do arquivo baseado no pattern do bucket
+ * Gera o path para um arquivo
  */
 export function generateFilePath(
   bucketKey: BucketKey,
-  params: Record<string, string>,
-  filename: string
+  params: Record<string, string>
 ): string {
   const def = BUCKET_DEFINITIONS[bucketKey];
-  if (!def) throw new Error(`Bucket não encontrado: ${bucketKey}`);
-
   let path = def.pathPattern;
-  
-  // Substituir placeholders
-  const now = new Date();
-  const replacements: Record<string, string> = {
-    ...params,
-    timestamp: now.getTime().toString(),
-    rand: generateRandomId(),
-    ext: getFileExtension(filename),
-    year: now.getFullYear().toString(),
-    month: (now.getMonth() + 1).toString().padStart(2, "0"),
-    day: now.getDate().toString().padStart(2, "0"),
-  };
 
-  Object.entries(replacements).forEach(([key, value]) => {
+  // Substituir placeholders fornecidos
+  Object.entries(params).forEach(([key, value]) => {
     path = path.replace(`{${key}}`, value);
   });
+
+  // Substituir placeholders padrão
+  const now = new Date();
+  path = path.replace("{timestamp}", now.getTime().toString());
+  path = path.replace("{year}", now.getFullYear().toString());
+  path = path.replace("{month}", (now.getMonth() + 1).toString().padStart(2, "0"));
+  path = path.replace("{day}", now.getDate().toString().padStart(2, "0"));
+  path = path.replace("{rand}", Math.random().toString(36).substring(2, 10));
 
   return path;
 }
@@ -714,33 +707,29 @@ export function generateFilePath(
  */
 export function validateFileForBucket(
   bucketKey: BucketKey,
-  file: File
+  file: { size: number; type: string }
 ): { valid: boolean; error?: string } {
   const def = BUCKET_DEFINITIONS[bucketKey];
-  if (!def) {
-    return { valid: false, error: `Bucket não encontrado: ${bucketKey}` };
-  }
 
   // Verificar tamanho
   if (file.size > def.maxFileSize) {
-    const maxSizeMB = Math.round(def.maxFileSize / (1024 * 1024));
-    return { valid: false, error: `Arquivo muito grande. Máximo: ${maxSizeMB}MB` };
+    const maxMB = Math.round(def.maxFileSize / (1024 * 1024));
+    return { valid: false, error: `Arquivo muito grande. Máximo: ${maxMB}MB` };
   }
 
   // Verificar MIME type
   const allowedTypes = def.allowedMimeTypes;
-  if (!allowedTypes.includes("*/*")) {
-    const isAllowed = allowedTypes.some((type) => {
-      if (type.endsWith("/*")) {
-        const category = type.split("/")[0];
-        return file.type.startsWith(`${category}/`);
-      }
-      return file.type === type;
-    });
-
-    if (!isAllowed) {
-      return { valid: false, error: `Tipo de arquivo não permitido: ${file.type}` };
+  const typeAllowed = allowedTypes.some(allowed => {
+    if (allowed === "*/*") return true;
+    if (allowed.endsWith("/*")) {
+      const prefix = allowed.replace("/*", "");
+      return file.type.startsWith(prefix);
     }
+    return file.type === allowed;
+  });
+
+  if (!typeAllowed) {
+    return { valid: false, error: `Tipo de arquivo não permitido: ${file.type}` };
   }
 
   return { valid: true };
@@ -754,52 +743,90 @@ export function canAccessBucket(
   userRole: string | null,
   userEmail?: string | null
 ): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+
   // Owner MASTER pode tudo
   if (userRole === "owner" || userEmail?.toLowerCase() === OWNER_EMAIL) {
     return true;
   }
 
-  const def = BUCKET_DEFINITIONS[bucketKey];
-  if (!def) return false;
+  // Verificar se bucket permite qualquer role
+  if (def.allowedRoles.includes("*")) {
+    return true;
+  }
 
-  // Buckets públicos
-  if (def.accessLevel === "public") return true;
-
-  // Requer autenticação
+  // Verificar role específica
   if (!userRole) return false;
-
-  // Verificar role
-  if (def.allowedRoles.includes("*")) return true;
   return def.allowedRoles.includes(userRole);
 }
 
 /**
  * Verifica se um bucket requer proteção SANCTUM
  */
-export function isSanctumProtected(bucketKey: BucketKey): boolean {
+export function requiresSanctumProtection(bucketKey: BucketKey): boolean {
   const def = BUCKET_DEFINITIONS[bucketKey];
-  return def?.isProtected && def?.watermarkRequired;
+  return def.isPremium && def.isProtected;
 }
 
 /**
- * Verifica se um bucket é premium
+ * Verifica se um bucket requer watermark
  */
-export function isPremiumBucket(bucketKey: BucketKey): boolean {
-  return BUCKET_DEFINITIONS[bucketKey]?.isPremium ?? false;
+export function requiresWatermark(bucketKey: BucketKey): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  return def.watermarkRequired;
 }
 
 /**
- * Retorna a definição de um bucket
+ * Verifica se um bucket requer auditoria
  */
-export function getBucketDefinition(bucketKey: BucketKey): BucketDefinition | null {
-  return BUCKET_DEFINITIONS[bucketKey] ?? null;
+export function requiresAudit(bucketKey: BucketKey): boolean {
+  const def = BUCKET_DEFINITIONS[bucketKey];
+  return def.auditRequired;
 }
 
 /**
- * Retorna o nome do bucket
+ * Extrai a extensão de um nome de arquivo
  */
-export function getBucketName(bucketKey: BucketKey): string {
-  return BUCKETS[bucketKey];
+export function getFileExtension(filename: string): string {
+  return filename.split(".").pop()?.toLowerCase() || "";
+}
+
+/**
+ * Gera um nome de arquivo seguro
+ */
+export function sanitizeFileName(filename: string): string {
+  return filename
+    .toLowerCase()
+    .replace(/[^a-z0-9.-]/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+/**
+ * Retorna todos os buckets de um nível de acesso
+ */
+export function getBucketsByAccessLevel(level: BucketAccessLevel): BucketKey[] {
+  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
+    key => BUCKET_DEFINITIONS[key].accessLevel === level
+  );
+}
+
+/**
+ * Retorna todos os buckets premium
+ */
+export function getPremiumBuckets(): BucketKey[] {
+  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
+    key => BUCKET_DEFINITIONS[key].isPremium
+  );
+}
+
+/**
+ * Retorna todos os buckets protegidos por SANCTUM
+ */
+export function getSanctumProtectedBuckets(): BucketKey[] {
+  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
+    key => requiresSanctumProtection(key)
+  );
 }
 
 /**
@@ -812,16 +839,7 @@ export function getUserBuckets(userRole: string | null, userEmail?: string | nul
 }
 
 /**
- * Retorna buckets por nível de acesso
- */
-export function getBucketsByAccessLevel(level: BucketAccessLevel): BucketKey[] {
-  return (Object.keys(BUCKET_DEFINITIONS) as BucketKey[]).filter(
-    (key) => BUCKET_DEFINITIONS[key].accessLevel === level
-  );
-}
-
-/**
- * Audita o registro de buckets
+ * Audita todos os buckets e retorna estatísticas
  */
 export function auditBuckets(): {
   total: number;
@@ -829,48 +847,22 @@ export function auditBuckets(): {
   protected: number;
   premium: number;
   private: number;
-  sanctumProtected: number;
-  totalMaxSizeMB: number;
+  requiresAuth: number;
+  requiresWatermark: number;
+  requiresAudit: number;
+  requiresEncryption: number;
 } {
-  const keys = Object.keys(BUCKET_DEFINITIONS) as BucketKey[];
-
-  let publicCount = 0;
-  let protectedCount = 0;
-  let premiumCount = 0;
-  let privateCount = 0;
-  let sanctumCount = 0;
-  let totalMaxSize = 0;
-
-  keys.forEach((key) => {
-    const def = BUCKET_DEFINITIONS[key];
-    
-    switch (def.accessLevel) {
-      case "public":
-        publicCount++;
-        break;
-      case "protected":
-        protectedCount++;
-        break;
-      case "premium":
-        premiumCount++;
-        break;
-      case "private":
-        privateCount++;
-        break;
-    }
-
-    if (isSanctumProtected(key)) sanctumCount++;
-    totalMaxSize += def.maxFileSize;
-  });
-
+  const buckets = Object.values(BUCKET_DEFINITIONS);
   return {
-    total: keys.length,
-    public: publicCount,
-    protected: protectedCount,
-    premium: premiumCount,
-    private: privateCount,
-    sanctumProtected: sanctumCount,
-    totalMaxSizeMB: Math.round(totalMaxSize / (1024 * 1024)),
+    total: buckets.length,
+    public: buckets.filter(b => b.accessLevel === "public").length,
+    protected: buckets.filter(b => b.accessLevel === "protected").length,
+    premium: buckets.filter(b => b.accessLevel === "premium").length,
+    private: buckets.filter(b => b.accessLevel === "private").length,
+    requiresAuth: buckets.filter(b => b.requiresAuth).length,
+    requiresWatermark: buckets.filter(b => b.watermarkRequired).length,
+    requiresAudit: buckets.filter(b => b.auditRequired).length,
+    requiresEncryption: buckets.filter(b => b.encryptionRequired).length,
   };
 }
 

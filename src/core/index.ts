@@ -24,10 +24,12 @@ export type { ActionKey, ActionDefinition, ActionCategory } from "./actions";
 
 // === STORAGE ===
 export { 
-  BUCKETS, BUCKET_DEFINITIONS, getBucketDefinition, getUserBuckets, 
+  BUCKETS, BUCKET_DEFINITIONS, getBucketDefinition, getUserBuckets, getBucket,
   canAccessBucket, validateFileForBucket, generateFilePath,
-  isSanctumProtected, isPremiumBucket, getBucketName, getBucketsByAccessLevel,
-  auditBuckets, OWNER_EMAIL as STORAGE_OWNER_EMAIL, SIGNED_URL_TTL_SECONDS
+  requiresSanctumProtection, requiresWatermark, requiresAudit,
+  getBucketsByAccessLevel, getPremiumBuckets, getSanctumProtectedBuckets,
+  getFileExtension, sanitizeFileName, auditBuckets, 
+  OWNER_EMAIL as STORAGE_OWNER_EMAIL, SIGNED_URL_TTL_SECONDS
 } from "./storage";
 export type { BucketKey, BucketDefinition, BucketAccessLevel, FileUploadResult, SecureDownloadResult } from "./storage";
 
