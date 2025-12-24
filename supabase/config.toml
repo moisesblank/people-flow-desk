@@ -247,3 +247,6 @@ verify_jwt = true
 
 [functions.verify-turnstile]
 verify_jwt = false
+
+[functions.validate-device]
+verify_jwt = false

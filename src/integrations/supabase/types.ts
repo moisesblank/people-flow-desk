@@ -3501,6 +3501,158 @@ export type Database = {
         }
         Relationships: []
       }
+      device_suspicious_events: {
+        Row: {
+          action_taken: string | null
+          country_code: string | null
+          created_at: string | null
+          description: string | null
+          device_trust_id: string | null
+          event_type: string
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          resolved: boolean | null
+          resolved_at: string | null
+          resolved_by: string | null
+          severity: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          action_taken?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          device_trust_id?: string | null
+          event_type: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          action_taken?: string | null
+          country_code?: string | null
+          created_at?: string | null
+          description?: string | null
+          device_trust_id?: string | null
+          event_type?: string
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          resolved?: boolean | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          severity?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "device_suspicious_events_device_trust_id_fkey"
+            columns: ["device_trust_id"]
+            isOneToOne: false
+            referencedRelation: "device_trust_scores"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      device_trust_scores: {
+        Row: {
+          blocked_at: string | null
+          blocked_reason: string | null
+          browser: string | null
+          created_at: string | null
+          device_hash: string
+          device_name: string | null
+          device_type: string | null
+          failed_logins: number | null
+          fingerprint_data: Json | null
+          first_seen_at: string | null
+          id: string
+          ip_history: Json | null
+          is_blocked: boolean | null
+          is_trusted: boolean | null
+          last_city: string | null
+          last_country: string | null
+          last_ip: string | null
+          last_login_at: string | null
+          last_seen_at: string | null
+          os: string | null
+          risk_score: number | null
+          successful_logins: number | null
+          suspicious_events: number | null
+          total_sessions: number | null
+          trust_score: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          browser?: string | null
+          created_at?: string | null
+          device_hash: string
+          device_name?: string | null
+          device_type?: string | null
+          failed_logins?: number | null
+          fingerprint_data?: Json | null
+          first_seen_at?: string | null
+          id?: string
+          ip_history?: Json | null
+          is_blocked?: boolean | null
+          is_trusted?: boolean | null
+          last_city?: string | null
+          last_country?: string | null
+          last_ip?: string | null
+          last_login_at?: string | null
+          last_seen_at?: string | null
+          os?: string | null
+          risk_score?: number | null
+          successful_logins?: number | null
+          suspicious_events?: number | null
+          total_sessions?: number | null
+          trust_score?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          blocked_at?: string | null
+          blocked_reason?: string | null
+          browser?: string | null
+          created_at?: string | null
+          device_hash?: string
+          device_name?: string | null
+          device_type?: string | null
+          failed_logins?: number | null
+          fingerprint_data?: Json | null
+          first_seen_at?: string | null
+          id?: string
+          ip_history?: Json | null
+          is_blocked?: boolean | null
+          is_trusted?: boolean | null
+          last_city?: string | null
+          last_country?: string | null
+          last_ip?: string | null
+          last_login_at?: string | null
+          last_seen_at?: string | null
+          os?: string | null
+          risk_score?: number | null
+          successful_logins?: number | null
+          suspicious_events?: number | null
+          total_sessions?: number | null
+          trust_score?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       dr_tests: {
         Row: {
           completed_at: string | null
@@ -13986,6 +14138,16 @@ export type Database = {
         }
         Returns: string
       }
+      calculate_device_risk_score: {
+        Args: {
+          p_country: string
+          p_device_hash: string
+          p_ip: string
+          p_user_agent: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
@@ -14909,6 +15071,21 @@ export type Database = {
         }
         Returns: undefined
       }
+      log_suspicious_device_event: {
+        Args: {
+          p_action_taken?: string
+          p_country?: string
+          p_description: string
+          p_device_hash: string
+          p_event_type: string
+          p_ip?: string
+          p_metadata?: Json
+          p_severity: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: string
+      }
       log_url_access: {
         Args: {
           p_allowed: boolean
@@ -14979,6 +15156,21 @@ export type Database = {
           p_version: string
         }
         Returns: string
+      }
+      register_device_trust: {
+        Args: {
+          p_browser?: string
+          p_city?: string
+          p_country?: string
+          p_device_hash: string
+          p_device_name?: string
+          p_device_type?: string
+          p_fingerprint?: Json
+          p_ip?: string
+          p_os?: string
+          p_user_id: string
+        }
+        Returns: Json
       }
       register_device_with_limit: {
         Args: {
