@@ -31,13 +31,18 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
   const watermarkText = useMemo(() => {
     const name = user?.email?.split("@")[0] || "ALUNO";
     const id = user?.id?.slice(0, 8) || "UNKNOWN";
+    
+    // CPF mascarado do aluno (***.***.XXX-XX) - últimos 6 dígitos visíveis
+    // Em produção virá do perfil do aluno, aqui exemplo para teste
+    const cpfExample = "***.***.789-01";
+    
     const timestamp = new Date().toLocaleString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       hour: "2-digit",
       minute: "2-digit",
     });
-    return `${name.toUpperCase()} • ${id} • ${timestamp}`;
+    return `${name.toUpperCase()} • CPF: ${cpfExample} • ${id} • ${timestamp}`;
   }, [user, tick]);
 
   // Owner bypass - no watermark for owner
