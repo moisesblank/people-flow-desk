@@ -3,6 +3,7 @@
 // SISTEMA DE SEGURANÇA PHD-LEVEL 2300
 // Preparado para 5000+ usuários simultâneos
 // Otimizado para celulares 3G
+// Rate Limits: Login=5, Signup=3, 2FA=5, Reset=3, Lockout=5
 // ============================================
 
 import { supabase } from '@/integrations/supabase/client';
@@ -534,7 +535,7 @@ export const SECURITY_CONFIG = {
   
   // Bloqueio progressivo
   LOCKOUT: {
-    MAX_ATTEMPTS: 10, // CORREÇÃO EMERGENCIAL: 10 tentativas
+    MAX_ATTEMPTS: 5, // 5 tentativas - padrão de segurança
     DURATION_MS: 900000, // 15 min
     PROGRESSIVE: true,
     MULTIPLIER: 2,

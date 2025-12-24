@@ -9,16 +9,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
 // Configurações de Rate Limiting por endpoint
-// Configurações de Rate Limiting por endpoint - CORREÇÃO EMERGENCIAL: 10 tentativas
 const RATE_LIMITS: Record<string, { limit: number; windowSeconds: number }> = {
-  'login': { limit: 10, windowSeconds: 300 },      // 10 tentativas por 5 min
-  'signup': { limit: 10, windowSeconds: 600 },     // 10 por 10 min
-  'password-reset': { limit: 10, windowSeconds: 3600 }, // 10 por hora
-  'send-email': { limit: 10, windowSeconds: 60 }, // 10 por minuto
-  '2fa': { limit: 10, windowSeconds: 300 },        // 10 por 5 min
-  'api-call': { limit: 100, windowSeconds: 60 },  // 100 por minuto
-  'webhook': { limit: 50, windowSeconds: 60 },    // 50 por minuto
-  'default': { limit: 30, windowSeconds: 60 },    // 30 por minuto
+  'login': { limit: 5, windowSeconds: 300 },       // 5 tentativas por 5 min
+  'signup': { limit: 3, windowSeconds: 600 },      // 3 por 10 min
+  'password-reset': { limit: 3, windowSeconds: 600 }, // 3 por 10 min
+  'send-email': { limit: 10, windowSeconds: 60 },  // 10 por minuto
+  '2fa': { limit: 5, windowSeconds: 300 },         // 5 por 5 min
+  'api-call': { limit: 100, windowSeconds: 60 },   // 100 por minuto
+  'webhook': { limit: 50, windowSeconds: 60 },     // 50 por minuto
+  'default': { limit: 30, windowSeconds: 60 },     // 30 por minuto
 };
 
 // Cache em memória para rate limiting rápido

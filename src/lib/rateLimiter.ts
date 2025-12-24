@@ -55,13 +55,13 @@ class RateLimiter {
   }
 }
 
-// Instâncias para diferentes endpoints - CORREÇÃO EMERGENCIAL: 10 tentativas
+// Instâncias para diferentes endpoints
 export const apiRateLimiter = new RateLimiter(100, 60000); // 100 req/min
 export const chatRateLimiter = new RateLimiter(30, 60000); // 30 msg/min
 export const reactionRateLimiter = new RateLimiter(60, 60000); // 60 reactions/min
 export const searchRateLimiter = new RateLimiter(20, 60000); // 20 buscas/min
 export const uploadRateLimiter = new RateLimiter(10, 60000); // 10 uploads/min
-export const loginRateLimiter = new RateLimiter(10, 300000); // 10 tentativas/5min
+export const loginRateLimiter = new RateLimiter(5, 300000); // 5 tentativas/5min
 
 // Hook para uso em componentes
 export function useRateLimiter(limiter: RateLimiter, key: string) {
