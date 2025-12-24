@@ -40,13 +40,28 @@ const AUTHORIZED_DOMAINS = [
   '127.0.0.1',
 ];
 
-// CORS headers
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-device-fingerprint, x-request-origin, x-sanctum-version, x-user-role",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Content-Type": "application/json",
-};
+// CORS - Usar allowlist dinâmica
+import { getCorsHeaders, isOriginAllowed, handleCorsOptions } from "../_shared/corsConfig.ts";
+
+// Rate limit em memória
+const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = { limit: 30, windowMs: 60000 }; // 30 req/min por usuário
+
+function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const entry = rateLimitCache.get(userId);
+  
+  if (!entry || entry.resetAt < now) {
+    rateLimitCache.set(userId, { count: 1, resetAt: now + RATE_LIMIT.windowMs });
+    return { allowed: true };
+  }
+  
+  entry.count++;
+  if (entry.count > RATE_LIMIT.limit) {
+    return { allowed: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
+  }
+  return { allowed: true };
+}
 
 // ============================================
 // TIPOS
@@ -159,15 +174,17 @@ function generateYouTubeEmbedUrl(videoId: string): string {
 // HANDLER PRINCIPAL
 // ============================================
 serve(async (req: Request) => {
-  // CORS preflight
+  // CORS seguro com allowlist
   if (req.method === "OPTIONS") {
-    return new Response(null, { status: 204, headers: CORS_HEADERS });
+    return handleCorsOptions(req);
   }
+  
+  const corsHeaders = getCorsHeaders(req);
 
   if (req.method !== "POST") {
     return new Response(
       JSON.stringify({ success: false, error: "Método não permitido" }),
-      { status: 405, headers: CORS_HEADERS }
+      { status: 405, headers: corsHeaders }
     );
   }
 
@@ -186,7 +203,7 @@ serve(async (req: Request) => {
           error: "Domínio não autorizado",
           code: "DOMAIN_BLOCKED",
         }),
-        { status: 403, headers: CORS_HEADERS }
+        { status: 403, headers: corsHeaders }
       );
     }
 
@@ -201,7 +218,7 @@ serve(async (req: Request) => {
           error: "Token de autenticação ausente",
           code: "AUTH_MISSING",
         }),
-        { status: 401, headers: CORS_HEADERS }
+        { status: 401, headers: corsHeaders }
       );
     }
 
@@ -220,7 +237,7 @@ serve(async (req: Request) => {
           error: "Token inválido ou expirado",
           code: "AUTH_INVALID",
         }),
-        { status: 401, headers: CORS_HEADERS }
+        { status: 401, headers: corsHeaders }
       );
     }
 
@@ -248,7 +265,7 @@ serve(async (req: Request) => {
           error: "provider_video_id é obrigatório",
           code: "MISSING_VIDEO_ID",
         }),
-        { status: 400, headers: CORS_HEADERS }
+        { status: 400, headers: corsHeaders }
       );
     }
 
@@ -330,7 +347,7 @@ serve(async (req: Request) => {
             error: "Você não tem acesso a este conteúdo",
             code: "NO_ENTITLEMENT",
           }),
-          { status: 403, headers: CORS_HEADERS }
+          { status: 403, headers: corsHeaders }
         );
       }
     }
@@ -396,7 +413,7 @@ serve(async (req: Request) => {
           error: "Falha ao criar sessão de vídeo",
           code: "SESSION_ERROR",
         }),
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -421,7 +438,7 @@ serve(async (req: Request) => {
           error: "Falha ao gerar URL do vídeo",
           code: "URL_ERROR",
         }),
-        { status: 500, headers: CORS_HEADERS }
+        { status: 500, headers: corsHeaders }
       );
     }
 
@@ -472,7 +489,7 @@ serve(async (req: Request) => {
         },
         latencyMs: Date.now() - startTime,
       }),
-      { status: 200, headers: CORS_HEADERS }
+      { status: 200, headers: corsHeaders }
     );
 
   } catch (error) {
@@ -485,7 +502,7 @@ serve(async (req: Request) => {
         code: "INTERNAL_ERROR",
         details: error instanceof Error ? error.message : "Unknown",
       }),
-      { status: 500, headers: CORS_HEADERS }
+      { status: 500, headers: corsHeaders }
     );
   }
 });
