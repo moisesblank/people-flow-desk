@@ -8480,6 +8480,7 @@ export type Database = {
           severity: string
           source: string
           user_agent: string | null
+          user_id: string | null
         }
         Insert: {
           created_at?: string
@@ -8494,6 +8495,7 @@ export type Database = {
           severity?: string
           source: string
           user_agent?: string | null
+          user_id?: string | null
         }
         Update: {
           created_at?: string
@@ -8508,6 +8510,7 @@ export type Database = {
           severity?: string
           source?: string
           user_agent?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
