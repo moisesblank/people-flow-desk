@@ -12,6 +12,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 // CORS HEADERS
 // ============================================
 
+import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
+
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hotmart-hottok, x-stripe-signature, x-webhook-signature, x-correlation-id',
