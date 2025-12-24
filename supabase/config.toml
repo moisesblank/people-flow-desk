@@ -250,3 +250,11 @@ verify_jwt = false
 
 [functions.validate-device]
 verify_jwt = false
+
+# ============================================
+# 🚨 NOTIFY SUSPICIOUS DEVICE - Alertas Admin
+# LEI VI - IMUNIDADE SISTÊMICA
+# ============================================
+
+[functions.notify-suspicious-device]
+verify_jwt = false
