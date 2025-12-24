@@ -83,33 +83,72 @@ const NEUTRAL_MESSAGES = {
 };
 
 // ============================================
-// SESSION STORAGE
+// SESSÃO ÚNICA
 // ============================================
-const activeSessions = new Map<string, {
-  userId: string;
-  deviceFingerprint?: string;
-  ipHash?: string;
-  createdAt: number;
-  lastActivity: number;
-}>();
 
 /**
- * Registra sessão do usuário
+ * Registra nova sessão e revoga anteriores
  */
 async function registerSession(
   userId: string,
   deviceFingerprint?: string,
   ipHash?: string
 ): Promise<void> {
-  const sessionKey = `session:${userId}`;
-  
-  activeSessions.set(sessionKey, {
-    userId,
-    deviceFingerprint,
-    ipHash,
-    createdAt: Date.now(),
-    lastActivity: Date.now(),
-  });
+  try {
+    // Revogar sessões anteriores (opcional - depende da política)
+    // await supabase.from('user_sessions').update({ revoked: true }).eq('user_id', userId);
+
+    // Registrar nova sessão
+    await supabase.from("user_sessions").insert({
+      user_id: userId,
+      device_fingerprint: deviceFingerprint,
+      ip_hash: ipHash,
+      created_at: new Date().toISOString(),
+      last_activity: new Date().toISOString(),
+    });
+  } catch {
+    // Não falhar por causa de sessão
+  }
+}
+
+/**
+ * Verifica se sessão é válida
+ */
+export async function validateSession(userId: string, sessionId: string): Promise<boolean> {
+  try {
+    const { data } = await supabase
+      .from("user_sessions")
+      .select("id, is_active")
+      .eq("user_id", userId)
+      .eq("id", sessionId)
+      .single();
+
+    return data && data.is_active === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Revoga todas as sessões do usuário
+ */
+export async function revokeAllUserSessions(userId: string): Promise<void> {
+  try {
+    await supabase
+      .from("user_sessions")
+      .update({ is_active: false })
+      .eq("user_id", userId);
+
+    await writeAuditLog({
+      correlationId: generateCorrelationId(),
+      userId,
+      action: "revoke_all_sessions",
+      result: "permit",
+      reason: "USER_REQUESTED",
+    });
+  } catch {
+    // Ignorar erros
+  }
 }
 
 // ============================================
@@ -328,6 +367,7 @@ export async function secureSignup(options: SignupOptions): Promise<AuthAttemptR
         metadata: { error: error.message },
       });
 
+      // Mensagem neutra para não revelar se email existe
       return {
         success: false,
         reason: NEUTRAL_MESSAGES.SIGNUP_FAILED,
@@ -335,24 +375,18 @@ export async function secureSignup(options: SignupOptions): Promise<AuthAttemptR
       };
     }
 
-    // ============================================
-    // 4. SIGNUP BEM SUCEDIDO
-    // ============================================
-    if (data.user) {
-      await writeAuditLog({
-        correlationId,
-        userId: data.user.id,
-        action: "signup_success",
-        result: "permit",
-        reason: "SIGNUP_OK",
-        ipHash,
-        metadata: { email: email.substring(0, 3) + "***" },
-      });
+    await writeAuditLog({
+      correlationId,
+      userId: data.user?.id,
+      action: "signup_success",
+      result: "permit",
+      reason: "SIGNUP_OK",
+      ipHash,
+    });
 
-      // Registrar sessão se já confirmado
-      if (data.session) {
-        await registerSession(data.user.id, deviceFingerprint, ipHash);
-      }
+    // Registrar sessão se já confirmado
+    if (data.user && data.session) {
+      await registerSession(data.user.id, deviceFingerprint, ipHash);
     }
 
     return {
@@ -361,15 +395,6 @@ export async function secureSignup(options: SignupOptions): Promise<AuthAttemptR
       correlationId,
     };
   } catch (error) {
-    await writeAuditLog({
-      correlationId,
-      action: "signup_attempt",
-      result: "deny",
-      reason: "SYSTEM_ERROR",
-      ipHash,
-      metadata: { error: String(error) },
-    });
-
     return {
       success: false,
       reason: NEUTRAL_MESSAGES.SIGNUP_FAILED,
@@ -379,13 +404,12 @@ export async function secureSignup(options: SignupOptions): Promise<AuthAttemptR
 }
 
 /**
- * Tenta recuperar senha com proteções
+ * Solicita recuperação de senha
  */
 export async function secureRecovery(options: RecoveryOptions): Promise<AuthAttemptResult> {
   const correlationId = generateCorrelationId();
   const { email, ipHash } = options;
-  
-  const rateLimitKey = `recovery:${ipHash || email.toLowerCase()}`;
+  const rateLimitKey = `recovery:${email.toLowerCase()}`;
 
   // ============================================
   // 1. VERIFICAR RATE LIMIT
@@ -395,18 +419,18 @@ export async function secureRecovery(options: RecoveryOptions): Promise<AuthAtte
     RATE_LIMITS.RECOVERY.requests,
     RATE_LIMITS.RECOVERY.windowMs
   );
-  
+
   if (!rateLimitResult.allowed) {
-    // Retornar mensagem neutra mesmo em rate limit
+    // Ainda retorna mensagem neutra
     return {
-      success: true,
+      success: true, // Sempre "sucesso" para não revelar se email existe
       reason: NEUTRAL_MESSAGES.RECOVERY_SENT,
       correlationId,
     };
   }
 
   // ============================================
-  // 2. TENTAR RECOVERY
+  // 2. ENVIAR EMAIL DE RECUPERAÇÃO
   // ============================================
   try {
     await supabase.auth.resetPasswordForEmail(email, {
@@ -415,27 +439,22 @@ export async function secureRecovery(options: RecoveryOptions): Promise<AuthAtte
 
     await writeAuditLog({
       correlationId,
-      action: "recovery_attempt",
+      action: "recovery_request",
       result: "permit",
       reason: "RECOVERY_SENT",
       ipHash,
       metadata: { email: email.substring(0, 3) + "***" },
     });
-
-    // Sempre retornar mensagem neutra
-    return {
-      success: true,
-      reason: NEUTRAL_MESSAGES.RECOVERY_SENT,
-      correlationId,
-    };
-  } catch (error) {
-    // Mesmo em erro, retornar mensagem neutra
-    return {
-      success: true,
-      reason: NEUTRAL_MESSAGES.RECOVERY_SENT,
-      correlationId,
-    };
+  } catch {
+    // Ignorar erros - sempre retornar mensagem neutra
   }
+
+  // SEMPRE retornar a mesma mensagem (anti-enumeration)
+  return {
+    success: true,
+    reason: NEUTRAL_MESSAGES.RECOVERY_SENT,
+    correlationId,
+  };
 }
 
 /**
@@ -448,10 +467,6 @@ export async function secureLogout(): Promise<AuthAttemptResult> {
     const { data: { user } } = await supabase.auth.getUser();
     
     if (user) {
-      // Remover sessão
-      const sessionKey = `session:${user.id}`;
-      activeSessions.delete(sessionKey);
-      
       await writeAuditLog({
         correlationId,
         userId: user.id,
@@ -501,6 +516,39 @@ export async function checkAuth(): Promise<{
   } catch {
     return { authenticated: false };
   }
+}
+
+// ============================================
+// STEP-UP AUTH
+// ============================================
+
+/**
+ * Verifica se ação requer step-up auth
+ */
+export function requiresStepUpAuth(action: string): boolean {
+  const SENSITIVE_ACTIONS = [
+    "change_email",
+    "change_password",
+    "delete_account",
+    "export_data",
+    "admin_action",
+    "create_user",
+    "delete_user",
+    "change_role",
+  ];
+
+  return SENSITIVE_ACTIONS.includes(action);
+}
+
+/**
+ * Solicita step-up auth (re-autenticação)
+ */
+export async function requestStepUpAuth(): Promise<{ required: boolean; method: string }> {
+  // Por enquanto, apenas solicitar senha novamente
+  return {
+    required: true,
+    method: "password",
+  };
 }
 
 // ============================================

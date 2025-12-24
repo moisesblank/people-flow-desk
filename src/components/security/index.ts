@@ -361,6 +361,14 @@ export {
   secureLogout,
   checkAuth,
   
+  // Sessões
+  validateSession,
+  revokeAllUserSessions,
+  
+  // Step-up auth
+  requiresStepUpAuth,
+  requestStepUpAuth,
+  
   // Configuração
   AUTH_GUARD_CONFIG,
   
