@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
+// Fallback CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -25,9 +27,12 @@ interface YouTubeLiveRequest {
 const YOUTUBE_API_BASE = 'https://www.googleapis.com/youtube/v3';
 
 serve(async (req) => {
+  // CORS seguro via allowlist
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+  
+  const secureHeaders = getCorsHeaders(req);
 
   try {
     const YOUTUBE_API_KEY = Deno.env.get("YOUTUBE_API_KEY");

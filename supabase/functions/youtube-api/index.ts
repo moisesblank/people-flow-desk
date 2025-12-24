@@ -1,5 +1,7 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
+// Fallback CORS headers
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
@@ -17,9 +19,12 @@ interface YouTubeRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // CORS seguro via allowlist
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+  
+  const secureHeaders = getCorsHeaders(req);
 
   try {
     if (!YOUTUBE_API_KEY) {
