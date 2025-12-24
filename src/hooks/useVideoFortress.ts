@@ -511,8 +511,8 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
       window.removeEventListener('keyup', handleKeyup);
     });
 
-    // 3. Context Menu Blocking
-    const handleContextMenu = (e: MouseEvent) => {
+    // 3. Context Menu Blocking (Desktop + Mobile)
+    const handleContextMenu = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
       reportViolation('context_menu', 1);
     };
@@ -520,7 +520,7 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
     document.addEventListener('contextmenu', handleContextMenu);
     cleanupFns.push(() => document.removeEventListener('contextmenu', handleContextMenu));
 
-    // 4. Visibility Change (Tab switching)
+    // 4. Visibility Change (Tab switching) - Desktop + Mobile
     const handleVisibilityChange = () => {
       if (document.hidden) {
         reportViolation('visibility_abuse', 1, { reason: 'tab_hidden' });
@@ -547,6 +547,75 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
       document.removeEventListener('copy', handleCopy);
       document.removeEventListener('dragstart', handleDragStart);
     });
+
+    // ============================================
+    // 📱 PROTEÇÕES ESPECÍFICAS PARA MOBILE/TOUCH
+    // ============================================
+    
+    // 6.a Long-press blocking (iOS/Android)
+    let longPressTimer: NodeJS.Timeout | null = null;
+    const handleTouchStart = (e: TouchEvent) => {
+      // Detectar multi-touch (possível screenshot gesture)
+      if (e.touches.length >= 3) {
+        e.preventDefault();
+        reportViolation('screenshot_attempt', 4, { method: 'multi_touch_3fingers' });
+      }
+      
+      // Long-press detection
+      longPressTimer = setTimeout(() => {
+        reportViolation('context_menu', 1, { method: 'long_press_touch' });
+      }, 400);
+    };
+    
+    const handleTouchEnd = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    };
+    
+    const handleTouchMove = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    };
+    
+    document.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false });
+    document.addEventListener('touchend', handleTouchEnd, { capture: true });
+    document.addEventListener('touchmove', handleTouchMove, { capture: true });
+    cleanupFns.push(() => {
+      document.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      document.removeEventListener('touchend', handleTouchEnd, { capture: true });
+      document.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      if (longPressTimer) clearTimeout(longPressTimer);
+    });
+    
+    // 6.b iOS Gesture blocking (Safari)
+    const handleGesture = (e: Event) => {
+      e.preventDefault();
+      reportViolation('screenshot_attempt', 3, { method: 'ios_gesture' });
+    };
+    
+    document.addEventListener('gesturestart', handleGesture, { capture: true });
+    document.addEventListener('gesturechange', handleGesture, { capture: true });
+    cleanupFns.push(() => {
+      document.removeEventListener('gesturestart', handleGesture, { capture: true });
+      document.removeEventListener('gesturechange', handleGesture, { capture: true });
+    });
+    
+    // 6.c iOS Screenshot detection (blur event)
+    const handleBlur = () => {
+      // iOS dispara blur muito rapidamente quando screenshot é tirado
+      setTimeout(() => {
+        if (document.hidden || !document.hasFocus()) {
+          reportViolation('screenshot_attempt', 2, { method: 'ios_blur_detection' });
+        }
+      }, 50);
+    };
+    
+    window.addEventListener('blur', handleBlur);
+    cleanupFns.push(() => window.removeEventListener('blur', handleBlur));
 
     // 6. Extension Detection (Chrome/Firefox)
     if (enableAntiExtensions) {

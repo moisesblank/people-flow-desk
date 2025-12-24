@@ -395,32 +395,71 @@ export function useSanctumCore(ctx: SanctumContext) {
   }, [isOwner, bump, reportViolation, punish]);
 
   // ============================================
-  // 📱 HANDLERS ESPECÍFICOS PARA TOUCH/MOBILE
+  // 📱 HANDLERS ULTRA ESPECÍFICOS PARA TOUCH/MOBILE/TABLET
+  // COMPATÍVEL: iOS Safari, Android Chrome, Samsung Browser, Firefox Mobile
   // ============================================
 
   // Long-press detection (iOS/Android context menu via touch)
   const longPressTimer = useRef<NodeJS.Timeout | null>(null);
   const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+  const touchCount = useRef<number>(0);
+  const multiTouchStart = useRef<number>(0);
+
+  // Detectar tipo de dispositivo
+  const isTouchDevice = useCallback(() => {
+    return 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+  }, []);
+
+  const isMobileDevice = useCallback(() => {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+  }, []);
+
+  const isIOSDevice = useCallback(() => {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+           (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  }, []);
+
+  const isAndroidDevice = useCallback(() => {
+    return /Android/i.test(navigator.userAgent);
+  }, []);
 
   const onTouchStart = useCallback((e: TouchEvent) => {
     if (isOwner) return;
 
-    // Guardar posição inicial
-    touchStartPos.current = {
-      x: e.touches[0].clientX,
-      y: e.touches[0].clientY,
-    };
-
-    // Timer para detectar long-press (500ms)
-    longPressTimer.current = setTimeout(() => {
-      const count = bump("contextmenu_blocked");
+    // Contar toques simultâneos
+    touchCount.current = e.touches.length;
+    
+    // Detectar multi-touch (possível screenshot gesture)
+    if (e.touches.length >= 3) {
+      multiTouchStart.current = Date.now();
+      e.preventDefault();
+      const count = bump("printscreen_attempt");
       void reportViolation({
-        type: "contextmenu_blocked",
-        severity: THREAT_SEVERITY_MAP.contextmenu_blocked,
-        meta: { count, device: "touch", action: "long_press" },
+        type: "printscreen_attempt",
+        severity: THREAT_SEVERITY_MAP.printscreen_attempt + 10,
+        meta: { count, device: "touch", gesture: "multi_touch_3fingers", touchCount: e.touches.length },
       });
-    }, 500);
-  }, [isOwner, bump, reportViolation]);
+    }
+
+    // Guardar posição inicial
+    if (e.touches.length === 1) {
+      touchStartPos.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+      };
+
+      // Timer para detectar long-press (400ms para iOS, 500ms para Android)
+      const delay = isIOSDevice() ? 400 : 500;
+      longPressTimer.current = setTimeout(() => {
+        const count = bump("contextmenu_blocked");
+        void reportViolation({
+          type: "contextmenu_blocked",
+          severity: THREAT_SEVERITY_MAP.contextmenu_blocked,
+          meta: { count, device: "touch", action: "long_press", os: isIOSDevice() ? 'iOS' : 'Android' },
+        });
+      }, delay);
+    }
+  }, [isOwner, bump, reportViolation, isIOSDevice]);
 
   const onTouchEnd = useCallback(() => {
     // Cancelar timer de long-press
@@ -429,7 +468,17 @@ export function useSanctumCore(ctx: SanctumContext) {
       longPressTimer.current = null;
     }
     touchStartPos.current = null;
-  }, []);
+    touchCount.current = 0;
+    
+    // Verificar se multi-touch foi muito rápido (possível screenshot)
+    if (multiTouchStart.current > 0) {
+      const duration = Date.now() - multiTouchStart.current;
+      if (duration < 300) {
+        bump("printscreen_attempt");
+      }
+      multiTouchStart.current = 0;
+    }
+  }, [bump]);
 
   const onTouchMove = useCallback((e: TouchEvent) => {
     // Cancelar long-press se mover muito
@@ -441,20 +490,74 @@ export function useSanctumCore(ctx: SanctumContext) {
         longPressTimer.current = null;
       }
     }
+    
+    // Detectar swipe rápido com 3+ dedos (screenshot gesture iOS)
+    if (e.touches.length >= 3 && touchCount.current >= 3) {
+      e.preventDefault();
+    }
   }, []);
 
-  // Bloquear gestos de screenshot em iOS (3 dedos swipe)
+  // Bloquear gestos de screenshot em iOS (3 dedos swipe, pinch-zoom agressivo)
   const onGestureStart = useCallback((e: Event) => {
     if (isOwner) return;
-    // Bloquear gestos de multi-touch que podem capturar tela
     e.preventDefault();
+    e.stopPropagation();
     const count = bump("printscreen_attempt");
     void reportViolation({
       type: "printscreen_attempt",
       severity: THREAT_SEVERITY_MAP.printscreen_attempt,
-      meta: { count, device: "touch", gesture: "multi_touch" },
+      meta: { count, device: "touch", gesture: "ios_gesture_start" },
     });
   }, [isOwner, bump, reportViolation]);
+
+  const onGestureEnd = useCallback((e: Event) => {
+    if (isOwner) return;
+    e.preventDefault();
+  }, [isOwner]);
+
+  // Bloquear zoom agressivo (possível tentativa de ver detalhes para captura)
+  const onTouchZoom = useCallback((e: TouchEvent) => {
+    if (isOwner) return;
+    if (e.touches.length >= 2) {
+      // Detectar pinch-to-zoom
+      const touch1 = e.touches[0];
+      const touch2 = e.touches[1];
+      const distance = Math.hypot(touch1.clientX - touch2.clientX, touch1.clientY - touch2.clientY);
+      
+      // Se distância muito grande, pode ser tentativa de zoom extremo
+      if (distance > 400) {
+        bump("selection_attempt_blocked");
+      }
+    }
+  }, [isOwner, bump]);
+
+  // Bloquear iOS Screenshot Shortcut (volume + power button - detectável via blur)
+  const onIOSScreenshotDetect = useCallback(() => {
+    if (isOwner) return;
+    // iOS dispara blur rapidamente quando screenshot é tirado
+    const blurTimeout = setTimeout(() => {
+      if (document.hidden || !document.hasFocus()) {
+        const count = bump("printscreen_attempt");
+        void reportViolation({
+          type: "printscreen_attempt",
+          severity: THREAT_SEVERITY_MAP.printscreen_attempt + 5,
+          meta: { count, device: "iOS", method: "button_combo_suspected" },
+        });
+      }
+    }, 100);
+    
+    return () => clearTimeout(blurTimeout);
+  }, [isOwner, bump, reportViolation]);
+
+  // Handler para beforeprint em mobile (alguns browsers suportam)
+  const onBeforePrint = useCallback(() => {
+    if (isOwner) return;
+    void reportViolation({
+      type: "print_shortcut_attempt",
+      severity: THREAT_SEVERITY_MAP.print_shortcut_attempt + 20,
+      meta: { device: isMobileDevice() ? "mobile" : "desktop", method: "beforeprint_event" },
+    });
+  }, [isOwner, reportViolation, isMobileDevice]);
 
   // ============================================
   // HEURÍSTICAS DE DETECÇÃO
@@ -587,16 +690,27 @@ export function useSanctumCore(ctx: SanctumContext) {
     document.addEventListener("dragstart", onDragStart, { capture: true });
     document.addEventListener("selectstart", onSelectStart, { capture: true });
     document.addEventListener("visibilitychange", onVisibilityChange);
+    
+    // Print events (desktop + alguns mobile)
+    window.addEventListener("beforeprint", onBeforePrint);
+    window.addEventListener("afterprint", onBeforePrint);
 
-    // 📱 Event listeners - TOUCH/MOBILE
-    document.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
+    // 📱 Event listeners - TOUCH/MOBILE (iOS, Android, Tablets)
+    document.addEventListener("touchstart", onTouchStart, { capture: true, passive: false });
     document.addEventListener("touchend", onTouchEnd, { capture: true, passive: true });
     document.addEventListener("touchcancel", onTouchEnd, { capture: true, passive: true });
-    document.addEventListener("touchmove", onTouchMove, { capture: true, passive: true });
+    document.addEventListener("touchmove", onTouchMove, { capture: true, passive: false });
     
-    // iOS gesture events (Safari)
-    document.addEventListener("gesturestart", onGestureStart, { capture: true });
-    document.addEventListener("gesturechange", onGestureStart, { capture: true });
+    // iOS gesture events (Safari + WebKit)
+    document.addEventListener("gesturestart", onGestureStart, { capture: true, passive: false });
+    document.addEventListener("gesturechange", onGestureStart, { capture: true, passive: false });
+    document.addEventListener("gestureend", onGestureEnd, { capture: true, passive: false });
+    
+    // Blur detection para iOS screenshot (volume + power)
+    window.addEventListener("blur", onIOSScreenshotDetect);
+    
+    // Zoom detection
+    document.addEventListener("touchmove", onTouchZoom, { capture: true, passive: true });
 
     // MutationObserver para tampering
     const mutationObserver = new MutationObserver((mutations) => {
@@ -660,14 +774,23 @@ export function useSanctumCore(ctx: SanctumContext) {
       document.removeEventListener("dragstart", onDragStart, { capture: true });
       document.removeEventListener("selectstart", onSelectStart, { capture: true });
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      window.removeEventListener("beforeprint", onBeforePrint);
+      window.removeEventListener("afterprint", onBeforePrint);
       
-      // Touch/Mobile
+      // Touch/Mobile (iOS, Android, Tablets)
       document.removeEventListener("touchstart", onTouchStart, { capture: true });
       document.removeEventListener("touchend", onTouchEnd, { capture: true });
       document.removeEventListener("touchcancel", onTouchEnd, { capture: true });
       document.removeEventListener("touchmove", onTouchMove, { capture: true });
+      document.removeEventListener("touchmove", onTouchZoom, { capture: true });
+      
+      // iOS gestures
       document.removeEventListener("gesturestart", onGestureStart, { capture: true });
       document.removeEventListener("gesturechange", onGestureStart, { capture: true });
+      document.removeEventListener("gestureend", onGestureEnd, { capture: true });
+      
+      // iOS screenshot detection
+      window.removeEventListener("blur", onIOSScreenshotDetect);
       
       // Timers
       if (longPressTimer.current) {
@@ -687,10 +810,14 @@ export function useSanctumCore(ctx: SanctumContext) {
     onDragStart,
     onSelectStart,
     onVisibilityChange,
+    onBeforePrint,
     onTouchStart,
     onTouchEnd,
     onTouchMove,
+    onTouchZoom,
     onGestureStart,
+    onGestureEnd,
+    onIOSScreenshotDetect,
     checkAutomation,
     checkDevTools,
     checkConsoleAccess,
