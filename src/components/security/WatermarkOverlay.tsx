@@ -82,20 +82,47 @@ export const WatermarkOverlay = memo(function WatermarkOverlay({
   return (
     <div
       className={`sanctum-watermark-container ena-watermark ${className}`}
-      style={{ opacity }}
+      style={{ 
+        opacity,
+        // Proteções para todos os dispositivos
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+        WebkitTapHighlightColor: "transparent",
+        touchAction: "none",
+        pointerEvents: "none",
+      } as React.CSSProperties}
       aria-hidden="true"
+      data-sanctum-protected="true"
     >
-      <div className="ena-watermark-inner">
+      <div 
+        className="ena-watermark-inner"
+        style={{
+          position: "absolute",
+          inset: 0,
+          overflow: "hidden",
+        }}
+      >
         {watermarkGrid}
       </div>
       
-      {/* Central diagonal watermark */}
-      <div className="sanctum-watermark-overlay">
+      {/* Central diagonal watermark - responsivo */}
+      <div 
+        className="sanctum-watermark-overlay"
+        style={{
+          fontSize: "clamp(12px, 2.5vw, 24px)",
+        }}
+      >
         {watermarkText}
       </div>
       
-      {/* Corner watermark */}
-      <div className="sanctum-watermark-corner">
+      {/* Corner watermark - oculto em mobile pequeno */}
+      <div 
+        className="sanctum-watermark-corner hidden sm:block"
+        style={{
+          fontSize: "clamp(8px, 1vw, 12px)",
+        }}
+      >
         {user?.id?.slice(0, 8) || "---"}
       </div>
     </div>

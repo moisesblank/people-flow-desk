@@ -395,6 +395,68 @@ export function useSanctumCore(ctx: SanctumContext) {
   }, [isOwner, bump, reportViolation, punish]);
 
   // ============================================
+  // 📱 HANDLERS ESPECÍFICOS PARA TOUCH/MOBILE
+  // ============================================
+
+  // Long-press detection (iOS/Android context menu via touch)
+  const longPressTimer = useRef<NodeJS.Timeout | null>(null);
+  const touchStartPos = useRef<{ x: number; y: number } | null>(null);
+
+  const onTouchStart = useCallback((e: TouchEvent) => {
+    if (isOwner) return;
+
+    // Guardar posição inicial
+    touchStartPos.current = {
+      x: e.touches[0].clientX,
+      y: e.touches[0].clientY,
+    };
+
+    // Timer para detectar long-press (500ms)
+    longPressTimer.current = setTimeout(() => {
+      const count = bump("contextmenu_blocked");
+      void reportViolation({
+        type: "contextmenu_blocked",
+        severity: THREAT_SEVERITY_MAP.contextmenu_blocked,
+        meta: { count, device: "touch", action: "long_press" },
+      });
+    }, 500);
+  }, [isOwner, bump, reportViolation]);
+
+  const onTouchEnd = useCallback(() => {
+    // Cancelar timer de long-press
+    if (longPressTimer.current) {
+      clearTimeout(longPressTimer.current);
+      longPressTimer.current = null;
+    }
+    touchStartPos.current = null;
+  }, []);
+
+  const onTouchMove = useCallback((e: TouchEvent) => {
+    // Cancelar long-press se mover muito
+    if (longPressTimer.current && touchStartPos.current) {
+      const dx = Math.abs(e.touches[0].clientX - touchStartPos.current.x);
+      const dy = Math.abs(e.touches[0].clientY - touchStartPos.current.y);
+      if (dx > 10 || dy > 10) {
+        clearTimeout(longPressTimer.current);
+        longPressTimer.current = null;
+      }
+    }
+  }, []);
+
+  // Bloquear gestos de screenshot em iOS (3 dedos swipe)
+  const onGestureStart = useCallback((e: Event) => {
+    if (isOwner) return;
+    // Bloquear gestos de multi-touch que podem capturar tela
+    e.preventDefault();
+    const count = bump("printscreen_attempt");
+    void reportViolation({
+      type: "printscreen_attempt",
+      severity: THREAT_SEVERITY_MAP.printscreen_attempt,
+      meta: { count, device: "touch", gesture: "multi_touch" },
+    });
+  }, [isOwner, bump, reportViolation]);
+
+  // ============================================
   // HEURÍSTICAS DE DETECÇÃO
   // ============================================
 
@@ -517,7 +579,7 @@ export function useSanctumCore(ctx: SanctumContext) {
     // Verificar automação imediatamente
     checkAutomation();
 
-    // Event listeners
+    // Event listeners - Desktop
     window.addEventListener("keydown", onKeyDown, { capture: true, passive: false });
     document.addEventListener("contextmenu", onContextMenu, { capture: true });
     document.addEventListener("copy", onCopy, { capture: true });
@@ -525,6 +587,16 @@ export function useSanctumCore(ctx: SanctumContext) {
     document.addEventListener("dragstart", onDragStart, { capture: true });
     document.addEventListener("selectstart", onSelectStart, { capture: true });
     document.addEventListener("visibilitychange", onVisibilityChange);
+
+    // 📱 Event listeners - TOUCH/MOBILE
+    document.addEventListener("touchstart", onTouchStart, { capture: true, passive: true });
+    document.addEventListener("touchend", onTouchEnd, { capture: true, passive: true });
+    document.addEventListener("touchcancel", onTouchEnd, { capture: true, passive: true });
+    document.addEventListener("touchmove", onTouchMove, { capture: true, passive: true });
+    
+    // iOS gesture events (Safari)
+    document.addEventListener("gesturestart", onGestureStart, { capture: true });
+    document.addEventListener("gesturechange", onGestureStart, { capture: true });
 
     // MutationObserver para tampering
     const mutationObserver = new MutationObserver((mutations) => {
@@ -580,6 +652,7 @@ export function useSanctumCore(ctx: SanctumContext) {
 
     // Cleanup
     return () => {
+      // Desktop
       window.removeEventListener("keydown", onKeyDown, { capture: true });
       document.removeEventListener("contextmenu", onContextMenu, { capture: true });
       document.removeEventListener("copy", onCopy, { capture: true });
@@ -587,6 +660,20 @@ export function useSanctumCore(ctx: SanctumContext) {
       document.removeEventListener("dragstart", onDragStart, { capture: true });
       document.removeEventListener("selectstart", onSelectStart, { capture: true });
       document.removeEventListener("visibilitychange", onVisibilityChange);
+      
+      // Touch/Mobile
+      document.removeEventListener("touchstart", onTouchStart, { capture: true });
+      document.removeEventListener("touchend", onTouchEnd, { capture: true });
+      document.removeEventListener("touchcancel", onTouchEnd, { capture: true });
+      document.removeEventListener("touchmove", onTouchMove, { capture: true });
+      document.removeEventListener("gesturestart", onGestureStart, { capture: true });
+      document.removeEventListener("gesturechange", onGestureStart, { capture: true });
+      
+      // Timers
+      if (longPressTimer.current) {
+        clearTimeout(longPressTimer.current);
+      }
+      
       mutationObserver.disconnect();
       clearInterval(devtoolsInterval);
       clearInterval(consoleInterval);
@@ -600,6 +687,10 @@ export function useSanctumCore(ctx: SanctumContext) {
     onDragStart,
     onSelectStart,
     onVisibilityChange,
+    onTouchStart,
+    onTouchEnd,
+    onTouchMove,
+    onGestureStart,
     checkAutomation,
     checkDevTools,
     checkConsoleAccess,

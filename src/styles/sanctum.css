@@ -322,6 +322,84 @@
 }
 
 /* ============================================
+ * 📱 PROTEÇÕES ESPECÍFICAS PARA MOBILE/TOUCH
+ * ============================================ */
+ 
+/* Bloquear long-press menu (iOS Safari/Android Chrome) */
+.sanctum-protected-surface,
+.sanctum-protected-surface *,
+[data-sanctum-protected],
+[data-sanctum-protected] * {
+  -webkit-touch-callout: none !important;
+  -webkit-user-select: none !important;
+  -webkit-tap-highlight-color: transparent !important;
+  -webkit-text-size-adjust: none !important;
+  touch-action: manipulation !important;
+}
+
+/* Bloquear gestos de zoom/pinch em áreas protegidas */
+.sanctum-no-zoom {
+  touch-action: pan-x pan-y !important;
+}
+
+/* Bloquear menu de contexto em imagens (long-press) */
+.sanctum-protected-surface img,
+.sanctum-protected-surface video,
+.sanctum-protected-surface canvas,
+[data-sanctum-protected] img,
+[data-sanctum-protected] video,
+[data-sanctum-protected] canvas {
+  -webkit-touch-callout: none !important;
+  -webkit-user-drag: none !important;
+  pointer-events: none !important;
+}
+
+/* Desabilitar 3D Touch/Force Touch preview (iOS) */
+.sanctum-protected-surface a,
+[data-sanctum-protected] a {
+  -webkit-touch-callout: none !important;
+}
+
+/* Bloquear seleção via highlight em Android */
+.sanctum-protected-surface::selection,
+.sanctum-protected-surface *::selection,
+[data-sanctum-protected]::selection,
+[data-sanctum-protected] *::selection {
+  background: transparent !important;
+  color: inherit !important;
+}
+
+/* Proteção para iPad/Tablet específica */
+@media (min-width: 768px) and (max-width: 1024px) and (pointer: coarse) {
+  .sanctum-protected-surface,
+  [data-sanctum-protected] {
+    touch-action: manipulation !important;
+  }
+  
+  :root {
+    --sanctum-watermark-font-size: clamp(10px, 1.5vw, 14px);
+  }
+}
+
+/* Proteção para dispositivos touch de alta DPI */
+@media (pointer: coarse) and (-webkit-min-device-pixel-ratio: 2) {
+  .sanctum-watermark-cell {
+    font-size: clamp(9px, 1.8vw, 13px);
+  }
+}
+
+/* Proteção em modo landscape mobile */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sanctum-watermark-overlay {
+    font-size: clamp(10px, 2vw, 16px);
+  }
+  
+  :root {
+    --sanctum-watermark-opacity: 0.05;
+  }
+}
+
+/* ============================================
  * MODO ESCURO
  * ============================================ */
 .dark .sanctum-anti-screenshot-overlay {
