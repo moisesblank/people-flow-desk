@@ -534,7 +534,7 @@ export const SECURITY_CONFIG = {
   
   // Bloqueio progressivo
   LOCKOUT: {
-    MAX_ATTEMPTS: 5,
+    MAX_ATTEMPTS: 10, // CORREÇÃO EMERGENCIAL: 10 tentativas
     DURATION_MS: 900000, // 15 min
     PROGRESSIVE: true,
     MULTIPLIER: 2,

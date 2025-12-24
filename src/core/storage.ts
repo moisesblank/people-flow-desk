@@ -113,11 +113,11 @@ export const BUCKETS = {
 // DEFINIÇÕES COMPLETAS DE BUCKETS
 // ============================================
 export const BUCKET_DEFINITIONS: Record<BucketKey, BucketDefinition> = {
-  // === PÚBLICOS ===
+  // === PROTEGIDOS (LEI VII - Privados por padrão) ===
   AVATARS: {
     name: "avatars",
-    accessLevel: "public",
-    public: true,
+    accessLevel: "protected", // LEI VII: PRIVADO
+    public: false, // LEI VII: PRIVADO OBRIGATÓRIO
     maxFileSize: 5 * 1024 * 1024,
     allowedMimeTypes: ["image/jpeg", "image/png", "image/webp", "image/gif"],
     pathPattern: "{user_id}/{timestamp}-{rand}.{ext}",
@@ -125,11 +125,11 @@ export const BUCKET_DEFINITIONS: Record<BucketKey, BucketDefinition> = {
     requiresAuth: true,
     allowedRoles: ["*"],
     isPremium: false,
-    isProtected: false,
+    isProtected: true, // LEI VII
     watermarkRequired: false,
-    auditRequired: false,
+    auditRequired: true, // LEI VII
     encryptionRequired: false,
-    description: "Avatares de usuários",
+    description: "Avatares de usuários - BUCKET PRIVADO",
   },
   COURSE_THUMBNAILS: {
     name: "course-thumbnails",

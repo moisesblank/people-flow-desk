@@ -189,12 +189,17 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
 
     onProgress?.(70);
 
-    // Obter URL pública
-    const { data: urlData } = supabase.storage
+    // LEI VII: Gerar signed URL para acesso seguro
+    const { data: signedUrlData, error: signedUrlError } = await supabase.storage
       .from(bucket)
-      .getPublicUrl(filePath);
-
-    const publicUrl = urlData.publicUrl;
+      .createSignedUrl(filePath, 3600); // 1 hora para acesso temporário
+    
+    if (signedUrlError) {
+      console.warn('Erro ao gerar signed URL, usando path:', signedUrlError);
+    }
+    
+    // Armazenar o path (não a URL assinada) para regerar quando necessário
+    const storedPath = filePath;
 
     onProgress?.(80);
 
@@ -204,7 +209,7 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
       .insert({
         nome: file.name,
         nome_storage: uniqueFileName,
-        url: publicUrl,
+        url: storedPath, // Guardar path, não URL pública
         path: filePath,
         tipo: file.type || 'application/octet-stream',
         extensao: getFileExtension(file.name),
@@ -244,7 +249,7 @@ export async function uploadFile(options: UploadOptions): Promise<UploadResult> 
     return {
       id: arquivoDb.id,
       nome: file.name,
-      url: publicUrl,
+      url: signedUrlData?.signedUrl || storedPath, // Retornar signed URL para uso imediato
       path: filePath,
       tipo: file.type,
       tamanho: file.size,

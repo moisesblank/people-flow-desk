@@ -195,15 +195,18 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
 
         if (uploadError) throw uploadError;
 
-        const { data: urlData } = supabase.storage
+        // LEI VII: Usar signed URL para bucket privado
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
           .from("avatars")
-          .getPublicUrl(fileName);
+          .createSignedUrl(fileName, 31536000); // 1 ano
+        
+        if (signedUrlError) throw signedUrlError;
+        
+        const signedUrl = signedUrlData?.signedUrl || fileName;
 
-        const publicUrl = urlData.publicUrl;
+        await updateValue(key, fileName, "image"); // Guardar path, não URL
 
-        await updateValue(key, publicUrl, "image");
-
-        return publicUrl;
+        return signedUrl;
       } catch (err) {
         console.error("Erro ao fazer upload:", err);
         toast.error("Erro ao fazer upload da imagem");
