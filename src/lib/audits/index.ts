@@ -4,3 +4,4 @@
 // ============================================
 
 export * from './AUDIT_SECTIONS_5_10';
+export * from './RELATORIO_FINAL';

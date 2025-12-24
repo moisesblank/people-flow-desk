@@ -268,6 +268,8 @@ export const SECTION_10_FINAL_VERIFICATION = {
     "src/lib/security/cloudflareIntegration.ts (ATUALIZADO)",
     "src/lib/security/index.ts (ATUALIZADO)",
     "src/lib/audits/AUDIT_SECTIONS_5_10.ts (CRIADO)",
+    "src/components/routing/LegacyRedirectHandler.tsx (CRIADO)",
+    "src/App.tsx (ATUALIZADO - LegacyRedirectHandler integrado)",
   ],
   
   // Antes vs Agora

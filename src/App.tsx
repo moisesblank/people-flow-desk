@@ -26,6 +26,7 @@ import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationCli
 import { SessionGuard } from "@/components/security/SessionGuard";
 import { DeviceGuard } from "@/components/security/DeviceGuard";
 import { LeiVIIEnforcer } from "@/components/security/LeiVIIEnforcer";
+import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
@@ -273,6 +274,7 @@ const AppContent = memo(() => {
           {/* 👔 GESTÃO - PREFIXO /gestao/ (FUNCIONÁRIOS) */}
           {/* gestao.moisesmedeiros.com.br/gestao/* */}
           {/* ========================================== */}
+          <Route path="/gestao" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
           <Route path="/gestao/dashboard" element={<ProtectedPage><Dashboard /></ProtectedPage>} />
           <Route path="/gestao/dashboard-executivo" element={<ProtectedPage><DashboardExecutivo /></ProtectedPage>} />
           <Route path="/gestao/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
@@ -464,6 +466,7 @@ const App = memo(() => (
                     <Toaster />
                     <Sonner />
                     <BrowserRouter>
+                      <LegacyRedirectHandler />
                       <AppContent />
                       <DuplicationClipboardIndicator />
                     </BrowserRouter>
