@@ -3,9 +3,8 @@
 // Integra frontend → validate-device edge function
 // ============================================
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useEnhancedFingerprint } from './useEnhancedFingerprint';
 
 interface DeviceValidationResult {
   success: boolean;
@@ -43,12 +42,75 @@ interface UseDeviceValidationReturn {
   riskScore: number | null;
 }
 
+// ============================================
+// HELPER: Coletar fingerprint simplificado (inline)
+// ============================================
+async function collectFingerprintData(): Promise<{ hash: string; data: Record<string, unknown> }> {
+  const data: Record<string, unknown> = {
+    screenWidth: window.screen.width,
+    screenHeight: window.screen.height,
+    screenColorDepth: window.screen.colorDepth,
+    screenPixelRatio: window.devicePixelRatio || 1,
+    hardwareConcurrency: navigator.hardwareConcurrency || 0,
+    deviceMemory: (navigator as any).deviceMemory || null,
+    maxTouchPoints: navigator.maxTouchPoints || 0,
+    userAgent: navigator.userAgent,
+    language: navigator.language,
+    languages: [...navigator.languages],
+    platform: navigator.platform,
+    vendor: navigator.vendor,
+    cookiesEnabled: navigator.cookieEnabled,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    timezoneOffset: new Date().getTimezoneOffset(),
+    deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) 
+      ? (/iPad|Tablet/i.test(navigator.userAgent) ? 'tablet' : 'mobile')
+      : 'desktop',
+    browser: navigator.userAgent.includes('Firefox') ? 'Firefox'
+      : navigator.userAgent.includes('Edg') ? 'Edge'
+      : navigator.userAgent.includes('Chrome') ? 'Chrome'
+      : navigator.userAgent.includes('Safari') ? 'Safari' : 'Unknown',
+    os: navigator.userAgent.includes('Windows') ? 'Windows'
+      : navigator.userAgent.includes('Mac') ? 'macOS'
+      : navigator.userAgent.includes('Linux') ? 'Linux'
+      : navigator.userAgent.includes('Android') ? 'Android'
+      : navigator.userAgent.includes('iPhone') ? 'iOS' : 'Unknown',
+    localStorageAvailable: typeof window.localStorage !== 'undefined',
+    sessionStorageAvailable: typeof window.sessionStorage !== 'undefined',
+    pluginsCount: navigator.plugins?.length || 0,
+    collectedAt: new Date().toISOString(),
+  };
+  
+  // Adicionar WebGL se disponível
+  try {
+    const canvas = document.createElement('canvas');
+    const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
+    if (gl) {
+      const debugInfo = (gl as WebGLRenderingContext).getExtension('WEBGL_debug_renderer_info');
+      if (debugInfo) {
+        data.webglVendor = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_VENDOR_WEBGL) || 'unknown';
+        data.webglRenderer = (gl as WebGLRenderingContext).getParameter(debugInfo.UNMASKED_RENDERER_WEBGL) || 'unknown';
+      }
+    }
+  } catch {
+    data.webglVendor = 'error';
+    data.webglRenderer = 'error';
+  }
+  
+  // Generate hash
+  const hashSource = JSON.stringify(data);
+  const buffer = new TextEncoder().encode(hashSource);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+  
+  return { hash, data };
+}
+
 export function useDeviceValidation(): UseDeviceValidationReturn {
   const [lastResult, setLastResult] = useState<DeviceValidationResult | null>(null);
   const [isValidating, setIsValidating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  
-  const { collect, hash } = useEnhancedFingerprint();
+  const cachedFingerprint = useRef<{ hash: string; data: Record<string, unknown> } | null>(null);
 
   const validateDevice = useCallback(async (options: {
     userId?: string;
@@ -59,8 +121,12 @@ export function useDeviceValidation(): UseDeviceValidationReturn {
     setError(null);
 
     try {
-      // Coletar fingerprint
-      const fingerprintData = await collect();
+      // Coletar fingerprint (usar cache se disponível e recente)
+      let fingerprintData = cachedFingerprint.current;
+      if (!fingerprintData) {
+        fingerprintData = await collectFingerprintData();
+        cachedFingerprint.current = fingerprintData;
+      }
       
       console.log('[DeviceValidation] Validando dispositivo...', { 
         action: options.action,
@@ -71,10 +137,7 @@ export function useDeviceValidation(): UseDeviceValidationReturn {
       const { data, error: fnError } = await supabase.functions.invoke('validate-device', {
         body: {
           fingerprint: fingerprintData.hash,
-          fingerprintData: {
-            ...fingerprintData,
-            hash: undefined, // Não enviar o hash no body
-          },
+          fingerprintData: fingerprintData.data,
           userId: options.userId,
           email: options.email,
           action: options.action,
@@ -126,7 +189,7 @@ export function useDeviceValidation(): UseDeviceValidationReturn {
     } finally {
       setIsValidating(false);
     }
-  }, [collect]);
+  }, []);
 
   return {
     validateDevice,
