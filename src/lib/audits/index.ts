@@ -22,6 +22,8 @@ export * from './AUDIT_SECTION_4';
 export * from './AUDIT_SECTIONS_5_10';
 export * from './RELATORIO_FINAL';
 export * from './VERIFICACAO_FINAL';
+export * from './VERIFICACAO_FINAL_COMPLETA';
 
 // Helper exports
 export { gerarRelatorioFinal } from './VERIFICACAO_FINAL';
+export { gerarRelatorioCompleto } from './VERIFICACAO_FINAL_COMPLETA';
