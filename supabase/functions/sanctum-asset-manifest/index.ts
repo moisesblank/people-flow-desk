@@ -124,7 +124,29 @@ serve(async (req: Request) => {
     }
 
     // ============================================
-    // 3) CHAMAR FUNÇÃO DE MANIFEST
+    // 3) VERIFICAR SE USUÁRIO ESTÁ BLOQUEADO (SANCTUM 3.0)
+    // ============================================
+    const { data: lockCheck } = await supabase.rpc("fn_is_user_locked", {
+      p_user_id: user.id,
+    });
+
+    if (lockCheck && lockCheck.length > 0 && lockCheck[0].is_locked) {
+      console.warn(`[Sanctum Manifest] Usuário ${user.id} está BLOQUEADO até ${lockCheck[0].locked_until}`);
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: "Acesso bloqueado temporariamente",
+          errorCode: "LOCKED",
+          lockedUntil: lockCheck[0].locked_until,
+          reason: lockCheck[0].lock_reason,
+          riskScore: lockCheck[0].risk_score,
+        }),
+        { status: 423, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // ============================================
+    // 4) CHAMAR FUNÇÃO DE MANIFEST
     // ============================================
     const { data: manifest, error: manifestError } = await supabase.rpc(
       "fn_get_asset_manifest",
