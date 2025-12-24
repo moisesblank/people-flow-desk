@@ -130,11 +130,6 @@
       "teaches": ["Química Orgânica", "Físico-Química", "Química Geral", "Bioquímica"]
     }
     </script>
-
-    <!-- ============================================
-         DOGMA I: PERFORMANCE EARLY HINTS
-         Vite injeta os scripts corretos automaticamente
-         ============================================ -->
   </head>
 
   <body>
@@ -146,8 +141,10 @@
     <div id="root"></div>
     
     <!-- ============================================
-         DOGMA I: SCRIPTS ASSÍNCRONOS
-         Vite injeta o bundle JS correto automaticamente
+         ⚡ VITE BUILD: Script Entry Point
+         O Vite AUTOMATICAMENTE substitui este script pelo
+         bundle .js transpilado durante o build de produção.
+         NÃO REMOVER - É o ponto de entrada padrão do Vite.
          ============================================ -->
     <script type="module" src="/src/main.tsx"></script>
     
@@ -170,10 +167,15 @@
           setTimeout(function() { loader.remove(); }, 300);
         }
       }, 5000);
+      
+      // 🧹 CLEANUP: Remove Service Workers antigos que podem causar problemas de cache
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+          for (var i = 0; i < registrations.length; i++) {
+            registrations[i].unregister();
+          }
+        });
+      }
     </script>
-    
-    <!-- Service Worker DESABILITADO em produção para evitar cache de assets quebrados -->
-    <!-- O SW causava problemas com MIME types e versionamento de assets -->
-    <!-- Cache será gerenciado via CDN/Cloudflare + hash de arquivos -->
   </body>
 </html>

@@ -71,11 +71,15 @@ export function initEvangelhoCompleto(): void {
   console.log('[EVANGELHO] ⚡ Todos os 10 Dogmas ativados. A Matriz está protegida.');
 }
 
-// Auto-init se não for SSR
-if (typeof window !== 'undefined') {
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initEvangelhoCompleto);
-  } else {
-    initEvangelhoCompleto();
-  }
-}
+// ============================================
+// AUTO-INIT DESABILITADO
+// A inicialização é feita via main.tsx com defer
+// para não bloquear o TTI
+// ============================================
+// if (typeof window !== 'undefined') {
+//   if (document.readyState === 'loading') {
+//     document.addEventListener('DOMContentLoaded', initEvangelhoCompleto);
+//   } else {
+//     initEvangelhoCompleto();
+//   }
+// }
