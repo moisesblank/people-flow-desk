@@ -709,6 +709,32 @@ export const RECOMMENDED_PAGE_RULES: PageRule[] = [
 ];
 
 // ============================================
+// INTEGRAÇÃO COM CLOUDFLARE SPA PROFILE v2.0
+// ============================================
+export {
+  MODO_A_DNS_ONLY,
+  MODO_B_PROXIED_SAFE,
+  CLOUDFLARE_ACTIVE_MODE,
+  getActiveCloudflareProfile,
+  verifyCloudflareReadiness,
+} from "@/lib/cloudflare/cloudflareSPAProfile";
+
+export {
+  checkHTMLGate,
+  checkRuntimeIntegrity,
+  checkDomainDeploy,
+  useDeployIntegrity,
+  DEPLOY_CHECKLIST,
+} from "@/lib/cloudflare/deployIntegrityGate";
+
+export {
+  LEGACY_REDIRECTS,
+  shouldRedirect,
+  handleLegacyRedirect,
+  useLegacyRedirect,
+} from "@/lib/cloudflare/legacyRedirects";
+
+// ============================================
 // EXPORTAR TUDO
 // ============================================
 export default {
@@ -726,4 +752,15 @@ export default {
   SECURITY_HEADERS,
   RECOMMENDED_WAF_RULES,
   RECOMMENDED_PAGE_RULES,
+  // v2.0 additions
+  MODO_A_DNS_ONLY: undefined, // Re-export from cloudflare module
+  MODO_B_PROXIED_SAFE: undefined,
+  getActiveCloudflareProfile: undefined,
+  verifyCloudflareReadiness: undefined,
+  checkHTMLGate: undefined,
+  checkRuntimeIntegrity: undefined,
+  DEPLOY_CHECKLIST: undefined,
+  LEGACY_REDIRECTS: undefined,
+  shouldRedirect: undefined,
+  handleLegacyRedirect: undefined,
 };
