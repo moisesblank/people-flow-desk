@@ -238,3 +238,72 @@ export {
   useLeiVII,
   useLeiVIIProtection,
 } from '@/hooks/useLeiVII';
+
+// ============================================
+// 🛡️ SANCTUM GATE v1.0 (PORTEIRO BANCÁRIO)
+// ============================================
+
+export {
+  // Função principal
+  sanctumGuard,
+  useSanctumGuard,
+  
+  // Constantes e tipos
+  OWNER_EMAIL as SANCTUM_OWNER_EMAIL,
+  ROLES,
+  ROLE_HIERARCHY,
+  LOCKDOWN_FLAGS,
+  
+  // Rate Limit
+  checkRateLimit as checkSanctumRateLimit,
+  
+  // Lockout progressivo
+  checkLockout,
+  recordFailedAttempt,
+  clearLockout,
+  LOCKOUT_POLICY,
+  
+  // Utilitários
+  generateCorrelationId,
+  hashValue,
+  hasRoleAccess,
+  isOwnerEmail as isOwnerSanctum,
+  writeAuditLog as writeSanctumAuditLog,
+  
+  // Tipos
+  type AppRole,
+  type SanctumPrincipal,
+  type SanctumGuardOptions,
+  type SanctumGuardResult,
+} from '@/lib/security/sanctumGate';
+
+// ============================================
+// 🛡️ WEBHOOK GUARD v1.0 (PROTEÇÃO ANTI-FALSIFICAÇÃO)
+// ============================================
+
+export {
+  // Função principal
+  webhookGuard,
+  useWebhookGuard,
+  
+  // Verificações
+  verifyHmacSignature,
+  verifyTimestamp,
+  verifyNonce,
+  checkIdempotency,
+  markAsProcessed,
+  checkWebhookRateLimit,
+  
+  // Verificadores específicos
+  verifyHotmartWebhook,
+  verifyStripeWebhook,
+  
+  // Configuração
+  WEBHOOK_CONFIG,
+  
+  // Tipos
+  type WebhookSource,
+  type WebhookVerifyOptions,
+  type WebhookVerifyResult,
+  type IdempotencyCheckResult,
+} from '@/lib/security/webhookGuard';
