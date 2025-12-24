@@ -20,6 +20,73 @@ const SUPABASE_SERVICE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 const SANCTUM_VERSION = "2.0-OMEGA";
 
+// ============================================
+// CORS — ALLOWLIST (LEI VI COMPLIANCE)
+// ============================================
+const ALLOWED_ORIGINS = [
+  'https://gestao.moisesmedeiros.com.br',
+  'https://pro.moisesmedeiros.com.br',
+  'https://moisesmedeiros.com.br',
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
+
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/[a-z0-9-]+\.lovable\.app$/,
+  /^https:\/\/[a-z0-9-]+\.lovable\.dev$/,
+];
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  return ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin));
+}
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin');
+  const allowed = isOriginAllowed(origin);
+  return {
+    "Access-Control-Allow-Origin": allowed && origin ? origin : "null",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Credentials": allowed ? "true" : "false",
+    "Content-Type": "application/json",
+    "Vary": "Origin",
+  };
+}
+
+// ============================================
+// RATE LIMITING + DEDUPE (ANTI-SPAM/DoS)
+// ============================================
+const rateLimitCache = new Map<string, { count: number; resetAt: number; lastHash: string }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_MAX = 50; // Video violations mais permissivo
+
+async function hashForRateLimit(str: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(str);
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
+}
+
+function checkRateLimitAndDedupe(key: string, hash: string): { allowed: boolean; reason?: string } {
+  const now = Date.now();
+  const entry = rateLimitCache.get(key);
+  
+  if (!entry || now > entry.resetAt) {
+    rateLimitCache.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS, lastHash: hash });
+    return { allowed: true };
+  }
+  
+  if (entry.lastHash === hash) return { allowed: false, reason: 'DUPLICATE' };
+  if (entry.count >= RATE_LIMIT_MAX) return { allowed: false, reason: 'RATE_LIMIT' };
+  
+  entry.count++;
+  entry.lastHash = hash;
+  return { allowed: true };
+}
+
 // Roles completamente imunes — NUNCA sofrem ação punitiva
 const IMMUNE_ROLES = [
   'owner', 'admin', 'funcionario', 'suporte', 
@@ -46,23 +113,14 @@ const VIOLATION_SEVERITY: Record<string, number> = {
 // Thresholds para ações (SANCTUM 2.0 — valores ALTOS = mais tolerância)
 const ACTION_THRESHOLDS = {
   none: 0,
-  warn: 50,      // Apenas warning interno
-  degrade: 100,  // Degradação visual (blur leve)
-  pause: 200,    // Pausar vídeo
-  reauth: 400,   // Exigir re-autenticação
-  revoke: 800,   // Revogar sessão (extremo)
+  warn: 50,
+  degrade: 100,
+  pause: 200,
+  reauth: 400,
+  revoke: 800,
 };
 
-// Multiplicador de score por ocorrência
-const SCORE_MULTIPLIER = 3; // Reduzido de 5
-
-// CORS headers
-const CORS_HEADERS = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-session-token",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Content-Type": "application/json",
-};
+const SCORE_MULTIPLIER = 3;
 
 // ============================================
 // TIPOS
@@ -101,9 +159,25 @@ function determineAction(riskScore: number, severity: number): string {
 // HANDLER PRINCIPAL
 // ============================================
 serve(async (req: Request) => {
+  const CORS_HEADERS = getCorsHeaders(req);
+  
   // CORS preflight
   if (req.method === "OPTIONS") {
+    const origin = req.headers.get('Origin');
+    if (!isOriginAllowed(origin)) {
+      console.warn(`[CORS BLOCKED] Origin: ${origin}`);
+      return new Response("Forbidden", { status: 403 });
+    }
     return new Response(null, { status: 204, headers: CORS_HEADERS });
+  }
+
+  // Bloquear Origin: null
+  const origin = req.headers.get('Origin');
+  if (origin === 'null') {
+    return new Response(
+      JSON.stringify({ success: false, error: "Invalid origin" }),
+      { status: 403, headers: CORS_HEADERS }
+    );
   }
 
   if (req.method !== "POST") {
@@ -130,6 +204,24 @@ serve(async (req: Request) => {
           code: "MISSING_TOKEN",
         }),
         { status: 400, headers: CORS_HEADERS }
+      );
+    }
+
+    // ============================================
+    // 1.5 RATE LIMIT + DEDUPE
+    // ============================================
+    const violationHash = await hashForRateLimit(`${session_token}|${violation_type}`);
+    const rateLimitResult = checkRateLimitAndDedupe(session_token.slice(0, 16), violationHash);
+    
+    if (!rateLimitResult.allowed) {
+      console.warn(`[RATE LIMIT] ${rateLimitResult.reason} for session: ${session_token.slice(0,8)}...`);
+      return new Response(
+        JSON.stringify({
+          success: true,
+          riskScore: 0,
+          instructions: { action: "none", rateLimited: true, reason: rateLimitResult.reason },
+        }),
+        { status: 200, headers: CORS_HEADERS }
       );
     }
 

@@ -21,15 +21,87 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
 // ============================================
-// CORS HEADERS
+// CORS — ALLOWLIST (LEI VI COMPLIANCE)
 // ============================================
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "Cache-Control": "no-store",
-  "X-Content-Type-Options": "nosniff",
-};
+const ALLOWED_ORIGINS = [
+  'https://gestao.moisesmedeiros.com.br',
+  'https://pro.moisesmedeiros.com.br',
+  'https://moisesmedeiros.com.br',
+  'https://www.moisesmedeiros.com.br',
+  'http://localhost:3000',
+  'http://localhost:5173',
+];
+
+const ALLOWED_ORIGIN_PATTERNS = [
+  /^https:\/\/[a-z0-9-]+\.lovable\.app$/,
+  /^https:\/\/[a-z0-9-]+\.lovable\.dev$/,
+  /^https:\/\/[a-z0-9-]+--[a-z0-9-]+\.lovable\.app$/,
+];
+
+function isOriginAllowed(origin: string | null): boolean {
+  if (!origin) return false;
+  if (ALLOWED_ORIGINS.includes(origin)) return true;
+  return ALLOWED_ORIGIN_PATTERNS.some(p => p.test(origin));
+}
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get('Origin');
+  const allowed = isOriginAllowed(origin);
+  
+  return {
+    "Access-Control-Allow-Origin": allowed && origin ? origin : "null",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+    "Access-Control-Allow-Methods": "POST, OPTIONS",
+    "Access-Control-Allow-Credentials": allowed ? "true" : "false",
+    "Cache-Control": "no-store",
+    "X-Content-Type-Options": "nosniff",
+    "Vary": "Origin",
+  };
+}
+
+// ============================================
+// RATE LIMITING + DEDUPE (ANTI-SPAM/DoS)
+// ============================================
+const rateLimitCache = new Map<string, { count: number; resetAt: number; lastHash: string }>();
+const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minuto
+const RATE_LIMIT_MAX = 30; // 30 violações por minuto por IP
+
+function checkRateLimitAndDedupe(ipHash: string, violationHash: string): { allowed: boolean; reason?: string } {
+  const now = Date.now();
+  const key = ipHash;
+  
+  const entry = rateLimitCache.get(key);
+  
+  if (!entry || now > entry.resetAt) {
+    // Nova janela
+    rateLimitCache.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS, lastHash: violationHash });
+    return { allowed: true };
+  }
+  
+  // Dedupe: mesma violação em sequência
+  if (entry.lastHash === violationHash) {
+    return { allowed: false, reason: 'DUPLICATE' };
+  }
+  
+  // Rate limit
+  if (entry.count >= RATE_LIMIT_MAX) {
+    return { allowed: false, reason: 'RATE_LIMIT' };
+  }
+  
+  entry.count++;
+  entry.lastHash = violationHash;
+  return { allowed: true };
+}
+
+// Limpar cache periodicamente
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, entry] of rateLimitCache.entries()) {
+    if (now > entry.resetAt) {
+      rateLimitCache.delete(key);
+    }
+  }
+}, 60000);
 
 // ============================================
 // TIPOS
@@ -48,6 +120,7 @@ interface ViolationResponse {
   violationType?: string;
   severity?: number;
   error?: string;
+  rateLimited?: boolean;
 }
 
 // ============================================
@@ -65,9 +138,26 @@ async function hashString(str: string): Promise<string> {
 // FUNÇÃO PRINCIPAL
 // ============================================
 serve(async (req: Request) => {
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
+    const origin = req.headers.get('Origin');
+    if (!isOriginAllowed(origin)) {
+      console.warn(`[CORS BLOCKED] Origin: ${origin}`);
+      return new Response("Forbidden", { status: 403 });
+    }
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Bloquear Origin: null (potencial ataque)
+  const origin = req.headers.get('Origin');
+  if (origin === 'null') {
+    console.warn('[SECURITY] Blocked null origin request');
+    return new Response(
+      JSON.stringify({ success: false, error: "Invalid origin" }),
+      { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
   }
 
   // Apenas POST
@@ -80,6 +170,14 @@ serve(async (req: Request) => {
 
   try {
     // ============================================
+    // 0) RATE LIMIT CHECK (antes de processar)
+    // ============================================
+    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
+                   || req.headers.get("cf-connecting-ip") 
+                   || "unknown";
+    const ipHash = await hashString(clientIp + "sanctum-salt-2300");
+    
+    // ============================================
     // 1) PARSE DO BODY
     // ============================================
     let payload: ViolationPayload;
@@ -89,6 +187,24 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ success: false, error: "JSON inválido" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Hash único para dedupe
+    const violationHash = await hashString(`${payload.violationType}|${payload.assetId || ''}|${ipHash}`);
+    
+    // Verificar rate limit e dedupe
+    const rateLimitResult = checkRateLimitAndDedupe(ipHash, violationHash);
+    if (!rateLimitResult.allowed) {
+      console.warn(`[RATE LIMIT] ${rateLimitResult.reason} for IP hash: ${ipHash.slice(0,8)}...`);
+      return new Response(
+        JSON.stringify({ 
+          success: true, // Retornamos success para não quebrar UX
+          locked: false, 
+          rateLimited: true,
+          reason: rateLimitResult.reason 
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
@@ -139,14 +255,9 @@ serve(async (req: Request) => {
     }
 
     // ============================================
-    // 4) HASH DE IP E USER-AGENT (PRIVACIDADE)
+    // 4) USER-AGENT HASH (PRIVACIDADE) - IP já calculado acima
     // ============================================
-    const clientIp = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() 
-                   || req.headers.get("cf-connecting-ip") 
-                   || "unknown";
     const userAgent = req.headers.get("user-agent") || "unknown";
-    
-    const ipHash = await hashString(clientIp + "sanctum-salt-2300");
     const uaHash = await hashString(userAgent + "sanctum-salt-2300");
 
     // ============================================
