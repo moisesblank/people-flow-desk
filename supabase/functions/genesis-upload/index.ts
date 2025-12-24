@@ -1,9 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/corsConfig.ts";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 const RAW_BUCKET = "ena-assets-raw";
 
+// Fallback CORS headers for backward compatibility
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
@@ -11,9 +13,12 @@ const corsHeaders = {
 };
 
 serve(async (req: Request) => {
+  // CORS seguro via allowlist
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+  
+  const secureHeaders = getCorsHeaders(req);
 
   try {
     const authHeader = req.headers.get("Authorization");

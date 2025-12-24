@@ -5,11 +5,10 @@
 // ============================================
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-source, x-webhook-event, x-hotmart-hottok, x-hub-signature-256, x-signature',
-};
+// CORS para webhooks externos (permissivo para servidores)
+const corsHeaders = getWebhookCorsHeaders();
 
 // Função para validar HMAC SHA256
 async function validateHMAC(payload: string, signature: string, secret: string): Promise<boolean> {

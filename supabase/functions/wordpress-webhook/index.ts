@@ -4,12 +4,10 @@
 // ============================================
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-webhook-secret',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+// CORS para webhooks externos (WordPress/WooCommerce)
+const corsHeaders = getWebhookCorsHeaders();
 
 interface WordPressEvent {
   event_type: string;
