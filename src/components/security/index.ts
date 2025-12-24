@@ -154,3 +154,61 @@ export {
   type FullAppRole,
   type SystemArea,
 } from '@/hooks/useRolePermissions';
+
+// ============================================
+// 🏛️ LEI VII - PROTEÇÃO DE CONTEÚDO SOBERANA
+// ============================================
+
+export {
+  // Funções de status
+  isOwner as isOwnerLeiVII,
+  getLeiVIIStatus,
+  logLeiVIIStatus,
+  
+  // Configurações
+  THREAT_THRESHOLDS,
+  EVENT_SEVERITIES,
+  BLOCKED_SHORTCUTS,
+  BLOCKED_MOUSE_EVENTS,
+  BLOCKED_TOUCH_EVENTS,
+  SUPPORTED_PLATFORMS,
+  WATERMARK_REQUIREMENTS,
+  VIDEO_PROTECTION_REQUIREMENTS,
+  PDF_PROTECTION_REQUIREMENTS,
+  WEB_BOOK_PROTECTION_REQUIREMENTS,
+  FINGERPRINT_COMPONENTS,
+  AUTOMATION_SIGNALS,
+  OWNER_BYPASS,
+  
+  // Constantes
+  LEI_VII_VERSION,
+  LEI_VII_CODENAME,
+  LEI_VII_ARTICLES,
+  LEI_VII_ACTIVE,
+  OWNER_EMAIL as OWNER_EMAIL_LEI_VII,
+  
+  // Tipos
+  type ThreatLevel as SanctumThreatLevel,
+  type ViolationType as SanctumViolationType,
+  type ProtectionLevel,
+  type ProtectedContentType,
+} from '@/lib/constitution/LEI_VII_PROTECAO_CONTEUDO';
+
+// ============================================
+// SANCTUM ENFORCER (LEI VII Compliance)
+// ============================================
+
+export {
+  checkLeiVIICompliance,
+  logComplianceReport,
+} from '@/lib/security/sanctumEnforcer';
+
+// ============================================
+// SANCTUM INTEGRATED HOOK
+// ============================================
+
+export {
+  useSanctumIntegrated,
+  type SanctumIntegratedConfig,
+  type SanctumIntegratedReturn,
+} from '@/hooks/useSanctumIntegrated';
