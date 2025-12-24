@@ -4,17 +4,18 @@
 // Performance ANO 3500 em qualquer dispositivo
 // ============================================
 
-const CACHE_VERSION = 'v3500.2';
+const CACHE_VERSION = 'v3500.3';
 const STATIC_CACHE = `static-${CACHE_VERSION}`;
 const DYNAMIC_CACHE = `dynamic-${CACHE_VERSION}`;
 const API_CACHE = `api-${CACHE_VERSION}`;
 const IMAGE_CACHE = `images-${CACHE_VERSION}`;
 const FONT_CACHE = `fonts-${CACHE_VERSION}`;
 
-// Assets críticos para offline
+// Fallback offline (SPA)
+const OFFLINE_FALLBACK_URL = '/index.html';
+
+// Assets críticos para offline (mínimo possível para evitar cache incorreto)
 const CRITICAL_ASSETS = [
-  '/',
-  '/index.html',
   '/manifest.json',
   '/favicon.ico',
 ];
@@ -31,15 +32,27 @@ const CACHE_PATTERNS = {
 // INSTALL - Cache crítico
 self.addEventListener('install', (event) => {
   console.log('[SW v3500] ⚡ Instalando Service Worker Quântico...');
-  
+
   event.waitUntil(
-    caches.open(STATIC_CACHE)
-      .then(cache => {
-        console.log('[SW v3500] 📦 Cacheando assets críticos...');
-        return cache.addAll(CRITICAL_ASSETS);
-      })
-      .then(() => self.skipWaiting())
-      .catch(err => console.error('[SW v3500] ❌ Erro no install:', err))
+    (async () => {
+      const cache = await caches.open(STATIC_CACHE);
+
+      console.log('[SW v3500] 📦 Cacheando assets críticos...');
+      await cache.addAll(CRITICAL_ASSETS);
+
+      // IMPORTANT: nunca confiar no cache HTTP para o HTML inicial
+      // (evita ficar preso em HTML de preview/dev em domínio custom)
+      try {
+        const resp = await fetch(`${OFFLINE_FALLBACK_URL}?sw=${CACHE_VERSION}`, { cache: 'reload' });
+        if (resp.ok) {
+          await cache.put(OFFLINE_FALLBACK_URL, resp.clone());
+        }
+      } catch (err) {
+        console.warn('[SW v3500] ⚠️ Não foi possível atualizar fallback HTML no install:', err);
+      }
+
+      await self.skipWaiting();
+    })().catch((err) => console.error('[SW v3500] ❌ Erro no install:', err))
   );
 });
 
@@ -221,33 +234,33 @@ async function networkFirstWithCache(request, cacheName, options = {}) {
  */
 async function networkFirstWithFallback(request, cacheName) {
   const cache = await caches.open(cacheName);
-  
+  const staticCache = await caches.open(STATIC_CACHE);
+
   try {
-    const response = await fetch(request);
-    
-    if (response.ok) {
-      cache.put(request, response.clone());
-    }
-    
+    // Para navegação, evitar servir HTML "stale" do próprio browser cache
+    const networkRequest = new Request(request, { cache: 'no-store' });
+    const response = await fetch(networkRequest);
+
+    // Não cachear HTML de navegação: evita aprisionar um HTML incorreto (preview/dev)
     return response;
   } catch (error) {
     const cached = await cache.match(request);
-    
+
     if (cached) {
       return cached;
     }
-    
-    // Fallback para página offline
-    const offlinePage = await cache.match('/index.html');
+
+    // Fallback SPA offline (sempre do STATIC_CACHE)
+    const offlinePage = await staticCache.match(OFFLINE_FALLBACK_URL);
     if (offlinePage) {
       return offlinePage;
     }
-    
+
     // Última opção: erro genérico
-    return new Response('Offline', { 
-      status: 503, 
+    return new Response('Offline', {
+      status: 503,
       statusText: 'Service Unavailable',
-      headers: { 'Content-Type': 'text/plain' }
+      headers: { 'Content-Type': 'text/plain' },
     });
   }
 }
