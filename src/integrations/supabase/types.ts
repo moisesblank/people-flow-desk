@@ -64,16 +64,20 @@ export type Database = {
           expires_at: string
           id: string
           ip_address: unknown
+          ip_hash: string | null
           is_current: boolean | null
           last_activity_at: string
+          last_validation_ip: string | null
           mfa_verified: boolean | null
           revoked_at: string | null
           revoked_reason: string | null
           risk_score: number | null
           session_token: string
           status: Database["public"]["Enums"]["session_status"]
+          token_hash: string | null
           user_agent: string | null
           user_id: string
+          validation_attempts: number | null
         }
         Insert: {
           city?: string | null
@@ -85,16 +89,20 @@ export type Database = {
           expires_at?: string
           id?: string
           ip_address?: unknown
+          ip_hash?: string | null
           is_current?: boolean | null
           last_activity_at?: string
+          last_validation_ip?: string | null
           mfa_verified?: boolean | null
           revoked_at?: string | null
           revoked_reason?: string | null
           risk_score?: number | null
           session_token?: string
           status?: Database["public"]["Enums"]["session_status"]
+          token_hash?: string | null
           user_agent?: string | null
           user_id: string
+          validation_attempts?: number | null
         }
         Update: {
           city?: string | null
@@ -106,16 +114,20 @@ export type Database = {
           expires_at?: string
           id?: string
           ip_address?: unknown
+          ip_hash?: string | null
           is_current?: boolean | null
           last_activity_at?: string
+          last_validation_ip?: string | null
           mfa_verified?: boolean | null
           revoked_at?: string | null
           revoked_reason?: string | null
           risk_score?: number | null
           session_token?: string
           status?: Database["public"]["Enums"]["session_status"]
+          token_hash?: string | null
           user_agent?: string | null
           user_id?: string
+          validation_attempts?: number | null
         }
         Relationships: []
       }
@@ -1807,6 +1819,13 @@ export type Database = {
             columns: ["afiliado_id"]
             isOneToOne: false
             referencedRelation: "affiliates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_afiliado_id_fkey"
+            columns: ["afiliado_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates_safe"
             referencedColumns: ["id"]
           },
           {
@@ -8098,6 +8117,13 @@ export type Database = {
             referencedRelation: "affiliates"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "sales_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates_safe"
+            referencedColumns: ["id"]
+          },
         ]
       }
       sales_funnel_data: {
@@ -8625,6 +8651,48 @@ export type Database = {
           url?: string | null
           user_agent?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      security_violations_log: {
+        Row: {
+          created_at: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          policy_violated: string | null
+          resource_accessed: string | null
+          severity: string | null
+          user_agent: string | null
+          user_email: string | null
+          user_id: string | null
+          violation_type: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          policy_violated?: string | null
+          resource_accessed?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          violation_type: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          policy_violated?: string | null
+          resource_accessed?: string | null
+          severity?: string | null
+          user_agent?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          violation_type?: string
         }
         Relationships: []
       }
@@ -13785,6 +13853,78 @@ export type Database = {
       }
     }
     Views: {
+      affiliates_safe: {
+        Row: {
+          agencia: string | null
+          banco: string | null
+          comissao_total: number | null
+          conta: string | null
+          created_at: string | null
+          cupom: string | null
+          email: string | null
+          hotmart_id: string | null
+          id: number | null
+          link_afiliado: string | null
+          nome: string | null
+          parceiro_aluno: boolean | null
+          percentual_comissao: number | null
+          pix: string | null
+          status: string | null
+          taxa_comissao: number | null
+          telefone: string | null
+          total_comissao: number | null
+          total_vendas: number | null
+          user_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          agencia?: never
+          banco?: never
+          comissao_total?: number | null
+          conta?: never
+          created_at?: string | null
+          cupom?: string | null
+          email?: string | null
+          hotmart_id?: string | null
+          id?: number | null
+          link_afiliado?: string | null
+          nome?: string | null
+          parceiro_aluno?: boolean | null
+          percentual_comissao?: number | null
+          pix?: never
+          status?: string | null
+          taxa_comissao?: number | null
+          telefone?: string | null
+          total_comissao?: number | null
+          total_vendas?: number | null
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          agencia?: never
+          banco?: never
+          comissao_total?: number | null
+          conta?: never
+          created_at?: string | null
+          cupom?: string | null
+          email?: string | null
+          hotmart_id?: string | null
+          id?: number | null
+          link_afiliado?: string | null
+          nome?: string | null
+          parceiro_aluno?: boolean | null
+          percentual_comissao?: number | null
+          pix?: never
+          status?: string | null
+          taxa_comissao?: number | null
+          telefone?: string | null
+          total_comissao?: number | null
+          total_vendas?: number | null
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       alunos_safe: {
         Row: {
           cpf: string | null
@@ -14903,6 +15043,7 @@ export type Database = {
             Returns: boolean
           }
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
+      hash_session_token: { Args: { token: string }; Returns: string }
       increment_metrica_diaria:
         | {
             Args: { p_campo: string; p_data: string; p_valor: number }
