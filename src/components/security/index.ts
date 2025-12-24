@@ -378,3 +378,31 @@ export {
   type SignupOptions,
   type RecoveryOptions,
 } from '@/lib/security/authGuard';
+
+// ============================================
+// ☁️ CLOUDFLARE INTEGRATION v1.0 (WAF + CDN)
+// ============================================
+
+export {
+  // Funções principais
+  extractCloudflareContext,
+  validateCloudflareRequest,
+  checkCloudflareRateLimit,
+  cleanupCloudflareRateLimits,
+  generateSecurityHeaders,
+  
+  // Helpers
+  useCloudflareContext,
+  isCloudflareBypass,
+  getCloudflareConfigForRoute,
+  
+  // Configurações
+  DEFAULT_CLOUDFLARE_CONFIG,
+  ROUTE_CLOUDFLARE_CONFIGS,
+  
+  // Tipos
+  type CloudflareHeaders,
+  type CloudflareContext,
+  type CloudflareSecurityConfig,
+  type CloudflareValidationResult,
+} from '@/lib/security/cloudflareIntegration';
