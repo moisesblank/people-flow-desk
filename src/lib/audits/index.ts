@@ -7,6 +7,7 @@ export * from "./AUDIT_SECTION_5";
 export * from "./AUDIT_SECTION_6";
 export * from "./AUDIT_SECTION_7";
 export * from "./AUDIT_SECTION_8";
+export * from "./AUDIT_SECTION_9";
 
 // ============================================
 // 🔥 AUDITS INDEX — ENA // SYNAPSE Ω∞
