@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
 // ║                                                                              ║
-// ║   🏛️ CONSTITUIÇÃO SYNAPSE - ÍNDICE GERAL v6.0                               ║
-// ║   7 LEIS SOBERANAS DO SISTEMA                                               ║
+// ║   🏛️ CONSTITUIÇÃO SYNAPSE - ÍNDICE GERAL v7.0                               ║
+// ║   7 LEIS SOBERANAS DO SISTEMA + EXECUTOR LEI VII                            ║
 // ║   OWNER SOBERANO: MOISESBLANK@GMAIL.COM                                     ║
 // ║                                                                              ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
@@ -35,6 +35,16 @@ export { default as LEI_IV, SNA_CONFIG, EVENT_HANDLERS, useSNAConstitution } fro
 // ============================================
 export * from './LEI_VII_PROTECAO_CONTEUDO';
 export { default as LEI_VII } from './LEI_VII_PROTECAO_CONTEUDO';
+
+// ============================================
+// EXECUTOR LEI VII - Execução Automática
+// ============================================
+export * from './executeLeiVII';
+export { 
+  default as executeLeiVII,
+  updateLeiVIIUser,
+  getLeiVIIExecutionStatus,
+} from './executeLeiVII';
 
 // ============================================
 // LEIS REFERENCIADAS (Implementadas em outros módulos)
@@ -149,7 +159,7 @@ export function checkConstitutionStatus(): {
     active: laws.every(l => l.active),
     laws,
     totalArticles: laws.reduce((a, b) => a + b.articles, 0),
-    version: 'v6.0',
+    version: 'v7.0',
     owner: 'MOISESBLANK@GMAIL.COM',
   };
 }

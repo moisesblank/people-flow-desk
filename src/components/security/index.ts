@@ -212,3 +212,29 @@ export {
   type SanctumIntegratedConfig,
   type SanctumIntegratedReturn,
 } from '@/hooks/useSanctumIntegrated';
+
+// ============================================
+// LEI VII ENFORCER COMPONENT (NOVO)
+// ============================================
+
+export { LeiVIIEnforcer } from './LeiVIIEnforcer';
+
+// ============================================
+// LEI VII EXECUTOR
+// ============================================
+
+export {
+  executeLeiVII,
+  updateLeiVIIUser,
+  getLeiVIIExecutionStatus,
+  type LeiVIIExecutionReport,
+} from '@/lib/constitution/executeLeiVII';
+
+// ============================================
+// useLeiVII Hook
+// ============================================
+
+export {
+  useLeiVII,
+  useLeiVIIProtection,
+} from '@/hooks/useLeiVII';
