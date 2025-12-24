@@ -1,30 +1,20 @@
 // ============================================
 // 🌌🔥 BOOK PAGE MANIFEST — EDGE FUNCTION NÍVEL NASA 🔥🌌
 // ANO 2300 — ENTREGA SEGURA DE PÁGINAS DO LIVRO WEB
+// LEI VI COMPLIANCE: CORS Allowlist
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 // ============================================
 // CONSTANTES
 // ============================================
 const OWNER_EMAIL = "moisesblank@gmail.com";
-const SIGNED_URL_TTL_SECONDS = 60; // 1 minuto
+const SIGNED_URL_TTL_SECONDS = 60;
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 const MAX_PAGES_PER_REQUEST = 10;
-
-// ============================================
-// CORS HEADERS
-// ============================================
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Cache-Control": "no-store, no-cache, must-revalidate",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-};
 
 // ============================================
 // TIPOS
@@ -59,10 +49,21 @@ interface ManifestResponse {
 // FUNÇÃO PRINCIPAL
 // ============================================
 serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+
+  const origin = req.headers.get("Origin");
+  if (!isOriginAllowed(origin)) {
+    return corsBlockedResponse(origin);
+  }
+
+  const corsHeaders = {
+    ...getCorsHeaders(req),
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+  };
 
   try {
     // ============================================
@@ -77,13 +78,10 @@ serve(async (req: Request) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-
-    // Criar cliente Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verificar usuário
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
@@ -98,10 +96,9 @@ serve(async (req: Request) => {
     // ============================================
     const url = new URL(req.url);
     let bookId = url.searchParams.get("bookId");
-    let pageNumbersParam = url.searchParams.get("pages"); // ex: "1,2,3" ou "1-5"
+    let pageNumbersParam = url.searchParams.get("pages");
     let sessionId = url.searchParams.get("sessionId");
 
-    // Também aceitar POST
     if (req.method === "POST") {
       try {
         const body = await req.json();
@@ -126,7 +123,6 @@ serve(async (req: Request) => {
     let requestedPages: number[] = [];
 
     if (pageNumbersParam) {
-      // Suporta "1,2,3" ou "1-5"
       if (pageNumbersParam.includes("-")) {
         const [start, end] = pageNumbersParam.split("-").map(Number);
         for (let i = start; i <= Math.min(end, start + MAX_PAGES_PER_REQUEST - 1); i++) {
@@ -162,18 +158,10 @@ serve(async (req: Request) => {
       let status = 500;
 
       switch (errorCode) {
-        case "LOCKED":
-          status = 423;
-          break;
-        case "UNAUTHORIZED":
-          status = 403;
-          break;
-        case "NOT_FOUND":
-          status = 404;
-          break;
-        case "NOT_READY":
-          status = 503;
-          break;
+        case "LOCKED": status = 423; break;
+        case "UNAUTHORIZED": status = 403; break;
+        case "NOT_FOUND": status = 404; break;
+        case "NOT_READY": status = 503; break;
       }
 
       return new Response(
@@ -188,14 +176,11 @@ serve(async (req: Request) => {
     const isOwner = bookData.isOwner || user.email?.toLowerCase() === OWNER_EMAIL;
     const allPages = bookData.pages || [];
 
-    // Se não especificou páginas, usar as do progresso ou página 1
     if (requestedPages.length === 0) {
       const currentPage = bookData.progress?.currentPage || 1;
-      // Prefetch: página atual + próxima
       requestedPages = [currentPage, currentPage + 1].filter(p => p <= (bookData.book?.totalPages || 1));
     }
 
-    // Filtrar apenas páginas existentes
     const validPages = allPages.filter((p: { pageNumber: number }) => 
       requestedPages.includes(p.pageNumber)
     );
@@ -299,7 +284,7 @@ serve(async (req: Request) => {
     
     return new Response(
       JSON.stringify({ success: false, error: "Erro interno do servidor", errorCode: "SERVER_ERROR" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });
