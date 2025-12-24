@@ -243,9 +243,32 @@ Deno.serve(async (req) => {
       });
 
       // Alertar admin se crítico
-      if (severity === 'critical') {
-        // TODO: Enviar notificação para admin via notify-owner
-        console.log('[validate-device] ALERTA CRÍTICO: Risk score alto para user', userId);
+      if (severity === 'critical' || severity === 'high') {
+        // Chamar edge function para notificar admin
+        try {
+          await fetch(`${supabaseUrl}/functions/v1/notify-suspicious-device`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${supabaseServiceKey}`,
+            },
+            body: JSON.stringify({
+              userId,
+              userEmail: email,
+              riskScore,
+              factors: riskFactors,
+              deviceHash: fingerprint,
+              ip: cfConnectingIP,
+              country: cfCountry,
+              city: cfCity,
+              action: recommendedAction,
+              timestamp: new Date().toISOString(),
+            }),
+          });
+          console.log('[validate-device] ✅ Notificação enviada para admin');
+        } catch (notifyError) {
+          console.error('[validate-device] Erro ao notificar admin:', notifyError);
+        }
       }
     }
 
