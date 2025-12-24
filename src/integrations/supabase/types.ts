@@ -14141,28 +14141,16 @@ export type Database = {
         }
         Returns: string
       }
-      calculate_device_risk_score:
-        | {
-            Args: {
-              p_current_country?: string
-              p_device_hash: string
-              p_user_id: string
-            }
-            Returns: {
-              risk_factors: Json
-              risk_score: number
-            }[]
-          }
-        | {
-            Args: {
-              p_country: string
-              p_device_hash: string
-              p_ip: string
-              p_user_agent: string
-              p_user_id: string
-            }
-            Returns: Json
-          }
+      calculate_device_risk_score: {
+        Args: {
+          p_country?: string
+          p_device_hash: string
+          p_ip?: string
+          p_user_agent?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       can_access_attachment: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: boolean
@@ -15172,39 +15160,21 @@ export type Database = {
         }
         Returns: string
       }
-      register_device_trust:
-        | {
-            Args: {
-              p_browser?: string
-              p_city?: string
-              p_country?: string
-              p_device_hash: string
-              p_device_name?: string
-              p_device_type?: string
-              p_fingerprint?: Json
-              p_ip?: string
-              p_os?: string
-              p_user_id: string
-            }
-            Returns: Json
-          }
-        | {
-            Args: {
-              p_browser?: string
-              p_country?: string
-              p_device_hash: string
-              p_device_name?: string
-              p_device_type?: string
-              p_ip_hash?: string
-              p_os?: string
-              p_user_id: string
-            }
-            Returns: {
-              is_new: boolean
-              is_trusted: boolean
-              trust_score: number
-            }[]
-          }
+      register_device_trust: {
+        Args: {
+          p_browser?: string
+          p_city?: string
+          p_country?: string
+          p_device_hash: string
+          p_device_name?: string
+          p_device_type?: string
+          p_fingerprint?: Json
+          p_ip?: string
+          p_os?: string
+          p_user_id: string
+        }
+        Returns: Json
+      }
       register_device_with_limit: {
         Args: {
           p_browser?: string
