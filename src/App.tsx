@@ -25,6 +25,7 @@ import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortc
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { SessionGuard } from "@/components/security/SessionGuard";
 import { DeviceGuard } from "@/components/security/DeviceGuard";
+import { LeiVIIEnforcer } from "@/components/security/LeiVIIEnforcer";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
@@ -447,28 +448,31 @@ const AppContent = memo(() => {
 });
 AppContent.displayName = 'AppContent';
 
-// ⚡ App Principal - Estrutura de providers otimizada + PERFORMANCE PROVIDER
+// ⚡ App Principal - Estrutura de providers otimizada + PERFORMANCE PROVIDER + LEI VII
 const App = memo(() => (
   <PerformanceProvider>
     <PerformanceStyles />
     <QueryClientProvider client={queryClient}>
       <AuthProvider>
-        <LiveSheetProvider>
-          <ReactiveFinanceProvider>
-            <GodModeProvider>
-              <DuplicationClipboardProvider>
-                <TooltipProvider>
-                  <Toaster />
-                  <Sonner />
-                  <BrowserRouter>
-                    <AppContent />
-                    <DuplicationClipboardIndicator />
-                  </BrowserRouter>
-                </TooltipProvider>
-              </DuplicationClipboardProvider>
-            </GodModeProvider>
-          </ReactiveFinanceProvider>
-        </LiveSheetProvider>
+        {/* 🛡️ LEI VII - Proteção de Conteúdo Soberana (GLOBAL) */}
+        <LeiVIIEnforcer>
+          <LiveSheetProvider>
+            <ReactiveFinanceProvider>
+              <GodModeProvider>
+                <DuplicationClipboardProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
+                    <BrowserRouter>
+                      <AppContent />
+                      <DuplicationClipboardIndicator />
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </DuplicationClipboardProvider>
+              </GodModeProvider>
+            </ReactiveFinanceProvider>
+          </LiveSheetProvider>
+        </LeiVIIEnforcer>
       </AuthProvider>
     </QueryClientProvider>
   </PerformanceProvider>
