@@ -14,6 +14,7 @@ export { SessionGuard } from './SessionGuard';
 // DOGMA XI - Controle de Dispositivos
 export { DeviceGuard } from './DeviceGuard';
 export { DeviceLimitModal } from './DeviceLimitModal';
+export { TrustedDevicesManager } from './TrustedDevicesManager';
 
 // DOGMA III - Proteção de Conteúdo
 export { ProtectedPDFViewer } from './ProtectedPDFViewer';
