@@ -1,48 +1,16 @@
 {
-  "name": "Gestão Moisés Medeiros",
-  "short_name": "Gestão MM",
-  "description": "Sistema de Gestão Completo - gestao.moisesmedeiros.com.br",
+  "name": "Moisés Medeiros",
+  "short_name": "MM",
+  "description": "Plataforma Moisés Medeiros - Curso de Química para ENEM e Vestibulares",
   "start_url": "/",
-  "display": "standalone",
+  "display": "browser",
   "background_color": "#0a0a0f",
-  "theme_color": "#EC4899",
-  "orientation": "portrait-primary",
+  "theme_color": "#0a0a0f",
   "icons": [
     {
       "src": "/favicon.ico",
       "sizes": "64x64 32x32 24x24 16x16",
       "type": "image/x-icon"
-    },
-    {
-      "src": "/icon-192.png",
-      "type": "image/png",
-      "sizes": "192x192",
-      "purpose": "any maskable"
-    },
-    {
-      "src": "/icon-512.png",
-      "type": "image/png",
-      "sizes": "512x512",
-      "purpose": "any maskable"
-    }
-  ],
-  "categories": ["business", "education", "productivity"],
-  "screenshots": [],
-  "shortcuts": [
-    {
-      "name": "Dashboard",
-      "url": "/",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
-    },
-    {
-      "name": "Alunos",
-      "url": "/alunos",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
-    },
-    {
-      "name": "Calendário",
-      "url": "/calendario",
-      "icons": [{ "src": "/favicon.ico", "sizes": "96x96" }]
     }
   ],
   "prefer_related_applications": false

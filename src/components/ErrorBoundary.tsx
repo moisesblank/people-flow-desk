@@ -54,6 +54,32 @@ export class ErrorBoundary extends Component<Props, State> {
     window.location.href = '/';
   };
 
+  // ⚡ SYNAPSE v7.0: Black Screen Gate - Recarregar sem cache
+  handleReloadNoCache = async () => {
+    try {
+      // Limpar todos os caches
+      if ('caches' in window) {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => caches.delete(k)));
+      }
+      
+      // Limpar Service Workers
+      if ('serviceWorker' in navigator) {
+        const regs = await navigator.serviceWorker.getRegistrations();
+        await Promise.all(regs.map(r => r.unregister()));
+      }
+      
+      // Recarregar com kill-switch
+      const url = new URL(window.location.href);
+      url.searchParams.set('nocache', '1');
+      url.searchParams.set('ts', Date.now().toString());
+      window.location.replace(url.toString());
+    } catch {
+      // Fallback: reload simples
+      window.location.reload();
+    }
+  };
+
   render() {
     if (this.state.hasError) {
       if (this.props.fallback) {
@@ -86,7 +112,7 @@ export class ErrorBoundary extends Component<Props, State> {
             </div>
           )}
 
-          <div className="flex gap-3">
+          <div className="flex flex-col sm:flex-row gap-3">
             <Button 
               onClick={this.handleRetry} 
               className="gap-2"
@@ -101,6 +127,15 @@ export class ErrorBoundary extends Component<Props, State> {
             >
               <Home className="w-4 h-4" />
               Ir para início
+            </Button>
+            {/* ⚡ SYNAPSE v7.0: Black Screen Gate */}
+            <Button 
+              variant="destructive" 
+              onClick={this.handleReloadNoCache}
+              className="gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Limpar cache e recarregar
             </Button>
           </div>
         </div>

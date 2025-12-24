@@ -26,6 +26,9 @@ import { DeviceGuard } from "@/components/security/DeviceGuard";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 
+// ⚡ SYNAPSE v7.0: Black Screen Gate - ErrorBoundary global
+import { ErrorBoundary } from "@/components/ErrorBoundary";
+
 // ⚡ DOGMA V: QueryClient otimizado com cache sagrado
 import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
 
@@ -330,27 +333,30 @@ const AppContent = memo(() => {
 AppContent.displayName = 'AppContent';
 
 // ⚡ App Principal - Estrutura de providers otimizada
+// ⚡ SYNAPSE v7.0: ErrorBoundary global para Black Screen Gate (Gate G2)
 const App = memo(() => (
-  <QueryClientProvider client={queryClient}>
-    <AuthProvider>
-      <LiveSheetProvider>
-        <ReactiveFinanceProvider>
-          <GodModeProvider>
-            <DuplicationClipboardProvider>
-              <TooltipProvider>
-                <Toaster />
-                <Sonner />
-                <BrowserRouter>
-                  <AppContent />
-                  <DuplicationClipboardIndicator />
-                </BrowserRouter>
-              </TooltipProvider>
-            </DuplicationClipboardProvider>
-          </GodModeProvider>
-        </ReactiveFinanceProvider>
-      </LiveSheetProvider>
-    </AuthProvider>
-  </QueryClientProvider>
+  <ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <LiveSheetProvider>
+          <ReactiveFinanceProvider>
+            <GodModeProvider>
+              <DuplicationClipboardProvider>
+                <TooltipProvider>
+                  <Toaster />
+                  <Sonner />
+                  <BrowserRouter>
+                    <AppContent />
+                    <DuplicationClipboardIndicator />
+                  </BrowserRouter>
+                </TooltipProvider>
+              </DuplicationClipboardProvider>
+            </GodModeProvider>
+          </ReactiveFinanceProvider>
+        </LiveSheetProvider>
+      </AuthProvider>
+    </QueryClientProvider>
+  </ErrorBoundary>
 ));
 App.displayName = 'App';
 
