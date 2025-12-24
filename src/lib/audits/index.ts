@@ -8,5 +8,6 @@ export * from './AUDIT_SECTION_2';
 export * from './AUDIT_SECTION_3';
 export * from './AUDIT_SECTION_4';
 export * from './AUDIT_SECTION_5';
+export * from './AUDIT_SECTION_6';
 export * from './AUDIT_SECTIONS_5_10';
 export * from './RELATORIO_FINAL';
