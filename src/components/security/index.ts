@@ -294,9 +294,12 @@ export {
   markAsProcessed,
   checkWebhookRateLimit,
   
-  // Verificadores específicos
+  // Verificadores específicos por provider
   verifyHotmartWebhook,
   verifyStripeWebhook,
+  verifyWhatsAppWebhook,
+  verifyWordPressWebhook,
+  verifyPandaWebhook,
   
   // Configuração
   WEBHOOK_CONFIG,
