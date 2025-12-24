@@ -27,6 +27,40 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // ========================================
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
+    // Queue-worker só pode ser chamado internamente
+    // ========================================
+    const internalSecret = req.headers.get('x-internal-secret');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isInternalCall = 
+      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
+      userAgent.includes('Deno/') ||
+      userAgent.includes('supabase-js/');
+
+    if (!isInternalCall) {
+      console.log('[QUEUE-WORKER] ❌ BLOQUEADO: Chamada externa não autorizada');
+      
+      await supabase.from('security_events').insert({
+        event_type: 'QUEUE_WORKER_EXTERNAL_CALL',
+        severity: 'critical',
+        description: 'Tentativa de chamada externa ao queue-worker bloqueada',
+        payload: {
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+          user_agent: userAgent.substring(0, 255)
+        }
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Acesso restrito a chamadas internas' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('[QUEUE-WORKER] ✅ Chamada interna autorizada');
+
     let body: { queue_id?: string; batch_mode?: boolean } = {};
     try {
       body = await req.json();

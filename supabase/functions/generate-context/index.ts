@@ -46,6 +46,45 @@ serve(async (req) => {
   const startTime = Date.now();
 
   try {
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // ========================================
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
+    // generate-context só pode ser chamado internamente (IAs)
+    // ========================================
+    const internalSecret = req.headers.get('x-internal-secret');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isInternalCall = 
+      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
+      userAgent.includes('Deno/') ||
+      userAgent.includes('supabase-js/');
+
+    if (!isInternalCall) {
+      console.log('[GENERATE-CONTEXT] ❌ BLOQUEADO: Chamada externa não autorizada');
+      
+      await supabase.from('security_events').insert({
+        event_type: 'GENERATE_CONTEXT_EXTERNAL_CALL',
+        severity: 'warning',
+        description: 'Tentativa de geração de contexto via chamada externa bloqueada',
+        payload: {
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+          user_agent: userAgent.substring(0, 255)
+        }
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Acesso restrito a chamadas internas' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log('[GENERATE-CONTEXT] ✅ Chamada interna autorizada');
+
     const { userId } = await req.json();
     
     if (!userId) {
@@ -54,11 +93,6 @@ serve(async (req) => {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' }
       });
     }
-
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL')!,
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
 
     console.log(`🧠 Gerando contexto preditivo para: ${userId}`);
 

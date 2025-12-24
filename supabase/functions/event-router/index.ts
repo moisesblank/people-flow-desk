@@ -40,6 +40,40 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // ========================================
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
+    // Event-router só pode ser chamado internamente
+    // ========================================
+    const internalSecret = req.headers.get('x-internal-secret');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isInternalCall = 
+      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
+      userAgent.includes('Deno/') ||
+      userAgent.includes('supabase-js/');
+
+    if (!isInternalCall) {
+      console.log('[EVENT-ROUTER] ❌ BLOQUEADO: Chamada externa não autorizada');
+      
+      await supabaseAdmin.from('security_events').insert({
+        event_type: 'EVENT_ROUTER_EXTERNAL_CALL',
+        severity: 'critical',
+        description: 'Tentativa de chamada externa ao event-router bloqueada',
+        payload: {
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+          user_agent: userAgent.substring(0, 255)
+        }
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Acesso restrito a chamadas internas' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log('[EVENT-ROUTER] ✅ Chamada interna autorizada');
+
     // Registrar este consumidor
     const consumerId = "event-router-main";
     await supabaseAdmin.from("event_consumers").upsert({
