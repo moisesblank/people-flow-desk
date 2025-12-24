@@ -143,7 +143,8 @@ export const ProfessorSection = () => {
                     transition={{ duration: 2, repeat: Infinity }}
                   >
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
-                      <img src={logoMoises} alt="Logo" className="w-9 h-9 object-contain" />
+                      {/* 🚀 OTIMIZAÇÃO: width/height explícitos */}
+                      <img src={logoMoises} alt="Logo" width={36} height={36} className="w-9 h-9 object-contain" loading="lazy" decoding="async" />
                     </div>
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center border border-black">
                       <CheckCircle2 className="w-2.5 h-2.5 text-white" />
