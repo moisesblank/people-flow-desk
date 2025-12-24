@@ -18,8 +18,8 @@ interface Verify2FARequest {
   code: string;
 }
 
-// Proteção brute-force: máximo 10 tentativas em 15 minutos - CORREÇÃO EMERGENCIAL
-const MAX_ATTEMPTS = 10;
+// Proteção brute-force: máximo 5 tentativas em 15 minutos
+const MAX_ATTEMPTS = 5;
 const LOCKOUT_WINDOW = 15 * 60 * 1000; // 15 minutos
 
 const handler = async (req: Request): Promise<Response> => {
