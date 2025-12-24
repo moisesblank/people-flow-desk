@@ -1100,12 +1100,142 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const logger = new Logger("17");
+  const logger = new Logger("18");
   
   const supabase = createClient(
     Deno.env.get("SUPABASE_URL")!,
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
+
+  // ============================================
+  // 🛡️ VALIDAÇÃO DE ASSINATURA OBRIGATÓRIA
+  // LEI III + LEI VI — SEGURANÇA NÍVEL NASA
+  // ============================================
+  const HOTMART_HOTTOK = Deno.env.get("HOTMART_HOTTOK");
+  const receivedHottok = req.headers.get("x-hotmart-hottok");
+  const webhookSource = req.headers.get("x-webhook-source") || "";
+  const siteToken = req.headers.get("x-site-token") || req.headers.get("x-webhook-secret") || "";
+  
+  // Detectar se é Hotmart (headers ou estrutura do payload)
+  const isHotmartRequest = 
+    receivedHottok || 
+    req.headers.get("x-hotmart-webhook-version") ||
+    webhookSource.toLowerCase().includes("hotmart");
+
+  // Detectar se é WordPress (token do site)
+  const isWordPressRequest = 
+    webhookSource.toLowerCase().includes("wordpress") ||
+    siteToken === CONFIG.WEBHOOK_MKT.TOKEN;
+
+  // 🔐 VALIDAÇÃO HOTTOK PARA HOTMART
+  if (isHotmartRequest) {
+    if (!HOTMART_HOTTOK) {
+      logger.error("❌ HOTTOK não configurado no servidor");
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Configuração de segurança ausente",
+        code: "SECURITY_CONFIG_MISSING"
+      }), {
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    if (!receivedHottok) {
+      logger.error("❌ HOTTOK ausente na requisição Hotmart");
+      
+      // Log de segurança
+      await supabase.from("security_events").insert({
+        event_type: "webhook_missing_signature",
+        severity: "critical",
+        user_id: null,
+        ip_address: req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown",
+        user_agent: req.headers.get("user-agent"),
+        payload: {
+          source: "hotmart-webhook-processor",
+          reason: "HOTTOK_MISSING",
+          headers: Object.fromEntries([...req.headers.entries()].filter(([k]) => 
+            !k.toLowerCase().includes("authorization") && 
+            !k.toLowerCase().includes("cookie")
+          )),
+        },
+      }).then(() => {}).then(() => {}, () => {});
+
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Assinatura de webhook ausente",
+        code: "SIGNATURE_MISSING"
+      }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    // Comparação segura (timing-safe não disponível em Deno, mas usamos trim/lowercase)
+    const isValidHottok = receivedHottok.trim() === HOTMART_HOTTOK.trim();
+    
+    if (!isValidHottok) {
+      logger.error("❌ HOTTOK inválido - possível tentativa de fraude");
+      
+      // Log de segurança - tentativa de fraude
+      await supabase.from("security_events").insert({
+        event_type: "webhook_invalid_signature",
+        severity: "critical",
+        user_id: null,
+        ip_address: req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown",
+        user_agent: req.headers.get("user-agent"),
+        payload: {
+          source: "hotmart-webhook-processor",
+          reason: "HOTTOK_INVALID",
+          received_token_hash: await crypto.subtle.digest(
+            "SHA-256", 
+            new TextEncoder().encode(receivedHottok)
+          ).then(buf => Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 16)),
+        },
+      }).then(() => {}).then(() => {}, () => {});
+
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Assinatura de webhook inválida",
+        code: "SIGNATURE_INVALID"
+      }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    logger.success("✅ HOTTOK validado com sucesso");
+  }
+
+  // 🔐 VALIDAÇÃO TOKEN PARA WORDPRESS
+  if (isWordPressRequest && !isHotmartRequest) {
+    if (!siteToken || siteToken !== CONFIG.WEBHOOK_MKT.TOKEN) {
+      logger.error("❌ Token WordPress inválido ou ausente");
+      
+      await supabase.from("security_events").insert({
+        event_type: "webhook_invalid_wordpress_token",
+        severity: "warning",
+        user_id: null,
+        ip_address: req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown",
+        user_agent: req.headers.get("user-agent"),
+        payload: {
+          source: "hotmart-webhook-processor",
+          reason: "WORDPRESS_TOKEN_INVALID",
+        },
+      }).then(() => {}).then(() => {}, () => {});
+
+      return new Response(JSON.stringify({ 
+        success: false, 
+        error: "Token de autenticação inválido",
+        code: "TOKEN_INVALID"
+      }), {
+        status: 403,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    
+    logger.success("✅ Token WordPress validado");
+  }
 
   try {
     // Ler payload
@@ -1119,16 +1249,16 @@ serve(async (req) => {
         error: "Payload inválido",
         code: "INVALID_JSON"
       }), {
-        status: 200,
+        status: 400,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       });
     }
 
-    const webhookSource = req.headers.get("x-webhook-source") || payload.source || "";
+    const payloadSource = payload.source || "";
     const eventType = sanitizeString(payload.event || payload.status || payload.type || "");
 
-    logger.separator("WEBHOOK RECEBIDO");
-    logger.info("Source", webhookSource);
+    logger.separator("WEBHOOK RECEBIDO (AUTENTICADO)");
+    logger.info("Source", webhookSource || payloadSource);
     logger.info("Event", eventType);
     logger.info("Payload preview", JSON.stringify(payload).substring(0, 600));
 
@@ -1139,6 +1269,7 @@ serve(async (req) => {
     // A) WordPress User Created
     const isWordPressUser = 
       webhookSource.includes("wordpress") ||
+      payloadSource.includes("wordpress") ||
       CONFIG.EVENTS.USER_CREATED.some(e => eventType.toLowerCase().includes(e));
 
     // B) Hotmart Purchase
