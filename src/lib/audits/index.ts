@@ -1,4 +1,14 @@
 // ============================================
+// 🔥 AUDITORIA CENTRAL — ÍNDICE DE SEÇÕES
+// ATUALIZADO: 24/12/2024
+// ============================================
+
+export * from "./AUDIT_SECTION_5";
+export * from "./AUDIT_SECTION_6";
+export * from "./AUDIT_SECTION_7";
+export * from "./AUDIT_SECTION_8";
+
+// ============================================
 // 🔥 AUDITS INDEX — ENA // SYNAPSE Ω∞
 // Centraliza todos os relatórios de auditoria
 // ============================================
