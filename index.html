@@ -8,7 +8,8 @@
     <meta name="keywords" content="curso química, ENEM, vestibular, medicina, Moisés Medeiros, química orgânica, físico-química, aulas online" />
     <meta name="author" content="Prof. Moisés Medeiros" />
     <meta name="robots" content="index, follow" />
-    <meta name="theme-color" content="#8B1538" />
+    <!-- Art. 36° LEI V: theme-color consistente com manifest.json -->
+    <meta name="theme-color" content="#EC4899" />
     <meta name="color-scheme" content="dark light" />
 
     <!-- Open Graph / Facebook -->
@@ -73,10 +74,10 @@
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fyikfsasudgzsjmumdlw.supabase.co" crossorigin />
     
-    <!-- DNS Prefetch for secondary resources -->
+    <!-- Art. 33° LEI V: DNS Prefetch obrigatório para Supabase -->
+    <link rel="dns-prefetch" href="https://fyikfsasudgzsjmumdlw.supabase.co" />
     <link rel="dns-prefetch" href="//fonts.googleapis.com" />
     <link rel="dns-prefetch" href="//api.fontshare.com" />
-    <link rel="dns-prefetch" href="//fyikfsasudgzsjmumdlw.supabase.co" />
     
     <!-- ============================================
          DOGMA I + TESE 1.4: FONTES OTIMIZADAS
@@ -168,14 +169,23 @@
         }
       }, 5000);
       
-      // 🧹 CLEANUP: Remove Service Workers antigos que podem causar problemas de cache
-      if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-          for (var i = 0; i < registrations.length; i++) {
-            registrations[i].unregister();
-          }
+      // ============================================
+      // 🏛️ LEI V Art. 4° - LIMPEZA OBRIGATÓRIA DE SW
+      // PROIBIÇÃO ABSOLUTA de Service Workers
+      // ============================================
+      if('serviceWorker' in navigator){
+        navigator.serviceWorker.getRegistrations().then(function(r){
+          r.forEach(function(s){s.unregister();});
         });
+        if('caches' in window){
+          caches.keys().then(function(k){
+            k.forEach(function(c){caches.delete(c);});
+          });
+        }
       }
     </script>
+    
+    <!-- Art. 41° LEI V: noscript OBRIGATÓRIO -->
+    <noscript>Ative o JavaScript para usar o sistema.</noscript>
   </body>
 </html>
