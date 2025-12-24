@@ -118,14 +118,15 @@ export const ProtectedPDFViewer = memo(({
   const [error, setError] = useState<string | null>(null);
 
   // ============================================
-  // BLOQUEIO DE INTERAÇÕES
+  // BLOQUEIO DE INTERAÇÕES - TODOS OS DISPOSITIVOS
+  // Desktop + Mobile (iOS/Android/Tablet)
   // ============================================
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
 
-    // Bloquear menu de contexto
-    const blockContextMenu = (e: MouseEvent) => {
+    // Bloquear menu de contexto (Desktop + Mobile long-press)
+    const blockContextMenu = (e: MouseEvent | TouchEvent) => {
       e.preventDefault();
       e.stopPropagation();
       onDownloadAttempt?.();
@@ -172,11 +173,59 @@ export const ProtectedPDFViewer = memo(({
       return false;
     };
 
+    // ============================================
+    // 📱 BLOQUEIOS ESPECÍFICOS PARA MOBILE/TOUCH
+    // ============================================
+    
+    // Long-press blocking para mobile
+    let longPressTimer: NodeJS.Timeout | null = null;
+    const handleTouchStart = (e: TouchEvent) => {
+      // Multi-touch = possível screenshot gesture
+      if (e.touches.length >= 3) {
+        e.preventDefault();
+        onDownloadAttempt?.();
+      }
+      
+      longPressTimer = setTimeout(() => {
+        onDownloadAttempt?.();
+      }, 400);
+    };
+    
+    const handleTouchEnd = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    };
+    
+    const handleTouchMove = () => {
+      if (longPressTimer) {
+        clearTimeout(longPressTimer);
+        longPressTimer = null;
+      }
+    };
+    
+    // iOS Gesture blocking
+    const handleGesture = (e: Event) => {
+      e.preventDefault();
+      onDownloadAttempt?.();
+    };
+
+    // Desktop events
     container.addEventListener('contextmenu', blockContextMenu);
     container.addEventListener('selectstart', blockSelect);
     container.addEventListener('copy', blockCopy);
     container.addEventListener('dragstart', blockDrag);
     window.addEventListener('keydown', blockShortcuts);
+    
+    // Touch/Mobile events
+    container.addEventListener('touchstart', handleTouchStart, { capture: true, passive: false });
+    container.addEventListener('touchend', handleTouchEnd, { capture: true });
+    container.addEventListener('touchmove', handleTouchMove, { capture: true });
+    
+    // iOS gestures
+    container.addEventListener('gesturestart', handleGesture, { capture: true });
+    container.addEventListener('gesturechange', handleGesture, { capture: true });
 
     // Desabilitar impressão via CSS
     const style = document.createElement('style');
@@ -186,22 +235,34 @@ export const ProtectedPDFViewer = memo(({
           display: none !important;
         }
         body::after {
-          content: "Impressão não permitida - Documento protegido";
+          content: "⚠️ IMPRESSÃO BLOQUEADA ⚠️ - Documento protegido por Prof. Moisés Medeiros";
           display: block;
           font-size: 24px;
           text-align: center;
           padding: 50px;
+          color: #dc2626;
+          font-weight: bold;
         }
       }
     `;
     document.head.appendChild(style);
 
     return () => {
+      // Desktop cleanup
       container.removeEventListener('contextmenu', blockContextMenu);
       container.removeEventListener('selectstart', blockSelect);
       container.removeEventListener('copy', blockCopy);
       container.removeEventListener('dragstart', blockDrag);
       window.removeEventListener('keydown', blockShortcuts);
+      
+      // Touch/Mobile cleanup
+      container.removeEventListener('touchstart', handleTouchStart, { capture: true });
+      container.removeEventListener('touchend', handleTouchEnd, { capture: true });
+      container.removeEventListener('touchmove', handleTouchMove, { capture: true });
+      container.removeEventListener('gesturestart', handleGesture, { capture: true });
+      container.removeEventListener('gesturechange', handleGesture, { capture: true });
+      
+      if (longPressTimer) clearTimeout(longPressTimer);
       document.head.removeChild(style);
     };
   }, [onDownloadAttempt]);
@@ -240,7 +301,10 @@ export const ProtectedPDFViewer = memo(({
         WebkitUserSelect: 'none',
         MozUserSelect: 'none',
         msUserSelect: 'none',
-      }}
+        WebkitTouchCallout: 'none',
+        WebkitTapHighlightColor: 'transparent',
+        touchAction: 'manipulation',
+      } as React.CSSProperties}
     >
       {/* Header com controles */}
       <div className="flex items-center justify-between p-3 bg-muted/50 border-b border-border">
