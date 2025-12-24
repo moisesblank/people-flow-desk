@@ -1,28 +1,43 @@
 // ============================================
-// 🛡️ Ω3: BOOK PAGE SIGNED URL v2.0
-// TTL CURTO (30s) + FINGERPRINT + LOGGING
+// 🛡️ Ω3: BOOK PAGE SIGNED URL v3.0
+// TTL CURTO (30s) + CORS SEGURO + DUAL CLIENT
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/corsConfig.ts";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 const URL_TTL_SECONDS = 30; // TTL curto para segurança
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-device-fingerprint",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Cache-Control": "no-store, no-cache, must-revalidate",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-};
+// Rate limit em memória
+const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
+const RATE_LIMIT = { limit: 60, windowMs: 60000 }; // 60 req/min
+
+function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
+  const now = Date.now();
+  const entry = rateLimitCache.get(userId);
+  
+  if (!entry || entry.resetAt < now) {
+    rateLimitCache.set(userId, { count: 1, resetAt: now + RATE_LIMIT.windowMs });
+    return { allowed: true };
+  }
+  
+  entry.count++;
+  if (entry.count > RATE_LIMIT.limit) {
+    return { allowed: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
+  }
+  return { allowed: true };
+}
 
 serve(async (req: Request) => {
+  // CORS seguro com allowlist
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+  
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     const authHeader = req.headers.get("Authorization");
@@ -43,6 +58,27 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({ success: false, error: "Token inválido" }),
         { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    // Rate limit por usuário
+    const rateCheck = checkRateLimit(user.id);
+    if (!rateCheck.allowed) {
+      console.warn(`[Book Page URL] 🚫 Rate limit excedido: ${user.email}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Muitas requisições. Aguarde.", 
+          retryAfter: rateCheck.retryAfter 
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "Retry-After": String(rateCheck.retryAfter)
+          } 
+        }
       );
     }
 

@@ -1,23 +1,29 @@
 // ============================================
-// 🛡️ SEND EMAIL v2.0 - COM JWT + RATE LIMIT
+// 🛡️ SEND EMAIL v3.0 - DUAL CLIENT + CORS SEGURO
 // LEI III + LEI VI — SEGURANÇA NÍVEL NASA
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, isOriginAllowed, handleCorsOptions } from "../_shared/corsConfig.ts";
 
 // Rate limit: máximo 10 emails por usuário por hora
 const RATE_LIMIT_WINDOW_MS = 60 * 60 * 1000; // 1 hora
 const RATE_LIMIT_MAX = 10;
 
 serve(async (req) => {
+  // CORS seguro com allowlist
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
+  }
+  
+  const corsHeaders = getCorsHeaders(req);
+  const origin = req.headers.get('Origin');
+  
+  // Bloquear origens não permitidas (exceto webhooks internos)
+  if (origin && !isOriginAllowed(origin)) {
+    console.warn(`[Send Email] 🚫 Origem bloqueada: ${origin}`);
+    // Não bloquear completamente pois pode ser chamada interna
   }
 
   const supabase = createClient(

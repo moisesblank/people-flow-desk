@@ -4,29 +4,45 @@
 // ============================================
 
 /**
- * Domínios permitidos (ALLOWLIST)
- * Adicionar novos domínios aqui conforme necessário
+ * Domínios permitidos (ALLOWLIST) - LEI VI + Seção 5.1
+ * ⚠️ PROIBIDO: Access-Control-Allow-Origin: * em endpoints do browser
  */
 export const ALLOWED_ORIGINS = [
-  // Produção
+  // ═══════════════════════════════════════════════════════
+  // PRODUÇÃO - Mapa de URLs definitivo (Seção 1.1)
+  // ═══════════════════════════════════════════════════════
+  
+  // 👑 OWNER/FUNCIONÁRIO - Gestão
   'https://gestao.moisesmedeiros.com.br',
+  
+  // 👨‍🎓 ALUNO BETA + NÃO PAGANTE - Plataforma de Alunos
   'https://pro.moisesmedeiros.com.br',
+  
+  // 🌐 Site Principal
   'https://moisesmedeiros.com.br',
   'https://www.moisesmedeiros.com.br',
   
-  // Lovable Preview/Deploy
+  // ═══════════════════════════════════════════════════════
+  // LOVABLE - Preview/Deploy (LEI VI - IMUNIDADE OMEGA)
+  // ═══════════════════════════════════════════════════════
   'https://lovable.dev',
   'https://lovable.app',
   
-  // Supabase
+  // ═══════════════════════════════════════════════════════
+  // SUPABASE - Backend (LEI VI - IMUNIDADE OMEGA)
+  // ═══════════════════════════════════════════════════════
   'https://fyikfsasudgzsjmumdlw.supabase.co',
   
-  // Desenvolvimento local
+  // ═══════════════════════════════════════════════════════
+  // DESENVOLVIMENTO LOCAL (somente dev)
+  // ═══════════════════════════════════════════════════════
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:8080',
+  'http://localhost:8000',
   'http://127.0.0.1:3000',
   'http://127.0.0.1:5173',
+  'http://127.0.0.1:8080',
 ];
 
 /**

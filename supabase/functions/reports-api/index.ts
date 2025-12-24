@@ -1,24 +1,23 @@
 // ============================================
-// 🛡️ TRAMON v10.0 - REPORTS API (O Bibliotecário)
-// LEI III + LEI VI — SEGURANÇA COM JWT + ROLE CHECK
+// 🛡️ TRAMON v11.0 - REPORTS API (O Bibliotecário)
+// LEI III + LEI VI — CORS SEGURO + DUAL CLIENT
 // Propósito: Endpoints seguros para dashboards e auditoria
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
+import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
 // Roles permitidas para acessar relatórios
 const ALLOWED_ROLES = ['owner', 'admin', 'funcionario'];
 
 serve(async (req) => {
+  // CORS seguro com allowlist
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+  
+  const corsHeaders = getCorsHeaders(req);
 
   const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL')!,
