@@ -11525,6 +11525,56 @@ export type Database = {
           },
         ]
       }
+      user_book_annotations: {
+        Row: {
+          annotation_blob: string
+          book_id: string
+          color: string | null
+          created_at: string
+          id: string
+          page_number: number
+          stroke_width: number | null
+          tool_used: string | null
+          updated_at: string
+          user_id: string
+          version: number
+        }
+        Insert: {
+          annotation_blob: string
+          book_id: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          page_number: number
+          stroke_width?: number | null
+          tool_used?: string | null
+          updated_at?: string
+          user_id: string
+          version?: number
+        }
+        Update: {
+          annotation_blob?: string
+          book_id?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          page_number?: number
+          stroke_width?: number | null
+          tool_used?: string | null
+          updated_at?: string
+          user_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_book_annotations_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_book_progress: {
         Row: {
           book_id: string
@@ -12455,6 +12505,75 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      web_book_chat_messages: {
+        Row: {
+          book_id: string
+          context_text: string | null
+          created_at: string
+          deleted_at: string | null
+          deleted_by: string | null
+          id: string
+          is_ai_response: boolean
+          is_deleted: boolean
+          is_pinned: boolean
+          message: string
+          message_type: string
+          meta: Json
+          page_number: number | null
+          reply_to: string | null
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          context_text?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          is_ai_response?: boolean
+          is_deleted?: boolean
+          is_pinned?: boolean
+          message: string
+          message_type?: string
+          meta?: Json
+          page_number?: number | null
+          reply_to?: string | null
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          context_text?: string | null
+          created_at?: string
+          deleted_at?: string | null
+          deleted_by?: string | null
+          id?: string
+          is_ai_response?: boolean
+          is_deleted?: boolean
+          is_pinned?: boolean
+          message?: string
+          message_type?: string
+          meta?: Json
+          page_number?: number | null
+          reply_to?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "web_book_chat_messages_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "web_book_chat_messages_reply_to_fkey"
+            columns: ["reply_to"]
+            isOneToOne: false
+            referencedRelation: "web_book_chat_messages"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       web_book_pages: {
         Row: {
