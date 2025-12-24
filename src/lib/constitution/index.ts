@@ -1,8 +1,9 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
 // ║                                                                              ║
-// ║   🏛️ CONSTITUIÇÃO SYNAPSE - ÍNDICE GERAL v8.0                               ║
+// ║   🏛️ CONSTITUIÇÃO SYNAPSE - ÍNDICE GERAL v8.1 OMEGA DEFINITIVA             ║
 // ║   7 LEIS SOBERANAS DO SISTEMA TOTALMENTE INTEGRADAS                         ║
 // ║   OWNER SOBERANO: MOISESBLANK@GMAIL.COM                                     ║
+// ║   ATUALIZADO: 2024-12-24 | 502+ ARTIGOS TOTAIS                              ║
 // ║                                                                              ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
 
@@ -167,6 +168,7 @@ export function checkConstitutionStatus(): {
   totalArticles: number;
   version: string;
   owner: string;
+  lastUpdate: string;
 } {
   const laws = [
     {
@@ -180,9 +182,9 @@ export function checkConstitutionStatus(): {
       active: true,
     },
     {
-      name: 'LEI III - Segurança',
-      articles: 43,
-      active: true,
+      name: 'LEI III - Segurança Soberana v3.0',
+      articles: LEI_III_ART,
+      active: LEI_III_ACT,
     },
     {
       name: 'LEI IV - SNA OMEGA (PhD)',
@@ -210,8 +212,9 @@ export function checkConstitutionStatus(): {
     active: laws.every(l => l.active),
     laws,
     totalArticles: laws.reduce((a, b) => a + b.articles, 0),
-    version: 'v7.0',
+    version: 'v8.1 OMEGA DEFINITIVA',
     owner: 'MOISESBLANK@GMAIL.COM',
+    lastUpdate: '2024-12-24',
   };
 }
 
