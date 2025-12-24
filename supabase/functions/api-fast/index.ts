@@ -1,26 +1,29 @@
 // ============================================
 // MOISÉS MEDEIROS - API FAST v1.0
 // Edge Function otimizada com cache em memória
+// LEI VI COMPLIANCE: CORS Allowlist
 // ============================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 // Cache em memória
 const cache = new Map<string, { data: unknown; ts: number }>()
 const CACHE_TTL = 60000 // 1 minuto
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-}
-
 serve(async (req) => {
   // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return handleCorsOptions(req);
   }
+
+  const origin = req.headers.get("Origin");
+  if (!isOriginAllowed(origin)) {
+    return corsBlockedResponse(origin);
+  }
+
+  const corsHeaders = getCorsHeaders(req);
 
   const url = new URL(req.url)
   const path = url.pathname.replace('/api-fast', '')
@@ -56,7 +59,6 @@ serve(async (req) => {
     switch (path) {
       case '/dashboard':
       case '/dashboard-stats': {
-        // Tentar view materializada primeiro
         const { data: mvStats, error: mvError } = await supabase
           .from('mv_dashboard_stats_v2')
           .select('*')
@@ -65,7 +67,6 @@ serve(async (req) => {
         if (!mvError && mvStats) {
           data = mvStats
         } else {
-          // Fallback para função cached
           const { data: cachedStats } = await supabase.rpc('get_cached_dashboard_stats')
           data = cachedStats || {
             alunos_ativos: 0,
@@ -104,7 +105,7 @@ serve(async (req) => {
 
       case '/entradas': {
         const limit = url.searchParams.get('limit') || '50'
-        const mes = url.searchParams.get('mes') // formato: YYYY-MM
+        const mes = url.searchParams.get('mes')
 
         let query = supabase
           .from('entradas')
@@ -186,10 +187,8 @@ serve(async (req) => {
       }
 
       case '/refresh-stats': {
-        // Força refresh da view materializada
         await supabase.rpc('refresh_dashboard_stats')
         data = { refreshed: true, timestamp: new Date().toISOString() }
-        // Limpar cache do dashboard
         cache.delete('GET:/dashboard')
         cache.delete('GET:/dashboard-stats')
         break

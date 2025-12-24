@@ -1,10 +1,12 @@
 // ============================================
 // 🌌🔥 BOOK CHAT AI — EDGE FUNCTION NÍVEL NASA 🔥🌌
 // ANO 2300 — CHAT INTEGRADO COM IA PARA LIVRO WEB
+// LEI VI COMPLIANCE: CORS Allowlist
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 // ============================================
 // CONSTANTES
@@ -12,15 +14,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const MAX_MESSAGE_LENGTH = 2000;
 const MAX_HISTORY_MESSAGES = 10;
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
-// ============================================
-// CORS HEADERS
-// ============================================
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
 
 // ============================================
 // TIPOS
@@ -71,10 +64,16 @@ Prof. Moisés Medeiros - moisesmedeiros.com.br`;
 // FUNÇÃO PRINCIPAL
 // ============================================
 serve(async (req: Request) => {
-  // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+
+  const origin = req.headers.get("Origin");
+  if (!isOriginAllowed(origin)) {
+    return corsBlockedResponse(origin);
+  }
+
+  const corsHeaders = getCorsHeaders(req);
 
   if (req.method !== "POST") {
     return new Response(
@@ -348,7 +347,7 @@ Prof. Moisés Medeiros`;
     
     return new Response(
       JSON.stringify({ success: false, error: "Erro interno do servidor", errorCode: "SERVER_ERROR" }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

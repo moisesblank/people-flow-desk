@@ -1,11 +1,12 @@
 // ============================================
-// 🌌🔥 GENESIS BOOK UPLOAD — EDGE FUNCTION NÍVEL NASA 🔥🌌
-// ANO 2300 — IMPORTAÇÃO DE PDF PARA LIVRO WEB
-// ESTE É O PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
+// 🌌🔥 GENESIS BOOK UPLOAD v2.0 — SIGNED URL PATTERN 🔥🌌
+// CORRIGIDO: Sem OOM risk — Upload direto para Storage
+// LEI VI COMPLIANCE: CORS Allowlist
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 // ============================================
 // CONSTANTES
@@ -14,21 +15,24 @@ const OWNER_EMAIL = "moisesblank@gmail.com";
 const RAW_BUCKET = "ena-assets-raw";
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 const ALLOWED_MIME_TYPES = ["application/pdf", "application/epub+zip"];
-
-// ============================================
-// CORS HEADERS
-// ============================================
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-  "X-Content-Type-Options": "nosniff",
-};
+const SIGNED_URL_EXPIRY = 3600; // 1 hora para upload
 
 // ============================================
 // TIPOS
 // ============================================
-interface UploadResponse {
+interface UploadInitResponse {
+  success: boolean;
+  phase: "init" | "complete";
+  bookId?: string;
+  uploadUrl?: string;
+  uploadPath?: string;
+  expiresAt?: string;
+  message?: string;
+  error?: string;
+  errorCode?: string;
+}
+
+interface UploadCompleteResponse {
   success: boolean;
   bookId?: string;
   title?: string;
@@ -64,8 +68,16 @@ const VALID_CATEGORIES = [
 serve(async (req: Request) => {
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+
+  // Validar origem
+  const origin = req.headers.get("Origin");
+  if (!isOriginAllowed(origin)) {
+    return corsBlockedResponse(origin);
+  }
+
+  const corsHeaders = getCorsHeaders(req);
 
   if (req.method !== "POST") {
     return new Response(
@@ -87,13 +99,10 @@ serve(async (req: Request) => {
     }
 
     const token = authHeader.replace("Bearer ", "");
-
-    // Criar cliente Supabase
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Verificar usuário
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     
     if (authError || !user) {
@@ -124,254 +133,305 @@ serve(async (req: Request) => {
     }
 
     // ============================================
-    // 3) PARSE FORMDATA
+    // 3) PARSE REQUEST - DETECTAR FASE
     // ============================================
-    let formData: FormData;
-    try {
-      formData = await req.formData();
-    } catch (err) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Dados de formulário inválidos", errorCode: "BAD_REQUEST" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const file = formData.get("file") as File | null;
-    const title = formData.get("title") as string | null;
-    const subtitle = formData.get("subtitle") as string | null;
-    const description = formData.get("description") as string | null;
-    const author = formData.get("author") as string | null;
-    const category = formData.get("category") as string | null;
-    const tagsRaw = formData.get("tags") as string | null;
-    const isPublished = formData.get("isPublished") === "true";
+    const body = await req.json();
+    const phase = body.phase || "init";
 
     // ============================================
-    // 4) VALIDAÇÕES
+    // FASE 1: INIT - Gerar URL assinada para upload direto
     // ============================================
-    if (!file) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Arquivo PDF é obrigatório", errorCode: "FILE_REQUIRED" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    if (phase === "init") {
+      const { title, subtitle, description, author, category, tags, isPublished, fileName, fileSize, mimeType } = body;
 
-    if (!title || title.trim().length === 0) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Título é obrigatório", errorCode: "TITLE_REQUIRED" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+      // Validações
+      if (!title || title.trim().length === 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Título é obrigatório", errorCode: "TITLE_REQUIRED" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    // Validar tipo de arquivo
-    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Tipo de arquivo não permitido: ${file.type}. Apenas PDF e EPUB.`,
-          errorCode: "INVALID_FILE_TYPE" 
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+      if (!fileName) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Nome do arquivo é obrigatório", errorCode: "FILENAME_REQUIRED" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    // Validar tamanho
-    if (file.size > MAX_FILE_SIZE) {
-      const maxMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
-      return new Response(
-        JSON.stringify({ 
-          success: false, 
-          error: `Arquivo muito grande. Máximo: ${maxMB}MB`,
-          errorCode: "FILE_TOO_LARGE" 
-        }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+      if (!ALLOWED_MIME_TYPES.includes(mimeType)) {
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Tipo de arquivo não permitido: ${mimeType}. Apenas PDF e EPUB.`,
+            errorCode: "INVALID_FILE_TYPE" 
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    // Validar categoria
-    const finalCategory = category && VALID_CATEGORIES.includes(category) ? category : "outros";
+      if (fileSize > MAX_FILE_SIZE) {
+        const maxMB = Math.round(MAX_FILE_SIZE / (1024 * 1024));
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Arquivo muito grande. Máximo: ${maxMB}MB`,
+            errorCode: "FILE_TOO_LARGE" 
+          }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    // Parsear tags
-    const tags = tagsRaw
-      ? tagsRaw.split(",").map(t => t.trim()).filter(Boolean)
-      : [];
+      // Gerar IDs
+      const bookId = crypto.randomUUID();
+      const fileExtension = fileName.split(".").pop()?.toLowerCase() || "pdf";
+      const uploadPath = `${bookId}/original.${fileExtension}`;
+      const slug = title
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-z0-9]+/g, "-")
+        .replace(/^-|-$/g, "")
+        .substring(0, 100);
 
-    // ============================================
-    // 5) GERAR IDs E PATHS
-    // ============================================
-    const bookId = crypto.randomUUID();
-    const jobId = crypto.randomUUID();
-    const fileExtension = file.name.split(".").pop()?.toLowerCase() || "pdf";
-    const filePath = `${bookId}/original.${fileExtension}`;
-    const slug = title
-      .toLowerCase()
-      .normalize("NFD")
-      .replace(/[\u0300-\u036f]/g, "")
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "")
-      .substring(0, 100);
+      // Validar categoria
+      const finalCategory = category && VALID_CATEGORIES.includes(category) ? category : "outros";
 
-    // Gerar checksum
-    const arrayBuffer = await file.arrayBuffer();
-    const hashBuffer = await crypto.subtle.digest("SHA-256", arrayBuffer);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const checksum = hashArray.map(b => b.toString(16).padStart(2, "0")).join("");
+      // Parsear tags
+      const parsedTags = tags
+        ? (Array.isArray(tags) ? tags : tags.split(",").map((t: string) => t.trim()).filter(Boolean))
+        : [];
 
-    // ============================================
-    // 6) UPLOAD PARA BUCKET RAW
-    // ============================================
-    console.log(`[Genesis] Iniciando upload: ${bookId} - ${title}`);
+      console.log(`[Genesis v2] Iniciando upload: ${bookId} - ${title}`);
 
-    const { error: uploadError } = await supabase.storage
-      .from(RAW_BUCKET)
-      .upload(filePath, arrayBuffer, {
-        contentType: file.type,
-        upsert: false,
-      });
+      // ============================================
+      // CRIAR SIGNED URL PARA UPLOAD DIRETO
+      // ============================================
+      const { data: signedData, error: signError } = await supabase.storage
+        .from(RAW_BUCKET)
+        .createSignedUploadUrl(uploadPath);
 
-    if (uploadError) {
-      console.error("[Genesis] Erro upload:", uploadError);
-      return new Response(
-        JSON.stringify({ success: false, error: "Erro ao fazer upload do arquivo", errorCode: "UPLOAD_ERROR" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+      if (signError || !signedData) {
+        console.error("[Genesis v2] Erro ao criar signed URL:", signError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Erro ao gerar URL de upload", errorCode: "SIGNED_URL_ERROR" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    // ============================================
-    // 7) CRIAR REGISTRO DO LIVRO
-    // ============================================
-    const { data: book, error: bookError } = await supabase
-      .from("web_books")
-      .insert({
-        id: bookId,
-        title: title.trim(),
-        subtitle: subtitle?.trim() || null,
-        description: description?.trim() || null,
-        author: author?.trim() || "Prof. Moisés Medeiros",
-        category: finalCategory,
-        tags,
-        original_path: filePath,
-        original_filename: file.name,
-        original_size_bytes: file.size,
-        original_mime_type: file.type,
-        original_checksum: checksum,
-        status: "queued",
-        status_message: "Aguardando processamento",
-        job_id: jobId,
-        is_published: isPublished,
-        created_by: user.id,
-        slug: `${slug}-${bookId.substring(0, 8)}`,
-      })
-      .select()
-      .single();
-
-    if (bookError) {
-      console.error("[Genesis] Erro criar livro:", bookError);
-      
-      // Tentar remover arquivo em caso de erro
-      await supabase.storage.from(RAW_BUCKET).remove([filePath]);
-      
-      return new Response(
-        JSON.stringify({ success: false, error: "Erro ao criar registro do livro", errorCode: "DATABASE_ERROR" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // ============================================
-    // 8) CRIAR JOB NA FILA
-    // ============================================
-    const { error: jobError } = await supabase
-      .from("book_import_jobs")
-      .insert({
-        id: jobId,
-        book_id: bookId,
-        status: "pending",
-        priority: 5,
-        created_by: user.id,
-        output_data: {
-          originalPath: filePath,
-          originalFilename: file.name,
-          originalSize: file.size,
-          checksum,
-        },
-      });
-
-    if (jobError) {
-      console.error("[Genesis] Erro criar job:", jobError);
-    }
-
-    // ============================================
-    // 9) TAMBÉM CRIAR NA FILA SANCTUM (SE EXISTIR)
-    // ============================================
-    try {
-      await supabase
-        .from("sanctum_jobs_queue")
+      // ============================================
+      // CRIAR REGISTRO DO LIVRO (STATUS: pending_upload)
+      // ============================================
+      const { error: bookError } = await supabase
+        .from("web_books")
         .insert({
-          job_type: "transmute_book",
-          asset_id: bookId,
-          input_data: { 
-            bookId, 
-            filePath, 
-            title: title.trim(),
-            category: finalCategory,
-          },
+          id: bookId,
+          title: title.trim(),
+          subtitle: subtitle?.trim() || null,
+          description: description?.trim() || null,
+          author: author?.trim() || "Prof. Moisés Medeiros",
+          category: finalCategory,
+          tags: parsedTags,
+          original_path: uploadPath,
+          original_filename: fileName,
+          original_size_bytes: fileSize,
+          original_mime_type: mimeType,
+          status: "pending_upload",
+          status_message: "Aguardando upload do arquivo",
+          is_published: isPublished || false,
+          created_by: user.id,
+          slug: `${slug}-${bookId.substring(0, 8)}`,
+        });
+
+      if (bookError) {
+        console.error("[Genesis v2] Erro criar registro livro:", bookError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Erro ao criar registro do livro", errorCode: "DATABASE_ERROR" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const expiresAt = new Date(Date.now() + SIGNED_URL_EXPIRY * 1000).toISOString();
+
+      console.log(`[Genesis v2] Signed URL gerada: ${bookId}`);
+
+      // ============================================
+      // RESPOSTA FASE 1: URL para upload
+      // ============================================
+      const response: UploadInitResponse = {
+        success: true,
+        phase: "init",
+        bookId,
+        uploadUrl: signedData.signedUrl,
+        uploadPath,
+        expiresAt,
+        message: "URL de upload gerada. Faça o upload do arquivo diretamente.",
+      };
+
+      return new Response(
+        JSON.stringify(response),
+        { 
+          status: 200, 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "X-Book-Id": bookId,
+          } 
+        }
+      );
+    }
+
+    // ============================================
+    // FASE 2: COMPLETE - Confirmar upload e criar job
+    // ============================================
+    if (phase === "complete") {
+      const { bookId, checksum } = body;
+
+      if (!bookId) {
+        return new Response(
+          JSON.stringify({ success: false, error: "bookId é obrigatório", errorCode: "BOOK_ID_REQUIRED" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Buscar livro
+      const { data: book, error: fetchError } = await supabase
+        .from("web_books")
+        .select("*")
+        .eq("id", bookId)
+        .single();
+
+      if (fetchError || !book) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Livro não encontrado", errorCode: "NOT_FOUND" }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      // Verificar se arquivo foi enviado para o Storage
+      const { data: fileList, error: listError } = await supabase.storage
+        .from(RAW_BUCKET)
+        .list(bookId, { limit: 1 });
+
+      if (listError || !fileList || fileList.length === 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Arquivo não encontrado no storage. Upload não completado.", errorCode: "FILE_NOT_FOUND" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      const jobId = crypto.randomUUID();
+
+      // Atualizar status do livro
+      const { error: updateError } = await supabase
+        .from("web_books")
+        .update({
+          status: "queued",
+          status_message: "Aguardando processamento",
+          job_id: jobId,
+          original_checksum: checksum || null,
+        })
+        .eq("id", bookId);
+
+      if (updateError) {
+        console.error("[Genesis v2] Erro ao atualizar livro:", updateError);
+      }
+
+      // Criar job na fila
+      const { error: jobError } = await supabase
+        .from("book_import_jobs")
+        .insert({
+          id: jobId,
+          book_id: bookId,
           status: "pending",
           priority: 5,
-        });
-    } catch (err) {
-      console.log("[Genesis] Fila sanctum_jobs_queue não disponível");
-    }
-
-    // ============================================
-    // 10) LOGAR EVENTO
-    // ============================================
-    try {
-      await supabase
-        .from("audit_logs")
-        .insert({
-          user_id: user.id,
-          action: "book_upload",
-          table_name: "web_books",
-          record_id: bookId,
-          metadata: {
-            title: title.trim(),
-            category: finalCategory,
-            fileSize: file.size,
-            fileName: file.name,
+          created_by: user.id,
+          output_data: {
+            originalPath: book.original_path,
+            originalFilename: book.original_filename,
+            originalSize: book.original_size_bytes,
+            checksum: checksum || null,
           },
         });
-    } catch {
-      // Ignorar se tabela não existir
+
+      if (jobError) {
+        console.error("[Genesis v2] Erro criar job:", jobError);
+      }
+
+      // Também criar na fila SANCTUM (se existir)
+      try {
+        await supabase
+          .from("sanctum_jobs_queue")
+          .insert({
+            job_type: "transmute_book",
+            asset_id: bookId,
+            input_data: { 
+              bookId, 
+              filePath: book.original_path, 
+              title: book.title,
+              category: book.category,
+            },
+            status: "pending",
+            priority: 5,
+          });
+      } catch {
+        console.log("[Genesis v2] Fila sanctum_jobs_queue não disponível");
+      }
+
+      // Logar evento
+      try {
+        await supabase
+          .from("audit_logs")
+          .insert({
+            user_id: user.id,
+            action: "book_upload_complete",
+            table_name: "web_books",
+            record_id: bookId,
+            metadata: {
+              title: book.title,
+              category: book.category,
+              fileSize: book.original_size_bytes,
+              fileName: book.original_filename,
+            },
+          });
+      } catch {
+        // Ignorar se tabela não existir
+      }
+
+      console.log(`[Genesis v2] Upload concluído: ${bookId}`);
+
+      // Resposta FASE 2: Sucesso
+      const response: UploadCompleteResponse = {
+        success: true,
+        bookId,
+        title: book.title,
+        status: "queued",
+        jobId,
+        message: "Livro enviado para processamento com sucesso!",
+      };
+
+      return new Response(
+        JSON.stringify(response),
+        { 
+          status: 201, 
+          headers: { 
+            ...corsHeaders, 
+            "Content-Type": "application/json",
+            "X-Book-Id": bookId,
+            "X-Job-Id": jobId,
+          } 
+        }
+      );
     }
 
-    console.log(`[Genesis] Upload concluído: ${bookId}`);
-
-    // ============================================
-    // 11) RESPOSTA DE SUCESSO
-    // ============================================
-    const response: UploadResponse = {
-      success: true,
-      bookId,
-      title: title.trim(),
-      status: "queued",
-      jobId,
-      message: "Livro enviado para processamento com sucesso!",
-    };
-
+    // Fase desconhecida
     return new Response(
-      JSON.stringify(response),
-      { 
-        status: 201, 
-        headers: { 
-          ...corsHeaders, 
-          "Content-Type": "application/json",
-          "X-Book-Id": bookId,
-          "X-Job-Id": jobId,
-        } 
-      }
+      JSON.stringify({ success: false, error: "Fase inválida. Use 'init' ou 'complete'.", errorCode: "INVALID_PHASE" }),
+      { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (err) {
-    console.error("[Genesis Upload] Erro fatal:", err);
+    console.error("[Genesis v2] Erro fatal:", err);
     
     return new Response(
       JSON.stringify({ 
@@ -379,7 +439,7 @@ serve(async (req: Request) => {
         error: "Erro interno do servidor", 
         errorCode: "SERVER_ERROR" 
       }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { status: 500, headers: { ...getCorsHeaders(req), "Content-Type": "application/json" } }
     );
   }
 });

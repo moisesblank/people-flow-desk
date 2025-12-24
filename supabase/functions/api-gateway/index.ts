@@ -1,10 +1,12 @@
 // ============================================
 // MASTER PRO ULTRA v3.0 - API GATEWAY
 // Edge Function otimizada com cache e rate limiting
+// LEI VI COMPLIANCE: CORS Allowlist
 // ============================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 // Cache em memória (TTL: 60 segundos)
 const cache = new Map<string, { data: unknown; timestamp: number }>()
@@ -23,14 +25,6 @@ const securityHeaders = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Content-Security-Policy': "default-src 'self'",
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-}
-
-// CORS headers
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, x-hotmart-hottok',
-  'Access-Control-Max-Age': '86400',
 }
 
 // Função de rate limiting
@@ -82,8 +76,15 @@ serve(async (req) => {
   
   // CORS preflight
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders })
+    return handleCorsOptions(req);
   }
+
+  const origin = req.headers.get("Origin");
+  if (!isOriginAllowed(origin)) {
+    return corsBlockedResponse(origin);
+  }
+
+  const corsHeaders = getCorsHeaders(req);
   
   // Rate limiting
   const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
@@ -152,7 +153,6 @@ serve(async (req) => {
     let response: unknown
     
     switch (true) {
-      // Dashboard Stats (com cache)
       case path === '/dashboard' && req.method === 'GET': {
         const cacheKey = 'dashboard-stats'
         const cached = getCached(cacheKey)
@@ -170,7 +170,6 @@ serve(async (req) => {
         break
       }
       
-      // Alunos (com paginação)
       case path === '/alunos' && req.method === 'GET': {
         const page = parseInt(url.searchParams.get('page') || '1')
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100)
@@ -205,7 +204,6 @@ serve(async (req) => {
         break
       }
       
-      // Funcionários (com paginação)
       case path === '/funcionarios' && req.method === 'GET': {
         const page = parseInt(url.searchParams.get('page') || '1')
         const limit = Math.min(parseInt(url.searchParams.get('limit') || '50'), 100)
@@ -226,7 +224,6 @@ serve(async (req) => {
         break
       }
       
-      // Métricas em tempo real (sem cache)
       case path === '/metrics/realtime' && req.method === 'GET': {
         const { data: onlineUsers } = await supabase
           .from('profiles')
@@ -253,7 +250,6 @@ serve(async (req) => {
         break
       }
       
-      // Invalidar cache (admin only)
       case path === '/cache/invalidate' && req.method === 'POST': {
         const authHeader = req.headers.get('Authorization')
         if (!authHeader) {
@@ -276,7 +272,6 @@ serve(async (req) => {
         break
       }
       
-      // Health check
       case path === '/health' && req.method === 'GET': {
         response = {
           status: 'healthy',
@@ -286,7 +281,6 @@ serve(async (req) => {
         break
       }
       
-      // Rota não encontrada
       default:
         return new Response(JSON.stringify({ error: 'Not found' }), {
           status: 404,
@@ -294,7 +288,6 @@ serve(async (req) => {
         })
     }
     
-    // Métricas de latência
     const duration = Date.now() - startTime
     console.log(`[API] ${req.method} ${path} - ${duration}ms`)
     

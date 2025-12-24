@@ -1,21 +1,24 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - AI ASSISTANT ULTRA
 // Assistente de Gestão Empresarial Inteligente
-// Conectado com dados em tempo real
+// LEI VI COMPLIANCE: CORS Allowlist
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+
+  const origin = req.headers.get("Origin");
+  if (!isOriginAllowed(origin)) {
+    return corsBlockedResponse(origin);
+  }
+
+  const corsHeaders = getCorsHeaders(req);
 
   try {
     const { messages, context, userId } = await req.json();
@@ -43,7 +46,6 @@ serve(async (req) => {
       const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       
       try {
-        // Dados financeiros - últimos 30 dias vs 30 dias anteriores
         const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
         const sixtyDaysAgo = new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString();
         
@@ -58,7 +60,6 @@ serve(async (req) => {
           supabase.from('metricas_marketing').select('*').order('mes_referencia', { ascending: false }).limit(1),
         ]);
 
-        // Processar dados financeiros
         const income = incomeResult.data || [];
         const currentMonthIncome = income.filter(i => new Date(i.created_at) >= new Date(thirtyDaysAgo)).reduce((sum, i) => sum + (i.valor || 0), 0);
         const lastMonthIncome = income.filter(i => new Date(i.created_at) >= new Date(sixtyDaysAgo) && new Date(i.created_at) < new Date(thirtyDaysAgo)).reduce((sum, i) => sum + (i.valor || 0), 0);
@@ -73,7 +74,6 @@ serve(async (req) => {
           monthlyGrowth: lastMonthIncome > 0 ? ((currentMonthIncome - lastMonthIncome) / lastMonthIncome) * 100 : 0
         };
 
-        // Processar alunos
         const students = studentsResult.data || [];
         const activeStudents = students.filter(s => s.status === 'ativo');
         const newStudents = students.filter(s => new Date(s.created_at) >= new Date(thirtyDaysAgo));
@@ -86,14 +86,12 @@ serve(async (req) => {
           churnRate: students.length > 0 ? ((students.length - activeStudents.length) / students.length) * 100 : 0
         };
 
-        // Processar funcionários
         const employees = employeesResult.data || [];
         systemData.employees = {
           active: employees.filter(e => e.status === 'ativo').length,
           total: employees.length
         };
 
-        // Processar tarefas
         const tasks = tasksResult.data || [];
         const today = new Date().toISOString().split('T')[0];
         systemData.tasks = {
@@ -103,7 +101,6 @@ serve(async (req) => {
           overdue: tasks.filter(t => !t.is_completed && t.task_date < today).length
         };
 
-        // Processar cursos
         const courses = coursesResult.data || [];
         systemData.courses = {
           total: courses.length,
@@ -111,7 +108,6 @@ serve(async (req) => {
           averageRating: courses.length > 0 ? courses.reduce((sum, c) => sum + (c.average_rating || 0), 0) / courses.length : 0
         };
 
-        // Processar marketing
         const marketing = marketingResult.data?.[0];
         if (marketing) {
           systemData.marketing = {
@@ -125,9 +121,6 @@ serve(async (req) => {
       }
     }
 
-    // ========================================
-    // FORMATAÇÃO DO CONTEXTO DO SISTEMA
-    // ========================================
     const formatCurrency = (value: number) => `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
     const formatPercent = (value: number) => `${value.toFixed(1)}%`;
 
@@ -167,9 +160,6 @@ serve(async (req) => {
 - **LTV/CAC Ratio:** ${systemData.marketing.cac > 0 ? (systemData.marketing.ltv / systemData.marketing.cac).toFixed(1) : 'N/A'}x
 `;
 
-    // ========================================
-    // PROMPTS ESPECIALIZADOS POR CONTEXTO
-    // ========================================
     const contextPrompts: Record<string, string> = {
       dashboard: `# 🎯 ASSISTENTE DE GESTÃO - PROF. MOISÉS MEDEIROS
 
@@ -219,13 +209,6 @@ ${dataContext}
 5. **ROI** - Retorno sobre investimentos
 6. **Cenários** - Projeções otimista/pessimista/realista
 
-## 📈 MÉTRICAS-CHAVE PARA INFOPRODUTOS
-- **Ticket Médio** - Valor médio por venda
-- **LTV/CAC Ratio** - Mínimo ideal: 3x
-- **Churn Rate** - Máximo aceitável: 5%/mês
-- **MRR** - Receita Recorrente Mensal
-- **Runway** - Meses de operação com caixa atual
-
 ## 🎯 SEMPRE INCLUA
 - Comparação com período anterior
 - Tendência (crescimento/queda)
@@ -250,13 +233,7 @@ ${dataContext}
 2. **Gamificação** - XP, conquistas, ranking
 3. **Comunidade** - Interação entre alunos
 4. **Suporte Proativo** - Identificar alunos em risco
-5. **Conteúdo Drip** - Liberação progressiva
-
-## ⚠️ SINAIS DE RISCO
-- Aluno não acessa há mais de 7 dias
-- Progresso estagnado
-- Baixa participação no fórum
-- Notas baixas em quizzes`,
+5. **Conteúdo Drip** - Liberação progressiva`,
 
       marketing: `# 📢 CONSULTOR DE MARKETING DIGITAL - PROF. MOISÉS MEDEIROS
 
@@ -275,25 +252,11 @@ ${dataContext}
 ## 🎯 FUNIL DE VENDAS
 1. **Topo (TOFU)** - Tráfego e awareness
 2. **Meio (MOFU)** - Leads e nutrição
-3. **Fundo (BOFU)** - Conversão e vendas
-
-## 📈 CANAIS RECOMENDADOS
-- YouTube (orgânico + ads)
-- Instagram/Reels
-- Google Ads (search + display)
-- Email Marketing
-- Afiliados
-
-## 💡 OTIMIZAÇÕES COMUNS
-- Melhorar copy da landing page
-- Teste A/B de headlines
-- Sequência de emails de abandono
-- Remarketing para visitantes`
+3. **Fundo (BOFU)** - Conversão e vendas`
     };
 
     const systemPrompt = contextPrompts[context || "dashboard"] || contextPrompts.dashboard;
 
-    // Usando ChatGPT Pro (GPT-5-mini) - excelente para gestão
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
       headers: {
