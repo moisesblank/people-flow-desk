@@ -204,21 +204,25 @@ export const NETWORK_CONSTITUTION = {
 
 // ============================================
 // TÍTULO VII - OFFLINE & PWA (Artigos 20-22)
+// ⚠️ SERVICE WORKER DESABILITADO - Causava problemas de MIME type
+// Cache gerenciado via CDN/Cloudflare + hash de arquivos
 // ============================================
 
 export const OFFLINE_CONSTITUTION = {
-  // Artigo 20° - Service Worker Obrigatório
+  // Artigo 20° - Service Worker DESABILITADO
   SERVICE_WORKER: {
-    enabled: true,
+    enabled: false, // ⚠️ DESABILITADO - ver index.html e main.tsx
     scope: "/",
     updateStrategy: "stale-while-revalidate",
+    status: "DISABLED - Using CDN cache instead",
   },
   
-  // Artigo 21° - Cache Offline
+  // Artigo 21° - Cache via CDN (substituiu SW)
   OFFLINE_CACHE: {
     cacheFirstAssets: ["fonts", "css", "js", "images/static"],
     networkFirstApi: true,
     offlineFallback: "/index.html",
+    strategy: "CDN + hash versioning", // Novo: sem SW
   },
   
   // Artigo 22° - UI Offline
