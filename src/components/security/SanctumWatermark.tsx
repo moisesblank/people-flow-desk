@@ -20,8 +20,25 @@ import { useAuth } from "@/hooks/useAuth";
 // ============================================
 const OWNER_EMAIL = "moisesblank@gmail.com";
 const UPDATE_INTERVAL_MS = 15000; // 15 segundos
-const GRID_ROWS = 12;
-const GRID_COLS = 3;
+
+// Detectar dispositivo
+const isTouchDevice = () => 
+  typeof window !== "undefined" && 
+  ("ontouchstart" in window || navigator.maxTouchPoints > 0);
+
+const isMobileDevice = () =>
+  typeof window !== "undefined" &&
+  /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+// Grid adaptativo por dispositivo
+const getGridConfig = () => {
+  if (typeof window === "undefined") return { rows: 8, cols: 3 };
+  const width = window.innerWidth;
+  if (width < 480) return { rows: 6, cols: 2 }; // Mobile pequeno
+  if (width < 768) return { rows: 8, cols: 2 }; // Mobile
+  if (width < 1024) return { rows: 10, cols: 3 }; // Tablet
+  return { rows: 12, cols: 3 }; // Desktop
+};
 
 // ============================================
 // TIPOS
@@ -100,6 +117,16 @@ export const SanctumWatermark = memo(({
   const { user, session } = useAuth();
   const [tick, setTick] = useState(0);
   const [positions, setPositions] = useState<Array<{ x: number; y: number }>>([]);
+  const [gridConfig, setGridConfig] = useState(getGridConfig());
+
+  // Atualizar grid config ao redimensionar
+  useEffect(() => {
+    const handleResize = () => {
+      setGridConfig(getGridConfig());
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Mesclar configurações
   const config = useMemo(
@@ -124,14 +151,14 @@ export const SanctumWatermark = memo(({
   // Gerar posições aleatórias para animação
   const generatePositions = useCallback(() => {
     const newPositions: Array<{ x: number; y: number }> = [];
-    for (let i = 0; i < GRID_ROWS * GRID_COLS; i++) {
+    for (let i = 0; i < gridConfig.rows * gridConfig.cols; i++) {
       newPositions.push({
         x: Math.random() * 20 - 10, // -10 a +10
         y: Math.random() * 20 - 10,
       });
     }
     setPositions(newPositions);
-  }, []);
+  }, [gridConfig]);
 
   // Atualizar tick e posições periodicamente
   useEffect(() => {
@@ -181,15 +208,16 @@ export const SanctumWatermark = memo(({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userName, userId, config.showSessionId, config.showTimestamp, sessionId, isOwner, tick]);
 
-  // Gerar grid de watermarks
+  // Gerar grid de watermarks - RESPONSIVO
   const watermarkGrid = useMemo(() => {
     if (isOwner) return null;
     
     const grid: React.ReactNode[] = [];
+    const { rows, cols } = gridConfig;
     
-    for (let row = 0; row < GRID_ROWS; row++) {
-      for (let col = 0; col < GRID_COLS; col++) {
-        const index = row * GRID_COLS + col;
+    for (let row = 0; row < rows; row++) {
+      for (let col = 0; col < cols; col++) {
+        const index = row * cols + col;
         const pos = positions[index] || { x: 0, y: 0 };
         
         grid.push(
@@ -197,8 +225,8 @@ export const SanctumWatermark = memo(({
             key={`wm-${row}-${col}-${tick}`}
             style={{
               position: "absolute",
-              left: `${(col / GRID_COLS) * 100 + 5 + pos.x}%`,
-              top: `${(row / GRID_ROWS) * 100 + 2 + pos.y}%`,
+              left: `${(col / cols) * 100 + 5 + pos.x}%`,
+              top: `${(row / rows) * 100 + 2 + pos.y}%`,
               transform: `rotate(${config.rotation}deg)`,
               fontSize: config.fontSize,
               color: config.color,
@@ -206,11 +234,13 @@ export const SanctumWatermark = memo(({
               whiteSpace: "nowrap",
               pointerEvents: "none",
               userSelect: "none",
+              WebkitUserSelect: "none",
+              WebkitTouchCallout: "none",
               fontFamily: "monospace",
               letterSpacing: "0.05em",
               textShadow: "0 0 1px rgba(0,0,0,0.1)",
               transition: config.animated ? "all 0.5s ease-out" : "none",
-            }}
+            } as React.CSSProperties}
           >
             {watermarkText}
           </div>
@@ -219,7 +249,7 @@ export const SanctumWatermark = memo(({
     }
 
     return grid;
-  }, [watermarkText, positions, config, tick, isOwner]);
+  }, [watermarkText, positions, config, tick, isOwner, gridConfig]);
 
   // Não renderizar para owner
   if (isOwner) {
@@ -236,46 +266,54 @@ export const SanctumWatermark = memo(({
         pointerEvents: "none",
         zIndex: 9999,
         userSelect: "none",
-      }}
+        WebkitUserSelect: "none",
+        WebkitTouchCallout: "none",
+        WebkitTapHighlightColor: "transparent",
+        touchAction: "none",
+      } as React.CSSProperties}
       aria-hidden="true"
       data-sanctum-watermark="true"
+      data-sanctum-protected="true"
     >
       {/* Grid de watermarks */}
       {watermarkGrid}
 
-      {/* Overlay diagonal adicional */}
+      {/* Overlay diagonal adicional - responsivo */}
       <div
         style={{
           position: "absolute",
           top: "50%",
           left: "50%",
           transform: "translate(-50%, -50%) rotate(-45deg)",
-          fontSize: "clamp(16px, 2vw, 24px)",
+          fontSize: "clamp(12px, 2vw, 24px)",
           color: config.color,
           opacity: config.opacity * 0.5,
           whiteSpace: "nowrap",
           pointerEvents: "none",
           userSelect: "none",
+          WebkitUserSelect: "none",
           fontWeight: "bold",
           letterSpacing: "0.1em",
-        }}
+        } as React.CSSProperties}
       >
         PROF. MOISÉS MEDEIROS • CONTEÚDO PROTEGIDO • {sessionId}
       </div>
 
-      {/* Marca d'água de canto */}
+      {/* Marca d'água de canto - oculta em mobile pequeno */}
       <div
+        className="hidden sm:block"
         style={{
           position: "absolute",
           bottom: "8px",
           right: "8px",
-          fontSize: "10px",
+          fontSize: "clamp(8px, 1vw, 12px)",
           color: config.color,
           opacity: config.opacity,
           fontFamily: "monospace",
           pointerEvents: "none",
           userSelect: "none",
-        }}
+          WebkitUserSelect: "none",
+        } as React.CSSProperties}
       >
         © MM-{sessionId}-{new Date().getFullYear()}
       </div>
