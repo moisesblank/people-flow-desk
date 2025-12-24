@@ -310,3 +310,43 @@ export {
   type WebhookVerifyResult,
   type IdempotencyCheckResult,
 } from '@/lib/security/webhookGuard';
+
+// ============================================
+// 🛡️ CONTENT SHIELD v1.0 (PROTEÇÃO DE CONTEÚDO)
+// ============================================
+
+export {
+  // Função principal
+  requestContentAccess,
+  useContentShield,
+  
+  // Validação
+  validateContinuousAccess,
+  revokeContentAccess,
+  validateContentToken,
+  generateContentToken,
+  decodeContentToken,
+  
+  // Watermark
+  generateWatermarkText,
+  generateWatermarkSeed,
+  
+  // Sessões
+  countActiveSessions,
+  registerContentSession,
+  heartbeatContentSession,
+  revokeContentSession,
+  revokeAllSessions,
+  
+  // Rate limit
+  checkContentRateLimit,
+  
+  // Configuração
+  CONTENT_SHIELD_CONFIG,
+  
+  // Tipos
+  type ContentToken,
+  type ContentAccessOptions,
+  type ContentAccessResult,
+  type WatermarkConfig,
+} from '@/lib/security/contentShield';
