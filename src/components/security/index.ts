@@ -380,7 +380,7 @@ export {
 } from '@/lib/security/authGuard';
 
 // ============================================
-// ☁️ CLOUDFLARE INTEGRATION v1.0 (WAF + CDN)
+// ☁️ CLOUDFLARE INTEGRATION v1.0 (WAF + CDN + BOT PROTECTION)
 // ============================================
 
 export {
@@ -390,6 +390,7 @@ export {
   checkCloudflareRateLimit,
   cleanupCloudflareRateLimits,
   generateSecurityHeaders,
+  getSecureResponseHeaders,
   
   // Helpers
   useCloudflareContext,
@@ -399,10 +400,15 @@ export {
   // Configurações
   DEFAULT_CLOUDFLARE_CONFIG,
   ROUTE_CLOUDFLARE_CONFIGS,
+  SECURITY_HEADERS,
+  RECOMMENDED_WAF_RULES,
+  RECOMMENDED_PAGE_RULES,
   
   // Tipos
   type CloudflareHeaders,
   type CloudflareContext,
   type CloudflareSecurityConfig,
   type CloudflareValidationResult,
+  type WafRule,
+  type PageRule,
 } from '@/lib/security/cloudflareIntegration';

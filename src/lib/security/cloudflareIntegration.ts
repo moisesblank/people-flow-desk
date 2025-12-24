@@ -409,49 +409,64 @@ export async function validateCloudflareRequest(
 }
 
 // ============================================
-// GERAR HEADERS DE SEGURANÇA
+// HEADERS DE SEGURANÇA RECOMENDADOS (COMPLETO)
+// ============================================
+export const SECURITY_HEADERS: Record<string, string> = {
+  // Prevenir clickjacking
+  "X-Frame-Options": "DENY",
+  // Prevenir MIME sniffing
+  "X-Content-Type-Options": "nosniff",
+  // XSS Protection
+  "X-XSS-Protection": "1; mode=block",
+  // Referrer Policy
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  // Permissions Policy (antes Feature-Policy)
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+  // HSTS (Strict Transport Security)
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
+  // Content Security Policy (completo)
+  "Content-Security-Policy": [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://*.cloudflare.com https://challenges.cloudflare.com",
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' https://fonts.gstatic.com",
+    "img-src 'self' data: blob: https: http:",
+    "media-src 'self' https://*.panda.video https://*.pandavideo.com.br https://*.youtube.com https://*.vimeo.com",
+    "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://*.cloudflare.com https://api.cloudflare.com",
+    "frame-src 'self' https://*.youtube.com https://*.vimeo.com https://*.panda.video https://*.pandavideo.com.br https://challenges.cloudflare.com",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests",
+  ].join("; "),
+};
+
+// ============================================
+// GERAR HEADERS DE SEGURANÇA (FUNÇÃO)
 // ============================================
 export function generateSecurityHeaders(): Record<string, string> {
-  return {
-    // Strict Transport Security
-    "Strict-Transport-Security": "max-age=31536000; includeSubDomains; preload",
-    
-    // Content Security Policy
-    "Content-Security-Policy": [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://challenges.cloudflare.com",
-      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-      "img-src 'self' data: https: blob:",
-      "font-src 'self' https://fonts.gstatic.com",
-      "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.cloudflare.com",
-      "frame-src 'self' https://challenges.cloudflare.com https://*.pandavideo.com.br",
-      "frame-ancestors 'none'",
-    ].join("; "),
-    
-    // Prevent clickjacking
-    "X-Frame-Options": "DENY",
-    
-    // Prevent MIME sniffing
-    "X-Content-Type-Options": "nosniff",
-    
-    // XSS Protection
-    "X-XSS-Protection": "1; mode=block",
-    
-    // Referrer Policy
-    "Referrer-Policy": "strict-origin-when-cross-origin",
-    
-    // Permissions Policy
-    "Permissions-Policy": [
-      "accelerometer=()",
-      "camera=()",
-      "geolocation=()",
-      "gyroscope=()",
-      "magnetometer=()",
-      "microphone=()",
-      "payment=()",
-      "usb=()",
-    ].join(", "),
-  };
+  return { ...SECURITY_HEADERS };
+}
+
+// ============================================
+// GERAR HEADERS DE RESPOSTA SEGURA COM CONTEXTO
+// ============================================
+export function getSecureResponseHeaders(
+  cfContext?: CloudflareContext
+): Record<string, string> {
+  const headers: Record<string, string> = { ...SECURITY_HEADERS };
+
+  // Adicionar Ray ID se disponível
+  if (cfContext?.rayId) {
+    headers["X-Request-Id"] = cfContext.rayId;
+  }
+
+  // Cache headers para CDN
+  headers["Cache-Control"] = "public, max-age=0, s-maxage=3600, stale-while-revalidate=86400";
+  headers["Vary"] = "Accept-Encoding, Accept, Cookie";
+
+  return headers;
 }
 
 // ============================================
@@ -553,6 +568,147 @@ export function getCloudflareConfigForRoute(
 }
 
 // ============================================
+// 🛡️ REGRAS WAF CUSTOMIZADAS (20 disponíveis no Pro)
+// ============================================
+export interface WafRule {
+  id: number;
+  name: string;
+  expression: string;
+  action: "block" | "challenge" | "js_challenge" | "managed_challenge" | "log";
+  priority: number;
+  rateLimit?: { requests: number; period: number };
+}
+
+export const RECOMMENDED_WAF_RULES: WafRule[] = [
+  {
+    id: 1,
+    name: "Block SQL Injection",
+    expression: `(http.request.uri.query contains "UNION" and http.request.uri.query contains "SELECT")`,
+    action: "block",
+    priority: 1,
+  },
+  {
+    id: 2,
+    name: "Block XSS Attempts",
+    expression: `(http.request.uri.query contains "<script" or http.request.body.raw contains "<script")`,
+    action: "block",
+    priority: 2,
+  },
+  {
+    id: 3,
+    name: "Block Admin Bruteforce",
+    expression: `(http.request.uri.path contains "/login" and http.request.method eq "POST" and cf.threat_score gt 20)`,
+    action: "challenge",
+    priority: 3,
+  },
+  {
+    id: 4,
+    name: "Protect API Endpoints",
+    expression: `(http.request.uri.path contains "/api/" and cf.bot_management.score lt 30)`,
+    action: "challenge",
+    priority: 4,
+  },
+  {
+    id: 5,
+    name: "Block Suspicious User Agents",
+    expression: `(http.user_agent contains "curl" or http.user_agent contains "wget" or http.user_agent contains "python")`,
+    action: "challenge",
+    priority: 5,
+  },
+  {
+    id: 6,
+    name: "Protect Content Endpoints",
+    expression: `(http.request.uri.path contains "/video" or http.request.uri.path contains "/pdf") and cf.threat_score gt 10`,
+    action: "challenge",
+    priority: 6,
+  },
+  {
+    id: 7,
+    name: "Block Path Traversal",
+    expression: `(http.request.uri.path contains "../" or http.request.uri.query contains "../")`,
+    action: "block",
+    priority: 7,
+  },
+  {
+    id: 8,
+    name: "Rate Limit Login",
+    expression: `(http.request.uri.path eq "/login" and http.request.method eq "POST")`,
+    action: "challenge",
+    priority: 8,
+    rateLimit: { requests: 5, period: 60 },
+  },
+  {
+    id: 9,
+    name: "Block Known Bad IPs",
+    expression: `(cf.threat_score gt 80)`,
+    action: "block",
+    priority: 9,
+  },
+  {
+    id: 10,
+    name: "Protect Webhooks",
+    expression: `(http.request.uri.path contains "/webhook" and not http.request.headers["x-hotmart-hottok"])`,
+    action: "block",
+    priority: 10,
+  },
+];
+
+// ============================================
+// 🌐 PAGE RULES RECOMENDADAS
+// ============================================
+export interface PageRule {
+  url: string;
+  settings: {
+    cache_level?: "bypass" | "aggressive" | "standard";
+    edge_cache_ttl?: number;
+    security_level?: "off" | "essentially_off" | "low" | "medium" | "high" | "under_attack";
+    browser_check?: "on" | "off";
+    ssl?: "off" | "flexible" | "full" | "strict";
+  };
+}
+
+export const RECOMMENDED_PAGE_RULES: PageRule[] = [
+  {
+    url: "*.moisesmedeiros.com.br/api/*",
+    settings: {
+      cache_level: "bypass",
+      security_level: "high",
+      browser_check: "on",
+    },
+  },
+  {
+    url: "*.moisesmedeiros.com.br/alunos/*",
+    settings: {
+      cache_level: "aggressive",
+      edge_cache_ttl: 3600,
+      security_level: "medium",
+    },
+  },
+  {
+    url: "*.moisesmedeiros.com.br/gestao/*",
+    settings: {
+      cache_level: "bypass",
+      security_level: "high",
+      browser_check: "on",
+    },
+  },
+  {
+    url: "*.moisesmedeiros.com.br/*.mp4",
+    settings: {
+      cache_level: "bypass",
+      security_level: "high",
+    },
+  },
+  {
+    url: "*.moisesmedeiros.com.br/*.pdf",
+    settings: {
+      cache_level: "bypass",
+      security_level: "high",
+    },
+  },
+];
+
+// ============================================
 // EXPORTAR TUDO
 // ============================================
 export default {
@@ -561,9 +717,13 @@ export default {
   checkCloudflareRateLimit,
   cleanupCloudflareRateLimits,
   generateSecurityHeaders,
+  getSecureResponseHeaders,
   useCloudflareContext,
   isCloudflareBypass,
   getCloudflareConfigForRoute,
   DEFAULT_CLOUDFLARE_CONFIG,
   ROUTE_CLOUDFLARE_CONFIGS,
+  SECURITY_HEADERS,
+  RECOMMENDED_WAF_RULES,
+  RECOMMENDED_PAGE_RULES,
 };
