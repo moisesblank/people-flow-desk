@@ -15,8 +15,7 @@
 //
 // ============================================
 
-import { supabase } from "@/integrations/supabase/client";
-import { sanctumGuard, generateCorrelationId, writeAuditLog, OWNER_EMAIL, isOwnerEmail } from "./sanctumGate";
+import { sanctumGuard, generateCorrelationId, writeAuditLog } from "./sanctumGate";
 
 // ============================================
 // TIPOS
@@ -37,8 +36,6 @@ export interface ContentAccessOptions {
   contentType: "video" | "pdf" | "book" | "audio";
   lessonId?: string;
   courseId?: string;
-  bucket?: string;
-  filePath?: string;
   
   // TTL do token em segundos (default: 60s)
   ttlSeconds?: number;
@@ -66,39 +63,28 @@ export interface WatermarkConfig {
 }
 
 // ============================================
-// CONFIGURAÇÕES
+// CONFIGURAÇÃO DO CONTENT SHIELD
 // ============================================
 export const CONTENT_SHIELD_CONFIG = {
-  // TTL padrão por tipo de conteúdo
-  ttl: {
-    video: 120,    // 2 minutos
-    pdf: 60,       // 1 minuto
-    book: 300,     // 5 minutos
-    audio: 120,    // 2 minutos
+  video: {
+    ttlSeconds: 120,
+    maxConcurrentSessions: 2,
+    rateLimit: 30,
   },
-  
-  // Máximo de sessões simultâneas
-  maxConcurrentSessions: {
-    video: 2,
-    pdf: 3,
-    book: 2,
-    audio: 3,
+  pdf: {
+    ttlSeconds: 300,
+    maxConcurrentSessions: 3,
+    rateLimit: 50,
   },
-  
-  // Buckets privados
-  buckets: {
-    video: "aulas",
-    pdf: "materiais",
-    book: "ena-assets-transmuted",
-    audio: "aulas",
+  book: {
+    ttlSeconds: 600,
+    maxConcurrentSessions: 2,
+    rateLimit: 100,
   },
-  
-  // Rate limit por conteúdo (requests/min)
-  rateLimit: {
-    video: 10,
-    pdf: 20,
-    book: 30,
-    audio: 15,
+  audio: {
+    ttlSeconds: 180,
+    maxConcurrentSessions: 3,
+    rateLimit: 40,
   },
 } as const;
 
@@ -113,21 +99,42 @@ const contentSessions = new Map<string, {
   lastHeartbeat: number;
 }>();
 
-// Rate limit storage
+// Limpar sessões inativas (5 min sem heartbeat)
+setInterval(() => {
+  const now = Date.now();
+  const timeout = 5 * 60 * 1000;
+  
+  for (const [key, session] of contentSessions.entries()) {
+    if (now - session.lastHeartbeat > timeout) {
+      contentSessions.delete(key);
+    }
+  }
+}, 30 * 1000);
+
+// ============================================
+// RATE LIMITER PARA CONTEÚDO
+// ============================================
 const contentRateLimits = new Map<string, { count: number; resetAt: number }>();
 
-// Limpar sessões inativas (5 min sem heartbeat)
-if (typeof window !== "undefined") {
-  setInterval(() => {
-    const now = Date.now();
-    const timeout = 5 * 60 * 1000;
-    
-    for (const [key, session] of contentSessions.entries()) {
-      if (now - session.lastHeartbeat > timeout) {
-        contentSessions.delete(key);
-      }
-    }
-  }, 30 * 1000);
+export function checkContentRateLimit(
+  userId: string,
+  maxPerMinute: number = 30
+): { allowed: boolean; count: number } {
+  const now = Date.now();
+  const key = `content:${userId}`;
+  const record = contentRateLimits.get(key);
+
+  if (!record || now > record.resetAt) {
+    contentRateLimits.set(key, { count: 1, resetAt: now + 60000 });
+    return { allowed: true, count: 1 };
+  }
+
+  if (record.count >= maxPerMinute) {
+    return { allowed: false, count: record.count };
+  }
+
+  record.count++;
+  return { allowed: true, count: record.count };
 }
 
 // ============================================
@@ -151,15 +158,6 @@ export function generateWatermarkText(
     parts.push(masked);
   }
   
-  // Email parcial
-  if (email) {
-    const [local, domain] = email.split("@");
-    if (local && domain) {
-      const maskedLocal = local.substring(0, 3) + "***";
-      parts.push(`${maskedLocal}@${domain}`);
-    }
-  }
-  
   // ID do usuário (primeiros 8 chars)
   parts.push(userId.substring(0, 8).toUpperCase());
   
@@ -173,13 +171,6 @@ export function generateWatermarkText(
   parts.push(now.toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }));
   
   return parts.join(" • ");
-}
-
-/**
- * Gera seed para watermark (posição única por sessão)
- */
-export function generateWatermarkSeed(): string {
-  return Math.random().toString(36).substring(2, 10).toUpperCase();
 }
 
 /**
@@ -314,148 +305,79 @@ export function revokeAllSessions(userId: string, contentId?: string): number {
 }
 
 // ============================================
-// RATE LIMITING PARA CONTEÚDO
-// ============================================
-
-export function checkContentRateLimit(
-  userId: string,
-  contentType: ContentToken["contentType"]
-): { allowed: boolean; remaining: number } {
-  const now = Date.now();
-  const key = `content:${userId}:${contentType}`;
-  const maxRequests = CONTENT_SHIELD_CONFIG.rateLimit[contentType];
-  const windowMs = 60 * 1000; // 1 minuto
-  
-  const record = contentRateLimits.get(key);
-  
-  if (!record || now > record.resetAt) {
-    contentRateLimits.set(key, { count: 1, resetAt: now + windowMs });
-    return { allowed: true, remaining: maxRequests - 1 };
-  }
-  
-  if (record.count >= maxRequests) {
-    return { allowed: false, remaining: 0 };
-  }
-  
-  record.count++;
-  return { allowed: true, remaining: maxRequests - record.count };
-}
-
-// ============================================
 // CONTENT SHIELD — FUNÇÃO PRINCIPAL
 // ============================================
-
-/**
- * Solicita acesso a conteúdo protegido
- * Retorna URL assinada + token + watermark config
- */
 export async function requestContentAccess(
   options: ContentAccessOptions
 ): Promise<ContentAccessResult> {
   const correlationId = generateCorrelationId();
-  
   const {
     contentId,
     contentType,
-    lessonId,
-    courseId,
-    bucket = CONTENT_SHIELD_CONFIG.buckets[contentType],
-    filePath,
-    ttlSeconds = CONTENT_SHIELD_CONFIG.ttl[contentType],
-    maxConcurrentSessions = CONTENT_SHIELD_CONFIG.maxConcurrentSessions[contentType],
+    ttlSeconds = 60,
+    maxConcurrentSessions = 2,
   } = options;
-  
+
   // ============================================
-  // 1. VERIFICAR AUTENTICAÇÃO VIA SANCTUM GATE
+  // 1. VERIFICAR AUTENTICAÇÃO E AUTORIZAÇÃO
   // ============================================
   const guardResult = await sanctumGuard({
+    requiredRoles: ["beta", "funcionario", "admin", "owner"],
     action: "content_access",
     resourceType: contentType,
     resourceId: contentId,
-    requiredRoles: ["beta", "funcionario", "admin", "owner"],
+    rateLimit: {
+      requests: 30,
+      windowMs: 60000,
+      keyPrefix: "content",
+    },
   });
-  
+
   if (!guardResult.allowed || !guardResult.principal) {
-    await writeAuditLog({
-      correlationId,
-      action: "content_access",
-      resourceType: contentType,
-      resourceId: contentId,
-      result: "deny",
-      reason: guardResult.reason || "NOT_AUTHENTICATED",
-    });
-    
     return {
       allowed: false,
-      reason: guardResult.reason || "Não autenticado",
+      reason: guardResult.reason || "Acesso não autorizado",
       correlationId,
     };
   }
-  
-  const principal = guardResult.principal;
-  
+
+  const { principal } = guardResult;
+
   // ============================================
-  // 2. OWNER BYPASS
+  // 2. OWNER BYPASS — ACESSO DIRETO
   // ============================================
   if (principal.isOwner) {
-    // Owner tem acesso total, gerar token sem restrições
-    const now = Date.now();
-    const sessionId = crypto.randomUUID();
-    const watermarkSeed = generateWatermarkSeed();
-    
-    const tokenData: ContentToken = {
+    const watermarkSeed = crypto.randomUUID();
+    const token: ContentToken = {
       userId: principal.userId,
       contentId,
       contentType,
-      sessionId,
+      sessionId: principal.sessionId,
       nonce: crypto.randomUUID(),
-      issuedAt: now,
-      expiresAt: now + (ttlSeconds * 1000 * 10), // 10x TTL para owner
+      issuedAt: Date.now(),
+      expiresAt: Date.now() + (ttlSeconds * 1000),
       watermarkSeed,
     };
-    
-    const token = generateContentToken(tokenData);
-    
-    // Gerar signed URL se bucket e filePath fornecidos
-    let signedUrl: string | undefined;
-    if (bucket && filePath) {
-      const { data } = await supabase.storage
-        .from(bucket)
-        .createSignedUrl(filePath, ttlSeconds * 10);
-      signedUrl = data?.signedUrl;
-    }
-    
-    await writeAuditLog({
-      correlationId,
-      userId: principal.userId,
-      action: "content_access",
-      resourceType: contentType,
-      resourceId: contentId,
-      result: "permit",
-      reason: "OWNER_BYPASS",
-    });
-    
+
     return {
       allowed: true,
-      token,
-      signedUrl,
+      token: generateContentToken(token),
+      expiresAt: token.expiresAt,
       watermark: {
-        text: "OWNER",
+        text: `OWNER • ${principal.userId.substring(0, 8)}`,
         seed: watermarkSeed,
         userId: principal.userId,
-        timestamp: now,
-        position: "fixed",
+        timestamp: Date.now(),
+        position: "random",
       },
-      expiresAt: tokenData.expiresAt,
       correlationId,
     };
   }
-  
+
   // ============================================
-  // 3. VERIFICAR RATE LIMIT
+  // 3. VERIFICAR RATE LIMIT DE CONTEÚDO
   // ============================================
-  const rateLimitResult = checkContentRateLimit(principal.userId, contentType);
-  
+  const rateLimitResult = checkContentRateLimit(principal.userId);
   if (!rateLimitResult.allowed) {
     await writeAuditLog({
       correlationId,
@@ -464,21 +386,20 @@ export async function requestContentAccess(
       resourceType: contentType,
       resourceId: contentId,
       result: "deny",
-      reason: "RATE_LIMITED",
+      reason: "CONTENT_RATE_LIMITED",
     });
-    
+
     return {
       allowed: false,
-      reason: "Muitos acessos. Aguarde um momento.",
+      reason: "Muitas requisições de conteúdo. Aguarde um momento.",
       correlationId,
     };
   }
-  
+
   // ============================================
-  // 4. VERIFICAR SESSÕES CONCORRENTES
+  // 4. VERIFICAR LIMITE DE SESSÕES SIMULTÂNEAS
   // ============================================
   const activeSessions = countActiveSessions(principal.userId, contentId);
-  
   if (activeSessions >= maxConcurrentSessions) {
     await writeAuditLog({
       correlationId,
@@ -490,88 +411,52 @@ export async function requestContentAccess(
       reason: "MAX_CONCURRENT_SESSIONS",
       metadata: { activeSessions, maxConcurrentSessions },
     });
-    
+
     return {
       allowed: false,
-      reason: `Limite de ${maxConcurrentSessions} sessões simultâneas atingido`,
+      reason: `Limite de ${maxConcurrentSessions} dispositivos simultâneos atingido`,
       correlationId,
     };
   }
-  
+
   // ============================================
-  // 5. BUSCAR DADOS DO USUÁRIO PARA WATERMARK
+  // 5. VERIFICAR ENTITLEMENT (ACESSO AO CURSO)
   // ============================================
-  let userEmail = principal.email;
-  let userCpf: string | undefined;
-  
-  try {
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("cpf, email")
-      .eq("id", principal.userId)
-      .single();
-    
-    if (profile) {
-      userCpf = profile.cpf || undefined;
-      userEmail = profile.email || userEmail;
-    }
-  } catch {
-    // Usar dados do principal
-  }
-  
+  // TODO: Verificar se usuário tem acesso ao curso/aula
+  // Por enquanto, role 'beta' tem acesso a tudo
+
   // ============================================
-  // 6. GERAR TOKEN E SESSÃO
+  // 6. GERAR TOKEN DE ACESSO
   // ============================================
-  const now = Date.now();
-  const sessionId = crypto.randomUUID();
-  const watermarkSeed = generateWatermarkSeed();
-  
-  const tokenData: ContentToken = {
+  const watermarkSeed = crypto.randomUUID();
+  const sessionId = crypto.randomUUID().substring(0, 12);
+
+  const token: ContentToken = {
     userId: principal.userId,
     contentId,
     contentType,
     sessionId,
     nonce: crypto.randomUUID(),
-    issuedAt: now,
-    expiresAt: now + (ttlSeconds * 1000),
+    issuedAt: Date.now(),
+    expiresAt: Date.now() + (ttlSeconds * 1000),
     watermarkSeed,
   };
-  
-  const token = generateContentToken(tokenData);
-  
+
   // Registrar sessão
   registerContentSession(principal.userId, contentId, sessionId);
-  
+
   // ============================================
-  // 7. GERAR SIGNED URL
+  // 7. GERAR WATERMARK
   // ============================================
-  let signedUrl: string | undefined;
-  
-  if (bucket && filePath) {
-    const { data, error } = await supabase.storage
-      .from(bucket)
-      .createSignedUrl(filePath, ttlSeconds);
-    
-    if (error) {
-      console.error("[CONTENT_SHIELD] Signed URL error:", error);
-    } else {
-      signedUrl = data?.signedUrl;
-    }
-  }
-  
+  const watermarkText = generateWatermarkText(
+    principal.userId,
+    principal.email,
+    undefined, // CPF seria buscado do perfil
+    sessionId
+  );
+
   // ============================================
-  // 8. GERAR WATERMARK CONFIG
-  // ============================================
-  const watermark: WatermarkConfig = {
-    text: generateWatermarkText(principal.userId, userEmail, userCpf, sessionId),
-    seed: watermarkSeed,
-    userId: principal.userId,
-    timestamp: now,
-    position: "random",
-  };
-  
-  // ============================================
-  // 9. LOG DE SUCESSO
+  // 8. LOG DE SUCESSO
   // ============================================
   await writeAuditLog({
     correlationId,
@@ -580,98 +465,72 @@ export async function requestContentAccess(
     resourceType: contentType,
     resourceId: contentId,
     result: "permit",
-    reason: "ACCESS_GRANTED",
+    reason: "TOKEN_ISSUED",
     metadata: {
       sessionId,
-      lessonId,
-      courseId,
+      expiresAt: token.expiresAt,
       ttlSeconds,
-      watermarkSeed,
     },
   });
-  
+
   return {
     allowed: true,
-    token,
-    signedUrl,
-    watermark,
-    expiresAt: tokenData.expiresAt,
+    token: generateContentToken(token),
+    expiresAt: token.expiresAt,
+    watermark: {
+      text: watermarkText,
+      seed: watermarkSeed,
+      userId: principal.userId,
+      timestamp: Date.now(),
+      position: "random",
+    },
     correlationId,
   };
 }
 
 // ============================================
-// VALIDAR ACESSO CONTÍNUO (HEARTBEAT)
+// VERIFICAR TOKEN DE CONTEÚDO
 // ============================================
+export async function verifyContentAccess(
+  token: string,
+  contentId: string
+): Promise<{ valid: boolean; data?: ContentToken; reason?: string }> {
+  const result = validateContentToken(token);
 
-export async function validateContinuousAccess(
-  token: string
-): Promise<{ valid: boolean; reason?: string }> {
-  const validation = validateContentToken(token);
-  
-  if (!validation.valid || !validation.data) {
-    return { valid: false, reason: validation.reason };
+  if (!result.valid || !result.data) {
+    return { valid: false, reason: result.reason };
   }
-  
-  const { userId, contentId, sessionId } = validation.data;
-  
-  // Atualizar heartbeat
+
+  if (result.data.contentId !== contentId) {
+    return { valid: false, reason: "Token não corresponde ao conteúdo" };
+  }
+
+  return { valid: true, data: result.data };
+}
+
+// ============================================
+// HEARTBEAT DE SESSÃO
+// ============================================
+export async function contentHeartbeat(
+  token: string
+): Promise<{ valid: boolean; newExpiresAt?: number; reason?: string }> {
+  const result = validateContentToken(token);
+
+  if (!result.valid || !result.data) {
+    return { valid: false, reason: result.reason };
+  }
+
+  const { userId, contentId, sessionId } = result.data;
   const heartbeatOk = heartbeatContentSession(userId, contentId, sessionId);
-  
+
   if (!heartbeatOk) {
-    return { valid: false, reason: "Sessão não encontrada" };
+    return { valid: false, reason: "Sessão não encontrada ou expirada" };
   }
-  
-  return { valid: true };
-}
 
-// ============================================
-// REVOGAR ACESSO
-// ============================================
+  // Estender expiração em 60s
+  const newExpiresAt = Date.now() + 60000;
 
-export async function revokeContentAccess(
-  token: string
-): Promise<{ revoked: boolean }> {
-  const validation = validateContentToken(token);
-  
-  if (!validation.valid || !validation.data) {
-    return { revoked: false };
-  }
-  
-  const { userId, contentId, sessionId } = validation.data;
-  
-  revokeContentSession(userId, contentId, sessionId);
-  
-  await writeAuditLog({
-    correlationId: generateCorrelationId(),
-    userId,
-    action: "content_revoke",
-    resourceType: validation.data.contentType,
-    resourceId: contentId,
-    result: "permit",
-    reason: "USER_REVOKED",
-  });
-  
-  return { revoked: true };
-}
-
-// ============================================
-// HOOK PARA USO EM COMPONENTES
-// ============================================
-
-export function useContentShield() {
-  return {
-    requestContentAccess,
-    validateContinuousAccess,
-    revokeContentAccess,
-    validateContentToken,
-    generateWatermarkText,
-    countActiveSessions,
-    heartbeatContentSession,
-    revokeAllSessions,
-    checkContentRateLimit,
-    CONTENT_SHIELD_CONFIG,
-  };
+  return { valid: true, newExpiresAt };
 }
 
 export default requestContentAccess;
