@@ -286,9 +286,9 @@ serve(async (req: Request) => {
       ? `ROLE:${effectiveRole}` 
       : sanctumClient?.bypassReason || null;
 
+    // 🛡️ LEI V: Logs sem PII em produção
     console.log(`🛡️ SANCTUM ${SANCTUM_VERSION}`, {
-      userId: user.id,
-      email: user.email,
+      userId: user.id.substring(0, 8) + '...',
       role: effectiveRole,
       isImmune,
       isRelaxed,

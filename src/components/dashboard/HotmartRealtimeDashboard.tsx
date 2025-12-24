@@ -166,7 +166,10 @@ export function HotmartRealtimeDashboard() {
           table: "transacoes_hotmart_completo"
         },
         (payload) => {
-          console.log("[Hotmart Dashboard] Nova transação:", payload);
+          // 🛡️ LEI V: Log sem dados sensíveis
+          if (import.meta.env.DEV) {
+            console.log("[Hotmart Dashboard] Nova transação recebida");
+          }
           const newSale = payload.new as RecentSale;
           
           // Mostrar alerta de nova venda

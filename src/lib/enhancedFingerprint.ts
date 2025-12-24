@@ -384,7 +384,10 @@ export async function collectEnhancedFingerprint(): Promise<{ hash: string; data
   cachedFingerprint = { hash, data };
   cacheTime = Date.now();
 
-  console.log('[EnhancedFingerprint] Collected, hash:', hash.substring(0, 16) + '...');
+  // 🛡️ LEI V: Log apenas em dev
+  if (import.meta.env.DEV) {
+    console.log('[EnhancedFingerprint] Collected');
+  }
 
   return { hash, data };
 }

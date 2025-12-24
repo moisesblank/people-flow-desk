@@ -129,7 +129,10 @@ export function useUrlGuard(options?: {
       
       // Redirecionar automaticamente
       if (autoRedirect && result.redirectTo) {
-        console.log(`[URL-GUARD] 🚫 Acesso negado: ${result.reason} → Redirecionando para ${result.redirectTo}`);
+        // 🛡️ LEI V: Log apenas em dev, sem expor rotas internas
+        if (import.meta.env.DEV) {
+          console.log(`[URL-GUARD] 🚫 Acesso negado`);
+        }
         navigate(result.redirectTo, { replace: true });
       }
     }
