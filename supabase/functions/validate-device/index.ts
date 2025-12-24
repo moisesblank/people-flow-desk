@@ -87,8 +87,8 @@ Deno.serve(async (req) => {
     let countryChanged = false;
     let rapidChange = false;
 
-    if (userId) {
-      // Chamar RPC para calcular risk_score no banco
+  if (userId) {
+      // Chamar RPC para calcular risk_score no banco (retorna JSONB)
       const { data: riskData, error: riskError } = await supabase.rpc('calculate_device_risk_score', {
         p_user_id: userId,
         p_device_hash: fingerprint,
@@ -98,12 +98,13 @@ Deno.serve(async (req) => {
       });
 
       if (!riskError && riskData) {
+        // riskData é JSONB com risk_score, is_new_device, country_changed, rapid_change, reasons
         riskScore += riskData.risk_score || 0;
-        isNewDevice = riskData.is_new_device;
-        countryChanged = riskData.country_changed;
-        rapidChange = riskData.rapid_change;
+        isNewDevice = riskData.is_new_device ?? true;
+        countryChanged = riskData.country_changed ?? false;
+        rapidChange = riskData.rapid_change ?? false;
 
-        if (riskData.reasons) {
+        if (riskData.reasons && Array.isArray(riskData.reasons)) {
           for (const reason of riskData.reasons) {
             riskFactors.push({
               name: reason.reason,
@@ -112,17 +113,26 @@ Deno.serve(async (req) => {
             });
           }
         }
+
+        // Pegar dados do dispositivo diretamente da resposta
+        deviceData = {
+          trust_score: riskData.device_trust_score,
+          is_trusted: riskData.device_is_trusted,
+          is_blocked: riskData.device_is_blocked,
+        };
+      } else {
+        // Se erro na RPC, buscar dados do dispositivo diretamente
+        const { data: device } = await supabase
+          .from('device_trust_scores')
+          .select('trust_score, is_trusted, is_blocked, total_sessions')
+          .eq('user_id', userId)
+          .eq('device_hash', fingerprint)
+          .single();
+
+        if (device) {
+          deviceData = device;
+        }
       }
-
-      // Buscar dados do dispositivo
-      const { data: device } = await supabase
-        .from('device_trust_scores')
-        .select('*')
-        .eq('user_id', userId)
-        .eq('device_hash', fingerprint)
-        .single();
-
-      deviceData = device;
     }
 
     // 4. Verificar fingerprint data por anomalias
