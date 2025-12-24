@@ -8,6 +8,7 @@
 import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useRef } from "react";
 import { User, Session, Provider } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
 
 type AppRole = "owner" | "admin" | "employee" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
 
@@ -40,40 +41,47 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 // ============================================
-// HELPER: Coletar fingerprint simplificado
+// HELPER: Coletar fingerprint (usa versão reforçada)
 // ============================================
 async function collectFingerprint(): Promise<{ hash: string; data: Record<string, unknown> }> {
-  const data: Record<string, unknown> = {
-    screenWidth: window.screen.width,
-    screenHeight: window.screen.height,
-    hardwareConcurrency: navigator.hardwareConcurrency || 0,
-    deviceMemory: (navigator as any).deviceMemory || null,
-    userAgent: navigator.userAgent,
-    language: navigator.language,
-    platform: navigator.platform,
-    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-    deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) 
-      ? (/iPad|Tablet/i.test(navigator.userAgent) ? 'tablet' : 'mobile')
-      : 'desktop',
-    browser: navigator.userAgent.includes('Firefox') ? 'Firefox'
-      : navigator.userAgent.includes('Edg') ? 'Edge'
-      : navigator.userAgent.includes('Chrome') ? 'Chrome'
-      : navigator.userAgent.includes('Safari') ? 'Safari' : 'Unknown',
-    os: navigator.userAgent.includes('Windows') ? 'Windows'
-      : navigator.userAgent.includes('Mac') ? 'macOS'
-      : navigator.userAgent.includes('Linux') ? 'Linux'
-      : navigator.userAgent.includes('Android') ? 'Android'
-      : navigator.userAgent.includes('iPhone') ? 'iOS' : 'Unknown',
-  };
-  
-  // Generate hash
-  const hashSource = JSON.stringify(data);
-  const buffer = new TextEncoder().encode(hashSource);
-  const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
-  const hashArray = Array.from(new Uint8Array(hashBuffer));
-  const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-  
-  return { hash, data };
+  try {
+    // Usar fingerprint reforçado com WebRTC, Canvas, WebGL, etc
+    const result = await collectEnhancedFingerprint();
+    return { hash: result.hash, data: result.data as unknown as Record<string, unknown> };
+  } catch (err) {
+    // Fallback para versão básica se o reforçado falhar
+    console.warn('[Auth] Fingerprint reforçado falhou, usando básico:', err);
+    const data: Record<string, unknown> = {
+      screenWidth: window.screen.width,
+      screenHeight: window.screen.height,
+      hardwareConcurrency: navigator.hardwareConcurrency || 0,
+      deviceMemory: (navigator as any).deviceMemory || null,
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      platform: navigator.platform,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      deviceType: /Mobi|Android|iPhone|iPad/i.test(navigator.userAgent) 
+        ? (/iPad|Tablet/i.test(navigator.userAgent) ? 'tablet' : 'mobile')
+        : 'desktop',
+      browser: navigator.userAgent.includes('Firefox') ? 'Firefox'
+        : navigator.userAgent.includes('Edg') ? 'Edge'
+        : navigator.userAgent.includes('Chrome') ? 'Chrome'
+        : navigator.userAgent.includes('Safari') ? 'Safari' : 'Unknown',
+      os: navigator.userAgent.includes('Windows') ? 'Windows'
+        : navigator.userAgent.includes('Mac') ? 'macOS'
+        : navigator.userAgent.includes('Linux') ? 'Linux'
+        : navigator.userAgent.includes('Android') ? 'Android'
+        : navigator.userAgent.includes('iPhone') ? 'iOS' : 'Unknown',
+    };
+    
+    const hashSource = JSON.stringify(data);
+    const buffer = new TextEncoder().encode(hashSource);
+    const hashBuffer = await crypto.subtle.digest('SHA-256', buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    return { hash, data };
+  }
 }
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -187,7 +195,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
+      async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -206,6 +214,43 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           
           // Iniciar heartbeat quando logado
           startHeartbeat();
+
+          // 🛡️ LEI VI: Validar/registrar dispositivo em QUALQUER login (incluindo OAuth)
+          // Isso cobre logins via Google, Magic Link, etc.
+          if (event === 'SIGNED_IN') {
+            try {
+              const { hash, data: fingerprintData } = await collectFingerprint();
+              const deviceInfo = detectDeviceInfo();
+              
+              // Criar sessão única (DOGMA I)
+              const { data: sessionData } = await supabase.rpc('create_single_session', {
+                _ip_address: null,
+                _user_agent: navigator.userAgent.slice(0, 255),
+                _device_type: deviceInfo.device_type,
+                _browser: deviceInfo.browser,
+                _os: deviceInfo.os,
+              });
+              
+              if (sessionData && sessionData.length > 0) {
+                localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
+                console.log('[DOGMA I] ✅ Sessão única criada (auth event)');
+              }
+
+              // Registrar dispositivo (LEI VI)
+              await supabase.functions.invoke('validate-device', {
+                body: {
+                  fingerprint: hash,
+                  fingerprintData,
+                  userId: session.user.id,
+                  email: session.user.email,
+                  action: 'post_login',
+                },
+              });
+              console.log('[LEI VI] ✅ Dispositivo registrado (auth event)');
+            } catch (err) {
+              console.error('[LEI VI] Erro no registro pós-auth:', err);
+            }
+          }
         }
       }
     );
