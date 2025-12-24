@@ -8654,6 +8654,39 @@ export type Database = {
         }
         Relationships: []
       }
+      security_risk_state: {
+        Row: {
+          created_at: string
+          last_event_at: string | null
+          lock_reason: string | null
+          locked_until: string | null
+          risk_score: number
+          total_violations: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          last_event_at?: string | null
+          lock_reason?: string | null
+          locked_until?: string | null
+          risk_score?: number
+          total_violations?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          last_event_at?: string | null
+          lock_reason?: string | null
+          locked_until?: string | null
+          risk_score?: number
+          total_violations?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       security_violations_log: {
         Row: {
           created_at: string | null
@@ -14696,6 +14729,15 @@ export type Database = {
       fn_is_beta_or_owner: { Args: never; Returns: boolean }
       fn_is_book_owner: { Args: never; Returns: boolean }
       fn_is_owner: { Args: never; Returns: boolean }
+      fn_is_user_locked: {
+        Args: { p_user_id: string }
+        Returns: {
+          is_locked: boolean
+          lock_reason: string
+          locked_until: string
+          risk_score: number
+        }[]
+      }
       fn_list_books_for_category: {
         Args: {
           p_category?: string
@@ -14741,6 +14783,7 @@ export type Database = {
         }
         Returns: Json
       }
+      fn_reset_user_risk: { Args: { p_user_id: string }; Returns: boolean }
       fn_save_annotation: {
         Args: {
           p_annotation_type: string

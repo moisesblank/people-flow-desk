@@ -220,6 +220,9 @@ verify_jwt = true
 [functions.sanctum-report-violation]
 verify_jwt = false
 
+[functions.enqueue-transmutation]
+verify_jwt = true
+
 # ============================================
 # 📚 LIVROS DO MOISA - Sistema de Livro Web
 # Genesis Upload + Signed URLs + Chat AI
