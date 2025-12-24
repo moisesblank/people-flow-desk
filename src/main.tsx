@@ -174,14 +174,32 @@ if (typeof window !== 'undefined') {
     }
   }, 500);
 
-  // 🚀 DEFER: Service Worker registration (não crítico para TTI)
+  // ============================================
+  // 🚫 SERVICE WORKER DESABILITADO EM PRODUÇÃO
+  // Motivo: Causava problemas com MIME types e cache de assets
+  // Cache será gerenciado via CDN/Cloudflare + hash de arquivos
+  // ============================================
+  // NOTA: Para reativar SW, descomente o código abaixo:
+  // if ('serviceWorker' in navigator) {
+  //   window.addEventListener('load', () => {
+  //     deferInit(() => {
+  //       navigator.serviceWorker.register('/sw.js')
+  //         .then((reg) => console.log('[MATRIZ] ⚡ Service Worker ativo:', reg.scope))
+  //         .catch(() => { /* SW não disponível */ });
+  //     }, 3000);
+  //   });
+  // }
+
+  // Unregister any existing service workers to clean up
   if ('serviceWorker' in navigator) {
-    window.addEventListener('load', () => {
-      deferInit(() => {
-        navigator.serviceWorker.register('/sw.js')
-          .then((reg) => console.log('[MATRIZ] ⚡ Service Worker ativo:', reg.scope))
-          .catch(() => { /* SW não disponível */ });
-      }, 3000);
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister().then((success) => {
+          if (success) {
+            console.log('[MATRIZ] 🧹 Service Worker removido para evitar cache problems');
+          }
+        });
+      }
     });
   }
 }

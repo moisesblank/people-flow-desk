@@ -133,9 +133,8 @@
 
     <!-- ============================================
          DOGMA I: PERFORMANCE EARLY HINTS
-         Resource hints para carregamento inteligente
+         Vite injeta os scripts corretos automaticamente
          ============================================ -->
-    <link rel="modulepreload" href="/src/main.tsx" />
   </head>
 
   <body>
@@ -148,7 +147,7 @@
     
     <!-- ============================================
          DOGMA I: SCRIPTS ASSÍNCRONOS
-         App principal com defer para ordem de execução
+         Vite injeta o bundle JS correto automaticamente
          ============================================ -->
     <script type="module" src="/src/main.tsx"></script>
     
@@ -173,13 +172,8 @@
       }, 5000);
     </script>
     
-    <!-- Service Worker registration (async, non-blocking) -->
-    <script async>
-      if ('serviceWorker' in navigator) {
-        window.addEventListener('load', function() {
-          navigator.serviceWorker.register('/sw.js').catch(function() {});
-        });
-      }
-    </script>
+    <!-- Service Worker DESABILITADO em produção para evitar cache de assets quebrados -->
+    <!-- O SW causava problemas com MIME types e versionamento de assets -->
+    <!-- Cache será gerenciado via CDN/Cloudflare + hash de arquivos -->
   </body>
 </html>
