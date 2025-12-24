@@ -348,3 +348,25 @@ export {
   type ContentAccessResult,
   type WatermarkConfig,
 } from '@/lib/security/contentShield';
+
+// ============================================
+// 🛡️ AUTH GUARD v1.0 (AUTENTICAÇÃO SEGURA)
+// ============================================
+
+export {
+  // Funções principais
+  secureLogin,
+  secureSignup,
+  secureRecovery,
+  secureLogout,
+  checkAuth,
+  
+  // Configuração
+  AUTH_GUARD_CONFIG,
+  
+  // Tipos
+  type AuthAttemptResult,
+  type LoginOptions,
+  type SignupOptions,
+  type RecoveryOptions,
+} from '@/lib/security/authGuard';
