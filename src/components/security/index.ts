@@ -318,18 +318,16 @@ export {
 export {
   // Função principal
   requestContentAccess,
-  useContentShield,
+  verifyContentAccess,
+  contentHeartbeat,
   
   // Validação
-  validateContinuousAccess,
-  revokeContentAccess,
   validateContentToken,
   generateContentToken,
   decodeContentToken,
   
   // Watermark
   generateWatermarkText,
-  generateWatermarkSeed,
   
   // Sessões
   countActiveSessions,
