@@ -511,7 +511,10 @@ export function useEnhancedFingerprint(): UseEnhancedFingerprintReturn {
       setFingerprint(fullFingerprint);
       cachedHash.current = hash;
 
-      console.log('[EnhancedFingerprint] Collected successfully, hash:', hash.substring(0, 16) + '...');
+      // 🛡️ LEI V: Log apenas em dev
+      if (import.meta.env.DEV) {
+        console.log('[EnhancedFingerprint] Collected successfully');
+      }
 
       return fullFingerprint;
     } catch (err) {
