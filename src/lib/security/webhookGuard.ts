@@ -584,6 +584,93 @@ export async function verifyStripeWebhook(
   });
 }
 
+/**
+ * Verificar webhook WhatsApp (Meta)
+ */
+export async function verifyWhatsAppWebhook(
+  payload: string,
+  signature: string,
+  appSecret: string
+): Promise<WebhookVerifyResult> {
+  return webhookGuard({
+    payload,
+    signature,
+    secret: appSecret,
+    source: "whatsapp",
+    eventType: "whatsapp_message",
+  });
+}
+
+/**
+ * Verificar webhook WordPress
+ */
+export async function verifyWordPressWebhook(
+  payload: string,
+  authToken: string,
+  expectedToken: string
+): Promise<WebhookVerifyResult> {
+  const correlationId = generateCorrelationId();
+
+  // WordPress usa token direto
+  const isValid = authToken === expectedToken;
+
+  if (!isValid) {
+    await writeAuditLog({
+      correlationId,
+      action: "webhook_receive",
+      resourceType: "webhook",
+      result: "deny",
+      reason: "INVALID_WP_TOKEN",
+      metadata: { source: "wordpress" },
+    });
+
+    return {
+      valid: false,
+      reason: "Token WordPress inválido",
+      correlationId,
+    };
+  }
+
+  let parsedPayload: Record<string, unknown> | undefined;
+  try {
+    parsedPayload = JSON.parse(payload);
+  } catch {
+    // Ignorar erro de parse
+  }
+
+  await writeAuditLog({
+    correlationId,
+    action: "webhook_receive",
+    resourceType: "webhook",
+    result: "permit",
+    reason: "WORDPRESS_VERIFIED",
+    metadata: { source: "wordpress" },
+  });
+
+  return {
+    valid: true,
+    correlationId,
+    payload: parsedPayload,
+  };
+}
+
+/**
+ * Verificar webhook Panda Video
+ */
+export async function verifyPandaWebhook(
+  payload: string,
+  signature: string,
+  secret: string
+): Promise<WebhookVerifyResult> {
+  return webhookGuard({
+    payload,
+    signature,
+    secret,
+    source: "panda",
+    eventType: "panda_event",
+  });
+}
+
 // ============================================
 // HOOK PARA USO EM COMPONENTES
 // ============================================
@@ -598,6 +685,9 @@ export function useWebhookGuard() {
     checkWebhookRateLimit,
     verifyHotmartWebhook,
     verifyStripeWebhook,
+    verifyWhatsAppWebhook,
+    verifyWordPressWebhook,
+    verifyPandaWebhook,
     WEBHOOK_CONFIG,
   };
 }
