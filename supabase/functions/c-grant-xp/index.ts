@@ -85,12 +85,46 @@ serve(async (req) => {
   }
 
   try {
-    const { event }: EventPayload = await req.json();
-    
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // ========================================
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
+    // c-grant-xp só pode ser chamado pelo event-router
+    // ========================================
+    const internalSecret = req.headers.get('x-internal-secret');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isInternalCall = 
+      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
+      userAgent.includes('Deno/') ||
+      userAgent.includes('supabase-js/');
+
+    if (!isInternalCall) {
+      console.log('[C-GRANT-XP] ❌ BLOQUEADO: Chamada externa não autorizada');
+      
+      await supabaseAdmin.from('security_events').insert({
+        event_type: 'GRANT_XP_EXTERNAL_CALL',
+        severity: 'warning',
+        description: 'Tentativa de concessão de XP via chamada externa bloqueada',
+        payload: {
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+          user_agent: userAgent.substring(0, 255)
+        }
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Acesso restrito a chamadas internas' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log('[C-GRANT-XP] ✅ Chamada interna autorizada');
+
+    const { event }: EventPayload = await req.json();
 
     // Determinar user_id do evento
     const userId = event.user_id || event.payload?.user_id;

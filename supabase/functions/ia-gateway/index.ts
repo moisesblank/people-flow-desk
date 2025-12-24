@@ -31,9 +31,46 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
     );
 
+    // ========================================
+    // 🛡️ LEI VI - AUTENTICAÇÃO JWT OBRIGATÓRIA
+    // Protege contra uso não autorizado de IAs (custo infinito)
+    // ========================================
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader?.startsWith('Bearer ')) {
+      console.log('[IA-GATEWAY] ❌ BLOQUEADO: Sem token JWT');
+      
+      await supabase.from('security_events').insert({
+        event_type: 'IA_GATEWAY_UNAUTHORIZED',
+        severity: 'critical',
+        description: 'Tentativa de acesso ao IA Gateway sem autenticação',
+        payload: {
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+          user_agent: req.headers.get('user-agent')?.substring(0, 255)
+        }
+      });
+      
+      return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.log('[IA-GATEWAY] ❌ BLOQUEADO: Token JWT inválido');
+      return new Response(JSON.stringify({ error: 'Token inválido' }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log(`[IA-GATEWAY] ✅ Autenticado: ${user.email}`);
+
     const { ia, action, params, context_id, priority = 5 }: IARequest = await req.json();
 
-    console.log(`🤖 IA Gateway: ${ia} -> ${action}`);
+    console.log(`🤖 IA Gateway: ${ia} -> ${action} (user: ${user.email})`);
 
     // Registrar comando
     const { data: comando } = await supabase

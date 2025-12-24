@@ -109,6 +109,46 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
     
+    // ========================================
+    // 🛡️ LEI VI - AUTENTICAÇÃO JWT OBRIGATÓRIA
+    // Exceto para /health (healthcheck público)
+    // ========================================
+    if (path !== '/health') {
+      const authHeader = req.headers.get('Authorization')
+      if (!authHeader?.startsWith('Bearer ')) {
+        console.log('[API-GATEWAY] ❌ BLOQUEADO: Sem token JWT')
+        
+        await supabase.from('security_events').insert({
+          event_type: 'API_GATEWAY_UNAUTHORIZED',
+          severity: 'warning',
+          description: 'Tentativa de acesso ao API Gateway sem autenticação',
+          payload: {
+            path,
+            ip,
+            user_agent: req.headers.get('user-agent')?.substring(0, 255)
+          }
+        })
+        
+        return new Response(JSON.stringify({ error: 'Não autorizado' }), {
+          status: 401,
+          headers: { ...securityHeaders, ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      const token = authHeader.replace('Bearer ', '')
+      const { data: { user }, error: authError } = await supabase.auth.getUser(token)
+      
+      if (authError || !user) {
+        console.log('[API-GATEWAY] ❌ BLOQUEADO: Token JWT inválido')
+        return new Response(JSON.stringify({ error: 'Token inválido' }), {
+          status: 401,
+          headers: { ...securityHeaders, ...corsHeaders, 'Content-Type': 'application/json' },
+        })
+      }
+
+      console.log(`[API-GATEWAY] ✅ Autenticado: ${user.email} - ${req.method} ${path}`)
+    }
+    
     let response: unknown
     
     switch (true) {

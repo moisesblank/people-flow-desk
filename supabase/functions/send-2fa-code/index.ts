@@ -31,9 +31,67 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const supabaseAdmin = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      { auth: { autoRefreshToken: false, persistSession: false } }
+    );
+
+    // ========================================
+    // 🛡️ LEI VI - AUTENTICAÇÃO JWT OBRIGATÓRIA
+    // ========================================
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader?.startsWith("Bearer ")) {
+      console.log("[2FA] ❌ BLOQUEADO: Sem token JWT");
+      
+      await supabaseAdmin.from("security_events").insert({
+        event_type: "2FA_UNAUTHORIZED_ACCESS",
+        severity: "critical",
+        description: "Tentativa de envio 2FA sem autenticação",
+        payload: {
+          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown",
+          user_agent: req.headers.get("user-agent")?.substring(0, 255)
+        }
+      });
+      
+      return new Response(
+        JSON.stringify({ error: "Não autorizado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.log("[2FA] ❌ BLOQUEADO: Token JWT inválido");
+      return new Response(
+        JSON.stringify({ error: "Token inválido" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { email, userId, userName }: Send2FARequest = await req.json();
     
-    console.log(`[2FA] Iniciando geração de código para: ${email}`);
+    // O userId deve corresponder ao usuário autenticado
+    if (userId !== user.id) {
+      console.log("[2FA] ❌ BLOQUEADO: userId não corresponde ao token");
+      
+      await supabaseAdmin.from("security_events").insert({
+        event_type: "2FA_USER_MISMATCH",
+        severity: "critical",
+        user_id: user.id,
+        description: "Tentativa de enviar 2FA para outro usuário",
+        payload: { requested_user_id: userId }
+      });
+      
+      return new Response(
+        JSON.stringify({ error: "Não autorizado" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`[2FA] ✅ Autenticado: ${user.email} - Iniciando geração de código`);
 
     if (!email || !userId) {
       return new Response(
@@ -51,11 +109,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const supabaseAdmin = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
-      { auth: { autoRefreshToken: false, persistSession: false } }
-    );
+    // supabaseAdmin já inicializado acima
 
     // ========================================
     // RATE LIMITING - Proteção anti-spam

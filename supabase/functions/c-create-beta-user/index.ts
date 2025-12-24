@@ -44,15 +44,49 @@ serve(async (req) => {
   }
 
   try {
-    const { event }: EventPayload = await req.json();
-    const { customer, transaction, product } = event.payload;
-
-    console.log(`🎯 Criando usuário BETA para: ${customer.email}`);
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
+
+    // ========================================
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
+    // Esta função só pode ser chamada pelo orchestrator/hotmart-webhook
+    // ========================================
+    const internalSecret = req.headers.get('x-internal-secret');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isInternalCall = 
+      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
+      userAgent.includes('Deno/') ||
+      userAgent.includes('supabase-js/');
+
+    if (!isInternalCall) {
+      console.log('[C-CREATE-BETA-USER] ❌ BLOQUEADO: Chamada externa não autorizada');
+      
+      await supabaseAdmin.from('security_events').insert({
+        event_type: 'CREATE_BETA_USER_EXTERNAL_CALL',
+        severity: 'critical',
+        description: 'Tentativa de criação de usuário BETA via chamada externa bloqueada - POSSÍVEL FRAUDE',
+        payload: {
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+          user_agent: userAgent.substring(0, 255)
+        }
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Acesso restrito a chamadas internas do sistema' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log('[C-CREATE-BETA-USER] ✅ Chamada interna autorizada');
+
+    const { event }: EventPayload = await req.json();
+    const { customer, transaction, product } = event.payload;
+
+    console.log(`🎯 Criando usuário BETA para: ${customer.email}`);
 
     // 1. Verificar se usuário já existe no auth
     const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();

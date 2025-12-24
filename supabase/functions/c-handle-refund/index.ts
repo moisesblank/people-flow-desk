@@ -18,16 +18,49 @@ serve(async (req) => {
   }
 
   try {
-    const { event } = await req.json();
-    const { customer, transaction } = event.payload;
-
-    console.log(`🔄 Processando reembolso para: ${customer?.email}`);
-
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
+    // ========================================
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
+    // c-handle-refund só pode ser chamado pelo orchestrator/hotmart-webhook
+    // ========================================
+    const internalSecret = req.headers.get('x-internal-secret');
+    const userAgent = req.headers.get('user-agent') || '';
+    const isInternalCall = 
+      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
+      userAgent.includes('Deno/') ||
+      userAgent.includes('supabase-js/');
+
+    if (!isInternalCall) {
+      console.log('[C-HANDLE-REFUND] ❌ BLOQUEADO: Chamada externa não autorizada');
+      
+      await supabaseAdmin.from('security_events').insert({
+        event_type: 'HANDLE_REFUND_EXTERNAL_CALL',
+        severity: 'critical',
+        description: 'Tentativa de processamento de reembolso via chamada externa bloqueada - POSSÍVEL FRAUDE',
+        payload: {
+          ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
+          user_agent: userAgent.substring(0, 255)
+        }
+      });
+      
+      return new Response(JSON.stringify({ 
+        error: 'Acesso restrito a chamadas internas do sistema' 
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+
+    console.log('[C-HANDLE-REFUND] ✅ Chamada interna autorizada');
+
+    const { event } = await req.json();
+    const { customer, transaction } = event.payload;
+
+    console.log(`🔄 Processando reembolso para: ${customer?.email}`);
     if (!customer?.email) {
       throw new Error("Email do cliente não encontrado no payload");
     }
