@@ -532,16 +532,19 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
 
       if (uploadError) throw uploadError;
 
-      const { data: urlData } = supabase.storage
+      // LEI VII: Usar signed URL para bucket privado
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from('avatars')
-        .getPublicUrl(fileName);
+        .createSignedUrl(fileName, 31536000); // 1 ano
+      
+      if (signedUrlError) throw signedUrlError;
+      
+      const signedUrl = signedUrlData?.signedUrl || fileName;
 
-      const publicUrl = urlData.publicUrl;
-
-      await updateContent(key, publicUrl, 'image');
+      await updateContent(key, fileName, 'image'); // Guardar path, não URL
 
       toast.success('📷 Imagem atualizada!');
-      return publicUrl;
+      return signedUrl;
     } catch (err) {
       console.error('Erro no upload:', err);
       toast.error('Erro ao fazer upload');

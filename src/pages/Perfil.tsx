@@ -169,21 +169,25 @@ export default function Perfil() {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
+      // LEI VII: Usar signed URL para bucket privado
+      const { data: signedUrlData, error: signedUrlError } = await supabase.storage
         .from("avatars")
-        .getPublicUrl(filePath);
-
+        .createSignedUrl(filePath, 31536000); // 1 ano (avatars são semi-permanentes)
+      
+      if (signedUrlError) throw signedUrlError;
+      
+      // Armazenar o path no banco (não a URL assinada que expira)
       const { error: updateError } = await supabase
         .from("profiles")
         .update({
-          avatar_url: publicUrl,
+          avatar_url: filePath, // Guardar apenas o path, gerar signed URL quando necessário
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
 
       if (updateError) throw updateError;
 
-      setProfile(prev => ({ ...prev, avatar_url: publicUrl }));
+      setProfile(prev => ({ ...prev, avatar_url: signedUrlData?.signedUrl || filePath }));
       toast.success("Avatar atualizado!");
     } catch (error: any) {
       console.error("Erro ao atualizar avatar:", error);

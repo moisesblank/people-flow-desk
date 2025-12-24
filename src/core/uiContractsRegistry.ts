@@ -151,9 +151,9 @@ export const ROUTE_CONTRACTS: Record<string, { role: string; area: string }> = {
  * Mapa de buckets e suas políticas esperadas
  */
 export const STORAGE_CONTRACTS: Record<string, { public: boolean; allowedRoles: string[] }> = {
-  'arquivos': { public: true, allowedRoles: ['owner', 'admin', 'employee'] },
+  'arquivos': { public: false, allowedRoles: ['owner', 'admin', 'employee'] }, // LEI VII: PRIVADO
   'aulas': { public: false, allowedRoles: ['owner', 'admin', 'employee', 'beta'] },
-  'avatars': { public: true, allowedRoles: ['*'] },
+  'avatars': { public: false, allowedRoles: ['*'] }, // LEI VII: PRIVADO
   'certificados': { public: false, allowedRoles: ['owner', 'admin', 'beta'] },
   'comprovantes': { public: false, allowedRoles: ['owner', 'admin', 'contabilidade'] },
   'documentos': { public: false, allowedRoles: ['owner', 'admin', 'employee'] },
