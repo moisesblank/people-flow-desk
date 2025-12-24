@@ -113,6 +113,17 @@ export {
   SECURITY_HEADERS,
   RECOMMENDED_WAF_RULES,
   RECOMMENDED_PAGE_RULES,
+  // v2.0 - SPA Profile + Deploy Integrity
+  MODO_A_DNS_ONLY,
+  MODO_B_PROXIED_SAFE,
+  getActiveCloudflareProfile,
+  verifyCloudflareReadiness,
+  checkHTMLGate,
+  checkRuntimeIntegrity,
+  DEPLOY_CHECKLIST,
+  LEGACY_REDIRECTS,
+  shouldRedirect,
+  handleLegacyRedirect,
 } from "./cloudflareIntegration";
 
 export type {
@@ -120,3 +131,8 @@ export type {
   CloudflareContext,
   CloudflareSecurityConfig,
 } from "./cloudflareIntegration";
+
+// ============================================
+// CLOUDFLARE MODULE (STANDALONE)
+// ============================================
+export * from "@/lib/cloudflare";
