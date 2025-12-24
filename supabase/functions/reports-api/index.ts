@@ -1,7 +1,9 @@
 // ============================================
-// TRAMON v9.0 - REPORTS API (O Bibliotecário)
+// 🛡️ TRAMON v10.0 - REPORTS API (O Bibliotecário)
+// LEI III + LEI VI — SEGURANÇA COM JWT + ROLE CHECK
 // Propósito: Endpoints seguros para dashboards e auditoria
 // ============================================
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -10,17 +12,103 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Roles permitidas para acessar relatórios
+const ALLOWED_ROLES = ['owner', 'admin', 'funcionario'];
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
 
-  const supabase = createClient(
+  const supabaseAdmin = createClient(
     Deno.env.get('SUPABASE_URL')!,
     Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
   );
 
   try {
+    // ============================================
+    // 🔐 AUTENTICAÇÃO OBRIGATÓRIA (JWT validado pelo Supabase)
+    // ============================================
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      console.error("[Reports API] ❌ Sem header de autorização");
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Não autorizado",
+        code: "UNAUTHORIZED"
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // Verificar usuário autenticado
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
+    
+    if (authError || !user) {
+      console.error("[Reports API] ❌ Token inválido:", authError?.message);
+      
+      // Log de segurança
+      await supabaseAdmin.from("security_events").insert({
+        event_type: "reports_unauthorized_attempt",
+        severity: "warning",
+        ip_address: req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown",
+        user_agent: req.headers.get("user-agent"),
+        payload: { reason: "invalid_token" },
+      });
+
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Token inválido ou expirado",
+        code: "INVALID_TOKEN"
+      }), {
+        status: 401,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    // ============================================
+    // 🔐 VERIFICAÇÃO DE ROLE
+    // ============================================
+    const { data: userRoles } = await supabaseAdmin
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id);
+
+    const roles = userRoles?.map(r => r.role) || [];
+    const hasPermission = roles.some(role => ALLOWED_ROLES.includes(role));
+
+    if (!hasPermission) {
+      console.error(`[Reports API] ❌ User ${user.id} sem permissão. Roles: ${roles.join(', ')}`);
+      
+      await supabaseAdmin.from("security_events").insert({
+        event_type: "reports_access_denied",
+        severity: "warning",
+        user_id: user.id,
+        ip_address: req.headers.get("cf-connecting-ip") || "unknown",
+        payload: { 
+          reason: "INSUFFICIENT_ROLE",
+          user_roles: roles,
+          required_roles: ALLOWED_ROLES
+        },
+      });
+
+      return new Response(JSON.stringify({ 
+        success: false,
+        error: "Você não tem permissão para acessar relatórios",
+        code: "FORBIDDEN"
+      }), {
+        status: 403,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+
+    console.log(`[Reports API] ✅ User ${user.id} autorizado. Roles: ${roles.join(', ')}`);
+
+    // ============================================
+    // 📊 PROCESSAMENTO DO RELATÓRIO
+    // ============================================
     const url = new URL(req.url);
     const reportType = url.searchParams.get('type') || 'dashboard';
     const startDate = url.searchParams.get('start') || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
@@ -32,11 +120,11 @@ serve(async (req) => {
       case 'dashboard':
         // Dashboard executivo
         const [alunos, entradas, gastos, tarefas, webhooks] = await Promise.all([
-          supabase.from('alunos').select('id, status').eq('status', 'ativo'),
-          supabase.from('entradas').select('valor').gte('data', startDate).lte('data', endDate),
-          supabase.from('gastos').select('valor').gte('data', startDate).lte('data', endDate),
-          supabase.from('calendar_tasks').select('id, is_completed'),
-          supabase.from('webhooks_queue').select('id, status')
+          supabaseAdmin.from('alunos').select('id, status').eq('status', 'ativo'),
+          supabaseAdmin.from('entradas').select('valor').gte('data', startDate).lte('data', endDate),
+          supabaseAdmin.from('gastos').select('valor').gte('data', startDate).lte('data', endDate),
+          supabaseAdmin.from('calendar_tasks').select('id, is_completed'),
+          supabaseAdmin.from('webhooks_queue').select('id, status')
         ]);
 
         const receitaTotal = entradas.data?.reduce((sum, e) => sum + (e.valor || 0), 0) || 0;
@@ -61,11 +149,11 @@ serve(async (req) => {
       case 'audit_access':
         // 3.4.1 - Dashboard de Auditoria "Pagou x Acesso"
         const [hotmartTrans, wpUsers, mismatches] = await Promise.all([
-          supabase.from('transacoes_hotmart_completo')
+          supabaseAdmin.from('transacoes_hotmart_completo')
             .select('*')
             .in('status', ['approved', 'complete', 'completed']),
-          supabase.from('usuarios_wordpress_sync').select('*'),
-          supabase.from('audit_access_mismatches').select('*').eq('resolvido', false)
+          supabaseAdmin.from('usuarios_wordpress_sync').select('*'),
+          supabaseAdmin.from('audit_access_mismatches').select('*').eq('resolvido', false)
         ]);
 
         const hotmartEmails = new Set((hotmartTrans.data || []).map(t => t.email?.toLowerCase()));
@@ -120,18 +208,18 @@ serve(async (req) => {
       case 'system_health':
         // 3.4.3 - Painel de Saúde do Sistema
         const [securityEvents, dlqItems, recentLogs, iaCommands] = await Promise.all([
-          supabase.from('security_events')
+          supabaseAdmin.from('security_events')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(20),
-          supabase.from('dead_letter_queue')
+          supabaseAdmin.from('dead_letter_queue')
             .select('*')
             .eq('reprocessed', false),
-          supabase.from('logs_integracao_detalhado')
+          supabaseAdmin.from('logs_integracao_detalhado')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(50),
-          supabase.from('comandos_ia_central')
+          supabaseAdmin.from('comandos_ia_central')
             .select('*')
             .gte('created_at', new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         ]);
@@ -168,7 +256,7 @@ serve(async (req) => {
 
       case 'logs':
         // Central de Monitoramento e Logs
-        const logs = await supabase
+        const logs = await supabaseAdmin
           .from('logs_integracao_detalhado')
           .select('*')
           .order('created_at', { ascending: false })
@@ -183,7 +271,7 @@ serve(async (req) => {
 
       case 'dlq':
         // Dead Letter Queue para reprocessamento
-        const dlq = await supabase
+        const dlq = await supabaseAdmin
           .from('dead_letter_queue')
           .select('*')
           .order('created_at', { ascending: false });
@@ -198,6 +286,7 @@ serve(async (req) => {
 
       default:
         return new Response(JSON.stringify({
+          success: false,
           error: `Tipo de relatório desconhecido: ${reportType}`,
           tipos_disponiveis: ['dashboard', 'audit_access', 'system_health', 'logs', 'dlq']
         }), {
@@ -206,9 +295,17 @@ serve(async (req) => {
         });
     }
 
+    // Log de acesso
+    await supabaseAdmin.from("activity_log").insert({
+      user_id: user.id,
+      action: "REPORT_ACCESSED",
+      new_value: { report_type: reportType, periodo: { startDate, endDate } }
+    });
+
     return new Response(JSON.stringify({
       success: true,
       generated_at: new Date().toISOString(),
+      accessed_by: user.id,
       report
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }
@@ -218,7 +315,8 @@ serve(async (req) => {
     console.error('Reports API error:', error);
     return new Response(JSON.stringify({
       success: false,
-      error: error instanceof Error ? error.message : 'Unknown error'
+      error: error instanceof Error ? error.message : 'Unknown error',
+      code: 'INTERNAL_ERROR'
     }), {
       status: 500,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' }

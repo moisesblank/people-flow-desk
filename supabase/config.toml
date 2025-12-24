@@ -1,154 +1,74 @@
 project_id = "fyikfsasudgzsjmumdlw"
 
+# ============================================
+# 🛡️ LEI VI - IMUNIDADE SISTÊMICA v3.1
+# FUNÇÕES COM verify_jwt ESTRATÉGICO
+# ============================================
+
+# ============================================
+# 🔴 WEBHOOKS - SEM JWT (validam internamente)
+# ============================================
+
 [functions.webhook-curso-quimica]
 verify_jwt = false
 
-[functions.ai-tutor]
-verify_jwt = false
-
-[functions.ai-assistant]
-verify_jwt = false
-
-[functions.ai-tramon]
-verify_jwt = false
-
-[functions.whatsapp-webhook]
-verify_jwt = false
-
-[functions.send-report]
-verify_jwt = true
-
-[functions.backup-data]
-verify_jwt = true
-
-[functions.send-notification-email]
-verify_jwt = false
-
-[functions.youtube-api]
-verify_jwt = false
-
-[functions.google-calendar]
-verify_jwt = true
-
-[functions.invite-employee]
-verify_jwt = false
-
-[functions.send-2fa-code]
-verify_jwt = false
-
-[functions.verify-2fa-code]
-verify_jwt = false
-
-[functions.social-media-stats]
-verify_jwt = false
-
-[functions.extract-document]
-verify_jwt = true
-
-[functions.send-weekly-report]
-verify_jwt = true
-
-[functions.ocr-receipt]
-verify_jwt = true
-
 [functions.hotmart-webhook-processor]
-verify_jwt = false
-
-[functions.instagram-sync]
-verify_jwt = false
-
-[functions.facebook-ads-sync]
-verify_jwt = false
-
-[functions.send-email]
-verify_jwt = false
-
-[functions.generate-weekly-report]
-verify_jwt = false
-
-[functions.notify-owner]
-verify_jwt = false
-
-[functions.youtube-sync]
-verify_jwt = false
-
-[functions.tiktok-sync]
-verify_jwt = false
-
-[functions.wordpress-webhook]
-verify_jwt = false
-
-[functions.google-analytics-sync]
-verify_jwt = false
-
-[functions.automacoes]
-verify_jwt = false
-
-[functions.webhook-handler]
-verify_jwt = false
-
-[functions.queue-worker]
-verify_jwt = false
-
-[functions.orchestrator]
-verify_jwt = false
-
-[functions.ia-gateway]
-verify_jwt = false
-
-[functions.wordpress-api]
-verify_jwt = false
-
-[functions.sync-wordpress-users]
-verify_jwt = false
-
-[functions.reports-api]
-verify_jwt = false
-
-[functions.api-gateway]
-verify_jwt = false
-
-[functions.task-reminder]
-verify_jwt = false
-
-[functions.api-fast]
 verify_jwt = false
 
 [functions.hotmart-fast]
 verify_jwt = false
 
-[functions.youtube-live]
+[functions.wordpress-webhook]
 verify_jwt = false
 
-[functions.check-vencimentos]
+[functions.whatsapp-webhook]
 verify_jwt = false
 
-[functions.atualizar-status-alunos]
+[functions.webhook-handler]
+verify_jwt = false
+
+[functions.webhook-receiver]
 verify_jwt = false
 
 # ============================================
-# 🔥 DOGMA III & IV - EDGE FUNCTIONS SEGURAS
+# 🔴 TURNSTILE/DEVICE - SEM JWT (anti-bot)
 # ============================================
 
-[functions.secure-video-url]
-verify_jwt = true
+[functions.verify-turnstile]
+verify_jwt = false
 
-[functions.secure-api-proxy]
-verify_jwt = true
+[functions.validate-device]
+verify_jwt = false
 
 # ============================================
-# 🔥 DOGMA X - RATE LIMITING
+# 🔴 RATE LIMIT GATEWAY - SEM JWT (infraestrutura)
 # ============================================
 
 [functions.rate-limit-gateway]
 verify_jwt = false
 
 # ============================================
-# 🌌 TESTAMENTO DA SINGULARIDADE v5.0
-# SISTEMA NERVOSO DIVINO - Event-Driven Architecture
+# 🔴 VIOLAÇÕES - SEM JWT (recebe reports anônimos)
 # ============================================
 
-[functions.webhook-receiver]
+[functions.video-violation-omega]
+verify_jwt = false
+
+[functions.sanctum-report-violation]
+verify_jwt = false
+
+[functions.notify-suspicious-device]
+verify_jwt = false
+
+# ============================================
+# 🟡 FUNÇÕES INTERNAS - PROTEGIDAS POR HEADER
+# verify_jwt = false MAS validam internamente
+# ============================================
+
+[functions.orchestrator]
+verify_jwt = false
+
+[functions.queue-worker]
 verify_jwt = false
 
 [functions.event-router]
@@ -163,71 +83,81 @@ verify_jwt = false
 [functions.c-handle-refund]
 verify_jwt = false
 
-# ============================================
-# 🧠 AXIOMA I - CONTEXTO PREDITIVO
-# ============================================
-
 [functions.generate-context]
 verify_jwt = false
 
 # ============================================
-# 🎥 PANDA VIDEO - URLs Assinadas
+# 🟢 FUNÇÕES COM JWT OBRIGATÓRIO
 # ============================================
 
-[functions.get-panda-signed-url]
+# --- Relatórios e APIs sensíveis ---
+[functions.reports-api]
 verify_jwt = true
 
-# ============================================
-# 🧠 AI CONTENT GENERATION
-# ============================================
-
-[functions.generate-ai-content]
+[functions.send-report]
 verify_jwt = true
 
-# ============================================
-# 🧠 FSRS FLASHCARD SYSTEM
-# ============================================
-
-[functions.reschedule-flashcard]
+[functions.backup-data]
 verify_jwt = true
 
-# ============================================
-# 💬 CHAT TRAMON - Assistente IA Contextual
-# ============================================
+[functions.generate-weekly-report]
+verify_jwt = true
+
+[functions.send-weekly-report]
+verify_jwt = true
+
+# --- Email e 2FA ---
+[functions.send-email]
+verify_jwt = true
+
+[functions.send-2fa-code]
+verify_jwt = true
+
+[functions.verify-2fa-code]
+verify_jwt = true
+
+[functions.send-notification-email]
+verify_jwt = true
+
+[functions.notify-owner]
+verify_jwt = true
+
+[functions.invite-employee]
+verify_jwt = true
+
+# --- IAs e Conteúdo Premium ---
+[functions.ai-tutor]
+verify_jwt = true
+
+[functions.ai-assistant]
+verify_jwt = true
+
+[functions.ai-tramon]
+verify_jwt = true
+
+[functions.ia-gateway]
+verify_jwt = true
 
 [functions.chat-tramon]
 verify_jwt = true
 
-# ============================================
-# 🔥🛡️ VIDEO AUTHORIZE OMEGA v5.0
-# SANCTUM 2.0 - Autorização de Vídeo
-# ============================================
+[functions.generate-ai-content]
+verify_jwt = true
+
+# --- Vídeo e Conteúdo Protegido ---
+[functions.secure-video-url]
+verify_jwt = true
+
+[functions.secure-api-proxy]
+verify_jwt = true
+
+[functions.get-panda-signed-url]
+verify_jwt = true
 
 [functions.video-authorize-omega]
 verify_jwt = true
 
-[functions.video-violation-omega]
-verify_jwt = false
-
-# ============================================
-# 🌌🔥 SANCTUM OMEGA ULTRA v3.0
-# Proteção de Conteúdo Nível NASA
-# ============================================
-
-[functions.sanctum-asset-manifest]
-verify_jwt = true
-
-[functions.sanctum-report-violation]
-verify_jwt = false
-
-[functions.enqueue-transmutation]
-verify_jwt = true
-
-# ============================================
-# 📚 LIVROS DO MOISA - Sistema de Livro Web
-# Genesis Upload + Signed URLs + Chat AI
-# ============================================
-
+# --- Livros e Assets ---
 [functions.genesis-upload]
 verify_jwt = true
 
@@ -243,21 +173,74 @@ verify_jwt = true
 [functions.book-chat-ai]
 verify_jwt = true
 
-# ============================================
-# 🛡️ CLOUDFLARE TURNSTILE - Anti-Bot Protection
-# LEI III - DOGMA SEGURANÇA
-# ============================================
+[functions.sanctum-asset-manifest]
+verify_jwt = true
 
-[functions.verify-turnstile]
-verify_jwt = false
+[functions.enqueue-transmutation]
+verify_jwt = true
 
-[functions.validate-device]
-verify_jwt = false
+# --- Flashcards e Estudo ---
+[functions.reschedule-flashcard]
+verify_jwt = true
 
-# ============================================
-# 🚨 NOTIFY SUSPICIOUS DEVICE - Alertas Admin
-# LEI VI - IMUNIDADE SISTÊMICA
-# ============================================
+# --- OCR e Documentos ---
+[functions.extract-document]
+verify_jwt = true
 
-[functions.notify-suspicious-device]
-verify_jwt = false
+[functions.ocr-receipt]
+verify_jwt = true
+
+# --- Google e Calendário ---
+[functions.google-calendar]
+verify_jwt = true
+
+# --- APIs e Gateways ---
+[functions.api-gateway]
+verify_jwt = true
+
+[functions.api-fast]
+verify_jwt = true
+
+# --- Syncs e Automações ---
+[functions.youtube-api]
+verify_jwt = true
+
+[functions.youtube-sync]
+verify_jwt = true
+
+[functions.youtube-live]
+verify_jwt = true
+
+[functions.instagram-sync]
+verify_jwt = true
+
+[functions.facebook-ads-sync]
+verify_jwt = true
+
+[functions.tiktok-sync]
+verify_jwt = true
+
+[functions.google-analytics-sync]
+verify_jwt = true
+
+[functions.social-media-stats]
+verify_jwt = true
+
+[functions.wordpress-api]
+verify_jwt = true
+
+[functions.sync-wordpress-users]
+verify_jwt = true
+
+# --- Tarefas e Automações Internas ---
+[functions.task-reminder]
+verify_jwt = true
+
+[functions.check-vencimentos]
+verify_jwt = true
+
+[functions.atualizar-status-alunos]
+verify_jwt = true
+
+[functions.automacoes]
+verify_jwt = true

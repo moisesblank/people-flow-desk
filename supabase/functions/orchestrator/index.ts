@@ -1,12 +1,19 @@
-// 🧠 TRAMON v8 - ORCHESTRATOR (O Maestro das IAs)
+// ============================================
+// 🧠 TRAMON v9.0 - ORCHESTRATOR (O Maestro das IAs)
+// 🛡️ LEI VI - PROTEGIDO POR HEADER INTERNO
 // Propósito: Coordenar ações entre as 4 IAs e sistemas externos
+// ============================================
+
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
 };
+
+// Secret interno para chamadas entre funções
+const INTERNAL_SECRET = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.substring(0, 32);
 
 interface OrchestratorRequest {
   queue_id: string;
@@ -23,6 +30,52 @@ serve(async (req) => {
 
   const startTime = Date.now();
   
+  // ============================================
+  // 🛡️ VALIDAÇÃO DE ORIGEM INTERNA
+  // Apenas outras edge functions podem chamar
+  // ============================================
+  const internalSecret = req.headers.get('x-internal-secret');
+  const userAgent = req.headers.get('user-agent') || '';
+  const isInternalCall = 
+    internalSecret === INTERNAL_SECRET ||
+    userAgent.includes('Deno/') ||
+    userAgent.includes('Supabase');
+
+  if (!isInternalCall) {
+    console.error("❌ Orchestrator: Chamada externa não autorizada");
+    
+    const supabase = createClient(
+      Deno.env.get('SUPABASE_URL')!,
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+    );
+
+    // Log de segurança
+    await supabase.from("security_events").insert({
+      event_type: "orchestrator_unauthorized",
+      severity: "critical",
+      ip_address: req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown",
+      user_agent: userAgent,
+      payload: {
+        source: "orchestrator",
+        reason: "EXTERNAL_CALL_BLOCKED",
+        headers: Object.fromEntries([...req.headers.entries()].filter(([k]) => 
+          !k.toLowerCase().includes("authorization") && 
+          !k.toLowerCase().includes("cookie") &&
+          !k.toLowerCase().includes("secret")
+        )),
+      },
+    });
+
+    return new Response(JSON.stringify({
+      status: 'error',
+      message: 'Função restrita a chamadas internas',
+      code: 'INTERNAL_ONLY'
+    }), {
+      status: 403,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+
   try {
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
