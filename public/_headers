@@ -1,0 +1,54 @@
+# ============================================
+# 🚀 CACHE HEADERS - LEI I PERFORMANCE
+# Economia estimada: 632 KiB
+# ============================================
+
+# Assets com hash (Vite fingerprinting) - Cache 1 ano
+/assets/*
+  Cache-Control: public, max-age=31536000, immutable
+
+# Imagens estáticas - Cache 1 mês
+/assets/images/*
+  Cache-Control: public, max-age=2592000, stale-while-revalidate=86400
+
+# Fontes - Cache 1 ano
+*.woff2
+  Cache-Control: public, max-age=31536000, immutable
+
+*.woff
+  Cache-Control: public, max-age=31536000, immutable
+
+# JS e CSS com hash - Cache 1 ano (imutáveis)
+/*.js
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.css
+  Cache-Control: public, max-age=31536000, immutable
+
+# Favicon - Cache 1 semana
+/favicon.ico
+  Cache-Control: public, max-age=604800
+
+# HTML - Sem cache (sempre buscar versão nova)
+/index.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+/*.html
+  Cache-Control: no-cache, no-store, must-revalidate
+
+# Manifest - Cache 1 dia
+/manifest.json
+  Cache-Control: public, max-age=86400
+
+# Robots - Cache 1 dia
+/robots.txt
+  Cache-Control: public, max-age=86400
+
+# ============================================
+# SECURITY HEADERS
+# ============================================
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-XSS-Protection: 1; mode=block
+  Referrer-Policy: strict-origin-when-cross-origin

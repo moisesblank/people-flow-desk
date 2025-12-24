@@ -159,14 +159,17 @@ export const CinematicIntro = memo(({ onComplete }: CinematicIntroProps) => {
               animate={phase >= 2 ? { opacity: [0.5, 1, 0.5] } : {}}
               transition={{ duration: 2, repeat: Infinity }}
             />
+            {/* 🚀 OTIMIZAÇÃO: Dimensões explícitas para evitar CLS */}
+            {/* Imagem original 1920x800, mas exibida em 192x192 - usar srcset seria ideal */}
             <img
               src={logoMoises}
               alt="Prof. Moisés Medeiros"
               width={192}
-              height={80}
+              height={192}
               className="relative w-40 h-40 md:w-48 md:h-48 object-contain"
               loading="eager"
               decoding="async"
+              fetchPriority="high"
             />
           </div>
         </motion.div>

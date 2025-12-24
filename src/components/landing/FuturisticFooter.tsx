@@ -150,11 +150,16 @@ export const FuturisticFooter = () => {
         <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-10 mb-16">
           {/* Brand column */}
           <div className="col-span-2 lg:col-span-2">
+            {/* 🚀 OTIMIZAÇÃO: width/height explícitos para evitar CLS */}
             <motion.img 
               src={logoMoises} 
               alt="Moisés Medeiros" 
+              width={134}
+              height={56}
               className="h-14 mb-6"
               whileHover={{ scale: 1.05 }}
+              loading="lazy"
+              decoding="async"
               style={{ filter: 'drop-shadow(0 0 20px rgba(220, 38, 38, 0.3))' }}
             />
             <p className="text-gray-400 mb-8 max-w-sm leading-relaxed">

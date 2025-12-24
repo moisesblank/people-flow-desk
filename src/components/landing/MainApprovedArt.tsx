@@ -178,11 +178,16 @@ export const MainApprovedArt = () => {
             />
             
             {/* Imagem */}
+            {/* 🚀 OTIMIZAÇÃO: width/height explícitos para evitar CLS */}
             <div className="relative rounded-2xl overflow-hidden bg-black">
               <img
                 src={artePrincipal}
                 alt="Todos os alunos aprovados em medicina pelo curso Moisés Medeiros"
+                width={1200}
+                height={800}
                 className="w-full h-auto object-contain"
+                loading="lazy"
+                decoding="async"
               />
               
               {/* Overlay gradiente sutil no topo */}
