@@ -40,32 +40,30 @@ export const DYNAMIC_PAGES = [
 
 // ============================================
 // SERVICE WORKER REGISTRATION
+// ⚠️ DESABILITADO - Causava problemas de MIME type em produção
+// Cache é gerenciado via CDN/Cloudflare + hash de arquivos
 // ============================================
 
+/**
+ * @deprecated Service Worker desabilitado para evitar problemas de cache
+ */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | null> {
-  if (!('serviceWorker' in navigator)) {
-    console.warn('[DOGMA VII] Service Worker não suportado');
-    return null;
+  console.warn('[DOGMA VII] ⚠️ Service Worker DESABILITADO - usando cache via CDN');
+  
+  // 🧹 CLEANUP: Remove qualquer SW existente
+  if ('serviceWorker' in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('[DOGMA VII] 🧹 Service Worker removido:', registration.scope);
+      }
+    } catch (error) {
+      console.warn('[DOGMA VII] Erro ao remover SW:', error);
+    }
   }
-
-  try {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/',
-      updateViaCache: 'none',
-    });
-
-    console.log('[DOGMA VII] ⚡ Service Worker registrado:', registration.scope);
-
-    // Check for updates periodically
-    setInterval(() => {
-      registration.update();
-    }, 60 * 60 * 1000); // Every hour
-
-    return registration;
-  } catch (error) {
-    console.error('[DOGMA VII] Falha ao registrar Service Worker:', error);
-    return null;
-  }
+  
+  return null;
 }
 
 // ============================================
@@ -266,7 +264,7 @@ export const EDGE_CACHE_CONFIG = {
 // ============================================
 
 export function initServerOptimization(): void {
-  // Register service worker
+  // 🧹 Service Worker cleanup (não registra mais, apenas limpa)
   registerServiceWorker();
 
   // Add speculation rules for common navigation
@@ -297,7 +295,7 @@ export function initServerOptimization(): void {
     document.head.appendChild(script);
   }
 
-  console.log('[DOGMA VII] ⚡ Otimizações de servidor inicializadas');
+  console.log('[DOGMA VII] ⚡ Otimizações de servidor inicializadas (SW desabilitado)');
 }
 
 console.log('[DOGMA VII] ⚡ Módulo de ressurreição no servidor carregado');

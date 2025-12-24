@@ -1,49 +1,29 @@
 // ============================================
 // MASTER PRO ULTRA v3.0 - SERVICE WORKER REGISTER
-// Registro do SW com tratamento de atualizações
+// ⚠️ DESABILITADO - Causava problemas de MIME type em produção
 // ============================================
 
+/**
+ * @deprecated Service Worker desabilitado para evitar problemas de cache
+ * O cache é gerenciado via CDN/Cloudflare + hash de arquivos
+ */
 export async function registerServiceWorker(): Promise<ServiceWorkerRegistration | undefined> {
-  if (!('serviceWorker' in navigator)) {
-    console.log('[SW] Service Workers não suportados');
-    return undefined;
+  console.warn('[SW] ⚠️ Service Worker DESABILITADO - usando cache via CDN');
+  
+  // 🧹 CLEANUP: Remove qualquer SW existente
+  if ('serviceWorker' in navigator) {
+    try {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const registration of registrations) {
+        await registration.unregister();
+        console.log('[SW] 🧹 Service Worker removido:', registration.scope);
+      }
+    } catch (error) {
+      console.warn('[SW] Erro ao remover SW:', error);
+    }
   }
-
-  try {
-    const registration = await navigator.serviceWorker.register('/sw.js', {
-      scope: '/'
-    });
-
-    console.log('[SW] Registrado com sucesso:', registration.scope);
-
-    // Verificar atualizações
-    registration.addEventListener('updatefound', () => {
-      const newWorker = registration.installing;
-
-      newWorker?.addEventListener('statechange', () => {
-        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
-          // Nova versão disponível
-          console.log('[SW] Nova versão disponível');
-          
-          // Notificar usuário (opcional - pode usar toast)
-          if (window.confirm('Nova versão disponível! Atualizar agora?')) {
-            newWorker.postMessage({ type: 'SKIP_WAITING' });
-            window.location.reload();
-          }
-        }
-      });
-    });
-
-    // Verificar atualizações periodicamente (a cada hora)
-    setInterval(() => {
-      registration.update();
-    }, 60 * 60 * 1000);
-
-    return registration;
-  } catch (error) {
-    console.error('[SW] Falha ao registrar:', error);
-    return undefined;
-  }
+  
+  return undefined;
 }
 
 // Verificar se está offline
