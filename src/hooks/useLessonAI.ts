@@ -37,7 +37,7 @@ export function useLessonAI(): UseLessonAIReturn {
     try {
       const { data, error } = await supabase
         .from('ai_generated_content')
-        .select('*')
+        .select('id, lesson_id, content_type, content, model_used, tokens_used, created_at')
         .eq('lesson_id', lessonId)
         .eq('content_type', type)
         .order('created_at', { ascending: false })

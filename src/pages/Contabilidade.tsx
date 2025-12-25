@@ -114,8 +114,8 @@ export default function Contabilidade() {
   const fetchData = async () => {
     try {
       const [entriesRes, metricasRes] = await Promise.all([
-        supabase.from("contabilidade").select("*").order("data_referencia", { ascending: false }),
-        supabase.from("metricas_marketing").select("*").order("mes_referencia", { ascending: false }),
+        supabase.from("contabilidade").select("id, descricao, tipo, valor, categoria, topico, subtopico, data_referencia, created_at").order("data_referencia", { ascending: false }).limit(500),
+        supabase.from("metricas_marketing").select("id, mes_referencia, investimento_marketing, receita_gerada, novos_clientes, custo_aquisicao, ltv, cac, roi_percentual, created_at").order("mes_referencia", { ascending: false }).limit(100),
       ]);
 
       if (entriesRes.error) throw entriesRes.error;

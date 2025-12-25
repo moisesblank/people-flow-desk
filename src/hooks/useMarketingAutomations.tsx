@@ -99,7 +99,7 @@ export function useMarketingAutomations() {
     try {
       const { data, error } = await supabase
         .from('marketing_alerts')
-        .select('*')
+        .select('id, tipo, titulo, mensagem, severidade, resolvido, created_at')
         .eq('resolvido', false)
         .order('created_at', { ascending: false })
         .limit(50);
@@ -124,7 +124,8 @@ export function useMarketingAutomations() {
       // Buscar campanhas
       const { data: campanhas } = await supabase
         .from('marketing_campaigns')
-        .select('*');
+        .select('id, name, status, budget, spent, leads, conversions')
+        .limit(100);
 
       // Buscar entradas do mês
       const { data: entradas } = await supabase

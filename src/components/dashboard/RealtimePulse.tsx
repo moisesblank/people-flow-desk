@@ -96,8 +96,9 @@ export function RealtimePulse() {
       // Fetch today's metrics
       const { data: metrics } = await supabase
         .from("synapse_metrics")
-        .select("*")
-        .eq("reference_date", today);
+        .select("id, metric_name, metric_value, reference_date")
+        .eq("reference_date", today)
+        .limit(50);
 
       const revenue = metrics?.find(m => m.metric_name === "daily_revenue")?.metric_value || 0;
       const sales = metrics?.find(m => m.metric_name === "daily_sales_count")?.metric_value || 0;
@@ -105,7 +106,7 @@ export function RealtimePulse() {
       // Fetch recent transactions
       const { data: transactions } = await supabase
         .from("synapse_transactions")
-        .select("*")
+        .select("id, transaction_type, amount, status, source, customer_name, product_name, created_at")
         .order("created_at", { ascending: false })
         .limit(5);
 

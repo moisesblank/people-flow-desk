@@ -38,8 +38,9 @@ export function useSocialMediaStats() {
     try {
       const { data, error: fetchError } = await supabase
         .from('social_media_metrics')
-        .select('*')
-        .order('platform');
+        .select('id, platform, username, profile_url, followers, following, posts_count, engagement_rate, growth_rate, views_count, subscribers, videos_count, last_fetched_at, is_auto_fetch, extra_data, created_at, updated_at')
+        .order('platform')
+        .limit(50);
 
       if (fetchError) throw fetchError;
 

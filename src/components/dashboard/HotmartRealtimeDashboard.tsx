@@ -87,14 +87,14 @@ export function HotmartRealtimeDashboard() {
       // Vendas de hoje
       const { data: vendasHoje } = await supabase
         .from("transacoes_hotmart_completo")
-        .select("*")
+        .select("id, valor_bruto, status, created_at")
         .gte("created_at", today.toISOString())
         .in("status", ["approved", "purchase_approved", "purchase_complete"]);
 
       // Vendas do mês
       const { data: vendasMes } = await supabase
         .from("transacoes_hotmart_completo")
-        .select("*")
+        .select("id, valor_bruto, status, created_at")
         .gte("created_at", startOfMonth.toISOString())
         .in("status", ["approved", "purchase_approved", "purchase_complete"]);
 
@@ -113,14 +113,14 @@ export function HotmartRealtimeDashboard() {
       // Últimas vendas
       const { data: ultimasVendas } = await supabase
         .from("transacoes_hotmart_completo")
-        .select("*")
+        .select("id, buyer_name, buyer_email, valor_bruto, product_name, status, created_at")
         .order("created_at", { ascending: false })
         .limit(10);
 
       // Últimos eventos de integração
       const { data: ultimosEventos } = await supabase
         .from("integration_events")
-        .select("*")
+        .select("id, event_type, source, payload, processed, created_at")
         .eq("source", "hotmart")
         .order("created_at", { ascending: false })
         .limit(10);

@@ -43,7 +43,8 @@ export function WordPressSyncWidget() {
     try {
       const { data, error } = await supabase
         .from("usuarios_wordpress_sync")
-        .select("*");
+        .select("id, status_acesso, updated_at")
+        .limit(1000);
 
       if (!error && data) {
         const activeUsers = data.filter(u => u.status_acesso === "ativo").length;

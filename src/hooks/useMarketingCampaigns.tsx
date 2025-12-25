@@ -33,8 +33,9 @@ export function useMarketingCampaigns() {
     try {
       const { data, error } = await supabase
         .from('marketing_campaigns')
-        .select('*')
-        .order('created_at', { ascending: false });
+        .select('id, name, platform, status, budget, spent, leads, conversions, start_date, end_date, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       setCampaigns(data || []);
@@ -47,9 +48,10 @@ export function useMarketingCampaigns() {
     try {
       const { data, error } = await supabase
         .from('sales_funnel_data')
-        .select('*')
+        .select('id, stage, value, period, reference_date, created_at')
         .eq('period', 'monthly')
-        .order('value', { ascending: false });
+        .order('value', { ascending: false })
+        .limit(50);
 
       if (error) throw error;
       setFunnelData(data || []);
