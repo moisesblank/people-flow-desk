@@ -45,10 +45,13 @@
   Cache-Control: public, max-age=86400
 
 # ============================================
-# SECURITY HEADERS
+# 🛡️ SECURITY HEADERS (LEI III — FASE 2.2 BANCÁRIO)
 # ============================================
 /*
   X-Content-Type-Options: nosniff
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
   X-XSS-Protection: 1; mode=block
   Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net https://*.supabase.co https://challenges.cloudflare.com https://player-vz-*.tv.pandavideo.com.br; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' https://fonts.gstatic.com data:; img-src 'self' data: blob: https://*.supabase.co https://*.supabase.in https://*.tv.pandavideo.com.br; connect-src 'self' https://*.supabase.co https://*.supabase.in wss://*.supabase.co https://api.openai.com https://*.tv.pandavideo.com.br https://challenges.cloudflare.com; media-src 'self' blob: https://*.supabase.co https://*.tv.pandavideo.com.br; frame-src 'self' https://www.youtube.com https://player.vimeo.com https://player-vz-*.tv.pandavideo.com.br https://challenges.cloudflare.com; frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; upgrade-insecure-requests
