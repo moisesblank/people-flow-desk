@@ -294,10 +294,12 @@ export function GeneralDocumentsManager() {
   const { data: documents = [], isLoading, refetch } = useQuery({
     queryKey: ["general-documents", search, categoryFilter, sortOrder],
     queryFn: async () => {
+      // ⚡ DOGMA V.5K: Query otimizada com limite
       let query = supabase
         .from("general_documents")
         .select("*")
-        .order("created_at", { ascending: sortOrder === "asc" });
+        .order("created_at", { ascending: sortOrder === "asc" })
+        .limit(100);
       
       if (search) {
         query = query.or(`title.ilike.%${search}%,description.ilike.%${search}%,file_name.ilike.%${search}%,extracted_content.ilike.%${search}%`);

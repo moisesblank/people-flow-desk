@@ -157,10 +157,12 @@ export default function ReceitasEmpresariais() {
   const { data: entradas, refetch: refetchEntradas } = useQuery({
     queryKey: ["receitas-entradas", period],
     queryFn: async () => {
+      // ⚡ DOGMA V.5K: Query otimizada com limite
       let query = supabase
         .from("entradas")
         .select("*")
-        .order("data", { ascending: false });
+        .order("data", { ascending: false })
+        .limit(200);
 
       if (dateRange.start) {
         query = query.gte("data", dateRange.start.toISOString());
@@ -173,7 +175,7 @@ export default function ReceitasEmpresariais() {
       }
       return data || [];
     },
-    refetchInterval: 10000 // 10 segundos para dados em tempo real
+    refetchInterval: 60000 // ⚡ 60s (otimizado de 10s para menos pressão em 5K)
   });
 
   // ============================================
@@ -216,7 +218,7 @@ export default function ReceitasEmpresariais() {
       if (error) return [];
       return data || [];
     },
-    refetchInterval: 30000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 30s)
   });
 
   // ============================================

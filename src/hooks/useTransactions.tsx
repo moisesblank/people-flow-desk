@@ -199,10 +199,12 @@ export function useFinancialStats(dateRange?: { start: Date; end: Date }) {
     async () => {
       if (!user?.id) return null;
 
+      // ⚡ DOGMA V.5K: Query otimizada com limite
       let query = supabase
         .from("transactions")
         .select("*")
-        .eq("created_by", user.id);
+        .eq("created_by", user.id)
+        .limit(500);
 
       if (dateRange) {
         query = query

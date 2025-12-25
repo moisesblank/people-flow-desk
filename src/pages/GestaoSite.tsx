@@ -89,10 +89,12 @@ export default function GestaoSite() {
 
   const fetchPendencias = async () => {
     try {
+      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
       const { data, error } = await supabase
         .from("website_pendencias")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(100);
 
       if (error) throw error;
       setPendencias(data || []);

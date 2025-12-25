@@ -151,10 +151,12 @@ export default function Integracoes() {
   };
 
   const fetchIntegrations = async () => {
+    // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
     const { data, error } = await supabase
       .from("synapse_integrations")
       .select("*")
-      .order("name");
+      .order("name")
+      .limit(50);
 
     if (!error) setIntegrations((data as Integration[]) || []);
   };

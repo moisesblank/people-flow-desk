@@ -109,11 +109,13 @@ export default function TransacoesHotmart() {
     try {
       const twoMonthsAgo = getDateTwoMonthsAgo();
       
+      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga em pico
       const { data, error } = await supabase
         .from("transacoes_hotmart_completo")
         .select("*")
         .gte("created_at", twoMonthsAgo)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(500);
 
       if (error) throw error;
 
