@@ -8,16 +8,55 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// Configurações de Rate Limiting por endpoint
-const RATE_LIMITS: Record<string, { limit: number; windowSeconds: number }> = {
-  'login': { limit: 5, windowSeconds: 300 },       // 5 tentativas por 5 min
-  'signup': { limit: 3, windowSeconds: 600 },      // 3 por 10 min
-  'password-reset': { limit: 3, windowSeconds: 600 }, // 3 por 10 min
-  'send-email': { limit: 10, windowSeconds: 60 },  // 10 por minuto
-  '2fa': { limit: 5, windowSeconds: 300 },         // 5 por 5 min
-  'api-call': { limit: 100, windowSeconds: 60 },   // 100 por minuto
-  'webhook': { limit: 50, windowSeconds: 60 },     // 50 por minuto
-  'default': { limit: 30, windowSeconds: 60 },     // 30 por minuto
+// ============================================
+// RATE LIMITS - LEI I (Performance 3500/3G)
+// Otimizado para 5000 usuários simultâneos
+// ============================================
+const RATE_LIMITS: Record<string, { limit: number; windowSeconds: number; priority: 'critical' | 'high' | 'normal' | 'low' }> = {
+  // === AUTH (CRÍTICO - Proteção contra brute force) ===
+  'login': { limit: 5, windowSeconds: 300, priority: 'critical' },         // 5/5min
+  'signup': { limit: 3, windowSeconds: 600, priority: 'critical' },        // 3/10min
+  'password-reset': { limit: 3, windowSeconds: 600, priority: 'critical' },// 3/10min
+  '2fa': { limit: 5, windowSeconds: 300, priority: 'critical' },           // 5/5min
+  'magic-link': { limit: 3, windowSeconds: 600, priority: 'critical' },    // 3/10min
+  
+  // === AI (ALTO CUSTO - Tokens OpenAI/Gemini) ===
+  'ai-chat': { limit: 20, windowSeconds: 60, priority: 'high' },           // 20/min
+  'ai-tutor': { limit: 15, windowSeconds: 60, priority: 'high' },          // 15/min
+  'ai-assistant': { limit: 15, windowSeconds: 60, priority: 'high' },      // 15/min
+  'book-chat-ai': { limit: 10, windowSeconds: 60, priority: 'high' },      // 10/min
+  'generate-ai-content': { limit: 5, windowSeconds: 60, priority: 'high' },// 5/min (caro)
+  
+  // === VIDEO (Proteção de URLs assinadas) ===
+  'video-authorize': { limit: 30, windowSeconds: 60, priority: 'high' },   // 30/min
+  'panda-video': { limit: 30, windowSeconds: 60, priority: 'high' },       // 30/min
+  'secure-video-url': { limit: 30, windowSeconds: 60, priority: 'high' },  // 30/min
+  'book-page-signed-url': { limit: 60, windowSeconds: 60, priority: 'normal' }, // 60/min (navegação)
+  
+  // === CHAT/REALTIME (5000 simultâneos) ===
+  'chat-message': { limit: 30, windowSeconds: 60, priority: 'normal' },    // 30/min (1 a cada 2s)
+  'chat-reaction': { limit: 60, windowSeconds: 60, priority: 'low' },      // 60/min
+  'live-presence': { limit: 12, windowSeconds: 60, priority: 'low' },      // 12/min (5s interval)
+  
+  // === API GERAL ===
+  'api-call': { limit: 100, windowSeconds: 60, priority: 'normal' },       // 100/min
+  'api-gateway': { limit: 100, windowSeconds: 60, priority: 'normal' },    // 100/min
+  'search': { limit: 30, windowSeconds: 60, priority: 'normal' },          // 30/min (debounce 300ms)
+  
+  // === UPLOADS/ARQUIVOS ===
+  'upload': { limit: 10, windowSeconds: 60, priority: 'normal' },          // 10/min
+  'file-download': { limit: 50, windowSeconds: 60, priority: 'normal' },   // 50/min
+  
+  // === EMAIL/NOTIFICAÇÕES ===
+  'send-email': { limit: 10, windowSeconds: 60, priority: 'high' },        // 10/min
+  'send-notification': { limit: 20, windowSeconds: 60, priority: 'normal' },// 20/min
+  
+  // === WEBHOOKS (Sistema) ===
+  'webhook': { limit: 100, windowSeconds: 60, priority: 'normal' },        // 100/min (hotmart, etc)
+  'hotmart-webhook': { limit: 100, windowSeconds: 60, priority: 'normal' },// 100/min
+  
+  // === DEFAULT ===
+  'default': { limit: 30, windowSeconds: 60, priority: 'normal' },         // 30/min
 };
 
 // Cache em memória para rate limiting rápido
