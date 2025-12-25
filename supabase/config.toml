@@ -244,3 +244,7 @@ verify_jwt = true
 
 [functions.automacoes]
 verify_jwt = true
+
+# --- Validação CPF Real (Receita Federal) ---
+[functions.validate-cpf-real]
+verify_jwt = false

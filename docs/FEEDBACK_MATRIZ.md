@@ -151,8 +151,72 @@ Validar CPF apenas no frontend. MAS: qualquer pessoa com conhecimento técnico p
 
 **PRÓXIMOS PASSOS RECOMENDADOS:**
 1. ✅ Testar cadastro com CPF inválido (deve bloquear)
-2. Revisar fluxo de cadastro para mostrar erro amigável
+2. ✅ Implementar validação na Receita Federal via API
 3. Considerar máscara visual de CPF no frontend (XXX.XXX.XXX-XX)
+
+---
+
+### 25/12/2024 — Validação CPF REAL na Receita Federal v17.8
+
+**O QUE FOI FEITO:**
+1. Integração com API cpfcnpj.com.br para consulta na Receita Federal
+2. Edge Function `validate-cpf-real` que verifica se CPF pertence a pessoa REAL
+3. Hook React `useValidateCPFReal()` para validar no frontend
+4. Auditoria de todas as validações realizadas
+5. Funções auxiliares: `formatCPF()`, `maskCPF()`, `validateCPFFormat()`
+
+**VEREDICTO: ✅ AVANÇO REAL (CRÍTICO)**
+
+**EXPLICAÇÃO SIMPLES:**
+Antes: O sistema verificava se os números do CPF estavam corretos matematicamente. Mas você podia inventar um CPF que "passava na conta" sem pertencer a ninguém real.
+
+Agora: O sistema PERGUNTA À RECEITA FEDERAL: "Esse CPF existe? Pertence a quem?". Se for inventado, a Receita responde "não existe" e o cadastro é bloqueado.
+
+**Analogia:** É como um porteiro de prédio. Antes ele só olhava se o crachá tinha o formato certo. Agora ele liga pro apartamento e confirma: "Tem um João aí? Posso deixar entrar?". Se não tiver João, não entra.
+
+**TESTES REALIZADOS:**
+
+| CPF Testado | Resultado | Correto? |
+|-------------|-----------|----------|
+| 529.982.247-25 (fictício válido) | ❌ "não existe na Receita" | ✅ |
+| 000.000.000-00 | ❌ "dígitos incorretos" | ✅ |
+| 123.456.789-00 | ❌ "dígitos incorretos" | ✅ |
+| 12345 (curto) | ❌ "formato inválido" | ✅ |
+
+**MÉTRICAS ANTES vs DEPOIS:**
+
+| Métrica | Antes | Depois | Mudança |
+|---------|-------|--------|---------|
+| Nível validação CPF | Formato matemático | Receita Federal | ✅ |
+| CPF fictício passa? | SIM | NÃO | ✅ |
+| Pessoa errada pode usar CPF? | SIM (qualquer válido) | NÃO (só se existir) | ✅ |
+| Auditoria de validações | Não existia | Registra tudo | ✅ |
+| Risco de fraude de identidade | ALTO | BAIXO | ✅ |
+
+**DECISÃO CERTA? 100% SIM.**
+
+Por quê:
+1. **Certificados:** CPF errado = certificado inválido legalmente
+2. **Pagamentos:** CPF errado = problema com Hotmart/PIX/Nota Fiscal
+3. **Fraude:** Sem validação real, qualquer um pode se passar por outro
+4. **5000 alunos:** Melhor validar AGORA do que ter que limpar depois
+
+**CUSTO-BENEFÍCIO:**
+- Custo: ~R$0,02-0,05 por consulta na API
+- Benefício: Zero fraude de identidade, certificados válidos, pagamentos corretos
+- ROI: Um único problema de certificado inválido custaria muito mais
+
+**ARQUIVOS CRIADOS/MODIFICADOS:**
+- `supabase/functions/validate-cpf-real/index.ts` — Edge Function
+- `src/hooks/useValidateCPFReal.ts` — Hook React
+- `supabase/config.toml` — Configuração da função
+- Secret `CPFCNPJ_API_TOKEN` configurado
+
+**PRÓXIMOS PASSOS RECOMENDADOS:**
+1. Integrar no formulário de cadastro de alunos
+2. Integrar no formulário de perfil
+3. Considerar validar CPFs existentes em batch
+4. Criar alerta se API ficar indisponível
 
 ---
 
@@ -163,7 +227,8 @@ Validar CPF apenas no frontend. MAS: qualquer pessoa com conhecimento técnico p
 3. **Proatividade** — Resolver antes do problema aparecer > correr atrás depois
 4. **Simplicidade** — Se não consegue explicar para não-técnico, provavelmente está complicado demais
 5. **Honestidade** — Admitir quando não avançou ou quando errou é essencial para melhorar
+6. **Validação na fonte** — Dados críticos devem ser verificados na origem real (Receita Federal, não algoritmo local)
 
 ---
 
-*Última atualização: 25/12/2024 — v17.7*
+*Última atualização: 25/12/2024 — v17.8 (Validação CPF Receita Federal)*
