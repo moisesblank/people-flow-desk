@@ -19,7 +19,8 @@ import {
   AlertCircle,
   LogOut,
   Settings,
-  Key
+  Key,
+  CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,16 +34,20 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
+import { useValidateCPFReal, formatCPF, validateCPFFormat } from "@/hooks/useValidateCPFReal";
 
 export default function Perfil() {
   const { user, role, signOut } = useAuth();
   const navigate = useNavigate();
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const { validateCPF, isValidating } = useValidateCPFReal();
+  const [cpfValidated, setCpfValidated] = useState<boolean | null>(null);
   const [profile, setProfile] = useState({
     nome: "",
     email: "",
     telefone: "",
+    cpf: "",
     avatar_url: "",
   });
   const [passwordData, setPasswordData] = useState({
@@ -73,8 +78,13 @@ export default function Perfil() {
             nome: data.nome || "",
             email: data.email || user.email || "",
             telefone: data.phone || "",
+            cpf: data.cpf || "",
             avatar_url: data.avatar_url || "",
           });
+          // Se já tem CPF cadastrado, considera validado
+          if (data.cpf) {
+            setCpfValidated(true);
+          }
         } else {
           setProfile(prev => ({
             ...prev,
@@ -92,9 +102,47 @@ export default function Perfil() {
     loadProfile();
   }, [user]);
 
+  // Validar CPF quando usuário sair do campo
+  const handleCPFBlur = async () => {
+    const cleanCpf = profile.cpf.replace(/\D/g, '');
+    if (cleanCpf.length === 11) {
+      // Primeiro verifica formato local (grátis)
+      if (!validateCPFFormat(profile.cpf)) {
+        setCpfValidated(false);
+        toast.error("CPF inválido", { description: "Dígitos verificadores incorretos" });
+        return;
+      }
+      // Depois valida na Receita Federal
+      const result = await validateCPF(profile.cpf);
+      setCpfValidated(result?.valid || false);
+    }
+  };
+
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
+
+    // Se CPF foi preenchido, validar antes de salvar
+    const cleanCpf = profile.cpf.replace(/\D/g, '');
+    if (cleanCpf.length > 0) {
+      if (cleanCpf.length !== 11) {
+        toast.error("CPF deve ter 11 dígitos");
+        return;
+      }
+      
+      // Validar na Receita Federal se ainda não foi validado
+      if (cpfValidated === null || cpfValidated === false) {
+        toast.info("Validando CPF na Receita Federal...");
+        const result = await validateCPF(profile.cpf);
+        if (!result?.valid) {
+          toast.error("CPF inválido", { 
+            description: result?.error || "CPF não encontrado na Receita Federal" 
+          });
+          return;
+        }
+        setCpfValidated(true);
+      }
+    }
 
     setIsSaving(true);
     try {
@@ -103,6 +151,7 @@ export default function Perfil() {
         .update({
           nome: profile.nome,
           phone: profile.telefone,
+          cpf: cleanCpf || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", user.id);
@@ -399,6 +448,51 @@ export default function Perfil() {
                     </div>
 
                     <div className="space-y-2">
+                      <Label htmlFor="cpf">
+                        CPF
+                        {cpfValidated === true && (
+                          <CheckCircle className="inline-block ml-2 h-4 w-4 text-green-500" />
+                        )}
+                        {cpfValidated === false && (
+                          <AlertCircle className="inline-block ml-2 h-4 w-4 text-red-500" />
+                        )}
+                        {isValidating && (
+                          <Loader2 className="inline-block ml-2 h-4 w-4 animate-spin text-primary" />
+                        )}
+                      </Label>
+                      <div className="relative">
+                        <CreditCard className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          id="cpf"
+                          value={formatCPF(profile.cpf)}
+                          onChange={(e) => {
+                            const raw = e.target.value.replace(/\D/g, '').slice(0, 11);
+                            setProfile(prev => ({ ...prev, cpf: raw }));
+                            setCpfValidated(null); // Reset validation status on change
+                          }}
+                          onBlur={handleCPFBlur}
+                          placeholder="000.000.000-00"
+                          className={`pl-10 ${
+                            cpfValidated === true 
+                              ? 'border-green-500 focus:ring-green-500' 
+                              : cpfValidated === false 
+                              ? 'border-red-500 focus:ring-red-500' 
+                              : ''
+                          }`}
+                          maxLength={14}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        {cpfValidated === true 
+                          ? "✓ CPF validado na Receita Federal" 
+                          : cpfValidated === false 
+                          ? "✗ CPF inválido ou não encontrado" 
+                          : "Obrigatório para certificados e pagamentos"
+                        }
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
                       <Label>Criado em</Label>
                       <div className="relative">
                         <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -413,13 +507,13 @@ export default function Perfil() {
 
                   <Separator className="my-4" />
 
-                  <Button type="submit" disabled={isSaving} className="w-full md:w-auto">
-                    {isSaving ? (
+                  <Button type="submit" disabled={isSaving || isValidating} className="w-full md:w-auto">
+                    {isSaving || isValidating ? (
                       <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                     ) : (
                       <Save className="h-4 w-4 mr-2" />
                     )}
-                    Salvar Alterações
+                    {isValidating ? "Validando CPF..." : isSaving ? "Salvando..." : "Salvar Alterações"}
                   </Button>
                 </form>
               </CardContent>
