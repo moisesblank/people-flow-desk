@@ -45,7 +45,20 @@ Deno.serve(async (req) => {
     const userAgent = req.headers.get('user-agent') || '';
 
     const body: DeviceValidationRequest = await req.json();
-    const { fingerprint, fingerprintData, userId, email, action } = body;
+    const { fingerprint, fingerprintData, email, action } = body;
+    
+    // 🛡️ P0.5 - IGNORAR userId DO BODY EM PRE-LOGIN
+    // LEI VI: userId deve vir do JWT (autenticado) ou ser null
+    // Em pre-login/validate, o usuário ainda não está autenticado
+    let userId: string | undefined = undefined;
+    
+    // Só aceita userId se action indica que já está logado
+    if (action === 'post_login' || action === 'register') {
+      userId = body.userId;
+      console.log(`[validate-device] Post-login/register: userId aceito do body`);
+    } else {
+      console.log(`[validate-device] Pre-login/validate: userId ignorado por segurança`);
+    }
 
     if (!fingerprint) {
       return new Response(
@@ -256,13 +269,14 @@ Deno.serve(async (req) => {
 
       // Alertar admin se crítico
       if (severity === 'critical' || severity === 'high') {
-        // Chamar edge function para notificar admin
+        // Chamar edge function para notificar admin com INTERNAL_SECRET
         try {
+          const internalSecret = Deno.env.get('INTERNAL_SECRET');
           await fetch(`${supabaseUrl}/functions/v1/notify-suspicious-device`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
-              'Authorization': `Bearer ${supabaseServiceKey}`,
+              'x-internal-secret': internalSecret || '',
             },
             body: JSON.stringify({
               userId,

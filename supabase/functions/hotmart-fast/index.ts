@@ -52,11 +52,35 @@ serve(async (req) => {
   console.log('[hotmart-fast] Webhook recebido')
 
   try {
+    // ============================================
+    // 🛡️ P0.1 - VALIDAÇÃO HOTTOK OBRIGATÓRIA
+    // LEI VI: Nunca processar webhook sem assinatura
+    // ============================================
+    const hottok = req.headers.get('x-hotmart-hottok')
+    const expectedHottok = Deno.env.get('HOTMART_HOTTOK')
+    
+    if (!expectedHottok) {
+      console.error('[hotmart-fast] ❌ HOTTOK não configurado no ambiente')
+      return new Response(
+        JSON.stringify({ error: 'Configuração de segurança ausente' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    if (!hottok || hottok !== expectedHottok) {
+      console.error('[hotmart-fast] ❌ HOTTOK inválido ou ausente')
+      return new Response(
+        JSON.stringify({ error: 'Assinatura de webhook inválida' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    
+    console.log('[hotmart-fast] ✅ HOTTOK validado')
+    
     const body = await req.json()
     
     // Extrair evento (diferentes formatos da Hotmart)
     const event = body.event || body.data?.event || body.status
-    const hottok = req.headers.get('x-hotmart-hottok')
     
     console.log(`[hotmart-fast] Evento: ${event}`)
 
