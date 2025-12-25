@@ -68,7 +68,11 @@ export default function Alunos() {
   const fetchData = async () => {
     try {
       // Fetch alunos from original table
-      const { data: alunosData, error: alunosError } = await supabase.from("alunos").select("*").order("nome");
+      const { data: alunosData, error: alunosError } = await supabase
+        .from("alunos")
+        .select("id, nome, email, curso_id, status")
+        .order("nome")
+        .limit(500);
       if (alunosError) throw alunosError;
       
       setStudents(alunosData?.map(s => ({
@@ -82,8 +86,9 @@ export default function Alunos() {
       // Fetch WordPress sync users
       const { data: wpData, error: wpError } = await supabase
         .from("usuarios_wordpress_sync")
-        .select("*")
-        .order("updated_at", { ascending: false });
+        .select("id, wp_user_id, email, nome, status_acesso, grupos, tem_pagamento_confirmado, data_cadastro_wp, ultimo_login, updated_at")
+        .order("updated_at", { ascending: false })
+        .limit(500);
       
       if (wpError) {
         console.error("Error fetching WP users:", wpError);

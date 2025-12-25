@@ -158,8 +158,8 @@ export default function FinancasPessoais() {
   const fetchExpenses = async () => {
     try {
       const [fixedRes, extraRes] = await Promise.all([
-        supabase.from("personal_fixed_expenses").select("*").order("nome"),
-        supabase.from("personal_extra_expenses").select("*").order("created_at", { ascending: false }),
+        supabase.from("personal_fixed_expenses").select("id, nome, valor, categoria, data").order("nome").limit(200),
+        supabase.from("personal_extra_expenses").select("id, nome, valor, categoria, data, created_at").order("created_at", { ascending: false }).limit(500),
       ]);
 
       if (fixedRes.error) throw fixedRes.error;

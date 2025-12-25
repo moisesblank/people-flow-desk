@@ -146,7 +146,8 @@ export function RoleManagementWidget() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from('user_roles')
-        .select('role');
+        .select('role')
+        .limit(5000);
       
       if (error) throw error;
       

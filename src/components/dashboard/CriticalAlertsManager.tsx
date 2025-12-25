@@ -70,7 +70,7 @@ export function CriticalAlertsManager() {
       // Buscar webhooks com falha
       const { data: failedWebhooks } = await supabase
         .from("webhooks_queue")
-        .select("*")
+        .select("id, source, status, error_message, created_at")
         .eq("status", "failed")
         .order("created_at", { ascending: false })
         .limit(10);
@@ -78,7 +78,7 @@ export function CriticalAlertsManager() {
       // Buscar discrepâncias de auditoria
       const { data: auditData } = await supabase
         .from("auditoria_grupo_beta")
-        .select("*")
+        .select("id, email, nome, tipo_discrepancia, data_deteccao, acao_tomada")
         .is("acao_tomada", null)
         .order("data_deteccao", { ascending: false })
         .limit(10);

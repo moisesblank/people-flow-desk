@@ -53,8 +53,8 @@ export default function Entradas() {
   const fetchData = async () => {
     try {
       const [incomeRes, taxRes] = await Promise.all([
-        supabase.from("income").select("*").order("created_at", { ascending: false }),
-        supabase.from("taxes").select("*").order("nome"),
+        supabase.from("income").select("id, fonte, banco, valor, created_at").order("created_at", { ascending: false }).limit(500),
+        supabase.from("taxes").select("id, nome, categoria, valor").order("nome").limit(100),
       ]);
 
       if (incomeRes.error) throw incomeRes.error;
