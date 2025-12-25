@@ -76,12 +76,21 @@ Deno.serve(async (req) => {
   }
 
   try {
-    // Verify webhook secret
+    // Verify webhook secret - OBRIGATÓRIO, sem fallback
     const webhookSecret = req.headers.get('x-webhook-secret');
-    const expectedSecret = Deno.env.get('WORDPRESS_WEBHOOK_SECRET') || 'moisesmedeiros2024';
+    const expectedSecret = Deno.env.get('WORDPRESS_WEBHOOK_SECRET');
     
-    if (webhookSecret !== expectedSecret) {
-      console.error('Invalid webhook secret');
+    // Se o secret não estiver configurado, rejeita por segurança
+    if (!expectedSecret) {
+      console.error('🚨 [SECURITY] WORDPRESS_WEBHOOK_SECRET não configurado!');
+      return new Response(
+        JSON.stringify({ error: 'Server misconfiguration' }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!webhookSecret || webhookSecret !== expectedSecret) {
+      console.error('🚨 [SECURITY] Invalid webhook secret from:', req.headers.get('x-forwarded-for') || 'unknown');
       return new Response(
         JSON.stringify({ error: 'Unauthorized' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
