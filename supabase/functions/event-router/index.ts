@@ -43,15 +43,24 @@ serve(async (req) => {
     );
 
     // ========================================
-    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
-    // Event-router só pode ser chamado internamente
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA (P0-3 CORRIGIDO)
+    // REMOVIDO fallback de User-Agent - apenas x-internal-secret
     // ========================================
     const internalSecret = req.headers.get('x-internal-secret');
     const userAgent = req.headers.get('user-agent') || '';
-    const isInternalCall = 
-      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
-      userAgent.includes('Deno/') ||
-      userAgent.includes('supabase-js/');
+    const INTERNAL_SECRET = Deno.env.get('INTERNAL_SECRET');
+    
+    // CRÍTICO: Verificar se INTERNAL_SECRET está configurado
+    if (!INTERNAL_SECRET) {
+      console.error("🚨 [SECURITY] INTERNAL_SECRET não configurado!");
+      return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    
+    // Validação ESTRITA: apenas x-internal-secret válido (SEM fallback de User-Agent)
+    const isInternalCall = internalSecret === INTERNAL_SECRET;
 
     if (!isInternalCall) {
       console.log('[EVENT-ROUTER] ❌ BLOQUEADO: Chamada externa não autorizada');
@@ -120,7 +129,7 @@ serve(async (req) => {
       );
     }
 
-    // Chamar a Edge Function correspondente
+    // Chamar a Edge Function correspondente COM x-internal-secret (P0-3)
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
     
@@ -133,6 +142,7 @@ serve(async (req) => {
       headers: {
         "Content-Type": "application/json",
         "Authorization": `Bearer ${serviceKey}`,
+        "x-internal-secret": INTERNAL_SECRET || "",
       },
       body: JSON.stringify({ event }),
     });

@@ -653,8 +653,10 @@ serve(async (req) => {
     let predictiveContext: any = null;
     if (userId && context === 'aluno') {
       try {
+        const INTERNAL_SECRET = Deno.env.get('INTERNAL_SECRET');
         const contextResponse = await supabase.functions.invoke('generate-context', {
-          body: { userId }
+          body: { userId },
+          headers: INTERNAL_SECRET ? { 'x-internal-secret': INTERNAL_SECRET } : {}
         });
         if (contextResponse.data?.success) {
           predictiveContext = contextResponse.data.context;
