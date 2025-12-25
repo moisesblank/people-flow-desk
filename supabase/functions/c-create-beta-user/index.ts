@@ -52,15 +52,16 @@ serve(async (req) => {
     );
 
     // ========================================
-    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
-    // Esta função só pode ser chamada pelo orchestrator/hotmart-webhook
+    // 🛡️ P0.7 - PROTEÇÃO INTERNA COM INTERNAL_SECRET DEDICADO
+    // LEI VI: Nunca usar User-Agent como validação (falsificável)
     // ========================================
     const internalSecret = req.headers.get('x-internal-secret');
-    const userAgent = req.headers.get('user-agent') || '';
-    const isInternalCall = 
-      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
-      userAgent.includes('Deno/') ||
-      userAgent.includes('supabase-js/');
+    const expectedSecret = Deno.env.get('INTERNAL_SECRET');
+    
+    // SEGURANÇA BANCÁRIA: Apenas validar INTERNAL_SECRET dedicado
+    // Removido: User-Agent fallback (falsificável)
+    // Removido: SUPABASE_SERVICE_ROLE_KEY como senha (anti-pattern)
+    const isInternalCall = expectedSecret && internalSecret === expectedSecret;
 
     if (!isInternalCall) {
       console.log('[C-CREATE-BETA-USER] ❌ BLOQUEADO: Chamada externa não autorizada');
@@ -71,7 +72,7 @@ serve(async (req) => {
         description: 'Tentativa de criação de usuário BETA via chamada externa bloqueada - POSSÍVEL FRAUDE',
         payload: {
           ip: req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown',
-          user_agent: userAgent.substring(0, 255)
+          user_agent: (req.headers.get('user-agent') || '').substring(0, 255)
         }
       });
       

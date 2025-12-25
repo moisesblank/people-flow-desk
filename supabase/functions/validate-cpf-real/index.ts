@@ -167,6 +167,53 @@ serve(async (req) => {
   }
 
   try {
+    // ============================================
+    // 🛡️ P0.6 - RATE LIMIT + JWT OBRIGATÓRIO
+    // LEI VI: API externa com custo + PII
+    // ============================================
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Autenticação obrigatória' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Verificar JWT com Supabase
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    const { data: { user }, error: authError } = await supabaseClient.auth.getUser();
+    
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Token inválido ou expirado' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    // Verificar role (apenas owner/admin podem validar CPF na Receita)
+    const { data: userRole } = await supabaseClient
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .single();
+    
+    const allowedRoles = ['owner', 'admin', 'funcionario'];
+    const isOwner = user.email?.toLowerCase() === 'moisesblank@gmail.com';
+    
+    if (!isOwner && (!userRole || !allowedRoles.includes(userRole.role))) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Acesso restrito a administradores' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log(`[validate-cpf-real] ✅ Autorizado: ${user.email}, role: ${userRole?.role || 'owner'}`);
+    
     const CPFCNPJ_TOKEN = Deno.env.get('CPFCNPJ_API_TOKEN');
     
     if (!CPFCNPJ_TOKEN) {
@@ -211,15 +258,15 @@ serve(async (req) => {
     // Consulta completa na Receita Federal
     const result = await consultCPFReal(cpf, CPFCNPJ_TOKEN);
 
-    // Log de auditoria (fire-and-forget)
-    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    // Log de auditoria (fire-and-forget) - reutiliza supabaseClient já criado
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
     
     // Registra auditoria de forma assíncrona
-    supabase.from('audit_logs').insert({
+    supabaseAdmin.from('audit_logs').insert({
       action: 'cpf_validation',
       table_name: 'external_api',
+      user_id: user.id,
       metadata: {
         cpf_masked: `${sanitizeCPF(cpf).substring(0, 3)}*****${sanitizeCPF(cpf).substring(9)}`,
         valid: result.valid,

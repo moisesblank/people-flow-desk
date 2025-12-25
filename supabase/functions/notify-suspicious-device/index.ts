@@ -34,6 +34,23 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // ============================================
+    // 🛡️ P0.4 - VALIDAÇÃO INTERNAL_SECRET OBRIGATÓRIA
+    // LEI VI: Função interna, não pode ser chamada externamente
+    // ============================================
+    const internalSecret = req.headers.get('x-internal-secret');
+    const expectedSecret = Deno.env.get('INTERNAL_SECRET');
+    
+    if (!expectedSecret || !internalSecret || internalSecret !== expectedSecret) {
+      console.error('[notify-suspicious-device] ❌ Chamada externa bloqueada');
+      return new Response(
+        JSON.stringify({ error: 'Acesso restrito a chamadas internas' }),
+        { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('[notify-suspicious-device] ✅ Chamada interna autorizada');
+    
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const resendApiKey = Deno.env.get('RESEND_API_KEY');

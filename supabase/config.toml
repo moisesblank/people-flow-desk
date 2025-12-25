@@ -246,5 +246,6 @@ verify_jwt = true
 verify_jwt = true
 
 # --- Validação CPF Real (Receita Federal) ---
+# 🛡️ P0.6 - AGORA COM JWT OBRIGATÓRIO (API externa com custo + PII)
 [functions.validate-cpf-real]
-verify_jwt = false
+verify_jwt = true

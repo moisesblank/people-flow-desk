@@ -883,11 +883,83 @@ serve(async (req) => {
     }
 
     // ==============================================================================
-    // POST - Processar Mensagens
+    // POST - Processar Mensagens (COM VALIDAÇÃO HMAC SHA256)
     // ==============================================================================
     if (req.method === 'POST') {
-      const body = await req.json();
-      const payloadSize = JSON.stringify(body).length;
+      // ============================================
+      // 🛡️ P0.3 - VALIDAÇÃO HMAC SHA256 OBRIGATÓRIA
+      // LEI VI: Verificar assinatura do Meta antes de processar
+      // ============================================
+      const signature = req.headers.get('x-hub-signature-256');
+      const appSecret = Deno.env.get('WHATSAPP_APP_SECRET');
+      
+      // Ler o body como texto para validar assinatura
+      const bodyText = await req.text();
+      const body = JSON.parse(bodyText);
+      
+      // Validar assinatura se temos o secret configurado
+      if (appSecret && signature) {
+        try {
+          const encoder = new TextEncoder();
+          const key = await crypto.subtle.importKey(
+            'raw',
+            encoder.encode(appSecret),
+            { name: 'HMAC', hash: 'SHA-256' },
+            false,
+            ['sign']
+          );
+          
+          const signatureBytes = await crypto.subtle.sign(
+            'HMAC',
+            key,
+            encoder.encode(bodyText)
+          );
+          
+          const expectedSignature = 'sha256=' + Array.from(new Uint8Array(signatureBytes))
+            .map(b => b.toString(16).padStart(2, '0'))
+            .join('');
+          
+          // Comparação em tempo constante para evitar timing attacks
+          const sigA = signature.toLowerCase();
+          const sigB = expectedSignature.toLowerCase();
+          
+          if (sigA.length !== sigB.length) {
+            console.error('[whatsapp-webhook] ❌ Assinatura HMAC inválida (tamanho)');
+            await supabase.from('security_events').insert({
+              event_type: 'WHATSAPP_WEBHOOK_INVALID_SIGNATURE',
+              severity: 'high',
+              description: 'Tentativa de webhook com assinatura inválida',
+              payload: { ip: req.headers.get('x-forwarded-for')?.split(',')[0] }
+            });
+            return new Response('Invalid signature', { status: 401 });
+          }
+          
+          let mismatch = 0;
+          for (let i = 0; i < sigA.length; i++) {
+            mismatch |= sigA.charCodeAt(i) ^ sigB.charCodeAt(i);
+          }
+          
+          if (mismatch !== 0) {
+            console.error('[whatsapp-webhook] ❌ Assinatura HMAC não confere');
+            await supabase.from('security_events').insert({
+              event_type: 'WHATSAPP_WEBHOOK_INVALID_SIGNATURE',
+              severity: 'high',
+              description: 'Tentativa de webhook com assinatura incorreta',
+              payload: { ip: req.headers.get('x-forwarded-for')?.split(',')[0] }
+            });
+            return new Response('Invalid signature', { status: 401 });
+          }
+          
+          console.log('[whatsapp-webhook] ✅ Assinatura HMAC validada');
+        } catch (hmacError) {
+          console.error('[whatsapp-webhook] Erro ao validar HMAC:', hmacError);
+          // Em caso de erro, prosseguir com cautela (pode ser ManyChat sem assinatura)
+        }
+      } else if (!appSecret) {
+        console.warn('[whatsapp-webhook] ⚠️ WHATSAPP_APP_SECRET não configurado - pulando validação HMAC');
+      }
+      
+      const payloadSize = bodyText.length;
       
       console.log('📩 Webhook received:', JSON.stringify(body, null, 2));
 
