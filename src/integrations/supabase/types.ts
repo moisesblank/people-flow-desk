@@ -1712,6 +1712,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "certificates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       comandos_ia_central: {
@@ -1829,6 +1836,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "comissoes_afiliado_id_fkey"
+            columns: ["afiliado_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates_secure"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "comissoes_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
@@ -1840,6 +1854,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -3134,6 +3155,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       critical_alerts: {
@@ -4316,6 +4344,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       entradas: {
@@ -4371,6 +4406,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -4561,6 +4603,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "error_notebook_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -5492,6 +5541,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lesson_annotations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lesson_attempts: {
@@ -5591,6 +5647,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "lesson_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       lesson_progress: {
@@ -5653,6 +5716,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -6556,6 +6626,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "pagamentos_cursos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_secure"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "pagamentos_cursos_curso_id_fkey"
             columns: ["curso_id"]
             isOneToOne: false
@@ -6627,6 +6704,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -7442,6 +7526,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "question_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       questions: {
@@ -7634,6 +7725,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -8122,6 +8220,13 @@ export type Database = {
             columns: ["affiliate_id"]
             isOneToOne: false
             referencedRelation: "affiliates_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "sales_affiliate_id_fkey"
+            columns: ["affiliate_id"]
+            isOneToOne: false
+            referencedRelation: "affiliates_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -9774,6 +9879,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "study_flashcards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       subscriptions: {
@@ -9829,6 +9941,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -11393,6 +11512,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_annotations: {
@@ -11521,6 +11647,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -11779,6 +11912,13 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: true
             referencedRelation: "profiles_public"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_gamification_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_secure"
             referencedColumns: ["id"]
           },
         ]
@@ -13055,6 +13195,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "weekly_xp_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       whatsapp_attachments: {
@@ -13690,6 +13837,13 @@ export type Database = {
             referencedRelation: "profiles_public"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "xp_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles_secure"
+            referencedColumns: ["id"]
+          },
         ]
       }
       xp_rules: {
@@ -13772,6 +13926,13 @@ export type Database = {
             columns: ["aluno_id"]
             isOneToOne: false
             referencedRelation: "alunos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "youtube_live_attendance_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_secure"
             referencedColumns: ["id"]
           },
           {
@@ -14077,6 +14238,78 @@ export type Database = {
         }
         Relationships: []
       }
+      affiliates_secure: {
+        Row: {
+          agencia: string | null
+          banco: string | null
+          comissao_total: number | null
+          conta: string | null
+          created_at: string | null
+          cupom: string | null
+          email: string | null
+          hotmart_id: string | null
+          id: number | null
+          link_afiliado: string | null
+          nome: string | null
+          parceiro_aluno: boolean | null
+          percentual_comissao: number | null
+          pix: string | null
+          status: string | null
+          taxa_comissao: number | null
+          telefone: string | null
+          total_comissao: number | null
+          total_vendas: number | null
+          user_id: string | null
+          whatsapp: string | null
+        }
+        Insert: {
+          agencia?: never
+          banco?: never
+          comissao_total?: number | null
+          conta?: never
+          created_at?: string | null
+          cupom?: string | null
+          email?: string | null
+          hotmart_id?: string | null
+          id?: number | null
+          link_afiliado?: string | null
+          nome?: string | null
+          parceiro_aluno?: boolean | null
+          percentual_comissao?: number | null
+          pix?: never
+          status?: string | null
+          taxa_comissao?: number | null
+          telefone?: string | null
+          total_comissao?: number | null
+          total_vendas?: number | null
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Update: {
+          agencia?: never
+          banco?: never
+          comissao_total?: number | null
+          conta?: never
+          created_at?: string | null
+          cupom?: string | null
+          email?: string | null
+          hotmart_id?: string | null
+          id?: number | null
+          link_afiliado?: string | null
+          nome?: string | null
+          parceiro_aluno?: boolean | null
+          percentual_comissao?: number | null
+          pix?: never
+          status?: string | null
+          taxa_comissao?: number | null
+          telefone?: string | null
+          total_comissao?: number | null
+          total_vendas?: number | null
+          user_id?: string | null
+          whatsapp?: string | null
+        }
+        Relationships: []
+      }
       alunos_safe: {
         Row: {
           cpf: string | null
@@ -14113,6 +14346,77 @@ export type Database = {
           status?: string | null
           telefone?: never
           updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alunos_curso_id_fkey"
+            columns: ["curso_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alunos_secure: {
+        Row: {
+          cidade: string | null
+          cpf: string | null
+          created_at: string | null
+          curso_id: string | null
+          data_matricula: string | null
+          data_nascimento: string | null
+          email: string | null
+          estado: string | null
+          fonte: string | null
+          foto_url: string | null
+          hotmart_transaction_id: string | null
+          id: string | null
+          nome: string | null
+          observacoes: string | null
+          status: string | null
+          telefone: string | null
+          updated_at: string | null
+          valor_pago: number | null
+        }
+        Insert: {
+          cidade?: string | null
+          cpf?: never
+          created_at?: string | null
+          curso_id?: string | null
+          data_matricula?: string | null
+          data_nascimento?: never
+          email?: string | null
+          estado?: string | null
+          fonte?: string | null
+          foto_url?: string | null
+          hotmart_transaction_id?: string | null
+          id?: string | null
+          nome?: string | null
+          observacoes?: string | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          valor_pago?: number | null
+        }
+        Update: {
+          cidade?: string | null
+          cpf?: never
+          created_at?: string | null
+          curso_id?: string | null
+          data_matricula?: string | null
+          data_nascimento?: never
+          email?: string | null
+          estado?: string | null
+          fonte?: string | null
+          foto_url?: string | null
+          hotmart_transaction_id?: string | null
+          id?: string | null
+          nome?: string | null
+          observacoes?: string | null
+          status?: string | null
+          telefone?: string | null
+          updated_at?: string | null
+          valor_pago?: number | null
         }
         Relationships: [
           {
@@ -14270,6 +14574,86 @@ export type Database = {
         }
         Relationships: []
       }
+      profiles_secure: {
+        Row: {
+          access_expires_at: string | null
+          avatar_url: string | null
+          bio: string | null
+          churn_risk_score: number | null
+          cpf: string | null
+          created_at: string | null
+          current_focus_area_id: string | null
+          email: string | null
+          id: string | null
+          is_online: boolean | null
+          last_activity_at: string | null
+          last_login_at: string | null
+          learning_style: string | null
+          level: number | null
+          nome: string | null
+          phone: string | null
+          preferences: Json | null
+          streak_days: number | null
+          study_preferences: Json | null
+          updated_at: string | null
+          xp_total: number | null
+        }
+        Insert: {
+          access_expires_at?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          churn_risk_score?: number | null
+          cpf?: never
+          created_at?: string | null
+          current_focus_area_id?: string | null
+          email?: string | null
+          id?: string | null
+          is_online?: boolean | null
+          last_activity_at?: string | null
+          last_login_at?: string | null
+          learning_style?: string | null
+          level?: number | null
+          nome?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          streak_days?: number | null
+          study_preferences?: Json | null
+          updated_at?: string | null
+          xp_total?: number | null
+        }
+        Update: {
+          access_expires_at?: string | null
+          avatar_url?: string | null
+          bio?: string | null
+          churn_risk_score?: number | null
+          cpf?: never
+          created_at?: string | null
+          current_focus_area_id?: string | null
+          email?: string | null
+          id?: string | null
+          is_online?: boolean | null
+          last_activity_at?: string | null
+          last_login_at?: string | null
+          learning_style?: string | null
+          level?: number | null
+          nome?: string | null
+          phone?: string | null
+          preferences?: Json | null
+          streak_days?: number | null
+          study_preferences?: Json | null
+          updated_at?: string | null
+          xp_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "profiles_current_focus_area_fkey"
+            columns: ["current_focus_area_id"]
+            isOneToOne: false
+            referencedRelation: "study_areas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       resumo_financeiro: {
         Row: {
           despesas: number | null
@@ -14284,6 +14668,93 @@ export type Database = {
         Row: {
           metric: string | null
           value: string | null
+        }
+        Relationships: []
+      }
+      transacoes_hotmart_secure: {
+        Row: {
+          affiliate_id: string | null
+          affiliate_name: string | null
+          buyer_cpf: string | null
+          buyer_email: string | null
+          buyer_name: string | null
+          buyer_phone: string | null
+          comissao_afiliado: number | null
+          cpf: string | null
+          created_at: string | null
+          data_cancelamento: string | null
+          data_compra: string | null
+          data_confirmacao: string | null
+          hotmart_fee: number | null
+          id: string | null
+          metodo_pagamento: string | null
+          motivo_cancelamento: string | null
+          parcelas: number | null
+          product_id: string | null
+          product_name: string | null
+          status: string | null
+          telefone: string | null
+          transaction_id: string | null
+          updated_at: string | null
+          valor_bruto: number | null
+          valor_liquido: number | null
+          webhook_raw: Json | null
+        }
+        Insert: {
+          affiliate_id?: string | null
+          affiliate_name?: string | null
+          buyer_cpf?: never
+          buyer_email?: string | null
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          comissao_afiliado?: number | null
+          cpf?: never
+          created_at?: string | null
+          data_cancelamento?: string | null
+          data_compra?: string | null
+          data_confirmacao?: string | null
+          hotmart_fee?: number | null
+          id?: string | null
+          metodo_pagamento?: string | null
+          motivo_cancelamento?: string | null
+          parcelas?: number | null
+          product_id?: string | null
+          product_name?: string | null
+          status?: string | null
+          telefone?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          valor_bruto?: number | null
+          valor_liquido?: number | null
+          webhook_raw?: Json | null
+        }
+        Update: {
+          affiliate_id?: string | null
+          affiliate_name?: string | null
+          buyer_cpf?: never
+          buyer_email?: string | null
+          buyer_name?: string | null
+          buyer_phone?: string | null
+          comissao_afiliado?: number | null
+          cpf?: never
+          created_at?: string | null
+          data_cancelamento?: string | null
+          data_compra?: string | null
+          data_confirmacao?: string | null
+          hotmart_fee?: number | null
+          id?: string | null
+          metodo_pagamento?: string | null
+          motivo_cancelamento?: string | null
+          parcelas?: number | null
+          product_id?: string | null
+          product_name?: string | null
+          status?: string | null
+          telefone?: string | null
+          transaction_id?: string | null
+          updated_at?: string | null
+          valor_bruto?: number | null
+          valor_liquido?: number | null
+          webhook_raw?: Json | null
         }
         Relationships: []
       }
@@ -15214,6 +15685,13 @@ export type Database = {
             Returns: boolean
           }
         | { Args: { _role: string; _user_id: string }; Returns: boolean }
+      has_role_typed: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
       hash_session_token: { Args: { token: string }; Returns: string }
       increment_metrica_diaria:
         | {
@@ -15240,12 +15718,15 @@ export type Database = {
       is_funcionario_or_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_gestao_staff: { Args: { _user_id?: string }; Returns: boolean }
       is_ip_blocked: { Args: { p_ip_address: unknown }; Returns: boolean }
+      is_marketing: { Args: { _user_id?: string }; Returns: boolean }
       is_matrix_admin: { Args: never; Returns: boolean }
       is_owner:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id?: string }; Returns: boolean }
       is_sna_admin: { Args: never; Returns: boolean }
+      is_suporte: { Args: { _user_id?: string }; Returns: boolean }
       is_user_banned_from_chat: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
@@ -15950,6 +16431,8 @@ export type Database = {
         | "aluno"
         | "beta"
         | "aluno_gratuito"
+        | "moderator"
+        | "user"
       asset_status: "pending" | "processing" | "ready" | "error" | "archived"
       asset_type: "pdf" | "ebook" | "worksheet" | "video" | "image" | "audio"
       attack_type:
@@ -16296,6 +16779,8 @@ export const Constants = {
         "aluno",
         "beta",
         "aluno_gratuito",
+        "moderator",
+        "user",
       ],
       asset_status: ["pending", "processing", "ready", "error", "archived"],
       asset_type: ["pdf", "ebook", "worksheet", "video", "image", "audio"],
