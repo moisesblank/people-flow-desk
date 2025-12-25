@@ -1,7 +1,8 @@
 // ============================================
-// 🔥 EDGE FUNCTION: RATE LIMITED GATEWAY v2.0
-// DOGMA X - Rate Limiting para Edge Functions
-// LEI VI — CORS SEGURO
+// 🔥 EDGE FUNCTION: RATE LIMITED GATEWAY v3.0
+// DOGMA X - Rate Limiting PERSISTENTE (DB)
+// LEI VI — CORS SEGURO + RATE LIMIT DISTRIBUÍDO
+// P1.3 FIX: Migrado de Map() para api_rate_limits
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -14,63 +15,123 @@ import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 // ============================================
 const RATE_LIMITS: Record<string, { limit: number; windowSeconds: number; priority: 'critical' | 'high' | 'normal' | 'low' }> = {
   // === AUTH (CRÍTICO - Proteção contra brute force) ===
-  'login': { limit: 5, windowSeconds: 300, priority: 'critical' },         // 5/5min
-  'signup': { limit: 3, windowSeconds: 600, priority: 'critical' },        // 3/10min
-  'password-reset': { limit: 3, windowSeconds: 600, priority: 'critical' },// 3/10min
-  '2fa': { limit: 5, windowSeconds: 300, priority: 'critical' },           // 5/5min
-  'magic-link': { limit: 3, windowSeconds: 600, priority: 'critical' },    // 3/10min
+  'login': { limit: 5, windowSeconds: 300, priority: 'critical' },
+  'signup': { limit: 3, windowSeconds: 600, priority: 'critical' },
+  'password-reset': { limit: 3, windowSeconds: 600, priority: 'critical' },
+  '2fa': { limit: 5, windowSeconds: 300, priority: 'critical' },
+  'magic-link': { limit: 3, windowSeconds: 600, priority: 'critical' },
   
   // === AI (ALTO CUSTO - Tokens OpenAI/Gemini) ===
-  'ai-chat': { limit: 20, windowSeconds: 60, priority: 'high' },           // 20/min
-  'ai-tutor': { limit: 15, windowSeconds: 60, priority: 'high' },          // 15/min
-  'ai-assistant': { limit: 15, windowSeconds: 60, priority: 'high' },      // 15/min
-  'book-chat-ai': { limit: 10, windowSeconds: 60, priority: 'high' },      // 10/min
-  'generate-ai-content': { limit: 5, windowSeconds: 60, priority: 'high' },// 5/min (caro)
+  'ai-chat': { limit: 20, windowSeconds: 60, priority: 'high' },
+  'ai-tutor': { limit: 15, windowSeconds: 60, priority: 'high' },
+  'ai-assistant': { limit: 15, windowSeconds: 60, priority: 'high' },
+  'book-chat-ai': { limit: 10, windowSeconds: 60, priority: 'high' },
+  'generate-ai-content': { limit: 5, windowSeconds: 60, priority: 'high' },
   
   // === VIDEO (Proteção de URLs assinadas) ===
-  'video-authorize': { limit: 30, windowSeconds: 60, priority: 'high' },   // 30/min
-  'panda-video': { limit: 30, windowSeconds: 60, priority: 'high' },       // 30/min
-  'secure-video-url': { limit: 30, windowSeconds: 60, priority: 'high' },  // 30/min
-  'book-page-signed-url': { limit: 60, windowSeconds: 60, priority: 'normal' }, // 60/min (navegação)
+  'video-authorize': { limit: 30, windowSeconds: 60, priority: 'high' },
+  'panda-video': { limit: 30, windowSeconds: 60, priority: 'high' },
+  'secure-video-url': { limit: 30, windowSeconds: 60, priority: 'high' },
+  'book-page-signed-url': { limit: 60, windowSeconds: 60, priority: 'normal' },
   
   // === CHAT/REALTIME (5000 simultâneos) ===
-  'chat-message': { limit: 30, windowSeconds: 60, priority: 'normal' },    // 30/min (1 a cada 2s)
-  'chat-reaction': { limit: 60, windowSeconds: 60, priority: 'low' },      // 60/min
-  'live-presence': { limit: 12, windowSeconds: 60, priority: 'low' },      // 12/min (5s interval)
+  'chat-message': { limit: 30, windowSeconds: 60, priority: 'normal' },
+  'chat-reaction': { limit: 60, windowSeconds: 60, priority: 'low' },
+  'live-presence': { limit: 12, windowSeconds: 60, priority: 'low' },
   
   // === API GERAL ===
-  'api-call': { limit: 100, windowSeconds: 60, priority: 'normal' },       // 100/min
-  'api-gateway': { limit: 100, windowSeconds: 60, priority: 'normal' },    // 100/min
-  'search': { limit: 30, windowSeconds: 60, priority: 'normal' },          // 30/min (debounce 300ms)
+  'api-call': { limit: 100, windowSeconds: 60, priority: 'normal' },
+  'api-gateway': { limit: 100, windowSeconds: 60, priority: 'normal' },
+  'search': { limit: 30, windowSeconds: 60, priority: 'normal' },
   
   // === UPLOADS/ARQUIVOS ===
-  'upload': { limit: 10, windowSeconds: 60, priority: 'normal' },          // 10/min
-  'file-download': { limit: 50, windowSeconds: 60, priority: 'normal' },   // 50/min
+  'upload': { limit: 10, windowSeconds: 60, priority: 'normal' },
+  'file-download': { limit: 50, windowSeconds: 60, priority: 'normal' },
   
   // === EMAIL/NOTIFICAÇÕES ===
-  'send-email': { limit: 10, windowSeconds: 60, priority: 'high' },        // 10/min
-  'send-notification': { limit: 20, windowSeconds: 60, priority: 'normal' },// 20/min
+  'send-email': { limit: 10, windowSeconds: 60, priority: 'high' },
+  'send-notification': { limit: 20, windowSeconds: 60, priority: 'normal' },
   
   // === WEBHOOKS (Sistema) ===
-  'webhook': { limit: 100, windowSeconds: 60, priority: 'normal' },        // 100/min (hotmart, etc)
-  'hotmart-webhook': { limit: 100, windowSeconds: 60, priority: 'normal' },// 100/min
+  'webhook': { limit: 100, windowSeconds: 60, priority: 'normal' },
+  'hotmart-webhook': { limit: 100, windowSeconds: 60, priority: 'normal' },
   
   // === DEFAULT ===
-  'default': { limit: 30, windowSeconds: 60, priority: 'normal' },         // 30/min
+  'default': { limit: 30, windowSeconds: 60, priority: 'normal' },
 };
 
-// Cache em memória para rate limiting rápido
-const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
-
-// Limpar cache periodicamente
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, value] of rateLimitCache.entries()) {
-    if (value.resetAt < now) {
-      rateLimitCache.delete(key);
+// ============================================
+// 🛡️ P1.3 FIX: RATE LIMIT PERSISTENTE (DB)
+// Usa tabela api_rate_limits para consistência
+// ============================================
+async function checkPersistentRateLimit(
+  supabase: any,
+  clientId: string,
+  endpoint: string,
+  config: { limit: number; windowSeconds: number }
+): Promise<{ allowed: boolean; count: number; resetAt: Date; retryAfter?: number }> {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - (config.windowSeconds * 1000));
+  
+  // Usar UPSERT atômico para evitar race conditions
+  // Primeiro, limpar entradas expiradas
+  await supabase
+    .from('api_rate_limits')
+    .delete()
+    .eq('client_id', clientId)
+    .eq('endpoint', endpoint)
+    .lt('window_start', windowStart.toISOString());
+  
+  // Buscar ou criar entrada atual
+  const { data: existing } = await supabase
+    .from('api_rate_limits')
+    .select('id, request_count, window_start')
+    .eq('client_id', clientId)
+    .eq('endpoint', endpoint)
+    .gte('window_start', windowStart.toISOString())
+    .order('window_start', { ascending: false })
+    .limit(1)
+    .single();
+  
+  if (existing) {
+    // Incrementar contador existente
+    const newCount = (existing.request_count || 0) + 1;
+    
+    if (newCount > config.limit) {
+      const resetAt = new Date(new Date(existing.window_start).getTime() + (config.windowSeconds * 1000));
+      const retryAfter = Math.ceil((resetAt.getTime() - now.getTime()) / 1000);
+      
+      return {
+        allowed: false,
+        count: newCount,
+        resetAt,
+        retryAfter: Math.max(1, retryAfter)
+      };
     }
+    
+    // Atualizar contador
+    await supabase
+      .from('api_rate_limits')
+      .update({ request_count: newCount })
+      .eq('id', existing.id);
+    
+    const resetAt = new Date(new Date(existing.window_start).getTime() + (config.windowSeconds * 1000));
+    return { allowed: true, count: newCount, resetAt };
+  } else {
+    // Nova janela - criar entrada
+    await supabase
+      .from('api_rate_limits')
+      .insert({
+        client_id: clientId,
+        endpoint: endpoint,
+        request_count: 1,
+        window_start: now.toISOString()
+      });
+    
+    const resetAt = new Date(now.getTime() + (config.windowSeconds * 1000));
+    return { allowed: true, count: 1, resetAt };
   }
-}, 60000);
+}
 
 serve(async (req) => {
   // CORS seguro
@@ -81,92 +142,72 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
   try {
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+    
     const { endpoint, action, clientId, payload } = await req.json();
     
     // Identificar cliente (IP + User Agent ou clientId fornecido)
     const clientIdentifier = clientId || 
-      req.headers.get('x-forwarded-for') || 
+      req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
       req.headers.get('x-real-ip') || 
       'unknown';
     
     const userAgent = req.headers.get('user-agent') || 'unknown';
-    const cacheKey = `${clientIdentifier}:${endpoint}`;
     
     // Obter configuração de rate limit
     const config = RATE_LIMITS[endpoint] || RATE_LIMITS['default'];
-    const now = Date.now();
     
-    // Verificar cache em memória primeiro (mais rápido)
-    let cacheEntry = rateLimitCache.get(cacheKey);
+    // 🛡️ P1.3 FIX: Usar rate limit persistente (DB)
+    const result = await checkPersistentRateLimit(supabase, clientIdentifier, endpoint, config);
     
-    if (cacheEntry) {
-      if (cacheEntry.resetAt > now) {
-        cacheEntry.count++;
-        
-        if (cacheEntry.count > config.limit) {
-          console.warn(`🚫 Rate limit excedido: ${cacheKey} (${cacheEntry.count}/${config.limit})`);
-          
-          // Logar tentativa bloqueada
-          const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
-          const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-          const supabase = createClient(supabaseUrl, supabaseKey);
-          
-          await supabase.from('security_events').insert({
-            event_type: 'RATE_LIMIT_EXCEEDED',
-            severity: 'warn',
-            source: 'rate-limit-gateway',
-            description: `Rate limit excedido para ${endpoint}`,
-            payload: {
-              endpoint,
-              clientId: clientIdentifier,
-              count: cacheEntry.count,
-              limit: config.limit,
-              userAgent: userAgent.substring(0, 200)
-            },
-            ip_address: clientIdentifier
-          });
-          
-          return new Response(
-            JSON.stringify({ 
-              error: 'Rate limit excedido',
-              retryAfter: Math.ceil((cacheEntry.resetAt - now) / 1000)
-            }),
-            { 
-              status: 429, 
-              headers: { 
-                ...corsHeaders, 
-                'Content-Type': 'application/json',
-                'Retry-After': String(Math.ceil((cacheEntry.resetAt - now) / 1000))
-              } 
-            }
-          );
-        }
-      } else {
-        // Janela expirou, resetar
-        rateLimitCache.set(cacheKey, {
-          count: 1,
-          resetAt: now + (config.windowSeconds * 1000)
-        });
-      }
-    } else {
-      // Nova entrada no cache
-      rateLimitCache.set(cacheKey, {
-        count: 1,
-        resetAt: now + (config.windowSeconds * 1000)
+    if (!result.allowed) {
+      console.warn(`🚫 Rate limit excedido (DB): ${clientIdentifier}:${endpoint} (${result.count}/${config.limit})`);
+      
+      // Logar tentativa bloqueada
+      await supabase.from('security_events').insert({
+        event_type: 'RATE_LIMIT_EXCEEDED',
+        severity: config.priority === 'critical' ? 'critical' : 'warn',
+        source: 'rate-limit-gateway',
+        description: `Rate limit excedido para ${endpoint}`,
+        payload: {
+          endpoint,
+          clientId: clientIdentifier,
+          count: result.count,
+          limit: config.limit,
+          userAgent: userAgent.substring(0, 200),
+          persistent: true // Flag indicando rate limit persistente
+        },
+        ip_address: clientIdentifier
       });
+      
+      return new Response(
+        JSON.stringify({ 
+          error: 'Rate limit excedido',
+          retryAfter: result.retryAfter
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(result.retryAfter)
+          } 
+        }
+      );
     }
     
-    // Rate limit OK, processar requisição
-    console.log(`✅ Rate limit OK: ${cacheKey} (${rateLimitCache.get(cacheKey)?.count}/${config.limit})`);
+    // Rate limit OK
+    console.log(`✅ Rate limit OK (DB): ${clientIdentifier}:${endpoint} (${result.count}/${config.limit})`);
     
     // Se for apenas verificação de rate limit
     if (action === 'check') {
-      const current = rateLimitCache.get(cacheKey);
       return new Response(
         JSON.stringify({
           allowed: true,
-          remaining: config.limit - (current?.count || 0),
-          resetAt: current?.resetAt || now + (config.windowSeconds * 1000)
+          remaining: config.limit - result.count,
+          resetAt: result.resetAt.toISOString()
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -174,12 +215,11 @@ serve(async (req) => {
     
     // Se tiver payload, processar como proxy
     if (action === 'proxy' && payload) {
-      // Aqui você pode encaminhar para outras Edge Functions
       return new Response(
         JSON.stringify({
           success: true,
           message: 'Request permitido pelo rate limiter',
-          remaining: config.limit - (rateLimitCache.get(cacheKey)?.count || 0)
+          remaining: config.limit - result.count
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
@@ -188,7 +228,7 @@ serve(async (req) => {
     return new Response(
       JSON.stringify({ 
         success: true,
-        remaining: config.limit - (rateLimitCache.get(cacheKey)?.count || 0)
+        remaining: config.limit - result.count
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
