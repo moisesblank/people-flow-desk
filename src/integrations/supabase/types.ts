@@ -3998,6 +3998,7 @@ export type Database = {
       }
       employees: {
         Row: {
+          cpf: string | null
           created_at: string | null
           created_by: string | null
           data_admissao: string | null
@@ -4014,6 +4015,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          cpf?: string | null
           created_at?: string | null
           created_by?: string | null
           data_admissao?: string | null
@@ -4030,6 +4032,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          cpf?: string | null
           created_at?: string | null
           created_by?: string | null
           data_admissao?: string | null
