@@ -191,11 +191,12 @@ export default function VidaPessoal() {
   const fetchData = async () => {
     setLoading(true);
     try {
+      // ⚡ DOGMA V.5K: Queries com limites para evitar sobrecarga
       const [petsRes, vaccinesRes, vehiclesRes, maintenancesRes, expensesRes] = await Promise.all([
-        supabase.from("pets").select("*").order("name"),
-        supabase.from("pet_vaccines").select("*").order("next_date"),
-        supabase.from("vehicles").select("*").order("name"),
-        supabase.from("vehicle_maintenance").select("*").order("service_date", { ascending: false }),
+        supabase.from("pets").select("*").order("name").limit(50),
+        supabase.from("pet_vaccines").select("*").order("next_date").limit(100),
+        supabase.from("vehicles").select("*").order("name").limit(20),
+        supabase.from("vehicle_maintenance").select("*").order("service_date", { ascending: false }).limit(50),
         supabase.from("personal_expenses_v2").select("*").order("date", { ascending: false }).limit(50),
       ]);
 
