@@ -136,6 +136,7 @@ export function FinancialGoalsWidget() {
 
   const fetchGoals = async () => {
     try {
+      // ⚡ DOGMA V.5K: Query otimizada com limite
       const { data, error } = await supabase
         .from("financial_goals")
         .select("*")

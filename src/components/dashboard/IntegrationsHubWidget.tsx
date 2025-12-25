@@ -70,17 +70,18 @@ export function IntegrationsHubWidget() {
   const { data: integrationEvents, refetch } = useQuery({
     queryKey: ["integration-events-status"],
     queryFn: async () => {
+      // ⚡ DOGMA V.5K: Limite reduzido + polling otimizado
       const { data, error } = await supabase
         .from("integration_events")
         .select("*")
         .gte("created_at", new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString())
         .order("created_at", { ascending: false })
-        .limit(100);
+        .limit(50);
       
       if (error) throw error;
       return data || [];
     },
-    refetchInterval: 30000, // Atualiza a cada 30 segundos
+    refetchInterval: 60000, // ⚡ 60s (reduzido de 30s para menos pressão)
   });
 
   // Atualiza status das integrações com base nos eventos reais
