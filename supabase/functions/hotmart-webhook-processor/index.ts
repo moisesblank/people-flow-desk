@@ -23,13 +23,13 @@ const corsHeaders = {
 // ============================================
 const CONFIG = {
   RD_STATION: {
-    API_KEY: "8b8f9f75b0596c30668b480a91a858c9",
+    API_KEY: Deno.env.get("RD_STATION_API_KEY") || "",
     BASE_URL: "https://api.rd.services/platform/conversions",
     TIMEOUT: 10000,
   },
   WEBHOOK_MKT: {
     URL: "https://app.moisesmedeiros.com.br/wp-json/webhook-mkt/v1/receive",
-    TOKEN: "28U4H9bCv5MHoRS3uJmodKx0u17pgCwn",
+    TOKEN: Deno.env.get("WEBHOOK_MKT_TOKEN") || "",
     TIMEOUT: 10000,
   },
   EVENTS: {
