@@ -23,6 +23,7 @@ export const SECURITY_HEADERS = {
     "base-uri 'self'",
     "form-action 'self'",
     "upgrade-insecure-requests",
+    "report-uri https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/sanctum-report-violation",
   ].join('; '),
 
   // Strict Transport Security (HSTS)
