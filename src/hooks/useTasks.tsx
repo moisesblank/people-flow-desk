@@ -54,11 +54,13 @@ export function useTasks(filters?: {
     async () => {
       if (!user?.id) return [];
 
+      // ⚡ DOGMA V.5K: Query otimizada com limite
       let query = supabase
         .from("tasks")
         .select("*")
         .or(`created_by.eq.${user.id},assigned_to_user.eq.${user.id}`)
-        .order("created_at", { ascending: false });
+        .order("created_at", { ascending: false })
+        .limit(200);
 
       if (filters?.status) {
         query = query.eq("status", filters.status);

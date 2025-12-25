@@ -134,11 +134,12 @@ export const useYouTubeLive = () => {
   };
 
   const useLivesFromDB = () => {
+    // ⚡ DOGMA V.5K: Limite + staleTime otimizado
     return useSubspaceQuery(['youtube-lives-db'], async () => {
-      const { data, error } = await supabase.from('youtube_lives').select('*').order('scheduled_start', { ascending: true });
+      const { data, error } = await supabase.from('youtube_lives').select('*').order('scheduled_start', { ascending: true }).limit(50);
       if (error) throw error;
       return data;
-    }, { profile: 'dashboard', persistKey: 'yt_lives_db', staleTime: 30 * 1000 });
+    }, { profile: 'dashboard', persistKey: 'yt_lives_db', staleTime: 60 * 1000 }); // 60s (de 30s)
   };
 
   const useMetricsFromDB = () => {

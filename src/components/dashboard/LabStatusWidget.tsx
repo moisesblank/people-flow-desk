@@ -29,9 +29,11 @@ export function LabStatusWidget() {
   const { data: reagentsData } = useQuery({
     queryKey: ["reagents-stats"],
     queryFn: async () => {
+      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
       const { data: reagents, error } = await supabase
         .from("reagents")
-        .select("*");
+        .select("*")
+        .limit(200);
 
       if (error) throw error;
 
@@ -58,9 +60,11 @@ export function LabStatusWidget() {
   const { data: equipmentData } = useQuery({
     queryKey: ["equipment-stats"],
     queryFn: async () => {
+      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
       const { data: equipment, error } = await supabase
         .from("equipment")
-        .select("*");
+        .select("*")
+        .limit(100);
 
       if (error) throw error;
 

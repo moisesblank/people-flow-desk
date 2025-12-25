@@ -66,30 +66,34 @@ export default function WhatsAppLive() {
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
     queryKey: ['whatsapp-live-conversations'],
     queryFn: async () => {
+      // ⚡ DOGMA V.5K: Limite + polling otimizado
       const { data, error } = await supabase
         .from('whatsapp_conversations')
         .select('*')
-        .order('last_message_at', { ascending: false });
+        .order('last_message_at', { ascending: false })
+        .limit(50);
       if (error) throw error;
       return data as Conversation[];
     },
-    refetchInterval: 5000 // Atualiza a cada 5 segundos
+    refetchInterval: 30000 // ⚡ DOGMA V.5K: 30s (de 5s) - usar Realtime para atualizações críticas
   });
 
   const { data: messages = [], isLoading: loadingMessages } = useQuery({
     queryKey: ['whatsapp-live-messages', selectedConversation],
     queryFn: async () => {
       if (!selectedConversation) return [];
+      // ⚡ DOGMA V.5K: Limite + polling otimizado
       const { data, error } = await supabase
         .from('whatsapp_messages')
         .select('*')
         .eq('conversation_id', selectedConversation)
-        .order('timestamp', { ascending: true });
+        .order('timestamp', { ascending: true })
+        .limit(100);
       if (error) throw error;
       return data as Message[];
     },
     enabled: !!selectedConversation,
-    refetchInterval: 3000 // Atualiza mensagens a cada 3 segundos
+    refetchInterval: 15000 // ⚡ DOGMA V.5K: 15s (de 3s) - usar Realtime para mensagens novas
   });
 
   // Stats em tempo real
@@ -110,7 +114,7 @@ export default function WhatsAppLive() {
         novosLeads: leadsResult.count || 0
       };
     },
-    refetchInterval: 10000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 10s)
   });
 
   // ==============================================================================

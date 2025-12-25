@@ -106,7 +106,7 @@ const CentralDiagnostico = () => {
 
       return checks;
     },
-    refetchInterval: 30000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 30s)
   });
 
   // Webhooks recentes
@@ -140,7 +140,7 @@ const CentralDiagnostico = () => {
         successRate: total > 0 ? Math.round((processed / total) * 100) : 100
       };
     },
-    refetchInterval: 15000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 15s)
   });
 
   // SNA Jobs status
@@ -175,7 +175,7 @@ const CentralDiagnostico = () => {
         failed: failed || 0
       };
     },
-    refetchInterval: 10000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 10s)
   });
 
   // Eventos de segurança
@@ -199,7 +199,7 @@ const CentralDiagnostico = () => {
         criticalToday: criticalToday || 0
       };
     },
-    refetchInterval: 20000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 20s)
   });
 
   // Usuários online
@@ -216,7 +216,7 @@ const CentralDiagnostico = () => {
 
       return count || 0;
     },
-    refetchInterval: 30000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 30s)
   });
 
   // ============================================

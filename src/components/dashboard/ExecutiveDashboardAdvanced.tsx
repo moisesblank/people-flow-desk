@@ -195,7 +195,7 @@ export function ExecutiveDashboardAdvanced() {
         monthlyData
       };
     },
-    refetchInterval: 30000
+    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 30s)
   });
 
   // KPIs dinâmicos baseados em dados reais

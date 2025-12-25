@@ -183,10 +183,12 @@ export function SmartAutomationsWidget() {
   const { data: dbRules } = useQuery({
     queryKey: ["automation-rules"],
     queryFn: async () => {
+      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
       const { data, error } = await supabase
         .from("custom_rules")
         .select("*")
-        .order("priority", { ascending: true });
+        .order("priority", { ascending: true })
+        .limit(50);
       if (error) throw error;
       return data;
     },

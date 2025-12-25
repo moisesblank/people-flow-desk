@@ -48,9 +48,11 @@ export default function TurmasOnline() {
   const { data: cursosData } = useSubspaceQuery(
     ["turmas-cursos-count"],
     async () => {
+      // ⚡ DOGMA V.5K: Surgical columns + limite
       const { data, error } = await supabase
         .from("courses")
-        .select("*");
+        .select("id, title, slug, is_published, total_students")
+        .limit(100);
       if (error) {
         console.error("[AUDIT] Erro ao buscar cursos:", error);
         return [];

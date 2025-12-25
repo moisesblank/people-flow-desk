@@ -87,10 +87,12 @@ export function useWhatsAppTasks() {
   return useSubspaceQuery(
     ['whatsapp-tasks'],
     async () => {
+      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
       const { data, error } = await supabase
         .from('command_tasks')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data as WhatsAppTask[];
     },
@@ -103,7 +105,8 @@ export function useWhatsAppFinance(period?: 'today' | 'week' | 'month' | 'all') 
   return useSubspaceQuery(
     ['whatsapp-finance', period || 'all'],
     async () => {
-      let query = supabase.from('command_finance').select('*');
+      // ⚡ DOGMA V.5K: Query com limite
+      let query = supabase.from('command_finance').select('*').limit(200);
       
       if (period === 'today') {
         query = query.gte('date', new Date().toISOString().split('T')[0]);
@@ -133,10 +136,12 @@ export function useWhatsAppConversations() {
   const query = useSubspaceQuery(
     ['whatsapp-conversations'],
     async () => {
+      // ⚡ DOGMA V.5K: Limite para evitar sobrecarga
       const { data, error } = await supabase
         .from('whatsapp_conversations')
         .select('*')
-        .order('last_message_at', { ascending: false });
+        .order('last_message_at', { ascending: false })
+        .limit(100);
       if (error) throw error;
       return data as WhatsAppConversation[];
     },
@@ -272,7 +277,7 @@ export function useWhatsAppStats() {
     {
       profile: 'dashboard',
       persistKey: 'whatsapp_stats_v1',
-      refetchInterval: 30000,
+      refetchInterval: 60000, // ⚡ DOGMA V.5K: 60s (de 30s)
     }
   );
 }
@@ -293,7 +298,7 @@ export function useWebhookDiagnostics() {
     {
       profile: 'realtime',
       persistKey: 'webhook_diagnostics_v1',
-      refetchInterval: 5000,
+      refetchInterval: 30000, // ⚡ DOGMA V.5K: 30s (de 5s) - admin only
     }
   );
 }
