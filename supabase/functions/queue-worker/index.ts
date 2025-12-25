@@ -30,15 +30,24 @@ serve(async (req) => {
     );
 
     // ========================================
-    // 🛡️ LEI VI - PROTEÇÃO INTERNA OBRIGATÓRIA
-    // Queue-worker só pode ser chamado internamente
+    // 🛡️ LEI VI - PROTEÇÃO INTERNA (P0-3 CORRIGIDO)
+    // REMOVIDO fallback de User-Agent - apenas x-internal-secret
     // ========================================
     const internalSecret = req.headers.get('x-internal-secret');
     const userAgent = req.headers.get('user-agent') || '';
-    const isInternalCall = 
-      internalSecret === Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
-      userAgent.includes('Deno/') ||
-      userAgent.includes('supabase-js/');
+    const INTERNAL_SECRET = Deno.env.get('INTERNAL_SECRET');
+    
+    // CRÍTICO: Verificar se INTERNAL_SECRET está configurado
+    if (!INTERNAL_SECRET) {
+      console.error("🚨 [SECURITY] INTERNAL_SECRET não configurado!");
+      return new Response(JSON.stringify({ error: 'Server misconfiguration' }), {
+        status: 500,
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      });
+    }
+    
+    // Validação ESTRITA: apenas x-internal-secret válido (SEM fallback de User-Agent)
+    const isInternalCall = internalSecret === INTERNAL_SECRET;
 
     if (!isInternalCall) {
       console.log('[QUEUE-WORKER] ❌ BLOQUEADO: Chamada externa não autorizada');
@@ -140,7 +149,7 @@ serve(async (req) => {
           .select()
           .single();
 
-        // Chamar o orquestrador
+        // Chamar o orquestrador COM x-internal-secret (P0-3)
         const orchestratorResult = await supabase.functions.invoke('orchestrator', {
           body: {
             queue_id: item.id,
@@ -148,6 +157,9 @@ serve(async (req) => {
             event_type: item.event,
             payload: item.payload,
             log_id: log?.id
+          },
+          headers: {
+            'x-internal-secret': INTERNAL_SECRET
           }
         });
 

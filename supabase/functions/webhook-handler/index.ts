@@ -311,10 +311,12 @@ serve(async (req) => {
 
     console.log(`✅ Webhook queued: ${source}:${event} in ${processingTime}ms - ID: ${data?.id}`);
 
-    // Disparar processamento assíncrono (fire and forget)
+    // Disparar processamento assíncrono COM x-internal-secret (P0-3)
     if (data?.id) {
+      const INTERNAL_SECRET = Deno.env.get('INTERNAL_SECRET');
       supabase.functions.invoke('queue-worker', {
-        body: { queue_id: data.id }
+        body: { queue_id: data.id },
+        headers: INTERNAL_SECRET ? { 'x-internal-secret': INTERNAL_SECRET } : {}
       }).catch(err => console.error('Failed to invoke worker:', err));
     }
 

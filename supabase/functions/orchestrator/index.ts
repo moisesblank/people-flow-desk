@@ -14,8 +14,9 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
 };
 
-// Secret interno para chamadas entre funções
-const INTERNAL_SECRET = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")?.substring(0, 32);
+// Secret interno dedicado para chamadas entre funções
+// NUNCA usar service role como secret - usar INTERNAL_SECRET dedicado
+const INTERNAL_SECRET = Deno.env.get("INTERNAL_SECRET");
 
 interface OrchestratorRequest {
   queue_id: string;
@@ -33,15 +34,27 @@ serve(async (req) => {
   const startTime = Date.now();
   
   // ============================================
-  // 🛡️ VALIDAÇÃO DE ORIGEM INTERNA
-  // Apenas outras edge functions podem chamar
+  // 🛡️ VALIDAÇÃO DE ORIGEM INTERNA (P0-3 CORRIGIDO)
+  // REMOVIDO fallback de User-Agent - apenas x-internal-secret
   // ============================================
   const internalSecret = req.headers.get('x-internal-secret');
   const userAgent = req.headers.get('user-agent') || '';
-  const isInternalCall = 
-    internalSecret === INTERNAL_SECRET ||
-    userAgent.includes('Deno/') ||
-    userAgent.includes('Supabase');
+  
+  // CRÍTICO: Verificar se INTERNAL_SECRET está configurado
+  if (!INTERNAL_SECRET) {
+    console.error("🚨 [SECURITY] INTERNAL_SECRET não configurado!");
+    return new Response(JSON.stringify({
+      status: 'error',
+      message: 'Server misconfiguration',
+      code: 'SECRET_NOT_CONFIGURED'
+    }), {
+      status: 500,
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+    });
+  }
+  
+  // Validação ESTRITA: apenas x-internal-secret válido (SEM fallback de User-Agent)
+  const isInternalCall = internalSecret === INTERNAL_SECRET;
 
   if (!isInternalCall) {
     console.error("❌ Orchestrator: Chamada externa não autorizada");

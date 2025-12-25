@@ -445,11 +445,13 @@ async function wfTutorWithContext(
     lesson_id?: string;
   };
 
-  // Buscar contexto do aluno
+  // Buscar contexto do aluno COM x-internal-secret (P0-3)
   let studentContext = '';
   try {
+    const INTERNAL_SECRET = Deno.env.get('INTERNAL_SECRET');
     const { data: context } = await supabase.functions.invoke('generate-context', {
-      body: { userId: user_id }
+      body: { userId: user_id },
+      headers: INTERNAL_SECRET ? { 'x-internal-secret': INTERNAL_SECRET } : {}
     });
     if (context?.success) {
       studentContext = `
