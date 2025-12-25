@@ -1,12 +1,11 @@
 // ============================================
-// MOISÉS MEDEIROS - HOTMART FAST WEBHOOK v1.0
-// Webhook otimizado para processar eventos Hotmart
+// 🛡️ HOTMART-FAST → REDIRECIONADOR PARA WEBHOOK-HANDLER
+// Este endpoint agora apenas repassa para o gateway oficial
+// Mantém compatibilidade com integrações existentes
 // ============================================
 
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts'
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
-
-import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -49,7 +48,7 @@ serve(async (req) => {
     )
   }
 
-  console.log('[hotmart-fast] Webhook recebido')
+  console.log('[hotmart-fast] ⚠️ DEPRECATED - Processando (migre para webhook-handler)');
 
   try {
     // ============================================

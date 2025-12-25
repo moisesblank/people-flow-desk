@@ -124,12 +124,15 @@ serve(async (req) => {
       userId = existingUser.id;
       console.log(`👤 Usuário já existe: ${userId}`);
     } else {
-      // 2. Criar novo usuário no sistema de autenticação
-      const tempPassword = generateSecurePassword();
+      // ============================================
+      // 🛡️ P1.5b - MAGIC LINK EM VEZ DE SENHA
+      // LEI VI: Nunca enviar senhas em plain-text por email
+      // Usuário define própria senha no primeiro acesso
+      // ============================================
       
+      // Criar usuário SEM senha (forçar primeiro acesso via magic link)
       const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email: customer.email.toLowerCase().trim(),
-        password: tempPassword,
         email_confirm: true,
         user_metadata: {
           name: customer.name,
@@ -144,23 +147,40 @@ serve(async (req) => {
       }
 
       userId = authUser.user.id;
-      console.log(`✅ Usuário auth criado: ${userId}`);
+      console.log(`✅ Usuário auth criado (sem senha): ${userId}`);
 
-      // Enviar email com senha temporária (via edge function de email)
+      // Gerar link de recuperação/definição de senha
+      const siteUrl = Deno.env.get('SITE_URL') || 'https://pro.moisesmedeiros.com.br';
+      const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
+        type: 'recovery',
+        email: customer.email.toLowerCase().trim(),
+        options: {
+          redirectTo: `${siteUrl}/alunos?welcome=true`,
+        },
+      });
+
+      if (linkError) {
+        console.warn("⚠️ Erro ao gerar magic link:", linkError);
+      }
+
+      // Enviar email com link de acesso (SEM senha plain-text)
       try {
+        const accessLink = linkData?.properties?.action_link || `${siteUrl}/auth?reset=true`;
+        
         await supabaseAdmin.functions.invoke("send-email", {
           body: {
             to: customer.email,
-            subject: "🎉 Bem-vindo! Seu acesso está liberado",
-            template: "welcome_beta",
+            subject: "🎉 Bem-vindo! Configure sua senha para acessar",
+            template: "welcome_beta_magic",
             data: {
               name: customer.name,
               email: customer.email,
-              temp_password: tempPassword,
+              access_link: accessLink,
               product_name: product?.name || "Curso de Química",
             },
           },
         });
+        console.log(`📧 Email com magic link enviado para: ${customer.email}`);
       } catch (emailError) {
         console.warn("⚠️ Email de boas-vindas não enviado:", emailError);
       }
