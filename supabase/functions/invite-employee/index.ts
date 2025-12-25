@@ -78,9 +78,26 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log(`[INVITE] Creating user: ${email} (${nome})`);
 
-    // Check if user already exists
-    const { data: existingUsers } = await supabase.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(u => u.email === email);
+    // Check if user already exists (OTIMIZADO: busca direta, não listUsers)
+    // P1 FIX: listUsers() não escala com +10k usuários
+    let existingUser = null;
+    try {
+      // Buscar pelo profiles (indexado por email) - mais rápido que auth.admin.listUsers
+      const { data: profileData } = await supabase
+        .from('profiles')
+        .select('id, email')
+        .ilike('email', email.trim())
+        .limit(1)
+        .single();
+      
+      if (profileData?.id) {
+        const { data: userData } = await supabase.auth.admin.getUserById(profileData.id);
+        existingUser = userData?.user;
+      }
+    } catch {
+      // Usuário não existe, será criado abaixo
+      existingUser = null;
+    }
 
     if (existingUser) {
       console.log(`[INVITE] User already exists: ${email}`);

@@ -91,11 +91,32 @@ serve(async (req) => {
 
     console.log(`🎯 Criando usuário BETA para: ${customer.email}`);
 
-    // 1. Verificar se usuário já existe no auth
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      u => u.email?.toLowerCase() === customer.email.toLowerCase()
-    );
+    // 1. Verificar se usuário já existe no auth (OTIMIZADO: busca direta por email, não listUsers)
+    // P1 FIX: listUsers() não escala com +10k usuários, usar busca filtrada
+    const { data: existingUserData } = await supabaseAdmin.auth.admin.listUsers({
+      page: 1,
+      perPage: 1,
+    });
+    
+    // Buscar diretamente pelo email usando getUserByEmail (mais eficiente)
+    let existingUser = null;
+    try {
+      // Tentar buscar usuário por email via profiles (mais rápido que auth.admin)
+      const { data: profileData } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email')
+        .ilike('email', customer.email.trim())
+        .limit(1)
+        .single();
+      
+      if (profileData?.id) {
+        const { data: userData } = await supabaseAdmin.auth.admin.getUserById(profileData.id);
+        existingUser = userData?.user;
+      }
+    } catch {
+      // Se não encontrou no profiles, tenta criar novo
+      existingUser = null;
+    }
 
     let userId: string;
 
