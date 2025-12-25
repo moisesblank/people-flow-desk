@@ -14401,6 +14401,15 @@ export type Database = {
         Args: { _required_role: string; _user_id: string }
         Returns: boolean
       }
+      audit_invalid_cpfs: {
+        Args: never
+        Returns: {
+          cpf_value: string
+          motivo: string
+          registro_id: string
+          tabela: string
+        }[]
+      }
       audit_rls_coverage: {
         Args: never
         Returns: {
@@ -15241,6 +15250,7 @@ export type Database = {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
       }
+      is_valid_cpf: { Args: { cpf_input: string }; Returns: boolean }
       is_video_admin: { Args: never; Returns: boolean }
       is_video_domain_authorized: {
         Args: { p_domain: string }
@@ -15582,6 +15592,7 @@ export type Database = {
           status: string
         }[]
       }
+      sanitize_cpf: { Args: { cpf_input: string }; Returns: string }
       security_cleanup_job: { Args: never; Returns: undefined }
       send_chat_message_v2: {
         Args: {
