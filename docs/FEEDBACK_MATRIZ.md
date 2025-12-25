@@ -111,4 +111,59 @@ Podíamos ter deixado como estava e "resolvido depois". Mas isso seria bomba-rel
 
 ---
 
-*Última atualização: 25/12/2024*
+### 25/12/2024 — Auditoria Financeira + Validação CPF Real v17.7
+
+**O QUE FOI FEITO:**
+1. Criamos função `is_valid_cpf()` que valida CPF brasileiro com algoritmo oficial (2 dígitos verificadores)
+2. CPFs inválidos como 000.000.000-00 ou 111.111.111-11 agora são REJEITADOS automaticamente
+3. Triggers de auditoria em 7 tabelas financeiras (transactions, comissoes, bank_accounts, etc.)
+4. Total de 18 tabelas agora com auditoria automática
+
+**VEREDICTO: ✅ AVANÇO REAL**
+
+**EXPLICAÇÃO SIMPLES:**
+Antes: Qualquer número podia ser cadastrado como CPF. Você podia digitar "00000000000" e o sistema aceitava.
+
+Agora: O sistema verifica se o CPF é REAL usando a mesma matemática que a Receita Federal usa. Se alguém tentar cadastrar um CPF fake, o sistema bloqueia na hora.
+
+Para o financeiro: Toda vez que alguém criar, editar ou deletar uma transação financeira, fica registrado QUEM fez, QUANDO fez, e O QUE mudou. Se sumir dinheiro no sistema, dá pra rastrear.
+
+**MÉTRICAS ANTES vs DEPOIS:**
+
+| Métrica | Antes | Depois | Mudança |
+|---------|-------|--------|---------|
+| Validação CPF | Nenhuma | Algoritmo oficial RF | ✅ |
+| CPFs inválidos no banco | Aceitos | Bloqueados | ✅ |
+| CPFs existentes inválidos | ? | 0 encontrados | ✅ |
+| Tabelas financeiras auditadas | ~5 | 7 principais | ✅ |
+| Total tabelas com auditoria | ~12 | 18 | ✅ |
+| Rastreabilidade financeira | Parcial | Completa | ✅ |
+
+**DECISÃO CERTA? SIM.**
+
+Por quê:
+1. CPF inválido = problema futuro com pagamentos, notas fiscais, certificados
+2. Auditoria financeira = proteção contra fraude interna/externa
+3. Feito ANTES dos 5000 alunos = limpeza preventiva
+
+**ALTERNATIVA QUE EXISTIA:**
+Validar CPF apenas no frontend. MAS: qualquer pessoa com conhecimento técnico poderia burlar. Validação no BANCO é a única que não dá pra pular.
+
+**PRÓXIMOS PASSOS RECOMENDADOS:**
+1. ✅ Testar cadastro com CPF inválido (deve bloquear)
+2. Revisar fluxo de cadastro para mostrar erro amigável
+3. Considerar máscara visual de CPF no frontend (XXX.XXX.XXX-XX)
+
+---
+
+## 🔑 PRINCÍPIOS GUIA
+
+1. **Menos é mais** — 4 políticas claras > 21 políticas confusas
+2. **Padronização** — Um padrão consistente > múltiplas abordagens misturadas  
+3. **Proatividade** — Resolver antes do problema aparecer > correr atrás depois
+4. **Simplicidade** — Se não consegue explicar para não-técnico, provavelmente está complicado demais
+5. **Honestidade** — Admitir quando não avançou ou quando errou é essencial para melhorar
+
+---
+
+*Última atualização: 25/12/2024 — v17.7*
