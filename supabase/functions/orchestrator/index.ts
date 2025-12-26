@@ -9,10 +9,7 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-internal-secret',
-};
+// LEI VI: CORS dinâmico - será obtido dentro do serve()
 
 // Secret interno dedicado para chamadas entre funções
 // NUNCA usar service role como secret - usar INTERNAL_SECRET dedicado
@@ -28,8 +25,10 @@ interface OrchestratorRequest {
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
+  
+  const corsHeaders = getCorsHeaders(req);
 
   const startTime = Date.now();
   

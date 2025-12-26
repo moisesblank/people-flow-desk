@@ -13,10 +13,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-hotmart-hottok, x-webhook-source, x-site-token',
-};
+// LEI VI: Webhooks server-to-server usam getWebhookCorsHeaders()
+const corsHeaders = getWebhookCorsHeaders();
 
 // ============================================
 // CONFIGURAÇÕES - INTEGRAÇÕES EXTERNAS
