@@ -75,39 +75,35 @@
       }
     </style>
 
-    <!-- Preconnect for critical resources (before DNS lookup) -->
-    <!-- 🚀 ECONOMIA: 314ms no LCP via preconnect cdn.fontshare -->
+    <!-- ============================================
+         🚀 PRECONNECT - Prioridade máxima (primeiras conexões)
+         ECONOMIA: ~300ms no LCP via early connections
+         ============================================ -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link rel="preconnect" href="https://api.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
     <link rel="preconnect" href="https://fyikfsasudgzsjmumdlw.supabase.co" crossorigin />
     
-    <!-- Art. 33° LEI V: DNS Prefetch obrigatório para Supabase -->
+    <!-- DNS Prefetch (fallback para navegadores antigos) -->
     <link rel="dns-prefetch" href="https://fyikfsasudgzsjmumdlw.supabase.co" />
     <link rel="dns-prefetch" href="//fonts.googleapis.com" />
-    <link rel="dns-prefetch" href="//api.fontshare.com" />
-    <link rel="dns-prefetch" href="//cdn.fontshare.com" />
+    <link rel="dns-prefetch" href="//fonts.gstatic.com" />
     
     <!-- ============================================
-         DOGMA I + TESE 1.4: FONTES OTIMIZADAS
-         Preload + font-display: optional (CLS = 0)
-         WOFF2 only + fallback sistema
-         LCP TARGET: -40% via preload prioritário
+         DOGMA I + TESE 1.4: FONTES OTIMIZADAS v2.0
+         Estratégia: font-display: swap + fallback sistema
+         REMOVIDO: preload de woff2 específicos (expiram/404)
+         MANTIDO: preload de CSS (resolve automaticamente)
          ============================================ -->
     
-    <!-- 🚀 LCP CRITICAL: Preload da fonte principal (MAIOR IMPACTO LCP) -->
-    <link rel="preload" href="https://fonts.gstatic.com/s/inter/v18/UcCO3FwrK3iLTeHuS_nVMrMxCp50SjIw2boKoduKmMEVuLyfAZ9hjp-Ek-_EeA.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
+    <!-- 🚀 FONTS CSS: Carregamento assíncrono com swap (não bloqueia render) -->
+    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" /></noscript>
     
-    <!-- 🚀 LCP CRITICAL: Preload Cabinet Grotesk (Headings - LCP candidate) -->
-    <link rel="preload" href="https://cdn.fontshare.com/wf/WVXDPDVMRQFQ4PWXFZBNKFSQFF46EIFL/4RL64BNDGDYXEDACEXBQLIPMPJJBXRCP/YQHZ3IQXC45FL6P5PHJBJ2J4QYOHFSZD.woff2" as="font" type="font/woff2" crossorigin fetchpriority="high" />
-    
-    <!-- TESE 1.4: font-display: optional para ZERO CLS -->
-    <link rel="preload" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=optional" rel="stylesheet" /></noscript>
-    
-    <link rel="preload" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=satoshi@400,500,700&display=optional" as="style" onload="this.onload=null;this.rel='stylesheet'" />
-    <noscript><link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=satoshi@400,500,700&display=optional" rel="stylesheet" /></noscript>
+    <!-- Cabinet Grotesk + Satoshi (Fontshare) - display=swap para CLS mínimo -->
+    <link rel="preload" href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=satoshi@400,500,700&display=swap" as="style" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,500,700&f[]=satoshi@400,500,700&display=swap" rel="stylesheet" /></noscript>
 
     <!-- Canonical URL -->
     <link rel="canonical" href="https://gestao.moisesmedeiros.com.br" />
