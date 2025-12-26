@@ -27,8 +27,9 @@ const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 // ============================================
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
+// LEI VI: CORS seguro - domínio específico
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
   "Cache-Control": "no-store, no-cache, must-revalidate",

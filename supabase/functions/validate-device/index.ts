@@ -8,9 +8,11 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
+// LEI VI: CORS dinâmico via allowlist (não usar * em browser endpoints)
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, cf-connecting-ip, cf-ipcountry, cf-ipcity',
+  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, cf-connecting-ip, cf-ipcountry, cf-ipcity",
+  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
 };
 
 interface DeviceValidationRequest {
@@ -58,6 +60,40 @@ Deno.serve(async (req) => {
       console.log(`[validate-device] Post-login/register: userId aceito do body`);
     } else {
       console.log(`[validate-device] Pre-login/validate: userId ignorado por segurança`);
+      
+      // 🛡️ P0.2 - TURNSTILE OBRIGATÓRIO EM PRE-LOGIN
+      // LEI VI: pre_login usa SERVICE_ROLE, então DEVE validar Turnstile
+      const turnstileToken = (body as any).turnstileToken;
+      if (!turnstileToken) {
+        console.warn(`[validate-device] PRE-LOGIN sem Turnstile - bloqueado`);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Turnstile token obrigatório em pre-login',
+            requiresTurnstile: true,
+            success: false
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Validar Turnstile via API
+      const TURNSTILE_SECRET = Deno.env.get('CLOUDFLARE_TURNSTILE_SECRET_KEY');
+      if (TURNSTILE_SECRET) {
+        const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: `secret=${TURNSTILE_SECRET}&response=${turnstileToken}&remoteip=${cfConnectingIP}`,
+        });
+        const turnstileResult = await turnstileResponse.json();
+        if (!turnstileResult.success) {
+          console.warn(`[validate-device] Turnstile FALHOU: ${JSON.stringify(turnstileResult)}`);
+          return new Response(
+            JSON.stringify({ error: 'Turnstile validation failed', success: false }),
+            { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        console.log(`[validate-device] Turnstile validado com sucesso`);
+      }
     }
 
     if (!fingerprint) {

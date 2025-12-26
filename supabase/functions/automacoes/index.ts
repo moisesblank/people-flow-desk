@@ -3,9 +3,13 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
+// LEI VI: CORS dinâmico via allowlist centralizado
+// Todas as respostas usam getCorsHeaders(req) ou handleCorsOptions(req)
+// Fallback seguro para contextos sem req (cron jobs, chamadas internas)
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
 };
 
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
