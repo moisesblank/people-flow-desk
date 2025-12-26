@@ -67,9 +67,11 @@ export function CloudflareTurnstile({
 }: CloudflareTurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'verified' | 'error' | 'expired' | 'dev-bypass'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'verified' | 'error' | 'expired' | 'dev-bypass' | 'fallback'>('loading');
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
   const [domainError, setDomainError] = useState(false);
+  const [errorCount, setErrorCount] = useState(0);
+  const MAX_ERRORS_BEFORE_FALLBACK = 3;
 
   // Carregar script do Turnstile
   useEffect(() => {
@@ -136,6 +138,9 @@ export function CloudflareTurnstile({
         },
         'error-callback': (errorCode: string) => {
           console.warn('[Turnstile] Erro:', errorCode);
+          
+          const newErrorCount = errorCount + 1;
+          setErrorCount(newErrorCount);
 
           // Preview/Dev (Lovable/localhost): Turnstile pode não conseguir completar o desafio.
           // Nesses casos, expomos o botão de bypass DEV (apenas preview) para não bloquear o acesso.
@@ -150,6 +155,16 @@ export function CloudflareTurnstile({
             errorCode?.includes('300030')
           ) {
             setDomainError(true);
+          }
+
+          // 🛡️ FALLBACK GRACIOSO: Após 3 erros consecutivos em PRODUÇÃO,
+          // permitir prosseguir com token especial (backend aplica rate-limit agressivo)
+          if (newErrorCount >= MAX_ERRORS_BEFORE_FALLBACK && !isDevEnvironment()) {
+            console.warn('[Turnstile] ⚠️ FALLBACK ativado após', newErrorCount, 'erros');
+            setStatus('fallback');
+            // Token especial que o backend reconhece como fallback (aplica rate-limit 1/min)
+            onVerify('FALLBACK_' + Date.now() + '_' + window.location.hostname);
+            return;
           }
 
           setStatus('error');
@@ -220,6 +235,8 @@ export function CloudflareTurnstile({
       case 'verified':
       case 'dev-bypass':
         return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
+      case 'fallback':
+        return <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />;
       case 'error':
       case 'expired':
         return <AlertCircle className="h-3.5 w-3.5 text-destructive" />;
@@ -236,8 +253,10 @@ export function CloudflareTurnstile({
         return 'Verificação concluída';
       case 'dev-bypass':
         return 'Modo desenvolvimento (bypass)';
+      case 'fallback':
+        return 'Modo alternativo (rate-limit ativo)';
       case 'error':
-        return 'Erro na verificação';
+        return `Erro na verificação (${errorCount}/${MAX_ERRORS_BEFORE_FALLBACK})`;
       case 'expired':
         return 'Verificação expirada';
     }

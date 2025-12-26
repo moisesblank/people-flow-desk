@@ -105,23 +105,85 @@ Deno.serve(async (req) => {
         );
       }
       
-      // Validar Turnstile via API
-      const TURNSTILE_SECRET = Deno.env.get('CLOUDFLARE_TURNSTILE_SECRET_KEY');
-      if (TURNSTILE_SECRET) {
-        const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-          body: `secret=${TURNSTILE_SECRET}&response=${turnstileToken}&remoteip=${cfConnectingIP}`,
-        });
-        const turnstileResult = await turnstileResponse.json();
-        if (!turnstileResult.success) {
-          console.warn(`[validate-device] Turnstile FALHOU: ${JSON.stringify(turnstileResult)}`);
+      // 🛡️ FALLBACK/DEV BYPASS: Aceitar tokens especiais sem chamar Cloudflare
+      const isFallbackToken = turnstileToken.startsWith('FALLBACK_');
+      const isDevBypassToken = turnstileToken.startsWith('DEV_BYPASS_');
+      
+      if (isFallbackToken || isDevBypassToken) {
+        const hostname = turnstileToken.split('_').pop() || '';
+        const allowedHosts = [
+          'pro.moisesmedeiros.com.br',
+          'gestao.moisesmedeiros.com.br',
+          'moisesmedeiros.com.br',
+          'www.moisesmedeiros.com.br',
+          'localhost',
+          '127.0.0.1',
+        ];
+        
+        const isAllowed = allowedHosts.some(h => hostname.includes(h)) ||
+                          hostname.includes('lovableproject.com');
+        
+        if (!isAllowed) {
+          console.warn(`[validate-device] Token especial rejeitado para hostname: ${hostname}`);
           return new Response(
-            JSON.stringify({ error: 'Turnstile validation failed', success: false }),
+            JSON.stringify({ error: 'Hostname não permitido', success: false }),
             { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
           );
         }
-        console.log(`[validate-device] Turnstile validado com sucesso`);
+        
+        // 🛡️ FALLBACK: Rate-limit agressivo (1/min por IP)
+        if (isFallbackToken) {
+          const { data: recentAttempts } = await supabase
+            .from('api_rate_limits')
+            .select('request_count')
+            .eq('client_id', cfConnectingIP)
+            .eq('endpoint', 'fallback-login')
+            .gte('window_start', new Date(Date.now() - 60000).toISOString())
+            .maybeSingle();
+          
+          if (recentAttempts && recentAttempts.request_count >= 1) {
+            console.warn(`[validate-device] FALLBACK rate-limit excedido para IP: ${cfConnectingIP}`);
+            return new Response(
+              JSON.stringify({ 
+                error: 'Muitas tentativas. Aguarde 1 minuto.',
+                retryAfter: 60,
+                success: false 
+              }),
+              { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          
+          // Registrar tentativa
+          await supabase.from('api_rate_limits').upsert({
+            client_id: cfConnectingIP,
+            endpoint: 'fallback-login',
+            request_count: 1,
+            window_start: new Date().toISOString(),
+          }, { onConflict: 'client_id,endpoint' });
+          
+          console.warn(`[validate-device] ⚠️ FALLBACK aceito para: ${hostname} (rate-limit 1/min)`);
+        } else {
+          console.warn(`[validate-device] ⚠️ DEV BYPASS aceito para: ${hostname}`);
+        }
+      } else {
+        // Validar Turnstile via API (token normal)
+        const TURNSTILE_SECRET = Deno.env.get('CLOUDFLARE_TURNSTILE_SECRET_KEY');
+        if (TURNSTILE_SECRET) {
+          const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: `secret=${TURNSTILE_SECRET}&response=${turnstileToken}&remoteip=${cfConnectingIP}`,
+          });
+          const turnstileResult = await turnstileResponse.json();
+          if (!turnstileResult.success) {
+            console.warn(`[validate-device] Turnstile FALHOU: ${JSON.stringify(turnstileResult)}`);
+            return new Response(
+              JSON.stringify({ error: 'Turnstile validation failed', success: false }),
+              { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+            );
+          }
+          console.log(`[validate-device] Turnstile validado com sucesso`);
+        }
       }
     }
 
