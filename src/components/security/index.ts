@@ -203,15 +203,8 @@ export {
   logComplianceReport,
 } from '@/lib/security/sanctumEnforcer';
 
-// ============================================
-// SANCTUM INTEGRATED HOOK
-// ============================================
-
-export {
-  useSanctumIntegrated,
-  type SanctumIntegratedConfig,
-  type SanctumIntegratedReturn,
-} from '@/hooks/useSanctumIntegrated';
+// ⚡ CONSOLIDADO v11.0: useSanctumIntegrated foi removido (redundante)
+// Use useSanctumCore ou useSanctumOmega diretamente
 
 // ============================================
 // LEI VII ENFORCER COMPONENT (NOVO)
