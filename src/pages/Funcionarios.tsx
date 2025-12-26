@@ -253,9 +253,39 @@ export default function Funcionarios() {
           }
         }
 
-        toast.success("Funcionário cadastrado!", {
-          description: `${data.nome} foi adicionado à equipe.`,
-        });
+        // 🔥 AUTO-VINCULAÇÃO: Se tem email e senha, criar acesso automaticamente
+        if (newEmp && data.email && (data as any).senha && (data as any).senha.length >= 6) {
+          try {
+            const inviteResponse = await supabase.functions.invoke("invite-employee", {
+              body: {
+                email: data.email,
+                nome: data.nome,
+                senha: (data as any).senha,
+                funcao: data.funcao,
+                employee_id: newEmp.id,
+              },
+            });
+
+            if (inviteResponse.data?.success) {
+              toast.success("Funcionário cadastrado com acesso!", {
+                description: `${data.nome} já pode fazer login com ${data.email}`,
+              });
+            } else {
+              toast.success("Funcionário cadastrado!", {
+                description: `${data.nome} foi adicionado. Acesso: ${inviteResponse.data?.error || 'pendente'}`,
+              });
+            }
+          } catch (inviteError) {
+            console.warn("Auto-invite failed:", inviteError);
+            toast.success("Funcionário cadastrado!", {
+              description: `${data.nome} foi adicionado. Crie o acesso manualmente.`,
+            });
+          }
+        } else {
+          toast.success("Funcionário cadastrado!", {
+            description: `${data.nome} foi adicionado à equipe.`,
+          });
+        }
       }
 
       await fetchEmployees();
