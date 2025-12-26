@@ -4,8 +4,9 @@
 // Exclusivo para Owner: moisesblank@gmail.com
 // ============================================
 
+import { forwardRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Sparkles, Check, Shield, Wand2, Crown, Eye, History } from "lucide-react";
+import { Sparkles, Shield, Wand2, Crown, Eye, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface EditModeToggleProps {
@@ -15,22 +16,19 @@ interface EditModeToggleProps {
   isGodMode?: boolean;
 }
 
-export function EditModeToggle({
-  isEditMode,
-  canEdit,
-  onToggle,
-  isGodMode = false,
-}: EditModeToggleProps) {
-  if (!canEdit) return null;
+// forwardRef para evitar warning do React quando usado com Suspense/AnimatePresence
+export const EditModeToggle = forwardRef<HTMLDivElement, EditModeToggleProps>(
+  function EditModeToggle({ isEditMode, canEdit, onToggle, isGodMode = false }, ref) {
+    if (!canEdit) return null;
 
-  return (
-    <>
-      {/* Main Toggle Button */}
-      <motion.div
-        initial={{ opacity: 0, y: 100 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="fixed bottom-6 left-6 z-50"
-      >
+    return (
+      <div ref={ref}>
+        {/* Main Toggle Button */}
+        <motion.div
+          initial={{ opacity: 0, y: 100 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed bottom-6 left-6 z-50"
+        >
         <motion.button
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
@@ -154,6 +152,8 @@ export function EditModeToggle({
           </motion.div>
         )}
       </AnimatePresence>
-    </>
+    </div>
   );
-}
+});
+
+export default EditModeToggle;
