@@ -30,7 +30,7 @@ interface AuthContextType {
   role: AppRole | null;
   isLoading: boolean;
   deviceValidation: DeviceValidationResult | null;
-  signIn: (email: string, password: string) => Promise<{ error: Error | null; needsChallenge?: boolean; blocked?: boolean }>;
+  signIn: (email: string, password: string, opts?: { turnstileToken?: string }) => Promise<{ error: Error | null; needsChallenge?: boolean; blocked?: boolean }>;
   signUp: (email: string, password: string, nome: string) => Promise<{ error: Error | null }>;
   signInWithProvider: (provider: Provider) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -310,19 +310,33 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
   // 🛡️ DOGMA I + LEI VI: Login com validação
   // ============================================
-  const signIn = async (email: string, password: string): Promise<{ error: Error | null; needsChallenge?: boolean; blocked?: boolean }> => {
+  const signIn = async (
+    email: string,
+    password: string,
+    opts?: { turnstileToken?: string }
+  ): Promise<{ error: Error | null; needsChallenge?: boolean; blocked?: boolean }> => {
     // 1. Validar dispositivo ANTES do login
     try {
       const { hash, data: fingerprintData } = await collectFingerprint();
-      
-      const { data: validationData } = await supabase.functions.invoke('validate-device', {
+
+      const { data: validationData, error: validationError } = await supabase.functions.invoke('validate-device', {
         body: {
           fingerprint: hash,
           fingerprintData,
           email: email.trim(),
           action: 'pre_login',
+          // 🛡️ P0: Turnstile obrigatório no pre_login (evita 400 + bloqueio silencioso)
+          ...(opts?.turnstileToken ? { turnstileToken: opts.turnstileToken } : {}),
         },
       });
+
+      // Se o backend pedir explicitamente Turnstile, sinalizar ao caller
+      if (validationError && (validationData as any)?.requiresTurnstile) {
+        return {
+          error: new Error('Verificação anti-bot obrigatória. Refaça a verificação e tente novamente.'),
+          needsChallenge: true,
+        };
+      }
 
       if (validationData) {
         const validation: DeviceValidationResult = {

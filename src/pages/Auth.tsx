@@ -293,26 +293,26 @@ export default function Auth() {
         return;
       }
 
-      if (isLogin) {
-        const result = await signIn(formData.email, formData.password);
-        if (result.error) {
-          if (result.error.message.includes("Invalid login credentials")) {
-            toast.error("Credenciais inválidas", {
-              description: "Verifique seu email e senha e tente novamente."
-            });
-          } else if (result.error.message.includes("Email not confirmed")) {
-            toast.warning("Email não confirmado", {
-              description: "Verifique sua caixa de entrada para confirmar seu email."
-            });
-          } else {
-            toast.error("Erro no login", {
-              description: result.error.message
-            });
-          }
-          resetTurnstile();
-          setIsLoading(false);
-          return;
-        }
+       if (isLogin) {
+         const result = await signIn(formData.email, formData.password, { turnstileToken });
+         if (result.error) {
+           if (result.error.message.includes("Invalid login credentials")) {
+             toast.error("Credenciais inválidas", {
+               description: "Verifique seu email e senha e tente novamente."
+             });
+           } else if (result.error.message.includes("Email not confirmed")) {
+             toast.warning("Email não confirmado", {
+               description: "Verifique sua caixa de entrada para confirmar seu email."
+             });
+           } else {
+             toast.error("Erro no login", {
+               description: result.error.message
+             });
+           }
+           resetTurnstile();
+           setIsLoading(false);
+           return;
+         }
         
         // Login bem sucedido - ativar 2FA
         // Buscar usuário atual do supabase
