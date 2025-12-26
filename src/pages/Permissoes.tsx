@@ -5,7 +5,8 @@
 //         Afiliados, Marketing, Contabilidade, Administrativo
 // ============================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { VirtualListSimple } from "@/components/performance/VirtualTable";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -638,13 +639,14 @@ export default function Permissoes() {
                     <p>Nenhuma alteração registrada ainda.</p>
                   </div>
                 ) : (
-                  <div className="space-y-4">
-                    {auditLogs.map((log, index) => (
-                      <motion.div
+                  <VirtualListSimple
+                    items={auditLogs}
+                    itemHeight={100}
+                    containerHeight={400}
+                    emptyMessage="Nenhuma alteração registrada ainda."
+                    renderItem={(log) => (
+                      <div
                         key={log.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: index * 0.03 }}
                         className="flex items-start gap-4 p-4 rounded-xl bg-secondary/30 border border-border/50"
                       >
                         <div className="p-2 rounded-lg bg-primary/10 shrink-0">
@@ -699,9 +701,9 @@ export default function Permissoes() {
                             </span>
                           </div>
                         </div>
-                      </motion.div>
-                    ))}
-                  </div>
+                      </div>
+                    )}
+                  />
                 )}
               </CardContent>
             </Card>

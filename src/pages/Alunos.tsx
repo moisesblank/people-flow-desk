@@ -3,7 +3,7 @@
 // Sistema Neural de Gestão de Alunos + WordPress Sync
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
@@ -24,6 +24,7 @@ import { StudentAnalytics } from "@/components/students/StudentAnalytics";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { VirtualTable } from "@/components/performance/VirtualTable";
 
 interface Student {
   id: string;
@@ -347,63 +348,70 @@ export default function Alunos() {
 
               {/* Table */}
               <FuturisticCard accentColor="blue">
-                <table className="w-full">
-                  <thead className="bg-blue-500/10">
-                    <tr>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
-                      <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {students.map((student) => (
-                      <tr key={student.id} className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
-                        <td className="p-4 text-foreground font-medium">{student.nome}</td>
-                        <td className="p-4 text-muted-foreground">{student.email || "-"}</td>
-                        <td className="p-4">
-                          <Badge variant={
-                            student.status === "Ativo" ? "default" :
-                            student.status === "Concluído" ? "secondary" : "outline"
-                          } className={
-                            student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
-                            student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
-                            student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
-                            "bg-red-500/20 text-red-400"
-                          }>
-                            {student.status}
-                          </Badge>
-                        </td>
-                        <td className="p-4 text-right">
-                          <div className="flex justify-end gap-2">
-                            <BetaAccessManager
-                              studentEmail={student.email}
-                              studentName={student.nome}
-                              studentId={student.id}
-                              onAccessChange={fetchData}
-                            />
-                            <AttachmentButton
-                              entityType="student"
-                              entityId={student.id}
-                              entityLabel={student.nome}
-                              variant="ghost"
-                              size="icon"
-                            />
-                            <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
-                              <Edit2 className="h-4 w-4 text-blue-400" />
-                            </Button>
-                            <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {students.length === 0 && (
-                      <tr><td colSpan={4} className="p-8 text-center text-muted-foreground">Nenhum aluno cadastrado</td></tr>
-                    )}
-                  </tbody>
-                </table>
+                <VirtualTable
+                  items={students}
+                  rowHeight={56}
+                  containerHeight={500}
+                  emptyMessage="Nenhum aluno cadastrado"
+                  renderHeader={() => (
+                    <table className="w-full">
+                      <thead className="bg-blue-500/10">
+                        <tr>
+                          <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
+                          <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
+                          <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
+                          <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
+                        </tr>
+                      </thead>
+                    </table>
+                  )}
+                  renderRow={(student) => (
+                    <table className="w-full">
+                      <tbody>
+                        <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
+                          <td className="p-4 text-foreground font-medium" style={{ width: '25%' }}>{student.nome}</td>
+                          <td className="p-4 text-muted-foreground" style={{ width: '30%' }}>{student.email || "-"}</td>
+                          <td className="p-4" style={{ width: '20%' }}>
+                            <Badge variant={
+                              student.status === "Ativo" ? "default" :
+                              student.status === "Concluído" ? "secondary" : "outline"
+                            } className={
+                              student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
+                              student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
+                              student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
+                              "bg-red-500/20 text-red-400"
+                            }>
+                              {student.status}
+                            </Badge>
+                          </td>
+                          <td className="p-4 text-right" style={{ width: '25%' }}>
+                            <div className="flex justify-end gap-2">
+                              <BetaAccessManager
+                                studentEmail={student.email}
+                                studentName={student.nome}
+                                studentId={student.id}
+                                onAccessChange={fetchData}
+                              />
+                              <AttachmentButton
+                                entityType="student"
+                                entityId={student.id}
+                                entityLabel={student.nome}
+                                variant="ghost"
+                                size="icon"
+                              />
+                              <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
+                                <Edit2 className="h-4 w-4 text-blue-400" />
+                              </Button>
+                              <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  )}
+                />
               </FuturisticCard>
             </TabsContent>
 
@@ -463,65 +471,71 @@ export default function Alunos() {
                     Sincronizar
                   </Button>
                 </div>
-                <table className="w-full">
-                  <thead className="bg-cyan-500/10">
-                    <tr>
-                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Nome</th>
-                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Email</th>
-                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Status</th>
-                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Pagamento</th>
-                      <th className="text-left p-4 text-sm font-medium text-cyan-400">Grupos</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {wpUsers.map((user) => (
-                      <tr key={user.id} className="border-t border-cyan-500/20 hover:bg-cyan-500/5 transition-colors">
-                        <td className="p-4 text-foreground font-medium">{user.nome || "Sem nome"}</td>
-                        <td className="p-4 text-muted-foreground">{user.email}</td>
-                        <td className="p-4">
-                          <Badge className={
-                            user.status_acesso === 'ativo' 
-                              ? "bg-emerald-500/20 text-emerald-400" 
-                              : "bg-yellow-500/20 text-yellow-400"
-                          }>
-                            {user.status_acesso}
-                          </Badge>
-                        </td>
-                        <td className="p-4">
-                          {user.tem_pagamento_confirmado ? (
-                            <Badge className="bg-green-500/20 text-green-400">
-                              <CheckCircle className="h-3 w-3 mr-1" /> Confirmado
+                <VirtualTable
+                  items={wpUsers}
+                  rowHeight={64}
+                  containerHeight={500}
+                  emptyMessage="Nenhum usuário sincronizado. Clique em 'Sincronizar' para importar usuários do WordPress"
+                  renderHeader={() => (
+                    <table className="w-full">
+                      <thead className="bg-cyan-500/10">
+                        <tr>
+                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Nome</th>
+                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Email</th>
+                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Status</th>
+                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Pagamento</th>
+                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Grupos</th>
+                        </tr>
+                      </thead>
+                    </table>
+                  )}
+                  renderRow={(user) => (
+                    <table className="w-full">
+                      <tbody>
+                        <tr className="border-t border-cyan-500/20 hover:bg-cyan-500/5 transition-colors">
+                          <td className="p-4 text-foreground font-medium" style={{ width: '20%' }}>{user.nome || "Sem nome"}</td>
+                          <td className="p-4 text-muted-foreground" style={{ width: '25%' }}>{user.email}</td>
+                          <td className="p-4" style={{ width: '15%' }}>
+                            <Badge className={
+                              user.status_acesso === 'ativo' 
+                                ? "bg-emerald-500/20 text-emerald-400" 
+                                : "bg-yellow-500/20 text-yellow-400"
+                            }>
+                              {user.status_acesso}
                             </Badge>
-                          ) : (
-                            <Badge className="bg-red-500/20 text-red-400">
-                              <XCircle className="h-3 w-3 mr-1" /> Não confirmado
-                            </Badge>
-                          )}
-                        </td>
-                        <td className="p-4">
-                          <div className="flex flex-wrap gap-1">
-                            {user.grupos.length > 0 ? user.grupos.map((g, i) => (
-                              <Badge key={i} variant="outline" className="text-xs border-cyan-500/30">
-                                {String(g)}
+                          </td>
+                          <td className="p-4" style={{ width: '15%' }}>
+                            {user.tem_pagamento_confirmado ? (
+                              <Badge className="bg-green-500/20 text-green-400">
+                                <CheckCircle className="h-3 w-3 mr-1" /> Confirmado
                               </Badge>
-                            )) : (
-                              <span className="text-muted-foreground text-sm">Nenhum grupo</span>
+                            ) : (
+                              <Badge className="bg-red-500/20 text-red-400">
+                                <XCircle className="h-3 w-3 mr-1" /> Não confirmado
+                              </Badge>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                    {wpUsers.length === 0 && (
-                      <tr>
-                        <td colSpan={5} className="p-8 text-center text-muted-foreground">
-                          <Globe className="h-12 w-12 mx-auto mb-3 opacity-50" />
-                          <p>Nenhum usuário sincronizado</p>
-                          <p className="text-sm mt-1">Clique em "Sincronizar" para importar usuários do WordPress</p>
-                        </td>
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                          </td>
+                          <td className="p-4" style={{ width: '25%' }}>
+                            <div className="flex flex-wrap gap-1">
+                              {user.grupos.length > 0 ? user.grupos.slice(0, 3).map((g, i) => (
+                                <Badge key={i} variant="outline" className="text-xs border-cyan-500/30">
+                                  {String(g)}
+                                </Badge>
+                              )) : (
+                                <span className="text-muted-foreground text-sm">Nenhum grupo</span>
+                              )}
+                              {user.grupos.length > 3 && (
+                                <Badge variant="outline" className="text-xs border-cyan-500/30">
+                                  +{user.grupos.length - 3}
+                                </Badge>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  )}
+                />
               </FuturisticCard>
             </TabsContent>
           </Tabs>
