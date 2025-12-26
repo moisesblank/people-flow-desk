@@ -1,6 +1,7 @@
 // ============================================
-// 🔥 MOISÉS MEDEIROS v11.0 - ROLE PERMISSIONS HOOK
+// 🔥 MOISÉS MEDEIROS v11.1 - ROLE PERMISSIONS HOOK
 // Sistema de Permissões por Cargo Completo
+// 🔐 ATUALIZAÇÃO v11.1: Domain Access Validation (LEI IV)
 // ============================================
 // 📌 REGRA MATRIZ - ARQUITETURA DE DOMÍNIOS:
 // ┌─────────────────────────────────────────────────────────────────┐
@@ -438,7 +439,7 @@ const FUNCIONARIO_OR_ABOVE_ROLES: FullAppRole[] = [
   'owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'employee', 'marketing', 'contabilidade', 'afiliado'
 ];
 
-interface RolePermissionsResult {
+export interface UseRolePermissionsReturn {
   role: FullAppRole | null;
   isLoading: boolean;
   isOwner: boolean;
@@ -459,7 +460,7 @@ interface RolePermissionsResult {
   canModify: (area: SystemArea) => boolean;
 }
 
-export function useRolePermissions(): RolePermissionsResult {
+export function useRolePermissions(): UseRolePermissionsReturn {
   const { user } = useAuth();
   const [role, setRole] = useState<FullAppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -571,5 +572,148 @@ export function useHasAccess(area: SystemArea): boolean {
   return hasAccess(area);
 }
 
-// Exporta as constantes para uso em outros componentes
-export { ROLE_PERMISSIONS, URL_TO_AREA, FUNCIONARIO_OR_ABOVE_ROLES };
+// ============================================
+// 🔐 VALIDAÇÃO DE ACESSO POR DOMÍNIO NO LOGIN
+// LEI IV - SEPARAÇÃO DE DOMÍNIOS (CONSTITUIÇÃO v9.2b)
+// ============================================
+// REGRA:
+// - gestao.moisesmedeiros.com.br → APENAS funcionários + owner
+// - pro.moisesmedeiros.com.br → APENAS alunos beta + owner
+// - Owner (moisesblank@gmail.com) → ACESSO SUPREMO EM TODOS
+// ============================================
+
+// Roles permitidos em cada domínio
+export const GESTAO_ALLOWED_ROLES: FullAppRole[] = [
+  "owner", "admin", "coordenacao", "suporte", "monitoria", 
+  "afiliado", "marketing", "contabilidade", "employee"
+];
+
+export const PRO_ALLOWED_ROLES: FullAppRole[] = [
+  "owner", "beta", "aluno_gratuito"
+];
+
+export interface DomainAccessResult {
+  permitido: boolean;
+  redirecionarPara?: string;
+  motivo?: string;
+  dominioAtual: "gestao" | "pro" | "public" | "localhost" | "unknown";
+}
+
+/**
+ * Valida se o role do usuário pode acessar o domínio atual APÓS LOGIN.
+ * Usa-se logo após autenticação para verificar se deve redirecionar.
+ * 
+ * @param role - Role do usuário logado
+ * @param userEmail - Email do usuário (para verificar owner)
+ * @returns Objeto com permitido, redirecionarPara e motivo
+ */
+export function validateDomainAccessForLogin(
+  role: FullAppRole | null,
+  userEmail: string | null
+): DomainAccessResult {
+  // SSR safety
+  if (typeof window === "undefined") {
+    return { permitido: true, dominioAtual: "unknown" };
+  }
+
+  const hostname = window.location.hostname.toLowerCase();
+  
+  // Detectar domínio atual
+  let dominioAtual: DomainAccessResult["dominioAtual"] = "unknown";
+  if (hostname.includes("localhost") || hostname.includes("127.0.0.1") || hostname.includes("lovable.app")) {
+    dominioAtual = "localhost"; // Dev/Preview - permitir tudo
+  } else if (isGestaoHost(hostname)) {
+    dominioAtual = "gestao";
+  } else if (isProHost(hostname)) {
+    dominioAtual = "pro";
+  } else if (isPublicHost(hostname)) {
+    dominioAtual = "public";
+  }
+
+  // Owner tem BYPASS SUPREMO em qualquer domínio
+  if (userEmail?.toLowerCase() === OWNER_EMAIL) {
+    console.log("[DOMAIN-ACCESS] Owner detectado - bypass supremo ativado");
+    return { permitido: true, dominioAtual };
+  }
+
+  // Sem role = sem acesso
+  if (!role) {
+    return { 
+      permitido: false, 
+      redirecionarPara: "/auth",
+      motivo: "Usuário sem role definido",
+      dominioAtual
+    };
+  }
+
+  // Localhost/Preview - permitir tudo para desenvolvimento
+  if (dominioAtual === "localhost") {
+    return { permitido: true, dominioAtual };
+  }
+
+  // ============================================
+  // VALIDAÇÃO gestao.moisesmedeiros.com.br
+  // ============================================
+  if (dominioAtual === "gestao") {
+    const isAllowed = GESTAO_ALLOWED_ROLES.includes(role);
+    
+    if (!isAllowed) {
+      console.log(`[DOMAIN-ACCESS] Role "${role}" BLOQUEADO em gestao.* → Redirecionar para pro.*`);
+      return {
+        permitido: false,
+        redirecionarPara: "https://pro.moisesmedeiros.com.br/alunos",
+        motivo: `Seu cargo "${ROLE_LABELS[role]}" não tem acesso à área de gestão. Redirecionando para área do aluno.`,
+        dominioAtual
+      };
+    }
+    
+    return { permitido: true, dominioAtual };
+  }
+
+  // ============================================
+  // VALIDAÇÃO pro.moisesmedeiros.com.br
+  // ============================================
+  if (dominioAtual === "pro") {
+    const isAllowed = PRO_ALLOWED_ROLES.includes(role);
+    
+    if (!isAllowed) {
+      console.log(`[DOMAIN-ACCESS] Role "${role}" BLOQUEADO em pro.* → Redirecionar para gestao.*`);
+      return {
+        permitido: false,
+        redirecionarPara: "https://gestao.moisesmedeiros.com.br/dashboard",
+        motivo: `Seu cargo "${ROLE_LABELS[role]}" é de funcionário. Redirecionando para área de gestão.`,
+        dominioAtual
+      };
+    }
+    
+    return { permitido: true, dominioAtual };
+  }
+
+  // Domínio público ou unknown - permitir (landing pages etc)
+  return { permitido: true, dominioAtual };
+}
+
+/**
+ * Hook para usar validação de domínio em componentes React
+ * Retorna estado reativo da validação
+ */
+export function useDomainAccessValidation() {
+  const { role, isLoading, userEmail } = useRolePermissions();
+  
+  const validation = useMemo(() => {
+    if (isLoading) return null;
+    return validateDomainAccessForLogin(role, userEmail);
+  }, [role, userEmail, isLoading]);
+
+  return {
+    isLoading,
+    ...validation
+  };
+}
+
+// Re-exportar tudo para garantir acessibilidade
+export { 
+  ROLE_PERMISSIONS, 
+  URL_TO_AREA, 
+  FUNCIONARIO_OR_ABOVE_ROLES
+};

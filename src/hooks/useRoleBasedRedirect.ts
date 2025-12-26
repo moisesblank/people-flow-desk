@@ -1,16 +1,27 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - HOOK DE REDIRECIONAMENTO POR ROLE
+// MOISÉS MEDEIROS v11.0 - HOOK DE REDIRECIONAMENTO POR ROLE
 // ARQUITETURA DE DOMÍNIOS (LEI IV - SOBERANIA DO ARQUITETO):
 // - gestao.moisesmedeiros.com.br → Funcionários → /dashboard
 // - pro.moisesmedeiros.com.br → Alunos Beta → /alunos
-// - Owner (moisesblank@gmail.com) → /dashboard (acesso total)
+// - Owner (moisesblank@gmail.com) → Acesso total (ambos domínios)
+// 
+// 🔐 ATUALIZAÇÃO v11.0:
+// - Integração com validateDomainAccessForLogin
+// - Redirecionamento cross-domain para roles incorretos
 // ============================================
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { OWNER_EMAIL, isGestaoHost, isProHost } from "@/hooks/useRolePermissions";
+import { 
+  OWNER_EMAIL, 
+  isGestaoHost, 
+  isProHost,
+  ROLE_LABELS
+} from "@/hooks/useRolePermissions";
+import { validateDomainAccessForLogin, type DomainAppRole, DOMAIN_ROLE_LABELS } from "@/hooks/useDomainAccess";
+import { toast } from "sonner";
 
 type RedirectRole = "owner" | "admin" | "beta" | "aluno_gratuito" | "gestao" | "other";
 
@@ -70,11 +81,68 @@ export function useRoleBasedRedirect() {
     }
   };
 
+  /**
+   * Redireciona após login COM VALIDAÇÃO DE DOMÍNIO
+   * Se o role não pode acessar o domínio atual, redireciona cross-domain
+   */
   const redirectAfterLogin = async () => {
+    if (!user) {
+      navigate("/auth", { replace: true });
+      return;
+    }
+
     setIsRedirecting(true);
-    const path = await getRedirectPath();
-    navigate(path, { replace: true });
-    setIsRedirecting(false);
+
+    try {
+      // Buscar role do usuário
+      const { data, error } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+
+      if (error) {
+        console.error("[REDIRECT] Erro ao buscar role:", error);
+      }
+
+      const role = (data?.role || "employee") as DomainAppRole;
+      const userEmail = user.email || null;
+
+      // ============================================
+      // 🔐 VALIDAÇÃO DE DOMÍNIO (LEI IV)
+      // ============================================
+      const domainValidation = validateDomainAccessForLogin(role, userEmail);
+
+      if (!domainValidation.permitido && domainValidation.redirecionarPara) {
+        console.log(`[REDIRECT] Domínio bloqueado para role "${role}" → ${domainValidation.redirecionarPara}`);
+        
+        // Mostrar toast informativo
+        toast.info("Redirecionando para sua área", {
+          description: domainValidation.motivo || `Seu cargo "${ROLE_LABELS[role]}" tem acesso em outro domínio.`,
+          duration: 4000
+        });
+
+        // Aguardar um momento para o toast ser visto
+        await new Promise(resolve => setTimeout(resolve, 1500));
+
+        // Redirecionar cross-domain
+        window.location.href = domainValidation.redirecionarPara;
+        return;
+      }
+
+      // ============================================
+      // REDIRECIONAMENTO NORMAL (domínio correto)
+      // ============================================
+      const path = await getRedirectPath();
+      console.log(`[REDIRECT] Navegando para ${path} (role: ${role}, domínio: ${domainValidation.dominioAtual})`);
+      navigate(path, { replace: true });
+
+    } catch (err) {
+      console.error("[REDIRECT] Erro geral:", err);
+      navigate("/dashboard", { replace: true });
+    } finally {
+      setIsRedirecting(false);
+    }
   };
 
   return {

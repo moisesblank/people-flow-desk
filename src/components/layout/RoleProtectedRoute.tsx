@@ -1,14 +1,22 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - ROLE PROTECTED ROUTE
+// MOISÉS MEDEIROS v11.0 - ROLE PROTECTED ROUTE
 // Rota protegida com verificação de permissão por cargo
+// 🔐 ATUALIZAÇÃO v11.0: Domain Guard (LEI IV)
 // ============================================
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { Loader2, ShieldX, Lock } from "lucide-react";
+import { Loader2, ShieldX, Lock, Globe } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
-import { useRolePermissions, type SystemArea, URL_TO_AREA } from "@/hooks/useRolePermissions";
+import { 
+  useRolePermissions, 
+  type SystemArea, 
+  URL_TO_AREA,
+  ROLE_LABELS
+} from "@/hooks/useRolePermissions";
+import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface RoleProtectedRouteProps {
   children: ReactNode;
@@ -19,12 +27,47 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const { user, isLoading: authLoading } = useAuth();
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role } = useRolePermissions();
   const location = useLocation();
+  const [isDomainRedirecting, setIsDomainRedirecting] = useState(false);
+
+  // ============================================
+  // 🔐 DOMAIN GUARD (LEI IV - CONSTITUIÇÃO v9.2b)
+  // Valida se o role pode acessar este domínio
+  // ============================================
+  useEffect(() => {
+    // Só validar quando temos role carregado
+    if (roleLoading || !user || !role) return;
+
+    const userEmail = user.email || null;
+    const domainValidation = validateDomainAccessForLogin(role, userEmail);
+
+    if (!domainValidation.permitido && domainValidation.redirecionarPara) {
+      setIsDomainRedirecting(true);
+      
+      console.log(`[DOMAIN-GUARD] Role "${role}" bloqueado no domínio ${domainValidation.dominioAtual}`);
+      
+      toast.info("Acesso em outro domínio", {
+        description: domainValidation.motivo || `Redirecionando para sua área correta.`,
+        duration: 3000
+      });
+
+      // Aguardar toast e redirecionar
+      setTimeout(() => {
+        window.location.href = domainValidation.redirecionarPara!;
+      }, 1500);
+    }
+  }, [role, roleLoading, user]);
 
   // Loading state - CSS only animation for max performance
-  if (authLoading || roleLoading) {
+  if (authLoading || roleLoading || isDomainRedirecting) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
+        {isDomainRedirecting && (
+          <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
+            <Globe className="h-4 w-4" />
+            <span className="text-sm">Redirecionando para sua área...</span>
+          </div>
+        )}
       </div>
     );
   }
@@ -34,7 +77,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
     return <Navigate to="/auth" replace />;
   }
 
-  // Check permission
+  // Check permission (área/rota)
   const currentArea = requiredArea || URL_TO_AREA[location.pathname];
   const hasPermission = currentArea ? hasAccess(currentArea) : hasAccessToUrl(location.pathname);
 
