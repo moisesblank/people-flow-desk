@@ -8,13 +8,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS dinâmico via allowlist (não usar * em browser endpoints)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
-
 interface ReportData {
   period: string;
   income: number;
@@ -27,9 +20,12 @@ interface ReportData {
 }
 
 serve(async (req) => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   try {

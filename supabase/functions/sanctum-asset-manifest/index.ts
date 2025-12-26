@@ -27,16 +27,6 @@ const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 // ============================================
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS seguro - domínio específico
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-  "Cache-Control": "no-store, no-cache, must-revalidate",
-  "X-Content-Type-Options": "nosniff",
-  "X-Frame-Options": "DENY",
-};
-
 // ============================================
 // TIPOS
 // ============================================
@@ -65,9 +55,17 @@ interface ManifestResponse {
 // FUNÇÃO PRINCIPAL
 // ============================================
 serve(async (req: Request) => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = {
+    ...getCorsHeaders(req),
+    "Cache-Control": "no-store, no-cache, must-revalidate",
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+  };
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response("ok", { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   try {

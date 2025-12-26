@@ -5,14 +5,10 @@ import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/c
 const OWNER_EMAIL = "moisesblank@gmail.com";
 const RAW_BUCKET = "ena-assets-raw";
 
-// LEI VI: CORS seguro - domínio específico
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://gestao.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "POST, OPTIONS",
-};
-
 serve(async (req: Request) => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = getCorsHeaders(req);
+  
   // CORS seguro via allowlist
   if (req.method === "OPTIONS") {
     return handleCorsOptions(req);
