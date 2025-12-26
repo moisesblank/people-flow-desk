@@ -9,12 +9,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS seguro - domínio específico
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 interface UserContext {
   aluno_id: string;
   perfil_aprendizagem: 'visual' | 'auditivo' | 'cinestesico' | 'leitura' | 'misto';
@@ -42,8 +36,11 @@ interface UserContext {
 }
 
 serve(async (req) => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   const startTime = Date.now();

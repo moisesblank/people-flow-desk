@@ -3,12 +3,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS seguro - domínio específico
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://gestao.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
@@ -21,9 +15,12 @@ interface InviteRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = getCorsHeaders(req);
+  
   // Handle CORS preflight
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   try {

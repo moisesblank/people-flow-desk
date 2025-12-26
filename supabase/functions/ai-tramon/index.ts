@@ -9,11 +9,7 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS seguro - domínio específico (fallback)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
+const OWNER_EMAIL = "moisesblank@gmail.com";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 

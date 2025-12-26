@@ -8,12 +8,6 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS seguro - domínio específico
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-};
-
 interface Verify2FARequest {
   userId: string;
   code: string;
@@ -24,8 +18,11 @@ const MAX_ATTEMPTS = 5;
 const LOCKOUT_WINDOW = 15 * 60 * 1000; // 15 minutos
 
 const handler = async (req: Request): Promise<Response> => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   try {
