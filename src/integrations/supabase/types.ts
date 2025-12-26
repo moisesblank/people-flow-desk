@@ -15725,10 +15725,12 @@ export type Database = {
       is_ip_blocked: { Args: { p_ip_address: unknown }; Returns: boolean }
       is_marketing: { Args: { _user_id?: string }; Returns: boolean }
       is_matrix_admin: { Args: never; Returns: boolean }
-      is_owner:
-        | { Args: never; Returns: boolean }
-        | { Args: { _user_id?: string }; Returns: boolean }
+      is_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_owner_by_email_audit_only: {
+        Args: { _email: string }
+        Returns: boolean
+      }
+      is_owner_legacy_email_check: {
         Args: { _email: string }
         Returns: boolean
       }
