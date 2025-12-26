@@ -148,12 +148,13 @@ serve(async (req) => {
           .single();
 
         // Chamar o orquestrador COM x-internal-secret (P0-3)
+        // 🛡️ P0.1 FIX: Contrato alinhado com orchestrator (event/data, não event_type/payload)
         const orchestratorResult = await supabase.functions.invoke('orchestrator', {
           body: {
             queue_id: item.id,
             source: item.source,
-            event_type: item.event,
-            payload: item.payload,
+            event: item.event,      // CORRIGIDO: era event_type
+            data: item.payload,     // CORRIGIDO: era payload
             log_id: log?.id
           },
           headers: {

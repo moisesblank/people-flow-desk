@@ -16349,7 +16349,7 @@ export type Database = {
           }
       validate_session_v3: { Args: { p_session_token: string }; Returns: Json }
       validate_signed_video_url: {
-        Args: { p_token: string; p_video_id: string }
+        Args: { p_token: string; p_user_id?: string; p_video_id: string }
         Returns: boolean
       }
       validate_url_access_v2: {
