@@ -12,10 +12,78 @@ import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse
 const cache = new Map<string, { data: unknown; timestamp: number }>()
 const CACHE_TTL = 60000 // 60 segundos
 
-// Rate limiting em memória
-const rateLimits = new Map<string, { count: number; timestamp: number }>()
-const RATE_LIMIT = 100 // 100 requisições
-const RATE_WINDOW = 60000 // por minuto
+// ============================================
+// 🛡️ P0-002 FIX: RATE LIMIT PERSISTENTE (DB)
+// Usa rate-limit-gateway para consistência global
+// ============================================
+const RATE_LIMIT_CONFIG = { limit: 100, windowSeconds: 60 }; // 100 req/min
+
+interface RateLimitEntry {
+  id: string;
+  request_count: number;
+  window_start: string;
+}
+
+async function checkRateLimitPersistent(
+  supabase: any,
+  clientId: string,
+  endpoint: string
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  try {
+    const windowStart = new Date(Date.now() - RATE_LIMIT_CONFIG.windowSeconds * 1000);
+    
+    // Limpar entradas expiradas
+    await supabase
+      .from('api_rate_limits')
+      .delete()
+      .eq('client_id', clientId)
+      .eq('endpoint', endpoint)
+      .lt('window_start', windowStart.toISOString());
+    
+    // Buscar entrada atual
+    const { data: existing } = await supabase
+      .from('api_rate_limits')
+      .select('id, request_count, window_start')
+      .eq('client_id', clientId)
+      .eq('endpoint', endpoint)
+      .gte('window_start', windowStart.toISOString())
+      .order('window_start', { ascending: false })
+      .limit(1)
+      .maybeSingle() as { data: RateLimitEntry | null };
+    
+    if (existing) {
+      const newCount = (existing.request_count || 0) + 1;
+      
+      if (newCount > RATE_LIMIT_CONFIG.limit) {
+        const resetAt = new Date(new Date(existing.window_start).getTime() + RATE_LIMIT_CONFIG.windowSeconds * 1000);
+        const retryAfter = Math.ceil((resetAt.getTime() - Date.now()) / 1000);
+        return { allowed: false, retryAfter: Math.max(1, retryAfter) };
+      }
+      
+      await supabase
+        .from('api_rate_limits')
+        .update({ request_count: newCount })
+        .eq('id', existing.id);
+      
+      return { allowed: true };
+    } else {
+      // Nova janela
+      await supabase
+        .from('api_rate_limits')
+        .insert({
+          client_id: clientId,
+          endpoint: endpoint,
+          request_count: 1,
+          window_start: new Date().toISOString()
+        });
+      
+      return { allowed: true };
+    }
+  } catch (e) {
+    console.error('[api-gateway] Rate limit check failed:', e);
+    return { allowed: true }; // Fail-open para não bloquear por erro de DB
+  }
+}
 
 // Headers de segurança
 const securityHeaders = {
@@ -25,24 +93,6 @@ const securityHeaders = {
   'Referrer-Policy': 'strict-origin-when-cross-origin',
   'Content-Security-Policy': "default-src 'self'",
   'Strict-Transport-Security': 'max-age=31536000; includeSubDomains',
-}
-
-// Função de rate limiting
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now()
-  const record = rateLimits.get(ip)
-  
-  if (!record || now - record.timestamp > RATE_WINDOW) {
-    rateLimits.set(ip, { count: 1, timestamp: now })
-    return true
-  }
-  
-  if (record.count >= RATE_LIMIT) {
-    return false
-  }
-  
-  record.count++
-  return true
 }
 
 // Função de cache
@@ -86,16 +136,23 @@ serve(async (req) => {
 
   const corsHeaders = getCorsHeaders(req);
   
-  // Rate limiting
-  const ip = req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'unknown'
-  if (!checkRateLimit(ip)) {
+  // Supabase client (precisa antes do rate limit persistente)
+  const supabase = createClient(
+    Deno.env.get('SUPABASE_URL') ?? '',
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+  )
+  
+  // Rate limiting PERSISTENTE (P0-002 FIX)
+  const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || req.headers.get('x-real-ip') || 'unknown'
+  const rateCheck = await checkRateLimitPersistent(supabase, ip, 'api-gateway')
+  if (!rateCheck.allowed) {
     return new Response(JSON.stringify({ error: 'Too many requests' }), {
       status: 429,
       headers: {
         ...securityHeaders,
         ...corsHeaders,
         'Content-Type': 'application/json',
-        'Retry-After': '60',
+        'Retry-After': String(rateCheck.retryAfter || 60),
       },
     })
   }
@@ -103,12 +160,6 @@ serve(async (req) => {
   try {
     const url = new URL(req.url)
     const path = url.pathname.replace('/api-gateway', '')
-    
-    // Supabase client
-    const supabase = createClient(
-      Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-    )
     
     // ========================================
     // 🛡️ LEI VI - AUTENTICAÇÃO JWT OBRIGATÓRIA
