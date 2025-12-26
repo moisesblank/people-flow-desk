@@ -16,13 +16,21 @@ serve(async (req) => {
     
     console.log("[GA Sync] Received data:", JSON.stringify(payload).substring(0, 500));
     
-    // Validar secret
+    // 🛡️ PATCH-008: Secret OBRIGATÓRIO e sem fallback hardcoded
+    const expectedSecret = Deno.env.get("GA_WEBHOOK_SECRET");
     const secret = req.headers.get("x-webhook-secret");
-    const expectedSecret = Deno.env.get("GA_WEBHOOK_SECRET") || "moisesmedeiros_ga_2024";
     
-    if (secret && secret !== expectedSecret) {
-      console.error("[GA Sync] Invalid secret");
-      return new Response(JSON.stringify({ error: "Invalid secret" }), { 
+    if (!expectedSecret) {
+      console.error("[GA Sync] ❌ GA_WEBHOOK_SECRET não configurado");
+      return new Response(JSON.stringify({ error: "Misconfig: GA_WEBHOOK_SECRET ausente" }), { 
+        status: 500,
+        headers: { "Content-Type": "application/json", ...corsHeaders }
+      });
+    }
+    
+    if (!secret || secret !== expectedSecret) {
+      console.error("[GA Sync] ❌ Secret inválido ou ausente");
+      return new Response(JSON.stringify({ error: "Não autorizado" }), { 
         status: 401,
         headers: { "Content-Type": "application/json", ...corsHeaders }
       });
