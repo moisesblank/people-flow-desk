@@ -9,7 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
-const SESSION_CHECK_INTERVAL = 30000; // 30 segundos
+const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos (P0-004 FIX: reduz 10x a carga no DB)
 
 interface SessionGuardProps {
   children: React.ReactNode;

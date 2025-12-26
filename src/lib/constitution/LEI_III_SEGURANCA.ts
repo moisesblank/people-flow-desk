@@ -138,8 +138,8 @@ export type SecurityAction =
  */
 export const SESSION_CONFIG = {
   // Validação
-  validateIntervalMs: 30000,           // 30 segundos (DOGMA I - Art. 8)
-  validateOnVisibilityChange: true,    // Validar ao voltar à aba
+  validateIntervalMs: 5 * 60 * 1000,   // 5 minutos (P0-004 FIX: reduz 10x carga no DB para 5k users)
+  validateOnVisibilityChange: true,    // Validar ao voltar à aba (validação instantânea)
   
   // Expiração
   defaultExpirationHours: 24,          // 24h padrão
