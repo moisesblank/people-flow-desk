@@ -8,7 +8,7 @@
 // - Owner (moisesblank@gmail.com) → ACESSO SUPREMO EM TODOS
 // ============================================
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -239,5 +239,3 @@ export function useDomainAccessValidation() {
   };
 }
 
-// Import useState and useEffect that are missing
-import { useState, useEffect } from "react";
