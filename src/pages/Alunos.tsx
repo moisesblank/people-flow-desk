@@ -376,6 +376,12 @@ export default function Alunos() {
                         </td>
                         <td className="p-4 text-right">
                           <div className="flex justify-end gap-2">
+                            <BetaAccessManager
+                              studentEmail={student.email}
+                              studentName={student.nome}
+                              studentId={student.id}
+                              onAccessChange={fetchData}
+                            />
                             <AttachmentButton
                               entityType="student"
                               entityId={student.id}
