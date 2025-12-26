@@ -429,14 +429,11 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
         }
       };
 
-      // Método 2: Debugger detection
+      // Método 2: Debugger detection - DESATIVADO
+      // O statement "debugger" pausa a execução e bloqueia player de vídeo
+      // Mantendo apenas detecção por dimensões (não bloqueia)
       const checkDebugger = () => {
-        const start = performance.now();
-        // eslint-disable-next-line no-debugger
-        debugger;
-        if (performance.now() - start > 100) {
-          reportViolation('devtools_open', 5, { method: 'debugger_timing' });
-        }
+        // Desativado: debugger statement causava bloqueio do player
       };
 
       // Método 3: Console.log timing
