@@ -66,6 +66,9 @@ function setupKeyboardProtection(): void {
   const handler = (e: KeyboardEvent) => {
     if (isOwner(currentUserEmail)) return;
     
+    // Safe guard: e.key pode ser undefined em alguns dispositivos
+    if (!e.key) return;
+    
     const key = e.key.toLowerCase();
     const ctrl = e.ctrlKey || e.metaKey;
     const shift = e.shiftKey;
