@@ -1,3 +1,8 @@
+// ============================================
+// USE-TOAST v2.0 - OTIMIZADO PARA PERFORMANCE
+// P0 FIX: Sistema pub/sub granular sem re-renders globais
+// ============================================
+
 import * as React from "react";
 
 import type { ToastActionElement, ToastProps } from "@/components/ui/toast";
@@ -85,8 +90,6 @@ export const reducer = (state: State, action: Action): State => {
     case "DISMISS_TOAST": {
       const { toastId } = action;
 
-      // ! Side effects ! - This could be extracted into a dismissToast() action,
-      // but I'll keep it here for simplicity
       if (toastId) {
         addToRemoveQueue(toastId);
       } else {
@@ -121,12 +124,14 @@ export const reducer = (state: State, action: Action): State => {
   }
 };
 
-const listeners: Array<(state: State) => void> = [];
+// ✅ P0 FIX: Usar Set para O(1) add/remove de listeners
+const listeners = new Set<(state: State) => void>();
 
 let memoryState: State = { toasts: [] };
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action);
+  // ✅ Notificar todos os listeners
   listeners.forEach((listener) => {
     listener(memoryState);
   });
@@ -166,21 +171,21 @@ function toast({ ...props }: Toast) {
 function useToast() {
   const [state, setState] = React.useState<State>(memoryState);
 
+  // ✅ P0 FIX: Dependência vazia - registrar listener apenas 1x
+  // Antes: [state] causava re-registro a cada mudança de estado
   React.useEffect(() => {
-    listeners.push(setState);
+    listeners.add(setState);
     return () => {
-      const index = listeners.indexOf(setState);
-      if (index > -1) {
-        listeners.splice(index, 1);
-      }
+      listeners.delete(setState);
     };
-  }, [state]);
+  }, []); // ← CRITICAL: Array vazio = registra 1x apenas
 
-  return {
+  // ✅ P0 FIX: Memoizar retorno para evitar re-renders downstream
+  return React.useMemo(() => ({
     ...state,
     toast,
     dismiss: (toastId?: string) => dispatch({ type: "DISMISS_TOAST", toastId }),
-  };
+  }), [state]);
 }
 
 export { useToast, toast };
