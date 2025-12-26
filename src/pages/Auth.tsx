@@ -465,8 +465,9 @@ export default function Auth() {
                     alt="Professor Moisés" 
                     width={240}
                     height={240}
-                    loading="eager"
+                    loading="lazy"
                     decoding="async"
+                    fetchPriority="low"
                     className="w-60 h-60 rounded-full object-cover [object-position:50%_15%] border-4 border-primary/60 shadow-2xl shadow-primary/30" 
                   />
                 )}
