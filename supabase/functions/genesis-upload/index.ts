@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/corsConfig.ts";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// P1 FIX: OWNER_EMAIL removido - usar role check via user_roles
 const RAW_BUCKET = "ena-assets-raw";
 
 serve(async (req: Request) => {
@@ -38,20 +38,20 @@ serve(async (req: Request) => {
       );
     }
 
-    // Verificar se é owner
-    if (user.email?.toLowerCase() !== OWNER_EMAIL) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      
-      if (profile?.role !== "owner" && profile?.role !== "admin") {
-        return new Response(
-          JSON.stringify({ success: false, error: "Apenas owner pode importar livros" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    // ✅ P1 FIX: Verificar role via user_roles (não por email!)
+    const { data: userRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
+    
+    const role = userRole?.role;
+    if (role !== "owner" && role !== "admin") {
+      console.warn(`[Genesis] Acesso negado: ${user.email} (role: ${role})`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Apenas owner/admin pode importar livros" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // Parse FormData

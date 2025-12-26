@@ -89,17 +89,16 @@ serve(async (req: Request) => {
       .eq("user_id", user.id);
 
     const userRoles = roles?.map(r => r.role) || [];
-    const canEnqueue = userRoles.some(r => ["owner", "admin", "funcionario"].includes(r));
+    // ✅ P1 FIX: Verificar apenas por role (não por email!)
+    // Roles permitidas: owner, admin, employee (funcionario não existe no enum)
+    const canEnqueue = userRoles.some(r => ["owner", "admin", "employee"].includes(r));
 
     if (!canEnqueue) {
-      // Verificar se é o owner por email
-      const OWNER_EMAIL = "moisesblank@gmail.com";
-      if (user.email?.toLowerCase() !== OWNER_EMAIL) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Sem permissão para enfileirar", errorCode: "FORBIDDEN" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+      console.warn(`[Enqueue] Acesso negado: ${user.email} (roles: ${userRoles.join(",")})`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Sem permissão para enfileirar", errorCode: "FORBIDDEN" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // ============================================

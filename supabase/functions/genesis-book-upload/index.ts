@@ -9,9 +9,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 // ============================================
-// CONSTANTES
+// CONSTANTES (P1 FIX: OWNER_EMAIL removido)
 // ============================================
-const OWNER_EMAIL = "moisesblank@gmail.com";
 const RAW_BUCKET = "ena-assets-raw";
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 const ALLOWED_MIME_TYPES = ["application/pdf", "application/epub+zip"];
@@ -113,23 +112,23 @@ serve(async (req: Request) => {
     }
 
     // ============================================
-    // 2) VERIFICAR PERMISSÃO (OWNER/ADMIN)
+    // 2) VERIFICAR PERMISSÃO VIA ROLE (P1 FIX)
     // ============================================
-    const isOwner = user.email?.toLowerCase() === OWNER_EMAIL;
+    const { data: userRole } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .single();
     
-    if (!isOwner) {
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("role")
-        .eq("id", user.id)
-        .single();
-      
-      if (!profile || !["owner", "admin"].includes(profile.role || "")) {
-        return new Response(
-          JSON.stringify({ success: false, error: "Apenas owner/admin pode importar livros", errorCode: "FORBIDDEN" }),
-          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
+    const isOwner = userRole?.role === "owner";
+    const isAdmin = userRole?.role === "admin";
+    
+    if (!isOwner && !isAdmin) {
+      console.warn(`[Genesis] Acesso negado: ${user.email} (role: ${userRole?.role})`);
+      return new Response(
+        JSON.stringify({ success: false, error: "Apenas owner/admin pode importar livros", errorCode: "FORBIDDEN" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
 
     // ============================================
