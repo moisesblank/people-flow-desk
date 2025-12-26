@@ -136,12 +136,22 @@ export function CloudflareTurnstile({
         },
         'error-callback': (errorCode: string) => {
           console.warn('[Turnstile] Erro:', errorCode);
-          
-          // Detectar erro de domínio inválido
-          if (errorCode?.includes('invalid') || errorCode?.includes('domain')) {
+
+          // Preview/Dev (Lovable/localhost): Turnstile pode não conseguir completar o desafio.
+          // Nesses casos, expomos o botão de bypass DEV (apenas preview) para não bloquear o acesso.
+          if (isDevEnvironment()) {
             setDomainError(true);
           }
-          
+
+          // Detectar erro de domínio/ambiente
+          if (
+            errorCode?.includes('invalid') ||
+            errorCode?.includes('domain') ||
+            errorCode?.includes('300030')
+          ) {
+            setDomainError(true);
+          }
+
           setStatus('error');
           onError?.(errorCode);
         },
