@@ -101,38 +101,41 @@ const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0];
 
     {/* Card principal */}
     <div className="relative bg-gradient-to-br from-black/80 via-slate-900/90 to-black/80 rounded-3xl border-2 border-amber-500/30 overflow-hidden backdrop-blur-xl p-1">
-      {/* Borda gradiente animada */}
-      <motion.div
-        className="absolute inset-0 rounded-3xl"
-        style={{
-          background: `conic-gradient(from 0deg, ${index === 0 ? '#f59e0b, #ef4444, #f59e0b' : '#ec4899, #8b5cf6, #ec4899'})`,
-          padding: '2px',
-        }}
-        animate={{ rotate: 360 }}
-        transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-      />
+      {/* Borda gradiente - animada APENAS se shouldAnimate */}
+      {shouldAnimate ? (
+        <motion.div
+          className="absolute inset-0 rounded-3xl"
+          style={{
+            background: `conic-gradient(from 0deg, ${index === 0 ? '#f59e0b, #ef4444, #f59e0b' : '#ec4899, #8b5cf6, #ec4899'})`,
+            padding: '2px',
+          }}
+          animate={{ rotate: 360 }}
+          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+        />
+      ) : (
+        <div
+          className="absolute inset-0 rounded-3xl"
+          style={{
+            background: `conic-gradient(from 0deg, ${index === 0 ? '#f59e0b, #ef4444, #f59e0b' : '#ec4899, #8b5cf6, #ec4899'})`,
+            padding: '2px',
+          }}
+        />
+      )}
 
       <div className="relative bg-gradient-to-br from-black via-slate-900 to-black rounded-3xl overflow-hidden">
-        {/* Coroa animada no topo */}
-        <motion.div
-          className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
-          animate={{ 
-            y: [0, -5, 0],
-            rotateZ: [-5, 5, -5]
-          }}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          <div className="relative">
-            <Crown className="w-16 h-16 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]" fill="rgba(251,191,36,0.3)" />
+        {/* Coroa - animada APENAS se shouldAnimate */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
+          {shouldAnimate ? (
             <motion.div
-              className="absolute inset-0"
-              animate={{ opacity: [0.5, 1, 0.5] }}
-              transition={{ duration: 1, repeat: Infinity }}
+              animate={{ y: [0, -5, 0], rotateZ: [-5, 5, -5] }}
+              transition={{ duration: 2, repeat: Infinity }}
             >
-              <Crown className="w-16 h-16 text-amber-300" />
+              <Crown className="w-16 h-16 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]" fill="rgba(251,191,36,0.3)" />
             </motion.div>
-          </div>
-        </motion.div>
+          ) : (
+            <Crown className="w-16 h-16 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]" fill="rgba(251,191,36,0.3)" />
+          )}
+        </div>
 
         {/* Badge 1º Lugar */}
         <motion.div
@@ -158,6 +161,8 @@ const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0];
             <img
               src={champion.image}
               alt={champion.nome}
+              loading="lazy"
+              decoding="async"
               className="w-full h-full object-cover"
             />
             
@@ -217,19 +222,18 @@ const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0];
       </div>
     </div>
 
-    {/* Estrelas ao redor */}
-    {[...Array(5)].map((_, i) => (
+    {/* Estrelas ao redor - APENAS se animações habilitadas */}
+    {shouldAnimate && [...Array(5)].map((_, i) => (
       <motion.div
         key={i}
-        className="absolute"
+        className="absolute will-change-transform"
         style={{
-          left: `${20 + Math.random() * 60}%`,
-          top: `${10 + Math.random() * 80}%`,
+          left: `${20 + i * 12}%`,
+          top: `${10 + i * 15}%`,
         }}
         animate={{
           scale: [0, 1, 0],
           opacity: [0, 1, 0],
-          rotate: [0, 180, 360],
         }}
         transition={{
           duration: 2,
@@ -334,50 +338,40 @@ export const FirstPlaceShowcase = () => {
           </motion.p>
           
           <Link to="/auth">
-            <motion.div
-              className="inline-block relative group"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {/* Glow pulsante épico */}
-              <motion.div
-                className="absolute -inset-2 rounded-2xl"
-                style={{
-                  background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #f59e0b)',
-                  backgroundSize: '300% 100%',
-                }}
-                animate={{
-                  backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'],
-                  opacity: [0.5, 0.8, 0.5],
-                }}
-                transition={{ duration: 3, repeat: Infinity }}
-              />
-              <motion.div
-                className="absolute -inset-4 rounded-2xl opacity-50 blur-xl"
-                style={{
-                  background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899)',
-                }}
-                animate={{
-                  opacity: [0.3, 0.6, 0.3],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
+            <div className="inline-block relative group">
+              {/* Glow - apenas se animações habilitadas */}
+              {shouldAnimate && (
+                <>
+                  <motion.div
+                    className="absolute -inset-2 rounded-2xl"
+                    style={{
+                      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899, #8b5cf6, #f59e0b)',
+                      backgroundSize: '300% 100%',
+                    }}
+                    animate={{
+                      backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'],
+                      opacity: [0.5, 0.8, 0.5],
+                    }}
+                    transition={{ duration: 3, repeat: Infinity }}
+                  />
+                  <div
+                    className="absolute -inset-4 rounded-2xl opacity-40 blur-xl"
+                    style={{
+                      background: 'linear-gradient(90deg, #f59e0b, #ef4444, #ec4899)',
+                    }}
+                  />
+                </>
+              )}
               
               <Button 
                 size="lg"
                 className="relative px-12 py-8 text-xl font-black rounded-xl bg-gradient-to-r from-amber-600 via-red-600 to-pink-600 hover:from-amber-500 hover:via-red-500 hover:to-pink-500 text-white border-0 shadow-2xl shadow-red-500/50"
               >
-                <Zap className="w-7 h-7 mr-3 animate-pulse" />
+                <Zap className="w-7 h-7 mr-3" />
                 ÁREA DO ALUNO
-                <motion.div
-                  className="ml-3"
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                >
-                  →
-                </motion.div>
+                <span className="ml-3">→</span>
               </Button>
-            </motion.div>
+            </div>
           </Link>
 
           {/* Selo de garantia */}
