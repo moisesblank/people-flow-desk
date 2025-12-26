@@ -146,38 +146,44 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    const { endpoint, action, clientId, payload } = await req.json();
+    // 🛡️ PATCH-007: NUNCA aceitar clientId do body + endpoint allowlist
+    const { endpoint, action, payload } = await req.json();
     
-    // Identificar cliente (IP + User Agent ou clientId fornecido)
-    const clientIdentifier = clientId || 
+    // Normalizar endpoint para allowlist (evita poluição de DB)
+    const safeEndpoint = (endpoint && endpoint in RATE_LIMITS) ? endpoint : 'default';
+    
+    // Identificar cliente pelo IP real (NUNCA do body)
+    const clientIdentifier = 
+      req.headers.get('cf-connecting-ip') ||  // Cloudflare proxied
       req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
       req.headers.get('x-real-ip') || 
       'unknown';
     
     const userAgent = req.headers.get('user-agent') || 'unknown';
     
-    // Obter configuração de rate limit
-    const config = RATE_LIMITS[endpoint] || RATE_LIMITS['default'];
+    // Obter configuração de rate limit (usando endpoint seguro)
+    const config = RATE_LIMITS[safeEndpoint];
     
     // 🛡️ P1.3 FIX: Usar rate limit persistente (DB)
-    const result = await checkPersistentRateLimit(supabase, clientIdentifier, endpoint, config);
+    const result = await checkPersistentRateLimit(supabase, clientIdentifier, safeEndpoint, config);
     
     if (!result.allowed) {
-      console.warn(`🚫 Rate limit excedido (DB): ${clientIdentifier}:${endpoint} (${result.count}/${config.limit})`);
+      console.warn(`🚫 Rate limit excedido (DB): ${clientIdentifier}:${safeEndpoint} (${result.count}/${config.limit})`);
       
       // Logar tentativa bloqueada
       await supabase.from('security_events').insert({
         event_type: 'RATE_LIMIT_EXCEEDED',
         severity: config.priority === 'critical' ? 'critical' : 'warn',
         source: 'rate-limit-gateway',
-        description: `Rate limit excedido para ${endpoint}`,
+        description: `Rate limit excedido para ${safeEndpoint}`,
         payload: {
-          endpoint,
+          endpoint: safeEndpoint,
+          originalEndpoint: endpoint, // Log do endpoint original para auditoria
           clientId: clientIdentifier,
           count: result.count,
           limit: config.limit,
           userAgent: userAgent.substring(0, 200),
-          persistent: true // Flag indicando rate limit persistente
+          persistent: true
         },
         ip_address: clientIdentifier
       });
@@ -199,7 +205,7 @@ serve(async (req) => {
     }
     
     // Rate limit OK
-    console.log(`✅ Rate limit OK (DB): ${clientIdentifier}:${endpoint} (${result.count}/${config.limit})`);
+    console.log(`✅ Rate limit OK (DB): ${clientIdentifier}:${safeEndpoint} (${result.count}/${config.limit})`);
     
     // Se for apenas verificação de rate limit
     if (action === 'check') {
