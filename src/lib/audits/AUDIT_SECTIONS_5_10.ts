@@ -232,8 +232,7 @@ export const SECTION_9_PERFORMANCE_AUDIT = {
   
   evidence: {
     constitution: "src/lib/constitution/LEI_I_PERFORMANCE.ts",
-    ultraPerformance: "src/hooks/useUltraPerformance.ts",
-    performance5k: "src/config/performance-5k.ts",
+    masterPerformance: "src/hooks/usePerformance.ts", // ⚡ HOOK UNIFICADO (consolidado v11.0)
     evangelhoVelocidade: "src/lib/performance/evangelhoVelocidade.ts",
   },
 };

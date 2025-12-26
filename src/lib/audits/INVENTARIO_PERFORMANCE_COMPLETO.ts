@@ -555,12 +555,7 @@ export const INVENTARIO_PERFORMANCE_COMPLETO = {
         descricao: 'Protocolo de reatividade 60 FPS',
         retorno: ['gpuAnimationProps', 'throttle', 'debounce', 'shouldVirtualize', 'isPending']
       },
-      {
-        hook: 'useUltraPerformance',
-        arquivo: 'useUltraPerformance.ts',
-        descricao: 'Ultra performance 3G',
-        retorno: ['state', 'tier', 'flags', 'budgets']
-      },
+      // ⚡ CONSOLIDADO: useUltraPerformance foi unificado em usePerformance.ts (v11.0)
       {
         hook: 'useWebWorker',
         arquivo: 'useWebWorker.ts',

@@ -153,9 +153,7 @@ export const SECTION_10_PERFORMANCE_AUDIT = {
   performanceHooks: {
     status: 'IMPLEMENTED',
     evidence: [
-      'src/hooks/usePerformance.ts',
-      'src/hooks/usePerformance5K.ts',
-      'src/hooks/useUltraPerformance.ts',
+      'src/hooks/usePerformance.ts', // ⚡ HOOK MASTER UNIFICADO (consolidado v11.0)
       'src/hooks/useLazyLoad3500.ts'
     ],
     hooks: [
