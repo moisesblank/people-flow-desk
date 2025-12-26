@@ -9,6 +9,7 @@ import { motion } from "framer-motion";
 import { Crown, Trophy, Star, Sparkles, GraduationCap, Zap, Award, Target, Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import artePrincipal from "@/assets/arte-aprovados-principal.png";
 
 // Partículas de celebração - 🛡️ LEI I: Reduzido de 40 para 8, posições fixas
@@ -168,24 +169,25 @@ export const MainApprovedArt = () => {
           {/* Borda gradiente - estática */}
           <div className="relative p-1 rounded-3xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 overflow-hidden">
             
-            {/* Imagem */}
-            {/* 🚀 OTIMIZAÇÃO: width/height explícitos para evitar CLS */}
+            {/* Imagem - 🚀 OptimizedImage com blur placeholder */}
             <div className="relative rounded-2xl overflow-hidden bg-black">
-              <img
+              <OptimizedImage
                 src={artePrincipal}
                 alt="Todos os alunos aprovados em medicina pelo curso Moisés Medeiros"
                 width={1200}
                 height={800}
-                className="w-full h-auto object-contain"
-                loading="lazy"
-                decoding="async"
+                aspectRatio="16:9"
+                objectFit="contain"
+                placeholderColor="#0a0a0a"
+                priority={false}
+                className="w-full h-auto"
               />
               
               {/* Overlay gradiente sutil no topo */}
-              <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/50 to-transparent" />
+              <div className="absolute top-0 left-0 right-0 h-20 bg-gradient-to-b from-black/50 to-transparent pointer-events-none" />
               
               {/* Overlay gradiente no fundo */}
-              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/50 to-transparent" />
+              <div className="absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/50 to-transparent pointer-events-none" />
             </div>
           </div>
 

@@ -1,9 +1,12 @@
 // ============================================
-// APPROVED STUDENTS CAROUSEL - PERFORMANCE OPTIMIZED
+// APPROVED STUDENTS CAROUSEL - PERFORMANCE ULTRA
+// 🚀 LEI I: OptimizedImage + Blur Placeholder
+// Design: 2300 | Performance: 3500
 // ============================================
 
 import { useState, useEffect, useRef, memo, useCallback } from "react";
-import { Trophy, Star, Sparkles, GraduationCap, Award, ChevronLeft, ChevronRight } from "lucide-react";
+import { Trophy, Star, GraduationCap, ChevronLeft, ChevronRight, Sparkles, Award } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 // Import apenas 10 imagens para performance
 import aprovado1 from "@/assets/aprovados/aprovado-1.png";
@@ -18,24 +21,35 @@ import aprovado9 from "@/assets/aprovados/aprovado-9.png";
 import aprovado10 from "@/assets/aprovados/aprovado-10.png";
 
 const approvedStudents = [
-  { id: 1, image: aprovado1, nome: "Ailton Filho", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "O Professor Moisés mudou minha vida!" },
-  { id: 2, image: aprovado2, nome: "Artur Leal", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Método incrível!" },
-  { id: 3, image: aprovado3, nome: "Carlos Cauã", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Plataforma sensacional!" },
-  { id: 4, image: aprovado4, nome: "Arthur Sodré", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Gratidão eterna!" },
-  { id: 5, image: aprovado5, nome: "Beatriz Mamede", curso: "Medicina", universidade: "UFCG", ano: "2K24", feedback: "Sonho realizado!" },
-  { id: 6, image: aprovado6, nome: "Arthur Antônio", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Melhor investimento!" },
-  { id: 7, image: aprovado7, nome: "Ana Clara Muniz", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Do zero à aprovação!" },
-  { id: 8, image: aprovado8, nome: "Maria Clara", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Prof. Moisés é o melhor!" },
-  { id: 9, image: aprovado9, nome: "Ana Clara Nóbrega", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "IA do curso é incrível!" },
-  { id: 10, image: aprovado10, nome: "Ana Beatriz Aires", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Recomendo!" },
+  { id: 1, image: aprovado1, nome: "Ailton Filho", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "O Professor Moisés mudou minha vida!", color: "#1a1a2e" },
+  { id: 2, image: aprovado2, nome: "Artur Leal", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Método incrível!", color: "#16213e" },
+  { id: 3, image: aprovado3, nome: "Carlos Cauã", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Plataforma sensacional!", color: "#1a1a2e" },
+  { id: 4, image: aprovado4, nome: "Arthur Sodré", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Gratidão eterna!", color: "#16213e" },
+  { id: 5, image: aprovado5, nome: "Beatriz Mamede", curso: "Medicina", universidade: "UFCG", ano: "2K24", feedback: "Sonho realizado!", color: "#1a1a2e" },
+  { id: 6, image: aprovado6, nome: "Arthur Antônio", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Melhor investimento!", color: "#16213e" },
+  { id: 7, image: aprovado7, nome: "Ana Clara Muniz", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Do zero à aprovação!", color: "#1a1a2e" },
+  { id: 8, image: aprovado8, nome: "Maria Clara", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Prof. Moisés é o melhor!", color: "#16213e" },
+  { id: 9, image: aprovado9, nome: "Ana Clara Nóbrega", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "IA do curso é incrível!", color: "#1a1a2e" },
+  { id: 10, image: aprovado10, nome: "Ana Beatriz Aires", curso: "Medicina", universidade: "UFPB", ano: "2K24", feedback: "Recomendo!", color: "#16213e" },
 ];
 
+// 🚀 Card otimizado com OptimizedImage
 const ApprovedCard = memo(({ student, isActive }: { student: typeof approvedStudents[0]; isActive: boolean }) => (
   <div className={`flex-shrink-0 w-[280px] md:w-[320px] transition-all duration-300 ${isActive ? 'scale-100 opacity-100' : 'scale-90 opacity-60'}`}>
     <div className={`rounded-2xl overflow-hidden border-2 ${isActive ? 'border-pink-500/50' : 'border-white/10'} bg-black/90`}>
-      <div className="aspect-square relative overflow-hidden">
-        <img src={student.image} alt={student.nome} className="w-full h-full object-cover object-top" loading="lazy" decoding="async" />
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent" />
+      <div className="relative overflow-hidden">
+        {/* 🚀 OptimizedImage com blur placeholder */}
+        <OptimizedImage
+          src={student.image}
+          alt={student.nome}
+          aspectRatio="square"
+          objectFit="cover"
+          objectPosition="top"
+          placeholderColor={student.color}
+          priority={isActive} // Carrega prioritário se ativo
+          className="object-top"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/20 to-transparent pointer-events-none" />
         <div className="absolute top-3 right-3 p-2 rounded-lg bg-gradient-to-br from-yellow-500 to-amber-600">
           <Trophy className="w-5 h-5 text-white" fill="currentColor" />
         </div>

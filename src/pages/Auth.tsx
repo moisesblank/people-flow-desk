@@ -36,6 +36,7 @@ import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas
 import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
@@ -460,15 +461,18 @@ export default function Auth() {
                     />
                   </Suspense>
                 ) : (
-                  <img 
-                    src={professorPhoto} 
-                    alt="Professor Moisés" 
+                  <OptimizedImage
+                    src={professorPhoto}
+                    alt="Professor Moisés"
                     width={240}
                     height={240}
-                    loading="lazy"
-                    decoding="async"
-                    fetchPriority="low"
-                    className="w-60 h-60 rounded-full object-cover [object-position:50%_15%] border-4 border-primary/60 shadow-2xl shadow-primary/30" 
+                    aspectRatio="square"
+                    objectFit="cover"
+                    objectPosition="50% 15%"
+                    placeholderColor="#1a0a0a"
+                    priority={false}
+                    className="border-4 border-primary/60 shadow-2xl shadow-primary/30"
+                    containerClassName="w-60 h-60 rounded-full overflow-hidden"
                   />
                 )}
               </div>

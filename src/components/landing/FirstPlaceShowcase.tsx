@@ -1,7 +1,7 @@
 // ============================================
 // FIRST PLACE SHOWCASE - SEÇÃO DESTAQUE 1º LUGARES
-// Design futurista premium
-// 🏛️ LEI I: useQuantumReactivity aplicado
+// 🚀 LEI I: OptimizedImage + Blur Placeholder
+// Design: 2300 | Performance: 3500
 // ============================================
 
 import { memo } from "react";
@@ -10,10 +10,11 @@ import { Crown, Trophy, Star, Sparkles, GraduationCap, Zap } from "lucide-react"
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import primeiroLugar1 from "@/assets/aprovados/primeiro-lugar-1.png";
 import primeiroLugar2 from "@/assets/aprovados/primeiro-lugar-2.png";
 
-// Dados dos primeiros lugares
+// Dados dos primeiros lugares com cores para placeholder
 const champions = [
   {
     id: 1,
@@ -23,7 +24,8 @@ const champions = [
     curso: "Medicina",
     ano: "2K25",
     posicao: "1º LUGAR GERAL",
-    depoimento: "O método do Prof. Moisés me levou ao topo! Química deixou de ser um problema e virou minha arma secreta."
+    depoimento: "O método do Prof. Moisés me levou ao topo! Química deixou de ser um problema e virou minha arma secreta.",
+    placeholderColor: "#1a1a2e" // Cor dominante para blur
   },
   {
     id: 2,
@@ -33,7 +35,8 @@ const champions = [
     curso: "Medicina",
     ano: "2K25",
     posicao: "1º LUGAR GERAL",
-    depoimento: "Conquistei meu sonho! A metodologia inovadora do curso me preparou como ninguém. Aprovação garantida!"
+    depoimento: "Conquistei meu sonho! A metodologia inovadora do curso me preparou como ninguém. Aprovação garantida!",
+    placeholderColor: "#16213e" // Cor dominante para blur
   },
 ];
 
@@ -127,23 +130,25 @@ const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0];
           </div>
         </motion.div>
 
-        {/* Imagem do aprovado */}
+        {/* Imagem do aprovado - 🚀 OptimizedImage */}
         <div className="relative pt-14">
           <motion.div
-            className="relative aspect-[4/5] overflow-hidden"
-            whileHover={{ scale: 1.05 }}
+            className="relative overflow-hidden"
+            whileHover={shouldAnimate ? { scale: 1.02 } : undefined}
             transition={{ duration: 0.5 }}
           >
-            <img
+            <OptimizedImage
               src={champion.image}
               alt={champion.nome}
-              loading="lazy"
-              decoding="async"
-              className="w-full h-full object-cover"
+              aspectRatio="4:3"
+              objectFit="cover"
+              placeholderColor={champion.placeholderColor}
+              priority={index === 0} // Primeiro campeão carrega prioritário
+              className="w-full h-full"
             />
             
             {/* Overlay gradiente */}
-            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-black via-transparent to-transparent pointer-events-none" />
           </motion.div>
 
           {/* Info overlay */}
