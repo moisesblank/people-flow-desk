@@ -535,15 +535,21 @@ const SidebarMenuBadge = React.forwardRef<HTMLDivElement, React.ComponentProps<"
 );
 SidebarMenuBadge.displayName = "SidebarMenuBadge";
 
+// Larguras pré-definidas para skeletons (evita Math.random() em useMemo)
+const SKELETON_WIDTHS = ['50%', '58%', '65%', '72%', '80%', '87%'] as const;
+let skeletonWidthIndex = 0;
+
 const SidebarMenuSkeleton = React.forwardRef<
   HTMLDivElement,
   React.ComponentProps<"div"> & {
     showIcon?: boolean;
   }
 >(({ className, showIcon = false, ...props }, ref) => {
-  // Random width between 50 to 90%.
+  // Largura determinística usando índice circular (evita anti-pattern Math.random em useMemo)
   const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`;
+    const w = SKELETON_WIDTHS[skeletonWidthIndex % SKELETON_WIDTHS.length];
+    skeletonWidthIndex++;
+    return w;
   }, []);
 
   return (

@@ -693,6 +693,27 @@ export const RECOMMENDED_PAGE_RULES: PageRule[] = [
     },
   },
   {
+    // Vídeos estáticos - cache de borda para performance
+    // NOTA: Vídeos protegidos usam signed URLs que já invalidam cache
+    url: "*.moisesmedeiros.com.br/assets/*.mp4",
+    settings: {
+      cache_level: "aggressive",
+      edge_cache_ttl: 86400, // 24 horas para vídeos estáticos
+      security_level: "medium",
+    },
+  },
+  {
+    // Vídeos de aulas - cache moderado com signed URLs
+    url: "*.moisesmedeiros.com.br/aulas/*.mp4",
+    settings: {
+      cache_level: "standard",
+      edge_cache_ttl: 7200, // 2 horas na borda
+      security_level: "high",
+      // Signed URLs já protegem contra acesso não autorizado
+    },
+  },
+  {
+    // Outros MP4s - bypass para segurança máxima
     url: "*.moisesmedeiros.com.br/*.mp4",
     settings: {
       cache_level: "bypass",
