@@ -81,6 +81,7 @@ import { Label } from "@/components/ui/label";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { logger } from "@/lib/logger";
+import { VirtualTable } from "@/components/performance/VirtualTable";
 
 type PeriodFilter = "hoje" | "semana" | "mes" | "ano" | "todos";
 
@@ -968,77 +969,76 @@ export default function ReceitasEmpresariais() {
             </Select>
           </div>
 
-          {/* Tabela de Transações */}
-          <ScrollArea className="h-96">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data/Hora</TableHead>
-                  <TableHead>Aluno</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead className="text-right">Bruto</TableHead>
-                  <TableHead className="text-right">Cupom</TableHead>
-                  <TableHead className="text-right">Taxa</TableHead>
-                  <TableHead className="text-right">Líquido</TableHead>
-                  <TableHead>Origem</TableHead>
-                  <TableHead>ID</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {transacoesFiltradas.length > 0 ? (
-                  transacoesFiltradas.map((t) => (
-                    <TableRow key={t.id} className="hover:bg-muted/30">
-                      <TableCell className="text-sm">
-                        {format(new Date(t.data_compra), "dd/MM/yy HH:mm", { locale: ptBR })}
-                      </TableCell>
-                      <TableCell>
-                        <div>
-                          <p className="font-medium text-sm">{t.nome_aluno}</p>
-                          <p className="text-xs text-muted-foreground">{t.email_aluno}</p>
-                        </div>
-                      </TableCell>
-                      <TableCell className="max-w-[200px] truncate text-sm">{t.produto}</TableCell>
-                      <TableCell className="text-right font-medium">{formatCurrency(t.valor_bruto)}</TableCell>
-                      <TableCell className="text-right">
-                        {t.cupom ? (
-                          <Badge variant="secondary" className="text-xs">{t.cupom}</Badge>
-                        ) : (
-                          <span className="text-muted-foreground">-</span>
-                        )}
-                      </TableCell>
-                      <TableCell className="text-right text-red-400 text-sm">
-                        -{formatCurrency(t.taxa_plataforma)}
-                      </TableCell>
-                      <TableCell className="text-right text-green-500 font-medium">
-                        {formatCurrency(t.valor_liquido)}
-                      </TableCell>
-                      <TableCell>
-                        <Badge 
-                          style={{ 
-                            backgroundColor: fontesReceita.find(f => f.nome.toLowerCase().includes(t.origem.toLowerCase()))?.color + "20",
-                            color: fontesReceita.find(f => f.nome.toLowerCase().includes(t.origem.toLowerCase()))?.color
-                          }}
-                          className="text-xs"
-                        >
-                          {t.origem}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-mono text-xs text-muted-foreground">
-                        {t.transaction_id.slice(0, 8)}...
-                      </TableCell>
-                    </TableRow>
-                  ))
-                ) : (
+          {/* Tabela de Transações - P2 FIX: VirtualTable para listas > 40 */}
+          <VirtualTable
+            items={transacoesFiltradas}
+            rowHeight={64}
+            containerHeight={384}
+            emptyMessage="Nenhuma transação encontrada no período"
+            renderHeader={() => (
+              <Table>
+                <TableHeader>
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">
-                      <Receipt className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                      <p>Nenhuma transação encontrada no período</p>
+                    <TableHead>Data/Hora</TableHead>
+                    <TableHead>Aluno</TableHead>
+                    <TableHead>Produto</TableHead>
+                    <TableHead className="text-right">Bruto</TableHead>
+                    <TableHead className="text-right">Cupom</TableHead>
+                    <TableHead className="text-right">Taxa</TableHead>
+                    <TableHead className="text-right">Líquido</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>ID</TableHead>
+                  </TableRow>
+                </TableHeader>
+              </Table>
+            )}
+            renderRow={(t) => (
+              <Table key={t.id}>
+                <TableBody>
+                  <TableRow className="hover:bg-muted/30">
+                    <TableCell className="text-sm">
+                      {format(new Date(t.data_compra), "dd/MM/yy HH:mm", { locale: ptBR })}
+                    </TableCell>
+                    <TableCell>
+                      <div>
+                        <p className="font-medium text-sm">{t.nome_aluno}</p>
+                        <p className="text-xs text-muted-foreground">{t.email_aluno}</p>
+                      </div>
+                    </TableCell>
+                    <TableCell className="max-w-[200px] truncate text-sm">{t.produto}</TableCell>
+                    <TableCell className="text-right font-medium">{formatCurrency(t.valor_bruto)}</TableCell>
+                    <TableCell className="text-right">
+                      {t.cupom ? (
+                        <Badge variant="secondary" className="text-xs">{t.cupom}</Badge>
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="text-right text-red-400 text-sm">
+                      -{formatCurrency(t.taxa_plataforma)}
+                    </TableCell>
+                    <TableCell className="text-right text-green-500 font-medium">
+                      {formatCurrency(t.valor_liquido)}
+                    </TableCell>
+                    <TableCell>
+                      <Badge 
+                        style={{ 
+                          backgroundColor: fontesReceita.find(f => f.nome.toLowerCase().includes(t.origem.toLowerCase()))?.color + "20",
+                          color: fontesReceita.find(f => f.nome.toLowerCase().includes(t.origem.toLowerCase()))?.color
+                        }}
+                        className="text-xs"
+                      >
+                        {t.origem}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="font-mono text-xs text-muted-foreground">
+                      {t.transaction_id.slice(0, 8)}...
                     </TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                </TableBody>
+              </Table>
+            )}
+          />
         </CardContent>
       </Card>
 

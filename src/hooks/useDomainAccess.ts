@@ -194,7 +194,7 @@ export function useDomainAccessValidation() {
 
   useEffect(() => {
     async function fetchRole() {
-      if (!user) {
+      if (!user?.id) {
         setRole(null);
         setIsLoading(false);
         return;
@@ -222,7 +222,7 @@ export function useDomainAccessValidation() {
     }
 
     fetchRole();
-  }, [user]);
+  }, [user?.id]); // P2 FIX: Depender de user.id primitivo, não do objeto completo
 
   const userEmail = user?.email || null;
 
