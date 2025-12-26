@@ -1,12 +1,15 @@
 import { useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { compressImage, type CompressionOptions } from '@/lib/imageCompression';
 
 interface UploadOptions {
   bucket?: string;
   folder?: string;
   maxSize?: number; // in MB
   allowedTypes?: string[];
+  // P1 FIX: Opções de compressão client-side
+  compression?: CompressionOptions | false;
 }
 
 interface UploadedFile {
@@ -37,7 +40,8 @@ export function useFileUpload(options: UploadOptions = {}) {
     bucket = 'arquivos',
     folder = '',
     maxSize = 25, // 25MB por padrão (REDUZIDO de 2GB)
-    allowedTypes = [] // Vazio = aceita QUALQUER tipo de arquivo
+    allowedTypes = [], // Vazio = aceita QUALQUER tipo de arquivo
+    compression = { quality: 0.85, maxWidth: 1920, maxHeight: 1080, format: 'webp' } // P1: Compressão ativada por padrão
   } = options;
 
   const [uploading, setUploading] = useState(false);
@@ -59,20 +63,30 @@ export function useFileUpload(options: UploadOptions = {}) {
   };
 
   const uploadFile = async (file: File): Promise<UploadedFile | null> => {
+    // P1 FIX: Comprimir imagem antes do upload se habilitado
+    let fileToUpload = file;
+    if (compression !== false && file.type.startsWith('image/')) {
+      try {
+        fileToUpload = await compressImage(file, compression);
+      } catch (err) {
+        console.warn('[Upload] Compressão falhou, usando original:', err);
+      }
+    }
+
     // SECURITY: Validar tamanho com limites seguros
     const maxSizeBytes = Math.min(maxSize * 1024 * 1024, MAX_FILE_SIZE_BYTES);
     const sizeMB = Math.round(maxSizeBytes / (1024 * 1024));
     
-    if (file.size > maxSizeBytes) {
+    if (fileToUpload.size > maxSizeBytes) {
       toast.error(`Arquivo muito grande. Máximo: ${sizeMB}MB`);
-      console.warn(`[SECURITY] Upload bloqueado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB > ${sizeMB}MB)`);
+      console.warn(`[SECURITY] Upload bloqueado: ${fileToUpload.name} (${(fileToUpload.size / 1024 / 1024).toFixed(2)}MB > ${sizeMB}MB)`);
       return null;
     }
 
-    // SECURITY: Validar tipos permitidos
-    if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+    // SECURITY: Validar tipos permitidos (após compressão pode mudar tipo)
+    if (allowedTypes.length > 0 && !allowedTypes.includes(fileToUpload.type) && !allowedTypes.includes(file.type)) {
       toast.error('Tipo de arquivo não permitido');
-      console.warn(`[SECURITY] Tipo bloqueado: ${file.type} para ${file.name}`);
+      console.warn(`[SECURITY] Tipo bloqueado: ${fileToUpload.type} para ${fileToUpload.name}`);
       return null;
     }
 
@@ -80,13 +94,14 @@ export function useFileUpload(options: UploadOptions = {}) {
     setProgress(0);
 
     try {
-      const fileExt = file.name.split('.').pop();
+      // P1 FIX: Usar extensão do arquivo comprimido, não do original
+      const fileExt = fileToUpload.name.split('.').pop();
       const fileName = `${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`;
       const filePath = folder ? `${folder}/${fileName}` : fileName;
 
       const { data, error } = await supabase.storage
         .from(bucket)
-        .upload(filePath, file, {
+        .upload(filePath, fileToUpload, {
           cacheControl: '3600',
           upsert: false
         });
@@ -103,11 +118,11 @@ export function useFileUpload(options: UploadOptions = {}) {
       setProgress(100);
 
       return {
-        name: file.name,
+        name: file.name, // Nome original para exibição
         url: signedUrl,
         path: data.path,
-        size: file.size,
-        type: file.type
+        size: fileToUpload.size, // Tamanho comprimido
+        type: fileToUpload.type // Tipo após compressão
       };
     } catch (error: any) {
       console.error('Upload error:', error);
