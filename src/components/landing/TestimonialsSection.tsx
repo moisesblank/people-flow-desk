@@ -1,6 +1,7 @@
 // ============================================
 // DEPOIMENTOS REAIS - VERSÃO 2500 ULTRA
 // GPU-ONLY animations via useQuantumReactivity
+// P1 FIX: Imagens otimizadas com lazy loading
 // ============================================
 
 import { useState, useEffect, useRef } from "react";
@@ -13,6 +14,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { OptimizedImage } from "@/components/OptimizedImage";
 
 // Imagens reais de depoimentos
 import depoimentoWhatsapp1 from "@/assets/testimonials/depoimento-whatsapp-1.jpg";
@@ -245,10 +247,11 @@ const RealFeedbacksGallery = () => {
         <div className="absolute -inset-2 bg-gradient-to-r from-green-600/20 via-emerald-600/20 to-green-600/20 blur-2xl" />
         
         <div className="relative">
-          <img 
+          {/* P1 FIX: Imagem otimizada com lazy loading */}
+          <OptimizedImage 
             src={feedbacksReais} 
             alt="Feedbacks reais de alunos no WhatsApp"
-            className="w-full h-auto rounded-3xl"
+            className="w-full rounded-3xl"
           />
           
           {/* Overlay com gradiente */}
@@ -278,10 +281,11 @@ const RealFeedbacksGallery = () => {
           <motion.div
             className="absolute -inset-2 bg-gradient-to-r from-purple-600/20 to-pink-600/20 blur-2xl opacity-50 group-hover:opacity-80 transition-opacity"
           />
-          <img 
+          {/* P1 FIX: Imagem otimizada com lazy loading */}
+          <OptimizedImage 
             src={depoimentoWhatsapp1} 
             alt="Depoimento real de aluno aprovado"
-            className="relative w-full h-auto rounded-3xl"
+            className="relative w-full rounded-3xl"
           />
         </div>
 
