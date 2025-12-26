@@ -96,25 +96,28 @@ const AppHeader = memo(({
       <PeriodicTableButton />
       <MemoizedSystemHealth />
 
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleClearCache}
-            disabled={isCacheClearing}
-            className="header-btn-glow micro-hover"
-          >
-            <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
-          </Button>
-        </TooltipTrigger>
-        <TooltipContent>
-          <div className="text-center">
-            <p className="font-medium">Limpar Cache</p>
-            <p className="text-xs text-muted-foreground">v{appVersion}</p>
-          </div>
-        </TooltipContent>
-      </Tooltip>
+      {/* 🔒 Botão Refresh - APENAS OWNER (LEI VII) */}
+      {isGodMode && (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={handleClearCache}
+              disabled={isCacheClearing}
+              className="header-btn-glow micro-hover"
+            >
+              <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
+            </Button>
+          </TooltipTrigger>
+          <TooltipContent>
+            <div className="text-center">
+              <p className="font-medium">Limpar Cache (OWNER)</p>
+              <p className="text-xs text-muted-foreground">v{appVersion}</p>
+            </div>
+          </TooltipContent>
+        </Tooltip>
+      )}
       
       <Tooltip>
         <TooltipTrigger asChild>

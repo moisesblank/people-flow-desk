@@ -9,7 +9,7 @@ import { toast } from "sonner";
 
 // Versão do app para detectar atualizações
 // Incrementar para forçar limpeza de cache em todos os usuários
-const APP_VERSION = "10.3.0";
+const APP_VERSION = "10.4.0";
 const VERSION_KEY = "mm_app_version";
 const LAST_CACHE_CLEAR_KEY = "mm_last_cache_clear";
 
