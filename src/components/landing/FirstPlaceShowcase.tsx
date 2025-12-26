@@ -4,6 +4,7 @@
 // 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Crown, Trophy, Star, Sparkles, GraduationCap, Zap } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -36,26 +37,26 @@ const champions = [
   },
 ];
 
-// Partículas flutuantes
-const FloatingParticles = () => (
+// Partículas flutuantes - APENAS se animações habilitadas
+// 🛡️ LEI I: Reduzido de 30 para 10 partículas + GPU-only
+const FloatingParticles = memo(() => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(30)].map((_, i) => (
+    {[...Array(10)].map((_, i) => (
       <motion.div
         key={i}
-        className="absolute"
+        className="absolute will-change-transform"
         style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
+          left: `${10 + (i * 8)}%`,
+          top: `${10 + (i * 8)}%`,
         }}
         animate={{
-          y: [0, -30, 0],
-          opacity: [0.3, 1, 0.3],
-          scale: [1, 1.2, 1],
+          y: [0, -20, 0],
+          opacity: [0.3, 0.8, 0.3],
         }}
         transition={{
-          duration: 4 + Math.random() * 3,
+          duration: 5 + i,
           repeat: Infinity,
-          delay: Math.random() * 2,
+          ease: "easeInOut",
         }}
       >
         {i % 3 === 0 ? (
@@ -68,32 +69,35 @@ const FloatingParticles = () => (
       </motion.div>
     ))}
   </div>
-);
+));
 
-// Card do campeão
-const ChampionCard = ({ champion, index }: { champion: typeof champions[0]; index: number }) => (
-  <motion.div
-    initial={{ opacity: 0, y: 50, scale: 0.9 }}
-    whileInView={{ opacity: 1, y: 0, scale: 1 }}
-    transition={{ delay: index * 0.2, duration: 0.7 }}
-    viewport={{ once: true }}
-    whileHover={{ y: -10, scale: 1.02 }}
-    className="relative group"
-  >
-    {/* Glow intenso */}
+FloatingParticles.displayName = "FloatingParticles";
+
+// Card do campeão - 🛡️ LEI I: Animações condicionais + lazy images
+const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0]; index: number }) => {
+  const { shouldAnimate } = useQuantumReactivity();
+  
+  return (
     <motion.div
-      className="absolute -inset-4 rounded-3xl opacity-50 group-hover:opacity-80 transition-opacity duration-500"
-      style={{
-        background: index === 0 
-          ? 'radial-gradient(circle, rgba(251,191,36,0.4) 0%, rgba(220,38,38,0.2) 50%, transparent 70%)'
-          : 'radial-gradient(circle, rgba(236,72,153,0.4) 0%, rgba(147,51,234,0.2) 50%, transparent 70%)',
-        filter: 'blur(40px)',
-      }}
-      animate={{
-        scale: [1, 1.1, 1],
-      }}
-      transition={{ duration: 3, repeat: Infinity }}
-    />
+      initial={shouldAnimate ? { opacity: 0, y: 50, scale: 0.9 } : { opacity: 1, y: 0, scale: 1 }}
+      whileInView={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ delay: index * 0.2, duration: 0.5 }}
+      viewport={{ once: true }}
+      whileHover={shouldAnimate ? { y: -5 } : undefined}
+      className="relative group"
+    >
+      {/* Glow - APENAS se animações habilitadas */}
+      {shouldAnimate && (
+        <div
+          className="absolute -inset-4 rounded-3xl opacity-40 group-hover:opacity-60 transition-opacity duration-500"
+          style={{
+            background: index === 0 
+              ? 'radial-gradient(circle, rgba(251,191,36,0.3) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(236,72,153,0.3) 0%, transparent 70%)',
+            filter: 'blur(40px)',
+          }}
+        />
+      )}
 
     {/* Card principal */}
     <div className="relative bg-gradient-to-br from-black/80 via-slate-900/90 to-black/80 rounded-3xl border-2 border-amber-500/30 overflow-hidden backdrop-blur-xl p-1">
@@ -237,7 +241,10 @@ const ChampionCard = ({ champion, index }: { champion: typeof champions[0]; inde
       </motion.div>
     ))}
   </motion.div>
-);
+  );
+});
+
+ChampionCard.displayName = "ChampionCard";
 
 export const FirstPlaceShowcase = () => {
   const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
