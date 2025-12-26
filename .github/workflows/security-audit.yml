@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload Audit Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: npm-audit-report
           path: audit-report.json
@@ -165,7 +165,7 @@ jobs:
 
       - name: Upload ZAP Report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: owasp-zap-report
           path: |
