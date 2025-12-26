@@ -864,7 +864,19 @@ serve(async (req) => {
       const token = url.searchParams.get('hub.verify_token');
       const challenge = url.searchParams.get('hub.challenge');
 
-      const VERIFY_TOKEN = Deno.env.get('WHATSAPP_VERIFY_TOKEN') || 'tramon_moises_2024';
+      // 🛡️ PATCH-003: VERIFY_TOKEN sem fallback hardcoded - fail-closed
+      const VERIFY_TOKEN = Deno.env.get('WHATSAPP_VERIFY_TOKEN');
+      
+      if (!VERIFY_TOKEN) {
+        console.error('[whatsapp-webhook] ❌ WHATSAPP_VERIFY_TOKEN não configurado');
+        await supabase.from('security_events').insert({
+          event_type: 'WHATSAPP_WEBHOOK_NO_VERIFY_TOKEN',
+          severity: 'critical',
+          description: 'Verificação de webhook sem WHATSAPP_VERIFY_TOKEN configurado',
+          payload: { ip: req.headers.get('x-forwarded-for')?.split(',')[0] }
+        });
+        return new Response('Configuration error: missing verify token', { status: 500 });
+      }
 
       console.log('🔐 Webhook verification request:', { mode, token: token?.slice(0, 10) + '...', challenge: !!challenge });
 
