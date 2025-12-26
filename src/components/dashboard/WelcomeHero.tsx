@@ -1,10 +1,11 @@
 // ============================================
 // WELCOME HERO - Boas-vindas Personalizadas v3.0
-// Com imagem de fundo, animações avançadas
-// Todos os elementos clicáveis e interativos
+// 🚀 P0 FIX: OptimizedImage para background
+// Design: 2300 | Performance: 3500
 // ============================================
 
 import { motion } from "framer-motion";
+import { memo } from "react";
 import { 
   Sun, 
   Moon, 
@@ -25,6 +26,7 @@ import {
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import dashboardHeroImage from "@/assets/dashboard-chemistry-hero.jpg";
 
 interface WelcomeHeroProps {
@@ -109,11 +111,15 @@ export function WelcomeHero({ pendingTasks, completedToday, pendingPayments, pro
       animate={{ opacity: 1, y: 0 }}
       className="relative overflow-hidden rounded-3xl h-64 md:h-72"
     >
-      {/* Background Image */}
-      <img 
-        src={dashboardHeroImage} 
-        alt="Dashboard Hero" 
-        className="absolute inset-0 w-full h-full object-cover"
+      {/* Background Image - Otimizado */}
+      <OptimizedImage
+        src={dashboardHeroImage}
+        alt="Dashboard Hero"
+        aspectRatio="auto"
+        objectFit="cover"
+        placeholderColor="#0a1a2a"
+        priority={false}
+        containerClassName="absolute inset-0"
       />
       
       {/* Gradient Overlay */}

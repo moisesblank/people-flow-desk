@@ -1,7 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - Cursos
-// Spider-Man Theme - Portal de Aprendizado
-// Elementos de Química Integrados
+// 🚀 P0 FIX: OptimizedImage para hero banner
+// Design: 2300 | Performance: 3500
 // ============================================
 
 import { useState } from 'react';
@@ -18,6 +18,7 @@ import CourseCard from '@/components/lms/CourseCard';
 import XPProgressCard from '@/components/lms/XPProgressCard';
 import Leaderboard from '@/components/lms/Leaderboard';
 import { AnimatedAtom, BubblingFlask, MiniPeriodicTable, ChemistryTip, LabEquipmentIcons } from '@/components/chemistry/ChemistryVisuals';
+import { OptimizedImage } from '@/components/ui/optimized-image';
 import heroImage from '@/assets/dashboard-chemistry-hero.jpg';
 
 export default function Cursos() {
@@ -61,10 +62,14 @@ export default function Cursos() {
         animate={{ opacity: 1, scale: 1 }}
         className="relative w-full h-48 md:h-64 rounded-2xl overflow-hidden mb-8"
       >
-        <img 
-          src={heroImage} 
-          alt="Curso de Química - Moisés Medeiros" 
-          className="w-full h-full object-cover"
+        <OptimizedImage
+          src={heroImage}
+          alt="Curso de Química - Moisés Medeiros"
+          aspectRatio="auto"
+          objectFit="cover"
+          placeholderColor="#0a1a2a"
+          priority={true}
+          containerClassName="absolute inset-0 w-full h-full"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-background/90 via-background/60 to-transparent" />
         <div className="absolute inset-0 flex items-center justify-between p-8">

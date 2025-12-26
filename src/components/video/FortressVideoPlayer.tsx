@@ -358,11 +358,13 @@ export const FortressVideoPlayer = memo(({
               <div className="absolute inset-0 bg-gradient-to-br from-gray-900 to-black animate-pulse" />
             )}
             
-            {/* Thumbnail Image */}
+            {/* Thumbnail Image - Otimizado */}
             <img
               src={thumbnailUrl}
               alt={title}
               loading="lazy"
+              decoding="async"
+              fetchPriority="low"
               onLoad={() => setImageLoaded(true)}
               className={cn(
                 "w-full h-full object-cover transition-opacity duration-300",
