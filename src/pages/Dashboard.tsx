@@ -334,6 +334,47 @@ export default function Dashboard() {
 
   const lucroLiquido = stats ? stats.income - stats.personalExpenses - stats.companyExpenses : 0;
 
+  // ✅ P0 FIX #2: Mover filter para useMemo (antes: O(n) a cada render)
+  const memoizedTaskStats = useMemo(() => {
+    const tasksData = stats?.tasksData;
+    if (!tasksData) return { totalTasks: 0, completedTasks: 0 };
+    
+    return {
+      totalTasks: tasksData.length,
+      completedTasks: tasksData.filter((t: any) => t.is_completed).length,
+    };
+  }, [stats?.tasksData]);
+
+  // ✅ P0 FIX #3: Memoizar props complexas para widgets
+  const totalExpensesValue = useMemo(() => 
+    (stats?.personalExpenses || 0) + (stats?.companyExpenses || 0),
+    [stats?.personalExpenses, stats?.companyExpenses]
+  );
+
+  const financialInsightsProps = useMemo(() => ({
+    totalIncome: stats?.income || 0,
+    totalExpenses: totalExpensesValue,
+    personalExpenses: stats?.personalExpenses || 0,
+    companyExpenses: stats?.companyExpenses || 0,
+    pendingPayments: stats?.pendingPayments || 0,
+  }), [stats?.income, totalExpensesValue, stats?.personalExpenses, stats?.companyExpenses, stats?.pendingPayments]);
+
+  const financialHealthProps = useMemo(() => ({
+    income: stats?.income || 0,
+    expenses: totalExpensesValue,
+    savings: Math.max(0, (stats?.income || 0) - totalExpensesValue),
+    debts: 0,
+    emergencyFund: (stats?.income || 0) * 3,
+    monthlyGoal: (stats?.income || 0) * 0.2,
+  }), [stats?.income, totalExpensesValue]);
+
+  const predictiveMetricsProps = useMemo(() => ({
+    income: stats?.income || 0,
+    expenses: totalExpensesValue,
+    students: stats?.students || 0,
+    tasks: memoizedTaskStats.totalTasks,
+    completedTasks: memoizedTaskStats.completedTasks,
+  }), [stats?.income, totalExpensesValue, stats?.students, memoizedTaskStats]);
 
   if (isLoading) {
     return (
@@ -364,8 +405,7 @@ export default function Dashboard() {
     );
   }
 
-  const lucroLiquidoValue = stats ? stats.income - stats.personalExpenses - stats.companyExpenses : 0;
-  const totalExpensesValue = stats ? stats.personalExpenses + stats.companyExpenses : 0;
+  const lucroLiquidoValue = lucroLiquido; // ✅ Reutiliza valor já calculado
 
   return (
     <div className="p-4 md:p-6 lg:p-8">
@@ -375,9 +415,10 @@ export default function Dashboard() {
         <ReactiveMetricsBar />
         
         {/* FUTURISTIC 2050: Hero com visual cyberpunk */}
+        {/* ✅ P0 FIX: Usando memoizedTaskStats */}
         <FuturisticHero
           pendingTasks={stats?.pendingTasks || 0}
-          completedToday={stats?.tasksData?.filter((t: any) => t.is_completed)?.length || 0}
+          completedToday={memoizedTaskStats.completedTasks}
           pendingPayments={stats?.pendingPayments || 0}
           profit={lucroLiquidoValue}
           students={stats?.students || 0}
@@ -521,14 +562,8 @@ export default function Dashboard() {
         {/* Weekly Insights + Financial Health */}
         <section className="grid gap-6 lg:grid-cols-2 mb-8">
           <WeeklyInsights />
-          <FinancialHealthScore
-            income={stats.income}
-            expenses={stats.personalExpenses + stats.companyExpenses}
-            savings={Math.max(0, stats.income - stats.personalExpenses - stats.companyExpenses)}
-            debts={0}
-            emergencyFund={stats.income * 3}
-            monthlyGoal={stats.income * 0.2}
-          />
+          {/* ✅ P0 FIX: Usando props memoizadas */}
+          <FinancialHealthScore {...financialHealthProps} />
         </section>
 
         {/* Real-time Data */}
@@ -544,13 +579,8 @@ export default function Dashboard() {
         {/* SYNAPSE v14.0 Widgets */}
         <section className="grid gap-6 lg:grid-cols-3 mb-8">
           {/* Financial Insights */}
-          <FinancialInsights
-            totalIncome={stats.income}
-            totalExpenses={stats.personalExpenses + stats.companyExpenses}
-            personalExpenses={stats.personalExpenses}
-            companyExpenses={stats.companyExpenses}
-            pendingPayments={stats.pendingPayments}
-          />
+          {/* ✅ P0 FIX: Usando props memoizadas */}
+          <FinancialInsights {...financialInsightsProps} />
           
           {/* Quiz/LMS Widget */}
           <QuizListWidget />
@@ -821,13 +851,8 @@ export default function Dashboard() {
         {/* EMPRESARIAL 2.0 - Widgets Avançados */}
         <section className="grid gap-4 lg:grid-cols-3 mb-8">
           <CriticalAlertsWidget />
-          <PredictiveMetricsWidget
-            income={stats.income}
-            expenses={totalExpensesValue}
-            students={stats.students}
-            tasks={stats.tasksData?.length || 0}
-            completedTasks={stats.tasksData?.filter((t: any) => t.is_completed)?.length || 0}
-          />
+          {/* ✅ P0 FIX: Usando props memoizadas */}
+          <PredictiveMetricsWidget {...predictiveMetricsProps} />
           <SmartAutomationsWidget />
         </section>
 
