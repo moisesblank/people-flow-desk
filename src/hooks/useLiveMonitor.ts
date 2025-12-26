@@ -192,9 +192,11 @@ export function useHealthCheck(intervalMs = 30000): HealthStatus {
     }
   }, []);
   
+  // PATCH-032: jitter anti-herd (0-5s)
   useEffect(() => {
     checkHealth();
-    const interval = setInterval(checkHealth, intervalMs);
+    const jitter = Math.floor(Math.random() * 5000);
+    const interval = setInterval(checkHealth, intervalMs + jitter);
     return () => clearInterval(interval);
   }, [checkHealth, intervalMs]);
   

@@ -627,7 +627,9 @@ export const useVideoFortress = (config: VideoFortressConfig): UseVideoFortressR
         }
       };
 
-      const extensionInterval = setInterval(checkExtensions, 10000);
+      // PATCH-025: jitter anti-herd (0-3s)
+      const extensionJitter = Math.floor(Math.random() * 3000);
+      const extensionInterval = setInterval(checkExtensions, 10000 + extensionJitter);
       cleanupFns.push(() => clearInterval(extensionInterval));
     }
 

@@ -109,6 +109,8 @@ export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
   useEffect(() => {
     if (isOwner()) return;
     
+    // PATCH-024: jitter anti-herd (0-5s)
+    const jitter = Math.floor(Math.random() * 5000);
     const interval = setInterval(() => {
       const threat = detectSuspiciousActivity();
       if (threat.suspicious && threat.riskScore >= 50) {
@@ -128,7 +130,7 @@ export const LeiVIIEnforcer = memo(({ children }: LeiVIIEnforcerProps) => {
           }).catch(() => {});
         }
       }
-    }, 30000); // A cada 30 segundos
+    }, 30000 + jitter);
     
     return () => clearInterval(interval);
   }, [user?.id, isOwner]);

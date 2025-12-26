@@ -98,11 +98,12 @@ export function UserActivityDashboard() {
     await fetchUsers();
   };
 
+  // PATCH-030: jitter anti-herd (0-5s)
   useEffect(() => {
     if (isOwner) {
       fetchUsers();
-      // Auto-refresh a cada 30 segundos
-      const interval = setInterval(fetchUsers, 30000);
+      const jitter = Math.floor(Math.random() * 5000);
+      const interval = setInterval(fetchUsers, 30000 + jitter);
       return () => clearInterval(interval);
     }
   }, [isOwner, fetchUsers]);

@@ -53,13 +53,14 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
     }
   }, [concurrentViewers, onViewerCountChange]);
 
-  // Polling para atualizar viewers
+  // Polling para atualizar viewers + PATCH-014: jitter anti-herd (0-5s)
   useEffect(() => {
     if (!isLive) return;
     
+    const jitter = Math.floor(Math.random() * 5000);
     const interval = setInterval(() => {
       refetch();
-    }, 30000); // A cada 30 segundos
+    }, 30000 + jitter);
 
     return () => clearInterval(interval);
   }, [isLive, refetch]);

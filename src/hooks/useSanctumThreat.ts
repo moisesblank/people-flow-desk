@@ -73,7 +73,9 @@ export function useSanctumThreat(): UseSanctumThreatReturn {
     };
 
     checkStatus();
-    const interval = setInterval(checkStatus, 10000); // Checar a cada 10s
+    // PATCH-023: jitter anti-herd (0-3s)
+    const jitter = Math.floor(Math.random() * 3000);
+    const interval = setInterval(checkStatus, 10000 + jitter);
     
     return () => clearInterval(interval);
   }, [state]);

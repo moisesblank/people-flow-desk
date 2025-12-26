@@ -229,7 +229,9 @@ export function useIAStatus(iaName: string) {
     };
 
     fetchStatus();
-    const interval = setInterval(fetchStatus, 30000);
+    // PATCH-029: jitter anti-herd (0-5s)
+    const jitter = Math.floor(Math.random() * 5000);
+    const interval = setInterval(fetchStatus, 30000 + jitter);
     return () => clearInterval(interval);
   }, [iaName]);
 

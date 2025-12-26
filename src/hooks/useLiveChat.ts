@@ -633,10 +633,11 @@ export function useLiveChat({ liveId, maxMessages = 100 }: UseLiveChatOptions) {
     };
   }, [connectToRealtime]);
 
-  // Verificar ban/timeout periodicamente
+  // Verificar ban/timeout periodicamente + PATCH-018: jitter anti-herd (0-5s)
   useEffect(() => {
     if (user && liveId) {
-      banCheckTimer.current = setInterval(checkUserBanStatus, BAN_CHECK_INTERVAL);
+      const jitter = Math.floor(Math.random() * 5000);
+      banCheckTimer.current = setInterval(checkUserBanStatus, BAN_CHECK_INTERVAL + jitter);
     }
     
     return () => {

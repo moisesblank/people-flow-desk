@@ -32,10 +32,12 @@ export function useReactiveData() {
 
     // Refresh para dados externos a cada 30s (otimizado para 3G)
     // 🏛️ LEI I: Reduzido de 10s para 30s para economizar requisições
+    // PATCH-015: jitter anti-herd (0-5s)
+    const jitter = Math.floor(Math.random() * 5000);
     const externalInterval = setInterval(() => {
       // Sem console.log em produção
       fetchFromDB();
-    }, 30000);
+    }, 30000 + jitter);
 
     return () => {
       unsubscribe();

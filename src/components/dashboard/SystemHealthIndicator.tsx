@@ -61,9 +61,11 @@ export function SystemHealthIndicator() {
     }
   };
 
+  // PATCH-016: jitter anti-herd (0-10s)
   useEffect(() => {
     checkHealth();
-    const interval = setInterval(checkHealth, 60000); // Check every minute
+    const jitter = Math.floor(Math.random() * 10000);
+    const interval = setInterval(checkHealth, 60000 + jitter);
     return () => clearInterval(interval);
   }, []);
 
