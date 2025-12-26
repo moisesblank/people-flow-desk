@@ -133,6 +133,47 @@ jobs:
           extra_args: --only-verified
 
   # ============================================
+  # OWASP ZAP - Dynamic Application Security Testing (DAST)
+  # FASE 3 LEI III: Scanner de vulnerabilidades em runtime
+  # ============================================
+  owasp-zap-scan:
+    name: 🕷️ OWASP ZAP DAST Scan
+    runs-on: ubuntu-latest
+    # Rodar apenas em schedule ou manualmente para não atrasar PRs
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    steps:
+      - name: Checkout código
+        uses: actions/checkout@v4
+
+      - name: 🕷️ OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@v0.12.0
+        with:
+          target: 'https://pro.moisesmedeiros.com.br'
+          rules_file_name: '.zap/rules.tsv'
+          cmd_options: '-a -j -l WARN'
+          allow_issue_writing: false
+        continue-on-error: true
+
+      - name: 🕷️ OWASP ZAP API Scan (Supabase Functions)
+        uses: zaproxy/action-api-scan@v0.7.0
+        with:
+          target: 'https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/'
+          format: openapi
+          cmd_options: '-a -j -l WARN'
+          allow_issue_writing: false
+        continue-on-error: true
+
+      - name: Upload ZAP Report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: owasp-zap-report
+          path: |
+            report_html.html
+            report_json.json
+          retention-days: 30
+
+  # ============================================
   # NOTIFICAÇÃO DE RESULTADOS
   # ============================================
   notify-results:
