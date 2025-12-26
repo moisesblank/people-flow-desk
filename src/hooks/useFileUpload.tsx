@@ -20,14 +20,23 @@ interface UploadedFile {
 // Security: Default signed URL expiration (1 hour in seconds)
 const DEFAULT_URL_EXPIRATION = 3600;
 
-// Limite de 2GB em bytes
-const MAX_FILE_SIZE_BYTES = 2 * 1024 * 1024 * 1024;
+// SECURITY: Limites seguros por tipo de bucket (em bytes)
+const UPLOAD_LIMITS = {
+  default: 25 * 1024 * 1024,      // 25MB - padrão seguro
+  images: 10 * 1024 * 1024,        // 10MB - imagens
+  documents: 50 * 1024 * 1024,     // 50MB - documentos
+  videos: 100 * 1024 * 1024,       // 100MB - vídeos (máximo absoluto)
+  avatars: 2 * 1024 * 1024,        // 2MB - avatares
+} as const;
+
+// Limite máximo absoluto - NUNCA exceder
+const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024; // 100MB
 
 export function useFileUpload(options: UploadOptions = {}) {
   const {
     bucket = 'arquivos',
     folder = '',
-    maxSize = 2048, // 2GB em MB por padrão
+    maxSize = 25, // 25MB por padrão (REDUZIDO de 2GB)
     allowedTypes = [] // Vazio = aceita QUALQUER tipo de arquivo
   } = options;
 
@@ -50,16 +59,20 @@ export function useFileUpload(options: UploadOptions = {}) {
   };
 
   const uploadFile = async (file: File): Promise<UploadedFile | null> => {
-    // Validar tamanho - máximo 2GB
+    // SECURITY: Validar tamanho com limites seguros
     const maxSizeBytes = Math.min(maxSize * 1024 * 1024, MAX_FILE_SIZE_BYTES);
+    const sizeMB = Math.round(maxSizeBytes / (1024 * 1024));
+    
     if (file.size > maxSizeBytes) {
-      toast.error(`Arquivo muito grande. Máximo: 2GB`);
+      toast.error(`Arquivo muito grande. Máximo: ${sizeMB}MB`);
+      console.warn(`[SECURITY] Upload bloqueado: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)}MB > ${sizeMB}MB)`);
       return null;
     }
 
-    // Aceita QUALQUER tipo de arquivo se allowedTypes estiver vazio
+    // SECURITY: Validar tipos permitidos
     if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
       toast.error('Tipo de arquivo não permitido');
+      console.warn(`[SECURITY] Tipo bloqueado: ${file.type} para ${file.name}`);
       return null;
     }
 
