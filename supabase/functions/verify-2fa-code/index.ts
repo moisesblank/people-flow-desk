@@ -8,8 +8,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
+// LEI VI: CORS seguro - domínio específico
 const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
