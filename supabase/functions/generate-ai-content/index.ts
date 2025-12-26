@@ -10,11 +10,6 @@ import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 // Prompts especializados para cada tipo de conteúdo
 const PROMPTS: Record<string, string> = {
   summary: `Você é um professor especialista em Química para ENEM. Crie um resumo estruturado e didático do seguinte conteúdo de aula. Use títulos, subtítulos e listas quando apropriado. O resumo deve ser completo mas conciso, focando nos pontos mais cobrados em vestibulares.`,
@@ -179,8 +174,11 @@ const TOOL_CHOICES: Record<string, { type: string; function: { name: string } }>
 type ContentType = 'summary' | 'flashcards' | 'quiz' | 'mindmap' | 'explanation' | 'exercises';
 
 serve(async (req) => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   const startTime = Date.now();

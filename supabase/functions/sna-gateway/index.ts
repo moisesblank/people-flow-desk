@@ -13,11 +13,6 @@ import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type, x-correlation-id, x-idempotency-key',
-};
-
 const LOVABLE_AI_URL = 'https://ai.gateway.lovable.dev/v1/chat/completions';
 const PERPLEXITY_URL = 'https://api.perplexity.ai/chat/completions';
 
@@ -116,7 +111,7 @@ const RATE_LIMITS: Record<string, number> = {
 // FUNÇÕES AUXILIARES
 // ============================================================
 
-function errorResponse(status: number, code: string, message: string, correlationId: string) {
+function errorResponse(status: number, code: string, message: string, correlationId: string, corsHeaders: Record<string, string>) {
   return new Response(JSON.stringify({
     error: code,
     message,
@@ -202,8 +197,11 @@ function estimateTokens(text: string): number {
 // ============================================================
 
 serve(async (req) => {
+  // LEI VI: CORS dinâmico via allowlist centralizado
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   const startTime = Date.now();
@@ -258,7 +256,7 @@ serve(async (req) => {
     if (!userId) {
       const apiKey = req.headers.get('apikey');
       if (apiKey !== Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
-        return errorResponse(401, 'AUTH_REQUIRED', 'Autenticação necessária', correlationId);
+        return errorResponse(401, 'AUTH_REQUIRED', 'Autenticação necessária', correlationId, corsHeaders);
       }
       userId = context?.user_id || 'system';
       userRole = 'system';
@@ -276,7 +274,7 @@ serve(async (req) => {
 
     if (flagResult && !flagResult.enabled && flagResult.reason !== 'flag_not_found') {
       console.warn(`⚠️ Feature disabled: ${featureKey} - ${flagResult.reason}`);
-      return errorResponse(403, 'FEATURE_DISABLED', `Funcionalidade desabilitada: ${flagResult.reason}`, correlationId);
+      return errorResponse(403, 'FEATURE_DISABLED', `Funcionalidade desabilitada: ${flagResult.reason}`, correlationId, corsHeaders);
     }
 
     // RATE LIMIT CHECK
@@ -322,7 +320,7 @@ serve(async (req) => {
       console.error(`💰 Budget exceeded: ${budgetResult.usage_percentage}%`);
       
       if (budgetResult.action === 'block') {
-        return errorResponse(402, 'BUDGET_EXCEEDED', 'Orçamento de IA excedido', correlationId);
+        return errorResponse(402, 'BUDGET_EXCEEDED', 'Orçamento de IA excedido', correlationId, corsHeaders);
       }
     }
 
@@ -406,14 +404,14 @@ serve(async (req) => {
     // RESOLVER PROVIDER E MODELO
     const mapping = PROVIDER_MODEL_MAP[provider];
     if (!mapping) {
-      return errorResponse(400, 'INVALID_PROVIDER', `Provider inválido: ${provider}`, correlationId);
+      return errorResponse(400, 'INVALID_PROVIDER', `Provider inválido: ${provider}`, correlationId, corsHeaders);
     }
 
     const providerConfig = PROVIDERS[mapping.provider];
     const modelConfig = providerConfig.models[mapping.model];
     
     if (!modelConfig) {
-      return errorResponse(400, 'INVALID_MODEL', `Modelo inválido: ${mapping.model}`, correlationId);
+      return errorResponse(400, 'INVALID_MODEL', `Modelo inválido: ${mapping.model}`, correlationId, corsHeaders);
     }
 
     // CONSTRUIR MENSAGENS
@@ -430,7 +428,7 @@ serve(async (req) => {
     // OBTER API KEY
     const apiKey = getApiKey(mapping.provider);
     if (!apiKey) {
-      return errorResponse(500, 'CONFIG_ERROR', `API key não configurada para ${mapping.provider}`, correlationId);
+      return errorResponse(500, 'CONFIG_ERROR', `API key não configurada para ${mapping.provider}`, correlationId, corsHeaders);
     }
 
     // EXECUTAR CHAMADA COM RETRY E FALLBACK
@@ -485,12 +483,12 @@ serve(async (req) => {
       });
 
       if (response?.status === 429) {
-        return errorResponse(429, 'PROVIDER_RATE_LIMITED', 'Rate limit do provider excedido', correlationId);
+        return errorResponse(429, 'PROVIDER_RATE_LIMITED', 'Rate limit do provider excedido', correlationId, corsHeaders);
       }
       if (response?.status === 402) {
-        return errorResponse(402, 'PROVIDER_CREDITS', 'Créditos do provider esgotados', correlationId);
+        return errorResponse(402, 'PROVIDER_CREDITS', 'Créditos do provider esgotados', correlationId, corsHeaders);
       }
-      return errorResponse(502, 'PROVIDER_ERROR', `Erro em todos os providers: ${lastError?.message}`, correlationId);
+      return errorResponse(502, 'PROVIDER_ERROR', `Erro em todos os providers: ${lastError?.message}`, correlationId, corsHeaders);
     }
 
     // STREAMING RESPONSE
@@ -580,6 +578,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error(`❌ SNA Gateway Error [${correlationId}]:`, error);
-    return errorResponse(500, 'INTERNAL_ERROR', error instanceof Error ? error.message : 'Erro interno', correlationId);
+    return errorResponse(500, 'INTERNAL_ERROR', error instanceof Error ? error.message : 'Erro interno', correlationId, corsHeaders);
   }
 });
