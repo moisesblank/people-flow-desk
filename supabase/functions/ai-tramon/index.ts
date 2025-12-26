@@ -11,8 +11,6 @@ import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/c
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
-
 const ASSESSORES = {
   moises: { nome: "Moisés Medeiros", telefone: "+55 83 98920-0105", email: "moisesblank@gmail.com", cargo: "CEO/Fundador" },
   bruna: { nome: "Bruna", telefone: "+55 83 96354-090", cargo: "Co-gestora" }
@@ -567,8 +565,11 @@ async function coletarDadosSistema(supabase: any) {
 // 🎯 HANDLER PRINCIPAL
 // ========================================
 serve(async (req) => {
+  // LEI VI: CORS dinâmico via allowlist
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   const startTime = Date.now();

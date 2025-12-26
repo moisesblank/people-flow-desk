@@ -1,12 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS seguro - domínio específico
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://gestao.moisesmedeiros.com.br',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 const YOUTUBE_API_KEY = Deno.env.get('YOUTUBE_API_KEY');
 const CHANNEL_ID = 'UCmoises.profquimica'; // Será substituído pelo ID real
 
@@ -19,12 +13,12 @@ interface YouTubeRequest {
 }
 
 const handler = async (req: Request): Promise<Response> => {
-  // CORS seguro via allowlist
+  // LEI VI: CORS dinâmico via allowlist
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
     return handleCorsOptions(req);
   }
-  
-  const secureHeaders = getCorsHeaders(req);
 
   try {
     if (!YOUTUBE_API_KEY) {

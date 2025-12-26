@@ -3,18 +3,15 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS seguro - domínio específico
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'https://gestao.moisesmedeiros.com.br',
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
-};
-
 // Nota: A API oficial do TikTok é muito restrita
 // Esta função salva métricas que podem ser inseridas manualmente
 // ou via scraping externo (Apify, etc.)
 serve(async (req) => {
+  // LEI VI: CORS dinâmico via allowlist
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === 'OPTIONS') {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   try {

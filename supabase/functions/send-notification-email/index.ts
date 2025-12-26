@@ -4,15 +4,6 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// LEI VI: CORS dinâmico via allowlist centralizado
-// Todas as respostas usam getCorsHeaders(req) ou handleCorsOptions(req)
-// Fallback seguro para contextos sem req (cron jobs, chamadas internas)
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "https://pro.moisesmedeiros.com.br",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
-  "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-};
-
 interface EmailRequest {
   to: string;
   subject?: string;
@@ -272,8 +263,11 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
 };
 
 const handler = async (req: Request): Promise<Response> => {
+  // LEI VI: CORS dinâmico via allowlist
+  const corsHeaders = getCorsHeaders(req);
+  
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return handleCorsOptions(req);
   }
 
   try {
