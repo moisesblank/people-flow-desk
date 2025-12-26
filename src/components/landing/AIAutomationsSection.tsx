@@ -4,7 +4,7 @@
 // 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, memo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -62,19 +62,27 @@ const automations = [
   },
 ];
 
-// Visualização de rede neural
-const NeuralNetworkVisualization = ({ activeIndex }: { activeIndex: number }) => {
-  const nodes = 25;
+// 🏛️ CONSTITUTION: Fixed positions (no Math.random in render)
+const NEURAL_NODES = [
+  { left: 10, top: 10 }, { left: 30, top: 10 }, { left: 50, top: 10 }, { left: 70, top: 10 }, { left: 90, top: 10 },
+  { left: 10, top: 30 }, { left: 30, top: 30 }, { left: 50, top: 30 }, { left: 70, top: 30 }, { left: 90, top: 30 },
+  { left: 10, top: 50 }, { left: 30, top: 50 }, { left: 50, top: 50 }, { left: 70, top: 50 }, { left: 90, top: 50 },
+  { left: 10, top: 70 }, { left: 30, top: 70 }, { left: 50, top: 70 }, { left: 70, top: 70 }, { left: 90, top: 70 },
+  { left: 10, top: 90 }, { left: 30, top: 90 }, { left: 50, top: 90 }, { left: 70, top: 90 }, { left: 90, top: 90 },
+];
+
+// 🏛️ CONSTITUTION: Static visualization for 3G
+const NeuralNetworkVisualization = memo(({ activeIndex, shouldAnimate }: { activeIndex: number; shouldAnimate: boolean }) => {
   const activeAutomation = automations[activeIndex];
   
   return (
-    <motion.div
+    <div
       className="relative w-full h-full min-h-[500px] rounded-3xl overflow-hidden"
       style={{
         background: `linear-gradient(135deg, rgba(0,0,0,0.9) 0%, rgba(20,0,30,0.95) 100%)`,
       }}
     >
-      {/* Grid holográfico */}
+      {/* Grid holográfico - STATIC */}
       <div 
         className="absolute inset-0 opacity-20"
         style={{
@@ -86,74 +94,26 @@ const NeuralNetworkVisualization = ({ activeIndex }: { activeIndex: number }) =>
         }}
       />
 
-      {/* Conexões neurais */}
-      <svg className="absolute inset-0 w-full h-full opacity-30">
-        {[...Array(30)].map((_, i) => {
-          const x1 = Math.random() * 100;
-          const y1 = Math.random() * 100;
-          const x2 = Math.random() * 100;
-          const y2 = Math.random() * 100;
-          return (
-            <motion.line
-              key={i}
-              x1={`${x1}%`}
-              y1={`${y1}%`}
-              x2={`${x2}%`}
-              y2={`${y2}%`}
-              stroke={`url(#neural-gradient-${activeIndex})`}
-              strokeWidth="1"
-              initial={{ pathLength: 0, opacity: 0 }}
-              animate={{ pathLength: 1, opacity: [0, 0.5, 0] }}
-              transition={{
-                duration: 3,
-                delay: i * 0.1,
-                repeat: Infinity,
-                repeatDelay: 2,
-              }}
-            />
-          );
-        })}
-        <defs>
-          <linearGradient id={`neural-gradient-${activeIndex}`} x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor={activeAutomation.glow.replace('0.5', '1')} />
-            <stop offset="100%" stopColor="#7c3aed" />
-          </linearGradient>
-        </defs>
-      </svg>
-      
-      {/* Nós da rede */}
-      {[...Array(nodes)].map((_, i) => (
-        <motion.div
+      {/* Neural nodes - STATIC dots on 3G */}
+      {NEURAL_NODES.slice(0, 12).map((pos, i) => (
+        <div
           key={i}
           className="absolute w-3 h-3 rounded-full"
           style={{
-            left: `${10 + (i % 5) * 20}%`,
-            top: `${10 + Math.floor(i / 5) * 20}%`,
+            left: `${pos.left}%`,
+            top: `${pos.top}%`,
             background: `radial-gradient(circle, ${activeAutomation.glow.replace('0.5', '0.8')} 0%, transparent 70%)`,
             boxShadow: `0 0 20px ${activeAutomation.glow}`,
-          }}
-          animate={{
-            scale: [1, 1.5, 1],
-            opacity: [0.3, 0.8, 0.3],
-          }}
-          transition={{
-            duration: 2 + Math.random() * 2,
-            repeat: Infinity,
-            delay: Math.random() * 2,
           }}
         />
       ))}
 
-      {/* Central orb - ícone principal */}
+      {/* Central orb - STATIC icon */}
       <div className="absolute inset-0 flex items-center justify-center">
-        <motion.div
-          className="relative"
-          animate={{ scale: [1, 1.05, 1] }}
-          transition={{ duration: 3, repeat: Infinity }}
-        >
-          {/* Anéis orbitais */}
+        <div className="relative">
+          {/* Static rings */}
           {[1, 2, 3].map((ring) => (
-            <motion.div
+            <div
               key={ring}
               className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border-2"
               style={{
@@ -161,35 +121,19 @@ const NeuralNetworkVisualization = ({ activeIndex }: { activeIndex: number }) =>
                 height: 100 + ring * 50,
                 borderColor: activeAutomation.glow.replace('0.5', `${0.3 - ring * 0.08}`),
               }}
-              animate={{
-                rotate: ring % 2 === 0 ? 360 : -360,
-              }}
-              transition={{
-                duration: 8 + ring * 3,
-                repeat: Infinity,
-                ease: "linear",
-              }}
             />
           ))}
 
-          {/* Ícone central */}
-          <motion.div
+          {/* Central icon */}
+          <div
             className={`relative w-28 h-28 rounded-full bg-gradient-to-br ${activeAutomation.gradient} flex items-center justify-center`}
             style={{
               boxShadow: `0 0 60px ${activeAutomation.glow}, 0 0 120px ${activeAutomation.glow}`,
             }}
-            animate={{
-              boxShadow: [
-                `0 0 60px ${activeAutomation.glow}, 0 0 120px ${activeAutomation.glow}`,
-                `0 0 100px ${activeAutomation.glow}, 0 0 180px ${activeAutomation.glow}`,
-                `0 0 60px ${activeAutomation.glow}, 0 0 120px ${activeAutomation.glow}`,
-              ],
-            }}
-            transition={{ duration: 2, repeat: Infinity }}
           >
             <activeAutomation.icon className="w-14 h-14 text-white" />
-          </motion.div>
-        </motion.div>
+          </div>
+        </div>
       </div>
 
       {/* Info overlay */}
@@ -219,33 +163,11 @@ const NeuralNetworkVisualization = ({ activeIndex }: { activeIndex: number }) =>
           </div>
         </div>
       </motion.div>
-
-      {/* Partículas flutuantes */}
-      {[...Array(30)].map((_, i) => (
-        <motion.div
-          key={`particle-${i}`}
-          className="absolute w-1 h-1 rounded-full"
-          style={{
-            left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            background: activeAutomation.glow,
-            boxShadow: `0 0 10px ${activeAutomation.glow}`,
-          }}
-          animate={{
-            y: [0, -40, 0],
-            opacity: [0.2, 0.8, 0.2],
-            scale: [1, 2, 1],
-          }}
-          transition={{
-            duration: 3 + Math.random() * 2,
-            repeat: Infinity,
-            delay: Math.random() * 3,
-          }}
-        />
-      ))}
-    </motion.div>
+    </div>
   );
-};
+});
+
+NeuralNetworkVisualization.displayName = "NeuralNetworkVisualization";
 
 const AutomationCard = ({ 
   automation, 
@@ -338,17 +260,18 @@ const AutomationCard = ({
   );
 };
 
-export const AIAutomationsSection = () => {
+export const AIAutomationsSection = memo(() => {
   const [activeIndex, setActiveIndex] = useState(0);
   const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
 
-  // Auto-rotate
+  // Auto-rotate - DISABLED on 3G (saves CPU)
   useEffect(() => {
+    if (!shouldAnimate) return;
     const timer = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % automations.length);
     }, 8000);
     return () => clearInterval(timer);
-  }, []);
+  }, [shouldAnimate]);
 
   return (
     <section id="metodo" className="relative py-32 overflow-hidden">
@@ -376,12 +299,7 @@ export const AIAutomationsSection = () => {
             viewport={{ once: true }}
             className="inline-flex items-center gap-3 px-6 py-3 rounded-full bg-purple-900/30 border border-purple-700/40 mb-8"
           >
-            <motion.div
-              animate={shouldAnimate ? { rotate: 360 } : undefined}
-              transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-            >
-              <Cpu className="w-5 h-5 text-purple-400" />
-            </motion.div>
+            <Cpu className="w-5 h-5 text-purple-400" />
             <span className="text-sm font-bold text-purple-400 tracking-wide">TECNOLOGIA DO ANO 2500</span>
           </motion.div>
 
@@ -424,7 +342,7 @@ export const AIAutomationsSection = () => {
             viewport={{ once: true }}
             className="sticky top-24"
           >
-            <NeuralNetworkVisualization activeIndex={activeIndex} />
+            <NeuralNetworkVisualization activeIndex={activeIndex} shouldAnimate={shouldAnimate} />
           </motion.div>
         </div>
 
@@ -451,4 +369,6 @@ export const AIAutomationsSection = () => {
       </div>
     </section>
   );
-};
+});
+
+AIAutomationsSection.displayName = "AIAutomationsSection";
