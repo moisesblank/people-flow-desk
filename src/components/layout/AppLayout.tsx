@@ -66,6 +66,7 @@ const AppHeader = memo(({
   isGodMode,
   signOut,
   navigate,
+  appVersion,
 }: any) => {
   const getInitials = useCallback((name: string) => {
     return name.split(" ").slice(0, 2).map((n) => n[0]).join("").toUpperCase();
@@ -107,7 +108,12 @@ const AppHeader = memo(({
             <RefreshCw className={`h-4 w-4 ${isCacheClearing ? 'animate-spin text-primary' : ''}`} />
           </Button>
         </TooltipTrigger>
-        <TooltipContent>Limpar Cache</TooltipContent>
+        <TooltipContent>
+          <div className="text-center">
+            <p className="font-medium">Limpar Cache</p>
+            <p className="text-xs text-muted-foreground">v{appVersion}</p>
+          </div>
+        </TooltipContent>
       </Tooltip>
       
       <Tooltip>
@@ -190,7 +196,7 @@ export const AppLayout = memo(function AppLayout({ children }: AppLayoutProps) {
   const [isCacheClearing, setIsCacheClearing] = useState(false);
   const { user, signOut } = useAuth();
   const { roleLabel, roleColor, isGodMode } = useRolePermissions();
-  const { clearAllCache, forceRefresh } = useCacheManager();
+  const { clearAllCache, forceRefresh, appVersion } = useCacheManager();
   const navigate = useNavigate();
 
   const handleClearCache = useCallback(async () => {
@@ -253,6 +259,7 @@ export const AppLayout = memo(function AppLayout({ children }: AppLayoutProps) {
             isGodMode={isGodMode}
             signOut={signOut}
             navigate={navigate}
+            appVersion={appVersion}
           />
           <MainContent>{children}</MainContent>
         </SidebarInset>
