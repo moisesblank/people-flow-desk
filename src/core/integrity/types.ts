@@ -180,7 +180,12 @@ export const DEFAULT_AUDIT_CONFIG: AuditConfig = {
 // ============================================
 // OWNER E PERMISSÕES ESPECIAIS
 // ============================================
-export const OWNER_EMAIL = 'moisesblank@gmail.com';
+/**
+ * @deprecated OWNER_EMAIL - Apenas para auditoria/logs
+ * ⚠️ NUNCA usar para controle de acesso!
+ * Fonte da verdade: user_roles.role = 'owner'
+ */
+export const OWNER_EMAIL = 'moisesblank@gmail.com'; // Legacy: apenas audit
 export const IMMUNE_ROLES = ['owner'] as const;
-export const GESTAO_ROLES = ['owner', 'admin', 'funcionario', 'coordenacao', 'contabilidade', 'suporte', 'monitoria', 'marketing', 'professor'] as const;
+export const GESTAO_ROLES = ['owner', 'admin', 'employee', 'coordenacao', 'contabilidade', 'suporte', 'monitoria', 'marketing'] as const;
 export const BETA_ROLES = ['owner', 'admin', 'beta'] as const;
