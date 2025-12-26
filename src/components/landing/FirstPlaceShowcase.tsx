@@ -37,36 +37,33 @@ const champions = [
   },
 ];
 
-// Partículas flutuantes - APENAS se animações habilitadas
-// 🛡️ LEI I: Reduzido de 30 para 10 partículas + GPU-only
+// 🏛️ CONSTITUTION: Fixed positions (no Math.random) + STATIC on 3G
+const PARTICLE_POSITIONS = [
+  { left: 10, top: 10 }, { left: 25, top: 20 }, { left: 40, top: 15 },
+  { left: 55, top: 25 }, { left: 70, top: 12 }, { left: 85, top: 22 },
+  { left: 15, top: 45 }, { left: 35, top: 55 }, { left: 60, top: 48 },
+  { left: 80, top: 52 },
+];
+
 const FloatingParticles = memo(() => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(10)].map((_, i) => (
-      <motion.div
+    {PARTICLE_POSITIONS.map((pos, i) => (
+      <div
         key={i}
-        className="absolute will-change-transform"
+        className="absolute"
         style={{
-          left: `${10 + (i * 8)}%`,
-          top: `${10 + (i * 8)}%`,
-        }}
-        animate={{
-          y: [0, -20, 0],
-          opacity: [0.3, 0.8, 0.3],
-        }}
-        transition={{
-          duration: 5 + i,
-          repeat: Infinity,
-          ease: "easeInOut",
+          left: `${pos.left}%`,
+          top: `${pos.top}%`,
         }}
       >
         {i % 3 === 0 ? (
-          <Star className="w-3 h-3 text-amber-400" />
+          <Star className="w-3 h-3 text-amber-400 opacity-60" />
         ) : i % 3 === 1 ? (
-          <Sparkles className="w-2 h-2 text-pink-400" />
+          <Sparkles className="w-2 h-2 text-pink-400 opacity-50" />
         ) : (
-          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-amber-400 to-pink-500" />
+          <div className="w-2 h-2 rounded-full bg-gradient-to-r from-amber-400/50 to-pink-500/50" />
         )}
-      </motion.div>
+      </div>
     ))}
   </div>
 ));
@@ -101,40 +98,19 @@ const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0];
 
     {/* Card principal */}
     <div className="relative bg-gradient-to-br from-black/80 via-slate-900/90 to-black/80 rounded-3xl border-2 border-amber-500/30 overflow-hidden backdrop-blur-xl p-1">
-      {/* Borda gradiente - animada APENAS se shouldAnimate */}
-      {shouldAnimate ? (
-        <motion.div
-          className="absolute inset-0 rounded-3xl"
-          style={{
-            background: `conic-gradient(from 0deg, ${index === 0 ? '#f59e0b, #ef4444, #f59e0b' : '#ec4899, #8b5cf6, #ec4899'})`,
-            padding: '2px',
-          }}
-          animate={{ rotate: 360 }}
-          transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
-        />
-      ) : (
-        <div
-          className="absolute inset-0 rounded-3xl"
-          style={{
-            background: `conic-gradient(from 0deg, ${index === 0 ? '#f59e0b, #ef4444, #f59e0b' : '#ec4899, #8b5cf6, #ec4899'})`,
-            padding: '2px',
-          }}
-        />
-      )}
+      {/* Borda gradiente - STATIC (remove rotate animation) */}
+      <div
+        className="absolute inset-0 rounded-3xl"
+        style={{
+          background: `conic-gradient(from 0deg, ${index === 0 ? '#f59e0b, #ef4444, #f59e0b' : '#ec4899, #8b5cf6, #ec4899'})`,
+          padding: '2px',
+        }}
+      />
 
       <div className="relative bg-gradient-to-br from-black via-slate-900 to-black rounded-3xl overflow-hidden">
-        {/* Coroa - animada APENAS se shouldAnimate */}
+        {/* Coroa - STATIC (remove animation) */}
         <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20">
-          {shouldAnimate ? (
-            <motion.div
-              animate={{ y: [0, -5, 0], rotateZ: [-5, 5, -5] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            >
-              <Crown className="w-16 h-16 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]" fill="rgba(251,191,36,0.3)" />
-            </motion.div>
-          ) : (
-            <Crown className="w-16 h-16 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]" fill="rgba(251,191,36,0.3)" />
-          )}
+          <Crown className="w-16 h-16 text-amber-400 drop-shadow-[0_0_30px_rgba(251,191,36,0.8)]" fill="rgba(251,191,36,0.3)" />
         </div>
 
         {/* Badge 1º Lugar */}
@@ -221,29 +197,6 @@ const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0];
         </div>
       </div>
     </div>
-
-    {/* Estrelas ao redor - APENAS se animações habilitadas */}
-    {shouldAnimate && [...Array(5)].map((_, i) => (
-      <motion.div
-        key={i}
-        className="absolute will-change-transform"
-        style={{
-          left: `${20 + i * 12}%`,
-          top: `${10 + i * 15}%`,
-        }}
-        animate={{
-          scale: [0, 1, 0],
-          opacity: [0, 1, 0],
-        }}
-        transition={{
-          duration: 2,
-          repeat: Infinity,
-          delay: i * 0.4,
-        }}
-      >
-        <Star className="w-4 h-4 text-amber-400" fill="rgba(251,191,36,0.5)" />
-      </motion.div>
-    ))}
   </motion.div>
   );
 });
