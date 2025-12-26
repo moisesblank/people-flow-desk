@@ -1,7 +1,7 @@
 // ============================================
-// 🛡️ P1.1 FIX: ENDPOINT LEGADO DESATIVADO
-// Use hotmart-fast ou webhook-handler
-// Status: 410 Gone
+// 🚨 WEBHOOK-RECEIVER → DEPRECADO → 410 GONE
+// FASE 2 LEI VI: Endpoint único = webhook-handler
+// Use: /functions/v1/webhook-handler
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
@@ -16,18 +16,28 @@ serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  console.log('[webhook-receiver] ⚠️ ENDPOINT LEGADO - Retornando 410 Gone');
+  console.log('[webhook-receiver] 🚨 DEPRECATED - Endpoint desativado. Use webhook-handler.');
   
   return new Response(
     JSON.stringify({
-      error: 'Endpoint desativado',
-      message: 'Este endpoint foi descontinuado. Use hotmart-fast ou webhook-handler.',
-      migration: 'Configure seu webhook para apontar para /functions/v1/hotmart-fast',
-      status: 'gone'
+      error: 'Este endpoint foi descontinuado',
+      code: 'ENDPOINT_DEPRECATED',
+      message: 'Por favor, atualize sua integração para usar o endpoint único: /functions/v1/webhook-handler',
+      migration: {
+        old_endpoint: '/functions/v1/webhook-receiver',
+        new_endpoint: '/functions/v1/webhook-handler',
+        documentation: 'https://docs.moisesmedeiros.com.br/webhooks'
+      },
+      timestamp: new Date().toISOString()
     }),
     { 
-      status: 410, 
-      headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      status: 410,
+      headers: { 
+        ...corsHeaders, 
+        'Content-Type': 'application/json',
+        'X-Deprecated-Since': '2025-12-25',
+        'X-Migration-Target': '/functions/v1/webhook-handler'
+      } 
     }
   );
 });
