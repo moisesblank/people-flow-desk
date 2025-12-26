@@ -9,6 +9,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
+import { VirtualListSimple } from "@/components/performance/VirtualTable";
 
 interface AuditEntry {
   id: string;
@@ -334,8 +335,12 @@ export default function AuditoriaAcessos() {
         </CardHeader>
         <CardContent>
           <ScrollArea className="h-[300px]">
-            <div className="space-y-2">
-              {auditLogs.map((log) => (
+            <VirtualListSimple
+              items={auditLogs}
+              itemHeight={64}
+              containerHeight={280}
+              emptyMessage="Nenhum log de auditoria encontrado"
+              renderItem={(log) => (
                 <div
                   key={log.id}
                   className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
@@ -357,8 +362,8 @@ export default function AuditoriaAcessos() {
                     {new Date(log.data_deteccao).toLocaleDateString("pt-BR")}
                   </Badge>
                 </div>
-              ))}
-            </div>
+              )}
+            />
           </ScrollArea>
         </CardContent>
       </Card>
