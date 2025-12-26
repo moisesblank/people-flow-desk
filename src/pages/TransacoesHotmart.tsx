@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
 import { 
   CreditCard, 
@@ -18,7 +18,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -27,6 +26,7 @@ import { useToast } from "@/hooks/use-toast";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { VirtualTable, VIRTUALIZATION_CONFIG } from "@/components/performance/VirtualTable";
 
 interface Transacao {
   id: string;
@@ -306,33 +306,41 @@ export default function TransacoesHotmart() {
         </CardContent>
       </Card>
 
-      {/* Transactions Table */}
+      {/* Transactions Table - P2 FIX: VirtualTable para listas > 40 */}
       <Card>
         <CardHeader>
           <CardTitle>📊 Lista de Transações ({filteredTransacoes.length})</CardTitle>
         </CardHeader>
         <CardContent>
-          <ScrollArea className="h-[600px]">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>ID Transação</TableHead>
-                  <TableHead>Comprador</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Valor</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Afiliado</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredTransacoes.map((transacao) => (
-                  <TableRow key={transacao.id}>
-                    <TableCell className="whitespace-nowrap">
+          <VirtualTable
+            items={filteredTransacoes}
+            rowHeight={72}
+            containerHeight={600}
+            emptyMessage="Nenhuma transação encontrada"
+            renderHeader={() => (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[100px]">Data</TableHead>
+                    <TableHead className="w-[120px]">ID Transação</TableHead>
+                    <TableHead>Comprador</TableHead>
+                    <TableHead>Produto</TableHead>
+                    <TableHead className="w-[100px]">Valor</TableHead>
+                    <TableHead className="w-[100px]">Status</TableHead>
+                    <TableHead>Afiliado</TableHead>
+                    <TableHead className="text-right w-[80px]">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+              </Table>
+            )}
+            renderRow={(transacao) => (
+              <Table key={transacao.id}>
+                <TableBody>
+                  <TableRow>
+                    <TableCell className="whitespace-nowrap w-[100px]">
                       {formatDate(transacao.data_compra || transacao.created_at)}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
+                    <TableCell className="font-mono text-xs w-[120px]">
                       {transacao.transaction_id?.slice(0, 12)}...
                     </TableCell>
                     <TableCell>
@@ -344,16 +352,16 @@ export default function TransacoesHotmart() {
                     <TableCell className="max-w-[150px] truncate">
                       {transacao.product_name || "Curso"}
                     </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell className="font-medium w-[100px]">
                       {formatCurrency(transacao.valor_bruto)}
                     </TableCell>
-                    <TableCell>
+                    <TableCell className="w-[100px]">
                       {getStatusBadge(transacao.status)}
                     </TableCell>
                     <TableCell className="text-sm text-muted-foreground">
                       {transacao.affiliate_name || "-"}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right w-[80px]">
                       <Dialog>
                         <DialogTrigger asChild>
                           <Button
@@ -430,10 +438,10 @@ export default function TransacoesHotmart() {
                       </Dialog>
                     </TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </ScrollArea>
+                </TableBody>
+              </Table>
+            )}
+          />
         </CardContent>
       </Card>
     </div>
