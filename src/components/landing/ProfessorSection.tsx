@@ -78,10 +78,12 @@ export const ProfessorSection = () => {
               {/* Galeria de imagens - aspect ratio reduzido */}
               <div className="aspect-[4/4] relative">
                 {professorImages.map((img, idx) => (
-                  <motion.img 
+                  <img 
                     key={idx}
                     src={img} 
                     alt={`Prof. Moisés Medeiros - Foto ${idx + 1}`} 
+                    loading="lazy"
+                    decoding="async"
                     className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
                   />
                 ))}
@@ -120,36 +122,25 @@ export const ProfessorSection = () => {
                 {/* Overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent pointer-events-none" />
                 
-                {/* Badge TOP 1 */}
-                <motion.div
-                  className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg"
-                  animate={{ scale: [1, 1.05, 1] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                >
+                {/* Badge TOP 1 - sem animação */}
+                <div className="absolute top-3 right-3 px-3 py-1.5 rounded-full bg-gradient-to-r from-pink-500 to-purple-500 text-white text-xs font-bold flex items-center gap-1.5 shadow-lg">
                   <Star className="w-3 h-3" fill="white" />
                   TOP 1 ENEM
-                </motion.div>
+                </div>
               </div>
 
               {/* Card info compacto */}
               <div className="p-4 bg-gradient-to-b from-black to-slate-950">
                 <div className="flex items-center gap-3">
-                  {/* Logo */}
-                  <motion.div
-                    className="relative flex-shrink-0"
-                    animate={{ 
-                      boxShadow: ['0 0 15px rgba(236,72,153,0.3)', '0 0 25px rgba(236,72,153,0.5)', '0 0 15px rgba(236,72,153,0.3)']
-                    }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
-                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center">
-                      {/* 🚀 OTIMIZAÇÃO: width/height explícitos */}
+                  {/* Logo - sem animação */}
+                  <div className="relative flex-shrink-0">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-red-600 to-pink-600 flex items-center justify-center shadow-lg shadow-pink-500/30">
                       <img src={logoMoises} alt="Logo" width={36} height={36} className="w-9 h-9 object-contain" loading="lazy" decoding="async" />
                     </div>
                     <div className="absolute -top-1 -right-1 w-4 h-4 bg-green-500 rounded-full flex items-center justify-center border border-black">
                       <CheckCircle2 className="w-2.5 h-2.5 text-white" />
                     </div>
-                  </motion.div>
+                  </div>
                   
                   {/* Info */}
                   <div className="flex-1 min-w-0">
@@ -168,24 +159,16 @@ export const ProfessorSection = () => {
                   </div>
                 </div>
                 
-                {/* Badges inline */}
+                {/* Badges inline - sem animação */}
                 <div className="flex gap-2 mt-3">
-                  <motion.div
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white text-[10px] font-bold"
-                    animate={{ scale: [1, 1.03, 1] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                  >
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-amber-600 to-amber-500 text-white text-[10px] font-bold">
                     <Trophy className="w-2.5 h-2.5" />
                     #1 Brasil
-                  </motion.div>
-                  <motion.div
-                    className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-green-600 to-emerald-500 text-white text-[10px] font-bold"
-                    animate={{ scale: [1, 1.03, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, delay: 0.5 }}
-                  >
+                  </div>
+                  <div className="flex items-center gap-1 px-2.5 py-1 rounded-full bg-gradient-to-r from-green-600 to-emerald-500 text-white text-[10px] font-bold">
                     <GraduationCap className="w-2.5 h-2.5" />
                     10.847+ Aprovados
-                  </motion.div>
+                  </div>
                 </div>
               </div>
             </div>
