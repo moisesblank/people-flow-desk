@@ -1,10 +1,11 @@
 // ============================================
 // PROFESSOR SECTION 2300 - ULTRA COMPACTA E FUTURISTA
-// Design otimizado sem cortes
+// 🚀 P0 FIX: OptimizedImage + Lazy Loading
+// Design: 2300 | Performance: 3500
 // ============================================
 
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { 
   Award, 
   Star, 
@@ -19,6 +20,7 @@ import {
   CheckCircle2,
   Zap
 } from "lucide-react";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 
 // Import professor images - FOTOS REAIS
 import professorImage1 from "@/assets/professor-moises-1.jpg";
@@ -26,7 +28,12 @@ import professorImage2 from "@/assets/professor-moises-2.jpg";
 import professorImageNovo from "@/assets/professor-moises-novo.png";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 
-const professorImages = [professorImageNovo, professorImage1, professorImage2];
+// Array com metadados para otimização
+const professorImages = [
+  { src: professorImageNovo, color: "#1a0a0a" },
+  { src: professorImage1, color: "#0a1a1a" },
+  { src: professorImage2, color: "#1a1a0a" }
+];
 
 export const ProfessorSection = () => {
   const [currentImage, setCurrentImage] = useState(0);
@@ -77,15 +84,22 @@ export const ProfessorSection = () => {
             <div className="relative rounded-2xl overflow-hidden border border-white/10 bg-black/80 backdrop-blur-xl">
               {/* Galeria de imagens - aspect ratio reduzido */}
               <div className="aspect-[4/4] relative">
-                {professorImages.map((img, idx) => (
-                  <img 
+                {professorImages.map((imgData, idx) => (
+                  <div 
                     key={idx}
-                    src={img} 
-                    alt={`Prof. Moisés Medeiros - Foto ${idx + 1}`} 
-                    loading="lazy"
-                    decoding="async"
-                    className={`absolute inset-0 w-full h-full object-cover object-top transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
-                  />
+                    className={`absolute inset-0 transition-opacity duration-500 ${idx === currentImage ? 'opacity-100' : 'opacity-0'}`}
+                  >
+                    <OptimizedImage
+                      src={imgData.src}
+                      alt={`Prof. Moisés Medeiros - Foto ${idx + 1}`}
+                      aspectRatio="square"
+                      objectFit="cover"
+                      objectPosition="top"
+                      placeholderColor={imgData.color}
+                      priority={idx === 0} // Primeira imagem prioritária
+                      className="object-top"
+                    />
+                  </div>
                 ))}
                 
                 {/* Navigation */}
@@ -110,7 +124,7 @@ export const ProfessorSection = () => {
 
                 {/* Dots */}
                 <div className="absolute bottom-3 left-0 right-0 flex justify-center gap-1.5 z-10">
-                  {professorImages.map((_, idx) => (
+                  {professorImages.map((imgData, idx) => (
                     <button
                       key={idx}
                       onClick={() => setCurrentImage(idx)}

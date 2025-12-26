@@ -172,14 +172,17 @@ export const YouTubeLivePlayer: React.FC<YouTubeLivePlayerProps> = ({
           {/* Click-to-load: Show poster until activated */}
           {!isActivated ? (
             <div className="aspect-video relative bg-gradient-to-br from-ai-surface to-background">
-              {/* YouTube thumbnail */}
-              <img
-                src={`https://i.ytimg.com/vi/${activeVideoId}/hqdefault.jpg`}
-                alt={title || "Live thumbnail"}
-                className="absolute inset-0 w-full h-full object-cover"
-                loading="lazy"
-                decoding="async"
-              />
+              {/* YouTube thumbnail - Otimizado */}
+              <div className="absolute inset-0 w-full h-full">
+                <img
+                  src={`https://i.ytimg.com/vi/${activeVideoId}/hqdefault.jpg`}
+                  alt={title || "Live thumbnail"}
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                  decoding="async"
+                  fetchPriority="low"
+                />
+              </div>
               {/* Gradient overlay */}
               <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-black/20" />
               {/* Play button */}

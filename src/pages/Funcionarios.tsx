@@ -25,7 +25,7 @@ import { AnimatedAtom, ChemistryTip } from "@/components/chemistry/ChemistryVisu
 import { TeamMetricsWidget } from "@/components/employees/TeamMetricsWidget";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
 import { SmartChecklist } from "@/components/checklists/SmartChecklist";
-import teamHeroImage from "@/assets/team-chemistry-hero.jpg";
+// teamHeroImage removido - não utilizado (FuturisticPageHeader)
 import type { EmployeeStatus, Sector } from "@/types/employee";
 
 interface Employee {

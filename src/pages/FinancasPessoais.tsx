@@ -1,8 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v8.0 - FINANÇAS PESSOAIS
-// Spider-Man Theme - Gestão Financeira Pessoal
-// HISTÓRICO DE LONGO PRAZO (50+ ANOS)
-// Controle: Diário, Semanal, Mensal, Anual, 10 Anos
+// 🚀 P0 FIX: OptimizedImage para hero banner
+// Design: 2300 | Performance: 3500
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
@@ -36,6 +35,7 @@ import { CalendarExpenseModal } from "@/components/finance/CalendarExpenseModal"
 import { useFinancialHistory, getMonthName } from "@/hooks/useFinancialHistory";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { OptimizedImage } from "@/components/ui/optimized-image";
 import financeHeroImage from "@/assets/finance-chemistry-hero.jpg";
 
 interface Expense {
@@ -338,10 +338,14 @@ export default function FinancasPessoais() {
           animate={{ opacity: 1, scale: 1 }}
           className="relative w-full h-48 md:h-56 rounded-2xl overflow-hidden mb-8"
         >
-          <img 
-            src={financeHeroImage} 
-            alt="Finanças Pessoais - Química do Dinheiro" 
-            className="w-full h-full object-cover"
+          <OptimizedImage
+            src={financeHeroImage}
+            alt="Finanças Pessoais - Química do Dinheiro"
+            aspectRatio="auto"
+            objectFit="cover"
+            placeholderColor="#0a1a2a"
+            priority={true}
+            containerClassName="absolute inset-0 w-full h-full"
           />
           <div className="absolute inset-0 bg-gradient-to-r from-background/95 via-background/70 to-transparent" />
           <div className="absolute inset-0 flex items-center justify-between p-8">
