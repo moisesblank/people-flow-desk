@@ -52,6 +52,8 @@ const ALLOWED_ORIGIN_PATTERNS = [
   /^https:\/\/[a-z0-9-]+\.lovable\.app$/,
   /^https:\/\/[a-z0-9-]+\.lovable\.dev$/,
   /^https:\/\/[a-z0-9-]+--[a-z0-9-]+\.lovable\.app$/,
+  // Preview do editor (domínio interno)
+  /^https:\/\/[a-z0-9-]+\.lovableproject\.com$/,
 ];
 
 /**
