@@ -50,6 +50,30 @@ serve(async (req) => {
       );
     }
 
+    // 🛡️ DEV BYPASS: Aceitar token de desenvolvimento para preview
+    if (token.startsWith('DEV_BYPASS_')) {
+      const hostname = token.split('_').pop() || '';
+      const isDevHost = hostname.includes('lovableproject.com') || 
+                        hostname === 'localhost' || 
+                        hostname.includes('127.0.0.1');
+      
+      if (isDevHost) {
+        console.warn(`[verify-turnstile] ⚠️ DEV BYPASS aceito para: ${hostname}`);
+        return new Response(
+          JSON.stringify({
+            success: true,
+            hostname: hostname,
+            timestamp: new Date().toISOString(),
+            devBypass: true
+          }),
+          { 
+            status: 200, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    }
+
     const secretKey = Deno.env.get('CLOUDFLARE_TURNSTILE_SECRET_KEY');
     if (!secretKey) {
       console.error('[verify-turnstile] Secret key não configurada');
