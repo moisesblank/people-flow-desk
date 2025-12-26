@@ -5,7 +5,8 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe } from "lucide-react";
+import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown } from "lucide-react";
+import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { FuturisticCard } from "@/components/ui/futuristic-card";
 import { CyberBackground } from "@/components/ui/cyber-background";
