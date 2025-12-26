@@ -112,8 +112,9 @@ export function useSessionTracking() {
       }
     });
 
-    // Atualizar atividade a cada 2 minutos
-    activityInterval.current = setInterval(updateActivity, 120000);
+    // Atualizar atividade a cada 2 minutos + PATCH-013: jitter anti-herd (0-15s)
+    const jitter = Math.floor(Math.random() * 15000);
+    activityInterval.current = setInterval(updateActivity, 120000 + jitter);
 
     // Handlers de visibilidade e unload
     const handleVisibilityChange = () => {
