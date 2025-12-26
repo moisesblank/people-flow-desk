@@ -1,36 +1,26 @@
 // ============================================
-// ⚡ MATRIZ DIGITAL - APP CORE v5.2 ⚡
+// ⚡ MATRIZ DIGITAL - APP CORE v5.3 ⚡
 // ULTRA PERFORMANCE 3G - 5000 usuários simultâneos
 // 🛡️ Evangelho da Segurança v2.0 Integrado
-// 🛡️ DOGMA XI: Controle de Dispositivos
-// ⚡ PERFORMANCE PROVIDER INTEGRADO
-// 📍 ROTAS MODULARIZADAS (v5.2)
+// 📍 ROTAS MODULARIZADAS + AppProviders
 // ============================================
 
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import "@/styles/performance.css"; // ⚡ ULTRA PERFORMANCE CSS
-import { QueryClientProvider } from "@tanstack/react-query";
+import "@/styles/performance.css";
 import { BrowserRouter, Routes } from "react-router-dom";
-import { AuthProvider } from "@/hooks/useAuth";
-import { GodModeProvider } from "@/contexts/GodModeContext";
-import { DuplicationClipboardProvider } from "@/contexts/DuplicationClipboardContext";
-import { ReactiveFinanceProvider } from "@/contexts/ReactiveFinanceContext";
-import { LiveSheetProvider } from "@/contexts/LiveSheetContext";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
 import { SessionTracker } from "@/components/SessionTracker";
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { SessionGuard } from "@/components/security/SessionGuard";
 import { DeviceGuard } from "@/components/security/DeviceGuard";
-import { LeiVIIEnforcer } from "@/components/security/LeiVIIEnforcer";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
-import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
 
-// ⚡ DOGMA V: QueryClient otimizado com cache sagrado
+// ⚡ PROVIDERS CONSOLIDADOS
+import { AppProviders } from "@/contexts/AppProviders";
 import { createSacredQueryClient } from "@/lib/performance/cacheConfig";
 
 // 📍 ROTAS MODULARIZADAS
@@ -43,7 +33,7 @@ import {
   PageLoader 
 } from "@/routes";
 
-// 🚀 TTI OPTIMIZATION: Lazy load heavy components
+// 🚀 LAZY LOAD: Componentes pesados
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
 const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
 const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
@@ -53,28 +43,25 @@ const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndo
 const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then(m => ({ default: m.MasterDeleteOverlay })));
 const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then(m => ({ default: m.MasterContextMenu })));
 
-// ⚡ DOGMA V: QueryClient Sagrado com cache otimizado
+// ⚡ QueryClient Sagrado
 const queryClient = createSacredQueryClient();
 
-// Listener global para limpeza de cache
+// Listener global + prefetch
 if (typeof window !== 'undefined') {
   window.addEventListener('mm-clear-cache', () => {
     queryClient.clear();
     queryClient.invalidateQueries();
-    console.log('[MATRIZ] 🧹 Cache purificado');
   });
   
-  // 🚀 PREFETCH: Carregar componentes pesados após TTI
   if ('requestIdleCallback' in window) {
     (window as any).requestIdleCallback(() => {
-      // Prefetch componentes de admin após idle
       import("@/components/ai/AITramonGlobal").catch(() => {});
       import("@/components/editor/GodModePanel").catch(() => {});
     }, { timeout: 5000 });
   }
 }
 
-// Global keyboard shortcuts hook - optimized
+// Hook para overlay de atalhos
 function useGlobalShortcutsOverlay() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -95,7 +82,7 @@ function useGlobalShortcutsOverlay() {
   return { isOpen, setIsOpen };
 }
 
-// App Content - memoized for performance
+// AppContent memoizado
 const AppContent = memo(() => {
   const { isOpen, setIsOpen } = useGlobalShortcutsOverlay();
   useGlobalDevToolsBlock();
@@ -104,41 +91,36 @@ const AppContent = memo(() => {
 
   return (
     <>
-      {/* 🛡️ DOGMA I: Guarda de Sessão Única */}
       <SessionGuard>
-        {/* 🛡️ DOGMA XI: Guarda de Limite de Dispositivos */}
         <DeviceGuard>
           <SessionTracker />
-      
-      {/* Heavy components - deferred loading */}
-      <Suspense fallback={null}>
-        <LazyGodModePanel />
-        <LazyInlineEditor />
-        <LazyMasterQuickAddMenu />
-        <LazyGlobalDuplication />
-        <LazyMasterUndoIndicator />
-        <LazyMasterDeleteOverlay />
-        <LazyMasterContextMenu />
-      </Suspense>
-      
-      <VisualEditMode />
-      <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
-      
-      {/* AI TRAMON - Lazy loaded */}
-      <Suspense fallback={null}>
-        <LazyAITramon />
-      </Suspense>
-      
-      {/* Routes with optimized Suspense - MODULARIZADAS */}
-      <Suspense fallback={<PageLoader />}>
-        <Routes>
-          {publicRoutes}
-          {comunidadeRoutes}
-          {gestaoRoutes}
-          {alunoRoutes}
-          {legacyRoutes}
-        </Routes>
-      </Suspense>
+          
+          <Suspense fallback={null}>
+            <LazyGodModePanel />
+            <LazyInlineEditor />
+            <LazyMasterQuickAddMenu />
+            <LazyGlobalDuplication />
+            <LazyMasterUndoIndicator />
+            <LazyMasterDeleteOverlay />
+            <LazyMasterContextMenu />
+          </Suspense>
+          
+          <VisualEditMode />
+          <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
+          
+          <Suspense fallback={null}>
+            <LazyAITramon />
+          </Suspense>
+          
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {publicRoutes}
+              {comunidadeRoutes}
+              {gestaoRoutes}
+              {alunoRoutes}
+              {legacyRoutes}
+            </Routes>
+          </Suspense>
         </DeviceGuard>
       </SessionGuard>
     </>
@@ -146,35 +128,17 @@ const AppContent = memo(() => {
 });
 AppContent.displayName = 'AppContent';
 
-// ⚡ App Principal - Estrutura de providers otimizada + PERFORMANCE PROVIDER + LEI VII
+// ⚡ App Principal com Providers Consolidados
 const App = memo(() => (
-  <PerformanceProvider>
-    <PerformanceStyles />
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        {/* 🛡️ LEI VII - Proteção de Conteúdo Soberana (GLOBAL) */}
-        <LeiVIIEnforcer>
-          <LiveSheetProvider>
-            <ReactiveFinanceProvider>
-              <GodModeProvider>
-                <DuplicationClipboardProvider>
-                  <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-                    <BrowserRouter>
-                      <LegacyRedirectHandler />
-                      <AppContent />
-                      <DuplicationClipboardIndicator />
-                    </BrowserRouter>
-                  </TooltipProvider>
-                </DuplicationClipboardProvider>
-              </GodModeProvider>
-            </ReactiveFinanceProvider>
-          </LiveSheetProvider>
-        </LeiVIIEnforcer>
-      </AuthProvider>
-    </QueryClientProvider>
-  </PerformanceProvider>
+  <AppProviders queryClient={queryClient}>
+    <Toaster />
+    <Sonner />
+    <BrowserRouter>
+      <LegacyRedirectHandler />
+      <AppContent />
+      <DuplicationClipboardIndicator />
+    </BrowserRouter>
+  </AppProviders>
 ));
 App.displayName = 'App';
 
