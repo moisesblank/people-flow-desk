@@ -119,16 +119,17 @@ export function CloudflareTurnstile({
 
     // Renderizar novo widget
     try {
-      widgetIdRef.current = window.turnstile.render(containerRef.current, {
-        sitekey: TURNSTILE_SITE_KEY,
-        theme,
-        size,
-        language: 'pt-BR',
-        appearance: 'always',
-        retry: 'auto',
-        'retry-interval': 5000,
-        'refresh-expired': 'auto',
-        callback: (token: string) => {
+        widgetIdRef.current = window.turnstile.render(containerRef.current, {
+          sitekey: TURNSTILE_SITE_KEY,
+          theme,
+          size,
+          // Cloudflare usa tags em minúsculo (pt-br). Evita fallback e ruído no console.
+          language: 'pt-br',
+          appearance: 'always',
+          retry: 'auto',
+          'retry-interval': 5000,
+          'refresh-expired': 'auto',
+          callback: (token: string) => {
           setStatus('verified');
           setDomainError(false);
           onVerify(token);
