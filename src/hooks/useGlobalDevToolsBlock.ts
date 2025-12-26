@@ -139,7 +139,10 @@ export function useGlobalDevToolsBlock() {
       // Owner pode tudo
       if (isOwnerRef.current) return;
 
+      // Safe guard: e.key pode ser undefined em alguns dispositivos/navegadores
       const key = e.key;
+      if (!key) return;
+      
       const keyUpper = key.toUpperCase();
       
       // ═══════════════════════════════════════════════════════════
