@@ -4,33 +4,32 @@
 // 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
+import { memo } from "react";
 import { motion } from "framer-motion";
 import { Crown, Trophy, Star, Sparkles, GraduationCap, Zap, Award, Target, Medal } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import artePrincipal from "@/assets/arte-aprovados-principal.png";
 
-// Partículas de celebração
-const CelebrationParticles = () => (
+// Partículas de celebração - 🛡️ LEI I: Reduzido de 40 para 8, posições fixas
+const CelebrationParticles = memo(() => (
   <div className="absolute inset-0 overflow-hidden pointer-events-none">
-    {[...Array(40)].map((_, i) => (
+    {[...Array(8)].map((_, i) => (
       <motion.div
         key={i}
-        className="absolute"
+        className="absolute will-change-transform"
         style={{
-          left: `${Math.random() * 100}%`,
-          top: `${Math.random() * 100}%`,
+          left: `${10 + i * 10}%`,
+          top: `${15 + i * 10}%`,
         }}
         animate={{
-          y: [0, -20, 0],
-          x: [0, Math.random() * 10 - 5, 0],
-          opacity: [0.2, 0.8, 0.2],
-          scale: [0.8, 1.2, 0.8],
+          y: [0, -15, 0],
+          opacity: [0.3, 0.7, 0.3],
         }}
         transition={{
-          duration: 3 + Math.random() * 2,
+          duration: 4 + i,
           repeat: Infinity,
-          delay: Math.random() * 3,
+          ease: "easeInOut",
         }}
       >
         {i % 4 === 0 ? (
@@ -45,7 +44,9 @@ const CelebrationParticles = () => (
       </motion.div>
     ))}
   </div>
-);
+));
+
+CelebrationParticles.displayName = "CelebrationParticles";
 
 export const MainApprovedArt = () => {
   const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
@@ -94,9 +95,9 @@ export const MainApprovedArt = () => {
             transition={{ type: "spring", duration: 0.8 }}
             className="inline-flex items-center gap-3 px-8 py-4 rounded-full bg-gradient-to-r from-red-600/30 via-amber-500/30 to-red-600/30 border-2 border-red-500/50 mb-8"
           >
-            <Crown className="w-7 h-7 text-amber-400 animate-pulse" />
+            <Crown className="w-7 h-7 text-amber-400" />
             <span className="text-xl md:text-2xl font-black text-white tracking-wider">HALL DA FAMA</span>
-            <Crown className="w-7 h-7 text-amber-400 animate-pulse" />
+            <Crown className="w-7 h-7 text-amber-400" />
           </motion.div>
 
           {/* Título principal animado */}
@@ -153,29 +154,19 @@ export const MainApprovedArt = () => {
           transition={{ duration: 0.8 }}
           className="relative max-w-6xl mx-auto"
         >
-          {/* Glow atrás da imagem */}
-          <motion.div
-            className="absolute -inset-4 md:-inset-8 rounded-3xl"
-            style={{
-              background: 'linear-gradient(45deg, rgba(220,38,38,0.3), rgba(251,191,36,0.3), rgba(220,38,38,0.3))',
-              filter: 'blur(40px)',
-            }}
-            animate={{
-              opacity: [0.4, 0.7, 0.4],
-            }}
-            transition={{ duration: 3, repeat: Infinity }}
-          />
-
-          {/* Borda animada */}
-          <div className="relative p-1 rounded-3xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 overflow-hidden">
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-red-600 via-amber-500 via-red-600 via-amber-500 to-red-600"
-              style={{ backgroundSize: '200% 100%' }}
-              animate={{
-                backgroundPosition: ['0% 0%', '100% 0%', '0% 0%'],
+          {/* Glow atrás da imagem - estático */}
+          {shouldAnimate && (
+            <div
+              className="absolute -inset-4 md:-inset-8 rounded-3xl opacity-50"
+              style={{
+                background: 'linear-gradient(45deg, rgba(220,38,38,0.3), rgba(251,191,36,0.3), rgba(220,38,38,0.3))',
+                filter: 'blur(40px)',
               }}
-              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
             />
+          )}
+
+          {/* Borda gradiente - estática */}
+          <div className="relative p-1 rounded-3xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 overflow-hidden">
             
             {/* Imagem */}
             {/* 🚀 OTIMIZAÇÃO: width/height explícitos para evitar CLS */}
@@ -198,28 +189,20 @@ export const MainApprovedArt = () => {
             </div>
           </div>
 
-          {/* Badges flutuantes */}
-          <motion.div
-            className="absolute -top-4 -left-4 md:-top-6 md:-left-6"
-            animate={{ y: [0, -10, 0], rotate: [-5, 5, -5] }}
-            transition={{ duration: 4, repeat: Infinity }}
-          >
+          {/* Badges - estáticos para performance */}
+          <div className="absolute -top-4 -left-4 md:-top-6 md:-left-6">
             <div className="bg-gradient-to-r from-red-600 to-red-500 px-4 py-2 md:px-6 md:py-3 rounded-full shadow-2xl shadow-red-500/50 flex items-center gap-2">
               <Trophy className="w-5 h-5 md:w-6 md:h-6 text-amber-300" />
               <span className="text-white font-black text-sm md:text-base">RESULTADOS REAIS</span>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div
-            className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6"
-            animate={{ y: [0, 10, 0], rotate: [5, -5, 5] }}
-            transition={{ duration: 4, repeat: Infinity, delay: 1 }}
-          >
+          <div className="absolute -bottom-4 -right-4 md:-bottom-6 md:-right-6">
             <div className="bg-gradient-to-r from-amber-600 to-amber-500 px-4 py-2 md:px-6 md:py-3 rounded-full shadow-2xl shadow-amber-500/50 flex items-center gap-2">
               <Award className="w-5 h-5 md:w-6 md:h-6 text-white" />
               <span className="text-white font-black text-sm md:text-base">+200 APROVADOS</span>
             </div>
-          </motion.div>
+          </div>
         </motion.div>
 
         {/* CTA */}
@@ -243,19 +226,13 @@ export const MainApprovedArt = () => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <motion.div
-              className="inline-block relative group"
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-            >
-              {/* Glow pulsante */}
-              <motion.div
-                className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 opacity-50 blur-xl"
-                animate={{
-                  opacity: [0.4, 0.7, 0.4],
-                }}
-                transition={{ duration: 2, repeat: Infinity }}
-              />
+            <div className="inline-block relative group">
+              {/* Glow - estático */}
+              {shouldAnimate && (
+                <div
+                  className="absolute -inset-2 rounded-2xl bg-gradient-to-r from-red-600 via-amber-500 to-red-600 opacity-50 blur-xl"
+                />
+              )}
               
               <Button 
                 size="lg"
@@ -263,15 +240,9 @@ export const MainApprovedArt = () => {
               >
                 <Zap className="w-6 h-6 mr-3" />
                 QUERO SER APROVADO
-                <motion.div
-                  className="ml-3"
-                  animate={{ x: [0, 5, 0] }}
-                  transition={{ duration: 1, repeat: Infinity }}
-                >
-                  →
-                </motion.div>
+                <span className="ml-3">→</span>
               </Button>
-            </motion.div>
+            </div>
           </a>
         </motion.div>
       </div>

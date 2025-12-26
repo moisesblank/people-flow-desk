@@ -1,37 +1,41 @@
 // ============================================
 // VIDEO SECTION - APRESENTAÇÃO DO CURSO 2300
 // Com player futurista cinematográfico
+// 🏛️ LEI I: useQuantumReactivity aplicado
 // ============================================
 
 import { motion } from "framer-motion";
 import { Play, Sparkles, Users, Clock, Award, Zap } from "lucide-react";
 import { FuturisticVideoPlayer } from "./FuturisticVideoPlayer";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 
 export const VideoSection = () => {
+  const { shouldAnimate, gpuAnimationProps } = useQuantumReactivity();
+  
   return (
     <section id="video" className="relative py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-slate-950 via-black to-slate-950" />
       
-      {/* Animated Grid */}
+      {/* Grid estático */}
       <div className="absolute inset-0 opacity-10" style={{
         backgroundImage: `linear-gradient(rgba(236,72,153,0.2) 1px, transparent 1px), linear-gradient(90deg, rgba(59,130,246,0.2) 1px, transparent 1px)`,
         backgroundSize: '80px 80px'
       }} />
 
-      {/* Glowing Orbs */}
-      <motion.div
-        className="absolute top-1/4 -left-20 w-96 h-96 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.2) 0%, transparent 60%)', filter: 'blur(80px)' }}
-        animate={{ scale: [1, 1.2, 1] }}
-        transition={{ duration: 8, repeat: Infinity }}
-      />
-      <motion.div
-        className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full"
-        style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.2) 0%, transparent 60%)', filter: 'blur(80px)' }}
-        animate={{ scale: [1.2, 1, 1.2] }}
-        transition={{ duration: 10, repeat: Infinity }}
-      />
+      {/* Orbes estáticos - sem animação */}
+      {shouldAnimate && (
+        <>
+          <div
+            className="absolute top-1/4 -left-20 w-96 h-96 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 60%)', filter: 'blur(80px)' }}
+          />
+          <div
+            className="absolute bottom-1/4 -right-20 w-80 h-80 rounded-full"
+            style={{ background: 'radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 60%)', filter: 'blur(80px)' }}
+          />
+        </>
+      )}
 
       <div className="container mx-auto px-4 relative z-10">
         {/* Header */}
@@ -156,23 +160,16 @@ export const VideoSection = () => {
           viewport={{ once: true }}
           className="mt-12 text-center"
         >
-          <motion.a
+          <a
             href="https://www.moisesmedeiros.com.br"
             target="_blank"
             rel="noopener noreferrer"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.98 }}
-            className="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white font-bold text-lg shadow-2xl shadow-pink-500/40 relative overflow-hidden"
+            className="inline-flex items-center gap-3 px-10 py-5 rounded-full bg-gradient-to-r from-pink-500 via-purple-500 to-pink-500 text-white font-bold text-lg shadow-2xl shadow-pink-500/40 relative overflow-hidden hover:scale-105 transition-transform"
           >
-            <motion.div
-              className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/20 to-white/0"
-              animate={{ x: ['-200%', '200%'] }}
-              transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-            />
             <Sparkles className="w-5 h-5 relative z-10" />
             <span className="relative z-10">Garantir Minha Vaga 2026</span>
             <Zap className="w-5 h-5 relative z-10" />
-          </motion.a>
+          </a>
         </motion.div>
       </div>
     </section>
