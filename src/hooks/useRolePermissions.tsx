@@ -189,7 +189,8 @@ export type SystemArea =
   | "aluno-metas"
   | "aluno-agenda"
   | "aluno-certificados"
-  | "aluno-perfil";
+  | "aluno-perfil"
+  | "aluno-livro-web";
 
 // Mapeamento de URLs para áreas
 const URL_TO_AREA: Record<string, SystemArea> = {
@@ -276,6 +277,7 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/alunos/agenda": "aluno-agenda",
   "/alunos/certificados": "aluno-certificados",
   "/alunos/perfil": "aluno-perfil",
+  "/alunos/livro-web": "aluno-livro-web",
 };
 
 // ============================================
@@ -301,7 +303,8 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-redacao", "aluno-desempenho", "aluno-ranking", "aluno-conquistas",
     "aluno-tutoria", "aluno-forum", "aluno-lives", "aluno-duvidas",
     "aluno-revisao", "aluno-laboratorio", "aluno-calculadora", "aluno-tabela-periodica",
-    "aluno-flashcards", "aluno-metas", "aluno-agenda", "aluno-certificados", "aluno-perfil"
+    "aluno-flashcards", "aluno-metas", "aluno-agenda", "aluno-certificados", "aluno-perfil",
+    "aluno-livro-web"
   ],
 
   // ADMIN - Igual owner mas sem vida pessoal e monitoramento
@@ -378,7 +381,8 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-redacao", "aluno-desempenho", "aluno-ranking", "aluno-conquistas",
     "aluno-tutoria", "aluno-forum", "aluno-lives", "aluno-duvidas",
     "aluno-revisao", "aluno-laboratorio", "aluno-calculadora", "aluno-tabela-periodica",
-    "aluno-flashcards", "aluno-metas", "aluno-agenda", "aluno-certificados", "aluno-perfil"
+    "aluno-flashcards", "aluno-metas", "aluno-agenda", "aluno-certificados", "aluno-perfil",
+    "aluno-livro-web"
   ],
 
   // ALUNO GRATUITO - Apenas área pré-login
@@ -717,3 +721,7 @@ export {
   URL_TO_AREA, 
   FUNCIONARIO_OR_ABOVE_ROLES
 };
+
+// Alias para compatibilidade com código legado
+export const FULL_ROLE_LABELS = ROLE_LABELS;
+export type UserRole = FullAppRole;
