@@ -131,10 +131,12 @@ export function useSessionHeartbeat(config: Partial<HeartbeatConfig> = {}) {
     // Primeiro heartbeat imediato
     sendHeartbeat();
 
-    // Configurar intervalo
-    intervalRef.current = setInterval(sendHeartbeat, finalConfig.intervalMs);
+    // PATCH-012: jitter anti-herd (0-10s)
+    const jitter = Math.floor(Math.random() * 10000);
+    const intervalWithJitter = finalConfig.intervalMs + jitter;
+    intervalRef.current = setInterval(sendHeartbeat, intervalWithJitter);
 
-    console.log(`[Heartbeat] ▶️ Iniciado (intervalo: ${finalConfig.intervalMs}ms)`);
+    console.log(`[Heartbeat] ▶️ Iniciado (intervalo: ${intervalWithJitter}ms com jitter)`);
   }, [sendHeartbeat, finalConfig.intervalMs]);
 
   // Parar heartbeat
