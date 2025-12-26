@@ -15710,7 +15710,7 @@ export type Database = {
         Returns: boolean
       }
       is_admin: { Args: { p_user_id?: string }; Returns: boolean }
-      is_admin_or_owner: { Args: { _user_id: string }; Returns: boolean }
+      is_admin_or_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_admin_or_owner_v2: { Args: { p_user_id: string }; Returns: boolean }
       is_admin_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta: { Args: { p_user_id?: string }; Returns: boolean }
@@ -15728,6 +15728,10 @@ export type Database = {
       is_owner:
         | { Args: never; Returns: boolean }
         | { Args: { _user_id?: string }; Returns: boolean }
+      is_owner_by_email_audit_only: {
+        Args: { _email: string }
+        Returns: boolean
+      }
       is_sna_admin: { Args: never; Returns: boolean }
       is_suporte: { Args: { _user_id?: string }; Returns: boolean }
       is_user_banned_from_chat: {
