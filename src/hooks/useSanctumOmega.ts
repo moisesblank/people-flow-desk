@@ -267,14 +267,15 @@ export function useSanctumOmega(): UseSanctumOmegaReturn {
         errorCode: null,
       }));
       
-      // Setup refresh timer
+      // Setup refresh timer + PATCH-022: jitter anti-herd (0-10s)
       if (refreshTimerRef.current) {
         clearInterval(refreshTimerRef.current);
       }
       
+      const jitter = Math.floor(Math.random() * 10000);
       refreshTimerRef.current = setInterval(() => {
         refreshUrls();
-      }, SANCTUM_OMEGA_CONFIG.refreshInterval);
+      }, SANCTUM_OMEGA_CONFIG.refreshInterval + jitter);
       
       console.log("[Sanctum] Asset loaded successfully:", assetId, "Pages:", manifest.totalPages);
       return true;

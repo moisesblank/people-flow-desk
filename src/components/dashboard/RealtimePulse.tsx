@@ -80,8 +80,9 @@ export function RealtimePulse() {
       )
       .subscribe();
 
-    // Refresh every 30 seconds
-    const interval = setInterval(fetchStats, 30000);
+    // Refresh every 30 seconds + PATCH-027: jitter anti-herd (0-5s)
+    const jitter = Math.floor(Math.random() * 5000);
+    const interval = setInterval(fetchStats, 30000 + jitter);
 
     return () => {
       supabase.removeChannel(channel);

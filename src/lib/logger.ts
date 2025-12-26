@@ -25,9 +25,10 @@ class Logger {
     this.sessionId = crypto.randomUUID();
     this.isProduction = import.meta.env.PROD;
 
-    // Flush a cada 30s em produção
+    // Flush a cada 30s em produção + PATCH-019: jitter anti-herd (0-5s)
     if (this.isProduction && typeof window !== 'undefined') {
-      this.flushInterval = setInterval(() => this.flush(), 30000);
+      const jitter = Math.floor(Math.random() * 5000);
+      this.flushInterval = setInterval(() => this.flush(), 30000 + jitter);
 
       // Flush ao sair da página
       window.addEventListener('beforeunload', () => this.flush());

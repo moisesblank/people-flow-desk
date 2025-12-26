@@ -152,10 +152,11 @@ export function StorageAndBackupWidget({ collapsed = false }: BackupWidgetProps)
     }
   };
 
-  // Atualizar storage a cada 30 segundos
+  // Atualizar storage a cada 30 segundos + PATCH-031: jitter anti-herd (0-5s)
   useEffect(() => {
     fetchStorageInfo();
-    const interval = setInterval(fetchStorageInfo, 30000);
+    const jitter = Math.floor(Math.random() * 5000);
+    const interval = setInterval(fetchStorageInfo, 30000 + jitter);
     return () => clearInterval(interval);
   }, []);
 

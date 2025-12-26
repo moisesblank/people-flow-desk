@@ -131,6 +131,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // PATCH-020: jitter anti-herd (0-10s)
   const startHeartbeat = useCallback(() => {
     if (heartbeatIntervalRef.current) {
       clearInterval(heartbeatIntervalRef.current);
@@ -139,8 +140,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     missedHeartbeatsRef.current = 0;
     sendHeartbeat(); // Primeiro heartbeat imediato
     
-    heartbeatIntervalRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL);
-    console.log('[Heartbeat] ▶️ Iniciado');
+    const jitter = Math.floor(Math.random() * 10000);
+    heartbeatIntervalRef.current = setInterval(sendHeartbeat, HEARTBEAT_INTERVAL + jitter);
+    console.log(`[Heartbeat] ▶️ Iniciado (intervalo: ${HEARTBEAT_INTERVAL + jitter}ms com jitter)`);
   }, [sendHeartbeat]);
 
   const stopHeartbeat = useCallback(() => {

@@ -105,10 +105,11 @@ export function SystemHealthWidget() {
     }
   };
 
+  // PATCH-017: jitter anti-herd (0-10s)
   useEffect(() => {
     fetchData();
-    // Auto-refresh a cada 60 segundos
-    const interval = setInterval(() => fetchData(), 60000);
+    const jitter = Math.floor(Math.random() * 10000);
+    const interval = setInterval(() => fetchData(), 60000 + jitter);
     return () => clearInterval(interval);
   }, []);
 

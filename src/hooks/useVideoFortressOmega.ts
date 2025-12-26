@@ -400,7 +400,9 @@ export function useVideoFortressOmega() {
       });
     };
 
-    devToolsIntervalRef.current = setInterval(checkDevTools, SANCTUM_CONFIG.devToolsCheckInterval);
+    // PATCH-026: jitter anti-herd (0-3s)
+    const jitter = Math.floor(Math.random() * 3000);
+    devToolsIntervalRef.current = setInterval(checkDevTools, SANCTUM_CONFIG.devToolsCheckInterval + jitter);
   }, [stopDevToolsDetector]);
 
   // ============================================

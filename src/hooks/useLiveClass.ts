@@ -410,12 +410,13 @@ export function useLiveClass(classId: string): UseLiveClassReturn {
     };
   }, []);
   
-  // Cleanup de messagesInWindow
+  // Cleanup de messagesInWindow + PATCH-033: jitter anti-herd (0-3s)
   useEffect(() => {
+    const jitter = Math.floor(Math.random() * 3000);
     const cleanup = setInterval(() => {
       const now = Date.now();
       setMessagesInWindow(prev => prev.filter(t => now - t < 60000));
-    }, 10000);
+    }, 10000 + jitter);
     
     return () => clearInterval(cleanup);
   }, []);

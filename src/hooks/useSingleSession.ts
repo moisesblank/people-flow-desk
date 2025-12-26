@@ -177,10 +177,11 @@ export function useSingleSession() {
       createSingleSession();
     }
 
-    // Verificação periódica (DOGMA I)
+    // Verificação periódica (DOGMA I) + PATCH-021: jitter anti-herd (0-30s)
+    const jitter = Math.floor(Math.random() * 30000);
     checkIntervalRef.current = setInterval(() => {
       validateSession();
-    }, SESSION_CHECK_INTERVAL);
+    }, SESSION_CHECK_INTERVAL + jitter);
 
     // Verificar ao voltar para a aba
     const handleVisibilityChange = () => {

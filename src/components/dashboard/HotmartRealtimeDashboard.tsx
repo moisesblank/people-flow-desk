@@ -198,8 +198,9 @@ export function HotmartRealtimeDashboard() {
       )
       .subscribe();
 
-    // Auto-refresh a cada 30 segundos
-    const interval = setInterval(fetchData, 30000);
+    // Auto-refresh a cada 30 segundos + PATCH-028: jitter anti-herd (0-5s)
+    const jitter = Math.floor(Math.random() * 5000);
+    const interval = setInterval(fetchData, 30000 + jitter);
 
     return () => {
       supabase.removeChannel(transacoesChannel);
