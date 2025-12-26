@@ -89,41 +89,35 @@ const ProfilePage = () => {
   const { gamification, levelInfo, userRank, isLoading: isLoadingGamification } = useGamification();
   const { data: achievements, isLoading: isLoadingAchievements } = useUserAchievements();
 
-  // Buscar perfil do usuário
-  const { data: profile, isLoading: isLoadingProfile } = useQuery({
-    queryKey: ['user-profile', user?.id],
+  // ✅ P0 FIX: Consolidar 2 queries em 1 com batching (1 round-trip)
+  const { data: profileData, isLoading: isLoadingProfile } = useQuery({
+    queryKey: ['user-profile-stats', user?.id],
     queryFn: async () => {
-      if (!user?.id) return null;
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', user.id)
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    enabled: !!user?.id,
-  });
-
-  // Buscar estatísticas de estudo
-  const { data: studyStats } = useQuery({
-    queryKey: ['study-stats', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return { lessonsCompleted: 0, coursesCompleted: 0, flashcardsCreated: 0 };
+      if (!user?.id) return { profile: null, studyStats: { lessonsCompleted: 0, coursesCompleted: 0, flashcardsCreated: 0 } };
       
-      const [lessonsResult, flashcardsResult] = await Promise.all([
+      // ✅ BATCHING: Todas as queries em paralelo, 1 round-trip
+      const [profileResult, lessonsResult, flashcardsResult] = await Promise.all([
+        supabase.from('profiles').select('*').eq('id', user.id).single(),
         supabase.from('lesson_progress').select('id', { count: 'exact' }).eq('user_id', user.id).eq('completed', true),
         supabase.from('study_flashcards').select('id', { count: 'exact' }).eq('user_id', user.id),
       ]);
 
       return {
-        lessonsCompleted: lessonsResult.count || 0,
-        coursesCompleted: gamification?.courses_completed || 0,
-        flashcardsCreated: flashcardsResult.count || 0,
+        profile: profileResult.data,
+        studyStats: {
+          lessonsCompleted: lessonsResult.count || 0,
+          coursesCompleted: gamification?.courses_completed || 0,
+          flashcardsCreated: flashcardsResult.count || 0,
+        }
       };
     },
     enabled: !!user?.id,
+    staleTime: 5 * 60 * 1000, // 5 min - LEI I anti-tempestade
   });
+
+  // ✅ Extrair dados do resultado consolidado
+  const profile = profileData?.profile;
+  const studyStats = profileData?.studyStats;
 
   const isLoading = isLoadingProfile || isLoadingGamification;
 
