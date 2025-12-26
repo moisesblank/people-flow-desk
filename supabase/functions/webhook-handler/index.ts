@@ -168,6 +168,34 @@ serve(async (req) => {
       }
     }
 
+    // 🛡️ P1.1 FIX: Validação de secret para WordPress
+    if (source === 'wordpress') {
+      const wpSecret = req.headers.get('x-webhook-secret');
+      const expectedWpSecret = Deno.env.get('WORDPRESS_WEBHOOK_SECRET');
+      
+      if (expectedWpSecret && wpSecret !== expectedWpSecret) {
+        await supabase.from('security_events').insert({
+          event_type: 'INVALID_WORDPRESS_SECRET',
+          severity: 'warning',
+          source: 'wordpress',
+          ip_address: clientIP,
+          user_agent: userAgent,
+          description: 'Webhook WordPress com secret inválido'
+        });
+        
+        console.error(`🚨 [SECURITY] Invalid WordPress secret from ${clientIP}`);
+        
+        return new Response(JSON.stringify({ 
+          status: 'error', 
+          message: 'Invalid authentication',
+          code: 'INVALID_SECRET'
+        }), { 
+          status: 403, 
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+        });
+      }
+    }
+
     // Validação HMAC para WhatsApp (Meta)
     if (source === 'whatsapp' && event !== 'verification') {
       const signature = req.headers.get('x-hub-signature-256');
