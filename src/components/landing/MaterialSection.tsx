@@ -1,8 +1,11 @@
 // ============================================
 // MATERIAL DIDÁTICO SECTION - FUTURISTA 2300
+// 🏛️ CONSTITUTION: GPU-ONLY + shouldAnimate gates
 // ============================================
 
+import { memo } from "react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   BookOpen, 
   Sparkles, 
@@ -69,31 +72,29 @@ const features = [
   "Certificado de conclusão"
 ];
 
-export const MaterialSection = () => {
+export const MaterialSection = memo(() => {
+  const { shouldAnimate } = useQuantumReactivity();
+  
   return (
     <section id="material" className="relative py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
       
-      {/* Animated Lines */}
+      {/* Animated Lines - STATIC on 3G */}
       <div className="absolute inset-0">
-        {[...Array(5)].map((_, i) => (
-          <motion.div
+        {[0, 1, 2, 3, 4].map((i) => (
+          <div
             key={i}
             className="absolute h-px w-full bg-gradient-to-r from-transparent via-pink-500/30 to-transparent"
             style={{ top: `${20 + i * 15}%` }}
-            animate={{ x: ['-100%', '100%'] }}
-            transition={{ duration: 15 + i * 2, repeat: Infinity, ease: "linear" }}
           />
         ))}
       </div>
 
-      {/* Glowing Orbs */}
-      <motion.div
+      {/* Glowing Orb - STATIC on 3G */}
+      <div
         className="absolute top-1/4 left-1/4 w-80 h-80 rounded-full"
         style={{ background: 'radial-gradient(circle, rgba(236,72,153,0.15) 0%, transparent 60%)', filter: 'blur(80px)' }}
-        animate={{ scale: [1, 1.3, 1] }}
-        transition={{ duration: 10, repeat: Infinity }}
       />
 
       <div className="container mx-auto px-4 relative z-10">
@@ -251,4 +252,6 @@ export const MaterialSection = () => {
       </div>
     </section>
   );
-};
+});
+
+MaterialSection.displayName = "MaterialSection";

@@ -1,8 +1,11 @@
 // ============================================
 // FEATURES/VANTAGENS SECTION - ANO 2300
+// 🏛️ CONSTITUTION: GPU-ONLY + shouldAnimate gates
 // ============================================
 
+import { memo } from "react";
 import { motion } from "framer-motion";
+import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
   Brain, 
   Sparkles, 
@@ -157,39 +160,37 @@ const FeatureCard = ({ feature, index }: { feature: typeof features[0]; index: n
   </motion.div>
 );
 
-export const FeaturesSection = () => {
+// 🏛️ CONSTITUTION: Fixed particle positions (no Math.random in render)
+const NEURAL_PARTICLES = [
+  { left: 10, top: 15 }, { left: 25, top: 8 }, { left: 45, top: 22 },
+  { left: 65, top: 12 }, { left: 80, top: 25 }, { left: 15, top: 45 },
+  { left: 35, top: 55 }, { left: 55, top: 42 }, { left: 75, top: 58 },
+  { left: 90, top: 48 }, { left: 20, top: 75 }, { left: 40, top: 82 },
+];
+
+export const FeaturesSection = memo(() => {
+  const { shouldAnimate } = useQuantumReactivity();
+  
   return (
     <section id="vantagens" className="relative py-24 overflow-hidden">
       {/* Background */}
       <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
       
-      {/* Neural Network Background */}
+      {/* Neural Network Background - STATIC on 3G */}
       <div className="absolute inset-0 opacity-10">
-        {[...Array(20)].map((_, i) => (
-          <motion.div
+        {NEURAL_PARTICLES.map((pos, i) => (
+          <div
             key={i}
             className="absolute w-1 h-1 rounded-full bg-pink-500"
-            style={{
-              left: `${Math.random() * 100}%`,
-              top: `${Math.random() * 100}%`,
-            }}
-            animate={{
-              scale: [1, 2, 1],
-              opacity: [0.3, 1, 0.3],
-            }}
-            transition={{
-              duration: 3 + Math.random() * 2,
-              repeat: Infinity,
-              delay: Math.random() * 2,
-            }}
+            style={{ left: `${pos.left}%`, top: `${pos.top}%` }}
           />
         ))}
       </div>
 
-      {/* Connecting Lines */}
+      {/* Connecting Lines - STATIC on 3G */}
       <svg className="absolute inset-0 w-full h-full opacity-10" preserveAspectRatio="none">
-        {[...Array(8)].map((_, i) => (
-          <motion.line
+        {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
+          <line
             key={i}
             x1={`${10 + i * 12}%`}
             y1="0%"
@@ -197,9 +198,6 @@ export const FeaturesSection = () => {
             y2="100%"
             stroke="url(#pinkGradient)"
             strokeWidth="1"
-            initial={{ pathLength: 0 }}
-            animate={{ pathLength: 1 }}
-            transition={{ duration: 3, delay: i * 0.2, repeat: Infinity, repeatType: "reverse" }}
           />
         ))}
         <defs>
@@ -305,4 +303,6 @@ export const FeaturesSection = () => {
       </div>
     </section>
   );
-};
+});
+
+FeaturesSection.displayName = "FeaturesSection";
