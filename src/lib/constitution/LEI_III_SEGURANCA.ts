@@ -1309,14 +1309,10 @@ export function detectSuspiciousActivity(): ThreatAnalysis {
     }
   }
   
-  // Debugger timing
-  const startTime = performance.now();
-  // eslint-disable-next-line no-debugger
-  debugger;
-  if (performance.now() - startTime > THREAT_DETECTION_CONFIG.debuggerTimingThreshold) {
-    reasons.push('Debugger ativo');
-    riskScore += 25;
-  }
+  // Debugger timing - DESATIVADO
+  // O statement "debugger" pausa a execução e bloqueia funcionalidades críticas
+  // Detecção de DevTools agora é feita apenas via dimensões (não bloqueia)
+  // riskScore permanece baseado em outros sinais
   
   // Determinar nível e ação
   let level: ThreatLevel = 'none';

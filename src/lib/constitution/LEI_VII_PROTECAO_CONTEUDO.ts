@@ -481,14 +481,12 @@ const checkDimensions = () => {
 };
 
 // Art. 45° - Debugger Timing
+// DESATIVADO: O statement "debugger" pausa execução quando DevTools aberto
+// Isso bloqueava o login e outras funcionalidades críticas
+// Mantendo apenas detecção por dimensões (Art. 43°) que não bloqueia
 const checkDebuggerTiming = () => {
-  const start = performance.now();
-  debugger; // Causa delay quando DevTools está aberto
-  const end = performance.now();
-  
-  if (end - start > 100) {
-    handleDevToolsOpen();
-  }
+  // Detecção passiva via timing (sem debugger statement)
+  // Removido: debugger statement causava bloqueio de funcionalidades
 };
 
 // Art. 46° - Console Override Detection
