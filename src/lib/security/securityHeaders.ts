@@ -71,9 +71,11 @@ export const PROTECTED_ASSET_HEADERS = {
 
 /**
  * Headers para edge functions que servem conteúdo protegido
+ * NOTA: Para CORS dinâmico, usar getCorsHeaders(req) de _shared/corsConfig.ts
+ * Este fallback é apenas para referência, não deve ser usado diretamente
  */
-export const EDGE_FUNCTION_CORS_HEADERS = {
-  'Access-Control-Allow-Origin': '*',
+export const EDGE_FUNCTION_CORS_HEADERS_REFERENCE = {
+  // ⚠️ NÃO USAR DIRETAMENTE - usar getCorsHeaders(req) nas edge functions
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
   'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
   'Cache-Control': 'no-store',
