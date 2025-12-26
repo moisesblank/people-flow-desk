@@ -263,19 +263,9 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      // Validar token do Turnstile no backend
-      const { data: turnstileResult, error: turnstileError } = await supabase.functions.invoke('verify-turnstile', {
-        body: { token: turnstileToken }
-      });
-      
-      if (turnstileError || !turnstileResult?.success) {
-        toast.error("Verificação de segurança falhou", {
-          description: turnstileResult?.error || "Por favor, tente novamente."
-        });
-        resetTurnstile();
-        setIsLoading(false);
-        return;
-      }
+      // ⚠️ P0-FIX: NÃO validar Turnstile aqui - o token é de uso único
+      // A validação acontece UMA VEZ APENAS em validate-device (pre_login)
+      // Validar aqui + lá = token expirado = bloqueio
       
       const schema = isLogin ? simpleLoginSchema : simpleSignupSchema;
       const result = schema.safeParse(formData);
