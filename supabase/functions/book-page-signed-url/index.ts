@@ -7,7 +7,10 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions, isOriginAllowed } from "../_shared/corsConfig.ts";
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// ============================================
+// P1 FIX: OWNER_EMAIL removido - usar role check via user_roles
+// Fonte da verdade: user_roles.role = 'owner'
+// ============================================
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 const URL_TTL_SECONDS = 30; // TTL curto para segurança
 

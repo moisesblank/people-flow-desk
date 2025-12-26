@@ -9,9 +9,8 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
 
 // ============================================
-// CONSTANTES
+// CONSTANTES (P1 FIX: OWNER_EMAIL removido)
 // ============================================
-const OWNER_EMAIL = "moisesblank@gmail.com";
 const SIGNED_URL_TTL_SECONDS = 60;
 const TRANSMUTED_BUCKET = "ena-assets-transmuted";
 const MAX_PAGES_PER_REQUEST = 10;
@@ -173,7 +172,7 @@ serve(async (req: Request) => {
     // ============================================
     // 5) BUSCAR INFORMAÇÕES DAS PÁGINAS
     // ============================================
-    const isOwner = bookData.isOwner || user.email?.toLowerCase() === OWNER_EMAIL;
+    const isOwner = bookData.isOwner; // P1 FIX: role-based only
     const allPages = bookData.pages || [];
 
     if (requestedPages.length === 0) {
