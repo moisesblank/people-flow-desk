@@ -168,9 +168,14 @@ serve(async (req) => {
 
     const responseHostname = (result.hostname || '').toLowerCase();
 
-    if (!responseHostname || !allowedHostnames.includes(responseHostname)) {
+    // 🔧 Permitir domínios de preview do Lovable (LEI VI - IMUNIDADE DEV)
+    const isLovablePreview = responseHostname.endsWith('.lovableproject.com') ||
+                              responseHostname.endsWith('.lovable.app') ||
+                              responseHostname.endsWith('.lovable.dev');
+
+    if (!responseHostname || (!allowedHostnames.includes(responseHostname) && !isLovablePreview)) {
       console.warn(
-        `[verify-turnstile] ❌ Hostname não permitido: "${responseHostname}" (permitidos: ${allowedHostnames.join(', ')})`
+        `[verify-turnstile] ❌ Hostname não permitido: "${responseHostname}" (permitidos: ${allowedHostnames.join(', ')} + *.lovable*)`
       );
       return new Response(
         JSON.stringify({
@@ -183,6 +188,11 @@ serve(async (req) => {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
       );
+    }
+    
+    // Log para preview aceito
+    if (isLovablePreview) {
+      console.log(`[verify-turnstile] ✅ Preview Lovable aceito: ${responseHostname}`);
     }
 
     // Verificação bem sucedida
