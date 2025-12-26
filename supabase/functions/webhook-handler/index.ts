@@ -107,6 +107,10 @@ serve(async (req) => {
       }
     }
 
+    // Extrair IP e User-Agent ANTES das validações
+    const clientIP = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown';
+    const userAgent = req.headers.get('user-agent') || 'unknown';
+
     // Determinar fonte do webhook via headers ou path
     let source = req.headers.get('X-Webhook-Source') || 'unknown';
     let event = req.headers.get('X-Webhook-Event') || 'unknown';
@@ -124,15 +128,36 @@ serve(async (req) => {
       event = 'incoming_message';
     }
 
+    // 🛡️ PATCH-002: ALLOWLIST ESTRITA - Rejeitar fontes desconhecidas
+    const allowedSources = new Set(['hotmart', 'whatsapp', 'wordpress', 'rdstation']);
+    if (!allowedSources.has(source)) {
+      console.warn(`🚨 [SECURITY] Webhook rejeitado - fonte inválida: "${source}" de ${clientIP}`);
+      
+      await supabase.from('security_events').insert({
+        event_type: 'INVALID_WEBHOOK_SOURCE',
+        severity: 'warning',
+        source: source,
+        ip_address: clientIP,
+        user_agent: userAgent,
+        description: `Webhook rejeitado: fonte "${source}" não está na allowlist`
+      });
+      
+      return new Response(JSON.stringify({ 
+        status: 'error', 
+        message: 'Webhook source inválido',
+        code: 'INVALID_SOURCE'
+      }), { 
+        status: 400, 
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+      });
+    }
+
     // Auto-detectar evento baseado no payload
     if (source === 'hotmart' && payload.event) {
       event = String(payload.event);
     } else if (source === 'wordpress' && payload.action) {
       event = String(payload.action);
     }
-
-    const clientIP = req.headers.get('cf-connecting-ip') || req.headers.get('x-forwarded-for') || 'unknown';
-    const userAgent = req.headers.get('user-agent') || 'unknown';
 
     // ===============================================
     // 3.2.1 - VALIDAÇÃO HMAC PARA CADA WEBHOOK
