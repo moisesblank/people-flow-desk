@@ -952,11 +952,26 @@ serve(async (req) => {
           
           console.log('[whatsapp-webhook] ✅ Assinatura HMAC validada');
         } catch (hmacError) {
-          console.error('[whatsapp-webhook] Erro ao validar HMAC:', hmacError);
-          // Em caso de erro, prosseguir com cautela (pode ser ManyChat sem assinatura)
+          // 🛡️ P0.1 FIX: NUNCA fail-open em validação de assinatura
+          console.error('[whatsapp-webhook] ❌ Erro crítico ao validar HMAC:', hmacError);
+          await supabase.from('security_events').insert({
+            event_type: 'WHATSAPP_WEBHOOK_HMAC_ERROR',
+            severity: 'critical',
+            description: 'Erro ao processar validação HMAC - rejeitando por segurança',
+            payload: { error: String(hmacError), ip: req.headers.get('x-forwarded-for')?.split(',')[0] }
+          });
+          return new Response('HMAC validation error', { status: 500 });
         }
       } else if (!appSecret) {
-        console.warn('[whatsapp-webhook] ⚠️ WHATSAPP_APP_SECRET não configurado - pulando validação HMAC');
+        // 🛡️ P0.2 FIX: Se não tem secret configurado, BLOQUEAR (não pular)
+        console.error('[whatsapp-webhook] ❌ WHATSAPP_APP_SECRET não configurado - BLOQUEANDO por segurança');
+        await supabase.from('security_events').insert({
+          event_type: 'WHATSAPP_WEBHOOK_NO_SECRET',
+          severity: 'critical',
+          description: 'Webhook recebido sem WHATSAPP_APP_SECRET configurado - bloqueado',
+          payload: { ip: req.headers.get('x-forwarded-for')?.split(',')[0] }
+        });
+        return new Response('Configuration error: missing app secret', { status: 500 });
       }
       
       const payloadSize = bodyText.length;
