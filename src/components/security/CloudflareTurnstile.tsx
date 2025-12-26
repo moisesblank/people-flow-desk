@@ -5,10 +5,20 @@
 // ============================================
 
 import { useEffect, useRef, useCallback, useState } from 'react';
-import { Shield, AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Shield, AlertCircle, CheckCircle2, Loader2, AlertTriangle } from 'lucide-react';
 
 // Cloudflare Turnstile Site Key (pública)
 const TURNSTILE_SITE_KEY = '0x4AAAAAACIzQHOgrmgkciqj';
+
+// Detectar ambiente de desenvolvimento/preview
+const isDevEnvironment = () => {
+  const hostname = window.location.hostname;
+  return (
+    hostname === 'localhost' ||
+    hostname.includes('lovableproject.com') ||
+    hostname.includes('127.0.0.1')
+  );
+};
 
 declare global {
   interface Window {
@@ -57,8 +67,9 @@ export function CloudflareTurnstile({
 }: CloudflareTurnstileProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetIdRef = useRef<string | null>(null);
-  const [status, setStatus] = useState<'loading' | 'ready' | 'verified' | 'error' | 'expired'>('loading');
+  const [status, setStatus] = useState<'loading' | 'ready' | 'verified' | 'error' | 'expired' | 'dev-bypass'>('loading');
   const [isScriptLoaded, setIsScriptLoaded] = useState(false);
+  const [domainError, setDomainError] = useState(false);
 
   // Carregar script do Turnstile
   useEffect(() => {
@@ -119,11 +130,19 @@ export function CloudflareTurnstile({
         'refresh-expired': 'auto',
         callback: (token: string) => {
           setStatus('verified');
+          setDomainError(false);
           onVerify(token);
         },
-        'error-callback': (error: string) => {
+        'error-callback': (errorCode: string) => {
+          console.warn('[Turnstile] Erro:', errorCode);
+          
+          // Detectar erro de domínio inválido
+          if (errorCode?.includes('invalid') || errorCode?.includes('domain')) {
+            setDomainError(true);
+          }
+          
           setStatus('error');
-          onError?.(error);
+          onError?.(errorCode);
         },
         'expired-callback': () => {
           setStatus('expired');
@@ -133,6 +152,7 @@ export function CloudflareTurnstile({
     } catch (error) {
       console.error('[Turnstile] Erro ao renderizar:', error);
       setStatus('error');
+      setDomainError(true);
       onError?.('Erro ao carregar verificação de segurança');
     }
 
@@ -156,6 +176,16 @@ export function CloudflareTurnstile({
     }
   }, []);
 
+  // Bypass para ambiente de desenvolvimento quando Turnstile falha
+  const handleDevBypass = useCallback(() => {
+    if (!isDevEnvironment()) return;
+    
+    console.warn('[Turnstile] ⚠️ DEV BYPASS ativado - apenas para desenvolvimento');
+    setStatus('dev-bypass');
+    // Token especial que o backend reconhece como bypass de dev
+    onVerify('DEV_BYPASS_' + Date.now() + '_' + window.location.hostname);
+  }, [onVerify]);
+
   // Obter token atual
   const getToken = useCallback(() => {
     if (widgetIdRef.current && window.turnstile) {
@@ -177,6 +207,7 @@ export function CloudflareTurnstile({
       case 'ready':
         return <Shield className="h-3.5 w-3.5 text-primary" />;
       case 'verified':
+      case 'dev-bypass':
         return <CheckCircle2 className="h-3.5 w-3.5 text-green-500" />;
       case 'error':
       case 'expired':
@@ -192,6 +223,8 @@ export function CloudflareTurnstile({
         return 'Verificação de segurança';
       case 'verified':
         return 'Verificação concluída';
+      case 'dev-bypass':
+        return 'Modo desenvolvimento (bypass)';
       case 'error':
         return 'Erro na verificação';
       case 'expired':
@@ -206,6 +239,18 @@ export function CloudflareTurnstile({
         ref={containerRef}
         className="min-h-[65px] flex items-center justify-center"
       />
+      
+      {/* Botão de bypass para desenvolvimento quando há erro de domínio */}
+      {status === 'error' && domainError && isDevEnvironment() && (
+        <button
+          type="button"
+          onClick={handleDevBypass}
+          className="flex items-center gap-2 px-3 py-1.5 text-xs bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 border border-amber-500/30 rounded-md transition-colors"
+        >
+          <AlertTriangle className="h-3.5 w-3.5" />
+          <span>Bypass Dev (domínio não configurado)</span>
+        </button>
+      )}
       
       {/* Status Badge */}
       {showStatus && (
