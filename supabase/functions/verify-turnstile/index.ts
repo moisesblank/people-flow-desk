@@ -119,6 +119,32 @@ serve(async (req) => {
       );
     }
 
+    // 🛡️ PATCH-005: Validar hostname contra allowlist
+    const allowedHostnames = (Deno.env.get('TURNSTILE_ALLOWED_HOSTNAMES') || '')
+      .split(',')
+      .map(s => s.trim().toLowerCase())
+      .filter(Boolean);
+    
+    // Se allowlist configurada, validar hostname
+    if (allowedHostnames.length > 0) {
+      const responseHostname = (result.hostname || '').toLowerCase();
+      
+      if (!responseHostname || !allowedHostnames.includes(responseHostname)) {
+        console.warn(`[verify-turnstile] ❌ Hostname não permitido: "${responseHostname}" (permitidos: ${allowedHostnames.join(', ')})`);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Origem não autorizada',
+            hostname: responseHostname
+          }),
+          { 
+            status: 403, 
+            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
+          }
+        );
+      }
+    }
+
     // Verificação bem sucedida
     console.log('[verify-turnstile] ✅ Verificação bem sucedida para hostname:', result.hostname);
 
