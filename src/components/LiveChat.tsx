@@ -109,11 +109,13 @@ export function LiveChat({ classId, className }: LiveChatProps) {
     reactions, 
     isConnected, 
     isLoading,
-    error,
     sendMessage, 
-    sendReaction,
-    rateLimitInfo
+    sendReaction
   } = useLiveClass(classId);
+  
+  // Compatibilidade: error e rateLimitInfo não existem no hook simplificado
+  const error = !isConnected && !isLoading ? 'Desconectado' : null;
+  const rateLimitInfo = { canSend: true, waitTime: 0, cooldownSeconds: 0, messagesRemaining: 10 };
   
   const [newMessage, setNewMessage] = useState('');
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -259,7 +261,7 @@ export function LiveChat({ classId, className }: LiveChatProps) {
       <div className="absolute right-4 bottom-32 pointer-events-none overflow-hidden h-40 w-16">
         <AnimatePresence mode="popLayout">
           {reactions.map((reaction) => (
-            <FloatingReaction key={reaction.id} reaction={reaction} />
+            <FloatingReaction key={reaction.id} reaction={reaction as LiveReaction} />
           ))}
         </AnimatePresence>
       </div>
