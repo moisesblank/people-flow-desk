@@ -24,10 +24,12 @@
 // ============================================
 
 /**
- * 👑 Email do Owner Master - ACESSO SUPREMO
- * IMUTÁVEL - Definido na CONSTITUIÇÃO SYNAPSE
+ * 👑 OWNER_EMAIL - APENAS PARA AUDITORIA/LOGS
+ * ⚠️ NUNCA usar para controle de acesso!
+ * Fonte da verdade: user_roles.role = 'owner'
+ * @deprecated Use role='owner' para verificar permissões
  */
-export const OWNER_EMAIL = "moisesblank@gmail.com";
+export const OWNER_EMAIL = "moisesblank@gmail.com"; // Legacy: apenas audit
 
 /**
  * Versão do sistema de controle de acesso
@@ -398,13 +400,14 @@ export const PUBLIC_PATHS: string[] = [
 // ============================================
 
 /**
- * 👑 Verifica se é o Owner Master (email OU role)
+ * 👑 Verifica se é o Owner Master
+ * ✅ P0 FIX: Agora usa APENAS role, não email
  * Owner tem BYPASS TOTAL para qualquer verificação
+ * Fonte da verdade: user_roles.role = 'owner'
  */
 export function isOwner(email?: string | null, role?: string | null): boolean {
-  const emailMatch = email?.toLowerCase().trim() === OWNER_EMAIL.toLowerCase();
-  const roleMatch = role === "owner";
-  return emailMatch || roleMatch;
+  // ✅ SEGURO: Apenas role check (email ignorado para segurança)
+  return role === "owner";
 }
 
 /**

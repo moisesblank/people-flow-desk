@@ -22,7 +22,10 @@ interface AdminCheckResult {
   canAccessTramon: boolean;
 }
 
-const OWNER_EMAIL = "moisesblank@gmail.com";
+// ============================================
+// P0 FIX: Owner determinado APENAS por role (não por email)
+// Fonte da verdade: user_roles.role = 'owner'
+// ============================================
 
 export function useAdminCheck(): AdminCheckResult {
   // OTIMIZADO: Reutilizar role do useAuth ao invés de query duplicada
@@ -31,8 +34,8 @@ export function useAdminCheck(): AdminCheckResult {
 
   const userEmail = user?.email || null;
   
-  // Verificação do OWNER: email do proprietário (poderes máximos)
-  const isOwner = (userEmail || '').toLowerCase() === OWNER_EMAIL;
+  // ✅ SEGURO: Verificação do OWNER apenas por role (não por email!)
+  const isOwner = role === "owner";
   const isAdmin = role === "admin";
   const isCoordinator = role === "coordenacao";
   const isAdminOrOwner = isOwner || isAdmin;
