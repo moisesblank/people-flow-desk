@@ -133,12 +133,13 @@ export function EmployeeModal({
       funcao: data.funcao,
       setor: data.setor as Sector,
       email: data.email,
+      senha: data.senha, // 🔥 Passar senha para auto-vinculação
       salario: salarioEmCentavos,
       dataAdmissao: data.dataAdmissao
         ? format(data.dataAdmissao, "yyyy-MM-dd")
         : format(new Date(), "yyyy-MM-dd"),
       status: data.status as EmployeeStatus,
-    });
+    } as any);
   }
 
   async function handleSendInvite() {
