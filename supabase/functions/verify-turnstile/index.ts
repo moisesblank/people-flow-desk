@@ -143,30 +143,46 @@ serve(async (req) => {
       );
     }
 
-    // 🛡️ PATCH-005: Validar hostname contra allowlist
-    const allowedHostnames = (Deno.env.get('TURNSTILE_ALLOWED_HOSTNAMES') || '')
+    // 🛡️ PATCH-005: Validar hostname contra allowlist (com fallback seguro)
+    const defaultAllowedHostnames = [
+      'pro.moisesmedeiros.com.br',
+      'gestao.moisesmedeiros.com.br',
+      'moisesmedeiros.com.br',
+      'www.moisesmedeiros.com.br',
+      'localhost',
+      '127.0.0.1',
+    ];
+
+    const envAllowlistRaw = (Deno.env.get('TURNSTILE_ALLOWED_HOSTNAMES') || '').trim();
+    const envAllowlist = envAllowlistRaw
       .split(',')
-      .map(s => s.trim().toLowerCase())
+      .map((s) => s.trim().toLowerCase())
       .filter(Boolean);
-    
-    // Se allowlist configurada, validar hostname
-    if (allowedHostnames.length > 0) {
-      const responseHostname = (result.hostname || '').toLowerCase();
-      
-      if (!responseHostname || !allowedHostnames.includes(responseHostname)) {
-        console.warn(`[verify-turnstile] ❌ Hostname não permitido: "${responseHostname}" (permitidos: ${allowedHostnames.join(', ')})`);
-        return new Response(
-          JSON.stringify({ 
-            success: false, 
-            error: 'Origem não autorizada',
-            hostname: responseHostname
-          }),
-          { 
-            status: 403, 
-            headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-          }
-        );
-      }
+
+    // Se a env estiver claramente mal configurada (ex.: "turnsecret"), ignorar e usar fallback
+    const looksLikeHostname = (h: string) => h.includes('.') || h === 'localhost' || h === '127.0.0.1';
+    const shouldUseEnvAllowlist = envAllowlist.length > 0 && envAllowlist.every(looksLikeHostname);
+
+    const allowedHostnames = (shouldUseEnvAllowlist ? envAllowlist : defaultAllowedHostnames)
+      .map((s) => s.toLowerCase());
+
+    const responseHostname = (result.hostname || '').toLowerCase();
+
+    if (!responseHostname || !allowedHostnames.includes(responseHostname)) {
+      console.warn(
+        `[verify-turnstile] ❌ Hostname não permitido: "${responseHostname}" (permitidos: ${allowedHostnames.join(', ')})`
+      );
+      return new Response(
+        JSON.stringify({
+          success: false,
+          error: 'Origem não autorizada',
+          hostname: responseHostname,
+        }),
+        {
+          status: 403,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
     }
 
     // Verificação bem sucedida
