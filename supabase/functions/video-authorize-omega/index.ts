@@ -43,24 +43,77 @@ const AUTHORIZED_DOMAINS = [
 // CORS - Usar allowlist dinâmica
 import { getCorsHeaders, isOriginAllowed, handleCorsOptions } from "../_shared/corsConfig.ts";
 
-// Rate limit em memória
-const rateLimitCache = new Map<string, { count: number; resetAt: number }>();
-const RATE_LIMIT = { limit: 30, windowMs: 60000 }; // 30 req/min por usuário
+// ============================================
+// 🛡️ P0-002 FIX: RATE LIMIT PERSISTENTE (DB)
+// Usa tabela api_rate_limits para consistência
+// ============================================
+const RATE_LIMIT_CONFIG = { limit: 30, windowSeconds: 60 }; // 30 req/min por usuário
 
-function checkRateLimit(userId: string): { allowed: boolean; retryAfter?: number } {
-  const now = Date.now();
-  const entry = rateLimitCache.get(userId);
-  
-  if (!entry || entry.resetAt < now) {
-    rateLimitCache.set(userId, { count: 1, resetAt: now + RATE_LIMIT.windowMs });
-    return { allowed: true };
+interface RateLimitEntry {
+  id: string;
+  request_count: number;
+  window_start: string;
+}
+
+async function checkRateLimitPersistent(
+  supabase: any,
+  clientId: string,
+  endpoint: string
+): Promise<{ allowed: boolean; retryAfter?: number }> {
+  try {
+    const windowStart = new Date(Date.now() - RATE_LIMIT_CONFIG.windowSeconds * 1000);
+    
+    // Limpar entradas expiradas
+    await supabase
+      .from('api_rate_limits')
+      .delete()
+      .eq('client_id', clientId)
+      .eq('endpoint', endpoint)
+      .lt('window_start', windowStart.toISOString());
+    
+    // Buscar entrada atual
+    const { data: existing } = await supabase
+      .from('api_rate_limits')
+      .select('id, request_count, window_start')
+      .eq('client_id', clientId)
+      .eq('endpoint', endpoint)
+      .gte('window_start', windowStart.toISOString())
+      .order('window_start', { ascending: false })
+      .limit(1)
+      .maybeSingle() as { data: RateLimitEntry | null };
+    
+    if (existing) {
+      const newCount = (existing.request_count || 0) + 1;
+      
+      if (newCount > RATE_LIMIT_CONFIG.limit) {
+        const resetAt = new Date(new Date(existing.window_start).getTime() + RATE_LIMIT_CONFIG.windowSeconds * 1000);
+        const retryAfter = Math.ceil((resetAt.getTime() - Date.now()) / 1000);
+        return { allowed: false, retryAfter: Math.max(1, retryAfter) };
+      }
+      
+      await supabase
+        .from('api_rate_limits')
+        .update({ request_count: newCount })
+        .eq('id', existing.id);
+      
+      return { allowed: true };
+    } else {
+      // Nova janela
+      await supabase
+        .from('api_rate_limits')
+        .insert({
+          client_id: clientId,
+          endpoint: endpoint,
+          request_count: 1,
+          window_start: new Date().toISOString()
+        });
+      
+      return { allowed: true };
+    }
+  } catch (e) {
+    console.error('[video-authorize-omega] Rate limit check failed:', e);
+    return { allowed: true }; // Fail-open
   }
-  
-  entry.count++;
-  if (entry.count > RATE_LIMIT.limit) {
-    return { allowed: false, retryAfter: Math.ceil((entry.resetAt - now) / 1000) };
-  }
-  return { allowed: true };
 }
 
 // ============================================
@@ -246,6 +299,29 @@ serve(async (req: Request) => {
       auth: { persistSession: false },
     });
 
+    // ============================================
+    // 🛡️ P0-002 FIX: RATE LIMIT PERSISTENTE
+    // ============================================
+    const rateCheck = await checkRateLimitPersistent(supabaseAdmin, user.id, 'video-authorize');
+    if (!rateCheck.allowed) {
+      console.warn(`[video-authorize-omega] ⚠️ Rate limit exceeded for user ${user.id}`);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Muitas requisições. Aguarde um momento.",
+          code: "RATE_LIMITED",
+          retryAfter: rateCheck.retryAfter || 60 
+        }),
+        { 
+          status: 429, 
+          headers: { 
+            ...corsHeaders, 
+            'Content-Type': 'application/json',
+            'Retry-After': String(rateCheck.retryAfter || 60) 
+          } 
+        }
+      );
+    }
     // ============================================
     // 3. PARSE DO BODY
     // ============================================
