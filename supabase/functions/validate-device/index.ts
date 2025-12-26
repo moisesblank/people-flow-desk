@@ -45,20 +45,53 @@ Deno.serve(async (req) => {
     const body: DeviceValidationRequest = await req.json();
     const { fingerprint, fingerprintData, email, action } = body;
     
-    // 🛡️ P0.5 - IGNORAR userId DO BODY EM PRE-LOGIN
-    // LEI VI: userId deve vir do JWT (autenticado) ou ser null
-    // Em pre-login/validate, o usuário ainda não está autenticado
+    // 🛡️ PATCH-004: userId NUNCA do body - sempre do JWT ou null
     let userId: string | undefined = undefined;
     
-    // Só aceita userId se action indica que já está logado
+    // Para post_login/register: EXIGIR JWT e derivar userId do token
     if (action === 'post_login' || action === 'register') {
-      userId = body.userId;
-      console.log(`[validate-device] Post-login/register: userId aceito do body`);
+      const authHeader = req.headers.get('authorization');
+      
+      if (!authHeader) {
+        console.warn(`[validate-device] POST_LOGIN/REGISTER sem Authorization - bloqueado`);
+        return new Response(
+          JSON.stringify({ 
+            error: 'Authorization obrigatório para post_login/register',
+            success: false
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Validar JWT e extrair userId do token (NUNCA do body)
+      const token = authHeader.replace('Bearer ', '');
+      const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+      const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+        global: { headers: { Authorization: authHeader } }
+      });
+      
+      const { data: { user }, error: authError } = await authClient.auth.getUser(token);
+      
+      if (authError || !user) {
+        console.error(`[validate-device] JWT inválido:`, authError);
+        return new Response(
+          JSON.stringify({ 
+            error: 'JWT inválido ou expirado',
+            success: false
+          }),
+          { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // 🛡️ CRÍTICO: userId vem do JWT, IGNORANDO body.userId
+      userId = user.id;
+      console.log(`[validate-device] Post-login/register: userId derivado do JWT (body.userId IGNORADO)`);
+      
     } else {
-      console.log(`[validate-device] Pre-login/validate: userId ignorado por segurança`);
+      // Pre-login/validate: userId permanece undefined
+      console.log(`[validate-device] Pre-login/validate: userId não aplicável`);
       
       // 🛡️ P0.2 - TURNSTILE OBRIGATÓRIO EM PRE-LOGIN
-      // LEI VI: pre_login usa SERVICE_ROLE, então DEVE validar Turnstile
       const turnstileToken = (body as any).turnstileToken;
       if (!turnstileToken) {
         console.warn(`[validate-device] PRE-LOGIN sem Turnstile - bloqueado`);
