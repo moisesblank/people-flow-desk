@@ -262,8 +262,9 @@ serve(async (req) => {
       userRole = 'system';
     }
 
-    // FEATURE FLAG CHECK
-    const workflow = context?.workflow || action;
+    // 🛡️ PATCH-006: Endpoint de rate-limit CONSTANTE (anti-bypass)
+    // NUNCA aceitar workflow do context - evita rotação de buckets
+    const rateLimitEndpoint = 'sna-gateway';
     const featureKey = `sna.${context?.agent || 'default'}.enabled`;
     
     const { data: flagResult } = await supabase.rpc('sna_check_feature', {
@@ -277,16 +278,16 @@ serve(async (req) => {
       return errorResponse(403, 'FEATURE_DISABLED', `Funcionalidade desabilitada: ${flagResult.reason}`, correlationId, corsHeaders);
     }
 
-    // RATE LIMIT CHECK
+    // RATE LIMIT CHECK (usando endpoint constante - PATCH-006)
     const { data: rateLimitResult } = await supabase.rpc('sna_check_rate_limit', {
       p_identifier: userId,
-      p_endpoint: workflow,
+      p_endpoint: rateLimitEndpoint,  // 🛡️ CONSTANTE, não variável
       p_cost: 0,
       p_tokens: 0
     });
 
     if (rateLimitResult && !rateLimitResult.allowed) {
-      console.warn(`⚠️ Rate limit: ${userId} on ${workflow}`);
+      console.warn(`⚠️ Rate limit: ${userId} on ${rateLimitEndpoint}`);
       return new Response(JSON.stringify({
         error: 'RATE_LIMITED',
         message: 'Rate limit excedido',
@@ -379,7 +380,7 @@ serve(async (req) => {
         },
         p_priority: body.priority ?? 3,
         p_deadline: body.deadline || null,
-        p_tags: [workflow, provider],
+        p_tags: [action, provider],  // action para tracking, não para rate-limit
         p_metadata: { correlation_id: correlationId, user_role: userRole }
       });
 
