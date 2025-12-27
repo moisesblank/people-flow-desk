@@ -202,6 +202,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        // ✅ DEBUG P0: Não logar tokens; apenas presença de sessão/usuário
+        console.log('[AUTH][STATE] event:', event, {
+          hasSession: Boolean(session),
+          hasUser: Boolean(session?.user),
+          path: typeof window !== 'undefined' ? window.location.pathname : undefined,
+          is2FAPending: typeof window !== 'undefined'
+            ? sessionStorage.getItem('matriz_2fa_pending') === '1'
+            : undefined,
+        });
+
         setSession(session);
         setUser(session?.user ?? null);
 
@@ -351,6 +361,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
+    });
+
+    // ✅ DEBUG P0: sinalizar resposta (sem expor tokens)
+    console.log('[AUTH][LOGIN] signInWithPassword result:', {
+      hasError: Boolean(error),
+      hasSession: Boolean(data?.session),
+      hasUser: Boolean(data?.user),
     });
 
     if (!error) {
