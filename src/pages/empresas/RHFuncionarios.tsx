@@ -70,6 +70,7 @@ interface Employee {
   salario?: number | null;
   foto_url?: string | null;
   created_by?: string | null;
+  user_id?: string | null;  // ID do usuário vinculado (acesso ao sistema)
 }
 
 interface Compensation {
@@ -507,34 +508,51 @@ export default function RHFuncionarios() {
   };
 
   const handleSendInvite = async (employeeId?: number) => {
-    if (!formData.email) {
+    const email = formData.email?.trim();
+    const nome = formData.nome?.trim();
+    
+    if (!email) {
       toast.error("Preencha o email do funcionário");
-      return;
+      return false;
     }
 
     try {
       // Senha gerada automaticamente se não fornecida
-      const senhaGerada = formData.senha || `${formData.nome.split(' ')[0].toLowerCase()}@${Math.random().toString(36).slice(-6)}`;
+      const senhaGerada = formData.senha?.trim() || `${nome.split(' ')[0].toLowerCase()}@${Math.random().toString(36).slice(-6)}`;
+      
+      console.log("[RH] Enviando convite:", { email, nome, employee_id: employeeId });
       
       const { data, error } = await supabase.functions.invoke("invite-employee", {
         body: {
-          email: formData.email,
-          nome: formData.nome,
+          email,
+          nome,
           senha: senhaGerada,
           funcao: formData.funcao,
           employee_id: employeeId || editingEmployee?.id || undefined,
         },
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[RH] Erro no invoke:", error);
+        throw error;
+      }
+      
+      if (data?.error) {
+        console.error("[RH] Erro retornado:", data.error);
+        throw new Error(data.error);
+      }
 
+      console.log("[RH] Convite enviado com sucesso:", data);
       toast.success("Convite enviado!", {
-        description: `Acesso criado para ${formData.email}`,
+        description: `Acesso criado para ${email}`,
       });
+      
+      // Refresh para mostrar user_id vinculado
+      await fetchData();
       
       return true;
     } catch (error: any) {
-      console.error("Erro ao enviar convite:", error);
+      console.error("[RH] Erro ao enviar convite:", error);
       toast.error("Erro ao criar acesso", {
         description: error.message,
       });
@@ -927,7 +945,7 @@ export default function RHFuncionarios() {
                             {employee.funcao}
                           </p>
                           
-                          <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-2 mt-2 flex-wrap">
                             <Badge variant="outline" className={cn("text-xs", setorInfo.color.replace('bg-', 'border-'))}>
                               <setorInfo.icon className="h-3 w-3 mr-1" />
                               {employee.setor}
@@ -935,6 +953,18 @@ export default function RHFuncionarios() {
                             {employee.salario && (
                               <Badge variant="secondary" className="text-xs text-green-500">
                                 {formatCurrency(employee.salario)}
+                              </Badge>
+                            )}
+                            {/* Indicador de acesso vinculado */}
+                            {employee.user_id ? (
+                              <Badge variant="secondary" className="text-xs bg-green-500/20 text-green-500 border-green-500/30">
+                                <Lock className="h-3 w-3 mr-1" />
+                                Com Acesso
+                              </Badge>
+                            ) : (
+                              <Badge variant="outline" className="text-xs text-yellow-500 border-yellow-500/30">
+                                <AlertCircle className="h-3 w-3 mr-1" />
+                                Sem Acesso
                               </Badge>
                             )}
                           </div>
@@ -1001,6 +1031,28 @@ export default function RHFuncionarios() {
                                 <Mail className="h-4 w-4 mr-2" />
                                 Enviar Email
                               </DropdownMenuItem>
+                              {/* Opção de criar/reenviar acesso */}
+                              {!employee.user_id && employee.email && (
+                                <>
+                                  <DropdownMenuSeparator />
+                                  <DropdownMenuItem 
+                                    onClick={async () => {
+                                      setFormData({
+                                        ...formData,
+                                        email: employee.email,
+                                        nome: employee.nome,
+                                        funcao: employee.funcao,
+                                        senha: "",
+                                      });
+                                      await handleSendInvite(employee.id);
+                                    }}
+                                    className="text-green-600"
+                                  >
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Criar Acesso
+                                  </DropdownMenuItem>
+                                </>
+                              )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem
                                 onClick={() => setDeleteDialogOpen(employee)}
@@ -1361,14 +1413,36 @@ export default function RHFuncionarios() {
                   />
                 </div>
 
+                {/* Senha para acesso (apenas novo funcionário ou funcionário sem acesso) */}
+                {(!editingEmployee || (editingEmployee && !editingEmployee.user_id)) && (
+                  <div className="md:col-span-2">
+                    <Separator className="my-4" />
+                    <Label htmlFor="senha">
+                      Senha de Acesso ao Sistema 
+                      <span className="text-muted-foreground ml-1">(opcional, será gerada automaticamente)</span>
+                    </Label>
+                    <Input
+                      id="senha"
+                      type="password"
+                      value={formData.senha}
+                      onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
+                      placeholder="Mínimo 6 caracteres (ou deixe em branco)"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Se deixar em branco, uma senha automática será gerada e enviada por email.
+                    </p>
+                  </div>
+                )}
+
                 {/* Info - Acesso ao Sistema */}
                 <div className="md:col-span-2">
-                  <Separator className="my-4" />
                   <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
                     <Send className="h-4 w-4 text-primary" />
                     <p className="text-sm text-muted-foreground">
                       {editingEmployee 
-                        ? "Clique em 'Atualizar' para salvar alterações."
+                        ? (editingEmployee.user_id 
+                            ? "Este funcionário já tem acesso ao sistema."
+                            : "Ao salvar, o funcionário receberá acesso ao sistema por email.")
                         : "Ao cadastrar, o funcionário receberá automaticamente acesso ao sistema por email."}
                     </p>
                   </div>
