@@ -1,11 +1,12 @@
 // ============================================
-// MOISÉS MEDEIROS v10.2 - ROLE-BASED SIDEBAR
+// MOISÉS MEDEIROS v10.3 - ROLE-BASED SIDEBAR
 // Sidebar com menu filtrado por cargo
+// + Integração com useMenuConfig (banco de dados)
+// + Fallback para dados hardcoded se banco vazio
 // + MODO MASTER: editar títulos e reordenar/realocar itens e categorias
-// + Safe useSidebar hook (prevents crash outside SidebarProvider)
 // ============================================
 
-import { useEffect, useMemo, useState, useContext, createContext } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   LayoutDashboard,
   Users,
@@ -62,7 +63,6 @@ import {
   Beaker,
   Calculator as CalcIcon,
   AtomIcon,
-  CreditCard as FlashIcon,
   Target,
   CalendarDays,
   Award,
@@ -74,6 +74,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions, type SystemArea } from "@/hooks/useRolePermissions";
 import { useGodMode } from "@/contexts/GodModeContext";
 import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems";
+import { useMenuConfig, type MenuGroup as DBMenuGroup, type MenuItem as DBMenuItem } from "@/hooks/useMenuConfig";
+import { getIconComponent } from "@/lib/iconMap";
 
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -342,6 +344,15 @@ export function RoleBasedSidebar() {
   const [userName, setUserName] = useState<string | null>(null);
   const [userAvatar, setUserAvatar] = useState<string | null>(null);
 
+  // ============================================
+  // INTEGRAÇÃO COM useMenuConfig (banco de dados)
+  // ============================================
+  const { 
+    groupsWithItems: dbMenuGroups, 
+    hasData: hasDbData, 
+    isLoading: isMenuLoading 
+  } = useMenuConfig();
+
   useEffect(() => {
     const fetchUserProfile = async () => {
       if (!user?.id) return;
@@ -359,21 +370,57 @@ export function RoleBasedSidebar() {
 
   // ============================================
   // REGRA: Selecionar menus baseado na área atual
-  // /gestaofc → gestaoMenuGroups
-  // /alunos → alunoMenuGroups
+  // /gestaofc → gestaoMenuGroups (ou banco se disponível)
+  // /alunos → alunoMenuGroups (hardcoded por enquanto)
   // Fora dessas áreas → vazio (sidebar não aparece)
   // ============================================
   const isGestaoArea = location.pathname.startsWith("/gestaofc");
   const isAlunosArea = location.pathname.startsWith("/alunos");
   
+  // ============================================
+  // CONVERTER DADOS DO BANCO PARA FORMATO DO SIDEBAR
+  // ============================================
+  const dbMenuGroupsConverted: MenuGroup[] = useMemo(() => {
+    if (!hasDbData || !isGestaoArea) return [];
+    
+    return dbMenuGroups
+      .filter(g => g.is_active)
+      .sort((a, b) => a.sort_order - b.sort_order)
+      .map(group => ({
+        id: group.group_key,
+        label: group.group_label,
+        image: dashboardImg, // Imagem padrão, pode ser mapeada depois
+        color: group.group_color || "from-primary/80",
+        items: group.items
+          .filter(item => item.is_active)
+          .sort((a, b) => a.sort_order - b.sort_order)
+          .map(item => {
+            const IconComponent = getIconComponent(item.item_icon);
+            return {
+              title: item.item_label,
+              url: item.item_url,
+              icon: IconComponent || FileText,
+              area: (item.item_area || "dashboard") as SystemArea,
+              badge: item.item_badge || undefined
+            };
+          })
+      }));
+  }, [hasDbData, isGestaoArea, dbMenuGroups]);
+
   // Selecionar os menus apropriados baseado na área
+  // PRIORIDADE: Banco de dados > Hardcoded
   const currentMenuGroups = useMemo(() => {
-    if (isGestaoArea) return gestaoMenuGroups;
+    if (isGestaoArea) {
+      // Se há dados no banco, usar banco. Senão, fallback hardcoded
+      return hasDbData && dbMenuGroupsConverted.length > 0 
+        ? dbMenuGroupsConverted 
+        : gestaoMenuGroups;
+    }
     if (isAlunosArea) return alunoMenuGroups;
     return []; // Fora de /gestaofc ou /alunos, não mostra nada
-  }, [isGestaoArea, isAlunosArea]);
+  }, [isGestaoArea, isAlunosArea, hasDbData, dbMenuGroupsConverted]);
 
-  // Merge static menu groups with dynamic items from database
+  // Merge static menu groups with dynamic items from database (para itens extras)
   const filteredMenuGroups = useMemo(() => {
     // Se não há menus (fora das áreas), retornar vazio
     if (currentMenuGroups.length === 0) return [];
@@ -387,7 +434,14 @@ export function RoleBasedSidebar() {
       Activity, Zap, Crown, Sparkles, MessageSquareText, Stethoscope, Settings, UserCog, CreditCard
     };
     
-    // Add dynamic items to their respective groups
+    // Se estamos usando dados do banco, não adicionar dynamicItems (já estão no banco)
+    if (hasDbData && isGestaoArea) {
+      return currentMenuGroups
+        .map((group) => ({ ...group, items: group.items.filter((item) => hasAccess(item.area)) }))
+        .filter((group) => group.items.length > 0);
+    }
+    
+    // Fallback: Add dynamic items to their respective groups (modo hardcoded)
     const enhancedGroups = currentMenuGroups.map(group => {
       const groupDynamicItems = dynamicItems
         .filter(di => di.group_id === group.id && di.is_active)
@@ -431,7 +485,7 @@ export function RoleBasedSidebar() {
     return allGroups
       .map((group) => ({ ...group, items: group.items.filter((item) => hasAccess(item.area)) }))
       .filter((group) => group.items.length > 0);
-  }, [hasAccess, dynamicItems, currentMenuGroups]);
+  }, [hasAccess, dynamicItems, currentMenuGroups, hasDbData, isGestaoArea]);
 
   const isActive = (path: string) => location.pathname === path;
 
