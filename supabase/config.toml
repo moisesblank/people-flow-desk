@@ -110,11 +110,12 @@ verify_jwt = true
 [functions.send-email]
 verify_jwt = true
 
+# 🔴 2FA - SEM JWT (chamado durante login, valida internamente)
 [functions.send-2fa-code]
-verify_jwt = true
+verify_jwt = false
 
 [functions.verify-2fa-code]
-verify_jwt = true
+verify_jwt = false
 
 [functions.send-notification-email]
 verify_jwt = true
