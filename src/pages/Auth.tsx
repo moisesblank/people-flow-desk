@@ -212,6 +212,16 @@ export default function Auth() {
     const pendingKey = "matriz_2fa_pending";
     const pendingUserKey = "matriz_2fa_user";
 
+    // ✅ PRIMEIRO: Se o usuário já está autenticado, limpar 2FA pendente e redirecionar
+    if (user) {
+      sessionStorage.removeItem(pendingKey);
+      sessionStorage.removeItem(pendingUserKey);
+      const target = isOwnerEmail(user.email) ? "/gestaofc" : "/alunos";
+      console.log('[AUTH] ✅ Usuário já autenticado - limpando 2FA e redirecionando para', target);
+      navigate(target, { replace: true });
+      return;
+    }
+
     const is2FAPending = sessionStorage.getItem(pendingKey) === "1";
 
     if (is2FAPending) {
@@ -238,13 +248,7 @@ export default function Auth() {
       }
     }
 
-    // Se o AuthProvider já carregou o usuário, redireciona imediatamente
-    if (user) {
-      const target = isOwnerEmail(user.email) ? "/gestaofc" : "/alunos";
-      console.log('[AUTH] ✅ Usuário já autenticado - redirecionando para', target);
-      navigate(target, { replace: true });
-      return;
-    }
+    // Nota: verificação de user já foi feita no início do useEffect
 
     // Fallback: sessão existe no storage, mas o provider ainda não refletiu
     (async () => {
