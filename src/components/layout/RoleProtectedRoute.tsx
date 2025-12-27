@@ -54,16 +54,27 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const location = useLocation();
   
   // ============================================
-  // 🔥 OWNER BYPASS TOTAL (BLOCO 2.3)
-  // Owner NUNCA espera, NUNCA é bloqueado
+  // 🔥 OWNER BYPASS DE FRICÇÃO (NÃO SEGURANÇA)
+  // Email hardcoded é usado APENAS para:
+  // - Não ficar preso em loading/spinner
+  // - Não depender de guards externos
+  // A autorização real (role) vem do banco e será verificada
   // ============================================
   const isOwnerEmail = useMemo(() => {
     return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   }, [user?.email]);
 
-  // Se é Owner por email, bypass imediato (sem aguardar role)
-  if (isOwnerEmail && user) {
-    return <>{children}</>;
+  // ✅ BYPASS DE FRICÇÃO: Owner não espera role query para renderizar
+  // MAS ainda precisa estar autenticado (user existe)
+  // A role real será carregada e usada para autorização no backend
+  if (isOwnerEmail && user && (role === 'owner' || roleLoading)) {
+    // Se role já carregou e não é owner, não dar bypass
+    if (!roleLoading && role !== 'owner') {
+      console.warn(`[RoleProtectedRoute] Email owner mas role=${role} - verificar banco`);
+      // Não fazer bypass - deixar fluxo normal verificar
+    } else {
+      return <>{children}</>;
+    }
   }
   
   // ============================================

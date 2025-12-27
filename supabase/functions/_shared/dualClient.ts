@@ -111,12 +111,13 @@ export async function createDualClients(
     profile = profileData;
   }
 
-  // Verificar role se especificado
+  // ✅ SEGURO: Verificar role APENAS do banco, nunca por email
+  // Email hardcoded é proibido para autorização backend
   if (allowedRoles && allowedRoles.length > 0) {
     const userRole = profile?.role || "user";
-    const isOwner = user.email === "moisesblank@gmail.com";
     
-    if (!isOwner && !allowedRoles.includes(userRole)) {
+    // ✅ Owner identificado pela role do banco, não por email
+    if (userRole !== "owner" && !allowedRoles.includes(userRole)) {
       console.error(`[${logContext}] ❌ Role não permitida: ${userRole}`);
       throw new AuthError(
         `Acesso negado. Role necessária: ${allowedRoles.join(" ou ")}`,
