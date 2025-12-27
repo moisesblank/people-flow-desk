@@ -22,9 +22,9 @@ const OWNER_EMAIL = "moisesblank@gmail.com";
 
 // ============================================
 // CORS — ALLOWLIST (LEI VI COMPLIANCE)
+// MONO-DOMÍNIO v2.0: gestao.* descontinuado
 // ============================================
 const ALLOWED_ORIGINS = [
-  'https://gestao.moisesmedeiros.com.br',
   'https://pro.moisesmedeiros.com.br',
   'https://moisesmedeiros.com.br',
   'https://www.moisesmedeiros.com.br',

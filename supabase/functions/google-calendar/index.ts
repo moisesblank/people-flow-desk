@@ -51,7 +51,7 @@ const handler = async (req: Request): Promise<Response> => {
         
         const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
           `client_id=${GOOGLE_CLIENT_ID}` +
-          `&redirect_uri=${encodeURIComponent(redirectUri || 'https://gestao.moisesmedeiros.com.br/calendario')}` +
+          `&redirect_uri=${encodeURIComponent(redirectUri || 'https://pro.moisesmedeiros.com.br/gestaofc/calendario')}` +
           `&response_type=code` +
           `&scope=${encodeURIComponent(scopes.join(' '))}` +
           `&access_type=offline` +
@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
             client_secret: GOOGLE_CLIENT_SECRET,
             code,
             grant_type: 'authorization_code',
-            redirect_uri: redirectUri || 'https://gestao.moisesmedeiros.com.br/calendario',
+            redirect_uri: redirectUri || 'https://pro.moisesmedeiros.com.br/gestaofc/calendario',
           }),
         });
 

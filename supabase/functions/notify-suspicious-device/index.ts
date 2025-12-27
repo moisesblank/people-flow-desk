@@ -141,7 +141,7 @@ Fatores: ${payload.factors.map(f => f.description).join(', ')}`,
                 </div>
                 
                 <div style="background: #1f2937; color: white; padding: 15px; border-radius: 0 0 8px 8px; text-align: center;">
-                  <a href="https://gestao.moisesmedeiros.com.br/gestao/gestao-dispositivos" style="color: #60a5fa; text-decoration: none;">
+                  <a href="https://pro.moisesmedeiros.com.br/gestaofc/gestao-dispositivos" style="color: #60a5fa; text-decoration: none;">
                     Acessar Painel de Segurança →
                   </a>
                 </div>

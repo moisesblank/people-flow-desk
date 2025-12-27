@@ -15,6 +15,7 @@ import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortc
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { SessionGuard } from "@/components/security/SessionGuard";
 import { DeviceGuard } from "@/components/security/DeviceGuard";
+import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
@@ -134,6 +135,7 @@ const App = memo(() => (
     <Toaster />
     <Sonner />
     <BrowserRouter>
+      <GestaoNoIndex />
       <LegacyRedirectHandler />
       <AppContent />
       <DuplicationClipboardIndicator />

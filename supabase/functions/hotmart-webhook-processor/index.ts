@@ -140,7 +140,7 @@ async function notifyRDStation(
         name: name || "Lead",
         cf_origem: "Gestao_Moises_Medeiros",
         cf_data_evento: getCurrentTimestamp(),
-        cf_plataforma: "gestao.moisesmedeiros.com.br",
+        cf_plataforma: "pro.moisesmedeiros.com.br",
         ...extraData,
       }
     };

@@ -1,14 +1,32 @@
+# ============================================
+# ROBOTS.TXT - Prof. Moisés Medeiros
+# /gestaofc é área interna - NÃO INDEXAR
+# ============================================
+
 User-agent: Googlebot
 Allow: /
+Disallow: /gestaofc
+Disallow: /gestaofc/
 
 User-agent: Bingbot
 Allow: /
+Disallow: /gestaofc
+Disallow: /gestaofc/
 
 User-agent: Twitterbot
 Allow: /
+Disallow: /gestaofc
+Disallow: /gestaofc/
 
 User-agent: facebookexternalhit
 Allow: /
+Disallow: /gestaofc
+Disallow: /gestaofc/
 
 User-agent: *
 Allow: /
+Disallow: /gestaofc
+Disallow: /gestaofc/
+
+# Sitemap
+Sitemap: https://pro.moisesmedeiros.com.br/sitemap.xml

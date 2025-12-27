@@ -12,10 +12,10 @@ export const ALLOWED_ORIGINS = [
   // PRODUÇÃO - Mapa de URLs definitivo (Seção 1.1)
   // ═══════════════════════════════════════════════════════
   
-  // 👑 OWNER/FUNCIONÁRIO - Gestão
-  'https://gestao.moisesmedeiros.com.br',
+  // 👑 OWNER/FUNCIONÁRIO + ALUNOS - Domínio Único (MONO-DOMÍNIO v2.0)
+  // gestao.* foi descontinuado - tudo via pro.moisesmedeiros.com.br/gestaofc
   
-  // 👨‍🎓 ALUNO BETA + NÃO PAGANTE - Plataforma de Alunos
+  // 👨‍🎓 ALUNO BETA + NÃO PAGANTE + GESTÃO - Plataforma Única
   'https://pro.moisesmedeiros.com.br',
   
   // 🌐 Site Principal

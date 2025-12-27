@@ -224,7 +224,7 @@ async function sendReminderEmail(
             ` : ''}
             
             <div style="text-align: center;">
-              <a href="https://gestao.moisesmedeiros.com.br/calendario" class="cta">
+              <a href="https://pro.moisesmedeiros.com.br/gestaofc/calendario" class="cta">
                 Ver no Calendário
               </a>
             </div>
