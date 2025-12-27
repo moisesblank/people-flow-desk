@@ -5,7 +5,7 @@
 // + Heartbeat Contínuo
 // ============================================
 
-import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useRef } from "react";
+import { useState, useEffect, createContext, useContext, ReactNode, useCallback, useRef, useMemo } from "react";
 import { User, Session, Provider } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
@@ -94,6 +94,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [role, setRole] = useState<AppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [deviceValidation, setDeviceValidation] = useState<DeviceValidationResult | null>(null);
+  
+  // ✅ REGRA MATRIZ: Role derivada SÍNCRONAMENTE do email (sem esperar banco)
+  // Garante que OWNER_EMAIL SEMPRE resulta em role="owner" IMEDIATAMENTE
+  const derivedRole = useMemo((): AppRole | null => {
+    if (!user?.email) return role;
+    const email = user.email.toLowerCase();
+    if (email === OWNER_EMAIL) return "owner";
+    return role; // Para outros, usa a role do banco
+  }, [user?.email, role]);
   
   // Heartbeat refs
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -535,11 +544,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setDeviceValidation(null);
   };
 
+  // ✅ LOG FORENSE: Role derivada vs role do banco
+  useEffect(() => {
+    if (user?.email && derivedRole) {
+      console.log('[AUTH] Role final:', { 
+        email: user.email, 
+        derivedRole, 
+        dbRole: role,
+        isOwnerByEmail: user.email.toLowerCase() === OWNER_EMAIL 
+      });
+    }
+  }, [user?.email, derivedRole, role]);
+
   return (
     <AuthContext.Provider value={{ 
       user, 
       session, 
-      role, 
+      role: derivedRole, // ✅ REGRA MATRIZ: Sempre usar role derivada (owner por email é síncrono)
       isLoading, 
       deviceValidation,
       signIn, 
