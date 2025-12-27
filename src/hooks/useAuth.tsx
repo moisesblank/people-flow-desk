@@ -30,7 +30,11 @@ interface AuthContextType {
   role: AppRole | null;
   isLoading: boolean;
   deviceValidation: DeviceValidationResult | null;
-  signIn: (email: string, password: string, opts?: { turnstileToken?: string }) => Promise<{ error: Error | null; needsChallenge?: boolean; blocked?: boolean }>;
+  signIn: (
+    email: string,
+    password: string,
+    opts?: { turnstileToken?: string }
+  ) => Promise<{ error: Error | null; user?: User | null; needsChallenge?: boolean; blocked?: boolean }>;
   signUp: (email: string, password: string, nome: string) => Promise<{ error: Error | null }>;
   signInWithProvider: (provider: Provider) => Promise<{ error: Error | null }>;
   signOut: () => Promise<void>;
@@ -314,47 +318,46 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     email: string,
     password: string,
     _opts?: { turnstileToken?: string }
-  ): Promise<{ error: Error | null; needsChallenge?: boolean; blocked?: boolean }> => {
-    // 🛡️ NOVA ESTRATÉGIA: Login DIRETO sem validate-device bloqueante
-    // Fingerprint e validação de dispositivo acontecem DEPOIS do login (não bloqueante)
-    // Isso garante que o login NUNCA fica travado por dependência externa
+  ): Promise<{ error: Error | null; user?: User | null; needsChallenge?: boolean; blocked?: boolean }> => {
+    // 🛡️ LOGIN DETERMINÍSTICO: termina SOMENTE no retorno do signInWithPassword
+    // Nada pode bloquear o fluxo (sem validate-device pré-login, sem Turnstile)
 
-    // 2. Fazer login no Supabase
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
-    
+
     if (!error) {
-      // 3. Criar sessão única e registrar dispositivo
+      const authUser = data?.user ?? null;
+
+      // Pós-login é assíncrono e NÃO bloqueia o retorno
       setTimeout(async () => {
         try {
           const deviceInfo = detectDeviceInfo();
           const { hash, data: fingerprintData } = await collectFingerprint();
-          
+
           // Criar sessão única (DOGMA I)
-          const { data } = await supabase.rpc('create_single_session', {
+          const { data: sessionData } = await supabase.rpc('create_single_session', {
             _ip_address: null,
             _user_agent: navigator.userAgent.slice(0, 255),
             _device_type: deviceInfo.device_type,
             _browser: deviceInfo.browser,
             _os: deviceInfo.os,
           });
-          
-          if (data && data.length > 0) {
-            localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
+
+          if (sessionData && sessionData.length > 0) {
+            localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
             console.log('[DOGMA I] ✅ Sessão única criada');
           }
 
-          // Registrar dispositivo (LEI VI)
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user) {
+          // Registrar dispositivo (LEI VI) - pós login
+          if (authUser) {
             await supabase.functions.invoke('validate-device', {
               body: {
                 fingerprint: hash,
                 fingerprintData,
-                userId: user.id,
-                email: user.email,
+                userId: authUser.id,
+                email: authUser.email,
                 action: 'post_login',
               },
             });
@@ -364,9 +367,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           console.error('[Auth] Erro pós-login:', err);
         }
       }, 100);
+
+      return { error: null, user: authUser };
     }
-    
-    return { error };
+
+    return { error, user: null };
   };
   
   const detectDeviceInfo = () => {

@@ -335,29 +335,28 @@ export default function Auth() {
            return;
          }
 
-        // Login bem sucedido - ativar 2FA
-        // Buscar usuário atual do supabase
-        const { supabase } = await import("@/integrations/supabase/client");
-        const { data: { user } } = await supabase.auth.getUser();
+         // ✅ Login bem sucedido - encerrar loading IMEDIATAMENTE
+         setIsLoading(false);
 
-        if (!user) {
-          toast.error("Não foi possível concluir o login", {
-            description: "Sua sessão não foi criada. Tente novamente (a verificação será refeita)."
-          });
-          resetTurnstile();
-          setIsLoading(false);
-          return;
-        }
+         // 2FA deve iniciar sem chamadas extras bloqueantes
+         const userFor2FA = result.user;
 
-        setPending2FAUser({
-          email: user.email || formData.email,
-          userId: user.id,
-          nome: user.user_metadata?.nome
-        });
-        setShow2FA(true);
-        toast.info("Verificação de Segurança 2FA", {
-          description: "Um código de 6 dígitos foi enviado para " + (user.email || formData.email)
-        });
+         if (!userFor2FA) {
+           toast.error("Não foi possível concluir o login", {
+             description: "Sua sessão não foi criada. Tente novamente."
+           });
+           return;
+         }
+
+         setPending2FAUser({
+           email: userFor2FA.email || formData.email,
+           userId: userFor2FA.id,
+           nome: (userFor2FA.user_metadata as any)?.nome,
+         });
+         setShow2FA(true);
+         toast.info("Verificação de Segurança 2FA", {
+           description: "Um código de 6 dígitos foi enviado para " + (userFor2FA.email || formData.email)
+         });
       } else {
         // 🛡️ SIGNUP: Turnstile OBRIGATÓRIO (evento de risco)
         if (!isTurnstileVerified || !turnstileToken) {
