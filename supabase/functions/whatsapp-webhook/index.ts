@@ -354,7 +354,7 @@ const executeNaturalLanguageAction = async (
                         parsed.period === 'month' ? 'este mês' :
                         parsed.period === 'week' ? 'esta semana' : 'no total';
       
-      return `📊 Resumo de gastos ${periodText}, ${adminName}:\n\n💸 Total: R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n📋 ${count} registros\n\n🔗 Detalhes: https://gestao.moisesmedeiros.com.br/financas-empresa`;
+      return `📊 Resumo de gastos ${periodText}, ${adminName}:\n\n💸 Total: R$ ${total.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n📋 ${count} registros\n\n🔗 Detalhes: https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa`;
     }
     
     if (parsed.action === 'balance') {
@@ -412,7 +412,7 @@ const executeNaturalLanguageAction = async (
       return `❌ Erro ao criar tarefa: ${error.message}`;
     }
     
-    return `✅ Tarefa criada, ${adminName}!\n\n📋 ${parsed.title}\n\n🔗 Ver tarefas: https://gestao.moisesmedeiros.com.br/tarefas`;
+    return `✅ Tarefa criada, ${adminName}!\n\n📋 ${parsed.title}\n\n🔗 Ver tarefas: https://pro.moisesmedeiros.com.br/gestaofc/tarefas`;
   }
   
   return null;
@@ -694,7 +694,7 @@ const executeAdminCommand = async (
       const todayTotal = todayExpenses?.reduce((sum: number, e: any) => sum + (e.amount || 0), 0) || 0;
       
       await auditLog('view_summary', { type: cmd.raw });
-      return `📊 Resumo, ${adminName}!\n\n📋 Tarefas pendentes: ${pendingTasks}\n💸 A pagar: R$ ${openPayable.toLocaleString('pt-BR')}\n💰 A receber: R$ ${openReceivable.toLocaleString('pt-BR')}\n📱 Gastos hoje: R$ ${todayTotal.toLocaleString('pt-BR')}\n⭐ Contatos VIP: ${vipContacts}\n\n🔗 Dashboard: https://gestao.moisesmedeiros.com.br/dashboard`;
+      return `📊 Resumo, ${adminName}!\n\n📋 Tarefas pendentes: ${pendingTasks}\n💸 A pagar: R$ ${openPayable.toLocaleString('pt-BR')}\n💰 A receber: R$ ${openReceivable.toLocaleString('pt-BR')}\n📱 Gastos hoje: R$ ${todayTotal.toLocaleString('pt-BR')}\n⭐ Contatos VIP: ${vipContacts}\n\n🔗 Dashboard: https://pro.moisesmedeiros.com.br/gestaofc/dashboard`;
     }
 
     case 'encerrar': {

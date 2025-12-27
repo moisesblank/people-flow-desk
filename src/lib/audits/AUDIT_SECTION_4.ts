@@ -207,18 +207,20 @@ export const AUDIT_SECTION_4_MODO_B = {
 // EXPRESSÕES CLOUDFLARE PRONTAS (REFERÊNCIA)
 // ============================================
 
+// ⚠️ MONO-DOMÍNIO v2.0: gestao.moisesmedeiros.com.br DESCONTINUADO
+// Apenas pro.moisesmedeiros.com.br é utilizado (gestaofc é rota interna)
 export const CLOUDFLARE_EXPRESSIONS_REFERENCE = {
   cacheRules: {
-    B1_bypass_html: `(http.request.method in {"GET" "HEAD"} and http.response.content_type contains "text/html" and http.host in {"pro.moisesmedeiros.com.br" "gestao.moisesmedeiros.com.br"})`,
-    B2_cache_assets: `(http.host in {"pro.moisesmedeiros.com.br" "gestao.moisesmedeiros.com.br"} and http.request.uri.path starts_with "/assets/")`,
-    B3_sw_bypass: `(http.host in {"pro.moisesmedeiros.com.br" "gestao.moisesmedeiros.com.br"} and http.request.uri.path eq "/sw.js")`,
-    B4_manifest: `(http.host in {"pro.moisesmedeiros.com.br" "gestao.moisesmedeiros.com.br"} and http.request.uri.path in {"/manifest.json" "/favicon.ico"})`,
+    B1_bypass_html: `(http.request.method in {"GET" "HEAD"} and http.response.content_type contains "text/html" and http.host eq "pro.moisesmedeiros.com.br")`,
+    B2_cache_assets: `(http.host eq "pro.moisesmedeiros.com.br" and http.request.uri.path starts_with "/assets/")`,
+    B3_sw_bypass: `(http.host eq "pro.moisesmedeiros.com.br" and http.request.uri.path eq "/sw.js")`,
+    B4_manifest: `(http.host eq "pro.moisesmedeiros.com.br" and http.request.uri.path in {"/manifest.json" "/favicon.ico"})`,
   },
   
   firewallRules: {
-    F1_allow_assets: `(http.host in {"pro.moisesmedeiros.com.br" "gestao.moisesmedeiros.com.br"} and (http.request.uri.path starts_with "/assets/" or http.request.uri.path in {"/sw.js" "/manifest.json" "/favicon.ico"}))`,
+    F1_allow_assets: `(http.host eq "pro.moisesmedeiros.com.br" and (http.request.uri.path starts_with "/assets/" or http.request.uri.path in {"/sw.js" "/manifest.json" "/favicon.ico"}))`,
     F2_block_sensitive: `(http.request.uri.path matches "(?i)^/(\\.env|\\.git|wp-admin|xmlrpc\\.php|phpmyadmin|\\.htaccess|wp-config\\.php)")`,
-    F4_challenge_auth: `(http.host in {"pro.moisesmedeiros.com.br" "gestao.moisesmedeiros.com.br"} and http.request.uri.path matches "(?i)^/(auth|login|reset|functions|api)")`,
+    F4_challenge_auth: `(http.host eq "pro.moisesmedeiros.com.br" and http.request.uri.path matches "(?i)^/(auth|login|reset|functions|api)")`,
   },
   
   notes: [

@@ -58,10 +58,10 @@ export const LEGACY_REDIRECTS: LegacyRedirect[] = [
     logEvent: true,
   },
   
-  // /admin/* → /gestao/*
+  // /admin/* → / (MONO-DOMÍNIO: gestaofc é rota secreta, nunca expor)
   {
     from: /^\/admin\/(.*)$/,
-    to: (match) => `/gestao/${match[1] || ""}`.replace(/\/$/, ""),
+    to: "/",
     permanent: true,
     description: "Redirect /admin/* para / (legacy - gestaofc é secreto)",
     logEvent: true,
