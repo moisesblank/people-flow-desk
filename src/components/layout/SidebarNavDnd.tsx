@@ -4,6 +4,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { useGodMode } from "@/contexts/GodModeContext";
 import { GripVertical, Copy, Check, Folder } from "lucide-react";
 import { toast } from "sonner";
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";
@@ -196,6 +197,10 @@ export function SidebarNavDnd(props: {
     updateContent,
     isActive
   } = props;
+  
+  // Master Mode: só mostra controles de edição quando ativo
+  const { isActive: isMasterModeActive } = useGodMode();
+  const showEditControls = canEditLayout && isMasterModeActive;
   const layoutKey = "nav_sidebar_layout_v1";
   const persisted = getContent(layoutKey, "");
   const baseLayout = useMemo(() => buildDefaultLayout(groups), [groups]);
@@ -327,7 +332,7 @@ export function SidebarNavDnd(props: {
         next.groupByItem[activeArea] = toGroup;
       }
       setLayout(next);
-      if (canEditLayout) await persist(next);
+      if (showEditControls) await persist(next);
       return;
     }
 
@@ -347,7 +352,7 @@ export function SidebarNavDnd(props: {
       next.itemOrderByGroup[toGroup] = toList;
       next.groupByItem[activeArea] = toGroup;
       setLayout(next);
-      if (canEditLayout) await persist(next);
+      if (showEditControls) await persist(next);
     }
   };
 
@@ -404,7 +409,7 @@ export function SidebarNavDnd(props: {
                         <div className="relative mb-2 rounded-lg overflow-hidden h-12 group">
                           <img src={group.image} alt={group.label} className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity" />
                           <div className={`absolute inset-0 bg-gradient-to-r ${group.color} to-transparent flex items-center px-3`}>
-                            {canEditLayout && <div className="flex items-center gap-1 mr-2">
+                            {showEditControls && <div className="flex items-center gap-1 mr-2">
                                 <Tooltip>
                                   <TooltipTrigger asChild>
                                     <button type="button" ref={setActivatorNodeRef} {...attributes} {...listeners} className="inline-flex items-center justify-center rounded-md p-1.5 text-white/80 hover:text-white hover:bg-white/20 touch-none cursor-grab active:cursor-grabbing transition-colors" aria-label="Arrastar categoria">
@@ -445,7 +450,7 @@ export function SidebarNavDnd(props: {
                                           <NavLink to={item.url} end className="flex items-center gap-3" activeClassName="bg-sidebar-accent text-sidebar-primary font-medium">
                                             <item.icon className="h-4 w-4 shrink-0" />
                                             <span className="flex items-center gap-2 min-w-0 flex-1">
-                                              {canEditLayout && <span className="flex items-center gap-0.5 shrink-0">
+                                              {showEditControls && <span className="flex items-center gap-0.5 shrink-0">
                                                   <Tooltip>
                                                     <TooltipTrigger asChild>
                                                       <button type="button" ref={setActivatorNodeRef} {...attributes} {...listeners} onClick={e => {
