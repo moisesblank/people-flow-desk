@@ -131,8 +131,6 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
 }
 
 export default function Auth() {
-  console.log('[AUTH] 1. Componente montado (/auth)');
-
   const navigate = useNavigate();
   const { user, signIn, signUp, resetPassword, isLoading: authLoading } = useAuth();
   // redirectAfterLogin removido - redirect agora é determinístico inline
@@ -145,6 +143,11 @@ export default function Auth() {
     updateValue, 
     uploadImage 
   } = useEditableContent("auth");
+
+  // ✅ P0 FIX: Log apenas uma vez na montagem (não no corpo do componente!)
+  useEffect(() => {
+    console.log('[AUTH] 1. Componente montado (/auth)');
+  }, []);
 
   // =====================================================
   // AUDITORIA: Stats reais do banco - nenhum valor fictício
