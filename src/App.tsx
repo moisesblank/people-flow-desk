@@ -17,6 +17,7 @@ import { SessionGuard } from "@/components/security/SessionGuard";
 import { DeviceGuard } from "@/components/security/DeviceGuard";
 import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
+import { LegacyDomainBlocker } from "@/components/routing/LegacyDomainBlocker";
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
 
@@ -134,12 +135,14 @@ const App = memo(() => (
   <AppProviders queryClient={queryClient}>
     <Toaster />
     <Sonner />
-    <BrowserRouter>
-      <GestaoNoIndex />
-      <LegacyRedirectHandler />
-      <AppContent />
-      <DuplicationClipboardIndicator />
-    </BrowserRouter>
+    <LegacyDomainBlocker>
+      <BrowserRouter>
+        <GestaoNoIndex />
+        <LegacyRedirectHandler />
+        <AppContent />
+        <DuplicationClipboardIndicator />
+      </BrowserRouter>
+    </LegacyDomainBlocker>
   </AppProviders>
 ));
 App.displayName = 'App';

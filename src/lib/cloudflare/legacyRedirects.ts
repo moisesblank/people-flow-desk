@@ -94,12 +94,30 @@ export const LEGACY_REDIRECTS: LegacyRedirect[] = [
     logEvent: true,
   },
   
-  // /dashboard → /gestao/dashboard (legado gestão)
+  // /dashboard → / (MATRIZ SUPREMA: rotas legadas vão para home)
   {
     from: /^\/dashboard\/?$/,
-    to: "/gestao/dashboard",
-    permanent: false, // Pode mudar
-    description: "Redirect /dashboard para /gestao/dashboard",
+    to: "/",
+    permanent: true,
+    description: "Redirect /dashboard para / (gestaofc é secreto)",
+    logEvent: true,
+  },
+  
+  // /gestao/* → / (MATRIZ SUPREMA: gestaofc é o único ponto de entrada)
+  {
+    from: /^\/gestao\/(.*)$/,
+    to: "/",
+    permanent: true,
+    description: "Redirect /gestao/* para / (legacy - gestaofc é único)",
+    logEvent: true,
+  },
+  
+  // /gestao → / (MATRIZ SUPREMA)
+  {
+    from: /^\/gestao\/?$/,
+    to: "/",
+    permanent: true,
+    description: "Redirect /gestao para / (legacy)",
     logEvent: true,
   },
   
@@ -121,12 +139,12 @@ export const LEGACY_REDIRECTS: LegacyRedirect[] = [
     logEvent: true,
   },
   
-  // /gestao-alunos → /gestao/alunos
+  // /gestao-alunos → / (MATRIZ SUPREMA: gestaofc é único)
   {
     from: /^\/gestao-alunos\/?$/,
-    to: "/gestao/alunos",
+    to: "/",
     permanent: true,
-    description: "Redirect /gestao-alunos para /gestao/alunos",
+    description: "Redirect /gestao-alunos para / (gestaofc é secreto)",
     logEvent: true,
   },
 ];
