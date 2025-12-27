@@ -4,11 +4,10 @@
 **Data:** 25/12/2025 (referência do projeto)  
 **OWNER:** `MOISESBLANK@GMAIL.COM` (case-insensitive)  
 **Regra-mãe:** **SÓ AVANÇA • PATCH-ONLY • ZERO REGRESSÃO • 0 TELA PRETA**  
-**Escopo:**  
+**Escopo (MONO-DOMÍNIO v2.0 - Atualizado 27/12/2025):**  
 - `https://pro.moisesmedeiros.com.br/` (público) + `/comunidade`  
 - `https://pro.moisesmedeiros.com.br/alunos` (pagante `beta`)  
-- `https://gestao.moisesmedeiros.com.br/gestao` (staff)  
-- `https://www.moisesmedeiros.com.br/` (institucional/WP se existir)
+- `https://pro.moisesmedeiros.com.br/gestaofc` (staff - ROTA INTERNA)
 
 > **Nota de realidade (obrigatória):** Web não impede 100% print/extensão/devtools. Segurança real = **RLS + Signed URLs + logs forenses + rate limit + watermark** + resposta automática (risk-based).
 
@@ -98,7 +97,7 @@ NUNCA assumir decisões críticas
 | 🌐 NÃO PAGANTE | `https://pro.moisesmedeiros.com.br/` | cadastro grátis + acesso base |
 | 🌐 COMUNIDADE | `https://pro.moisesmedeiros.com.br/comunidade` | público limitado; beta/owner premium |
 | 👨‍🎓 ALUNO BETA | `https://pro.moisesmedeiros.com.br/alunos` | `role='beta'` + acesso válido (ou owner) |
-| 👔 FUNCIONÁRIO | `https://gestao.moisesmedeiros.com.br/gestao` | `role='funcionario'` (ou owner) |
+| 👔 FUNCIONÁRIO | `https://pro.moisesmedeiros.com.br/gestaofc` | `role='funcionario'` (ou owner) |
 | 👑 OWNER | TODAS | `role='owner'` ou email OWNER |
 | 🧰 MASTER | TODAS | apenas OWNER (feature flag) |
 
@@ -155,7 +154,7 @@ NUNCA assumir decisões críticas
 
 ## ☁️ CLOUDFLARE PRO — MODOS A/B + ORDEM DE REGRAS (resumo operacional)
 ### MODO A (durante incidente / padrão Lovable SPA)
-- DNS Only (cinza) em `pro` e `gestao`
+- DNS Only (cinza) em `pro` (mono-domínio ativo)
 - Segurança no app (Edge Guard + RLS + Storage)
 - Zero risco de Cloudflare quebrar SPA
 

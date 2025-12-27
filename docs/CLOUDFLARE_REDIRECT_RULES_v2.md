@@ -27,11 +27,11 @@
 **Preserva:** Path + Query String
 **Status:** 301 (Moved Permanently)
 
-### REGRA 2: Legacy Domain (301 Permanente)  
-**Origem:** `gestao.moisesmedeiros.com.br/*`
-**Destino:** `https://pro.moisesmedeiros.com.br/`
-**Preserva:** NÃO (legacy domain terminado, vai para home)
-**Status:** 301 (Moved Permanently)
+### REGRA 2: Legacy Domain (OBSOLETA - DNS REMOVIDO 27/12/2025)
+**Origem:** ~~`gestao.moisesmedeiros.com.br/*`~~ (DNS não existe mais)
+**Destino:** N/A (domínio deletado do Cloudflare/Lovable)
+**Observação:** Esta regra existe apenas para histórico. O DNS foi removido.
+**Status:** 🚫 INATIVO
 
 ### REGRA 3: WWW Redirect (301 Permanente)
 **Origem:** `www.moisesmedeiros.com.br/*`
@@ -47,7 +47,7 @@
 source,destination,status,preserve_path_suffix,preserve_query_string
 https://moisesmedeiros.com.br,https://pro.moisesmedeiros.com.br,301,true,true
 https://www.moisesmedeiros.com.br,https://pro.moisesmedeiros.com.br,301,true,true
-https://gestao.moisesmedeiros.com.br,https://pro.moisesmedeiros.com.br,301,false,false
+# gestao.moisesmedeiros.com.br REMOVIDO - DNS deletado em 27/12/2025
 ```
 
 ---
@@ -72,13 +72,11 @@ Status: 301
 Target: concat("https://pro.moisesmedeiros.com.br", http.request.uri.path, "?", http.request.uri.query)
 ```
 
-### Regra 3 — Legacy Gestão Domain (TERMINADO)
+### ~~Regra 3 — Legacy Gestão Domain~~ (REMOVIDA - DNS DELETADO 27/12/2025)
 ```
-Name: Legacy Gestao Domain Terminated
-Expression: (http.host eq "gestao.moisesmedeiros.com.br")
-Action: Static Redirect
-Status: 301
-Target: https://pro.moisesmedeiros.com.br/
+# OBSOLETO - Domínio gestao.moisesmedeiros.com.br foi DELETADO do Cloudflare
+# Esta regra não existe mais pois o DNS foi removido
+# Toda funcionalidade migrou para pro.moisesmedeiros.com.br/gestaofc
 ```
 
 ---
@@ -101,12 +99,11 @@ Status: 301
 Destination: https://pro.moisesmedeiros.com.br/$1
 ```
 
-### Page Rule 3 — Legacy Gestão (TERMINADO)
+### ~~Page Rule 3 — Legacy Gestão~~ (REMOVIDA - DNS DELETADO)
 ```
-URL: gestao.moisesmedeiros.com.br/*
-Setting: Forwarding URL
-Status: 301
-Destination: https://pro.moisesmedeiros.com.br/
+# OBSOLETO - gestao.moisesmedeiros.com.br foi DELETADO
+# DNS não existe mais no Cloudflare
+# Esta regra não é necessária
 ```
 
 ---
@@ -126,9 +123,9 @@ curl -I https://moisesmedeiros.com.br/auth?next=/alunos
 curl -I https://www.moisesmedeiros.com.br/comunidade
 # Esperado: 301, Location: https://pro.moisesmedeiros.com.br/comunidade
 
-# Testar Legacy Gestão (TERMINADO - não preserva path)
-curl -I https://gestao.moisesmedeiros.com.br/dashboard
-# Esperado: 301, Location: https://pro.moisesmedeiros.com.br/
+# Legacy Gestão (DNS DELETADO - Não é mais possível testar)
+# curl -I https://gestao.moisesmedeiros.com.br/dashboard
+# Esperado: DNS não resolve (domínio removido em 27/12/2025)
 
 # Testar que PRO é o destino final (sem redirect)
 curl -I https://pro.moisesmedeiros.com.br/
@@ -137,11 +134,11 @@ curl -I https://pro.moisesmedeiros.com.br/
 
 ---
 
-## ⚠️ ORDEM DE REGRAS NO CLOUDFLARE
+## ⚠️ ORDEM DE REGRAS NO CLOUDFLARE (MONO-DOMÍNIO v2.0)
 
-1. **Legacy Gestão** (mais específico - bloqueia subdomínio)
-2. **WWW Redirect** (subdomínio www)
-3. **Entry Redirect** (domínio raiz - fallback)
+1. **WWW Redirect** (subdomínio www)
+2. **Entry Redirect** (domínio raiz - fallback)
+3. ~~Legacy Gestão~~ (REMOVIDO - DNS deletado 27/12/2025)
 
 ---
 

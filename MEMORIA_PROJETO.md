@@ -25,7 +25,7 @@
 |------|----------|-----------|-----------|
 | 🌐 **NÃO PAGANTE** | `pro.moisesmedeiros.com.br/` | `role='viewer'` | Área comum + `/comunidade` |
 | 👨‍🎓 **ALUNO BETA** | `pro.moisesmedeiros.com.br/alunos` | `role='beta'` | PAGANTE - Tudo do portal |
-| 👔 **FUNCIONÁRIO** | `gestao.moisesmedeiros.com.br/gestao` | `role='funcionario'` | Área de gestão |
+| 👔 **FUNCIONÁRIO** | `pro.moisesmedeiros.com.br/gestaofc` | `role='funcionario'` | Área de gestão (ROTA INTERNA) |
 | 👑 **OWNER** | **TODAS** | `role='owner'` | MASTER - PODE TUDO |
 
 ### Owner Master (IMUTÁVEL)
@@ -122,14 +122,14 @@
 
 ---
 
-## 🌐 ESTRUTURA DE DOMÍNIOS
+## 🌐 ESTRUTURA DE DOMÍNIOS (MONO-DOMÍNIO v2.0 - Atualizado 27/12/2025)
 
 | Subdomínio | Destino | Status |
 |------------|---------|--------|
-| `moisesmedeiros.com.br` | Lovable Cloud (Landing + Gestão) | 🔄 MIGRAR |
-| `www.moisesmedeiros.com.br` | Redireciona para principal | 🔄 MIGRAR |
-| `pro.moisesmedeiros.com.br` | Portal do Aluno | ✅ ATIVO |
-| `gestao.moisesmedeiros.com.br` | Área de Gestão | ✅ ATIVO |
+| `moisesmedeiros.com.br` | Redireciona para pro | ✅ REDIRECT 301 |
+| `www.moisesmedeiros.com.br` | Redireciona para pro | ✅ REDIRECT 301 |
+| `pro.moisesmedeiros.com.br` | **DOMÍNIO ÚNICO** - Tudo aqui | ✅ ATIVO |
+| ~~`gestao.moisesmedeiros.com.br`~~ | ❌ REMOVIDO | 🚫 DELETADO 27/12/2025 |
 
 ---
 

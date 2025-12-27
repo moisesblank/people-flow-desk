@@ -4,11 +4,10 @@
 // PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
 // ============================================
 // 
-// ⚠️ MIGRAÇÃO v2.0: MONO-DOMÍNIO
-// - Antigo: gestao.moisesmedeiros.com.br/gestao → DESCONTINUADO
-// - Novo: pro.moisesmedeiros.com.br/gestaofc (ROTA INTERNA SECRETA)
-// - As definições /gestao abaixo são LEGADAS para compatibilidade
-// - Rotas reais estão em src/routes/gestaofcRoutes.tsx
+// ⚠️ ARQUITETURA MONO-DOMÍNIO v2.0 (27/12/2025)
+// - DOMÍNIO ÚNICO: pro.moisesmedeiros.com.br
+// - Área Staff: pro.moisesmedeiros.com.br/gestaofc (ROTA INTERNA)
+// - Rotas definidas em src/routes/gestaofcRoutes.tsx
 //
 // ============================================
 // 📍 MAPA DE URLs DEFINITIVO v2.0 (REGRA SUPREMA)

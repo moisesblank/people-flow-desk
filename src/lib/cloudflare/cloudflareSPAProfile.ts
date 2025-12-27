@@ -92,9 +92,8 @@ export const MODO_A_DNS_ONLY: CloudflareSafeProfile = {
         "Zero risco de quebrar SPA/assets",
       ],
     },
-    // ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
-    // Arquitetura migrada para mono-domínio (pro.moisesmedeiros.com.br/gestaofc)
-    // Configuração mantida apenas para período de transição (redirect 302)
+    // ✅ MONO-DOMÍNIO v2.0 - 27/12/2025
+    // Toda funcionalidade em pro.moisesmedeiros.com.br/gestaofc
   ],
   
   // MODO A: Não precisa configurar speed (não proxied)

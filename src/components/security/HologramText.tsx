@@ -7,12 +7,11 @@
 // Renderiza texto em canvas, impossível de selecionar/copiar
 // Mantém acessibilidade via elemento oculto para screen readers
 //
-// 📍 MAPA DE URLs DEFINITIVO (MONO-DOMÍNIO):
+// 📍 MAPA DE URLs DEFINITIVO (MONO-DOMÍNIO v2.0 - 27/12/2025):
 //   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
 //   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
 //   👔 FUNCIONÁRIO: pro.moisesmedeiros.com.br/gestaofc (STAFF)
 //   👑 OWNER: TODAS (role='owner' do banco)
-//   ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
 //
 // ============================================
 

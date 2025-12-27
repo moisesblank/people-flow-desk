@@ -10,7 +10,6 @@
 //   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
 //   👔 FUNCIONÁRIO: pro.moisesmedeiros.com.br/gestaofc (STAFF)
 //   👑 OWNER: TODAS (role='owner' do banco)
-//   ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
 //
 // ============================================
 
