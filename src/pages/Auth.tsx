@@ -395,6 +395,10 @@ export default function Auth() {
           return;
         }
 
+        // ✅ CRÍTICO: setar flag ANTES de qualquer efeito global (AuthProvider)
+        // Assim garantimos que nenhum redirect acontece enquanto o 2FA estiver pendente.
+        sessionStorage.setItem("matriz_2fa_pending", "1");
+
         setPending2FAUser({
           email: userFor2FA.email || formData.email,
           userId: userFor2FA.id,
