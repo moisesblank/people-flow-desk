@@ -86,8 +86,23 @@ export default function Alunos() {
   };
   
   // ============================================
+  // ⚡ PARTE 6 REFINADA: Converter universo para filtro A/B/C/D
+  // A = presencial, B = presencial_online, C = online, D = registrados
+  // ============================================
+  const universoFiltro = useMemo(() => {
+    if (!selection) return null;
+    switch (selection.universe) {
+      case 'presencial': return 'A' as const;
+      case 'presencial_online': return 'B' as const;
+      case 'online': return 'C' as const;
+      case 'registrados': return 'D' as const;
+      default: return null;
+    }
+  }, [selection]);
+
+  // ============================================
   // ⚡ PARTE 14: Hook de paginação server-side
-  // Contadores agregados + paginação real
+  // PARTE 6: Agora com filtro de universo aplicado na query
   // ============================================
   const {
     alunos: paginatedStudents,
@@ -103,6 +118,7 @@ export default function Alunos() {
     refetch: refetchPaginated,
   } = useAlunosPaginados({
     pageSize: 50, // Paginação obrigatória: 50 por página
+    universoFiltro, // ⚡ PARTE 6: Filtro aplicado na query
   });
   
   const [wpUsers, setWpUsers] = useState<WordPressUser[]>([]);
@@ -125,7 +141,8 @@ export default function Alunos() {
   });
 
   // ============================================
-  // ⚡ PARTE 14: Converter alunos paginados para formato Student
+  // ⚡ PARTE 14 + PARTE 6: Converter alunos paginados para formato Student
+  // Inclui fonte para filtro de universo
   // ============================================
   const students: Student[] = useMemo(() => {
     return paginatedStudents.map(a => ({
@@ -134,6 +151,7 @@ export default function Alunos() {
       email: a.email,
       curso: '',
       status: a.status,
+      fonte: a.fonte || undefined,
       role: a.role,
     }));
   }, [paginatedStudents]);
