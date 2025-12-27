@@ -63,10 +63,10 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isGodMode]);
 
-  // Fetch content from database - NON-BLOCKING (apenas para edit mode)
+  // Fetch content from database - VISÍVEL PARA TODOS (edições Master Mode públicas)
+  // A edição continua restrita ao Owner via isGodMode checks em updateValue, uploadImage, etc.
   useEffect(() => {
-    // Só buscar conteúdo editável se o usuário é owner (evitar queries desnecessárias)
-    if (!isGodMode) return;
+    // Carregar conteúdo editável para TODOS os usuários verem as edições do Owner
     
     async function fetchContent() {
       setIsLoading(true);
