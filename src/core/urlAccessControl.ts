@@ -2,7 +2,7 @@
 // 🔥🛡️ URL ACCESS CONTROL OMEGA v4.0 🛡️🔥
 // CONTROLE DE ACESSO SUPREMO - NÍVEL NASA
 // ============================================
-// 📍 MAPA DE URLs DEFINITIVO (REGRA SUPREMA):
+// 📍 MAPA DE URLs DEFINITIVO v2.0 (MONO-DOMÍNIO):
 // ┌───────────────────────────────────────────────────────────────────┐
 // │ QUEM             │ URL BASE                           │ VALIDAÇÃO│
 // ├───────────────────────────────────────────────────────────────────┤
@@ -12,7 +12,8 @@
 // │ 👨‍🎓 ALUNO BETA    │ pro.moisesmedeiros.com.br/alunos   │ beta     │
 // │                  │ + /comunidade (acesso incluído)     │          │
 // ├───────────────────────────────────────────────────────────────────┤
-// │ 👔 FUNCIONÁRIO   │ gestao.moisesmedeiros.com.br/gestao│ func     │
+// │ 👔 FUNCIONÁRIO   │ pro.moisesmedeiros.com.br/gestaofc │ staff    │
+// │                  │ (ROTA INTERNA - ACESSO POR URL)    │          │
 // ├───────────────────────────────────────────────────────────────────┤
 // │ 👑 OWNER         │ TODAS                              │ owner    │
 // └───────────────────────────────────────────────────────────────────┘
