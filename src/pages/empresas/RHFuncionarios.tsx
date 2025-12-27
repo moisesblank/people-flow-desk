@@ -57,6 +57,30 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarC
 // TIPOS E CONSTANTES
 // ═══════════════════════════════════════════════════════════════
 
+// 🎯 CONSTITUIÇÃO ROLES v1.0.0 - Nomenclatura Definitiva
+// "employee" e "funcionario" são CATEGORIAS, não roles
+// Cada funcionário recebe UMA role específica de permissão
+export type StaffRole = 
+  | "owner"        // Nível 0 - Proprietário (TOTAL)
+  | "admin"        // Nível 1 - Administrador (quase total)
+  | "coordenacao"  // Nível 2 - Coordenação
+  | "contabilidade"// Nível 2 - Contabilidade  
+  | "suporte"      // Nível 3 - Suporte
+  | "monitoria"    // Nível 3 - Monitoria
+  | "marketing"    // Nível 3 - Marketing
+  | "afiliado";    // Nível 3 - Afiliados
+
+// Opções de nível de acesso para o formulário
+const STAFF_ROLE_OPTIONS: { value: StaffRole; label: string; description: string; level: number }[] = [
+  { value: "admin", label: "Administrador", description: "Acesso quase total (sem god_mode)", level: 1 },
+  { value: "coordenacao", label: "Coordenação", description: "Alunos, cursos, relatórios", level: 2 },
+  { value: "contabilidade", label: "Contabilidade", description: "Financeiro completo", level: 2 },
+  { value: "suporte", label: "Suporte", description: "Atendimento a alunos", level: 3 },
+  { value: "monitoria", label: "Monitoria", description: "Acompanhamento pedagógico", level: 3 },
+  { value: "marketing", label: "Marketing", description: "Campanhas e analytics", level: 3 },
+  { value: "afiliado", label: "Afiliados", description: "Gestão de afiliações", level: 3 },
+];
+
 interface Employee {
   id: number;
   nome: string;
@@ -156,7 +180,8 @@ export default function RHFuncionarios() {
     nome: "",
     email: "",
     telefone: "",
-    funcao: "",
+    funcao: "", // Cargo/descrição humana (ex: "Desenvolvedor Sênior")
+    nivel_acesso: "suporte" as StaffRole, // Role de permissão (nova)
     setor: "Administrativo",
     status: "ativo",
     data_admissao: format(new Date(), "yyyy-MM-dd"),
@@ -343,6 +368,7 @@ export default function RHFuncionarios() {
         email: employee.email || "",
         telefone: employee.telefone || "",
         funcao: employee.funcao || "",
+        nivel_acesso: "suporte" as StaffRole, // Default para edição
         setor: employee.setor || "Administrativo",
         status: employee.status || "ativo",
         data_admissao: employee.data_admissao || format(new Date(), "yyyy-MM-dd"),
@@ -357,6 +383,7 @@ export default function RHFuncionarios() {
         email: "",
         telefone: "",
         funcao: "",
+        nivel_acesso: "suporte" as StaffRole,
         setor: "Administrativo",
         status: "ativo",
         data_admissao: format(new Date(), "yyyy-MM-dd"),
@@ -520,7 +547,7 @@ export default function RHFuncionarios() {
       // Senha gerada automaticamente se não fornecida
       const senhaGerada = formData.senha?.trim() || `${nome.split(' ')[0].toLowerCase()}@${Math.random().toString(36).slice(-6)}`;
       
-      console.log("[RH] Enviando convite:", { email, nome, employee_id: employeeId });
+      console.log("[RH] Enviando convite:", { email, nome, employee_id: employeeId, role: formData.nivel_acesso });
       
       const { data, error } = await supabase.functions.invoke("invite-employee", {
         body: {
@@ -528,6 +555,7 @@ export default function RHFuncionarios() {
           nome,
           senha: senhaGerada,
           funcao: formData.funcao,
+          role: formData.nivel_acesso, // 🎯 NOVA: Role específica de permissão
           employee_id: employeeId || editingEmployee?.id || undefined,
         },
       });
@@ -1327,15 +1355,47 @@ export default function RHFuncionarios() {
                   />
                 </div>
 
-                {/* Função */}
+                {/* Função/Cargo (descrição humana) */}
                 <div>
-                  <Label htmlFor="funcao">Função/Cargo</Label>
+                  <Label htmlFor="funcao">Cargo/Função</Label>
                   <Input
                     id="funcao"
                     value={formData.funcao}
                     onChange={(e) => setFormData({ ...formData, funcao: e.target.value })}
-                    placeholder="Ex: Analista de Marketing"
+                    placeholder="Ex: Desenvolvedor Sênior, Atendente"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Descrição do cargo (aparece no perfil)
+                  </p>
+                </div>
+
+                {/* Nível de Acesso (role de permissão) - NOVO! */}
+                <div>
+                  <Label htmlFor="nivel_acesso" className="flex items-center gap-2">
+                    <Shield className="h-4 w-4 text-primary" />
+                    Nível de Acesso *
+                  </Label>
+                  <Select 
+                    value={formData.nivel_acesso} 
+                    onValueChange={(v) => setFormData({ ...formData, nivel_acesso: v as StaffRole })}
+                  >
+                    <SelectTrigger className="border-primary/30">
+                      <SelectValue placeholder="Selecione o nível" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STAFF_ROLE_OPTIONS.map((role) => (
+                        <SelectItem key={role.value} value={role.value}>
+                          <div className="flex flex-col">
+                            <span className="font-medium">{role.label}</span>
+                            <span className="text-xs text-muted-foreground">{role.description}</span>
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Define as permissões do funcionário no sistema
+                  </p>
                 </div>
 
                 {/* Setor */}

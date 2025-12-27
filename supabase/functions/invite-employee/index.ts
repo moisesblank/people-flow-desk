@@ -6,11 +6,28 @@ import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
 const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
+// 🎯 CONSTITUIÇÃO ROLES v1.0.0 - Nomenclatura Definitiva
+// "employee" e "funcionario" são CATEGORIAS, não roles
+// Cada funcionário recebe UMA role específica de permissão
+type StaffRole = 
+  | "admin"        // Nível 1 - Administrador
+  | "coordenacao"  // Nível 2 - Coordenação
+  | "contabilidade"// Nível 2 - Contabilidade  
+  | "suporte"      // Nível 3 - Suporte
+  | "monitoria"    // Nível 3 - Monitoria
+  | "marketing"    // Nível 3 - Marketing
+  | "afiliado";    // Nível 3 - Afiliados
+
+const VALID_STAFF_ROLES: StaffRole[] = [
+  "admin", "coordenacao", "contabilidade", "suporte", "monitoria", "marketing", "afiliado"
+];
+
 interface InviteRequest {
   email: string;
   nome: string;
   senha: string;
   funcao?: string;
+  role?: StaffRole; // Role específica de permissão (NOVO!)
   employee_id?: number;
 }
 
@@ -58,7 +75,7 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, nome, senha, funcao, employee_id }: InviteRequest = await req.json();
+    const { email, nome, senha, funcao, role, employee_id }: InviteRequest = await req.json();
 
     if (!email || !nome) {
       return new Response(
@@ -73,6 +90,10 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
+
+    // 🎯 Validar role (default: suporte)
+    const assignedRole: StaffRole = role && VALID_STAFF_ROLES.includes(role) ? role : "suporte";
+    console.log(`[INVITE] Role a ser atribuída: ${assignedRole}`);
 
     console.log(`[INVITE] Creating user: ${email} (${nome})`);
 
@@ -177,13 +198,13 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Assign employee role
+    // 🎯 Assign specific staff role (não mais "employee" genérico!)
     if (newUser.user) {
       const { error: roleError } = await supabase
         .from("user_roles")
         .upsert({ 
           user_id: newUser.user.id, 
-          role: "employee" 
+          role: assignedRole // Role específica: suporte, monitoria, coordenacao, etc.
         }, { 
           onConflict: "user_id" 
         });
@@ -191,7 +212,7 @@ const handler = async (req: Request): Promise<Response> => {
       if (roleError) {
         console.warn("[INVITE] Could not assign role:", roleError);
       } else {
-        console.log(`[INVITE] Role 'employee' assigned to ${newUser.user.id}`);
+        console.log(`[INVITE] Role '${assignedRole}' assigned to ${newUser.user.id}`);
       }
     }
 

@@ -322,7 +322,7 @@ export async function requestContentAccess(
   // 1. VERIFICAR AUTENTICAÇÃO E AUTORIZAÇÃO
   // ============================================
   const guardResult = await sanctumGuard({
-    requiredRoles: ["beta", "funcionario", "admin", "owner"],
+    requiredRoles: ["beta", "suporte", "monitoria", "coordenacao", "contabilidade", "marketing", "afiliado", "admin", "owner"],
     action: "content_access",
     resourceType: contentType,
     resourceId: contentId,
