@@ -17,9 +17,10 @@ import { getIconComponent } from "@/lib/iconMap";
 import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, DragEndEvent } from "@dnd-kit/core";
 import { SortableContext, verticalListSortingStrategy, useSortable, arrayMove } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
-import { GripVertical, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Lock, Save, RotateCcw, Loader2 } from "lucide-react";
+import { GripVertical, Plus, Pencil, Trash2, ChevronDown, ChevronRight, Lock, Save, RotateCcw, Loader2, Database, RefreshCw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface MasterMenuEditorProps {
   open: boolean;
@@ -109,7 +110,7 @@ function GroupSection({ group, items, onEditGroup, onDeleteGroup, onAddItem, onE
 }
 
 export function MasterMenuEditor({ open, onOpenChange }: MasterMenuEditorProps) {
-  const { groups, items, groupsWithItems, isLoading, isMutating, createGroup, updateGroup, deleteGroup, createItem, updateItem, deleteItem, bulkUpdateOrder, refetchAll } = useMenuConfig();
+  const { groups, items, groupsWithItems, isLoading, isMutating, hasData, createGroup, updateGroup, deleteGroup, createItem, updateItem, deleteItem, bulkUpdateOrder, refetchAll } = useMenuConfig();
   
   const [groupFormOpen, setGroupFormOpen] = useState(false);
   const [itemFormOpen, setItemFormOpen] = useState(false);
@@ -118,6 +119,32 @@ export function MasterMenuEditor({ open, onOpenChange }: MasterMenuEditorProps) 
   const [deleteConfirm, setDeleteConfirm] = useState<{ type: "group" | "item"; id: string; label: string } | null>(null);
   const [defaultGroupId, setDefaultGroupId] = useState<string>("");
   const [pendingChanges, setPendingChanges] = useState<Map<string, MenuItem[]>>(new Map());
+  const [isSeeding, setIsSeeding] = useState(false);
+
+  const handleSeedMenu = async (forceReseed = false) => {
+    setIsSeeding(true);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("Sessão expirada. Faça login novamente.");
+        return;
+      }
+
+      const response = await supabase.functions.invoke("seed-menu-config", {
+        body: { forceReseed },
+      });
+
+      if (response.error) throw response.error;
+      
+      toast.success(response.data.message);
+      refetchAll();
+    } catch (error) {
+      console.error("Erro ao fazer seed:", error);
+      toast.error("Erro ao popular menu inicial");
+    } finally {
+      setIsSeeding(false);
+    }
+  };
 
   const hasUnsavedChanges = pendingChanges.size > 0;
 
@@ -196,9 +223,31 @@ export function MasterMenuEditor({ open, onOpenChange }: MasterMenuEditorProps) 
                 />
               ))}
               {groups.length === 0 && !isLoading && (
-                <div className="text-center py-12 text-muted-foreground">
+                <div className="text-center py-12 text-muted-foreground space-y-4">
+                  <Database className="h-12 w-12 mx-auto opacity-50" />
                   <p>Nenhum grupo configurado.</p>
-                  <p className="text-sm">Clique em "+ Grupo" para começar.</p>
+                  <p className="text-sm">Clique em "Seed Inicial" para popular com os menus padrão, ou crie manualmente.</p>
+                  <div className="flex gap-2 justify-center">
+                    <Button onClick={() => handleSeedMenu(false)} disabled={isSeeding}>
+                      {isSeeding ? <Loader2 className="h-4 w-4 mr-1 animate-spin" /> : <Database className="h-4 w-4 mr-1" />}
+                      Seed Inicial
+                    </Button>
+                    <Button variant="outline" onClick={() => { setEditingGroup(null); setGroupFormOpen(true); }}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Criar Manualmente
+                    </Button>
+                  </div>
+                </div>
+              )}
+              {hasData && (
+                <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center justify-between text-sm text-muted-foreground">
+                    <span>{groups.length} grupos • {items.length} itens</span>
+                    <Button variant="ghost" size="sm" onClick={() => handleSeedMenu(true)} disabled={isSeeding}>
+                      <RefreshCw className={cn("h-3 w-3 mr-1", isSeeding && "animate-spin")} />
+                      Repopular
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>
