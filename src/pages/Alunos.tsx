@@ -218,10 +218,27 @@ export default function Alunos() {
   useEffect(() => {
     fetchData();
 
-    // Realtime subscription for WordPress sync
+    // ============================================
+    // ⚡ PARTE 13: Realtime subscription para sincronização
+    // Tabelas: usuarios_wordpress_sync, alunos, profiles, user_roles
+    // Estratégia: invalidation (re-fetch ao mudar)
+    // ============================================
     const channel = supabase
-      .channel('wp-sync-realtime')
+      .channel('gestao-alunos-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios_wordpress_sync' }, () => {
+        console.log('[GESTAO-REALTIME] usuarios_wordpress_sync changed');
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => {
+        console.log('[GESTAO-REALTIME] alunos changed');
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        console.log('[GESTAO-REALTIME] profiles changed');
+        fetchData();
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => {
+        console.log('[GESTAO-REALTIME] user_roles changed');
         fetchData();
       })
       .subscribe();

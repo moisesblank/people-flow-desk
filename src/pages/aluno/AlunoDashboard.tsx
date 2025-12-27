@@ -57,11 +57,20 @@ export default function AlunoDashboard() {
   const queryClient = useQueryClient();
   
   // ============================================
-  // ⚡ REALTIME CORE — PARTE 5
+  // ⚡ REALTIME CORE — PARTE 5 + PARTE 13
   // Assina tabelas do aluno filtradas por user_id
-  // Tabelas: lesson_progress, user_gamification, study_flashcards, student_daily_goals
+  // Tabelas: profiles, alunos (via email), lesson_progress, user_gamification, study_flashcards, student_daily_goals
+  // PARTE 13: Sincronização em tempo real com indicador visual
   // ============================================
   const { isConnected, state: realtimeState } = useRealtimeAlunos([
+    {
+      table: 'profiles',
+      event: '*',
+      onEvent: () => {
+        queryClient.invalidateQueries({ queryKey: ['profile'] });
+        queryClient.invalidateQueries({ queryKey: ['user-profile'] });
+      },
+    },
     {
       table: 'lesson_progress',
       event: '*',
@@ -115,16 +124,19 @@ export default function AlunoDashboard() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
-      {/* ⚡ Indicador de Sincronização Realtime — PARTE 5 */}
+      {/* ⚡ Indicador de Sincronização Realtime — PARTE 5 + PARTE 13 */}
       <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
         {isConnected ? (
-          <Wifi className="h-3 w-3 text-emerald-500" />
+          <Wifi className="h-3 w-3 text-emerald-500 animate-pulse" />
         ) : (
           <WifiOff className="h-3 w-3 text-destructive" />
         )}
         <span>
-          {isConnected ? 'Sincronizado' : 'Desconectado'}
-          {lastSyncTime && ` • ${lastSyncTime}`}
+          {isConnected 
+            ? lastSyncTime 
+              ? `Sincronizado agora • ${lastSyncTime}` 
+              : 'Sincronizado • aguardando eventos'
+            : 'Desconectado'}
         </span>
       </div>
       
