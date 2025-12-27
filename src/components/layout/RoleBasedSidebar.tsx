@@ -174,6 +174,7 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Planejamento de Aula", url: "/gestaofc/planejamento-aula", icon: PenTool, area: "planejamento-aula" },
       { title: "Turmas Online", url: "/gestaofc/turmas-online", icon: Monitor, area: "turmas-online" },
       { title: "Turmas Presenciais", url: "/gestaofc/turmas-presenciais", icon: MapPin, area: "turmas-presenciais" },
+      { title: "Simulados", url: "/gestaofc/simulados", icon: Brain, area: "simulados" },
     ],
   },
   {
@@ -195,7 +196,6 @@ const gestaoMenuGroups: MenuGroup[] = [
     color: "from-purple-600/80",
     items: [
       { title: "Cursos", url: "/gestaofc/cursos", icon: PlayCircle, area: "cursos" },
-      { title: "Simulados", url: "/gestaofc/simulados", icon: Brain, area: "simulados" },
       { title: "Afiliados", url: "/gestaofc/afiliados", icon: Handshake, area: "afiliados" },
       { title: "Gestão Alunos", url: "/gestaofc/gestao-alunos", icon: GraduationCap, area: "alunos" },
       { title: "Portal Aluno", url: "/gestaofc/portal-aluno", icon: UserCheck, area: "portal-aluno" },
