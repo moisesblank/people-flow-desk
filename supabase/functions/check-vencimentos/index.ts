@@ -191,7 +191,7 @@ serve(async (req) => {
     </div>
     
     <div style="text-align: center;">
-      <a href="https://gestao.moisesmedeiros.com.br/financas-empresa" class="cta-button">
+      <a href="https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa" class="cta-button">
         💰 Acessar Central Financeira
       </a>
     </div>

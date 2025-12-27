@@ -243,7 +243,7 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Não deixe para depois!</p>
         `,
         "Ver Calendário",
-        "https://gestao.moisesmedeiros.com.br/calendario"
+        "https://pro.moisesmedeiros.com.br/gestaofc/calendario"
       ),
     },
 

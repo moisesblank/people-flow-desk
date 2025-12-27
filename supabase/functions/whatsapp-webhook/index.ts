@@ -486,15 +486,15 @@ COMANDOS /admin (AVANÇADOS)
 /admin encerrar
 
 ═══════════════════════════════════════════════════════════════════
-LINKS DO SISTEMA
+LINKS DO SISTEMA (MONO-DOMÍNIO v2.0)
 ═══════════════════════════════════════════════════════════════════
-🔗 Dashboard: https://gestao.moisesmedeiros.com.br/dashboard
-📋 Tarefas: https://gestao.moisesmedeiros.com.br/tarefas
-💰 Finanças: https://gestao.moisesmedeiros.com.br/financas-empresa
-👥 Alunos: https://gestao.moisesmedeiros.com.br/alunos
-👔 Equipe: https://gestao.moisesmedeiros.com.br/funcionarios
-📱 Leads: https://gestao.moisesmedeiros.com.br/central-whatsapp
-📈 Marketing: https://gestao.moisesmedeiros.com.br/marketing
+🔗 Dashboard: https://pro.moisesmedeiros.com.br/gestaofc/dashboard
+📋 Tarefas: https://pro.moisesmedeiros.com.br/gestaofc/tarefas
+💰 Finanças: https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa
+👥 Alunos: https://pro.moisesmedeiros.com.br/gestaofc/gestao-alunos
+👔 Equipe: https://pro.moisesmedeiros.com.br/gestaofc/funcionarios
+📱 Leads: https://pro.moisesmedeiros.com.br/gestaofc/central-whatsapp
+📈 Marketing: https://pro.moisesmedeiros.com.br/gestaofc/marketing
 
 ═══════════════════════════════════════════════════════════════════
 IMPORTANTE

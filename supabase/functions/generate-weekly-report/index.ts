@@ -249,7 +249,7 @@ serve(async (req) => {
     
     <div class="footer">
       <p>Relatório gerado automaticamente pelo sistema de gestão</p>
-      <p><a href="https://gestao.moisesmedeiros.com.br/dashboard">Acessar Dashboard Completo</a></p>
+      <p><a href="https://pro.moisesmedeiros.com.br/gestaofc/dashboard">Acessar Dashboard Completo</a></p>
     </div>
   </div>
 </body>
