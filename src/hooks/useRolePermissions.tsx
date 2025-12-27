@@ -628,12 +628,12 @@ export function useHasAccess(area: SystemArea): boolean {
 }
 
 // ============================================
-// 🔐 VALIDAÇÃO DE ACESSO POR DOMÍNIO NO LOGIN
-// LEI IV - SEPARAÇÃO DE DOMÍNIOS (CONSTITUIÇÃO v9.2b)
+// 🔐 VALIDAÇÃO DE ACESSO (MONO-DOMÍNIO v2.0)
 // ============================================
-// REGRA:
-// - gestao.moisesmedeiros.com.br → APENAS funcionários + owner
-// - pro.moisesmedeiros.com.br → APENAS alunos beta + owner
+// REGRA ATUALIZADA:
+// - pro.moisesmedeiros.com.br/gestaofc → FUNCIONÁRIOS + OWNER
+// - pro.moisesmedeiros.com.br/alunos → ALUNOS BETA + OWNER
+// - pro.moisesmedeiros.com.br/ → ÁREA PÚBLICA
 // - Owner (moisesblank@gmail.com) → ACESSO SUPREMO EM TODOS
 // ============================================
 

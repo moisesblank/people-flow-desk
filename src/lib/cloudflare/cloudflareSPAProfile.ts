@@ -92,19 +92,9 @@ export const MODO_A_DNS_ONLY: CloudflareSafeProfile = {
         "Zero risco de quebrar SPA/assets",
       ],
     },
-    {
-      domain: "gestao.moisesmedeiros.com.br",
-      mode: "dns_only",
-      proxyStatus: "grey",
-      sslMode: "full_strict",
-      minTLS: "1.2",
-      alwaysHttps: true,
-      notes: [
-        "DNS Only - Cloudflare não processa tráfego",
-        "Segurança via Edge Guard + RLS + MFA",
-        "Zero risco de quebrar SPA/assets",
-      ],
-    },
+    // ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
+    // Arquitetura migrada para mono-domínio (pro.moisesmedeiros.com.br/gestaofc)
+    // Configuração mantida apenas para período de transição (redirect 302)
   ],
   
   // MODO A: Não precisa configurar speed (não proxied)
@@ -157,19 +147,8 @@ export const MODO_B_PROXIED_SAFE: CloudflareSafeProfile = {
         "Verificar gates antes de ativar",
       ],
     },
-    {
-      domain: "gestao.moisesmedeiros.com.br",
-      mode: "proxied",
-      proxyStatus: "orange",
-      sslMode: "full_strict",
-      minTLS: "1.2",
-      alwaysHttps: true,
-      notes: [
-        "Proxied - WAF/Bot/Rate Limit ativos",
-        "REQUER configurações anti-quebra abaixo",
-        "Verificar gates antes de ativar",
-      ],
-    },
+    // ❌ gestao.moisesmedeiros.com.br DESCONTINUADO em MODO B também
+    // Arquitetura migrada para mono-domínio (pro.moisesmedeiros.com.br/gestaofc)
   ],
   
   // MODO B: Desabilitar tudo que quebra SPA
