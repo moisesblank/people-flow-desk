@@ -372,7 +372,10 @@ export type Database = {
       }
       alunos: {
         Row: {
+          bairro: string | null
+          cep: string | null
           cidade: string | null
+          complemento: string | null
           cpf: string | null
           created_at: string | null
           curso_id: string | null
@@ -384,7 +387,9 @@ export type Database = {
           foto_url: string | null
           hotmart_transaction_id: string | null
           id: string
+          logradouro: string | null
           nome: string
+          numero: string | null
           observacoes: string | null
           status: string | null
           telefone: string | null
@@ -392,7 +397,10 @@ export type Database = {
           valor_pago: number | null
         }
         Insert: {
+          bairro?: string | null
+          cep?: string | null
           cidade?: string | null
+          complemento?: string | null
           cpf?: string | null
           created_at?: string | null
           curso_id?: string | null
@@ -404,7 +412,9 @@ export type Database = {
           foto_url?: string | null
           hotmart_transaction_id?: string | null
           id?: string
+          logradouro?: string | null
           nome: string
+          numero?: string | null
           observacoes?: string | null
           status?: string | null
           telefone?: string | null
@@ -412,7 +422,10 @@ export type Database = {
           valor_pago?: number | null
         }
         Update: {
+          bairro?: string | null
+          cep?: string | null
           cidade?: string | null
+          complemento?: string | null
           cpf?: string | null
           created_at?: string | null
           curso_id?: string | null
@@ -424,7 +437,9 @@ export type Database = {
           foto_url?: string | null
           hotmart_transaction_id?: string | null
           id?: string
+          logradouro?: string | null
           nome?: string
+          numero?: string | null
           observacoes?: string | null
           status?: string | null
           telefone?: string | null

@@ -342,7 +342,8 @@ serve(async (req) => {
 
     // ============================================
     // 7. UPSERT EM ALUNOS
-    // Colunas reais: nome, email, telefone, foto_url, cidade, estado
+    // Colunas reais: nome, email, telefone, foto_url, 
+    // logradouro, numero, complemento, bairro, cidade, estado, cep
     // ============================================
     const alunoData: Record<string, unknown> = {
       nome: payload.nome,
@@ -360,12 +361,29 @@ serve(async (req) => {
       alunoData.foto_url = payload.foto_aluno;
     }
 
-    // Endereço parcial (apenas cidade e estado existem na tabela)
-    if (payload.endereco?.cidade) {
-      alunoData.cidade = payload.endereco.cidade;
-    }
-    if (payload.endereco?.estado) {
-      alunoData.estado = payload.endereco.estado.toUpperCase();
+    // Endereço completo (todas as colunas agora existem)
+    if (payload.endereco) {
+      if (payload.endereco.logradouro) {
+        alunoData.logradouro = payload.endereco.logradouro;
+      }
+      if (payload.endereco.numero) {
+        alunoData.numero = payload.endereco.numero;
+      }
+      if (payload.endereco.complemento) {
+        alunoData.complemento = payload.endereco.complemento;
+      }
+      if (payload.endereco.bairro) {
+        alunoData.bairro = payload.endereco.bairro;
+      }
+      if (payload.endereco.cidade) {
+        alunoData.cidade = payload.endereco.cidade;
+      }
+      if (payload.endereco.estado) {
+        alunoData.estado = payload.endereco.estado.toUpperCase();
+      }
+      if (payload.endereco.cep) {
+        alunoData.cep = payload.endereco.cep.replace(/\D/g, '');
+      }
     }
 
     const { error: alunoError } = await supabaseAdmin
