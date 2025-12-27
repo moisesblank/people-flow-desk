@@ -1,6 +1,7 @@
 // ============================================
 // CENTRAL DO ALUNO - DASHBOARD 2300
 // GPU-ONLY animations via useQuantumReactivity
+// ⚡ RealtimeCore v1.0.0 — PARTE 5
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -11,11 +12,14 @@ import { Button } from "@/components/ui/button";
 import { 
   BookOpen, PlayCircle, Trophy, Target, Calendar, 
   Clock, TrendingUp, Star, Zap, Brain, Award, 
-  Flame, Rocket, Sparkles, ChevronRight, Atom
+  Flame, Rocket, Sparkles, ChevronRight, Atom, Wifi, WifiOff
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { useRealtimeAlunos } from "@/hooks/useRealtimeCore";
+import { useAuth } from "@/hooks/useAuth";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface StudyStats {
   horasEstudadas: number;
@@ -49,6 +53,50 @@ export default function AlunoDashboard() {
   const navigate = useNavigate();
   const { shouldAnimate } = useQuantumReactivity();
   const { container, item } = getGpuVariants(shouldAnimate);
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
+  
+  // ============================================
+  // ⚡ REALTIME CORE — PARTE 5
+  // Assina tabelas do aluno filtradas por user_id
+  // Tabelas: lesson_progress, user_gamification, study_flashcards, student_daily_goals
+  // ============================================
+  const { isConnected, state: realtimeState } = useRealtimeAlunos([
+    {
+      table: 'lesson_progress',
+      event: '*',
+      onEvent: () => {
+        queryClient.invalidateQueries({ queryKey: ['lesson-progress'] });
+      },
+    },
+    {
+      table: 'user_gamification',
+      event: '*',
+      onEvent: () => {
+        queryClient.invalidateQueries({ queryKey: ['user-gamification'] });
+      },
+    },
+    {
+      table: 'study_flashcards',
+      event: '*',
+      onEvent: () => {
+        queryClient.invalidateQueries({ queryKey: ['study-flashcards'] });
+      },
+    },
+    {
+      table: 'student_daily_goals',
+      event: '*',
+      onEvent: () => {
+        queryClient.invalidateQueries({ queryKey: ['daily-goals'] });
+      },
+    },
+  ]);
+
+  // Formatar timestamp do último evento
+  const lastSyncTime = realtimeState.lastEventAt 
+    ? realtimeState.lastEventAt.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
+    : null;
+  
   const [stats] = useState<StudyStats>({
     horasEstudadas: 47,
     aulasAssistidas: 32,
@@ -67,6 +115,19 @@ export default function AlunoDashboard() {
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
+      {/* ⚡ Indicador de Sincronização Realtime — PARTE 5 */}
+      <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
+        {isConnected ? (
+          <Wifi className="h-3 w-3 text-emerald-500" />
+        ) : (
+          <WifiOff className="h-3 w-3 text-destructive" />
+        )}
+        <span>
+          {isConnected ? 'Sincronizado' : 'Desconectado'}
+          {lastSyncTime && ` • ${lastSyncTime}`}
+        </span>
+      </div>
+      
       {/* Header Hero Futurista */}
       <motion.div 
         {...(shouldAnimate ? { initial: { opacity: 0, y: -20 }, animate: { opacity: 1, y: 0 } } : {})}
