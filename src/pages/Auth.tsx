@@ -252,13 +252,9 @@ export default function Auth() {
       return;
     }
     
-    // Verificar Turnstile antes de prosseguir
-    if (!isTurnstileVerified || !turnstileToken) {
-      toast.error("Verificação de segurança necessária", {
-        description: "Por favor, complete a verificação anti-bot."
-      });
-      return;
-    }
+    // 🛡️ NOVA ESTRATÉGIA: Turnstile NÃO é obrigatório no login normal
+    // Só é exigido em eventos de risco: signup, reset senha, muitas tentativas falhas
+    // Login padrão flui SEM bloqueio por Turnstile
     
     setIsLoading(true);
 
@@ -284,7 +280,8 @@ export default function Auth() {
       }
 
        if (isLogin) {
-         const result = await signIn(formData.email, formData.password, { turnstileToken });
+         // 🛡️ Login SEM Turnstile obrigatório (nova estratégia)
+         const result = await signIn(formData.email, formData.password, {});
 
          // 🛡️ LEI VI: pode bloquear/solicitar desafio antes do login (sem erro de credencial)
          if (result.blocked) {
@@ -348,6 +345,15 @@ export default function Auth() {
           description: "Um código de 6 dígitos foi enviado para " + (user.email || formData.email)
         });
       } else {
+        // 🛡️ SIGNUP: Turnstile OBRIGATÓRIO (evento de risco)
+        if (!isTurnstileVerified || !turnstileToken) {
+          toast.error("Verificação de segurança necessária", {
+            description: "Para criar uma conta, complete a verificação anti-bot."
+          });
+          setIsLoading(false);
+          return;
+        }
+        
         // Cadastro de novo usuário
         const result = await signUp(formData.email, formData.password, formData.nome);
         if (result.error) {
@@ -871,15 +877,17 @@ export default function Auth() {
                 </div>
               )}
 
-              {/* Cloudflare Turnstile - Anti-Bot Protection */}
-              <div className="py-2">
-                <CloudflareTurnstile
-                  {...TurnstileProps}
-                  theme="dark"
-                  size="flexible"
-                  showStatus={true}
-                />
-              </div>
+              {/* Cloudflare Turnstile - APENAS para signup (evento de risco) */}
+              {!isLogin && (
+                <div className="py-2">
+                  <CloudflareTurnstile
+                    {...TurnstileProps}
+                    theme="dark"
+                    size="flexible"
+                    showStatus={true}
+                  />
+                </div>
+              )}
 
               <Button
                 type="submit"
