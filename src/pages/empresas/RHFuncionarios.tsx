@@ -544,8 +544,27 @@ export default function RHFuncionarios() {
     }
 
     try {
-      // Senha gerada automaticamente se não fornecida
-      const senhaGerada = formData.senha?.trim() || `${nome.split(' ')[0].toLowerCase()}@${Math.random().toString(36).slice(-6)}`;
+      // Senha forte gerada automaticamente se não fornecida (mín 8 + min/maiúscula/número/especial)
+      const generateStrongPassword = () => {
+        const lower = "abcdefghijklmnopqrstuvwxyz";
+        const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const digits = "0123456789";
+        const special = "!@#$%^&*()_+-=[]{};':\"\\|<>?,./`~";
+        const all = lower + upper + digits + special;
+
+        const pick = (chars: string) => chars[Math.floor(Math.random() * chars.length)];
+        const result = [pick(lower), pick(upper), pick(digits), pick(special)];
+        // completa até 12 chars
+        while (result.length < 12) result.push(pick(all));
+        // shuffle simples
+        for (let i = result.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [result[i], result[j]] = [result[j], result[i]];
+        }
+        return result.join("");
+      };
+
+      const senhaGerada = formData.senha?.trim() || generateStrongPassword();
       
       console.log("[RH] Enviando convite:", { email, nome, employee_id: employeeId, role: formData.nivel_acesso });
       
