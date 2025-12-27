@@ -506,19 +506,17 @@ export default function RHFuncionarios() {
 
     setIsSaving(true);
     try {
-      // Deletar compensação primeiro
-      await supabase
-        .from("employee_compensation")
-        .delete()
-        .eq("employee_id", deleteDialogOpen.id);
-
-      // Deletar funcionário
+      // FK CASCADE cuida de employee_compensation, employee_documents, etc.
+      // Deletar funcionário diretamente (cascata automática)
       const { error } = await supabase
         .from("employees")
         .delete()
         .eq("id", deleteDialogOpen.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("[RH] Erro detalhado ao excluir:", error);
+        throw error;
+      }
 
       toast.success("Funcionário excluído!", {
         description: `${deleteDialogOpen.nome} foi removido da equipe.`,
@@ -527,8 +525,10 @@ export default function RHFuncionarios() {
       setDeleteDialogOpen(null);
       fetchData();
     } catch (error: any) {
-      console.error("Erro ao excluir:", error);
-      toast.error("Erro ao excluir funcionário");
+      console.error("[RH] Erro ao excluir funcionário:", error);
+      toast.error("Erro ao excluir funcionário", {
+        description: error?.message || error?.details || "Tente novamente",
+      });
     } finally {
       setIsSaving(false);
     }
