@@ -126,6 +126,10 @@ verify_jwt = true
 [functions.invite-employee]
 verify_jwt = true
 
+# --- Criação de Acesso Oficial (PARTE 10) ---
+[functions.c-create-official-access]
+verify_jwt = true
+
 # --- IAs e Conteúdo Premium ---
 [functions.ai-tutor]
 verify_jwt = true

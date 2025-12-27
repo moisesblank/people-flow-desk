@@ -139,7 +139,10 @@ export function CriarAcessoOficialModal({
         { body: payload }
       );
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error);
+        throw new Error(error.message || 'Erro na comunicação com servidor');
+      }
 
       if (!response?.success) {
         throw new Error(response?.error || 'Erro ao criar acesso');
