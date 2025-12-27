@@ -301,8 +301,11 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     // Enviar email
+    const defaultFrom = "Moisés Medeiros <onboarding@resend.dev>";
+    const from = Deno.env.get("RESEND_FROM") || defaultFrom;
+
     const emailResponse = await resend.emails.send({
-      from: "Moisés Medeiros <onboarding@resend.dev>",
+      from,
       to: [email],
       subject: `🔐 [${codeStr}] Código de Verificação - Prof. Moisés Medeiros`,
       html: emailHtml,

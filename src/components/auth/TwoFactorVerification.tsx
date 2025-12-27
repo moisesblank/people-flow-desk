@@ -116,7 +116,7 @@ export function TwoFactorVerification({
       }
 
       toast.success("Código enviado!", {
-        description: `Verifique: ${email}`
+        description: `Verifique: ${email} (SPAM e Promoções). Remetente: onboarding@resend.dev`,
       });
 
       setCountdown(60);
