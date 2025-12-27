@@ -199,33 +199,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // ============================================
   // AUTH STATE
   // ============================================
+  // ============================================
+  // ✅ P0 FIX: AUTH STATE com proteções anti-loop
+  // - Cleanup obrigatório
+  // - setState otimizado (só atualiza se mudou)
+  // - Array de dependências vazio
+  // ============================================
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      async (event, newSession) => {
         // ✅ DEBUG P0: Não logar tokens; apenas presença de sessão/usuário
         console.log('[AUTH][STATE] event:', event, {
-          hasSession: Boolean(session),
-          hasUser: Boolean(session?.user),
+          hasSession: Boolean(newSession),
+          hasUser: Boolean(newSession?.user),
           path: typeof window !== 'undefined' ? window.location.pathname : undefined,
           is2FAPending: typeof window !== 'undefined'
             ? sessionStorage.getItem('matriz_2fa_pending') === '1'
             : undefined,
         });
 
-        setSession(session);
-        setUser(session?.user ?? null);
+        // ✅ P0 FIX: Evitar re-render desnecessário - só atualiza se realmente mudou
+        setSession(prev => {
+          if (prev?.access_token === newSession?.access_token) {
+            return prev;
+          }
+          return newSession;
+        });
+        
+        setUser(prev => {
+          const newUser = newSession?.user ?? null;
+          if (prev?.id === newUser?.id) {
+            return prev;
+          }
+          return newUser;
+        });
 
-        const email = (session?.user?.email || "").toLowerCase();
+        const email = (newSession?.user?.email || "").toLowerCase();
         if (email === OWNER_EMAIL) {
           setRole("owner");
-        } else if (!session?.user) {
+        } else if (!newSession?.user) {
           setRole(null);
           stopHeartbeat();
         }
 
-        if (session?.user) {
+        if (newSession?.user) {
           setTimeout(() => {
-            fetchUserRole(session.user.id);
+            fetchUserRole(newSession.user.id);
           }, 0);
           
           // Iniciar heartbeat quando logado
@@ -257,8 +276,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                 body: {
                   fingerprint: hash,
                   fingerprintData,
-                  userId: session.user.id,
-                  email: session.user.email,
+                  userId: newSession.user.id,
+                  email: newSession.user.email,
                   action: 'post_login',
                 },
               });
@@ -271,35 +290,50 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
+    supabase.auth.getSession().then(({ data: { session: initialSession } }) => {
+      // ✅ P0 FIX: Evitar re-render desnecessário
+      setSession(prev => {
+        if (prev?.access_token === initialSession?.access_token) {
+          return prev;
+        }
+        return initialSession;
+      });
+      
+      setUser(prev => {
+        const newUser = initialSession?.user ?? null;
+        if (prev?.id === newUser?.id) {
+          return prev;
+        }
+        return newUser;
+      });
 
-      const email = (session?.user?.email || "").toLowerCase();
+      const email = (initialSession?.user?.email || "").toLowerCase();
       if (email === OWNER_EMAIL) {
         setRole("owner");
-      } else if (!session?.user) {
+      } else if (!initialSession?.user) {
         setRole(null);
       }
 
-      if (session?.user) {
-        fetchUserRole(session.user.id);
+      if (initialSession?.user) {
+        fetchUserRole(initialSession.user.id);
         startHeartbeat();
       }
       setIsLoading(false);
     });
 
+    // ✅ P0 FIX: Cleanup obrigatório
     return () => {
       subscription.unsubscribe();
       stopHeartbeat();
     };
-  }, [startHeartbeat, stopHeartbeat]);
+  }, []); // ✅ P0 FIX: Array vazio - executa apenas uma vez
 
   // ============================================
   // ✅ ÚNICO DONO DO REDIRECT GLOBAL
   // Regra: se existe sessão e está em /auth, redireciona UMA VEZ.
   // Login (/auth) não decide nada.
   // ============================================
+  // ✅ P0 FIX: Redirect com dependências primitivas (evita re-render)
   useEffect(() => {
     if (isLoading) return;
 
@@ -317,7 +351,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       // replace: evita voltar para /auth no histórico
       window.location.replace(target);
     }
-  }, [isLoading, user, session]);
+  }, [isLoading, user?.id, session?.access_token]); // ✅ P0 FIX: Valores primitivos
 
   const fetchUserRole = async (userId: string) => {
     try {
