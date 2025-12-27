@@ -16,6 +16,7 @@ import { useRealtimeNotifications } from "@/hooks/useRealtimeNotifications";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { useCacheManager } from "@/hooks/useCacheManager";
+import { useGestaoAccessLog } from "@/hooks/useGestaoAccessLog";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { SystemHealthIndicator } from "@/components/dashboard/SystemHealthIndicator";
 import { TeamChat } from "@/components/chat/TeamChat";
@@ -207,6 +208,10 @@ export const AppLayout = memo(function AppLayout({ children }: AppLayoutProps) {
   const { roleLabel, roleColor, isGodMode } = useRolePermissions();
   const { clearAllCache, forceRefresh, appVersion } = useCacheManager();
   const navigate = useNavigate();
+  
+  // 🛡️ LOG DE ACESSO A /gestaofc (AUTOMÁTICO)
+  // Loga todos os acessos, especialmente do owner
+  const { isGestaoArea, isOwner, logAction } = useGestaoAccessLog({ enabled: true });
 
   const handleClearCache = useCallback(async () => {
     setIsCacheClearing(true);

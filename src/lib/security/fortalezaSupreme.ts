@@ -67,6 +67,12 @@ export interface SecurityEvent {
 // 📍 MAPA DEFINITIVO DE URLs v4.0
 // ============================================
 
+// ============================================
+// 📍 MAPA DEFINITIVO DE URLs v5.0
+// MONO-DOMÍNIO: pro.moisesmedeiros.com.br
+// GESTÃO: /gestaofc (rota interna secreta)
+// ============================================
+
 export const URL_MAP = {
   // 🌐 NÃO PAGANTE - pro.moisesmedeiros.com.br/ + /comunidade
   PUBLIC: {
@@ -96,22 +102,26 @@ export const URL_MAP = {
     description: 'Área exclusiva para alunos PAGANTES (beta) + comunidade. Criados via Hotmart/Owner/Admin'
   },
   
-  // 👔 FUNCIONÁRIO - gestao.moisesmedeiros.com.br/* (com permissões por categoria)
-  FUNCIONARIO: {
-    domain: 'gestao.moisesmedeiros.com.br',
-    paths: ['/', '/*', '/gestao', '/gestao/*', '/dashboard', '/alunos-gestao', '/funcionarios', '/tarefas'],
+  // 👔 FUNCIONÁRIO/GESTÃO - pro.moisesmedeiros.com.br/gestaofc/* (ROTA INTERNA SECRETA)
+  // Acesso APENAS por digitação manual da URL - NÃO há links visíveis
+  GESTAOFC: {
+    domain: 'pro.moisesmedeiros.com.br',
+    paths: ['/gestaofc', '/gestaofc/*'],
     roles: ['funcionario', 'coordenacao', 'admin', 'owner', 'employee', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'],
     requireSubscription: false,
-    description: 'Área de gestão para funcionários com permissões específicas por categoria'
+    description: 'Área de gestão interna - acesso SOMENTE por URL direta (secreta)',
+    isSecret: true,
+    logAllAccess: true
   },
   
-  // 💰 FINANCEIRO - gestao.moisesmedeiros.com.br/financeiro
+  // 💰 FINANCEIRO - pro.moisesmedeiros.com.br/gestaofc/financeiro
   FINANCEIRO: {
-    domain: 'gestao.moisesmedeiros.com.br',
-    paths: ['/financeiro', '/financeiro/*', '/contabilidade', '/contabilidade/*', '/relatorios'],
+    domain: 'pro.moisesmedeiros.com.br',
+    paths: ['/gestaofc/financeiro', '/gestaofc/financeiro/*', '/gestaofc/contabilidade', '/gestaofc/contabilidade/*', '/gestaofc/relatorios'],
     roles: ['coordenacao', 'admin', 'owner', 'contabilidade'],
     requireSubscription: false,
-    description: 'Área financeira restrita'
+    description: 'Área financeira restrita',
+    logAllAccess: true
   },
   
   // 👑 OWNER - TODAS (MOISESBLANK@GMAIL.COM = MASTER)
@@ -122,9 +132,20 @@ export const URL_MAP = {
     requireSubscription: false,
     description: 'Acesso TOTAL e irrestrito - MASTER (moisesblank@gmail.com)',
     email: 'moisesblank@gmail.com',
-    poderes: ['criar', 'editar', 'excluir', 'importar', 'exportar', 'configurar', 'auditar']
+    poderes: ['criar', 'editar', 'excluir', 'importar', 'exportar', 'configurar', 'auditar'],
+    logAllAccess: true  // Log de TODAS ações do owner para auditoria
   },
 } as const;
+
+// Helper para verificar se uma rota é /gestaofc
+export function isGestaoPath(path: string): boolean {
+  return path.startsWith('/gestaofc');
+}
+
+// Helper para verificar se deve logar acesso
+export function shouldLogAccess(path: string): boolean {
+  return isGestaoPath(path) || path.startsWith('/alunos');
+}
 
 // ============================================
 // CACHE INTELIGENTE (LEI I - PERFORMANCE)
