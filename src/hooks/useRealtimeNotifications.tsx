@@ -152,13 +152,14 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
   }, [addNotification]);
 
   // Nova: XP Ganho
+  // ✅ MATRIZ SUPREMA v2.0.0: XP/Conquistas apontam para /alunos (área do aluno)
   const handleXPGained = useCallback((payload: any) => {
     const xp = payload.new;
     addNotification({
       type: "success",
       title: "XP Conquistado! ⭐",
       message: `+${xp.amount} XP - ${xp.description || xp.source}`,
-      actionUrl: "/dashboard",
+      actionUrl: "/alunos",
       actionLabel: "Ver progresso",
     });
   }, [addNotification]);
@@ -170,12 +171,13 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
       type: "success",
       title: "Nova Conquista Desbloqueada! 🏆",
       message: `Você desbloqueou: ${achievement.achievement_code}`,
-      actionUrl: "/dashboard",
+      actionUrl: "/alunos",
       actionLabel: "Ver conquistas",
     });
   }, [addNotification]);
 
   // Nova: Automação Executada
+  // ✅ MATRIZ SUPREMA v2.0.0: Automações são gestão → /gestaofc
   const handleAutomationExecuted = useCallback((payload: any) => {
     const rule = payload.new;
     if (rule.is_active) {
@@ -183,7 +185,7 @@ export function useRealtimeNotifications({ addNotification }: UseRealtimeNotific
         type: "info",
         title: "Automação Executada ⚡",
         message: `Regra "${rule.rule_name}" foi executada com sucesso`,
-        actionUrl: "/dashboard",
+        actionUrl: "/gestaofc",
         actionLabel: "Ver automações",
       });
     }

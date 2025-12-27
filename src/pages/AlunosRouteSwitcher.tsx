@@ -144,6 +144,7 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-  // Outros roles sem permissão → redireciona para dashboard ou app
-  return <Navigate to="/dashboard" replace />;
+  // Outros roles sem permissão → redireciona conforme MATRIZ SUPREMA v2.0.0
+  // GESTAO roles → /gestaofc, outros → /comunidade
+  return <Navigate to="/comunidade" replace />;
 }
