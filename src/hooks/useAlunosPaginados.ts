@@ -21,6 +21,7 @@ export interface AlunoRow {
   nome: string;
   email: string;
   status: string;
+  fonte: string | null;
   role: 'beta' | 'aluno_gratuito' | null;
 }
 
@@ -34,6 +35,12 @@ export interface AlunosContadores {
   gratuito: number;
 }
 
+/**
+ * ⚡ PARTE 6 REFINADA: Universo para filtro server-side
+ * A = Presencial, B = Presencial+Online, C = Online, D = Registrados
+ */
+export type UniversoFiltro = 'A' | 'B' | 'C' | 'D' | null;
+
 export interface UseAlunosPaginadosOptions {
   /** Tamanho da página (default: 50) */
   pageSize?: number;
@@ -41,6 +48,8 @@ export interface UseAlunosPaginadosOptions {
   statusFilter?: string;
   /** Filtro por role */
   roleFilter?: 'beta' | 'aluno_gratuito' | null;
+  /** ⚡ PARTE 6: Filtro por universo (A/B/C/D) - aplicado na query */
+  universoFiltro?: UniversoFiltro;
   /** Termo de busca */
   searchTerm?: string;
   /** Ordenação */
@@ -90,10 +99,16 @@ export function useAlunosPaginados(
     pageSize = DEFAULT_PAGE_SIZE,
     statusFilter,
     roleFilter,
+    universoFiltro, // ⚡ PARTE 6: Filtro por universo
     searchTerm,
     orderBy = 'nome',
     orderDirection = 'asc',
   } = options;
+
+  // ⚡ PARTE 6: Determinar role esperada baseada no universo
+  // D = aluno_gratuito, A/B/C = beta
+  const roleFromUniverso = universoFiltro === 'D' ? 'aluno_gratuito' : universoFiltro ? 'beta' : null;
+  const effectiveRoleFilter = roleFilter || roleFromUniverso;
 
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -148,16 +163,16 @@ export function useAlunosPaginados(
   // Apenas a página atual com JOIN de roles
   // ============================================
   const alunosQuery = useQuery({
-    queryKey: ['alunos-paginados', page, pageSize, statusFilter, roleFilter, searchTerm, orderBy, orderDirection],
+    queryKey: ['alunos-paginados', page, pageSize, statusFilter, effectiveRoleFilter, universoFiltro, searchTerm, orderBy, orderDirection],
     queryFn: async (): Promise<{ data: AlunoRow[]; count: number }> => {
       // Calcular offset
       const from = (page - 1) * pageSize;
       const to = from + pageSize - 1;
 
-      // Query base
+      // Query base - inclui fonte para filtro de universo
       let query = supabase
         .from('alunos')
-        .select('id, nome, email, status', { count: 'exact' });
+        .select('id, nome, email, status, fonte', { count: 'exact' });
 
       // Aplicar filtros
       if (statusFilter) {
@@ -167,6 +182,18 @@ export function useAlunosPaginados(
       if (searchTerm && searchTerm.trim()) {
         query = query.or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
       }
+
+      // ⚡ PARTE 6: Filtro por fonte/modalidade baseado no universo
+      // A = presencial, B = presencial+online (sem filtro extra), C = online
+      // Nota: fonte='Hotmart' é o único valor atual, mas estrutura preparada
+      if (universoFiltro === 'A') {
+        // Presencial - fonte contém 'presencial' (quando disponível)
+        query = query.ilike('fonte', '%presencial%');
+      } else if (universoFiltro === 'C') {
+        // Online - fonte não contém 'presencial'
+        query = query.or('fonte.is.null,fonte.neq.presencial');
+      }
+      // B e D não filtram por fonte, apenas por role
 
       // Ordenação e paginação
       query = query
@@ -208,12 +235,13 @@ export function useAlunosPaginados(
         nome: a.nome,
         email: a.email || '',
         status: a.status || 'ativo',
+        fonte: a.fonte || null,
         role: roleMap[(a.email || '').toLowerCase()] || null,
       }));
 
-      // Filtrar por role se necessário (client-side para esta página)
-      const filteredAlunos = roleFilter
-        ? alunos.filter(a => a.role === roleFilter)
+      // ⚡ PARTE 6: Filtrar por role baseado no universo (server-side via roleMap)
+      const filteredAlunos = effectiveRoleFilter
+        ? alunos.filter(a => a.role === effectiveRoleFilter)
         : alunos;
 
       return { data: filteredAlunos, count: count || 0 };
