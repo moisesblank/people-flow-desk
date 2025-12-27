@@ -165,23 +165,27 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log(`[INVITE] Password updated for existing user: ${email}`);
       
-      // 🎯 FIX: Enviar email de boas-vindas também para usuários existentes
+      // 🎯 FIX: Enviar email via fetch direto (functions.invoke não passa JWT corretamente)
       try {
-        const { data: emailData, error: emailError } = await supabase.functions.invoke(
-          "send-notification-email",
-          {
-            body: {
-              to: email,
-              type: "welcome",
-              data: { nome },
-            },
-          }
-        );
+        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            to: email,
+            type: "welcome",
+            data: { nome },
+          }),
+        });
 
-        if (emailError) {
-          console.warn("[INVITE] Email sending may have failed:", emailError.message);
-        } else {
+        if (emailResponse.ok) {
+          const emailData = await emailResponse.json();
           console.log("[INVITE] Welcome email sent to existing user", emailData);
+        } else {
+          const errText = await emailResponse.text();
+          console.warn("[INVITE] Email sending may have failed:", errText);
         }
       } catch (emailErr) {
         console.warn("[INVITE] Email error:", emailErr);
@@ -257,21 +261,25 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send welcome email usando template padronizado (aprovado 16/12/2024)
     try {
-      const { data: emailData, error: emailError } = await supabase.functions.invoke(
-        "send-notification-email",
-        {
-          body: {
-            to: email,
-            type: "welcome",
-            data: { nome },
-          },
-        }
-      );
+      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${supabaseServiceKey}`,
+        },
+        body: JSON.stringify({
+          to: email,
+          type: "welcome",
+          data: { nome },
+        }),
+      });
 
-      if (emailError) {
-        console.warn("[INVITE] Email sending may have failed:", emailError.message);
-      } else {
+      if (emailResponse.ok) {
+        const emailData = await emailResponse.json();
         console.log("[INVITE] Welcome email sent successfully", emailData);
+      } else {
+        const errText = await emailResponse.text();
+        console.warn("[INVITE] Email sending may have failed:", errText);
       }
     } catch (emailErr) {
       console.warn("[INVITE] Email error:", emailErr);
