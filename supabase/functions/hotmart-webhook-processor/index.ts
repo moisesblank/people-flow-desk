@@ -264,7 +264,7 @@ async function notifyWebhookMKT(
       product: data.product || "",
       transaction: data.transaction || "",
       source: "gestao_moises_medeiros",
-      platform: "gestao.moisesmedeiros.com.br",
+      platform: "pro.moisesmedeiros.com.br", // MONO-DOMÍNIO
       timestamp: getCurrentTimestamp(),
 
       // Compat: alguns plugins lêem no root, outros leem em meta

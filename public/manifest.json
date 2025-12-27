@@ -1,7 +1,7 @@
 {
-  "name": "Gestão Moisés Medeiros",
-  "short_name": "Gestão MM",
-  "description": "Sistema de Gestão Completo - gestao.moisesmedeiros.com.br",
+  "name": "Curso Moisés Medeiros",
+  "short_name": "Curso MM",
+  "description": "Plataforma Educacional - pro.moisesmedeiros.com.br",
   "start_url": "/",
   "display": "browser",
   "background_color": "#0a0a0f",

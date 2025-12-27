@@ -69,10 +69,10 @@ export const URL_MAP = {
     requireRole: 'beta',
   },
   
-  // 👔 FUNCIONÁRIO - Área de gestão
+  // 👔 FUNCIONÁRIO - Área de gestão (MONO-DOMÍNIO: rota /gestaofc secreta)
   FUNCIONARIO: {
-    domain: 'gestao.moisesmedeiros.com.br',
-    paths: ['/', '/*', '/gestao', '/gestao/*'],
+    domain: 'pro.moisesmedeiros.com.br',
+    paths: ['/gestaofc', '/gestaofc/*'],
     roles: GESTAO_ROLES,
     requireAuth: true,
   },

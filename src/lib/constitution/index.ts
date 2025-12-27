@@ -125,7 +125,7 @@ const LEI_IV_ACTIVE = true;
  * 🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade → Cadastro gratuito
  * 👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos/* + /comunidade → role='beta' + acesso válido
  *    (Vem de pagamento Hotmart OU criado por Owner/Admin)
- * 👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/* → role='funcionario' + permissões
+ * 👔 FUNCIONÁRIO: pro.moisesmedeiros.com.br/gestaofc/* → role='funcionario' + permissões (ROTA SECRETA)
  * 👑 OWNER: TODAS → role='owner' (MOISESBLANK@GMAIL.COM) - ACESSO MASTER TOTAL
  */
 export const URL_MAP = {
@@ -143,10 +143,10 @@ export const URL_MAP = {
     origem: ['hotmart_purchase', 'owner_created', 'admin_created', 'import'],
   },
   FUNCIONARIO: {
-    host: 'gestao.moisesmedeiros.com.br',
-    paths: ['/gestao/*', '/dashboard', '/*'],
+    host: 'pro.moisesmedeiros.com.br', // MONO-DOMÍNIO
+    paths: ['/gestaofc/*'], // ROTA SECRETA
     validacao: "role='funcionario' | 'admin' | subcategorias",
-    descricao: 'Funcionários com permissões específicas por categoria',
+    descricao: 'Funcionários com permissões específicas por categoria (acesso por URL direta)',
     subcategorias: ['coordenacao', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'],
   },
   OWNER: {

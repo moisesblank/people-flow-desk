@@ -63,16 +63,16 @@ export const LEGACY_REDIRECTS: LegacyRedirect[] = [
     from: /^\/admin\/(.*)$/,
     to: (match) => `/gestao/${match[1] || ""}`.replace(/\/$/, ""),
     permanent: true,
-    description: "Redirect /admin/* para /gestao/*",
+    description: "Redirect /admin/* para / (legacy - gestaofc é secreto)",
     logEvent: true,
   },
   
-  // /admin → /gestao
+  // /admin → / (MONO-DOMÍNIO: /gestaofc é rota secreta)
   {
     from: /^\/admin\/?$/,
-    to: "/gestao",
+    to: "/",
     permanent: true,
-    description: "Redirect /admin para /gestao",
+    description: "Redirect /admin para / (legacy)",
     logEvent: true,
   },
   

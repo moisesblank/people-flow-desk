@@ -10,10 +10,10 @@ import { Counter, Rate, Trend } from 'k6/metrics';
 import { randomString, randomIntBetween } from 'https://jslib.k6.io/k6-utils/1.4.0/index.js';
 
 // =====================================================
-// CONFIGURAÇÃO
+// CONFIGURAÇÃO (MONO-DOMÍNIO: gestao.* descontinuado)
 // =====================================================
 
-const BASE_URL = __ENV.BASE_URL || 'https://gestao.moisesmedeiros.com.br';
+const BASE_URL = __ENV.BASE_URL || 'https://pro.moisesmedeiros.com.br';
 const SUPABASE_URL = __ENV.SUPABASE_URL || 'https://fyikfsasudgzsjmumdlw.supabase.co';
 const SUPABASE_ANON_KEY = __ENV.SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZ5aWtmc2FzdWRnenNqbXVtZGx3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU3MzUwMTEsImV4cCI6MjA4MTMxMTAxMX0.qSVRCgEX6L0cLZoDebzOIvTGhDeZi0Rl45SsDVZthIs';
 

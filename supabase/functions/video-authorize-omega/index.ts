@@ -30,9 +30,8 @@ const IMMUNE_ROLES = [
   'coordenacao', 'employee', 'monitoria',
 ];
 
-// Domínios autorizados
+// MONO-DOMÍNIO: gestao.* descontinuado
 const AUTHORIZED_DOMAINS = [
-  'gestao.moisesmedeiros.com.br',
   'pro.moisesmedeiros.com.br',
   'www.moisesmedeiros.com.br',
   'moisesmedeiros.com.br',

@@ -97,7 +97,7 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Mais uma vez, seja bem-vindo(a).<br/>Vamos juntos manter — e elevar — o padrão. 💪🔥</p>
         `,
         "Acessar Sistema",
-        "https://gestao.moisesmedeiros.com.br/auth"
+        "https://pro.moisesmedeiros.com.br/gestaofc"
       ),
     },
 
@@ -121,7 +121,7 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:16px 0 0 0;color:#9aa0a6;">Conte sempre conosco para qualquer dúvida ou suporte!</p>
         `,
         "Acessar Painel",
-        "https://gestao.moisesmedeiros.com.br/afiliados"
+        "https://pro.moisesmedeiros.com.br/gestaofc/afiliados"
       ),
     },
 
@@ -148,7 +148,7 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Continue com o excelente trabalho! Juntos vamos longe. 🚀</p>
         `,
         "Ver Histórico",
-        "https://gestao.moisesmedeiros.com.br/afiliados"
+        "https://pro.moisesmedeiros.com.br/gestaofc/afiliados"
       ),
     },
 
@@ -198,7 +198,7 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Mantenha sua senha segura e não a compartilhe com ninguém.</p>
         `,
         "Acessar Sistema",
-        "https://gestao.moisesmedeiros.com.br/auth"
+        "https://pro.moisesmedeiros.com.br/gestaofc"
       ),
     },
 
@@ -220,7 +220,7 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Acesse o dashboard para mais detalhes.</p>
         `,
         "Ver Dashboard",
-        "https://gestao.moisesmedeiros.com.br/dashboard"
+        "https://pro.moisesmedeiros.com.br/gestaofc/dashboard"
       ),
     },
 

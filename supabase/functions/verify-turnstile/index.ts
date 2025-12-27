@@ -78,9 +78,9 @@ serve(async (req) => {
     // Backend aplica rate-limit agressivo (1 tentativa/min por IP)
     if (token.startsWith('FALLBACK_')) {
       const hostname = token.split('_').pop() || '';
+      // MONO-DOMÍNIO: gestao.* descontinuado
       const allowedProdHosts = [
         'pro.moisesmedeiros.com.br',
-        'gestao.moisesmedeiros.com.br',
         'moisesmedeiros.com.br',
         'www.moisesmedeiros.com.br',
       ];
@@ -188,10 +188,9 @@ serve(async (req) => {
       );
     }
 
-    // 🛡️ PATCH-005: Validar hostname contra allowlist (com fallback seguro)
+    // 🛡️ PATCH-005: Validar hostname contra allowlist (MONO-DOMÍNIO)
     const defaultAllowedHostnames = [
       'pro.moisesmedeiros.com.br',
-      'gestao.moisesmedeiros.com.br',
       'moisesmedeiros.com.br',
       'www.moisesmedeiros.com.br',
       'localhost',

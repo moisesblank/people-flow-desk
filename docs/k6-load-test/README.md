@@ -33,7 +33,7 @@ k6 run --vus 100 --duration 2m test-5k-live.js
 ### Com variáveis de ambiente
 ```bash
 k6 run \
-  -e BASE_URL=https://gestao.moisesmedeiros.com.br \
+  -e BASE_URL=https://pro.moisesmedeiros.com.br \
   -e SUPABASE_URL=https://fyikfsasudgzsjmumdlw.supabase.co \
   test-5k-live.js
 ```
