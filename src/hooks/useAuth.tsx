@@ -211,20 +211,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     console.log('[AUTH] useEffect de auth state iniciado');
-    
+
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, newSession) => {
+      (event, newSession) => {
         console.log('[AUTH][STATE] event:', event, {
           hasSession: Boolean(newSession),
           hasUser: Boolean(newSession?.user),
         });
 
-        // Atualizar estado de forma otimizada
+        // ✅ Atualizações síncronas apenas (evita deadlocks / travas)
         setSession(prev => {
           if (prev?.access_token === newSession?.access_token) return prev;
           return newSession;
         });
-        
+
         setUser(prev => {
           const newUser = newSession?.user ?? null;
           if (prev?.id === newUser?.id) return prev;
@@ -239,49 +239,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           stopHeartbeatRef.current();
         }
 
+        // ✅ Tudo que faz I/O vai para fora do callback
         if (newSession?.user) {
+          const userId = newSession.user.id;
+          const userEmail = newSession.user.email;
+
           setTimeout(() => {
-            fetchUserRole(newSession.user.id);
+            fetchUserRole(userId);
+            startHeartbeatRef.current();
           }, 0);
-          
-          // Iniciar heartbeat quando logado
-          startHeartbeatRef.current();
 
-          // 🛡️ LEI VI: Validar/registrar dispositivo em QUALQUER login (incluindo OAuth)
-          // Isso cobre logins via Google, Magic Link, etc.
+          // 🛡️ LEI VI + DOGMA I: pós-login (não bloqueia auth listener)
           if (event === 'SIGNED_IN') {
-            try {
-              const { hash, data: fingerprintData } = await collectFingerprint();
-              const deviceInfo = detectDeviceInfo();
-              
-              // Criar sessão única (DOGMA I)
-              const { data: sessionData } = await supabase.rpc('create_single_session', {
-                _ip_address: null,
-                _user_agent: navigator.userAgent.slice(0, 255),
-                _device_type: deviceInfo.device_type,
-                _browser: deviceInfo.browser,
-                _os: deviceInfo.os,
-              });
-              
-              if (sessionData && sessionData.length > 0) {
-                localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
-                console.log('[DOGMA I] ✅ Sessão única criada (auth event)');
-              }
+            setTimeout(async () => {
+              try {
+                const { hash, data: fingerprintData } = await collectFingerprint();
+                const deviceInfo = detectDeviceInfo();
 
-              // Registrar dispositivo (LEI VI)
-              await supabase.functions.invoke('validate-device', {
-                body: {
-                  fingerprint: hash,
-                  fingerprintData,
-                  userId: newSession.user.id,
-                  email: newSession.user.email,
-                  action: 'post_login',
-                },
-              });
-              console.log('[LEI VI] ✅ Dispositivo registrado (auth event)');
-            } catch (err) {
-              console.error('[LEI VI] Erro no registro pós-auth:', err);
-            }
+                // Criar sessão única (DOGMA I)
+                const { data: sessionData } = await supabase.rpc('create_single_session', {
+                  _ip_address: null,
+                  _user_agent: navigator.userAgent.slice(0, 255),
+                  _device_type: deviceInfo.device_type,
+                  _browser: deviceInfo.browser,
+                  _os: deviceInfo.os,
+                });
+
+                if (sessionData && sessionData.length > 0) {
+                  localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
+                  console.log('[DOGMA I] ✅ Sessão única criada (auth event)');
+                }
+
+                // Registrar dispositivo (LEI VI)
+                await supabase.functions.invoke('validate-device', {
+                  body: {
+                    fingerprint: hash,
+                    fingerprintData,
+                    userId,
+                    email: userEmail,
+                    action: 'post_login',
+                  },
+                });
+                console.log('[LEI VI] ✅ Dispositivo registrado (auth event)');
+              } catch (err) {
+                console.error('[LEI VI] Erro no registro pós-auth:', err);
+              }
+            }, 0);
           }
         }
       }
@@ -295,7 +298,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
         return initialSession;
       });
-      
+
       setUser(prev => {
         const newUser = initialSession?.user ?? null;
         if (prev?.id === newUser?.id) {
