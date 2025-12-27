@@ -6196,6 +6196,110 @@ export type Database = {
           },
         ]
       }
+      menu_groups: {
+        Row: {
+          created_at: string | null
+          group_color: string | null
+          group_icon: string | null
+          group_key: string
+          group_label: string
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          group_color?: string | null
+          group_icon?: string | null
+          group_key: string
+          group_label: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          group_color?: string | null
+          group_icon?: string | null
+          group_key?: string
+          group_label?: string
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      menu_items: {
+        Row: {
+          allowed_roles: string[] | null
+          created_at: string | null
+          group_id: string | null
+          id: string
+          is_active: boolean | null
+          is_system: boolean | null
+          item_area: string | null
+          item_badge: string | null
+          item_badge_variant: string | null
+          item_icon: string
+          item_key: string
+          item_label: string
+          item_url: string
+          opens_in_new_tab: boolean | null
+          sort_order: number
+          updated_at: string | null
+        }
+        Insert: {
+          allowed_roles?: string[] | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          item_area?: string | null
+          item_badge?: string | null
+          item_badge_variant?: string | null
+          item_icon: string
+          item_key: string
+          item_label: string
+          item_url: string
+          opens_in_new_tab?: boolean | null
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Update: {
+          allowed_roles?: string[] | null
+          created_at?: string | null
+          group_id?: string | null
+          id?: string
+          is_active?: boolean | null
+          is_system?: boolean | null
+          item_area?: string | null
+          item_badge?: string | null
+          item_badge_variant?: string | null
+          item_icon?: string
+          item_key?: string
+          item_label?: string
+          item_url?: string
+          opens_in_new_tab?: boolean | null
+          sort_order?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "menu_items_group_id_fkey"
+            columns: ["group_id"]
+            isOneToOne: false
+            referencedRelation: "menu_groups"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       metricas_diarias: {
         Row: {
           acessos_plataforma: number | null
