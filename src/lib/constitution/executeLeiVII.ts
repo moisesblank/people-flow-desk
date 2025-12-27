@@ -117,31 +117,31 @@ function setupMouseProtection(): void {
   // Clique direito
   document.addEventListener('contextmenu', (e) => {
     if (isOwner(currentUserEmail)) return;
-    
-    const target = e.target as Element;
-    if (target.closest('[data-sanctum-protected]')) {
+
+    const target = e.target;
+    if (target instanceof Element && target.closest('[data-sanctum-protected]')) {
       e.preventDefault();
       recordViolation('right_click');
     }
   }, { capture: true });
-  
+
   // Drag
   document.addEventListener('dragstart', (e) => {
     if (isOwner(currentUserEmail)) return;
-    
-    const target = e.target as Element;
-    if (target.closest('[data-sanctum-protected]')) {
+
+    const target = e.target;
+    if (target instanceof Element && target.closest('[data-sanctum-protected]')) {
       e.preventDefault();
       recordViolation('drag_attempt');
     }
   }, { capture: true });
-  
+
   // Seleção
   document.addEventListener('selectstart', (e) => {
     if (isOwner(currentUserEmail)) return;
-    
-    const target = e.target as Element;
-    if (target.closest('[data-sanctum-protected]')) {
+
+    const target = e.target;
+    if (target instanceof Element && target.closest('[data-sanctum-protected]')) {
       e.preventDefault();
     }
   }, { capture: true });
@@ -215,20 +215,20 @@ function setupTouchProtection(): void {
     
     // Bloquear multi-touch em conteúdo protegido
     if (e.touches.length >= 3) {
-      const target = e.target as Element;
-      if (target.closest('[data-sanctum-protected]')) {
+      const target = e.target;
+      if (target instanceof Element && target.closest('[data-sanctum-protected]')) {
         e.preventDefault();
       }
     }
   }, { capture: true, passive: false });
-  
+
   // iOS gesture events
   ['gesturestart', 'gesturechange', 'gestureend'].forEach(event => {
     document.addEventListener(event, (e) => {
       if (isOwner(currentUserEmail)) return;
-      
-      const target = e.target as Element;
-      if (target.closest('[data-sanctum-protected]')) {
+
+      const target = e.target;
+      if (target instanceof Element && target.closest('[data-sanctum-protected]')) {
         e.preventDefault();
         recordViolation('gesture_blocked');
       }
