@@ -7,10 +7,10 @@
 // O PDF ORIGINAL NUNCA CHEGA AO CLIENTE
 // Apenas imagens rasterizadas com watermark queimada
 //
-// 📍 MAPA DE URLs DEFINITIVO:
+// 📍 MAPA DE URLs DEFINITIVO (MONO-DOMÍNIO v2.0 - 27/12/2025):
 //   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
 //   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
-//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+//   👔 FUNCIONÁRIO: pro.moisesmedeiros.com.br/gestaofc (STAFF)
 //   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
 //
 // ============================================

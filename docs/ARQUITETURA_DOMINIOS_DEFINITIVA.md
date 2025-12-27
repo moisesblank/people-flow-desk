@@ -62,7 +62,7 @@
       "block_type": "restricted",
       "partial_access": false,
       "permission_inheritance": {
-        "source_system": "gestao.moisesmedeiros.com.br",
+        "source_system": "RBAC interno",
         "target_system": "pro.moisesmedeiros.com.br/gestaofc",
         "mode": "absolute_mirror",
         "scope": "all_employee_roles_existing_or_future",
@@ -141,14 +141,14 @@
 
 ---
 
-## 📡 1) MATRIZ DE DOMÍNIOS (HIERARQUIA FIXA)
+## 📡 1) MATRIZ DE DOMÍNIOS (HIERARQUIA FIXA - MONO-DOMÍNIO v2.0)
 
 | Prioridade | Domínio | Estado | Regra |
 |:----------:|---------|--------|-------|
-| N0 | http://www.moisesmedeiros.com.br | Entrada | Redirecionar 100% |
-| N0 | https://moisesmedeiros.com.br | Entrada | Redirecionar 100% |
-| N1 | https://pro.moisesmedeiros.com.br | **NÚCLEO** | Domínio oficial único |
-| N2 | https://gestao.moisesmedeiros.com.br | **LEGADO** | PROIBIDO/BLOQUEADO |
+| N0 | http://www.moisesmedeiros.com.br | Entrada | Redirecionar 100% → pro |
+| N0 | https://moisesmedeiros.com.br | Entrada | Redirecionar 100% → pro |
+| N1 | https://pro.moisesmedeiros.com.br | **NÚCLEO ÚNICO** | Domínio oficial - TUDO AQUI |
+| ~~N2~~ | ~~gestao.moisesmedeiros.com.br~~ | **DELETADO** | DNS REMOVIDO 27/12/2025 |
 
 **Destino único de redirecionamento N0 →** `https://pro.moisesmedeiros.com.br`
 

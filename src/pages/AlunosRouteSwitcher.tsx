@@ -4,11 +4,10 @@
 // - pro.moisesmedeiros.com.br/gestaofc → Funcionários (Gestão)
 // - pro.moisesmedeiros.com.br/alunos → Alunos Beta (Central)
 // - pro.moisesmedeiros.com.br/ → Área pública
-// HIERARQUIA: 
+// HIERARQUIA (MONO-DOMÍNIO v2.0): 
 //   Owner (role='owner' do banco) = Acesso total
 //   Beta = Aluno Pagante → vê Portal do Aluno
-//   Staff = Funcionários → vê Gestão de Alunos
-// ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
+//   Staff = Funcionários → vê Gestão de Alunos (/gestaofc)
 // ============================================
 
 import { useMemo } from "react";
