@@ -509,12 +509,14 @@ export default function RHFuncionarios() {
 
     setIsSaving(true);
     try {
-      const { error } = await supabase.functions.invoke("invite-employee", {
+      // Corrigido: campos devem ser nome/senha (não name/password) conforme edge function
+      const { data, error } = await supabase.functions.invoke("invite-employee", {
         body: {
           email: formData.email,
-          password: formData.senha,
-          name: formData.nome,
-          role: formData.funcao,
+          nome: formData.nome,
+          senha: formData.senha,
+          funcao: formData.funcao,
+          employee_id: editingEmployee?.id || undefined,
         },
       });
 
