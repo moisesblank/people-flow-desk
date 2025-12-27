@@ -71,8 +71,8 @@ export type SystemDomain =
   | "publico"     // Qualquer pessoa (/, /auth, /termos)
   | "comunidade"  // Não pagantes + Beta (/comunidade/*)
   | "alunos"      // Alunos pagantes (/alunos/*)
-  | "gestao"      // Funcionários (/gestao/*)
-  | "owner";      // Apenas owner (/gestao/central-*, /gestao/master)
+  | "gestaofc"    // Funcionários (/gestaofc/* - rota interna secreta)
+  | "owner";      // Apenas owner (/gestaofc/central-*, /gestaofc/master)
 
 /**
  * Categorias de acesso simplificadas
@@ -181,7 +181,7 @@ export interface RolePermissions {
 export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   // 👑 OWNER - SUPREMO
   owner: {
-    areas: ["publico", "comunidade", "alunos", "gestao", "owner"],
+    areas: ["publico", "comunidade", "alunos", "gestaofc", "owner"],
     canCreate: true,
     canEdit: true,
     canDelete: true,
@@ -193,7 +193,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 ADMIN
   admin: {
-    areas: ["publico", "comunidade", "alunos", "gestao"],
+    areas: ["publico", "comunidade", "alunos", "gestaofc"],
     canCreate: true,
     canEdit: true,
     canDelete: true,
@@ -205,7 +205,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 FUNCIONÁRIO
   funcionario: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: true,
     canEdit: true,
     canDelete: false,
@@ -217,7 +217,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 EMPLOYEE (alias)
   employee: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: true,
     canEdit: true,
     canDelete: false,
@@ -229,7 +229,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 SUPORTE
   suporte: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: false,
     canEdit: true,
     canDelete: false,
@@ -241,7 +241,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 COORDENAÇÃO
   coordenacao: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: true,
     canEdit: true,
     canDelete: false,
@@ -253,7 +253,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 MONITORIA
   monitoria: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: false,
     canEdit: true,
     canDelete: false,
@@ -265,7 +265,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 MARKETING
   marketing: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: true,
     canEdit: true,
     canDelete: false,
@@ -277,7 +277,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 CONTABILIDADE
   contabilidade: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: false,
     canEdit: true,
     canDelete: false,
@@ -289,7 +289,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 👔 PROFESSOR
   professor: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: true,
     canEdit: true,
     canDelete: false,
@@ -349,7 +349,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   },
   // 🤝 AFILIADO (Parceiro)
   afiliado: {
-    areas: ["publico", "gestao"],
+    areas: ["publico", "gestaofc"],
     canCreate: false,
     canEdit: false,
     canDelete: false,
@@ -469,9 +469,9 @@ export function getUrlArea(pathname: string): SystemDomain {
     return "owner";
   }
   
-  // 👔 Gestão
-  if (path.startsWith("/gestao")) {
-    return "gestao";
+  // 👔 Gestão (rota secreta /gestaofc)
+  if (path.startsWith("/gestaofc")) {
+    return "gestaofc";
   }
   
   // 👨‍🎓 Alunos
