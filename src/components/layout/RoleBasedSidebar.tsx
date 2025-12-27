@@ -120,20 +120,23 @@ interface MenuGroup {
   items: MenuItem[];
 }
 
-// Definição dos menus com suas áreas correspondentes
-const menuGroups: MenuGroup[] = [
+// ============================================
+// MENUS DE GESTÃO (só visível em /gestaofc)
+// Todos os paths são prefixados com /gestaofc
+// ============================================
+const gestaoMenuGroups: MenuGroup[] = [
   {
     id: "principal",
     label: "Principal",
     image: dashboardImg,
     color: "from-primary/80",
     items: [
-      { title: "Central de Comando", url: "/", icon: Brain, area: "dashboard" },
-      { title: "Dashboard Executivo", url: "/dashboard-executivo", icon: Gauge, area: "dashboard-executivo" },
-      { title: "Tarefas", url: "/tarefas", icon: ClipboardCheck, area: "tarefas" },
-      { title: "Integrações", url: "/integracoes", icon: Link2, area: "integracoes" },
-      { title: "Calendário", url: "/calendario", icon: Calendar, area: "calendario" },
-      { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck, area: "area-professor" },
+      { title: "Central de Comando", url: "/gestaofc", icon: Brain, area: "dashboard" },
+      { title: "Dashboard Executivo", url: "/gestaofc/dashboard-executivo", icon: Gauge, area: "dashboard-executivo" },
+      { title: "Tarefas", url: "/gestaofc/tarefas", icon: ClipboardCheck, area: "tarefas" },
+      { title: "Integrações", url: "/gestaofc/integracoes", icon: Link2, area: "integracoes" },
+      { title: "Calendário", url: "/gestaofc/calendario", icon: Calendar, area: "calendario" },
+      { title: "Área Professor", url: "/gestaofc/area-professor", icon: ClipboardCheck, area: "area-professor" },
     ],
   },
   {
@@ -142,17 +145,115 @@ const menuGroups: MenuGroup[] = [
     image: financeImg,
     color: "from-purple-600/80",
     items: [
-      { title: "Central Financeira", url: "/financas-empresa", icon: Wallet, area: "financas-empresa", badge: "CENTRAL" },
-      { title: "Receitas", url: "/empresas/receitas", icon: TrendingUp, area: "receitas-empresariais", badge: "LIVE" },
-      { title: "Contabilidade", url: "/contabilidade", icon: Calculator, area: "contabilidade" },
-      { title: "Funcionários (RH)", url: "/empresas/rh", icon: Users, area: "rh-funcionarios" },
-      { title: "Arquivos Empresariais", url: "/empresas/arquivos", icon: FolderOpen, area: "arquivos-empresariais" },
+      { title: "Central Financeira", url: "/gestaofc/financas-empresa", icon: Wallet, area: "financas-empresa", badge: "CENTRAL" },
+      { title: "Receitas", url: "/gestaofc/empresas/receitas", icon: TrendingUp, area: "receitas-empresariais", badge: "LIVE" },
+      { title: "Contabilidade", url: "/gestaofc/contabilidade", icon: Calculator, area: "contabilidade" },
+      { title: "Funcionários (RH)", url: "/gestaofc/empresas/rh", icon: Users, area: "rh-funcionarios" },
+      { title: "Arquivos Empresariais", url: "/gestaofc/empresas/arquivos", icon: FolderOpen, area: "arquivos-empresariais" },
     ],
   },
-  // =======================================
-  // CENTRAL DO ALUNO - QUÍMICA ENEM
-  // Apenas OWNER e BETA podem ver
-  // =======================================
+  {
+    id: "marketing",
+    label: "Marketing & Lançamento",
+    image: marketingImg,
+    color: "from-orange-600/80",
+    items: [
+      { title: "Central de Métricas", url: "/gestaofc/central-metricas", icon: Activity, area: "metricas", badge: "LIVE" },
+      { title: "Marketing", url: "/gestaofc/marketing", icon: Megaphone, area: "marketing" },
+      { title: "Lançamento", url: "/gestaofc/lancamento", icon: Rocket, area: "lancamento" },
+      { title: "Métricas", url: "/gestaofc/metricas", icon: BarChart3, area: "metricas" },
+      { title: "Arquivos", url: "/gestaofc/arquivos", icon: FolderOpen, area: "arquivos" },
+    ],
+  },
+  {
+    id: "aulas",
+    label: "Aulas & Turmas",
+    image: calendarImg,
+    color: "from-blue-600/80",
+    items: [
+      { title: "Planejamento de Aula", url: "/gestaofc/planejamento-aula", icon: PenTool, area: "planejamento-aula" },
+      { title: "Turmas Online", url: "/gestaofc/turmas-online", icon: Monitor, area: "turmas-online" },
+      { title: "Turmas Presenciais", url: "/gestaofc/turmas-presenciais", icon: MapPin, area: "turmas-presenciais" },
+    ],
+  },
+  {
+    id: "financas",
+    label: "Finanças",
+    image: financeImg,
+    color: "from-green-600/80",
+    items: [
+      { title: "Finanças Pessoais", url: "/gestaofc/financas-pessoais", icon: Wallet, area: "financas-pessoais" },
+      { title: "Finanças Empresa", url: "/gestaofc/financas-empresa", icon: Building2, area: "financas-empresa", badge: "CENTRAL" },
+      { title: "Entradas", url: "/gestaofc/entradas", icon: TrendingUp, area: "entradas" },
+      { title: "Contabilidade", url: "/gestaofc/contabilidade", icon: Calculator, area: "contabilidade" },
+    ],
+  },
+  {
+    id: "negocios",
+    label: "Negócios",
+    image: studentsImg,
+    color: "from-purple-600/80",
+    items: [
+      { title: "Cursos", url: "/gestaofc/cursos", icon: PlayCircle, area: "cursos" },
+      { title: "Simulados", url: "/gestaofc/simulados", icon: Brain, area: "simulados" },
+      { title: "Afiliados", url: "/gestaofc/afiliados", icon: Handshake, area: "afiliados" },
+      { title: "Gestão Alunos", url: "/gestaofc/gestao-alunos", icon: GraduationCap, area: "alunos" },
+      { title: "Portal Aluno", url: "/gestaofc/portal-aluno", icon: UserCheck, area: "portal-aluno" },
+      { title: "Relatórios", url: "/gestaofc/relatorios", icon: FileText, area: "relatorios" },
+      { title: "Guia", url: "/gestaofc/guia", icon: BookOpen, area: "guia" },
+    ],
+  },
+  {
+    id: "site",
+    label: "Site",
+    image: devImg,
+    color: "from-cyan-600/80",
+    items: [
+      { title: "Gestão Site", url: "/gestaofc/gestao-site", icon: Globe, area: "gestao-site" },
+      { title: "Site/Programador", url: "/gestaofc/site-programador", icon: Code, area: "site-programador" },
+      { title: "Laboratório", url: "/gestaofc/laboratorio", icon: Zap, area: "laboratorio" },
+    ],
+  },
+  {
+    id: "pessoal",
+    label: "Vida Pessoal",
+    image: personalLifeImg,
+    color: "from-pink-600/80",
+    items: [
+      { title: "Pessoal", url: "/gestaofc/pessoal", icon: User, area: "pessoal" },
+      { title: "Vida Pessoal", url: "/gestaofc/vida-pessoal", icon: Heart, area: "vida-pessoal" },
+    ],
+  },
+  {
+    id: "admin",
+    label: "Administração",
+    image: teamImg,
+    color: "from-slate-600/80",
+    items: [
+      { title: "Permissões", url: "/gestaofc/permissoes", icon: Shield, area: "permissoes" },
+      { title: "Configurações", url: "/gestaofc/configuracoes", icon: Settings, area: "configuracoes" },
+    ],
+  },
+  {
+    id: "owner",
+    label: "Modo Master",
+    image: godModeImg,
+    color: "from-purple-600/80 via-pink-600/80",
+    items: [
+      { title: "Monitoramento", url: "/gestaofc/monitoramento", icon: Activity, area: "monitoramento", badge: "MASTER" },
+      { title: "Central WhatsApp", url: "/gestaofc/central-whatsapp", icon: MessageSquareText, area: "central-whatsapp", badge: "LIVE" },
+      { title: "Diagnóstico WhatsApp", url: "/gestaofc/diagnostico-whatsapp", icon: Stethoscope, area: "diagnostico-whatsapp" },
+      { title: "Auditoria Acessos", url: "/gestaofc/auditoria-acessos", icon: Shield, area: "auditoria-acessos", badge: "AUDIT" },
+      { title: "Central Monitoramento", url: "/gestaofc/central-monitoramento", icon: Activity, area: "central-monitoramento", badge: "REAL-TIME" },
+      { title: "Central IAs", url: "/gestaofc/central-ias", icon: Brain, area: "central-ias", badge: "AI" },
+    ],
+  },
+];
+
+// ============================================
+// MENUS DE ALUNO (visível em /alunos)
+// ============================================
+const alunoMenuGroups: MenuGroup[] = [
   {
     id: "aluno-aprendizado",
     label: "📚 APRENDIZADO",
@@ -227,103 +328,6 @@ const menuGroups: MenuGroup[] = [
       { title: "Meu Perfil", url: "/alunos/perfil", icon: User, area: "aluno-perfil" },
     ],
   },
-  {
-    id: "marketing",
-    label: "Marketing & Lançamento",
-    image: marketingImg,
-    color: "from-orange-600/80",
-    items: [
-      { title: "Central de Métricas", url: "/central-metricas", icon: Activity, area: "metricas", badge: "LIVE" },
-      { title: "Marketing", url: "/marketing", icon: Megaphone, area: "marketing" },
-      { title: "Lançamento", url: "/lancamento", icon: Rocket, area: "lancamento" },
-      { title: "Métricas", url: "/metricas", icon: BarChart3, area: "metricas" },
-      { title: "Arquivos", url: "/arquivos", icon: FolderOpen, area: "arquivos" },
-    ],
-  },
-  {
-    id: "aulas",
-    label: "Aulas & Turmas",
-    image: calendarImg,
-    color: "from-blue-600/80",
-    items: [
-      { title: "Planejamento de Aula", url: "/planejamento-aula", icon: PenTool, area: "planejamento-aula" },
-      { title: "Turmas Online", url: "/turmas-online", icon: Monitor, area: "turmas-online" },
-      { title: "Turmas Presenciais", url: "/turmas-presenciais", icon: MapPin, area: "turmas-presenciais" },
-    ],
-  },
-  {
-    id: "financas",
-    label: "Finanças",
-    image: financeImg,
-    color: "from-green-600/80",
-    items: [
-      { title: "Finanças Pessoais", url: "/financas-pessoais", icon: Wallet, area: "financas-pessoais" },
-      { title: "Finanças Empresa", url: "/financas-empresa", icon: Building2, area: "financas-empresa", badge: "CENTRAL" },
-      { title: "Entradas", url: "/entradas", icon: TrendingUp, area: "entradas" },
-      { title: "Contabilidade", url: "/contabilidade", icon: Calculator, area: "contabilidade" },
-    ],
-  },
-  {
-    id: "negocios",
-    label: "Negócios",
-    image: studentsImg,
-    color: "from-purple-600/80",
-    items: [
-      { title: "Cursos", url: "/cursos", icon: PlayCircle, area: "cursos" },
-      { title: "Simulados", url: "/simulados", icon: Brain, area: "simulados" },
-      { title: "Afiliados", url: "/afiliados", icon: Handshake, area: "afiliados" },
-      { title: "Gestão Alunos", url: "/gestao-alunos", icon: GraduationCap, area: "alunos" },
-      { title: "Portal Aluno", url: "/portal-aluno", icon: UserCheck, area: "portal-aluno" },
-      
-      { title: "Relatórios", url: "/relatorios", icon: FileText, area: "relatorios" },
-      { title: "Guia", url: "/guia", icon: BookOpen, area: "guia" },
-    ],
-  },
-  {
-    id: "site",
-    label: "Site",
-    image: devImg,
-    color: "from-cyan-600/80",
-    items: [
-      { title: "Gestão Site", url: "/gestao-site", icon: Globe, area: "gestao-site" },
-      { title: "Site/Programador", url: "/site-programador", icon: Code, area: "site-programador" },
-      { title: "Laboratório", url: "/laboratorio", icon: Zap, area: "laboratorio" },
-    ],
-  },
-  {
-    id: "pessoal",
-    label: "Vida Pessoal",
-    image: personalLifeImg,
-    color: "from-pink-600/80",
-    items: [
-      { title: "Pessoal", url: "/pessoal", icon: User, area: "pessoal" },
-      { title: "Vida Pessoal", url: "/vida-pessoal", icon: Heart, area: "vida-pessoal" },
-    ],
-  },
-  {
-    id: "admin",
-    label: "Administração",
-    image: teamImg,
-    color: "from-slate-600/80",
-    items: [
-      { title: "Permissões", url: "/permissoes", icon: Shield, area: "permissoes" },
-      { title: "Configurações", url: "/configuracoes", icon: Settings, area: "configuracoes" },
-    ],
-  },
-  {
-    id: "owner",
-    label: "Modo Master",
-    image: godModeImg,
-    color: "from-purple-600/80 via-pink-600/80",
-    items: [
-      { title: "Monitoramento", url: "/monitoramento", icon: Activity, area: "monitoramento", badge: "MASTER" },
-      { title: "Central WhatsApp", url: "/central-whatsapp", icon: MessageSquareText, area: "central-whatsapp", badge: "LIVE" },
-      { title: "Diagnóstico WhatsApp", url: "/diagnostico-whatsapp", icon: Stethoscope, area: "diagnostico-whatsapp" },
-      { title: "Auditoria Acessos", url: "/auditoria-acessos", icon: Shield, area: "auditoria-acessos", badge: "AUDIT" },
-      { title: "Central Monitoramento", url: "/central-monitoramento", icon: Activity, area: "central-monitoramento", badge: "REAL-TIME" },
-      { title: "Central IAs", url: "/central-ias", icon: Brain, area: "central-ias", badge: "AI" },
-    ],
-  },
 ];
 
 export function RoleBasedSidebar() {
@@ -353,8 +357,27 @@ export function RoleBasedSidebar() {
     fetchUserProfile();
   }, [user?.id, user?.user_metadata?.nome]);
 
+  // ============================================
+  // REGRA: Selecionar menus baseado na área atual
+  // /gestaofc → gestaoMenuGroups
+  // /alunos → alunoMenuGroups
+  // Fora dessas áreas → vazio (sidebar não aparece)
+  // ============================================
+  const isGestaoArea = location.pathname.startsWith("/gestaofc");
+  const isAlunosArea = location.pathname.startsWith("/alunos");
+  
+  // Selecionar os menus apropriados baseado na área
+  const currentMenuGroups = useMemo(() => {
+    if (isGestaoArea) return gestaoMenuGroups;
+    if (isAlunosArea) return alunoMenuGroups;
+    return []; // Fora de /gestaofc ou /alunos, não mostra nada
+  }, [isGestaoArea, isAlunosArea]);
+
   // Merge static menu groups with dynamic items from database
   const filteredMenuGroups = useMemo(() => {
+    // Se não há menus (fora das áreas), retornar vazio
+    if (currentMenuGroups.length === 0) return [];
+    
     // Create a map of icons for dynamic items
     const iconMap: Record<string, React.ComponentType<{ className?: string }>> = {
       FileText, Brain, Users, Wallet, Building2, TrendingUp, Handshake,
@@ -365,7 +388,7 @@ export function RoleBasedSidebar() {
     };
     
     // Add dynamic items to their respective groups
-    const enhancedGroups = menuGroups.map(group => {
+    const enhancedGroups = currentMenuGroups.map(group => {
       const groupDynamicItems = dynamicItems
         .filter(di => di.group_id === group.id && di.is_active)
         .map(di => ({
@@ -384,7 +407,7 @@ export function RoleBasedSidebar() {
     
     // Create new groups for dynamic items that don't match existing groups
     const customGroupIds = [...new Set(dynamicItems.filter(di => 
-      di.is_active && !menuGroups.some(g => g.id === di.group_id)
+      di.is_active && !currentMenuGroups.some(g => g.id === di.group_id)
     ).map(di => di.group_id))];
     
     const customGroups: MenuGroup[] = customGroupIds.map(gid => ({
@@ -408,7 +431,7 @@ export function RoleBasedSidebar() {
     return allGroups
       .map((group) => ({ ...group, items: group.items.filter((item) => hasAccess(item.area)) }))
       .filter((group) => group.items.length > 0);
-  }, [hasAccess, dynamicItems]);
+  }, [hasAccess, dynamicItems, currentMenuGroups]);
 
   const isActive = (path: string) => location.pathname === path;
 

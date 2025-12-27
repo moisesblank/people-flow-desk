@@ -154,10 +154,10 @@ export function validateDomainAccessForLogin(
     return { permitido: true, dominioAtual, areaAtual };
   }
 
-  // Sem role = usuário não logado ainda → PERMITIR acessar áreas públicas
+  // Sem role = usuário não logado ainda
   if (!role) {
-    if (areaAtual === "gestaofc" || areaAtual === "alunos") {
-      // Área restrita - redirecionar para auth (RELATIVO)
+    // Se está em /gestaofc, precisa fazer login
+    if (areaAtual === "gestaofc") {
       return { 
         permitido: false, 
         dominioAtual, 
@@ -166,6 +166,17 @@ export function validateDomainAccessForLogin(
         motivo: "Faça login para acessar esta área"
       };
     }
+    // Se está em /alunos, precisa fazer login
+    if (areaAtual === "alunos") {
+      return { 
+        permitido: false, 
+        dominioAtual, 
+        areaAtual,
+        redirecionarPara: "/auth",
+        motivo: "Faça login para acessar esta área"
+      };
+    }
+    // Área pública - permitir
     return { permitido: true, dominioAtual, areaAtual };
   }
 
@@ -176,19 +187,19 @@ export function validateDomainAccessForLogin(
 
   // ============================================
   // VALIDAÇÃO /gestaofc (área de funcionários)
+  // Só acessível quando digitado MANUALMENTE
   // ============================================
   if (areaAtual === "gestaofc") {
     const isAllowed = GESTAO_ALLOWED_ROLES.includes(role as DomainAppRole);
     
     if (!isAllowed) {
-      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /gestaofc - redirecionando`);
-      // Redireciona para área correta baseado no role (RELATIVO)
+      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /gestaofc - redirecionando para /alunos`);
       return { 
         permitido: false, 
         dominioAtual, 
         areaAtual,
         redirecionarPara: "/alunos",
-        motivo: "Área restrita para funcionários"
+        motivo: "Área restrita"
       };
     }
     
@@ -207,7 +218,7 @@ export function validateDomainAccessForLogin(
     }
     
     if (!isAllowed) {
-      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /alunos - redirecionando`);
+      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /alunos - redirecionando para /`);
       return { 
         permitido: false, 
         dominioAtual, 

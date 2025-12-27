@@ -162,8 +162,14 @@ const AppHeader = memo(({
             </div>
           </DropdownMenuLabel>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate('/configuracoes')}>Configurações</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate('/permissoes')}>Permissões</DropdownMenuItem>
+          {/* Links só aparecem se está em /gestaofc */}
+          {typeof window !== "undefined" && window.location.pathname.startsWith("/gestaofc") && (
+            <>
+              <DropdownMenuItem onClick={() => navigate('/gestaofc/configuracoes')}>Configurações</DropdownMenuItem>
+              <DropdownMenuItem onClick={() => navigate('/gestaofc/permissoes')}>Permissões</DropdownMenuItem>
+              <DropdownMenuSeparator />
+            </>
+          )}
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => signOut()} className="text-destructive focus:text-destructive">
             Sair
