@@ -120,6 +120,12 @@ export function validateDomainAccessForLogin(
 
   const dominioAtual = getCurrentDomain();
 
+  // ============================================
+  // 🛡️ LEI SUPREMA: NUNCA REDIRECIONAR ENTRE DOMÍNIOS
+  // Cada domínio é independente - NÃO existe domínio canônico
+  // gestao.* e pro.* coexistem sem redirect forçado
+  // ============================================
+  
   // Owner tem BYPASS SUPREMO em qualquer domínio
   if (userEmail?.toLowerCase() === OWNER_EMAIL) {
     console.log("[DOMAIN-ACCESS] Owner detectado - bypass supremo ativado");
@@ -127,7 +133,6 @@ export function validateDomainAccessForLogin(
   }
 
   // Sem role = usuário não logado ainda → PERMITIR acessar /auth normalmente
-  // O redirecionamento só acontece APÓS login quando sabemos o role real
   if (!role) {
     console.log("[DOMAIN-ACCESS] Sem role (usuário não logado) - permitindo acesso para login");
     return { permitido: true, dominioAtual };
@@ -138,22 +143,17 @@ export function validateDomainAccessForLogin(
     return { permitido: true, dominioAtual };
   }
 
-  const roleLabel = DOMAIN_ROLE_LABELS[role as DomainAppRole] || role;
-
   // ============================================
   // VALIDAÇÃO gestao.moisesmedeiros.com.br
+  // SEM REDIRECT - apenas log e continua
   // ============================================
   if (dominioAtual === "gestao") {
     const isAllowed = GESTAO_ALLOWED_ROLES.includes(role as DomainAppRole);
     
     if (!isAllowed) {
-      console.log(`[DOMAIN-ACCESS] Role "${role}" BLOQUEADO em gestao.* → Redirecionar para pro.*`);
-      return {
-        permitido: false,
-        redirecionarPara: "https://pro.moisesmedeiros.com.br/alunos",
-        motivo: `Seu cargo "${roleLabel}" não tem acesso à área de gestão. Redirecionando para área do aluno.`,
-        dominioAtual
-      };
+      console.log(`[DOMAIN-ACCESS] Role "${role}" não é gestão, mas PERMANECE no domínio atual (sem redirect)`);
+      // NÃO redireciona - apenas marca como não permitido para UI decidir
+      return { permitido: false, dominioAtual, motivo: `Acesso restrito para este cargo.` };
     }
     
     return { permitido: true, dominioAtual };
@@ -161,18 +161,15 @@ export function validateDomainAccessForLogin(
 
   // ============================================
   // VALIDAÇÃO pro.moisesmedeiros.com.br
+  // SEM REDIRECT - apenas log e continua
   // ============================================
   if (dominioAtual === "pro") {
     const isAllowed = PRO_ALLOWED_ROLES.includes(role as DomainAppRole);
     
     if (!isAllowed) {
-      console.log(`[DOMAIN-ACCESS] Role "${role}" BLOQUEADO em pro.* → Redirecionar para gestao.*`);
-      return {
-        permitido: false,
-        redirecionarPara: "https://gestao.moisesmedeiros.com.br/dashboard",
-        motivo: `Seu cargo "${roleLabel}" é de funcionário. Redirecionando para área de gestão.`,
-        dominioAtual
-      };
+      console.log(`[DOMAIN-ACCESS] Role "${role}" não é aluno, mas PERMANECE no domínio atual (sem redirect)`);
+      // NÃO redireciona - apenas marca como não permitido para UI decidir
+      return { permitido: false, dominioAtual, motivo: `Acesso restrito para este cargo.` };
     }
     
     return { permitido: true, dominioAtual };

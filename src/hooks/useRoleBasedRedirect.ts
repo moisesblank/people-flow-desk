@@ -21,7 +21,7 @@ import {
   ROLE_LABELS
 } from "@/hooks/useRolePermissions";
 import { validateDomainAccessForLogin, type DomainAppRole, DOMAIN_ROLE_LABELS } from "@/hooks/useDomainAccess";
-import { toast } from "sonner";
+// toast removido - não há mais redirect cross-domain
 
 type RedirectRole = "owner" | "admin" | "beta" | "aluno_gratuito" | "gestao" | "other";
 
@@ -109,25 +109,15 @@ export function useRoleBasedRedirect() {
       const userEmail = user.email || null;
 
       // ============================================
-      // 🔐 VALIDAÇÃO DE DOMÍNIO (LEI IV)
+      // 🛡️ VALIDAÇÃO DE DOMÍNIO DESATIVADA (LEI SUPREMA)
+      // NÃO redirecionar entre domínios - cada domínio é independente
+      // O redirect agora é apenas RELATIVO ao hostname atual
       // ============================================
       const domainValidation = validateDomainAccessForLogin(role, userEmail);
-
-      if (!domainValidation.permitido && domainValidation.redirecionarPara) {
-        console.log(`[REDIRECT] Domínio bloqueado para role "${role}" → ${domainValidation.redirecionarPara}`);
-        
-        // Mostrar toast informativo
-        toast.info("Redirecionando para sua área", {
-          description: domainValidation.motivo || `Seu cargo "${ROLE_LABELS[role]}" tem acesso em outro domínio.`,
-          duration: 4000
-        });
-
-        // Aguardar um momento para o toast ser visto
-        await new Promise(resolve => setTimeout(resolve, 1500));
-
-        // Redirecionar cross-domain
-        window.location.href = domainValidation.redirecionarPara;
-        return;
+      
+      // Apenas log, sem redirect cross-domain
+      if (!domainValidation.permitido) {
+        console.log(`[REDIRECT] Role "${role}" no domínio ${domainValidation.dominioAtual} - sem redirect cross-domain`);
       }
 
       // ============================================

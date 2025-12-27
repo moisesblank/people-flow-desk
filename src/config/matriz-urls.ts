@@ -171,13 +171,18 @@ export function validarAcessoUrl(
     return { permitido: true };
   }
 
+  // ============================================
+  // 🛡️ LEI SUPREMA: NUNCA REDIRECIONAR ENTRE DOMÍNIOS
+  // Cada domínio é independente - redirects são sempre RELATIVOS
+  // ============================================
+
   // BETA deve acessar /alunos em pro.*
   if (categoria === "beta") {
     if (isGestao) {
+      // NÃO redireciona cross-domain - apenas indica acesso restrito
       return { 
         permitido: false, 
-        redirecionarPara: MATRIZ_URLS.ALUNOS,
-        motivo: "Alunos Beta devem acessar a área de alunos" 
+        motivo: "Esta área é restrita. Acesse sua área de aluno." 
       };
     }
     if (!isAlunosPath && !isPublicPath) {
@@ -197,10 +202,10 @@ export function validarAcessoUrl(
       if (isAlunosPath) {
         return { permitido: true };
       }
+      // NÃO redireciona cross-domain - apenas indica acesso restrito
       return { 
         permitido: false, 
-        redirecionarPara: MATRIZ_URLS.GESTAO,
-        motivo: "Funcionários devem acessar a área de gestão" 
+        motivo: "Esta área é restrita. Acesse a gestão pelo domínio correto." 
       };
     }
     return { permitido: true };
@@ -216,9 +221,9 @@ export function validarAcessoUrl(
       };
     }
     if (isGestao) {
+      // NÃO redireciona cross-domain
       return { 
         permitido: false, 
-        redirecionarPara: MATRIZ_URLS.PUBLICA,
         motivo: "Área restrita para funcionários" 
       };
     }
