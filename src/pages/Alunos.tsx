@@ -1,11 +1,12 @@
 // ============================================
 // TRAMON v8 - ACADEMIA QUANTUM
 // Sistema Neural de Gestão de Alunos + WordPress Sync
+// ⚡ PARTE 6: Pré-seleção operacional de universo
 // ============================================
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown } from "lucide-react";
+import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown, ArrowLeft } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { FuturisticCard } from "@/components/ui/futuristic-card";
@@ -25,6 +26,12 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { VirtualTable } from "@/components/performance/VirtualTable";
+import { 
+  AlunosUniverseSelector, 
+  AlunoUniverseType, 
+  getUniverseFilters,
+  ALUNO_UNIVERSE_OPTIONS
+} from "@/components/students/AlunosUniverseSelector";
 
 interface Student {
   id: string;
@@ -32,6 +39,7 @@ interface Student {
   email: string;
   curso: string;
   status: string;
+  fonte?: string;
 }
 
 interface WordPressUser {
@@ -50,6 +58,12 @@ interface WordPressUser {
 const STATUS_OPTIONS = ["Ativo", "Concluído", "Pendente", "Cancelado"];
 
 export default function Alunos() {
+  // ============================================
+  // ⚡ PARTE 6: Estado de pré-seleção de universo
+  // null = tela de seleção, valor = gestão filtrada
+  // ============================================
+  const [selectedUniverse, setSelectedUniverse] = useState<AlunoUniverseType | null>(null);
+  
   const [students, setStudents] = useState<Student[]>([]);
   const [wpUsers, setWpUsers] = useState<WordPressUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -165,8 +179,40 @@ export default function Alunos() {
     }
   };
 
-  const ativos = students.filter(s => s.status === "Ativo").length;
-  const concluidos = students.filter(s => s.status === "Concluído").length;
+  // ============================================
+  // ⚡ PARTE 6: Filtragem por universo selecionado
+  // Aplica filtros sem duplicar lógica existente
+  // ============================================
+  const universeFilters = useMemo(() => {
+    if (!selectedUniverse) return null;
+    return getUniverseFilters(selectedUniverse);
+  }, [selectedUniverse]);
+
+  const filteredStudents = useMemo(() => {
+    if (!universeFilters) return students;
+    return students.filter(universeFilters.filterFn);
+  }, [students, universeFilters]);
+
+  const filteredWpUsers = useMemo(() => {
+    if (!universeFilters || !universeFilters.wpFilterFn) return wpUsers;
+    return wpUsers.filter(universeFilters.wpFilterFn);
+  }, [wpUsers, universeFilters]);
+
+  // Stats recalculados com base nos dados filtrados
+  const filteredWpStats = useMemo(() => {
+    const ativos = filteredWpUsers.filter(u => u.status_acesso === 'ativo').length;
+    const comPagamento = filteredWpUsers.filter(u => u.tem_pagamento_confirmado).length;
+    const semPagamento = filteredWpUsers.filter(u => !u.tem_pagamento_confirmado && u.grupos.length > 0).length;
+    return {
+      total: filteredWpUsers.length,
+      ativos,
+      comPagamento,
+      semPagamento
+    };
+  }, [filteredWpUsers]);
+
+  const ativos = filteredStudents.filter(s => s.status === "Ativo" || s.status === "ativo").length;
+  const concluidos = filteredStudents.filter(s => s.status === "Concluído" || s.status === "concluido").length;
 
   const openModal = (student?: Student) => {
     setEditingItem(student || null);
@@ -250,23 +296,50 @@ export default function Alunos() {
     }
   };
 
+  // ============================================
+  // ⚡ PARTE 6: Renderização condicional
+  // Se não selecionou universo, mostra tela de seleção
+  // ============================================
+  if (!selectedUniverse) {
+    return <AlunosUniverseSelector onSelect={setSelectedUniverse} />;
+  }
+
+  // Encontrar label do universo selecionado
+  const selectedUniverseLabel = ALUNO_UNIVERSE_OPTIONS.find(o => o.id === selectedUniverse)?.label || 'Todos';
+
   return (
     <div className="relative min-h-screen">
       <CyberBackground variant="matrix" />
       
       <div className="relative z-10 p-4 md:p-8 lg:p-12">
         <div className="mx-auto max-w-7xl space-y-6">
+          {/* ⚡ PARTE 6: Botão voltar + Badge do universo */}
+          <div className="flex items-center gap-4">
+            <Button 
+              variant="ghost" 
+              size="sm"
+              onClick={() => setSelectedUniverse(null)}
+              className="text-muted-foreground hover:text-foreground"
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Voltar à seleção
+            </Button>
+            <Badge variant="outline" className="text-sm">
+              {selectedUniverseLabel}
+            </Badge>
+          </div>
+
           {/* Futuristic Header */}
           <FuturisticPageHeader
             title="Academia Quantum"
-            subtitle="Sistema Neural de Gestão de Alunos"
+            subtitle={`Gestão de Alunos — ${selectedUniverseLabel}`}
             icon={GraduationCap}
             badge="STUDENT MATRIX"
             accentColor="blue"
             stats={[
-              { label: "Alunos DB", value: students.length, icon: Users },
-              { label: "WordPress", value: wpStats.total, icon: Globe },
-              { label: "Com Pagamento", value: wpStats.comPagamento, icon: CheckCircle },
+              { label: "Alunos DB", value: filteredStudents.length, icon: Users },
+              { label: "WordPress", value: filteredWpStats.total, icon: Globe },
+              { label: "Com Pagamento", value: filteredWpStats.comPagamento, icon: CheckCircle },
             ]}
             action={
               <div className="flex gap-2">
@@ -295,11 +368,11 @@ export default function Alunos() {
             <TabsList className="grid w-full max-w-md grid-cols-2 bg-background/50 border border-blue-500/30">
               <TabsTrigger value="alunos" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400">
                 <Users className="h-4 w-4 mr-2" />
-                Alunos DB ({students.length})
+                Alunos DB ({filteredStudents.length})
               </TabsTrigger>
               <TabsTrigger value="wordpress" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                 <Globe className="h-4 w-4 mr-2" />
-                WordPress ({wpStats.total})
+                WordPress ({filteredWpStats.total})
               </TabsTrigger>
             </TabsList>
 
@@ -309,7 +382,7 @@ export default function Alunos() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <FuturisticCard accentColor="blue" className="p-4 text-center">
                   <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-blue-400">{students.length}</div>
+                  <div className="text-2xl font-bold text-blue-400">{filteredStudents.length}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
                 </FuturisticCard>
                 <FuturisticCard accentColor="green" className="p-4 text-center">
@@ -325,7 +398,7 @@ export default function Alunos() {
                 <FuturisticCard accentColor="cyan" className="p-4 text-center">
                   <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
                   <div className="text-2xl font-bold text-cyan-400">
-                    {students.length > 0 ? Math.round((concluidos / students.length) * 100) : 0}%
+                    {filteredStudents.length > 0 ? Math.round((concluidos / filteredStudents.length) * 100) : 0}%
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa</div>
                 </FuturisticCard>
@@ -333,12 +406,12 @@ export default function Alunos() {
 
               {/* Analytics */}
               <StudentAnalytics 
-                totalStudents={students.length}
+                totalStudents={filteredStudents.length}
                 activeStudents={ativos}
                 completedStudents={concluidos}
-                averageProgress={students.length > 0 ? 65 : 0}
-                averageXP={students.length > 0 ? 2450 : 0}
-                topPerformers={students.slice(0, 5).map((s, i) => ({
+                averageProgress={filteredStudents.length > 0 ? 65 : 0}
+                averageXP={filteredStudents.length > 0 ? 2450 : 0}
+                topPerformers={filteredStudents.slice(0, 5).map((s, i) => ({
                   id: s.id.toString(),
                   name: s.nome,
                   xp: 3000 - (i * 200),
@@ -349,7 +422,7 @@ export default function Alunos() {
               {/* Table */}
               <FuturisticCard accentColor="blue">
                 <VirtualTable
-                  items={students}
+                  items={filteredStudents}
                   rowHeight={56}
                   containerHeight={500}
                   emptyMessage="Nenhum aluno cadastrado"
@@ -421,35 +494,35 @@ export default function Alunos() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <FuturisticCard accentColor="cyan" className="p-4 text-center">
                   <Globe className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-cyan-400">{wpStats.total}</div>
+                  <div className="text-2xl font-bold text-cyan-400">{filteredWpStats.total}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Total WordPress</div>
                 </FuturisticCard>
                 <FuturisticCard accentColor="green" className="p-4 text-center">
                   <CheckCircle className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-emerald-400">{wpStats.ativos}</div>
+                  <div className="text-2xl font-bold text-emerald-400">{filteredWpStats.ativos}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
                 </FuturisticCard>
                 <FuturisticCard accentColor="blue" className="p-4 text-center">
                   <CheckCircle className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-blue-400">{wpStats.comPagamento}</div>
+                  <div className="text-2xl font-bold text-blue-400">{filteredWpStats.comPagamento}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Pagamento OK</div>
                 </FuturisticCard>
                 <FuturisticCard accentColor="orange" className="p-4 text-center">
                   <AlertTriangle className="h-6 w-6 text-red-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-red-400">{wpStats.semPagamento}</div>
+                  <div className="text-2xl font-bold text-red-400">{filteredWpStats.semPagamento}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">⚠️ Sem Pagamento</div>
                 </FuturisticCard>
               </div>
 
               {/* Alert for users without payment */}
-              {wpStats.semPagamento > 0 && (
+              {filteredWpStats.semPagamento > 0 && (
                 <FuturisticCard accentColor="orange" className="p-4 border-red-500/50">
                   <div className="flex items-center gap-3">
                     <AlertTriangle className="h-6 w-6 text-red-400" />
                     <div>
                       <h4 className="font-semibold text-red-400">Atenção: Acesso Indevido Detectado</h4>
                       <p className="text-sm text-muted-foreground">
-                        {wpStats.semPagamento} usuário(s) têm acesso ao curso mas não possuem pagamento confirmado.
+                        {filteredWpStats.semPagamento} usuário(s) têm acesso ao curso mas não possuem pagamento confirmado.
                         Verifique na página de Auditoria de Acessos.
                       </p>
                     </div>
@@ -472,7 +545,7 @@ export default function Alunos() {
                   </Button>
                 </div>
                 <VirtualTable
-                  items={wpUsers}
+                  items={filteredWpUsers}
                   rowHeight={64}
                   containerHeight={500}
                   emptyMessage="Nenhum usuário sincronizado. Clique em 'Sincronizar' para importar usuários do WordPress"
