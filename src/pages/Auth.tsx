@@ -37,6 +37,7 @@ import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
 import { OptimizedImage } from "@/components/ui/optimized-image";
+import { isOwnerEmail } from "@/lib/security";
 
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
@@ -221,15 +222,28 @@ export default function Auth() {
     setIsLoading(true);
 
     try {
-      if (!formData.email || !formData.email.includes('@')) {
+      const email = (formData.email || '').trim();
+
+      if (!email || !email.includes('@')) {
         setErrors({ email: "Digite um email válido" });
         setIsLoading(false);
         return;
       }
 
-      const { error } = await resetPassword(formData.email);
+      // 🛡️ RESET DE SENHA: Turnstile obrigatório (evento de risco)
+      // 🧿 OWNER BYPASS: owner nunca deve ser bloqueado por desafio externo
+      if (!isOwnerEmail(email) && (!isTurnstileVerified || !turnstileToken)) {
+        toast.error("Verificação de segurança necessária", {
+          description: "Para recuperar a senha, complete a verificação anti-bot."
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const { error } = await resetPassword(email);
       if (error) {
         toast.error(error.message);
+        resetTurnstile();
         setIsLoading(false);
         return;
       }
@@ -733,6 +747,18 @@ export default function Auth() {
                         <p className="text-xs text-red-400 mt-1" role="alert" aria-live="polite">{errors.email}</p>
                       )}
                     </div>
+
+                    {/* Cloudflare Turnstile - RESET DE SENHA (evento de risco) */}
+                    {!isOwnerEmail((formData.email || '').trim()) && (
+                      <div className="py-2">
+                        <CloudflareTurnstile
+                          {...TurnstileProps}
+                          theme="dark"
+                          size="flexible"
+                          showStatus={true}
+                        />
+                      </div>
+                    )}
                     
                     <Button
                       type="submit"
