@@ -38,67 +38,60 @@ const handler = async (req: Request): Promise<Response> => {
     );
 
     // ========================================
-    // 🛡️ LEI VI - AUTENTICAÇÃO JWT OBRIGATÓRIA
+    // 🛡️ LEI VI - VALIDAÇÃO INTERNA (2FA pré-login)
+    // O JWT pode não estar disponível durante 2FA
+    // Validamos via userId + email + rate limiting
     // ========================================
-    const authHeader = req.headers.get("Authorization");
-    if (!authHeader?.startsWith("Bearer ")) {
-      console.log("[2FA] ❌ BLOQUEADO: Sem token JWT");
-      
-      await supabaseAdmin.from("security_events").insert({
-        event_type: "2FA_UNAUTHORIZED_ACCESS",
-        severity: "critical",
-        description: "Tentativa de envio 2FA sem autenticação",
-        payload: {
-          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown",
-          user_agent: req.headers.get("user-agent")?.substring(0, 255)
-        }
-      });
-      
-      return new Response(
-        JSON.stringify({ error: "Não autorizado" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const token = authHeader.replace("Bearer ", "");
-    const { data: { user }, error: authError } = await supabaseAdmin.auth.getUser(token);
-    
-    if (authError || !user) {
-      console.log("[2FA] ❌ BLOQUEADO: Token JWT inválido");
-      return new Response(
-        JSON.stringify({ error: "Token inválido" }),
-        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
     const { email, userId, userName }: Send2FARequest = await req.json();
     
-    // O userId deve corresponder ao usuário autenticado
-    if (userId !== user.id) {
-      console.log("[2FA] ❌ BLOQUEADO: userId não corresponde ao token");
-      
-      await supabaseAdmin.from("security_events").insert({
-        event_type: "2FA_USER_MISMATCH",
-        severity: "critical",
-        user_id: user.id,
-        description: "Tentativa de enviar 2FA para outro usuário",
-        payload: { requested_user_id: userId }
-      });
-      
-      return new Response(
-        JSON.stringify({ error: "Não autorizado" }),
-        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-    
-    console.log(`[2FA] ✅ Autenticado: ${user.email} - Iniciando geração de código`);
-
     if (!email || !userId) {
       return new Response(
         JSON.stringify({ error: "Email e userId são obrigatórios" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
+
+    // Validar que o userId corresponde a um usuário real
+    const { data: userCheck, error: userCheckError } = await supabaseAdmin.auth.admin.getUserById(userId);
+    
+    if (userCheckError || !userCheck?.user) {
+      console.log("[2FA] ❌ BLOQUEADO: userId inválido:", userId);
+      
+      await supabaseAdmin.from("security_events").insert({
+        event_type: "2FA_INVALID_USER",
+        severity: "warning",
+        description: "Tentativa de 2FA com userId inválido",
+        payload: {
+          userId,
+          ip: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+        }
+      });
+      
+      return new Response(
+        JSON.stringify({ error: "Usuário não encontrado" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validar que o email corresponde ao usuário
+    if (userCheck.user.email?.toLowerCase() !== email.toLowerCase()) {
+      console.log("[2FA] ❌ BLOQUEADO: email não corresponde ao userId");
+      
+      await supabaseAdmin.from("security_events").insert({
+        event_type: "2FA_EMAIL_MISMATCH",
+        severity: "critical",
+        user_id: userId,
+        description: "Email não corresponde ao userId",
+        payload: { provided_email: email, user_email: userCheck.user.email }
+      });
+      
+      return new Response(
+        JSON.stringify({ error: "Email inválido" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    console.log(`[2FA] ✅ Usuário validado: ${email} - Iniciando geração de código`);
 
     // Validar formato do email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -108,8 +101,6 @@ const handler = async (req: Request): Promise<Response> => {
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
-
-    // supabaseAdmin já inicializado acima
 
     // ========================================
     // RATE LIMITING - Proteção anti-spam
