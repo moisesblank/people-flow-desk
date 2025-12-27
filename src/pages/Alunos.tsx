@@ -29,8 +29,12 @@ import { VirtualTable } from "@/components/performance/VirtualTable";
 import { 
   AlunosUniverseSelector, 
   AlunoUniverseType, 
+  AlunoSelectionState,
   getUniverseFilters,
-  ALUNO_UNIVERSE_OPTIONS
+  parseSelectionFromUrl,
+  updateUrlWithSelection,
+  ALUNO_UNIVERSE_OPTIONS,
+  ONLINE_PRODUCT_OPTIONS
 } from "@/components/students/AlunosUniverseSelector";
 
 interface Student {
@@ -59,10 +63,20 @@ const STATUS_OPTIONS = ["Ativo", "Concluído", "Pendente", "Cancelado"];
 
 export default function Alunos() {
   // ============================================
-  // ⚡ PARTE 6: Estado de pré-seleção de universo
+  // ⚡ PARTE 6 + 7: Estado de pré-seleção de universo + produto
   // null = tela de seleção, valor = gestão filtrada
+  // Persistência via querystring (PARTE 7)
   // ============================================
-  const [selectedUniverse, setSelectedUniverse] = useState<AlunoUniverseType | null>(null);
+  const [selection, setSelection] = useState<AlunoSelectionState | null>(() => {
+    // Inicializa do querystring se disponível
+    return parseSelectionFromUrl();
+  });
+  
+  // ⚡ PARTE 7: Atualiza URL quando seleção muda
+  const handleSelectionChange = (newSelection: AlunoSelectionState | null) => {
+    setSelection(newSelection);
+    updateUrlWithSelection(newSelection);
+  };
   
   const [students, setStudents] = useState<Student[]>([]);
   const [wpUsers, setWpUsers] = useState<WordPressUser[]>([]);
@@ -180,13 +194,13 @@ export default function Alunos() {
   };
 
   // ============================================
-  // ⚡ PARTE 6: Filtragem por universo selecionado
+  // ⚡ PARTE 6 + 7: Filtragem por universo + produto selecionado
   // Aplica filtros sem duplicar lógica existente
   // ============================================
   const universeFilters = useMemo(() => {
-    if (!selectedUniverse) return null;
-    return getUniverseFilters(selectedUniverse);
-  }, [selectedUniverse]);
+    if (!selection) return null;
+    return getUniverseFilters(selection);
+  }, [selection]);
 
   const filteredStudents = useMemo(() => {
     if (!universeFilters) return students;
@@ -297,15 +311,21 @@ export default function Alunos() {
   };
 
   // ============================================
-  // ⚡ PARTE 6: Renderização condicional
+  // ⚡ PARTE 6 + 7: Renderização condicional
   // Se não selecionou universo, mostra tela de seleção
   // ============================================
-  if (!selectedUniverse) {
-    return <AlunosUniverseSelector onSelect={setSelectedUniverse} />;
+  if (!selection) {
+    return <AlunosUniverseSelector onSelect={handleSelectionChange} />;
   }
 
-  // Encontrar label do universo selecionado
-  const selectedUniverseLabel = ALUNO_UNIVERSE_OPTIONS.find(o => o.id === selectedUniverse)?.label || 'Todos';
+  // ⚡ PARTE 7: Labels combinados (universo + produto)
+  const universeOption = ALUNO_UNIVERSE_OPTIONS.find(o => o.id === selection.universe);
+  const productOption = selection.product 
+    ? ONLINE_PRODUCT_OPTIONS.find(o => o.id === selection.product) 
+    : null;
+  const selectedUniverseLabel = productOption 
+    ? `${universeOption?.label || 'Todos'} → ${productOption.label}`
+    : universeOption?.label || 'Todos';
 
   return (
     <div className="relative min-h-screen">
@@ -313,12 +333,12 @@ export default function Alunos() {
       
       <div className="relative z-10 p-4 md:p-8 lg:p-12">
         <div className="mx-auto max-w-7xl space-y-6">
-          {/* ⚡ PARTE 6: Botão voltar + Badge do universo */}
+          {/* ⚡ PARTE 6 + 7: Botão voltar + Badge do universo/produto */}
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
               size="sm"
-              onClick={() => setSelectedUniverse(null)}
+              onClick={() => handleSelectionChange(null)}
               className="text-muted-foreground hover:text-foreground"
             >
               <ArrowLeft className="h-4 w-4 mr-2" />
