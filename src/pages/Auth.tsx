@@ -189,6 +189,7 @@ export default function Auth() {
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptTerms, setAcceptTerms] = useState(false);
@@ -201,6 +202,60 @@ export default function Auth() {
   
   // Estado para Cloudflare Turnstile (Anti-Bot)
   const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
+
+  // ============================================
+  // ✅ P0 FIX: Se já existe sessão/user, /auth deve redirecionar
+  // - Não redirecionar se 2FA estiver pendente nesta aba
+  // ============================================
+  useEffect(() => {
+    const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
+
+    if (is2FAPending) {
+      console.log('[AUTH] 0. 2FA pendente nesta aba - não redirecionar');
+      setIsCheckingSession(false);
+      return;
+    }
+
+    // Se o AuthProvider já carregou o usuário, redireciona imediatamente
+    if (user) {
+      const target = isOwnerEmail(user.email) ? "/gestaofc" : "/alunos";
+      console.log('[AUTH] ✅ Usuário já autenticado - redirecionando para', target);
+      navigate(target, { replace: true });
+      return;
+    }
+
+    // Fallback: sessão existe no storage, mas o provider ainda não refletiu
+    (async () => {
+      console.log('[AUTH] Verificando sessão existente (fallback)...');
+      const { data: { session } } = await supabase.auth.getSession();
+
+      if (session?.user) {
+        const target = isOwnerEmail(session.user.email) ? "/gestaofc" : "/alunos";
+        console.log('[AUTH] ✅ Sessão encontrada - redirecionando para', target);
+        navigate(target, { replace: true });
+        return;
+      }
+
+      console.log('[AUTH] Sem sessão - mostrando formulário');
+      setIsCheckingSession(false);
+    })();
+  }, [navigate, user]);
+
+  // Listener: login bem-sucedido deve sair de /auth
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event !== 'SIGNED_IN' || !session?.user) return;
+
+      const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
+      if (is2FAPending) return;
+
+      const target = isOwnerEmail(session.user.email) ? "/gestaofc" : "/alunos";
+      console.log('[AUTH] ✅ SIGNED_IN - redirecionando para', target);
+      navigate(target, { replace: true });
+    });
+
+    return () => subscription.unsubscribe();
+  }, [navigate]);
 
   useEffect(() => {
     console.log('[AUTH] 2. Turnstile hook status:', {
@@ -475,6 +530,21 @@ export default function Auth() {
 
   // REMOVIDO: authLoading check - renderizar instantaneamente
   // O redirecionamento acontece no useEffect quando user/authLoading mudam
+
+  // ✅ P0: Não renderizar form enquanto valida sessão/redirect
+  if (isCheckingSession) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 relative overflow-hidden">
+        <SpiderWebPattern />
+        <CyberGrid />
+        <GlowingOrbs />
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Loader2 className="h-7 w-7 text-primary animate-spin" />
+          <p className="text-sm text-muted-foreground">Verificando sessão…</p>
+        </div>
+      </div>
+    );
+  }
 
   // Renderizar tela de 2FA se necessário
   if (show2FA && pending2FAUser) {
