@@ -285,6 +285,26 @@ export default function Auth() {
 
        if (isLogin) {
          const result = await signIn(formData.email, formData.password, { turnstileToken });
+
+         // 🛡️ LEI VI: pode bloquear/solicitar desafio antes do login (sem erro de credencial)
+         if (result.blocked) {
+           toast.error("Acesso bloqueado por segurança", {
+             description: "Detectamos um risco elevado. Se você é você mesmo, fale com o suporte para liberar seu acesso."
+           });
+           resetTurnstile();
+           setIsLoading(false);
+           return;
+         }
+
+         if (result.needsChallenge) {
+           toast.warning("Verificação adicional necessária", {
+             description: "Refaça a verificação anti-bot e tente novamente. Se persistir, vamos ajustar o filtro para não travar alunos reais."
+           });
+           resetTurnstile();
+           setIsLoading(false);
+           return;
+         }
+
          if (result.error) {
            if (result.error.message.includes("Invalid login credentials")) {
              toast.error("Credenciais inválidas", {
@@ -303,23 +323,30 @@ export default function Auth() {
            setIsLoading(false);
            return;
          }
-        
+
         // Login bem sucedido - ativar 2FA
         // Buscar usuário atual do supabase
         const { supabase } = await import("@/integrations/supabase/client");
         const { data: { user } } = await supabase.auth.getUser();
-        
-        if (user) {
-          setPending2FAUser({
-            email: user.email || formData.email,
-            userId: user.id,
-            nome: user.user_metadata?.nome
+
+        if (!user) {
+          toast.error("Não foi possível concluir o login", {
+            description: "Sua sessão não foi criada. Tente novamente (a verificação será refeita)."
           });
-          setShow2FA(true);
-          toast.info("Verificação de Segurança 2FA", {
-            description: "Um código de 6 dígitos foi enviado para " + (user.email || formData.email)
-          });
+          resetTurnstile();
+          setIsLoading(false);
+          return;
         }
+
+        setPending2FAUser({
+          email: user.email || formData.email,
+          userId: user.id,
+          nome: user.user_metadata?.nome
+        });
+        setShow2FA(true);
+        toast.info("Verificação de Segurança 2FA", {
+          description: "Um código de 6 dígitos foi enviado para " + (user.email || formData.email)
+        });
       } else {
         // Cadastro de novo usuário
         const result = await signUp(formData.email, formData.password, formData.nome);
