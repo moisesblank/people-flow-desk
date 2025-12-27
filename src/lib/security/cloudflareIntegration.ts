@@ -524,8 +524,8 @@ export const ROUTE_CLOUDFLARE_CONFIGS: Record<string, Partial<CloudflareSecurity
     mode: "monitor",
   },
   
-  // Admin/Gestão - mais restritivo
-  "/gestao": {
+  // Gestão - /gestaofc (rota secreta interna)
+  "/gestaofc": {
     minBotScore: 50,
     maxThreatScore: 30,
     mode: "block",

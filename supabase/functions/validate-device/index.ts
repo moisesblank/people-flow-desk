@@ -105,9 +105,9 @@ Deno.serve(async (req) => {
       
       if (isFallbackToken || isDevBypassToken) {
         const hostname = turnstileToken.split('_').pop() || '';
+        // MONO-DOMÍNIO: gestao.* não existe mais
         const allowedHosts = [
           'pro.moisesmedeiros.com.br',
-          'gestao.moisesmedeiros.com.br',
           'moisesmedeiros.com.br',
           'www.moisesmedeiros.com.br',
           'localhost',

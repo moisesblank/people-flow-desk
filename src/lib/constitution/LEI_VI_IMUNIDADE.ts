@@ -14,7 +14,7 @@ export const PROJECT_INVENTORY = {
   TABLES: '150+',
   STORAGE_BUCKETS: 10,
   CONNECTORS: ['ElevenLabs', 'Firecrawl'] as const,
-  DOMAINS: ['gestao.moisesmedeiros.com.br', 'pro.moisesmedeiros.com.br'] as const,
+  DOMAINS: ['pro.moisesmedeiros.com.br'] as const, // MONO-DOMÍNIO
   OWNER: 'MOISESBLANK@GMAIL.COM',
   VERSION: '3.1 OMEGA DEFINITIVA',
   AUDIT_DATE: '2024-12-24',

@@ -242,9 +242,9 @@ export async function checkDomainDeploy(domain: string): Promise<DomainDeploySta
 // VERIFICAÇÃO DE TODOS OS DOMÍNIOS
 // ============================================
 
+// MONO-DOMÍNIO: gestao.* descontinuado
 export const MONITORED_DOMAINS = [
   "pro.moisesmedeiros.com.br",
-  "gestao.moisesmedeiros.com.br",
 ];
 
 export async function checkAllDomainsIntegrity(): Promise<DomainDeployStatus[]> {

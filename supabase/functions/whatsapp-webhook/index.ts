@@ -308,7 +308,7 @@ const executeNaturalLanguageAction = async (
         return `❌ Erro ao registrar: ${error.message}`;
       }
       
-      return `✅ Registrado, ${adminName}!\n\n💸 Gasto: R$ ${parsed.amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n📝 ${parsed.description}\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n🔗 Ver finanças: https://gestao.moisesmedeiros.com.br/financas-empresa`;
+      return `✅ Registrado, ${adminName}!\n\n💸 Gasto: R$ ${parsed.amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n📝 ${parsed.description}\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n🔗 Ver finanças: https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa`;
     }
     
     if (parsed.action === 'income') {
@@ -327,7 +327,7 @@ const executeNaturalLanguageAction = async (
         return `❌ Erro ao registrar: ${error.message}`;
       }
       
-      return `✅ Registrado, ${adminName}!\n\n💰 Receita: R$ ${parsed.amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n📝 ${parsed.description}\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n🔗 Ver finanças: https://gestao.moisesmedeiros.com.br/financas-empresa`;
+      return `✅ Registrado, ${adminName}!\n\n💰 Receita: R$ ${parsed.amount.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n📝 ${parsed.description}\n📅 ${new Date().toLocaleDateString('pt-BR')}\n\n🔗 Ver finanças: https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa`;
     }
   }
   
@@ -372,7 +372,7 @@ const executeNaturalLanguageAction = async (
       
       const emoji = balance >= 0 ? '✅' : '⚠️';
       
-      return `${emoji} Seu saldo, ${adminName}:\n\n💰 Receitas: R$ ${totalIncome.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n💸 Gastos: R$ ${totalExpenses.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n\n📊 Saldo: R$ ${balance.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n\n🔗 Dashboard: https://gestao.moisesmedeiros.com.br/dashboard`;
+      return `${emoji} Seu saldo, ${adminName}:\n\n💰 Receitas: R$ ${totalIncome.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n💸 Gastos: R$ ${totalExpenses.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n\n📊 Saldo: R$ ${balance.toLocaleString('pt-BR', {minimumFractionDigits: 2})}\n\n🔗 Dashboard: https://pro.moisesmedeiros.com.br/gestaofc/dashboard`;
     }
     
     if (parsed.action === 'tasks_list') {
@@ -384,7 +384,7 @@ const executeNaturalLanguageAction = async (
         .limit(5);
       
       if (!tasks || tasks.length === 0) {
-        return `✨ Você não tem tarefas pendentes, ${adminName}!\n\n🔗 Ver tarefas: https://gestao.moisesmedeiros.com.br/tarefas`;
+        return `✨ Você não tem tarefas pendentes, ${adminName}!\n\n🔗 Ver tarefas: https://pro.moisesmedeiros.com.br/gestaofc/tarefas`;
       }
       
       const taskList = tasks.map((t: any, i: number) => {
@@ -393,7 +393,7 @@ const executeNaturalLanguageAction = async (
         return `${i + 1}. ${priority} ${t.title}${date}`;
       }).join('\n');
       
-      return `📋 Suas tarefas pendentes, ${adminName}:\n\n${taskList}\n\n🔗 Ver todas: https://gestao.moisesmedeiros.com.br/tarefas`;
+      return `📋 Suas tarefas pendentes, ${adminName}:\n\n${taskList}\n\n🔗 Ver todas: https://pro.moisesmedeiros.com.br/gestaofc/tarefas`;
     }
   }
   
@@ -624,7 +624,7 @@ const executeAdminCommand = async (
       }
       
       await auditLog('create_task', cmd.args);
-      return `✅ Tarefa criada, ${adminName}!\n\n📋 ${titulo}\n${desc ? `📝 ${desc}\n` : ''}${data ? `📅 ${data}\n` : ''}\n🔗 Ver: https://gestao.moisesmedeiros.com.br/tarefas`;
+      return `✅ Tarefa criada, ${adminName}!\n\n📋 ${titulo}\n${desc ? `📝 ${desc}\n` : ''}${data ? `📅 ${data}\n` : ''}\n🔗 Ver: https://pro.moisesmedeiros.com.br/gestaofc/tarefas`;
     }
 
     case 'fin': {
@@ -649,7 +649,7 @@ const executeAdminCommand = async (
       }
       
       await auditLog('create_finance', cmd.args);
-      return `✅ Finança registrada, ${adminName}!\n\n💰 R$ ${parseFloat(valor).toLocaleString('pt-BR')}\n${parte ? `👤 ${parte}\n` : ''}${desc ? `📝 ${desc}\n` : ''}\n🔗 Ver: https://gestao.moisesmedeiros.com.br/financas-empresa`;
+      return `✅ Finança registrada, ${adminName}!\n\n💰 R$ ${parseFloat(valor).toLocaleString('pt-BR')}\n${parte ? `👤 ${parte}\n` : ''}${desc ? `📝 ${desc}\n` : ''}\n🔗 Ver: https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa`;
     }
 
     case 'crm': {
@@ -671,7 +671,7 @@ const executeAdminCommand = async (
       }
       
       await auditLog('update_crm', cmd.args);
-      return `✅ CRM atualizado, ${adminName}!\n\n${stage ? `🎯 Estágio: ${stage}\n` : ''}${tags ? `🏷️ Tags: ${tags}\n` : ''}${note ? `📝 ${note}\n` : ''}\n🔗 Ver: https://gestao.moisesmedeiros.com.br/central-whatsapp`;
+      return `✅ CRM atualizado, ${adminName}!\n\n${stage ? `🎯 Estágio: ${stage}\n` : ''}${tags ? `🏷️ Tags: ${tags}\n` : ''}${note ? `📝 ${note}\n` : ''}\n🔗 Ver: https://pro.moisesmedeiros.com.br/gestaofc/central-whatsapp`;
     }
 
     case 'resumo': {

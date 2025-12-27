@@ -200,7 +200,7 @@ export const AUDIT_SECTION_6 = {
     domain_check: {
       function: "checkDomainDeploy()",
       location: "src/lib/cloudflare/deployIntegrityGate.ts:179-239",
-      monitors: ["pro.moisesmedeiros.com.br", "gestao.moisesmedeiros.com.br"],
+      monitors: ["pro.moisesmedeiros.com.br"], // MONO-DOMÍNIO: gestao.* descontinuado
       returns: "DomainDeployStatus com liveStatus",
     },
   },
