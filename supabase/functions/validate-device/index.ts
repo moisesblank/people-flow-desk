@@ -91,19 +91,13 @@ Deno.serve(async (req) => {
       // Pre-login/validate: userId permanece undefined
       console.log(`[validate-device] Pre-login/validate: userId não aplicável`);
       
-      // 🛡️ P0.2 - TURNSTILE OBRIGATÓRIO EM PRE-LOGIN
+      // 🛡️ NOVA ESTRATÉGIA: Turnstile OPCIONAL no pre-login
+      // Login normal flui SEM Turnstile - só exigido em eventos de risco
       const turnstileToken = (body as any).turnstileToken;
-      if (!turnstileToken) {
-        console.warn(`[validate-device] PRE-LOGIN sem Turnstile - bloqueado`);
-        return new Response(
-          JSON.stringify({ 
-            error: 'Turnstile token obrigatório em pre-login',
-            requiresTurnstile: true,
-            success: false
-          }),
-          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
+      console.log(`[validate-device] Pre-login: Turnstile ${turnstileToken ? 'presente' : 'ausente (ok - nova estratégia)'}`);
+      
+      // Se NÃO tem token, pular validação de Turnstile e continuar normalmente
+      // A segurança é garantida por: fingerprint, IP, rate-limit, risk-score
       
       // 🛡️ FALLBACK/DEV BYPASS: Aceitar tokens especiais sem chamar Cloudflare
       const isFallbackToken = turnstileToken.startsWith('FALLBACK_');
