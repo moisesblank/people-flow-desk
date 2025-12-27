@@ -1,33 +1,70 @@
 // ============================================
-// MOISÉS MEDEIROS v11.0 - ROLE PROTECTED ROUTE
+// MOISÉS MEDEIROS v12.0 - ROLE PROTECTED ROUTE
 // Rota protegida com verificação de permissão por cargo
-// 🔐 ATUALIZAÇÃO v11.0: Domain Guard (LEI IV)
+// 🔐 ATUALIZAÇÃO v12.0: 404 genérico para /gestaofc (não expor existência)
+// BLOCO 2 & 3: Owner bypass total, alunos veem 404
 // ============================================
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useEffect, useState, useMemo } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { Loader2, ShieldX, Lock } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   useRolePermissions, 
   type SystemArea, 
   URL_TO_AREA,
-  ROLE_LABELS
+  OWNER_EMAIL
 } from "@/hooks/useRolePermissions";
 import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
 import { Button } from "@/components/ui/button";
-// toast removido - não há mais redirect cross-domain com notificação
 
 interface RoleProtectedRouteProps {
   children: ReactNode;
   requiredArea?: SystemArea;
 }
 
+// ============================================
+// 🚫 COMPONENTE: Página 404 Genérica
+// Usada para não expor existência de /gestaofc
+// ============================================
+function NotFoundPage() {
+  return (
+    <div className="min-h-screen bg-background flex items-center justify-center p-4">
+      <div className="max-w-md w-full text-center space-y-6">
+        <div className="text-8xl font-bold text-muted-foreground/30">404</div>
+        <div className="space-y-2">
+          <h1 className="text-2xl font-bold text-foreground">
+            Página não encontrada
+          </h1>
+          <p className="text-muted-foreground">
+            A página que você está procurando não existe ou foi movida.
+          </p>
+        </div>
+        <Button onClick={() => window.location.href = '/'}>
+          Voltar para o Início
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
-  const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role } = useRolePermissions();
+  const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role, isOwner } = useRolePermissions();
   const location = useLocation();
-  // isDomainRedirecting removido - não há mais redirect cross-domain
+  
+  // ============================================
+  // 🔥 OWNER BYPASS TOTAL (BLOCO 2.3)
+  // Owner NUNCA espera, NUNCA é bloqueado
+  // ============================================
+  const isOwnerEmail = useMemo(() => {
+    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  }, [user?.email]);
+
+  // Se é Owner por email, bypass imediato (sem aguardar role)
+  if (isOwnerEmail && user) {
+    return <>{children}</>;
+  }
   
   // ============================================
   // ⏱️ TIMEOUT GLOBAL (LEI IV CONSTITUIÇÃO)
@@ -47,18 +84,14 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   }, [authLoading, roleLoading]);
 
   // ============================================
-  // 🛡️ DOMAIN GUARD DESATIVADO (LEI SUPREMA)
-  // NÃO redirecionar entre domínios - cada domínio é independente
-  // gestao.* e pro.* coexistem sem redirect forçado
+  // 🛡️ DOMAIN GUARD - LOG ONLY (sem redirect)
   // ============================================
-  // Apenas log, sem ação de redirect
   useEffect(() => {
     if (roleLoading || !user || !role) return;
 
     const userEmail = user.email || null;
     const domainValidation = validateDomainAccessForLogin(role, userEmail);
 
-    // Apenas log informativo - SEM REDIRECT
     if (!domainValidation.permitido) {
       console.log(`[DOMAIN-GUARD] Role "${role}" no domínio ${domainValidation.dominioAtual} - acesso pode ser limitado (sem redirect)`);
     }
@@ -83,58 +116,32 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
     return <Navigate to="/auth" replace />;
   }
 
-  // Check permission (área/rota)
+  // ============================================
+  // 🔒 BLOCO 3: POLÍTICA DE ACESSO À ROTA
+  // /gestaofc/* → OWNER/STAFF permitido, outros = 404
+  // ============================================
+  const isGestaoPath = location.pathname.startsWith("/gestaofc");
+  const isStaffRole = ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'employee', 'marketing', 'contabilidade', 'afiliado'].includes(role || '');
+
+  // Se tentando acessar /gestaofc sem ser staff/owner → 404 GENÉRICO
+  // Não expõe que a área existe (BLOCO 3.2)
+  if (isGestaoPath && !isStaffRole && !isOwner) {
+    console.log(`[GESTAO_GUARD] Usuário "${user.email}" (role: ${role}) tentou acessar /gestaofc → 404`);
+    return <NotFoundPage />;
+  }
+
+  // Check permission (área/rota) - para outras áreas
   const currentArea = requiredArea || URL_TO_AREA[location.pathname];
   const hasPermission = currentArea ? hasAccess(currentArea) : hasAccessToUrl(location.pathname);
 
+  // Para rotas /gestaofc, já validamos acima
+  if (isGestaoPath && isStaffRole) {
+    return <>{children}</>;
+  }
+
   if (!hasPermission) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="max-w-md w-full text-center space-y-6 animate-fade-in">
-          <div className="mx-auto w-24 h-24 rounded-full bg-destructive/10 flex items-center justify-center animate-pulse">
-            <ShieldX className="w-12 h-12 text-destructive" />
-          </div>
-
-          <div className="space-y-2">
-            <h1 className="text-2xl font-bold text-foreground">
-              Acesso Negado
-            </h1>
-            <p className="text-muted-foreground">
-              Você não tem permissão para acessar esta área.
-            </p>
-          </div>
-
-          <div className="p-4 rounded-xl bg-card border border-border">
-            <div className="flex items-center gap-3 justify-center">
-              <Lock className="w-5 h-5 text-muted-foreground" />
-              <div className="text-left">
-                <p className="text-sm text-muted-foreground">Seu cargo atual:</p>
-                <p className="font-semibold text-foreground">{roleLabel}</p>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-xs text-muted-foreground">
-            Se você acredita que deveria ter acesso a esta área,<br />
-            entre em contato com o administrador do sistema.
-          </p>
-
-          <div className="flex gap-3 justify-center">
-            <Button
-              variant="outline"
-              onClick={() => window.history.back()}
-            >
-              Voltar
-            </Button>
-            <Button
-              onClick={() => window.location.href = '/'}
-            >
-              Ir para o Início
-            </Button>
-          </div>
-        </div>
-      </div>
-    );
+    // Para outras áreas (não /gestaofc), mostrar acesso negado normal
+    return <NotFoundPage />;
   }
 
   return <>{children}</>;
