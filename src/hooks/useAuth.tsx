@@ -298,14 +298,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return;
       }
 
-      const email = (supabase.auth.getUser ? (await supabase.auth.getUser()).data.user?.email : undefined) || undefined;
-      const isOwnerEmail = (email || "").toLowerCase() === OWNER_EMAIL;
-      if (isOwnerEmail) {
-        setRole("owner");
-        return;
+      // ✅ SEGURO: Role vem do banco, não de email hardcoded
+      // O email é usado APENAS para bypass de fricção (guards/UI), nunca para autorização
+      // A role real sempre vem da tabela user_roles
+      const dbRole = (data?.role as AppRole) ?? null;
+      setRole(dbRole);
+      
+      // Log para auditoria se for owner
+      if (dbRole === 'owner') {
+        console.log('[AUTH] Owner role confirmed from database');
       }
-
-      setRole((data?.role as AppRole) ?? null);
     } catch (err) {
       console.error("Error fetching role:", err);
     }

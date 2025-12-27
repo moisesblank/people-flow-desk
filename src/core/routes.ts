@@ -683,11 +683,11 @@ export function getRouteDefinition(key: string): RouteDefinition | undefined {
 
 /**
  * Verifica se o usuário tem acesso a uma rota
- * OWNER = MASTER = PODE TUDO
+ * ✅ SEGURO: OWNER identificado por role, não email
  */
-export function canAccessRoute(key: string, userRole?: string | null, email?: string | null): boolean {
-  // Owner MASTER pode tudo
-  if (userRole === "owner" || email?.toLowerCase() === "moisesblank@gmail.com") {
+export function canAccessRoute(key: string, userRole?: string | null, _email?: string | null): boolean {
+  // Owner MASTER pode tudo (verificado por role, não email)
+  if (userRole === "owner") {
     return true;
   }
   

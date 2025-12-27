@@ -241,13 +241,9 @@ export async function writeAuditLog(params: {
 
 // ============================================
 // BUSCAR ROLE DO USUÁRIO (VIA user_roles TABLE)
+// ✅ SEGURO: Role vem do banco, não de email hardcoded
 // ============================================
-async function getUserRole(userId: string, email: string): Promise<AppRole> {
-  // Owner sempre é owner
-  if (isOwnerEmail(email)) {
-    return ROLES.OWNER;
-  }
-
+async function getUserRole(userId: string, _email: string): Promise<AppRole> {
   try {
     const { data } = await supabase
       .from("user_roles")
