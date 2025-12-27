@@ -588,7 +588,7 @@ export function validateAccess(
     return {
       allowed: false,
       reason: "OWNER_ONLY_AREA",
-      redirectTo: "/gestao/dashboard",
+      redirectTo: "/gestaofc", // ✅ MATRIZ SUPREMA v2.0.0: Corrigido de /gestao/dashboard
       area,
     };
   }

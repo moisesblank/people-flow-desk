@@ -81,8 +81,9 @@ export function useKeyboardShortcuts(
 
         switch (key) {
           case "d":
-            navigate("/dashboard");
-            toast.info("📊 Dashboard", { duration: 1500 });
+            // ✅ MATRIZ SUPREMA v2.0.0: Dashboard agora é /gestaofc
+            navigate("/gestaofc");
+            toast.info("📊 Gestão", { duration: 1500 });
             break;
           case "c":
             navigate("/calendario");
