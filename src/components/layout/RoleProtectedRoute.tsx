@@ -6,7 +6,7 @@
 
 import { ReactNode, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { Loader2, ShieldX, Lock, Globe } from "lucide-react";
+import { Loader2, ShieldX, Lock } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   useRolePermissions, 
@@ -16,7 +16,7 @@ import {
 } from "@/hooks/useRolePermissions";
 import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
 import { Button } from "@/components/ui/button";
-import { toast } from "sonner";
+// toast removido - não há mais redirect cross-domain com notificação
 
 interface RoleProtectedRouteProps {
   children: ReactNode;
@@ -27,7 +27,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const { user, isLoading: authLoading } = useAuth();
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role } = useRolePermissions();
   const location = useLocation();
-  const [isDomainRedirecting, setIsDomainRedirecting] = useState(false);
+  // isDomainRedirecting removido - não há mais redirect cross-domain
   
   // ============================================
   // ⏱️ TIMEOUT GLOBAL (LEI IV CONSTITUIÇÃO)
@@ -47,30 +47,20 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   }, [authLoading, roleLoading]);
 
   // ============================================
-  // 🔐 DOMAIN GUARD (LEI IV - CONSTITUIÇÃO v9.2b)
-  // Valida se o role pode acessar este domínio
+  // 🛡️ DOMAIN GUARD DESATIVADO (LEI SUPREMA)
+  // NÃO redirecionar entre domínios - cada domínio é independente
+  // gestao.* e pro.* coexistem sem redirect forçado
   // ============================================
+  // Apenas log, sem ação de redirect
   useEffect(() => {
-    // Só validar quando temos role carregado
     if (roleLoading || !user || !role) return;
 
     const userEmail = user.email || null;
     const domainValidation = validateDomainAccessForLogin(role, userEmail);
 
-    if (!domainValidation.permitido && domainValidation.redirecionarPara) {
-      setIsDomainRedirecting(true);
-      
-      console.log(`[DOMAIN-GUARD] Role "${role}" bloqueado no domínio ${domainValidation.dominioAtual}`);
-      
-      toast.info("Acesso em outro domínio", {
-        description: domainValidation.motivo || `Redirecionando para sua área correta.`,
-        duration: 3000
-      });
-
-      // Aguardar toast e redirecionar
-      setTimeout(() => {
-        window.location.href = domainValidation.redirecionarPara!;
-      }, 1500);
+    // Apenas log informativo - SEM REDIRECT
+    if (!domainValidation.permitido) {
+      console.log(`[DOMAIN-GUARD] Role "${role}" no domínio ${domainValidation.dominioAtual} - acesso pode ser limitado (sem redirect)`);
     }
   }, [role, roleLoading, user]);
 
@@ -80,16 +70,10 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // ============================================
   const isActuallyLoading = (authLoading || roleLoading) && !loadingTimeout;
   
-  if (isActuallyLoading || isDomainRedirecting) {
+  if (isActuallyLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
-        {isDomainRedirecting && (
-          <div className="flex items-center gap-2 text-muted-foreground animate-pulse">
-            <Globe className="h-4 w-4" />
-            <span className="text-sm">Redirecionando para sua área...</span>
-          </div>
-        )}
       </div>
     );
   }

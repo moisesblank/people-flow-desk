@@ -690,40 +690,26 @@ export function validateDomainAccessForLogin(
   }
 
   // ============================================
-  // VALIDAÇÃO gestao.moisesmedeiros.com.br
+  // 🛡️ LEI SUPREMA: NUNCA REDIRECIONAR ENTRE DOMÍNIOS
+  // Cada domínio é independente - NÃO existe domínio canônico
+  // gestao.* e pro.* coexistem sem redirect forçado
   // ============================================
+  
   if (dominioAtual === "gestao") {
     const isAllowed = GESTAO_ALLOWED_ROLES.includes(role);
-    
     if (!isAllowed) {
-      console.log(`[DOMAIN-ACCESS] Role "${role}" BLOQUEADO em gestao.* → Redirecionar para pro.*`);
-      return {
-        permitido: false,
-        redirecionarPara: "https://pro.moisesmedeiros.com.br/alunos",
-        motivo: `Seu cargo "${ROLE_LABELS[role]}" não tem acesso à área de gestão. Redirecionando para área do aluno.`,
-        dominioAtual
-      };
+      console.log(`[DOMAIN-ACCESS] Role "${role}" não é gestão, mas PERMANECE no domínio atual (sem redirect)`);
+      return { permitido: false, dominioAtual, motivo: `Acesso restrito para este cargo.` };
     }
-    
     return { permitido: true, dominioAtual };
   }
 
-  // ============================================
-  // VALIDAÇÃO pro.moisesmedeiros.com.br
-  // ============================================
   if (dominioAtual === "pro") {
     const isAllowed = PRO_ALLOWED_ROLES.includes(role);
-    
     if (!isAllowed) {
-      console.log(`[DOMAIN-ACCESS] Role "${role}" BLOQUEADO em pro.* → Redirecionar para gestao.*`);
-      return {
-        permitido: false,
-        redirecionarPara: "https://gestao.moisesmedeiros.com.br/dashboard",
-        motivo: `Seu cargo "${ROLE_LABELS[role]}" é de funcionário. Redirecionando para área de gestão.`,
-        dominioAtual
-      };
+      console.log(`[DOMAIN-ACCESS] Role "${role}" não é aluno, mas PERMANECE no domínio atual (sem redirect)`);
+      return { permitido: false, dominioAtual, motivo: `Acesso restrito para este cargo.` };
     }
-    
     return { permitido: true, dominioAtual };
   }
 
