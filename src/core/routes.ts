@@ -1,16 +1,22 @@
 // ============================================
-// 🔥 ROUTES.TS — ROTAS CENTRALIZADAS (MAPA DEFINITIVO OMEGA)
+// 🔥 ROUTES.TS — ROTAS CENTRALIZADAS (MAPA DEFINITIVO OMEGA v2)
 // Single Source of Truth para todas as rotas do sistema
 // PROJETO DA VIDA DO MESTRE MOISÉS MEDEIROS
 // ============================================
-
+// 
+// ⚠️ MIGRAÇÃO v2.0: MONO-DOMÍNIO
+// - Antigo: gestao.moisesmedeiros.com.br/gestao → DESCONTINUADO
+// - Novo: pro.moisesmedeiros.com.br/gestaofc (ROTA INTERNA SECRETA)
+// - As definições /gestao abaixo são LEGADAS para compatibilidade
+// - Rotas reais estão em src/routes/gestaofcRoutes.tsx
+//
 // ============================================
-// 📍 MAPA DE URLs DEFINITIVO (REGRA SUPREMA)
+// 📍 MAPA DE URLs DEFINITIVO v2.0 (REGRA SUPREMA)
 // ============================================
 //
 // 🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
 // 👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (PAGANTE)
-// 👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao
+// 👔 FUNCIONÁRIO: pro.moisesmedeiros.com.br/gestaofc (SECRETO - só URL direta)
 // 👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
 //
 // ============================================
