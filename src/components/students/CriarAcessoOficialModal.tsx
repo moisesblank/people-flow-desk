@@ -1,0 +1,538 @@
+// ============================================
+// 📜 PARTE 9 — UI Criação de Acesso Oficial
+// CONSTITUIÇÃO SYNAPSE Ω v10.x — PATCH-ONLY
+// ============================================
+// Campos obrigatórios: nome, email, role
+// Campos opcionais: endereço, telefone, foto_aluno, senha
+// Edge Function: c-create-official-access (PARTE 10)
+// ============================================
+
+import { useState } from "react";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { StudentRole, STUDENT_ROLE_LABELS } from "@/types/studentIdentityContract";
+
+// ============================================
+// SCHEMA DE VALIDAÇÃO (Zod)
+// ============================================
+const criarAcessoSchema = z.object({
+  // Campos obrigatórios
+  nome: z.string()
+    .min(2, "Nome deve ter pelo menos 2 caracteres")
+    .max(100, "Nome deve ter no máximo 100 caracteres")
+    .regex(/^[a-zA-ZÀ-ÿ\s'-]+$/, "Nome contém caracteres inválidos"),
+  
+  email: z.string()
+    .email("Email inválido")
+    .max(255, "Email deve ter no máximo 255 caracteres")
+    .transform(val => val.toLowerCase().trim()),
+  
+  role: z.enum(['beta', 'aluno_gratuito'], {
+    required_error: "Selecione o tipo de acesso",
+  }),
+
+  // Campos opcionais
+  telefone: z.string()
+    .optional()
+    .refine(val => !val || /^[\d\s()+-]+$/.test(val), "Telefone inválido"),
+  
+  foto_aluno: z.string()
+    .url("URL da foto inválida")
+    .optional()
+    .or(z.literal("")),
+  
+  senha: z.string()
+    .optional()
+    .refine(val => !val || val.length >= 8, "Senha deve ter pelo menos 8 caracteres"),
+
+  // Endereço (todos opcionais)
+  logradouro: z.string().max(200).optional(),
+  numero: z.string().max(20).optional(),
+  complemento: z.string().max(100).optional(),
+  bairro: z.string().max(100).optional(),
+  cidade: z.string().max(100).optional(),
+  estado: z.string().max(2).optional(),
+  cep: z.string()
+    .optional()
+    .refine(val => !val || /^\d{5}-?\d{3}$/.test(val), "CEP inválido (formato: 00000-000)"),
+});
+
+type CriarAcessoFormData = z.infer<typeof criarAcessoSchema>;
+
+interface CriarAcessoOficialModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSuccess?: () => void;
+}
+
+export function CriarAcessoOficialModal({ 
+  open, 
+  onOpenChange, 
+  onSuccess 
+}: CriarAcessoOficialModalProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showOptionalFields, setShowOptionalFields] = useState(false);
+
+  const form = useForm<CriarAcessoFormData>({
+    resolver: zodResolver(criarAcessoSchema),
+    defaultValues: {
+      nome: "",
+      email: "",
+      role: undefined,
+      telefone: "",
+      foto_aluno: "",
+      senha: "",
+      logradouro: "",
+      numero: "",
+      complemento: "",
+      bairro: "",
+      cidade: "",
+      estado: "",
+      cep: "",
+    },
+  });
+
+  const handleSubmit = async (data: CriarAcessoFormData) => {
+    setIsSubmitting(true);
+    
+    try {
+      // ⚡ PARTE 10: Chamar Edge Function c-create-official-access
+      const payload = {
+        // Campos obrigatórios
+        nome: data.nome.trim(),
+        email: data.email,
+        role: data.role,
+        
+        // Campos opcionais (só envia se preenchidos)
+        ...(data.telefone && { telefone: data.telefone.trim() }),
+        ...(data.foto_aluno && { foto_aluno: data.foto_aluno.trim() }),
+        ...(data.senha && { senha: data.senha }),
+        
+        // Endereço (só envia se algum campo preenchido)
+        ...((data.logradouro || data.numero || data.complemento || 
+             data.bairro || data.cidade || data.estado || data.cep) && {
+          endereco: {
+            ...(data.logradouro && { logradouro: data.logradouro.trim() }),
+            ...(data.numero && { numero: data.numero.trim() }),
+            ...(data.complemento && { complemento: data.complemento.trim() }),
+            ...(data.bairro && { bairro: data.bairro.trim() }),
+            ...(data.cidade && { cidade: data.cidade.trim() }),
+            ...(data.estado && { estado: data.estado.toUpperCase().trim() }),
+            ...(data.cep && { cep: data.cep.replace(/\D/g, '') }),
+          }
+        }),
+      };
+
+      const { data: response, error } = await supabase.functions.invoke(
+        'c-create-official-access',
+        { body: payload }
+      );
+
+      if (error) throw error;
+
+      if (!response?.success) {
+        throw new Error(response?.error || 'Erro ao criar acesso');
+      }
+
+      // Sucesso
+      toast.success("✅ Acesso oficial criado!", {
+        description: data.senha 
+          ? `${data.nome} pode fazer login imediatamente.`
+          : `Email de definição de senha enviado para ${data.email}`,
+      });
+
+      // Reset form e fecha modal
+      form.reset();
+      setShowOptionalFields(false);
+      onOpenChange(false);
+      
+      // Callback de sucesso (para refetch/invalidate)
+      onSuccess?.();
+
+    } catch (error: any) {
+      console.error("Erro ao criar acesso:", error);
+      toast.error("Erro ao criar acesso", {
+        description: error.message || "Tente novamente",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleClose = () => {
+    if (!isSubmitting) {
+      form.reset();
+      setShowOptionalFields(false);
+      onOpenChange(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={handleClose}>
+      <DialogContent className="sm:max-w-lg border-emerald-500/30 max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-emerald-400">
+            <UserPlus className="h-5 w-5" />
+            Criar Acesso Oficial
+          </DialogTitle>
+          <DialogDescription>
+            Crie um novo acesso para aluno. Campos com * são obrigatórios.
+          </DialogDescription>
+        </DialogHeader>
+
+        <Form {...form}>
+          <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4 pt-2">
+            {/* ============================================ */}
+            {/* CAMPOS OBRIGATÓRIOS */}
+            {/* ============================================ */}
+            
+            {/* Nome */}
+            <FormField
+              control={form.control}
+              name="nome"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <User className="h-4 w-4" />
+                    Nome Completo *
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="João da Silva"
+                      className="border-emerald-500/30 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Email */}
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <Mail className="h-4 w-4" />
+                    Email *
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      type="email"
+                      placeholder="aluno@exemplo.com"
+                      className="border-emerald-500/30 focus:border-emerald-500"
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* Role */}
+            <FormField
+              control={form.control}
+              name="role"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <UserPlus className="h-4 w-4" />
+                    Tipo de Acesso *
+                  </FormLabel>
+                  <Select 
+                    onValueChange={field.onChange} 
+                    defaultValue={field.value}
+                    disabled={isSubmitting}
+                  >
+                    <FormControl>
+                      <SelectTrigger className="border-emerald-500/30">
+                        <SelectValue placeholder="Selecione o tipo de acesso" />
+                      </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      <SelectItem value="beta">
+                        {STUDENT_ROLE_LABELS.beta}
+                      </SelectItem>
+                      <SelectItem value="aluno_gratuito">
+                        {STUDENT_ROLE_LABELS.aluno_gratuito}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <FormDescription className="text-xs">
+                    Beta = acesso completo | Gratuito = acesso limitado
+                  </FormDescription>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ============================================ */}
+            {/* CAMPOS OPCIONAIS (Collapsible) */}
+            {/* ============================================ */}
+            <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
+              <CollapsibleTrigger asChild>
+                <Button 
+                  type="button" 
+                  variant="outline" 
+                  size="sm"
+                  className="w-full border-dashed border-muted-foreground/30"
+                >
+                  {showOptionalFields ? "Ocultar campos opcionais" : "Mostrar campos opcionais"}
+                </Button>
+              </CollapsibleTrigger>
+              
+              <CollapsibleContent className="space-y-4 pt-4">
+                {/* Telefone */}
+                <FormField
+                  control={form.control}
+                  name="telefone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Phone className="h-4 w-4" />
+                        Telefone
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="(11) 99999-9999"
+                          className="border-muted-foreground/30"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Foto URL */}
+                <FormField
+                  control={form.control}
+                  name="foto_aluno"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Image className="h-4 w-4" />
+                        URL da Foto
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="https://exemplo.com/foto.jpg"
+                          className="border-muted-foreground/30"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Senha */}
+                <FormField
+                  control={form.control}
+                  name="senha"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Lock className="h-4 w-4" />
+                        Senha (opcional)
+                      </FormLabel>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          type="password"
+                          placeholder="Deixe vazio para enviar email de definição"
+                          className="border-muted-foreground/30"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormDescription className="text-xs">
+                        Se vazio, um email será enviado para o aluno definir a senha.
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Endereço - Título */}
+                <div className="flex items-center gap-2 pt-2">
+                  <MapPin className="h-4 w-4 text-muted-foreground" />
+                  <Label className="text-sm text-muted-foreground">Endereço</Label>
+                </div>
+
+                {/* Logradouro + Número */}
+                <div className="grid grid-cols-3 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="logradouro"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Rua, Avenida..."
+                            className="border-muted-foreground/30"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="numero"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Nº"
+                            className="border-muted-foreground/30"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Complemento + Bairro */}
+                <div className="grid grid-cols-2 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="complemento"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Complemento"
+                            className="border-muted-foreground/30"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="bairro"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Bairro"
+                            className="border-muted-foreground/30"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+
+                {/* Cidade + Estado + CEP */}
+                <div className="grid grid-cols-4 gap-2">
+                  <FormField
+                    control={form.control}
+                    name="cidade"
+                    render={({ field }) => (
+                      <FormItem className="col-span-2">
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="Cidade"
+                            className="border-muted-foreground/30"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="estado"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="UF"
+                            maxLength={2}
+                            className="border-muted-foreground/30 uppercase"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name="cep"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormControl>
+                          <Input 
+                            {...field} 
+                            placeholder="CEP"
+                            className="border-muted-foreground/30"
+                            disabled={isSubmitting}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                </div>
+              </CollapsibleContent>
+            </Collapsible>
+
+            {/* ============================================ */}
+            {/* BOTÃO SUBMIT */}
+            {/* ============================================ */}
+            <Button 
+              type="submit" 
+              className="w-full bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Criando acesso...
+                </>
+              ) : (
+                <>
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Criar Acesso Oficial
+                </>
+              )}
+            </Button>
+          </form>
+        </Form>
+      </DialogContent>
+    </Dialog>
+  );
+}

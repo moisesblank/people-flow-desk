@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown, ArrowLeft } from "lucide-react";
+import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown, ArrowLeft, UserPlus } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { FuturisticCard } from "@/components/ui/futuristic-card";
@@ -26,6 +26,7 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { VirtualTable } from "@/components/performance/VirtualTable";
+import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
 import { 
   AlunosUniverseSelector, 
   AlunoUniverseType, 
@@ -91,6 +92,9 @@ export default function Alunos() {
   const [editingItem, setEditingItem] = useState<Student | null>(null);
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
   const [activeTab, setActiveTab] = useState("alunos");
+  
+  // ⚡ PARTE 9: Modal de Criar Acesso Oficial
+  const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
 
   // Stats
   const [wpStats, setWpStats] = useState({
@@ -460,9 +464,18 @@ export default function Alunos() {
                   <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
                   Sync WordPress
                 </Button>
+                {/* ⚡ PARTE 9: Botão Criar Acesso Oficial */}
+                <Button 
+                  onClick={() => setIsCriarAcessoModalOpen(true)}
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
+                >
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  Criar Acesso Oficial
+                </Button>
                 <Button 
                   onClick={() => openModal()}
-                  className="bg-gradient-to-r from-blue-500 to-cyan-600 hover:from-blue-400 hover:to-cyan-500 text-white shadow-lg shadow-blue-500/25"
+                  variant="outline"
+                  className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
                 >
                   <Plus className="h-4 w-4 mr-2" />
                   Novo Aluno
@@ -753,6 +766,13 @@ export default function Alunos() {
               </div>
             </DialogContent>
           </Dialog>
+
+          {/* ⚡ PARTE 9: Modal Criar Acesso Oficial */}
+          <CriarAcessoOficialModal 
+            open={isCriarAcessoModalOpen}
+            onOpenChange={setIsCriarAcessoModalOpen}
+            onSuccess={fetchData}
+          />
         </div>
       </div>
     </div>
