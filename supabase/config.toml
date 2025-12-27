@@ -118,7 +118,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-notification-email]
-verify_jwt = true
+verify_jwt = false
 
 [functions.notify-owner]
 verify_jwt = true
