@@ -197,40 +197,37 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, [user]);
 
   // ============================================
-  // AUTH STATE
+  // AUTH STATE - ESTÁVEL
   // ============================================
-  // ============================================
-  // ✅ P0 FIX: AUTH STATE com proteções anti-loop
-  // - Cleanup obrigatório
-  // - setState otimizado (só atualiza se mudou)
-  // - Array de dependências vazio
-  // ============================================
+  // Usar refs para evitar stale closures no useEffect com []
+  const startHeartbeatRef = useRef(startHeartbeat);
+  const stopHeartbeatRef = useRef(stopHeartbeat);
+  
+  // Manter refs atualizadas
   useEffect(() => {
+    startHeartbeatRef.current = startHeartbeat;
+    stopHeartbeatRef.current = stopHeartbeat;
+  }, [startHeartbeat, stopHeartbeat]);
+
+  useEffect(() => {
+    console.log('[AUTH] useEffect de auth state iniciado');
+    
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, newSession) => {
-        // ✅ DEBUG P0: Não logar tokens; apenas presença de sessão/usuário
         console.log('[AUTH][STATE] event:', event, {
           hasSession: Boolean(newSession),
           hasUser: Boolean(newSession?.user),
-          path: typeof window !== 'undefined' ? window.location.pathname : undefined,
-          is2FAPending: typeof window !== 'undefined'
-            ? sessionStorage.getItem('matriz_2fa_pending') === '1'
-            : undefined,
         });
 
-        // ✅ P0 FIX: Evitar re-render desnecessário - só atualiza se realmente mudou
+        // Atualizar estado de forma otimizada
         setSession(prev => {
-          if (prev?.access_token === newSession?.access_token) {
-            return prev;
-          }
+          if (prev?.access_token === newSession?.access_token) return prev;
           return newSession;
         });
         
         setUser(prev => {
           const newUser = newSession?.user ?? null;
-          if (prev?.id === newUser?.id) {
-            return prev;
-          }
+          if (prev?.id === newUser?.id) return prev;
           return newUser;
         });
 
@@ -239,7 +236,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           setRole("owner");
         } else if (!newSession?.user) {
           setRole(null);
-          stopHeartbeat();
+          stopHeartbeatRef.current();
         }
 
         if (newSession?.user) {
@@ -248,7 +245,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           }, 0);
           
           // Iniciar heartbeat quando logado
-          startHeartbeat();
+          startHeartbeatRef.current();
 
           // 🛡️ LEI VI: Validar/registrar dispositivo em QUALQUER login (incluindo OAuth)
           // Isso cobre logins via Google, Magic Link, etc.
@@ -316,17 +313,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (initialSession?.user) {
         fetchUserRole(initialSession.user.id);
-        startHeartbeat();
+        startHeartbeatRef.current();
       }
       setIsLoading(false);
     });
 
-    // ✅ P0 FIX: Cleanup obrigatório
     return () => {
       subscription.unsubscribe();
-      stopHeartbeat();
+      stopHeartbeatRef.current();
     };
-  }, []); // ✅ P0 FIX: Array vazio - executa apenas uma vez
+  }, []);
 
   // ============================================
   // ✅ ÚNICO DONO DO REDIRECT GLOBAL
