@@ -1,15 +1,17 @@
 // ============================================
-// 📜 PARTE 10 — Edge Function: c-create-official-access
+// 📜 PARTE 10 + 11 — Edge Function: c-create-official-access
 // CONSTITUIÇÃO SYNAPSE Ω v10.x — PATCH-ONLY
 // ============================================
 // Cria acesso oficial para alunos (beta ou aluno_gratuito)
 // Campos obrigatórios: email, nome, role
 // Campos opcionais: endereco, telefone, foto_aluno, senha
 // Segurança: caller deve ter role owner/admin/suporte via tabela
+// Email: Envia boas-vindas via Resend (NUNCA envia senha em texto)
 // ============================================
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
 import { serve } from 'https://deno.land/std@0.168.0/http/server.ts';
+import { Resend } from 'https://esm.sh/resend@2.0.0';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -44,7 +46,11 @@ interface CreateAccessResponse {
   success: boolean;
   user_id?: string;
   role?: string;
-  email_status?: 'sent' | 'queued' | 'failed' | 'password_set';
+  email_status?: 'sent' | 'queued' | 'failed' | 'password_set' | 'welcome_sent';
+  email_details?: {
+    welcome_email: boolean;
+    password_setup_email: boolean;
+  };
   error?: string;
 }
 
@@ -52,6 +58,14 @@ interface CreateAccessResponse {
 // ROLES PERMITIDAS PARA CHAMAR ESTA FUNÇÃO
 // ============================================
 const ALLOWED_CALLER_ROLES = ['owner', 'admin', 'suporte'];
+
+// ============================================
+// ROLE LABELS
+// ============================================
+const ROLE_LABELS: Record<string, string> = {
+  beta: 'Aluno Beta (Premium)',
+  aluno_gratuito: 'Aluno Gratuito',
+};
 
 // ============================================
 // VALIDAÇÃO DE INPUT
@@ -102,6 +116,160 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
 }
 
 // ============================================
+// ENVIAR EMAIL DE BOAS-VINDAS (Resend)
+// ⚠️ NUNCA envia senha em texto
+// ============================================
+async function sendWelcomeEmail(
+  resend: Resend,
+  fromEmail: string,
+  toEmail: string,
+  nome: string,
+  role: string,
+  passwordSetupLink?: string,
+): Promise<{ success: boolean; error?: string }> {
+  const roleLabel = ROLE_LABELS[role] || role;
+  const platformUrl = 'https://pro.moisesmedeiros.com.br';
+  
+  // Conteúdo do email baseado em se precisa definir senha ou não
+  const needsPasswordSetup = !!passwordSetupLink;
+  
+  const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bem-vindo(a) à Plataforma</title>
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <!-- Header -->
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); padding: 40px 40px 30px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">
+                🎉 Bem-vindo(a), ${nome}!
+              </h1>
+              <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0; font-size: 16px;">
+                Seu acesso foi criado com sucesso
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Content -->
+          <tr>
+            <td style="padding: 40px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Olá, <strong>${nome}</strong>!
+              </p>
+              
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Seu acesso à plataforma foi criado pela equipe de gestão. Você agora possui acesso como:
+              </p>
+              
+              <!-- Role Badge -->
+              <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin: 0 0 24px; text-align: center;">
+                <span style="color: #166534; font-size: 18px; font-weight: 600;">
+                  ✅ ${roleLabel}
+                </span>
+              </div>
+              
+              ${needsPasswordSetup ? `
+              <!-- Password Setup Section -->
+              <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 0 0 24px;">
+                <h3 style="color: #92400e; margin: 0 0 12px; font-size: 16px;">
+                  🔐 Configure sua senha
+                </h3>
+                <p style="color: #78350f; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
+                  Para acessar a plataforma, você precisa definir uma senha. Clique no botão abaixo:
+                </p>
+                <a href="${passwordSetupLink}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  Definir Minha Senha
+                </a>
+                <p style="color: #92400e; font-size: 12px; margin: 16px 0 0;">
+                  ⚠️ Este link expira em 24 horas. Se expirar, solicite um novo na página de login.
+                </p>
+              </div>
+              ` : `
+              <!-- Already Has Password -->
+              <div style="background-color: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 20px; margin: 0 0 24px;">
+                <h3 style="color: #065f46; margin: 0 0 12px; font-size: 16px;">
+                  ✅ Acesso pronto!
+                </h3>
+                <p style="color: #047857; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
+                  Sua conta já está configurada e você pode fazer login agora mesmo.
+                </p>
+                <a href="${platformUrl}/auth" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
+                  Acessar Plataforma
+                </a>
+              </div>
+              `}
+              
+              <!-- Instructions -->
+              <h3 style="color: #111827; font-size: 18px; margin: 24px 0 12px;">
+                📚 Próximos passos:
+              </h3>
+              <ol style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                ${needsPasswordSetup ? '<li>Clique no botão acima para definir sua senha</li>' : ''}
+                <li>Acesse <a href="${platformUrl}/auth" style="color: #0ea5e9;">a plataforma</a> e faça login com seu email</li>
+                <li>Explore o conteúdo disponível para você</li>
+                <li>Em caso de dúvidas, entre em contato com nosso suporte</li>
+              </ol>
+              
+              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 24px 0 0;">
+                Este email foi enviado automaticamente. Não responda diretamente.
+              </p>
+            </td>
+          </tr>
+          
+          <!-- Footer -->
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                © ${new Date().getFullYear()} PRO Moisés Medeiros. Todos os direitos reservados.
+              </p>
+              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0;">
+                <a href="${platformUrl}" style="color: #6b7280;">pro.moisesmedeiros.com.br</a>
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+  `;
+
+  try {
+    console.log('[c-create-official-access] Sending welcome email to:', toEmail);
+    
+    const { data, error } = await resend.emails.send({
+      from: fromEmail,
+      to: [toEmail],
+      subject: needsPasswordSetup 
+        ? `🎉 Bem-vindo(a), ${nome}! Configure seu acesso` 
+        : `🎉 Bem-vindo(a), ${nome}! Seu acesso está pronto`,
+      html: htmlContent,
+    });
+
+    if (error) {
+      console.error('[c-create-official-access] Resend error:', error);
+      return { success: false, error: error.message };
+    }
+
+    console.log('[c-create-official-access] Welcome email sent successfully. ID:', data?.id);
+    return { success: true };
+    
+  } catch (err) {
+    console.error('[c-create-official-access] Email send exception:', err);
+    return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
+  }
+}
+
+// ============================================
 // MAIN HANDLER
 // ============================================
 serve(async (req) => {
@@ -111,15 +279,48 @@ serve(async (req) => {
   }
 
   const startTime = Date.now();
-  console.log('[c-create-official-access] Request started');
+  console.log('[c-create-official-access] ========== REQUEST START ==========');
 
   try {
+    // ============================================
+    // 0. VERIFICAR SECRETS OBRIGATÓRIOS
+    // ============================================
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const resendFrom = Deno.env.get('RESEND_FROM');
+    
+    if (!resendApiKey) {
+      console.error('[c-create-official-access] ❌ RESEND_API_KEY não configurado');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Configuração de email ausente. Solicite INTERNAL_SECRET ao owner para configurar SMTP/Resend.',
+          requires_config: true,
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    if (!resendFrom) {
+      console.error('[c-create-official-access] ❌ RESEND_FROM não configurado');
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: 'Email remetente não configurado. Configure RESEND_FROM nos secrets.',
+          requires_config: true,
+        }),
+        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
+    console.log('[c-create-official-access] ✅ Email config OK. From:', resendFrom);
+    const resend = new Resend(resendApiKey);
+
     // ============================================
     // 1. AUTENTICAÇÃO DO CALLER
     // ============================================
     const authHeader = req.headers.get('authorization');
     if (!authHeader) {
-      console.warn('[c-create-official-access] Missing authorization header');
+      console.warn('[c-create-official-access] ❌ Missing authorization header');
       return new Response(
         JSON.stringify({ success: false, error: 'Não autorizado' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -144,14 +345,14 @@ serve(async (req) => {
     // Verificar usuário autenticado
     const { data: { user: caller }, error: authError } = await supabaseUser.auth.getUser();
     if (authError || !caller) {
-      console.warn('[c-create-official-access] Auth error:', authError?.message);
+      console.warn('[c-create-official-access] ❌ Auth error:', authError?.message);
       return new Response(
         JSON.stringify({ success: false, error: 'Token inválido' }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[c-create-official-access] Caller authenticated:', caller.email);
+    console.log('[c-create-official-access] ✅ Caller authenticated:', caller.email);
 
     // ============================================
     // 2. VERIFICAR ROLE DO CALLER VIA TABELA
@@ -166,7 +367,7 @@ serve(async (req) => {
       .maybeSingle();
 
     if (roleError) {
-      console.error('[c-create-official-access] Role check error:', roleError);
+      console.error('[c-create-official-access] ❌ Role check error:', roleError);
       return new Response(
         JSON.stringify({ success: false, error: 'Erro ao verificar permissões' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -174,14 +375,14 @@ serve(async (req) => {
     }
 
     if (!callerRoleData) {
-      console.warn('[c-create-official-access] Caller lacks permission. User:', caller.email);
+      console.warn('[c-create-official-access] ❌ Caller lacks permission. User:', caller.email);
       return new Response(
         JSON.stringify({ success: false, error: 'Sem permissão para criar acessos. Requer role: owner, admin ou suporte' }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[c-create-official-access] Caller role:', callerRoleData.role);
+    console.log('[c-create-official-access] ✅ Caller role:', callerRoleData.role);
 
     // ============================================
     // 3. VALIDAR INPUT
@@ -190,7 +391,7 @@ serve(async (req) => {
     const validation = validateInput(body);
 
     if (!validation.valid || !validation.data) {
-      console.warn('[c-create-official-access] Validation failed:', validation.error);
+      console.warn('[c-create-official-access] ❌ Validation failed:', validation.error);
       return new Response(
         JSON.stringify({ success: false, error: validation.error }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -198,7 +399,7 @@ serve(async (req) => {
     }
 
     const payload = validation.data;
-    console.log('[c-create-official-access] Creating access for:', payload.email, 'Role:', payload.role);
+    console.log('[c-create-official-access] 📝 Creating access for:', payload.email, 'Role:', payload.role);
 
     // ============================================
     // 4. VERIFICAR SE USUÁRIO JÁ EXISTE
@@ -206,13 +407,7 @@ serve(async (req) => {
     let userId: string | null = null;
     let userAlreadyExists = false;
 
-    // Buscar por email no auth
-    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers({
-      page: 1,
-      perPage: 1,
-    });
-
-    // Buscar especificamente pelo email
+    // Buscar especificamente pelo email em profiles
     const { data: userByEmail } = await supabaseAdmin
       .from('profiles')
       .select('id, email')
@@ -222,18 +417,23 @@ serve(async (req) => {
     if (userByEmail) {
       userId = userByEmail.id;
       userAlreadyExists = true;
-      console.log('[c-create-official-access] User already exists:', userId);
+      console.log('[c-create-official-access] ℹ️ User already exists:', userId);
     }
 
     // ============================================
     // 5. CRIAR OU OBTER USUÁRIO
     // ============================================
-    let emailStatus: 'sent' | 'queued' | 'failed' | 'password_set' = 'failed';
+    let emailStatus: 'sent' | 'queued' | 'failed' | 'password_set' | 'welcome_sent' = 'failed';
+    let passwordSetupLink: string | undefined;
+    let welcomeEmailSent = false;
+    let passwordEmailSent = false;
 
     if (!userAlreadyExists) {
       // Criar novo usuário
       if (payload.senha) {
-        // Criar com senha fornecida
+        // Criar com senha fornecida (⚠️ NUNCA logamos ou enviamos a senha por email)
+        console.log('[c-create-official-access] 🔐 Creating user with provided password (NOT logged/emailed)');
+        
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email: payload.email,
           password: payload.senha,
@@ -246,7 +446,7 @@ serve(async (req) => {
         });
 
         if (createError) {
-          console.error('[c-create-official-access] Error creating user:', createError);
+          console.error('[c-create-official-access] ❌ Error creating user:', createError);
           return new Response(
             JSON.stringify({ success: false, error: `Erro ao criar usuário: ${createError.message}` }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -255,13 +455,16 @@ serve(async (req) => {
 
         userId = newUser.user.id;
         emailStatus = 'password_set';
-        console.log('[c-create-official-access] User created with password:', userId);
+        passwordEmailSent = false; // Não precisou enviar email de senha
+        console.log('[c-create-official-access] ✅ User created with password:', userId);
 
       } else {
-        // Criar sem senha - enviar magic link / recovery
+        // Criar sem senha - gerar link de recuperação
+        console.log('[c-create-official-access] 📧 Creating user WITHOUT password (will send setup link)');
+        
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email: payload.email,
-          email_confirm: false, // Não confirma ainda
+          email_confirm: true, // Confirma email automaticamente
           user_metadata: {
             nome: payload.nome,
             created_by: caller.email,
@@ -270,7 +473,7 @@ serve(async (req) => {
         });
 
         if (createError) {
-          console.error('[c-create-official-access] Error creating user:', createError);
+          console.error('[c-create-official-access] ❌ Error creating user:', createError);
           return new Response(
             JSON.stringify({ success: false, error: `Erro ao criar usuário: ${createError.message}` }),
             { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -279,32 +482,34 @@ serve(async (req) => {
 
         userId = newUser.user.id;
 
-        // Enviar email de recuperação/definição de senha
-        const { error: recoveryError } = await supabaseAdmin.auth.admin.generateLink({
+        // Gerar link de recuperação/definição de senha
+        const { data: linkData, error: linkError } = await supabaseAdmin.auth.admin.generateLink({
           type: 'recovery',
           email: payload.email,
           options: {
-            redirectTo: `${supabaseUrl.replace('.supabase.co', '.lovable.app')}/auth?action=set-password`,
+            redirectTo: 'https://pro.moisesmedeiros.com.br/auth?action=set-password',
           },
         });
 
-        if (recoveryError) {
-          console.warn('[c-create-official-access] Recovery link error:', recoveryError.message);
-          emailStatus = 'failed';
-        } else {
-          emailStatus = 'sent';
+        if (linkError) {
+          console.warn('[c-create-official-access] ⚠️ Recovery link error:', linkError.message);
+        } else if (linkData?.properties?.action_link) {
+          passwordSetupLink = linkData.properties.action_link;
+          passwordEmailSent = true;
+          console.log('[c-create-official-access] ✅ Password setup link generated');
         }
 
-        console.log('[c-create-official-access] User created, recovery sent:', userId, 'Status:', emailStatus);
+        emailStatus = 'queued';
+        console.log('[c-create-official-access] ✅ User created, link generated:', userId);
       }
     } else {
       // Usuário já existe
       emailStatus = 'password_set'; // Assume que já tem senha
-      console.log('[c-create-official-access] Using existing user:', userId);
+      console.log('[c-create-official-access] ℹ️ Using existing user:', userId);
     }
 
     if (!userId) {
-      console.error('[c-create-official-access] No user_id after creation');
+      console.error('[c-create-official-access] ❌ No user_id after creation');
       return new Response(
         JSON.stringify({ success: false, error: 'Erro interno: user_id não obtido' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -334,10 +539,10 @@ serve(async (req) => {
       .upsert(profileData, { onConflict: 'id' });
 
     if (profileError) {
-      console.error('[c-create-official-access] Profile upsert error:', profileError);
+      console.error('[c-create-official-access] ⚠️ Profile upsert error:', profileError);
       // Não falha, apenas loga (profile pode já existir com trigger)
     } else {
-      console.log('[c-create-official-access] Profile upserted');
+      console.log('[c-create-official-access] ✅ Profile upserted');
     }
 
     // ============================================
@@ -394,10 +599,10 @@ serve(async (req) => {
       });
 
     if (alunoError) {
-      console.error('[c-create-official-access] Aluno upsert error:', alunoError);
+      console.error('[c-create-official-access] ⚠️ Aluno upsert error:', alunoError);
       // Continua, não é crítico
     } else {
-      console.log('[c-create-official-access] Aluno upserted');
+      console.log('[c-create-official-access] ✅ Aluno upserted');
     }
 
     // ============================================
@@ -415,17 +620,41 @@ serve(async (req) => {
       });
 
     if (roleUpsertError) {
-      console.error('[c-create-official-access] Role upsert error:', roleUpsertError);
+      console.error('[c-create-official-access] ❌ Role upsert error:', roleUpsertError);
       return new Response(
         JSON.stringify({ success: false, error: `Erro ao atribuir role: ${roleUpsertError.message}` }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    console.log('[c-create-official-access] Role assigned:', payload.role);
+    console.log('[c-create-official-access] ✅ Role assigned:', payload.role);
 
     // ============================================
-    // 9. LOG DE AUDITORIA
+    // 9. ENVIAR EMAIL DE BOAS-VINDAS (OBRIGATÓRIO)
+    // ⚠️ NUNCA envia senha em texto
+    // ============================================
+    console.log('[c-create-official-access] 📧 Sending welcome email...');
+    
+    const emailResult = await sendWelcomeEmail(
+      resend,
+      resendFrom,
+      payload.email,
+      payload.nome,
+      payload.role,
+      passwordSetupLink, // Só inclui se precisar configurar senha
+    );
+
+    if (emailResult.success) {
+      welcomeEmailSent = true;
+      emailStatus = 'welcome_sent';
+      console.log('[c-create-official-access] ✅ Welcome email sent successfully');
+    } else {
+      console.error('[c-create-official-access] ❌ Welcome email failed:', emailResult.error);
+      emailStatus = 'failed';
+    }
+
+    // ============================================
+    // 10. LOG DE AUDITORIA
     // ============================================
     await supabaseAdmin
       .from('audit_logs')
@@ -439,6 +668,9 @@ serve(async (req) => {
           target_role: payload.role,
           created_by: caller.email,
           caller_role: callerRoleData.role,
+          user_already_existed: userAlreadyExists,
+          welcome_email_sent: welcomeEmailSent,
+          password_setup_required: !payload.senha,
         },
         metadata: {
           function: 'c-create-official-access',
@@ -447,16 +679,22 @@ serve(async (req) => {
       });
 
     // ============================================
-    // 10. RESPOSTA DE SUCESSO
+    // 11. RESPOSTA DE SUCESSO
     // ============================================
     const response: CreateAccessResponse = {
       success: true,
       user_id: userId,
       role: payload.role,
       email_status: emailStatus,
+      email_details: {
+        welcome_email: welcomeEmailSent,
+        password_setup_email: passwordEmailSent,
+      },
     };
 
-    console.log('[c-create-official-access] Success:', JSON.stringify(response));
+    console.log('[c-create-official-access] ========== SUCCESS ==========');
+    console.log('[c-create-official-access] Response:', JSON.stringify(response));
+    console.log('[c-create-official-access] Duration:', Date.now() - startTime, 'ms');
 
     return new Response(
       JSON.stringify(response),
@@ -467,7 +705,7 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('[c-create-official-access] Unexpected error:', error);
+    console.error('[c-create-official-access] ❌ Unexpected error:', error);
     return new Response(
       JSON.stringify({ 
         success: false, 
