@@ -451,8 +451,13 @@ export default function RHFuncionarios() {
           }
         }
 
+        // 🎯 SIMPLIFICADO: Criar funcionário = Enviar convite automaticamente
+        if (newEmp) {
+          await handleSendInvite(newEmp.id);
+        }
+
         toast.success("Funcionário cadastrado!", {
-          description: `${formData.nome} foi adicionado à equipe.`,
+          description: `${formData.nome} foi adicionado e receberá acesso ao sistema.`,
         });
       }
 
@@ -501,37 +506,39 @@ export default function RHFuncionarios() {
     }
   };
 
-  const handleSendInvite = async () => {
-    if (!formData.email || !formData.senha) {
-      toast.error("Preencha email e senha para enviar convite");
+  const handleSendInvite = async (employeeId?: number) => {
+    if (!formData.email) {
+      toast.error("Preencha o email do funcionário");
       return;
     }
 
-    setIsSaving(true);
     try {
-      // Corrigido: campos devem ser nome/senha (não name/password) conforme edge function
+      // Senha gerada automaticamente se não fornecida
+      const senhaGerada = formData.senha || `${formData.nome.split(' ')[0].toLowerCase()}@${Math.random().toString(36).slice(-6)}`;
+      
       const { data, error } = await supabase.functions.invoke("invite-employee", {
         body: {
           email: formData.email,
           nome: formData.nome,
-          senha: formData.senha,
+          senha: senhaGerada,
           funcao: formData.funcao,
-          employee_id: editingEmployee?.id || undefined,
+          employee_id: employeeId || editingEmployee?.id || undefined,
         },
       });
 
       if (error) throw error;
 
       toast.success("Convite enviado!", {
-        description: `Um email foi enviado para ${formData.email}`,
+        description: `Acesso criado para ${formData.email}`,
       });
+      
+      return true;
     } catch (error: any) {
       console.error("Erro ao enviar convite:", error);
-      toast.error("Erro ao enviar convite", {
+      toast.error("Erro ao criar acesso", {
         description: error.message,
       });
-    } finally {
-      setIsSaving(false);
+      return false;
     }
   };
 
@@ -1354,40 +1361,17 @@ export default function RHFuncionarios() {
                   />
                 </div>
 
-                {/* Separador - Acesso ao Sistema */}
+                {/* Info - Acesso ao Sistema */}
                 <div className="md:col-span-2">
                   <Separator className="my-4" />
-                  <p className="text-sm font-medium mb-4 flex items-center gap-2">
-                    <Lock className="h-4 w-4" />
-                    Acesso ao Sistema (opcional)
-                  </p>
-                </div>
-
-                {/* Senha */}
-                <div className="md:col-span-2">
-                  <Label htmlFor="senha">Senha de Acesso</Label>
-                  <div className="flex gap-2">
-                    <Input
-                      id="senha"
-                      type="password"
-                      value={formData.senha}
-                      onChange={(e) => setFormData({ ...formData, senha: e.target.value })}
-                      placeholder="Senha para login no sistema"
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      variant="outline"
-                      onClick={handleSendInvite}
-                      disabled={isSaving || !formData.email || !formData.senha}
-                    >
-                      <Send className="h-4 w-4 mr-2" />
-                      Enviar Convite
-                    </Button>
+                  <div className="flex items-center gap-2 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                    <Send className="h-4 w-4 text-primary" />
+                    <p className="text-sm text-muted-foreground">
+                      {editingEmployee 
+                        ? "Clique em 'Atualizar' para salvar alterações."
+                        : "Ao cadastrar, o funcionário receberá automaticamente acesso ao sistema por email."}
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Preencha para criar acesso ao sistema e enviar convite por email
-                  </p>
                 </div>
               </div>
             </ResizableDialogBody>
