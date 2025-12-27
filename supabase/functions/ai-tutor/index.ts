@@ -2,10 +2,16 @@
 // MOISÉS MEDEIROS v11.0 - AI TUTOR SUPREMO
 // Tutor Virtual de ELITE - Química para Medicina
 // LEI VI COMPLIANCE: CORS Allowlist
+// 🛡️ PATCH-001: Rate limit adicionado (P0-001)
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { getCorsHeaders, handleCorsOptions, isOriginAllowed, corsBlockedResponse } from "../_shared/corsConfig.ts";
+
+// Rate limit config: 30 requests por minuto por usuário
+const RATE_LIMIT = 30;
+const RATE_WINDOW_SECONDS = 60;
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -20,6 +26,108 @@ serve(async (req) => {
   const corsHeaders = getCorsHeaders(req);
 
   try {
+    // 🛡️ PATCH-001: Rate limit OBRIGATÓRIO para IA
+    const authHeader = req.headers.get('authorization');
+    if (!authHeader) {
+      return new Response(JSON.stringify({ error: 'Não autorizado' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseAnonKey = Deno.env.get('SUPABASE_ANON_KEY')!;
+    const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    
+    // Validar JWT e extrair userId
+    const authClient = createClient(supabaseUrl, supabaseAnonKey, {
+      global: { headers: { Authorization: authHeader } }
+    });
+    
+    const { data: { user }, error: authError } = await authClient.auth.getUser();
+    
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: 'Token inválido' }), { 
+        status: 401, 
+        headers: { ...corsHeaders, "Content-Type": "application/json" }
+      });
+    }
+    
+    // Rate limit persistente via DB (tabela api_rate_limits)
+    const adminClient = createClient(supabaseUrl, supabaseServiceKey);
+    const now = new Date();
+    const windowStart = new Date(now.getTime() - (RATE_WINDOW_SECONDS * 1000));
+    
+    // UPSERT atômico para rate limit
+    const { data: rlData, error: rlError } = await adminClient
+      .from('api_rate_limits')
+      .upsert({
+        client_id: user.id,
+        endpoint: 'ai-tutor',
+        request_count: 1,
+        window_start: now.toISOString(),
+        last_request_at: now.toISOString()
+      }, {
+        onConflict: 'client_id,endpoint',
+        ignoreDuplicates: false
+      })
+      .select('request_count, window_start')
+      .single();
+    
+    // Se não conseguiu fazer upsert, tentar incrementar
+    if (rlError) {
+      const { data: existingData } = await adminClient
+        .from('api_rate_limits')
+        .select('request_count, window_start')
+        .eq('client_id', user.id)
+        .eq('endpoint', 'ai-tutor')
+        .single();
+      
+      if (existingData) {
+        const windowTime = new Date(existingData.window_start);
+        if (windowTime > windowStart) {
+          // Dentro da janela, incrementar
+          const newCount = existingData.request_count + 1;
+          await adminClient
+            .from('api_rate_limits')
+            .update({ 
+              request_count: newCount, 
+              last_request_at: now.toISOString() 
+            })
+            .eq('client_id', user.id)
+            .eq('endpoint', 'ai-tutor');
+          
+          if (newCount > RATE_LIMIT) {
+            console.warn(`[ai-tutor] Rate limit exceeded for user: ${user.id} (${newCount}/${RATE_LIMIT})`);
+            return new Response(JSON.stringify({ 
+              error: 'Limite de requisições excedido. Aguarde 1 minuto.',
+              retryAfter: RATE_WINDOW_SECONDS
+            }), { 
+              status: 429, 
+              headers: { 
+                ...corsHeaders, 
+                "Content-Type": "application/json",
+                "Retry-After": String(RATE_WINDOW_SECONDS)
+              }
+            });
+          }
+        } else {
+          // Janela expirada, resetar
+          await adminClient
+            .from('api_rate_limits')
+            .update({ 
+              request_count: 1, 
+              window_start: now.toISOString(),
+              last_request_at: now.toISOString() 
+            })
+            .eq('client_id', user.id)
+            .eq('endpoint', 'ai-tutor');
+        }
+      }
+    }
+    
+    console.log(`[ai-tutor] ✅ Request autorizado para user: ${user.id}`);
+
     const { messages, lessonContext, mode, studentLevel } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
