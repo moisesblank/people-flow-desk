@@ -1,37 +1,27 @@
 // ============================================
-// MOISÉS MEDEIROS v11.0 - HOOK DE REDIRECIONAMENTO POR ROLE
-// ARQUITETURA DE DOMÍNIOS (LEI IV - SOBERANIA DO ARQUITETO):
-// - gestao.moisesmedeiros.com.br → Funcionários → /dashboard
-// - pro.moisesmedeiros.com.br → Alunos Beta → /alunos
-// - Owner (moisesblank@gmail.com) → Acesso total (ambos domínios)
-// 
-// 🔐 ATUALIZAÇÃO v11.0:
-// - Integração com validateDomainAccessForLogin
-// - Redirecionamento cross-domain para roles incorretos
+// MOISÉS MEDEIROS v12.0 - HOOK DE REDIRECIONAMENTO POR ROLE
+// ARQUITETURA MONO-DOMÍNIO (pro.moisesmedeiros.com.br):
+// - /gestaofc/* → Funcionários → /gestaofc/dashboard
+// - /alunos/* → Alunos Beta → /alunos
+// - Owner (moisesblank@gmail.com) → Acesso total (todas as áreas)
 // ============================================
 
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  OWNER_EMAIL, 
-  isGestaoHost, 
-  isProHost,
-  ROLE_LABELS
-} from "@/hooks/useRolePermissions";
-import { validateDomainAccessForLogin, type DomainAppRole, DOMAIN_ROLE_LABELS } from "@/hooks/useDomainAccess";
-// toast removido - não há mais redirect cross-domain
+import { OWNER_EMAIL, ROLE_LABELS } from "@/hooks/useRolePermissions";
+import { validateDomainAccessForLogin, type DomainAppRole, GESTAO_ALLOWED_ROLES, PRO_ALLOWED_ROLES } from "@/hooks/useDomainAccess";
 
 type RedirectRole = "owner" | "admin" | "beta" | "aluno_gratuito" | "gestao" | "other";
 
-// Roles que vão para área de gestão (funcionários)
+// Roles que vão para área de gestão (/gestaofc)
 const GESTAO_ROLES = [
   "owner", "admin", "coordenacao", "suporte", "monitoria", 
   "financeiro", "rh", "marketing", "contabilidade", "afiliado", "employee"
 ];
 
-// Roles que vão para área de aluno
+// Roles que vão para área de aluno (/alunos)
 const ALUNO_ROLES = ["beta", "aluno_gratuito"];
 
 export function useRoleBasedRedirect() {
@@ -44,7 +34,7 @@ export function useRoleBasedRedirect() {
 
     // Owner sempre vai para dashboard de gestão (ACESSO SUPREMO)
     if (user.email?.toLowerCase() === OWNER_EMAIL) {
-      return "/dashboard";
+      return "/gestaofc/dashboard";
     }
 
     try {
@@ -56,34 +46,32 @@ export function useRoleBasedRedirect() {
 
       if (error) {
         console.error("[REDIRECT] Erro ao buscar role:", error);
-        return "/dashboard";
+        return "/gestaofc/dashboard";
       }
 
       const role = data?.role || "employee";
 
       // Se for aluno pago (beta), vai para central do aluno
-      // Independente do domínio - aluno beta SEMPRE vai para /alunos
       if (ALUNO_ROLES.includes(role)) {
         return "/alunos";
       }
 
-      // Funcionários (gestão) vão para dashboard
-      // Owner e Admin também vão para dashboard
+      // Funcionários (gestão) vão para dashboard de gestão
       if (GESTAO_ROLES.includes(role)) {
-        return "/dashboard";
+        return "/gestaofc/dashboard";
       }
 
-      // Fallback para dashboard
-      return "/dashboard";
+      // Fallback para gestão
+      return "/gestaofc/dashboard";
     } catch (err) {
       console.error("[REDIRECT] Erro:", err);
-      return "/dashboard";
+      return "/gestaofc/dashboard";
     }
   };
 
   /**
-   * Redireciona após login COM VALIDAÇÃO DE DOMÍNIO
-   * Se o role não pode acessar o domínio atual, redireciona cross-domain
+   * Redireciona após login
+   * ARQUITETURA MONO-DOMÍNIO: todos os redirects são RELATIVOS
    */
   const redirectAfterLogin = async () => {
     if (!user) {
@@ -108,28 +96,23 @@ export function useRoleBasedRedirect() {
       const role = (data?.role || "employee") as DomainAppRole;
       const userEmail = user.email || null;
 
-      // ============================================
-      // 🛡️ VALIDAÇÃO DE DOMÍNIO DESATIVADA (LEI SUPREMA)
-      // NÃO redirecionar entre domínios - cada domínio é independente
-      // O redirect agora é apenas RELATIVO ao hostname atual
-      // ============================================
-      const domainValidation = validateDomainAccessForLogin(role, userEmail);
+      // Validação de área (não domínio)
+      const areaValidation = validateDomainAccessForLogin(role, userEmail);
       
-      // Apenas log, sem redirect cross-domain
-      if (!domainValidation.permitido) {
-        console.log(`[REDIRECT] Role "${role}" no domínio ${domainValidation.dominioAtual} - sem redirect cross-domain`);
+      if (!areaValidation.permitido && areaValidation.redirecionarPara) {
+        console.log(`[REDIRECT] Role "${role}" - redirecionando para ${areaValidation.redirecionarPara}`);
+        navigate(areaValidation.redirecionarPara, { replace: true });
+        return;
       }
 
-      // ============================================
-      // REDIRECIONAMENTO NORMAL (domínio correto)
-      // ============================================
+      // Redirecionamento normal baseado no role
       const path = await getRedirectPath();
-      console.log(`[REDIRECT] Navegando para ${path} (role: ${role}, domínio: ${domainValidation.dominioAtual})`);
+      console.log(`[REDIRECT] Navegando para ${path} (role: ${role})`);
       navigate(path, { replace: true });
 
     } catch (err) {
       console.error("[REDIRECT] Erro geral:", err);
-      navigate("/dashboard", { replace: true });
+      navigate("/gestaofc/dashboard", { replace: true });
     } finally {
       setIsRedirecting(false);
     }
@@ -145,7 +128,7 @@ export function useRoleBasedRedirect() {
 // Hook simples para usar em componentes que precisam saber a home do usuário
 export function useUserHomePath() {
   const { user } = useAuth();
-  const [homePath, setHomePath] = useState<string>("/dashboard");
+  const [homePath, setHomePath] = useState<string>("/gestaofc/dashboard");
 
   useEffect(() => {
     async function determineHome() {
@@ -154,9 +137,9 @@ export function useUserHomePath() {
         return;
       }
 
-      // Owner sempre vai para dashboard
+      // Owner sempre vai para dashboard de gestão
       if (user.email?.toLowerCase() === OWNER_EMAIL) {
-        setHomePath("/dashboard");
+        setHomePath("/gestaofc/dashboard");
         return;
       }
 
@@ -169,10 +152,10 @@ export function useUserHomePath() {
 
         const role = data?.role || "employee";
         
-        // Alunos vão para /alunos, funcionários para /dashboard
-        setHomePath(ALUNO_ROLES.includes(role) ? "/alunos" : "/dashboard");
+        // Alunos vão para /alunos, funcionários para /gestaofc/dashboard
+        setHomePath(ALUNO_ROLES.includes(role) ? "/alunos" : "/gestaofc/dashboard");
       } catch {
-        setHomePath("/dashboard");
+        setHomePath("/gestaofc/dashboard");
       }
     }
 

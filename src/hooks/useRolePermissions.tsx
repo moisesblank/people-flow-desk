@@ -1,16 +1,18 @@
 // ============================================
-// 🔥 MOISÉS MEDEIROS v11.1 - ROLE PERMISSIONS HOOK
+// 🔥 MOISÉS MEDEIROS v12.0 - ROLE PERMISSIONS HOOK
 // Sistema de Permissões por Cargo Completo
-// 🔐 ATUALIZAÇÃO v11.1: Domain Access Validation (LEI IV)
+// ARQUITETURA MONO-DOMÍNIO (pro.moisesmedeiros.com.br)
+// /gestaofc/* = área de funcionários
+// /alunos/* = área de alunos
 // ============================================
-// 📌 REGRA MATRIZ - ARQUITETURA DE DOMÍNIOS:
+// 📌 REGRA MATRIZ - ARQUITETURA MONO-DOMÍNIO:
 // ┌─────────────────────────────────────────────────────────────────┐
-// │ CATEGORIA        │ URL                                 │ ACESSO │
+// │ CATEGORIA        │ PATH                                │ ACESSO │
 // ├─────────────────────────────────────────────────────────────────┤
 // │ OWNER (Master)   │ TODOS                               │ SUPREMO│
-// │ GESTÃO           │ gestao.moisesmedeiros.com.br        │ Func.  │
-// │ BETA (Alunos)    │ pro.moisesmedeiros.com.br/alunos    │ Pagante│
-// │ ÁREA GRATUITA    │ pro.moisesmedeiros.com.br           │ Público│
+// │ GESTÃO           │ /gestaofc/*                         │ Func.  │
+// │ BETA (Alunos)    │ /alunos/*                           │ Pagante│
+// │ ÁREA GRATUITA    │ / + /comunidade                     │ Público│
 // └─────────────────────────────────────────────────────────────────┘
 // Owner: moisesblank@gmail.com → Acesso Total SUPREMO
 // ============================================
@@ -39,7 +41,7 @@ import {
 } from "@/core/urlAccessControl";
 
 // ============================================
-// CONSTANTES GLOBAIS - LEI IV (SOBERANIA DO ARQUITETO)
+// CONSTANTES GLOBAIS - ARQUITETURA MONO-DOMÍNIO
 // ============================================
 export const OWNER_EMAIL = "moisesblank@gmail.com";
 
@@ -47,16 +49,21 @@ export const OWNER_EMAIL = "moisesblank@gmail.com";
 export { MATRIZ_URLS, MATRIZ_PATHS };
 
 // ============================================
-// FUNÇÕES DE DETECÇÃO DE DOMÍNIO
+// FUNÇÕES DE DETECÇÃO DE ÁREA (NÃO DOMÍNIO)
+// ARQUITETURA MONO-DOMÍNIO: tudo em pro.moisesmedeiros.com.br
 // ============================================
-export function isGestaoHost(hostname?: string): boolean {
-  const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
-  return h.startsWith("gestao.") || h.includes("gestao.");
+
+/**
+ * @deprecated Domínio gestao.* não existe mais. Use isGestaoPath()
+ */
+export function isGestaoHost(_hostname?: string): boolean {
+  // SEMPRE RETORNA FALSE - domínio gestao.* foi descontinuado
+  return false;
 }
 
 export function isProHost(hostname?: string): boolean {
   const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
-  return h.startsWith("pro.") || h.includes("pro.");
+  return h.startsWith("pro.") || h.includes("pro.") || h.includes("localhost") || h.includes("lovable");
 }
 
 export function isPublicHost(hostname?: string): boolean {
@@ -64,10 +71,18 @@ export function isPublicHost(hostname?: string): boolean {
   return h.startsWith("www.") || h === "moisesmedeiros.com.br";
 }
 
-export function getCurrentDomain(): "gestao" | "pro" | "public" | "unknown" {
+/**
+ * Verifica se está na área de gestão (/gestaofc)
+ */
+export function isGestaoPath(pathname?: string): boolean {
+  const p = (pathname || (typeof window !== "undefined" ? window.location.pathname : "")).toLowerCase();
+  return p.startsWith("/gestaofc");
+}
+
+export function getCurrentDomain(): "pro" | "public" | "localhost" | "unknown" {
   if (typeof window === "undefined") return "unknown";
   const h = window.location.hostname.toLowerCase();
-  if (isGestaoHost(h)) return "gestao";
+  if (h.includes("localhost") || h.includes("lovable")) return "localhost";
   if (isProHost(h)) return "pro";
   if (isPublicHost(h)) return "public";
   return "unknown";

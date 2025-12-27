@@ -1,11 +1,10 @@
 // ============================================
-// 🔥 REGRA MATRIZ v2.0 - ARQUITETURA DE URLs
-// ATUALIZADO: 2024-12-22 - Design 2300
-// ============================================
-// DOCUMENTAÇÃO OFICIAL DO SISTEMA DE ROTAS E ACESSOS
+// 🔥 REGRA MATRIZ v3.0 - ARQUITETURA MONO-DOMÍNIO
+// MIGRAÇÃO: gestao.* → /gestaofc (área interna)
+// DOMÍNIO ÚNICO: pro.moisesmedeiros.com.br
 // ============================================
 
-// 📍 MAPA DE URLs DEFINITIVO (LEI IV - SNA OMEGA)
+// 📍 MAPA DE URLs DEFINITIVO (ARQUITETURA MONO-DOMÍNIO)
 // 
 // ┌──────────────────────────────────────────────────────────────────────────────────────┐
 // │ QUEM                │ URL                                    │ VALIDAÇÃO            │
@@ -17,34 +16,24 @@
 // │   (PAGANTE)         │ + /comunidade                          │ acesso válido        │
 // │                     │ (Hotmart/Owner/Admin podem criar)      │                      │
 // ├──────────────────────────────────────────────────────────────────────────────────────┤
-// │ 👔 FUNCIONÁRIO      │ gestao.moisesmedeiros.com.br/gestao    │ role='funcionario'   │
-// │                     │ (categorias de permissão específicas)  │ + permissões         │
+// │ 👔 FUNCIONÁRIO      │ pro.moisesmedeiros.com.br/gestaofc/*   │ role='funcionario'   │
+// │                     │ (ÁREA INTERNA RESTRITA)                │ + permissões         │
 // ├──────────────────────────────────────────────────────────────────────────────────────┤
 // │ 👑 OWNER (MASTER)   │ TODAS AS URLs                          │ role='owner'         │
 // │   moisesblank@      │ Acesso TOTAL em tempo real             │ MOISESBLANK@GMAIL    │
 // │   gmail.com         │ Pode criar/importar/exportar tudo      │ .COM                 │
 // └──────────────────────────────────────────────────────────────────────────────────────┘
-// 
-// 📋 HIERARQUIA DE ACESSOS (do maior para menor):
-// 1. 👑 OWNER (moisesblank@gmail.com) → Acesso TOTAL a TUDO, SEMPRE
-// 2. 👔 FUNCIONÁRIOS (gestão) → gestao.moisesmedeiros.com.br/* conforme permissões
-// 3. 👨‍🎓 ALUNOS BETA (pagantes) → /alunos/* + /comunidade em pro.*
-// 4. 🌐 NÃO PAGANTES (gratuitos) → / + /comunidade em pro.*
-// 
-// 🔐 VALIDAÇÕES:
-// - Cada acesso valida: domínio + role + autenticação + access_expires_at
-// - Owner = bypass total (MOISESBLANK@GMAIL.COM)
-// - Beta vem de: pagamento Hotmart OU criado por Owner/Admin
-// - Beta acessa /alunos/* E /comunidade
-// - Gestão requer role funcionario+
 
 // ============================================
-// CONSTANTES DA MATRIZ
+// CONSTANTES DA MATRIZ - DOMÍNIO ÚNICO
 // ============================================
 
 export const MATRIZ_URLS = {
-  // URL base de gestão (funcionários)
-  GESTAO: "https://gestao.moisesmedeiros.com.br",
+  // URL base (ÚNICO DOMÍNIO)
+  BASE: "https://pro.moisesmedeiros.com.br",
+  
+  // URL de gestão (agora área interna /gestaofc)
+  GESTAO: "https://pro.moisesmedeiros.com.br/gestaofc",
   
   // URL base de alunos (beta)
   ALUNOS: "https://pro.moisesmedeiros.com.br/alunos",
@@ -60,6 +49,9 @@ export const MATRIZ_URLS = {
 } as const;
 
 export const MATRIZ_PATHS = {
+  // Path de gestão (área interna restrita)
+  GESTAO: "/gestaofc",
+  
   // Path de alunos dentro do domínio pro
   ALUNOS: "/alunos",
   
@@ -67,7 +59,7 @@ export const MATRIZ_PATHS = {
   AUTH: "/auth",
   
   // Path de dashboard (gestão)
-  DASHBOARD: "/dashboard",
+  DASHBOARD: "/gestaofc/dashboard",
   
   // Path home (área pública)
   HOME: "/",
@@ -82,9 +74,9 @@ export const MATRIZ_PATHS = {
 
 export type CategoriaAcesso = 
   | "owner"           // Acesso supremo a tudo
-  | "gestao"          // Funcionários - gestao.*
-  | "beta"            // Alunos pagantes - pro.*/alunos
-  | "gratuito"        // Não pagantes - pro.* (home apenas)
+  | "gestao"          // Funcionários - /gestaofc/*
+  | "beta"            // Alunos pagantes - /alunos/*
+  | "gratuito"        // Não pagantes - / (home apenas)
   | "publico";        // Visitantes - área aberta
 
 // ============================================
@@ -110,26 +102,8 @@ export const ROLE_TO_CATEGORIA: Record<string, CategoriaAcesso> = {
 // ============================================
 
 /**
- * Retorna a URL correta para uma categoria de acesso
- */
-export function getUrlPorCategoria(categoria: CategoriaAcesso): string {
-  switch (categoria) {
-    case "owner":
-      return MATRIZ_URLS.GESTAO; // Owner vai para gestão por padrão
-    case "gestao":
-      return MATRIZ_URLS.GESTAO;
-    case "beta":
-      return MATRIZ_URLS.ALUNOS;
-    case "gratuito":
-    case "publico":
-      return MATRIZ_URLS.PUBLICA;
-    default:
-      return MATRIZ_URLS.PUBLICA;
-  }
-}
-
-/**
- * Retorna o path interno para redirecionamento após login
+ * Retorna o PATH correto para uma categoria de acesso
+ * NUNCA retorna URL absoluta - apenas paths relativos
  */
 export function getPathPorCategoria(categoria: CategoriaAcesso): string {
   switch (categoria) {
@@ -148,67 +122,66 @@ export function getPathPorCategoria(categoria: CategoriaAcesso): string {
 }
 
 /**
+ * @deprecated Use getPathPorCategoria - arquitetura mono-domínio não usa URLs absolutas
+ */
+export function getUrlPorCategoria(categoria: CategoriaAcesso): string {
+  // Retorna sempre o mesmo domínio base
+  return MATRIZ_URLS.BASE;
+}
+
+/**
  * Valida se um usuário pode acessar uma URL específica
+ * ARQUITETURA MONO-DOMÍNIO: validação baseada em PATH, não domínio
  */
 export function validarAcessoUrl(
   categoria: CategoriaAcesso,
   pathname: string,
-  hostname: string
+  _hostname: string // ignorado - mono-domínio
 ): { permitido: boolean; redirecionarPara?: string; motivo?: string } {
-  const isGestao = hostname.includes("gestao.");
-  const isPro = hostname.includes("pro.") || hostname.includes("www.") || hostname === "moisesmedeiros.com.br";
+  const isGestaoPath = pathname.startsWith("/gestaofc");
   const isAlunosPath = pathname.startsWith("/alunos");
   const isAuthPath = pathname === "/auth";
-  const isPublicPath = pathname === "/" || pathname.startsWith("/cursos");
+  const isPublicPath = pathname === "/" || pathname.startsWith("/cursos") || pathname.startsWith("/comunidade");
 
   // Owner tem acesso supremo a tudo
   if (categoria === "owner") {
     return { permitido: true };
   }
 
-  // Permitir acesso a auth em qualquer domínio
+  // Permitir acesso a auth sempre
   if (isAuthPath) {
     return { permitido: true };
   }
 
-  // ============================================
-  // 🛡️ LEI SUPREMA: NUNCA REDIRECIONAR ENTRE DOMÍNIOS
-  // Cada domínio é independente - redirects são sempre RELATIVOS
-  // ============================================
-
-  // BETA deve acessar /alunos em pro.*
-  if (categoria === "beta") {
-    if (isGestao) {
-      // NÃO redireciona cross-domain - apenas indica acesso restrito
-      return { 
-        permitido: false, 
-        motivo: "Esta área é restrita. Acesse sua área de aluno." 
-      };
+  // GESTÃO pode acessar /gestaofc/* e ver /alunos para testes
+  if (categoria === "gestao") {
+    if (isGestaoPath || isAlunosPath || isPublicPath) {
+      return { permitido: true };
     }
-    if (!isAlunosPath && !isPublicPath) {
+    return { 
+      permitido: false, 
+      redirecionarPara: "/gestaofc",
+      motivo: "Área não disponível" 
+    };
+  }
+
+  // BETA pode acessar /alunos/* e áreas públicas
+  if (categoria === "beta") {
+    if (isGestaoPath) {
       return { 
         permitido: false, 
         redirecionarPara: "/alunos",
         motivo: "Área restrita para funcionários" 
       };
     }
-    return { permitido: true };
-  }
-
-  // GESTÃO deve acessar gestao.*
-  if (categoria === "gestao") {
-    if (isPro && !isPublicPath) {
-      // Permitir visualização de /alunos para testes
-      if (isAlunosPath) {
-        return { permitido: true };
-      }
-      // NÃO redireciona cross-domain - apenas indica acesso restrito
-      return { 
-        permitido: false, 
-        motivo: "Esta área é restrita. Acesse a gestão pelo domínio correto." 
-      };
+    if (isAlunosPath || isPublicPath) {
+      return { permitido: true };
     }
-    return { permitido: true };
+    return { 
+      permitido: false, 
+      redirecionarPara: "/alunos",
+      motivo: "Acesse sua área de aluno" 
+    };
   }
 
   // GRATUITO só pode ver área pública
@@ -220,14 +193,21 @@ export function validarAcessoUrl(
         motivo: "Área exclusiva para alunos pagantes" 
       };
     }
-    if (isGestao) {
-      // NÃO redireciona cross-domain
+    if (isGestaoPath) {
       return { 
         permitido: false, 
+        redirecionarPara: "/",
         motivo: "Área restrita para funcionários" 
       };
     }
-    return { permitido: true };
+    if (isPublicPath) {
+      return { permitido: true };
+    }
+    return { 
+      permitido: false, 
+      redirecionarPara: "/",
+      motivo: "Área restrita" 
+    };
   }
 
   // PÚBLICO só pode ver home
@@ -244,33 +224,3 @@ export function validarAcessoUrl(
 
   return { permitido: false, redirecionarPara: "/auth" };
 }
-
-// ============================================
-// DOCUMENTAÇÃO INLINE (para referência rápida)
-// ============================================
-
-// 📌 RESUMO DA REGRA MATRIZ:
-// 
-// 1. www.moisesmedeiros.com.br → Redireciona para pro.moisesmedeiros.com.br
-// 
-// 2. pro.moisesmedeiros.com.br (HOME PÚBLICA)
-//    - Área aberta para todos
-//    - Botão "ENTRAR" → /auth
-//    - Após login:
-//      • BETA → /alunos (central do aluno)
-//      • GESTÃO → gestao.moisesmedeiros.com.br/dashboard
-//      • OWNER → /dashboard (pode navegar para qualquer área)
-// 
-// 3. pro.moisesmedeiros.com.br/alunos (CENTRAL DO ALUNO)
-//    - Exclusivo para BETA (alunos pagantes)
-//    - Owner pode acessar para testar experiência
-// 
-// 4. gestao.moisesmedeiros.com.br (ÁREA DE GESTÃO)
-//    - Funcionários e Admin
-//    - Owner com acesso supremo
-//    - Gestão de alunos, finanças, equipe, etc.
-// 
-// 🔒 VALIDAÇÕES APLICADAS:
-//    - Cada requisição valida: domínio + role + autenticação
-//    - Acessos inválidos são redirecionados automaticamente
-//    - Logs de auditoria para tentativas de acesso negado

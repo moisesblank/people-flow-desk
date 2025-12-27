@@ -1,11 +1,7 @@
 // ============================================
-// 🔐 MOISÉS MEDEIROS v11.0 - DOMAIN ACCESS VALIDATION
-// LEI IV - SEPARAÇÃO DE DOMÍNIOS (CONSTITUIÇÃO v9.2b)
-// ============================================
-// REGRA:
-// - gestao.moisesmedeiros.com.br → APENAS funcionários + owner
-// - pro.moisesmedeiros.com.br → APENAS alunos beta + owner
-// - Owner (moisesblank@gmail.com) → ACESSO SUPREMO EM TODOS
+// 🔐 MOISÉS MEDEIROS v12.0 - DOMAIN ACCESS VALIDATION
+// ARQUITETURA MONO-DOMÍNIO (pro.moisesmedeiros.com.br)
+// /gestaofc = área interna restrita para funcionários
 // ============================================
 
 import { useMemo, useState, useEffect } from "react";
@@ -46,27 +42,34 @@ export const DOMAIN_ROLE_LABELS: Record<DomainAppRole, string> = {
   aluno_gratuito: "Usuário Gratuito",
 };
 
-// Roles permitidos em cada domínio
+// Roles permitidos na área de gestão (/gestaofc)
 export const GESTAO_ALLOWED_ROLES: DomainAppRole[] = [
   "owner", "admin", "coordenacao", "suporte", "monitoria", 
   "afiliado", "marketing", "contabilidade", "employee"
 ];
 
+// Roles permitidos na área de alunos (/alunos)
 export const PRO_ALLOWED_ROLES: DomainAppRole[] = [
   "owner", "beta", "aluno_gratuito"
 ];
 
 // ============================================
-// FUNÇÕES DE DETECÇÃO DE DOMÍNIO
+// FUNÇÕES DE DETECÇÃO DE ÁREA (NÃO DOMÍNIO)
+// ARQUITETURA MONO-DOMÍNIO: tudo em pro.moisesmedeiros.com.br
 // ============================================
-export function isGestaoHost(hostname?: string): boolean {
-  const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
-  return h.startsWith("gestao.") || h.includes("gestao.");
+
+/**
+ * @deprecated Domínio gestao.* não existe mais. Use isGestaoPath()
+ */
+export function isGestaoHost(_hostname?: string): boolean {
+  // SEMPRE RETORNA FALSE - domínio gestao.* foi descontinuado
+  return false;
 }
 
 export function isProHost(hostname?: string): boolean {
   const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
-  return h.startsWith("pro.") || h.includes("pro.");
+  // Em produção, sempre retorna true pois só existe pro.*
+  return h.startsWith("pro.") || h.includes("pro.") || h.includes("localhost") || h.includes("lovable");
 }
 
 export function isPublicHost(hostname?: string): boolean {
@@ -74,7 +77,23 @@ export function isPublicHost(hostname?: string): boolean {
   return h.startsWith("www.") || h === "moisesmedeiros.com.br";
 }
 
-export function getCurrentDomain(): "gestao" | "pro" | "public" | "localhost" | "unknown" {
+/**
+ * Verifica se o usuário está na área de gestão (/gestaofc)
+ */
+export function isGestaoPath(pathname?: string): boolean {
+  const p = (pathname || (typeof window !== "undefined" ? window.location.pathname : "")).toLowerCase();
+  return p.startsWith("/gestaofc");
+}
+
+/**
+ * Verifica se o usuário está na área de alunos (/alunos)
+ */
+export function isAlunosPath(pathname?: string): boolean {
+  const p = (pathname || (typeof window !== "undefined" ? window.location.pathname : "")).toLowerCase();
+  return p.startsWith("/alunos");
+}
+
+export function getCurrentDomain(): "pro" | "public" | "localhost" | "unknown" {
   if (typeof window === "undefined") return "unknown";
   const h = window.location.hostname.toLowerCase();
   
@@ -82,7 +101,6 @@ export function getCurrentDomain(): "gestao" | "pro" | "public" | "localhost" | 
   if (h.includes("localhost") || h.includes("127.0.0.1") || h.includes("lovable.app") || h.includes("lovableproject.com")) {
     return "localhost";
   }
-  if (isGestaoHost(h)) return "gestao";
   if (isProHost(h)) return "pro";
   if (isPublicHost(h)) return "public";
   return "unknown";
@@ -95,15 +113,16 @@ export interface DomainAccessResult {
   permitido: boolean;
   redirecionarPara?: string;
   motivo?: string;
-  dominioAtual: "gestao" | "pro" | "public" | "localhost" | "unknown";
+  dominioAtual: "pro" | "public" | "localhost" | "unknown";
+  areaAtual: "gestaofc" | "alunos" | "publica" | "unknown";
 }
 
 // ============================================
 // FUNÇÃO PRINCIPAL DE VALIDAÇÃO
 // ============================================
 /**
- * Valida se o role do usuário pode acessar o domínio atual APÓS LOGIN.
- * Usa-se logo após autenticação para verificar se deve redirecionar.
+ * Valida se o role do usuário pode acessar a ÁREA atual (não domínio).
+ * ARQUITETURA: 1 domínio (pro.*) + múltiplas áreas internas
  * 
  * @param role - Role do usuário logado
  * @param userEmail - Email do usuário (para verificar owner)
@@ -115,68 +134,94 @@ export function validateDomainAccessForLogin(
 ): DomainAccessResult {
   // SSR safety
   if (typeof window === "undefined") {
-    return { permitido: true, dominioAtual: "unknown" };
+    return { permitido: true, dominioAtual: "unknown", areaAtual: "unknown" };
   }
 
   const dominioAtual = getCurrentDomain();
-
-  // ============================================
-  // 🛡️ LEI SUPREMA: NUNCA REDIRECIONAR ENTRE DOMÍNIOS
-  // Cada domínio é independente - NÃO existe domínio canônico
-  // gestao.* e pro.* coexistem sem redirect forçado
-  // ============================================
+  const pathname = window.location.pathname.toLowerCase();
   
-  // Owner tem BYPASS SUPREMO em qualquer domínio
-  if (userEmail?.toLowerCase() === OWNER_EMAIL) {
-    console.log("[DOMAIN-ACCESS] Owner detectado - bypass supremo ativado");
-    return { permitido: true, dominioAtual };
+  // Determinar área atual baseado no path
+  let areaAtual: "gestaofc" | "alunos" | "publica" | "unknown" = "publica";
+  if (isGestaoPath(pathname)) {
+    areaAtual = "gestaofc";
+  } else if (isAlunosPath(pathname)) {
+    areaAtual = "alunos";
   }
 
-  // Sem role = usuário não logado ainda → PERMITIR acessar /auth normalmente
+  // Owner tem BYPASS SUPREMO em qualquer área
+  if (userEmail?.toLowerCase() === OWNER_EMAIL) {
+    console.log("[AREA-ACCESS] Owner detectado - bypass supremo ativado");
+    return { permitido: true, dominioAtual, areaAtual };
+  }
+
+  // Sem role = usuário não logado ainda → PERMITIR acessar áreas públicas
   if (!role) {
-    console.log("[DOMAIN-ACCESS] Sem role (usuário não logado) - permitindo acesso para login");
-    return { permitido: true, dominioAtual };
+    if (areaAtual === "gestaofc" || areaAtual === "alunos") {
+      // Área restrita - redirecionar para auth (RELATIVO)
+      return { 
+        permitido: false, 
+        dominioAtual, 
+        areaAtual,
+        redirecionarPara: "/auth",
+        motivo: "Faça login para acessar esta área"
+      };
+    }
+    return { permitido: true, dominioAtual, areaAtual };
   }
 
   // Localhost/Preview - permitir tudo para desenvolvimento
   if (dominioAtual === "localhost") {
-    return { permitido: true, dominioAtual };
+    return { permitido: true, dominioAtual, areaAtual };
   }
 
   // ============================================
-  // VALIDAÇÃO gestao.moisesmedeiros.com.br
-  // SEM REDIRECT - apenas log e continua
+  // VALIDAÇÃO /gestaofc (área de funcionários)
   // ============================================
-  if (dominioAtual === "gestao") {
+  if (areaAtual === "gestaofc") {
     const isAllowed = GESTAO_ALLOWED_ROLES.includes(role as DomainAppRole);
     
     if (!isAllowed) {
-      console.log(`[DOMAIN-ACCESS] Role "${role}" não é gestão, mas PERMANECE no domínio atual (sem redirect)`);
-      // NÃO redireciona - apenas marca como não permitido para UI decidir
-      return { permitido: false, dominioAtual, motivo: `Acesso restrito para este cargo.` };
+      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /gestaofc - redirecionando`);
+      // Redireciona para área correta baseado no role (RELATIVO)
+      return { 
+        permitido: false, 
+        dominioAtual, 
+        areaAtual,
+        redirecionarPara: "/alunos",
+        motivo: "Área restrita para funcionários"
+      };
     }
     
-    return { permitido: true, dominioAtual };
+    return { permitido: true, dominioAtual, areaAtual };
   }
 
   // ============================================
-  // VALIDAÇÃO pro.moisesmedeiros.com.br
-  // SEM REDIRECT - apenas log e continua
+  // VALIDAÇÃO /alunos (área de alunos beta)
   // ============================================
-  if (dominioAtual === "pro") {
+  if (areaAtual === "alunos") {
     const isAllowed = PRO_ALLOWED_ROLES.includes(role as DomainAppRole);
     
-    if (!isAllowed) {
-      console.log(`[DOMAIN-ACCESS] Role "${role}" não é aluno, mas PERMANECE no domínio atual (sem redirect)`);
-      // NÃO redireciona - apenas marca como não permitido para UI decidir
-      return { permitido: false, dominioAtual, motivo: `Acesso restrito para este cargo.` };
+    // Funcionários podem visualizar /alunos para testes
+    if (GESTAO_ALLOWED_ROLES.includes(role as DomainAppRole)) {
+      return { permitido: true, dominioAtual, areaAtual };
     }
     
-    return { permitido: true, dominioAtual };
+    if (!isAllowed) {
+      console.log(`[AREA-ACCESS] Role "${role}" sem acesso a /alunos - redirecionando`);
+      return { 
+        permitido: false, 
+        dominioAtual, 
+        areaAtual,
+        redirecionarPara: "/",
+        motivo: "Área exclusiva para alunos"
+      };
+    }
+    
+    return { permitido: true, dominioAtual, areaAtual };
   }
 
-  // Domínio público ou unknown - permitir (landing pages etc)
-  return { permitido: true, dominioAtual };
+  // Área pública - permitir tudo
+  return { permitido: true, dominioAtual, areaAtual };
 }
 
 // ============================================
@@ -203,13 +248,13 @@ export function useDomainAccessValidation() {
           .maybeSingle();
 
         if (error) {
-          console.error("[DOMAIN-ACCESS] Erro ao buscar role:", error);
+          console.error("[AREA-ACCESS] Erro ao buscar role:", error);
           setRole(null);
         } else {
           setRole(data?.role as DomainAppRole ?? "employee");
         }
       } catch (err) {
-        console.error("[DOMAIN-ACCESS] Erro:", err);
+        console.error("[AREA-ACCESS] Erro:", err);
         setRole(null);
       } finally {
         setIsLoading(false);
@@ -217,7 +262,7 @@ export function useDomainAccessValidation() {
     }
 
     fetchRole();
-  }, [user?.id]); // P2 FIX: Depender de user.id primitivo, não do objeto completo
+  }, [user?.id]);
 
   const userEmail = user?.email || null;
 
@@ -233,4 +278,3 @@ export function useDomainAccessValidation() {
     ...validation
   };
 }
-
