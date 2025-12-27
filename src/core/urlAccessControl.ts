@@ -604,30 +604,39 @@ export function validateAccess(
 }
 
 /**
- * Obtém a URL de redirecionamento após login baseado na role
+ * 🔄 Determina o destino correto após login
+ * 
+ * REGRA DEFINITIVA (docs/ARQUITETURA_DOMINIOS_DEFINITIVA.md):
+ * - OWNER → /gestaofc
+ * - GESTAO_ROLES (funcionários) → /gestaofc
+ * - BETA/ALUNO → /alunos
+ * - VIEWER/FREE → /comunidade
+ * - ANÔNIMO → / (não deveria acontecer após login)
  */
 export function getPostLoginRedirect(role?: string | null, email?: string | null): string {
-  // 👑 Owner vai para dashboard de gestão
-  if (isOwner(email, role)) {
-    return "/gestao/dashboard";
+  // 1. Owner por email (bypass síncrono) ou role
+  const ownerEmail = "moisesblank@gmail.com";
+  if (email?.toLowerCase() === ownerEmail || role === "owner") {
+    return "/gestaofc";
   }
   
-  if (!role) return "/";
-  
-  const category = getRoleCategory(role);
-  
-  switch (category) {
-    case "owner":
-      return "/gestao/dashboard";
-    case "gestao":
-      return "/gestao/dashboard";
-    case "beta":
-      return "/alunos";
-    case "gratuito":
-      return "/comunidade";
-    default:
-      return "/";
+  // 2. Funcionários → gestaofc
+  if (role && isGestaoRole(role)) {
+    return "/gestaofc";
   }
+  
+  // 3. Alunos pagantes → alunos
+  if (role && isAlunoRole(role)) {
+    return "/alunos";
+  }
+  
+  // 4. Viewer/Free → comunidade
+  if (role === "viewer" || role === "aluno_gratuito") {
+    return "/comunidade";
+  }
+  
+  // 5. Fallback seguro (sem role vai para comunidade)
+  return "/comunidade";
 }
 
 /**

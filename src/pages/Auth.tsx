@@ -38,6 +38,7 @@ import logoMoises from "@/assets/logo-moises-medeiros.png";
 import { useEditableContent } from "@/hooks/useEditableContent";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { isOwnerEmail } from "@/lib/security";
+import { getPostLoginRedirect } from "@/core/urlAccessControl";
 
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
@@ -270,7 +271,9 @@ export default function Auth() {
       const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
       if (is2FAPending) return;
 
-      const target = isOwnerEmail(session.user.email) ? "/gestaofc" : "/alunos";
+      // ✅ REGRA DEFINITIVA: Usa função centralizada
+      // Nota: Aqui não temos role ainda (acabou de logar), então usa só email
+      const target = getPostLoginRedirect(null, session.user.email);
       console.log('[AUTH] ✅ SIGNED_IN - redirecionando para', target);
       navigate(target, { replace: true });
     });

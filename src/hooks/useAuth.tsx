@@ -9,8 +9,7 @@ import { useState, useEffect, createContext, useContext, ReactNode, useCallback,
 import { User, Session, Provider } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
 import { collectEnhancedFingerprint } from "@/lib/enhancedFingerprint";
-
-type AppRole = "owner" | "admin" | "employee" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
+import { getPostLoginRedirect, type AppRole } from "@/core/urlAccessControl";
 
 const OWNER_EMAIL = "moisesblank@gmail.com";
 const SESSION_TOKEN_KEY = 'matriz_session_token';
@@ -355,13 +354,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (user && session && isAuthPath) {
       const email = (user.email || "").toLowerCase();
 
-      // ✅ Rotas reais (evita cair nas rotas legadas que redirecionam para "/")
-      const target = email === OWNER_EMAIL ? "/gestaofc" : "/alunos";
+      // ✅ REGRA DEFINITIVA: Usa função centralizada (docs/ARQUITETURA_DOMINIOS_DEFINITIVA.md)
+      const target = getPostLoginRedirect(derivedRole, email);
 
       // replace: evita voltar para /auth no histórico
       window.location.replace(target);
     }
-  }, [isLoading, user?.id, session?.access_token]); // ✅ P0 FIX: Valores primitivos
+  }, [isLoading, user?.id, session?.access_token, derivedRole]); // ✅ Inclui role para recálculo
 
   const fetchUserRole = async (userId: string) => {
     try {
