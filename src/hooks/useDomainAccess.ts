@@ -78,7 +78,8 @@ export function getCurrentDomain(): "gestao" | "pro" | "public" | "localhost" | 
   if (typeof window === "undefined") return "unknown";
   const h = window.location.hostname.toLowerCase();
   
-  if (h.includes("localhost") || h.includes("127.0.0.1") || h.includes("lovable.app")) {
+  // Localhost + Lovable preview = bypass total
+  if (h.includes("localhost") || h.includes("127.0.0.1") || h.includes("lovable.app") || h.includes("lovableproject.com")) {
     return "localhost";
   }
   if (isGestaoHost(h)) return "gestao";
@@ -125,14 +126,11 @@ export function validateDomainAccessForLogin(
     return { permitido: true, dominioAtual };
   }
 
-  // Sem role = sem acesso
+  // Sem role = usuário não logado ainda → PERMITIR acessar /auth normalmente
+  // O redirecionamento só acontece APÓS login quando sabemos o role real
   if (!role) {
-    return { 
-      permitido: false, 
-      redirecionarPara: "/auth",
-      motivo: "Usuário sem role definido",
-      dominioAtual
-    };
+    console.log("[DOMAIN-ACCESS] Sem role (usuário não logado) - permitindo acesso para login");
+    return { permitido: true, dominioAtual };
   }
 
   // Localhost/Preview - permitir tudo para desenvolvimento
