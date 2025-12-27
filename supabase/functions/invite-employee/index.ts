@@ -148,10 +148,35 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log(`[INVITE] Password updated for existing user: ${email}`);
       
+      // 🎯 FIX: Enviar email de boas-vindas também para usuários existentes
+      try {
+        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${supabaseServiceKey}`,
+          },
+          body: JSON.stringify({
+            to: email,
+            type: "welcome",
+            data: { nome },
+          }),
+        });
+
+        if (emailResponse.ok) {
+          console.log("[INVITE] Welcome email sent to existing user");
+        } else {
+          const errData = await emailResponse.text();
+          console.warn("[INVITE] Email sending may have failed:", errData);
+        }
+      } catch (emailErr) {
+        console.warn("[INVITE] Email error:", emailErr);
+      }
+      
       return new Response(
         JSON.stringify({ 
           success: true, 
-          message: "Senha atualizada com sucesso! O funcionário já estava cadastrado.",
+          message: "Acesso atualizado com sucesso! O funcionário receberá um email.",
           user_id: existingUser.id
         }),
         { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } }
