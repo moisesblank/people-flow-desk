@@ -1,13 +1,14 @@
 // ============================================
-// ⚡ MATRIZ DIGITAL v10.0 - ROTEADOR /alunos (Gestão vs Portal)
-// ARQUITETURA DE DOMÍNIOS:
-// - gestao.moisesmedeiros.com.br → Funcionários (Gestão de Alunos)
-// - pro.moisesmedeiros.com.br → Alunos Beta (Central do Aluno)
-// - www/moisesmedeiros.com.br → Área pública (Home)
+// ⚡ MATRIZ DIGITAL v11.0 - ROTEADOR /alunos
+// ARQUITETURA MONO-DOMÍNIO:
+// - pro.moisesmedeiros.com.br/gestaofc → Funcionários (Gestão)
+// - pro.moisesmedeiros.com.br/alunos → Alunos Beta (Central)
+// - pro.moisesmedeiros.com.br/ → Área pública
 // HIERARQUIA: 
-//   Owner (moisesblank@gmail.com) = Acesso total a tudo
+//   Owner (role='owner' do banco) = Acesso total
 //   Beta = Aluno Pagante → vê Portal do Aluno
-//   Funcionários (gestão) → vê Gestão de Alunos
+//   Staff = Funcionários → vê Gestão de Alunos
+// ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
 // ============================================
 
 import { useMemo } from "react";

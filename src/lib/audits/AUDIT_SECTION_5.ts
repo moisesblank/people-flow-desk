@@ -137,7 +137,7 @@ export const AUDIT_SECTION_5_DEPLOY_INTEGRITY = {
     
     monitoredDomains: [
       "pro.moisesmedeiros.com.br",
-      "gestao.moisesmedeiros.com.br",
+      // ❌ gestao.* DESCONTINUADO - arquitetura mono-domínio
     ],
     
     deployChecklist: {

@@ -12,11 +12,12 @@
 //   ✅ CDN inteligente
 //   ✅ Otimização de imagens
 //
-// 📍 MAPA DE URLs DEFINITIVO:
+// 📍 MAPA DE URLs DEFINITIVO (MONO-DOMÍNIO):
 //   🌐 NÃO PAGANTE: pro.moisesmedeiros.com.br/ + /comunidade
 //   👨‍🎓 ALUNO BETA: pro.moisesmedeiros.com.br/alunos (role='beta')
-//   👔 FUNCIONÁRIO: gestao.moisesmedeiros.com.br/gestao (role='funcionario')
-//   👑 OWNER: TODAS (moisesblank@gmail.com = MASTER)
+//   👔 FUNCIONÁRIO: pro.moisesmedeiros.com.br/gestaofc (role='staff')
+//   👑 OWNER: TODAS (role='owner' do banco)
+//   ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
 //
 // ============================================
 
