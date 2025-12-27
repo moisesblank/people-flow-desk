@@ -656,10 +656,11 @@ export function getAccessDeniedRedirect(role?: string | null): string {
   
   const category = getRoleCategory(role);
   
+  // ✅ MATRIZ SUPREMA v2.0.0: Redirects seguem blocos associativos
   switch (category) {
     case "owner":
     case "gestao":
-      return "/gestao/dashboard";
+      return "/gestaofc"; // ✅ CORRIGIDO: Era /gestao/dashboard, agora /gestaofc
     case "beta":
       return "/alunos";
     case "gratuito":
