@@ -44,6 +44,7 @@ interface Student {
   curso: string;
   status: string;
   fonte?: string;
+  role?: 'beta' | 'aluno_gratuito' | null; // ⚡ PARTE 8: role do aluno
 }
 
 interface WordPressUser {
@@ -57,7 +58,11 @@ interface WordPressUser {
   data_cadastro_wp: string | null;
   ultimo_login: string | null;
   updated_at: string;
+  role?: 'beta' | 'aluno_gratuito' | null; // ⚡ PARTE 8: role do usuário
 }
+
+// ⚡ PARTE 8: Mapa de email -> role (lido da tabela user_roles)
+type RoleMap = Record<string, 'beta' | 'aluno_gratuito' | null>;
 
 const STATUS_OPTIONS = ["Ativo", "Concluído", "Pendente", "Cancelado"];
 
@@ -95,8 +100,53 @@ export default function Alunos() {
     semPagamento: 0
   });
 
+  // ============================================
+  // ⚡ PARTE 8: Mapa de roles por email
+  // Lido da tabela user_roles (FONTE DA VERDADE)
+  // ============================================
+  const [roleMap, setRoleMap] = useState<RoleMap>({});
+
+  const fetchRoles = async () => {
+    try {
+      // Buscar roles de alunos (beta e aluno_gratuito) via profiles + user_roles
+      const { data: rolesData, error: rolesError } = await supabase
+        .from('user_roles')
+        .select(`
+          role,
+          user_id,
+          profiles!inner(email)
+        `)
+        .in('role', ['beta', 'aluno_gratuito']);
+      
+      if (rolesError) {
+        console.error('Error fetching roles:', rolesError);
+        return {};
+      }
+      
+      // Criar mapa email -> role
+      const map: RoleMap = {};
+      (rolesData || []).forEach((r: any) => {
+        const email = r.profiles?.email?.toLowerCase();
+        if (email) {
+          // Se já tem beta, mantém beta (prioridade)
+          if (map[email] === 'beta') return;
+          map[email] = r.role as 'beta' | 'aluno_gratuito';
+        }
+      });
+      
+      return map;
+    } catch (error) {
+      console.error('Error in fetchRoles:', error);
+      return {};
+    }
+  };
+
   const fetchData = async () => {
     try {
+      // ⚡ PARTE 8: Buscar roles primeiro
+      const roles = await fetchRoles();
+      setRoleMap(roles);
+
       // Fetch alunos from original table
       const { data: alunosData, error: alunosError } = await supabase
         .from("alunos")
@@ -105,12 +155,14 @@ export default function Alunos() {
         .limit(500);
       if (alunosError) throw alunosError;
       
+      // ⚡ PARTE 8: Adicionar role a cada aluno
       setStudents(alunosData?.map(s => ({
         id: s.id,
         nome: s.nome,
         email: s.email || "",
         curso: s.curso_id || "",
         status: s.status || "ativo",
+        role: roles[(s.email || "").toLowerCase()] || null,
       })) || []);
 
       // Fetch WordPress sync users
@@ -123,6 +175,7 @@ export default function Alunos() {
       if (wpError) {
         console.error("Error fetching WP users:", wpError);
       } else {
+        // ⚡ PARTE 8: Adicionar role a cada usuário WordPress
         const wpUsersMapped: WordPressUser[] = (wpData || []).map(u => ({
           id: u.id,
           wp_user_id: u.wp_user_id,
@@ -133,7 +186,8 @@ export default function Alunos() {
           tem_pagamento_confirmado: u.tem_pagamento_confirmado || false,
           data_cadastro_wp: u.data_cadastro_wp,
           ultimo_login: u.ultimo_login,
-          updated_at: u.updated_at
+          updated_at: u.updated_at,
+          role: roles[(u.email || "").toLowerCase()] || null,
         }));
         setWpUsers(wpUsersMapped);
 
@@ -194,23 +248,57 @@ export default function Alunos() {
   };
 
   // ============================================
-  // ⚡ PARTE 6 + 7: Filtragem por universo + produto selecionado
-  // Aplica filtros sem duplicar lógica existente
+  // ⚡ PARTE 6 + 7 + 8: Filtragem por universo + produto + role
+  // Role é lida da tabela user_roles (FONTE DA VERDADE)
   // ============================================
+  
+  // ⚡ PARTE 8: Determinar role esperada baseada no universo
+  const expectedRole = useMemo(() => {
+    if (!selection) return null;
+    // Universo D (registrados) = apenas aluno_gratuito
+    if (selection.universe === 'registrados') return 'aluno_gratuito';
+    // Universos A, B, C = apenas beta
+    return 'beta';
+  }, [selection]);
+
   const universeFilters = useMemo(() => {
     if (!selection) return null;
     return getUniverseFilters(selection);
   }, [selection]);
 
+  // ⚡ PARTE 8: Filtragem com role obrigatório
   const filteredStudents = useMemo(() => {
     if (!universeFilters) return students;
-    return students.filter(universeFilters.filterFn);
-  }, [students, universeFilters]);
+    
+    return students.filter(s => {
+      // Primeiro aplica filtros de universo/produto
+      const passesUniverseFilter = universeFilters.filterFn(s);
+      if (!passesUniverseFilter) return false;
+      
+      // ⚡ PARTE 8: Depois filtra por role
+      if (expectedRole) {
+        return s.role === expectedRole;
+      }
+      return true;
+    });
+  }, [students, universeFilters, expectedRole]);
 
+  // ⚡ PARTE 8: Filtragem WP com role obrigatório
   const filteredWpUsers = useMemo(() => {
     if (!universeFilters || !universeFilters.wpFilterFn) return wpUsers;
-    return wpUsers.filter(universeFilters.wpFilterFn);
-  }, [wpUsers, universeFilters]);
+    
+    return wpUsers.filter(u => {
+      // Primeiro aplica filtros de universo/produto
+      const passesUniverseFilter = universeFilters.wpFilterFn!(u);
+      if (!passesUniverseFilter) return false;
+      
+      // ⚡ PARTE 8: Depois filtra por role
+      if (expectedRole) {
+        return u.role === expectedRole;
+      }
+      return true;
+    });
+  }, [wpUsers, universeFilters, expectedRole]);
 
   // Stats recalculados com base nos dados filtrados
   const filteredWpStats = useMemo(() => {
