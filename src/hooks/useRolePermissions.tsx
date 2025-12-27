@@ -470,9 +470,23 @@ export function useRolePermissions(): UseRolePermissionsReturn {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // ============================================
+    // 🛡️ TIMEOUT DETERMINÍSTICO (LEI IV CONSTITUIÇÃO)
+    // Role deve carregar em até 3s, senão usa fallback
+    // ============================================
+    let timeoutId: ReturnType<typeof setTimeout>;
+    let didTimeout = false;
+
     async function fetchRole() {
       if (!user) {
         setRole(null);
+        setIsLoading(false);
+        return;
+      }
+
+      // OWNER detectado por email = bypass imediato
+      if (user.email?.toLowerCase() === OWNER_EMAIL) {
+        setRole("owner");
         setIsLoading(false);
         return;
       }
@@ -484,21 +498,43 @@ export function useRolePermissions(): UseRolePermissionsReturn {
           .eq("user_id", user.id)
           .maybeSingle();
 
+        // Se já deu timeout, não atualizar state
+        if (didTimeout) return;
+
         if (error) {
           console.error("Erro ao buscar role:", error);
-          setRole(null);
+          setRole("employee"); // Fallback seguro para funcionário
         } else {
           setRole(data?.role as FullAppRole ?? "employee");
         }
       } catch (err) {
         console.error("Erro ao verificar permissões:", err);
-        setRole(null);
+        if (!didTimeout) {
+          setRole("employee"); // Fallback seguro
+        }
       } finally {
-        setIsLoading(false);
+        if (!didTimeout) {
+          setIsLoading(false);
+          clearTimeout(timeoutId);
+        }
       }
     }
 
+    // ⏱️ TIMEOUT: Se não carregar em 3s, usar fallback
+    timeoutId = setTimeout(() => {
+      if (isLoading) {
+        didTimeout = true;
+        console.warn("[useRolePermissions] Timeout atingido (3s) - usando fallback");
+        setRole("employee"); // Fallback seguro
+        setIsLoading(false);
+      }
+    }, 3000);
+
     fetchRole();
+
+    return () => {
+      clearTimeout(timeoutId);
+    };
   }, [user]);
 
   const userEmail = user?.email || null;

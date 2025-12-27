@@ -31,7 +31,7 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-import { useRoleBasedRedirect } from "@/hooks/useRoleBasedRedirect";
+// useRoleBasedRedirect removido - redirect agora é determinístico inline
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
@@ -133,7 +133,7 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp, resetPassword, isLoading: authLoading } = useAuth();
-  const { redirectAfterLogin } = useRoleBasedRedirect();
+  // redirectAfterLogin removido - redirect agora é determinístico inline
   
   const { 
     isEditMode, 
@@ -203,12 +203,27 @@ export default function Auth() {
     password: "",
   });
 
-  // Redirecionamento pós-login baseado no role
+  // ============================================
+  // 🛡️ REDIRECIONAMENTO PÓS-LOGIN DETERMINÍSTICO
+  // NÃO espera queries - usa regras simples
+  // ============================================
   useEffect(() => {
+    // Se já está em 2FA, não redirecionar
+    if (show2FA && pending2FAUser) return;
+    
+    // Se user está autenticado e NÃO está em loading
     if (user && !authLoading) {
-      redirectAfterLogin();
+      // Owner vai sempre para dashboard imediatamente
+      if (user.email?.toLowerCase() === 'moisesblank@gmail.com') {
+        navigate('/dashboard', { replace: true });
+        return;
+      }
+      
+      // Para outros usuários, deixar o RoleProtectedRoute decidir
+      // Redireciona para path padrão (o guard cuidará do resto)
+      navigate('/alunos', { replace: true });
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, show2FA, pending2FAUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -414,7 +429,10 @@ export default function Auth() {
             userName={pending2FAUser.nome}
             onVerified={() => {
               toast.success("Bem-vindo de volta!");
-              redirectAfterLogin();
+              // 🛡️ REDIRECT DETERMINÍSTICO após 2FA
+              // Owner vai para dashboard, outros para área de alunos
+              const isOwner = pending2FAUser.email.toLowerCase() === 'moisesblank@gmail.com';
+              navigate(isOwner ? '/dashboard' : '/alunos', { replace: true });
             }}
             onCancel={() => {
               setShow2FA(false);
