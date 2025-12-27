@@ -300,7 +300,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const path = typeof window !== "undefined" ? window.location.pathname : "";
     if (user && session && path === "/auth") {
       const email = (user.email || "").toLowerCase();
-      const target = email === OWNER_EMAIL ? "/dashboard" : "/alunos";
+
+      // ✅ Rotas reais (evita cair nas rotas legadas que redirecionam para "/")
+      const target = email === OWNER_EMAIL ? "/gestaofc" : "/alunos";
 
       // replace: evita voltar para /auth no histórico
       window.location.replace(target);
