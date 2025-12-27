@@ -294,7 +294,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Prof. Moisés Medeiros <noreply@moisesmedeiros.com.br>",
+        from: Deno.env.get("RESEND_FROM") || "Prof. Moisés Medeiros <falecom@moisesmedeiros.com.br>",
         to: [to],
         subject: template.subject,
         html: template.html,

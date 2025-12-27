@@ -200,7 +200,7 @@ serve(async (req) => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: `${from_name || "Curso Moisés Medeiros"} <${from_email || "onboarding@resend.dev"}>`,
+          from: from_email ? `${from_name || "Curso Moisés Medeiros"} <${from_email}>` : (Deno.env.get("RESEND_FROM") || "Curso Moisés Medeiros <falecom@moisesmedeiros.com.br>"),
           to: [to],
           subject: subject,
           html: html || `<p>${text}</p>`,

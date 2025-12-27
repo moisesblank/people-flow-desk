@@ -98,7 +98,7 @@ Fatores: ${payload.factors.map(f => f.description).join(', ')}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Moisés Medeiros <seguranca@moisesmedeiros.com.br>',
+            from: Deno.env.get("RESEND_FROM") || 'Moisés Medeiros <falecom@moisesmedeiros.com.br>',
             to: [OWNER_EMAIL],
             subject: `🚨 ALERTA CRÍTICO: Dispositivo Suspeito (Risk: ${payload.riskScore})`,
             html: `
