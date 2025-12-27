@@ -568,39 +568,49 @@ export function getPostLoginRedirect(role?: string | null, email?: string | null
     return "/gestaofc";
   }
   
-  // 3. Alunos pagantes → alunos
+  // 3. Alunos → alunos
   if (role && isAlunoRole(role)) {
     return "/alunos";
   }
   
-  // 4. Viewer/Free → comunidade
-  if (role === "viewer" || role === "aluno_gratuito") {
+  // 4. aluno_gratuito → comunidade (acesso limitado)
+  if (role === "aluno_gratuito") {
     return "/comunidade";
   }
   
-  // 5. Fallback seguro (sem role vai para comunidade)
-  return "/comunidade";
+  // 🚨 P0-3 CONSTITUIÇÃO v10.0: SEM ROLE = /perfil-incompleto
+  // NÃO pode ir para /auth (loop) nem /comunidade (sem autorização)
+  return "/perfil-incompleto";
 }
 
 /**
  * Obtém a URL de redirecionamento quando acesso é negado
+ * 🚨 P0-3: SEM ROLE = /perfil-incompleto (nunca /auth para logados)
  */
-export function getAccessDeniedRedirect(role?: string | null): string {
-  if (!role) return "/auth";
+export function getAccessDeniedRedirect(role?: string | null, isAuthenticated?: boolean): string {
+  // Se não está logado, vai para /auth
+  if (!isAuthenticated) {
+    return "/auth";
+  }
+  
+  // 🚨 P0-3: Se está logado mas SEM role, vai para /perfil-incompleto
+  if (!role) {
+    return "/perfil-incompleto";
+  }
   
   const category = getRoleCategory(role);
   
-  // ✅ MATRIZ SUPREMA v2.0.0: Redirects seguem blocos associativos
+  // Redirects seguem blocos associativos
   switch (category) {
     case "owner":
     case "gestao":
-      return "/gestaofc"; // ✅ CORRIGIDO: Era /gestao/dashboard, agora /gestaofc
+      return "/gestaofc";
     case "beta":
       return "/alunos";
     case "gratuito":
       return "/comunidade";
     default:
-      return "/";
+      return "/perfil-incompleto";
   }
 }
 
