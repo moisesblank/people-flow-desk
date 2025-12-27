@@ -624,7 +624,8 @@ export function validateDomainAccessForLogin(
   
   // Detectar domínio atual
   let dominioAtual: DomainAccessResult["dominioAtual"] = "unknown";
-  if (hostname.includes("localhost") || hostname.includes("127.0.0.1") || hostname.includes("lovable.app")) {
+  // Localhost + Lovable preview = bypass total
+  if (hostname.includes("localhost") || hostname.includes("127.0.0.1") || hostname.includes("lovable.app") || hostname.includes("lovableproject.com")) {
     dominioAtual = "localhost"; // Dev/Preview - permitir tudo
   } else if (isGestaoHost(hostname)) {
     dominioAtual = "gestao";
@@ -640,14 +641,11 @@ export function validateDomainAccessForLogin(
     return { permitido: true, dominioAtual };
   }
 
-  // Sem role = sem acesso
+  // Sem role = usuário não logado ainda → PERMITIR acessar /auth normalmente
+  // O redirecionamento só acontece APÓS login quando sabemos o role real
   if (!role) {
-    return { 
-      permitido: false, 
-      redirecionarPara: "/auth",
-      motivo: "Usuário sem role definido",
-      dominioAtual
-    };
+    console.log("[DOMAIN-ACCESS] Sem role (usuário não logado) - permitindo acesso para login");
+    return { permitido: true, dominioAtual };
   }
 
   // Localhost/Preview - permitir tudo para desenvolvimento
