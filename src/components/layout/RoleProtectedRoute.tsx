@@ -54,28 +54,10 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const location = useLocation();
   
   // ============================================
-  // 🔥 OWNER BYPASS DE FRICÇÃO (NÃO SEGURANÇA)
-  // Email hardcoded é usado APENAS para:
-  // - Não ficar preso em loading/spinner
-  // - Não depender de guards externos
-  // A autorização real (role) vem do banco e será verificada
+  // ⚠️ CRÍTICO: TODOS OS HOOKS DEVEM VIR PRIMEIRO
+  // React Error #310 = hooks em ordem diferente
+  // NUNCA fazer return antes de TODOS os hooks
   // ============================================
-  const isOwnerEmail = useMemo(() => {
-    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
-  }, [user?.email]);
-
-  // ✅ BYPASS DE FRICÇÃO: Owner não espera role query para renderizar
-  // MAS ainda precisa estar autenticado (user existe)
-  // A role real será carregada e usada para autorização no backend
-  if (isOwnerEmail && user && (role === 'owner' || roleLoading)) {
-    // Se role já carregou e não é owner, não dar bypass
-    if (!roleLoading && role !== 'owner') {
-      console.warn(`[RoleProtectedRoute] Email owner mas role=${role} - verificar banco`);
-      // Não fazer bypass - deixar fluxo normal verificar
-    } else {
-      return <>{children}</>;
-    }
-  }
   
   // ============================================
   // ⏱️ TIMEOUT GLOBAL (LEI IV CONSTITUIÇÃO)
@@ -95,6 +77,31 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   }, [authLoading, roleLoading]);
 
   // ============================================
+  // 🔥 OWNER BYPASS DE FRICÇÃO (NÃO SEGURANÇA)
+  // Email hardcoded é usado APENAS para:
+  // - Não ficar preso em loading/spinner
+  // - Não depender de guards externos
+  // A autorização real (role) vem do banco e será verificada
+  // ============================================
+  const isOwnerEmail = useMemo(() => {
+    return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+  }, [user?.email]);
+  
+  // ✅ BYPASS calculado como VALOR, não como return condicional
+  const shouldBypassForOwner = useMemo(() => {
+    // Owner autenticado com role confirmada OU ainda carregando
+    if (isOwnerEmail && user && (role === 'owner' || roleLoading)) {
+      // Se role já carregou e não é owner, não dar bypass
+      if (!roleLoading && role !== 'owner') {
+        console.warn(`[RoleProtectedRoute] Email owner mas role=${role} - verificar banco`);
+        return false;
+      }
+      return true;
+    }
+    return false;
+  }, [isOwnerEmail, user, role, roleLoading]);
+
+  // ============================================
   // 🛡️ DOMAIN GUARD - LOG ONLY (sem redirect)
   // ============================================
   useEffect(() => {
@@ -109,11 +116,25 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   }, [role, roleLoading, user]);
 
   // ============================================
+  // 🛡️ LÓGICA DE ACESSO (APÓS TODOS OS HOOKS)
+  // ============================================
+  const isGestaoPath = location.pathname.startsWith("/gestaofc");
+  const isStaffRole = ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'employee', 'marketing', 'contabilidade', 'afiliado'].includes(role || '');
+  const currentArea = requiredArea || URL_TO_AREA[location.pathname];
+  const hasPermission = currentArea ? hasAccess(currentArea) : hasAccessToUrl(location.pathname);
+  const isActuallyLoading = (authLoading || roleLoading) && !loadingTimeout;
+
+  // ============================================
+  // 🔥 OWNER BYPASS - DECISÃO (não estrutura)
+  // ============================================
+  if (shouldBypassForOwner) {
+    return <>{children}</>;
+  }
+
+  // ============================================
   // 🛡️ LOADING STATE DETERMINÍSTICO
   // Spinner máximo 5s, depois prossegue
   // ============================================
-  const isActuallyLoading = (authLoading || roleLoading) && !loadingTimeout;
-  
   if (isActuallyLoading) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
@@ -131,19 +152,13 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🔒 BLOCO 3: POLÍTICA DE ACESSO À ROTA
   // /gestaofc/* → OWNER/STAFF permitido, outros = 404
   // ============================================
-  const isGestaoPath = location.pathname.startsWith("/gestaofc");
-  const isStaffRole = ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'employee', 'marketing', 'contabilidade', 'afiliado'].includes(role || '');
-
+  
   // Se tentando acessar /gestaofc sem ser staff/owner → 404 GENÉRICO
   // Não expõe que a área existe (BLOCO 3.2)
   if (isGestaoPath && !isStaffRole && !isOwner) {
     console.log(`[GESTAO_GUARD] Usuário "${user.email}" (role: ${role}) tentou acessar /gestaofc → 404`);
     return <NotFoundPage />;
   }
-
-  // Check permission (área/rota) - para outras áreas
-  const currentArea = requiredArea || URL_TO_AREA[location.pathname];
-  const hasPermission = currentArea ? hasAccess(currentArea) : hasAccessToUrl(location.pathname);
 
   // Para rotas /gestaofc, já validamos acima
   if (isGestaoPath && isStaffRole) {
