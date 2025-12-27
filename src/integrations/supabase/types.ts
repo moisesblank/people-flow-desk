@@ -15713,6 +15713,8 @@ export type Database = {
       is_admin_or_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_admin_or_owner_v2: { Args: { p_user_id: string }; Returns: boolean }
       is_admin_v2: { Args: { p_user_id?: string }; Returns: boolean }
+      is_aluno: { Args: { _user_id: string }; Returns: boolean }
+      is_aluno_uid: { Args: never; Returns: boolean }
       is_beta: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_beta_v2: { Args: { p_user_id?: string }; Returns: boolean }
@@ -15722,6 +15724,7 @@ export type Database = {
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
       is_gestao_staff: { Args: { _user_id: string }; Returns: boolean }
+      is_gestao_staff_uid: { Args: never; Returns: boolean }
       is_ip_blocked: { Args: { p_ip_address: unknown }; Returns: boolean }
       is_marketing: { Args: { _user_id?: string }; Returns: boolean }
       is_matrix_admin: { Args: never; Returns: boolean }
@@ -15734,6 +15737,7 @@ export type Database = {
         Args: { _email: string }
         Returns: boolean
       }
+      is_owner_uid: { Args: never; Returns: boolean }
       is_sna_admin: { Args: never; Returns: boolean }
       is_suporte: { Args: { _user_id?: string }; Returns: boolean }
       is_user_banned_from_chat: {
