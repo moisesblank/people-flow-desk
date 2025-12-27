@@ -19,9 +19,7 @@
       "https://moisesmedeiros.com.br"
     ],
     "core_domain": "https://pro.moisesmedeiros.com.br",
-    "legacy_domains": [
-      "https://gestao.moisesmedeiros.com.br"
-    ]
+    "legacy_domains": []
   },
 
   "domain_enforcement": {
@@ -36,10 +34,11 @@
     },
     "legacy_domain": {
       "domain": "https://gestao.moisesmedeiros.com.br",
-      "state": "terminated",
-      "direct_access": "forbidden",
+      "state": "DELETED",
+      "direct_access": "DNS_REMOVED",
       "all_logic_migrated_to": "https://pro.moisesmedeiros.com.br/gestaofc",
-      "any_request_action": "redirect_or_block"
+      "any_request_action": "DNS_will_not_resolve",
+      "removal_date": "2025-12-27"
     }
   },
 
