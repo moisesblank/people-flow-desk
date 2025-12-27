@@ -337,6 +337,13 @@ export default function Auth() {
           signIn(formData.email, formData.password, {})
         );
 
+        console.log('[AUTH] Login response:', {
+          hasError: Boolean(result.error),
+          hasUser: Boolean(result.user),
+          // Nosso 2FA é APP-level: se login OK, sempre exige 2FA antes do redirect.
+          needs2FA: !result.error && Boolean(result.user),
+        });
+
         console.log('[AUTH] 5. Resposta do signIn:', {
           hasError: Boolean(result.error),
           blocked: Boolean(result.blocked),
