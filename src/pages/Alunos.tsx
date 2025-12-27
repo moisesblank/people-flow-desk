@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown, ArrowLeft, UserPlus } from "lucide-react";
+import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown, ArrowLeft, UserPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { FuturisticCard } from "@/components/ui/futuristic-card";
@@ -27,6 +27,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { VirtualTable } from "@/components/performance/VirtualTable";
 import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
+import { useAlunosPaginados } from "@/hooks/useAlunosPaginados";
 import { 
   AlunosUniverseSelector, 
   AlunoUniverseType, 
@@ -84,7 +85,26 @@ export default function Alunos() {
     updateUrlWithSelection(newSelection);
   };
   
-  const [students, setStudents] = useState<Student[]>([]);
+  // ============================================
+  // ⚡ PARTE 14: Hook de paginação server-side
+  // Contadores agregados + paginação real
+  // ============================================
+  const {
+    alunos: paginatedStudents,
+    contadores,
+    page,
+    totalPages,
+    hasNextPage,
+    hasPrevPage,
+    goToPage,
+    nextPage,
+    prevPage,
+    isLoading: isLoadingPaginated,
+    refetch: refetchPaginated,
+  } = useAlunosPaginados({
+    pageSize: 50, // Paginação obrigatória: 50 por página
+  });
+  
   const [wpUsers, setWpUsers] = useState<WordPressUser[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -96,7 +116,7 @@ export default function Alunos() {
   // ⚡ PARTE 9: Modal de Criar Acesso Oficial
   const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
 
-  // Stats
+  // Stats WordPress
   const [wpStats, setWpStats] = useState({
     total: 0,
     ativos: 0,
@@ -105,148 +125,108 @@ export default function Alunos() {
   });
 
   // ============================================
-  // ⚡ PARTE 8: Mapa de roles por email
-  // Lido da tabela user_roles (FONTE DA VERDADE)
+  // ⚡ PARTE 14: Converter alunos paginados para formato Student
   // ============================================
-  const [roleMap, setRoleMap] = useState<RoleMap>({});
+  const students: Student[] = useMemo(() => {
+    return paginatedStudents.map(a => ({
+      id: a.id,
+      nome: a.nome,
+      email: a.email,
+      curso: '',
+      status: a.status,
+      role: a.role,
+    }));
+  }, [paginatedStudents]);
 
-  const fetchRoles = async () => {
+  // ============================================
+  // ⚡ PARTE 14: Fetch WordPress separado (paginado)
+  // ============================================
+  const fetchWpData = async () => {
     try {
-      // Buscar roles de alunos (beta e aluno_gratuito) via profiles + user_roles
-      const { data: rolesData, error: rolesError } = await supabase
-        .from('user_roles')
-        .select(`
-          role,
-          user_id,
-          profiles!inner(email)
-        `)
-        .in('role', ['beta', 'aluno_gratuito']);
-      
-      if (rolesError) {
-        console.error('Error fetching roles:', rolesError);
-        return {};
-      }
-      
-      // Criar mapa email -> role
-      const map: RoleMap = {};
-      (rolesData || []).forEach((r: any) => {
-        const email = r.profiles?.email?.toLowerCase();
-        if (email) {
-          // Se já tem beta, mantém beta (prioridade)
-          if (map[email] === 'beta') return;
-          map[email] = r.role as 'beta' | 'aluno_gratuito';
-        }
-      });
-      
-      return map;
-    } catch (error) {
-      console.error('Error in fetchRoles:', error);
-      return {};
-    }
-  };
-
-  const fetchData = async () => {
-    try {
-      // ⚡ PARTE 8: Buscar roles primeiro
-      const roles = await fetchRoles();
-      setRoleMap(roles);
-
-      // Fetch alunos from original table
-      const { data: alunosData, error: alunosError } = await supabase
-        .from("alunos")
-        .select("id, nome, email, curso_id, status")
-        .order("nome")
-        .limit(500);
-      if (alunosError) throw alunosError;
-      
-      // ⚡ PARTE 8: Adicionar role a cada aluno
-      setStudents(alunosData?.map(s => ({
-        id: s.id,
-        nome: s.nome,
-        email: s.email || "",
-        curso: s.curso_id || "",
-        status: s.status || "ativo",
-        role: roles[(s.email || "").toLowerCase()] || null,
-      })) || []);
-
-      // Fetch WordPress sync users
       const { data: wpData, error: wpError } = await supabase
         .from("usuarios_wordpress_sync")
         .select("id, wp_user_id, email, nome, status_acesso, grupos, tem_pagamento_confirmado, data_cadastro_wp, ultimo_login, updated_at")
         .order("updated_at", { ascending: false })
-        .limit(500);
+        .limit(100); // Limite para WP
       
       if (wpError) {
         console.error("Error fetching WP users:", wpError);
-      } else {
-        // ⚡ PARTE 8: Adicionar role a cada usuário WordPress
-        const wpUsersMapped: WordPressUser[] = (wpData || []).map(u => ({
-          id: u.id,
-          wp_user_id: u.wp_user_id,
-          email: u.email,
-          nome: u.nome || '',
-          grupos: Array.isArray(u.grupos) ? (u.grupos as unknown as string[]) : [],
-          status_acesso: u.status_acesso || 'aguardando_pagamento',
-          tem_pagamento_confirmado: u.tem_pagamento_confirmado || false,
-          data_cadastro_wp: u.data_cadastro_wp,
-          ultimo_login: u.ultimo_login,
-          updated_at: u.updated_at,
-          role: roles[(u.email || "").toLowerCase()] || null,
-        }));
-        setWpUsers(wpUsersMapped);
-
-        // Calculate stats
-        const ativos = wpUsersMapped.filter(u => u.status_acesso === 'ativo').length;
-        const comPagamento = wpUsersMapped.filter(u => u.tem_pagamento_confirmado).length;
-        const semPagamento = wpUsersMapped.filter(u => !u.tem_pagamento_confirmado && u.grupos.length > 0).length;
-
-        setWpStats({
-          total: wpUsersMapped.length,
-          ativos,
-          comPagamento,
-          semPagamento
-        });
+        return;
       }
+      
+      const wpUsersMapped: WordPressUser[] = (wpData || []).map(u => ({
+        id: u.id,
+        wp_user_id: u.wp_user_id,
+        email: u.email,
+        nome: u.nome || '',
+        grupos: Array.isArray(u.grupos) ? (u.grupos as unknown as string[]) : [],
+        status_acesso: u.status_acesso || 'aguardando_pagamento',
+        tem_pagamento_confirmado: u.tem_pagamento_confirmado || false,
+        data_cadastro_wp: u.data_cadastro_wp,
+        ultimo_login: u.ultimo_login,
+        updated_at: u.updated_at,
+        role: null,
+      }));
+      setWpUsers(wpUsersMapped);
+
+      // Calculate stats via count queries (agregado)
+      const [totalRes, ativosRes, comPagRes] = await Promise.all([
+        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }),
+        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }).eq('status_acesso', 'ativo'),
+        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }).eq('tem_pagamento_confirmado', true),
+      ]);
+
+      setWpStats({
+        total: totalRes.count || 0,
+        ativos: ativosRes.count || 0,
+        comPagamento: comPagRes.count || 0,
+        semPagamento: (totalRes.count || 0) - (comPagRes.count || 0)
+      });
     } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Erro ao carregar dados");
+      console.error("Error fetching WP data:", error);
     } finally {
       setIsLoading(false);
     }
   };
+  
+  // Função para refetch completo
+  const fetchData = useCallback(() => {
+    refetchPaginated();
+    fetchWpData();
+  }, [refetchPaginated]);
 
   useEffect(() => {
-    fetchData();
+    fetchWpData();
 
     // ============================================
-    // ⚡ PARTE 13: Realtime subscription para sincronização
-    // Tabelas: usuarios_wordpress_sync, alunos, profiles, user_roles
+    // ⚡ PARTE 14: Realtime subscription para sincronização
     // Estratégia: invalidation (re-fetch ao mudar)
+    // NÃO assina tabela inteira - apenas invalida cache
     // ============================================
     const channel = supabase
       .channel('gestao-alunos-realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios_wordpress_sync' }, () => {
         console.log('[GESTAO-REALTIME] usuarios_wordpress_sync changed');
-        fetchData();
+        fetchWpData();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => {
         console.log('[GESTAO-REALTIME] alunos changed');
-        fetchData();
+        refetchPaginated();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
         console.log('[GESTAO-REALTIME] profiles changed');
-        fetchData();
+        refetchPaginated();
       })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => {
         console.log('[GESTAO-REALTIME] user_roles changed');
-        fetchData();
+        refetchPaginated();
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [refetchPaginated]);
 
   const syncWordPress = async () => {
     setIsSyncing(true);
@@ -334,8 +314,9 @@ export default function Alunos() {
     };
   }, [filteredWpUsers]);
 
-  const ativos = filteredStudents.filter(s => s.status === "Ativo" || s.status === "ativo").length;
-  const concluidos = filteredStudents.filter(s => s.status === "Concluído" || s.status === "concluido").length;
+  // ⚡ PARTE 14: Usar contadores agregados do hook (zero N+1)
+  const ativos = contadores.ativos;
+  const concluidos = contadores.concluidos;
 
   const openModal = (student?: Student) => {
     setEditingItem(student || null);
@@ -466,9 +447,9 @@ export default function Alunos() {
             badge="STUDENT MATRIX"
             accentColor="blue"
             stats={[
-              { label: "Alunos DB", value: filteredStudents.length, icon: Users },
-              { label: "WordPress", value: filteredWpStats.total, icon: Globe },
-              { label: "Com Pagamento", value: filteredWpStats.comPagamento, icon: CheckCircle },
+              { label: "Alunos DB", value: contadores.total, icon: Users },
+              { label: "WordPress", value: wpStats.total, icon: Globe },
+              { label: "Com Pagamento", value: wpStats.comPagamento, icon: CheckCircle },
             ]}
             action={
               <div className="flex gap-2">
@@ -506,37 +487,37 @@ export default function Alunos() {
             <TabsList className="grid w-full max-w-md grid-cols-2 bg-background/50 border border-blue-500/30">
               <TabsTrigger value="alunos" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400">
                 <Users className="h-4 w-4 mr-2" />
-                Alunos DB ({filteredStudents.length})
+                Alunos DB ({contadores.total})
               </TabsTrigger>
               <TabsTrigger value="wordpress" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
                 <Globe className="h-4 w-4 mr-2" />
-                WordPress ({filteredWpStats.total})
+                WordPress ({wpStats.total})
               </TabsTrigger>
             </TabsList>
 
             {/* Tab: Alunos */}
             <TabsContent value="alunos" className="space-y-6 mt-6">
-              {/* Stats Grid */}
+              {/* Stats Grid - ⚡ PARTE 14: Usando contadores agregados */}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <FuturisticCard accentColor="blue" className="p-4 text-center">
                   <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-blue-400">{filteredStudents.length}</div>
+                  <div className="text-2xl font-bold text-blue-400">{contadores.total}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
                 </FuturisticCard>
                 <FuturisticCard accentColor="green" className="p-4 text-center">
                   <GraduationCap className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-emerald-400">{ativos}</div>
+                  <div className="text-2xl font-bold text-emerald-400">{contadores.ativos}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
                 </FuturisticCard>
                 <FuturisticCard accentColor="purple" className="p-4 text-center">
                   <Award className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-purple-400">{concluidos}</div>
+                  <div className="text-2xl font-bold text-purple-400">{contadores.concluidos}</div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídos</div>
                 </FuturisticCard>
                 <FuturisticCard accentColor="cyan" className="p-4 text-center">
                   <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
                   <div className="text-2xl font-bold text-cyan-400">
-                    {filteredStudents.length > 0 ? Math.round((concluidos / filteredStudents.length) * 100) : 0}%
+                    {contadores.total > 0 ? Math.round((contadores.concluidos / contadores.total) * 100) : 0}%
                   </div>
                   <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa</div>
                 </FuturisticCard>
@@ -557,13 +538,46 @@ export default function Alunos() {
                 }))}
               />
 
-              {/* Table */}
+              {/* ⚡ PARTE 14: Table com paginação server-side */}
               <FuturisticCard accentColor="blue">
+                {/* Header com info de paginação */}
+                <div className="p-4 border-b border-blue-500/20 flex items-center justify-between">
+                  <h3 className="font-semibold text-blue-400">
+                    Alunos Cadastrados
+                    <span className="text-muted-foreground font-normal ml-2">
+                      (Página {page} de {totalPages})
+                    </span>
+                  </h3>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={prevPage}
+                      disabled={!hasPrevPage || isLoadingPaginated}
+                      className="border-blue-500/30"
+                    >
+                      <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                      {page} / {totalPages}
+                    </span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={nextPage}
+                      disabled={!hasNextPage || isLoadingPaginated}
+                      className="border-blue-500/30"
+                    >
+                      <ChevronRight className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
+                
                 <VirtualTable
                   items={filteredStudents}
                   rowHeight={56}
                   containerHeight={500}
-                  emptyMessage="Nenhum aluno cadastrado"
+                  emptyMessage={isLoadingPaginated ? "Carregando..." : "Nenhum aluno cadastrado"}
                   renderHeader={() => (
                     <table className="w-full">
                       <thead className="bg-blue-500/10">
@@ -623,6 +637,53 @@ export default function Alunos() {
                     </table>
                   )}
                 />
+                
+                {/* Footer com paginação */}
+                <div className="p-4 border-t border-blue-500/20 flex items-center justify-between">
+                  <span className="text-sm text-muted-foreground">
+                    Mostrando {filteredStudents.length} de {contadores.total} alunos
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(1)}
+                      disabled={page === 1 || isLoadingPaginated}
+                      className="border-blue-500/30"
+                    >
+                      Primeira
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={prevPage}
+                      disabled={!hasPrevPage || isLoadingPaginated}
+                      className="border-blue-500/30"
+                    >
+                      <ChevronLeft className="h-4 w-4 mr-1" />
+                      Anterior
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={nextPage}
+                      disabled={!hasNextPage || isLoadingPaginated}
+                      className="border-blue-500/30"
+                    >
+                      Próxima
+                      <ChevronRight className="h-4 w-4 ml-1" />
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => goToPage(totalPages)}
+                      disabled={page === totalPages || isLoadingPaginated}
+                      className="border-blue-500/30"
+                    >
+                      Última
+                    </Button>
+                  </div>
+                </div>
               </FuturisticCard>
             </TabsContent>
 
