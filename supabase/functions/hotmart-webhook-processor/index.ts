@@ -1,15 +1,18 @@
 // ============================================
-// MOISÉS MEDEIROS v17.0 - PRODUÇÃO FINAL
+// MOISÉS MEDEIROS v18.0 - PRODUÇÃO FINAL
 // Sistema de Gestão Integrado - Zero Erros
+// PARTE 12: Integração com c-create-official-access
 // ============================================
 // A) WordPress cria usuário → Registra LEAD (não cria aluno)
-// B) Hotmart aprova compra → Cria ALUNO e converte lead
+// B) Hotmart aprova compra → Cria ALUNO + Auth + user_roles (role=beta)
 // C) RD Station → Notifica e registra envio de email
 // D) WebHook_MKT → Notifica site e registra evento
+// E) Email de boas-vindas via Resend
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { Resend } from 'https://esm.sh/resend@2.0.0';
 
 import { getWebhookCorsHeaders } from "../_shared/corsConfig.ts";
 
@@ -105,6 +108,296 @@ class Logger {
 
   separator(title: string) {
     console.log(`\n${"=".repeat(50)}\n${this.prefix} ${title}\n${"=".repeat(50)}`);
+  }
+}
+
+// ============================================
+// CRIAR ACESSO BETA (PARTE 12)
+// Lógica alinhada com c-create-official-access
+// Cria Auth user + profiles + user_roles (role=beta)
+// Envia email de boas-vindas via Resend
+// ============================================
+
+interface CreateBetaResult {
+  success: boolean;
+  user_id?: string;
+  email_sent: boolean;
+  already_existed: boolean;
+  error?: string;
+}
+
+async function createBetaAccess(
+  supabase: any,
+  email: string,
+  name: string,
+  phone: string | null,
+  logger: Logger
+): Promise<CreateBetaResult> {
+  
+  logger.info("🔐 Criando acesso Beta (Auth + user_roles)...", { email, name });
+
+  const result: CreateBetaResult = {
+    success: false,
+    email_sent: false,
+    already_existed: false,
+  };
+
+  try {
+    // 1. Verificar se usuário já existe no Auth (por email)
+    let userId: string | null = null;
+    
+    // Buscar em profiles primeiro (mais confiável)
+    const { data: existingProfile } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .eq('email', email.toLowerCase())
+      .maybeSingle();
+
+    if (existingProfile) {
+      userId = existingProfile.id;
+      result.already_existed = true;
+      logger.info("ℹ️ Usuário já existe em profiles:", { id: userId });
+    }
+
+    // 2. Se não existe, criar no Supabase Auth
+    if (!userId) {
+      logger.info("📝 Criando novo usuário no Auth...");
+      
+      const { data: newUser, error: createError } = await supabase.auth.admin.createUser({
+        email: email.toLowerCase(),
+        email_confirm: true,
+        user_metadata: {
+          nome: name,
+          created_by: 'hotmart-webhook',
+          created_via: 'hotmart-webhook-processor',
+        },
+      });
+
+      if (createError) {
+        // Verificar se é erro de "user already exists"
+        if (createError.message?.toLowerCase().includes('already') || 
+            createError.message?.toLowerCase().includes('exists')) {
+          logger.warn("⚠️ Usuário já existe no Auth, buscando...");
+          
+          // Buscar pelo email no Auth
+          const { data: listData } = await supabase.auth.admin.listUsers();
+          const existingAuthUser = listData?.users?.find(
+            (u: any) => u.email?.toLowerCase() === email.toLowerCase()
+          );
+          
+          if (existingAuthUser) {
+            userId = existingAuthUser.id;
+            result.already_existed = true;
+            logger.info("✅ Usuário encontrado no Auth:", { id: userId });
+          } else {
+            result.error = `Erro ao criar usuário: ${createError.message}`;
+            logger.error("❌ Erro ao criar usuário e não encontrado:", createError);
+            return result;
+          }
+        } else {
+          result.error = `Erro ao criar usuário: ${createError.message}`;
+          logger.error("❌ Erro ao criar usuário:", createError);
+          return result;
+        }
+      } else if (newUser?.user) {
+        userId = newUser.user.id;
+        logger.success("✅ Novo usuário criado no Auth:", { id: userId });
+      }
+    }
+
+    if (!userId) {
+      result.error = "Não foi possível obter user_id";
+      logger.error("❌ user_id não obtido após criação/busca");
+      return result;
+    }
+
+    result.user_id = userId;
+
+    // 3. Upsert em profiles
+    const profileData: Record<string, unknown> = {
+      id: userId,
+      nome: name,
+      email: email.toLowerCase(),
+    };
+    if (phone) {
+      profileData.phone = phone;
+    }
+
+    const { error: profileError } = await supabase
+      .from('profiles')
+      .upsert(profileData, { onConflict: 'id' });
+
+    if (profileError) {
+      logger.warn("⚠️ Profile upsert warning:", profileError.message);
+    } else {
+      logger.success("✅ Profile upserted");
+    }
+
+    // 4. Upsert em user_roles (CONSTITUIÇÃO v10.x - role=beta via tabela)
+    const { error: roleError } = await supabase
+      .from('user_roles')
+      .upsert({
+        user_id: userId,
+        role: 'beta',
+      }, { 
+        onConflict: 'user_id,role',
+        ignoreDuplicates: false,
+      });
+
+    if (roleError) {
+      logger.error("❌ Role upsert error:", roleError);
+      result.error = `Erro ao atribuir role: ${roleError.message}`;
+      // Não retorna erro - continua para tentar email
+    } else {
+      logger.success("✅ Role beta atribuída via user_roles");
+    }
+
+    // 5. Gerar link de recuperação de senha
+    let passwordSetupLink: string | undefined;
+    
+    if (!result.already_existed) {
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email: email.toLowerCase(),
+        options: {
+          redirectTo: 'https://pro.moisesmedeiros.com.br/auth?action=set-password',
+        },
+      });
+
+      if (linkError) {
+        logger.warn("⚠️ Erro ao gerar link de senha:", linkError.message);
+      } else if (linkData?.properties?.action_link) {
+        passwordSetupLink = linkData.properties.action_link;
+        logger.success("✅ Link de configuração de senha gerado");
+      }
+    }
+
+    // 6. Enviar email de boas-vindas via Resend
+    const resendApiKey = Deno.env.get('RESEND_API_KEY');
+    const resendFrom = Deno.env.get('RESEND_FROM');
+
+    if (resendApiKey && resendFrom) {
+      try {
+        const resend = new Resend(resendApiKey);
+        const platformUrl = 'https://pro.moisesmedeiros.com.br';
+        const needsPasswordSetup = !!passwordSetupLink;
+
+        const htmlContent = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif; background-color: #f4f4f5;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+          <tr>
+            <td style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); padding: 40px; text-align: center;">
+              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">
+                🎉 Parabéns pela compra, ${name}!
+              </h1>
+              <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0; font-size: 16px;">
+                Seu acesso Premium está ativo
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px;">
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Olá, <strong>${name}</strong>!
+              </p>
+              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
+                Seu pagamento foi confirmado e você agora tem acesso completo à plataforma:
+              </p>
+              <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin: 0 0 24px; text-align: center;">
+                <span style="color: #166534; font-size: 18px; font-weight: 600;">
+                  ✅ Aluno Beta (Premium)
+                </span>
+              </div>
+              ${needsPasswordSetup ? `
+              <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 0 0 24px;">
+                <h3 style="color: #92400e; margin: 0 0 12px; font-size: 16px;">🔐 Configure sua senha</h3>
+                <p style="color: #78350f; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
+                  Para acessar a plataforma, defina sua senha clicando no botão abaixo:
+                </p>
+                <a href="${passwordSetupLink}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;">
+                  Definir Minha Senha
+                </a>
+                <p style="color: #92400e; font-size: 12px; margin: 16px 0 0;">
+                  ⚠️ Este link expira em 24 horas.
+                </p>
+              </div>
+              ` : `
+              <div style="background-color: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 20px; margin: 0 0 24px;">
+                <h3 style="color: #065f46; margin: 0 0 12px; font-size: 16px;">✅ Acesso pronto!</h3>
+                <a href="${platformUrl}/auth" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600;">
+                  Acessar Plataforma
+                </a>
+              </div>
+              `}
+              <h3 style="color: #111827; font-size: 18px; margin: 24px 0 12px;">📚 O que você terá acesso:</h3>
+              <ul style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
+                <li>Todas as videoaulas disponíveis</li>
+                <li>Materiais didáticos exclusivos</li>
+                <li>Simulados e exercícios</li>
+                <li>Correção de redações</li>
+                <li>Tutoria e suporte</li>
+                <li>Comunidade premium</li>
+              </ul>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
+              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
+                © ${new Date().getFullYear()} PRO Moisés Medeiros. Todos os direitos reservados.
+              </p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>`;
+
+        const { error: emailError } = await resend.emails.send({
+          from: resendFrom,
+          to: [email.toLowerCase()],
+          subject: needsPasswordSetup 
+            ? `🎉 Parabéns, ${name}! Configure seu acesso Premium` 
+            : `🎉 Parabéns, ${name}! Seu acesso Premium está pronto`,
+          html: htmlContent,
+        });
+
+        if (emailError) {
+          logger.warn("⚠️ Erro ao enviar email:", emailError);
+        } else {
+          result.email_sent = true;
+          logger.success("✅ Email de boas-vindas enviado");
+        }
+      } catch (emailErr) {
+        logger.warn("⚠️ Exceção ao enviar email:", emailErr);
+      }
+    } else {
+      logger.warn("⚠️ RESEND_API_KEY ou RESEND_FROM não configurado - email não enviado");
+    }
+
+    result.success = true;
+    logger.success("✅ Acesso Beta criado com sucesso", { 
+      user_id: userId, 
+      email_sent: result.email_sent,
+      already_existed: result.already_existed,
+    });
+
+    return result;
+
+  } catch (err) {
+    result.error = err instanceof Error ? err.message : 'Erro desconhecido';
+    logger.error("❌ Exceção em createBetaAccess:", err);
+    return result;
   }
 }
 
@@ -872,7 +1165,7 @@ async function handleHotmartPurchase(
       existingLead ? `Lead em: ${leadInfo.data_criacao || "N/A"}` : null,
       `TX: ${data.transactionId || "N/A"}`,
       `Processado: ${new Date().toLocaleString("pt-BR")}`,
-      `Webhook: v17`,
+      `Webhook: v18 (Beta Access)`,
     ].filter(Boolean).join(" | "),
     updated_at: timestamp,
   };
@@ -909,6 +1202,29 @@ async function handleHotmartPurchase(
   }
 
   logger.success("Aluno criado/atualizado", { id: alunoId });
+
+  // ============================================
+  // PARTE 12: CRIAR ACESSO BETA (Auth + user_roles)
+  // Idempotente por email, role sempre = beta
+  // ============================================
+  const betaAccessResult = await createBetaAccess(
+    supabase,
+    data.email,
+    data.name || existingLead?.nome || "Aluno Hotmart",
+    data.phone || existingLead?.phone || null,
+    logger
+  );
+
+  if (!betaAccessResult.success) {
+    logger.warn("⚠️ Falha ao criar acesso Beta (Auth/user_roles)", betaAccessResult.error);
+    // Não falha o webhook - aluno já foi criado
+  } else {
+    logger.success("✅ Acesso Beta criado/atualizado", { 
+      user_id: betaAccessResult.user_id,
+      email_sent: betaAccessResult.email_sent,
+      already_existed: betaAccessResult.already_existed,
+    });
+  }
 
   // ============================================
   // SALVAR TRANSAÇÃO NA TABELA transacoes_hotmart_completo
@@ -1014,7 +1330,7 @@ async function handleHotmartPurchase(
     { access_level: "beta", group: "Beta", origin: "hotmart_approved" }
   );
 
-  // Registrar evento principal
+  // Registrar evento principal (inclui resultado do acesso Beta)
   await supabase.from("integration_events").insert({
     event_type: "hotmart_purchase_processed",
     source: "hotmart",
@@ -1033,6 +1349,13 @@ async function handleHotmartPurchase(
       integrations: {
         rd_station: rdResult.success ? "OK" : rdResult.message,
         webhook_mkt: mktResult.success ? "OK" : mktResult.message,
+      },
+      beta_access: {
+        success: betaAccessResult.success,
+        user_id: betaAccessResult.user_id || null,
+        email_sent: betaAccessResult.email_sent,
+        already_existed: betaAccessResult.already_existed,
+        error: betaAccessResult.error || null,
       },
       action: "ALUNO_CRIADO_COMPRA_APROVADA",
     },
@@ -1057,9 +1380,10 @@ async function handleHotmartPurchase(
       "",
       `RD Station: ${rdResult.success ? "✅" : "❌"}`,
       `WebHook_MKT: ${mktResult.success ? "✅" : "❌"}`,
+      `Acesso Beta: ${betaAccessResult.success ? "✅" : "❌"} ${betaAccessResult.email_sent ? "(email enviado)" : ""}`,
     ].join("\n"),
     "sale",
-    "/alunos",
+    "/gestaofc/gestao-alunos",
     logger
   );
 
@@ -1070,12 +1394,20 @@ async function handleHotmartPurchase(
     type: "purchase_approved",
     code: "ALUNO_CREATED",
     aluno_id: alunoId,
+    user_id: betaAccessResult.user_id || null,
+    role: "beta",
     had_lead: !!existingLead,
     lead_admin: leadInfo.admin_criador || null,
     message: "Compra aprovada - Aluno criado com sucesso",
     integrations: {
       rd_station: rdResult.success,
       webhook_mkt: mktResult.success,
+    },
+    beta_access: {
+      success: betaAccessResult.success,
+      user_id: betaAccessResult.user_id,
+      email_sent: betaAccessResult.email_sent,
+      already_existed: betaAccessResult.already_existed,
     },
     data: {
       email: data.email,
