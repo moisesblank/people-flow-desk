@@ -22,6 +22,22 @@ const VALID_STAFF_ROLES: StaffRole[] = [
   "admin", "coordenacao", "contabilidade", "suporte", "monitoria", "marketing", "afiliado"
 ];
 
+const PASSWORD_POLICY = {
+  minLength: 8,
+  // pelo menos 1 minúscula, 1 maiúscula, 1 número e 1 especial
+  regex: /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]).+$/,
+} as const;
+
+function validateStrongPassword(password: string): string | null {
+  if (!password || password.length < PASSWORD_POLICY.minLength) {
+    return `Senha fraca: mínimo de ${PASSWORD_POLICY.minLength} caracteres.`;
+  }
+  if (!PASSWORD_POLICY.regex.test(password)) {
+    return "Senha fraca: use ao menos 1 letra minúscula, 1 maiúscula, 1 número e 1 caractere especial.";
+  }
+  return null;
+}
+
 interface InviteRequest {
   email: string;
   nome: string;
@@ -84,9 +100,10 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    if (!senha || senha.length < 6) {
+    const passwordError = validateStrongPassword(senha);
+    if (passwordError) {
       return new Response(
-        JSON.stringify({ error: "Senha é obrigatória e deve ter no mínimo 6 caracteres" }),
+        JSON.stringify({ error: passwordError }),
         { status: 400, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
@@ -150,24 +167,21 @@ const handler = async (req: Request): Promise<Response> => {
       
       // 🎯 FIX: Enviar email de boas-vindas também para usuários existentes
       try {
-        const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${supabaseServiceKey}`,
-          },
-          body: JSON.stringify({
-            to: email,
-            type: "welcome",
-            data: { nome },
-          }),
-        });
+        const { data: emailData, error: emailError } = await supabase.functions.invoke(
+          "send-notification-email",
+          {
+            body: {
+              to: email,
+              type: "welcome",
+              data: { nome },
+            },
+          }
+        );
 
-        if (emailResponse.ok) {
-          console.log("[INVITE] Welcome email sent to existing user");
+        if (emailError) {
+          console.warn("[INVITE] Email sending may have failed:", emailError.message);
         } else {
-          const errData = await emailResponse.text();
-          console.warn("[INVITE] Email sending may have failed:", errData);
+          console.log("[INVITE] Welcome email sent to existing user", emailData);
         }
       } catch (emailErr) {
         console.warn("[INVITE] Email error:", emailErr);
@@ -243,23 +257,21 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send welcome email usando template padronizado (aprovado 16/12/2024)
     try {
-      const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Authorization": `Bearer ${supabaseServiceKey}`,
-        },
-        body: JSON.stringify({
-          to: email,
-          type: "welcome",
-          data: { nome },
-        }),
-      });
+      const { data: emailData, error: emailError } = await supabase.functions.invoke(
+        "send-notification-email",
+        {
+          body: {
+            to: email,
+            type: "welcome",
+            data: { nome },
+          },
+        }
+      );
 
-      if (emailResponse.ok) {
-        console.log("[INVITE] Welcome email sent successfully");
+      if (emailError) {
+        console.warn("[INVITE] Email sending may have failed:", emailError.message);
       } else {
-        console.warn("[INVITE] Email sending may have failed");
+        console.log("[INVITE] Welcome email sent successfully", emailData);
       }
     } catch (emailErr) {
       console.warn("[INVITE] Email error:", emailErr);
