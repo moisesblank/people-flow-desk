@@ -92,7 +92,7 @@ export default function AlunosRouteSwitcher() {
     );
   }
 
-  // BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
+// BETA = Aluno pagante → SEMPRE portal do aluno (pro.moisesmedeiros.com.br/alunos)
   if (isBeta) {
     return (
       <>
@@ -107,6 +107,15 @@ export default function AlunosRouteSwitcher() {
         <AlunoDashboard />
       </>
     );
+  }
+
+  // ============================================
+  // 🚫 ALUNO_GRATUITO = Acesso limitado → Redireciona para /comunidade
+  // CONSTITUIÇÃO SYNAPSE Ω v10.x — PARTE 3
+  // Role lida da tabela user_roles (não metadata)
+  // ============================================
+  if (role === "aluno_gratuito") {
+    return <Navigate to="/comunidade" replace />;
   }
 
   // ADMIN/FUNCIONÁRIOS no domínio de gestão → Gestão de Alunos
