@@ -19,10 +19,17 @@ import { supabase } from "@/integrations/supabase/client";
 // ============================================
 export const OWNER_EMAIL = "moisesblank@gmail.com";
 
+// 🎯 CONSTITUIÇÃO ROLES v1.0.0 - Nomenclatura Definitiva
+// "employee" e "funcionario" são CATEGORIAS, não roles individuais
 export const ROLES = {
   OWNER: "owner",
   ADMIN: "admin",
-  FUNCIONARIO: "funcionario",
+  COORDENACAO: "coordenacao",
+  CONTABILIDADE: "contabilidade",
+  SUPORTE: "suporte",
+  MONITORIA: "monitoria",
+  MARKETING: "marketing",
+  AFILIADO: "afiliado",
   BETA: "beta",
   USER: "user",
 } as const;
@@ -33,9 +40,14 @@ export type AppRole = (typeof ROLES)[keyof typeof ROLES];
 // HIERARQUIA DE ROLES
 // ============================================
 export const ROLE_HIERARCHY: Record<AppRole, AppRole[]> = {
-  owner: ["owner", "admin", "funcionario", "beta", "user"],
-  admin: ["admin", "funcionario", "beta", "user"],
-  funcionario: ["funcionario", "beta", "user"],
+  owner: ["owner", "admin", "coordenacao", "contabilidade", "suporte", "monitoria", "marketing", "afiliado", "beta", "user"],
+  admin: ["admin", "coordenacao", "contabilidade", "suporte", "monitoria", "marketing", "afiliado", "beta", "user"],
+  coordenacao: ["coordenacao", "suporte", "monitoria", "beta", "user"],
+  contabilidade: ["contabilidade", "user"],
+  suporte: ["suporte", "user"],
+  monitoria: ["monitoria", "user"],
+  marketing: ["marketing", "user"],
+  afiliado: ["afiliado", "user"],
   beta: ["beta", "user"],
   user: ["user"],
 };
@@ -377,14 +389,20 @@ export async function sanctumGuard(
   const isOwner = isOwnerEmail(email);
 
   // 6. CONSTRUIR PRINCIPAL
+  // 🎯 isGestaoStaff = qualquer role de staff (não mais "funcionario")
+  const isGestaoStaff = [
+    ROLES.ADMIN, ROLES.COORDENACAO, ROLES.CONTABILIDADE, 
+    ROLES.SUPORTE, ROLES.MONITORIA, ROLES.MARKETING, ROLES.AFILIADO
+  ].includes(userRole as any) || isOwner;
+  
   const principal: SanctumPrincipal = {
     userId: user.id,
     email,
     role: userRole,
     isOwner,
     isAdmin: userRole === ROLES.ADMIN || isOwner,
-    isFuncionario: userRole === ROLES.FUNCIONARIO || userRole === ROLES.ADMIN || isOwner,
-    isBeta: userRole === ROLES.BETA || userRole === ROLES.FUNCIONARIO || userRole === ROLES.ADMIN || isOwner,
+    isFuncionario: isGestaoStaff, // Agora verifica TODAS as roles de staff
+    isBeta: userRole === ROLES.BETA || isGestaoStaff,
     sessionId: session.access_token.substring(0, 16),
     correlationId,
   };

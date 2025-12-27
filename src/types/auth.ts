@@ -4,17 +4,18 @@
 // ============================================
 
 // Roles do sistema
+// 🎯 CONSTITUIÇÃO ROLES v1.0.0 - Nomenclatura Definitiva
+// "employee" e "funcionario" são CATEGORIAS, não roles individuais
 export type FullAppRole = 
-  | "owner" 
-  | "admin" 
-  | "employee" 
-  | "coordenacao" 
-  | "suporte" 
-  | "monitoria" 
-  | "afiliado" 
-  | "marketing" 
-  | "contabilidade"
-  | "beta"           // ALUNO PAGANTE (365 dias)
+  | "owner"         // Nível 0 - Proprietário (TOTAL)
+  | "admin"         // Nível 1 - Administrador
+  | "coordenacao"   // Nível 2 - Coordenação
+  | "contabilidade" // Nível 2 - Contabilidade
+  | "suporte"       // Nível 3 - Suporte
+  | "monitoria"     // Nível 3 - Monitoria
+  | "marketing"     // Nível 3 - Marketing
+  | "afiliado"      // Nível 3 - Afiliados
+  | "beta"          // ALUNO PAGANTE (365 dias)
   | "aluno_gratuito"; // CADASTRO COMUM (apenas área gratuita)
 
 // Alias para compatibilidade
@@ -24,13 +25,12 @@ export type UserRole = FullAppRole;
 export const FULL_ROLE_LABELS: Record<FullAppRole, string> = {
   owner: "Proprietário",
   admin: "Administrador",
-  employee: "Funcionário",
   coordenacao: "Coordenação",
+  contabilidade: "Contabilidade",
   suporte: "Suporte",
   monitoria: "Monitoria",
-  afiliado: "Afiliado",
   marketing: "Marketing",
-  contabilidade: "Contabilidade",
+  afiliado: "Afiliado",
   beta: "Aluno Beta",
   aluno_gratuito: "Aluno Gratuito",
 };
