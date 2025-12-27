@@ -121,11 +121,12 @@ export const SECTION_1_URL_MAP_AUDIT = {
     ],
   },
   
-  // STAFF
+  // STAFF (MONO-DOMÍNIO)
   realm_staff: {
-    url: "gestao.moisesmedeiros.com.br/gestao",
+    url: "pro.moisesmedeiros.com.br/gestaofc",
     roles: ["funcionario", "owner", "admin", "coordenacao", "suporte", "monitoria", "marketing", "contabilidade", "professor"],
     status: "PASS",
+    note: "❌ gestao.* DESCONTINUADO - arquitetura mono-domínio",
     evidence: [
       "LEI_III_SEGURANCA.ts:72-78",
       "urlAccessControl.ts:107-118",

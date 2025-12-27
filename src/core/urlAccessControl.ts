@@ -655,11 +655,14 @@ export function getAccessDeniedRedirect(role?: string | null): string {
 // ============================================
 
 /**
- * Verifica se está no domínio de gestão
+ * @deprecated ARQUITETURA MONO-DOMÍNIO: domínio gestao.* não existe mais
+ * Use isGestaoPath() para verificar se está na área /gestaofc
+ * SEMPRE retorna false para conformidade com mandato de produção
  */
-export function isGestaoHost(hostname?: string): boolean {
-  const h = (hostname || (typeof window !== "undefined" ? window.location.hostname : "")).toLowerCase();
-  return h.startsWith("gestao.") || h.includes("gestao.");
+export function isGestaoHost(_hostname?: string): boolean {
+  // ❌ PROIBIDO: hostname-based logic para gestão
+  // ✅ CORRETO: usar isGestaoPath() baseado em pathname
+  return false;
 }
 
 /**
@@ -687,21 +690,22 @@ export function isDevHost(hostname?: string): boolean {
 }
 
 /**
- * Obtém o domínio atual
+ * Obtém o domínio atual (MONO-DOMÍNIO: gestao.* descontinuado)
  */
-export function getCurrentDomain(): "gestao" | "pro" | "public" | "dev" | "unknown" {
+export function getCurrentDomain(): "pro" | "public" | "dev" | "unknown" {
   if (typeof window === "undefined") return "unknown";
   const h = window.location.hostname.toLowerCase();
-  if (isGestaoHost(h)) return "gestao";
+  // ❌ isGestaoHost removido - domínio não existe mais
+  if (isDevHost(h)) return "dev";
   if (isProHost(h)) return "pro";
   if (isPublicHost(h)) return "public";
-  if (isDevHost(h)) return "dev";
   return "unknown";
 }
 
 /**
- * Valida se um role pode acessar o domínio atual
- * Regra: funcionários só acessam gestao.*, alunos só acessam pro.*
+ * Valida se um role pode acessar o PATH atual (MONO-DOMÍNIO)
+ * ARQUITETURA: tudo em pro.moisesmedeiros.com.br
+ * /gestaofc/* = staff/owner only (verificado por pathname)
  */
 export function validateDomainAccess(role: AppRole | string | null, email?: string | null): boolean {
   // Owner pode tudo
@@ -711,23 +715,9 @@ export function validateDomainAccess(role: AppRole | string | null, email?: stri
   const domain = getCurrentDomain();
   if (domain === "dev" || domain === "unknown") return true;
   
-  if (!role) return domain === "public";
-  
-  const category = getRoleCategory(role);
-  
-  switch (domain) {
-    case "gestao":
-      // Apenas roles de gestão podem acessar gestao.*
-      return category === "owner" || category === "gestao";
-    case "pro":
-      // Roles de aluno ou gestão podem acessar pro.*
-      return category === "owner" || category === "gestao" || category === "beta" || category === "gratuito";
-    case "public":
-      // Qualquer um pode acessar área pública
-      return true;
-    default:
-      return true;
-  }
+  // MONO-DOMÍNIO: validação é por PATH, não por hostname
+  // A verificação de /gestaofc/* é feita em RoleProtectedRoute
+  return true;
 }
 
 // ============================================

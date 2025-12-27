@@ -28,13 +28,10 @@ export const SECTION_3_MODO_A_AUDIT = {
         mode: "DNS Only (cinza)",
         pointsTo: "Lovable IP/CNAME",
         cloudflareIntercepts: false,
+        note: "MONO-DOMÍNIO: único domínio ativo, /gestaofc = área interna",
       },
-      {
-        domain: "gestao.moisesmedeiros.com.br",
-        mode: "DNS Only (cinza)",
-        pointsTo: "Lovable IP/CNAME",
-        cloudflareIntercepts: false,
-      },
+      // ❌ gestao.moisesmedeiros.com.br DESCONTINUADO
+      // Arquitetura migrada para mono-domínio em 2024-12
     ],
     cloudflareProUsedFor: [
       "www.* (marketing/WordPress)",
@@ -106,7 +103,7 @@ export const SECTION_3_MODO_A_AUDIT = {
       implementation: "CORS dinâmico com validação de Origin",
       allowedDomains: [
         "pro.moisesmedeiros.com.br",
-        "gestao.moisesmedeiros.com.br",
+        // ❌ gestao.* DESCONTINUADO - mono-domínio
         "localhost (dev only)",
       ],
       evidence: "supabase/functions/video-violation-omega/index.ts:45-55",
