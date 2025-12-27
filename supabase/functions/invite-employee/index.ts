@@ -48,12 +48,12 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    // Check if user is admin/owner
-    const { data: isAdmin } = await supabase.rpc("is_admin_or_owner", { _user_id: user.id });
-    if (!isAdmin) {
-      console.log("[INVITE] User is not admin/owner:", user.id);
+    // Check if user is gestao staff (owner, admin, employee, coordenacao, etc.)
+    const { data: isStaff } = await supabase.rpc("is_gestao_staff", { _user_id: user.id });
+    if (!isStaff) {
+      console.log("[INVITE] User is not gestao staff:", user.id);
       return new Response(
-        JSON.stringify({ error: "Permissão negada. Apenas administradores podem criar acessos." }),
+        JSON.stringify({ error: "Permissão negada. Apenas funcionários da gestão podem criar acessos." }),
         { status: 403, headers: { "Content-Type": "application/json", ...corsHeaders } }
       );
     }
