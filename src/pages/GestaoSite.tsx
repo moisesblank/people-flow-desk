@@ -20,7 +20,8 @@ import {
   FileText,
   Upload,
   BookOpen,
-  ListTodo
+  ListTodo,
+  GraduationCap
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,6 +39,7 @@ import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { GuiaOperacionalOwner } from "@/components/owner/GuiaOperacionalOwner";
+import { PlatformEducationHub } from "@/components/education/PlatformEducationHub";
 
 interface Pendencia {
   id: string;
@@ -74,7 +76,7 @@ export default function GestaoSite() {
   const { toast } = useToast();
   const { user } = useAuth();
   const { isOwner } = useRolePermissions();
-  const [activeTab, setActiveTab] = useState<"pendencias" | "guia">("pendencias");
+  const [activeTab, setActiveTab] = useState<"pendencias" | "guia" | "plataforma">("pendencias");
   const [pendencias, setPendencias] = useState<Pendencia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -269,15 +271,19 @@ export default function GestaoSite() {
 
         {/* Tabs para Owner */}
         {isOwner && (
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pendencias" | "guia")} className="mb-6">
-            <TabsList className="grid w-full max-w-md grid-cols-2">
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pendencias" | "guia" | "plataforma")} className="mb-6">
+            <TabsList className="grid w-full max-w-2xl grid-cols-3">
               <TabsTrigger value="pendencias" className="gap-2">
                 <ListTodo className="h-4 w-4" />
-                Pendências
+                <span className="hidden sm:inline">Pendências</span>
               </TabsTrigger>
               <TabsTrigger value="guia" className="gap-2">
                 <BookOpen className="h-4 w-4" />
-                Guia Operacional
+                <span className="hidden sm:inline">Guia IA</span>
+              </TabsTrigger>
+              <TabsTrigger value="plataforma" className="gap-2">
+                <GraduationCap className="h-4 w-4" />
+                <span className="hidden sm:inline">Guia Plataforma</span>
               </TabsTrigger>
             </TabsList>
           </Tabs>
@@ -286,6 +292,8 @@ export default function GestaoSite() {
         {/* Conteúdo baseado na tab ativa */}
         {activeTab === "guia" && isOwner ? (
           <GuiaOperacionalOwner />
+        ) : activeTab === "plataforma" && isOwner ? (
+          <PlatformEducationHub />
         ) : (
           <>
         {/* Progress & Stats - GPU optimized */}
