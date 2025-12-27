@@ -480,32 +480,46 @@ export interface UseRolePermissionsReturn {
 }
 
 export function useRolePermissions(): UseRolePermissionsReturn {
-  const { user } = useAuth();
+  const { user, role: authRole } = useAuth();
   const [role, setRole] = useState<FullAppRole | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     // ============================================
-    // 🛡️ TIMEOUT DETERMINÍSTICO (LEI IV CONSTITUIÇÃO)
-    // Role deve carregar em até 3s, senão usa fallback
+    // 🛡️ REGRA MATRIZ MÃE: OWNER EMAIL = OWNER ROLE
+    // Bypass IMEDIATO sem esperar banco (evita race condition)
+    // ============================================
+    if (!user) {
+      setRole(null);
+      setIsLoading(false);
+      return;
+    }
+
+    const userEmail = (user.email || "").toLowerCase();
+
+    // ✅ OWNER BYPASS DETERMINÍSTICO (REGRA MATRIZ)
+    if (userEmail === OWNER_EMAIL) {
+      console.log('[ROLE] ✅ OWNER detectado por email - bypass imediato');
+      setRole("owner");
+      setIsLoading(false);
+      return;
+    }
+
+    // ✅ Se useAuth já tem a role, usar ela (evita fetch duplicado)
+    if (authRole) {
+      console.log('[ROLE] ✅ Usando role do AuthProvider:', authRole);
+      setRole(authRole as FullAppRole);
+      setIsLoading(false);
+      return;
+    }
+
+    // ============================================
+    // Fallback: buscar role do banco (usuários normais)
     // ============================================
     let timeoutId: ReturnType<typeof setTimeout>;
     let didTimeout = false;
 
     async function fetchRole() {
-      if (!user) {
-        setRole(null);
-        setIsLoading(false);
-        return;
-      }
-
-      // OWNER detectado por email = bypass imediato
-      if (user.email?.toLowerCase() === OWNER_EMAIL) {
-        setRole("owner");
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const { data, error } = await supabase
           .from("user_roles")
@@ -513,19 +527,18 @@ export function useRolePermissions(): UseRolePermissionsReturn {
           .eq("user_id", user.id)
           .maybeSingle();
 
-        // Se já deu timeout, não atualizar state
         if (didTimeout) return;
 
         if (error) {
           console.error("Erro ao buscar role:", error);
-          setRole("employee"); // Fallback seguro para funcionário
+          setRole("employee");
         } else {
           setRole(data?.role as FullAppRole ?? "employee");
         }
       } catch (err) {
         console.error("Erro ao verificar permissões:", err);
         if (!didTimeout) {
-          setRole("employee"); // Fallback seguro
+          setRole("employee");
         }
       } finally {
         if (!didTimeout) {
@@ -540,7 +553,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
       if (isLoading) {
         didTimeout = true;
         console.warn("[useRolePermissions] Timeout atingido (3s) - usando fallback");
-        setRole("employee"); // Fallback seguro
+        setRole("employee");
         setIsLoading(false);
       }
     }, 3000);
@@ -550,7 +563,7 @@ export function useRolePermissions(): UseRolePermissionsReturn {
     return () => {
       clearTimeout(timeoutId);
     };
-  }, [user]);
+  }, [user, authRole]);
 
   const userEmail = user?.email || null;
   
