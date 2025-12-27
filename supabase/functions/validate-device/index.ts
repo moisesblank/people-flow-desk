@@ -100,8 +100,8 @@ Deno.serve(async (req) => {
       // A segurança é garantida por: fingerprint, IP, rate-limit, risk-score
       
       // 🛡️ FALLBACK/DEV BYPASS: Aceitar tokens especiais sem chamar Cloudflare
-      const isFallbackToken = turnstileToken.startsWith('FALLBACK_');
-      const isDevBypassToken = turnstileToken.startsWith('DEV_BYPASS_');
+      const isFallbackToken = typeof turnstileToken === 'string' && turnstileToken.startsWith('FALLBACK_');
+      const isDevBypassToken = typeof turnstileToken === 'string' && turnstileToken.startsWith('DEV_BYPASS_');
       
       if (isFallbackToken || isDevBypassToken) {
         const hostname = turnstileToken.split('_').pop() || '';
