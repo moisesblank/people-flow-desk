@@ -13,11 +13,12 @@ import {
   Eye, EyeOff, Wand2, RotateCcw, Redo2,
   MousePointer, Sparkles, ChevronRight, X,
   Grid3X3, Move, Palette, Code, Zap, Shield,
-  GripVertical, RefreshCw, Save, Download
+  GripVertical, RefreshCw, Save, Download, Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGodMode } from '@/contexts/GodModeContext';
 import { MasterSectionOrganizer } from './MasterSectionOrganizer';
+import { MasterMenuEditor } from './MasterMenuEditor';
 import { useMasterDrag } from '@/hooks/useMasterDrag';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -30,6 +31,7 @@ interface MasterFloatingPanelProps {
 export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelProps) {
   const { isOwner, isActive, toggle: toggleMaster } = useGodMode();
   const [showSectionOrganizer, setShowSectionOrganizer] = useState(false);
+  const [showMenuEditor, setShowMenuEditor] = useState(false);
   const { isDragModeActive, setIsDragModeActive, resetAllPositions } = useMasterDrag();
 
   // Atalho para abrir painel
@@ -37,8 +39,8 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
     if (!isOwner) return;
 
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl+Shift+M = Toggle Painel Master
-      if (e.ctrlKey && e.shiftKey && e.key === 'M') {
+      // Ctrl+Shift+P = Toggle Painel Master (alterado de M para P)
+      if (e.ctrlKey && e.shiftKey && e.key === 'P') {
         e.preventDefault();
         onToggle();
       }
@@ -46,6 +48,11 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
       if (e.ctrlKey && e.shiftKey && e.key === 'O') {
         e.preventDefault();
         setShowSectionOrganizer(true);
+      }
+      // Ctrl+Shift+M = Editor de Menu
+      if (e.ctrlKey && e.shiftKey && e.key === 'M') {
+        e.preventDefault();
+        setShowMenuEditor(true);
       }
     };
 
@@ -100,6 +107,16 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
       onClick: () => setShowSectionOrganizer(true),
       color: 'from-green-500 to-emerald-500',
       shortcut: 'Ctrl+Shift+O',
+    },
+    {
+      id: 'menu-editor',
+      label: 'Editor de Menu',
+      description: 'Editar menu lateral do sistema',
+      icon: Menu,
+      active: showMenuEditor,
+      onClick: () => setShowMenuEditor(true),
+      color: 'from-indigo-500 to-violet-500',
+      shortcut: 'Ctrl+Shift+M',
     },
   ];
 
@@ -179,8 +196,8 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
                       <Crown className="h-5 w-5 text-white" />
                     </div>
                     <div>
-                      <h3 className="font-bold text-sm">MASTER CONTROL v18</h3>
-                      <p className="text-[10px] text-muted-foreground">Controle Total do Sistema</p>
+                      <h3 className="font-bold text-sm">MASTER CONTROL v19</h3>
+                      <p className="text-[10px] text-muted-foreground">Controle Total + Editor de Menu</p>
                     </div>
                   </div>
                   <Button variant="ghost" size="icon" onClick={onToggle} className="h-8 w-8">
@@ -274,7 +291,7 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
                   </div>
                   <div className="flex items-center gap-1 text-primary">
                     <Sparkles className="h-3 w-3" />
-                    <span>v18.0</span>
+                    <span>v19.0</span>
                   </div>
                 </div>
               </div>
@@ -287,6 +304,12 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
       <MasterSectionOrganizer
         isOpen={showSectionOrganizer}
         onClose={() => setShowSectionOrganizer(false)}
+      />
+
+      {/* Editor de Menu */}
+      <MasterMenuEditor
+        open={showMenuEditor}
+        onOpenChange={setShowMenuEditor}
       />
     </>
   );
