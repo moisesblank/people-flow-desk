@@ -264,17 +264,34 @@ export default function Auth() {
   }, [navigate, user]);
 
   // Listener: login bem-sucedido deve sair de /auth
+  // ✅ P0 FIX: Buscar role do banco ANTES de redirecionar
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event !== 'SIGNED_IN' || !session?.user) return;
 
       const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
       if (is2FAPending) return;
 
-      // ✅ REGRA DEFINITIVA: Usa função centralizada
-      // Nota: Aqui não temos role ainda (acabou de logar), então usa só email
-      const target = getPostLoginRedirect(null, session.user.email);
-      console.log('[AUTH] ✅ SIGNED_IN - redirecionando para', target);
+      // ✅ P0 FIX CRÍTICO: Buscar role ANTES de decidir redirect
+      // Sem isso, funcionário cai no fallback /comunidade
+      let userRole: string | null = null;
+      
+      try {
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", session.user.id)
+          .maybeSingle();
+        
+        userRole = roleData?.role || null;
+        console.log('[AUTH] Role carregada do banco:', userRole);
+      } catch (err) {
+        console.error('[AUTH] Erro ao buscar role:', err);
+      }
+
+      // ✅ REGRA DEFINITIVA: Usa função centralizada COM role
+      const target = getPostLoginRedirect(userRole, session.user.email);
+      console.log('[AUTH] ✅ SIGNED_IN - redirecionando para', target, '(role:', userRole, ')');
       navigate(target, { replace: true });
     });
 
