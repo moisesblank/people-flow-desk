@@ -4,6 +4,7 @@ import { VariantProps, cva } from "class-variance-authority";
 import { GripVertical, PanelLeft } from "lucide-react";
 
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useGlobalSidebarWidth } from "@/hooks/ui/use-global-sidebar-width";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,11 +20,10 @@ const SIDEBAR_WIDTH_MOBILE = "18rem";
 const SIDEBAR_WIDTH_ICON = "3rem";
 const SIDEBAR_KEYBOARD_SHORTCUT = "b";
 
-// Constantes para resize
+// Constantes para resize (fallback)
 const SIDEBAR_MIN_WIDTH = 56;
 const SIDEBAR_DEFAULT_WIDTH = 240;
 const SIDEBAR_MAX_WIDTH = 360;
-const SIDEBAR_WIDTH_STORAGE_KEY = "ui.sidebar.width";
 
 type SidebarContext = {
   state: "expanded" | "collapsed";
@@ -33,11 +33,13 @@ type SidebarContext = {
   setOpenMobile: (open: boolean) => void;
   isMobile: boolean;
   toggleSidebar: () => void;
-  // Novos campos para resize
+  // Campos para resize
   sidebarWidth: number;
   setSidebarWidth: (width: number) => void;
   isResizing: boolean;
   setIsResizing: (resizing: boolean) => void;
+  // Controle de permissão (OWNER-ONLY)
+  canResize: boolean;
 };
 
 const SidebarContext = React.createContext<SidebarContext | null>(null);
@@ -59,6 +61,7 @@ function useSidebar() {
       setSidebarWidth: () => {},
       isResizing: false,
       setIsResizing: () => {},
+      canResize: false,
     };
   }
 
@@ -77,33 +80,24 @@ const SidebarProvider = React.forwardRef<
   const [openMobile, setOpenMobile] = React.useState(false);
   const [isResizing, setIsResizing] = React.useState(false);
 
-  // Estado da largura da sidebar com persistência
-  const [sidebarWidth, setSidebarWidthState] = React.useState<number>(() => {
-    if (typeof window === "undefined") return SIDEBAR_DEFAULT_WIDTH;
-    try {
-      const stored = localStorage.getItem(SIDEBAR_WIDTH_STORAGE_KEY);
-      if (stored) {
-        const parsed = parseInt(stored, 10);
-        if (!isNaN(parsed) && parsed >= SIDEBAR_MIN_WIDTH && parsed <= SIDEBAR_MAX_WIDTH) {
-          return parsed;
-        }
-      }
-    } catch {
-      // localStorage não disponível
-    }
-    return SIDEBAR_DEFAULT_WIDTH;
-  });
-
-  // Persistir largura no localStorage
+  // ============================================
+  // INTEGRAÇÃO COM GLOBAL SIDEBAR WIDTH (OWNER-CONTROLLED)
+  // Lê do banco, permite escrita apenas para OWNER
+  // ============================================
+  const globalSidebar = useGlobalSidebarWidth();
+  
+  // Usar largura global do banco
+  const sidebarWidth = globalSidebar.width;
+  const canResize = globalSidebar.canResize;
+  
+  // Wrapper que só permite escrita se for owner
   const setSidebarWidth = React.useCallback((width: number) => {
-    const clampedWidth = Math.max(SIDEBAR_MIN_WIDTH, Math.min(SIDEBAR_MAX_WIDTH, width));
-    setSidebarWidthState(clampedWidth);
-    try {
-      localStorage.setItem(SIDEBAR_WIDTH_STORAGE_KEY, String(clampedWidth));
-    } catch {
-      // Ignorar erros
+    if (!canResize) {
+      console.warn("[Sidebar] Apenas o OWNER pode redimensionar a sidebar");
+      return;
     }
-  }, []);
+    globalSidebar.setWidth(width);
+  }, [canResize, globalSidebar]);
 
   // This is the internal state of the sidebar.
   // We use openProp and setOpenProp for control from outside the component.
@@ -162,8 +156,9 @@ const SidebarProvider = React.forwardRef<
       setSidebarWidth,
       isResizing,
       setIsResizing,
+      canResize,
     }),
-    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, sidebarWidth, setSidebarWidth, isResizing, setIsResizing],
+    [state, open, setOpen, isMobile, openMobile, setOpenMobile, toggleSidebar, sidebarWidth, setSidebarWidth, isResizing, setIsResizing, canResize],
   );
 
   return (
@@ -202,20 +197,23 @@ const Sidebar = React.forwardRef<
     resizable?: boolean;
   }
 >(({ side = "left", variant = "sidebar", collapsible = "offcanvas", resizable = true, className, children, ...props }, ref) => {
-  const { isMobile, state, openMobile, setOpenMobile, sidebarWidth, setSidebarWidth, isResizing, setIsResizing } = useSidebar();
+  const { isMobile, state, openMobile, setOpenMobile, sidebarWidth, setSidebarWidth, isResizing, setIsResizing, canResize } = useSidebar();
   const sidebarRef = React.useRef<HTMLDivElement>(null);
   const startXRef = React.useRef(0);
   const startWidthRef = React.useRef(0);
 
-  // Handle resize logic
+  // Verificar se pode redimensionar (prop + permissão OWNER)
+  const allowResize = resizable && canResize;
+
+  // Handle resize logic - BLOQUEADO para non-owners
   const handleMouseDown = React.useCallback((e: React.MouseEvent) => {
-    if (state === "collapsed" || isMobile || !resizable) return;
+    if (state === "collapsed" || isMobile || !allowResize) return;
     
     e.preventDefault();
     setIsResizing(true);
     startXRef.current = e.clientX;
     startWidthRef.current = sidebarWidth;
-  }, [state, isMobile, resizable, sidebarWidth, setIsResizing]);
+  }, [state, isMobile, allowResize, sidebarWidth, setIsResizing]);
 
   React.useEffect(() => {
     if (!isResizing) return;
@@ -273,7 +271,8 @@ const Sidebar = React.forwardRef<
     );
   }
 
-  const showResizeHandle = resizable && state !== "collapsed" && !isMobile;
+  // OWNER-ONLY: Mostrar handle apenas se tiver permissão
+  const showResizeHandle = allowResize && state !== "collapsed" && !isMobile;
 
   return (
     <div

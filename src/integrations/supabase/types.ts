@@ -11371,6 +11371,27 @@ export type Database = {
         }
         Relationships: []
       }
+      ui_settings: {
+        Row: {
+          id: string
+          sidebar_width: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          sidebar_width?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          sidebar_width?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       universal_attachments: {
         Row: {
           ai_insights: Json | null
