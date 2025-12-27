@@ -426,22 +426,23 @@ export const NAV_GROUPS = {
 // ROLES POR CATEGORIA
 // ============================================
 
+// 🎯 CONSTITUIÇÃO SYNAPSE Ω v10.0 — Roles Definitivas
 const ALL_ROLES: AppRole[] = [
-  "owner", "admin", "funcionario", "suporte", "coordenacao", 
-  "monitoria", "marketing", "contabilidade", "professor",
-  "beta", "aluno", "viewer", "employee"
+  "owner", "admin", "coordenacao", "contabilidade", "suporte", 
+  "monitoria", "marketing", "afiliado", "beta", "aluno_gratuito"
 ];
 
 const GESTAO_ROLES: AppRole[] = [
-  "owner", "admin", "funcionario", "suporte", "coordenacao",
-  "monitoria", "marketing", "contabilidade", "professor", "employee"
+  "owner", "admin", "coordenacao", "contabilidade", "suporte",
+  "monitoria", "marketing", "afiliado"
 ];
 
-const ALUNO_ROLES: AppRole[] = ["owner", "admin", "beta", "aluno"];
+const ALUNO_ROLES: AppRole[] = ["owner", "admin", "beta", "aluno_gratuito"];
 
-const COMUNIDADE_ROLES: AppRole[] = ["owner", "admin", "beta", "aluno", "viewer"];
+const COMUNIDADE_ROLES: AppRole[] = ["owner", "admin", "beta", "aluno_gratuito"];
 
 const OWNER_ONLY: AppRole[] = ["owner"];
+
 
 // ============================================
 // ITENS DE NAVEGAÇÃO - PÚBLICO

@@ -44,26 +44,22 @@ export const ACCESS_CONTROL_VERSION = "4.0.0";
 /**
  * Todas as roles do sistema (ordenadas por hierarquia)
  */
+// 🎯 CONSTITUIÇÃO SYNAPSE Ω v10.0 - Roles Definitivas
+// ⚠️ "employee" e "funcionario" são CATEGORIAS, não roles!
 export type AppRole =
-  // 👑 MASTER
+  // 👑 MASTER (nível 0)
   | "owner"          // MASTER - PODE TUDO
-  // 👔 GESTÃO (funcionários)
-  | "admin"          // Administrador
-  | "funcionario"    // Funcionário padrão
-  | "employee"       // Alias para funcionário
-  | "suporte"        // Suporte ao cliente
-  | "coordenacao"    // Coordenação pedagógica
-  | "monitoria"      // Monitor/Tutor
-  | "marketing"      // Equipe de marketing
-  | "contabilidade"  // Contabilidade
-  | "professor"      // Professor convidado
-  | "afiliado"       // Afiliado externo
+  // 👔 GESTÃO - funcionários (níveis 1-3)
+  | "admin"          // Administrador (nível 1)
+  | "coordenacao"    // Coordenação (nível 2)
+  | "contabilidade"  // Contabilidade (nível 2)
+  | "suporte"        // Suporte ao cliente (nível 3)
+  | "monitoria"      // Monitor/Tutor (nível 3)
+  | "marketing"      // Equipe de marketing (nível 3)
+  | "afiliado"       // Afiliado externo (nível 3)
   // 👨‍🎓 ALUNOS
   | "beta"           // Aluno pagante (365 dias)
-  | "aluno"          // Aluno regular
-  | "aluno_gratuito" // Aluno cadastro gratuito
-  // 🌐 VISITANTES
-  | "viewer";        // Não pagante (cadastro grátis)
+  | "aluno_gratuito";
 
 /**
  * Domínios/Áreas do sistema
@@ -89,6 +85,8 @@ export type AccessCategory =
 // ROLES IMUNES (NUNCA BLOQUEADOS)
 // ============================================
 
+// 🎯 CONSTITUIÇÃO SYNAPSE Ω v10.0 — Listas de Roles
+
 /**
  * Roles que têm bypass de algumas restrições de conteúdo
  * (mas não de acesso a áreas)
@@ -96,49 +94,46 @@ export type AccessCategory =
 export const IMMUNE_ROLES: AppRole[] = [
   "owner",
   "admin",
-  "funcionario",
-  "employee",
   "suporte",
   "coordenacao",
   "monitoria",
-  "professor",
 ];
 
 /**
- * Roles que podem acessar a área de gestão
+ * Roles que podem acessar a área de gestão (/gestaofc)
+ * CONSTITUIÇÃO v10.0 — Bloco GESTÃO
  */
 export const GESTAO_ROLES: AppRole[] = [
   "owner",
   "admin",
-  "funcionario",
-  "employee",
-  "suporte",
   "coordenacao",
+  "contabilidade",
+  "suporte",
   "monitoria",
   "marketing",
-  "contabilidade",
-  "professor",
+  "afiliado",
 ];
 
 /**
- * Roles que podem acessar a área de alunos
+ * Roles que podem acessar a área de alunos (/alunos)
+ * CONSTITUIÇÃO v10.0 — Bloco ALUNOS
  */
 export const ALUNO_ROLES: AppRole[] = [
   "owner",
   "admin",
   "beta",
-  "aluno",
+  "aluno_gratuito",
 ];
 
 /**
- * Roles que podem acessar a comunidade
+ * Roles que podem acessar a comunidade (/comunidade)
+ * Todos os alunos (beta, gratuito) + gestão
  */
 export const COMUNIDADE_ROLES: AppRole[] = [
   "owner",
   "admin",
   "beta",
-  "aluno",
-  "viewer",
+  "aluno_gratuito",
 ];
 
 // ============================================
@@ -146,21 +141,19 @@ export const COMUNIDADE_ROLES: AppRole[] = [
 // ============================================
 
 export const ROLE_TO_CATEGORY: Record<AppRole, AccessCategory> = {
+  // 👑 OWNER
   owner: "owner",
+  // 👔 GESTÃO
   admin: "gestao",
-  funcionario: "gestao",
-  employee: "gestao",
-  suporte: "gestao",
   coordenacao: "gestao",
+  contabilidade: "gestao",
+  suporte: "gestao",
   monitoria: "gestao",
   marketing: "gestao",
-  contabilidade: "gestao",
-  professor: "gestao",
   afiliado: "gestao",
+  // 👨‍🎓 ALUNOS
   beta: "beta",
-  aluno: "beta",
   aluno_gratuito: "gratuito",
-  viewer: "gratuito",
 };
 
 // ============================================
@@ -180,7 +173,7 @@ export interface RolePermissions {
 }
 
 export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
-  // 👑 OWNER - SUPREMO
+  // 👑 OWNER - SUPREMO (nível 0)
   owner: {
     areas: ["publico", "comunidade", "alunos", "gestaofc", "owner"],
     canCreate: true,
@@ -192,7 +185,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     canAccessFinance: true,
     canAccessOwnerArea: true,
   },
-  // 👔 ADMIN
+  // 👔 ADMIN (nível 1)
   admin: {
     areas: ["publico", "comunidade", "alunos", "gestaofc"],
     canCreate: true,
@@ -204,43 +197,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     canAccessFinance: true,
     canAccessOwnerArea: false,
   },
-  // 👔 FUNCIONÁRIO
-  funcionario: {
-    areas: ["publico", "gestaofc"],
-    canCreate: true,
-    canEdit: true,
-    canDelete: false,
-    canExport: true,
-    canImport: false,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 👔 EMPLOYEE (alias)
-  employee: {
-    areas: ["publico", "gestaofc"],
-    canCreate: true,
-    canEdit: true,
-    canDelete: false,
-    canExport: true,
-    canImport: false,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 👔 SUPORTE
-  suporte: {
-    areas: ["publico", "gestaofc"],
-    canCreate: false,
-    canEdit: true,
-    canDelete: false,
-    canExport: true,
-    canImport: false,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 👔 COORDENAÇÃO
+  // 👔 COORDENAÇÃO (nível 2)
   coordenacao: {
     areas: ["publico", "gestaofc"],
     canCreate: true,
@@ -252,31 +209,7 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     canAccessFinance: false,
     canAccessOwnerArea: false,
   },
-  // 👔 MONITORIA
-  monitoria: {
-    areas: ["publico", "gestaofc"],
-    canCreate: false,
-    canEdit: true,
-    canDelete: false,
-    canExport: false,
-    canImport: false,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 👔 MARKETING
-  marketing: {
-    areas: ["publico", "gestaofc"],
-    canCreate: true,
-    canEdit: true,
-    canDelete: false,
-    canExport: true,
-    canImport: true,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 👔 CONTABILIDADE
+  // 👔 CONTABILIDADE (nível 2)
   contabilidade: {
     areas: ["publico", "gestaofc"],
     canCreate: false,
@@ -288,8 +221,32 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     canAccessFinance: true,
     canAccessOwnerArea: false,
   },
-  // 👔 PROFESSOR
-  professor: {
+  // 👔 SUPORTE (nível 3)
+  suporte: {
+    areas: ["publico", "gestaofc"],
+    canCreate: false,
+    canEdit: true,
+    canDelete: false,
+    canExport: true,
+    canImport: false,
+    canManageUsers: false,
+    canAccessFinance: false,
+    canAccessOwnerArea: false,
+  },
+  // 👔 MONITORIA (nível 3)
+  monitoria: {
+    areas: ["publico", "gestaofc"],
+    canCreate: false,
+    canEdit: true,
+    canDelete: false,
+    canExport: false,
+    canImport: false,
+    canManageUsers: false,
+    canAccessFinance: false,
+    canAccessOwnerArea: false,
+  },
+  // 👔 MARKETING (nível 3)
+  marketing: {
     areas: ["publico", "gestaofc"],
     canCreate: true,
     canEdit: true,
@@ -300,7 +257,19 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     canAccessFinance: false,
     canAccessOwnerArea: false,
   },
-  // 👨‍🎓 BETA (Aluno Pagante)
+  // 👔 AFILIADO (nível 3)
+  afiliado: {
+    areas: ["publico", "gestaofc"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    canExport: true,
+    canImport: false,
+    canManageUsers: false,
+    canAccessFinance: false,
+    canAccessOwnerArea: false,
+  },
+  // 👨‍🎓 BETA (Aluno Pagante - nível 1)
   beta: {
     areas: ["publico", "comunidade", "alunos"],
     canCreate: false,
@@ -312,49 +281,13 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
     canAccessFinance: false,
     canAccessOwnerArea: false,
   },
-  // 👨‍🎓 ALUNO
-  aluno: {
-    areas: ["publico", "comunidade", "alunos"],
-    canCreate: false,
-    canEdit: false,
-    canDelete: false,
-    canExport: false,
-    canImport: false,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 🌐 VIEWER (Não Pagante)
-  viewer: {
-    areas: ["publico", "comunidade"],
-    canCreate: false,
-    canEdit: false,
-    canDelete: false,
-    canExport: false,
-    canImport: false,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 🌐 ALUNO GRATUITO (Cadastro Grátis)
+  // 👨‍🎓 ALUNO GRATUITO (nível 2)
   aluno_gratuito: {
     areas: ["publico", "comunidade"],
     canCreate: false,
     canEdit: false,
     canDelete: false,
     canExport: false,
-    canImport: false,
-    canManageUsers: false,
-    canAccessFinance: false,
-    canAccessOwnerArea: false,
-  },
-  // 🤝 AFILIADO (Parceiro)
-  afiliado: {
-    areas: ["publico", "gestaofc"],
-    canCreate: false,
-    canEdit: false,
-    canDelete: false,
-    canExport: true,
     canImport: false,
     canManageUsers: false,
     canAccessFinance: false,
@@ -446,10 +379,11 @@ export function isAlunoRole(role?: string | null): boolean {
 
 /**
  * Obtém as permissões de uma role
+ * Fallback: aluno_gratuito (role com menos permissões)
  */
 export function getRolePermissions(role?: string | null): RolePermissions {
-  if (!role) return ROLE_PERMISSIONS.viewer;
-  return ROLE_PERMISSIONS[role as AppRole] || ROLE_PERMISSIONS.viewer;
+  if (!role) return ROLE_PERMISSIONS.aluno_gratuito;
+  return ROLE_PERMISSIONS[role as AppRole] || ROLE_PERMISSIONS.aluno_gratuito;
 }
 
 /**
