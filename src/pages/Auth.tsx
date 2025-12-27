@@ -131,6 +131,8 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
 }
 
 export default function Auth() {
+  console.log('[AUTH] 1. Componente montado (/auth)');
+
   const navigate = useNavigate();
   const { user, signIn, signUp, resetPassword, isLoading: authLoading } = useAuth();
   // redirectAfterLogin removido - redirect agora é determinístico inline
@@ -196,6 +198,13 @@ export default function Auth() {
   
   // Estado para Cloudflare Turnstile (Anti-Bot)
   const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
+
+  useEffect(() => {
+    console.log('[AUTH] 2. Turnstile hook status:', {
+      verified: isTurnstileVerified,
+      hasToken: Boolean(turnstileToken),
+    });
+  }, [isTurnstileVerified, turnstileToken]);
   
   const [formData, setFormData] = useState({
     nome: "",
@@ -266,123 +275,105 @@ export default function Auth() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[AUTH] === INICIANDO FLUXO DE LOGIN/SIGNUP ===');
+    console.log('[AUTH] Timestamp:', new Date().toISOString());
+
     setErrors({});
-    
+
     if (!isLogin && !acceptTerms) {
       toast.error("Você precisa aceitar os termos de uso");
       return;
     }
-    
+
     // 🛡️ NOVA ESTRATÉGIA: Turnstile NÃO é obrigatório no login normal
     // Só é exigido em eventos de risco: signup, reset senha, muitas tentativas falhas
     // Login padrão flui SEM bloqueio por Turnstile
-    
+
+    console.log('[AUTH] 3. Estado Turnstile (não obrigatório no login):', {
+      verified: isTurnstileVerified,
+      hasToken: Boolean(turnstileToken),
+    });
+
     setIsLoading(true);
 
+    const TIMEOUT_MS = 30_000;
+    const withTimeout = async <T,>(label: string, promise: Promise<T>): Promise<T> => {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      try {
+        const timeoutPromise = new Promise<T>((_, reject) => {
+          timeoutId = setTimeout(() => {
+            reject(new Error(`Timeout ${TIMEOUT_MS}ms em: ${label}`));
+          }, TIMEOUT_MS);
+        });
+        return await Promise.race([promise, timeoutPromise]);
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    };
+
     try {
-      // ⚠️ P0-FIX: NÃO validar Turnstile aqui - o token é de uso único
-      // A validação acontece UMA VEZ APENAS em validate-device (pre_login)
-      // Validar aqui + lá = token expirado = bloqueio
-      
       const schema = isLogin ? simpleLoginSchema : simpleSignupSchema;
-      const result = schema.safeParse(formData);
-      
-      if (!result.success) {
+      const parsed = schema.safeParse(formData);
+
+      if (!parsed.success) {
         const fieldErrors: Record<string, string> = {};
-        result.error.errors.forEach(err => {
+        parsed.error.errors.forEach(err => {
           if (err.path[0]) {
             fieldErrors[err.path[0] as string] = err.message;
           }
         });
+        console.error('[AUTH] ERROR: validação de formulário', fieldErrors);
         setErrors(fieldErrors);
         resetTurnstile();
         setIsLoading(false);
         return;
       }
 
-       if (isLogin) {
-         // 🛡️ Login SEM Turnstile obrigatório (nova estratégia)
-         const result = await signIn(formData.email, formData.password, {});
+      if (isLogin) {
+        console.log('[AUTH] 4. Iniciando signInWithPassword...');
 
-         // 🛡️ LEI VI: pode bloquear/solicitar desafio antes do login (sem erro de credencial)
-         if (result.blocked) {
-           toast.error("Acesso bloqueado por segurança", {
-             description: "Detectamos um risco elevado. Se você é você mesmo, fale com o suporte para liberar seu acesso."
-           });
-           resetTurnstile();
-           setIsLoading(false);
-           return;
-         }
+        const result = await withTimeout(
+          'signInWithPassword',
+          signIn(formData.email, formData.password, {})
+        );
 
-         if (result.needsChallenge) {
-           toast.warning("Verificação adicional necessária", {
-             description: "Refaça a verificação anti-bot e tente novamente. Se persistir, vamos ajustar o filtro para não travar alunos reais."
-           });
-           resetTurnstile();
-           setIsLoading(false);
-           return;
-         }
+        console.log('[AUTH] 5. Resposta do signIn:', {
+          hasError: Boolean(result.error),
+          blocked: Boolean(result.blocked),
+          needsChallenge: Boolean(result.needsChallenge),
+          hasUser: Boolean(result.user),
+        });
 
-         if (result.error) {
-           if (result.error.message.includes("Invalid login credentials")) {
-             toast.error("Credenciais inválidas", {
-               description: "Verifique seu email e senha e tente novamente."
-             });
-           } else if (result.error.message.includes("Email not confirmed")) {
-             toast.warning("Email não confirmado", {
-               description: "Verifique sua caixa de entrada para confirmar seu email."
-             });
-           } else {
-             toast.error("Erro no login", {
-               description: result.error.message
-             });
-           }
-           resetTurnstile();
-           setIsLoading(false);
-           return;
-         }
-
-         // ✅ Login bem sucedido - encerrar loading IMEDIATAMENTE
-         setIsLoading(false);
-
-         // 2FA deve iniciar sem chamadas extras bloqueantes
-         const userFor2FA = result.user;
-
-         if (!userFor2FA) {
-           toast.error("Não foi possível concluir o login", {
-             description: "Sua sessão não foi criada. Tente novamente."
-           });
-           return;
-         }
-
-         setPending2FAUser({
-           email: userFor2FA.email || formData.email,
-           userId: userFor2FA.id,
-           nome: (userFor2FA.user_metadata as any)?.nome,
-         });
-         setShow2FA(true);
-         toast.info("Verificação de Segurança 2FA", {
-           description: "Um código de 6 dígitos foi enviado para " + (userFor2FA.email || formData.email)
-         });
-      } else {
-        // 🛡️ SIGNUP: Turnstile OBRIGATÓRIO (evento de risco)
-        if (!isTurnstileVerified || !turnstileToken) {
-          toast.error("Verificação de segurança necessária", {
-            description: "Para criar uma conta, complete a verificação anti-bot."
+        if (result.blocked) {
+          toast.error("Acesso bloqueado por segurança", {
+            description: "Detectamos um risco elevado. Se você é você mesmo, fale com o suporte para liberar seu acesso."
           });
+          resetTurnstile();
           setIsLoading(false);
           return;
         }
-        
-        // Cadastro de novo usuário
-        const result = await signUp(formData.email, formData.password, formData.nome);
+
+        if (result.needsChallenge) {
+          toast.warning("Verificação adicional necessária", {
+            description: "Refaça a verificação anti-bot e tente novamente. Se persistir, vamos ajustar o filtro para não travar alunos reais."
+          });
+          resetTurnstile();
+          setIsLoading(false);
+          return;
+        }
+
         if (result.error) {
-          if (result.error.message.includes("User already registered")) {
-            toast.error("Email já cadastrado", {
-              description: "Este email já possui uma conta. Tente fazer login."
+          console.error('[AUTH] ERROR: signIn retornou erro:', result.error);
+          if (result.error.message.includes("Invalid login credentials")) {
+            toast.error("Credenciais inválidas", {
+              description: "Verifique seu email e senha e tente novamente."
+            });
+          } else if (result.error.message.includes("Email not confirmed")) {
+            toast.warning("Email não confirmado", {
+              description: "Verifique sua caixa de entrada para confirmar seu email."
             });
           } else {
-            toast.error("Erro no cadastro", {
+            toast.error("Erro no login", {
               description: result.error.message
             });
           }
@@ -390,15 +381,79 @@ export default function Auth() {
           setIsLoading(false);
           return;
         }
-        
-        toast.success("Conta criada com sucesso!", {
-          description: "Você já pode fazer login."
+
+        // ✅ Login bem sucedido - encerrar loading IMEDIATAMENTE
+        setIsLoading(false);
+        console.log('[AUTH] 6. Login bem sucedido. Iniciando 2FA UI...');
+
+        const userFor2FA = result.user;
+        if (!userFor2FA) {
+          console.error('[AUTH] ERROR: user ausente após login');
+          toast.error("Não foi possível concluir o login", {
+            description: "Sua sessão não foi criada. Tente novamente."
+          });
+          return;
+        }
+
+        setPending2FAUser({
+          email: userFor2FA.email || formData.email,
+          userId: userFor2FA.id,
+          nome: (userFor2FA.user_metadata as any)?.nome,
         });
-        setIsLogin(true);
-        setFormData({ nome: "", email: formData.email, password: "" });
+        setShow2FA(true);
+        toast.info("Verificação de Segurança 2FA", {
+          description: "Um código de 6 dígitos foi enviado para " + (userFor2FA.email || formData.email)
+        });
+
+        return;
       }
-    } catch {
-      toast.error("Erro ao processar solicitação");
+
+      // SIGNUP
+      console.log('[AUTH] 4. Iniciando signup...');
+
+      if (!isTurnstileVerified || !turnstileToken) {
+        console.error('[AUTH] ERROR: Turnstile ausente no signup');
+        toast.error("Verificação de segurança necessária", {
+          description: "Para criar uma conta, complete a verificação anti-bot."
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const signupResult = await withTimeout(
+        'signUp',
+        signUp(formData.email, formData.password, formData.nome)
+      );
+
+      console.log('[AUTH] 5. Resposta do signUp:', { hasError: Boolean(signupResult.error) });
+
+      if (signupResult.error) {
+        console.error('[AUTH] ERROR: signUp retornou erro:', signupResult.error);
+        if (signupResult.error.message.includes("User already registered")) {
+          toast.error("Email já cadastrado", {
+            description: "Este email já possui uma conta. Tente fazer login."
+          });
+        } else {
+          toast.error("Erro no cadastro", {
+            description: signupResult.error.message
+          });
+        }
+        resetTurnstile();
+        setIsLoading(false);
+        return;
+      }
+
+      toast.success("Conta criada com sucesso!", {
+        description: "Você já pode fazer login."
+      });
+      setIsLogin(true);
+      setFormData({ nome: "", email: formData.email, password: "" });
+
+    } catch (err: any) {
+      console.error('[AUTH] ERROR:', err);
+      toast.error("Erro ao processar solicitação", {
+        description: err?.message || 'Falha inesperada'
+      });
     } finally {
       setIsLoading(false);
     }

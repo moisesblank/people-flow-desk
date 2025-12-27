@@ -75,7 +75,10 @@ export function CloudflareTurnstile({
 
   // Carregar script do Turnstile
   useEffect(() => {
+    console.log('[AUTH] 2. Turnstile script init');
+
     if (window.turnstile) {
+      console.log('[AUTH] 2. Turnstile script já disponível');
       setIsScriptLoaded(true);
       return;
     }
@@ -83,12 +86,17 @@ export function CloudflareTurnstile({
     // Verificar se script já existe
     const existingScript = document.querySelector('script[src*="turnstile"]');
     if (existingScript) {
-      window.onTurnstileLoad = () => setIsScriptLoaded(true);
+      console.log('[AUTH] 2. Turnstile script já injetado, aguardando onload');
+      window.onTurnstileLoad = () => {
+        console.log('[AUTH] 2. Turnstile script onload (existing)');
+        setIsScriptLoaded(true);
+      };
       return;
     }
 
     // Criar callback global
     window.onTurnstileLoad = () => {
+      console.log('[AUTH] 2. Turnstile script onload');
       setIsScriptLoaded(true);
     };
 
@@ -118,27 +126,32 @@ export function CloudflareTurnstile({
     }
 
     setStatus('ready');
+    console.log('[AUTH] 2. Turnstile renderizando widget');
 
     // Renderizar novo widget
     try {
-        widgetIdRef.current = window.turnstile.render(containerRef.current, {
-          sitekey: TURNSTILE_SITE_KEY,
-          theme,
-          size,
-          // Cloudflare usa tags em minúsculo (pt-br). Evita fallback e ruído no console.
-          language: 'pt-br',
-          appearance: 'always',
-          retry: 'auto',
-          'retry-interval': 5000,
-          'refresh-expired': 'auto',
-          callback: (token: string) => {
+      widgetIdRef.current = window.turnstile.render(containerRef.current, {
+        sitekey: TURNSTILE_SITE_KEY,
+        theme,
+        size,
+        // Cloudflare usa tags em minúsculo (pt-br). Evita fallback e ruído no console.
+        language: 'pt-br',
+        appearance: 'always',
+        retry: 'auto',
+        'retry-interval': 5000,
+        'refresh-expired': 'auto',
+        callback: (token: string) => {
           setStatus('verified');
           setDomainError(false);
+          console.log('[AUTH] 3. Token Turnstile recebido (redacted):', {
+            length: token?.length || 0,
+            suffix: token ? token.slice(-6) : null,
+          });
           onVerify(token);
         },
         'error-callback': (errorCode: string) => {
-          console.warn('[Turnstile] Erro:', errorCode);
-          
+          console.warn('[AUTH] ERROR: Turnstile error-callback:', errorCode);
+
           const newErrorCount = errorCount + 1;
           setErrorCount(newErrorCount);
 
@@ -171,6 +184,7 @@ export function CloudflareTurnstile({
           onError?.(errorCode);
         },
         'expired-callback': () => {
+          console.warn('[AUTH] ERROR: Turnstile expired-callback');
           setStatus('expired');
           onExpire?.();
         }
