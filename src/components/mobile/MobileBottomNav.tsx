@@ -1,6 +1,6 @@
 // ============================================
 // MOISÉS MEDEIROS - Mobile Bottom Navigation
-// Navegação otimizada para celular
+// ÁREA /gestaofc INVISÍVEL - só aparece quando acessada manualmente
 // ============================================
 
 import { useState } from "react";
@@ -32,19 +32,33 @@ interface NavItem {
   path: string;
 }
 
-const mainNavItems: NavItem[] = [
-  { icon: Home, label: "Home", path: "/" },
-  { icon: Wallet, label: "Finanças", path: "/financas-empresa" },
-  { icon: Calendar, label: "Agenda", path: "/calendario" },
-  { icon: CheckSquare, label: "Tarefas", path: "/tarefas" },
+// ============================================
+// REGRA ABSOLUTA: Navegação mobile só aparece
+// se o usuário está DENTRO de /gestaofc
+// ============================================
+
+// Menu de gestão (só visível dentro de /gestaofc)
+const gestaoNavItems: NavItem[] = [
+  { icon: Home, label: "Home", path: "/gestaofc" },
+  { icon: Wallet, label: "Finanças", path: "/gestaofc/financas-empresa" },
+  { icon: Calendar, label: "Agenda", path: "/gestaofc/calendario" },
+  { icon: CheckSquare, label: "Tarefas", path: "/gestaofc/tarefas" },
 ];
 
-const moreNavItems: NavItem[] = [
-  { icon: Users, label: "Funcionários", path: "/funcionarios" },
-  { icon: GraduationCap, label: "Alunos", path: "/alunos" },
-  { icon: MessageSquare, label: "WhatsApp", path: "/central-whatsapp" },
-  { icon: BarChart3, label: "Relatórios", path: "/relatorios" },
-  { icon: Settings, label: "Configurações", path: "/configuracoes" },
+const gestaoMoreItems: NavItem[] = [
+  { icon: Users, label: "Funcionários", path: "/gestaofc/funcionarios" },
+  { icon: GraduationCap, label: "Alunos", path: "/gestaofc/gestao-alunos" },
+  { icon: MessageSquare, label: "WhatsApp", path: "/gestaofc/central-whatsapp" },
+  { icon: BarChart3, label: "Relatórios", path: "/gestaofc/relatorios" },
+  { icon: Settings, label: "Config", path: "/gestaofc/configuracoes" },
+];
+
+// Menu de alunos (para área /alunos)
+const alunosNavItems: NavItem[] = [
+  { icon: Home, label: "Home", path: "/alunos" },
+  { icon: GraduationCap, label: "Aulas", path: "/alunos/aulas" },
+  { icon: Calendar, label: "Agenda", path: "/alunos/calendario" },
+  { icon: CheckSquare, label: "Atividades", path: "/alunos/atividades" },
 ];
 
 export function MobileBottomNav() {
@@ -52,8 +66,26 @@ export function MobileBottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
 
+  // Detectar área atual
+  const isGestaoArea = location.pathname.startsWith("/gestaofc");
+  const isAlunosArea = location.pathname.startsWith("/alunos");
+
+  // ============================================
+  // REGRA: Se não está em /gestaofc nem /alunos,
+  // NÃO RENDERIZA o nav mobile
+  // ============================================
+  if (!isGestaoArea && !isAlunosArea) {
+    return null;
+  }
+
+  // Selecionar itens baseado na área
+  const mainNavItems = isGestaoArea ? gestaoNavItems : alunosNavItems;
+  const moreNavItems = isGestaoArea ? gestaoMoreItems : [];
+
   const isActive = (path: string) => {
-    if (path === "/") return location.pathname === "/";
+    if (path === "/gestaofc" || path === "/alunos") {
+      return location.pathname === path;
+    }
     return location.pathname.startsWith(path);
   };
 
@@ -100,46 +132,48 @@ export function MobileBottomNav() {
           );
         })}
 
-        {/* More Menu */}
-        <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
-          <SheetTrigger asChild>
-            <button className="flex flex-col items-center justify-center flex-1 h-full">
-              <div className="p-1.5 rounded-xl">
-                <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+        {/* More Menu - só para gestão */}
+        {isGestaoArea && moreNavItems.length > 0 && (
+          <Sheet open={moreOpen} onOpenChange={setMoreOpen}>
+            <SheetTrigger asChild>
+              <button className="flex flex-col items-center justify-center flex-1 h-full">
+                <div className="p-1.5 rounded-xl">
+                  <MoreHorizontal className="h-5 w-5 text-muted-foreground" />
+                </div>
+                <span className="text-[10px] mt-0.5 font-medium text-muted-foreground">
+                  Mais
+                </span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-3xl">
+              <SheetHeader>
+                <SheetTitle>Menu Rápido</SheetTitle>
+              </SheetHeader>
+              <div className="grid grid-cols-4 gap-4 py-6">
+                {moreNavItems.map((item) => {
+                  const Icon = item.icon;
+                  return (
+                    <button
+                      key={item.path}
+                      onClick={() => {
+                        navigate(item.path);
+                        setMoreOpen(false);
+                      }}
+                      className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-muted transition-colors"
+                    >
+                      <div className="p-3 rounded-xl bg-primary/10">
+                        <Icon className="h-5 w-5 text-primary" />
+                      </div>
+                      <span className="text-xs font-medium text-center">
+                        {item.label}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
-              <span className="text-[10px] mt-0.5 font-medium text-muted-foreground">
-                Mais
-              </span>
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-3xl">
-            <SheetHeader>
-              <SheetTitle>Menu Rápido</SheetTitle>
-            </SheetHeader>
-            <div className="grid grid-cols-4 gap-4 py-6">
-              {moreNavItems.map((item) => {
-                const Icon = item.icon;
-                return (
-                  <button
-                    key={item.path}
-                    onClick={() => {
-                      navigate(item.path);
-                      setMoreOpen(false);
-                    }}
-                    className="flex flex-col items-center gap-2 p-3 rounded-xl hover:bg-muted transition-colors"
-                  >
-                    <div className="p-3 rounded-xl bg-primary/10">
-                      <Icon className="h-5 w-5 text-primary" />
-                    </div>
-                    <span className="text-xs font-medium text-center">
-                      {item.label}
-                    </span>
-                  </button>
-                );
-              })}
-            </div>
-          </SheetContent>
-        </Sheet>
+            </SheetContent>
+          </Sheet>
+        )}
       </div>
     </nav>
   );

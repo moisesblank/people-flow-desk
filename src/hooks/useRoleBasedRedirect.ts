@@ -1,21 +1,16 @@
 // ============================================
 // MOISÉS MEDEIROS v12.0 - HOOK DE REDIRECIONAMENTO POR ROLE
-// ARQUITETURA MONO-DOMÍNIO (pro.moisesmedeiros.com.br):
-// - /gestaofc/* → Funcionários → /gestaofc/dashboard
-// - /alunos/* → Alunos Beta → /alunos
-// - Owner (moisesblank@gmail.com) → Acesso total (todas as áreas)
+// ÁREA /gestaofc INVISÍVEL - não redireciona automaticamente
 // ============================================
 
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { OWNER_EMAIL, ROLE_LABELS } from "@/hooks/useRolePermissions";
+import { OWNER_EMAIL } from "@/hooks/useRolePermissions";
 import { validateDomainAccessForLogin, type DomainAppRole, GESTAO_ALLOWED_ROLES, PRO_ALLOWED_ROLES } from "@/hooks/useDomainAccess";
 
-type RedirectRole = "owner" | "admin" | "beta" | "aluno_gratuito" | "gestao" | "other";
-
-// Roles que vão para área de gestão (/gestaofc)
+// Roles que podem acessar gestão (quando digitam manualmente /gestaofc)
 const GESTAO_ROLES = [
   "owner", "admin", "coordenacao", "suporte", "monitoria", 
   "financeiro", "rh", "marketing", "contabilidade", "afiliado", "employee"
@@ -27,14 +22,28 @@ const ALUNO_ROLES = ["beta", "aluno_gratuito"];
 export function useRoleBasedRedirect() {
   const { user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isRedirecting, setIsRedirecting] = useState(false);
 
+  /**
+   * REGRA ABSOLUTA:
+   * - Se o usuário ESTÁ em /gestaofc (digitou manualmente), PERMANECE lá
+   * - Se o usuário NÃO está em /gestaofc, NUNCA vai para /gestaofc automaticamente
+   * - /gestaofc SÓ EXISTE quando digitada manualmente na URL
+   */
   const getRedirectPath = async (): Promise<string> => {
     if (!user) return "/auth";
 
-    // Owner sempre vai para dashboard de gestão (ACESSO SUPREMO)
+    // Verificar se está DENTRO de /gestaofc (digitou manualmente)
+    const isInGestaofc = location.pathname.startsWith("/gestaofc");
+
+    // Owner: se está em /gestaofc, fica. Se não está, vai para /alunos ou home
     if (user.email?.toLowerCase() === OWNER_EMAIL) {
-      return "/gestaofc/dashboard";
+      if (isInGestaofc) {
+        return "/gestaofc/dashboard";
+      }
+      // Owner fora de /gestaofc vai para área pública ou alunos
+      return "/";
     }
 
     try {
@@ -46,32 +55,43 @@ export function useRoleBasedRedirect() {
 
       if (error) {
         console.error("[REDIRECT] Erro ao buscar role:", error);
-        return "/gestaofc/dashboard";
+        return "/";
       }
 
       const role = data?.role || "employee";
+
+      // ============================================
+      // REGRA: NUNCA redirecionar automaticamente para /gestaofc
+      // Funcionários só vão para /gestaofc se DIGITARAM a URL
+      // ============================================
+
+      // Se o usuário está DENTRO de /gestaofc E é funcionário, fica lá
+      if (isInGestaofc && GESTAO_ROLES.includes(role)) {
+        return "/gestaofc/dashboard";
+      }
 
       // Se for aluno pago (beta), vai para central do aluno
       if (ALUNO_ROLES.includes(role)) {
         return "/alunos";
       }
 
-      // Funcionários (gestão) vão para dashboard de gestão
+      // Funcionários FORA de /gestaofc vão para home (invisível)
+      // ELES PRECISAM DIGITAR /gestaofc MANUALMENTE
       if (GESTAO_ROLES.includes(role)) {
-        return "/gestaofc/dashboard";
+        return "/";
       }
 
-      // Fallback para gestão
-      return "/gestaofc/dashboard";
+      // Fallback para home pública
+      return "/";
     } catch (err) {
       console.error("[REDIRECT] Erro:", err);
-      return "/gestaofc/dashboard";
+      return "/";
     }
   };
 
   /**
    * Redireciona após login
-   * ARQUITETURA MONO-DOMÍNIO: todos os redirects são RELATIVOS
+   * REGRA: NUNCA revela /gestaofc automaticamente
    */
   const redirectAfterLogin = async () => {
     if (!user) {
@@ -82,37 +102,13 @@ export function useRoleBasedRedirect() {
     setIsRedirecting(true);
 
     try {
-      // Buscar role do usuário
-      const { data, error } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", user.id)
-        .maybeSingle();
-
-      if (error) {
-        console.error("[REDIRECT] Erro ao buscar role:", error);
-      }
-
-      const role = (data?.role || "employee") as DomainAppRole;
-      const userEmail = user.email || null;
-
-      // Validação de área (não domínio)
-      const areaValidation = validateDomainAccessForLogin(role, userEmail);
-      
-      if (!areaValidation.permitido && areaValidation.redirecionarPara) {
-        console.log(`[REDIRECT] Role "${role}" - redirecionando para ${areaValidation.redirecionarPara}`);
-        navigate(areaValidation.redirecionarPara, { replace: true });
-        return;
-      }
-
-      // Redirecionamento normal baseado no role
       const path = await getRedirectPath();
-      console.log(`[REDIRECT] Navegando para ${path} (role: ${role})`);
+      console.log(`[REDIRECT] Navegando para ${path}`);
       navigate(path, { replace: true });
 
     } catch (err) {
       console.error("[REDIRECT] Erro geral:", err);
-      navigate("/gestaofc/dashboard", { replace: true });
+      navigate("/", { replace: true });
     } finally {
       setIsRedirecting(false);
     }
@@ -128,7 +124,8 @@ export function useRoleBasedRedirect() {
 // Hook simples para usar em componentes que precisam saber a home do usuário
 export function useUserHomePath() {
   const { user } = useAuth();
-  const [homePath, setHomePath] = useState<string>("/gestaofc/dashboard");
+  const location = useLocation();
+  const [homePath, setHomePath] = useState<string>("/");
 
   useEffect(() => {
     async function determineHome() {
@@ -137,9 +134,12 @@ export function useUserHomePath() {
         return;
       }
 
-      // Owner sempre vai para dashboard de gestão
+      // Verificar se está em /gestaofc
+      const isInGestaofc = location.pathname.startsWith("/gestaofc");
+
+      // Owner: se está em gestaofc, home é gestaofc. Se não, home é /
       if (user.email?.toLowerCase() === OWNER_EMAIL) {
-        setHomePath("/gestaofc/dashboard");
+        setHomePath(isInGestaofc ? "/gestaofc/dashboard" : "/");
         return;
       }
 
@@ -152,15 +152,25 @@ export function useUserHomePath() {
 
         const role = data?.role || "employee";
         
-        // Alunos vão para /alunos, funcionários para /gestaofc/dashboard
-        setHomePath(ALUNO_ROLES.includes(role) ? "/alunos" : "/gestaofc/dashboard");
+        // Alunos vão para /alunos
+        if (ALUNO_ROLES.includes(role)) {
+          setHomePath("/alunos");
+          return;
+        }
+
+        // Funcionários: se estão em /gestaofc, home é /gestaofc. Se não, home é /
+        if (isInGestaofc) {
+          setHomePath("/gestaofc/dashboard");
+        } else {
+          setHomePath("/");
+        }
       } catch {
-        setHomePath("/gestaofc/dashboard");
+        setHomePath("/");
       }
     }
 
     determineHome();
-  }, [user]);
+  }, [user, location.pathname]);
 
   return homePath;
 }
