@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v7.0 - GESTÃO DO SITE
 // Spider-Man Theme - Pendências e Tarefas
+// + Guia Operacional (OWNER ONLY)
 // ============================================
 
 import { useState, useEffect, useMemo } from "react";
@@ -17,7 +18,9 @@ import {
   Edit2,
   Filter,
   FileText,
-  Upload
+  Upload,
+  BookOpen,
+  ListTodo
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,11 +30,14 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useRolePermissions } from "@/hooks/useRolePermissions";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { GuiaOperacionalOwner } from "@/components/owner/GuiaOperacionalOwner";
 
 interface Pendencia {
   id: string;
@@ -67,6 +73,8 @@ const STATUS_OPTIONS = [
 export default function GestaoSite() {
   const { toast } = useToast();
   const { user } = useAuth();
+  const { isOwner } = useRolePermissions();
+  const [activeTab, setActiveTab] = useState<"pendencias" | "guia">("pendencias");
   const [pendencias, setPendencias] = useState<Pendencia[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -259,6 +267,27 @@ export default function GestaoSite() {
           </div>
         </motion.header>
 
+        {/* Tabs para Owner */}
+        {isOwner && (
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "pendencias" | "guia")} className="mb-6">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="pendencias" className="gap-2">
+                <ListTodo className="h-4 w-4" />
+                Pendências
+              </TabsTrigger>
+              <TabsTrigger value="guia" className="gap-2">
+                <BookOpen className="h-4 w-4" />
+                Guia Operacional
+              </TabsTrigger>
+            </TabsList>
+          </Tabs>
+        )}
+
+        {/* Conteúdo baseado na tab ativa */}
+        {activeTab === "guia" && isOwner ? (
+          <GuiaOperacionalOwner />
+        ) : (
+          <>
         {/* Progress & Stats - GPU optimized */}
         <motion.section
           {...gpuAnimationProps.fadeUp}
@@ -510,6 +539,8 @@ export default function GestaoSite() {
             </div>
           </DialogContent>
         </Dialog>
+          </>
+        )}
       </div>
     </div>
   );
