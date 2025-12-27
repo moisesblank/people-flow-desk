@@ -285,6 +285,28 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
   }, [startHeartbeat, stopHeartbeat]);
 
+  // ============================================
+  // ✅ ÚNICO DONO DO REDIRECT GLOBAL
+  // Regra: se existe sessão e está em /auth, redireciona UMA VEZ.
+  // Login (/auth) não decide nada.
+  // ============================================
+  useEffect(() => {
+    if (isLoading) return;
+
+    // Não interromper desafio 2FA na tela de /auth
+    const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
+    if (is2FAPending) return;
+
+    const path = typeof window !== "undefined" ? window.location.pathname : "";
+    if (user && session && path === "/auth") {
+      const email = (user.email || "").toLowerCase();
+      const target = email === OWNER_EMAIL ? "/dashboard" : "/alunos";
+
+      // replace: evita voltar para /auth no histórico
+      window.location.replace(target);
+    }
+  }, [isLoading, user, session]);
+
   const fetchUserRole = async (userId: string) => {
     try {
       const { data, error } = await supabase
