@@ -28,6 +28,23 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role } = useRolePermissions();
   const location = useLocation();
   const [isDomainRedirecting, setIsDomainRedirecting] = useState(false);
+  
+  // ============================================
+  // ⏱️ TIMEOUT GLOBAL (LEI IV CONSTITUIÇÃO)
+  // Se loading > 5s, prosseguir com fallback
+  // ============================================
+  const [loadingTimeout, setLoadingTimeout] = useState(false);
+  
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      if (authLoading || roleLoading) {
+        console.warn("[RoleProtectedRoute] Timeout de 5s atingido - prosseguindo com estado atual");
+        setLoadingTimeout(true);
+      }
+    }, 5000);
+    
+    return () => clearTimeout(timeout);
+  }, [authLoading, roleLoading]);
 
   // ============================================
   // 🔐 DOMAIN GUARD (LEI IV - CONSTITUIÇÃO v9.2b)
@@ -57,8 +74,13 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
     }
   }, [role, roleLoading, user]);
 
-  // Loading state - CSS only animation for max performance
-  if (authLoading || roleLoading || isDomainRedirecting) {
+  // ============================================
+  // 🛡️ LOADING STATE DETERMINÍSTICO
+  // Spinner máximo 5s, depois prossegue
+  // ============================================
+  const isActuallyLoading = (authLoading || roleLoading) && !loadingTimeout;
+  
+  if (isActuallyLoading || isDomainRedirecting) {
     return (
       <div className="min-h-screen bg-background flex flex-col items-center justify-center gap-4">
         <Loader2 className="h-8 w-8 text-primary animate-spin" />
