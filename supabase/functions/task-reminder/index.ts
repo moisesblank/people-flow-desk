@@ -163,7 +163,7 @@ async function sendReminderEmail(
 
   try {
     const result = await resend.emails.send({
-      from: 'Plataforma Moisés Medeiros <onboarding@resend.dev>',
+      from: Deno.env.get("RESEND_FROM") || 'Plataforma Moisés Medeiros <falecom@moisesmedeiros.com.br>',
       to: [email],
       subject: `📌 Nova Tarefa: ${task.title}`,
       html: `

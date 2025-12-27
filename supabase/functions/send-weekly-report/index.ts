@@ -183,7 +183,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'SYNAPSE <reports@resend.dev>',
+            from: Deno.env.get("RESEND_FROM") || 'SYNAPSE <falecom@moisesmedeiros.com.br>',
             to: [recipient_email],
             subject: `📊 Relatório Semanal - ${reportData.period.start} a ${reportData.period.end}`,
             html: htmlReport,

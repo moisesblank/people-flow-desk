@@ -217,7 +217,7 @@ serve(async (req) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: 'Sistema Moisés Medeiros <onboarding@resend.dev>',
+            from: Deno.env.get("RESEND_FROM") || 'Sistema Moisés Medeiros <falecom@moisesmedeiros.com.br>',
             to: [OWNER_EMAIL],
             subject: `⚠️ ALERTA: ${vencidos.length} gastos pendentes - ${formatCurrency(totalVencido)} total`,
             html: emailHtml,
