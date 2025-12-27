@@ -204,26 +204,18 @@ export default function Auth() {
   });
 
   // ============================================
-  // 🛡️ REDIRECIONAMENTO PÓS-LOGIN DETERMINÍSTICO
-  // NÃO espera queries - usa regras simples
+  // 🔒 CONTROLE DE 2FA (SINALIZAÇÃO APENAS)
+  // /auth NÃO redireciona. Quem redireciona é o AuthProvider.
+  // Este flag só evita redirect durante o desafio 2FA.
   // ============================================
   useEffect(() => {
-    // Se já está em 2FA, não redirecionar
-    if (show2FA && pending2FAUser) return;
-    
-    // Se user está autenticado e NÃO está em loading
-    if (user && !authLoading) {
-      // Owner vai sempre para dashboard imediatamente
-      if (user.email?.toLowerCase() === 'moisesblank@gmail.com') {
-        navigate('/dashboard', { replace: true });
-        return;
-      }
-      
-      // Para outros usuários, deixar o RoleProtectedRoute decidir
-      // Redireciona para path padrão (o guard cuidará do resto)
-      navigate('/alunos', { replace: true });
+    const key = "matriz_2fa_pending";
+    if (show2FA && pending2FAUser) {
+      sessionStorage.setItem(key, "1");
+    } else {
+      sessionStorage.removeItem(key);
     }
-  }, [user, authLoading, show2FA, pending2FAUser]);
+  }, [show2FA, pending2FAUser]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -429,12 +421,13 @@ export default function Auth() {
             userName={pending2FAUser.nome}
             onVerified={() => {
               toast.success("Bem-vindo de volta!");
-              // 🛡️ REDIRECT DETERMINÍSTICO após 2FA
-              // Owner vai para dashboard, outros para área de alunos
-              const isOwner = pending2FAUser.email.toLowerCase() === 'moisesblank@gmail.com';
-              navigate(isOwner ? '/dashboard' : '/alunos', { replace: true });
+              // /auth NÃO redireciona. AuthProvider fará o redirect quando a sessão estiver READY.
+              sessionStorage.removeItem("matriz_2fa_pending");
+              setShow2FA(false);
+              setPending2FAUser(null);
             }}
             onCancel={() => {
+              sessionStorage.removeItem("matriz_2fa_pending");
               setShow2FA(false);
               setPending2FAUser(null);
             }}
