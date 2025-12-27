@@ -367,15 +367,24 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
 // ============================================
 
 export const OWNER_ONLY_PATHS: string[] = [
-  "/gestao/central-monitoramento",
-  "/gestao/central-diagnostico",
-  "/gestao/diagnostico-whatsapp",
-  "/gestao/diagnostico-webhooks",
-  "/gestao/site-programador",
-  "/gestao/vida-pessoal",
-  "/gestao/pessoal",
-  "/gestao/master",
-  "/gestao/owner",
+  // ✅ MATRIZ SUPREMA: Rotas exclusivas OWNER no /gestaofc
+  "/gestaofc/central-monitoramento",
+  "/gestaofc/central-diagnostico",
+  "/gestaofc/diagnostico-whatsapp",
+  "/gestaofc/diagnostico-webhooks",
+  "/gestaofc/site-programador",
+  "/gestaofc/vida-pessoal",
+  "/gestaofc/pessoal",
+  "/gestaofc/master",
+  "/gestaofc/owner",
+  "/gestaofc/gestao-dispositivos",
+  "/gestaofc/auditoria-acessos",
+  "/gestaofc/central-ias",
+  "/gestaofc/central-metricas",
+  "/gestaofc/central-whatsapp",
+  "/gestaofc/whatsapp-live",
+  "/gestaofc/monitoramento",
+  // Legacy redirect (se alguém digitar)
   "/central-diagnostico",
 ];
 
