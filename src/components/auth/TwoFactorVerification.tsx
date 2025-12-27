@@ -48,6 +48,7 @@ export function TwoFactorVerification({
 
   // Enviar código ao montar
   useEffect(() => {
+    console.log('[AUTH][2FA] 1. TwoFactorVerification montado');
     sendCode();
   }, []);
 
@@ -71,24 +72,47 @@ export function TwoFactorVerification({
   }, [lockoutTime, isLocked]);
 
   const sendCode = useCallback(async () => {
+    console.log('[AUTH][2FA] 2. Enviando código...');
     setIsResending(true);
     setError("");
 
+    const TIMEOUT_MS = 30_000;
+    const withTimeout = async <T,>(label: string, promise: Promise<T>): Promise<T> => {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      try {
+        const timeoutPromise = new Promise<T>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`Timeout ${TIMEOUT_MS}ms em: ${label}`)), TIMEOUT_MS);
+        });
+        return await Promise.race([promise, timeoutPromise]);
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    };
+
     try {
-      const { data, error } = await supabase.functions.invoke("send-2fa-code", {
-        body: { email, userId, userName }
+      const { data, error } = await withTimeout(
+        'send-2fa-code',
+        supabase.functions.invoke("send-2fa-code", {
+          body: { email, userId, userName }
+        })
+      );
+
+      console.log('[AUTH][2FA] 3. Resposta send-2fa-code:', {
+        hasError: Boolean(error),
+        hasData: Boolean(data),
+        dataError: Boolean((data as any)?.error),
       });
 
       if (error) throw error;
 
-      if (data?.error) {
-        if (data.retryAfter) {
+      if ((data as any)?.error) {
+        if ((data as any).retryAfter) {
           toast.error("Muitas tentativas", {
             description: "Aguarde 15 minutos para solicitar novo código"
           });
           return;
         }
-        throw new Error(data.error);
+        throw new Error((data as any).error);
       }
 
       toast.success("Código enviado!", {
@@ -97,7 +121,8 @@ export function TwoFactorVerification({
 
       setCountdown(60);
     } catch (err: any) {
-      console.error("Erro ao enviar código:", err);
+      console.error('[AUTH][2FA] ERROR sendCode:', err);
+      setError(err?.message || "Erro ao enviar código");
       toast.error("Erro ao enviar código", {
         description: err.message || "Tente novamente em alguns segundos"
       });
@@ -144,30 +169,54 @@ export function TwoFactorVerification({
   };
 
   const verifyCode = async (fullCode: string) => {
+    console.log('[AUTH][2FA] 4. Verificando código...');
     setIsLoading(true);
     setError("");
 
+    const TIMEOUT_MS = 30_000;
+    const withTimeout = async <T,>(label: string, promise: Promise<T>): Promise<T> => {
+      let timeoutId: ReturnType<typeof setTimeout> | null = null;
+      try {
+        const timeoutPromise = new Promise<T>((_, reject) => {
+          timeoutId = setTimeout(() => reject(new Error(`Timeout ${TIMEOUT_MS}ms em: ${label}`)), TIMEOUT_MS);
+        });
+        return await Promise.race([promise, timeoutPromise]);
+      } finally {
+        if (timeoutId) clearTimeout(timeoutId);
+      }
+    };
+
     try {
-      const { data, error } = await supabase.functions.invoke("verify-2fa-code", {
-        body: { userId, code: fullCode }
+      const { data, error } = await withTimeout(
+        'verify-2fa-code',
+        supabase.functions.invoke("verify-2fa-code", {
+          body: { userId, code: fullCode }
+        })
+      );
+
+      console.log('[AUTH][2FA] 5. Resposta verify-2fa-code:', {
+        hasError: Boolean(error),
+        valid: Boolean((data as any)?.valid),
+        lockedUntil: Boolean((data as any)?.lockedUntil),
+        attemptsRemaining: (data as any)?.attemptsRemaining,
       });
 
-      if (error || !data?.valid) {
+      if (error || !(data as any)?.valid) {
         // Verificar se está bloqueado
-        if (data?.lockedUntil) {
+        if ((data as any)?.lockedUntil) {
           setIsLocked(true);
-          setLockoutTime(data.remainingSeconds || 900);
+          setLockoutTime((data as any).remainingSeconds || 900);
           setError("Conta temporariamente bloqueada por excesso de tentativas");
           setCode(["", "", "", "", "", ""]);
           return;
         }
 
         // Atualizar tentativas restantes
-        if (data?.attemptsRemaining !== undefined) {
-          setAttemptsRemaining(data.attemptsRemaining);
+        if ((data as any)?.attemptsRemaining !== undefined) {
+          setAttemptsRemaining((data as any).attemptsRemaining);
         }
 
-        setError(data?.error || "Código inválido");
+        setError((data as any)?.error || "Código inválido");
         setCode(["", "", "", "", "", ""]);
         inputRefs.current[0]?.focus();
         return;
@@ -179,8 +228,8 @@ export function TwoFactorVerification({
 
       onVerified();
     } catch (err: any) {
-      console.error("Erro ao verificar:", err);
-      setError("Erro ao verificar código. Tente novamente.");
+      console.error('[AUTH][2FA] ERROR verifyCode:', err);
+      setError(err?.message || "Erro ao verificar código. Tente novamente.");
       setCode(["", "", "", "", "", ""]);
     } finally {
       setIsLoading(false);
