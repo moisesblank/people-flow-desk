@@ -65,9 +65,10 @@ export function useRoleBasedRedirect() {
       // Funcionários só vão para /gestaofc se DIGITARAM a URL
       // ============================================
 
-      // Se o usuário está DENTRO de /gestaofc E é funcionário, fica lá
-      if (isInGestaofc && GESTAO_ROLES.includes(role)) {
-        return "/gestaofc/dashboard";
+      // ✅ P0 FIX: Funcionário SEMPRE vai para /gestaofc (não para /)
+      // Se o usuário é funcionário, destino é /gestaofc
+      if (GESTAO_ROLES.includes(role)) {
+        return "/gestaofc";
       }
 
       // Se for aluno pago (beta), vai para central do aluno
@@ -75,14 +76,8 @@ export function useRoleBasedRedirect() {
         return "/alunos";
       }
 
-      // Funcionários FORA de /gestaofc vão para home (invisível)
-      // ELES PRECISAM DIGITAR /gestaofc MANUALMENTE
-      if (GESTAO_ROLES.includes(role)) {
-        return "/";
-      }
-
-      // Fallback para home pública
-      return "/";
+      // Fallback para comunidade (não /)
+      return "/comunidade";
     } catch (err) {
       console.error("[REDIRECT] Erro:", err);
       return "/";
@@ -158,14 +153,16 @@ export function useUserHomePath() {
           return;
         }
 
-        // Funcionários: se estão em /gestaofc, home é /gestaofc. Se não, home é /
-        if (isInGestaofc) {
-          setHomePath("/gestaofc/dashboard");
-        } else {
-          setHomePath("/");
+        // ✅ P0 FIX: Funcionários sempre têm home /gestaofc (não /)
+        if (GESTAO_ROLES.includes(role)) {
+          setHomePath("/gestaofc");
+          return;
         }
+
+        // Fallback para comunidade (não /)
+        setHomePath("/comunidade");
       } catch {
-        setHomePath("/");
+        setHomePath("/comunidade");
       }
     }
 

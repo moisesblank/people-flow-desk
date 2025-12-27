@@ -341,6 +341,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   // Login (/auth) não decide nada.
   // ============================================
   // ✅ P0 FIX: Redirect com dependências primitivas (evita re-render)
+  // ✅ P0 FIX v2: Espera role ser carregada antes de redirecionar FUNCIONARIO
   useEffect(() => {
     if (isLoading) return;
 
@@ -353,11 +354,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (user && session && isAuthPath) {
       const email = (user.email || "").toLowerCase();
+      const ownerEmail = "moisesblank@gmail.com";
+      
+      // ✅ P0 FIX: Owner pode redirecionar imediatamente (sem esperar role do banco)
+      if (email === ownerEmail) {
+        console.log('[AUTH] Owner detectado - redirecionando para /gestaofc');
+        window.location.replace("/gestaofc");
+        return;
+      }
+      
+      // ✅ P0 FIX CRÍTICO: Para outros usuários, ESPERAR role ser carregada
+      // Se derivedRole ainda é null, NÃO redirecionar ainda
+      if (derivedRole === null) {
+        console.log('[AUTH] Aguardando role ser carregada do banco...');
+        return; // Espera próximo ciclo quando role estiver disponível
+      }
 
-      // ✅ REGRA DEFINITIVA: Usa função centralizada (docs/ARQUITETURA_DOMINIOS_DEFINITIVA.md)
+      // ✅ REGRA DEFINITIVA: Usa função centralizada COM role carregada
       const target = getPostLoginRedirect(derivedRole, email);
-
-      // replace: evita voltar para /auth no histórico
+      console.log('[AUTH] Redirecionando para', target, '(role:', derivedRole, ')');
       window.location.replace(target);
     }
   }, [isLoading, user?.id, session?.access_token, derivedRole]); // ✅ Inclui role para recálculo
