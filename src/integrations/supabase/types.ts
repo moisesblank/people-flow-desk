@@ -15721,7 +15721,7 @@ export type Database = {
       is_funcionario_or_owner: { Args: { _user_id?: string }; Returns: boolean }
       is_funcionario_user: { Args: { p_user_id?: string }; Returns: boolean }
       is_funcionario_v2: { Args: { p_user_id?: string }; Returns: boolean }
-      is_gestao_staff: { Args: { _user_id?: string }; Returns: boolean }
+      is_gestao_staff: { Args: { _user_id: string }; Returns: boolean }
       is_ip_blocked: { Args: { p_ip_address: unknown }; Returns: boolean }
       is_marketing: { Args: { _user_id?: string }; Returns: boolean }
       is_matrix_admin: { Args: never; Returns: boolean }
