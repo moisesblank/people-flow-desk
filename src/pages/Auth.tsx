@@ -208,12 +208,33 @@ export default function Auth() {
   // - Não redirecionar se 2FA estiver pendente nesta aba
   // ============================================
   useEffect(() => {
-    const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
+    const pendingKey = "matriz_2fa_pending";
+    const pendingUserKey = "matriz_2fa_user";
+
+    const is2FAPending = sessionStorage.getItem(pendingKey) === "1";
 
     if (is2FAPending) {
-      console.log('[AUTH] 0. 2FA pendente nesta aba - não redirecionar');
-      setIsCheckingSession(false);
-      return;
+      // ✅ Anti-stuck: se houve refresh com 2FA pendente, restaurar a UI do desafio.
+      // Se não houver payload do usuário, consideramos flag “stale” e limpamos.
+      try {
+        const raw = sessionStorage.getItem(pendingUserKey);
+        const parsed = raw ? (JSON.parse(raw) as { email: string; userId: string; nome?: string }) : null;
+
+        if (parsed?.email && parsed?.userId) {
+          console.log('[AUTH] 0. 2FA pendente nesta aba - restaurando desafio');
+          setPending2FAUser(parsed);
+          setShow2FA(true);
+          setIsCheckingSession(false);
+          return;
+        }
+
+        console.warn('[AUTH] 0. Flag 2FA pendente sem payload - limpando (stale)');
+        sessionStorage.removeItem(pendingKey);
+      } catch (e) {
+        console.warn('[AUTH] 0. Falha ao restaurar 2FA - limpando flag (stale)', e);
+        sessionStorage.removeItem(pendingKey);
+        sessionStorage.removeItem(pendingUserKey);
+      }
     }
 
     // Se o AuthProvider já carregou o usuário, redireciona imediatamente
@@ -276,11 +297,15 @@ export default function Auth() {
   // Este flag só evita redirect durante o desafio 2FA.
   // ============================================
   useEffect(() => {
-    const key = "matriz_2fa_pending";
+    const pendingKey = "matriz_2fa_pending";
+    const pendingUserKey = "matriz_2fa_user";
+
     if (show2FA && pending2FAUser) {
-      sessionStorage.setItem(key, "1");
+      sessionStorage.setItem(pendingKey, "1");
+      sessionStorage.setItem(pendingUserKey, JSON.stringify(pending2FAUser));
     } else {
-      sessionStorage.removeItem(key);
+      sessionStorage.removeItem(pendingKey);
+      sessionStorage.removeItem(pendingUserKey);
     }
   }, [show2FA, pending2FAUser]);
 
@@ -462,7 +487,16 @@ export default function Auth() {
 
         // ✅ CRÍTICO: setar flag ANTES de qualquer efeito global (AuthProvider)
         // Assim garantimos que nenhum redirect acontece enquanto o 2FA estiver pendente.
+        // Também persistimos o payload do usuário para sobreviver a refresh (anti-stuck P0).
         sessionStorage.setItem("matriz_2fa_pending", "1");
+        sessionStorage.setItem(
+          "matriz_2fa_user",
+          JSON.stringify({
+            email: userFor2FA.email || formData.email,
+            userId: userFor2FA.id,
+            nome: (userFor2FA.user_metadata as any)?.nome,
+          })
+        );
 
         setPending2FAUser({
           email: userFor2FA.email || formData.email,
@@ -562,11 +596,13 @@ export default function Auth() {
               toast.success("Bem-vindo de volta!");
               // /auth NÃO redireciona. AuthProvider fará o redirect quando a sessão estiver READY.
               sessionStorage.removeItem("matriz_2fa_pending");
+              sessionStorage.removeItem("matriz_2fa_user");
               setShow2FA(false);
               setPending2FAUser(null);
             }}
             onCancel={() => {
               sessionStorage.removeItem("matriz_2fa_pending");
+              sessionStorage.removeItem("matriz_2fa_user");
               setShow2FA(false);
               setPending2FAUser(null);
             }}
