@@ -313,60 +313,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signIn = async (
     email: string,
     password: string,
-    opts?: { turnstileToken?: string }
+    _opts?: { turnstileToken?: string }
   ): Promise<{ error: Error | null; needsChallenge?: boolean; blocked?: boolean }> => {
-    // 1. Validar dispositivo ANTES do login
-    try {
-      const { hash, data: fingerprintData } = await collectFingerprint();
-
-      const { data: validationData, error: validationError } = await supabase.functions.invoke('validate-device', {
-        body: {
-          fingerprint: hash,
-          fingerprintData,
-          email: email.trim(),
-          action: 'pre_login',
-          // 🛡️ P0: Turnstile obrigatório no pre_login (evita 400 + bloqueio silencioso)
-          ...(opts?.turnstileToken ? { turnstileToken: opts.turnstileToken } : {}),
-        },
-      });
-
-      // Se o backend pedir explicitamente Turnstile, sinalizar ao caller
-      if (validationError && (validationData as any)?.requiresTurnstile) {
-        return {
-          error: new Error('Verificação anti-bot obrigatória. Refaça a verificação e tente novamente.'),
-          needsChallenge: true,
-        };
-      }
-
-      if (validationData) {
-        const validation: DeviceValidationResult = {
-          riskScore: validationData.riskScore || 0,
-          action: validationData.action || 'allow',
-          requiresChallenge: validationData.requiresChallenge || false,
-          isNewDevice: validationData.isNewDevice || true,
-        };
-        
-        setDeviceValidation(validation);
-
-        // Bloquear se risk muito alto
-        if (validation.action === 'block') {
-          console.warn('[LEI VI] ❌ Dispositivo bloqueado, risk score:', validation.riskScore);
-          return { 
-            error: new Error('Acesso bloqueado por motivos de segurança. Entre em contato com o suporte.'), 
-            blocked: true 
-          };
-        }
-
-        // Requerer desafio adicional
-        if (validation.requiresChallenge) {
-          console.warn('[LEI VI] ⚠️ Challenge necessário, risk score:', validation.riskScore);
-          return { error: null, needsChallenge: true };
-        }
-      }
-    } catch (validationError) {
-      // Se falhar a validação, continuar (não bloquear por erro)
-      console.error('[LEI VI] Erro na validação pré-login:', validationError);
-    }
+    // 🛡️ NOVA ESTRATÉGIA: Login DIRETO sem validate-device bloqueante
+    // Fingerprint e validação de dispositivo acontecem DEPOIS do login (não bloqueante)
+    // Isso garante que o login NUNCA fica travado por dependência externa
 
     // 2. Fazer login no Supabase
     const { error } = await supabase.auth.signInWithPassword({
