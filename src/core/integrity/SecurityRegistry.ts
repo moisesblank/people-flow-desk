@@ -32,7 +32,9 @@ export type Capability =
   | 'access_comunidade'
   | 'access_gestao';
 
+// 🎯 CONSTITUIÇÃO ROLES v1.0.0 - Capacidades por role específica
 export const ROLE_CAPABILITIES: Record<string, Capability[]> = {
+  // === GESTÃO (Funcionários) ===
   owner: [
     'view_dashboard', 'manage_alunos', 'manage_cursos', 'manage_funcionarios',
     'view_financeiro', 'manage_financeiro', 'view_relatorios', 'export_data',
@@ -63,19 +65,14 @@ export const ROLE_CAPABILITIES: Record<string, Capability[]> = {
   marketing: [
     'view_dashboard', 'manage_marketing', 'view_analytics', 'access_gestao'
   ],
-  professor: [
-    'view_dashboard', 'manage_cursos', 'access_gestao'
+  afiliado: [
+    'view_dashboard', 'view_analytics', 'access_gestao'
   ],
-  funcionario: [
-    'view_dashboard', 'access_gestao'
-  ],
+  // === ALUNOS ===
   beta: [
     'access_portal_aluno', 'access_comunidade'
   ],
-  aluno: [
-    'access_comunidade'
-  ],
-  viewer: [
+  aluno_gratuito: [
     'access_comunidade'
   ],
 };
