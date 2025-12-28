@@ -159,27 +159,33 @@ Deno.serve(async (req) => {
         } else {
           console.warn(`[validate-device] ⚠️ DEV BYPASS aceito para: ${hostname}`);
         }
-      } else {
-        // Validar Turnstile via API (token normal)
+      } else if (turnstileToken) {
+        // Validar Turnstile via API (token normal) - MAS É OPCIONAL
+        // Se falhar, apenas logar e continuar (não bloquear)
         const TURNSTILE_SECRET = Deno.env.get('CLOUDFLARE_TURNSTILE_SECRET_KEY');
-        if (TURNSTILE_SECRET) {
-          const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-            body: `secret=${TURNSTILE_SECRET}&response=${turnstileToken}&remoteip=${cfConnectingIP}`,
-          });
-          const turnstileResult = await turnstileResponse.json();
-          if (!turnstileResult.success) {
-            console.warn(`[validate-device] Turnstile FALHOU: ${JSON.stringify(turnstileResult)}`);
-            return new Response(
-              JSON.stringify({ error: 'Turnstile validation failed', success: false }),
-              { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-            );
+        if (TURNSTILE_SECRET && turnstileToken) {
+          try {
+            const turnstileResponse = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+              body: `secret=${TURNSTILE_SECRET}&response=${turnstileToken}&remoteip=${cfConnectingIP}`,
+            });
+            const turnstileResult = await turnstileResponse.json();
+            if (!turnstileResult.success) {
+              // ✅ P0 FIX: Turnstile é OPCIONAL no pre-login
+              // Se falhar, apenas logar e continuar (não bloquear o fluxo)
+              console.warn(`[validate-device] Turnstile falhou (ignorando - opcional): ${JSON.stringify(turnstileResult)}`);
+              // NÃO retornar 403 - apenas continuar
+            } else {
+              console.log(`[validate-device] Turnstile validado com sucesso`);
+            }
+          } catch (turnstileError) {
+            console.warn(`[validate-device] Erro ao validar Turnstile (ignorando):`, turnstileError);
           }
-          console.log(`[validate-device] Turnstile validado com sucesso`);
         }
       }
-    }
+      // Se não tem turnstileToken, continuar normalmente (Turnstile é opcional)
+    } // Fecha o else do pre-login/validate
 
     if (!fingerprint) {
       return new Response(
