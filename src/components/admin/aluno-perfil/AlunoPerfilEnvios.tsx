@@ -256,8 +256,9 @@ export function AlunoPerfilEnvios({
         codigoValidado = data.data;
       }
 
-      // Criar registro
-      const { error } = await supabase
+      // Criar registro com dispatch_state
+      const hasTrackingCode = !!novoEnvio.codigoRastreio && !!codigoValidado;
+      const { data: insertedEnvio, error } = await supabase
         .from('envios_correios')
         .insert({
           aluno_id: alunoId,
@@ -280,9 +281,51 @@ export function AlunoPerfilEnvios({
           codigo_rastreio_validado: !!codigoValidado,
           codigo_rastreio_validado_at: codigoValidado ? new Date().toISOString() : null,
           eventos_rastreio: codigoValidado?.eventos || [],
-          status: codigoValidado ? 'postado' : 'endereco_validado',
-          data_postagem: codigoValidado ? new Date().toISOString() : null,
+          status: hasTrackingCode ? 'postado' : 'endereco_validado',
+          data_postagem: hasTrackingCode ? new Date().toISOString() : null,
+          // State Machine: só vai para sent_confirmed quando código validado
+          dispatch_state: hasTrackingCode ? 'sent_confirmed' : 'not_sent',
+        })
+        .select('id')
+        .single();
+
+      // Log de auditoria
+      if (insertedEnvio?.id) {
+        await supabase.from('dispatch_audit_log').insert({
+          envio_id: insertedEnvio.id,
+          event_type: 'dispatch_created',
+          actor_id: (await supabase.auth.getUser()).data.user?.id,
+          actor_role: 'admin',
+          tracking_code: novoEnvio.codigoRastreio || null,
+          metadata: { has_tracking: hasTrackingCode }
         });
+
+        // Se tem código, criar notificação para o aluno
+        if (hasTrackingCode) {
+          await supabase.from('notifications').insert({
+            user_id: alunoId,
+            type: 'info',
+            title: '📦 Material enviado!',
+            message: 'Seu material foi enviado. Clique para acompanhar o rastreamento.',
+            action_url: `/alunos/perfil?envio=${insertedEnvio.id}`,
+            metadata: { 
+              envio_id: insertedEnvio.id, 
+              tracking_code: novoEnvio.codigoRastreio,
+              is_dispatch: true
+            }
+          });
+
+          // Log de notificação
+          await supabase.from('dispatch_audit_log').insert({
+            envio_id: insertedEnvio.id,
+            event_type: 'student_notified',
+            actor_id: (await supabase.auth.getUser()).data.user?.id,
+            actor_role: 'admin',
+            tracking_code: novoEnvio.codigoRastreio,
+            metadata: { notification_channel: 'in_app' }
+          });
+        }
+      }
 
       if (error) throw error;
 

@@ -10,6 +10,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useGamification, useUserAchievements, getLevelInfo } from '@/hooks/useGamification';
 import { supabase } from '@/integrations/supabase/client';
+import { StudentDispatchSection } from '@/components/aluno/StudentDispatchSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -152,7 +153,8 @@ const ProfilePage = () => {
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6 max-w-5xl">
-      {/* Hero Header Card */}
+      {/* Seção de Envios - Aparece primeiro se houver envios pendentes */}
+      <StudentDispatchSection />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
