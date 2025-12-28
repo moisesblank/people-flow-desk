@@ -2,6 +2,7 @@
 // PERFIL ALUNO: SEÇÃO ENVIOS CORREIOS
 // CONSTITUIÇÃO SYNAPSE Ω v10.x — PATCH-ONLY
 // Autoridade: CORREIOS OFICIAL
+// Disparo Atômico: Email + WhatsApp
 // ============================================
 
 import { useState, useCallback } from "react";
@@ -29,6 +30,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import {
   Package,
@@ -43,6 +50,8 @@ import {
   Mail,
   MessageSquare,
   ExternalLink,
+  Send,
+  Bell,
 } from "lucide-react";
 
 interface AlunoEnviosProps {
@@ -64,6 +73,7 @@ interface AlunoEnviosProps {
 interface Envio {
   id: string;
   codigo_rastreio: string | null;
+  codigo_rastreio_validado: boolean | null;
   status: string;
   servico_correios: string | null;
   data_postagem: string | null;
@@ -75,6 +85,9 @@ interface Envio {
   descricao_conteudo: string | null;
   created_at: string;
   eventos_rastreio: any[];
+  notificacao_postagem_enviada: boolean | null;
+  destinatario_email: string | null;
+  destinatario_telefone: string | null;
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; icon: typeof Package }> = {
@@ -98,8 +111,10 @@ export function AlunoPerfilEnvios({
   const queryClient = useQueryClient();
   const [isNovoEnvioOpen, setIsNovoEnvioOpen] = useState(false);
   const [isRastreioOpen, setIsRastreioOpen] = useState(false);
+  const [isNotifyConfirmOpen, setIsNotifyConfirmOpen] = useState(false);
   const [selectedEnvio, setSelectedEnvio] = useState<Envio | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [isNotifying, setIsNotifying] = useState(false);
   const [rastreioResult, setRastreioResult] = useState<any>(null);
   
   // Form state para novo envio
@@ -275,6 +290,69 @@ export function AlunoPerfilEnvios({
     }
   }, [alunoId, alunoNome, alunoEmail, alunoTelefone, endereco, novoEnvio, correiosStatus, validarEndereco, queryClient]);
 
+  // Disparo atômico de notificação (Email + WhatsApp)
+  const enviarNotificacaoAtomica = useCallback(async (envio: Envio) => {
+    // Gate: pré-condições
+    if (!envio.codigo_rastreio) {
+      toast.error("Código de rastreio não cadastrado", {
+        description: "Adicione o código de rastreio antes de notificar."
+      });
+      return;
+    }
+
+    if (!envio.codigo_rastreio_validado) {
+      toast.error("Código não validado pelos Correios", {
+        description: "O código precisa ser validado oficialmente antes de notificar."
+      });
+      return;
+    }
+
+    if (!envio.destinatario_email && !envio.destinatario_telefone) {
+      toast.error("Aluno sem contato", {
+        description: "O aluno não possui email nem telefone cadastrado."
+      });
+      return;
+    }
+
+    if (envio.notificacao_postagem_enviada) {
+      toast.error("Notificação já enviada", {
+        description: "Este envio já teve a notificação disparada anteriormente."
+      });
+      return;
+    }
+
+    setIsNotifying(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('correios-notify', {
+        body: { envio_id: envio.id }
+      });
+
+      if (error || !data?.success) {
+        const errorMsg = data?.errors?.join(', ') || error?.message || 'Erro desconhecido';
+        throw new Error(errorMsg);
+      }
+
+      const result = data.data;
+      
+      // Feedback detalhado
+      const successParts: string[] = [];
+      if (result.email_sent) successParts.push('📧 Email');
+      if (result.whatsapp_sent) successParts.push('💬 WhatsApp');
+
+      toast.success("Notificação enviada com sucesso!", {
+        description: `Canais: ${successParts.join(' + ')}`
+      });
+
+      setIsNotifyConfirmOpen(false);
+      setSelectedEnvio(null);
+      queryClient.invalidateQueries({ queryKey: ['envios-aluno', alunoId] });
+    } catch (err: any) {
+      toast.error("Erro ao enviar notificação", { description: err.message });
+    } finally {
+      setIsNotifying(false);
+    }
+  }, [alunoId, queryClient]);
+
   // Verificar pré-condições
   const enderecoCompleto = !!(endereco?.cep && endereco?.logradouro && endereco?.numero && endereco?.bairro && endereco?.cidade && endereco?.estado);
   const temContato = !!(alunoEmail || alunoTelefone);
@@ -355,21 +433,27 @@ export function AlunoPerfilEnvios({
             {envios.map((envio) => {
               const statusConfig = STATUS_CONFIG[envio.status] || STATUS_CONFIG.pendente;
               const StatusIcon = statusConfig.icon;
+              const podeNotificar = envio.codigo_rastreio && 
+                                    envio.codigo_rastreio_validado && 
+                                    !envio.notificacao_postagem_enviada &&
+                                    (envio.destinatario_email || envio.destinatario_telefone);
               
               return (
                 <div
                   key={envio.id}
-                  className="p-4 rounded-lg border bg-card hover:bg-muted/20 transition-colors cursor-pointer"
-                  onClick={() => {
-                    setSelectedEnvio(envio);
-                    if (envio.codigo_rastreio) {
-                      setIsRastreioOpen(true);
-                      rastrearObjeto(envio.codigo_rastreio);
-                    }
-                  }}
+                  className="p-4 rounded-lg border bg-card hover:bg-muted/20 transition-colors"
                 >
                   <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
+                    <div 
+                      className="flex items-center gap-3 flex-1 cursor-pointer"
+                      onClick={() => {
+                        setSelectedEnvio(envio);
+                        if (envio.codigo_rastreio) {
+                          setIsRastreioOpen(true);
+                          rastrearObjeto(envio.codigo_rastreio);
+                        }
+                      }}
+                    >
                       <div className={`p-2 rounded-lg ${statusConfig.color}`}>
                         <StatusIcon className="h-4 w-4" />
                       </div>
@@ -381,19 +465,56 @@ export function AlunoPerfilEnvios({
                           <Badge variant="outline" className="text-xs">
                             {envio.servico_correios || "PAC"}
                           </Badge>
+                          {envio.notificacao_postagem_enviada && (
+                            <Badge variant="secondary" className="text-xs gap-1">
+                              <Bell className="h-3 w-3" />
+                              Notificado
+                            </Badge>
+                          )}
                         </div>
                         <p className="text-sm text-muted-foreground">
                           {envio.endereco_cidade}/{envio.endereco_estado} • {envio.descricao_conteudo || "Material didático"}
                         </p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <Badge className={statusConfig.color}>
-                        {statusConfig.label}
-                      </Badge>
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {new Date(envio.created_at).toLocaleDateString('pt-BR')}
-                      </p>
+                    <div className="flex items-center gap-3">
+                      <div className="text-right">
+                        <Badge className={statusConfig.color}>
+                          {statusConfig.label}
+                        </Badge>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {new Date(envio.created_at).toLocaleDateString('pt-BR')}
+                        </p>
+                      </div>
+                      {/* Botão de Notificar */}
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              size="sm"
+                              variant={podeNotificar ? "default" : "ghost"}
+                              disabled={!podeNotificar}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSelectedEnvio(envio);
+                                setIsNotifyConfirmOpen(true);
+                              }}
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            {envio.notificacao_postagem_enviada 
+                              ? "Notificação já enviada"
+                              : !envio.codigo_rastreio
+                              ? "Sem código de rastreio"
+                              : !envio.codigo_rastreio_validado
+                              ? "Código não validado"
+                              : "Notificar aluno (Email + WhatsApp)"
+                            }
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
                     </div>
                   </div>
                 </div>
@@ -569,6 +690,77 @@ export function AlunoPerfilEnvios({
                 Atualizar
               </Button>
             )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Confirmação Notificação */}
+      <Dialog open={isNotifyConfirmOpen} onOpenChange={setIsNotifyConfirmOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Send className="h-5 w-5 text-primary" />
+              Confirmar Notificação
+            </DialogTitle>
+            <DialogDescription>
+              Esta ação é irreversível. O aluno será notificado por Email e WhatsApp.
+            </DialogDescription>
+          </DialogHeader>
+
+          {selectedEnvio && (
+            <div className="space-y-4">
+              <div className="p-4 rounded-lg bg-muted/30 space-y-3">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wide">Código de Rastreio</p>
+                  <p className="font-mono text-lg font-semibold">{selectedEnvio.codigo_rastreio}</p>
+                </div>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">Email</p>
+                    <div className="flex items-center gap-1">
+                      <Mail className="h-3 w-3" />
+                      <span className="text-sm">{selectedEnvio.destinatario_email || "Não cadastrado"}</span>
+                    </div>
+                  </div>
+                  <div>
+                    <p className="text-xs text-muted-foreground uppercase tracking-wide">WhatsApp</p>
+                    <div className="flex items-center gap-1">
+                      <MessageSquare className="h-3 w-3" />
+                      <span className="text-sm">{selectedEnvio.destinatario_telefone || "Não cadastrado"}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20">
+                <p className="text-sm text-yellow-600 dark:text-yellow-400">
+                  ⚠️ <strong>Atenção:</strong> A notificação será enviada para todos os canais disponíveis (Email e/ou WhatsApp).
+                </p>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsNotifyConfirmOpen(false)} disabled={isNotifying}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={() => selectedEnvio && enviarNotificacaoAtomica(selectedEnvio)} 
+              disabled={isNotifying}
+            >
+              {isNotifying ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Enviando...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4 mr-2" />
+                  Enviar Notificação
+                </>
+              )}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
