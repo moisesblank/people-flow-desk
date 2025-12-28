@@ -85,7 +85,7 @@ export function StudentCommandCenter() {
       });
     }
 
-    // Flashcards para revisar
+    // Flashcards para revisar (contagem dinâmica quando FSRS estiver ativo)
     actions.push({
       id: 'flashcards',
       label: 'Flashcards',
@@ -93,7 +93,7 @@ export function StudentCommandCenter() {
       icon: Brain,
       route: '/alunos/flashcards',
       color: 'from-purple-500 to-pink-500',
-      badge: 12, // TODO: conectar com flashcards pendentes
+      badge: undefined, // Será conectado ao sistema FSRS
       priority: 'high',
       xp: 50
     });

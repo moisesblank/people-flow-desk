@@ -205,7 +205,7 @@ export function ExecutiveDashboardAdvanced() {
       icon: DollarSign,
       color: "hsl(var(--stats-green))",
       trend: (realData?.totalReceita || 0) > 0 ? "up" : "stable",
-      target: 0, // TODO: Definir metas no banco
+      target: undefined, // Metas disponíveis via configurações
       prediction: 0,
     },
     {

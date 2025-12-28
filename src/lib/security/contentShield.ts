@@ -422,8 +422,8 @@ export async function requestContentAccess(
   // ============================================
   // 5. VERIFICAR ENTITLEMENT (ACESSO AO CURSO)
   // ============================================
-  // TODO: Verificar se usuário tem acesso ao curso/aula
-  // Por enquanto, role 'beta' tem acesso a tudo
+  // NOTA: Verificação granular por curso será fase 2.
+  // Atualmente, role 'beta' tem acesso a todo conteúdo premium.
 
   // ============================================
   // 6. GERAR TOKEN DE ACESSO
