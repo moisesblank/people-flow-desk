@@ -596,11 +596,12 @@ serve(async (req) => {
       ]);
       
       userEmail = authRes.data?.user?.email || "";
-      userRole = roleRes.data?.role || "employee";
+      // P1-2 FIX: Sem default 'employee' - usar null ou role específica
+      userRole = roleRes.data?.role || null;
       userName = profileRes.data?.nome || userEmail.split('@')[0];
       
-      const isOwner = userEmail === OWNER_EMAIL;
-      hasAccess = isOwner || ["owner", "admin", "coordenacao"].includes(userRole);
+      // P1-2 FIX: Verificar por role apenas, não por email
+      hasAccess = ["owner", "admin", "coordenacao"].includes(userRole || '');
     }
 
     if (!hasAccess) {

@@ -120,13 +120,10 @@ export const HologramText = memo(({
   const containerRef = useRef<HTMLDivElement>(null);
   const { user, role } = useAuth();
 
-  // Verificar se é owner
+  // P1-2 FIX: Role-first, email como fallback UX
   const isOwner = useMemo(() => {
-    return (
-      role === "owner" ||
-      user?.email?.toLowerCase() === OWNER_EMAIL
-    );
-  }, [role, user]);
+    return role === "owner";
+  }, [role]);
 
   // Renderizar canvas para não-owners
   const renderCanvas = useCallback(() => {

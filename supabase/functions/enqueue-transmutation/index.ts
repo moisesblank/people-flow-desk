@@ -89,9 +89,8 @@ serve(async (req: Request) => {
       .eq("user_id", user.id);
 
     const userRoles = roles?.map(r => r.role) || [];
-    // ✅ P1 FIX: Verificar apenas por role (não por email!)
-    // Roles permitidas: owner, admin, employee (funcionario não existe no enum)
-    const canEnqueue = userRoles.some(r => ["owner", "admin", "employee"].includes(r));
+    // P1-2 FIX: Sem 'employee' deprecated - usar roles específicas
+    const canEnqueue = userRoles.some(r => ["owner", "admin", "coordenacao", "suporte"].includes(r));
 
     if (!canEnqueue) {
       console.warn(`[Enqueue] Acesso negado: ${user.email} (roles: ${userRoles.join(",")})`);

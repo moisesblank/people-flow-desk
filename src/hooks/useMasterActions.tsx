@@ -144,7 +144,8 @@ export function useMasterActions() {
   const { removeEntity, getRemovePreview, removeFromTable } = useMasterRemove();
   const { duplicateEntity } = useMasterDuplication();
 
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL && role === 'owner';
+  // P1-2 FIX: Role como fonte da verdade
+  const isOwner = role === 'owner';
 
   // Resolver tabela a partir do tipo
   const resolveTable = useCallback((entityType: string): string => {

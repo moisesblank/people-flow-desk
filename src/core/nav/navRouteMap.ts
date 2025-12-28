@@ -936,8 +936,8 @@ export function getRouteForNavItem(navItemKey: NavItemKey): RouteKey {
  * OWNER = MASTER = PODE TUDO
  */
 export function canAccessNavItemByKey(navItemKey: NavItemKey, userRole: UserRole | null, email?: string | null): boolean {
-  // Owner MASTER pode tudo
-  if (userRole === "owner" || email?.toLowerCase() === "moisesblank@gmail.com") {
+  // P1-2 FIX: Role como fonte da verdade
+  if (userRole === "owner") {
     return true;
   }
   

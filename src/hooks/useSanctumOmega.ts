@@ -18,11 +18,11 @@ export const SANCTUM_OMEGA_CONFIG = {
   // Owner email - IMUNIDADE TOTAL
   ownerEmail: "moisesblank@gmail.com",
   
-  // Roles com bypass completo
-  immuneRoles: ["owner", "admin", "funcionario", "coordenacao", "suporte", "employee", "monitoria"] as const,
+  // P1-2 FIX: Roles imunes (sem 'funcionario' e 'employee' deprecated)
+  immuneRoles: ["owner", "admin", "coordenacao", "suporte", "monitoria", "contabilidade", "marketing", "afiliado"] as const,
   
-  // Roles com proteção relaxada (apenas log)
-  relaxedRoles: ["afiliado", "marketing", "contabilidade"] as const,
+  // Roles com proteção relaxada (apenas log) - todas são imunes agora
+  relaxedRoles: [] as const,
   
   // Thresholds de bloqueio progressivo
   thresholds: {

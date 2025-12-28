@@ -152,10 +152,8 @@ export const SecurePdfViewerOmega = memo(({
 
   const { session, user, role } = useAuth();
 
-  // Verificar se é owner
-  const isOwner = 
-    role === "owner" || 
-    user?.email?.toLowerCase() === OWNER_EMAIL;
+  // P1-2 FIX: Role-first, email como fallback UX
+  const isOwner = role === "owner";
 
   // ============================================
   // BUSCAR MANIFEST

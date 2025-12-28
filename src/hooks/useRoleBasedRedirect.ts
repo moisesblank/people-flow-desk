@@ -10,10 +10,10 @@ import { useAuth } from "@/hooks/useAuth";
 import { OWNER_EMAIL } from "@/hooks/useRolePermissions";
 import { validateDomainAccessForLogin, type DomainAppRole, GESTAO_ALLOWED_ROLES, PRO_ALLOWED_ROLES } from "@/hooks/useDomainAccess";
 
-// Roles que podem acessar gestão (quando digitam manualmente /gestaofc)
+// P1-2 FIX: Roles que podem acessar gestão (sem 'employee' deprecated)
 const GESTAO_ROLES = [
   "owner", "admin", "coordenacao", "suporte", "monitoria", 
-  "financeiro", "rh", "marketing", "contabilidade", "afiliado", "employee"
+  "marketing", "contabilidade", "afiliado"
 ];
 
 // Roles que vão para área de aluno (/alunos)
