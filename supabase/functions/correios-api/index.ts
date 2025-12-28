@@ -211,16 +211,18 @@ async function calcularPreco(params: {
   };
 }
 
-// Verificar se usuário tem permissão (owner/admin)
-async function verificarPermissao(supabase: any): Promise<boolean> {
-  const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return false;
-
-  const { data: roles } = await supabase
+// Verificar se usuário tem permissão (owner/admin) - usa service role para bypass RLS
+async function verificarPermissao(serviceSupabase: any, userId: string): Promise<boolean> {
+  const { data: roles, error } = await serviceSupabase
     .from('user_roles')
     .select('role')
-    .eq('user_id', user.id)
+    .eq('user_id', userId)
     .in('role', ['owner', 'admin']);
+
+  if (error) {
+    console.error('[CORREIOS] Erro ao verificar permissão:', error);
+    return false;
+  }
 
   return roles && roles.length > 0;
 }
@@ -233,6 +235,7 @@ Deno.serve(async (req) => {
   }
 
   try {
+    // Service role client para operações internas (bypass RLS)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -247,14 +250,23 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Criar cliente com token do usuário para verificar permissões
-    const userSupabase = createClient(
+    // Extrair user do token para pegar o ID
+    const userClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
       { global: { headers: { Authorization: authHeader } } }
     );
+    
+    const { data: { user }, error: userError } = await userClient.auth.getUser();
+    if (userError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Token inválido' }),
+        { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
 
-    const temPermissao = await verificarPermissao(userSupabase);
+    // Verificar permissão usando service role (bypass RLS)
+    const temPermissao = await verificarPermissao(supabase, user.id);
     if (!temPermissao) {
       return new Response(
         JSON.stringify({ error: 'Acesso negado: apenas owner/admin' }),
