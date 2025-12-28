@@ -4,7 +4,7 @@
 // ============================================
 
 import { useParams, useNavigate } from "react-router-dom";
-import { ArrowLeft, RefreshCw, Edit, Shield, LogOut, Mail, MessageSquare } from "lucide-react";
+import { ArrowLeft, RefreshCw, Edit, Shield, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { CyberBackground } from "@/components/ui/cyber-background";
@@ -69,7 +69,7 @@ export default function AlunoPerfilAdmin() {
   if (loadingAluno) {
     return (
       <div className="min-h-screen bg-background">
-        <CyberBackground variant="subtle" />
+        <CyberBackground variant="grid" />
         <div className="container mx-auto px-4 py-8 space-y-6">
           <Skeleton className="h-12 w-64" />
           <Skeleton className="h-64 w-full" />
@@ -94,7 +94,7 @@ export default function AlunoPerfilAdmin() {
 
   return (
     <div className="min-h-screen bg-background">
-      <CyberBackground variant="subtle" />
+      <CyberBackground variant="grid" />
       <div className="container mx-auto px-4 py-8 relative z-10">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
@@ -105,7 +105,8 @@ export default function AlunoPerfilAdmin() {
             <FuturisticPageHeader
               title={aluno.nome}
               subtitle="Perfil Administrativo Completo"
-              icon={<Shield className="h-6 w-6 text-blue-400" />}
+              icon={Shield}
+              accentColor="blue"
             />
           </div>
           <div className="flex items-center gap-2">
