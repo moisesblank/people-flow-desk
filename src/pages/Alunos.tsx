@@ -151,39 +151,82 @@ const UNIVERSO_LABELS = {
   hibrido: { label: 'Híbrido', color: 'purple', icon: '🔀' },
 } as const;
 
+// ============================================
+// DETERMINAÇÃO DE ROLE EFETIVO
+// ============================================
+// REGRA CANÔNICA: Aluno Hotmart = PAGANTE = beta implícito
+// Mesmo sem profile/user_roles, Hotmart indica pagamento confirmado
+// ============================================
+function getEffectiveRole(student: Student): 'beta' | 'aluno_gratuito' | null {
+  // Role explícito tem prioridade
+  if (student.role === 'beta' || student.role === 'aluno_gratuito') {
+    return student.role;
+  }
+  
+  // HOTMART = PAGANTE = BETA IMPLÍCITO
+  const fonte = student.fonte?.toLowerCase() || '';
+  if (fonte.includes('hotmart')) {
+    return 'beta';
+  }
+  
+  // Acesso Oficial (Gestão) = BETA por default (admin criou)
+  if (fonte.includes('acesso oficial') || fonte.includes('gestão') || fonte.includes('gestao')) {
+    return 'beta';
+  }
+  
+  // Sem fonte identificável = registrado gratuito
+  return 'aluno_gratuito';
+}
+
 // Derivar label do aluno baseado em dados existentes
 function deriveStudentLabel(student: Student): keyof typeof UNIVERSO_LABELS {
-  // Role-based first
-  if (student.role === 'aluno_gratuito') return 'registrados';
+  const effectiveRole = getEffectiveRole(student);
   
-  // Fonte-based
+  // Role-based first
+  if (effectiveRole === 'aluno_gratuito') return 'registrados';
+  
+  // Fonte-based para pagantes
   const fonte = student.fonte?.toLowerCase() || '';
   if (fonte.includes('presencial')) return 'presencial';
   if (fonte.includes('híbrido') || fonte.includes('hibrido')) return 'hibrido';
   
   // Default: online para pagantes
-  if (student.role === 'beta') return 'online';
+  if (effectiveRole === 'beta') return 'online';
   
   return 'registrados';
 }
 
 // Filtrar aluno pelo universo selecionado
+// SEGMENTOS CANÔNICOS:
+// - presencial: fonte contém 'presencial' (sem online)
+// - presencial_online: híbrido ou presencial+online
+// - online: pagantes (beta) SEM presencial na fonte
+// - registrados: APENAS aluno_gratuito confirmado (não pagou)
 function matchesUniverseFilter(student: Student, filter: UniverseFilterType): boolean {
   if (filter === 'all') return true;
   
   const fonte = student.fonte?.toLowerCase() || '';
+  const effectiveRole = getEffectiveRole(student);
   
   switch (filter) {
     case 'presencial':
-      return fonte.includes('presencial') && !fonte.includes('online');
+      // Presencial exclusivo (sem online)
+      return fonte.includes('presencial') && !fonte.includes('online') && !fonte.includes('híbrido') && !fonte.includes('hibrido');
+    
     case 'presencial_online':
-      return fonte.includes('presencial') && fonte.includes('online') || 
-             fonte.includes('híbrido') || fonte.includes('hibrido') ||
-             (student.role === 'beta' && fonte.includes('presencial'));
+      // Híbrido: presencial + online ou marcado como híbrido
+      return (fonte.includes('presencial') && fonte.includes('online')) || 
+             fonte.includes('híbrido') || fonte.includes('hibrido');
+    
     case 'online':
-      return !fonte.includes('presencial') && student.role === 'beta';
+      // Online: pagantes (beta) que NÃO são presencial
+      return !fonte.includes('presencial') && effectiveRole === 'beta';
+    
     case 'registrados':
-      return student.role === 'aluno_gratuito' || student.role === null;
+      // Registrados: APENAS aluno_gratuito confirmado
+      // Hotmart/Acesso Oficial NUNCA vai para registrados
+      return effectiveRole === 'aluno_gratuito' && !fonte.includes('hotmart') && !fonte.includes('acesso oficial');
+    
     default:
       return true;
   }
