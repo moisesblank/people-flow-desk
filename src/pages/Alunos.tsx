@@ -109,7 +109,7 @@ const STALE_TIME = 30_000;
 // UNIVERSOS — Cards de filtro rápido
 // ============================================
 
-type UniverseFilterType = 'all' | 'presencial' | 'presencial_online' | 'online' | 'registrados';
+type UniverseFilterType = 'all' | 'beta' | 'presencial' | 'presencial_online' | 'online' | 'registrados';
 
 const UNIVERSE_OPTIONS: Array<{
   id: UniverseFilterType;
@@ -277,6 +277,10 @@ function matchesUniverseFilter(student: Student, filter: UniverseFilterType): bo
       // Registrados: APENAS aluno_gratuito confirmado
       // Hotmart/Acesso Oficial NUNCA vai para registrados
       return effectiveRole === 'aluno_gratuito' && !fonte.includes('hotmart') && !fonte.includes('acesso oficial');
+    
+    case 'beta':
+      // Beta/Pagos: todos os alunos pagantes (beta ou beta_expira)
+      return effectiveRole === 'beta' || effectiveRole === 'beta_expira';
     
     default:
       return true;
@@ -624,21 +628,31 @@ export default function Alunos() {
           {/* Stats Grid — FUTURISTIC HOLOGRAPHIC STYLE */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { icon: Users, value: contadores.total, label: 'TOTAL', gradient: 'from-blue-600 via-blue-500 to-cyan-400', glow: 'shadow-blue-500/30', border: 'border-blue-500/40' },
-              { icon: CheckCircle, value: contadores.ativos, label: 'ATIVOS', gradient: 'from-emerald-600 via-emerald-500 to-teal-400', glow: 'shadow-emerald-500/30', border: 'border-emerald-500/40' },
-              { icon: Crown, value: contadores.beta, label: 'BETA (PAGOS)', gradient: 'from-purple-600 via-purple-500 to-pink-400', glow: 'shadow-purple-500/30', border: 'border-purple-500/40' },
-              { icon: Shield, value: contadores.gratuito, label: 'GRATUITOS', gradient: 'from-cyan-600 via-cyan-500 to-blue-400', glow: 'shadow-cyan-500/30', border: 'border-cyan-500/40' },
+              { icon: Users, value: contadores.total, label: 'TOTAL', gradient: 'from-blue-600 via-blue-500 to-cyan-400', glow: 'shadow-blue-500/30', border: 'border-blue-500/40', filterId: null },
+              { icon: CheckCircle, value: contadores.ativos, label: 'ATIVOS', gradient: 'from-emerald-600 via-emerald-500 to-teal-400', glow: 'shadow-emerald-500/30', border: 'border-emerald-500/40', filterId: null },
+              { icon: Crown, value: contadores.beta, label: 'BETA (PAGOS)', gradient: 'from-purple-600 via-purple-500 to-pink-400', glow: 'shadow-purple-500/30', border: 'border-purple-500/40', filterId: 'beta' as UniverseFilterType },
+              { icon: Shield, value: contadores.gratuito, label: 'GRATUITOS', gradient: 'from-cyan-600 via-cyan-500 to-blue-400', glow: 'shadow-cyan-500/30', border: 'border-cyan-500/40', filterId: 'registrados' as UniverseFilterType },
             ].map((stat, idx) => {
               const StatIcon = stat.icon;
+              const isActive = stat.filterId && universeFilter === stat.filterId;
+              const isClickable = !!stat.filterId;
+              
               return (
                 <div
                   key={idx}
+                  onClick={() => {
+                    if (stat.filterId) {
+                      setUniverseFilter(universeFilter === stat.filterId ? 'all' : stat.filterId);
+                    }
+                  }}
                   className={`
                     relative group overflow-hidden rounded-xl border backdrop-blur-xl
                     bg-gradient-to-br from-background/80 via-background/60 to-background/40
                     ${stat.border} hover:border-opacity-80
                     shadow-lg ${stat.glow} hover:shadow-xl
                     transition-all duration-300 hover:scale-[1.02]
+                    ${isClickable ? 'cursor-pointer' : ''}
+                    ${isActive ? 'ring-2 ring-purple-500/50 ring-offset-2 ring-offset-background' : ''}
                   `}
                 >
                   {/* Holographic shimmer */}
@@ -646,6 +660,11 @@ export default function Alunos() {
                     <div className={`absolute inset-0 bg-gradient-to-r ${stat.gradient} opacity-10`} />
                     <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_40%,rgba(255,255,255,0.1)_50%,transparent_60%)] bg-[length:250%_250%] animate-[shimmer_3s_infinite]" />
                   </div>
+                  
+                  {/* Active indicator */}
+                  {isActive && (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-15`} />
+                  )}
                   
                   {/* Content */}
                   <div className="relative z-10 p-4 text-center">
