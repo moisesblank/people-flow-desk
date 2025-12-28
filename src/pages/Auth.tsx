@@ -147,16 +147,62 @@ export default function Auth() {
     uploadImage 
   } = useEditableContent("auth");
 
+  // Estado para token de reset customizado
+  const [resetToken, setResetToken] = useState<string | null>(null);
+  const [resetTokenEmail, setResetTokenEmail] = useState<string | null>(null);
+  const [validatingToken, setValidatingToken] = useState(false);
+
   // ✅ P0 FIX: Log apenas uma vez na montagem (não no corpo do componente!)
   useEffect(() => {
     console.log('[AUTH] 1. Componente montado (/auth)');
     
-    // 🎯 P0 FIX: Detectar ?reset=true para mostrar formulário de nova senha
     const urlParams = new URLSearchParams(window.location.search);
-    const isReset = urlParams.get('reset') === 'true' || urlParams.get('type') === 'recovery';
     
+    // 🎯 P0 FIX: Detectar reset_token (novo fluxo customizado)
+    const customToken = urlParams.get('reset_token');
+    if (customToken) {
+      console.log('[AUTH] 🔐 Token de reset customizado detectado');
+      setResetToken(customToken);
+      setIsUpdatePassword(true);
+      setValidatingToken(true);
+      setIsCheckingSession(false);
+      
+      // Validar token
+      const validateToken = async () => {
+        try {
+          const { data, error } = await supabase.functions.invoke("custom-password-reset", {
+            body: { action: "validate", token: customToken },
+          });
+          
+          if (error || !data?.valid) {
+            console.error('[AUTH] Token inválido:', error || data);
+            toast.error("Link de recuperação inválido ou expirado", {
+              description: "Solicite uma nova recuperação de senha.",
+            });
+            setIsUpdatePassword(false);
+            setResetToken(null);
+          } else {
+            console.log('[AUTH] ✅ Token válido para:', data.email);
+            setResetTokenEmail(data.email);
+          }
+        } catch (err) {
+          console.error('[AUTH] Erro ao validar token:', err);
+          toast.error("Erro ao validar link de recuperação");
+          setIsUpdatePassword(false);
+          setResetToken(null);
+        } finally {
+          setValidatingToken(false);
+        }
+      };
+      
+      validateToken();
+      return;
+    }
+    
+    // Fallback: suporte ao fluxo antigo (reset=true)
+    const isReset = urlParams.get('reset') === 'true' || urlParams.get('type') === 'recovery';
     if (isReset) {
-      console.log('[AUTH] 🔐 Modo RESET PASSWORD detectado via URL');
+      console.log('[AUTH] 🔐 Modo RESET PASSWORD (fluxo antigo) detectado via URL');
       setIsUpdatePassword(true);
       setIsCheckingSession(false);
     }
@@ -447,7 +493,34 @@ export default function Auth() {
         return;
       }
 
-      console.log('[AUTH] 🔐 Atualizando senha via supabase.auth.updateUser...');
+      // 🎯 NOVO FLUXO: Se temos resetToken, usar fluxo customizado
+      if (resetToken) {
+        console.log('[AUTH] 🔐 Atualizando senha via fluxo customizado...');
+        
+        const { data, error } = await supabase.functions.invoke("custom-password-reset", {
+          body: { 
+            action: "reset", 
+            token: resetToken, 
+            newPassword: newPassword 
+          },
+        });
+
+        if (error || data?.error) {
+          console.error('[AUTH] Erro ao atualizar senha:', error || data?.error);
+          toast.error(data?.error || "Erro ao atualizar senha");
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('[AUTH] ✅ Senha atualizada com sucesso (fluxo customizado)!');
+        setPasswordUpdated(true);
+        toast.success("Senha atualizada com sucesso!");
+        window.history.replaceState({}, document.title, '/auth');
+        return;
+      }
+
+      // Fallback: fluxo antigo via supabase.auth.updateUser (quando vem do link nativo)
+      console.log('[AUTH] 🔐 Atualizando senha via supabase.auth.updateUser (fallback)...');
 
       const { error } = await supabase.auth.updateUser({ password: newPassword });
 
@@ -1141,7 +1214,12 @@ export default function Auth() {
             {/* 🎯 P0 FIX: Modo DEFINIR NOVA SENHA (após clicar no link do email) */}
             {isUpdatePassword ? (
               <div className="space-y-4">
-                {passwordUpdated ? (
+                {validatingToken ? (
+                  <div className="text-center py-8 animate-fade-in">
+                    <Loader2 className="h-8 w-8 mx-auto mb-4 text-primary animate-spin" />
+                    <p className="text-sm text-gray-400">Validando link de recuperação...</p>
+                  </div>
+                ) : passwordUpdated ? (
                   <div className="text-center py-8 animate-scale-in">
                     <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
                       <Lock className="h-8 w-8 text-green-500" />
@@ -1157,6 +1235,8 @@ export default function Auth() {
                         setPasswordUpdated(false);
                         setNewPassword("");
                         setConfirmPassword("");
+                        setResetToken(null);
+                        setResetTokenEmail(null);
                       }}
                       className="bg-gradient-to-r from-primary to-[#7D1128] text-white"
                     >
@@ -1168,7 +1248,9 @@ export default function Auth() {
                     <div className="text-center mb-4">
                       <h3 className="text-lg font-semibold text-white mb-1">Definir Nova Senha</h3>
                       <p className="text-sm text-gray-400">
-                        Digite sua nova senha de acesso
+                        {resetTokenEmail 
+                          ? `Definindo nova senha para: ${resetTokenEmail}` 
+                          : "Digite sua nova senha de acesso"}
                       </p>
                     </div>
                     
