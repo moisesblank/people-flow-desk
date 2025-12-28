@@ -37,6 +37,7 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import financeHeroImage from "@/assets/finance-chemistry-hero.jpg";
+import { formatCurrency } from "@/utils";
 
 interface Expense {
   id: number;
@@ -67,13 +68,6 @@ const getCategoryLabel = (value: string) => {
   const cat = EXPENSE_CATEGORIES.find(c => c.value === value);
   return cat?.label || value;
 };
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
 
 // Componente de Lucro Líquido Empresarial - vinculado em tempo real
 function LucroLiquidoCard() {
