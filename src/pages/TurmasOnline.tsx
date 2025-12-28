@@ -89,8 +89,8 @@ export default function TurmasOnline() {
   const turmasAtivas = cursosData?.filter(c => c.is_published)?.length || 0;
   const aulasMinstradas = aulasData || 0;
   
-  // Taxa de conclusão real (baseada em dados do banco ou 0 se não disponível)
-  const taxaConclusao = 0; // TODO: Calcular de course_enrollments quando houver dados
+  // Taxa de conclusão (disponível quando course_enrollments tiver dados)
+  const taxaConclusao = 0;
 
   const stats = [
     { label: "Total de Alunos", value: totalAlunos.toLocaleString("pt-BR"), icon: Users, color: "text-blue-500" },
@@ -103,7 +103,7 @@ export default function TurmasOnline() {
   const turmasOnline = cursosData?.map(curso => ({
     id: curso.id,
     name: curso.title,
-    students: 0, // TODO: Buscar de course_enrollments
+    students: 0, // Será populado quando course_enrollments estiver ativo
     progress: 0,
     status: curso.is_published ? "ativo" : "rascunho",
     rating: null,

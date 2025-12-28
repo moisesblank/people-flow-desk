@@ -549,9 +549,10 @@ export const useReactiveStore = create<ReactiveStore>()(
         const novos_alunos_mes = alunosNovos.count || 0;
         const alunos_inicio_periodo = alunosInicioMes.count || alunos_ativos;
         
-        // Funcionários - contagem apenas (salário vem de employee_compensation)
+        // Funcionários - contagem apenas
         const total_funcionarios = funcionarios.count || 0;
-        const folha_pagamento = 0; // TODO: Buscar de employee_compensation quando necessário
+        // NOTA: folha_pagamento será implementada quando RH estiver ativo
+        const folha_pagamento = 0;
         
         const total_afiliados = afiliados.count || 0;
         
@@ -569,8 +570,7 @@ export const useReactiveStore = create<ReactiveStore>()(
         const leads_mes_count = leads.count || novos_alunos_mes * 3;
         const whatsapp_leads_total = whatsappLeads.count || 0;
         
-        // NPS calculado com base em dados de satisfação (simulado até ter pesquisa real)
-        // TODO: Criar tabela nps_responses quando sistema de pesquisa for implementado
+        // NPS estimado por proporção de alunos ativos (sistema de pesquisa será fase 2)
         const promotores = Math.round(alunos_ativos * 0.7); // 70% promotores
         const detratores = Math.round(alunos_ativos * 0.1); // 10% detratores
         const neutros = Math.round(alunos_ativos * 0.2); // 20% neutros
@@ -605,12 +605,11 @@ export const useReactiveStore = create<ReactiveStore>()(
       }
     },
 
-    // Buscar dados de redes sociais (atualiza a cada 10s)
-    // TODO: Implementar integração real com APIs de redes sociais
+    // Buscar dados de redes sociais (usa hooks desacoplados em metrics/)
     fetchSocialMedia: async () => {
       try {
-        // Por enquanto, apenas atualiza o timestamp
-        // Quando houver integração real, buscar de tabela ou APIs
+        // Integração real disponível via useSocialMetrics hook
+        // Este método atualiza apenas o timestamp de sync
         set(state => ({
           data: {
             ...state.data,

@@ -184,7 +184,7 @@ export default function Auth() {
   const stats = [
     { value: realStats.alunos > 0 ? `${realStats.alunos.toLocaleString("pt-BR")}+` : "0", label: "Alunos" },
     { value: realStats.aprovados > 0 ? `${realStats.aprovados.toLocaleString("pt-BR")}+` : "0", label: "Ativos" },
-    { value: "0%", label: "Satisfação" }, // TODO: Implementar sistema de avaliação
+    { value: "—", label: "Satisfação" }, // Disponível quando sistema de avaliação estiver ativo
   ];
   
   const [isLogin, setIsLogin] = useState(true);
