@@ -199,7 +199,7 @@ export default function Auth() {
   
   // Estado para 2FA
   const [show2FA, setShow2FA] = useState(false);
-  const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string } | null>(null);
+  const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string; phone?: string } | null>(null);
   
   // Estado para Cloudflare Turnstile (Anti-Bot)
   const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
@@ -537,6 +537,7 @@ export default function Auth() {
             email: userFor2FA.email || formData.email,
             userId: userFor2FA.id,
             nome: (userFor2FA.user_metadata as any)?.nome,
+            phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
           })
         );
 
@@ -544,6 +545,7 @@ export default function Auth() {
           email: userFor2FA.email || formData.email,
           userId: userFor2FA.id,
           nome: (userFor2FA.user_metadata as any)?.nome,
+          phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
         });
         setShow2FA(true);
         toast.info("Verificação de Segurança 2FA", {
@@ -634,6 +636,7 @@ export default function Auth() {
             email={pending2FAUser.email}
             userId={pending2FAUser.userId}
             userName={pending2FAUser.nome}
+            userPhone={pending2FAUser.phone}
             onVerified={() => {
               toast.success("Bem-vindo de volta!");
               // /auth NÃO redireciona. AuthProvider fará o redirect quando a sessão estiver READY.

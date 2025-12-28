@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - 2FA Email Code
-// Sistema de verificação em duas etapas via RESEND
-// MIGRADO: 100% Resend
+// MOISÉS MEDEIROS v10.0 - 2FA Email + WhatsApp
+// Sistema de verificação em duas etapas multicanal
+// RESEND (Email) + WhatsApp Business API
 // ============================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -13,25 +13,29 @@ import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
 const FROM_EMAIL = Deno.env.get("RESEND_FROM") || "Prof. Moisés Medeiros <noreply@moisesmedeiros.com.br>";
 
+// WhatsApp Business API
+const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
+const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
+
 interface Send2FARequest {
   email: string;
   userId: string;
   userName?: string;
   phone?: string;
+  channel: "email" | "whatsapp"; // Canal escolhido pelo usuário
 }
 
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
-const RATE_LIMIT_MAX = 3;
+const RATE_LIMIT_MAX = 5;
 const CODE_EXPIRATION_MINUTES = 5;
 
-// Template do email 2FA
+// ============================================
+// TEMPLATE EMAIL 2FA
+// ============================================
 const get2FAEmailHtml = (code: string, userName: string, expirationMinutes: number) => `
 <!DOCTYPE html>
 <html lang="pt-BR">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-</head>
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
 <body style="margin:0;padding:0;background:#0a0a0f;color:#ffffff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
   <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0a0a0f;">
     <tr>
@@ -40,40 +44,30 @@ const get2FAEmailHtml = (code: string, userName: string, expirationMinutes: numb
           <tr>
             <td style="background:linear-gradient(180deg,#131318 0%,#0a0a0f 100%);border-radius:16px;padding:28px;border:1px solid #7D1128;">
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td align="center" style="padding-bottom:20px;">
-                    <h1 style="margin:0;color:#E62B4A;font-size:24px;font-weight:700;">Curso Moisés Medeiros</h1>
-                    <p style="margin:8px 0 0;color:#9aa0a6;font-size:13px;">Verificação em Duas Etapas</p>
-                  </td>
-                </tr>
+                <tr><td align="center" style="padding-bottom:20px;">
+                  <h1 style="margin:0;color:#E62B4A;font-size:24px;font-weight:700;">Curso Moisés Medeiros</h1>
+                  <p style="margin:8px 0 0;color:#9aa0a6;font-size:13px;">Verificação em Duas Etapas</p>
+                </td></tr>
               </table>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td style="color:#e6e6e6;line-height:1.7;font-size:14px;">
-                    <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Olá, ${userName}!</h2>
-                    <p style="margin:0 0 16px;">Seu código de verificação é:</p>
-                    <div style="background:#1a1a1f;border-radius:12px;padding:24px;margin:20px 0;text-align:center;">
-                      <p style="margin:0;color:#E62B4A;font-size:36px;font-weight:700;letter-spacing:8px;font-family:monospace;">${code}</p>
-                    </div>
-                    <p style="margin:0 0 12px;color:#ff9500;">⏱️ Este código expira em <strong>${expirationMinutes} minutos</strong>.</p>
-                    <p style="margin:0;color:#9aa0a6;font-size:13px;">⚠️ Nunca compartilhe este código com ninguém. Nossa equipe jamais solicitará seu código.</p>
-                  </td>
-                </tr>
+                <tr><td style="color:#e6e6e6;line-height:1.7;font-size:14px;">
+                  <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Olá, ${userName}!</h2>
+                  <p style="margin:0 0 16px;">Seu código de verificação é:</p>
+                  <div style="background:#1a1a1f;border-radius:12px;padding:24px;margin:20px 0;text-align:center;">
+                    <p style="margin:0;color:#E62B4A;font-size:36px;font-weight:700;letter-spacing:8px;font-family:monospace;">${code}</p>
+                  </div>
+                  <p style="margin:0 0 12px;color:#ff9500;">⏱️ Este código expira em <strong>${expirationMinutes} minutos</strong>.</p>
+                  <p style="margin:0;color:#9aa0a6;font-size:13px;">⚠️ Nunca compartilhe este código. Nossa equipe jamais solicitará seu código.</p>
+                </td></tr>
               </table>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
                 <tr><td style="padding:24px 0 18px;"><hr style="border:none;border-top:1px solid #2a2a2f;margin:0;" /></td></tr>
               </table>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr>
-                  <td style="color:#9aa0a6;font-size:12px;line-height:1.6;">
-                    <p style="margin:0 0 8px;"><strong style="color:#e6e6e6;">Prof. Moisés Medeiros Melo</strong></p>
-                    <p style="margin:0 0 8px;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
-                    <p style="margin:0;">WhatsApp: <a href="https://wa.me/558396169222" style="color:#E62B4A;text-decoration:none;">+55 83 9616-9222</a></p>
-                  </td>
-                </tr>
-              </table>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
-                <tr><td align="center" style="padding-top:18px;"><p style="margin:0;color:#666;font-size:11px;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p></td></tr>
+                <tr><td style="color:#9aa0a6;font-size:12px;line-height:1.6;">
+                  <p style="margin:0 0 8px;"><strong style="color:#e6e6e6;">Prof. Moisés Medeiros Melo</strong></p>
+                  <p style="margin:0;">MM CURSO DE QUÍMICA LTDA</p>
+                </td></tr>
               </table>
             </td>
           </tr>
@@ -85,6 +79,107 @@ const get2FAEmailHtml = (code: string, userName: string, expirationMinutes: numb
 </html>
 `;
 
+// ============================================
+// ENVIAR VIA WHATSAPP BUSINESS API
+// ============================================
+async function sendViaWhatsApp(
+  phone: string,
+  code: string,
+  userName: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!WHATSAPP_ACCESS_TOKEN || !WHATSAPP_PHONE_NUMBER_ID) {
+    console.error("[2FA-WHATSAPP] Credenciais não configuradas");
+    return { success: false, error: "WhatsApp não configurado" };
+  }
+
+  // Formatar telefone (remover caracteres e adicionar DDI)
+  let formattedPhone = phone.replace(/\D/g, '');
+  
+  // Se não começa com código do país, adicionar Brasil (55)
+  if (!formattedPhone.startsWith('55') && formattedPhone.length >= 10) {
+    formattedPhone = `55${formattedPhone}`;
+  }
+
+  console.log(`[2FA-WHATSAPP] Enviando para: ${formattedPhone}`);
+
+  try {
+    // Usar template de mensagem (recomendado pela Meta para 2FA)
+    // Se não tiver template aprovado, usar mensagem de texto simples
+    const messagePayload = {
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: formattedPhone,
+      type: "text",
+      text: {
+        preview_url: false,
+        body: `🔐 *Curso Moisés Medeiros*\n\nOlá, ${userName}!\n\nSeu código de verificação é:\n\n*${code}*\n\n⏱️ Expira em ${CODE_EXPIRATION_MINUTES} minutos.\n\n⚠️ Nunca compartilhe este código.`
+      }
+    };
+
+    const response = await fetch(
+      `https://graph.facebook.com/v18.0/${WHATSAPP_PHONE_NUMBER_ID}/messages`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${WHATSAPP_ACCESS_TOKEN}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(messagePayload),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      console.error("[2FA-WHATSAPP] Erro da API:", result);
+      return { 
+        success: false, 
+        error: result.error?.message || "Erro ao enviar WhatsApp" 
+      };
+    }
+
+    console.log(`[2FA-WHATSAPP] ✅ Mensagem enviada! ID: ${result.messages?.[0]?.id}`);
+    return { success: true };
+
+  } catch (error: any) {
+    console.error("[2FA-WHATSAPP] Erro:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// ENVIAR VIA RESEND (EMAIL)
+// ============================================
+async function sendViaEmail(
+  email: string,
+  code: string,
+  userName: string
+): Promise<{ success: boolean; error?: string }> {
+  try {
+    const response = await resend.emails.send({
+      from: FROM_EMAIL,
+      to: [email],
+      subject: `🔐 [${code}] Código de Verificação - Prof. Moisés Medeiros`,
+      html: get2FAEmailHtml(code, userName, CODE_EXPIRATION_MINUTES),
+    });
+
+    if (response.error) {
+      console.error("[2FA-EMAIL] Erro:", response.error);
+      return { success: false, error: response.error.message };
+    }
+
+    console.log(`[2FA-EMAIL] ✅ Email enviado! ID: ${response.data?.id}`);
+    return { success: true };
+
+  } catch (error: any) {
+    console.error("[2FA-EMAIL] Erro:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
+// HANDLER PRINCIPAL
+// ============================================
 const handler = async (req: Request): Promise<Response> => {
   const corsHeaders = getCorsHeaders(req);
   
@@ -99,11 +194,19 @@ const handler = async (req: Request): Promise<Response> => {
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const { email, userId, userName }: Send2FARequest = await req.json();
+    const { email, userId, userName, phone, channel = "email" }: Send2FARequest = await req.json();
     
     if (!email || !userId) {
       return new Response(
         JSON.stringify({ error: "Email e userId são obrigatórios" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Validar canal
+    if (channel === "whatsapp" && !phone) {
+      return new Response(
+        JSON.stringify({ error: "Telefone é obrigatório para WhatsApp" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -125,6 +228,18 @@ const handler = async (req: Request): Promise<Response> => {
         JSON.stringify({ error: "Email inválido" }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
+    }
+
+    // Buscar telefone do perfil se não foi fornecido
+    let userPhone = phone;
+    if (!userPhone && channel === "whatsapp") {
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("phone")
+        .eq("id", userId)
+        .single();
+      
+      userPhone = profile?.phone;
     }
 
     // Rate limiting
@@ -165,45 +280,64 @@ const handler = async (req: Request): Promise<Response> => {
       user_agent: req.headers.get("user-agent")?.substring(0, 255) || "unknown"
     });
 
-    // Enviar via Resend
+    // Enviar pelo canal escolhido
     const displayName = userName || userCheck.user.user_metadata?.name || "Usuário";
-    
-    console.log(`[2FA-RESEND] Enviando código para ${email}`);
-    
-    const response = await resend.emails.send({
-      from: FROM_EMAIL,
-      to: [email],
-      subject: `🔐 [${codeStr}] Código de Verificação - Prof. Moisés Medeiros`,
-      html: get2FAEmailHtml(codeStr, displayName, CODE_EXPIRATION_MINUTES),
-    });
+    let result: { success: boolean; error?: string };
+    let channelUsed = channel;
 
-    if (response.error) {
-      console.error("[2FA-RESEND] Erro:", response.error);
-      throw new Error(response.error.message);
+    console.log(`[2FA] Enviando via ${channel} para ${channel === "whatsapp" ? userPhone : email}`);
+
+    if (channel === "whatsapp" && userPhone) {
+      result = await sendViaWhatsApp(userPhone, codeStr, displayName);
+      
+      // Fallback para email se WhatsApp falhar
+      if (!result.success) {
+        console.log("[2FA] WhatsApp falhou, tentando email...");
+        result = await sendViaEmail(email, codeStr, displayName);
+        channelUsed = "email";
+      }
+    } else {
+      result = await sendViaEmail(email, codeStr, displayName);
     }
 
-    console.log(`[2FA-RESEND] ✅ Email enviado! ID: ${response.data?.id}`);
+    if (!result.success) {
+      console.error("[2FA] ❌ Falha ao enviar código:", result.error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Erro ao enviar código de verificação. Tente novamente.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     // Log de atividade
     await supabaseAdmin.from("activity_log").insert({
       user_id: userId,
       action: "2FA_CODE_SENT",
       new_value: { 
-        method: "resend",
-        email_sent: true,
+        channel: channelUsed,
         sent_at: new Date().toISOString(),
         expires_at: expiresAt.toISOString(),
         expiration_minutes: CODE_EXPIRATION_MINUTES
       }
     });
 
+    const message = channelUsed === "whatsapp" 
+      ? "Código enviado por WhatsApp" 
+      : "Código enviado por email";
+
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Código enviado por email",
+        message,
         expiresAt: expiresAt.toISOString(),
         expiresIn: CODE_EXPIRATION_MINUTES * 60,
-        channels: { email: true, sms: false }
+        channel: channelUsed,
+        channels: { 
+          email: channelUsed === "email", 
+          whatsapp: channelUsed === "whatsapp" 
+        }
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
