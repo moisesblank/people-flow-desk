@@ -72,13 +72,16 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 // TYPES
 // ============================================
 
+// CONSTITUIÇÃO v10.x - 4 roles de aluno válidas
+type StudentRoleType = 'beta' | 'aluno_gratuito' | 'aluno_presencial' | 'beta_expira';
+
 interface Student {
   id: string;
   nome: string;
   email: string;
   status: string;
   fonte: string | null;
-  role: 'beta' | 'aluno_gratuito' | null;
+  role: StudentRoleType | null;
   created_at: string;
 }
 
@@ -341,21 +344,27 @@ export default function Alunos() {
       if (error) throw error;
 
       // Buscar roles apenas para emails desta página (evita N+1)
+      // CONSTITUIÇÃO v10.x - 4 roles de aluno válidas
       const emails = (data || []).map(a => a.email?.toLowerCase()).filter(Boolean);
-      let roleMap: Record<string, 'beta' | 'aluno_gratuito'> = {};
+      let roleMap: Record<string, StudentRoleType> = {};
       
       if (emails.length > 0) {
         const { data: rolesData } = await supabase
           .from('user_roles')
           .select(`role, profiles!inner(email)`)
-          .in('role', ['beta', 'aluno_gratuito']);
+          .in('role', ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira']);
 
         (rolesData || []).forEach((r: any) => {
           const email = r.profiles?.email?.toLowerCase();
           if (email && emails.includes(email)) {
-            // Beta tem prioridade sobre aluno_gratuito
-            if (roleMap[email] !== 'beta') {
-              roleMap[email] = r.role as 'beta' | 'aluno_gratuito';
+            // Prioridade: beta > beta_expira > aluno_presencial > aluno_gratuito
+            const currentRole = roleMap[email];
+            const newRole = r.role as StudentRoleType;
+            if (!currentRole || 
+                (newRole === 'beta') || 
+                (newRole === 'beta_expira' && currentRole !== 'beta') ||
+                (newRole === 'aluno_presencial' && currentRole === 'aluno_gratuito')) {
+              roleMap[email] = newRole;
             }
           }
         });

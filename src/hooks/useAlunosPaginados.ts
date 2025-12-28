@@ -16,13 +16,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 // TYPES
 // ============================================
 
+// CONSTITUIÇÃO v10.x - 4 roles de aluno válidas
+type StudentRoleType = 'beta' | 'aluno_gratuito' | 'aluno_presencial' | 'beta_expira';
+
 export interface AlunoRow {
   id: string;
   nome: string;
   email: string;
   status: string;
   fonte: string | null;
-  role: 'beta' | 'aluno_gratuito' | null;
+  role: StudentRoleType | null;
 }
 
 export interface AlunosContadores {
@@ -46,8 +49,8 @@ export interface UseAlunosPaginadosOptions {
   pageSize?: number;
   /** Filtro por status */
   statusFilter?: string;
-  /** Filtro por role */
-  roleFilter?: 'beta' | 'aluno_gratuito' | null;
+  /** Filtro por role - CONSTITUIÇÃO v10.x */
+  roleFilter?: StudentRoleType | null;
   /** ⚡ PARTE 6: Filtro por universo (A/B/C/D) - aplicado na query */
   universoFiltro?: UniversoFiltro;
   /** Termo de busca */

@@ -57,9 +57,11 @@ export type AppRole =
   | "monitoria"      // Monitor/Tutor (nível 3)
   | "marketing"      // Equipe de marketing (nível 3)
   | "afiliado"       // Afiliado externo (nível 3)
-  // 👨‍🎓 ALUNOS
-  | "beta"           // Aluno pagante (365 dias)
-  | "aluno_gratuito";
+  // 👨‍🎓 ALUNOS (CONSTITUIÇÃO v10.x - 4 roles)
+  | "beta"           // Aluno pagante (permanente)
+  | "aluno_gratuito" // Cadastro grátis (limitado)
+  | "aluno_presencial" // Aluno presencial (v10.x)
+  | "beta_expira";   // Beta com expiração (v10.x)
 
 /**
  * Domínios/Áreas do sistema
@@ -151,9 +153,11 @@ export const ROLE_TO_CATEGORY: Record<AppRole, AccessCategory> = {
   monitoria: "gestao",
   marketing: "gestao",
   afiliado: "gestao",
-  // 👨‍🎓 ALUNOS
+  // 👨‍🎓 ALUNOS (CONSTITUIÇÃO v10.x - 4 roles)
   beta: "beta",
   aluno_gratuito: "gratuito",
+  aluno_presencial: "beta", // Mesmo acesso que beta
+  beta_expira: "beta",      // Mesmo acesso que beta
 };
 
 // ============================================
@@ -284,6 +288,30 @@ export const ROLE_PERMISSIONS: Record<AppRole, RolePermissions> = {
   // 👨‍🎓 ALUNO GRATUITO (nível 2)
   aluno_gratuito: {
     areas: ["publico", "comunidade"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    canExport: false,
+    canImport: false,
+    canManageUsers: false,
+    canAccessFinance: false,
+    canAccessOwnerArea: false,
+  },
+  // 👨‍🎓 ALUNO PRESENCIAL (CONSTITUIÇÃO v10.x)
+  aluno_presencial: {
+    areas: ["publico", "comunidade", "alunos"],
+    canCreate: false,
+    canEdit: false,
+    canDelete: false,
+    canExport: false,
+    canImport: false,
+    canManageUsers: false,
+    canAccessFinance: false,
+    canAccessOwnerArea: false,
+  },
+  // 👨‍🎓 BETA EXPIRA (CONSTITUIÇÃO v10.x)
+  beta_expira: {
+    areas: ["publico", "comunidade", "alunos"],
     canCreate: false,
     canEdit: false,
     canDelete: false,

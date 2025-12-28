@@ -98,7 +98,10 @@ export function isValidStudentIdentity(data: unknown): data is StudentIdentityCo
   // Campos obrigatórios
   if (typeof obj.email !== 'string' || !obj.email.trim()) return false;
   if (typeof obj.nome !== 'string' || !obj.nome.trim()) return false;
-  if (obj.role !== 'beta' && obj.role !== 'aluno_gratuito') return false;
+  
+  // Validar role (4 roles válidas - CONSTITUIÇÃO v10.x)
+  const validRoles = ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira'];
+  if (!validRoles.includes(obj.role as string)) return false;
   
   return true;
 }

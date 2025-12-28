@@ -7,16 +7,18 @@
 // 🎯 CONSTITUIÇÃO ROLES v1.0.0 - Nomenclatura Definitiva
 // "employee" e "funcionario" são CATEGORIAS, não roles individuais
 export type FullAppRole = 
-  | "owner"         // Nível 0 - Proprietário (TOTAL)
-  | "admin"         // Nível 1 - Administrador
-  | "coordenacao"   // Nível 2 - Coordenação
-  | "contabilidade" // Nível 2 - Contabilidade
-  | "suporte"       // Nível 3 - Suporte
-  | "monitoria"     // Nível 3 - Monitoria
-  | "marketing"     // Nível 3 - Marketing
-  | "afiliado"      // Nível 3 - Afiliados
-  | "beta"          // ALUNO PAGANTE (365 dias)
-  | "aluno_gratuito"; // CADASTRO COMUM (apenas área gratuita)
+  | "owner"           // Nível 0 - Proprietário (TOTAL)
+  | "admin"           // Nível 1 - Administrador
+  | "coordenacao"     // Nível 2 - Coordenação
+  | "contabilidade"   // Nível 2 - Contabilidade
+  | "suporte"         // Nível 3 - Suporte
+  | "monitoria"       // Nível 3 - Monitoria
+  | "marketing"       // Nível 3 - Marketing
+  | "afiliado"        // Nível 3 - Afiliados
+  | "beta"            // ALUNO PAGANTE (permanente)
+  | "aluno_gratuito"  // CADASTRO COMUM (apenas área gratuita)
+  | "aluno_presencial" // ALUNO PRESENCIAL (v10.x)
+  | "beta_expira";    // BETA COM EXPIRAÇÃO (v10.x)
 
 // Alias para compatibilidade
 export type UserRole = FullAppRole;
@@ -33,6 +35,8 @@ export const FULL_ROLE_LABELS: Record<FullAppRole, string> = {
   afiliado: "Afiliado",
   beta: "Aluno Beta",
   aluno_gratuito: "Aluno Gratuito",
+  aluno_presencial: "Aluno Presencial",
+  beta_expira: "Beta com Expiração",
 };
 
 // Áreas do sistema
