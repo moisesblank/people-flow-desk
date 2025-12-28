@@ -11,7 +11,7 @@ import { Copy, Check, Loader2, X, Clipboard, MousePointer } from 'lucide-react';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/useAuth';
 import { useInstantDuplication, DuplicableEntity } from '@/hooks/useInstantDuplication';
-import { useDuplicationClipboard } from '@/contexts/DuplicationClipboardContext';
+import { useDuplicationClipboard } from '@/stores/clipboardStore';
 import { Button } from '@/components/ui/button';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
