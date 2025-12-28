@@ -538,14 +538,14 @@ export default function Auth() {
           const { hash: deviceHash, data: fingerprintData } = await collectFingerprint();
 
           // Chamar validate-device para obter sinais de risco
+          // 🔧 FIX: usar 'validate' ao invés de 'post_login' pois a sessão ainda não foi propagada
           console.log('[AUTH] 8. Validando dispositivo...');
           const { data: validationData, error: validationError } = await supabase.functions.invoke('validate-device', {
             body: {
               fingerprint: deviceHash,
               fingerprintData,
-              userId: userFor2FA.id,
               email: userFor2FA.email,
-              action: 'post_login',
+              action: 'validate',  // 🔧 'validate' não exige JWT, só fingerprint
             },
           });
 
