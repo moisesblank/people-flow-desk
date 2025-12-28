@@ -405,9 +405,10 @@ export function AppSidebar() {
           <SidebarGroupContent>
             <SidebarMenu>
               {businessMenuItems.map((item) => {
+                // HARD BINDING: Alunos SEMPRE aponta para /gestaofc/gestao-alunos
                 const resolvedUrl =
                   item.title === "Alunos"
-                    ? (isAdminOrOwner ? "/gestao-alunos" : "/alunos")
+                    ? (isAdminOrOwner ? "/gestaofc/gestao-alunos" : "/alunos")
                     : item.url;
 
                 return (

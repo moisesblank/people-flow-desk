@@ -95,7 +95,7 @@ export const ROUTE_CONTRACTS: Record<string, { role: string; area: string }> = {
   '/financas-empresa': { role: 'employee', area: 'gestao' },
   '/entradas': { role: 'employee', area: 'gestao' },
   '/afiliados': { role: 'employee', area: 'gestao' },
-  '/gestao-alunos': { role: 'employee', area: 'gestao' },
+  '/gestaofc/gestao-alunos': { role: 'employee', area: 'gestao' },
   '/relatorios': { role: 'employee', area: 'gestao' },
   '/configuracoes': { role: 'admin', area: 'gestao' },
   '/gestao-equipe': { role: 'admin', area: 'gestao' },

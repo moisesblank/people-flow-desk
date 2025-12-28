@@ -232,7 +232,7 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/cursos": "cursos",
   "/simulados": "simulados",
   "/afiliados": "afiliados",
-  "/gestao-alunos": "alunos",
+  "/gestaofc/gestao-alunos": "alunos",
   "/portal-aluno": "portal-aluno",
   "/gestao-site": "gestao-site",
   "/relatorios": "relatorios",

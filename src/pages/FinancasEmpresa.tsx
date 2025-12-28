@@ -1290,7 +1290,7 @@ export default function FinancasEmpresa() {
               <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => window.location.href = "/funcionarios"}>
                 <Users className="h-3 w-3 mr-1" /> RH
               </Button>
-              <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => window.location.href = "/gestao-alunos"}>
+              <Button variant="outline" size="sm" className="flex-1 text-xs" onClick={() => window.location.href = "/gestaofc/gestao-alunos"}>
                 <Users className="h-3 w-3 mr-1" /> Alunos
               </Button>
             </div>
