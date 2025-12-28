@@ -3655,6 +3655,47 @@ export type Database = {
         }
         Relationships: []
       }
+      dispatch_audit_log: {
+        Row: {
+          actor_id: string | null
+          actor_role: string | null
+          created_at: string
+          envio_id: string
+          event_type: string
+          id: string
+          metadata: Json | null
+          tracking_code: string | null
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          envio_id: string
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          tracking_code?: string | null
+        }
+        Update: {
+          actor_id?: string | null
+          actor_role?: string | null
+          created_at?: string
+          envio_id?: string
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          tracking_code?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dispatch_audit_log_envio_id_fkey"
+            columns: ["envio_id"]
+            isOneToOne: false
+            referencedRelation: "envios_correios"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       dr_tests: {
         Row: {
           completed_at: string | null
@@ -4487,6 +4528,7 @@ export type Database = {
           destinatario_nome: string
           destinatario_telefone: string | null
           dimensoes: Json | null
+          dispatch_state: string | null
           endereco_bairro: string
           endereco_cep: string
           endereco_cidade: string
@@ -4505,6 +4547,8 @@ export type Database = {
           peso_gramas: number | null
           servico_correios: string | null
           status: Database["public"]["Enums"]["correios_envio_status"] | null
+          student_seen_at: string | null
+          student_seen_via: string | null
           ultimo_evento_at: string | null
           updated_at: string | null
           valor_declarado: number | null
@@ -4525,6 +4569,7 @@ export type Database = {
           destinatario_nome: string
           destinatario_telefone?: string | null
           dimensoes?: Json | null
+          dispatch_state?: string | null
           endereco_bairro: string
           endereco_cep: string
           endereco_cidade: string
@@ -4543,6 +4588,8 @@ export type Database = {
           peso_gramas?: number | null
           servico_correios?: string | null
           status?: Database["public"]["Enums"]["correios_envio_status"] | null
+          student_seen_at?: string | null
+          student_seen_via?: string | null
           ultimo_evento_at?: string | null
           updated_at?: string | null
           valor_declarado?: number | null
@@ -4563,6 +4610,7 @@ export type Database = {
           destinatario_nome?: string
           destinatario_telefone?: string | null
           dimensoes?: Json | null
+          dispatch_state?: string | null
           endereco_bairro?: string
           endereco_cep?: string
           endereco_cidade?: string
@@ -4581,6 +4629,8 @@ export type Database = {
           peso_gramas?: number | null
           servico_correios?: string | null
           status?: Database["public"]["Enums"]["correios_envio_status"] | null
+          student_seen_at?: string | null
+          student_seen_via?: string | null
           ultimo_evento_at?: string | null
           updated_at?: string | null
           valor_declarado?: number | null
@@ -16032,6 +16082,10 @@ export type Database = {
           p_user_role?: string
         }
         Returns: undefined
+      }
+      mark_dispatch_seen: {
+        Args: { p_envio_id: string; p_seen_via?: string }
+        Returns: boolean
       }
       mark_webhook_processed:
         | {
