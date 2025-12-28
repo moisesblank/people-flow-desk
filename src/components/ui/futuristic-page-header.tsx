@@ -185,8 +185,10 @@ export function FuturisticPageHeader({
       />
 
       <div className="relative z-10 p-6">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex items-center gap-4">
+        {/* Row 1: Title/Icon + Stats + Action */}
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+          {/* Left: Icon + Title */}
+          <div className="flex items-center gap-4 min-w-0 flex-shrink-0">
             {/* Back Button */}
             {showBackButton && (
               <motion.button
@@ -194,7 +196,7 @@ export function FuturisticPageHeader({
                 whileTap={{ scale: 0.95 }}
                 onClick={() => backPath ? navigate(backPath) : navigate(-1)}
                 className={cn(
-                  "p-2 rounded-xl border backdrop-blur-xl transition-colors",
+                  "p-2 rounded-xl border backdrop-blur-xl transition-colors flex-shrink-0",
                   config.border,
                   "hover:bg-background/50"
                 )}
@@ -210,7 +212,7 @@ export function FuturisticPageHeader({
                 animate={{ scale: 1, rotate: 0 }}
                 transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
                 className={cn(
-                  "p-3 rounded-xl border backdrop-blur-xl",
+                  "p-3 rounded-xl border backdrop-blur-xl flex-shrink-0",
                   config.border,
                   "bg-background/30"
                 )}
@@ -221,19 +223,19 @@ export function FuturisticPageHeader({
             )}
 
             {/* Title & Subtitle */}
-            <div>
+            <div className="min-w-0">
               <motion.div
                 initial={{ opacity: 0, x: -20 }}
                 animate={{ opacity: 1, x: 0 }}
                 transition={{ delay: 0.1 }}
-                className="flex items-center gap-2"
+                className="flex items-center gap-2 flex-wrap"
               >
-                <h1 className="text-2xl md:text-3xl font-bold text-foreground">
+                <h1 className="text-xl md:text-2xl lg:text-3xl font-bold text-foreground truncate">
                   {title}
                 </h1>
                 {badge && (
                   <span className={cn(
-                    "px-2 py-0.5 text-xs font-bold rounded-md border",
+                    "px-2 py-0.5 text-xs font-bold rounded-md border flex-shrink-0",
                     config.border,
                     config.text,
                     "bg-background/30 backdrop-blur-xl"
@@ -244,6 +246,7 @@ export function FuturisticPageHeader({
                 <motion.span
                   animate={{ rotate: [0, 15, -15, 0] }}
                   transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
+                  className="flex-shrink-0"
                 >
                   <Sparkles className={cn("h-5 w-5", config.text)} />
                 </motion.span>
@@ -253,7 +256,7 @@ export function FuturisticPageHeader({
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: 0.2 }}
-                  className="text-sm text-muted-foreground mt-1"
+                  className="text-sm text-muted-foreground mt-1 truncate"
                 >
                   {subtitle}
                 </motion.p>
@@ -261,33 +264,33 @@ export function FuturisticPageHeader({
             </div>
           </div>
 
-          {/* Stats */}
+          {/* Center/Right: Stats */}
           {stats && stats.length > 0 && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="flex items-center gap-4 flex-wrap"
+              className="flex items-center gap-6 flex-shrink-0"
             >
               {stats.map((stat, index) => (
                 <div key={index} className="flex items-center gap-2">
                   {stat.icon && <stat.icon className={cn("h-4 w-4", config.text)} />}
                   <div className="text-center">
                     <div className={cn("text-lg font-bold font-mono", config.text)}>{stat.value}</div>
-                    <div className="text-xs text-muted-foreground uppercase tracking-wider">{stat.label}</div>
+                    <div className="text-xs text-muted-foreground uppercase tracking-wider whitespace-nowrap">{stat.label}</div>
                   </div>
                 </div>
               ))}
             </motion.div>
           )}
 
-          {/* Actions */}
+          {/* Right: Actions */}
           {(action || children) && (
             <motion.div
               initial={{ opacity: 0, x: 20 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ delay: 0.4 }}
-              className="flex items-center gap-2 flex-wrap"
+              className="flex items-center gap-2 flex-shrink-0"
             >
               {action}
               {children}
