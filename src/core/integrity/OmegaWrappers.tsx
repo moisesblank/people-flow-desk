@@ -8,7 +8,6 @@ import React, { memo, useCallback, useRef, useState, createContext, useContext }
 import { Link, useNavigate } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { useAuth } from "@/hooks/useAuth";
 import { Button, ButtonProps } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { AlertCircle, Lock, Clock, Loader2, Upload, Download, FileWarning } from "lucide-react";
@@ -16,6 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import type { FunctionId } from "./types";
 import { logAuditEvent } from "./TelemetryRegistry";
 import { hasCapability, type Capability } from "./SecurityRegistry";
+import type { AppRole } from "@/core/urlAccessControl";
 
 // ============================================
 // TIPOS COMUNS
@@ -28,23 +28,63 @@ interface BaseFnProps {
 }
 
 // ============================================
-// VALIDAÇÃO CENTRAL
+// OMEGA CONTEXT (Injeção de Dependência)
+// Desacopla do useAuth para evitar acoplamento circular
+// ============================================
+interface OmegaContextType {
+  userId?: string;
+  userRole: AppRole | null;
+  isOwner: boolean;
+}
+
+const OmegaContext = createContext<OmegaContextType | null>(null);
+
+/**
+ * Provider que injeta user/role nos OmegaWrappers
+ * Use no nível do App para evitar acoplamento circular com useAuth
+ */
+export function OmegaProvider({ 
+  children, 
+  userId, 
+  userRole 
+}: { 
+  children: React.ReactNode; 
+  userId?: string; 
+  userRole: AppRole | null;
+}) {
+  const value: OmegaContextType = {
+    userId,
+    userRole,
+    isOwner: userRole === "owner",
+  };
+  
+  return <OmegaContext.Provider value={value}>{children}</OmegaContext.Provider>;
+}
+
+function useOmegaContext() {
+  const ctx = useContext(OmegaContext);
+  // Fallback seguro se usado fora do provider
+  return ctx || { userId: undefined, userRole: null, isOwner: false };
+}
+
+// ============================================
+// VALIDAÇÃO CENTRAL (usando contexto injetado)
 // ============================================
 function useFnValidation(fn: FunctionId) {
-  const { user, role } = useAuth();
+  const { userId, userRole, isOwner } = useOmegaContext();
   
   // Verificar se função existe (placeholder - expandir com registry real)
   const fnExists = fn && fn.startsWith("F.");
   
   // Verificar permissão básica
-  const hasAccess = hasCapability(role || "viewer", "view_dashboard" as Capability);
+  const hasAccess = hasCapability(userRole || "viewer", "view_dashboard" as Capability);
   
   return {
     fnExists,
     hasAccess,
-    userId: user?.id,
-    userRole: role,
-    isOwner: role === "owner",
+    userId,
+    userRole,
+    isOwner,
   };
 }
 
