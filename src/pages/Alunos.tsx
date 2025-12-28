@@ -1,7 +1,8 @@
 // ============================================
-// TRAMON v8 - ACADEMIA QUANTUM
+// TRAMON v8.1 - ACADEMIA QUANTUM
 // Sistema Neural de Gestão de Alunos + WordPress Sync
 // ⚡ PARTE 6: Pré-seleção operacional de universo
+// Fix: Force rebuild - clear dynamic import cache
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
