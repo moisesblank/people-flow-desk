@@ -270,18 +270,11 @@ export function getClientIp(req: Request): string {
   );
 }
 
-/**
- * ✅ P1 FIX: isOwner agora requer verificação via role, não email!
- * @deprecated Use isOwnerByRole(supabase, userId) para verificação segura
- * Esta função existe apenas para compatibilidade - sempre retorna false
- * para forçar migração para role-based check
- */
-export function isOwner(email?: string | null): boolean {
-  console.warn("[SECURITY] isOwner(email) é deprecated - use role check via user_roles");
-  // ⚠️ DESABILITADO: Não verificar mais por email
-  // Para verificar owner, use: has_role(userId, 'owner') via RPC ou query
-  return false; // Força migração para role-based
-}
+// ============================================
+// 🚫 P1-2 FIX: isOwner(email) REMOVIDO
+// Validação por email é proibida pela Constituição v10
+// Usar APENAS isOwnerByRole(supabase, userId)
+// ============================================
 
 /**
  * ✅ Verificação segura de owner via role (inline)
