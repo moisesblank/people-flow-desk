@@ -9,5 +9,4 @@ export * from './financialService';
 // Dashboard services
 export * from './dashboardService';
 
-// Alunos services
-export * from './alunosService';
+// WordPress removido em 2025-12-28 - Fluxo Hotmart->Beta independente
