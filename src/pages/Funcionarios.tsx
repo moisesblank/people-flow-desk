@@ -27,6 +27,7 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import { SmartChecklist } from "@/components/checklists/SmartChecklist";
 // teamHeroImage removido - não utilizado (FuturisticPageHeader)
 import type { EmployeeStatus, Sector } from "@/types/employee";
+import { formatCurrencyMasked } from "@/utils/format";
 
 interface Employee {
   id: number;
@@ -39,13 +40,8 @@ interface Employee {
   status: EmployeeStatus;
 }
 
-function formatCurrency(cents: number | null): string {
-  if (cents === null) return "••••••";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
+// Alias para compatibilidade com código existente
+const formatCurrency = formatCurrencyMasked;
 
 const sectorMapping: Record<string, Sector> = {
   "Coordenação": "Coordenação",

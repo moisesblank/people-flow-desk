@@ -55,6 +55,7 @@ import {
   Info,
   ExternalLink
 } from "lucide-react";
+import { formatCurrencyFromReais } from "@/utils/format";
 import {
   AreaChart,
   Area,
@@ -460,12 +461,8 @@ export default function ReceitasEmpresariais() {
     }
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }).format(value);
-  };
+  // Usar formatCurrencyFromReais do @/utils/format
+  const formatCurrency = formatCurrencyFromReais;
 
   const formatPercent = (value: number) => {
     const sign = value >= 0 ? "+" : "";

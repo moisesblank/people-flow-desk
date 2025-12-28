@@ -129,12 +129,7 @@ const BRAZILIAN_BANKS = [
   { code: "000", name: "Outro" },
 ];
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value / 100);
-}
+import { formatCurrency } from "@/utils/format";
 
 function formatPhone(phone: string): string {
   if (!phone) return "";

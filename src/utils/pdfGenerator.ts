@@ -5,6 +5,7 @@
 
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import { formatCurrency, formatDate as formatDateUtil } from "@/utils/format";
 
 // Extend jsPDF type for autoTable
 declare module 'jspdf' {
@@ -21,16 +22,10 @@ interface PDFOptions {
   date?: Date;
 }
 
-const formatCurrency = (cents: number): string => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-};
-
+// Alias para compatibilidade (formatDate retorna "-" para null, igual ao original)
 const formatDate = (date: string | Date | null): string => {
   if (!date) return "-";
-  return new Date(date).toLocaleDateString("pt-BR");
+  return formatDateUtil(date);
 };
 
 // Create base PDF with header

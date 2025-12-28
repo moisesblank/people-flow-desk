@@ -47,6 +47,7 @@ import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { useNavigate } from "react-router-dom";
 import { format, differenceInDays } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatCurrencyFromReais } from "@/utils/format";
 
 interface Pet {
   id: string;
@@ -317,12 +318,8 @@ export default function VidaPessoal() {
     fetchData();
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(value);
-  };
+  // Usar formatCurrencyFromReais do @/utils/format
+  const formatCurrency = formatCurrencyFromReais;
 
   // Calculations
   const totalExpensesMonth = expenses
