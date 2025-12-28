@@ -1,13 +1,13 @@
 // ============================================
 // SYNAPSE v14.0 - VISUAL EDIT MODE
 // Sistema de edição visual inline estilo Elementor
-// COM UPLOAD DE IMAGENS
+// COM UPLOAD DE IMAGENS + STYLE INSPECTOR
 // ============================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useGodMode } from '@/stores/godModeStore';
-import { X, Check, Type, Image, Link, Upload, Loader2 } from 'lucide-react';
+import { X, Check, Type, Image, Link, Upload, Loader2, Palette } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -15,12 +15,24 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
+import { StyleInspector } from './StyleInspector';
 
 interface EditableElement {
   element: HTMLElement;
   type: 'text' | 'image' | 'link';
   originalValue: string;
   key: string;
+}
+
+interface ElementStyles extends Record<string, string> {
+  fontSize: string;
+  fontWeight: string;
+  textAlign: string;
+  color: string;
+  backgroundColor: string;
+  padding: string;
+  margin: string;
+  borderRadius: string;
 }
 
 export function VisualEditMode() {
@@ -32,7 +44,75 @@ export function VisualEditMode() {
   const [isUploading, setIsUploading] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [imageTab, setImageTab] = useState<'upload' | 'url'>('upload');
+  const [showStyleInspector, setShowStyleInspector] = useState(false);
+  const [elementStyles, setElementStyles] = useState<ElementStyles>({
+    fontSize: '16px',
+    fontWeight: 'normal',
+    textAlign: 'left',
+    color: '',
+    backgroundColor: '',
+    padding: '0',
+    margin: '0',
+    borderRadius: '0',
+  });
+  const [originalStyles, setOriginalStyles] = useState<ElementStyles | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Extrair estilos do elemento selecionado
+  const extractStyles = useCallback((el: HTMLElement): ElementStyles => {
+    const computed = window.getComputedStyle(el);
+    return {
+      fontSize: computed.fontSize || '16px',
+      fontWeight: computed.fontWeight || 'normal',
+      textAlign: computed.textAlign || 'left',
+      color: computed.color || '',
+      backgroundColor: computed.backgroundColor || '',
+      padding: computed.padding || '0',
+      margin: computed.margin || '0',
+      borderRadius: computed.borderRadius || '0',
+    };
+  }, []);
+
+  // Aplicar estilo ao elemento
+  const handleStyleChange = useCallback((property: string, value: string) => {
+    if (!selectedElement) return;
+    
+    const el = selectedElement.element;
+    const styleMap: Record<string, string> = {
+      fontSize: 'fontSize',
+      fontWeight: 'fontWeight',
+      textAlign: 'textAlign',
+      color: 'color',
+      backgroundColor: 'backgroundColor',
+      padding: 'padding',
+      margin: 'margin',
+      borderRadius: 'borderRadius',
+    };
+
+    const cssProp = styleMap[property];
+    if (cssProp) {
+      (el.style as any)[cssProp] = value;
+      setElementStyles(prev => ({ ...prev, [property]: value }));
+    }
+  }, [selectedElement]);
+
+  // Reverter estilos
+  const handleRevertStyles = useCallback(() => {
+    if (!selectedElement || !originalStyles) return;
+    
+    const el = selectedElement.element;
+    Object.entries(originalStyles).forEach(([key, value]) => {
+      (el.style as any)[key] = value;
+    });
+    setElementStyles(originalStyles);
+    toast.info('Estilos revertidos');
+  }, [selectedElement, originalStyles]);
+
+  // Salvar estilos
+  const handleSaveStyles = useCallback(() => {
+    toast.success('Estilos aplicados!');
+    setOriginalStyles(elementStyles);
+  }, [elementStyles]);
 
   // Detectar elementos editáveis
   const detectEditableElements = useCallback(() => {
@@ -75,15 +155,22 @@ export function VisualEditMode() {
           value = target.innerText || target.textContent || '';
         }
 
-        setSelectedElement({
+        const newElement = {
           element: target,
           type,
           originalValue: value,
           key: editableKey || `inline_${Date.now()}`,
-        });
+        };
+        setSelectedElement(newElement);
         setEditValue(value);
         setPreviewImage(type === 'image' ? value : null);
         setIsEditing(true);
+        
+        // Extrair e salvar estilos originais
+        const styles = extractStyles(target);
+        setElementStyles(styles);
+        setOriginalStyles(styles);
+        setShowStyleInspector(true);
       } else {
         // Só permitir edição dinâmica fora de elementos interativos
         if (
@@ -101,15 +188,22 @@ export function VisualEditMode() {
 
             const elementType = target.tagName === 'IMG' ? 'image' : 'text';
 
-            setSelectedElement({
+            const newElement: EditableElement = {
               element: target,
-              type: elementType,
+              type: elementType as 'text' | 'image' | 'link',
               originalValue: value,
               key: `dynamic_${target.tagName.toLowerCase()}_${Date.now()}`,
-            });
+            };
+            setSelectedElement(newElement);
             setEditValue(value);
             setPreviewImage(elementType === 'image' ? value : null);
             setIsEditing(true);
+            
+            // Extrair e salvar estilos originais
+            const styles = extractStyles(target);
+            setElementStyles(styles);
+            setOriginalStyles(styles);
+            setShowStyleInspector(true);
           }
         }
         // Links e botões continuam a funcionar normalmente
@@ -301,6 +395,7 @@ export function VisualEditMode() {
     setIsEditing(false);
     setSelectedElement(null);
     setPreviewImage(null);
+    setShowStyleInspector(false);
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
     }
@@ -333,9 +428,20 @@ export function VisualEditMode() {
                   Editar {selectedElement.type === 'text' ? 'Texto' : selectedElement.type === 'image' ? 'Imagem' : 'Link'}
                 </span>
               </div>
-              <Button variant="ghost" size="icon" onClick={handleCancel}>
-                <X className="w-4 h-4" />
-              </Button>
+              <div className="flex items-center gap-1">
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  onClick={() => setShowStyleInspector(!showStyleInspector)}
+                  className={cn(showStyleInspector && "bg-primary/20 text-primary")}
+                  title="Painel de Estilos"
+                >
+                  <Palette className="w-4 h-4" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={handleCancel}>
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
             </div>
 
             {/* Editor */}
@@ -450,6 +556,20 @@ export function VisualEditMode() {
           </div>
         </motion.div>
       )}
+
+      {/* Style Inspector Panel */}
+      <StyleInspector
+        isOpen={showStyleInspector && isEditing && !!selectedElement}
+        onClose={() => setShowStyleInspector(false)}
+        selectedElement={selectedElement ? {
+          type: selectedElement.type,
+          content: editValue,
+          styles: elementStyles as Record<string, string>
+        } : undefined}
+        onStyleChange={handleStyleChange}
+        onSave={handleSaveStyles}
+        onRevert={handleRevertStyles}
+      />
     </AnimatePresence>
   );
 }
