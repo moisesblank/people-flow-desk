@@ -1,8 +1,8 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - 2FA Email Code
-// Sistema de verificação em duas etapas seguro
-// Com rate limiting e proteção anti-brute-force
-// ATUALIZADO: Usa Lovable AI para envio de emails
+// MOISÉS MEDEIROS v10.0 - 2FA Email + SMS Code
+// Sistema de verificação em duas etapas via RD STATION
+// MIGRADO: 100% RD Station (Email + SMS)
+// ATUALIZADO: Expiração 5 minutos
 // ============================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -14,113 +14,143 @@ interface Send2FARequest {
   email: string;
   userId: string;
   userName?: string;
+  phone?: string; // Telefone para SMS
 }
 
 // Rate limiting: máximo 3 códigos por usuário em 15 minutos
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000; // 15 minutos
 const RATE_LIMIT_MAX = 3;
 
-// Função para enviar email via Lovable AI
-async function sendEmailViaLovableAI(
-  to: string,
-  subject: string,
-  htmlContent: string,
-  textContent?: string
-): Promise<{ success: boolean; error?: string }> {
-  const apiKey = Deno.env.get("LOVABLE_API_KEY");
+// Nova expiração: 5 minutos
+const CODE_EXPIRATION_MINUTES = 5;
+
+// Função para enviar via RD Station (Email + SMS)
+async function sendViaRDStation(
+  email: string,
+  phone: string | undefined,
+  code: string,
+  userName: string
+): Promise<{ success: boolean; emailSent: boolean; smsSent: boolean; error?: string }> {
+  const rdApiKey = Deno.env.get("RD_STATION_API_KEY");
   
-  if (!apiKey) {
-    console.error("[2FA] LOVABLE_API_KEY não configurada");
-    return { success: false, error: "API key não configurada" };
+  if (!rdApiKey) {
+    console.error("[2FA-RD] RD_STATION_API_KEY não configurada");
+    return { success: false, emailSent: false, smsSent: false, error: "RD Station API key não configurada" };
   }
+
+  let emailSent = false;
+  let smsSent = false;
+
+  // Formatar telefone para SMS (remover caracteres especiais e adicionar DDI se necessário)
+  const formattedPhone = phone ? formatPhoneForSMS(phone) : null;
+
+  // Payload comum para ambos (email e SMS)
+  const basePayload = {
+    event_type: "CONVERSION",
+    event_family: "CDP",
+    payload: {
+      conversion_identifier: "codigo_2fa_autenticacao",
+      email: email,
+      name: userName || "Usuário",
+      mobile_phone: formattedPhone,
+      cf_codigo_2fa: code,
+      cf_expiracao_minutos: CODE_EXPIRATION_MINUTES.toString(),
+      cf_data_solicitacao: new Date().toISOString(),
+      cf_origem: "sistema_2fa_plataforma",
+      cf_tipo_envio: formattedPhone ? "email_sms" : "email_only",
+      cf_plataforma: "pro.moisesmedeiros.com.br",
+      cf_assunto_email: `🔐 [${code}] Código de Verificação - Prof. Moisés Medeiros`,
+      cf_mensagem_sms: `[Prof. Moises] Seu codigo de verificacao: ${code} - Expira em ${CODE_EXPIRATION_MINUTES} min. NAO compartilhe!`,
+    }
+  };
 
   try {
-    // Usar Lovable AI para gerar e enviar email
-    const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "openai/gpt-5-nano",
-        messages: [
-          {
-            role: "system",
-            content: `Você é um assistente de envio de emails. Sua tarefa é confirmar o envio do email.
-            
-IMPORTANTE: Este é um email de segurança 2FA que DEVE ser enviado imediatamente.
+    console.log(`[2FA-RD] Enviando código ${code} para ${email}${formattedPhone ? ` e SMS para ${formattedPhone}` : ''}`);
+    console.log(`[2FA-RD] Payload:`, JSON.stringify(basePayload, null, 2));
 
-Detalhes do email:
-- Para: ${to}
-- Assunto: ${subject}
-- Conteúdo: ${textContent || "Código de verificação 2FA"}
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000);
 
-Responda apenas com: "EMAIL_ENVIADO_OK" se você entendeu que este email deve ser enviado.`
-          },
-          {
-            role: "user",
-            content: `Por favor, confirme o envio do email de verificação 2FA para ${to} com assunto: ${subject}`
-          }
-        ],
-        max_tokens: 50,
-      }),
-    });
-
-    if (!response.ok) {
-      const errorText = await response.text();
-      console.error("[2FA] Lovable AI error:", response.status, errorText);
-      return { success: false, error: `Lovable AI error: ${response.status}` };
-    }
-
-    // Para emails transacionais como 2FA, vamos usar uma abordagem diferente
-    // Vamos enviar via SMTP do próprio domínio ou fallback para notificação RD Station
-    
-    console.log("[2FA] Lovable AI confirmou processamento do email");
-    
-    // Tentar enviar via RD Station como notificação
-    const rdApiKey = Deno.env.get("RD_STATION_API_KEY");
-    if (rdApiKey) {
-      const rdResponse = await fetch(
-        `https://api.rd.services/platform/conversions?api_key=${rdApiKey}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-          },
-          body: JSON.stringify({
-            event_type: "CONVERSION",
-            event_family: "CDP",
-            payload: {
-              conversion_identifier: "codigo_2fa_solicitado",
-              email: to,
-              cf_assunto_email: subject,
-              cf_codigo_2fa: subject.match(/\[(\d{6})\]/)?.[1] || "",
-              cf_data_solicitacao: new Date().toISOString(),
-              cf_origem: "sistema_2fa",
-            }
-          }),
-        }
-      );
-
-      if (rdResponse.ok) {
-        console.log("[2FA] RD Station notificado com sucesso");
-        return { success: true };
-      } else {
-        const rdError = await rdResponse.text();
-        console.log("[2FA] RD Station fallback falhou:", rdError);
+    const response = await fetch(
+      `https://api.rd.services/platform/conversions?api_key=${rdApiKey}`,
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "Accept": "application/json",
+        },
+        body: JSON.stringify(basePayload),
+        signal: controller.signal,
       }
+    );
+
+    clearTimeout(timeoutId);
+
+    let responseBody = "";
+    try {
+      responseBody = await response.text();
+    } catch (e) {
+      responseBody = "Não foi possível ler resposta";
     }
 
-    // Se RD Station falhou, usar notificação alternativa
-    console.log("[2FA] Email processado via sistema alternativo");
-    return { success: true };
-    
+    console.log(`[2FA-RD] Response status: ${response.status}`);
+    console.log(`[2FA-RD] Response body: ${responseBody}`);
+
+    if (response.ok || response.status === 200) {
+      emailSent = true;
+      smsSent = !!formattedPhone; // SMS só é considerado enviado se tinha telefone
+      
+      console.log(`[2FA-RD] ✅ Conversão criada com sucesso - Email: ${emailSent}, SMS: ${smsSent}`);
+      
+      return { 
+        success: true, 
+        emailSent, 
+        smsSent,
+      };
+    } else {
+      console.error(`[2FA-RD] ❌ Erro ao criar conversão: ${response.status} - ${responseBody}`);
+      return { 
+        success: false, 
+        emailSent: false, 
+        smsSent: false, 
+        error: `RD Station retornou ${response.status}: ${responseBody}` 
+      };
+    }
   } catch (error) {
-    console.error("[2FA] Erro ao enviar email:", error);
-    return { success: false, error: error instanceof Error ? error.message : "Erro desconhecido" };
+    console.error("[2FA-RD] Erro ao enviar:", error);
+    return { 
+      success: false, 
+      emailSent: false, 
+      smsSent: false, 
+      error: error instanceof Error ? error.message : "Erro desconhecido" 
+    };
   }
+}
+
+// Função para formatar telefone para SMS
+function formatPhoneForSMS(phone: string): string | null {
+  if (!phone) return null;
+  
+  // Remover todos os caracteres não numéricos
+  const numbersOnly = phone.replace(/\D/g, '');
+  
+  // Validar que tem pelo menos 10 dígitos (DDD + número)
+  if (numbersOnly.length < 10) return null;
+  
+  // Se já começa com 55 (Brasil), retornar como está
+  if (numbersOnly.startsWith('55') && numbersOnly.length >= 12) {
+    return numbersOnly;
+  }
+  
+  // Se começa com 0, remover
+  const withoutZero = numbersOnly.startsWith('0') ? numbersOnly.substring(1) : numbersOnly;
+  
+  // Adicionar DDI do Brasil se não tiver
+  if (withoutZero.length >= 10 && withoutZero.length <= 11) {
+    return `55${withoutZero}`;
+  }
+  
+  return numbersOnly;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -143,7 +173,7 @@ const handler = async (req: Request): Promise<Response> => {
     // O JWT pode não estar disponível durante 2FA
     // Validamos via userId + email + rate limiting
     // ========================================
-    const { email, userId, userName }: Send2FARequest = await req.json();
+    const { email, userId, userName, phone }: Send2FARequest = await req.json();
     
     if (!email || !userId) {
       return new Response(
@@ -194,6 +224,36 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log(`[2FA] ✅ Usuário validado: ${email} - Iniciando geração de código`);
 
+    // Buscar telefone do usuário se não foi fornecido
+    let userPhone = phone;
+    if (!userPhone) {
+      // Tentar buscar do perfil
+      const { data: profile } = await supabaseAdmin
+        .from("profiles")
+        .select("phone")
+        .eq("id", userId)
+        .single();
+      
+      if (profile?.phone) {
+        userPhone = profile.phone;
+        console.log(`[2FA] Telefone encontrado no perfil: ${userPhone}`);
+      }
+      
+      // Tentar buscar das configurações MFA
+      if (!userPhone) {
+        const { data: mfaSettings } = await supabaseAdmin
+          .from("user_mfa_settings")
+          .select("phone_number")
+          .eq("user_id", userId)
+          .single();
+        
+        if (mfaSettings?.phone_number) {
+          userPhone = mfaSettings.phone_number;
+          console.log(`[2FA] Telefone encontrado nas configurações MFA: ${userPhone}`);
+        }
+      }
+    }
+
     // Validar formato do email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
@@ -237,8 +297,8 @@ const handler = async (req: Request): Promise<Response> => {
     const code = (randomBytes[0] * 256 * 256 * 256 + randomBytes[1] * 256 * 256 + randomBytes[2] * 256 + randomBytes[3]) % 900000 + 100000;
     const codeStr = code.toString();
     
-    // Expiração: 10 minutos
-    const expiresAt = new Date(Date.now() + 10 * 60 * 1000);
+    // Expiração: 5 minutos (ATUALIZADO)
+    const expiresAt = new Date(Date.now() + CODE_EXPIRATION_MINUTES * 60 * 1000);
 
     // Invalidar códigos anteriores não usados
     await supabaseAdmin
@@ -264,150 +324,16 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     // ========================================
-    // TEMPLATE DE EMAIL PROFISSIONAL
+    // ENVIAR VIA RD STATION (EMAIL + SMS)
     // ========================================
-    const emailHtml = `
-<!DOCTYPE html>
-<html lang="pt-BR">
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Código de Verificação - Prof. Moisés Medeiros</title>
-</head>
-<body style="margin: 0; padding: 0; background-color: #0a0a0f; font-family: 'Segoe UI', Arial, sans-serif;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #0a0a0f; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%); border-radius: 24px; border: 2px solid #7D1128; overflow: hidden;">
-          
-          <!-- Header -->
-          <tr>
-            <td style="padding: 40px 40px 20px; text-align: center; background: linear-gradient(135deg, rgba(125, 17, 40, 0.3) 0%, transparent 100%);">
-              <div style="margin-bottom: 20px;">
-                <span style="font-size: 48px;">🔐</span>
-              </div>
-              <h1 style="color: #ffffff; font-size: 28px; margin: 0; font-weight: 700;">
-                Verificação de Segurança
-              </h1>
-              <p style="color: rgba(255,255,255,0.6); font-size: 14px; margin: 10px 0 0;">
-                Proteção em duas etapas ativada
-              </p>
-            </td>
-          </tr>
+    const rdResult = await sendViaRDStation(
+      email,
+      userPhone,
+      codeStr,
+      userName || userCheck.user.user_metadata?.name || "Usuário"
+    );
 
-          <!-- Content -->
-          <tr>
-            <td style="padding: 40px;">
-              <p style="color: #ffffff; font-size: 18px; margin: 0 0 10px;">
-                Olá${userName ? `, <strong>${userName}</strong>` : ''}! 👋
-              </p>
-              
-              <p style="color: #a0a0a0; font-size: 16px; line-height: 1.6; margin: 0 0 30px;">
-                Detectamos uma tentativa de acesso à sua conta. Para confirmar sua identidade, 
-                use o código abaixo:
-              </p>
-
-              <!-- Código Principal -->
-              <div style="background: linear-gradient(135deg, #7D1128 0%, #B91C3C 50%, #7D1128 100%); border-radius: 16px; padding: 35px; text-align: center; margin: 0 0 25px; box-shadow: 0 10px 40px rgba(125, 17, 40, 0.4);">
-                <p style="color: rgba(255,255,255,0.8); font-size: 11px; margin: 0 0 15px; text-transform: uppercase; letter-spacing: 3px; font-weight: 600;">
-                  Seu código de verificação
-                </p>
-                <div style="font-size: 48px; font-weight: 800; color: #ffffff; letter-spacing: 16px; font-family: 'Courier New', monospace; text-shadow: 0 2px 10px rgba(0,0,0,0.3);">
-                  ${codeStr}
-                </div>
-              </div>
-
-              <!-- Timer -->
-              <div style="background: linear-gradient(90deg, rgba(251, 191, 36, 0.15) 0%, rgba(251, 191, 36, 0.05) 100%); border: 1px solid rgba(251, 191, 36, 0.4); border-radius: 12px; padding: 16px 20px; margin: 0 0 30px;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td width="40" valign="middle">
-                      <span style="font-size: 24px;">⏱️</span>
-                    </td>
-                    <td valign="middle">
-                      <p style="color: #fbbf24; font-size: 15px; margin: 0; font-weight: 600;">
-                        Este código expira em <strong>10 minutos</strong>
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </div>
-
-              <!-- Segurança Info -->
-              <div style="background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin: 0 0 20px;">
-                <table width="100%" cellpadding="0" cellspacing="0">
-                  <tr>
-                    <td width="40" valign="top">
-                      <span style="font-size: 20px;">🛡️</span>
-                    </td>
-                    <td valign="top">
-                      <p style="color: #ffffff; font-size: 14px; margin: 0 0 8px; font-weight: 600;">
-                        Dica de Segurança
-                      </p>
-                      <p style="color: #888888; font-size: 13px; margin: 0; line-height: 1.5;">
-                        Nunca compartilhe este código com ninguém. Nossa equipe <strong>jamais</strong> 
-                        solicitará esse código por telefone, WhatsApp ou qualquer outro meio.
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </div>
-
-              <p style="color: #666666; font-size: 13px; line-height: 1.6; margin: 0; text-align: center;">
-                Se você não solicitou este código, ignore este email.<br>
-                Sua conta permanece segura.
-              </p>
-            </td>
-          </tr>
-
-          <!-- Footer -->
-          <tr>
-            <td style="padding: 30px 40px; background: rgba(0,0,0,0.4); border-top: 1px solid rgba(125, 17, 40, 0.3);">
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    <p style="color: #888888; font-size: 13px; margin: 0 0 8px; font-weight: 600;">
-                      Prof. Moisés Medeiros Melo
-                    </p>
-                    <p style="color: #666666; font-size: 12px; margin: 0 0 12px;">
-                      MM CURSO DE QUÍMICA LTDA<br>
-                      <em>O curso que mais aprova e comprova!</em>
-                    </p>
-                    <a href="https://www.moisesmedeiros.com.br" style="color: #7D1128; font-size: 12px; text-decoration: none;">
-                      www.moisesmedeiros.com.br
-                    </a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-
-        </table>
-
-        <!-- Sub-footer -->
-        <table width="600" cellpadding="0" cellspacing="0" style="margin-top: 20px;">
-          <tr>
-            <td align="center">
-              <p style="color: #444444; font-size: 11px; margin: 0;">
-                Este é um email automático. Por favor, não responda.
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
-    `;
-
-    const subject = `🔐 [${codeStr}] Código de Verificação - Prof. Moisés Medeiros`;
-    const textContent = `Seu código de verificação é: ${codeStr}. Este código expira em 10 minutos.`;
-
-    // Enviar email via sistema híbrido (Lovable AI + RD Station)
-    const emailResult = await sendEmailViaLovableAI(email, subject, emailHtml, textContent);
-
-    console.log(`[2FA] Email processado para ${email}:`, emailResult);
+    console.log(`[2FA] RD Station result:`, rdResult);
 
     // Log de atividade
     await supabaseAdmin
@@ -416,19 +342,48 @@ const handler = async (req: Request): Promise<Response> => {
         user_id: userId,
         action: "2FA_CODE_SENT",
         new_value: { 
-          method: "lovable_ai_rd_station", 
+          method: "rd_station",
+          email_sent: rdResult.emailSent,
+          sms_sent: rdResult.smsSent,
+          phone_used: userPhone ? formatPhoneForSMS(userPhone) : null,
           sent_at: new Date().toISOString(),
           expires_at: expiresAt.toISOString(),
-          email_result: emailResult.success
+          expiration_minutes: CODE_EXPIRATION_MINUTES,
+          success: rdResult.success
         }
       });
+
+    // Determinar mensagem de retorno
+    let message = "Código enviado";
+    if (rdResult.emailSent && rdResult.smsSent) {
+      message = "Código enviado por email e SMS";
+    } else if (rdResult.emailSent) {
+      message = "Código enviado por email";
+    } else if (rdResult.smsSent) {
+      message = "Código enviado por SMS";
+    }
+
+    if (!rdResult.success) {
+      console.error("[2FA] ❌ Falha ao enviar código via RD Station:", rdResult.error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: "Erro ao enviar código de verificação. Tente novamente.",
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "Código enviado com sucesso",
+        message,
         expiresAt: expiresAt.toISOString(),
-        expiresIn: 600 // 10 minutos em segundos
+        expiresIn: CODE_EXPIRATION_MINUTES * 60, // Em segundos
+        channels: {
+          email: rdResult.emailSent,
+          sms: rdResult.smsSent
+        }
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
