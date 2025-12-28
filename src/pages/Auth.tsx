@@ -205,20 +205,42 @@ export default function Auth() {
   const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
 
   // ============================================
-  // ✅ P0 FIX: Se já existe sessão/user, /auth deve redirecionar
+  // ✅ P0-1 FIX DEFINITIVO: Se já existe sessão/user, /auth deve redirecionar
+  // - SEMPRE busca role do banco antes de redirecionar
   // - Não redirecionar se 2FA estiver pendente nesta aba
   // ============================================
   useEffect(() => {
     const pendingKey = "matriz_2fa_pending";
     const pendingUserKey = "matriz_2fa_user";
 
-    // ✅ PRIMEIRO: Se o usuário já está autenticado, limpar 2FA pendente e redirecionar
+    // Função assíncrona para buscar role e redirecionar
+    const redirectWithRole = async (userId: string, email: string | undefined) => {
+      try {
+        // ✅ P0-1 CRÍTICO: Buscar role ANTES de decidir destino
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .maybeSingle();
+        
+        const userRole = roleData?.role || null;
+        const target = getPostLoginRedirect(userRole, email);
+        console.log('[AUTH] ✅ Redirecionando para', target, '(role:', userRole, ')');
+        navigate(target, { replace: true });
+      } catch (err) {
+        console.error('[AUTH] Erro ao buscar role no mount:', err);
+        // Fallback seguro: usa função centralizada sem role (vai para /perfil-incompleto)
+        const target = getPostLoginRedirect(null, email);
+        navigate(target, { replace: true });
+      }
+    };
+
+    // ✅ PRIMEIRO: Se o usuário já está autenticado, limpar 2FA pendente e redirecionar COM ROLE
     if (user) {
       sessionStorage.removeItem(pendingKey);
       sessionStorage.removeItem(pendingUserKey);
-      const target = isOwnerEmail(user.email) ? "/gestaofc" : "/alunos";
-      console.log('[AUTH] ✅ Usuário já autenticado - limpando 2FA e redirecionando para', target);
-      navigate(target, { replace: true });
+      console.log('[AUTH] Usuário já autenticado - buscando role para redirect...');
+      redirectWithRole(user.id, user.email);
       return;
     }
 
@@ -226,7 +248,6 @@ export default function Auth() {
 
     if (is2FAPending) {
       // ✅ Anti-stuck: se houve refresh com 2FA pendente, restaurar a UI do desafio.
-      // Se não houver payload do usuário, consideramos flag “stale” e limpamos.
       try {
         const raw = sessionStorage.getItem(pendingUserKey);
         const parsed = raw ? (JSON.parse(raw) as { email: string; userId: string; nome?: string }) : null;
@@ -248,17 +269,14 @@ export default function Auth() {
       }
     }
 
-    // Nota: verificação de user já foi feita no início do useEffect
-
     // Fallback: sessão existe no storage, mas o provider ainda não refletiu
     (async () => {
       console.log('[AUTH] Verificando sessão existente (fallback)...');
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
-        const target = isOwnerEmail(session.user.email) ? "/gestaofc" : "/alunos";
-        console.log('[AUTH] ✅ Sessão encontrada - redirecionando para', target);
-        navigate(target, { replace: true });
+        console.log('[AUTH] Sessão encontrada - buscando role para redirect...');
+        await redirectWithRole(session.user.id, session.user.email);
         return;
       }
 
