@@ -6710,6 +6710,36 @@ export type Database = {
           },
         ]
       }
+      password_reset_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       payment_transactions: {
         Row: {
           amount: number
@@ -15113,6 +15143,14 @@ export type Database = {
         }
         Returns: string
       }
+      create_password_reset_token: {
+        Args: { _email: string }
+        Returns: {
+          expires_at: string
+          token: string
+          user_id: string
+        }[]
+      }
       create_rollback_point: {
         Args: {
           p_description: string
@@ -16276,6 +16314,14 @@ export type Database = {
       validate_content_domain: {
         Args: { p_content_type: string; p_request_domain: string }
         Returns: boolean
+      }
+      validate_password_reset_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          user_id: string
+          valid: boolean
+        }[]
       }
       validate_session_token: {
         Args: { p_session_token: string }

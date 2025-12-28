@@ -545,12 +545,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const resetPassword = async (email: string) => {
-    const redirectUrl = `${window.location.origin}/auth?reset=true`;
-    
-    const { error } = await supabase.auth.resetPasswordForEmail(email.trim(), {
-      redirectTo: redirectUrl,
-    });
-    return { error };
+    try {
+      // 🎯 P0 FIX: Usar fluxo customizado com email bonito
+      const { data, error } = await supabase.functions.invoke("custom-password-reset", {
+        body: { action: "request", email: email.trim().toLowerCase() },
+      });
+
+      if (error) {
+        console.error("[AUTH] Erro no reset customizado:", error);
+        return { error: new Error("Erro ao processar solicitação. Tente novamente.") };
+      }
+
+      // Sempre retorna sucesso (segurança - não revelar se email existe)
+      return { error: null };
+    } catch (err: any) {
+      console.error("[AUTH] Erro inesperado no reset:", err);
+      return { error: new Error("Erro ao processar solicitação.") };
+    }
   };
 
   // 🛡️ DOGMA I: Logout invalida sessão
