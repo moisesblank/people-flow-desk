@@ -157,10 +157,10 @@ export function RealTimeMetricsBar({ className }: RealTimeMetricsBarProps) {
       return metricsArray;
     },
     {
-      profile: 'realtime',
+      profile: 'dashboard', // PATCH-LOOP: Mudado de 'realtime' para 'dashboard'
       persistKey: 'realtime_metrics_bar_v1',
-      refetchInterval: 30000,
-      staleTime: 10000,
+      staleTime: 120_000, // 2 minutos - métricas não mudam a cada segundo
+      // REMOVIDO: refetchInterval - evitar LOOP DE AUTOMAÇÃO
     }
   );
 

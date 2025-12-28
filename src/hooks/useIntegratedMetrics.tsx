@@ -648,10 +648,10 @@ export function useIntegratedMetrics() {
       }
     },
     {
-      profile: 'realtime',
+      profile: 'dashboard', // PATCH-LOOP: Mudado de 'realtime' para 'dashboard'
       persistKey: 'integrated_metrics_v1',
-      refetchInterval: 30000,
-      staleTime: 15000,
+      staleTime: 120_000, // 2 minutos
+      // REMOVIDO: refetchInterval - já tem Realtime subscriptions abaixo (linha 660+)
       retry: 1
     }
   );

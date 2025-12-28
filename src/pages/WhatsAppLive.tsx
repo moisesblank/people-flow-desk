@@ -66,7 +66,7 @@ export default function WhatsAppLive() {
   const { data: conversations = [], isLoading: loadingConversations } = useQuery({
     queryKey: ['whatsapp-live-conversations'],
     queryFn: async () => {
-      // ⚡ DOGMA V.5K: Limite + polling otimizado
+      // ⚡ PATCH-LOOP: Removido refetchInterval - Realtime subscription já invalida a query
       const { data, error } = await supabase
         .from('whatsapp_conversations')
         .select('*')
@@ -75,14 +75,15 @@ export default function WhatsAppLive() {
       if (error) throw error;
       return data as Conversation[];
     },
-    refetchInterval: 30000 // ⚡ DOGMA V.5K: 30s (de 5s) - usar Realtime para atualizações críticas
+    staleTime: 30_000, // Cache por 30s (Realtime atualiza quando necessário)
+    // REMOVIDO: refetchInterval - causa LOOP DE AUTOMAÇÃO (polling + realtime = duplicado)
   });
 
   const { data: messages = [], isLoading: loadingMessages } = useQuery({
     queryKey: ['whatsapp-live-messages', selectedConversation],
     queryFn: async () => {
       if (!selectedConversation) return [];
-      // ⚡ DOGMA V.5K: Limite + polling otimizado
+      // ⚡ PATCH-LOOP: Removido refetchInterval - Realtime subscription já invalida a query
       const { data, error } = await supabase
         .from('whatsapp_messages')
         .select('*')
@@ -93,19 +94,20 @@ export default function WhatsAppLive() {
       return data as Message[];
     },
     enabled: !!selectedConversation,
-    refetchInterval: 15000 // ⚡ DOGMA V.5K: 15s (de 3s) - usar Realtime para mensagens novas
+    staleTime: 15_000, // Cache por 15s (Realtime atualiza quando necessário)
+    // REMOVIDO: refetchInterval - causa LOOP DE AUTOMAÇÃO (polling + realtime = duplicado)
   });
 
-  // Stats em tempo real
+  // Stats - apenas quando page carrega (Realtime atualiza via invalidateQueries)
   const { data: stats } = useQuery({
     queryKey: ['whatsapp-live-stats'],
     queryFn: async () => {
       const today = new Date().toISOString().split('T')[0];
       
       const [msgsResult, convsResult, leadsResult] = await Promise.all([
-        supabase.from('whatsapp_messages').select('id', { count: 'exact' }).gte('created_at', today),
-        supabase.from('whatsapp_conversations').select('id', { count: 'exact' }).eq('status', 'open'),
-        supabase.from('whatsapp_leads').select('id', { count: 'exact' }).gte('created_at', today)
+        supabase.from('whatsapp_messages').select('id', { count: 'exact', head: true }).gte('created_at', today),
+        supabase.from('whatsapp_conversations').select('id', { count: 'exact', head: true }).eq('status', 'open'),
+        supabase.from('whatsapp_leads').select('id', { count: 'exact', head: true }).gte('created_at', today)
       ]);
 
       return {
@@ -114,7 +116,8 @@ export default function WhatsAppLive() {
         novosLeads: leadsResult.count || 0
       };
     },
-    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 10s)
+    staleTime: 60_000, // Cache por 60s (Realtime atualiza quando necessário)
+    // REMOVIDO: refetchInterval - causa LOOP DE AUTOMAÇÃO
   });
 
   // ==============================================================================
