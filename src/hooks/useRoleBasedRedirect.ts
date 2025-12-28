@@ -16,8 +16,8 @@ const GESTAO_ROLES = [
   "marketing", "contabilidade", "afiliado"
 ];
 
-// Roles que vão para área de aluno (/alunos)
-const ALUNO_ROLES = ["beta", "aluno_gratuito"];
+// Roles que vão para área de aluno (/alunos) - CONSTITUIÇÃO v10.x
+const ALUNO_ROLES = ["beta", "aluno_gratuito", "aluno_presencial", "beta_expira"];
 
 export function useRoleBasedRedirect() {
   const { user, isLoading: authLoading } = useAuth();

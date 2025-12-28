@@ -29,7 +29,7 @@ export default function PerfilIncompleto() {
     // Se TEM role, redirecionar para área correta
     if (role) {
       const gestaoRoles = ["owner", "admin", "coordenacao", "contabilidade", "suporte", "monitoria", "marketing", "afiliado"];
-      const alunoRoles = ["beta", "aluno_gratuito"];
+      const alunoRoles = ["beta", "aluno_gratuito", "aluno_presencial", "beta_expira"];
 
       if (gestaoRoles.includes(role)) {
         navigate("/gestaofc", { replace: true });

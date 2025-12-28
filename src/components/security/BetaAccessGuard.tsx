@@ -110,8 +110,9 @@ export function BetaAccessGuard({ children, requiredArea }: BetaAccessGuardProps
     );
   }
 
-  // BETA com acesso expirado
-  if (role === "beta" && isExpired) {
+  // BETA/premium com acesso expirado (CONSTITUIÇÃO v10.x)
+  const premiumRoles = ["beta", "aluno_presencial", "beta_expira"];
+  if (premiumRoles.includes(role || '') && isExpired) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-background via-background to-destructive/5 flex items-center justify-center p-4">
         <motion.div

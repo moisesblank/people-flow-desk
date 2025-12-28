@@ -103,7 +103,10 @@ export function useBetaAccess(): BetaAccessResult {
   }, [checkAccess]);
 
   const isExpired = accessData.reason === "EXPIRED";
+  // CONSTITUIÇÃO v10.x - apenas aluno_gratuito é "free user"
   const isFreeUser = accessData.role === "aluno_gratuito";
+  // Roles premium: beta, aluno_presencial, beta_expira
+  const isPremiumUser = ['beta', 'aluno_presencial', 'beta_expira'].includes(accessData.role || '');
 
   return {
     ...accessData,

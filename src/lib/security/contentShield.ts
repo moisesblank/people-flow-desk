@@ -147,8 +147,10 @@ async function checkContentEntitlement(
     return { allowed: true };
   }
   
-  // Role 'beta' (aluno pagante) tem acesso a todo conteúdo premium
-  if (role === 'beta') {
+  // Roles pagantes têm acesso a todo conteúdo premium (CONSTITUIÇÃO v10.x)
+  // beta, aluno_presencial, beta_expira = acesso premium
+  const premiumRoles = ['beta', 'aluno_presencial', 'beta_expira'];
+  if (role && premiumRoles.includes(role)) {
     return { allowed: true };
   }
   

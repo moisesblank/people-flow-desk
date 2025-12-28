@@ -570,7 +570,9 @@ export function useRolePermissions(): UseRolePermissionsReturn {
   // P1-2 FIX: Role como fonte da verdade (email é apenas log/fallback UX)
   const isOwner = role === "owner";
   const isAdmin = role === "admin";
-  const isBeta = role === "beta";
+  // CONSTITUIÇÃO v10.x - Roles premium incluem beta, aluno_presencial, beta_expira
+  const roleStr = role as string;
+  const isBeta = roleStr === "beta" || roleStr === "aluno_presencial" || roleStr === "beta_expira";
   const isAlunoGratuito = role === "aluno_gratuito";
   const isGodMode = isOwner;
   const canEdit = isOwner;
