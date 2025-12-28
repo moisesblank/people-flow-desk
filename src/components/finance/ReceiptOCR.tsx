@@ -6,6 +6,7 @@
 import { useState, useCallback } from "react";
 import { useFileUploadWorker } from "@/hooks/useWebWorker";
 import { motion } from "framer-motion";
+import { formatCurrencyFromReais } from "@/utils";
 import {
   Camera,
   Upload,
@@ -142,8 +143,8 @@ export function ReceiptOCR({ onExtracted, buttonVariant = "outline", buttonSize 
     }
   };
 
-  const formatCurrency = (cents: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents);
+  // Usa formatação centralizada (valor em reais)
+  const formatCurrency = formatCurrencyFromReais;
 
   const reset = () => {
     setSelectedFile(null);

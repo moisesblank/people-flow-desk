@@ -7,6 +7,7 @@
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { formatCurrencyShort } from '@/utils';
 import { 
   MessageSquare, CheckSquare, DollarSign, Users, 
   TrendingUp, TrendingDown, Zap, Star, ArrowRight,
@@ -43,12 +44,8 @@ export function WhatsAppStatsCard() {
     );
   }
   
-  const formatCurrency = (value: number) => {
-    if (value >= 1000) {
-      return `R$ ${(value / 1000).toFixed(1)}k`;
-    }
-    return `R$ ${value.toFixed(0)}`;
-  };
+  // Usa formatação compacta centralizada
+  const formatCurrency = formatCurrencyShort;
   
   // Stats items com navegação
   const statsItems = [

@@ -6,6 +6,7 @@
 import { useState, useMemo, useCallback, memo } from "react";
 import { motion } from "framer-motion";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency } from "@/utils";
 import {
   RefreshCw,
   Plus,
@@ -35,13 +36,7 @@ import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import type { CalendarTask } from "@/types/calendar";
 
-// Memoized currency formatter
-const formatCurrency = (cents: number): string => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-};
+// formatCurrency importado de @/utils
 
 interface QuickAction {
   icon: React.ElementType;

@@ -5,6 +5,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import { motion } from "framer-motion";
+import { formatCurrency } from "@/utils";
 import { 
   Brain, 
   TrendingUp, 
@@ -241,12 +242,7 @@ export function WeeklyInsights() {
     }
   };
 
-  const formatCurrency = (cents: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(cents / 100);
-  };
+  // formatCurrency importado de @/utils
 
   const getInsightIcon = (type: Insight["type"]) => {
     switch (type) {

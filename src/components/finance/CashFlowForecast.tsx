@@ -5,6 +5,7 @@
 
 import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
+import { formatCurrency } from "@/utils";
 import {
   TrendingUp,
   TrendingDown,
@@ -199,8 +200,7 @@ export function CashFlowForecast() {
     }
   };
 
-  const formatCurrency = (cents: number) =>
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(cents / 100);
+  // formatCurrency importado de @/utils
 
   const getTrendIcon = () => {
     if (!summary) return null;

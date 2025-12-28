@@ -7,6 +7,7 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { formatCurrency } from "@/utils";
 import {
   Building2,
   Plus,
@@ -103,12 +104,7 @@ const companyTypes = {
   sa: { label: "S.A.", limit: "Sem limite" },
 };
 
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
+// formatCurrency importado de @/utils
 
 export function MultiCNPJManager() {
   const { gpuAnimationProps } = useQuantumReactivity();

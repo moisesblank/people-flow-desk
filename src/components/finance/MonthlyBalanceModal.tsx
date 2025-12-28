@@ -16,6 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { getMonthName } from "@/hooks/useFinancialHistory";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/utils";
 
 interface MonthlySnapshot {
   id: string;
@@ -35,15 +36,6 @@ interface MonthlyBalanceModalProps {
   onClose: () => void;
   snapshot: MonthlySnapshot | null;
   onCloseMonth?: () => void;
-}
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(cents / 100);
 }
 
 export function MonthlyBalanceModal({

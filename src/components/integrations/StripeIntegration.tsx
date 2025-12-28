@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import { formatCurrency } from "@/utils";
 import { 
   CreditCard, 
   DollarSign, 
@@ -57,12 +58,7 @@ export function StripeIntegration({
     }
   };
 
-  const formatCurrency = (cents: number): string => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(cents / 100);
-  };
+  // formatCurrency importado de @/utils
 
   if (!isConnected) {
     return (

@@ -7,6 +7,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { useState, useEffect, useMemo } from "react";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { formatCurrency } from "@/utils";
 import { 
   Zap, 
   Brain, 
@@ -391,13 +392,7 @@ export function FuturisticHero({
 
   const userName = user?.user_metadata?.nome || user?.email?.split("@")[0] || "Comandante";
   
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-      minimumFractionDigits: 0,
-    }).format(value / 100);
-  };
+  // formatCurrency importado de @/utils no topo
 
   const getGreeting = () => {
     const hour = currentTime.getHours();

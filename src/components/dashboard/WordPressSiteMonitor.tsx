@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrencyFromReais } from "@/utils";
 import { 
   Globe, 
   Users, 
@@ -213,12 +214,8 @@ export function WordPressSiteMonitor() {
     return saleDate === new Date().toDateString();
   }).length;
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  // Usa formatação centralizada (valor em reais)
+  const formatCurrency = formatCurrencyFromReais;
 
   const getEventIcon = (type: string, source: string) => {
     if (source === 'hotmart') {

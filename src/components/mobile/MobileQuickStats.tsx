@@ -5,6 +5,7 @@
 
 import { memo, useMemo } from "react";
 import { motion } from "framer-motion";
+import { formatCurrencyCompact } from "@/utils";
 import {
   TrendingUp,
   TrendingDown,
@@ -25,15 +26,8 @@ interface MobileQuickStatsProps {
   students: number;
 }
 
-// Memoized currency formatter
-const formatCurrency = (cents: number): string => {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    notation: "compact",
-    maximumFractionDigits: 1,
-  }).format(cents / 100);
-};
+// Usa formatação compacta centralizada
+const formatCurrency = formatCurrencyCompact;
 
 // Static stat card for low-end devices
 const StaticStatCard = memo(function StaticStatCard({
