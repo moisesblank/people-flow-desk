@@ -5,7 +5,7 @@
 // ============================================
 
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { ArrowLeft, RefreshCw, Edit, Shield, Mail, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
@@ -14,6 +14,13 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 // Seções do Perfil - Todas as 12 áreas
 import { AlunoPerfilIdentidade } from "@/components/admin/aluno-perfil/AlunoPerfilIdentidade";
@@ -28,11 +35,15 @@ import { AlunoPerfilAnalytics } from "@/components/admin/aluno-perfil/AlunoPerfi
 import { AlunoPerfilHistorico } from "@/components/admin/aluno-perfil/AlunoPerfilHistorico";
 import { AlunoPerfilAcoes } from "@/components/admin/aluno-perfil/AlunoPerfilAcoes";
 import { AlunoPerfilIntegracoes } from "@/components/admin/aluno-perfil/AlunoPerfilIntegracoes";
+import { StudentEmailComposer } from "@/components/admin/aluno-perfil/StudentEmailComposer";
 
 export default function AlunoPerfilAdmin() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  
+  // Estados para modais de comunicação
+  const [isEmailComposerOpen, setIsEmailComposerOpen] = useState(false);
 
   // Buscar dados do aluno - FONTE DA VERDADE
   const { data: aluno, isLoading: loadingAluno, refetch } = useQuery({
@@ -125,6 +136,37 @@ export default function AlunoPerfilAdmin() {
     };
   }, [id, aluno?.email, queryClient]);
 
+  // Função para abrir WhatsApp
+  const handleOpenWhatsApp = useCallback(() => {
+    if (!aluno) return;
+    
+    const phone = aluno.telefone || profile?.phone;
+    if (!phone) {
+      toast.error("Telefone não cadastrado", {
+        description: "O aluno não possui telefone cadastrado."
+      });
+      return;
+    }
+
+    // Limpar telefone e converter para formato E164 (Brasil)
+    let cleanPhone = phone.replace(/\D/g, '');
+    
+    // Adicionar código do país se não tiver
+    if (cleanPhone.length === 10 || cleanPhone.length === 11) {
+      cleanPhone = '55' + cleanPhone;
+    }
+
+    const whatsappUrl = `https://wa.me/${cleanPhone}`;
+    window.open(whatsappUrl, '_blank');
+    
+    toast.success("Abrindo WhatsApp...", {
+      description: `Conversa com ${aluno.nome}`
+    });
+  }, [aluno, profile]);
+
+  // Verificar se tem telefone para habilitar botão
+  const hasPhone = !!(aluno?.telefone || profile?.phone);
+
   if (loadingAluno) {
     return (
       <div className="min-h-screen bg-background">
@@ -173,12 +215,40 @@ export default function AlunoPerfilAdmin() {
             <Button variant="outline" size="sm" onClick={() => refetch()}>
               <RefreshCw className="h-4 w-4 mr-2" /> Atualizar
             </Button>
-            <Button variant="outline" size="sm">
+            
+            {/* Botão Email */}
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsEmailComposerOpen(true)}
+            >
               <Mail className="h-4 w-4 mr-2" /> Email
             </Button>
-            <Button variant="outline" size="sm">
-              <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
-            </Button>
+            
+            {/* Botão WhatsApp */}
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={handleOpenWhatsApp}
+                      disabled={!hasPhone}
+                      className={!hasPhone ? "opacity-50 cursor-not-allowed" : ""}
+                    >
+                      <MessageSquare className="h-4 w-4 mr-2" /> WhatsApp
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                {!hasPhone && (
+                  <TooltipContent>
+                    <p>Telefone não cadastrado</p>
+                  </TooltipContent>
+                )}
+              </Tooltip>
+            </TooltipProvider>
+            
             <Button variant="default" size="sm">
               <Edit className="h-4 w-4 mr-2" /> Editar
             </Button>
@@ -306,6 +376,14 @@ export default function AlunoPerfilAdmin() {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Modal de Email */}
+      <StudentEmailComposer
+        isOpen={isEmailComposerOpen}
+        onClose={() => setIsEmailComposerOpen(false)}
+        studentEmail={aluno.email}
+        studentName={aluno.nome}
+      />
     </div>
   );
 }
