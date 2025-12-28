@@ -107,7 +107,8 @@ export const URL_MAP = {
   GESTAOFC: {
     domain: 'pro.moisesmedeiros.com.br',
     paths: ['/gestaofc', '/gestaofc/*'],
-    roles: ['funcionario', 'coordenacao', 'admin', 'owner', 'employee', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'],
+    // P1-2 FIX: Sem 'funcionario' e 'employee' deprecated
+    roles: ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'],
     requireSubscription: false,
     description: 'Área de gestão interna - acesso SOMENTE por URL direta (secreta)',
     isSecret: true,

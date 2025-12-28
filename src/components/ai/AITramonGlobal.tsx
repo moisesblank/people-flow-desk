@@ -79,7 +79,7 @@ const quickActions = {
 };
 
 export function AITramonGlobal() {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const { canAccessTramon, isLoading: roleLoading } = useAdminCheck();
   const location = useLocation();
   
@@ -110,7 +110,8 @@ export function AITramonGlobal() {
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
   const hasAccess = canAccessTramon;
-  const isOwner = user?.email === OWNER_EMAIL;
+  // P1-2 FIX: Role-first, email como fallback UX
+  const isOwner = role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   const { invalidateAll } = useInvalidateCache();
 
   // ========================================

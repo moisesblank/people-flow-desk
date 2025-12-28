@@ -170,8 +170,8 @@ export function useMasterDuplication() {
   const [isDuplicating, setIsDuplicating] = useState(false);
   const { user, role } = useAuth();
 
-  // VERIFICAÇÃO ESTRITA: Apenas owner pode duplicar
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL && role === 'owner';
+  // P1-2 FIX: Role como fonte da verdade
+  const isOwner = role === 'owner';
   const canDuplicate = isOwner;
 
   // Função para verificar se é owner antes de qualquer ação
@@ -180,14 +180,15 @@ export function useMasterDuplication() {
       toast.error('Você precisa estar logado');
       return false;
     }
-    if (user.email?.toLowerCase() !== OWNER_EMAIL) {
+    // P1-2 FIX: Verificar apenas role, não email
+    if (role !== 'owner') {
       toast.error('Acesso negado', {
         description: 'Apenas o owner pode usar esta funcionalidade'
       });
       return false;
     }
     return true;
-  }, [user]);
+  }, [user, role]);
 
   const duplicateEntity = useCallback(async (
     entityType: DuplicableEntityType,

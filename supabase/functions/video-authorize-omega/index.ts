@@ -24,10 +24,10 @@ const PANDA_API_KEY = Deno.env.get("PANDA_API_KEY") || "";
 const SANCTUM_VERSION = "2.0-OMEGA";
 const SESSION_TTL_MINUTES = 5;
 
-// Roles imunes (espelha frontend)
+// P1-2 FIX: Roles imunes (sem 'funcionario' e 'employee' deprecated)
 const IMMUNE_ROLES = [
-  'owner', 'admin', 'funcionario', 'suporte', 
-  'coordenacao', 'employee', 'monitoria',
+  'owner', 'admin', 'suporte', 
+  'coordenacao', 'monitoria', 'contabilidade', 'marketing', 'afiliado',
 ];
 
 // MONO-DOMÍNIO: gestao.* descontinuado

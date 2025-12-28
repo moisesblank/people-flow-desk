@@ -240,23 +240,25 @@ export function useMasterRemove() {
   const [isRemoving, setIsRemoving] = useState(false);
   const { user, role } = useAuth();
 
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL && role === 'owner';
+  // P1-2 FIX: Role como fonte da verdade
+  const isOwner = role === 'owner';
   const canRemove = isOwner;
 
-  // Verificar ownership
+  // Verificar ownership via role
   const verifyOwnership = useCallback((): boolean => {
     if (!user) {
       toast.error('Você precisa estar logado');
       return false;
     }
-    if (user.email?.toLowerCase() !== OWNER_EMAIL) {
+    // P1-2 FIX: Verificar apenas role, não email
+    if (role !== 'owner') {
       toast.error('Acesso negado', {
         description: 'Apenas o owner pode usar esta funcionalidade'
       });
       return false;
     }
     return true;
-  }, [user]);
+  }, [user, role]);
 
   // Preview COMPLETO do que será removido
   const getRemovePreview = useCallback(async (

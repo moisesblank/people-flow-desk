@@ -567,8 +567,8 @@ export function useRolePermissions(): UseRolePermissionsReturn {
 
   const userEmail = user?.email || null;
   
-  // Verificação de owner (role + email exato)
-  const isOwner = role === "owner" && userEmail === OWNER_EMAIL;
+  // P1-2 FIX: Role como fonte da verdade (email é apenas log/fallback UX)
+  const isOwner = role === "owner";
   const isAdmin = role === "admin";
   const isBeta = role === "beta";
   const isAlunoGratuito = role === "aluno_gratuito";
@@ -606,8 +606,8 @@ export function useRolePermissions(): UseRolePermissionsReturn {
   const canModify = (area: SystemArea): boolean => {
     if (isOwner) return true;
     if (isAdmin) return hasAccess(area);
-    // Outros cargos só podem visualizar (exceto em suas próprias áreas de trabalho)
-    if (role === "employee" || role === "contabilidade") return false;
+    // P1-2 FIX: Contabilidade só visualiza, sem 'employee' deprecated
+    if (role === "contabilidade") return false;
     return hasAccess(area);
   };
 

@@ -6,7 +6,8 @@
 
 import { useAuth } from "@/hooks/useAuth";
 
-export type AppRole = "owner" | "admin" | "employee" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
+// P1-2 FIX: Sem 'employee' deprecated
+export type AppRole = "owner" | "admin" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
 
 interface AdminCheckResult {
   isOwner: boolean;
@@ -39,7 +40,8 @@ export function useAdminCheck(): AdminCheckResult {
   const isAdmin = role === "admin";
   const isCoordinator = role === "coordenacao";
   const isAdminOrOwner = isOwner || isAdmin;
-  const isEmployee = role === "employee";
+  // P1-2: 'employee' deprecated - verificar roles específicas
+  const isEmployee = false; // deprecated
 
   // MODO DEUS: exclusivo do Owner
   const isGodMode = isOwner;

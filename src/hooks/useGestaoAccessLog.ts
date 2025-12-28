@@ -35,7 +35,8 @@ export function useGestaoAccessLog(options: GestaoAccessLogOptions = {}) {
 
   // Verificar se está em área de gestão
   const isGestaoArea = location.pathname.startsWith('/gestaofc');
-  const isOwner = user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase() || role === 'owner';
+  // P1-2 FIX: Role como fonte da verdade
+  const isOwner = role === 'owner';
 
   // PATCH-CUSTO: Log único consolidado (1 tabela ao invés de 3)
   useEffect(() => {

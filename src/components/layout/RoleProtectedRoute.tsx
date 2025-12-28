@@ -125,7 +125,8 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🛡️ LÓGICA DE ACESSO (APÓS TODOS OS HOOKS)
   // ============================================
   const isGestaoPath = location.pathname.startsWith("/gestaofc");
-  const isStaffRole = ['owner', 'admin', 'funcionario', 'employee', 'coordenacao', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'professor', 'afiliado'].includes(role || '');
+  // P1-2 FIX: Sem 'funcionario' e 'employee' deprecated
+  const isStaffRole = ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'].includes(role || '');
   const currentArea = requiredArea || URL_TO_AREA[location.pathname];
   const hasPermission = currentArea ? hasAccess(currentArea) : hasAccessToUrl(location.pathname);
   const isActuallyLoading = (authLoading || roleLoading) && !loadingTimeout;
