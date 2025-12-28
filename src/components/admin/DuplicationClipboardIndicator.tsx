@@ -8,7 +8,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Copy, X, ClipboardPaste, GripVertical, Trash2, Sparkles, Check } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { useDuplicationClipboard } from '@/contexts/DuplicationClipboardContext';
+import { useDuplicationClipboard } from '@/stores/clipboardStore';
 import { useMasterDuplication } from '@/hooks/useMasterDuplication';
 import { cn } from '@/lib/utils';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
