@@ -272,3 +272,8 @@ verify_jwt = true
 # --- Email para Alunos (Admin) ---
 [functions.send-student-email]
 verify_jwt = true
+
+# --- Expiração de Beta (Cron/Scheduled) ---
+# 🟡 Chamado por cron ou manualmente, valida internamente
+[functions.process-beta-expirations]
+verify_jwt = false
