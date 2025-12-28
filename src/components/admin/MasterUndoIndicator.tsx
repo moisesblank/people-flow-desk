@@ -7,7 +7,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Undo2, Redo2, History, Trash2 } from 'lucide-react';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { useMasterUndo } from '@/hooks/useMasterUndo';
 import { Button } from '@/components/ui/button';
 import {

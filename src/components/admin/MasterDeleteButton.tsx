@@ -9,7 +9,7 @@ import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { useMasterRemove } from '@/hooks/useMasterRemove';
 import { MasterConfirmDialog } from './MasterConfirmDialog';
 

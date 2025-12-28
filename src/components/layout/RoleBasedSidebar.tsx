@@ -72,7 +72,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { NavLink } from "@/components/NavLink";
 import { useAuth } from "@/hooks/useAuth";
 import { useRolePermissions, type SystemArea } from "@/hooks/useRolePermissions";
-import { useGodMode } from "@/contexts/GodModeContext";
+import { useGodMode } from "@/stores/godModeStore";
 import { useDynamicMenuItems } from "@/hooks/useDynamicMenuItems";
 import { useMenuConfig, type MenuGroup as DBMenuGroup, type MenuItem as DBMenuItem } from "@/hooks/useMenuConfig";
 import { getIconComponent } from "@/lib/iconMap";

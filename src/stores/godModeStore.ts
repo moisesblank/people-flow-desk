@@ -197,6 +197,30 @@ export function useGodMode() {
     },
     getHistory: async () => [],
     revertToVersion: async () => false,
-    uploadImage: async () => null,
+    uploadImage: async (key: string, file: File) => {
+      if (!store.isOwner) return null;
+      try {
+        const fileExt = file.name.split('.').pop();
+        const fileName = `godmode/${key.replace(/[^a-zA-Z0-9]/g, '_')}-${Date.now()}.${fileExt}`;
+
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, file, { upsert: true });
+        if (uploadError) throw uploadError;
+
+        const { data: signedUrlData, error: signedUrlError } = await supabase.storage
+          .from('avatars')
+          .createSignedUrl(fileName, 31536000);
+        if (signedUrlError) throw signedUrlError;
+
+        // Guardar path (não URL) para manter LEI VII e permitir revalidação
+        await store.updateContent(key, fileName, 'image');
+
+        return signedUrlData?.signedUrl || fileName;
+      } catch {
+        toast.error('Erro ao fazer upload');
+        return null;
+      }
+    },
   };
 }
