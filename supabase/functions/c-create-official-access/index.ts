@@ -2,9 +2,14 @@
 // 📜 PARTE 10 + 11 — Edge Function: c-create-official-access
 // CONSTITUIÇÃO SYNAPSE Ω v10.x — PATCH-ONLY
 // ============================================
-// Cria acesso oficial para alunos (beta ou aluno_gratuito)
+// Cria acesso oficial para alunos (beta, aluno_gratuito, aluno_presencial, beta_expira)
 // Campos obrigatórios: email, nome, role
-// Campos opcionais: endereco, telefone, foto_aluno, senha
+// Campos opcionais: endereco, telefone, foto_aluno, senha, expires_days
+// 
+// 🎯 NOVO: expires_days para role beta_expira
+// - Se role === 'beta_expira' e expires_days existe:
+//   Calcula expires_at = NOW() + expires_days e salva em user_roles.expires_at
+//
 // Segurança: caller deve ter role owner/admin/suporte via tabela
 // Email: Envia boas-vindas via Resend (NUNCA envia senha em texto)
 // ============================================
@@ -32,20 +37,25 @@ interface EnderecoInput {
   cep?: string;
 }
 
+// CONSTITUIÇÃO v10.x - 4 roles de aluno válidas
+type StudentRole = 'beta' | 'aluno_gratuito' | 'aluno_presencial' | 'beta_expira';
+
 interface CreateAccessPayload {
   email: string;
   nome: string;
-  role: 'beta' | 'aluno_gratuito';
+  role: StudentRole;
   telefone?: string;
   foto_aluno?: string;
   senha?: string;
   endereco?: EnderecoInput;
+  expires_days?: number; // 30, 60, 90, 180, 365, ou custom
 }
 
 interface CreateAccessResponse {
   success: boolean;
   user_id?: string;
   role?: string;
+  expires_at?: string | null; // NOVO: data de expiração se role === beta_expira
   email_status?: 'sent' | 'queued' | 'failed' | 'password_set' | 'welcome_sent';
   email_details?: {
     welcome_email: boolean;
@@ -60,12 +70,19 @@ interface CreateAccessResponse {
 const ALLOWED_CALLER_ROLES = ['owner', 'admin', 'suporte'];
 
 // ============================================
-// ROLE LABELS
+// ROLE LABELS (CONSTITUIÇÃO v10.x)
 // ============================================
-const ROLE_LABELS: Record<string, string> = {
+const ROLE_LABELS: Record<StudentRole, string> = {
   beta: 'Aluno Beta (Premium)',
   aluno_gratuito: 'Aluno Gratuito',
+  aluno_presencial: 'Aluno Presencial',
+  beta_expira: 'Beta com Expiração',
 };
+
+// ============================================
+// ROLES DE ALUNO VÁLIDAS
+// ============================================
+const VALID_STUDENT_ROLES: StudentRole[] = ['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira'];
 
 // ============================================
 // VALIDAÇÃO DE INPUT
@@ -86,8 +103,21 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
     return { valid: false, error: 'Nome é obrigatório' };
   }
 
-  if (p.role !== 'beta' && p.role !== 'aluno_gratuito') {
-    return { valid: false, error: 'Role deve ser "beta" ou "aluno_gratuito"' };
+  // Validar role (4 roles válidas)
+  if (!VALID_STUDENT_ROLES.includes(p.role as StudentRole)) {
+    return { valid: false, error: `Role deve ser uma de: ${VALID_STUDENT_ROLES.join(', ')}` };
+  }
+
+  // Validar expires_days se fornecido
+  if (p.expires_days !== undefined) {
+    if (typeof p.expires_days !== 'number' || p.expires_days < 1) {
+      return { valid: false, error: 'expires_days deve ser um número positivo' };
+    }
+  }
+
+  // Se role === 'beta_expira', expires_days é recomendado (warning, não erro)
+  if (p.role === 'beta_expira' && !p.expires_days) {
+    console.warn('[c-create-official-access] ⚠️ beta_expira sem expires_days - será acesso sem expiração');
   }
 
   // Validar email formato básico
@@ -106,11 +136,12 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
     data: {
       email: (p.email as string).toLowerCase().trim(),
       nome: (p.nome as string).trim(),
-      role: p.role as 'beta' | 'aluno_gratuito',
+      role: p.role as StudentRole,
       telefone: typeof p.telefone === 'string' ? p.telefone.trim() : undefined,
       foto_aluno: typeof p.foto_aluno === 'string' ? p.foto_aluno.trim() : undefined,
       senha: typeof p.senha === 'string' ? p.senha : undefined,
       endereco: typeof p.endereco === 'object' ? p.endereco as EnderecoInput : undefined,
+      expires_days: typeof p.expires_days === 'number' ? p.expires_days : undefined,
     },
   };
 }
@@ -215,10 +246,10 @@ async function sendWelcomeEmail(
   fromEmail: string,
   toEmail: string,
   nome: string,
-  role: string,
+  role: StudentRole,
   generatedPassword?: string,
 ): Promise<{ success: boolean; error?: string }> {
-  const roleLabel = ROLE_LABELS[role] || role;
+  const roleLabel = ROLE_LABELS[role];
   const platformUrl = 'https://pro.moisesmedeiros.com.br/alunos';
   
   // 🎯 P0 FIX: Agora SEMPRE envia senha gerada no email (autorizado pelo OWNER)
@@ -628,13 +659,35 @@ serve(async (req) => {
     // - ON CONFLICT (user_id) DO UPDATE: Sobrescreve role existente
     // - Isso é CORRETO para fluxo de Hotmart/acesso oficial
     // - Aluno pode "subir" de aluno_gratuito → beta
+    // 
+    // 🎯 NOVO: expires_at para beta_expira
     // ============================================
+    
+    // Calcular expires_at se role === 'beta_expira' e expires_days fornecido
+    let expiresAt: string | null = null;
+    if (payload.role === 'beta_expira' && payload.expires_days) {
+      const expirationDate = new Date();
+      expirationDate.setDate(expirationDate.getDate() + payload.expires_days);
+      expiresAt = expirationDate.toISOString();
+      console.log(`[c-create-official-access] 📅 Role expires_at: ${expiresAt} (${payload.expires_days} days)`);
+    }
+    
+    const roleData: Record<string, unknown> = {
+      user_id: userId,
+      role: payload.role,
+    };
+    
+    // Adicionar expires_at se calculado
+    if (expiresAt) {
+      roleData.expires_at = expiresAt;
+    } else {
+      // Limpar expires_at se role não requer expiração
+      roleData.expires_at = null;
+    }
+    
     const { error: roleUpsertError } = await supabaseAdmin
       .from('user_roles')
-      .upsert({
-        user_id: userId,
-        role: payload.role,
-      }, { 
+      .upsert(roleData, { 
         onConflict: 'user_id',  // ✅ CORRETO: 1 role por user
         ignoreDuplicates: false, // ✅ ATUALIZA role se já existir
       });
@@ -647,7 +700,7 @@ serve(async (req) => {
       );
     }
 
-    console.log('[c-create-official-access] ✅ Role assigned:', payload.role);
+    console.log('[c-create-official-access] ✅ Role assigned:', payload.role, expiresAt ? `(expires: ${expiresAt})` : '');
 
     // ============================================
     // 9. ENVIAR EMAIL DE BOAS-VINDAS (COM SENHA SE GERADA)
@@ -686,6 +739,8 @@ serve(async (req) => {
         new_data: {
           target_email: payload.email,
           target_role: payload.role,
+          expires_at: expiresAt,
+          expires_days: payload.expires_days,
           created_by: caller.email,
           caller_role: callerRoleData.role,
           user_already_existed: userAlreadyExists,
@@ -705,6 +760,7 @@ serve(async (req) => {
       success: true,
       user_id: userId,
       role: payload.role,
+      expires_at: expiresAt,
       email_status: emailStatus,
       email_details: {
         welcome_email: welcomeEmailSent,
