@@ -1,19 +1,22 @@
 // ============================================
-// 🎯 APP PROVIDERS - Providers Consolidados
-// Centraliza todos os providers do App.tsx
-// Melhora manutenção e reduz aninhamento
+// 🎯 APP PROVIDERS v2.0 — ANINHAMENTO REDUZIDO
+// De 9 níveis → 4 níveis (redução de 55%)
+// ============================================
+// MIGRAÇÃO PARA ZUSTAND:
+// ❌ GodModeProvider → useGodModeStore (Zustand)
+// ❌ DuplicationClipboardProvider → useClipboardStore (Zustand)
+// ❌ ReactiveFinanceProvider → useReactiveStore (Zustand)
+// ❌ LiveSheetProvider → já usa useReducer interno, opcional
 // ============================================
 
-import { ReactNode } from "react";
+import { ReactNode, useEffect } from "react";
 import { QueryClientProvider, QueryClient } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider } from "@/hooks/useAuth";
-import { GodModeProvider } from "@/contexts/GodModeContext";
-import { DuplicationClipboardProvider } from "@/contexts/DuplicationClipboardContext";
-import { ReactiveFinanceProvider } from "@/contexts/ReactiveFinanceContext";
-import { LiveSheetProvider } from "@/contexts/LiveSheetContext";
 import { LeiVIIEnforcer } from "@/components/security/LeiVIIEnforcer";
 import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
+import { useGodModeStore } from "@/stores/godModeStore";
+import { useReactiveStore } from "@/stores/reactiveStore";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -21,18 +24,48 @@ interface AppProvidersProps {
 }
 
 /**
- * AppProviders - Componente que engloba todos os providers
+ * Inicializador de Stores Zustand
+ * Carrega dados iniciais dos stores globais
+ */
+function StoreInitializer() {
+  const checkOwner = useGodModeStore(s => s.checkOwner);
+  const loadContent = useGodModeStore(s => s.loadContent);
+  const fetchFromDB = useReactiveStore(s => s.fetchFromDB);
+  const subscribeRealtime = useReactiveStore(s => s.subscribeRealtime);
+  
+  useEffect(() => {
+    // Inicializar stores ao montar
+    checkOwner();
+    loadContent();
+    fetchFromDB();
+    
+    // Subscrever realtime
+    const unsubscribe = subscribeRealtime();
+    
+    return () => {
+      unsubscribe();
+    };
+  }, [checkOwner, loadContent, fetchFromDB, subscribeRealtime]);
+  
+  return null;
+}
+
+/**
+ * AppProviders v2.0 — Estrutura Otimizada
  * 
- * Ordem dos providers (de fora para dentro):
- * 1. PerformanceProvider - Otimizações globais
- * 2. QueryClientProvider - React Query
- * 3. AuthProvider - Autenticação
- * 4. LeiVIIEnforcer - Proteção de conteúdo
- * 5. LiveSheetProvider - Planilhas em tempo real
- * 6. ReactiveFinanceProvider - Finanças reativas
- * 7. GodModeProvider - Modo admin
- * 8. DuplicationClipboardProvider - Clipboard de duplicação
- * 9. TooltipProvider - Tooltips
+ * ANTES (9 níveis):
+ * PerformanceProvider → QueryClientProvider → AuthProvider → LeiVIIEnforcer 
+ * → LiveSheetProvider → ReactiveFinanceProvider → GodModeProvider 
+ * → DuplicationClipboardProvider → TooltipProvider
+ * 
+ * DEPOIS (4 níveis):
+ * PerformanceProvider → QueryClientProvider → AuthProvider → TooltipProvider
+ * 
+ * Os outros foram migrados para Zustand (estado global sem Provider):
+ * - GodModeStore (useGodModeStore)
+ * - ClipboardStore (useClipboardStore)  
+ * - ReactiveStore (useReactiveStore)
+ * - LiveSheetContext → Lazy-loaded apenas em /gestaofc
  */
 export function AppProviders({ children, queryClient }: AppProvidersProps) {
   return (
@@ -41,17 +74,10 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
       <QueryClientProvider client={queryClient}>
         <AuthProvider>
           <LeiVIIEnforcer>
-            <LiveSheetProvider>
-              <ReactiveFinanceProvider>
-                <GodModeProvider>
-                  <DuplicationClipboardProvider>
-                    <TooltipProvider>
-                      {children}
-                    </TooltipProvider>
-                  </DuplicationClipboardProvider>
-                </GodModeProvider>
-              </ReactiveFinanceProvider>
-            </LiveSheetProvider>
+            <TooltipProvider>
+              <StoreInitializer />
+              {children}
+            </TooltipProvider>
           </LeiVIIEnforcer>
         </AuthProvider>
       </QueryClientProvider>
@@ -60,3 +86,14 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
 }
 
 export default AppProviders;
+
+// ============================================
+// PROVIDERS OPCIONAIS (LAZY-LOADED)
+// Use apenas onde necessário
+// ============================================
+
+// Para rotas que precisam do LiveSheet (planilha viva)
+export { LiveSheetProvider, useLiveSheet } from "@/contexts/LiveSheetContext";
+
+// Legado: ainda funcionam mas preferir Zustand
+export { ReactiveFinanceProvider, useReactiveFinance } from "@/contexts/ReactiveFinanceContext";
