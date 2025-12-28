@@ -621,102 +621,155 @@ export default function Alunos() {
             }
           />
 
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <FuturisticCard accentColor="blue" className="p-4 text-center">
-              <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-blue-400">{contadores.total}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
-            </FuturisticCard>
-            <FuturisticCard accentColor="green" className="p-4 text-center">
-              <CheckCircle className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-emerald-400">{contadores.ativos}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
-            </FuturisticCard>
-            <FuturisticCard accentColor="purple" className="p-4 text-center">
-              <Crown className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-purple-400">{contadores.beta}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Beta (Pagos)</div>
-            </FuturisticCard>
-            <FuturisticCard accentColor="cyan" className="p-4 text-center">
-              <Shield className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-cyan-400">{contadores.gratuito}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Gratuitos</div>
-            </FuturisticCard>
+          {/* Stats Grid — FUTURISTIC HOLOGRAPHIC STYLE */}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            {[
+              { icon: Users, value: contadores.total, label: 'TOTAL', gradient: 'from-blue-600 via-blue-500 to-cyan-400', glow: 'shadow-blue-500/30', border: 'border-blue-500/40' },
+              { icon: CheckCircle, value: contadores.ativos, label: 'ATIVOS', gradient: 'from-emerald-600 via-emerald-500 to-teal-400', glow: 'shadow-emerald-500/30', border: 'border-emerald-500/40' },
+              { icon: Crown, value: contadores.beta, label: 'BETA (PAGOS)', gradient: 'from-purple-600 via-purple-500 to-pink-400', glow: 'shadow-purple-500/30', border: 'border-purple-500/40' },
+              { icon: Shield, value: contadores.gratuito, label: 'GRATUITOS', gradient: 'from-cyan-600 via-cyan-500 to-blue-400', glow: 'shadow-cyan-500/30', border: 'border-cyan-500/40' },
+            ].map((stat, idx) => {
+              const StatIcon = stat.icon;
+              return (
+                <div
+                  key={idx}
+                  className={`
+                    relative group overflow-hidden rounded-xl border backdrop-blur-xl
+                    bg-gradient-to-br from-background/80 via-background/60 to-background/40
+                    ${stat.border} hover:border-opacity-80
+                    shadow-lg ${stat.glow} hover:shadow-xl
+                    transition-all duration-300 hover:scale-[1.02]
+                  `}
+                >
+                  {/* Holographic shimmer */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className={`absolute inset-0 bg-gradient-to-r ${stat.gradient} opacity-10`} />
+                    <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_40%,rgba(255,255,255,0.1)_50%,transparent_60%)] bg-[length:250%_250%] animate-[shimmer_3s_infinite]" />
+                  </div>
+                  
+                  {/* Content */}
+                  <div className="relative z-10 p-4 text-center">
+                    {/* Icon with glow ring */}
+                    <div className={`
+                      inline-flex items-center justify-center w-10 h-10 rounded-lg mb-2
+                      bg-gradient-to-br ${stat.gradient} shadow-lg ${stat.glow}
+                    `}>
+                      <StatIcon className="h-5 w-5 text-white" />
+                    </div>
+                    
+                    {/* Value with gradient text */}
+                    <div className={`text-3xl font-black bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+                      {stat.value}
+                    </div>
+                    
+                    {/* Label */}
+                    <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.2em] mt-1">
+                      {stat.label}
+                    </div>
+                  </div>
+                  
+                  {/* Corner accents */}
+                  <div className={`absolute top-1 left-1 w-2 h-2 border-t border-l ${stat.border} rounded-tl`} />
+                  <div className={`absolute top-1 right-1 w-2 h-2 border-t border-r ${stat.border} rounded-tr`} />
+                  <div className={`absolute bottom-1 left-1 w-2 h-2 border-b border-l ${stat.border} rounded-bl`} />
+                  <div className={`absolute bottom-1 right-1 w-2 h-2 border-b border-r ${stat.border} rounded-br`} />
+                </div>
+              );
+            })}
           </div>
 
-          {/* Universe Cards — Filtros de área (HARD BINDING com contadores derivados) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Universe Cards — FUTURISTIC FILTER SELECTOR */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
             {UNIVERSE_OPTIONS.map((option, index) => {
               const Icon = option.icon;
               const isActive = universeFilter === option.id;
-              // HARD BINDING: contador deriva de universeCounters
               const count = universeCounters[option.id as keyof typeof universeCounters] || 0;
               
+              const colorMap: Record<string, { gradient: string; border: string; glow: string; text: string; bg: string }> = {
+                blue: { gradient: 'from-blue-600 to-cyan-500', border: 'border-blue-500/50', glow: 'shadow-blue-500/20', text: 'text-blue-400', bg: 'bg-blue-500' },
+                purple: { gradient: 'from-purple-600 to-pink-500', border: 'border-purple-500/50', glow: 'shadow-purple-500/20', text: 'text-purple-400', bg: 'bg-purple-500' },
+                cyan: { gradient: 'from-cyan-600 to-blue-500', border: 'border-cyan-500/50', glow: 'shadow-cyan-500/20', text: 'text-cyan-400', bg: 'bg-cyan-500' },
+                green: { gradient: 'from-emerald-600 to-teal-500', border: 'border-emerald-500/50', glow: 'shadow-emerald-500/20', text: 'text-emerald-400', bg: 'bg-emerald-500' },
+              };
+              const colors = colorMap[option.accentColor] || colorMap.blue;
+              
               return (
-                <motion.div
+                <div
                   key={option.id}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: index * 0.05 }}
+                  onClick={() => handleUniverseSelect(option.id)}
+                  className={`
+                    relative group cursor-pointer overflow-hidden rounded-xl border backdrop-blur-xl
+                    transition-all duration-300 hover:scale-[1.02]
+                    ${isActive 
+                      ? `${colors.border} bg-gradient-to-br from-background/90 to-background/70 shadow-lg ${colors.glow}` 
+                      : 'border-white/10 bg-background/50 hover:border-white/20 hover:bg-background/70'
+                    }
+                  `}
                 >
-                  <FuturisticCard
-                    accentColor={option.accentColor as any}
-                    className={`p-4 cursor-pointer group hover:scale-[1.02] transition-all duration-300 ${
-                      isActive ? 'ring-2 ring-offset-2 ring-offset-background' : ''
-                    } ${
-                      isActive && option.accentColor === 'blue' ? 'ring-blue-500' : ''
-                    } ${
-                      isActive && option.accentColor === 'purple' ? 'ring-purple-500' : ''
-                    } ${
-                      isActive && option.accentColor === 'cyan' ? 'ring-cyan-500' : ''
-                    } ${
-                      isActive && option.accentColor === 'green' ? 'ring-emerald-500' : ''
-                    }`}
-                    onClick={() => handleUniverseSelect(option.id)}
-                  >
-                    <div className="flex items-start gap-3">
+                  {/* Active indicator glow */}
+                  {isActive && (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${colors.gradient} opacity-10`} />
+                  )}
+                  
+                  {/* Scan line effect on hover */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 overflow-hidden">
+                    <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent animate-[scan_2s_linear_infinite]" />
+                  </div>
+                  
+                  <div className="relative z-10 p-3">
+                    <div className="flex items-center gap-3">
+                      {/* Icon with gradient background */}
                       <div className={`
-                        p-2.5 rounded-xl 
-                        ${option.accentColor === 'blue' ? 'bg-blue-500/20 text-blue-400' : ''}
-                        ${option.accentColor === 'purple' ? 'bg-purple-500/20 text-purple-400' : ''}
-                        ${option.accentColor === 'cyan' ? 'bg-cyan-500/20 text-cyan-400' : ''}
-                        ${option.accentColor === 'green' ? 'bg-emerald-500/20 text-emerald-400' : ''}
+                        p-2 rounded-lg transition-all duration-300
+                        ${isActive 
+                          ? `bg-gradient-to-br ${colors.gradient} shadow-lg ${colors.glow}` 
+                          : 'bg-white/5 group-hover:bg-white/10'
+                        }
                       `}>
-                        <Icon className="h-5 w-5" />
+                        <Icon className={`h-4 w-4 ${isActive ? 'text-white' : colors.text}`} />
                       </div>
                       
+                      {/* Text content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                        <div className="flex items-center gap-2">
+                          <h3 className={`text-sm font-semibold truncate transition-colors ${isActive ? 'text-foreground' : 'text-foreground/80 group-hover:text-foreground'}`}>
                             {option.label}
                           </h3>
-                          {/* Contador derivado = HARD BINDING */}
-                          <Badge variant="secondary" className={`ml-2 text-xs ${
-                            option.accentColor === 'blue' ? 'bg-blue-500/20 text-blue-400' : ''
-                          } ${
-                            option.accentColor === 'purple' ? 'bg-purple-500/20 text-purple-400' : ''
-                          } ${
-                            option.accentColor === 'cyan' ? 'bg-cyan-500/20 text-cyan-400' : ''
-                          } ${
-                            option.accentColor === 'green' ? 'bg-emerald-500/20 text-emerald-400' : ''
-                          }`}>
-                            {count}
-                          </Badge>
                         </div>
-                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
+                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                           {option.description}
                         </p>
                       </div>
                       
+                      {/* Counter badge */}
+                      <div className={`
+                        px-2 py-0.5 rounded-md text-xs font-bold tabular-nums
+                        ${isActive 
+                          ? `bg-gradient-to-r ${colors.gradient} text-white shadow-sm` 
+                          : `bg-white/5 ${colors.text}`
+                        }
+                      `}>
+                        {count}
+                      </div>
+                      
+                      {/* Close button when active */}
                       {isActive && (
-                        <div className="flex-shrink-0">
-                          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        <div className="p-1 rounded-md bg-white/10 hover:bg-white/20 transition-colors">
+                          <X className="h-3 w-3 text-white/70" />
                         </div>
                       )}
                     </div>
-                  </FuturisticCard>
-                </motion.div>
+                  </div>
+                  
+                  {/* Bottom accent line */}
+                  <div className={`
+                    absolute bottom-0 left-0 right-0 h-0.5 transition-all duration-300
+                    ${isActive 
+                      ? `bg-gradient-to-r ${colors.gradient}` 
+                      : 'bg-transparent group-hover:bg-white/10'
+                    }
+                  `} />
+                </div>
               );
             })}
           </div>
