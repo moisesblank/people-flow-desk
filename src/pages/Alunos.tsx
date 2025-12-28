@@ -147,6 +147,42 @@ const UNIVERSE_OPTIONS: Array<{
   },
 ];
 
+// ============================================
+// ROLE → DISPLAY MAPPING (SINCRONIZADO COM CARDS)
+// Cada role de aluno tem ícone, label e cor correspondente ao card
+// ============================================
+const ROLE_DISPLAY_CONFIG = {
+  // Card: "Alunos Presencial" (roxo/blue)
+  aluno_presencial: { 
+    label: 'Presencial', 
+    colorClass: 'border-blue-500/50 bg-blue-500/10 text-blue-400',
+    icon: MapPin,
+  },
+  // Card: "Presencial + Online" (verde/purple) = Beta Premium
+  beta: { 
+    label: 'Premium', 
+    colorClass: 'border-purple-500/50 bg-purple-500/10 text-purple-400',
+    icon: Globe,
+  },
+  // Card: "Alunos Online" (ciano) = Beta com Expiração
+  beta_expira: { 
+    label: 'Online', 
+    colorClass: 'border-cyan-500/50 bg-cyan-500/10 text-cyan-400',
+    icon: Wifi,
+  },
+  // Card: "Registrados (Área Gratuita)" (green)
+  aluno_gratuito: { 
+    label: 'Gratuito', 
+    colorClass: 'border-emerald-500/50 bg-emerald-500/10 text-emerald-400',
+    icon: UserCheck,
+  },
+} as const;
+
+// Helper para obter config de display baseado no role
+function getRoleDisplayConfig(role: EffectiveRole) {
+  return ROLE_DISPLAY_CONFIG[role] || ROLE_DISPLAY_CONFIG.aluno_gratuito;
+}
+
 const UNIVERSO_LABELS = {
   presencial: { label: 'Presencial', color: 'blue', icon: '📍' },
   online: { label: 'Online', color: 'cyan', icon: '🌐' },
@@ -756,8 +792,10 @@ export default function Alunos() {
                 </table>
               )}
               renderRow={(student) => {
-                const labelKey = deriveStudentLabel(student);
-                const labelInfo = UNIVERSO_LABELS[labelKey];
+                // SINCRONIZADO: Usa role REAL do aluno (user_roles)
+                const effectiveRole = getEffectiveRole(student);
+                const roleConfig = getRoleDisplayConfig(effectiveRole);
+                const RoleIcon = roleConfig.icon;
                 
                 return (
                   <table className="w-full">
@@ -765,7 +803,7 @@ export default function Alunos() {
                       <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors cursor-pointer" onClick={() => navigate(`/gestaofc/gestao-alunos/${student.id}`)}>
                         <td className="p-4 text-foreground font-medium w-[30%]">
                           <div className="flex items-center gap-2">
-                            {student.role === 'beta' && <Crown className="h-4 w-4 text-yellow-400" />}
+                            {effectiveRole === 'beta' && <Crown className="h-4 w-4 text-yellow-400" />}
                             <span className="hover:text-blue-400 transition-colors">{student.nome}</span>
                           </div>
                         </td>
@@ -784,13 +822,10 @@ export default function Alunos() {
                           </Badge>
                         </td>
                         <td className="p-4 w-[13%]">
-                          <Badge variant="outline" className={
-                            labelKey === 'online' ? "border-cyan-500/50 text-cyan-400" :
-                            labelKey === 'presencial' ? "border-blue-500/50 text-blue-400" :
-                            labelKey === 'hibrido' ? "border-purple-500/50 text-purple-400" :
-                            "border-green-500/50 text-green-400"
-                          }>
-                            {labelInfo.icon} {labelInfo.label}
+                          {/* TIPO: Sincronizado com user_roles e cards */}
+                          <Badge variant="outline" className={roleConfig.colorClass}>
+                            <RoleIcon className="h-3 w-3 mr-1" />
+                            {roleConfig.label}
                           </Badge>
                         </td>
                         <td className="p-4 text-right w-[20%]">
