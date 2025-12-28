@@ -39,21 +39,8 @@ export function AlunoPerfilIntegracoes({
     enabled: !!alunoEmail
   });
 
-  // Verificar transações Hotmart
-  const { data: hotmartData } = useQuery({
-    queryKey: ['aluno-hotmart-integration', alunoEmail],
-    queryFn: async () => {
-      const { data } = await supabase
-        .from('transacoes_hotmart_completo')
-        .select('status, product_name, data_compra')
-        .eq('email', alunoEmail)
-        .order('data_compra', { ascending: false })
-        .limit(1)
-        .single();
-      return data;
-    },
-    enabled: !!alunoEmail
-  });
+  // Placeholder for hotmart data - will use existing financial component data
+  const hotmartData: any = null;
 
   // Placeholder for video access check
   const videoAccess = false;
