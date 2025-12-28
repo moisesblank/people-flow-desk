@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v10.0 - 2FA Email + WhatsApp
+// MOISÉS MEDEIROS v10.0 - 2FA Email + SMS + WhatsApp
 // Sistema de verificação em duas etapas multicanal
-// RESEND (Email) + WhatsApp Business API
+// RESEND (Email) + Twilio (SMS) + WhatsApp Business API
 // ============================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -17,12 +17,17 @@ const FROM_EMAIL = Deno.env.get("RESEND_FROM") || "Prof. Moisés Medeiros <norep
 const WHATSAPP_ACCESS_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 const WHATSAPP_PHONE_NUMBER_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 
+// Twilio SMS
+const TWILIO_ACCOUNT_SID = Deno.env.get("TWILIO_ACCOUNT_SID");
+const TWILIO_AUTH_TOKEN = Deno.env.get("TWILIO_AUTH_TOKEN");
+const TWILIO_PHONE_NUMBER = Deno.env.get("TWILIO_PHONE_NUMBER");
+
 interface Send2FARequest {
   email: string;
   userId: string;
   userName?: string;
   phone?: string;
-  channel: "email" | "whatsapp"; // Canal escolhido pelo usuário
+  channel: "email" | "sms" | "whatsapp"; // Canal escolhido pelo usuário
 }
 
 const RATE_LIMIT_WINDOW = 15 * 60 * 1000;
@@ -148,6 +153,70 @@ async function sendViaWhatsApp(
 }
 
 // ============================================
+// ENVIAR VIA TWILIO (SMS)
+// ============================================
+async function sendViaSMS(
+  phone: string,
+  code: string,
+  userName: string
+): Promise<{ success: boolean; error?: string }> {
+  if (!TWILIO_ACCOUNT_SID || !TWILIO_AUTH_TOKEN || !TWILIO_PHONE_NUMBER) {
+    console.error("[2FA-SMS] Credenciais Twilio não configuradas");
+    return { success: false, error: "SMS não configurado" };
+  }
+
+  // Formatar telefone (remover caracteres e adicionar DDI)
+  let formattedPhone = phone.replace(/\D/g, '');
+  
+  // Se não começa com código do país, adicionar Brasil (55)
+  if (!formattedPhone.startsWith('55') && formattedPhone.length >= 10) {
+    formattedPhone = `55${formattedPhone}`;
+  }
+  
+  // Adicionar + no início
+  formattedPhone = `+${formattedPhone}`;
+
+  console.log(`[2FA-SMS] Enviando para: ${formattedPhone}`);
+
+  try {
+    const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
+    
+    const response = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${TWILIO_ACCOUNT_SID}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          "Authorization": `Basic ${credentials}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body: new URLSearchParams({
+          To: formattedPhone,
+          From: TWILIO_PHONE_NUMBER,
+          Body: `🔐 Curso Moisés Medeiros\n\nOlá, ${userName}!\n\nSeu código de verificação é: ${code}\n\n⏱️ Expira em ${CODE_EXPIRATION_MINUTES} min.\n\n⚠️ Nunca compartilhe.`
+        }),
+      }
+    );
+
+    const result = await response.json();
+
+    if (!response.ok || result.error_code) {
+      console.error("[2FA-SMS] Erro da API Twilio:", result);
+      return { 
+        success: false, 
+        error: result.message || "Erro ao enviar SMS" 
+      };
+    }
+
+    console.log(`[2FA-SMS] ✅ SMS enviado! SID: ${result.sid}`);
+    return { success: true };
+
+  } catch (error: any) {
+    console.error("[2FA-SMS] Erro:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// ============================================
 // ENVIAR VIA RESEND (EMAIL)
 // ============================================
 async function sendViaEmail(
@@ -232,7 +301,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Buscar telefone do perfil se não foi fornecido
     let userPhone = phone;
-    if (!userPhone && channel === "whatsapp") {
+    if (!userPhone && (channel === "whatsapp" || channel === "sms")) {
       const { data: profile } = await supabaseAdmin
         .from("profiles")
         .select("phone")
@@ -285,14 +354,34 @@ const handler = async (req: Request): Promise<Response> => {
     let result: { success: boolean; error?: string };
     let channelUsed = channel;
 
-    console.log(`[2FA] Enviando via ${channel} para ${channel === "whatsapp" ? userPhone : email}`);
+    console.log(`[2FA] Enviando via ${channel} para ${channel === "email" ? email : userPhone}`);
 
+    // ============================================
+    // LÓGICA DE ENVIO COM FALLBACK
+    // Prioridade: Canal escolhido → SMS → Email
+    // ============================================
     if (channel === "whatsapp" && userPhone) {
       result = await sendViaWhatsApp(userPhone, codeStr, displayName);
       
-      // Fallback para email se WhatsApp falhar
+      // Fallback para SMS se WhatsApp falhar
       if (!result.success) {
-        console.log("[2FA] WhatsApp falhou, tentando email...");
+        console.log("[2FA] WhatsApp falhou, tentando SMS...");
+        result = await sendViaSMS(userPhone, codeStr, displayName);
+        channelUsed = "sms";
+        
+        // Fallback final para email se SMS também falhar
+        if (!result.success) {
+          console.log("[2FA] SMS falhou, tentando email...");
+          result = await sendViaEmail(email, codeStr, displayName);
+          channelUsed = "email";
+        }
+      }
+    } else if (channel === "sms" && userPhone) {
+      result = await sendViaSMS(userPhone, codeStr, displayName);
+      
+      // Fallback para email se SMS falhar
+      if (!result.success) {
+        console.log("[2FA] SMS falhou, tentando email...");
         result = await sendViaEmail(email, codeStr, displayName);
         channelUsed = "email";
       }
@@ -323,19 +412,22 @@ const handler = async (req: Request): Promise<Response> => {
       }
     });
 
-    const message = channelUsed === "whatsapp" 
-      ? "Código enviado por WhatsApp" 
-      : "Código enviado por email";
+    const channelLabels: Record<string, string> = {
+      email: "Código enviado por email",
+      sms: "Código enviado por SMS",
+      whatsapp: "Código enviado por WhatsApp"
+    };
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message,
+        message: channelLabels[channelUsed] || "Código enviado",
         expiresAt: expiresAt.toISOString(),
         expiresIn: CODE_EXPIRATION_MINUTES * 60,
         channel: channelUsed,
         channels: { 
           email: channelUsed === "email", 
+          sms: channelUsed === "sms",
           whatsapp: channelUsed === "whatsapp" 
         }
       }),
