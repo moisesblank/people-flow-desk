@@ -137,8 +137,21 @@ export function hasRoleAccess(userRole: AppRole, requiredRole: AppRole): boolean
   return allowedRoles.includes(requiredRole);
 }
 
+/**
+ * @deprecated P1-2 FIX: Use isOwnerByRole() para verificação segura
+ * Esta função existe apenas para bypass de UX (spinners/loading)
+ * A autorização REAL vem do banco via user_roles.role='owner'
+ */
 export function isOwnerEmail(email: string): boolean {
+  console.warn('[SECURITY] isOwnerEmail() é deprecated - usar verificação por role');
   return email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+}
+
+/**
+ * ✅ Verificação segura de owner via role (preferir esta)
+ */
+export function isOwnerByRole(role?: string | null): boolean {
+  return role === 'owner';
 }
 
 // ============================================

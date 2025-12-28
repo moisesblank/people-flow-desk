@@ -128,13 +128,25 @@ export interface UseSanctumOmegaReturn extends SanctumState {
 // ============================================
 // FUNÇÕES UTILITÁRIAS
 // ============================================
+/**
+ * @deprecated P1-2: Use role-based check first
+ */
 function isOwnerEmail(email?: string | null): boolean {
   return email?.toLowerCase() === SANCTUM_OMEGA_CONFIG.ownerEmail;
 }
 
+/**
+ * ✅ Verificação segura de owner via role
+ */
+function isOwnerByRole(role?: string | null): boolean {
+  return role === 'owner';
+}
+
 function isImmuneRole(role?: string | null): boolean {
   if (!role) return false;
-  return (SANCTUM_OMEGA_CONFIG.immuneRoles as readonly string[]).includes(role);
+  // P1-2 FIX: Remover 'employee' e 'funcionario' (deprecated)
+  const IMMUNE_ROLES = ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'contabilidade', 'marketing', 'afiliado'];
+  return IMMUNE_ROLES.includes(role);
 }
 
 function isRelaxedRole(role?: string | null): boolean {
@@ -182,10 +194,13 @@ export function useSanctumOmega(): UseSanctumOmegaReturn {
   const currentAssetIdRef = useRef<string | null>(null);
   const violationCountRef = useRef<number>(0);
   
-  // Compute immunity
+  // Compute immunity - P1-2 FIX: Preferir role-based check
   const isImmune = useMemo(() => {
-    if (isOwnerEmail(user?.email)) return true;
+    // 1. Primeiro: verificar role (fonte da verdade)
+    if (isOwnerByRole(role)) return true;
     if (isImmuneRole(role)) return true;
+    // 2. Fallback: email (apenas UX bypass, não segurança)
+    if (isOwnerEmail(user?.email)) return true;
     return false;
   }, [user?.email, role]);
   

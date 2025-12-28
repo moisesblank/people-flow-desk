@@ -82,24 +82,30 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // - Não ficar preso em loading/spinner
   // - Não depender de guards externos
   // A autorização real (role) vem do banco e será verificada
+  // @deprecated P1-2: Preferir role check primeiro
   // ============================================
-  const isOwnerEmail = useMemo(() => {
+  const isOwnerEmailMatch = useMemo(() => {
     return user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   }, [user?.email]);
   
+  // ✅ P1-2 FIX: Preferir verificação por role
+  const isOwnerByRole = useMemo(() => {
+    return role === 'owner';
+  }, [role]);
+  
   // ✅ BYPASS calculado como VALOR, não como return condicional
   const shouldBypassForOwner = useMemo(() => {
-    // Owner autenticado com role confirmada OU ainda carregando
-    if (isOwnerEmail && user && (role === 'owner' || roleLoading)) {
-      // Se role já carregou e não é owner, não dar bypass
-      if (!roleLoading && role !== 'owner') {
-        console.warn(`[RoleProtectedRoute] Email owner mas role=${role} - verificar banco`);
-        return false;
-      }
-      return true;
+    // 1. Primeiro: verificar role (fonte da verdade)
+    if (isOwnerByRole && user) return true;
+    // 2. Fallback: email (apenas UX bypass enquanto role carrega)
+    if (isOwnerEmailMatch && user && roleLoading) return true;
+    // 3. Se role já carregou e não é owner, não dar bypass
+    if (!roleLoading && !isOwnerByRole && isOwnerEmailMatch) {
+      console.warn(`[RoleProtectedRoute] Email owner mas role=${role} - verificar banco`);
+      return false;
     }
     return false;
-  }, [isOwnerEmail, user, role, roleLoading]);
+  }, [isOwnerByRole, isOwnerEmailMatch, user, role, roleLoading]);
 
   // ============================================
   // 🛡️ DOMAIN GUARD - LOG ONLY (sem redirect)
