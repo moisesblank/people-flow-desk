@@ -17,6 +17,7 @@ import { LeiVIIEnforcer } from "@/components/security/LeiVIIEnforcer";
 import { PerformanceProvider, PerformanceStyles } from "@/components/performance/PerformanceProvider";
 import { useGodModeStore } from "@/stores/godModeStore";
 import { useReactiveStore } from "@/stores/reactiveStore";
+import { PresenceInitializer } from "@/components/presence/PresenceInitializer";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -76,6 +77,7 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
           <LeiVIIEnforcer>
             <TooltipProvider>
               <StoreInitializer />
+              <PresenceInitializer />
               {children}
             </TooltipProvider>
           </LeiVIIEnforcer>

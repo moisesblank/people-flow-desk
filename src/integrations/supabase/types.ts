@@ -1657,6 +1657,13 @@ export type Database = {
             foreignKeyName: "certificates_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "certificates_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -1803,6 +1810,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "comissoes_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["aluno_id"]
           },
           {
             foreignKeyName: "comissoes_aluno_id_fkey"
@@ -3100,6 +3114,13 @@ export type Database = {
             foreignKeyName: "courses_instructor_id_fkey"
             columns: ["instructor_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "courses_instructor_id_fkey"
+            columns: ["instructor_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -4333,6 +4354,13 @@ export type Database = {
             foreignKeyName: "enrollments_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "enrollments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -4399,6 +4427,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "entradas_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["aluno_id"]
           },
           {
             foreignKeyName: "entradas_aluno_id_fkey"
@@ -4648,6 +4683,13 @@ export type Database = {
             foreignKeyName: "envios_correios_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "envios_correios_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "alunos_safe"
             referencedColumns: ["id"]
           },
@@ -4737,6 +4779,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "sanctuary_questions"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "error_notebook_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
           },
           {
             foreignKeyName: "error_notebook_user_id_fkey"
@@ -5678,6 +5727,13 @@ export type Database = {
             foreignKeyName: "lesson_annotations_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "lesson_annotations_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -5784,6 +5840,13 @@ export type Database = {
             foreignKeyName: "lesson_notes_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "lesson_notes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -5850,6 +5913,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "lessons"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_progress_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
           },
           {
             foreignKeyName: "lesson_progress_user_id_fkey"
@@ -6873,6 +6943,13 @@ export type Database = {
             foreignKeyName: "pagamentos_cursos_aluno_id_fkey"
             columns: ["aluno_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["aluno_id"]
+          },
+          {
+            foreignKeyName: "pagamentos_cursos_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
             referencedRelation: "alunos_safe"
             referencedColumns: ["id"]
           },
@@ -6973,6 +7050,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "payment_transactions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
           {
             foreignKeyName: "payment_transactions_user_id_fkey"
             columns: ["user_id"]
@@ -7806,6 +7890,13 @@ export type Database = {
             foreignKeyName: "question_attempts_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "question_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -8002,6 +8093,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "quizzes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_attempts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
           },
           {
             foreignKeyName: "quiz_attempts_user_id_fkey"
@@ -10159,6 +10257,13 @@ export type Database = {
             foreignKeyName: "study_flashcards_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "study_flashcards_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -10219,6 +10324,13 @@ export type Database = {
           user_id?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "subscriptions_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
           {
             foreignKeyName: "subscriptions_user_id_fkey"
             columns: ["user_id"]
@@ -11813,6 +11925,13 @@ export type Database = {
             foreignKeyName: "user_achievements_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "user_achievements_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -11945,6 +12064,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "badges"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_badges_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
           },
           {
             foreignKeyName: "user_badges_user_id_fkey"
@@ -12215,6 +12341,13 @@ export type Database = {
             foreignKeyName: "user_gamification_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "user_gamification_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -12269,6 +12402,39 @@ export type Database = {
           phone_number?: string | null
           totp_secret?: string | null
           updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      user_presence: {
+        Row: {
+          created_at: string | null
+          device_type: string | null
+          id: string
+          ip_hash: string | null
+          is_online: boolean | null
+          last_seen_at: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_online?: boolean | null
+          last_seen_at?: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          device_type?: string | null
+          id?: string
+          ip_hash?: string | null
+          is_online?: boolean | null
+          last_seen_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -13439,6 +13605,13 @@ export type Database = {
             foreignKeyName: "weekly_xp_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: true
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "weekly_xp_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -13997,6 +14170,13 @@ export type Database = {
             foreignKeyName: "xp_history_user_id_fkey"
             columns: ["user_id"]
             isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["auth_user_id"]
+          },
+          {
+            foreignKeyName: "xp_history_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
@@ -14090,6 +14270,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "alunos"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "youtube_live_attendance_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_presence"
+            referencedColumns: ["aluno_id"]
           },
           {
             foreignKeyName: "youtube_live_attendance_aluno_id_fkey"
@@ -14477,6 +14664,18 @@ export type Database = {
           total_vendas?: number | null
           user_id?: string | null
           whatsapp?: string | null
+        }
+        Relationships: []
+      }
+      alunos_presence: {
+        Row: {
+          aluno_id: string | null
+          auth_user_id: string | null
+          device_type: string | null
+          email: string | null
+          is_online: boolean | null
+          last_seen_at: string | null
+          presence_status: string | null
         }
         Relationships: []
       }
@@ -16122,6 +16321,7 @@ export type Database = {
         Returns: boolean
       }
       mark_password_changed: { Args: { _user_id: string }; Returns: undefined }
+      mark_users_offline: { Args: never; Returns: undefined }
       mark_webhook_processed:
         | {
             Args: {
@@ -16511,6 +16711,10 @@ export type Database = {
         Returns: Json
       }
       update_user_activity: { Args: never; Returns: undefined }
+      update_user_presence: {
+        Args: { p_device_type?: string; p_ip_hash?: string }
+        Returns: undefined
+      }
       update_user_streak: { Args: { p_user_id: string }; Returns: number }
       upsert_hotmart_transaction: {
         Args: {
