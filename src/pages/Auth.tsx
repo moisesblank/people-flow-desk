@@ -199,10 +199,12 @@ export default function Auth() {
       return;
     }
     
-    // Fallback: suporte ao fluxo antigo (reset=true)
-    const isReset = urlParams.get('reset') === 'true' || urlParams.get('type') === 'recovery';
+    // Fallback: suporte ao fluxo antigo (reset=true, type=recovery, action=set-password)
+    const isReset = urlParams.get('reset') === 'true' 
+      || urlParams.get('type') === 'recovery'
+      || urlParams.get('action') === 'set-password'; // 🎯 FIX: Suportar action=set-password do c-create-official-access
     if (isReset) {
-      console.log('[AUTH] 🔐 Modo RESET PASSWORD (fluxo antigo) detectado via URL');
+      console.log('[AUTH] 🔐 Modo RESET PASSWORD detectado via URL');
       setIsUpdatePassword(true);
       setIsCheckingSession(false);
     }
@@ -271,10 +273,33 @@ export default function Auth() {
   // ✅ P0-1 FIX DEFINITIVO: Se já existe sessão/user, /auth deve redirecionar
   // - SEMPRE busca role do banco antes de redirecionar
   // - Não redirecionar se 2FA estiver pendente nesta aba
+  // - 🎯 FIX: Não redirecionar se estamos no modo de atualização de senha
   // ============================================
   useEffect(() => {
     const pendingKey = "matriz_2fa_pending";
     const pendingUserKey = "matriz_2fa_user";
+
+    // 🎯 FIX CRÍTICO: Verificar se veio de link de recovery ANTES de qualquer redirect
+    const urlParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    const isRecoveryFromUrl = urlParams.get('action') === 'set-password' 
+      || urlParams.get('reset') === 'true' 
+      || urlParams.get('type') === 'recovery'
+      || urlParams.get('reset_token')
+      || hash.includes('type=recovery');
+    
+    if (isRecoveryFromUrl) {
+      console.log('[AUTH] 🔐 Link de recovery detectado - NÃO redirecionar automaticamente');
+      setIsCheckingSession(false);
+      return; // Deixar o outro useEffect tratar o reset de senha
+    }
+
+    // 🎯 FIX: Não redirecionar se já estamos no modo de update password
+    if (isUpdatePassword) {
+      console.log('[AUTH] 🔐 Em modo update password - não redirecionar');
+      setIsCheckingSession(false);
+      return;
+    }
 
     // Função assíncrona para buscar role e redirecionar
     const redirectWithRole = async (userId: string, email: string | undefined) => {
@@ -346,13 +371,29 @@ export default function Auth() {
       console.log('[AUTH] Sem sessão - mostrando formulário');
       setIsCheckingSession(false);
     })();
-  }, [navigate, user]);
+  }, [navigate, user, isUpdatePassword]);
 
   // Listener: login bem-sucedido deve sair de /auth
   // ✅ P0 FIX: Buscar role do banco ANTES de redirecionar
+  // ✅ FIX: Tratar PASSWORD_RECOVERY para links de definição de senha
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      // 🎯 FIX: Quando usuário clica no link de recovery, Supabase dispara PASSWORD_RECOVERY
+      // Neste caso, devemos mostrar o formulário de definição de senha, NÃO redirecionar
+      if (event === 'PASSWORD_RECOVERY') {
+        console.log('[AUTH] 🔐 PASSWORD_RECOVERY event - mostrando formulário de nova senha');
+        setIsUpdatePassword(true);
+        setIsCheckingSession(false);
+        return; // NÃO redirecionar, deixar usuário definir senha
+      }
+
       if (event !== 'SIGNED_IN' || !session?.user) return;
+
+      // Se estamos no modo de atualização de senha, não redirecionar
+      if (isUpdatePassword) {
+        console.log('[AUTH] 🔐 Em modo update password - não redirecionar');
+        return;
+      }
 
       const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
       if (is2FAPending) return;
@@ -381,7 +422,7 @@ export default function Auth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, isUpdatePassword]);
 
   useEffect(() => {
     console.log('[AUTH] 2. Turnstile hook status:', {
