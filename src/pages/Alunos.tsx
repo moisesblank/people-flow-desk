@@ -135,12 +135,14 @@ export default function Alunos() {
     return getUniverseFilters(selection);
   }, [selection]);
 
-  // ⚡ FIX: Não filtrar por role - mostrar TODOS os alunos do universo
-  // Role é informação complementar, não critério de exclusão
+  // ⚡ FIX FINAL: Não filtrar por role - mostrar TODOS os alunos
+  // O filterFn do universo já está corrigido para ser permissivo
   const filteredStudents = useMemo(() => {
+    // Se não há seleção de universo, retorna todos
     if (!universeFilters) return students;
     
-    // Aplicar apenas filtro de universo (presencial/online), não de role
+    // Aplicar filtro de universo (presencial/online)
+    // O filtro agora é permissivo: online aceita qualquer fonte exceto 'presencial'
     return students.filter(s => universeFilters.filterFn(s));
   }, [students, universeFilters]);
 
