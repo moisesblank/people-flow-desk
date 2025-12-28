@@ -7,7 +7,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useLocation } from 'react-router-dom';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { MasterAddModal } from './MasterAddModal';
 import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from 'sonner';

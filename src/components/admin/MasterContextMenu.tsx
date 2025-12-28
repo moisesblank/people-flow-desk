@@ -7,7 +7,7 @@
 // ============================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { useMasterActions } from '@/hooks/useMasterActions';
 import { MasterActionConfirmDialog } from './MasterActionConfirmDialog';
 import { Plus, Copy, Trash2, ChevronRight, FileText, Users, DollarSign, Calendar, BookOpen, BarChart3, Bell, Target, X, Loader2, GraduationCap, Briefcase, Link2, ExternalLink } from 'lucide-react';

@@ -27,7 +27,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
 import { useMasterDuplication, DuplicableEntityType } from '@/hooks/useMasterDuplication';
-import { useDuplicationClipboard } from '@/contexts/DuplicationClipboardContext';
+import { useDuplicationClipboard } from '@/stores/clipboardStore';
 import { cn } from '@/lib/utils';
 
 interface MasterDuplicateButtonProps {

@@ -4,7 +4,7 @@ import { SortableContext, arrayMove, useSortable, verticalListSortingStrategy } 
 import { CSS } from "@dnd-kit/utilities";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
-import { useGodMode } from "@/contexts/GodModeContext";
+import { useGodMode } from "@/stores/godModeStore";
 import { GripVertical, Copy, Check, Folder } from "lucide-react";
 import { toast } from "sonner";
 import { SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar";

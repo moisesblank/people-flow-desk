@@ -6,7 +6,7 @@
 // ============================================
 
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { toast } from 'sonner';
 
 interface DragPosition {

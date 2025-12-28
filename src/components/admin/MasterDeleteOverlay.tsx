@@ -8,7 +8,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Trash2, AlertTriangle, Loader2, X, Edit, Copy, Check, Zap } from 'lucide-react';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { useMasterRemove } from '@/hooks/useMasterRemove';
 import { toast } from 'sonner';
 import {

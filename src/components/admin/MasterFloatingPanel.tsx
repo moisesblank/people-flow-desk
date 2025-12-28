@@ -16,7 +16,7 @@ import {
   GripVertical, RefreshCw, Save, Download, Menu
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { MasterSectionOrganizer } from './MasterSectionOrganizer';
 import { MasterMenuEditor } from './MasterMenuEditor';
 import { useMasterDrag } from '@/hooks/useMasterDrag';

@@ -11,7 +11,7 @@
 // ============================================
 
 import { useEffect, useCallback, useState } from 'react';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { useRealtimeEquivalences } from '@/hooks/useRealtimeEquivalences';
 import { useInstantDuplication, useDuplicationListener } from '@/hooks/useInstantDuplication';
 import { useMasterUndo } from '@/hooks/useMasterUndo';
