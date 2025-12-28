@@ -251,6 +251,10 @@ export default {
           "50%": { backgroundPosition: "100% 50%" },
           "100%": { backgroundPosition: "0% 50%" },
         },
+        "scan": {
+          "0%": { transform: "translateY(0)" },
+          "100%": { transform: "translateY(100vh)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
@@ -281,6 +285,7 @@ export default {
         // 2300 UPGRADE animations
         "header-glow": "header-glow 4s ease-in-out infinite",
         "border-shimmer": "border-shimmer 4s ease infinite",
+        "scan": "scan 2s linear infinite",
       },
       backgroundImage: {
         'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
