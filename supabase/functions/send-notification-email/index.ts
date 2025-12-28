@@ -99,6 +99,33 @@ const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
         <p style="margin:0;">Vamos juntos manter — e elevar — o padrão. 💪🔥</p>`,
         "Acessar Sistema", "https://pro.moisesmedeiros.com.br/gestaofc"),
     },
+    // 🎯 P0 FIX: Template de RECUPERAÇÃO DE SENHA (padrão bonito)
+    password_recovery: {
+      subject: "Recuperação de Senha — Curso Moisés Medeiros 🔐",
+      html: getBaseTemplate("Recuperação de Senha",
+        `<h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Olá!</h2>
+        <p style="margin:0 0 12px;">Recebemos uma solicitação para redefinir sua senha de acesso ao sistema.</p>
+        <p style="margin:0 0 16px;">Clique no botão abaixo para criar uma nova senha:</p>
+        <p style="margin:16px 0 12px;color:#9aa0a6;font-size:13px;">⚠️ Este link expira em 1 hora. Se você não solicitou esta recuperação, ignore este email.</p>`,
+        "Redefinir Senha", data.confirmation_url || "https://pro.moisesmedeiros.com.br/auth"),
+    },
+    // 🎯 P0 FIX: Template de EMAIL CONFIRMAÇÃO (signup)
+    email_confirmation: {
+      subject: "Confirme seu Email — Curso Moisés Medeiros 📧",
+      html: getBaseTemplate("Confirmação de Email",
+        `<h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Bem-vindo(a)!</h2>
+        <p style="margin:0 0 12px;">Para completar seu cadastro, confirme seu endereço de email clicando no botão abaixo:</p>`,
+        "Confirmar Email", data.confirmation_url || "https://pro.moisesmedeiros.com.br/auth"),
+    },
+    // 🎯 P0 FIX: Template de MAGIC LINK (login sem senha)
+    magic_link: {
+      subject: "Seu link de acesso — Curso Moisés Medeiros 🔗",
+      html: getBaseTemplate("Link de Acesso",
+        `<h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Olá!</h2>
+        <p style="margin:0 0 12px;">Clique no botão abaixo para acessar sua conta:</p>
+        <p style="margin:16px 0 12px;color:#9aa0a6;font-size:13px;">⚠️ Este link expira em 1 hora e só pode ser usado uma vez.</p>`,
+        "Acessar Conta", data.confirmation_url || "https://pro.moisesmedeiros.com.br/auth"),
+    },
     sale: {
       subject: "Nova Venda Realizada! 💰🎯",
       html: getBaseTemplate("Nova Venda Confirmada!",
