@@ -35,6 +35,7 @@ import { AlunoPerfilAnalytics } from "@/components/admin/aluno-perfil/AlunoPerfi
 import { AlunoPerfilHistorico } from "@/components/admin/aluno-perfil/AlunoPerfilHistorico";
 import { AlunoPerfilAcoes } from "@/components/admin/aluno-perfil/AlunoPerfilAcoes";
 import { AlunoPerfilIntegracoes } from "@/components/admin/aluno-perfil/AlunoPerfilIntegracoes";
+import { AlunoPerfilEnvios } from "@/components/admin/aluno-perfil/AlunoPerfilEnvios";
 import { StudentEmailComposer } from "@/components/admin/aluno-perfil/StudentEmailComposer";
 
 export default function AlunoPerfilAdmin() {
@@ -270,6 +271,7 @@ export default function AlunoPerfilAdmin() {
             <TabsTrigger value="historico" className="text-xs">Histórico</TabsTrigger>
             <TabsTrigger value="acoes" className="text-xs">Ações</TabsTrigger>
             <TabsTrigger value="integracoes" className="text-xs">Integrações</TabsTrigger>
+            <TabsTrigger value="envios" className="text-xs">Envios Correios</TabsTrigger>
           </TabsList>
 
           {/* Identidade */}
@@ -372,6 +374,25 @@ export default function AlunoPerfilAdmin() {
               alunoId={aluno.id}
               alunoEmail={aluno.email}
               hotmartTransactionId={aluno.hotmart_transaction_id}
+            />
+          </TabsContent>
+
+          {/* Envios Correios */}
+          <TabsContent value="envios">
+            <AlunoPerfilEnvios 
+              alunoId={aluno.id}
+              alunoNome={aluno.nome}
+              alunoEmail={aluno.email}
+              alunoTelefone={aluno.telefone || profile?.phone}
+              endereco={{
+                cep: aluno.cep || undefined,
+                logradouro: aluno.logradouro || undefined,
+                numero: aluno.numero || undefined,
+                complemento: aluno.complemento || undefined,
+                bairro: aluno.bairro || undefined,
+                cidade: aluno.cidade || undefined,
+                estado: aluno.estado || undefined,
+              }}
             />
           </TabsContent>
         </Tabs>

@@ -4471,6 +4471,145 @@ export type Database = {
         }
         Relationships: []
       }
+      envios_correios: {
+        Row: {
+          aluno_id: string
+          codigo_rastreio: string | null
+          codigo_rastreio_validado: boolean | null
+          codigo_rastreio_validado_at: string | null
+          created_at: string | null
+          created_by: string | null
+          data_entrega_prevista: string | null
+          data_entrega_real: string | null
+          data_postagem: string | null
+          descricao_conteudo: string | null
+          destinatario_email: string
+          destinatario_nome: string
+          destinatario_telefone: string | null
+          dimensoes: Json | null
+          endereco_bairro: string
+          endereco_cep: string
+          endereco_cidade: string
+          endereco_complemento: string | null
+          endereco_correios_response: Json | null
+          endereco_estado: string
+          endereco_logradouro: string
+          endereco_numero: string
+          endereco_validado: boolean | null
+          endereco_validado_at: string | null
+          eventos_rastreio: Json | null
+          id: string
+          notificacao_entrega_enviada: boolean | null
+          notificacao_postagem_enviada: boolean | null
+          observacoes: string | null
+          peso_gramas: number | null
+          servico_correios: string | null
+          status: Database["public"]["Enums"]["correios_envio_status"] | null
+          ultimo_evento_at: string | null
+          updated_at: string | null
+          valor_declarado: number | null
+          valor_frete: number | null
+        }
+        Insert: {
+          aluno_id: string
+          codigo_rastreio?: string | null
+          codigo_rastreio_validado?: boolean | null
+          codigo_rastreio_validado_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_entrega_prevista?: string | null
+          data_entrega_real?: string | null
+          data_postagem?: string | null
+          descricao_conteudo?: string | null
+          destinatario_email: string
+          destinatario_nome: string
+          destinatario_telefone?: string | null
+          dimensoes?: Json | null
+          endereco_bairro: string
+          endereco_cep: string
+          endereco_cidade: string
+          endereco_complemento?: string | null
+          endereco_correios_response?: Json | null
+          endereco_estado: string
+          endereco_logradouro: string
+          endereco_numero: string
+          endereco_validado?: boolean | null
+          endereco_validado_at?: string | null
+          eventos_rastreio?: Json | null
+          id?: string
+          notificacao_entrega_enviada?: boolean | null
+          notificacao_postagem_enviada?: boolean | null
+          observacoes?: string | null
+          peso_gramas?: number | null
+          servico_correios?: string | null
+          status?: Database["public"]["Enums"]["correios_envio_status"] | null
+          ultimo_evento_at?: string | null
+          updated_at?: string | null
+          valor_declarado?: number | null
+          valor_frete?: number | null
+        }
+        Update: {
+          aluno_id?: string
+          codigo_rastreio?: string | null
+          codigo_rastreio_validado?: boolean | null
+          codigo_rastreio_validado_at?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          data_entrega_prevista?: string | null
+          data_entrega_real?: string | null
+          data_postagem?: string | null
+          descricao_conteudo?: string | null
+          destinatario_email?: string
+          destinatario_nome?: string
+          destinatario_telefone?: string | null
+          dimensoes?: Json | null
+          endereco_bairro?: string
+          endereco_cep?: string
+          endereco_cidade?: string
+          endereco_complemento?: string | null
+          endereco_correios_response?: Json | null
+          endereco_estado?: string
+          endereco_logradouro?: string
+          endereco_numero?: string
+          endereco_validado?: boolean | null
+          endereco_validado_at?: string | null
+          eventos_rastreio?: Json | null
+          id?: string
+          notificacao_entrega_enviada?: boolean | null
+          notificacao_postagem_enviada?: boolean | null
+          observacoes?: string | null
+          peso_gramas?: number | null
+          servico_correios?: string | null
+          status?: Database["public"]["Enums"]["correios_envio_status"] | null
+          ultimo_evento_at?: string | null
+          updated_at?: string | null
+          valor_declarado?: number | null
+          valor_frete?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "envios_correios_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_correios_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_safe"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "envios_correios_aluno_id_fkey"
+            columns: ["aluno_id"]
+            isOneToOne: false
+            referencedRelation: "alunos_secure"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       equipment: {
         Row: {
           created_at: string | null
@@ -16442,6 +16581,15 @@ export type Database = {
         | "bot_attack"
         | "api_abuse"
         | "data_exfiltration"
+      correios_envio_status:
+        | "pendente"
+        | "endereco_validado"
+        | "postado"
+        | "em_transito"
+        | "entregue"
+        | "devolvido"
+        | "extraviado"
+        | "cancelado"
       employee_status: "ativo" | "ferias" | "afastado" | "inativo"
       event_name:
         | "payment.succeeded"
@@ -16791,6 +16939,16 @@ export const Constants = {
         "bot_attack",
         "api_abuse",
         "data_exfiltration",
+      ],
+      correios_envio_status: [
+        "pendente",
+        "endereco_validado",
+        "postado",
+        "em_transito",
+        "entregue",
+        "devolvido",
+        "extraviado",
+        "cancelado",
       ],
       employee_status: ["ativo", "ferias", "afastado", "inativo"],
       event_name: [
