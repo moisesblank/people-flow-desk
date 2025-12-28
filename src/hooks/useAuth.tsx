@@ -278,17 +278,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
                   console.log('[DOGMA I] ✅ Sessão única criada (auth event)');
                 }
 
-                // Registrar dispositivo (LEI VI)
+                // Registrar dispositivo (LEI VI) - usar 'validate' pois JWT pode não estar propagado
                 await supabase.functions.invoke('validate-device', {
                   body: {
                     fingerprint: hash,
                     fingerprintData,
-                    userId,
                     email: userEmail,
-                    action: 'post_login',
+                    action: 'validate',  // ✅ FIX: 'validate' não exige JWT
                   },
                 });
-                console.log('[LEI VI] ✅ Dispositivo registrado (auth event)');
+                console.log('[LEI VI] ✅ Dispositivo validado (auth event)');
               } catch (err) {
                 console.error('[LEI VI] Erro no registro pós-auth:', err);
               }
@@ -451,18 +450,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             console.log('[DOGMA I] ✅ Sessão única criada');
           }
 
-          // Registrar dispositivo (LEI VI) - pós login
+          // Registrar dispositivo (LEI VI) - usar 'validate' pois JWT pode não estar propagado
           if (authUser) {
             await supabase.functions.invoke('validate-device', {
               body: {
                 fingerprint: hash,
                 fingerprintData,
-                userId: authUser.id,
                 email: authUser.email,
-                action: 'post_login',
+                action: 'validate',  // ✅ FIX: 'validate' não exige JWT
               },
             });
-            console.log('[LEI VI] ✅ Dispositivo registrado');
+            console.log('[LEI VI] ✅ Dispositivo validado');
           }
         } catch (err) {
           console.error('[Auth] Erro pós-login:', err);
