@@ -525,6 +525,7 @@ serve(async (req) => {
     // ============================================
     // 6. UPSERT EM PROFILES
     // Colunas reais: nome, email, phone, avatar_url
+    // + password_change_required (MAGIC PASSWORD FLOW)
     // ============================================
     const profileData: Record<string, unknown> = {
       id: userId,
@@ -538,6 +539,14 @@ serve(async (req) => {
 
     if (payload.foto_aluno) {
       profileData.avatar_url = payload.foto_aluno;
+    }
+
+    // 🎯 MAGIC PASSWORD FLOW: Forçar troca de senha no primeiro login
+    // Se senha foi gerada automaticamente, marca para forçar troca
+    if (generatedPassword && !userAlreadyExists) {
+      profileData.password_change_required = true;
+      profileData.magic_password_created_at = new Date().toISOString();
+      console.log('[c-create-official-access] 🔐 Magic password flow: will require password change on first login');
     }
 
     const { error: profileError } = await supabaseAdmin
