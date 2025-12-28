@@ -10,7 +10,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import "@/styles/performance.css";
 import { BrowserRouter, Routes } from "react-router-dom";
 import { VisualEditMode } from "@/components/editor/VisualEditMode";
-import { SessionTracker } from "@/components/SessionTracker";
+// SessionTracker REMOVIDO - heartbeat já existe em useAuth (DOGMA I)
 import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortcutsOverlay";
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { SessionGuard } from "@/components/security/SessionGuard";
@@ -95,7 +95,7 @@ const AppContent = memo(() => {
     <>
       <SessionGuard>
         <DeviceGuard>
-          <SessionTracker />
+          {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
           
           <Suspense fallback={null}>
             <LazyGodModePanel />
