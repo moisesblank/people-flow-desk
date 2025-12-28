@@ -27,6 +27,7 @@ import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { VirtualTable, VIRTUALIZATION_CONFIG } from "@/components/performance/VirtualTable";
+import { formatCurrencyFromReais } from "@/utils";
 
 interface Transacao {
   id: string;
@@ -175,13 +176,7 @@ export default function TransacoesHotmart() {
     );
   };
 
-  const formatCurrency = (value: number | null) => {
-    if (!value) return "R$ 0,00";
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }).format(value);
-  };
+  // Usando formatCurrencyFromReais do @/utils (valor já em reais, não centavos)
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "-";
@@ -243,7 +238,7 @@ export default function TransacoesHotmart() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Receita Aprovadas</p>
-                <p className="text-2xl font-bold text-green-500">{formatCurrency(stats.receitaAprovadas)}</p>
+                <p className="text-2xl font-bold text-green-500">{formatCurrencyFromReais(stats.receitaAprovadas)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-green-500/30" />
             </div>
@@ -255,7 +250,7 @@ export default function TransacoesHotmart() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Valor Canceladas</p>
-                <p className="text-2xl font-bold text-red-500">{formatCurrency(stats.receitaCanceladas)}</p>
+                <p className="text-2xl font-bold text-red-500">{formatCurrencyFromReais(stats.receitaCanceladas)}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-red-500/30" />
             </div>
@@ -353,7 +348,7 @@ export default function TransacoesHotmart() {
                       {transacao.product_name || "Curso"}
                     </TableCell>
                     <TableCell className="font-medium w-[100px]">
-                      {formatCurrency(transacao.valor_bruto)}
+                      {formatCurrencyFromReais(transacao.valor_bruto)}
                     </TableCell>
                     <TableCell className="w-[100px]">
                       {getStatusBadge(transacao.status)}
@@ -404,7 +399,7 @@ export default function TransacoesHotmart() {
                                 </div>
                                 <div>
                                   <h4 className="text-sm font-medium text-muted-foreground">Valor</h4>
-                                  <p className="text-lg font-bold">{formatCurrency(selectedTransacao.valor_bruto)}</p>
+                                  <p className="text-lg font-bold">{formatCurrencyFromReais(selectedTransacao.valor_bruto)}</p>
                                 </div>
                                 <div>
                                   <h4 className="text-sm font-medium text-muted-foreground">Pagamento</h4>

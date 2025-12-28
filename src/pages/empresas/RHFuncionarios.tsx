@@ -128,14 +128,9 @@ type ViewMode = "dashboard" | "lista" | "folha" | "cargos" | "relatorios";
 // ═══════════════════════════════════════════════════════════════
 // FUNÇÕES UTILITÁRIAS
 // ═══════════════════════════════════════════════════════════════
-
-function formatCurrency(cents: number | null | undefined): string {
-  if (cents === null || cents === undefined) return "R$ ••••••";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
+// Formatação centralizada - import de @/utils
+import { formatCurrencyMasked as formatCurrency } from "@/utils";
+// ═══════════════════════════════════════════════════════════════
 
 function getInitials(name: string): string {
   const parts = name.split(" ");
