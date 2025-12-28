@@ -146,42 +146,43 @@ serve(async (req) => {
         break;
 
       case 'audit_access':
-        // 3.4.1 - Dashboard de Auditoria "Pagou x Acesso"
-        const [hotmartTrans, wpUsers, mismatches] = await Promise.all([
+        // 3.4.1 - Dashboard de Auditoria "Pagou x Acesso" (WordPress removido - agora usa Supabase Auth + user_roles)
+        const [hotmartTrans, betaUsers] = await Promise.all([
           supabaseAdmin.from('transacoes_hotmart_completo')
             .select('*')
             .in('status', ['approved', 'complete', 'completed']),
-          supabaseAdmin.from('usuarios_wordpress_sync').select('*'),
-          supabaseAdmin.from('audit_access_mismatches').select('*').eq('resolvido', false)
+          supabaseAdmin.from('user_roles')
+            .select('user_id, role, profiles!inner(id, email, full_name)')
+            .eq('role', 'beta')
         ]);
 
         const hotmartEmails = new Set((hotmartTrans.data || []).map(t => t.email?.toLowerCase()));
-        const wpEmails = new Set((wpUsers.data || []).map(u => u.email?.toLowerCase()).filter(Boolean));
+        const betaEmails = new Set((betaUsers.data || []).map(u => (u.profiles as any)?.email?.toLowerCase()).filter(Boolean));
 
-        // Pagou e tem acesso (OK)
+        // Pagou e tem acesso Beta (OK)
         const pagouETemAcesso = (hotmartTrans.data || []).filter(t => 
-          wpEmails.has(t.email?.toLowerCase())
+          betaEmails.has(t.email?.toLowerCase())
         );
 
-        // Pagou e NÃO tem acesso (CRÍTICO)
+        // Pagou e NÃO tem role beta (CRÍTICO)
         const pagouSemAcesso = (hotmartTrans.data || []).filter(t => 
-          !wpEmails.has(t.email?.toLowerCase())
+          !betaEmails.has(t.email?.toLowerCase())
         );
 
-        // Tem acesso e NÃO pagou (ALERTA)
-        const acessoSemPagamento = (wpUsers.data || []).filter(u => 
-          !hotmartEmails.has(u.email?.toLowerCase())
+        // Tem role beta e NÃO pagou (ALERTA)
+        const acessoSemPagamento = (betaUsers.data || []).filter(u => 
+          !hotmartEmails.has((u.profiles as any)?.email?.toLowerCase())
         );
 
         report = {
           tipo: 'auditoria_acesso',
           resumo: {
             total_transacoes_hotmart: hotmartTrans.data?.length || 0,
-            total_usuarios_wordpress: wpUsers.data?.length || 0,
+            total_usuarios_beta: betaUsers.data?.length || 0,
             pagou_e_tem_acesso: pagouETemAcesso.length,
             pagou_sem_acesso: pagouSemAcesso.length,
             acesso_sem_pagamento: acessoSemPagamento.length,
-            discrepancias_pendentes: mismatches.data?.length || 0
+            discrepancias_pendentes: 0
           },
           detalhes: {
             pagou_sem_acesso: pagouSemAcesso.slice(0, 50).map(t => ({
@@ -190,13 +191,13 @@ serve(async (req) => {
               transacao: t.transaction_id,
               valor: t.price_value,
               data: t.purchase_date,
-              acao_sugerida: 'LIBERAR_ACESSO_WORDPRESS'
+              acao_sugerida: 'ATRIBUIR_ROLE_BETA'
             })),
             acesso_sem_pagamento: acessoSemPagamento.slice(0, 50).map(u => ({
-              email: u.email,
-              nome: u.display_name,
-              wp_user_id: u.wp_user_id,
-              grupos: u.groups,
+              email: (u.profiles as any)?.email,
+              nome: (u.profiles as any)?.full_name,
+              user_id: u.user_id,
+              role: u.role,
               acao_sugerida: 'VERIFICAR_PAGAMENTO_OU_REVOGAR'
             }))
           },

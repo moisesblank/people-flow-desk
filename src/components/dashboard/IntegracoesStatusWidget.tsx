@@ -22,9 +22,9 @@ interface IntegrationStatus {
   health: number;
 }
 
+// WordPress removido em 2025-12-28
 const INTEGRATIONS: IntegrationStatus[] = [
   { id: 'hotmart', name: 'Hotmart', icon: CreditCard, status: 'connected', lastSync: null, health: 100 },
-  { id: 'wordpress', name: 'WordPress', icon: Globe, status: 'connected', lastSync: null, health: 100 },
   { id: 'whatsapp', name: 'WhatsApp', icon: MessageSquare, status: 'connected', lastSync: null, health: 100 },
   { id: 'youtube', name: 'YouTube', icon: Youtube, status: 'connected', lastSync: null, health: 100 },
   { id: 'instagram', name: 'Instagram', icon: Instagram, status: 'checking', lastSync: null, health: 75 },

@@ -21,7 +21,6 @@ interface SystemHealth {
   timestamp: string;
   integracoes: {
     hotmart: { status: string; ultima_verificacao: string };
-    wordpress: { status: string; ultima_verificacao: string };
     whatsapp: { status: string; ultima_verificacao: string };
   };
   metricas: {

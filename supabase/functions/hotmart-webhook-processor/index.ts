@@ -28,14 +28,10 @@ const CONFIG = {
     BASE_URL: "https://api.rd.services/platform/conversions",
     TIMEOUT: 10000,
   },
-  WEBHOOK_MKT: {
-    URL: "https://app.moisesmedeiros.com.br/wp-json/webhook-mkt/v1/receive",
-    TOKEN: Deno.env.get("WEBHOOK_MKT_TOKEN") || "",
-    TIMEOUT: 10000,
-  },
+  // WEBHOOK_MKT removido - WordPress não é mais usado (2025-12-28)
   EVENTS: {
     APPROVED: ["PURCHASE_APPROVED", "PURCHASE_COMPLETE", "PURCHASE_DELAYED", "purchase.approved", "purchase.completed", "purchase_approved", "approved", "completed"],
-    USER_CREATED: ["user_created", "wordpress_user_created", "new_user"],
+    USER_CREATED: ["user_created", "new_user"],
   }
 };
 
@@ -520,7 +516,10 @@ async function notifyRDStation(
 }
 
 // ============================================
-// NOTIFICADOR WEBHOOK_MKT (D)
+// NOTIFICADOR WEBHOOK_MKT (D) - REMOVIDO
+// WordPress removido em 2025-12-28
+// Essa função era usada para notificar o site WordPress
+// Agora o acesso é 100% via Supabase Auth + user_roles
 // ============================================
 
 async function notifyWebhookMKT(
@@ -537,174 +536,9 @@ async function notifyWebhookMKT(
   logger: Logger,
   meta?: Record<string, any>
 ): Promise<{ success: boolean; message: string }> {
-
-  const eventId = generateEventId("mkt");
-
-  try {
-    logger.info(`WebHook_MKT: Iniciando notificação (${eventType})`);
-
-    // Hard safety: NUNCA permitir Beta em eventos de cadastro/lead.
-    // O único evento permitido para Beta é compra_aprovada.
-    const safeMeta = { ...(meta || {}) } as Record<string, any>;
-    if (eventType !== "compra_aprovada") {
-      if (safeMeta.access_level?.toString().toLowerCase() === "beta" || safeMeta.group === "Beta") {
-        logger.warn("WebHook_MKT: Meta Beta bloqueada em evento não-permitido", { eventType });
-        safeMeta.access_level = "registered";
-        safeMeta.group = "Registered";
-        safeMeta._coerced_from_beta = true;
-      }
-    }
-
-    const mktPayload: Record<string, any> = {
-      event: eventType,
-      email: data.email,
-      name: data.name || "",
-      phone: data.phone || "",
-      value: data.value || 0,
-      product: data.product || "",
-      transaction: data.transaction || "",
-      source: "gestao_moises_medeiros",
-      platform: "pro.moisesmedeiros.com.br", // MONO-DOMÍNIO
-      timestamp: getCurrentTimestamp(),
-
-      // Compat: alguns plugins lêem no root, outros leem em meta
-      access_level: safeMeta?.access_level,
-      group: safeMeta?.group,
-
-      // Compat extra para plugins (se suportarem)
-      add_groups: safeMeta?.enforce?.add_groups,
-      remove_groups: safeMeta?.enforce?.remove_groups,
-
-      meta: Object.keys(safeMeta || {}).length ? safeMeta : undefined,
-    };
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), CONFIG.WEBHOOK_MKT.TIMEOUT);
-
-    const doRequest = async (mode: "primary" | "fallback") => {
-      const url = mode === "primary"
-        ? `${CONFIG.WEBHOOK_MKT.URL}?token=${encodeURIComponent(CONFIG.WEBHOOK_MKT.TOKEN)}`
-        : CONFIG.WEBHOOK_MKT.URL;
-
-      return await fetch(url, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json",
-          // Enviamos múltiplas variações para evitar mismatch de header no plugin do site
-          "X-Site-Token": CONFIG.WEBHOOK_MKT.TOKEN,
-          "X-Webhook-Token": CONFIG.WEBHOOK_MKT.TOKEN,
-          "X-Auth-Token": CONFIG.WEBHOOK_MKT.TOKEN,
-          "x-webhook-secret": CONFIG.WEBHOOK_MKT.TOKEN,
-          "Authorization": `Bearer ${CONFIG.WEBHOOK_MKT.TOKEN}`,
-        },
-        body: JSON.stringify(mktPayload),
-        signal: controller.signal,
-      });
-    };
-
-    // 1) tentativa principal
-    let response = await doRequest("primary");
-
-    // 2) fallback apenas se for 401/403 (muito comum quando o site espera token em header específico)
-    if (!response.ok && (response.status === 401 || response.status === 403)) {
-      logger.warn("WebHook_MKT: 401/403; tentando fallback", { status: response.status });
-      response = await doRequest("fallback");
-    }
-
-    clearTimeout(timeoutId);
-
-    let responseBody = "";
-    try {
-      responseBody = await response.text();
-    } catch {
-      responseBody = "Não foi possível ler resposta";
-    }
-
-    // Registrar evento (inclui o payload enviado para auditoria/debug)
-    await supabase.from("integration_events").insert({
-      event_type: "webhook_mkt_notification",
-      source: "webhook_mkt_site",
-      source_id: eventId,
-      payload: {
-        action: "NOTIFICACAO_ENVIADA",
-        event_type: eventType,
-        email: data.email,
-        sent_payload: {
-          event: mktPayload.event,
-          email: mktPayload.email,
-          name: mktPayload.name,
-          phone: mktPayload.phone ? "***" : "",
-          value: mktPayload.value,
-          product: mktPayload.product,
-          transaction: mktPayload.transaction,
-          access_level: mktPayload.access_level,
-          group: mktPayload.group,
-          add_groups: mktPayload.add_groups,
-          remove_groups: mktPayload.remove_groups,
-          meta: mktPayload.meta,
-          timestamp: mktPayload.timestamp,
-        },
-        response_status: response.status,
-        response_ok: response.ok,
-        response_body: responseBody.substring(0, 2000),
-        sent_at: getCurrentTimestamp(),
-      },
-      processed: response.ok,
-      processed_at: getCurrentTimestamp(),
-    });
-
-    if (response.ok) {
-      logger.success(`WebHook_MKT: Notificação enviada (${response.status})`);
-      return { success: true, message: "Enviado com sucesso" };
-    }
-
-    logger.warn(`WebHook_MKT: Resposta não-OK (${response.status})`);
-    // Se o site rejeitou, avisar owner para ação imediata (isso evita "Beta" por regras default)
-    await notifyOwner(
-      supabase,
-      "⚠️ WebHook_MKT rejeitado",
-      [
-        `Evento: ${eventType}`,
-        `Email: ${data.email}`,
-        `Status: ${response.status}`,
-        `Resposta: ${responseBody.substring(0, 500)}`,
-      ].join("\n"),
-      "warning",
-      "/integracoes",
-      logger
-    );
-
-    return { success: false, message: `Status ${response.status}` };
-
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : "Erro desconhecido";
-    logger.error("WebHook_MKT: Erro na notificação", error);
-
-    await supabase.from("integration_events").insert({
-      event_type: "webhook_mkt_error",
-      source: "webhook_mkt_site",
-      source_id: eventId,
-      payload: {
-        action: "ERRO_NOTIFICACAO",
-        email: data.email,
-        error: errorMessage,
-        timestamp: getCurrentTimestamp(),
-      },
-      processed: false,
-    });
-
-    await notifyOwner(
-      supabase,
-      "❌ Erro ao notificar WebHook_MKT",
-      [`Email: ${data.email}`, `Erro: ${errorMessage}`].join("\n"),
-      "error",
-      "/integracoes",
-      logger
-    );
-
-    return { success: false, message: errorMessage };
-  }
+  // WordPress removido - função stub que apenas loga
+  logger.info(`WebHook_MKT: DESABILITADO (WordPress removido) - ${eventType} para ${data.email}`);
+  return { success: true, message: "WordPress removido - operação ignorada" };
 }
 
 // ============================================
@@ -1461,10 +1295,7 @@ serve(async (req) => {
     req.headers.get("x-hotmart-webhook-version") ||
     webhookSource.toLowerCase().includes("hotmart");
 
-  // Detectar se é WordPress (token do site)
-  const isWordPressRequest = 
-    webhookSource.toLowerCase().includes("wordpress") ||
-    siteToken === CONFIG.WEBHOOK_MKT.TOKEN;
+  // WordPress removido em 2025-12-28 - não detectamos mais isWordPressRequest
 
   // 🔐 VALIDAÇÃO HOTTOK PARA HOTMART
   if (isHotmartRequest) {
@@ -1546,36 +1377,6 @@ serve(async (req) => {
     logger.success("✅ HOTTOK validado com sucesso");
   }
 
-  // 🔐 VALIDAÇÃO TOKEN PARA WORDPRESS
-  if (isWordPressRequest && !isHotmartRequest) {
-    if (!siteToken || siteToken !== CONFIG.WEBHOOK_MKT.TOKEN) {
-      logger.error("❌ Token WordPress inválido ou ausente");
-      
-      await supabase.from("security_events").insert({
-        event_type: "webhook_invalid_wordpress_token",
-        severity: "warning",
-        user_id: null,
-        ip_address: req.headers.get("cf-connecting-ip") || req.headers.get("x-forwarded-for") || "unknown",
-        user_agent: req.headers.get("user-agent"),
-        payload: {
-          source: "hotmart-webhook-processor",
-          reason: "WORDPRESS_TOKEN_INVALID",
-        },
-      }).then(() => {}).then(() => {}, () => {});
-
-      return new Response(JSON.stringify({ 
-        success: false, 
-        error: "Token de autenticação inválido",
-        code: "TOKEN_INVALID"
-      }), {
-        status: 403,
-        headers: { "Content-Type": "application/json", ...corsHeaders },
-      });
-    }
-    
-    logger.success("✅ Token WordPress validado");
-  }
-
   try {
     // Ler payload
     let payload: any;
@@ -1605,11 +1406,7 @@ serve(async (req) => {
     // DETECTAR E ROTEAR
     // ============================================
 
-    // A) WordPress User Created
-    const isWordPressUser = 
-      webhookSource.includes("wordpress") ||
-      payloadSource.includes("wordpress") ||
-      CONFIG.EVENTS.USER_CREATED.some(e => eventType.toLowerCase().includes(e));
+    // A) WordPress removido em 2025-12-28 - não processamos mais
 
     // B) Hotmart Purchase
     const isHotmartPurchase = 
@@ -1617,15 +1414,11 @@ serve(async (req) => {
       (payload.data?.purchase?.transaction && payload.data?.buyer?.email) ||
       (payload.buyer?.email && payload.purchase?.transaction);
 
-    logger.info("Detecção", { isWordPressUser, isHotmartPurchase });
+    logger.info("Detecção", { isHotmartPurchase });
 
-    // Prioridade: Hotmart > WordPress
+    // Apenas Hotmart
     if (isHotmartPurchase) {
       return await handleHotmartPurchase(payload, supabase, logger);
-    }
-
-    if (isWordPressUser) {
-      return await handleWordPressUserCreated(payload, supabase, logger);
     }
 
     // ============================================
