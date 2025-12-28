@@ -28,6 +28,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { supabase } from "@/integrations/supabase/client";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatCurrencyFromReais } from "@/utils/format";
 
 interface HotmartStats {
   vendasHoje: number;
@@ -209,12 +210,8 @@ export function HotmartRealtimeDashboard() {
     };
   }, []);
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }).format(value);
-  };
+  // REFATORADO: Usando função centralizada de @/utils/format
+  const formatCurrency = formatCurrencyFromReais;
 
   const getStatusColor = (status: string) => {
     const statusLower = status?.toLowerCase() || "";
