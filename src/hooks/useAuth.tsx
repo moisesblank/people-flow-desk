@@ -107,6 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const heartbeatIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const missedHeartbeatsRef = useRef(0);
 
+  // =====================================================
+  // P0: Post-auth side-effects (SEM setTimeout)
+  // - Evita duplicidade de create_single_session
+  // - Evita race com SessionGuard/useSingleSession
+  // =====================================================
+  const postSignInPayloadRef = useRef<{ userId: string; email: string | null } | null>(null);
+  const processedSignInTokenRef = useRef<string | null>(null);
+  const [postSignInTick, setPostSignInTick] = useState(0);
+
   // ============================================
   // HEARTBEAT CONTÍNUO
   // ============================================
@@ -247,53 +256,26 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           stopHeartbeatRef.current();
         }
 
-        // ✅ Tudo que faz I/O vai para fora do callback
+        // ✅ Tudo que faz I/O deve rodar FORA do callback.
+        // P0: Sem setTimeout/delay hacks — usamos um "tick" que dispara useEffect.
         if (newSession?.user) {
-          const userId = newSession.user.id;
-          const userEmail = newSession.user.email;
+          // Role + heartbeat são iniciados em um useEffect baseado em user/session.
 
-          setTimeout(() => {
-            fetchUserRole(userId);
-            startHeartbeatRef.current();
-          }, 0);
-
-          // 🛡️ LEI VI + DOGMA I: pós-login (não bloqueia auth listener)
+          // Pós-login (SIGNED_IN): disparar criação da sessão única + validate-device UMA ÚNICA VEZ
           if (event === 'SIGNED_IN') {
-            setTimeout(async () => {
-              try {
-                const { hash, data: fingerprintData } = await collectFingerprint();
-                const deviceInfo = detectDeviceInfo();
+            const tokenKey = newSession.access_token || `${newSession.user.id}:${new Date().toISOString()}`;
 
-                // Criar sessão única (DOGMA I)
-                const { data: sessionData } = await supabase.rpc('create_single_session', {
-                  _ip_address: null,
-                  _user_agent: navigator.userAgent.slice(0, 255),
-                  _device_type: deviceInfo.device_type,
-                  _browser: deviceInfo.browser,
-                  _os: deviceInfo.os,
-                });
-
-                if (sessionData && sessionData.length > 0) {
-                  localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
-                  console.log('[DOGMA I] ✅ Sessão única criada (auth event)');
-                }
-
-                // Registrar dispositivo (LEI VI) - usar 'validate' pois JWT pode não estar propagado
-                await supabase.functions.invoke('validate-device', {
-                  body: {
-                    fingerprint: hash,
-                    fingerprintData,
-                    email: userEmail,
-                    action: 'validate',  // ✅ FIX: 'validate' não exige JWT
-                  },
-                });
-                console.log('[LEI VI] ✅ Dispositivo validado (auth event)');
-              } catch (err) {
-                console.error('[LEI VI] Erro no registro pós-auth:', err);
-              }
-            }, 0);
+            if (processedSignInTokenRef.current !== tokenKey) {
+              processedSignInTokenRef.current = tokenKey;
+              postSignInPayloadRef.current = {
+                userId: newSession.user.id,
+                email: newSession.user.email ?? null,
+              };
+              setPostSignInTick((t) => t + 1);
+            }
           }
         }
+
       }
     );
 
@@ -430,43 +412,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!error) {
       const authUser = data?.user ?? null;
 
-      // Pós-login é assíncrono e NÃO bloqueia o retorno
-      setTimeout(async () => {
-        try {
-          const deviceInfo = detectDeviceInfo();
-          const { hash, data: fingerprintData } = await collectFingerprint();
-
-          // Criar sessão única (DOGMA I)
-          const { data: sessionData } = await supabase.rpc('create_single_session', {
-            _ip_address: null,
-            _user_agent: navigator.userAgent.slice(0, 255),
-            _device_type: deviceInfo.device_type,
-            _browser: deviceInfo.browser,
-            _os: deviceInfo.os,
-          });
-
-          if (sessionData && sessionData.length > 0) {
-            localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
-            console.log('[DOGMA I] ✅ Sessão única criada');
-          }
-
-          // Registrar dispositivo (LEI VI) - usar 'validate' pois JWT pode não estar propagado
-          if (authUser) {
-            await supabase.functions.invoke('validate-device', {
-              body: {
-                fingerprint: hash,
-                fingerprintData,
-                email: authUser.email,
-                action: 'validate',  // ✅ FIX: 'validate' não exige JWT
-              },
-            });
-            console.log('[LEI VI] ✅ Dispositivo validado');
-          }
-        } catch (err) {
-          console.error('[Auth] Erro pós-login:', err);
-        }
-      }, 100);
-
+      // P0: Side-effects pós-login (sessão única, role, heartbeat, validate-device)
+      // são executados EXCLUSIVAMENTE pelo listener onAuthStateChange + useEffects.
+      // Isso evita duplicidade de create_single_session e invalidação acidental de tokens.
       return { error: null, user: authUser };
     }
 
