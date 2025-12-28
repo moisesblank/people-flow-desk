@@ -35,7 +35,47 @@ serve(async (req) => {
 
     const today = new Date();
     const todayStr = today.toISOString().split('T')[0];
-    
+
+    // ============================================
+    // 🔒 IDEMPOTÊNCIA (INCIDENTE: EMAIL LOOP)
+    // Regra-mãe: ONE_VENCIMENTO_EQUALS_ONE_EMAIL_FOREVER
+    // Implementação: cada item gera uma chave estável (tipo:id)
+    // e só é notificado uma única vez para o destinatário.
+    // Fonte: tabela public.vencimentos_notificacoes (itens_ids TEXT[])
+    // ============================================
+
+    const makeItemKey = (tipo: 'fixo' | 'extra', id: number) => `${tipo}:${id}`;
+
+    // Buscar histórico de itens já notificados (sucesso=true)
+    const { data: notifRows, error: notifError } = await supabase
+      .from('vencimentos_notificacoes')
+      .select('itens_ids')
+      .eq('enviado_para', OWNER_EMAIL)
+      .eq('tipo_notificacao', 'email')
+      .eq('sucesso', true)
+      .limit(1000);
+
+    if (notifError) {
+      console.error('[Check Vencimentos] ⚠️ Falha ao ler idempotência (vencimentos_notificacoes):', notifError);
+      // Fail-safe: se não conseguimos checar idempotência, BLOQUEAR envio para evitar loop.
+      return new Response(JSON.stringify({
+        success: false,
+        blocked: true,
+        reason: 'IDEMPOTENCY_READ_FAILED',
+      }), {
+        status: 503,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
+
+    const alreadyNotified = new Set<string>();
+    for (const row of (notifRows || [])) {
+      const ids = Array.isArray(row.itens_ids) ? row.itens_ids : [];
+      for (const k of ids) {
+        if (typeof k === 'string' && k.length > 0) alreadyNotified.add(k);
+      }
+    }
+
     // Buscar gastos fixos com vencimento hoje ou atrasados e pendentes
     const { data: gastosFixosVencidos, error: errorFixos } = await supabase
       .from('company_fixed_expenses')
@@ -56,10 +96,13 @@ serve(async (req) => {
       throw new Error(`Erro ao buscar gastos: ${errorFixos?.message || errorExtras?.message}`);
     }
 
-    // Combinar e formatar
+    // Combinar e formatar (somente itens AINDA NÃO NOTIFICADOS)
     const vencidos: VencimentoItem[] = [];
 
     for (const gasto of (gastosFixosVencidos || [])) {
+      const itemKey = makeItemKey('fixo', gasto.id);
+      if (alreadyNotified.has(itemKey)) continue;
+
       const dataVenc = new Date(gasto.data_vencimento);
       const diasAte = Math.floor((dataVenc.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       vencidos.push({
@@ -74,6 +117,9 @@ serve(async (req) => {
     }
 
     for (const gasto of (gastosExtrasVencidos || [])) {
+      const itemKey = makeItemKey('extra', gasto.id);
+      if (alreadyNotified.has(itemKey)) continue;
+
       const dataVenc = new Date(gasto.data_vencimento);
       const diasAte = Math.floor((dataVenc.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
       vencidos.push({
@@ -90,24 +136,35 @@ serve(async (req) => {
     // Ordenar por mais atrasado primeiro
     vencidos.sort((a, b) => a.dias_ate_vencimento - b.dias_ate_vencimento);
 
-    console.log(`[Check Vencimentos] Encontrados ${vencidos.length} gastos vencidos/vencendo`);
+    console.log(`[Check Vencimentos] Encontrados ${vencidos.length} NOVOS itens vencidos/vencendo (idempotência ativa)`);
+
+    // Se NÃO há novos gastos vencidos, não envia e-mail.
+    if (vencidos.length === 0) {
+      return new Response(JSON.stringify({
+        success: true,
+        skipped: true,
+        reason: 'NO_NEW_ITEMS_TO_NOTIFY',
+      }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json', ...corsHeaders },
+      });
+    }
 
     // Se há gastos vencidos, enviar email ao owner
-    if (vencidos.length > 0) {
-      const totalVencido = vencidos.reduce((sum, v) => sum + v.valor, 0);
-      const vencidosHoje = vencidos.filter(v => v.dias_ate_vencimento === 0);
-      const atrasados = vencidos.filter(v => v.dias_ate_vencimento < 0);
+    const totalVencido = vencidos.reduce((sum, v) => sum + v.valor, 0);
+    const vencidosHoje = vencidos.filter(v => v.dias_ate_vencimento === 0);
+    const atrasados = vencidos.filter(v => v.dias_ate_vencimento < 0);
 
-      // Formatar valor
-      const formatCurrency = (cents: number) => {
-        return new Intl.NumberFormat('pt-BR', {
-          style: 'currency',
-          currency: 'BRL',
-        }).format(cents / 100);
-      };
+    // Formatar valor
+    const formatCurrency = (cents: number) => {
+      return new Intl.NumberFormat('pt-BR', {
+        style: 'currency',
+        currency: 'BRL',
+      }).format(cents / 100);
+    };
 
-      // Construir HTML do email
-      const emailHtml = `
+    // Construir HTML do email
+    const emailHtml = `
 <!DOCTYPE html>
 <html>
 <head>
@@ -142,27 +199,27 @@ serve(async (req) => {
       <h1>⚠️ ALERTA DE VENCIMENTOS</h1>
       <p>Sistema de Gestão Moisés Medeiros</p>
     </div>
-    
+
     <div class="alert-box">
       <h2>🔔 Atenção! Você tem gastos que precisam de pagamento:</h2>
-      
+
       <div class="stat-row">
-        <span class="stat-label">Total de gastos pendentes:</span>
+        <span class="stat-label">Novos gastos pendentes:</span>
         <span class="stat-value">${vencidos.length}</span>
       </div>
-      
+
       <div class="stat-row">
-        <span class="stat-label">Valor total:</span>
+        <span class="stat-label">Valor total (novos):</span>
         <span class="stat-value total-value">${formatCurrency(totalVencido)}</span>
       </div>
-      
+
       ${atrasados.length > 0 ? `
       <div class="stat-row">
         <span class="stat-label">🚨 Atrasados:</span>
         <span class="stat-value" style="color: #ef4444;">${atrasados.length} itens</span>
       </div>
       ` : ''}
-      
+
       ${vencidosHoje.length > 0 ? `
       <div class="stat-row">
         <span class="stat-label">📅 Vencem hoje:</span>
@@ -170,15 +227,15 @@ serve(async (req) => {
       </div>
       ` : ''}
     </div>
-    
+
     <div class="item-list">
-      <h3 style="color: #fff; margin-bottom: 15px;">📋 Detalhamento:</h3>
+      <h3 style="color: #fff; margin-bottom: 15px;">📋 Detalhamento (novos):</h3>
       ${vencidos.slice(0, 10).map(item => `
       <div class="item">
         <div class="item-info">
           <h3>${item.nome}</h3>
           <p>
-            ${item.tipo === 'fixo' ? '🏢 Gasto Fixo' : '📝 Gasto Extra'} • 
+            ${item.tipo === 'fixo' ? '🏢 Gasto Fixo' : '📝 Gasto Extra'} •
             Vencimento: ${new Date(item.data_vencimento).toLocaleDateString('pt-BR')}
             ${item.dias_ate_vencimento < 0 ? `<span class="badge badge-atrasado">${Math.abs(item.dias_ate_vencimento)} dias atrasado</span>` : ''}
             ${item.dias_ate_vencimento === 0 ? `<span class="badge badge-hoje">VENCE HOJE</span>` : ''}
@@ -189,13 +246,13 @@ serve(async (req) => {
       `).join('')}
       ${vencidos.length > 10 ? `<p style="text-align: center; color: #94a3b8;">+ ${vencidos.length - 10} outros itens...</p>` : ''}
     </div>
-    
+
     <div style="text-align: center;">
       <a href="https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa" class="cta-button">
         💰 Acessar Central Financeira
       </a>
     </div>
-    
+
     <div class="footer">
       <p>Este é um email automático do sistema de gestão.</p>
       <p>Moisés Medeiros • SYNAPSE v15.0</p>
@@ -204,60 +261,99 @@ serve(async (req) => {
   </div>
 </body>
 </html>
-      `;
+    `;
 
-      // Enviar email usando a edge function existente
-      const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
-      
-      if (RESEND_API_KEY) {
-        const response = await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${RESEND_API_KEY}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            from: Deno.env.get("RESEND_FROM") || 'Sistema Moisés Medeiros <falecom@moisesmedeiros.com.br>',
-            to: [OWNER_EMAIL],
-            subject: `⚠️ ALERTA: ${vencidos.length} gastos pendentes - ${formatCurrency(totalVencido)} total`,
-            html: emailHtml,
-          }),
+    const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+
+    // Preparar registro idempotente ANTES do envio (trava pós-disparo)
+    const itensKeys = vencidos.map(v => makeItemKey(v.tipo, v.id));
+
+    if (RESEND_API_KEY) {
+      const response = await fetch('https://api.resend.com/emails', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${RESEND_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          from: Deno.env.get("RESEND_FROM") || 'Sistema Moisés Medeiros <falecom@moisesmedeiros.com.br>',
+          to: [OWNER_EMAIL],
+          subject: `⚠️ ALERTA: ${vencidos.length} novos gastos pendentes - ${formatCurrency(totalVencido)} total`,
+          html: emailHtml,
+        }),
+      });
+
+      if (response.ok) {
+        console.log('[Check Vencimentos] ✅ Email de alerta enviado ao owner (idempotente)');
+
+        // Registrar idempotência + auditoria (sucesso=true)
+        await supabase.from('vencimentos_notificacoes').insert({
+          data_notificacao: todayStr,
+          tipo_notificacao: 'email',
+          total_itens: vencidos.length,
+          valor_total: totalVencido,
+          itens_ids: itensKeys,
+          enviado_para: OWNER_EMAIL,
+          sucesso: true,
         });
 
-        if (response.ok) {
-          console.log('[Check Vencimentos] ✅ Email de alerta enviado ao owner');
-          
-          // Registrar log
-          await supabase.from('activity_log').insert({
-            action: 'vencimento_email_enviado',
-            table_name: 'vencimentos',
-            user_email: OWNER_EMAIL,
-            new_value: {
-              total_vencidos: vencidos.length,
-              valor_total: totalVencido,
-              atrasados: atrasados.length,
-              vencendo_hoje: vencidosHoje.length,
-            },
-          });
-        } else {
-          const errorText = await response.text();
-          console.error('[Check Vencimentos] Erro ao enviar email:', errorText);
-        }
-      }
+        // Registrar log (legado)
+        await supabase.from('activity_log').insert({
+          action: 'vencimento_email_enviado',
+          table_name: 'vencimentos',
+          user_email: OWNER_EMAIL,
+          new_value: {
+            total_vencidos: vencidos.length,
+            valor_total: totalVencido,
+            atrasados: atrasados.length,
+            vencendo_hoje: vencidosHoje.length,
+            itens_ids: itensKeys,
+          },
+        });
+      } else {
+        const errorText = await response.text();
+        console.error('[Check Vencimentos] ❌ Erro ao enviar email:', errorText);
 
-      // Atualizar status dos atrasados
-      for (const item of atrasados) {
-        if (item.tipo === 'fixo') {
-          await supabase
-            .from('company_fixed_expenses')
-            .update({ status_pagamento: 'atrasado' })
-            .eq('id', item.id);
-        } else {
-          await supabase
-            .from('company_extra_expenses')
-            .update({ status_pagamento: 'atrasado' })
-            .eq('id', item.id);
-        }
+        // Registrar tentativa falha (sucesso=false)
+        await supabase.from('vencimentos_notificacoes').insert({
+          data_notificacao: todayStr,
+          tipo_notificacao: 'email',
+          total_itens: vencidos.length,
+          valor_total: totalVencido,
+          itens_ids: itensKeys,
+          enviado_para: OWNER_EMAIL,
+          sucesso: false,
+          erro: errorText?.slice(0, 5000),
+        });
+      }
+    } else {
+      console.error('[Check Vencimentos] ❌ RESEND_API_KEY não configurada');
+
+      // Sem provedor: registrar falha (para bloquear loop cego)
+      await supabase.from('vencimentos_notificacoes').insert({
+        data_notificacao: todayStr,
+        tipo_notificacao: 'email',
+        total_itens: vencidos.length,
+        valor_total: totalVencido,
+        itens_ids: itensKeys,
+        enviado_para: OWNER_EMAIL,
+        sucesso: false,
+        erro: 'RESEND_API_KEY_NOT_CONFIGURED',
+      });
+    }
+
+    // Atualizar status dos atrasados
+    for (const item of atrasados) {
+      if (item.tipo === 'fixo') {
+        await supabase
+          .from('company_fixed_expenses')
+          .update({ status_pagamento: 'atrasado' })
+          .eq('id', item.id);
+      } else {
+        await supabase
+          .from('company_extra_expenses')
+          .update({ status_pagamento: 'atrasado' })
+          .eq('id', item.id);
       }
     }
 
@@ -266,6 +362,9 @@ serve(async (req) => {
       vencidos: vencidos.length,
       total: vencidos.reduce((sum, v) => sum + v.valor, 0),
       detalhes: vencidos,
+      idempotency: {
+        notified_keys_count: itensKeys.length,
+      }
     }), {
       status: 200,
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
@@ -280,3 +379,4 @@ serve(async (req) => {
     });
   }
 });
+
