@@ -6,7 +6,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { X, Check, Type, Image, Link, Upload, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
