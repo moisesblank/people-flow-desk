@@ -358,6 +358,79 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, [isLoading, user?.id, session?.access_token, derivedRole]); // ✅ Inclui role para recálculo
 
+  // ============================================
+  // 🛡️ P0 FIX: CRIAÇÃO DE SESSÃO ÚNICA PÓS-LOGIN
+  // Executa UMA VEZ após SIGNED_IN (via postSignInTick)
+  // ============================================
+  useEffect(() => {
+    if (postSignInTick === 0) return; // Ignora montagem inicial
+    if (!postSignInPayloadRef.current) return;
+
+    const { userId, email } = postSignInPayloadRef.current;
+    
+    // ✅ OWNER BYPASS: não criar sessão única para owner (LEI DE IMUNIDADE)
+    const ownerEmail = "moisesblank@gmail.com";
+    if (email?.toLowerCase() === ownerEmail) {
+      console.log('[AUTH][SESSAO] Owner bypass - não cria sessão única');
+      postSignInPayloadRef.current = null;
+      startHeartbeatRef.current();
+      return;
+    }
+
+    console.log('[AUTH][SESSAO] Criando sessão única pós-login para:', userId);
+
+    // Criar sessão única no banco
+    const createSession = async () => {
+      try {
+        const ua = navigator.userAgent;
+        let device_type = 'desktop';
+        if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+          device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+        }
+        
+        let browser = 'unknown';
+        if (ua.includes('Firefox')) browser = 'Firefox';
+        else if (ua.includes('Edg')) browser = 'Edge';
+        else if (ua.includes('Chrome')) browser = 'Chrome';
+        else if (ua.includes('Safari')) browser = 'Safari';
+        
+        let os = 'unknown';
+        if (ua.includes('Windows')) os = 'Windows';
+        else if (ua.includes('Mac')) os = 'macOS';
+        else if (ua.includes('Linux')) os = 'Linux';
+        else if (ua.includes('Android')) os = 'Android';
+        else if (ua.includes('iPhone')) os = 'iOS';
+
+        const { data, error } = await supabase.rpc('create_single_session', {
+          _ip_address: null,
+          _user_agent: navigator.userAgent.slice(0, 255),
+          _device_type: device_type,
+          _browser: browser,
+          _os: os,
+        });
+
+        if (error) {
+          console.error('[AUTH][SESSAO] Erro ao criar sessão:', error);
+          return;
+        }
+
+        if (data && data.length > 0) {
+          const sessionToken = data[0].session_token;
+          localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
+          console.log('[AUTH][SESSAO] ✅ Sessão única criada com sucesso');
+          
+          // Iniciar heartbeat
+          startHeartbeatRef.current();
+        }
+      } catch (err) {
+        console.error('[AUTH][SESSAO] Erro crítico:', err);
+      }
+    };
+
+    createSession();
+    postSignInPayloadRef.current = null; // Limpa para não rodar novamente
+  }, [postSignInTick]);
+
   const fetchUserRole = async (userId: string) => {
     try {
       const { data, error } = await supabase

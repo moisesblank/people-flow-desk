@@ -171,10 +171,14 @@ export function useSingleSession() {
       return;
     }
 
-    // Verificar se já tem sessão, senão criar
+    // ✅ P0 FIX: NÃO criar sessão automaticamente aqui
+    // A sessão é criada EXCLUSIVAMENTE no login (useAuth.tsx onAuthStateChange SIGNED_IN)
+    // Criar aqui causava invalidação da sessão e loop de auth
+    // Se não tem token, aguarda o fluxo de login criar
     const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
     if (!storedToken) {
-      createSingleSession();
+      console.log('[SESSÃO ÚNICA] Token não encontrado - aguardando login criar sessão');
+      // NÃO criar sessão aqui - isso será feito pelo useAuth após SIGNED_IN
     }
 
     // Verificação periódica (DOGMA I) + PATCH-021: jitter anti-herd (0-30s)
