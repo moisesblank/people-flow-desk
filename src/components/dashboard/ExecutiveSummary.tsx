@@ -14,6 +14,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { formatCurrency } from '@/utils';
 
 interface ExecutiveSummaryProps {
   totalIncome: number;
@@ -25,13 +26,6 @@ interface ExecutiveSummaryProps {
   pendingPayments: number;
   completedTasks: number;
   totalTasks: number;
-}
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-  }).format(cents / 100);
 }
 
 export function ExecutiveSummary({

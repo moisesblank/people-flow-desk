@@ -583,6 +583,7 @@ export function LiveSheetProvider({ children }: { children: React.ReactNode }) {
     return state.derivedData[key] ?? state.baseData[key] ?? 0;
   }, [state.baseData, state.derivedData]);
   
+  // Formatação centralizada (compatível com @/utils)
   const formatCurrency = useCallback((cents: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',

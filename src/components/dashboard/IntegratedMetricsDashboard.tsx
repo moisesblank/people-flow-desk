@@ -530,12 +530,9 @@ function formatNumber(num: number): string {
   return num.toLocaleString("pt-BR");
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL"
-  }).format(value);
-}
+// Usa formatação centralizada de @/utils
+import { formatCurrencyFromReais } from "@/utils";
+const formatCurrency = formatCurrencyFromReais;
 
 // Main Dashboard Component
 export function IntegratedMetricsDashboard() {

@@ -18,6 +18,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { formatCurrency } from '@/utils';
 
 interface FinancialInsightsProps {
   totalIncome: number;
@@ -43,13 +44,6 @@ export function FinancialInsights({
   companyExpenses,
   pendingPayments = 0
 }: FinancialInsightsProps) {
-  
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', { 
-      style: 'currency', 
-      currency: 'BRL' 
-    }).format(value / 100);
-  };
 
   const insights = useMemo(() => {
     const result: Insight[] = [];

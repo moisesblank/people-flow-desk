@@ -2,6 +2,7 @@ import { motion } from "framer-motion";
 import { ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatCurrency } from "@/utils";
 
 interface Transaction {
   id: string;
@@ -14,14 +15,6 @@ interface Transaction {
 
 interface RecentTransactionsProps {
   transactions: Transaction[];
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-  }).format(value / 100);
 }
 
 export function RecentTransactions({ transactions }: RecentTransactionsProps) {

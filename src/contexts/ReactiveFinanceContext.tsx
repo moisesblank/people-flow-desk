@@ -359,7 +359,7 @@ export function ReactiveFinanceProvider({ children }: { children: React.ReactNod
     setIsLoading(false);
   }, [calculateMetrics, queryClient]);
 
-  // ===== FORMATAÇÃO =====
+  // ===== FORMATAÇÃO (compatível com @/utils) =====
   const formatCurrency = useCallback((cents: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',

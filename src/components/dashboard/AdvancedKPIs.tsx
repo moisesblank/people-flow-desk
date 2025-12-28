@@ -26,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { formatCurrency } from "@/utils";
 
 interface KPIData {
   // LTV (Lifetime Value)
@@ -56,13 +57,6 @@ interface KPIData {
 
 interface AdvancedKPIsProps {
   data: KPIData;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value / 100);
 }
 
 function formatPercentage(value: number): string {

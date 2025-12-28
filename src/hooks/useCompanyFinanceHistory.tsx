@@ -13,8 +13,9 @@ import {
   subDays, subWeeks, subMonths, subYears, format
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatCurrency as formatCurrencyCentralized } from "@/utils";
 
-export type CompanyPeriodFilter = 
+export type CompanyPeriodFilter =
   | "hoje" 
   | "semana" 
   | "mes" 
@@ -829,9 +830,5 @@ export function useCompanyFinanceHistory() {
   };
 }
 
-export function formatCompanyCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
+// Re-exporta de @/utils (CONSTITUIÇÃO v10.x)
+export { formatCurrencyCentralized as formatCompanyCurrency };

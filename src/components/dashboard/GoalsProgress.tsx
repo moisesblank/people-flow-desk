@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { ProgressRing } from "./ProgressRing";
+import { formatCurrency } from "@/utils";
 
 interface Goal {
   id: string;
@@ -34,14 +35,6 @@ interface GoalsProgressProps {
   studentsTarget?: number;
   completedTasks: number;
   totalTasks: number;
-}
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
 }
 
 export function GoalsProgress({
