@@ -537,7 +537,7 @@ const formatCurrency = formatCurrencyFromReais;
 
 // Main Dashboard Component
 export function IntegratedMetricsDashboard() {
-  const { data, isLoading, syncYouTube, syncInstagram, syncFacebookAds, syncTikTok, syncAll, refetch } = useIntegratedMetrics();
+  const { data, isLoading, refresh, useDemo } = useIntegratedMetrics();
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [taskData, setTaskData] = useState({ pending: 0, overdue: 0 });
@@ -576,30 +576,14 @@ export function IntegratedMetricsDashboard() {
     return () => clearInterval(interval);
   }, []);
 
-  const handleSync = async (platform: string, syncFn: () => Promise<any>) => {
-    setIsSyncing(platform);
-    toast.loading(`Sincronizando ${platform}...`, { id: platform });
-    try {
-      const result = await syncFn();
-      if (result.error) {
-        toast.error(`Erro ao sincronizar ${platform}`, { id: platform, description: result.error.message });
-      } else {
-        toast.success(`${platform} sincronizado com sucesso!`, { id: platform });
-      }
-    } catch (err: any) {
-      toast.error(`Erro ao sincronizar ${platform}`, { id: platform });
-    }
-    setIsSyncing(null);
-  };
-
-  const handleSyncAll = async () => {
+  const handleRefresh = async () => {
     setIsSyncing("all");
-    toast.loading("Sincronizando todas as plataformas...", { id: "syncAll" });
+    toast.loading("Atualizando métricas...", { id: "refresh" });
     try {
-      await syncAll();
-      toast.success("Todas as plataformas sincronizadas!", { id: "syncAll" });
+      await refresh();
+      toast.success("Métricas atualizadas!", { id: "refresh" });
     } catch (err) {
-      toast.error("Erro ao sincronizar plataformas", { id: "syncAll" });
+      toast.error("Erro ao atualizar", { id: "refresh" });
     }
     setIsSyncing(null);
   };
@@ -735,7 +719,7 @@ export function IntegratedMetricsDashboard() {
             <LiveDataIndicator />
             
             <Button
-              onClick={handleSyncAll}
+              onClick={handleRefresh}
               disabled={isSyncing === "all"}
               className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70 shadow-lg shadow-primary/20"
             >
@@ -1188,8 +1172,8 @@ export function IntegratedMetricsDashboard() {
                 { label: "Total de Vídeos", value: data?.youtube?.total_videos || 0, icon: Video },
                 { label: "Views Recentes", value: formatNumber(data?.youtube?.visualizacoes_recentes || 0), icon: Play }
               ]}
-              onSync={() => handleSync("YouTube", syncYouTube)}
-              isSyncing={isSyncing === "YouTube"}
+              onSync={handleRefresh}
+              isSyncing={isSyncing === "all"}
               status={data?.youtube ? "active" : "pending"}
               lastSync={data?.youtube?.data}
               delay={0}
@@ -1206,8 +1190,8 @@ export function IntegratedMetricsDashboard() {
                 { label: "Impressões", value: formatNumber(data?.instagram?.impressoes || 0), icon: Eye },
                 { label: "Novos Seguidores", value: `+${data?.instagram?.novos_seguidores || 0}`, icon: TrendingUp }
               ]}
-              onSync={() => handleSync("Instagram", syncInstagram)}
-              isSyncing={isSyncing === "Instagram"}
+              onSync={handleRefresh}
+              isSyncing={isSyncing === "all"}
               status={data?.instagram ? "active" : "pending"}
               lastSync={data?.instagram?.data}
               delay={0.1}
@@ -1224,8 +1208,8 @@ export function IntegratedMetricsDashboard() {
                 { label: "Total de Vídeos", value: data?.tiktok?.total_videos || 0, icon: Video },
                 { label: "Views do Perfil", value: formatNumber(data?.tiktok?.visualizacoes_perfil || 0), icon: Eye }
               ]}
-              onSync={() => handleSync("TikTok", syncTikTok)}
-              isSyncing={isSyncing === "TikTok"}
+              onSync={handleRefresh}
+              isSyncing={isSyncing === "all"}
               status={data?.tiktok ? "active" : "pending"}
               lastSync={data?.tiktok?.data}
               delay={0.2}
@@ -1242,8 +1226,8 @@ export function IntegratedMetricsDashboard() {
                 { label: "ROI Médio", value: `${(data?.facebookAds.reduce((sum, fb) => sum + (fb.roi || 0), 0) / Math.max(data?.facebookAds.length || 1, 1)).toFixed(0)}%`, icon: TrendingUp },
                 { label: "Conversões", value: data?.facebookAds.reduce((sum, fb) => sum + (fb.conversoes || 0), 0) || 0, icon: ShoppingCart }
               ]}
-              onSync={() => handleSync("Facebook Ads", syncFacebookAds)}
-              isSyncing={isSyncing === "Facebook Ads"}
+              onSync={handleRefresh}
+              isSyncing={isSyncing === "all"}
               status={data?.facebookAds.length ? "active" : "pending"}
               delay={0.3}
             />
@@ -1266,8 +1250,8 @@ export function IntegratedMetricsDashboard() {
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => handleSync("Facebook Ads", syncFacebookAds)}
-                    disabled={isSyncing === "Facebook Ads"}
+                    onClick={handleRefresh}
+                    disabled={isSyncing === "all"}
                   >
                     <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing === "Facebook Ads" ? 'animate-spin' : ''}`} />
                     Atualizar
@@ -1328,7 +1312,7 @@ export function IntegratedMetricsDashboard() {
                     <Target className="h-16 w-16 mx-auto mb-4 opacity-20" />
                     <p className="text-lg font-medium mb-2">Nenhuma campanha encontrada</p>
                     <p className="text-sm mb-4">Sincronize para carregar suas campanhas</p>
-                    <Button onClick={() => handleSync("Facebook Ads", syncFacebookAds)}>
+                    <Button onClick={handleRefresh}>
                       <RefreshCw className="h-4 w-4 mr-2" />
                       Sincronizar Facebook Ads
                     </Button>
@@ -1861,152 +1845,15 @@ export function IntegratedMetricsDashboard() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-2 max-h-[400px] overflow-y-auto">
-                  {data?.wordpress?.recentEvents && data.wordpress.recentEvents.length > 0 ? (
-                    data.wordpress.recentEvents.map((event, i) => (
-                      <motion.div
-                        key={event.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                        className="flex items-center gap-3 p-3 rounded-xl bg-secondary/30 hover:bg-secondary/50 transition-all"
-                      >
-                        <div className={`p-2 rounded-lg ${
-                          event.event_type === 'user_registered' 
-                            ? 'bg-emerald-500/20' 
-                            : event.event_type === 'user_login'
-                            ? 'bg-blue-500/20'
-                            : event.event_type === 'woocommerce_order'
-                            ? 'bg-purple-500/20'
-                            : 'bg-amber-500/20'
-                        }`}>
-                          {event.event_type === 'user_registered' ? (
-                            <GraduationCap className="h-4 w-4 text-emerald-500" />
-                          ) : event.event_type === 'user_login' ? (
-                            <Users className="h-4 w-4 text-blue-500" />
-                          ) : event.event_type === 'woocommerce_order' ? (
-                            <ShoppingCart className="h-4 w-4 text-purple-500" />
-                          ) : (
-                            <Eye className="h-4 w-4 text-amber-500" />
-                          )}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-medium text-foreground truncate">
-                            {event.user_name || event.user_email || 'Visitante'}
-                          </p>
-                          <div className="flex items-center gap-2">
-                            <p className="text-xs text-muted-foreground">
-                              {event.event_type === 'user_registered' ? '🎉 Novo cadastro' :
-                               event.event_type === 'user_login' ? '👋 Login' :
-                               event.event_type === 'woocommerce_order' ? `🛒 Compra R$ ${(event.event_data as any)?.total || 0}` : 
-                               '👁️ Visualização'}
-                            </p>
-                            <span className="text-[10px] text-muted-foreground/50">
-                              {new Date(event.created_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
-                            </span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))
-                  ) : (
-                    <div className="text-center py-12 text-muted-foreground">
-                      <Activity className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                      <p className="font-medium">Aguardando eventos...</p>
-                    </div>
-                  )}
+                  <div className="text-center py-12 text-muted-foreground">
+                    <Activity className="h-12 w-12 mx-auto mb-4 opacity-30" />
+                    <p className="font-medium">Sistema de eventos em tempo real</p>
+                    <p className="text-sm">Aguardando atividade...</p>
+                  </div>
                 </CardContent>
               </Card>
             </div>
           </div>
-
-          {/* WordPress Users Section */}
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <div className="p-2 rounded-lg bg-blue-500/20">
-                <Users className="h-5 w-5 text-blue-500" />
-              </div>
-              <h3 className="text-lg font-bold text-foreground">👥 Usuários da Plataforma</h3>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <CyberMetricCard
-                title="Total Usuários"
-                value={data?.wordpress?.metrics?.total_users || 0}
-                icon={Users}
-                color="#3b82f6"
-                isLive
-              />
-              <CyberMetricCard
-                title="Novos Cadastros"
-                value={data?.wordpress?.metrics?.new_registrations || 0}
-                icon={GraduationCap}
-                color="#22c55e"
-                isLive
-              />
-              <CyberMetricCard
-                title="Usuários Ativos"
-                value={data?.wordpress?.metrics?.active_users || 0}
-                icon={Activity}
-                color="#9333ea"
-              />
-              <CyberMetricCard
-                title="Page Views"
-                value={data?.wordpress?.metrics?.page_views || 0}
-                icon={Eye}
-                color="#f59e0b"
-              />
-            </div>
-          </div>
-
-          {/* Setup Instructions */}
-          <Card className="border-border/20 bg-gradient-to-br from-primary/5 via-card to-card backdrop-blur-xl">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Cpu className="h-5 w-5 text-primary" />
-                ⚙️ Configuração dos Webhooks
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
-                  <p className="text-sm font-bold text-foreground mb-2">📡 URL do Webhook:</p>
-                  <code className="text-xs bg-background p-2 rounded block break-all text-primary">
-                    https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/wordpress-webhook
-                  </code>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="mt-2 w-full"
-                    onClick={() => {
-                      navigator.clipboard.writeText('https://fyikfsasudgzsjmumdlw.supabase.co/functions/v1/wordpress-webhook');
-                      toast.success('URL copiada!');
-                    }}
-                  >
-                    Copiar URL
-                  </Button>
-                </div>
-                
-                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
-                  <p className="text-sm font-bold text-foreground mb-2">🔐 Header de Segurança:</p>
-                  <code className="text-xs bg-background p-2 rounded block text-muted-foreground">
-                    x-webhook-secret: moisesmedeiros2024
-                  </code>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Adicione este header em todas as requisições
-                  </p>
-                </div>
-
-                <div className="p-4 rounded-xl bg-secondary/30 border border-border/30">
-                  <p className="text-sm font-bold text-foreground mb-2">🎯 Eventos Suportados:</p>
-                  <div className="space-y-1 text-xs text-muted-foreground">
-                    <p>• user_registered (novo cadastro)</p>
-                    <p>• user_login (login)</p>
-                    <p>• woocommerce_order (vendas)</p>
-                    <p>• google_analytics (métricas GA)</p>
-                  </div>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
       </Tabs>
     </div>

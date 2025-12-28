@@ -1,13 +1,12 @@
 // ============================================
 // TRAMON v8.1 - ACADEMIA QUANTUM
-// Sistema Neural de Gestão de Alunos + WordPress Sync
-// ⚡ PARTE 6: Pré-seleção operacional de universo
-// Fix: Force rebuild - clear dynamic import cache
+// Sistema Neural de Gestão de Alunos
+// WordPress removido em 2025-12-28
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Globe, Crown, ArrowLeft, UserPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Crown, ArrowLeft, UserPlus, ChevronLeft, ChevronRight } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { FuturisticCard } from "@/components/ui/futuristic-card";
@@ -17,7 +16,6 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
@@ -47,49 +45,27 @@ interface Student {
   curso: string;
   status: string;
   fonte?: string;
-  role?: 'beta' | 'aluno_gratuito' | null; // ⚡ PARTE 8: role do aluno
+  role?: 'beta' | 'aluno_gratuito' | null;
 }
-
-interface WordPressUser {
-  id: string;
-  wp_user_id: number;
-  email: string;
-  nome: string;
-  grupos: string[];
-  status_acesso: string;
-  tem_pagamento_confirmado: boolean;
-  data_cadastro_wp: string | null;
-  ultimo_login: string | null;
-  updated_at: string;
-  role?: 'beta' | 'aluno_gratuito' | null; // ⚡ PARTE 8: role do usuário
-}
-
-// ⚡ PARTE 8: Mapa de email -> role (lido da tabela user_roles)
-type RoleMap = Record<string, 'beta' | 'aluno_gratuito' | null>;
 
 const STATUS_OPTIONS = ["Ativo", "Concluído", "Pendente", "Cancelado"];
 
 export default function Alunos() {
   // ============================================
-  // ⚡ PARTE 6 + 7: Estado de pré-seleção de universo + produto
+  // Estado de pré-seleção de universo + produto
   // null = tela de seleção, valor = gestão filtrada
-  // Persistência via querystring (PARTE 7)
+  // Persistência via querystring
   // ============================================
   const [selection, setSelection] = useState<AlunoSelectionState | null>(() => {
-    // Inicializa do querystring se disponível
     return parseSelectionFromUrl();
   });
   
-  // ⚡ PARTE 7: Atualiza URL quando seleção muda
   const handleSelectionChange = (newSelection: AlunoSelectionState | null) => {
     setSelection(newSelection);
     updateUrlWithSelection(newSelection);
   };
   
-  // ============================================
-  // ⚡ PARTE 6 REFINADA: Converter universo para filtro A/B/C/D
-  // A = presencial, B = presencial_online, C = online, D = registrados
-  // ============================================
+  // Converter universo para filtro A/B/C/D
   const universoFiltro = useMemo(() => {
     if (!selection) return null;
     switch (selection.universe) {
@@ -101,10 +77,7 @@ export default function Alunos() {
     }
   }, [selection]);
 
-  // ============================================
-  // ⚡ PARTE 14: Hook de paginação server-side
-  // PARTE 6: Agora com filtro de universo aplicado na query
-  // ============================================
+  // Hook de paginação server-side
   const {
     alunos: paginatedStudents,
     contadores,
@@ -118,33 +91,19 @@ export default function Alunos() {
     isLoading: isLoadingPaginated,
     refetch: refetchPaginated,
   } = useAlunosPaginados({
-    pageSize: 50, // Paginação obrigatória: 50 por página
-    universoFiltro, // ⚡ PARTE 6: Filtro aplicado na query
+    pageSize: 50,
+    universoFiltro,
   });
   
-  const [wpUsers, setWpUsers] = useState<WordPressUser[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Student | null>(null);
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
-  const [activeTab, setActiveTab] = useState("alunos");
   
-  // ⚡ PARTE 9: Modal de Criar Acesso Oficial
+  // Modal de Criar Acesso Oficial
   const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
 
-  // Stats WordPress
-  const [wpStats, setWpStats] = useState({
-    total: 0,
-    ativos: 0,
-    comPagamento: 0,
-    semPagamento: 0
-  });
-
-  // ============================================
-  // ⚡ PARTE 14 + PARTE 6: Converter alunos paginados para formato Student
-  // Inclui fonte para filtro de universo
-  // ============================================
+  // Converter alunos paginados para formato Student
   const students: Student[] = useMemo(() => {
     return paginatedStudents.map(a => ({
       id: a.id,
@@ -157,127 +116,15 @@ export default function Alunos() {
     }));
   }, [paginatedStudents]);
 
-  // ============================================
-  // ⚡ PARTE 14: Fetch WordPress separado (paginado)
-  // ============================================
-  const fetchWpData = async () => {
-    try {
-      const { data: wpData, error: wpError } = await supabase
-        .from("usuarios_wordpress_sync")
-        .select("id, wp_user_id, email, nome, status_acesso, grupos, tem_pagamento_confirmado, data_cadastro_wp, ultimo_login, updated_at")
-        .order("updated_at", { ascending: false })
-        .limit(100); // Limite para WP
-      
-      if (wpError) {
-        console.error("Error fetching WP users:", wpError);
-        return;
-      }
-      
-      const wpUsersMapped: WordPressUser[] = (wpData || []).map(u => ({
-        id: u.id,
-        wp_user_id: u.wp_user_id,
-        email: u.email,
-        nome: u.nome || '',
-        grupos: Array.isArray(u.grupos) ? (u.grupos as unknown as string[]) : [],
-        status_acesso: u.status_acesso || 'aguardando_pagamento',
-        tem_pagamento_confirmado: u.tem_pagamento_confirmado || false,
-        data_cadastro_wp: u.data_cadastro_wp,
-        ultimo_login: u.ultimo_login,
-        updated_at: u.updated_at,
-        role: null,
-      }));
-      setWpUsers(wpUsersMapped);
-
-      // Calculate stats via count queries (agregado)
-      const [totalRes, ativosRes, comPagRes] = await Promise.all([
-        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }),
-        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }).eq('status_acesso', 'ativo'),
-        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }).eq('tem_pagamento_confirmado', true),
-      ]);
-
-      setWpStats({
-        total: totalRes.count || 0,
-        ativos: ativosRes.count || 0,
-        comPagamento: comPagRes.count || 0,
-        semPagamento: (totalRes.count || 0) - (comPagRes.count || 0)
-      });
-    } catch (error) {
-      console.error("Error fetching WP data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-  
-  // Função para refetch completo
+  // Função para refetch
   const fetchData = useCallback(() => {
     refetchPaginated();
-    fetchWpData();
   }, [refetchPaginated]);
 
-  useEffect(() => {
-    fetchWpData();
-
-    // ============================================
-    // ⚡ PARTE 14: Realtime subscription para sincronização
-    // Estratégia: invalidation (re-fetch ao mudar)
-    // NÃO assina tabela inteira - apenas invalida cache
-    // ============================================
-    const channel = supabase
-      .channel('gestao-alunos-realtime')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios_wordpress_sync' }, () => {
-        console.log('[GESTAO-REALTIME] usuarios_wordpress_sync changed');
-        fetchWpData();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => {
-        console.log('[GESTAO-REALTIME] alunos changed');
-        refetchPaginated();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
-        console.log('[GESTAO-REALTIME] profiles changed');
-        refetchPaginated();
-      })
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => {
-        console.log('[GESTAO-REALTIME] user_roles changed');
-        refetchPaginated();
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [refetchPaginated]);
-
-  const syncWordPress = async () => {
-    setIsSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-wordpress-users');
-      
-      if (error) throw error;
-      
-      toast.success(`✅ Sincronização concluída!`, {
-        description: `${data?.total_synced || 0} usuários sincronizados`
-      });
-      
-      await fetchData();
-    } catch (error) {
-      console.error("Sync error:", error);
-      toast.error("Erro ao sincronizar com WordPress");
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  // ============================================
-  // ⚡ PARTE 6 + 7 + 8: Filtragem por universo + produto + role
-  // Role é lida da tabela user_roles (FONTE DA VERDADE)
-  // ============================================
-  
-  // ⚡ PARTE 8: Determinar role esperada baseada no universo
+  // Determinar role esperada baseada no universo
   const expectedRole = useMemo(() => {
     if (!selection) return null;
-    // Universo D (registrados) = apenas aluno_gratuito
     if (selection.universe === 'registrados') return 'aluno_gratuito';
-    // Universos A, B, C = apenas beta
     return 'beta';
   }, [selection]);
 
@@ -286,16 +133,14 @@ export default function Alunos() {
     return getUniverseFilters(selection);
   }, [selection]);
 
-  // ⚡ PARTE 8: Filtragem com role obrigatório
+  // Filtragem com role obrigatório
   const filteredStudents = useMemo(() => {
     if (!universeFilters) return students;
     
     return students.filter(s => {
-      // Primeiro aplica filtros de universo/produto
       const passesUniverseFilter = universeFilters.filterFn(s);
       if (!passesUniverseFilter) return false;
       
-      // ⚡ PARTE 8: Depois filtra por role
       if (expectedRole) {
         return s.role === expectedRole;
       }
@@ -303,37 +148,7 @@ export default function Alunos() {
     });
   }, [students, universeFilters, expectedRole]);
 
-  // ⚡ PARTE 8: Filtragem WP com role obrigatório
-  const filteredWpUsers = useMemo(() => {
-    if (!universeFilters || !universeFilters.wpFilterFn) return wpUsers;
-    
-    return wpUsers.filter(u => {
-      // Primeiro aplica filtros de universo/produto
-      const passesUniverseFilter = universeFilters.wpFilterFn!(u);
-      if (!passesUniverseFilter) return false;
-      
-      // ⚡ PARTE 8: Depois filtra por role
-      if (expectedRole) {
-        return u.role === expectedRole;
-      }
-      return true;
-    });
-  }, [wpUsers, universeFilters, expectedRole]);
-
-  // Stats recalculados com base nos dados filtrados
-  const filteredWpStats = useMemo(() => {
-    const ativos = filteredWpUsers.filter(u => u.status_acesso === 'ativo').length;
-    const comPagamento = filteredWpUsers.filter(u => u.tem_pagamento_confirmado).length;
-    const semPagamento = filteredWpUsers.filter(u => !u.tem_pagamento_confirmado && u.grupos.length > 0).length;
-    return {
-      total: filteredWpUsers.length,
-      ativos,
-      comPagamento,
-      semPagamento
-    };
-  }, [filteredWpUsers]);
-
-  // ⚡ PARTE 14: Usar contadores agregados do hook (zero N+1)
+  // Stats recalculados
   const ativos = contadores.ativos;
   const concluidos = contadores.concluidos;
 
@@ -383,15 +198,11 @@ export default function Alunos() {
           .maybeSingle();
 
         if (profileData?.id) {
-          // ============================================
-          // 3. UPSERT ROLE (CONSTITUIÇÃO v10.x)
-          // Regra: 1 role por user_id (constraint UNIQUE)
-          // ON CONFLICT (user_id) sobrescreve role existente
-          // ============================================
+          // UPSERT ROLE (CONSTITUIÇÃO v10.x)
           const { error: roleError } = await supabase.from("user_roles").upsert({
             user_id: profileData.id,
             role: "beta" as any,
-          }, { onConflict: "user_id" }); // ✅ CORRETO: 1 role por user
+          }, { onConflict: "user_id" });
 
           if (roleError) {
             console.warn("Não foi possível atribuir role beta:", roleError);
@@ -423,15 +234,12 @@ export default function Alunos() {
     }
   };
 
-  // ============================================
-  // ⚡ PARTE 6 + 7: Renderização condicional
   // Se não selecionou universo, mostra tela de seleção
-  // ============================================
   if (!selection) {
     return <AlunosUniverseSelector onSelect={handleSelectionChange} />;
   }
 
-  // ⚡ PARTE 7: Labels combinados (universo + produto)
+  // Labels combinados (universo + produto)
   const universeOption = ALUNO_UNIVERSE_OPTIONS.find(o => o.id === selection.universe);
   const productOption = selection.product 
     ? ONLINE_PRODUCT_OPTIONS.find(o => o.id === selection.product) 
@@ -446,7 +254,7 @@ export default function Alunos() {
       
       <div className="relative z-10 p-4 md:p-8 lg:p-12">
         <div className="mx-auto max-w-7xl space-y-6">
-          {/* ⚡ PARTE 6 + 7: Botão voltar + Badge do universo/produto */}
+          {/* Botão voltar + Badge do universo/produto */}
           <div className="flex items-center gap-4">
             <Button 
               variant="ghost" 
@@ -470,22 +278,13 @@ export default function Alunos() {
             badge="STUDENT MATRIX"
             accentColor="blue"
             stats={[
-              { label: "Alunos DB", value: contadores.total, icon: Users },
-              { label: "WordPress", value: wpStats.total, icon: Globe },
-              { label: "Com Pagamento", value: wpStats.comPagamento, icon: CheckCircle },
+              { label: "Total Alunos", value: contadores.total, icon: Users },
+              { label: "Ativos", value: contadores.ativos, icon: CheckCircle },
+              { label: "Concluídos", value: contadores.concluidos, icon: Award },
             ]}
             action={
               <div className="flex gap-2">
-                <Button 
-                  onClick={syncWordPress}
-                  disabled={isSyncing}
-                  variant="outline"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10"
-                >
-                  <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-                  Sync WordPress
-                </Button>
-                {/* ⚡ PARTE 9: Botão Criar Acesso Oficial */}
+                {/* Botão Criar Acesso Oficial */}
                 <Button 
                   onClick={() => setIsCriarAcessoModalOpen(true)}
                   className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
@@ -505,335 +304,194 @@ export default function Alunos() {
             }
           />
 
-          {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="grid w-full max-w-md grid-cols-2 bg-background/50 border border-blue-500/30">
-              <TabsTrigger value="alunos" className="data-[state=active]:bg-blue-500/20 data-[state=active]:text-blue-400">
-                <Users className="h-4 w-4 mr-2" />
-                Alunos DB ({contadores.total})
-              </TabsTrigger>
-              <TabsTrigger value="wordpress" className="data-[state=active]:bg-cyan-500/20 data-[state=active]:text-cyan-400">
-                <Globe className="h-4 w-4 mr-2" />
-                WordPress ({wpStats.total})
-              </TabsTrigger>
-            </TabsList>
-
-            {/* Tab: Alunos */}
-            <TabsContent value="alunos" className="space-y-6 mt-6">
-              {/* Stats Grid - ⚡ PARTE 14: Usando contadores agregados */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <FuturisticCard accentColor="blue" className="p-4 text-center">
-                  <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-blue-400">{contadores.total}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
-                </FuturisticCard>
-                <FuturisticCard accentColor="green" className="p-4 text-center">
-                  <GraduationCap className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-emerald-400">{contadores.ativos}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
-                </FuturisticCard>
-                <FuturisticCard accentColor="purple" className="p-4 text-center">
-                  <Award className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-purple-400">{contadores.concluidos}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídos</div>
-                </FuturisticCard>
-                <FuturisticCard accentColor="cyan" className="p-4 text-center">
-                  <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-cyan-400">
-                    {contadores.total > 0 ? Math.round((contadores.concluidos / contadores.total) * 100) : 0}%
-                  </div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa</div>
-                </FuturisticCard>
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <FuturisticCard accentColor="blue" className="p-4 text-center">
+              <Users className="h-6 w-6 text-blue-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-blue-400">{contadores.total}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="green" className="p-4 text-center">
+              <GraduationCap className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-emerald-400">{contadores.ativos}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="purple" className="p-4 text-center">
+              <Award className="h-6 w-6 text-purple-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-purple-400">{contadores.concluidos}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídos</div>
+            </FuturisticCard>
+            <FuturisticCard accentColor="cyan" className="p-4 text-center">
+              <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-cyan-400">
+                {contadores.total > 0 ? Math.round((contadores.concluidos / contadores.total) * 100) : 0}%
               </div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa</div>
+            </FuturisticCard>
+          </div>
 
-              {/* Analytics */}
-              <StudentAnalytics 
-                totalStudents={filteredStudents.length}
-                activeStudents={ativos}
-                completedStudents={concluidos}
-                averageProgress={filteredStudents.length > 0 ? 65 : 0}
-                averageXP={filteredStudents.length > 0 ? 2450 : 0}
-                topPerformers={filteredStudents.slice(0, 5).map((s, i) => ({
-                  id: s.id.toString(),
-                  name: s.nome,
-                  xp: 3000 - (i * 200),
-                  progress: 90 - (i * 5)
-                }))}
-              />
+          {/* Analytics */}
+          <StudentAnalytics 
+            totalStudents={filteredStudents.length}
+            activeStudents={ativos}
+            completedStudents={concluidos}
+            averageProgress={filteredStudents.length > 0 ? 65 : 0}
+            averageXP={filteredStudents.length > 0 ? 2450 : 0}
+            topPerformers={filteredStudents.slice(0, 5).map((s, i) => ({
+              id: s.id.toString(),
+              name: s.nome,
+              xp: 3000 - (i * 200),
+              progress: 90 - (i * 5)
+            }))}
+          />
 
-              {/* ⚡ PARTE 14: Table com paginação server-side */}
-              <FuturisticCard accentColor="blue">
-                {/* Header com info de paginação */}
-                <div className="p-4 border-b border-blue-500/20 flex items-center justify-between">
-                  <h3 className="font-semibold text-blue-400">
-                    Alunos Cadastrados
-                    <span className="text-muted-foreground font-normal ml-2">
-                      (Página {page} de {totalPages})
-                    </span>
-                  </h3>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={prevPage}
-                      disabled={!hasPrevPage || isLoadingPaginated}
-                      className="border-blue-500/30"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                      {page} / {totalPages}
-                    </span>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={nextPage}
-                      disabled={!hasNextPage || isLoadingPaginated}
-                      className="border-blue-500/30"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </Button>
-                  </div>
-                </div>
-                
-                <VirtualTable
-                  items={filteredStudents}
-                  rowHeight={56}
-                  containerHeight={500}
-                  emptyMessage={isLoadingPaginated ? "Carregando..." : "Nenhum aluno cadastrado"}
-                  renderHeader={() => (
-                    <table className="w-full">
-                      <thead className="bg-blue-500/10">
-                        <tr>
-                          <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
-                          <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
-                          <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
-                          <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
-                        </tr>
-                      </thead>
-                    </table>
-                  )}
-                  renderRow={(student) => (
-                    <table className="w-full">
-                      <tbody>
-                        <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
-                          <td className="p-4 text-foreground font-medium" style={{ width: '25%' }}>{student.nome}</td>
-                          <td className="p-4 text-muted-foreground" style={{ width: '30%' }}>{student.email || "-"}</td>
-                          <td className="p-4" style={{ width: '20%' }}>
-                            <Badge variant={
-                              student.status === "Ativo" ? "default" :
-                              student.status === "Concluído" ? "secondary" : "outline"
-                            } className={
-                              student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
-                              student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
-                              student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
-                              "bg-red-500/20 text-red-400"
-                            }>
-                              {student.status}
-                            </Badge>
-                          </td>
-                          <td className="p-4 text-right" style={{ width: '25%' }}>
-                            <div className="flex justify-end gap-2">
-                              <BetaAccessManager
-                                studentEmail={student.email}
-                                studentName={student.nome}
-                                studentId={student.id}
-                                onAccessChange={fetchData}
-                              />
-                              <AttachmentButton
-                                entityType="student"
-                                entityId={student.id}
-                                entityLabel={student.nome}
-                                variant="ghost"
-                                size="icon"
-                              />
-                              <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
-                                <Edit2 className="h-4 w-4 text-blue-400" />
-                              </Button>
-                              <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  )}
-                />
-                
-                {/* Footer com paginação */}
-                <div className="p-4 border-t border-blue-500/20 flex items-center justify-between">
-                  <span className="text-sm text-muted-foreground">
-                    Mostrando {filteredStudents.length} de {contadores.total} alunos
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToPage(1)}
-                      disabled={page === 1 || isLoadingPaginated}
-                      className="border-blue-500/30"
-                    >
-                      Primeira
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={prevPage}
-                      disabled={!hasPrevPage || isLoadingPaginated}
-                      className="border-blue-500/30"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-1" />
-                      Anterior
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={nextPage}
-                      disabled={!hasNextPage || isLoadingPaginated}
-                      className="border-blue-500/30"
-                    >
-                      Próxima
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => goToPage(totalPages)}
-                      disabled={page === totalPages || isLoadingPaginated}
-                      className="border-blue-500/30"
-                    >
-                      Última
-                    </Button>
-                  </div>
-                </div>
-              </FuturisticCard>
-            </TabsContent>
-
-            {/* Tab: WordPress Sync */}
-            <TabsContent value="wordpress" className="space-y-6 mt-6">
-              {/* Stats Grid */}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <FuturisticCard accentColor="cyan" className="p-4 text-center">
-                  <Globe className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-cyan-400">{filteredWpStats.total}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Total WordPress</div>
-                </FuturisticCard>
-                <FuturisticCard accentColor="green" className="p-4 text-center">
-                  <CheckCircle className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-emerald-400">{filteredWpStats.ativos}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
-                </FuturisticCard>
-                <FuturisticCard accentColor="blue" className="p-4 text-center">
-                  <CheckCircle className="h-6 w-6 text-blue-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-blue-400">{filteredWpStats.comPagamento}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">Pagamento OK</div>
-                </FuturisticCard>
-                <FuturisticCard accentColor="orange" className="p-4 text-center">
-                  <AlertTriangle className="h-6 w-6 text-red-400 mx-auto mb-2" />
-                  <div className="text-2xl font-bold text-red-400">{filteredWpStats.semPagamento}</div>
-                  <div className="text-xs text-muted-foreground uppercase tracking-wider">⚠️ Sem Pagamento</div>
-                </FuturisticCard>
+          {/* Table com paginação server-side */}
+          <FuturisticCard accentColor="blue">
+            {/* Header com info de paginação */}
+            <div className="p-4 border-b border-blue-500/20 flex items-center justify-between">
+              <h3 className="font-semibold text-blue-400">
+                Alunos Cadastrados
+                <span className="text-muted-foreground font-normal ml-2">
+                  (Página {page} de {totalPages})
+                </span>
+              </h3>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={prevPage}
+                  disabled={!hasPrevPage || isLoadingPaginated}
+                  className="border-blue-500/30"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                  {page} / {totalPages}
+                </span>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={nextPage}
+                  disabled={!hasNextPage || isLoadingPaginated}
+                  className="border-blue-500/30"
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </Button>
               </div>
-
-              {/* Alert for users without payment */}
-              {filteredWpStats.semPagamento > 0 && (
-                <FuturisticCard accentColor="orange" className="p-4 border-red-500/50">
-                  <div className="flex items-center gap-3">
-                    <AlertTriangle className="h-6 w-6 text-red-400" />
-                    <div>
-                      <h4 className="font-semibold text-red-400">Atenção: Acesso Indevido Detectado</h4>
-                      <p className="text-sm text-muted-foreground">
-                        {filteredWpStats.semPagamento} usuário(s) têm acesso ao curso mas não possuem pagamento confirmado.
-                        Verifique na página de Auditoria de Acessos.
-                      </p>
-                    </div>
-                  </div>
-                </FuturisticCard>
+            </div>
+            
+            <VirtualTable
+              items={filteredStudents}
+              rowHeight={56}
+              containerHeight={500}
+              emptyMessage={isLoadingPaginated ? "Carregando..." : "Nenhum aluno cadastrado"}
+              renderHeader={() => (
+                <table className="w-full">
+                  <thead className="bg-blue-500/10">
+                    <tr>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
+                      <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
+                    </tr>
+                  </thead>
+                </table>
               )}
-
-              {/* WordPress Users Table */}
-              <FuturisticCard accentColor="cyan">
-                <div className="p-4 border-b border-cyan-500/20 flex items-center justify-between">
-                  <h3 className="font-semibold text-cyan-400">Usuários WordPress Sincronizados</h3>
-                  <Button 
-                    onClick={syncWordPress} 
-                    disabled={isSyncing} 
-                    size="sm"
-                    className="bg-cyan-500/20 text-cyan-400 hover:bg-cyan-500/30"
-                  >
-                    <RefreshCw className={`h-4 w-4 mr-2 ${isSyncing ? 'animate-spin' : ''}`} />
-                    Sincronizar
-                  </Button>
-                </div>
-                <VirtualTable
-                  items={filteredWpUsers}
-                  rowHeight={64}
-                  containerHeight={500}
-                  emptyMessage="Nenhum usuário sincronizado. Clique em 'Sincronizar' para importar usuários do WordPress"
-                  renderHeader={() => (
-                    <table className="w-full">
-                      <thead className="bg-cyan-500/10">
-                        <tr>
-                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Nome</th>
-                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Email</th>
-                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Status</th>
-                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Pagamento</th>
-                          <th className="text-left p-4 text-sm font-medium text-cyan-400">Grupos</th>
-                        </tr>
-                      </thead>
-                    </table>
-                  )}
-                  renderRow={(user) => (
-                    <table className="w-full">
-                      <tbody>
-                        <tr className="border-t border-cyan-500/20 hover:bg-cyan-500/5 transition-colors">
-                          <td className="p-4 text-foreground font-medium" style={{ width: '20%' }}>{user.nome || "Sem nome"}</td>
-                          <td className="p-4 text-muted-foreground" style={{ width: '25%' }}>{user.email}</td>
-                          <td className="p-4" style={{ width: '15%' }}>
-                            <Badge className={
-                              user.status_acesso === 'ativo' 
-                                ? "bg-emerald-500/20 text-emerald-400" 
-                                : "bg-yellow-500/20 text-yellow-400"
-                            }>
-                              {user.status_acesso}
-                            </Badge>
-                          </td>
-                          <td className="p-4" style={{ width: '15%' }}>
-                            {user.tem_pagamento_confirmado ? (
-                              <Badge className="bg-green-500/20 text-green-400">
-                                <CheckCircle className="h-3 w-3 mr-1" /> Confirmado
-                              </Badge>
-                            ) : (
-                              <Badge className="bg-red-500/20 text-red-400">
-                                <XCircle className="h-3 w-3 mr-1" /> Não confirmado
-                              </Badge>
-                            )}
-                          </td>
-                          <td className="p-4" style={{ width: '25%' }}>
-                            <div className="flex flex-wrap gap-1">
-                              {user.grupos.length > 0 ? user.grupos.slice(0, 3).map((g, i) => (
-                                <Badge key={i} variant="outline" className="text-xs border-cyan-500/30">
-                                  {String(g)}
-                                </Badge>
-                              )) : (
-                                <span className="text-muted-foreground text-sm">Nenhum grupo</span>
-                              )}
-                              {user.grupos.length > 3 && (
-                                <Badge variant="outline" className="text-xs border-cyan-500/30">
-                                  +{user.grupos.length - 3}
-                                </Badge>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  )}
-                />
-              </FuturisticCard>
-            </TabsContent>
-          </Tabs>
+              renderRow={(student) => (
+                <table className="w-full">
+                  <tbody>
+                    <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
+                      <td className="p-4 text-foreground font-medium" style={{ width: '25%' }}>{student.nome}</td>
+                      <td className="p-4 text-muted-foreground" style={{ width: '30%' }}>{student.email || "-"}</td>
+                      <td className="p-4" style={{ width: '20%' }}>
+                        <Badge variant={
+                          student.status === "Ativo" ? "default" :
+                          student.status === "Concluído" ? "secondary" : "outline"
+                        } className={
+                          student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
+                          student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
+                          student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
+                          "bg-red-500/20 text-red-400"
+                        }>
+                          {student.status}
+                        </Badge>
+                      </td>
+                      <td className="p-4 text-right" style={{ width: '25%' }}>
+                        <div className="flex justify-end gap-2">
+                          <BetaAccessManager
+                            studentEmail={student.email}
+                            studentName={student.nome}
+                            studentId={student.id}
+                            onAccessChange={fetchData}
+                          />
+                          <AttachmentButton
+                            entityType="student"
+                            entityId={student.id}
+                            entityLabel={student.nome}
+                            variant="ghost"
+                            size="icon"
+                          />
+                          <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
+                            <Edit2 className="h-4 w-4 text-blue-400" />
+                          </Button>
+                          <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
+            />
+            
+            {/* Footer com paginação */}
+            <div className="p-4 border-t border-blue-500/20 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">
+                Mostrando {filteredStudents.length} de {contadores.total} alunos
+              </span>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(1)}
+                  disabled={page === 1 || isLoadingPaginated}
+                  className="border-blue-500/30"
+                >
+                  Primeira
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={prevPage}
+                  disabled={!hasPrevPage || isLoadingPaginated}
+                  className="border-blue-500/30"
+                >
+                  <ChevronLeft className="h-4 w-4 mr-1" />
+                  Anterior
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={nextPage}
+                  disabled={!hasNextPage || isLoadingPaginated}
+                  className="border-blue-500/30"
+                >
+                  Próxima
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => goToPage(totalPages)}
+                  disabled={page === totalPages || isLoadingPaginated}
+                  className="border-blue-500/30"
+                >
+                  Última
+                </Button>
+              </div>
+            </div>
+          </FuturisticCard>
 
           {/* Modal */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
@@ -868,7 +526,7 @@ export default function Alunos() {
             </DialogContent>
           </Dialog>
 
-          {/* ⚡ PARTE 9: Modal Criar Acesso Oficial */}
+          {/* Modal Criar Acesso Oficial */}
           <CriarAcessoOficialModal 
             open={isCriarAcessoModalOpen}
             onOpenChange={setIsCriarAcessoModalOpen}
