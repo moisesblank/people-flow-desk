@@ -75,11 +75,27 @@ const getBaseTemplate = (titulo: string, conteudo: string, botaoTexto?: string, 
 
 const getEmailTemplate = (type: string, data: Record<string, any> = {}) => {
   const templates: Record<string, { subject: string; html: string }> = {
+    // Template ORIGINAL sem senha (retrocompatibilidade)
     welcome: {
       subject: "Seja bem-vindo(a) à equipe — Curso Moisés Medeiros 👊",
       html: getBaseTemplate("Bem-vindo(a) à equipe!",
         `<h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Colaborador(a)'}!</h2>
         <p style="margin:0 0 12px;">Seja muito bem-vindo(a) à equipe do Curso Moisés Medeiros 👊📚</p>
+        <p style="margin:0;">Vamos juntos manter — e elevar — o padrão. 💪🔥</p>`,
+        "Acessar Sistema", "https://pro.moisesmedeiros.com.br/gestaofc"),
+    },
+    // 🎯 P0 FIX: Template COM CREDENCIAIS para funcionários
+    welcome_staff: {
+      subject: "Suas credenciais de acesso — Curso Moisés Medeiros 👊",
+      html: getBaseTemplate("Bem-vindo(a) à equipe!",
+        `<h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">Olá, ${data.nome || 'Colaborador(a)'}!</h2>
+        <p style="margin:0 0 12px;">Seja muito bem-vindo(a) à equipe do Curso Moisés Medeiros 👊📚</p>
+        <p style="margin:0 0 16px;">Aqui estão suas credenciais de acesso ao sistema:</p>
+        <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;">
+          <p style="margin:0 0 8px;"><strong style="color:#E62B4A;">📧 Email:</strong> ${data.email || 'N/A'}</p>
+          <p style="margin:0;"><strong style="color:#E62B4A;">🔑 Senha:</strong> <code style="background:#2a2a2f;padding:4px 8px;border-radius:4px;font-family:monospace;color:#fff;">${data.senha || 'N/A'}</code></p>
+        </div>
+        <p style="margin:0 0 12px;color:#9aa0a6;font-size:13px;">⚠️ Por segurança, recomendamos que altere sua senha no primeiro acesso.</p>
         <p style="margin:0;">Vamos juntos manter — e elevar — o padrão. 💪🔥</p>`,
         "Acessar Sistema", "https://pro.moisesmedeiros.com.br/gestaofc"),
     },
