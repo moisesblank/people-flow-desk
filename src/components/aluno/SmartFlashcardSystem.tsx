@@ -3,6 +3,9 @@
 // Sistema de Repetição Espaçada Avançado
 // Lei I: Performance | Lei IV: Aprendizado Ótimo
 // ============================================
+// 
+// REFATORADO: Lógica FSRS movida para src/lib/algorithms/fsrs.ts
+// ============================================
 
 import { useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -16,33 +19,23 @@ import {
   ChevronRight, Trophy, Flame, CheckCircle2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { 
+  type Rating, 
+  type FlashcardState,
+  calculateNextInterval,
+  estimateXP,
+  isCorrect
+} from "@/lib/algorithms/fsrs";
 
-// FSRS Parameters (Free Spaced Repetition Scheduler)
-const FSRS_PARAMS = {
-  w: [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61],
-  requestRetention: 0.9,
-  maximumInterval: 36500,
-  initialStability: [0.4, 0.6, 2.4, 5.8], // Again, Hard, Good, Easy
-};
+// Re-export para compatibilidade
+export type { Rating };
 
-type Rating = 'again' | 'hard' | 'good' | 'easy';
-
-interface Flashcard {
+interface Flashcard extends FlashcardState {
   id: string;
   front: string;
   back: string;
   area: string;
   areaColor: string;
-  // FSRS state
-  stability: number;
-  difficulty: number;
-  elapsedDays: number;
-  scheduledDays: number;
-  reps: number;
-  lapses: number;
-  state: 'new' | 'learning' | 'review' | 'relearning';
-  lastReview?: Date;
-  dueDate?: Date;
 }
 
 interface FlashcardSessionProps {
@@ -57,46 +50,6 @@ interface SessionResult {
   incorrect: number;
   xpEarned: number;
   averageTime: number;
-}
-
-// Cálculos FSRS
-function calculateNextInterval(card: Flashcard, rating: Rating): { interval: number; stability: number; difficulty: number } {
-  const ratingMap: Record<Rating, number> = { again: 1, hard: 2, good: 3, easy: 4 };
-  const grade = ratingMap[rating];
-  
-  let newStability = card.stability;
-  let newDifficulty = card.difficulty;
-  
-  if (card.state === 'new') {
-    newStability = FSRS_PARAMS.initialStability[grade - 1];
-    newDifficulty = Math.min(10, Math.max(1, 5 - (grade - 3)));
-  } else {
-    // Fórmula FSRS para estabilidade
-    const retrievability = Math.exp(-card.elapsedDays / card.stability);
-    const stabilityFactor = Math.exp(FSRS_PARAMS.w[8]) * 
-      (11 - newDifficulty) * 
-      Math.pow(card.stability, -FSRS_PARAMS.w[9]) * 
-      (Math.exp(FSRS_PARAMS.w[10] * (1 - retrievability)) - 1);
-    
-    if (rating === 'again') {
-      newStability = Math.min(card.stability, FSRS_PARAMS.w[11] * Math.pow(newDifficulty, -FSRS_PARAMS.w[12]) * (Math.pow(card.stability + 1, FSRS_PARAMS.w[13]) - 1));
-    } else {
-      const hardPenalty = rating === 'hard' ? FSRS_PARAMS.w[15] : 1;
-      const easyBonus = rating === 'easy' ? FSRS_PARAMS.w[16] : 1;
-      newStability = card.stability * (1 + stabilityFactor * hardPenalty * easyBonus);
-    }
-    
-    // Atualizar dificuldade
-    const difficultyDelta = FSRS_PARAMS.w[6] * (grade - 3);
-    newDifficulty = Math.min(10, Math.max(1, newDifficulty - difficultyDelta));
-  }
-  
-  // Calcular intervalo
-  const desiredRetention = FSRS_PARAMS.requestRetention;
-  let interval = Math.round(newStability * Math.log(desiredRetention) / Math.log(0.9));
-  interval = Math.min(FSRS_PARAMS.maximumInterval, Math.max(1, interval));
-  
-  return { interval, stability: newStability, difficulty: newDifficulty };
 }
 
 export function SmartFlashcardSystem({ cards, onComplete, onCardReview }: FlashcardSessionProps) {

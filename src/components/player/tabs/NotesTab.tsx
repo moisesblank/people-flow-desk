@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { formatDateTime } from '@/utils/format';
 
 interface NotesTabProps {
   lessonId: string;
@@ -104,14 +105,8 @@ function NotesTab({ lessonId }: NotesTabProps) {
     toast({ title: "Excluída", description: "Anotação removida." });
   }, [notes, activeNote, saveNotes]);
 
-  const formatDate = (date: Date) => {
-    return new Intl.DateTimeFormat('pt-BR', {
-      day: '2-digit',
-      month: 'short',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
-  };
+  // REFATORADO: Usando função centralizada de @/utils/format
+  const formatDate = (date: Date) => formatDateTime(date);
 
   return (
     <div className="flex gap-4 h-[450px]">

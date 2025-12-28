@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useYouTubeLive, YouTubeVideo } from '@/hooks/useYouTubeLive';
 import { cn } from '@/lib/utils';
+import { formatRelativeTime } from '@/utils/format';
 
 interface YouTubeVideoGridProps {
   maxVideos?: number;
@@ -56,18 +57,17 @@ export const YouTubeVideoGrid: React.FC<YouTubeVideoGridProps> = ({
     return `${minutes}:${seconds.toString().padStart(2, '0')}`;
   };
 
+  // REFATORADO: Usando função centralizada de @/utils/format
+  // Wrapper para manter compatibilidade com formato específico do componente
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
-    const diff = now.getTime() - date.getTime();
+    const diffDays = Math.floor((now.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
     
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    if (days === 0) return 'Hoje';
-    if (days === 1) return 'Ontem';
-    if (days < 7) return `${days} dias atrás`;
-    if (days < 30) return `${Math.floor(days / 7)} semanas atrás`;
-    if (days < 365) return `${Math.floor(days / 30)} meses atrás`;
-    return `${Math.floor(days / 365)} anos atrás`;
+    if (diffDays === 0) return 'Hoje';
+    if (diffDays === 1) return 'Ontem';
+    
+    return formatRelativeTime(dateString);
   };
 
   const gridCols = {
