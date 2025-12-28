@@ -5,7 +5,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useGodMode } from '@/contexts/GodModeContext';
+import { useGodMode } from '@/stores/godModeStore';
 import { useNavigate } from 'react-router-dom';
 import { 
   Zap, X, Eye, EyeOff, 
