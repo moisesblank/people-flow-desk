@@ -4,7 +4,8 @@
 // + Sistema Universal de Anexos
 // ============================================
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useDebounce } from "@/hooks/usePerformance";
 import { motion } from "framer-motion";
 import {
   Plus,
@@ -200,9 +201,12 @@ function TaskForm({
 
 export default function Tarefas() {
   const [view, setView] = useState<"kanban" | "advanced" | "list">("advanced");
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
+  
+  // ⚡ ECONOMIA: Debounce de 300ms para reduzir refiltragens
+  const search = useDebounce(searchInput, 300);
 
   const { columns, isLoading } = useTasksKanban();
   const stats = useTasksStats();
@@ -300,8 +304,8 @@ export default function Tarefas() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 placeholder="Buscar tarefas..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="pl-9 w-64 bg-background/50 border-border/50 focus:border-cyan-500/50"
               />
             </div>
