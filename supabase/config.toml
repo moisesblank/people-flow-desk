@@ -260,3 +260,15 @@ verify_jwt = true
 # 🟢 Novo gateway centralizado de emails via RD Station
 [functions.rd-send-email]
 verify_jwt = false
+
+# --- Correios API e Notificações ---
+# 🟢 Correios integrado
+[functions.correios-api]
+verify_jwt = true
+
+[functions.correios-notify]
+verify_jwt = true
+
+# --- Email para Alunos (Admin) ---
+[functions.send-student-email]
+verify_jwt = true
