@@ -152,11 +152,15 @@ export const CACHE_PROFILES = {
     gcTime: 10 * 60 * 1000,
   },
   
-  // Dados em tempo real (sem cache)
+  // ⚠️ PATCH-LOOP: Perfil 'realtime' MUITO AGRESSIVO 
+  // ANTES: staleTime:0, refetchInterval:5000 (5s) = LOOP DE AUTOMAÇÃO
+  // DEPOIS: staleTime:30s, SEM refetchInterval (usa Realtime subscription)
+  // Componentes que precisam de tempo real devem usar Supabase Realtime, não polling
   realtime: {
-    staleTime: 0,
-    gcTime: 0,
-    refetchInterval: 5000,
+    staleTime: 30_000, // 30s - Realtime subscription invalida quando necessário
+    gcTime: 60_000,    // 1min garbage collection
+    // REMOVIDO: refetchInterval - causa LOOP DE AUTOMAÇÃO
+    // Use supabase.channel().on('postgres_changes') para tempo real
   },
 } as const;
 

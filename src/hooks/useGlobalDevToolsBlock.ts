@@ -459,9 +459,9 @@ export function useGlobalDevToolsBlock() {
     document.addEventListener('visibilitychange', handleVisibilityChange);
     
     // Verificar DevTools periodicamente
-    // 🏛️ LEI I: Aumentado de 3s para 10s para MÁXIMA economia de CPU
-    // A proteção por teclas já é suficiente - polling é backup
-    const devToolsInterval = setInterval(detectDevTools, 10000);
+    // 🏛️ PATCH-LOOP: Aumentado de 10s para 60s para MÁXIMA economia de CPU
+    // A proteção por teclas (F12, Ctrl+Shift+I) já é suficiente - polling é backup de último recurso
+    const devToolsInterval = setInterval(detectDevTools, 60000);
 
     return () => {
       document.removeEventListener('keydown', handleKeyDown, true);
