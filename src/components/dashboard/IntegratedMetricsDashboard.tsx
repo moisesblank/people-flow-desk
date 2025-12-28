@@ -532,6 +532,7 @@ function formatNumber(num: number): string {
 
 // Usa formatação centralizada de @/utils
 import { formatCurrencyFromReais } from "@/utils";
+import { useFinancialSummary } from "@/hooks/useMonthlyFinancials";
 const formatCurrency = formatCurrencyFromReais;
 
 // Main Dashboard Component
@@ -539,37 +540,39 @@ export function IntegratedMetricsDashboard() {
   const { data, isLoading, syncYouTube, syncInstagram, syncFacebookAds, syncTikTok, syncAll, refetch } = useIntegratedMetrics();
   const [isSyncing, setIsSyncing] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
-  const [financialData, setFinancialData] = useState({ receita: 0, despesa: 0, saldo: 0 });
   const [taskData, setTaskData] = useState({ pending: 0, overdue: 0 });
 
-  // Fetch financial and task data for AI insights
+  // =====================================================
+  // REFATORADO: Usar hook unificado para dados financeiros
+  // Substitui 30 linhas de query duplicada
+  // =====================================================
+  const { data: financialSummary } = useFinancialSummary();
+  const financialData = useMemo(() => ({
+    receita: financialSummary?.receita || 0,
+    despesa: financialSummary?.despesa || 0,
+    saldo: financialSummary?.saldo || 0,
+  }), [financialSummary]);
+
+  // Fetch task data for AI insights (específico deste componente)
   useEffect(() => {
-    const fetchInsightsData = async () => {
+    const fetchTaskData = async () => {
       try {
         const now = new Date();
-        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
-        
-        // Fetch financial data
-        const [entradasResult, gastosResult, tasksResult] = await Promise.all([
-          supabase.from("entradas").select("valor").gte("data", firstDayOfMonth),
-          supabase.from("gastos").select("valor").gte("data", firstDayOfMonth),
-          supabase.from("calendar_tasks").select("*").eq("is_completed", false)
-        ]);
+        const { data: tasksResult } = await supabase
+          .from("calendar_tasks")
+          .select("id, task_date")
+          .eq("is_completed", false);
 
-        const receita = entradasResult.data?.reduce((sum, e) => sum + Number(e.valor || 0), 0) || 0;
-        const despesa = gastosResult.data?.reduce((sum, g) => sum + Number(g.valor || 0), 0) || 0;
-        setFinancialData({ receita, despesa, saldo: receita - despesa });
-
-        const pending = tasksResult.data?.length || 0;
-        const overdue = tasksResult.data?.filter(t => new Date(t.task_date) < now).length || 0;
+        const pending = tasksResult?.length || 0;
+        const overdue = tasksResult?.filter(t => new Date(t.task_date) < now).length || 0;
         setTaskData({ pending, overdue });
       } catch (err) {
-        console.error("Error fetching insights data:", err);
+        console.error("Error fetching task data:", err);
       }
     };
 
-    fetchInsightsData();
-    const interval = setInterval(fetchInsightsData, 5 * 60 * 1000);
+    fetchTaskData();
+    const interval = setInterval(fetchTaskData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
