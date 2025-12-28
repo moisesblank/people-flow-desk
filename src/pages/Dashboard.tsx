@@ -107,7 +107,7 @@ import { IntegracoesStatusWidget } from "@/components/dashboard/IntegracoesStatu
 import { QuickActionsV2 } from "@/components/dashboard/QuickActionsV2";
 import { AlertasSistemaWidget } from "@/components/dashboard/AlertasSistemaWidget";
 import { AlunosRealtimeWidget } from "@/components/dashboard/AlunosRealtimeWidget";
-import { WordPressSyncWidget } from "@/components/dashboard/WordPressSyncWidget";
+// WordPressSyncWidget removido - WordPress desativado em 2025-12-28
 import { ChurnRiskAlert } from "@/components/dashboard/ChurnRiskAlert";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

@@ -56,7 +56,7 @@ const Configuracoes = lazy(() => import("@/pages/Configuracoes"));
 const GestaoEquipe = lazy(() => import("@/pages/GestaoEquipe"));
 const GestaoSite = lazy(() => import("@/pages/GestaoSite"));
 const GestaoDispositivos = lazy(() => import("@/pages/GestaoDispositivos"));
-const AuditoriaAcessos = lazy(() => import("@/pages/AuditoriaAcessos"));
+// AuditoriaAcessos removido - WordPress desativado em 2025-12-28
 
 // Owner Only
 const CentralMonitoramento = lazy(() => import("@/pages/CentralMonitoramento"));
@@ -129,7 +129,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc/gestao-equipe" element={<ProtectedPage><GestaoEquipe /></ProtectedPage>} />
     <Route path="/gestaofc/gestao-site" element={<ProtectedPage><GestaoSite /></ProtectedPage>} />
     <Route path="/gestaofc/gestao-dispositivos" element={<ProtectedPage><GestaoDispositivos /></ProtectedPage>} />
-    <Route path="/gestaofc/auditoria-acessos" element={<ProtectedPage><AuditoriaAcessos /></ProtectedPage>} />
+    {/* Rota auditoria-acessos removida - WordPress desativado em 2025-12-28 */}
     
     {/* Owner Only */}
     <Route path="/gestaofc/central-monitoramento" element={<ProtectedPage><CentralMonitoramento /></ProtectedPage>} />

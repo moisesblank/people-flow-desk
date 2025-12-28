@@ -1,7 +1,7 @@
 // ============================================
 // HOOK: useAlunosData
-// Extraído de Alunos.tsx (881 linhas)
-// Centraliza lógica de dados de alunos
+// Versão LIMPA - WordPress removido em 2025-12-28
+// Centraliza lógica de dados de alunos (apenas Supabase)
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -18,27 +18,6 @@ export interface Student {
   role?: 'beta' | 'aluno_gratuito' | null;
 }
 
-export interface WordPressUser {
-  id: string;
-  wp_user_id: number;
-  email: string;
-  nome: string;
-  grupos: string[];
-  status_acesso: string;
-  tem_pagamento_confirmado: boolean;
-  data_cadastro_wp: string | null;
-  ultimo_login: string | null;
-  updated_at: string;
-  role?: 'beta' | 'aluno_gratuito' | null;
-}
-
-export interface WpStats {
-  total: number;
-  ativos: number;
-  comPagamento: number;
-  semPagamento: number;
-}
-
 export interface AlunoFormData {
   nome: string;
   email: string;
@@ -47,95 +26,13 @@ export interface AlunoFormData {
 }
 
 interface UseAlunosDataReturn {
-  wpUsers: WordPressUser[];
-  wpStats: WpStats;
   isLoading: boolean;
-  isSyncing: boolean;
-  fetchWpData: () => Promise<void>;
-  syncWordPress: () => Promise<void>;
   saveStudent: (formData: AlunoFormData, editingItem: Student | null) => Promise<boolean>;
   deleteStudent: (id: string) => Promise<boolean>;
 }
 
 export function useAlunosData(refetchPaginated: () => void): UseAlunosDataReturn {
-  const [wpUsers, setWpUsers] = useState<WordPressUser[]>([]);
-  const [wpStats, setWpStats] = useState<WpStats>({
-    total: 0,
-    ativos: 0,
-    comPagamento: 0,
-    semPagamento: 0
-  });
-  const [isLoading, setIsLoading] = useState(true);
-  const [isSyncing, setIsSyncing] = useState(false);
-
-  const fetchWpData = useCallback(async () => {
-    try {
-      const { data: wpData, error: wpError } = await supabase
-        .from("usuarios_wordpress_sync")
-        .select("id, wp_user_id, email, nome, status_acesso, grupos, tem_pagamento_confirmado, data_cadastro_wp, ultimo_login, updated_at")
-        .order("updated_at", { ascending: false })
-        .limit(100);
-      
-      if (wpError) {
-        console.error("Error fetching WP users:", wpError);
-        return;
-      }
-      
-      const wpUsersMapped: WordPressUser[] = (wpData || []).map(u => ({
-        id: u.id,
-        wp_user_id: u.wp_user_id,
-        email: u.email,
-        nome: u.nome || '',
-        grupos: Array.isArray(u.grupos) ? (u.grupos as unknown as string[]) : [],
-        status_acesso: u.status_acesso || 'aguardando_pagamento',
-        tem_pagamento_confirmado: u.tem_pagamento_confirmado || false,
-        data_cadastro_wp: u.data_cadastro_wp,
-        ultimo_login: u.ultimo_login,
-        updated_at: u.updated_at,
-        role: null,
-      }));
-      setWpUsers(wpUsersMapped);
-
-      // Calculate stats via count queries
-      const [totalRes, ativosRes, comPagRes] = await Promise.all([
-        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }),
-        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }).eq('status_acesso', 'ativo'),
-        supabase.from("usuarios_wordpress_sync").select('*', { count: 'exact', head: true }).eq('tem_pagamento_confirmado', true),
-      ]);
-
-      setWpStats({
-        total: totalRes.count || 0,
-        ativos: ativosRes.count || 0,
-        comPagamento: comPagRes.count || 0,
-        semPagamento: (totalRes.count || 0) - (comPagRes.count || 0)
-      });
-    } catch (error) {
-      console.error("Error fetching WP data:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
-
-  const syncWordPress = useCallback(async () => {
-    setIsSyncing(true);
-    try {
-      const { data, error } = await supabase.functions.invoke('sync-wordpress-users');
-      
-      if (error) throw error;
-      
-      toast.success(`✅ Sincronização concluída!`, {
-        description: `${data?.total_synced || 0} usuários sincronizados`
-      });
-      
-      await fetchWpData();
-      refetchPaginated();
-    } catch (error) {
-      console.error("Sync error:", error);
-      toast.error("Erro ao sincronizar com WordPress");
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [fetchWpData, refetchPaginated]);
+  const [isLoading, setIsLoading] = useState(false);
 
   const saveStudent = useCallback(async (formData: AlunoFormData, editingItem: Student | null): Promise<boolean> => {
     if (!formData.nome.trim()) {
@@ -148,6 +45,7 @@ export function useAlunosData(refetchPaginated: () => void): UseAlunosDataReturn
       return false;
     }
 
+    setIsLoading(true);
     try {
       if (editingItem) {
         const { error } = await supabase
@@ -190,42 +88,37 @@ export function useAlunosData(refetchPaginated: () => void): UseAlunosDataReturn
       }
 
       refetchPaginated();
-      await fetchWpData();
       return true;
     } catch (error: any) {
       console.error("Error saving student:", error);
       toast.error(error.message || "Erro ao salvar");
       return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [fetchWpData, refetchPaginated]);
+  }, [refetchPaginated]);
 
   const deleteStudent = useCallback(async (id: string): Promise<boolean> => {
+    setIsLoading(true);
     try {
       const { error } = await supabase.from("alunos").delete().eq("id", id);
       if (error) throw error;
       toast.success("Aluno removido!");
       refetchPaginated();
-      await fetchWpData();
       return true;
     } catch (error) {
       console.error("Error deleting student:", error);
       toast.error("Erro ao remover");
       return false;
+    } finally {
+      setIsLoading(false);
     }
-  }, [fetchWpData, refetchPaginated]);
+  }, [refetchPaginated]);
 
-  // Initial fetch
-  useEffect(() => {
-    fetchWpData();
-  }, [fetchWpData]);
-
-  // Realtime subscription
+  // Realtime subscription for alunos changes
   useEffect(() => {
     const channel = supabase
       .channel('gestao-alunos-realtime-hook')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'usuarios_wordpress_sync' }, () => {
-        fetchWpData();
-      })
       .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => {
         refetchPaginated();
       })
@@ -240,25 +133,19 @@ export function useAlunosData(refetchPaginated: () => void): UseAlunosDataReturn
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchWpData, refetchPaginated]);
+  }, [refetchPaginated]);
 
   return {
-    wpUsers,
-    wpStats,
     isLoading,
-    isSyncing,
-    fetchWpData,
-    syncWordPress,
     saveStudent,
     deleteStudent,
   };
 }
 
-// Hook para filtragem de alunos por universo
+// Hook para filtragem de alunos por universo (sem WordPress)
 export function useAlunosFiltering(
   students: Student[],
-  wpUsers: WordPressUser[],
-  universeFilters: { filterFn: (s: any) => boolean; wpFilterFn?: (u: any) => boolean } | null,
+  universeFilters: { filterFn: (s: any) => boolean } | null,
   expectedRole: 'beta' | 'aluno_gratuito' | null
 ) {
   const filteredStudents = useMemo(() => {
@@ -275,31 +162,5 @@ export function useAlunosFiltering(
     });
   }, [students, universeFilters, expectedRole]);
 
-  const filteredWpUsers = useMemo(() => {
-    if (!universeFilters || !universeFilters.wpFilterFn) return wpUsers;
-    
-    return wpUsers.filter(u => {
-      const passesUniverseFilter = universeFilters.wpFilterFn!(u);
-      if (!passesUniverseFilter) return false;
-      
-      if (expectedRole) {
-        return u.role === expectedRole;
-      }
-      return true;
-    });
-  }, [wpUsers, universeFilters, expectedRole]);
-
-  const filteredWpStats = useMemo(() => {
-    const ativos = filteredWpUsers.filter(u => u.status_acesso === 'ativo').length;
-    const comPagamento = filteredWpUsers.filter(u => u.tem_pagamento_confirmado).length;
-    const semPagamento = filteredWpUsers.filter(u => !u.tem_pagamento_confirmado && u.grupos.length > 0).length;
-    return {
-      total: filteredWpUsers.length,
-      ativos,
-      comPagamento,
-      semPagamento
-    };
-  }, [filteredWpUsers]);
-
-  return { filteredStudents, filteredWpUsers, filteredWpStats };
+  return { filteredStudents };
 }

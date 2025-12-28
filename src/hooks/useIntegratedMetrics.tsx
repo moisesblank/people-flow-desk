@@ -71,30 +71,7 @@ export interface HotmartMetrics {
   receitaHoje: number;
 }
 
-export interface WordPressEvent {
-  id: string;
-  event_type: string;
-  event_data: Record<string, unknown>;
-  user_email: string | null;
-  user_name: string | null;
-  user_ip: string | null;
-  page_url: string | null;
-  created_at: string;
-}
-
-export interface WordPressMetrics {
-  id: string;
-  date: string;
-  total_users: number;
-  new_registrations: number;
-  active_users: number;
-  page_views: number;
-  unique_visitors: number;
-  bounce_rate: number;
-  avg_session_duration: number;
-  top_pages: unknown[];
-  traffic_sources: unknown[];
-}
+// WordPress interfaces removidas em 2025-12-28 - WordPress desativado
 
 export interface GoogleAnalyticsMetrics {
   id: string;
@@ -163,10 +140,7 @@ export interface IntegratedData {
   facebookAds: FacebookAdsMetrics[];
   tiktok: TikTokMetrics | null;
   hotmart: HotmartMetrics;
-  wordpress: {
-    metrics: WordPressMetrics | null;
-    recentEvents: WordPressEvent[];
-  };
+  // WordPress removido em 2025-12-28
   googleAnalytics: GoogleAnalyticsMetrics | null;
   woocommerce: {
     metrics: WooCommerceDailyMetrics | null;
