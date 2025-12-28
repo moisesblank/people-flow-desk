@@ -9,10 +9,12 @@
 
 /**
  * Roles válidas para alunos (CONSTITUIÇÃO v10.x)
- * - beta: aluno pagante com acesso completo
+ * - beta: aluno pagante com acesso completo (permanente)
  * - aluno_gratuito: cadastro grátis com acesso limitado
+ * - aluno_presencial: aluno presencial com acesso premium (restrições futuras)
+ * - beta_expira: beta com data de expiração (converte para aluno_gratuito)
  */
-export type StudentRole = 'beta' | 'aluno_gratuito';
+export type StudentRole = 'beta' | 'aluno_gratuito' | 'aluno_presencial' | 'beta_expira';
 
 /**
  * Endereço completo do aluno (campos opcionais)
@@ -104,7 +106,9 @@ export function isValidStudentIdentity(data: unknown): data is StudentIdentityCo
 /**
  * Roles válidas para alunos (array para validação)
  */
-export const STUDENT_ROLES: readonly StudentRole[] = ['beta', 'aluno_gratuito'] as const;
+export const STUDENT_ROLES: readonly StudentRole[] = [
+  'beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira'
+] as const;
 
 /**
  * Labels amigáveis para as roles de aluno
@@ -112,6 +116,8 @@ export const STUDENT_ROLES: readonly StudentRole[] = ['beta', 'aluno_gratuito'] 
 export const STUDENT_ROLE_LABELS: Record<StudentRole, string> = {
   beta: 'Aluno Beta (Premium)',
   aluno_gratuito: 'Aluno Gratuito',
+  aluno_presencial: 'Aluno Presencial',
+  beta_expira: 'Beta com Expiração',
 } as const;
 
 /**
