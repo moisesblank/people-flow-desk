@@ -15282,6 +15282,7 @@ export type Database = {
       cleanup_expired_timeouts: { Args: never; Returns: number }
       cleanup_expired_video_sessions: { Args: never; Returns: number }
       cleanup_expired_video_sessions_omega: { Args: never; Returns: number }
+      cleanup_old_audit_logs: { Args: never; Returns: number }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
