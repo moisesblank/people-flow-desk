@@ -90,21 +90,25 @@ const ProfilePage = () => {
   const { gamification, levelInfo, userRank, isLoading: isLoadingGamification } = useGamification();
   const { data: achievements, isLoading: isLoadingAchievements } = useUserAchievements();
 
-  // ✅ P0 FIX: Consolidar 2 queries em 1 com batching (1 round-trip)
+  // ✅ P0 FIX: Consolidar queries em 1 com batching (1 round-trip)
+  // ✅ CONSTITUIÇÃO v10.x: expires_at vem de user_roles (fonte única)
   const { data: profileData, isLoading: isLoadingProfile } = useQuery({
     queryKey: ['user-profile-stats', user?.id],
     queryFn: async () => {
-      if (!user?.id) return { profile: null, studyStats: { lessonsCompleted: 0, coursesCompleted: 0, flashcardsCreated: 0 } };
+      if (!user?.id) return { profile: null, roleData: null, studyStats: { lessonsCompleted: 0, coursesCompleted: 0, flashcardsCreated: 0 } };
       
       // ✅ BATCHING: Todas as queries em paralelo, 1 round-trip
-      const [profileResult, lessonsResult, flashcardsResult] = await Promise.all([
+      const [profileResult, roleResult, lessonsResult, flashcardsResult] = await Promise.all([
         supabase.from('profiles').select('*').eq('id', user.id).single(),
+        // ✅ FONTE DA VERDADE: user_roles.expires_at
+        supabase.from('user_roles').select('role, expires_at').eq('user_id', user.id).maybeSingle(),
         supabase.from('lesson_progress').select('id', { count: 'exact' }).eq('user_id', user.id).eq('completed', true),
         supabase.from('study_flashcards').select('id', { count: 'exact' }).eq('user_id', user.id),
       ]);
 
       return {
         profile: profileResult.data,
+        roleData: roleResult.data, // { role, expires_at }
         studyStats: {
           lessonsCompleted: lessonsResult.count || 0,
           coursesCompleted: gamification?.courses_completed || 0,
@@ -118,6 +122,7 @@ const ProfilePage = () => {
 
   // ✅ Extrair dados do resultado consolidado
   const profile = profileData?.profile;
+  const roleData = profileData?.roleData; // { role, expires_at }
   const studyStats = profileData?.studyStats;
 
   const isLoading = isLoadingProfile || isLoadingGamification;
@@ -142,8 +147,10 @@ const ProfilePage = () => {
     month: 'long',
   });
 
-  const daysUntilExpiration = profile.access_expires_at
-    ? Math.ceil((new Date(profile.access_expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
+  // ✅ CONSTITUIÇÃO v10.x: expires_at vem de user_roles (fonte única)
+  // Só mostra expiração para role beta_expira
+  const daysUntilExpiration = (roleData?.role === 'beta_expira' && roleData?.expires_at)
+    ? Math.ceil((new Date(roleData.expires_at).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : null;
 
   const currentXP = gamification?.total_xp || profile.xp_total || 0;

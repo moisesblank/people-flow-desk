@@ -138,9 +138,11 @@ export const URL_MAP = {
   ALUNO_BETA: {
     host: 'pro.moisesmedeiros.com.br',
     paths: ['/alunos/*', '/comunidade'],
-    validacao: "role='beta' + access_expires_at válido",
-    descricao: 'Aluno PAGANTE com acesso a tudo da área + comunidade. Origem: Hotmart/Owner/Admin',
+    // CONSTITUIÇÃO v10.x: user_roles.expires_at é a fonte da verdade
+    validacao: "role IN ('beta', 'aluno_presencial', 'beta_expira') + user_roles.expires_at válido",
+    descricao: 'Aluno PREMIUM com acesso a tudo da área + comunidade. Origem: Hotmart/Owner/Admin',
     origem: ['hotmart_purchase', 'owner_created', 'admin_created', 'import'],
+    roles_validas: ['beta', 'aluno_presencial', 'beta_expira'],
   },
   FUNCIONARIO: {
     host: 'pro.moisesmedeiros.com.br', // MONO-DOMÍNIO
