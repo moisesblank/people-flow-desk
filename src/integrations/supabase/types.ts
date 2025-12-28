@@ -15450,6 +15450,7 @@ export type Database = {
             Returns: Json
           }
         | { Args: { p_session_token: string }; Returns: boolean }
+      expire_beta_roles: { Args: never; Returns: undefined }
       extend_beta_access: {
         Args: { _additional_days: number; _user_id: string }
         Returns: Json
