@@ -12949,6 +12949,8 @@ export type Database = {
           original_path: string
           original_size_bytes: number | null
           processed_at: string | null
+          rating_average: number | null
+          rating_count: number | null
           required_roles: string[]
           status: Database["public"]["Enums"]["web_book_status"]
           subtitle: string | null
@@ -12984,6 +12986,8 @@ export type Database = {
           original_path: string
           original_size_bytes?: number | null
           processed_at?: string | null
+          rating_average?: number | null
+          rating_count?: number | null
           required_roles?: string[]
           status?: Database["public"]["Enums"]["web_book_status"]
           subtitle?: string | null
@@ -13019,6 +13023,8 @@ export type Database = {
           original_path?: string
           original_size_bytes?: number | null
           processed_at?: string | null
+          rating_average?: number | null
+          rating_count?: number | null
           required_roles?: string[]
           status?: Database["public"]["Enums"]["web_book_status"]
           subtitle?: string | null
