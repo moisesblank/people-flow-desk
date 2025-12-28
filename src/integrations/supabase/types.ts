@@ -12275,16 +12275,19 @@ export type Database = {
       }
       user_roles: {
         Row: {
+          expires_at: string | null
           id: string
           role: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Insert: {
+          expires_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id: string
         }
         Update: {
+          expires_at?: string | null
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
@@ -16642,6 +16645,8 @@ export type Database = {
         | "aluno_gratuito"
         | "moderator"
         | "user"
+        | "aluno_presencial"
+        | "beta_expira"
       asset_status: "pending" | "processing" | "ready" | "error" | "archived"
       asset_type: "pdf" | "ebook" | "worksheet" | "video" | "image" | "audio"
       attack_type:
@@ -16999,6 +17004,8 @@ export const Constants = {
         "aluno_gratuito",
         "moderator",
         "user",
+        "aluno_presencial",
+        "beta_expira",
       ],
       asset_status: ["pending", "processing", "ready", "error", "archived"],
       asset_type: ["pdf", "ebook", "worksheet", "video", "image", "audio"],
