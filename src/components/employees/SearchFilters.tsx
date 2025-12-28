@@ -1,6 +1,8 @@
+import { useState, useEffect } from "react";
 import { Search, Filter, X, SlidersHorizontal } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Input } from "@/components/ui/input";
+import { useDebounce } from "@/hooks/usePerformance";
 import { Button } from "@/components/ui/button";
 import {
   Select,
@@ -34,6 +36,23 @@ export function SearchFilters({
   activeFiltersCount,
   onClearFilters,
 }: SearchFiltersProps) {
+  // ⚡ ECONOMIA: Debounce de 300ms para reduzir queries
+  const [localSearch, setLocalSearch] = useState(search);
+  const debouncedSearch = useDebounce(localSearch, 300);
+
+  // Propagar apenas o valor debounced
+  useEffect(() => {
+    if (debouncedSearch !== search) {
+      onSearchChange(debouncedSearch);
+    }
+  }, [debouncedSearch, search, onSearchChange]);
+
+  // Sincronizar quando limpar externamente
+  useEffect(() => {
+    if (search === "" && localSearch !== "") {
+      setLocalSearch("");
+    }
+  }, [search]);
   return (
     <motion.div
       initial={{ opacity: 0, y: -10 }}
@@ -46,17 +65,20 @@ export function SearchFilters({
           <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
           <Input
             placeholder="Buscar por nome, função ou email..."
-            value={search}
-            onChange={(e) => onSearchChange(e.target.value)}
+            value={localSearch}
+            onChange={(e) => setLocalSearch(e.target.value)}
             className="pl-11 pr-10 h-12 search-input rounded-xl"
           />
           <AnimatePresence>
-            {search && (
+            {localSearch && (
               <motion.button
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.8 }}
-                onClick={() => onSearchChange("")}
+                onClick={() => {
+                  setLocalSearch("");
+                  onSearchChange("");
+                }}
                 className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-full hover:bg-secondary transition-colors"
               >
                 <X className="h-4 w-4 text-muted-foreground" />
@@ -111,10 +133,10 @@ export function SearchFilters({
               Filtros ativos:
             </span>
             
-            {search && (
+            {localSearch && (
               <Badge variant="secondary" className="gap-1 pl-2 pr-1 py-1 rounded-lg">
-                Busca: "{search.slice(0, 15)}{search.length > 15 ? '...' : ''}"
-                <button onClick={() => onSearchChange("")} className="ml-1 hover:bg-muted rounded p-0.5">
+                Busca: "{localSearch.slice(0, 15)}{localSearch.length > 15 ? '...' : ''}"
+                <button onClick={() => { setLocalSearch(""); onSearchChange(""); }} className="ml-1 hover:bg-muted rounded p-0.5">
                   <X className="h-3 w-3" />
                 </button>
               </Badge>

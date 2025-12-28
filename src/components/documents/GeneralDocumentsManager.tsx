@@ -5,6 +5,7 @@
 // ============================================
 
 import { useState, useCallback, useRef, useEffect } from "react";
+import { useDebounce } from "@/hooks/usePerformance";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useOptimisticMutation } from "@/hooks/useSubspaceCommunication";
 import { motion, AnimatePresence } from "framer-motion";
@@ -271,7 +272,9 @@ export function GeneralDocumentsManager() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   
   // State
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  // ⚡ ECONOMIA: Debounce de 300ms para reduzir queries ao banco
+  const search = useDebounce(searchInput, 300);
   const [categoryFilter, setCategoryFilter] = useState<string>("all");
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [sortOrder, setSortOrder] = useState<"desc" | "asc">("desc");
@@ -718,8 +721,8 @@ export function GeneralDocumentsManager() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Buscar por título, nome do arquivo ou conteúdo extraído..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="pl-10 h-11"
             />
           </div>

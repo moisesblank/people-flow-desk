@@ -6,6 +6,7 @@
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
+import { useDebounce } from "@/hooks/usePerformance";
 import { VirtualListSimple } from "@/components/performance/VirtualTable";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
@@ -173,7 +174,9 @@ export default function Permissoes() {
   const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingAudit, setIsLoadingAudit] = useState(false);
-  const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  // ⚡ ECONOMIA: Debounce de 300ms para reduzir refiltragens
+  const search = useDebounce(searchInput, 300);
   const [updatingUserId, setUpdatingUserId] = useState<string | null>(null);
   const [isOwner, setIsOwner] = useState(false);
   const [activeTab, setActiveTab] = useState("usuarios");
@@ -442,8 +445,8 @@ export default function Permissoes() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Buscar por nome ou email..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  value={searchInput}
+                  onChange={(e) => setSearchInput(e.target.value)}
                   className="pl-10 bg-secondary/30 border-border/50"
                 />
               </div>
