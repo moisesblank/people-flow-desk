@@ -1,12 +1,16 @@
 // ============================================
-// TRAMON v8.1 - ACADEMIA QUANTUM
-// Sistema Neural de Gestão de Alunos
-// WordPress removido em 2025-12-28
+// GESTÃO DE ALUNOS — LISTA UNIFICADA v2.0
+// BLOCK 2: Todos alunos (pagos + não pagos) juntos
+// 100/página, ordem alfabética, busca global
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
-import { Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, Brain, RefreshCw, AlertTriangle, CheckCircle, XCircle, Crown, ArrowLeft, UserPlus, ChevronLeft, ChevronRight } from "lucide-react";
+import { 
+  Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, 
+  UserPlus, ChevronLeft, ChevronRight, Search, Crown, Shield,
+  CheckCircle, XCircle, Clock, AlertCircle
+} from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
 import { FuturisticCard } from "@/components/ui/futuristic-card";
@@ -17,143 +21,259 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { StudentAnalytics } from "@/components/students/StudentAnalytics";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
-import { format } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import { VirtualTable } from "@/components/performance/VirtualTable";
 import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
-import { useAlunosPaginados } from "@/hooks/useAlunosPaginados";
-import { 
-  AlunosUniverseSelector, 
-  AlunoUniverseType, 
-  AlunoSelectionState,
-  getUniverseFilters,
-  parseSelectionFromUrl,
-  updateUrlWithSelection,
-  ALUNO_UNIVERSE_OPTIONS,
-  ONLINE_PRODUCT_OPTIONS
-} from "@/components/students/AlunosUniverseSelector";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+// ============================================
+// TYPES
+// ============================================
 
 interface Student {
   id: string;
   nome: string;
   email: string;
-  curso: string;
   status: string;
-  fonte?: string;
-  role?: 'beta' | 'aluno_gratuito' | null;
+  fonte: string | null;
+  role: 'beta' | 'aluno_gratuito' | null;
+  created_at: string;
+}
+
+interface AlunosContadores {
+  total: number;
+  ativos: number;
+  concluidos: number;
+  pendentes: number;
+  cancelados: number;
+  beta: number;
+  gratuito: number;
 }
 
 const STATUS_OPTIONS = ["Ativo", "Concluído", "Pendente", "Cancelado"];
 
-export default function Alunos() {
-  // ============================================
-  // Estado de pré-seleção de universo + produto
-  // null = tela de seleção, valor = gestão filtrada
-  // Persistência via querystring
-  // ============================================
-  const [selection, setSelection] = useState<AlunoSelectionState | null>(() => {
-    return parseSelectionFromUrl();
-  });
-  
-  const handleSelectionChange = (newSelection: AlunoSelectionState | null) => {
-    setSelection(newSelection);
-    updateUrlWithSelection(newSelection);
-  };
-  
-  // Converter universo para filtro A/B/C/D
-  const universoFiltro = useMemo(() => {
-    if (!selection) return null;
-    switch (selection.universe) {
-      case 'presencial': return 'A' as const;
-      case 'presencial_online': return 'B' as const;
-      case 'online': return 'C' as const;
-      case 'registrados': return 'D' as const;
-      default: return null;
-    }
-  }, [selection]);
+// ============================================
+// CONSTANTS — BLOCK 2 COMPLIANCE
+// ============================================
 
-  // Hook de paginação server-side
-  const {
-    alunos: paginatedStudents,
-    contadores,
-    page,
-    totalPages,
-    hasNextPage,
-    hasPrevPage,
-    goToPage,
-    nextPage,
-    prevPage,
-    isLoading: isLoadingPaginated,
-    refetch: refetchPaginated,
-  } = useAlunosPaginados({
-    pageSize: 50,
-    universoFiltro,
-  });
+const PAGE_SIZE = 100; // BLOCK 2: 100 por página
+const STALE_TIME = 30_000;
+
+// ============================================
+// UNIVERSOS — Apenas visual, não fragmenta lista
+// ============================================
+
+const UNIVERSO_LABELS = {
+  presencial: { label: 'Presencial', color: 'blue', icon: '📍' },
+  online: { label: 'Online', color: 'cyan', icon: '🌐' },
+  registrados: { label: 'Registrado', color: 'green', icon: '✓' },
+  hibrido: { label: 'Híbrido', color: 'purple', icon: '🔀' },
+} as const;
+
+// Derivar label do aluno baseado em dados existentes
+function deriveStudentLabel(student: Student): keyof typeof UNIVERSO_LABELS {
+  // Role-based first
+  if (student.role === 'aluno_gratuito') return 'registrados';
   
-  const [isLoading, setIsLoading] = useState(false);
+  // Fonte-based
+  const fonte = student.fonte?.toLowerCase() || '';
+  if (fonte.includes('presencial')) return 'presencial';
+  if (fonte.includes('híbrido') || fonte.includes('hibrido')) return 'hibrido';
+  
+  // Default: online para pagantes
+  if (student.role === 'beta') return 'online';
+  
+  return 'registrados';
+}
+
+// ============================================
+// MAIN COMPONENT
+// ============================================
+
+export default function Alunos() {
+  const queryClient = useQueryClient();
+  
+  // Paginação
+  const [page, setPage] = useState(1);
+  
+  // Busca global
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  // Modais
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<Student | null>(null);
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
-  
-  // Modal de Criar Acesso Oficial
   const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
 
-  // Converter alunos paginados para formato Student
-  const students: Student[] = useMemo(() => {
-    return paginatedStudents.map(a => ({
-      id: a.id,
-      nome: a.nome,
-      email: a.email,
-      curso: '',
-      status: a.status,
-      fonte: a.fonte || undefined,
-      role: a.role,
-    }));
-  }, [paginatedStudents]);
+  // Debounce search (300ms)
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedSearch(searchTerm);
+      setPage(1); // Reset page on search
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [searchTerm]);
 
-  // Função para refetch
-  const fetchData = useCallback(() => {
-    refetchPaginated();
-  }, [refetchPaginated]);
+  // ============================================
+  // QUERY 1: Contadores agregados (Zero N+1)
+  // ============================================
+  const contadoresQuery = useQuery({
+    queryKey: ['alunos-contadores-unified'],
+    queryFn: async (): Promise<AlunosContadores> => {
+      const [
+        totalResult,
+        ativosResult,
+        concluidosResult,
+        pendentesResult,
+        canceladosResult,
+        betaResult,
+        gratuitoResult,
+      ] = await Promise.all([
+        supabase.from('alunos').select('*', { count: 'exact', head: true }),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'ativo'),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'concluído'),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'pendente'),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'cancelado'),
+        supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'beta'),
+        supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'aluno_gratuito'),
+      ]);
 
-  // ⚡ FIX: Role é informativo, NÃO filtro obrigatório
-  // Alunos cadastrados aparecem mesmo sem role associada
-  const expectedRole = useMemo(() => {
-    if (!selection) return null;
-    // Role é apenas para exibição/badge, não para filtro
-    if (selection.universe === 'registrados') return 'aluno_gratuito';
-    return 'beta';
-  }, [selection]);
+      return {
+        total: totalResult.count || 0,
+        ativos: ativosResult.count || 0,
+        concluidos: concluidosResult.count || 0,
+        pendentes: pendentesResult.count || 0,
+        cancelados: canceladosResult.count || 0,
+        beta: betaResult.count || 0,
+        gratuito: gratuitoResult.count || 0,
+      };
+    },
+    staleTime: STALE_TIME,
+  });
 
-  const universeFilters = useMemo(() => {
-    if (!selection) return null;
-    return getUniverseFilters(selection);
-  }, [selection]);
+  // ============================================
+  // QUERY 2: Alunos paginados — TODOS juntos
+  // BLOCK 2: Ordenação alfabética (pt-BR), 100/página
+  // ============================================
+  const alunosQuery = useQuery({
+    queryKey: ['alunos-unified', page, debouncedSearch],
+    queryFn: async (): Promise<{ data: Student[]; count: number }> => {
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
 
-  // ⚡ FIX FINAL: Não filtrar por role - mostrar TODOS os alunos
-  // O filterFn do universo já está corrigido para ser permissivo
-  const filteredStudents = useMemo(() => {
-    // Se não há seleção de universo, retorna todos
-    if (!universeFilters) return students;
-    
-    // Aplicar filtro de universo (presencial/online)
-    // O filtro agora é permissivo: online aceita qualquer fonte exceto 'presencial'
-    return students.filter(s => universeFilters.filterFn(s));
-  }, [students, universeFilters]);
+      // Query base — TODOS os alunos (pagos + não pagos)
+      let query = supabase
+        .from('alunos')
+        .select('id, nome, email, status, fonte, created_at', { count: 'exact' });
 
-  // Stats recalculados
-  const ativos = contadores.ativos;
-  const concluidos = contadores.concluidos;
+      // Busca global: nome OU email (case-insensitive, partial match)
+      if (debouncedSearch.trim()) {
+        query = query.or(`nome.ilike.%${debouncedSearch}%,email.ilike.%${debouncedSearch}%`);
+      }
 
+      // BLOCK 2: Ordenação alfabética por nome
+      query = query
+        .order('nome', { ascending: true })
+        .range(from, to);
+
+      const { data, count, error } = await query;
+      if (error) throw error;
+
+      // Buscar roles apenas para emails desta página (evita N+1)
+      const emails = (data || []).map(a => a.email?.toLowerCase()).filter(Boolean);
+      let roleMap: Record<string, 'beta' | 'aluno_gratuito'> = {};
+      
+      if (emails.length > 0) {
+        const { data: rolesData } = await supabase
+          .from('user_roles')
+          .select(`role, profiles!inner(email)`)
+          .in('role', ['beta', 'aluno_gratuito']);
+
+        (rolesData || []).forEach((r: any) => {
+          const email = r.profiles?.email?.toLowerCase();
+          if (email && emails.includes(email)) {
+            // Beta tem prioridade sobre aluno_gratuito
+            if (roleMap[email] !== 'beta') {
+              roleMap[email] = r.role as 'beta' | 'aluno_gratuito';
+            }
+          }
+        });
+      }
+
+      const alunos: Student[] = (data || []).map(a => ({
+        id: a.id,
+        nome: a.nome,
+        email: a.email || '',
+        status: a.status || 'Ativo',
+        fonte: a.fonte || null,
+        role: roleMap[(a.email || '').toLowerCase()] || null,
+        created_at: a.created_at || '',
+      }));
+
+      return { data: alunos, count: count || 0 };
+    },
+    staleTime: STALE_TIME,
+  });
+
+  // ============================================
+  // REALTIME — Refetch imediato
+  // ============================================
+  useEffect(() => {
+    const channel = supabase
+      .channel('gestao-alunos-unified-realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'alunos' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['alunos-unified'] });
+        queryClient.invalidateQueries({ queryKey: ['alunos-contadores-unified'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'user_roles' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['alunos-unified'] });
+        queryClient.invalidateQueries({ queryKey: ['alunos-contadores-unified'] });
+      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'profiles' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['alunos-unified'] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // ============================================
+  // PAGINATION
+  // ============================================
+  const totalCount = alunosQuery.data?.count || 0;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  const goToPage = useCallback((newPage: number) => {
+    setPage(Math.max(1, Math.min(newPage, totalPages)));
+  }, [totalPages]);
+
+  const nextPage = useCallback(() => {
+    if (hasNextPage) setPage(p => p + 1);
+  }, [hasNextPage]);
+
+  const prevPage = useCallback(() => {
+    if (hasPrevPage) setPage(p => p - 1);
+  }, [hasPrevPage]);
+
+  const refetch = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['alunos-unified'] });
+    queryClient.invalidateQueries({ queryKey: ['alunos-contadores-unified'] });
+  }, [queryClient]);
+
+  // ============================================
+  // CRUD HANDLERS
+  // ============================================
   const openModal = (student?: Student) => {
     setEditingItem(student || null);
     setFormData(student 
-      ? { nome: student.nome, email: student.email, curso: student.curso, status: student.status }
+      ? { nome: student.nome, email: student.email, curso: '', status: student.status }
       : { nome: "", email: "", curso: "", status: "Ativo" }
     );
     setIsModalOpen(true);
@@ -164,7 +284,6 @@ export default function Alunos() {
       toast.error("Preencha o nome");
       return;
     }
-
     if (!formData.email.trim()) {
       toast.error("Preencha o email");
       return;
@@ -179,7 +298,6 @@ export default function Alunos() {
         if (error) throw error;
         toast.success("Aluno atualizado!");
       } else {
-        // 1. Inserir na tabela alunos
         const { data: alunoData, error: alunoError } = await supabase.from("alunos").insert({
           nome: formData.nome,
           email: formData.email,
@@ -188,7 +306,7 @@ export default function Alunos() {
         
         if (alunoError) throw alunoError;
 
-        // 2. Verificar se existe um profile com esse email para atribuir role beta
+        // Verificar se existe profile para atribuir role beta
         const { data: profileData } = await supabase
           .from("profiles")
           .select("id")
@@ -196,23 +314,22 @@ export default function Alunos() {
           .maybeSingle();
 
         if (profileData?.id) {
-          // UPSERT ROLE (CONSTITUIÇÃO v10.x)
           const { error: roleError } = await supabase.from("user_roles").upsert({
             user_id: profileData.id,
             role: "beta" as any,
           }, { onConflict: "user_id" });
 
-          if (roleError) {
-            console.warn("Não foi possível atribuir role beta:", roleError);
-          } else {
+          if (!roleError) {
             toast.success("🎓 Aluno adicionado com acesso BETA!");
+          } else {
+            toast.success("Aluno adicionado!");
           }
         } else {
           toast.success("Aluno adicionado! (Role será atribuído quando fizer login)");
         }
       }
 
-      await fetchData();
+      refetch();
       setIsModalOpen(false);
     } catch (error: any) {
       console.error("Error saving student:", error);
@@ -225,64 +342,45 @@ export default function Alunos() {
       const { error } = await supabase.from("alunos").delete().eq("id", id);
       if (error) throw error;
       toast.success("Aluno removido!");
-      await fetchData();
+      refetch();
     } catch (error) {
       console.error("Error deleting student:", error);
       toast.error("Erro ao remover");
     }
   };
 
-  // Se não selecionou universo, mostra tela de seleção
-  if (!selection) {
-    return <AlunosUniverseSelector onSelect={handleSelectionChange} />;
-  }
+  // ============================================
+  // DERIVED DATA
+  // ============================================
+  const students = alunosQuery.data?.data || [];
+  const contadores = contadoresQuery.data || {
+    total: 0, ativos: 0, concluidos: 0, pendentes: 0, cancelados: 0, beta: 0, gratuito: 0,
+  };
+  const isLoading = alunosQuery.isLoading;
 
-  // Labels combinados (universo + produto)
-  const universeOption = ALUNO_UNIVERSE_OPTIONS.find(o => o.id === selection.universe);
-  const productOption = selection.product 
-    ? ONLINE_PRODUCT_OPTIONS.find(o => o.id === selection.product) 
-    : null;
-  const selectedUniverseLabel = productOption 
-    ? `${universeOption?.label || 'Todos'} → ${productOption.label}`
-    : universeOption?.label || 'Todos';
-
+  // ============================================
+  // RENDER
+  // ============================================
   return (
     <div className="relative min-h-screen">
       <CyberBackground variant="matrix" />
       
       <div className="relative z-10 p-4 md:p-8 lg:p-12">
         <div className="mx-auto max-w-7xl space-y-6">
-          {/* Botão voltar + Badge do universo/produto */}
-          <div className="flex items-center gap-4">
-            <Button 
-              variant="ghost" 
-              size="sm"
-              onClick={() => handleSelectionChange(null)}
-              className="text-muted-foreground hover:text-foreground"
-            >
-              <ArrowLeft className="h-4 w-4 mr-2" />
-              Voltar à seleção
-            </Button>
-            <Badge variant="outline" className="text-sm">
-              {selectedUniverseLabel}
-            </Badge>
-          </div>
-
-          {/* Futuristic Header */}
+          {/* Header */}
           <FuturisticPageHeader
-            title="Academia Quantum"
-            subtitle={`Gestão de Alunos — ${selectedUniverseLabel}`}
+            title="Gestão de Alunos"
+            subtitle="Lista unificada — Todos os alunos (pagos + gratuitos)"
             icon={GraduationCap}
-            badge="STUDENT MATRIX"
+            badge="FONTE ÚNICA"
             accentColor="blue"
             stats={[
-              { label: "Total Alunos", value: contadores.total, icon: Users },
-              { label: "Ativos", value: contadores.ativos, icon: CheckCircle },
-              { label: "Concluídos", value: contadores.concluidos, icon: Award },
+              { label: "Total", value: contadores.total, icon: Users },
+              { label: "Beta (Pagos)", value: contadores.beta, icon: Crown },
+              { label: "Gratuitos", value: contadores.gratuito, icon: Shield },
             ]}
             action={
               <div className="flex gap-2">
-                {/* Botão Criar Acesso Oficial */}
                 <Button 
                   onClick={() => setIsCriarAcessoModalOpen(true)}
                   className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
@@ -310,150 +408,143 @@ export default function Alunos() {
               <div className="text-xs text-muted-foreground uppercase tracking-wider">Total</div>
             </FuturisticCard>
             <FuturisticCard accentColor="green" className="p-4 text-center">
-              <GraduationCap className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
+              <CheckCircle className="h-6 w-6 text-emerald-400 mx-auto mb-2" />
               <div className="text-2xl font-bold text-emerald-400">{contadores.ativos}</div>
               <div className="text-xs text-muted-foreground uppercase tracking-wider">Ativos</div>
             </FuturisticCard>
             <FuturisticCard accentColor="purple" className="p-4 text-center">
-              <Award className="h-6 w-6 text-purple-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-purple-400">{contadores.concluidos}</div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Concluídos</div>
+              <Crown className="h-6 w-6 text-purple-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-purple-400">{contadores.beta}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Beta (Pagos)</div>
             </FuturisticCard>
             <FuturisticCard accentColor="cyan" className="p-4 text-center">
-              <TrendingUp className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
-              <div className="text-2xl font-bold text-cyan-400">
-                {contadores.total > 0 ? Math.round((contadores.concluidos / contadores.total) * 100) : 0}%
-              </div>
-              <div className="text-xs text-muted-foreground uppercase tracking-wider">Taxa</div>
+              <Shield className="h-6 w-6 text-cyan-400 mx-auto mb-2" />
+              <div className="text-2xl font-bold text-cyan-400">{contadores.gratuito}</div>
+              <div className="text-xs text-muted-foreground uppercase tracking-wider">Gratuitos</div>
             </FuturisticCard>
           </div>
 
-          {/* Analytics */}
-          <StudentAnalytics 
-            totalStudents={filteredStudents.length}
-            activeStudents={ativos}
-            completedStudents={concluidos}
-            averageProgress={filteredStudents.length > 0 ? 65 : 0}
-            averageXP={filteredStudents.length > 0 ? 2450 : 0}
-            topPerformers={filteredStudents.slice(0, 5).map((s, i) => ({
-              id: s.id.toString(),
-              name: s.nome,
-              xp: 3000 - (i * 200),
-              progress: 90 - (i * 5)
-            }))}
-          />
-
-          {/* Table com paginação server-side */}
+          {/* Search + Table */}
           <FuturisticCard accentColor="blue">
-            {/* Header com info de paginação */}
-            <div className="p-4 border-b border-blue-500/20 flex items-center justify-between">
-              <h3 className="font-semibold text-blue-400">
-                Alunos Cadastrados
-                <span className="text-muted-foreground font-normal ml-2">
-                  (Página {page} de {totalPages})
-                </span>
-              </h3>
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={prevPage}
-                  disabled={!hasPrevPage || isLoadingPaginated}
-                  className="border-blue-500/30"
-                >
-                  <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
-                  {page} / {totalPages}
-                </span>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={nextPage}
-                  disabled={!hasNextPage || isLoadingPaginated}
-                  className="border-blue-500/30"
-                >
-                  <ChevronRight className="h-4 w-4" />
-                </Button>
+            {/* Search Header */}
+            <div className="p-4 border-b border-blue-500/20">
+              <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
+                <div className="flex-1 max-w-md">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input 
+                      placeholder="Buscar por nome ou email..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-10 border-blue-500/30 focus:border-blue-400"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>Página {page} de {totalPages}</span>
+                  <span className="text-blue-400">({totalCount} alunos)</span>
+                </div>
               </div>
             </div>
             
+            {/* Table */}
             <VirtualTable
-              items={filteredStudents}
-              rowHeight={56}
-              containerHeight={500}
-              emptyMessage={isLoadingPaginated ? "Carregando..." : "Nenhum aluno cadastrado"}
+              items={students}
+              rowHeight={64}
+              containerHeight={600}
+              emptyMessage={isLoading ? "Carregando..." : debouncedSearch ? "Nenhum aluno encontrado" : "Nenhum aluno cadastrado"}
               renderHeader={() => (
                 <table className="w-full">
                   <thead className="bg-blue-500/10">
                     <tr>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400">Nome</th>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400">Email</th>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400">Status</th>
-                      <th className="text-right p-4 text-sm font-medium text-blue-400">Ações</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400 w-[30%]">Nome</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400 w-[25%]">Email</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400 w-[12%]">Status</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400 w-[13%]">Tipo</th>
+                      <th className="text-right p-4 text-sm font-medium text-blue-400 w-[20%]">Ações</th>
                     </tr>
                   </thead>
                 </table>
               )}
-              renderRow={(student) => (
-                <table className="w-full">
-                  <tbody>
-                    <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
-                      <td className="p-4 text-foreground font-medium" style={{ width: '25%' }}>{student.nome}</td>
-                      <td className="p-4 text-muted-foreground" style={{ width: '30%' }}>{student.email || "-"}</td>
-                      <td className="p-4" style={{ width: '20%' }}>
-                        <Badge variant={
-                          student.status === "Ativo" ? "default" :
-                          student.status === "Concluído" ? "secondary" : "outline"
-                        } className={
-                          student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
-                          student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
-                          student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
-                          "bg-red-500/20 text-red-400"
-                        }>
-                          {student.status}
-                        </Badge>
-                      </td>
-                      <td className="p-4 text-right" style={{ width: '25%' }}>
-                        <div className="flex justify-end gap-2">
-                          <BetaAccessManager
-                            studentEmail={student.email}
-                            studentName={student.nome}
-                            studentId={student.id}
-                            onAccessChange={fetchData}
-                          />
-                          <AttachmentButton
-                            entityType="student"
-                            entityId={student.id}
-                            entityLabel={student.nome}
-                            variant="ghost"
-                            size="icon"
-                          />
-                          <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
-                            <Edit2 className="h-4 w-4 text-blue-400" />
-                          </Button>
-                          <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
-              )}
+              renderRow={(student) => {
+                const labelKey = deriveStudentLabel(student);
+                const labelInfo = UNIVERSO_LABELS[labelKey];
+                
+                return (
+                  <table className="w-full">
+                    <tbody>
+                      <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
+                        <td className="p-4 text-foreground font-medium w-[30%]">
+                          <div className="flex items-center gap-2">
+                            {student.role === 'beta' && <Crown className="h-4 w-4 text-yellow-400" />}
+                            {student.nome}
+                          </div>
+                        </td>
+                        <td className="p-4 text-muted-foreground w-[25%]">{student.email || "-"}</td>
+                        <td className="p-4 w-[12%]">
+                          <Badge variant={
+                            student.status === "Ativo" ? "default" :
+                            student.status === "Concluído" ? "secondary" : "outline"
+                          } className={
+                            student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
+                            student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
+                            student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
+                            "bg-red-500/20 text-red-400"
+                          }>
+                            {student.status}
+                          </Badge>
+                        </td>
+                        <td className="p-4 w-[13%]">
+                          <Badge variant="outline" className={
+                            labelKey === 'online' ? "border-cyan-500/50 text-cyan-400" :
+                            labelKey === 'presencial' ? "border-blue-500/50 text-blue-400" :
+                            labelKey === 'hibrido' ? "border-purple-500/50 text-purple-400" :
+                            "border-green-500/50 text-green-400"
+                          }>
+                            {labelInfo.icon} {labelInfo.label}
+                          </Badge>
+                        </td>
+                        <td className="p-4 text-right w-[20%]">
+                          <div className="flex justify-end gap-2">
+                            <BetaAccessManager
+                              studentEmail={student.email}
+                              studentName={student.nome}
+                              studentId={student.id}
+                              onAccessChange={refetch}
+                            />
+                            <AttachmentButton
+                              entityType="student"
+                              entityId={student.id}
+                              entityLabel={student.nome}
+                              variant="ghost"
+                              size="icon"
+                            />
+                            <Button variant="ghost" size="icon" onClick={() => openModal(student)}>
+                              <Edit2 className="h-4 w-4 text-blue-400" />
+                            </Button>
+                            <Button variant="ghost" size="icon" onClick={() => handleDelete(student.id)} className="text-red-400 hover:text-red-300">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                );
+              }}
             />
             
             {/* Footer com paginação */}
             <div className="p-4 border-t border-blue-500/20 flex items-center justify-between">
               <span className="text-sm text-muted-foreground">
-                Mostrando {filteredStudents.length} de {contadores.total} alunos
+                Mostrando {students.length} de {totalCount} alunos
               </span>
               <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={() => goToPage(1)}
-                  disabled={page === 1 || isLoadingPaginated}
+                  disabled={page === 1 || isLoading}
                   className="border-blue-500/30"
                 >
                   Primeira
@@ -462,17 +553,20 @@ export default function Alunos() {
                   variant="outline"
                   size="sm"
                   onClick={prevPage}
-                  disabled={!hasPrevPage || isLoadingPaginated}
+                  disabled={!hasPrevPage || isLoading}
                   className="border-blue-500/30"
                 >
                   <ChevronLeft className="h-4 w-4 mr-1" />
                   Anterior
                 </Button>
+                <span className="text-sm text-muted-foreground min-w-[80px] text-center">
+                  {page} / {totalPages}
+                </span>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={nextPage}
-                  disabled={!hasNextPage || isLoadingPaginated}
+                  disabled={!hasNextPage || isLoading}
                   className="border-blue-500/30"
                 >
                   Próxima
@@ -482,7 +576,7 @@ export default function Alunos() {
                   variant="outline"
                   size="sm"
                   onClick={() => goToPage(totalPages)}
-                  disabled={page === totalPages || isLoadingPaginated}
+                  disabled={page === totalPages || isLoading}
                   className="border-blue-500/30"
                 >
                   Última
@@ -491,7 +585,7 @@ export default function Alunos() {
             </div>
           </FuturisticCard>
 
-          {/* Modal */}
+          {/* Modal Edição */}
           <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
             <DialogContent className="sm:max-w-md border-blue-500/30">
               <DialogHeader>
@@ -500,15 +594,21 @@ export default function Alunos() {
               <div className="space-y-4 pt-4">
                 <div>
                   <Label>Nome</Label>
-                  <Input value={formData.nome} onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))} placeholder="Nome do aluno" className="mt-1.5 border-blue-500/30" />
+                  <Input 
+                    value={formData.nome} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, nome: e.target.value }))} 
+                    placeholder="Nome do aluno" 
+                    className="mt-1.5 border-blue-500/30" 
+                  />
                 </div>
                 <div>
                   <Label>Email</Label>
-                  <Input value={formData.email} onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} placeholder="email@exemplo.com" className="mt-1.5 border-blue-500/30" />
-                </div>
-                <div>
-                  <Label>Curso</Label>
-                  <Input value={formData.curso} onChange={(e) => setFormData(prev => ({ ...prev, curso: e.target.value }))} placeholder="Nome do curso" className="mt-1.5 border-blue-500/30" />
+                  <Input 
+                    value={formData.email} 
+                    onChange={(e) => setFormData(prev => ({ ...prev, email: e.target.value }))} 
+                    placeholder="email@exemplo.com" 
+                    className="mt-1.5 border-blue-500/30" 
+                  />
                 </div>
                 <div>
                   <Label>Status</Label>
@@ -519,7 +619,9 @@ export default function Alunos() {
                     </SelectContent>
                   </Select>
                 </div>
-                <Button onClick={handleSave} className="w-full bg-gradient-to-r from-blue-500 to-cyan-600">Salvar</Button>
+                <Button onClick={handleSave} className="w-full bg-gradient-to-r from-blue-500 to-cyan-600">
+                  Salvar
+                </Button>
               </div>
             </DialogContent>
           </Dialog>
@@ -528,7 +630,7 @@ export default function Alunos() {
           <CriarAcessoOficialModal 
             open={isCriarAcessoModalOpen}
             onOpenChange={setIsCriarAcessoModalOpen}
-            onSuccess={fetchData}
+            onSuccess={refetch}
           />
         </div>
       </div>

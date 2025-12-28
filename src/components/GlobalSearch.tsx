@@ -161,10 +161,10 @@ const gestaoSearchItems: SearchItem[] = [
   {
     id: "gestao-alunos",
     title: "Gestão de Alunos",
-    description: "Administrar alunos",
-    path: "/gestaofc/alunos",
+    description: "Administrar alunos (lista unificada)",
+    path: "/gestaofc/gestao-alunos",
     icon: GraduationCap,
-    keywords: ["estudantes", "cursos", "matriculas"],
+    keywords: ["estudantes", "cursos", "matriculas", "beta", "gratuito"],
     category: "Gestão",
     gestaoOnly: true,
   },
