@@ -42,6 +42,7 @@ import { CategoryPieChart } from "@/components/dashboard/CategoryPieChart";
 import { BudgetAlerts } from "@/components/dashboard/BudgetAlerts";
 import { RecentTransactions } from "@/components/dashboard/RecentTransactions";
 import { ReactiveMetricsBar } from "@/components/dashboard/ReactiveMetricsBar";
+import { ReactiveFinanceProvider } from "@/contexts/ReactiveFinanceContext";
 import { ReactiveDashboardSection } from "@/components/reactive";
 import { useReactiveData } from "@/hooks/useReactiveData";
 import { CommandCenter } from "@/components/dashboard/CommandCenter";
@@ -278,6 +279,7 @@ export default function Dashboard() {
   const lucroLiquidoValue = lucroLiquido; // ✅ Reutiliza valor já calculado
 
   return (
+    <ReactiveFinanceProvider>
     <div className="p-4 md:p-6 lg:p-8">
       <div className="mx-auto max-w-7xl space-y-6">
         
@@ -828,5 +830,6 @@ export default function Dashboard() {
         onComplete={completeTour} 
       />
     </div>
+    </ReactiveFinanceProvider>
   );
 }
