@@ -46,6 +46,7 @@ const TransacoesHotmart = lazy(() => import("@/pages/TransacoesHotmart"));
 
 // Alunos
 const Alunos = lazy(() => import("@/pages/Alunos"));
+const AlunoPerfilAdmin = lazy(() => import("@/pages/gestao/AlunoPerfilAdmin"));
 const PortalAluno = lazy(() => import("@/pages/PortalAluno"));
 const Relatorios = lazy(() => import("@/pages/Relatorios"));
 const Afiliados = lazy(() => import("@/pages/Afiliados"));
@@ -119,6 +120,7 @@ export const gestaofcRoutes = (
     
     {/* Alunos */}
     <Route path="/gestaofc/gestao-alunos" element={<ProtectedPage><Alunos /></ProtectedPage>} />
+    <Route path="/gestaofc/gestao-alunos/:id" element={<ProtectedPage><AlunoPerfilAdmin /></ProtectedPage>} />
     <Route path="/gestaofc/portal-aluno" element={<ProtectedPage><PortalAluno /></ProtectedPage>} />
     <Route path="/gestaofc/relatorios" element={<ProtectedPage><Relatorios /></ProtectedPage>} />
     <Route path="/gestaofc/afiliados" element={<ProtectedPage><Afiliados /></ProtectedPage>} />
