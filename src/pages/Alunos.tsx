@@ -137,7 +137,7 @@ const UNIVERSE_OPTIONS: Array<{
     label: 'Alunos Online',
     description: 'Alunos matriculados exclusivamente online',
     icon: Wifi,
-    accentColor: 'cyan',
+    accentColor: 'purple',
   },
   {
     id: 'registrados',
