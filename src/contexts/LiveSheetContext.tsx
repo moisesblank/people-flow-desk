@@ -16,6 +16,7 @@ import React, {
 } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { formatCurrency, formatPercentFromValue as formatPercent } from '@/utils/format';
 
 // ===== TIPOS DO SISTEMA =====
 interface FormulaDefinition {
@@ -583,21 +584,9 @@ export function LiveSheetProvider({ children }: { children: React.ReactNode }) {
     return state.derivedData[key] ?? state.baseData[key] ?? 0;
   }, [state.baseData, state.derivedData]);
   
-  // Formatação centralizada (compatível com @/utils)
-  const formatCurrency = useCallback((cents: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(cents / 100);
-  }, []);
-  
-  const formatPercent = useCallback((value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'percent',
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(value / 100);
-  }, []);
+  // ===== FORMATAÇÃO (importada de @/utils/format) =====
+  // Removido: formatCurrency e formatPercent locais
+  // Usar: import { formatCurrency, formatPercentFromValue } from '@/utils/format';
   
   const getFormatted = useCallback((key: string, format?: 'currency' | 'percent' | 'number'): string => {
     const value = getValue(key);
@@ -616,7 +605,7 @@ export function LiveSheetProvider({ children }: { children: React.ReactNode }) {
       default:
         return value.toLocaleString('pt-BR');
     }
-  }, [getValue, state.formulas, formatCurrency, formatPercent]);
+  }, [getValue, state.formulas]);
   
   const getFormula = useCallback((key: string) => state.formulas[key], [state.formulas]);
   const getDependencies = useCallback((key: string) => state.dependencyGraph[key] || [], [state.dependencyGraph]);
@@ -651,7 +640,7 @@ export function LiveSheetProvider({ children }: { children: React.ReactNode }) {
     isReactive: state.isConnected,
     latency: state.computationTime,
   }), [state, getValue, getFormatted, getFormula, getDependencies, getDependents, 
-      setValue, batchUpdate, forceRecompute, formatCurrency, formatPercent]);
+      setValue, batchUpdate, forceRecompute]);
   
   return (
     <LiveSheetContext.Provider value={contextValue}>

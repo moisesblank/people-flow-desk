@@ -7,6 +7,7 @@ import { memo, useEffect, useRef } from "react";
 import { motion, AnimatePresence, useSpring, useTransform } from "framer-motion";
 import { useLiveValue, useLiveSheet } from "@/contexts/LiveSheetContext";
 import { cn } from "@/lib/utils";
+import { formatCurrency, formatCurrencyCompact } from "@/utils/format";
 import {
   Tooltip,
   TooltipContent,
@@ -230,7 +231,7 @@ export const LiveStatus = memo(function LiveStatus({ className }: { className?: 
   );
 });
 
-// ===== HELPERS =====
+// ===== HELPERS (usa utils centralizados) =====
 function formatCompact(value: number): string {
   if (Math.abs(value) >= 1_000_000_00) {
     return `R$ ${(value / 1_000_000_00).toFixed(1)}M`;
@@ -238,11 +239,7 @@ function formatCompact(value: number): string {
   if (Math.abs(value) >= 1_000_00) {
     return `R$ ${(value / 1_000_00).toFixed(1)}k`;
   }
-  return new Intl.NumberFormat('pt-BR', {
-    style: 'currency',
-    currency: 'BRL',
-    maximumFractionDigits: 0,
-  }).format(value / 100);
+  return formatCurrency(value);
 }
 
 // CSS para animação pulse-once (adicionar ao index.css se não existir)

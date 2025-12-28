@@ -6,6 +6,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
+import { formatCurrency, formatPercentFromValue as formatPercent } from '@/utils/format';
 
 // ===== TIPOS =====
 interface FinancialMetrics {
@@ -359,21 +360,9 @@ export function ReactiveFinanceProvider({ children }: { children: React.ReactNod
     setIsLoading(false);
   }, [calculateMetrics, queryClient]);
 
-  // ===== FORMATAÇÃO (compatível com @/utils) =====
-  const formatCurrency = useCallback((cents: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(cents / 100);
-  }, []);
-
-  const formatPercent = useCallback((value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'percent',
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(value / 100);
-  }, []);
+  // ===== FORMATAÇÃO (importada de @/utils/format) =====
+  // Removido: formatCurrency e formatPercent locais
+  // Usar: import { formatCurrency, formatPercentFromValue } from '@/utils/format';
 
   // ===== VALOR DO CONTEXT =====
   const value = useMemo(() => ({
@@ -385,7 +374,7 @@ export function ReactiveFinanceProvider({ children }: { children: React.ReactNod
     setMetaMensal,
     formatCurrency,
     formatPercent,
-  }), [metrics, isLoading, isConnected, error, forceRefresh, formatCurrency, formatPercent]);
+  }), [metrics, isLoading, isConnected, error, forceRefresh]);
 
   return (
     <ReactiveFinanceContext.Provider value={value}>

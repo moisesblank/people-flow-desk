@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils';
 import { TrendingUp, TrendingDown, Minus, Zap } from 'lucide-react';
 import { useMemo } from 'react';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { formatCurrency, formatCurrencyCompact, formatNumber } from '@/utils/format';
 
 interface ReactiveValueProps {
   field: string;
@@ -56,20 +57,20 @@ export function ReactiveValue({
   const lastUpdated = useReactiveStore(s => s.data.last_updated);
   const computationTime = useReactiveStore(s => s.data.computation_time_ms);
 
-  // Formatar valor
+  // Formatar valor (usando utils centralizados)
   const formatted = useMemo(() => {
     switch (format) {
       case 'currency':
-        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value / 100);
+        return formatCurrency(value);
       case 'percent':
         return `${value.toFixed(1)}%`;
       case 'compact':
         if (Math.abs(value) >= 100000000) return `${(value / 100000000).toFixed(1)}M`;
         if (Math.abs(value) >= 100000) return `${(value / 100000).toFixed(1)}K`;
-        if (Math.abs(value) >= 100) return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value / 100);
+        if (Math.abs(value) >= 100) return formatCurrency(value);
         return value.toString();
       default:
-        return new Intl.NumberFormat('pt-BR').format(value);
+        return formatNumber(value);
     }
   }, [value, format]);
 

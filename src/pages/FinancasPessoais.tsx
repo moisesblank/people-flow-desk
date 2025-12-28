@@ -93,7 +93,8 @@ function LucroLiquidoCard() {
     }
   );
 
-  const formatReal = (v: number) => new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(v);
+  // formatReal removido - usar formatCurrencyFromReais de @/utils/format
+  const formatReal = (v: number) => formatCurrency(v * 100); // Converte reais para centavos
   const lucro = lucroData?.lucro || 0;
   const isPositive = lucro >= 0;
 
