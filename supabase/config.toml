@@ -18,8 +18,7 @@ verify_jwt = false
 [functions.hotmart-fast]
 verify_jwt = false
 
-[functions.wordpress-webhook]
-verify_jwt = false
+# REMOVED: [functions.wordpress-webhook] - WordPress removido 2025-12-28
 
 [functions.whatsapp-webhook]
 verify_jwt = false
@@ -231,11 +230,8 @@ verify_jwt = true
 [functions.social-media-stats]
 verify_jwt = true
 
-[functions.wordpress-api]
-verify_jwt = true
-
-[functions.sync-wordpress-users]
-verify_jwt = true
+# REMOVED: [functions.wordpress-api] - WordPress removido 2025-12-28
+# REMOVED: [functions.sync-wordpress-users] - WordPress removido 2025-12-28
 
 # --- Tarefas e Automações Internas ---
 [functions.task-reminder]

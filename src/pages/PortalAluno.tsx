@@ -51,7 +51,6 @@ interface Student {
   email: string | null;
   curso: string | null;
   status: string | null;
-  wordpress_id: string | null;
   created_at: string | null;
 }
 

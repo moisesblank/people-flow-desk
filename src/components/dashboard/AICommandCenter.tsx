@@ -51,9 +51,9 @@ const iaConfigs: Record<IATarget, IAConfig> = {
     color: "text-blue-500 bg-blue-500/10",
     description: "Automação e desenvolvimento",
     examples: [
-      "Sincronizar dados WordPress",
       "Atualizar grupos de usuários",
       "Processar webhooks pendentes",
+      "Verificar status de integrações",
     ],
   },
   chatgpt: {

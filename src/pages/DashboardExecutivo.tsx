@@ -72,7 +72,7 @@ import { useReactiveStore } from "@/stores/reactiveStore";
 import { format, subMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { CashFlowForecast } from "@/components/finance/CashFlowForecast";
-import { WordPressSiteMonitor } from "@/components/dashboard/WordPressSiteMonitor";
+// WordPressSiteMonitor removido em 2025-12-28
 
 // Cores do design system CYBER
 const COLORS = {
@@ -613,23 +613,7 @@ export default function DashboardExecutivo() {
         </Card>
       </div>
 
-      {/* Meu Site - WordPress em Tempo Real - GPU optimized */}
-      <motion.section
-        {...gpuAnimationProps.fadeUp}
-        transition={{ delay: 0.3 }}
-        className="will-change-transform transform-gpu"
-      >
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <Globe className="h-5 w-5 text-primary" />
-          </div>
-          <div>
-            <h2 className="text-xl font-bold">Meu Site</h2>
-            <p className="text-sm text-muted-foreground">Monitoramento em tempo real do WordPress</p>
-          </div>
-        </div>
-        <WordPressSiteMonitor />
-      </motion.section>
+      {/* Seção WordPress removida em 2025-12-28 */}
 
       {/* Cash Flow Forecast */}
       <div className="grid gap-6 lg:grid-cols-2">

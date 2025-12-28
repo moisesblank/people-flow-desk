@@ -49,12 +49,7 @@ function generateExternalEventId(source: string, payload: Record<string, unknown
     }
     return null;
   }
-  if (source === 'wordpress') {
-    if (payload.user_id && payload.action) {
-      return `wp_${payload.user_id}_${payload.action}_${payload.timestamp || ''}`;
-    }
-    return null;
-  }
+  // WordPress removido em 2025-12-28
   if (source === 'whatsapp') {
     const entry = (payload.entry as Array<{ id?: string; changes?: Array<{ value?: { messages?: Array<{ id?: string }> } }> }>)?.[0];
     const messageId = entry?.changes?.[0]?.value?.messages?.[0]?.id;
@@ -193,33 +188,7 @@ serve(async (req) => {
       }
     }
 
-    // 🛡️ P1.1 FIX: Validação de secret para WordPress
-    if (source === 'wordpress') {
-      const wpSecret = req.headers.get('x-webhook-secret');
-      const expectedWpSecret = Deno.env.get('WORDPRESS_WEBHOOK_SECRET');
-      
-      if (expectedWpSecret && wpSecret !== expectedWpSecret) {
-        await supabase.from('security_events').insert({
-          event_type: 'INVALID_WORDPRESS_SECRET',
-          severity: 'warning',
-          source: 'wordpress',
-          ip_address: clientIP,
-          user_agent: userAgent,
-          description: 'Webhook WordPress com secret inválido'
-        });
-        
-        console.error(`🚨 [SECURITY] Invalid WordPress secret from ${clientIP}`);
-        
-        return new Response(JSON.stringify({ 
-          status: 'error', 
-          message: 'Invalid authentication',
-          code: 'INVALID_SECRET'
-        }), { 
-          status: 403, 
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' } 
-        });
-      }
-    }
+    // WordPress removido em 2025-12-28
 
     // Validação HMAC para WhatsApp (Meta)
     if (source === 'whatsapp' && event !== 'verification') {
