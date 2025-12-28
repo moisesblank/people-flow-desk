@@ -141,11 +141,23 @@ export function CriarAcessoOficialModal({
 
       if (error) {
         console.error('Edge function error:', error);
+        // 🎯 FIX: Mensagem mais clara para erro de sessão expirada
+        const isSessionError = error.message?.includes('session') 
+          || error.message?.includes('Auth') 
+          || error.message?.includes('401');
+        if (isSessionError) {
+          throw new Error('Sessão expirada. Faça logout e login novamente.');
+        }
         throw new Error(error.message || 'Erro na comunicação com servidor');
       }
 
       if (!response?.success) {
-        throw new Error(response?.error || 'Erro ao criar acesso');
+        // 🎯 FIX: Detectar erro de token/sessão no response
+        const errorMsg = response?.error || 'Erro ao criar acesso';
+        if (errorMsg.includes('Token') || errorMsg.includes('session') || errorMsg.includes('Auth')) {
+          throw new Error('Sessão expirada. Faça logout e login novamente.');
+        }
+        throw new Error(errorMsg);
       }
 
       // Sucesso
