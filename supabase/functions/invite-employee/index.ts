@@ -165,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
 
       console.log(`[INVITE] Password updated for existing user: ${email}`);
       
-      // 🎯 FIX: Enviar email via fetch direto (functions.invoke não passa JWT corretamente)
+      // 🎯 FIX: Enviar email via fetch direto COM SENHA
       try {
         const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
           method: "POST",
@@ -175,8 +175,12 @@ const handler = async (req: Request): Promise<Response> => {
           },
           body: JSON.stringify({
             to: email,
-            type: "welcome",
-            data: { nome },
+            type: "welcome_staff", // Template específico com senha
+            data: { 
+              nome,
+              senha, // ✅ P0 FIX: Incluir senha no email
+              email, // Para exibir login
+            },
           }),
         });
 
@@ -268,7 +272,7 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // Send welcome email usando template padronizado (aprovado 16/12/2024)
+    // Send welcome email COM SENHA (P0 FIX: incluir credenciais)
     try {
       const emailResponse = await fetch(`${supabaseUrl}/functions/v1/send-notification-email`, {
         method: "POST",
@@ -278,8 +282,12 @@ const handler = async (req: Request): Promise<Response> => {
         },
         body: JSON.stringify({
           to: email,
-          type: "welcome",
-          data: { nome },
+          type: "welcome_staff", // Template específico com senha
+          data: { 
+            nome,
+            senha, // ✅ P0 FIX: Incluir senha no email
+            email, // Para exibir login
+          },
         }),
       });
 
