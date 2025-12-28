@@ -31,7 +31,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-// useRoleBasedRedirect removido - redirect agora é determinístico inline
+// 2FA Decision Engine (SYNAPSE Ω v10.x)
+import { useDeviceFingerprint, decide2FA } from "@/hooks/auth";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
@@ -134,7 +135,8 @@ function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) 
 export default function Auth() {
   const navigate = useNavigate();
   const { user, signIn, signUp, resetPassword, isLoading: authLoading } = useAuth();
-  // redirectAfterLogin removido - redirect agora é determinístico inline
+  // 2FA Decision Engine (SYNAPSE Ω v10.x)
+  const { collect: collectFingerprint } = useDeviceFingerprint();
   
   const { 
     isEditMode, 
@@ -514,9 +516,8 @@ export default function Auth() {
           return;
         }
 
-        // ✅ Login bem sucedido - encerrar loading IMEDIATAMENTE
-        setIsLoading(false);
-        console.log('[AUTH] 6. Login bem sucedido. Iniciando 2FA UI...');
+        // ✅ Login bem sucedido - NÃO encerrar loading ainda (2FA decision em andamento)
+        console.log('[AUTH] 6. Login bem sucedido. Verificando necessidade de 2FA...');
 
         const userFor2FA = result.user;
         if (!userFor2FA) {
@@ -524,33 +525,137 @@ export default function Auth() {
           toast.error("Não foi possível concluir o login", {
             description: "Sua sessão não foi criada. Tente novamente."
           });
+          setIsLoading(false);
           return;
         }
 
-        // ✅ CRÍTICO: setar flag ANTES de qualquer efeito global (AuthProvider)
-        // Assim garantimos que nenhum redirect acontece enquanto o 2FA estiver pendente.
-        // Também persistimos o payload do usuário para sobreviver a refresh (anti-stuck P0).
-        sessionStorage.setItem("matriz_2fa_pending", "1");
-        sessionStorage.setItem(
-          "matriz_2fa_user",
-          JSON.stringify({
+        // ============================================
+        // 🛡️ 2FA DECISION ENGINE (SYNAPSE Ω v10.x)
+        // Decidir SE 2FA é necessário baseado em sinais
+        // ============================================
+        try {
+          console.log('[AUTH] 7. Coletando fingerprint para decisão 2FA...');
+          const { hash: deviceHash, data: fingerprintData } = await collectFingerprint();
+
+          // Chamar validate-device para obter sinais de risco
+          console.log('[AUTH] 8. Validando dispositivo...');
+          const { data: validationData, error: validationError } = await supabase.functions.invoke('validate-device', {
+            body: {
+              fingerprint: deviceHash,
+              fingerprintData,
+              userId: userFor2FA.id,
+              email: userFor2FA.email,
+              action: 'post_login',
+            },
+          });
+
+          if (validationError) {
+            console.warn('[AUTH] Erro na validação de dispositivo:', validationError);
+          }
+
+          // Extrair sinais da validação
+          const deviceSignals = {
+            isNewDevice: validationData?.isNewDevice ?? true,
+            countryChanged: validationData?.countryChanged ?? false,
+            rapidChange: validationData?.rapidChange ?? false,
+            riskScore: validationData?.riskScore ?? 0,
+            deviceHash,
+          };
+
+          console.log('[AUTH] 9. Sinais do dispositivo:', deviceSignals);
+
+          // Decidir SE 2FA é necessário
+          const decision = await decide2FA({
+            userId: userFor2FA.id,
+            email: userFor2FA.email || formData.email,
+            deviceHash,
+            deviceSignals,
+            isPasswordReset: false, // Login normal, não é reset de senha
+          });
+
+          console.log('[AUTH] 10. Decisão 2FA:', decision);
+
+          if (!decision.requires2FA) {
+            // ✅ NÃO PRECISA DE 2FA - Dispositivo confiável dentro da janela de 24h
+            console.log('[AUTH] ✅ 2FA dispensado - dispositivo confiável');
+            toast.success("Bem-vindo de volta!", {
+              description: "Dispositivo reconhecido. Login realizado com sucesso."
+            });
+            
+            // Buscar role e redirecionar
+            const { data: roleData } = await supabase
+              .from("user_roles")
+              .select("role")
+              .eq("user_id", userFor2FA.id)
+              .maybeSingle();
+            
+            const userRole = roleData?.role || null;
+            const target = getPostLoginRedirect(userRole, userFor2FA.email);
+            console.log('[AUTH] ✅ Redirecionando para', target, '(role:', userRole, ')');
+            setIsLoading(false);
+            navigate(target, { replace: true });
+            return;
+          }
+
+          // ✅ PRECISA DE 2FA - Mostrar desafio
+          console.log('[AUTH] ⚠️ 2FA necessário:', decision.reason);
+          
+          // Encerrar loading e mostrar 2FA
+          setIsLoading(false);
+
+          // Setar flag ANTES de qualquer efeito global (AuthProvider)
+          sessionStorage.setItem("matriz_2fa_pending", "1");
+          sessionStorage.setItem(
+            "matriz_2fa_user",
+            JSON.stringify({
+              email: userFor2FA.email || formData.email,
+              userId: userFor2FA.id,
+              nome: (userFor2FA.user_metadata as any)?.nome,
+              phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
+            })
+          );
+
+          setPending2FAUser({
             email: userFor2FA.email || formData.email,
             userId: userFor2FA.id,
             nome: (userFor2FA.user_metadata as any)?.nome,
             phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
-          })
-        );
+          });
+          setShow2FA(true);
+          
+          // Toast informativo com razão
+          toast.info("Verificação de Segurança", {
+            description: decision.reason
+          });
 
-        setPending2FAUser({
-          email: userFor2FA.email || formData.email,
-          userId: userFor2FA.id,
-          nome: (userFor2FA.user_metadata as any)?.nome,
-          phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
-        });
-        setShow2FA(true);
-        toast.info("Verificação de Segurança 2FA", {
-          description: "Um código de 6 dígitos foi enviado para " + (userFor2FA.email || formData.email)
-        });
+        } catch (decisionError) {
+          console.error('[AUTH] Erro na decisão 2FA - fallback para SEMPRE pedir 2FA:', decisionError);
+          
+          // Em caso de erro, SEMPRE pedir 2FA (segurança)
+          setIsLoading(false);
+          
+          sessionStorage.setItem("matriz_2fa_pending", "1");
+          sessionStorage.setItem(
+            "matriz_2fa_user",
+            JSON.stringify({
+              email: userFor2FA.email || formData.email,
+              userId: userFor2FA.id,
+              nome: (userFor2FA.user_metadata as any)?.nome,
+              phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
+            })
+          );
+
+          setPending2FAUser({
+            email: userFor2FA.email || formData.email,
+            userId: userFor2FA.id,
+            nome: (userFor2FA.user_metadata as any)?.nome,
+            phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
+          });
+          setShow2FA(true);
+          toast.info("Verificação de Segurança 2FA", {
+            description: "Um código de 6 dígitos foi enviado para " + (userFor2FA.email || formData.email)
+          });
+        }
 
         return;
       }
