@@ -74,9 +74,9 @@ export function RealtimePulse() {
       )
       .subscribe();
 
-    // Refresh every 30 seconds + PATCH-027: jitter anti-herd (0-5s)
-    const jitter = Math.floor(Math.random() * 5000);
-    const interval = setInterval(fetchStats, 30000 + jitter);
+    // PATCH-CUSTO: Aumentado de 30s para 60s + jitter anti-herd (0-10s)
+    const jitter = Math.floor(Math.random() * 10000);
+    const interval = setInterval(fetchStats, 60000 + jitter);
 
     return () => {
       supabase.removeChannel(channel);
