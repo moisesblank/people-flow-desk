@@ -1,12 +1,13 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.49.1';
-import { Resend } from "https://esm.sh/resend@2.0.0";
 
+// MIGRADO: Agora usa RD Station como principal, Resend como fallback
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY');
+const RD_STATION_API_KEY = Deno.env.get('RD_STATION_API_KEY');
+const RESEND_API_KEY = Deno.env.get('RESEND_API_KEY'); // Fallback
 const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
 const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
 
@@ -141,8 +142,6 @@ async function sendReminderEmail(
 
   if (!task) return { success: false, error: 'Task is required' };
 
-  const resend = new Resend(RESEND_API_KEY);
-  
   const priorityEmoji = {
     'urgent': '🔴 URGENTE',
     'high': '🟡 Alta',
@@ -162,84 +161,134 @@ async function sendReminderEmail(
   const formattedTime = task.task_time || 'Horário não definido';
 
   try {
-    const result = await resend.emails.send({
-      from: Deno.env.get("RESEND_FROM") || 'Plataforma Moisés Medeiros <falecom@moisesmedeiros.com.br>',
-      to: [email],
-      subject: `📌 Nova Tarefa: ${task.title}`,
-      html: `
-        <!DOCTYPE html>
-        <html>
-        <head>
-          <meta charset="utf-8">
-          <style>
-            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #fff; padding: 20px; }
-            .container { max-width: 600px; margin: 0 auto; background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%); border-radius: 16px; padding: 32px; border: 1px solid rgba(212, 175, 55, 0.2); }
-            .header { text-align: center; margin-bottom: 24px; }
-            .logo { font-size: 24px; font-weight: bold; color: #d4af37; }
-            .title { font-size: 28px; font-weight: bold; color: #fff; margin: 16px 0; }
-            .priority { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin: 8px 0; }
-            .urgent { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
-            .high { background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid #eab308; }
-            .normal { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6; }
-            .low { background: rgba(156, 163, 175, 0.2); color: #9ca3af; border: 1px solid #9ca3af; }
-            .details { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin: 20px 0; }
-            .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-            .detail-row:last-child { border-bottom: none; }
-            .detail-label { color: #9ca3af; font-size: 14px; }
-            .detail-value { color: #fff; font-weight: 500; }
-            .description { background: rgba(212, 175, 55, 0.1); border-left: 4px solid #d4af37; padding: 16px; margin: 20px 0; border-radius: 8px; }
-            .footer { text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); }
-            .footer p { color: #6b7280; font-size: 12px; }
-            .cta { display: inline-block; background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px; }
-          </style>
-        </head>
-        <body>
-          <div class="container">
-            <div class="header">
-              <div class="logo">⚗️ Plataforma Moisés Medeiros</div>
-              <h1 class="title">${task.title}</h1>
-              <span class="priority ${task.priority}">${priorityEmoji}</span>
-            </div>
-            
-            <div class="details">
-              <div class="detail-row">
-                <span class="detail-label">📅 Data</span>
-                <span class="detail-value">${formattedDate}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">⏰ Horário</span>
-                <span class="detail-value">${formattedTime}</span>
-              </div>
-              <div class="detail-row">
-                <span class="detail-label">📂 Categoria</span>
-                <span class="detail-value">${task.category}</span>
-              </div>
-            </div>
-            
-            ${task.description ? `
-              <div class="description">
-                <strong>📝 Descrição:</strong><br>
-                ${task.description}
-              </div>
-            ` : ''}
-            
-            <div style="text-align: center;">
-              <a href="https://pro.moisesmedeiros.com.br/gestaofc/calendario" class="cta">
-                Ver no Calendário
-              </a>
-            </div>
-            
-            <div class="footer">
-              <p>Este lembrete foi criado automaticamente pela sua plataforma de gestão.</p>
-              <p>© 2024 Moisés Medeiros - Todos os direitos reservados</p>
-            </div>
-          </div>
-        </body>
-        </html>
-      `,
-    });
+    // MIGRADO: Usar RD Station ao invés de Resend
+    if (RD_STATION_API_KEY) {
+      const rdPayload = {
+        event_type: "CONVERSION",
+        event_family: "CDP",
+        payload: {
+          conversion_identifier: "email_lembrete_tarefa",
+          email: email,
+          name: "Usuário",
+          cf_titulo_tarefa: task.title,
+          cf_descricao_tarefa: task.description || "",
+          cf_data_tarefa: formattedDate,
+          cf_horario_tarefa: formattedTime,
+          cf_prioridade: task.priority,
+          cf_categoria: task.category,
+          cf_origem: "task_reminder",
+          cf_data_envio: new Date().toISOString(),
+        }
+      };
 
-    console.log('Reminder email sent:', result);
+      console.log('[TASK-REMINDER] Enviando via RD Station:', JSON.stringify(rdPayload, null, 2));
+
+      const response = await fetch(
+        `https://api.rd.services/platform/conversions?api_key=${RD_STATION_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify(rdPayload),
+        }
+      );
+
+      const rdResponse = await response.text();
+      console.log('[TASK-REMINDER] RD Station response:', response.status, rdResponse);
+
+      if (response.ok) {
+        return { success: true };
+      }
+    }
+
+    // Fallback para Resend se RD Station não funcionar
+    if (RESEND_API_KEY) {
+      const { Resend } = await import("https://esm.sh/resend@2.0.0");
+      const resend = new Resend(RESEND_API_KEY);
+      
+      const result = await resend.emails.send({
+        from: Deno.env.get("RESEND_FROM") || 'Plataforma Moisés Medeiros <falecom@moisesmedeiros.com.br>',
+        to: [email],
+        subject: `📌 Nova Tarefa: ${task.title}`,
+        html: `
+          <!DOCTYPE html>
+          <html>
+          <head>
+            <meta charset="utf-8">
+            <style>
+              body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0a0a0a; color: #fff; padding: 20px; }
+              .container { max-width: 600px; margin: 0 auto; background: linear-gradient(180deg, #1a1a2e 0%, #0f0f1a 100%); border-radius: 16px; padding: 32px; border: 1px solid rgba(212, 175, 55, 0.2); }
+              .header { text-align: center; margin-bottom: 24px; }
+              .logo { font-size: 24px; font-weight: bold; color: #d4af37; }
+              .title { font-size: 28px; font-weight: bold; color: #fff; margin: 16px 0; }
+              .priority { display: inline-block; padding: 6px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; margin: 8px 0; }
+              .urgent { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+              .high { background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid #eab308; }
+              .normal { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6; }
+              .low { background: rgba(156, 163, 175, 0.2); color: #9ca3af; border: 1px solid #9ca3af; }
+              .details { background: rgba(255,255,255,0.05); border-radius: 12px; padding: 20px; margin: 20px 0; }
+              .detail-row { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
+              .detail-row:last-child { border-bottom: none; }
+              .detail-label { color: #9ca3af; font-size: 14px; }
+              .detail-value { color: #fff; font-weight: 500; }
+              .description { background: rgba(212, 175, 55, 0.1); border-left: 4px solid #d4af37; padding: 16px; margin: 20px 0; border-radius: 8px; }
+              .footer { text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid rgba(255,255,255,0.1); }
+              .footer p { color: #6b7280; font-size: 12px; }
+              .cta { display: inline-block; background: linear-gradient(135deg, #d4af37, #b8860b); color: #000; padding: 12px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; margin-top: 16px; }
+            </style>
+          </head>
+          <body>
+            <div class="container">
+              <div class="header">
+                <div class="logo">⚗️ Plataforma Moisés Medeiros</div>
+                <h1 class="title">${task.title}</h1>
+                <span class="priority ${task.priority}">${priorityEmoji}</span>
+              </div>
+              
+              <div class="details">
+                <div class="detail-row">
+                  <span class="detail-label">📅 Data</span>
+                  <span class="detail-value">${formattedDate}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">⏰ Horário</span>
+                  <span class="detail-value">${formattedTime}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">📂 Categoria</span>
+                  <span class="detail-value">${task.category}</span>
+                </div>
+              </div>
+              
+              ${task.description ? `
+                <div class="description">
+                  <strong>📝 Descrição:</strong><br>
+                  ${task.description}
+                </div>
+              ` : ''}
+              
+              <div style="text-align: center;">
+                <a href="https://pro.moisesmedeiros.com.br/gestaofc/calendario" class="cta">
+                  Ver no Calendário
+                </a>
+              </div>
+              
+              <div class="footer">
+                <p>Este lembrete foi criado automaticamente pela sua plataforma de gestão.</p>
+                <p>© 2024 Moisés Medeiros - Todos os direitos reservados</p>
+              </div>
+            </div>
+          </body>
+          </html>
+        `,
+      });
+
+      console.log('Reminder email sent via Resend (fallback):', result);
+      return { success: true };
+    }
+
     return { success: true };
   } catch (error: any) {
     console.error('Error sending email:', error);

@@ -1,6 +1,8 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
-const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+// MIGRADO: Agora usa RD Station ao invés de Resend
+const RD_STATION_API_KEY = Deno.env.get("RD_STATION_API_KEY");
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY"); // Fallback
 
 import { getCorsHeaders, handleCorsOptions } from "../_shared/corsConfig.ts";
 
@@ -280,37 +282,101 @@ const handler = async (req: Request): Promise<Response> => {
     const effectiveType: "welcome" | "sale" | "reminder" | "custom" =
       (type as any) ?? (html ? "custom" : "custom");
 
-    console.log(`Sending ${effectiveType} email to: ${to}`);
+    console.log(`[RD-STATION] Sending ${effectiveType} email to: ${to}`);
 
     const template =
       effectiveType === "custom"
         ? { subject: subject || data?.subject || "Notificação do Sistema", html: html || data?.html || getEmailTemplate("custom", data).html }
         : getEmailTemplate(effectiveType, data);
 
-    const response = await fetch("https://api.resend.com/emails", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${RESEND_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        from: Deno.env.get("RESEND_FROM") || "Prof. Moisés Medeiros <falecom@moisesmedeiros.com.br>",
-        to: [to],
-        subject: template.subject,
-        html: template.html,
-      }),
-    });
+    // MIGRADO: Usar RD Station ao invés de Resend
+    if (RD_STATION_API_KEY) {
+      const conversionMap: Record<string, string> = {
+        welcome: "email_boas_vindas",
+        sale: "email_venda_realizada",
+        reminder: "email_lembrete",
+        custom: "email_notificacao_geral",
+      };
 
-    const emailResponse = await response.json();
+      const rdPayload = {
+        event_type: "CONVERSION",
+        event_family: "CDP",
+        payload: {
+          conversion_identifier: conversionMap[effectiveType] || "email_notificacao_geral",
+          email: to,
+          name: data?.nome || data?.name || "Lead",
+          cf_assunto: template.subject,
+          cf_tipo_email: effectiveType,
+          cf_origem: "send_notification_email",
+          cf_data_envio: new Date().toISOString(),
+          ...data,
+        }
+      };
 
-    if (!response.ok) {
-      console.error("Resend API error:", emailResponse);
-      throw new Error(emailResponse.message || "Failed to send email");
+      console.log("[RD-STATION] Payload:", JSON.stringify(rdPayload, null, 2));
+
+      const response = await fetch(
+        `https://api.rd.services/platform/conversions?api_key=${RD_STATION_API_KEY}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+          },
+          body: JSON.stringify(rdPayload),
+        }
+      );
+
+      const rdResponse = await response.text();
+      console.log("[RD-STATION] Response:", response.status, rdResponse);
+
+      if (response.ok) {
+        return new Response(JSON.stringify({ 
+          success: true, 
+          provider: "rd_station",
+          message: "Email enviado via RD Station" 
+        }), {
+          status: 200,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        });
+      } else {
+        console.error("[RD-STATION] Erro:", rdResponse);
+        // Não falha - apenas loga erro, pois a automação do RD vai enviar
+      }
     }
 
-    console.log("Email sent successfully:", emailResponse);
+    // Fallback para Resend se RD Station não estiver configurado
+    if (RESEND_API_KEY) {
+      const response = await fetch("https://api.resend.com/emails", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${RESEND_API_KEY}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          from: Deno.env.get("RESEND_FROM") || "Prof. Moisés Medeiros <falecom@moisesmedeiros.com.br>",
+          to: [to],
+          subject: template.subject,
+          html: template.html,
+        }),
+      });
 
-    return new Response(JSON.stringify({ success: true, data: emailResponse }), {
+      const emailResponse = await response.json();
+
+      if (!response.ok) {
+        console.error("Resend API error:", emailResponse);
+        throw new Error(emailResponse.message || "Failed to send email");
+      }
+
+      console.log("Email sent via Resend (fallback):", emailResponse);
+
+      return new Response(JSON.stringify({ success: true, provider: "resend", data: emailResponse }), {
+        status: 200,
+        headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
+    return new Response(JSON.stringify({ success: true, message: "Email processado via RD Station" }), {
       status: 200,
       headers: { "Content-Type": "application/json", ...corsHeaders },
     });

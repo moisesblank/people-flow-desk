@@ -255,3 +255,8 @@ verify_jwt = true
 # 🛡️ Apenas OWNER pode executar (valida internamente)
 [functions.fix-missing-beta-access]
 verify_jwt = true
+
+# --- RD Station Email Gateway ---
+# 🟢 Novo gateway centralizado de emails via RD Station
+[functions.rd-send-email]
+verify_jwt = false
