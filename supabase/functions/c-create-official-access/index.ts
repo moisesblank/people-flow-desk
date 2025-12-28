@@ -116,8 +116,62 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
 }
 
 // ============================================
+// TEMPLATE BASE PADRÃO (Igual send-notification-email)
+// ============================================
+const getBaseTemplate = (titulo: string, conteudo: string, botaoTexto?: string, botaoUrl?: string) => `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background:#0a0a0f;color:#ffffff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0a0a0f;">
+    <tr>
+      <td align="center" style="padding:24px;">
+        <table role="presentation" width="100%" style="max-width:640px;" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="background:linear-gradient(180deg,#131318 0%,#0a0a0f 100%);border-radius:16px;padding:28px;border:1px solid #7D1128;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-bottom:20px;">
+                  <h1 style="margin:0;color:#E62B4A;font-size:24px;font-weight:700;">Curso Moisés Medeiros</h1>
+                  <p style="margin:8px 0 0;color:#9aa0a6;font-size:13px;">${titulo}</p>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="color:#e6e6e6;line-height:1.7;font-size:14px;">${conteudo}</td></tr>
+              </table>
+              ${botaoTexto && botaoUrl ? `
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-top:24px;">
+                  <a href="${botaoUrl}" style="display:inline-block;background:linear-gradient(135deg,#E62B4A,#7D1128);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:14px;">${botaoTexto}</a>
+                </td></tr>
+              </table>
+              ` : ''}
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="padding:24px 0 18px;"><hr style="border:none;border-top:1px solid #2a2a2f;margin:0;" /></td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="color:#9aa0a6;font-size:12px;line-height:1.6;">
+                  <p style="margin:0 0 8px;"><strong style="color:#e6e6e6;">Prof. Moisés Medeiros Melo</strong></p>
+                  <p style="margin:0 0 8px;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
+                  <p style="margin:0;">WhatsApp: <a href="https://wa.me/558396169222" style="color:#E62B4A;">+55 83 9616-9222</a></p>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-top:18px;"><p style="margin:0;color:#666;font-size:11px;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p></td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>
+`;
+
+// ============================================
 // ENVIAR EMAIL DE BOAS-VINDAS (Resend)
 // ⚠️ NUNCA envia senha em texto
+// AGORA USA O TEMPLATE PADRÃO DA PLATAFORMA
 // ============================================
 async function sendWelcomeEmail(
   resend: Resend,
@@ -128,120 +182,51 @@ async function sendWelcomeEmail(
   passwordSetupLink?: string,
 ): Promise<{ success: boolean; error?: string }> {
   const roleLabel = ROLE_LABELS[role] || role;
-  const platformUrl = 'https://pro.moisesmedeiros.com.br';
+  const platformUrl = 'https://pro.moisesmedeiros.com.br/alunos';
   
   // Conteúdo do email baseado em se precisa definir senha ou não
   const needsPasswordSetup = !!passwordSetupLink;
   
-  const htmlContent = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Bem-vindo(a) à Plataforma</title>
-</head>
-<body style="margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f4f4f5;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-          <!-- Header -->
-          <tr>
-            <td style="background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); padding: 40px 40px 30px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: 700;">
-                🎉 Bem-vindo(a), ${nome}!
-              </h1>
-              <p style="color: rgba(255, 255, 255, 0.9); margin: 10px 0 0; font-size: 16px;">
-                Seu acesso foi criado com sucesso
-              </p>
-            </td>
-          </tr>
-          
-          <!-- Content -->
-          <tr>
-            <td style="padding: 40px;">
-              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                Olá, <strong>${nome}</strong>!
-              </p>
-              
-              <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 20px;">
-                Seu acesso à plataforma foi criado pela equipe de gestão. Você agora possui acesso como:
-              </p>
-              
-              <!-- Role Badge -->
-              <div style="background-color: #f0fdf4; border: 1px solid #86efac; border-radius: 8px; padding: 16px; margin: 0 0 24px; text-align: center;">
-                <span style="color: #166534; font-size: 18px; font-weight: 600;">
-                  ✅ ${roleLabel}
-                </span>
-              </div>
-              
-              ${needsPasswordSetup ? `
-              <!-- Password Setup Section -->
-              <div style="background-color: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 20px; margin: 0 0 24px;">
-                <h3 style="color: #92400e; margin: 0 0 12px; font-size: 16px;">
-                  🔐 Configure sua senha
-                </h3>
-                <p style="color: #78350f; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
-                  Para acessar a plataforma, você precisa definir uma senha. Clique no botão abaixo:
-                </p>
-                <a href="${passwordSetupLink}" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                  Definir Minha Senha
-                </a>
-                <p style="color: #92400e; font-size: 12px; margin: 16px 0 0;">
-                  ⚠️ Este link expira em 24 horas. Se expirar, solicite um novo na página de login.
-                </p>
-              </div>
-              ` : `
-              <!-- Already Has Password -->
-              <div style="background-color: #ecfdf5; border: 1px solid #6ee7b7; border-radius: 8px; padding: 20px; margin: 0 0 24px;">
-                <h3 style="color: #065f46; margin: 0 0 12px; font-size: 16px;">
-                  ✅ Acesso pronto!
-                </h3>
-                <p style="color: #047857; font-size: 14px; line-height: 1.5; margin: 0 0 16px;">
-                  Sua conta já está configurada e você pode fazer login agora mesmo.
-                </p>
-                <a href="${platformUrl}/auth" style="display: inline-block; background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%); color: #ffffff; text-decoration: none; padding: 14px 28px; border-radius: 8px; font-weight: 600; font-size: 16px;">
-                  Acessar Plataforma
-                </a>
-              </div>
-              `}
-              
-              <!-- Instructions -->
-              <h3 style="color: #111827; font-size: 18px; margin: 24px 0 12px;">
-                📚 Próximos passos:
-              </h3>
-              <ol style="color: #374151; font-size: 14px; line-height: 1.8; margin: 0; padding-left: 20px;">
-                ${needsPasswordSetup ? '<li>Clique no botão acima para definir sua senha</li>' : ''}
-                <li>Acesse <a href="${platformUrl}/auth" style="color: #0ea5e9;">a plataforma</a> e faça login com seu email</li>
-                <li>Explore o conteúdo disponível para você</li>
-                <li>Em caso de dúvidas, entre em contato com nosso suporte</li>
-              </ol>
-              
-              <p style="color: #6b7280; font-size: 14px; line-height: 1.6; margin: 24px 0 0;">
-                Este email foi enviado automaticamente. Não responda diretamente.
-              </p>
-            </td>
-          </tr>
-          
-          <!-- Footer -->
-          <tr>
-            <td style="background-color: #f9fafb; padding: 24px 40px; text-align: center; border-top: 1px solid #e5e7eb;">
-              <p style="color: #9ca3af; font-size: 12px; margin: 0;">
-                © ${new Date().getFullYear()} PRO Moisés Medeiros. Todos os direitos reservados.
-              </p>
-              <p style="color: #9ca3af; font-size: 12px; margin: 8px 0 0;">
-                <a href="${platformUrl}" style="color: #6b7280;">pro.moisesmedeiros.com.br</a>
-              </p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
-  </table>
-</body>
-</html>
+  // Conteúdo interno usando o template base padrão
+  const conteudo = `
+    <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">🎉 Bem-vindo(a), ${nome}!</h2>
+    <p style="margin:0 0 12px;">Seu acesso à plataforma foi criado pela equipe de gestão.</p>
+    
+    <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;text-align:center;">
+      <p style="margin:0;color:#E62B4A;font-size:16px;font-weight:bold;">✅ ${roleLabel}</p>
+    </div>
+    
+    ${needsPasswordSetup ? `
+    <div style="background:#2a2a2f;border-radius:8px;padding:16px;margin:16px 0;border-left:3px solid #E62B4A;">
+      <p style="margin:0 0 8px;color:#ffffff;font-weight:bold;">🔐 Configure sua senha</p>
+      <p style="margin:0;color:#9aa0a6;font-size:13px;">Para acessar a plataforma, você precisa definir uma senha clicando no botão abaixo.</p>
+      <p style="margin:12px 0 0;color:#9aa0a6;font-size:12px;">⚠️ Este link expira em 24 horas.</p>
+    </div>
+    ` : `
+    <div style="background:#1a2f1a;border-radius:8px;padding:16px;margin:16px 0;border-left:3px solid #22c55e;">
+      <p style="margin:0 0 8px;color:#22c55e;font-weight:bold;">✅ Acesso pronto!</p>
+      <p style="margin:0;color:#9aa0a6;font-size:13px;">Sua conta já está configurada. Faça login com seu email e senha.</p>
+    </div>
+    `}
+    
+    <h3 style="margin:20px 0 12px;font-size:14px;color:#ffffff;">📚 Próximos passos:</h3>
+    <ul style="margin:0;padding-left:20px;color:#9aa0a6;font-size:13px;line-height:1.8;">
+      ${needsPasswordSetup ? '<li>Clique no botão abaixo para definir sua senha</li>' : ''}
+      <li>Acesse a plataforma e faça login com seu email</li>
+      <li>Explore todo o conteúdo disponível para você</li>
+      <li>Em caso de dúvidas, entre em contato via WhatsApp</li>
+    </ul>
   `;
+  
+  const botaoTexto = needsPasswordSetup ? "Definir Minha Senha" : "Acessar Plataforma";
+  const botaoUrl = needsPasswordSetup ? passwordSetupLink : platformUrl;
+  
+  const htmlContent = getBaseTemplate(
+    "Seu acesso foi criado com sucesso!",
+    conteudo,
+    botaoTexto,
+    botaoUrl
+  );
 
   try {
     console.log('[c-create-official-access] Sending welcome email to:', toEmail);
@@ -250,8 +235,8 @@ async function sendWelcomeEmail(
       from: fromEmail,
       to: [toEmail],
       subject: needsPasswordSetup 
-        ? `🎉 Bem-vindo(a), ${nome}! Configure seu acesso` 
-        : `🎉 Bem-vindo(a), ${nome}! Seu acesso está pronto`,
+        ? `🎉 Bem-vindo(a), ${nome}! Configure seu acesso — Curso Moisés Medeiros` 
+        : `🎉 Bem-vindo(a), ${nome}! Seu acesso está pronto — Curso Moisés Medeiros`,
       html: htmlContent,
     });
 
