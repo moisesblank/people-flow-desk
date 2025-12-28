@@ -254,3 +254,8 @@ verify_jwt = true
 # 🛡️ P0.6 - AGORA COM JWT OBRIGATÓRIO (API externa com custo + PII)
 [functions.validate-cpf-real]
 verify_jwt = true
+
+# --- Correção de Emergência (P0) ---
+# 🛡️ Apenas OWNER pode executar (valida internamente)
+[functions.fix-missing-beta-access]
+verify_jwt = true
