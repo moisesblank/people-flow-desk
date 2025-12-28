@@ -73,12 +73,15 @@ const criarAcessoSchema = z.object({
   cep: z.string()
     .optional()
     .refine(val => !val || /^\d{5}-?\d{3}$/.test(val), "CEP inválido (formato: 00000-000)"),
-}).refine((data) => {
-  // Se role é beta_expira, expires_days é recomendado (warning no console, não bloqueia)
+}).superRefine((data, ctx) => {
+  // Se role é beta_expira, expires_days é OBRIGATÓRIO
   if (data.role === 'beta_expira' && !data.expires_days) {
-    console.warn('[CriarAcessoOficial] beta_expira selecionado sem expires_days');
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Defina o tempo de expiração para Beta Expira",
+      path: ["expires_days"],
+    });
   }
-  return true;
 });
 
 type CriarAcessoFormData = z.infer<typeof criarAcessoSchema>;
@@ -314,57 +317,49 @@ export function CriarAcessoOficialModal({
               )}
             />
 
-            {/* Role */}
-            <FormField
-              control={form.control}
-              name="role"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="flex items-center gap-1">
-                    <UserPlus className="h-4 w-4" />
-                    Tipo de Acesso *
-                  </FormLabel>
-                  <Select 
-                    onValueChange={(value) => {
-                      field.onChange(value);
-                      // Limpar expires_days se não for beta_expira
-                      if (value !== 'beta_expira') {
-                        form.setValue('expires_days', undefined);
-                      }
-                    }} 
-                    defaultValue={field.value}
-                    disabled={isSubmitting}
-                  >
-                    <FormControl>
-                      <SelectTrigger className="border-emerald-500/30">
-                        <SelectValue placeholder="Selecione o tipo de acesso" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="beta">
-                        {STUDENT_ROLE_LABELS.beta}
-                      </SelectItem>
-                      <SelectItem value="aluno_gratuito">
-                        {STUDENT_ROLE_LABELS.aluno_gratuito}
-                      </SelectItem>
-                      <SelectItem value="aluno_presencial">
-                        {STUDENT_ROLE_LABELS.aluno_presencial}
-                      </SelectItem>
-                      <SelectItem value="beta_expira">
-                        {STUDENT_ROLE_LABELS.beta_expira}
-                      </SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormDescription className="text-xs">
-                    Beta = acesso completo | Gratuito = limitado | Presencial = aulas presenciais | Beta Expira = com prazo
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+            {/* Role + Expiração lado a lado */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Role */}
+              <FormField
+                control={form.control}
+                name="role"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <UserPlus className="h-4 w-4" />
+                      Tipo de Acesso *
+                    </FormLabel>
+                    <Select 
+                      onValueChange={field.onChange} 
+                      defaultValue={field.value}
+                      disabled={isSubmitting}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="border-emerald-500/30">
+                          <SelectValue placeholder="Selecione" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="beta">
+                          {STUDENT_ROLE_LABELS.beta}
+                        </SelectItem>
+                        <SelectItem value="aluno_gratuito">
+                          {STUDENT_ROLE_LABELS.aluno_gratuito}
+                        </SelectItem>
+                        <SelectItem value="aluno_presencial">
+                          {STUDENT_ROLE_LABELS.aluno_presencial}
+                        </SelectItem>
+                        <SelectItem value="beta_expira">
+                          {STUDENT_ROLE_LABELS.beta_expira}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
-            {/* Dias de Expiração (só aparece se beta_expira) */}
-            {selectedRole === 'beta_expira' && (
+              {/* Dias de Expiração (OPCIONAL para todos, OBRIGATÓRIO só para beta_expira) */}
               <FormField
                 control={form.control}
                 name="expires_days"
@@ -372,34 +367,41 @@ export function CriarAcessoOficialModal({
                   <FormItem>
                     <FormLabel className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      Dias de Acesso *
+                      Expiração {selectedRole === 'beta_expira' ? '*' : '(opcional)'}
                     </FormLabel>
                     <Select 
-                      onValueChange={(value) => field.onChange(Number(value))} 
-                      value={field.value?.toString()}
+                      onValueChange={(value) => field.onChange(value === 'permanente' ? undefined : Number(value))} 
+                      value={field.value?.toString() || 'permanente'}
                       disabled={isSubmitting}
                     >
                       <FormControl>
-                        <SelectTrigger className="border-amber-500/30">
-                          <SelectValue placeholder="Selecione a duração" />
+                        <SelectTrigger className={selectedRole === 'beta_expira' ? "border-amber-500/30" : "border-muted-foreground/30"}>
+                          <SelectValue placeholder="Permanente" />
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value="permanente">♾️ Permanente</SelectItem>
                         <SelectItem value="30">30 dias</SelectItem>
                         <SelectItem value="60">60 dias</SelectItem>
                         <SelectItem value="90">90 dias</SelectItem>
-                        <SelectItem value="180">180 dias (6 meses)</SelectItem>
-                        <SelectItem value="365">365 dias (1 ano)</SelectItem>
+                        <SelectItem value="180">180 dias</SelectItem>
+                        <SelectItem value="365">1 ano</SelectItem>
                       </SelectContent>
                     </Select>
-                    <FormDescription className="text-xs text-amber-400">
-                      O acesso expirará após o período selecionado.
-                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-            )}
+            </div>
+            
+            {/* Descrição do tipo de acesso */}
+            <p className="text-xs text-muted-foreground -mt-2">
+              {selectedRole === 'beta' && "Beta = acesso completo permanente"}
+              {selectedRole === 'aluno_gratuito' && "Gratuito = acesso limitado"}
+              {selectedRole === 'aluno_presencial' && "Presencial = aulas presenciais"}
+              {selectedRole === 'beta_expira' && "Beta Expira = acesso completo com prazo definido"}
+              {!selectedRole && "Selecione o tipo de acesso"}
+            </p>
 
             {/* ============================================ */}
             {/* CAMPOS OPCIONAIS (Collapsible) */}
