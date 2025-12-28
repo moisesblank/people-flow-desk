@@ -17,7 +17,8 @@ import {
   AlertTriangle,
   ShieldAlert,
   MessageCircle,
-  Smartphone
+  Smartphone,
+  Phone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +34,7 @@ interface TwoFactorVerificationProps {
   onCancel: () => void;
 }
 
-type Channel = "email" | "whatsapp";
+type Channel = "email" | "sms" | "whatsapp";
 
 export function TwoFactorVerification({
   email,
@@ -143,10 +144,15 @@ export function TwoFactorVerification({
       const usedChannel = (data as any)?.channel || channel;
       setCurrentChannel(usedChannel);
 
-      const channelLabel = usedChannel === "whatsapp" ? "WhatsApp" : "email";
-      const destination = usedChannel === "whatsapp" 
-        ? formatPhone(userPhone || "")
-        : email;
+      const channelLabels: Record<Channel, string> = {
+        email: "email",
+        sms: "SMS",
+        whatsapp: "WhatsApp"
+      };
+      const channelLabel = channelLabels[usedChannel as Channel] || usedChannel;
+      const destination = usedChannel === "email" 
+        ? email
+        : formatPhone(userPhone || "");
 
       toast.success(`Código enviado via ${channelLabel}!`, {
         description: `Verifique seu ${channelLabel}: ${destination}`,
@@ -331,6 +337,34 @@ export function TwoFactorVerification({
               <CheckCircle className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
             </motion.button>
 
+            {/* SMS */}
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.25 }}
+              onClick={() => selectChannelAndSend("sms")}
+              disabled={isResending || !hasWhatsApp}
+              className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 group 
+                ${hasWhatsApp 
+                  ? "border-border bg-background/50 hover:border-orange-500 hover:bg-orange-500/5" 
+                  : "border-border/50 bg-muted/30 cursor-not-allowed opacity-50"
+                }`}
+            >
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors
+                ${hasWhatsApp ? "bg-orange-500/10 group-hover:bg-orange-500/20" : "bg-muted"}`}>
+                <Phone className={`w-6 h-6 ${hasWhatsApp ? "text-orange-500" : "text-muted-foreground"}`} />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-foreground">SMS</p>
+                <p className="text-sm text-muted-foreground">
+                  {hasWhatsApp ? formatPhone(userPhone || "") : "Telefone não cadastrado"}
+                </p>
+              </div>
+              {hasWhatsApp && (
+                <CheckCircle className="w-5 h-5 text-muted-foreground/30 group-hover:text-orange-500 transition-colors" />
+              )}
+            </motion.button>
+
             {/* WhatsApp */}
             <motion.button
               initial={{ opacity: 0, x: -20 }}
@@ -437,13 +471,17 @@ export function TwoFactorVerification({
                 ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)"
                 : currentChannel === "whatsapp"
                   ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
-                  : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
+                  : currentChannel === "sms"
+                    ? "linear-gradient(135deg, #f97316 0%, #ea580c 100%)"
+                    : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
             }}
           >
             {isLocked ? (
               <ShieldAlert className="w-10 h-10 text-white" />
             ) : currentChannel === "whatsapp" ? (
               <MessageCircle className="w-10 h-10 text-white" />
+            ) : currentChannel === "sms" ? (
+              <Phone className="w-10 h-10 text-white" />
             ) : (
               <Mail className="w-10 h-10 text-white" />
             )}
@@ -461,13 +499,18 @@ export function TwoFactorVerification({
           <p className="text-muted-foreground text-sm">
             {isLocked 
               ? "Muitas tentativas incorretas detectadas"
-              : `Enviamos um código de 6 dígitos para seu ${currentChannel === "whatsapp" ? "WhatsApp" : "email"}`}
+              : `Enviamos um código de 6 dígitos para seu ${currentChannel === "whatsapp" ? "WhatsApp" : currentChannel === "sms" ? "SMS" : "email"}`}
           </p>
           {!isLocked && (
             <p className="text-primary font-medium flex items-center justify-center gap-2 mt-1">
               {currentChannel === "whatsapp" ? (
                 <>
                   <MessageCircle className="w-4 h-4" />
+                  {formatPhone(userPhone || "")}
+                </>
+              ) : currentChannel === "sms" ? (
+                <>
+                  <Phone className="w-4 h-4" />
                   {formatPhone(userPhone || "")}
                 </>
               ) : (
