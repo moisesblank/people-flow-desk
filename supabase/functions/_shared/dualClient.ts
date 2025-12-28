@@ -141,20 +141,21 @@ export async function createDualClients(
   };
 }
 
-/**
- * Verifica se usuário é OWNER (bypass total)
- */
-export function isOwner(email?: string | null): boolean {
-  return email === "moisesblank@gmail.com";
-}
+// ============================================
+// 🚫 P1-2 FIX: isOwner(email) REMOVIDO
+// Validação por email é PROIBIDA pela Constituição v10
+// Usar APENAS verificação via role do banco:
+//   await supabase.from("user_roles").select("role").eq("user_id", userId).eq("role", "owner")
+// ============================================
 
 /**
  * Verifica se usuário tem role imune (gestão)
+ * NOTA: 'employee' e 'funcionario' são categorias deprecated
  */
 export function isImmuneRole(role?: string | null): boolean {
   const IMMUNE_ROLES = [
-    'owner', 'admin', 'funcionario', 'suporte',
-    'coordenacao', 'employee', 'monitoria',
+    'owner', 'admin', 'suporte',
+    'coordenacao', 'monitoria', 'contabilidade', 'marketing', 'afiliado',
   ];
   return role ? IMMUNE_ROLES.includes(role) : false;
 }
