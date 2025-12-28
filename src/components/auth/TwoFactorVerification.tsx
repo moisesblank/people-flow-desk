@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - Two Factor Verification
-// Componente de verificação 2FA Ultra Seguro
+// Componente de verificação 2FA com escolha de canal
+// Email ou WhatsApp
 // ============================================
 
 import { useState, useEffect, useRef, useCallback } from "react";
@@ -14,7 +15,9 @@ import {
   AlertCircle, 
   Timer,
   AlertTriangle,
-  ShieldAlert
+  ShieldAlert,
+  MessageCircle,
+  Smartphone
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,17 +28,26 @@ interface TwoFactorVerificationProps {
   email: string;
   userId: string;
   userName?: string;
+  userPhone?: string;
   onVerified: () => void;
   onCancel: () => void;
 }
+
+type Channel = "email" | "whatsapp";
 
 export function TwoFactorVerification({
   email,
   userId,
   userName,
+  userPhone,
   onVerified,
   onCancel
 }: TwoFactorVerificationProps) {
+  // Estado de seleção de canal
+  const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
+  const [showChannelSelection, setShowChannelSelection] = useState(true);
+  
+  // Estado do código
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
   const [isResending, setIsResending] = useState(false);
@@ -44,13 +56,11 @@ export function TwoFactorVerification({
   const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
   const [isLocked, setIsLocked] = useState(false);
   const [lockoutTime, setLockoutTime] = useState(0);
+  const [currentChannel, setCurrentChannel] = useState<Channel>("email");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
-  // Enviar código ao montar
-  useEffect(() => {
-    console.log('[AUTH][2FA] 1. TwoFactorVerification montado');
-    sendCode();
-  }, []);
+  // Verificar se tem WhatsApp disponível
+  const hasWhatsApp = Boolean(userPhone && userPhone.length >= 10);
 
   // Countdown para reenvio
   useEffect(() => {
@@ -71,8 +81,16 @@ export function TwoFactorVerification({
     }
   }, [lockoutTime, isLocked]);
 
-  const sendCode = useCallback(async () => {
-    console.log('[AUTH][2FA] 2. Enviando código...');
+  // Selecionar canal e enviar código
+  const selectChannelAndSend = async (channel: Channel) => {
+    setSelectedChannel(channel);
+    setCurrentChannel(channel);
+    setShowChannelSelection(false);
+    await sendCode(channel);
+  };
+
+  const sendCode = useCallback(async (channel: Channel = currentChannel) => {
+    console.log(`[AUTH][2FA] Enviando código via ${channel}...`);
     setIsResending(true);
     setError("");
 
@@ -93,14 +111,20 @@ export function TwoFactorVerification({
       const { data, error } = await withTimeout(
         'send-2fa-code',
         supabase.functions.invoke("send-2fa-code", {
-          body: { email, userId, userName }
+          body: { 
+            email, 
+            userId, 
+            userName,
+            phone: userPhone,
+            channel 
+          }
         })
       );
 
-      console.log('[AUTH][2FA] 3. Resposta send-2fa-code:', {
+      console.log('[AUTH][2FA] Resposta send-2fa-code:', {
         hasError: Boolean(error),
         hasData: Boolean(data),
-        dataError: Boolean((data as any)?.error),
+        channel: (data as any)?.channel,
       });
 
       if (error) throw error;
@@ -115,8 +139,17 @@ export function TwoFactorVerification({
         throw new Error((data as any).error);
       }
 
-      toast.success("Código enviado!", {
-        description: `Verifique: ${email} (SPAM e Promoções). Remetente: onboarding@resend.dev`,
+      // Atualizar canal usado (pode ter sido fallback)
+      const usedChannel = (data as any)?.channel || channel;
+      setCurrentChannel(usedChannel);
+
+      const channelLabel = usedChannel === "whatsapp" ? "WhatsApp" : "email";
+      const destination = usedChannel === "whatsapp" 
+        ? formatPhone(userPhone || "")
+        : email;
+
+      toast.success(`Código enviado via ${channelLabel}!`, {
+        description: `Verifique seu ${channelLabel}: ${destination}`,
       });
 
       setCountdown(60);
@@ -129,7 +162,7 @@ export function TwoFactorVerification({
     } finally {
       setIsResending(false);
     }
-  }, [email, userId, userName]);
+  }, [email, userId, userName, userPhone, currentChannel]);
 
   const handleInputChange = (index: number, value: string) => {
     if (!/^\d*$/.test(value)) return;
@@ -169,7 +202,7 @@ export function TwoFactorVerification({
   };
 
   const verifyCode = async (fullCode: string) => {
-    console.log('[AUTH][2FA] 4. Verificando código...');
+    console.log('[AUTH][2FA] Verificando código...');
     setIsLoading(true);
     setError("");
 
@@ -194,15 +227,7 @@ export function TwoFactorVerification({
         })
       );
 
-      console.log('[AUTH][2FA] 5. Resposta verify-2fa-code:', {
-        hasError: Boolean(error),
-        valid: Boolean((data as any)?.valid),
-        lockedUntil: Boolean((data as any)?.lockedUntil),
-        attemptsRemaining: (data as any)?.attemptsRemaining,
-      });
-
       if (error || !(data as any)?.valid) {
-        // Verificar se está bloqueado
         if ((data as any)?.lockedUntil) {
           setIsLocked(true);
           setLockoutTime((data as any).remainingSeconds || 900);
@@ -211,7 +236,6 @@ export function TwoFactorVerification({
           return;
         }
 
-        // Atualizar tentativas restantes
         if ((data as any)?.attemptsRemaining !== undefined) {
           setAttemptsRemaining((data as any).attemptsRemaining);
         }
@@ -242,8 +266,157 @@ export function TwoFactorVerification({
     return `${mins}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const formatPhone = (phone: string) => {
+    const clean = phone.replace(/\D/g, '');
+    if (clean.length >= 11) {
+      return `(**) *****-${clean.slice(-4)}`;
+    }
+    return `***-${clean.slice(-4)}`;
+  };
+
   const maskedEmail = email.replace(/(.{2})(.*)(@.*)/, '$1***$3');
 
+  // ============================================
+  // TELA DE SELEÇÃO DE CANAL
+  // ============================================
+  if (showChannelSelection && !selectedChannel) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0, scale: 0.95 }}
+        className="w-full max-w-md mx-auto"
+      >
+        <div className="bg-card/50 backdrop-blur-xl border border-primary/20 rounded-2xl p-8 shadow-2xl shadow-primary/10">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ type: "spring", delay: 0.1 }}
+              className="w-20 h-20 mx-auto mb-4 rounded-full flex items-center justify-center"
+              style={{
+                background: "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
+              }}
+            >
+              <Shield className="w-10 h-10 text-white" />
+            </motion.div>
+
+            <h2 className="text-2xl font-bold text-foreground mb-2">
+              Verificação em Duas Etapas
+            </h2>
+            <p className="text-muted-foreground text-sm">
+              Onde você quer receber seu código de verificação?
+            </p>
+          </div>
+
+          {/* Opções de Canal */}
+          <div className="space-y-3 mb-6">
+            {/* Email */}
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.2 }}
+              onClick={() => selectChannelAndSend("email")}
+              disabled={isResending}
+              className="w-full p-4 rounded-xl border-2 border-border bg-background/50 hover:border-primary hover:bg-primary/5 transition-all duration-200 flex items-center gap-4 group disabled:opacity-50"
+            >
+              <div className="w-12 h-12 rounded-full bg-blue-500/10 flex items-center justify-center group-hover:bg-blue-500/20 transition-colors">
+                <Mail className="w-6 h-6 text-blue-500" />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-foreground">Email</p>
+                <p className="text-sm text-muted-foreground">{maskedEmail}</p>
+              </div>
+              <CheckCircle className="w-5 h-5 text-muted-foreground/30 group-hover:text-primary transition-colors" />
+            </motion.button>
+
+            {/* WhatsApp */}
+            <motion.button
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ delay: 0.3 }}
+              onClick={() => selectChannelAndSend("whatsapp")}
+              disabled={isResending || !hasWhatsApp}
+              className={`w-full p-4 rounded-xl border-2 transition-all duration-200 flex items-center gap-4 group 
+                ${hasWhatsApp 
+                  ? "border-border bg-background/50 hover:border-green-500 hover:bg-green-500/5" 
+                  : "border-border/50 bg-muted/30 cursor-not-allowed opacity-50"
+                }`}
+            >
+              <div className={`w-12 h-12 rounded-full flex items-center justify-center transition-colors
+                ${hasWhatsApp ? "bg-green-500/10 group-hover:bg-green-500/20" : "bg-muted"}`}>
+                <MessageCircle className={`w-6 h-6 ${hasWhatsApp ? "text-green-500" : "text-muted-foreground"}`} />
+              </div>
+              <div className="flex-1 text-left">
+                <p className="font-semibold text-foreground">WhatsApp</p>
+                <p className="text-sm text-muted-foreground">
+                  {hasWhatsApp ? formatPhone(userPhone || "") : "Telefone não cadastrado"}
+                </p>
+              </div>
+              {hasWhatsApp && (
+                <CheckCircle className="w-5 h-5 text-muted-foreground/30 group-hover:text-green-500 transition-colors" />
+              )}
+            </motion.button>
+          </div>
+
+          {/* Loading */}
+          <AnimatePresence>
+            {isResending && (
+              <motion.div
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: "auto" }}
+                exit={{ opacity: 0, height: 0 }}
+                className="mb-4"
+              >
+                <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-primary/10 text-primary text-sm">
+                  <motion.div
+                    animate={{ rotate: 360 }}
+                    transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                  </motion.div>
+                  <span>Enviando código...</span>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+
+          {/* Cancel */}
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={onCancel}
+            disabled={isResending}
+          >
+            Cancelar
+          </Button>
+        </div>
+
+        {/* Dica */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
+          className="mt-6 p-4 rounded-lg bg-muted/30 border border-border/50"
+        >
+          <div className="flex items-start gap-3">
+            <Smartphone className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+            <div className="text-sm text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">Mais segurança para você</p>
+              <p>
+                A verificação em duas etapas protege sua conta mesmo que sua senha seja comprometida.
+              </p>
+            </div>
+          </div>
+        </motion.div>
+      </motion.div>
+    );
+  }
+
+  // ============================================
+  // TELA DE INSERÇÃO DO CÓDIGO
+  // ============================================
   return (
     <motion.div
       initial={{ opacity: 0, scale: 0.95 }}
@@ -262,35 +435,47 @@ export function TwoFactorVerification({
             style={{
               background: isLocked 
                 ? "linear-gradient(135deg, #991b1b 0%, #dc2626 100%)"
-                : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
+                : currentChannel === "whatsapp"
+                  ? "linear-gradient(135deg, #22c55e 0%, #16a34a 100%)"
+                  : "linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--destructive)) 100%)"
             }}
           >
             {isLocked ? (
               <ShieldAlert className="w-10 h-10 text-white" />
+            ) : currentChannel === "whatsapp" ? (
+              <MessageCircle className="w-10 h-10 text-white" />
             ) : (
-              <Shield className="w-10 h-10 text-white" />
+              <Mail className="w-10 h-10 text-white" />
             )}
             
-            {/* Animated ring */}
             <motion.div
-              className="absolute inset-0 rounded-full border-2 border-primary/50"
+              className="absolute inset-0 rounded-full border-2 border-current opacity-50"
               animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0, 0.5] }}
               transition={{ duration: 2, repeat: Infinity }}
             />
           </motion.div>
 
           <h2 className="text-2xl font-bold text-foreground mb-2">
-            {isLocked ? "Conta Temporariamente Bloqueada" : "Verificação em Duas Etapas"}
+            {isLocked ? "Conta Temporariamente Bloqueada" : "Digite o Código"}
           </h2>
           <p className="text-muted-foreground text-sm">
             {isLocked 
               ? "Muitas tentativas incorretas detectadas"
-              : "Enviamos um código de 6 dígitos para"}
+              : `Enviamos um código de 6 dígitos para seu ${currentChannel === "whatsapp" ? "WhatsApp" : "email"}`}
           </p>
           {!isLocked && (
             <p className="text-primary font-medium flex items-center justify-center gap-2 mt-1">
-              <Mail className="w-4 h-4" />
-              {maskedEmail}
+              {currentChannel === "whatsapp" ? (
+                <>
+                  <MessageCircle className="w-4 h-4" />
+                  {formatPhone(userPhone || "")}
+                </>
+              ) : (
+                <>
+                  <Mail className="w-4 h-4" />
+                  {maskedEmail}
+                </>
+              )}
             </p>
           )}
         </div>
@@ -359,7 +544,7 @@ export function TwoFactorVerification({
             <div className="flex items-center justify-center gap-4 mt-4 text-sm text-muted-foreground">
               <span className="flex items-center gap-1">
                 <Timer className="w-4 h-4" />
-                Expira em 10 min
+                Expira em 5 min
               </span>
               {attemptsRemaining !== null && attemptsRemaining < 5 && (
                 <span className="flex items-center gap-1 text-amber-500">
@@ -410,21 +595,38 @@ export function TwoFactorVerification({
           )}
         </AnimatePresence>
 
-        {/* Resend */}
+        {/* Resend & Change Channel */}
         {!isLocked && (
-          <div className="text-center mb-6">
-            <p className="text-sm text-muted-foreground mb-2">
-              Não recebeu o código?
-            </p>
+          <div className="text-center mb-6 space-y-3">
+            <div>
+              <p className="text-sm text-muted-foreground mb-2">
+                Não recebeu o código?
+              </p>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => sendCode(currentChannel)}
+                disabled={isResending || countdown > 0}
+                className="text-primary hover:text-primary/80"
+              >
+                <RefreshCw className={`w-4 h-4 mr-2 ${isResending ? "animate-spin" : ""}`} />
+                {countdown > 0 ? `Reenviar em ${countdown}s` : "Reenviar código"}
+              </Button>
+            </div>
+
+            {/* Trocar canal */}
             <Button
-              variant="ghost"
+              variant="link"
               size="sm"
-              onClick={sendCode}
-              disabled={isResending || countdown > 0}
-              className="text-primary hover:text-primary/80"
+              onClick={() => {
+                setShowChannelSelection(true);
+                setSelectedChannel(null);
+                setCode(["", "", "", "", "", ""]);
+                setError("");
+              }}
+              className="text-muted-foreground hover:text-foreground"
             >
-              <RefreshCw className={`w-4 h-4 mr-2 ${isResending ? "animate-spin" : ""}`} />
-              {countdown > 0 ? `Reenviar em ${countdown}s` : "Reenviar código"}
+              Usar outro método de verificação
             </Button>
           </div>
         )}
@@ -436,7 +638,7 @@ export function TwoFactorVerification({
           onClick={onCancel}
           disabled={isLoading}
         >
-          {isLocked ? "Voltar ao login" : "Cancelar e voltar ao login"}
+          {isLocked ? "Voltar ao login" : "Cancelar"}
         </Button>
       </div>
 
@@ -453,7 +655,7 @@ export function TwoFactorVerification({
             <p className="font-medium text-foreground mb-1">Dica de segurança</p>
             <p>
               Nunca compartilhe seu código de verificação com ninguém. 
-              Nossa equipe <strong>jamais</strong> solicitará esse código por telefone ou WhatsApp.
+              Nossa equipe <strong>jamais</strong> solicitará esse código.
             </p>
           </div>
         </div>
