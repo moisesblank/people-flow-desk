@@ -7,6 +7,7 @@ import { memo, Suspense, lazy } from "react";
 import { motion } from "framer-motion";
 import { useConstitutionPerformance, useChartSimplification } from "@/hooks/useConstitutionPerformance";
 import { ChartSkeleton } from "@/components/performance/LazyRecharts";
+import { formatCurrency } from "@/utils";
 
 // Lazy load Recharts
 const LazyPieChart = lazy(() => 
@@ -32,14 +33,6 @@ interface CategoryPieChartProps {
     color: string;
   }[];
   title: string;
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-  }).format(value / 100);
 }
 
 // Versão simplificada para conexões lentas

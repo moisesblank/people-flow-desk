@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { formatCurrencyFromReais } from "@/utils";
 import {
   Target,
   Plus,
@@ -278,12 +279,8 @@ export function FinancialGoalsWidget() {
     return Math.min((current / target) * 100, 100);
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  // Usa função centralizada de @/utils
+  const formatCurrency = formatCurrencyFromReais;
 
   if (loading) {
     return (

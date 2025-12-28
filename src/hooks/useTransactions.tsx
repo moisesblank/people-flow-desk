@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "./useAuth";
 import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
 import { toast } from "sonner";
+import { formatCurrency as formatCurrencyCentralized } from "@/utils";
 
 export interface Transaction {
   id: string;
@@ -256,10 +257,5 @@ export function useFinancialStats(dateRange?: { start: Date; end: Date }) {
   );
 }
 
-// Função auxiliar para formatar moeda
-export function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(value / 100);
-}
+// Função auxiliar para formatar moeda (re-exporta de @/utils)
+export { formatCurrencyCentralized as formatCurrency };

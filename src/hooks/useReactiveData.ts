@@ -4,6 +4,7 @@
 // ============================================
 
 import { useEffect, useCallback } from 'react';
+import { formatCurrency as formatCurrencyCentralized, formatPercent as formatPercentCentralized, formatNumber as formatNumberCentralized, formatNumberCompact } from '@/utils';
 import { 
   useReactiveStore, 
   useLastUpdate, 
@@ -81,27 +82,12 @@ export function useReactiveStatus() {
 }
 
 // ===== HOOK PARA FORMATAÇÃO =====
+// Usa funções centralizadas de @/utils (CONSTITUIÇÃO v10.x)
 export function useReactiveFormat() {
-  const formatCurrency = useCallback((cents: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL',
-    }).format(cents / 100);
-  }, []);
-
-  const formatPercent = useCallback((value: number) => {
-    return `${value.toFixed(1)}%`;
-  }, []);
-
-  const formatNumber = useCallback((value: number) => {
-    return new Intl.NumberFormat('pt-BR').format(value);
-  }, []);
-
-  const formatCompact = useCallback((value: number) => {
-    if (value >= 1000000) return `${(value / 1000000).toFixed(1)}M`;
-    if (value >= 1000) return `${(value / 1000).toFixed(1)}K`;
-    return value.toString();
-  }, []);
+  const formatCurrency = useCallback((cents: number) => formatCurrencyCentralized(cents), []);
+  const formatPercent = useCallback((value: number) => formatPercentCentralized(value), []);
+  const formatNumber = useCallback((value: number) => formatNumberCentralized(value), []);
+  const formatCompact = useCallback((value: number) => formatNumberCompact(value), []);
 
   return { formatCurrency, formatPercent, formatNumber, formatCompact };
 }

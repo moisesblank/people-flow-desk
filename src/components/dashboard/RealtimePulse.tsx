@@ -18,6 +18,7 @@ import {
   AlertTriangle
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/utils";
 
 interface Transaction {
   id: string;
@@ -34,13 +35,6 @@ interface DashboardStats {
   todaySales: number;
   recentTransactions: Transaction[];
   isConnected: boolean;
-}
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
 }
 
 function formatTime(date: string): string {

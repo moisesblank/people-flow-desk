@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import { Target, TrendingUp, AlertTriangle, CheckCircle2 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
+import { formatCurrency } from "@/utils";
 
 interface Goal {
   id: string;
@@ -12,14 +13,6 @@ interface Goal {
 
 interface FinancialGoalsProps {
   goals: Goal[];
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-  }).format(value / 100);
 }
 
 export function FinancialGoals({ goals }: FinancialGoalsProps) {

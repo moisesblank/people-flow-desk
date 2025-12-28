@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
+import { formatCurrency } from "@/utils";
 
 interface FinancialOverviewProps {
   income: number;
@@ -25,14 +26,7 @@ interface FinancialOverviewProps {
   pendingPayments: number;
 }
 
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
-
-export function FinancialOverview({ 
+export function FinancialOverview({
   income, 
   expenses, 
   personalExpenses, 

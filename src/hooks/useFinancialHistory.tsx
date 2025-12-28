@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { format, startOfDay, endOfDay, startOfWeek, endOfWeek, startOfMonth, endOfMonth, startOfYear, endOfYear, subYears, addMonths } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatCurrency as formatCurrencyCentralized } from "@/utils";
 
 export type PeriodFilter = "diario" | "semanal" | "mensal" | "anual" | "10anos" | "custom";
 
@@ -430,14 +431,9 @@ export function useFinancialHistory() {
   };
 }
 
-// Hook para formatar valores
+// Hook para formatar valores (usa @/utils centralizado)
 export function useFormatCurrency() {
-  return useCallback((cents: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL",
-    }).format(cents / 100);
-  }, []);
+  return useCallback((cents: number) => formatCurrencyCentralized(cents), []);
 }
 
 // Nome do mês em português

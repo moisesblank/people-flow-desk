@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { useConstitutionPerformance, useChartSimplification } from "@/hooks/useConstitutionPerformance";
 import { ChartSkeleton } from "@/components/performance/LazyRecharts";
+import { formatCurrency } from "@/utils";
 
 // Lazy load Recharts
 const LazyAreaChart = lazy(() => 
@@ -38,14 +39,6 @@ interface RevenueChartProps {
     receitas: number;
     despesas: number;
   }[];
-}
-
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-  }).format(value / 100);
 }
 
 // Versão simplificada para conexões lentas

@@ -8,6 +8,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { formatCurrency as formatCurrencyCentralized } from "@/utils";
 import { 
   format, 
   startOfDay, 
@@ -17,7 +18,7 @@ import {
   startOfMonth, 
   endOfMonth, 
   startOfYear, 
-  endOfYear, 
+  endOfYear,
   subYears, 
   addYears,
   parseISO,
@@ -508,10 +509,5 @@ export function usePaymentsHistory() {
   };
 }
 
-// Utilitário para formatar moeda
-export function formatPaymentCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
+// Re-exporta de @/utils (CONSTITUIÇÃO v10.x)
+export { formatCurrencyCentralized as formatPaymentCurrency };
