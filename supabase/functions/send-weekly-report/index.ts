@@ -243,119 +243,130 @@ function generateHTMLReport(data: WeeklyReportData): string {
   const formatCurrency = (cents: number) => 
     new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(cents / 100);
 
+  // Template padrão da plataforma (PADRONIZADO v10.x)
   return `
 <!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Relatório Semanal SYNAPSE</title>
-  <style>
-    body { font-family: 'Segoe UI', Arial, sans-serif; background: #0a0a0a; color: #fff; margin: 0; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: #111; border-radius: 16px; overflow: hidden; }
-    .header { background: linear-gradient(135deg, #dc2626 0%, #7c3aed 100%); padding: 30px; text-align: center; }
-    .header h1 { margin: 0; font-size: 24px; }
-    .header p { margin: 10px 0 0; opacity: 0.9; }
-    .content { padding: 30px; }
-    .section { margin-bottom: 30px; }
-    .section-title { font-size: 16px; font-weight: 600; margin-bottom: 15px; color: #a3a3a3; text-transform: uppercase; letter-spacing: 1px; }
-    .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
-    .stat-card { background: #1a1a1a; border-radius: 12px; padding: 20px; }
-    .stat-value { font-size: 24px; font-weight: 700; color: #fff; }
-    .stat-label { font-size: 12px; color: #737373; margin-top: 5px; }
-    .stat-positive { color: #22c55e; }
-    .stat-negative { color: #ef4444; }
-    .highlight { background: #1a2e1a; border-left: 4px solid #22c55e; padding: 12px 15px; border-radius: 0 8px 8px 0; margin-bottom: 10px; }
-    .alert { background: #2e1a1a; border-left: 4px solid #ef4444; padding: 12px 15px; border-radius: 0 8px 8px 0; margin-bottom: 10px; }
-    .footer { text-align: center; padding: 20px; color: #525252; font-size: 12px; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>📊 Relatório Semanal</h1>
-      <p>${data.period.start} — ${data.period.end}</p>
-    </div>
-    
-    <div class="content">
-      <div class="section">
-        <div class="section-title">Resumo Financeiro</div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value stat-positive">${formatCurrency(data.financial.totalIncome)}</div>
-            <div class="stat-label">Receitas</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value stat-negative">${formatCurrency(data.financial.totalExpenses)}</div>
-            <div class="stat-label">Despesas</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value ${data.financial.profit >= 0 ? 'stat-positive' : 'stat-negative'}">${formatCurrency(data.financial.profit)}</div>
-            <div class="stat-label">Lucro Líquido</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${data.financial.profitMargin.toFixed(1)}%</div>
-            <div class="stat-label">Margem</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Vendas & Alunos</div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">${data.sales.count}</div>
-            <div class="stat-label">Vendas</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${formatCurrency(data.sales.avgTicket)}</div>
-            <div class="stat-label">Ticket Médio</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${data.students.total}</div>
-            <div class="stat-label">Total Alunos</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value stat-positive">+${data.students.newThisWeek}</div>
-            <div class="stat-label">Novos</div>
-          </div>
-        </div>
-      </div>
-
-      <div class="section">
-        <div class="section-title">Produtividade</div>
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value stat-positive">${data.tasks.completed}</div>
-            <div class="stat-label">Tarefas Concluídas</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">${data.tasks.pending}</div>
-            <div class="stat-label">Pendentes</div>
-          </div>
-        </div>
-      </div>
-
-      ${data.highlights.length > 0 ? `
-      <div class="section">
-        <div class="section-title">Destaques</div>
-        ${data.highlights.map(h => `<div class="highlight">${h}</div>`).join('')}
-      </div>
-      ` : ''}
-
-      ${data.alerts.length > 0 ? `
-      <div class="section">
-        <div class="section-title">Alertas</div>
-        ${data.alerts.map(a => `<div class="alert">${a}</div>`).join('')}
-      </div>
-      ` : ''}
-    </div>
-
-    <div class="footer">
-      <p>Gerado automaticamente pelo SYNAPSE v14.0</p>
-      <p>Moisés Medeiros - Sistema de Gestão</p>
-    </div>
-  </div>
+<html lang="pt-BR">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background:#0a0a0f;color:#ffffff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0a0a0f;">
+    <tr>
+      <td align="center" style="padding:24px;">
+        <table role="presentation" width="100%" style="max-width:640px;" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="background:linear-gradient(180deg,#131318 0%,#0a0a0f 100%);border-radius:16px;padding:28px;border:1px solid #7D1128;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-bottom:20px;">
+                  <h1 style="margin:0;color:#E62B4A;font-size:24px;font-weight:700;">Curso Moisés Medeiros</h1>
+                  <p style="margin:8px 0 0;color:#9aa0a6;font-size:13px;">📊 Relatório Semanal</p>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="color:#e6e6e6;line-height:1.7;font-size:14px;">
+                  <div style="text-align:center;margin-bottom:20px;">
+                    <p style="margin:0;color:#9aa0a6;font-size:14px;">${data.period.start} — ${data.period.end}</p>
+                  </div>
+                  
+                  <h3 style="margin:20px 0 12px;font-size:14px;color:#E62B4A;text-transform:uppercase;letter-spacing:1px;">💰 Resumo Financeiro</h3>
+                  <table role="presentation" width="100%" cellspacing="8" cellpadding="0">
+                    <tr>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#22c55e;">${formatCurrency(data.financial.totalIncome)}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Receitas</p>
+                      </td>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#ef4444;">${formatCurrency(data.financial.totalExpenses)}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Despesas</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:${data.financial.profit >= 0 ? '#22c55e' : '#ef4444'};">${formatCurrency(data.financial.profit)}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Lucro Líquido</p>
+                      </td>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#ffffff;">${data.financial.profitMargin.toFixed(1)}%</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Margem</p>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <h3 style="margin:24px 0 12px;font-size:14px;color:#E62B4A;text-transform:uppercase;letter-spacing:1px;">🎓 Vendas & Alunos</h3>
+                  <table role="presentation" width="100%" cellspacing="8" cellpadding="0">
+                    <tr>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#ffffff;">${data.sales.count}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Vendas</p>
+                      </td>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#ffffff;">${formatCurrency(data.sales.avgTicket)}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Ticket Médio</p>
+                      </td>
+                    </tr>
+                    <tr>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#ffffff;">${data.students.total}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Total Alunos</p>
+                      </td>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#22c55e;">+${data.students.newThisWeek}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Novos</p>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  <h3 style="margin:24px 0 12px;font-size:14px;color:#E62B4A;text-transform:uppercase;letter-spacing:1px;">✅ Produtividade</h3>
+                  <table role="presentation" width="100%" cellspacing="8" cellpadding="0">
+                    <tr>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#22c55e;">${data.tasks.completed}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Concluídas</p>
+                      </td>
+                      <td style="background:#1a1a1f;border-radius:8px;padding:16px;width:50%;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:bold;color:#eab308;">${data.tasks.pending}</p>
+                        <p style="margin:4px 0 0;font-size:11px;color:#9aa0a6;">Pendentes</p>
+                      </td>
+                    </tr>
+                  </table>
+                  
+                  ${data.highlights.length > 0 ? `
+                  <h3 style="margin:24px 0 12px;font-size:14px;color:#E62B4A;text-transform:uppercase;letter-spacing:1px;">🌟 Destaques</h3>
+                  ${data.highlights.map(h => `<div style="background:#1a2f1a;border-left:3px solid #22c55e;padding:12px 15px;border-radius:0 8px 8px 0;margin-bottom:8px;color:#e6e6e6;">${h}</div>`).join('')}
+                  ` : ''}
+                  
+                  ${data.alerts.length > 0 ? `
+                  <h3 style="margin:24px 0 12px;font-size:14px;color:#E62B4A;text-transform:uppercase;letter-spacing:1px;">⚠️ Alertas</h3>
+                  ${data.alerts.map(a => `<div style="background:#2f1a1a;border-left:3px solid #ef4444;padding:12px 15px;border-radius:0 8px 8px 0;margin-bottom:8px;color:#e6e6e6;">${a}</div>`).join('')}
+                  ` : ''}
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-top:24px;">
+                  <a href="https://pro.moisesmedeiros.com.br/gestaofc/dashboard" style="display:inline-block;background:linear-gradient(135deg,#E62B4A,#7D1128);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:14px;">📊 Ver Dashboard Completo</a>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="padding:24px 0 18px;"><hr style="border:none;border-top:1px solid #2a2a2f;margin:0;" /></td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="color:#9aa0a6;font-size:12px;line-height:1.6;">
+                  <p style="margin:0 0 8px;"><strong style="color:#e6e6e6;">Prof. Moisés Medeiros Melo</strong></p>
+                  <p style="margin:0 0 8px;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
+                  <p style="margin:0;">WhatsApp: <a href="https://wa.me/558396169222" style="color:#E62B4A;">+55 83 9616-9222</a></p>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-top:18px;">
+                  <p style="margin:0;color:#666;font-size:11px;">Relatório automático • SYNAPSE v10.x</p>
+                  <p style="margin:4px 0 0;color:#666;font-size:11px;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `;

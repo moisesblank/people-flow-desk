@@ -163,102 +163,99 @@ serve(async (req) => {
       }).format(cents / 100);
     };
 
-    // Construir HTML do email
-    const emailHtml = `
-<!DOCTYPE html>
-<html>
-<head>
-  <meta charset="utf-8">
-  <style>
-    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #0a0a0f; color: #fff; padding: 20px; }
-    .container { max-width: 600px; margin: 0 auto; background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%); border-radius: 16px; padding: 30px; }
-    .header { text-align: center; margin-bottom: 30px; }
-    .header h1 { color: #EC4899; margin: 0; font-size: 28px; }
-    .header p { color: #8B5CF6; margin: 5px 0 0 0; }
-    .alert-box { background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.5); border-radius: 12px; padding: 20px; margin: 20px 0; }
-    .alert-box h2 { color: #ef4444; margin: 0 0 10px 0; font-size: 20px; }
-    .stat-row { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    .stat-label { color: #94a3b8; }
-    .stat-value { color: #fff; font-weight: bold; font-size: 18px; }
-    .total-value { color: #EC4899; }
-    .item-list { margin: 20px 0; }
-    .item { background: rgba(255,255,255,0.05); border-radius: 8px; padding: 15px; margin: 10px 0; display: flex; justify-content: space-between; align-items: center; }
-    .item-info h3 { margin: 0; color: #fff; font-size: 16px; }
-    .item-info p { margin: 5px 0 0 0; color: #94a3b8; font-size: 12px; }
-    .item-value { color: #EC4899; font-weight: bold; font-size: 18px; }
-    .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: bold; }
-    .badge-atrasado { background: rgba(239, 68, 68, 0.3); color: #ef4444; }
-    .badge-hoje { background: rgba(234, 179, 8, 0.3); color: #eab308; }
-    .footer { text-align: center; margin-top: 30px; color: #64748b; font-size: 12px; }
-    .cta-button { display: inline-block; background: linear-gradient(135deg, #EC4899 0%, #8B5CF6 100%); color: #fff; padding: 15px 30px; border-radius: 10px; text-decoration: none; font-weight: bold; margin: 20px 0; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="header">
-      <h1>⚠️ ALERTA DE VENCIMENTOS</h1>
-      <p>Sistema de Gestão Moisés Medeiros</p>
-    </div>
-
-    <div class="alert-box">
-      <h2>🔔 Atenção! Você tem gastos que precisam de pagamento:</h2>
-
-      <div class="stat-row">
-        <span class="stat-label">Novos gastos pendentes:</span>
-        <span class="stat-value">${vencidos.length}</span>
-      </div>
-
-      <div class="stat-row">
-        <span class="stat-label">Valor total (novos):</span>
-        <span class="stat-value total-value">${formatCurrency(totalVencido)}</span>
-      </div>
-
-      ${atrasados.length > 0 ? `
-      <div class="stat-row">
-        <span class="stat-label">🚨 Atrasados:</span>
-        <span class="stat-value" style="color: #ef4444;">${atrasados.length} itens</span>
-      </div>
-      ` : ''}
-
-      ${vencidosHoje.length > 0 ? `
-      <div class="stat-row">
-        <span class="stat-label">📅 Vencem hoje:</span>
-        <span class="stat-value" style="color: #eab308;">${vencidosHoje.length} itens</span>
-      </div>
-      ` : ''}
-    </div>
-
-    <div class="item-list">
-      <h3 style="color: #fff; margin-bottom: 15px;">📋 Detalhamento (novos):</h3>
-      ${vencidos.slice(0, 10).map(item => `
-      <div class="item">
-        <div class="item-info">
-          <h3>${item.nome}</h3>
-          <p>
-            ${item.tipo === 'fixo' ? '🏢 Gasto Fixo' : '📝 Gasto Extra'} •
-            Vencimento: ${new Date(item.data_vencimento).toLocaleDateString('pt-BR')}
-            ${item.dias_ate_vencimento < 0 ? `<span class="badge badge-atrasado">${Math.abs(item.dias_ate_vencimento)} dias atrasado</span>` : ''}
-            ${item.dias_ate_vencimento === 0 ? `<span class="badge badge-hoje">VENCE HOJE</span>` : ''}
+    // ============================================
+    // TEMPLATE PADRÃO DA PLATAFORMA (PADRONIZADO v10.x)
+    // ============================================
+    const detalhamentoHtml = vencidos.slice(0, 10).map(item => `
+      <div style="background:#1a1a1f;border-radius:8px;padding:12px;margin:8px 0;display:flex;justify-content:space-between;align-items:center;">
+        <div>
+          <p style="margin:0;color:#ffffff;font-weight:bold;">${item.nome}</p>
+          <p style="margin:4px 0 0;color:#9aa0a6;font-size:12px;">
+            ${item.tipo === 'fixo' ? '🏢 Gasto Fixo' : '📝 Gasto Extra'} • Venc: ${new Date(item.data_vencimento).toLocaleDateString('pt-BR')}
+            ${item.dias_ate_vencimento < 0 ? `<span style="background:rgba(239,68,68,0.3);color:#ef4444;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">${Math.abs(item.dias_ate_vencimento)} dias atrasado</span>` : ''}
+            ${item.dias_ate_vencimento === 0 ? `<span style="background:rgba(234,179,8,0.3);color:#eab308;padding:2px 8px;border-radius:10px;font-size:10px;margin-left:8px;">VENCE HOJE</span>` : ''}
           </p>
         </div>
-        <span class="item-value">${formatCurrency(item.valor)}</span>
+        <span style="color:#E62B4A;font-weight:bold;font-size:16px;">${formatCurrency(item.valor)}</span>
       </div>
-      `).join('')}
-      ${vencidos.length > 10 ? `<p style="text-align: center; color: #94a3b8;">+ ${vencidos.length - 10} outros itens...</p>` : ''}
-    </div>
+    `).join('');
 
-    <div style="text-align: center;">
-      <a href="https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa" class="cta-button">
-        💰 Acessar Central Financeira
-      </a>
-    </div>
-
-    <div class="footer">
-      <p>Este é um email automático do sistema de gestão.</p>
-      <p>Moisés Medeiros • SYNAPSE v15.0</p>
-      <p>${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</p>
-    </div>
-  </div>
+    const emailHtml = `
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+<body style="margin:0;padding:0;background:#0a0a0f;color:#ffffff;font-family:'Segoe UI',Tahoma,Geneva,Verdana,sans-serif;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background:#0a0a0f;">
+    <tr>
+      <td align="center" style="padding:24px;">
+        <table role="presentation" width="100%" style="max-width:640px;" cellspacing="0" cellpadding="0">
+          <tr>
+            <td style="background:linear-gradient(180deg,#131318 0%,#0a0a0f 100%);border-radius:16px;padding:28px;border:1px solid #7D1128;">
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-bottom:20px;">
+                  <h1 style="margin:0;color:#E62B4A;font-size:24px;font-weight:700;">Curso Moisés Medeiros</h1>
+                  <p style="margin:8px 0 0;color:#9aa0a6;font-size:13px;">⚠️ Alerta de Vencimentos</p>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="color:#e6e6e6;line-height:1.7;font-size:14px;">
+                  <h2 style="margin:0 0 16px;font-size:18px;color:#ffffff;">🔔 Atenção! Gastos pendentes de pagamento</h2>
+                  
+                  <div style="background:#1a1a1f;border-radius:8px;padding:16px;margin:16px 0;">
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a2a2f;">
+                      <span style="color:#9aa0a6;">Novos gastos pendentes:</span>
+                      <span style="color:#ffffff;font-weight:bold;">${vencidos.length}</span>
+                    </div>
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a2a2f;">
+                      <span style="color:#9aa0a6;">Valor total:</span>
+                      <span style="color:#E62B4A;font-weight:bold;font-size:18px;">${formatCurrency(totalVencido)}</span>
+                    </div>
+                    ${atrasados.length > 0 ? `
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid #2a2a2f;">
+                      <span style="color:#9aa0a6;">🚨 Atrasados:</span>
+                      <span style="color:#ef4444;font-weight:bold;">${atrasados.length} itens</span>
+                    </div>
+                    ` : ''}
+                    ${vencidosHoje.length > 0 ? `
+                    <div style="display:flex;justify-content:space-between;padding:8px 0;">
+                      <span style="color:#9aa0a6;">📅 Vencem hoje:</span>
+                      <span style="color:#eab308;font-weight:bold;">${vencidosHoje.length} itens</span>
+                    </div>
+                    ` : ''}
+                  </div>
+                  
+                  <h3 style="margin:20px 0 12px;font-size:14px;color:#ffffff;">📋 Detalhamento:</h3>
+                  ${detalhamentoHtml}
+                  ${vencidos.length > 10 ? `<p style="text-align:center;color:#9aa0a6;font-size:12px;">+ ${vencidos.length - 10} outros itens...</p>` : ''}
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-top:24px;">
+                  <a href="https://pro.moisesmedeiros.com.br/gestaofc/financas-empresa" style="display:inline-block;background:linear-gradient(135deg,#E62B4A,#7D1128);color:#ffffff;text-decoration:none;padding:14px 32px;border-radius:10px;font-weight:700;font-size:14px;">💰 Acessar Central Financeira</a>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="padding:24px 0 18px;"><hr style="border:none;border-top:1px solid #2a2a2f;margin:0;" /></td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td style="color:#9aa0a6;font-size:12px;line-height:1.6;">
+                  <p style="margin:0 0 8px;"><strong style="color:#e6e6e6;">Prof. Moisés Medeiros Melo</strong></p>
+                  <p style="margin:0 0 8px;">MM CURSO DE QUÍMICA LTDA | O curso que mais aprova e comprova!</p>
+                  <p style="margin:0;">WhatsApp: <a href="https://wa.me/558396169222" style="color:#E62B4A;">+55 83 9616-9222</a></p>
+                </td></tr>
+              </table>
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr><td align="center" style="padding-top:18px;">
+                  <p style="margin:0;color:#666;font-size:11px;">Email automático • ${new Date().toLocaleDateString('pt-BR', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                  <p style="margin:4px 0 0;color:#666;font-size:11px;">© ${new Date().getFullYear()} MM Curso de Química Ltda.</p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
     `;
