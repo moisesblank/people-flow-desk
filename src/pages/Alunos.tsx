@@ -45,10 +45,11 @@
 
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 import { 
   Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, 
   UserPlus, ChevronLeft, ChevronRight, Search, Crown, Shield,
-  CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X
+  CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X, Eye
 } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
@@ -197,7 +198,7 @@ export default function Alunos() {
   
   // Paginação
   const [page, setPage] = useState(1);
-  
+  const navigate = useNavigate();
   // Filtro de universo
   const [universeFilter, setUniverseFilter] = useState<UniverseFilterType>('all');
   
@@ -698,11 +699,11 @@ export default function Alunos() {
                 return (
                   <table className="w-full">
                     <tbody>
-                      <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors">
+                      <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors cursor-pointer" onClick={() => navigate(`/gestaofc/gestao-alunos/${student.id}`)}>
                         <td className="p-4 text-foreground font-medium w-[30%]">
                           <div className="flex items-center gap-2">
                             {student.role === 'beta' && <Crown className="h-4 w-4 text-yellow-400" />}
-                            {student.nome}
+                            <span className="hover:text-blue-400 transition-colors">{student.nome}</span>
                           </div>
                         </td>
                         <td className="p-4 text-muted-foreground w-[25%]">{student.email || "-"}</td>
