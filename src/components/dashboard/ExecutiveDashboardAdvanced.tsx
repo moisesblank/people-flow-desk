@@ -115,33 +115,57 @@ export function ExecutiveDashboardAdvanced() {
   const { data: financialData, refetch: refetchFinancials } = useExecutiveFinancials();
 
   // Query para dados de evolução mensal (específica deste componente)
+  // Inclui histórico de alunos por mês
   const { data: monthlyEvolutionData, refetch: refetchMonthly } = useQuery({
     queryKey: ["executive-monthly-evolution", period],
     queryFn: async () => {
       const anoAtual = new Date().getFullYear();
       const mesAtual = new Date().getMonth() + 1;
       
-      // Buscar fechamentos mensais para evolução
-      const { data: fechamentos } = await supabase
-        .from("company_monthly_closures")
-        .select("*")
-        .eq("ano", anoAtual)
-        .order("mes", { ascending: true });
+      // Buscar fechamentos mensais para evolução + histórico de alunos
+      const [fechamentosRes, alunosHistoricoRes] = await Promise.all([
+        supabase
+          .from("company_monthly_closures")
+          .select("*")
+          .eq("ano", anoAtual)
+          .order("mes", { ascending: true }),
+        // Buscar contagem de alunos por mês via data_matricula
+        supabase
+          .from("alunos")
+          .select("data_matricula")
+          .eq("status", "ativo")
+          .gte("data_matricula", `${anoAtual}-01-01`),
+      ]);
+
+      const fechamentos = fechamentosRes.data || [];
+      const alunos = alunosHistoricoRes.data || [];
+      
+      // Calcular histórico de alunos por mês
+      const alunosPorMes: Record<number, number> = {};
+      alunos.forEach(a => {
+        if (a.data_matricula) {
+          const mes = new Date(a.data_matricula).getMonth() + 1;
+          alunosPorMes[mes] = (alunosPorMes[mes] || 0) + 1;
+        }
+      });
 
       const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
       return meses.map((month, index) => {
-        const fechamento = (fechamentos || []).find(f => f.mes === index + 1);
+        const mesNumero = index + 1;
+        const fechamento = fechamentos.find(f => f.mes === mesNumero);
+        
         if (fechamento) {
           return {
             month,
             receita: Number(fechamento.total_receitas || 0) / 100,
             despesas: (Number(fechamento.total_gastos_fixos || 0) + Number(fechamento.total_gastos_extras || 0)) / 100,
             lucro: Number(fechamento.saldo_periodo || 0) / 100,
-            alunos: 0,
+            alunos: alunosPorMes[mesNumero] || 0,
           };
         }
+        
         // Mês atual com dados do hook
-        if (index + 1 === mesAtual && financialData) {
+        if (mesNumero === mesAtual && financialData) {
           return {
             month,
             receita: (financialData.totalReceita || 0) / 100,
@@ -150,11 +174,27 @@ export function ExecutiveDashboardAdvanced() {
             alunos: financialData.alunosAtivos || 0,
           };
         }
-        return { month, receita: 0, despesas: 0, lucro: 0, alunos: 0 };
-      }).filter(m => m.receita > 0 || m.despesas > 0);
+        
+        return { month, receita: 0, despesas: 0, lucro: 0, alunos: alunosPorMes[mesNumero] || 0 };
+      }).filter(m => m.receita > 0 || m.despesas > 0 || m.alunos > 0);
     },
     refetchInterval: 60000,
     enabled: !!financialData,
+  });
+
+  // Buscar metas financeiras do banco
+  const { data: financialGoals } = useQuery({
+    queryKey: ["executive-financial-goals"],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("financial_goals")
+        .select("id, title, category, target_amount, current_amount, status")
+        .eq("status", "active")
+        .limit(5);
+      
+      return data || [];
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutos
   });
 
   // Combinar dados para compatibilidade
@@ -175,7 +215,13 @@ export function ExecutiveDashboardAdvanced() {
     refetchMonthly();
   };
 
-  // KPIs dinâmicos baseados em dados reais
+  // Extrair metas do banco por categoria
+  const getGoalTarget = (category: string) => {
+    const goal = financialGoals?.find(g => g.category.toLowerCase() === category.toLowerCase());
+    return goal?.target_amount;
+  };
+
+  // KPIs dinâmicos baseados em dados reais + metas do banco
   const realKPIs: KPIMetric[] = useMemo(() => [
     {
       id: "revenue",
@@ -186,7 +232,7 @@ export function ExecutiveDashboardAdvanced() {
       icon: DollarSign,
       color: "hsl(var(--stats-green))",
       trend: (realData?.totalReceita || 0) > 0 ? "up" : "stable",
-      target: undefined, // Metas disponíveis via configurações
+      target: getGoalTarget("receita") || getGoalTarget("revenue"),
       prediction: 0,
     },
     {
@@ -198,7 +244,7 @@ export function ExecutiveDashboardAdvanced() {
       icon: GraduationCap,
       color: "hsl(var(--stats-blue))",
       trend: (realData?.alunosAtivos || 0) > 0 ? "up" : "stable",
-      target: 0,
+      target: getGoalTarget("alunos") || getGoalTarget("students"),
       prediction: 0,
     },
     {
@@ -210,7 +256,7 @@ export function ExecutiveDashboardAdvanced() {
       icon: Target,
       color: "hsl(var(--stats-purple))",
       trend: (realData?.margem || 0) > 0 ? "up" : (realData?.margem || 0) < 0 ? "down" : "stable",
-      target: 0,
+      target: getGoalTarget("margem") || getGoalTarget("profit"),
       prediction: 0,
     },
     {
@@ -222,7 +268,7 @@ export function ExecutiveDashboardAdvanced() {
       icon: Wallet,
       color: "hsl(var(--stats-gold))",
       trend: "stable",
-      target: 0,
+      target: getGoalTarget("gastos") || getGoalTarget("expenses"),
       prediction: 0,
     },
   ], [realData]);

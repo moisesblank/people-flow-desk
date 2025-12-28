@@ -112,6 +112,72 @@ setInterval(() => {
 }, 30 * 1000);
 
 // ============================================
+// VERIFICAÇÃO DE ENTITLEMENT (ACESSO AO CONTEÚDO)
+// ============================================
+interface EntitlementResult {
+  allowed: boolean;
+  reason?: string;
+}
+
+interface ContentPrincipal {
+  userId: string;
+  role?: string;
+  isOwner?: boolean;
+  sessionId: string;
+}
+
+/**
+ * Verifica se o usuário tem direito de acessar o conteúdo
+ * Baseado em role e matrícula no curso
+ */
+async function checkContentEntitlement(
+  principal: ContentPrincipal,
+  courseId?: string
+): Promise<EntitlementResult> {
+  const { role, isOwner } = principal;
+  
+  // Owner tem acesso irrestrito
+  if (isOwner) {
+    return { allowed: true };
+  }
+  
+  // Roles de gestão têm acesso irrestrito
+  const managementRoles = ['admin', 'suporte', 'monitoria', 'coordenacao', 'contabilidade', 'marketing'];
+  if (role && managementRoles.includes(role)) {
+    return { allowed: true };
+  }
+  
+  // Role 'beta' (aluno pagante) tem acesso a todo conteúdo premium
+  if (role === 'beta') {
+    return { allowed: true };
+  }
+  
+  // Role 'aluno_gratuito' - verificar se curso é gratuito
+  if (role === 'aluno_gratuito') {
+    if (!courseId) {
+      // Sem courseId, permitir apenas conteúdos marcados como gratuitos
+      return { 
+        allowed: false, 
+        reason: "Este conteúdo está disponível apenas para alunos premium" 
+      };
+    }
+    
+    // Verificar se o curso é gratuito (implementação futura com supabase)
+    // Por ora, aluno_gratuito não tem acesso a conteúdo protegido
+    return { 
+      allowed: false, 
+      reason: "Conteúdo exclusivo para alunos do programa Beta" 
+    };
+  }
+  
+  // Sem role válida = sem acesso
+  return { 
+    allowed: false, 
+    reason: "Você precisa ter uma assinatura ativa para acessar este conteúdo" 
+  };
+}
+
+// ============================================
 // RATE LIMITER PARA CONTEÚDO
 // ============================================
 const contentRateLimits = new Map<string, { count: number; resetAt: number }>();
@@ -314,6 +380,7 @@ export async function requestContentAccess(
   const {
     contentId,
     contentType,
+    courseId,
     ttlSeconds = 60,
     maxConcurrentSessions = 2,
   } = options;
@@ -422,8 +489,30 @@ export async function requestContentAccess(
   // ============================================
   // 5. VERIFICAR ENTITLEMENT (ACESSO AO CURSO)
   // ============================================
-  // NOTA: Verificação granular por curso será fase 2.
-  // Atualmente, role 'beta' tem acesso a todo conteúdo premium.
+  // Implementado: Verificação baseada em role
+  // - role 'owner' ou 'beta': Acesso total a conteúdo premium
+  // - role 'aluno_gratuito': Apenas conteúdo gratuito (course.is_free = true)
+  // - Outros: Verificar matrícula específica no curso (fase futura)
+  
+  const hasContentAccess = await checkContentEntitlement(principal, courseId);
+  if (!hasContentAccess.allowed) {
+    await writeAuditLog({
+      correlationId,
+      userId: principal.userId,
+      action: "content_access",
+      resourceType: contentType,
+      resourceId: contentId,
+      result: "deny",
+      reason: "NO_CONTENT_ENTITLEMENT",
+      metadata: { courseId, role: principal.role },
+    });
+
+    return {
+      allowed: false,
+      reason: hasContentAccess.reason || "Você não tem acesso a este conteúdo",
+      correlationId,
+    };
+  }
 
   // ============================================
   // 6. GERAR TOKEN DE ACESSO

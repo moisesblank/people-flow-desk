@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useErrorNotebook, useErrorNotebookCount } from "@/hooks/useErrorNotebook";
+import { usePendingFlashcardsCount } from "@/hooks/useFlashcards";
 import { useGamification } from "@/hooks/useGamification";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -48,6 +49,7 @@ export function StudentCommandCenter() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { data: errorCount } = useErrorNotebookCount();
+  const { data: pendingFlashcardsCount } = usePendingFlashcardsCount();
   const { gamification, levelInfo, userRank } = useGamification();
   
   // Dias até o ENEM (calculado dinamicamente)
@@ -85,16 +87,18 @@ export function StudentCommandCenter() {
       });
     }
 
-    // Flashcards para revisar (contagem dinâmica quando FSRS estiver ativo)
+    // Flashcards para revisar (contagem dinâmica via FSRS)
     actions.push({
       id: 'flashcards',
       label: 'Flashcards',
-      sublabel: 'Revisão espaçada FSRS',
+      sublabel: pendingFlashcardsCount && pendingFlashcardsCount > 0 
+        ? `${pendingFlashcardsCount} para revisar hoje` 
+        : 'Revisão espaçada FSRS',
       icon: Brain,
       route: '/alunos/flashcards',
       color: 'from-purple-500 to-pink-500',
-      badge: undefined, // Será conectado ao sistema FSRS
-      priority: 'high',
+      badge: pendingFlashcardsCount && pendingFlashcardsCount > 0 ? pendingFlashcardsCount : undefined,
+      priority: pendingFlashcardsCount && pendingFlashcardsCount > 0 ? 'urgent' : 'high',
       xp: 50
     });
 
