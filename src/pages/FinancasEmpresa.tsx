@@ -435,14 +435,28 @@ export default function FinancasEmpresa() {
           );
         }
 
-        // Chamar edge function para enviar email ao owner (se ainda não enviado hoje)
-        try {
-          const response = await supabase.functions.invoke('check-vencimentos');
-          if (response.data?.success) {
-            console.log('[Vencimentos] Edge function executada:', response.data);
+        // ============================================
+        // 🔒 IDEMPOTÊNCIA FRONTEND (INCIDENTE EMAIL LOOP)
+        // Regra: só invoca check-vencimentos 1x por sessão de página
+        // Usa sessionStorage para evitar chamadas duplicadas no reload
+        // ============================================
+        const LOCK_KEY = 'check_vencimentos_invoked_' + new Date().toISOString().slice(0, 10);
+        const alreadyInvoked = sessionStorage.getItem(LOCK_KEY);
+        
+        if (!alreadyInvoked) {
+          try {
+            sessionStorage.setItem(LOCK_KEY, 'true');
+            const response = await supabase.functions.invoke('check-vencimentos');
+            if (response.data?.success) {
+              console.log('[Vencimentos] Edge function executada (idempotente):', response.data);
+            } else if (response.data?.skipped) {
+              console.log('[Vencimentos] Nenhum item novo a notificar:', response.data.reason);
+            }
+          } catch (error) {
+            console.error('[Vencimentos] Erro ao verificar:', error);
           }
-        } catch (error) {
-          console.error('[Vencimentos] Erro ao verificar:', error);
+        } else {
+          console.log('[Vencimentos] Chamada bloqueada (já invocada nesta sessão)');
         }
       }
     };
