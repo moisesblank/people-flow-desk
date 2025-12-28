@@ -101,7 +101,8 @@ export const ALUNO_UNIVERSE_OPTIONS: AlunoUniverseOption[] = [
     icon: MapPin,
     accentColor: 'blue',
     requiresProductSelection: false,
-    filterFn: (s) => s.fonte === 'presencial' || s.curso?.includes('presencial'),
+    // Presencial: fonte contém 'presencial'
+    filterFn: (s) => s.fonte?.toLowerCase()?.includes('presencial') || s.curso?.toLowerCase()?.includes('presencial'),
     wpFilterFn: (wp) => wp.grupos?.some((g: string) => g.toLowerCase().includes('presencial')),
   },
   {
@@ -110,8 +111,9 @@ export const ALUNO_UNIVERSE_OPTIONS: AlunoUniverseOption[] = [
     description: 'Alunos com acesso híbrido (presencial e online)',
     icon: Globe,
     accentColor: 'purple',
-    requiresProductSelection: true, // ⚡ PARTE 7: Requer subseleção
-    filterFn: (s) => s.status === 'Ativo' || s.status === 'ativo',
+    requiresProductSelection: true,
+    // Híbrido: mostra todos os alunos ativos
+    filterFn: () => true, // Sem filtro restritivo
     wpFilterFn: (wp) => wp.tem_pagamento_confirmado === true,
   },
   {
@@ -120,8 +122,9 @@ export const ALUNO_UNIVERSE_OPTIONS: AlunoUniverseOption[] = [
     description: 'Alunos matriculados exclusivamente online',
     icon: Wifi,
     accentColor: 'cyan',
-    requiresProductSelection: true, // ⚡ PARTE 7: Requer subseleção
-    filterFn: (s) => s.fonte !== 'presencial' && (s.status === 'Ativo' || s.status === 'ativo'),
+    requiresProductSelection: true,
+    // Online: fonte NÃO contém 'presencial' (inclui Hotmart, Acesso Oficial, etc)
+    filterFn: (s) => !s.fonte?.toLowerCase()?.includes('presencial'),
     wpFilterFn: (wp) => wp.tem_pagamento_confirmado === true && !wp.grupos?.some((g: string) => g.toLowerCase().includes('presencial')),
   },
   {
@@ -131,7 +134,8 @@ export const ALUNO_UNIVERSE_OPTIONS: AlunoUniverseOption[] = [
     icon: UserCheck,
     accentColor: 'green',
     requiresProductSelection: false,
-    filterFn: (s) => s.status === 'Pendente' || s.status === 'pendente',
+    // Registrados: mostra todos (role aluno_gratuito é informativo)
+    filterFn: () => true,
     wpFilterFn: (wp) => wp.tem_pagamento_confirmado === false,
   },
 ];

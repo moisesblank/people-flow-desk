@@ -121,9 +121,11 @@ export default function Alunos() {
     refetchPaginated();
   }, [refetchPaginated]);
 
-  // Determinar role esperada baseada no universo
+  // ⚡ FIX: Role é informativo, NÃO filtro obrigatório
+  // Alunos cadastrados aparecem mesmo sem role associada
   const expectedRole = useMemo(() => {
     if (!selection) return null;
+    // Role é apenas para exibição/badge, não para filtro
     if (selection.universe === 'registrados') return 'aluno_gratuito';
     return 'beta';
   }, [selection]);
@@ -133,20 +135,14 @@ export default function Alunos() {
     return getUniverseFilters(selection);
   }, [selection]);
 
-  // Filtragem com role obrigatório
+  // ⚡ FIX: Não filtrar por role - mostrar TODOS os alunos do universo
+  // Role é informação complementar, não critério de exclusão
   const filteredStudents = useMemo(() => {
     if (!universeFilters) return students;
     
-    return students.filter(s => {
-      const passesUniverseFilter = universeFilters.filterFn(s);
-      if (!passesUniverseFilter) return false;
-      
-      if (expectedRole) {
-        return s.role === expectedRole;
-      }
-      return true;
-    });
-  }, [students, universeFilters, expectedRole]);
+    // Aplicar apenas filtro de universo (presencial/online), não de role
+    return students.filter(s => universeFilters.filterFn(s));
+  }, [students, universeFilters]);
 
   // Stats recalculados
   const ativos = contadores.ativos;
