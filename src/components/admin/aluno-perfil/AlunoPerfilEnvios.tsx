@@ -125,20 +125,27 @@ export function AlunoPerfilEnvios({
   });
 
   // Verificar status da API Correios
-  const { data: correiosStatus } = useQuery({
+  const { data: correiosStatus, refetch: refetchCorreiosStatus } = useQuery({
     queryKey: ['correios-status'],
     queryFn: async () => {
       try {
         const { data, error } = await supabase.functions.invoke('correios-api', {
           body: { action: 'status' }
         });
-        if (error) throw error;
-        return data?.data || { correios_configurado: false };
-      } catch {
-        return { correios_configurado: false };
+        console.log('[AlunoPerfilEnvios] Correios status response:', { data, error });
+        if (error) {
+          console.error('[AlunoPerfilEnvios] Correios status error:', error);
+          return { correios_configurado: false, error: error.message };
+        }
+        // O edge function retorna { success: true, data: {...} }
+        return data?.data || data || { correios_configurado: false };
+      } catch (e: any) {
+        console.error('[AlunoPerfilEnvios] Correios status exception:', e);
+        return { correios_configurado: false, error: e?.message };
       }
     },
-    staleTime: 5 * 60 * 1000, // 5 minutos
+    staleTime: 60 * 1000, // 1 minuto (reduzido para debugging)
+    refetchOnMount: 'always',
   });
 
   // Buscar envios do aluno
