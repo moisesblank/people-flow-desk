@@ -112,9 +112,9 @@ export function useSessionTracking() {
       }
     });
 
-    // Atualizar atividade a cada 2 minutos + PATCH-013: jitter anti-herd (0-15s)
-    const jitter = Math.floor(Math.random() * 15000);
-    activityInterval.current = setInterval(updateActivity, 120000 + jitter);
+    // PATCH-CUSTO: Aumentado de 2min para 5min + jitter anti-herd (0-30s)
+    const jitter = Math.floor(Math.random() * 30000);
+    activityInterval.current = setInterval(updateActivity, 300000 + jitter);
 
     // Handlers de visibilidade e unload
     const handleVisibilityChange = () => {
