@@ -35,51 +35,75 @@ export * from './realUserMonitoring';
 export * from './evangelhoVelocidade';
 
 // ============================================
-// INICIALIZAÇÃO UNIFICADA
+// INICIALIZAÇÃO DESACOPLADA (LAZY)
 // ============================================
 
-import { budgetEnforcer } from './performanceBudgets';
-import { rum } from './realUserMonitoring';
-import { initDependencyExorcism } from './dependencyExorcism';
-import { initServerOptimization } from './serverOptimization';
-import { detectPerformanceTier, prefetcher } from './evangelhoVelocidade';
+// Cache para evitar re-inicialização
+let _initialized = false;
 
-export function initEvangelhoCompleto(): void {
-  console.log('╔══════════════════════════════════════════════════════════╗');
-  console.log('║      ⚡ EVANGELHO DA VELOCIDADE v2.0 - INICIALIZANDO ⚡    ║');
-  console.log('╚══════════════════════════════════════════════════════════╝');
+/**
+ * Inicializa o Evangelho da Velocidade de forma assíncrona
+ * Não bloqueia o boot da aplicação
+ */
+export async function initEvangelhoCompleto(): Promise<void> {
+  if (_initialized) return;
+  _initialized = true;
+  
+  // Defer para não bloquear TTI
+  if (typeof requestIdleCallback !== 'undefined') {
+    requestIdleCallback(() => doInit(), { timeout: 2000 });
+  } else {
+    setTimeout(doInit, 1000);
+  }
+}
 
-  // Detectar tier de performance
-  const tier = detectPerformanceTier();
-  console.log(`[EVANGELHO] Performance Tier: ${tier.tier} (${tier.score}/100)`);
-
-  // Inicializar todos os sistemas
-  prefetcher.init?.();
-  budgetEnforcer.start();
-  rum.init();
-  initDependencyExorcism();
-  initServerOptimization();
-
-  // Report após carregamento
-  window.addEventListener('load', () => {
-    setTimeout(() => {
-      console.log(budgetEnforcer.generateReport());
-      console.log(`[EVANGELHO] RUM Score: ${rum.getScore()}/100`);
-    }, 5000);
-  });
-
-  console.log('[EVANGELHO] ⚡ Todos os 10 Dogmas ativados. A Matriz está protegida.');
+async function doInit(): Promise<void> {
+  try {
+    // Imports dinâmicos para não carregar tudo no boot
+    const [
+      { budgetEnforcer },
+      { rum },
+      { initDependencyExorcism },
+      { initServerOptimization },
+      { detectPerformanceTier, prefetcher }
+    ] = await Promise.all([
+      import('./performanceBudgets'),
+      import('./realUserMonitoring'),
+      import('./dependencyExorcism'),
+      import('./serverOptimization'),
+      import('./evangelhoVelocidade')
+    ]);
+    
+    console.log('[EVANGELHO] ⚡ Inicializando (desacoplado)...');
+    
+    // Detectar tier
+    const tier = detectPerformanceTier();
+    console.log(`[EVANGELHO] Tier: ${tier.tier} (${tier.score}/100)`);
+    
+    // Inicializar sistemas
+    prefetcher.init?.();
+    budgetEnforcer.start();
+    rum.init();
+    initDependencyExorcism();
+    initServerOptimization();
+    
+    // Report após load (com mais delay)
+    window.addEventListener('load', () => {
+      setTimeout(() => {
+        console.log(budgetEnforcer.generateReport());
+      }, 8000); // Aumentado para não competir com conteúdo
+    });
+    
+    console.log('[EVANGELHO] ✅ Todos os Dogmas ativados.');
+  } catch (e) {
+    console.warn('[EVANGELHO] Falha na inicialização:', e);
+  }
 }
 
 // ============================================
-// AUTO-INIT DESABILITADO
-// A inicialização é feita via main.tsx com defer
-// para não bloquear o TTI
+// SYNC FALLBACK (para quem ainda importa direto)
 // ============================================
-// if (typeof window !== 'undefined') {
-//   if (document.readyState === 'loading') {
-//     document.addEventListener('DOMContentLoaded', initEvangelhoCompleto);
-//   } else {
-//     initEvangelhoCompleto();
-//   }
-// }
+export function initEvangelhoSync(): void {
+  console.warn('[EVANGELHO] ⚠️ initEvangelhoSync() é deprecated. Use initEvangelhoCompleto()');
+  initEvangelhoCompleto();
+}

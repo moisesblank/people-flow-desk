@@ -1,18 +1,54 @@
 // ============================================
-// 🔥🛡️ CORE — ÍNDICE CENTRAL OMEGA 🛡️🔥
+// 🔥🛡️ CORE — ÍNDICE CENTRAL OMEGA v3.0 🛡️🔥
 // Single Source of Truth para todo o sistema
 // ZERO CLIQUES MORTOS
+// 
+// 🏗️ ARQUITETURA DESACOPLADA:
+// - Imports diretos: import { isOwner } from "@/core/urlAccessControl"
+// - Barrel por domínio: import { ROUTES } from "@/core/routing"
+// - Este arquivo mantém compatibilidade com imports antigos
 // ============================================
 
-// Rotas
-export * from "./routes";
-export { default as ROUTES } from "./routes";
+// ============================================
+// 🗺️ ROTAS (import direto recomendado: @/core/routes)
+// ============================================
+export {
+  ROUTES,
+  ROUTE_DEFINITIONS,
+  getRoute,
+  getRouteWithParams,
+  canAccessRoute,
+  getRouteDefinition,
+  getRouteKeysByDomain,
+  getRedirectUrl,
+  isValidRoute,
+  type RouteKey,
+  type RouteDefinition,
+  type RouteDomain,
+} from "./routes";
+export { default as ROUTES_DEFAULT } from "./routes";
 
-// Ações
-export * from "./actions";
-export { default as ACTIONS } from "./actions";
+// ============================================
+// ⚡ AÇÕES (import direto recomendado: @/core/actions)
+// ============================================
+export {
+  ACTIONS,
+  getAction,
+  getActionDefinition,
+  canExecuteAction,
+  requiresConfirmation,
+  getActionsByCategory,
+  getUserActions,
+  auditActions,
+  type ActionKey,
+  type ActionDefinition,
+  type ActionCategory,
+} from "./actions";
+export { default as ACTIONS_DEFAULT } from "./actions";
 
-// Storage (exports seletivos para evitar conflitos)
+// ============================================
+// 📦 STORAGE (import direto recomendado: @/core/storage)
+// ============================================
 export {
   BUCKETS,
   BUCKET_DEFINITIONS,
@@ -39,17 +75,9 @@ export {
 } from "./storage";
 export { canAccessBucket as canAccessStorageBucket } from "./storage";
 
-// Function Matrix
-export * from "./functionMatrix";
-export { default as FUNCTION_MATRIX } from "./functionMatrix";
-
-// Safe Components
-export * from "./SafeComponents";
-
-// Navigation
-export * from "./nav/navRouteMap";
-
-// URL Access Control (MAPA DE URLs DEFINITIVO)
+// ============================================
+// 🔒 CONTROLE DE ACESSO (import direto recomendado: @/core/urlAccessControl)
+// ============================================
 export {
   OWNER_EMAIL,
   isOwner,
@@ -77,10 +105,25 @@ export {
   type AccessValidationResult,
 } from "./urlAccessControl";
 
-// Dead Click Reporter
-export * from "./deadClickReporter";
+// ============================================
+// 🧩 FUNCTION MATRIX (import direto: @/core/functionMatrix)
+// ============================================
+export * from "./functionMatrix";
+export { default as FUNCTION_MATRIX } from "./functionMatrix";
 
-// UI Contracts Registry (exports seletivos)
+// ============================================
+// 🧱 SAFE COMPONENTS
+// ============================================
+export * from "./SafeComponents";
+
+// ============================================
+// 🧭 NAVIGATION
+// ============================================
+export * from "./nav/navRouteMap";
+
+// ============================================
+// 📋 UI CONTRACTS (exports seletivos)
+// ============================================
 export {
   ROUTE_CONTRACTS,
   STORAGE_CONTRACTS,
@@ -91,37 +134,68 @@ export {
   canCallEdgeFunction,
 } from "./uiContractsRegistry";
 
-// Runtime Guard
+// ============================================
+// 🛡️ OUTROS MÓDULOS
+// ============================================
+export * from "./deadClickReporter";
 export * from "./runtimeGuard";
-
-// Storage Router
 export * from "./storageRouter";
 
 // ============================================
 // VERSÃO
 // ============================================
-export const CORE_VERSION = "2.0-OMEGA";
-export const CORE_BUILD_DATE = "2024-12-23";
+export const CORE_VERSION = "3.0-DESACOPLADO";
+export const CORE_BUILD_DATE = "2024-12-28";
 
 // ============================================
-// ESTATÍSTICAS DO CORE
+// ESTATÍSTICAS DO CORE (LAZY - só calcula quando chamado)
 // ============================================
-import { ROUTES as R } from "./routes";
-import { ACTIONS as A } from "./actions";
-import { BUCKETS as B } from "./storage";
-import { FUNCTION_MATRIX as FM } from "./functionMatrix";
-import { NAV_ROUTE_MAP } from "./nav/navRouteMap";
-import { PUBLIC_PATHS, GESTAO_ROLES, ALUNO_ROLES } from "./urlAccessControl";
+let _coreStats: {
+  routes: number;
+  actions: number;
+  buckets: number;
+  functions: number;
+  navItems: number;
+  publicPaths: number;
+  gestaoRoles: number;
+  alunoRoles: number;
+} | null = null;
 
+export function getCoreStats() {
+  if (_coreStats) return _coreStats;
+  
+  // Import lazy para evitar carregamento no boot
+  const { ROUTES: R } = require("./routes");
+  const { ACTIONS: A } = require("./actions");
+  const { BUCKETS: B } = require("./storage");
+  const { default: FM } = require("./functionMatrix");
+  const { NAV_ROUTE_MAP } = require("./nav/navRouteMap");
+  const { PUBLIC_PATHS, GESTAO_ROLES, ALUNO_ROLES } = require("./urlAccessControl");
+  
+  _coreStats = {
+    routes: Object.keys(R).length,
+    actions: Object.keys(A).length,
+    buckets: Object.keys(B).length,
+    functions: FM.length,
+    navItems: Object.keys(NAV_ROUTE_MAP).length,
+    publicPaths: PUBLIC_PATHS.length,
+    gestaoRoles: GESTAO_ROLES.length,
+    alunoRoles: ALUNO_ROLES.length,
+  };
+  
+  return _coreStats;
+}
+
+// Alias para retrocompatibilidade
 export const CORE_STATS = {
-  routes: Object.keys(R).length,
-  actions: Object.keys(A).length,
-  buckets: Object.keys(B).length,
-  functions: FM.length,
-  navItems: Object.keys(NAV_ROUTE_MAP).length,
-  publicPaths: PUBLIC_PATHS.length,
-  gestaoRoles: GESTAO_ROLES.length,
-  alunoRoles: ALUNO_ROLES.length,
+  get routes() { return getCoreStats().routes; },
+  get actions() { return getCoreStats().actions; },
+  get buckets() { return getCoreStats().buckets; },
+  get functions() { return getCoreStats().functions; },
+  get navItems() { return getCoreStats().navItems; },
+  get publicPaths() { return getCoreStats().publicPaths; },
+  get gestaoRoles() { return getCoreStats().gestaoRoles; },
+  get alunoRoles() { return getCoreStats().alunoRoles; },
 };
 
 // ============================================
@@ -129,59 +203,69 @@ export const CORE_STATS = {
 // ============================================
 
 /**
- * Verifica integridade do core
+ * Verifica integridade do core (LAZY)
  */
 export function verifyCoreIntegrity(): {
   valid: boolean;
-  stats: typeof CORE_STATS;
+  stats: ReturnType<typeof getCoreStats>;
   errors: string[];
   warnings: string[];
 } {
   const errors: string[] = [];
   const warnings: string[] = [];
-
-  // Verificar imports
+  
   try {
-    if (!R || Object.keys(R).length === 0) errors.push("ROUTES vazio");
-    if (!A || Object.keys(A).length === 0) errors.push("ACTIONS vazio");
-    if (!B || Object.keys(B).length === 0) errors.push("BUCKETS vazio");
-    if (!FM || FM.length === 0) warnings.push("FUNCTION_MATRIX vazio");
-    if (!NAV_ROUTE_MAP || Object.keys(NAV_ROUTE_MAP).length === 0) warnings.push("NAV_ROUTE_MAP vazio");
+    const stats = getCoreStats();
+    
+    if (stats.routes === 0) errors.push("ROUTES vazio");
+    if (stats.actions === 0) errors.push("ACTIONS vazio");
+    if (stats.buckets === 0) errors.push("BUCKETS vazio");
+    if (stats.functions === 0) warnings.push("FUNCTION_MATRIX vazio");
+    if (stats.navItems === 0) warnings.push("NAV_ROUTE_MAP vazio");
+    
+    if (stats.routes < 50) warnings.push(`Poucas rotas: ${stats.routes}`);
+    if (stats.actions < 50) warnings.push(`Poucas ações: ${stats.actions}`);
+    
+    return { valid: errors.length === 0, stats, errors, warnings };
   } catch (e) {
-    errors.push(`Erro ao verificar imports: ${e}`);
+    errors.push(`Erro ao verificar core: ${e}`);
+    return { 
+      valid: false, 
+      stats: { routes: 0, actions: 0, buckets: 0, functions: 0, navItems: 0, publicPaths: 0, gestaoRoles: 0, alunoRoles: 0 },
+      errors, 
+      warnings 
+    };
   }
-
-  // Verificar consistência
-  if (CORE_STATS.routes < 50) warnings.push(`Poucas rotas: ${CORE_STATS.routes}`);
-  if (CORE_STATS.actions < 50) warnings.push(`Poucas ações: ${CORE_STATS.actions}`);
-
-  return {
-    valid: errors.length === 0,
-    stats: CORE_STATS,
-    errors,
-    warnings,
-  };
 }
 
 /**
  * Retorna resumo do core para logs
  */
 export function getCoreInfo(): string {
-  return `Core OMEGA v${CORE_VERSION} | ${CORE_STATS.routes} rotas | ${CORE_STATS.actions} ações | ${CORE_STATS.buckets} buckets | ${CORE_STATS.navItems} menu items`;
+  const stats = getCoreStats();
+  return `Core OMEGA v${CORE_VERSION} | ${stats.routes} rotas | ${stats.actions} ações | ${stats.buckets} buckets | ${stats.navItems} menu items`;
 }
 
 /**
  * Inicializa o core (deve ser chamado no App.tsx)
  */
 export function initCore(): void {
-  const integrity = verifyCoreIntegrity();
-  
-  if (!integrity.valid) {
-    console.error("❌ CORE INTEGRITY FAILED:", integrity.errors);
-  } else {
-    console.log(`✅ ${getCoreInfo()}`);
-    if (integrity.warnings.length > 0) {
-      console.warn("⚠️ Core warnings:", integrity.warnings);
+  // Defer para não bloquear o boot
+  requestIdleCallback?.(() => {
+    const integrity = verifyCoreIntegrity();
+    
+    if (!integrity.valid) {
+      console.error("❌ CORE INTEGRITY FAILED:", integrity.errors);
+    } else {
+      console.log(`✅ ${getCoreInfo()}`);
+      if (integrity.warnings.length > 0) {
+        console.warn("⚠️ Core warnings:", integrity.warnings);
+      }
     }
-  }
+  }) || setTimeout(() => {
+    const integrity = verifyCoreIntegrity();
+    if (integrity.valid) {
+      console.log(`✅ ${getCoreInfo()}`);
+    }
+  }, 1000);
 }
