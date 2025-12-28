@@ -15,6 +15,9 @@ import {
   type LeiVIIExecutionReport,
 } from '@/lib/constitution/executeLeiVII';
 
+// P1-2 FIX: Helper local para role-based check
+const isOwnerByRole = (role?: string | null): boolean => role === 'owner';
+
 // ═══════════════════════════════════════════════════════════════════════════════
 // TIPOS
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -39,7 +42,7 @@ export interface UseLeiVIIReturn extends LeiVIIState {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function useLeiVII(): UseLeiVIIReturn {
-  const { user } = useAuth();
+  const { user, role } = useAuth();
   const [state, setState] = useState<LeiVIIState>({
     executed: false,
     isOwner: false,
@@ -49,10 +52,13 @@ export function useLeiVII(): UseLeiVIIReturn {
     report: null,
   });
 
-  // Verificar se é owner
+  // P1-2 FIX: Preferir verificação por role
   const userIsOwner = useMemo(() => {
+    // 1. Primeiro: verificar role (fonte da verdade)
+    if (isOwnerByRole(role)) return true;
+    // 2. Fallback: email (apenas UX bypass)
     return isOwner(user?.email);
-  }, [user?.email]);
+  }, [user?.email, role]);
 
   // Executar LEI VII quando usuário mudar
   useEffect(() => {
@@ -134,8 +140,9 @@ export function useLeiVIIProtection(resourceId?: string): {
   isOwner: boolean;
   sessionId: string;
 } {
-  const { user } = useAuth();
-  const userIsOwner = isOwner(user?.email);
+  const { user, role } = useAuth();
+  // P1-2 FIX: Preferir verificação por role
+  const userIsOwner = isOwnerByRole(role) || isOwner(user?.email);
   
   const sessionId = useMemo(() => {
     const status = getLeiVIIExecutionStatus();

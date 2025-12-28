@@ -848,10 +848,19 @@ export const SENSITIVE_BUCKETS = [
 // ============================================
 
 /**
- * Verifica se o usuário é owner
+ * @deprecated P1-2 FIX: Use isOwnerByRole() para verificação segura
+ * Esta função existe apenas para bypass de UX
+ * A autorização REAL deve vir do banco via user_roles.role='owner'
  */
 export function isOwner(email: string | null | undefined): boolean {
   return email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
+}
+
+/**
+ * ✅ Verificação segura de owner via role (preferir esta)
+ */
+export function isOwnerByRole(role?: string | null): boolean {
+  return role === 'owner';
 }
 
 /**

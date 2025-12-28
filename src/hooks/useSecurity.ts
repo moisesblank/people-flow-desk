@@ -164,9 +164,11 @@ export function useSecurity(options: UseSecurityOptions = {}) {
   );
 
   /**
-   * Verifica se é o email do owner
+   * @deprecated P1-2: Preferir verificação por role (state.isOwner)
+   * Esta função existe apenas para compatibilidade
    */
   const checkIsOwner = useCallback((email: string): boolean => {
+    console.warn('[SECURITY] checkIsOwner(email) é deprecated - usar state.isOwner (role-based)');
     return isOwnerEmail(email);
   }, []);
 
@@ -266,8 +268,13 @@ export function useSecurity(options: UseSecurityOptions = {}) {
 // ============================================
 // HOOK SIMPLES PARA VERIFICAR OWNER
 // ============================================
+/**
+ * @deprecated P1-2: Preferir useRole() e verificar role === 'owner'
+ * Hook mantido para compatibilidade com código existente
+ */
 export function useIsOwner(): boolean {
   const { user } = useAuth();
+  console.warn('[SECURITY] useIsOwner() é deprecated - usar useRole() e verificar role');
   return useMemo(() => {
     if (!user?.email) return false;
     return isOwnerEmail(user.email);

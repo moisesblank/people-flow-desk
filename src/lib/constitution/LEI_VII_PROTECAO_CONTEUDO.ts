@@ -269,10 +269,21 @@ export const FINAL_PROVISIONS = {
 // FUNÇÕES DE VERIFICAÇÃO E STATUS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/** Verifica se o usuário é o OWNER (imune a todas as proteções) */
+/**
+ * @deprecated P1-2 FIX: Use isOwnerByRole() para verificação segura
+ * Esta função existe apenas para bypass de UX (proteções de conteúdo)
+ * A autorização REAL deve vir do banco via user_roles.role='owner'
+ */
 export const isOwner = (email?: string | null): boolean => {
   if (!email) return false;
   return email.toLowerCase() === OWNER_EMAIL.toLowerCase();
+};
+
+/**
+ * ✅ Verificação segura de owner via role (preferir esta)
+ */
+export const isOwnerByRole = (role?: string | null): boolean => {
+  return role === 'owner';
 };
 
 /** Retorna o status completo da LEI VII */

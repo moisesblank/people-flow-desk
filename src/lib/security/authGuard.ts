@@ -511,6 +511,7 @@ export async function checkAuth(): Promise<{
       authenticated: true,
       userId: user.id,
       email: user.email,
+      // P1-2: Manter email check apenas para log/metadata, não para autorização
       isOwner: user.email ? isOwnerEmail(user.email) : false,
     };
   } catch {
