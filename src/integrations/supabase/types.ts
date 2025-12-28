@@ -393,6 +393,7 @@ export type Database = {
           observacoes: string | null
           status: string | null
           telefone: string | null
+          tipo_produto: string | null
           updated_at: string | null
           valor_pago: number | null
         }
@@ -418,6 +419,7 @@ export type Database = {
           observacoes?: string | null
           status?: string | null
           telefone?: string | null
+          tipo_produto?: string | null
           updated_at?: string | null
           valor_pago?: number | null
         }
@@ -443,6 +445,7 @@ export type Database = {
           observacoes?: string | null
           status?: string | null
           telefone?: string | null
+          tipo_produto?: string | null
           updated_at?: string | null
           valor_pago?: number | null
         }
