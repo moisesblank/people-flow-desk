@@ -243,6 +243,8 @@ Deno.serve(async (req) => {
 
     // Verificar autenticação
     const authHeader = req.headers.get('Authorization');
+    console.log('[CORREIOS] Auth header presente:', !!authHeader);
+    
     if (!authHeader) {
       return new Response(
         JSON.stringify({ error: 'Não autorizado' }),
@@ -250,17 +252,27 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Extrair token (remover "Bearer " se presente)
+    const token = authHeader.replace(/^Bearer\s+/i, '');
+    console.log('[CORREIOS] Token length:', token?.length);
+
     // Extrair user do token para pegar o ID
     const userClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } }
+      { 
+        global: { 
+          headers: { Authorization: `Bearer ${token}` } 
+        } 
+      }
     );
     
     const { data: { user }, error: userError } = await userClient.auth.getUser();
+    console.log('[CORREIOS] getUser result:', { userId: user?.id, error: userError?.message });
+    
     if (userError || !user) {
       return new Response(
-        JSON.stringify({ error: 'Token inválido' }),
+        JSON.stringify({ error: 'Token inválido', details: userError?.message }),
         { status: 401, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
