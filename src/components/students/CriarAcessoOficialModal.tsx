@@ -11,7 +11,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2 } from "lucide-react";
+import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2, Calendar } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -38,9 +38,16 @@ const criarAcessoSchema = z.object({
     .max(255, "Email deve ter no máximo 255 caracteres")
     .transform(val => val.toLowerCase().trim()),
   
-  role: z.enum(['beta', 'aluno_gratuito'], {
+  // CONSTITUIÇÃO v10.x - 4 roles de aluno válidas
+  role: z.enum(['beta', 'aluno_gratuito', 'aluno_presencial', 'beta_expira'], {
     required_error: "Selecione o tipo de acesso",
   }),
+
+  // Novo: expires_days para beta_expira (30, 60, 90, 180, 365 ou custom)
+  expires_days: z.number()
+    .min(1, "Dias deve ser pelo menos 1")
+    .max(3650, "Dias não pode exceder 10 anos")
+    .optional(),
 
   // Campos opcionais
   telefone: z.string()
@@ -66,6 +73,12 @@ const criarAcessoSchema = z.object({
   cep: z.string()
     .optional()
     .refine(val => !val || /^\d{5}-?\d{3}$/.test(val), "CEP inválido (formato: 00000-000)"),
+}).refine((data) => {
+  // Se role é beta_expira, expires_days é recomendado (warning no console, não bloqueia)
+  if (data.role === 'beta_expira' && !data.expires_days) {
+    console.warn('[CriarAcessoOficial] beta_expira selecionado sem expires_days');
+  }
+  return true;
 });
 
 type CriarAcessoFormData = z.infer<typeof criarAcessoSchema>;
@@ -90,6 +103,7 @@ export function CriarAcessoOficialModal({
       nome: "",
       email: "",
       role: undefined,
+      expires_days: undefined,
       telefone: "",
       foto_aluno: "",
       senha: "",
@@ -102,6 +116,9 @@ export function CriarAcessoOficialModal({
       cep: "",
     },
   });
+
+  // Watch role para mostrar/ocultar campo de dias
+  const selectedRole = form.watch("role");
 
   const handleSubmit = async (data: CriarAcessoFormData) => {
     setIsSubmitting(true);
@@ -148,6 +165,7 @@ export function CriarAcessoOficialModal({
         ...(data.telefone && { telefone: data.telefone.trim() }),
         ...(data.foto_aluno && { foto_aluno: data.foto_aluno.trim() }),
         ...(data.senha && { senha: data.senha }),
+        ...(data.expires_days && { expires_days: data.expires_days }),
         
         // Endereço (só envia se algum campo preenchido)
         ...((data.logradouro || data.numero || data.complemento || 
@@ -307,7 +325,13 @@ export function CriarAcessoOficialModal({
                     Tipo de Acesso *
                   </FormLabel>
                   <Select 
-                    onValueChange={field.onChange} 
+                    onValueChange={(value) => {
+                      field.onChange(value);
+                      // Limpar expires_days se não for beta_expira
+                      if (value !== 'beta_expira') {
+                        form.setValue('expires_days', undefined);
+                      }
+                    }} 
                     defaultValue={field.value}
                     disabled={isSubmitting}
                   >
@@ -323,15 +347,59 @@ export function CriarAcessoOficialModal({
                       <SelectItem value="aluno_gratuito">
                         {STUDENT_ROLE_LABELS.aluno_gratuito}
                       </SelectItem>
+                      <SelectItem value="aluno_presencial">
+                        {STUDENT_ROLE_LABELS.aluno_presencial}
+                      </SelectItem>
+                      <SelectItem value="beta_expira">
+                        {STUDENT_ROLE_LABELS.beta_expira}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
                   <FormDescription className="text-xs">
-                    Beta = acesso completo | Gratuito = acesso limitado
+                    Beta = acesso completo | Gratuito = limitado | Presencial = aulas presenciais | Beta Expira = com prazo
                   </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
+            {/* Dias de Expiração (só aparece se beta_expira) */}
+            {selectedRole === 'beta_expira' && (
+              <FormField
+                control={form.control}
+                name="expires_days"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Calendar className="h-4 w-4" />
+                      Dias de Acesso *
+                    </FormLabel>
+                    <Select 
+                      onValueChange={(value) => field.onChange(Number(value))} 
+                      value={field.value?.toString()}
+                      disabled={isSubmitting}
+                    >
+                      <FormControl>
+                        <SelectTrigger className="border-amber-500/30">
+                          <SelectValue placeholder="Selecione a duração" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="30">30 dias</SelectItem>
+                        <SelectItem value="60">60 dias</SelectItem>
+                        <SelectItem value="90">90 dias</SelectItem>
+                        <SelectItem value="180">180 dias (6 meses)</SelectItem>
+                        <SelectItem value="365">365 dias (1 ano)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormDescription className="text-xs text-amber-400">
+                      O acesso expirará após o período selecionado.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
 
             {/* ============================================ */}
             {/* CAMPOS OPCIONAIS (Collapsible) */}
