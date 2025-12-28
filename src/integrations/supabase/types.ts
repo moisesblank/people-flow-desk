@@ -14928,6 +14928,19 @@ export type Database = {
         }
         Relationships: []
       }
+      user_access_status: {
+        Row: {
+          avatar_url: string | null
+          days_remaining: number | null
+          email: string | null
+          expires_at: string | null
+          has_premium_access: boolean | null
+          nome: string | null
+          role: Database["public"]["Enums"]["app_role"] | null
+          user_id: string | null
+        }
+        Relationships: []
+      }
       v_dashboard_consolidado: {
         Row: {
           afiliados_ativos: number | null
