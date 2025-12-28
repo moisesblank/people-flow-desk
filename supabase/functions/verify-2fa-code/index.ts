@@ -169,6 +169,27 @@ const handler = async (req: Request): Promise<Response> => {
       console.error("[2FA Verify] Erro ao atualizar código:", updateError);
     }
 
+    // ========================================
+    // MARCAR SESSÃO COMO MFA_VERIFIED (SYNAPSE Ω v10.x)
+    // Isso habilita o Trust Window de 24h para este dispositivo
+    // ========================================
+    const { error: sessionError } = await supabaseAdmin
+      .from("active_sessions")
+      .update({ 
+        mfa_verified: true,
+        last_activity_at: new Date().toISOString()
+      })
+      .eq("user_id", userId)
+      .eq("status", "active")
+      .order("created_at", { ascending: false })
+      .limit(1);
+
+    if (sessionError) {
+      console.error("[2FA Verify] Erro ao marcar sessão mfa_verified:", sessionError);
+    } else {
+      console.log("[2FA Verify] ✅ Sessão marcada como mfa_verified");
+    }
+
     // Registrar login bem-sucedido
     await supabaseAdmin
       .from("activity_log")
