@@ -154,12 +154,17 @@ const UNIVERSO_LABELS = {
 // ============================================
 // DETERMINAÇÃO DE ROLE EFETIVO
 // ============================================
-// REGRA CANÔNICA: Aluno Hotmart = PAGANTE = beta implícito
-// Mesmo sem profile/user_roles, Hotmart indica pagamento confirmado
+// REGRA CANÔNICA (CONSTITUIÇÃO v10.x):
+// - 4 roles válidas: beta, aluno_gratuito, aluno_presencial, beta_expira
+// - Aluno Hotmart = PAGANTE = beta implícito
+// - Mesmo sem profile/user_roles, Hotmart indica pagamento confirmado
 // ============================================
-function getEffectiveRole(student: Student): 'beta' | 'aluno_gratuito' | null {
-  // Role explícito tem prioridade
-  if (student.role === 'beta' || student.role === 'aluno_gratuito') {
+type EffectiveRole = 'beta' | 'aluno_gratuito' | 'aluno_presencial' | 'beta_expira';
+
+function getEffectiveRole(student: Student): EffectiveRole {
+  // Role explícito tem prioridade (4 roles válidas)
+  if (student.role === 'beta' || student.role === 'aluno_gratuito' || 
+      student.role === 'aluno_presencial' || student.role === 'beta_expira') {
     return student.role;
   }
   
@@ -185,22 +190,25 @@ function deriveStudentLabel(student: Student): keyof typeof UNIVERSO_LABELS {
   // Role-based first
   if (effectiveRole === 'aluno_gratuito') return 'registrados';
   
-  // Fonte-based para pagantes
+  // aluno_presencial → presencial
+  if (effectiveRole === 'aluno_presencial') return 'presencial';
+  
+  // Fonte-based para pagantes (beta, beta_expira)
   const fonte = student.fonte?.toLowerCase() || '';
   if (fonte.includes('presencial')) return 'presencial';
   if (fonte.includes('híbrido') || fonte.includes('hibrido')) return 'hibrido';
   
-  // Default: online para pagantes
-  if (effectiveRole === 'beta') return 'online';
+  // Default: online para pagantes (beta, beta_expira)
+  if (effectiveRole === 'beta' || effectiveRole === 'beta_expira') return 'online';
   
   return 'registrados';
 }
 
 // Filtrar aluno pelo universo selecionado
-// SEGMENTOS CANÔNICOS:
-// - presencial: fonte contém 'presencial' (sem online)
+// SEGMENTOS CANÔNICOS (CONSTITUIÇÃO v10.x):
+// - presencial: role aluno_presencial OU fonte contém 'presencial' (sem online)
 // - presencial_online: híbrido ou presencial+online
-// - online: pagantes (beta) SEM presencial na fonte
+// - online: pagantes (beta, beta_expira) SEM presencial na fonte
 // - registrados: APENAS aluno_gratuito confirmado (não pagou)
 function matchesUniverseFilter(student: Student, filter: UniverseFilterType): boolean {
   if (filter === 'all') return true;
@@ -210,8 +218,9 @@ function matchesUniverseFilter(student: Student, filter: UniverseFilterType): bo
   
   switch (filter) {
     case 'presencial':
-      // Presencial exclusivo (sem online)
-      return fonte.includes('presencial') && !fonte.includes('online') && !fonte.includes('híbrido') && !fonte.includes('hibrido');
+      // Presencial exclusivo: role aluno_presencial OU fonte presencial sem online
+      return effectiveRole === 'aluno_presencial' || 
+             (fonte.includes('presencial') && !fonte.includes('online') && !fonte.includes('híbrido') && !fonte.includes('hibrido'));
     
     case 'presencial_online':
       // Híbrido: presencial + online ou marcado como híbrido
@@ -219,8 +228,10 @@ function matchesUniverseFilter(student: Student, filter: UniverseFilterType): bo
              fonte.includes('híbrido') || fonte.includes('hibrido');
     
     case 'online':
-      // Online: pagantes (beta) que NÃO são presencial
-      return !fonte.includes('presencial') && effectiveRole === 'beta';
+      // Online: pagantes (beta, beta_expira) que NÃO são presencial
+      return !fonte.includes('presencial') && 
+             effectiveRole !== 'aluno_presencial' &&
+             (effectiveRole === 'beta' || effectiveRole === 'beta_expira');
     
     case 'registrados':
       // Registrados: APENAS aluno_gratuito confirmado
