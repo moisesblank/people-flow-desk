@@ -164,9 +164,16 @@ export function CriarAcessoOficialModal({
         }),
       };
 
+      const accessToken = refreshData.session.access_token;
+
       const { data: response, error } = await supabase.functions.invoke(
         'c-create-official-access',
-        { body: payload }
+        {
+          body: payload,
+          headers: {
+            Authorization: `Bearer ${accessToken}`,
+          },
+        }
       );
 
       if (error) {
