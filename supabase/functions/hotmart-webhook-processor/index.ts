@@ -233,15 +233,22 @@ async function createBetaAccess(
       logger.success("✅ Profile upserted");
     }
 
-    // 4. Upsert em user_roles (CONSTITUIÇÃO v10.x - role=beta via tabela)
+    // ============================================
+    // 4. UPSERT EM USER_ROLES (CONSTITUIÇÃO v10.x)
+    // Regra: 1 role por user_id (constraint UNIQUE user_roles_user_id_key)
+    // 
+    // ⚠️ ESTRATÉGIA DE CONFLICT:
+    // - ON CONFLICT (user_id) DO UPDATE: Sobrescreve role existente
+    // - Aluno pode "subir" de aluno_gratuito → beta
+    // ============================================
     const { error: roleError } = await supabase
       .from('user_roles')
       .upsert({
         user_id: userId,
         role: 'beta',
       }, { 
-        onConflict: 'user_id,role',
-        ignoreDuplicates: false,
+        onConflict: 'user_id',  // ✅ CORRETO: 1 role por user
+        ignoreDuplicates: false, // ✅ ATUALIZA role se já existir
       });
 
     if (roleError) {

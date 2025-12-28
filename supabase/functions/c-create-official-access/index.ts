@@ -606,8 +606,13 @@ serve(async (req) => {
     }
 
     // ============================================
-    // 8. UPSERT EM USER_ROLES
-    // Role: beta ou aluno_gratuito (via tabela, CONSTITUIÇÃO v10.x)
+    // 8. UPSERT EM USER_ROLES (CONSTITUIÇÃO v10.x)
+    // Regra: 1 role por user_id (constraint UNIQUE user_roles_user_id_key)
+    // 
+    // ⚠️ ESTRATÉGIA DE CONFLICT:
+    // - ON CONFLICT (user_id) DO UPDATE: Sobrescreve role existente
+    // - Isso é CORRETO para fluxo de Hotmart/acesso oficial
+    // - Aluno pode "subir" de aluno_gratuito → beta
     // ============================================
     const { error: roleUpsertError } = await supabaseAdmin
       .from('user_roles')
@@ -615,8 +620,8 @@ serve(async (req) => {
         user_id: userId,
         role: payload.role,
       }, { 
-        onConflict: 'user_id,role',
-        ignoreDuplicates: false,
+        onConflict: 'user_id',  // ✅ CORRETO: 1 role por user
+        ignoreDuplicates: false, // ✅ ATUALIZA role se já existir
       });
 
     if (roleUpsertError) {

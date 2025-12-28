@@ -241,7 +241,15 @@ const handler = async (req: Request): Promise<Response> => {
       }
     }
 
-    // 🎯 Assign specific staff role (não mais "employee" genérico!)
+    // ============================================
+    // 🎯 UPSERT ROLE (CONSTITUIÇÃO v10.x)
+    // Regra: 1 role por user_id (constraint UNIQUE user_roles_user_id_key)
+    // 
+    // ⚠️ ESTRATÉGIA DE CONFLICT:
+    // - ON CONFLICT (user_id) DO UPDATE: Sobrescreve role existente
+    // - Isso é CORRETO para convite de funcionário
+    // - Se user já existia com outra role, agora será staff
+    // ============================================
     if (newUser.user) {
       const { error: roleError } = await supabase
         .from("user_roles")
@@ -249,7 +257,8 @@ const handler = async (req: Request): Promise<Response> => {
           user_id: newUser.user.id, 
           role: assignedRole // Role específica: suporte, monitoria, coordenacao, etc.
         }, { 
-          onConflict: "user_id" 
+          onConflict: "user_id",  // ✅ CORRETO: 1 role por user
+          ignoreDuplicates: false, // ✅ ATUALIZA role se já existir
         });
       
       if (roleError) {

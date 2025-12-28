@@ -383,11 +383,15 @@ export default function Alunos() {
           .maybeSingle();
 
         if (profileData?.id) {
-          // 3. Atribuir role 'beta' ao usuário (aluno pagante)
+          // ============================================
+          // 3. UPSERT ROLE (CONSTITUIÇÃO v10.x)
+          // Regra: 1 role por user_id (constraint UNIQUE)
+          // ON CONFLICT (user_id) sobrescreve role existente
+          // ============================================
           const { error: roleError } = await supabase.from("user_roles").upsert({
             user_id: profileData.id,
             role: "beta" as any,
-          }, { onConflict: "user_id,role" });
+          }, { onConflict: "user_id" }); // ✅ CORRETO: 1 role por user
 
           if (roleError) {
             console.warn("Não foi possível atribuir role beta:", roleError);
