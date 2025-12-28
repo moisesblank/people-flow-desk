@@ -427,25 +427,44 @@ serve(async (req) => {
     }
 
     const payload = validation.data;
+    
+    // ============================================
+    // 3.1 NORMALIZAR EMAIL (AXIOMA DE IDENTIDADE)
+    // 1 EMAIL = 1 PESSOA = 1 LOGIN
+    // ============================================
+    payload.email = payload.email.toLowerCase().trim();
     console.log('[c-create-official-access] 📝 Creating access for:', payload.email, 'Role:', payload.role);
 
     // ============================================
-    // 4. VERIFICAR SE USUÁRIO JÁ EXISTE
+    // 4. VERIFICAR SE USUÁRIO JÁ EXISTE (GLOBAL CHECK)
+    // Verifica em auth.users E profiles
     // ============================================
     let userId: string | null = null;
     let userAlreadyExists = false;
 
-    // Buscar especificamente pelo email em profiles
-    const { data: userByEmail } = await supabaseAdmin
-      .from('profiles')
-      .select('id, email')
-      .eq('email', payload.email)
-      .maybeSingle();
+    // Verificar em auth.users primeiro (fonte primária de identidade)
+    const { data: existingAuthUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingAuthUser = existingAuthUsers?.users?.find(
+      u => u.email?.toLowerCase().trim() === payload.email
+    );
 
-    if (userByEmail) {
-      userId = userByEmail.id;
+    if (existingAuthUser) {
+      userId = existingAuthUser.id;
       userAlreadyExists = true;
-      console.log('[c-create-official-access] ℹ️ User already exists:', userId);
+      console.log('[c-create-official-access] ℹ️ User already exists in auth.users:', userId);
+    } else {
+      // Fallback: buscar em profiles (para casos de inconsistência)
+      const { data: userByEmail } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email')
+        .ilike('email', payload.email)
+        .maybeSingle();
+
+      if (userByEmail) {
+        userId = userByEmail.id;
+        userAlreadyExists = true;
+        console.log('[c-create-official-access] ⚠️ User exists in profiles but not auth (orphan):', userId);
+      }
     }
 
     // ============================================

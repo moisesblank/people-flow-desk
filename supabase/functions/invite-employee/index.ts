@@ -91,7 +91,18 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
-    const { email, nome, senha, funcao, role, employee_id }: InviteRequest = await req.json();
+    const rawBody: InviteRequest = await req.json();
+    
+    // ============================================
+    // AXIOMA DE IDENTIDADE: NORMALIZAR EMAIL
+    // 1 EMAIL = 1 PESSOA = 1 LOGIN
+    // ============================================
+    const email = rawBody.email?.toLowerCase().trim();
+    const nome = rawBody.nome?.trim();
+    const senha = rawBody.senha;
+    const funcao = rawBody.funcao;
+    const role = rawBody.role;
+    const employee_id = rawBody.employee_id;
 
     if (!email || !nome) {
       return new Response(
