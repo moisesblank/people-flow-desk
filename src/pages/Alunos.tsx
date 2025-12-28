@@ -9,7 +9,7 @@ import { motion } from "framer-motion";
 import { 
   Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, 
   UserPlus, ChevronLeft, ChevronRight, Search, Crown, Shield,
-  CheckCircle, XCircle, Clock, AlertCircle
+  CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X
 } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
@@ -62,8 +62,47 @@ const PAGE_SIZE = 100; // BLOCK 2: 100 por página
 const STALE_TIME = 30_000;
 
 // ============================================
-// UNIVERSOS — Apenas visual, não fragmenta lista
+// UNIVERSOS — Cards de filtro rápido
 // ============================================
+
+type UniverseFilterType = 'all' | 'presencial' | 'presencial_online' | 'online' | 'registrados';
+
+const UNIVERSE_OPTIONS: Array<{
+  id: UniverseFilterType;
+  label: string;
+  description: string;
+  icon: React.ElementType;
+  accentColor: string;
+}> = [
+  {
+    id: 'presencial',
+    label: 'Alunos Presencial',
+    description: 'Alunos matriculados em cursos presenciais',
+    icon: MapPin,
+    accentColor: 'blue',
+  },
+  {
+    id: 'presencial_online',
+    label: 'Presencial + Online',
+    description: 'Alunos com acesso híbrido (presencial e online)',
+    icon: Globe,
+    accentColor: 'purple',
+  },
+  {
+    id: 'online',
+    label: 'Alunos Online',
+    description: 'Alunos matriculados exclusivamente online',
+    icon: Wifi,
+    accentColor: 'cyan',
+  },
+  {
+    id: 'registrados',
+    label: 'Registrados (Área Gratuita)',
+    description: 'Usuários registrados sem pagamento confirmado',
+    icon: UserCheck,
+    accentColor: 'green',
+  },
+];
 
 const UNIVERSO_LABELS = {
   presencial: { label: 'Presencial', color: 'blue', icon: '📍' },
@@ -88,6 +127,28 @@ function deriveStudentLabel(student: Student): keyof typeof UNIVERSO_LABELS {
   return 'registrados';
 }
 
+// Filtrar aluno pelo universo selecionado
+function matchesUniverseFilter(student: Student, filter: UniverseFilterType): boolean {
+  if (filter === 'all') return true;
+  
+  const fonte = student.fonte?.toLowerCase() || '';
+  
+  switch (filter) {
+    case 'presencial':
+      return fonte.includes('presencial') && !fonte.includes('online');
+    case 'presencial_online':
+      return fonte.includes('presencial') && fonte.includes('online') || 
+             fonte.includes('híbrido') || fonte.includes('hibrido') ||
+             (student.role === 'beta' && fonte.includes('presencial'));
+    case 'online':
+      return !fonte.includes('presencial') && student.role === 'beta';
+    case 'registrados':
+      return student.role === 'aluno_gratuito' || student.role === null;
+    default:
+      return true;
+  }
+}
+
 // ============================================
 // MAIN COMPONENT
 // ============================================
@@ -97,6 +158,9 @@ export default function Alunos() {
   
   // Paginação
   const [page, setPage] = useState(1);
+  
+  // Filtro de universo
+  const [universeFilter, setUniverseFilter] = useState<UniverseFilterType>('all');
   
   // Busca global
   const [searchTerm, setSearchTerm] = useState("");
@@ -352,11 +416,24 @@ export default function Alunos() {
   // ============================================
   // DERIVED DATA
   // ============================================
-  const students = alunosQuery.data?.data || [];
+  const allStudents = alunosQuery.data?.data || [];
+  
+  // Aplicar filtro de universo (client-side para evitar requery)
+  const students = useMemo(() => {
+    if (universeFilter === 'all') return allStudents;
+    return allStudents.filter(s => matchesUniverseFilter(s, universeFilter));
+  }, [allStudents, universeFilter]);
+  
   const contadores = contadoresQuery.data || {
     total: 0, ativos: 0, concluidos: 0, pendentes: 0, cancelados: 0, beta: 0, gratuito: 0,
   };
   const isLoading = alunosQuery.isLoading;
+  
+  // Handler para selecionar universo
+  const handleUniverseSelect = (id: UniverseFilterType) => {
+    setUniverseFilter(id === universeFilter ? 'all' : id);
+    setPage(1);
+  };
 
   // ============================================
   // RENDER
@@ -423,6 +500,88 @@ export default function Alunos() {
               <div className="text-xs text-muted-foreground uppercase tracking-wider">Gratuitos</div>
             </FuturisticCard>
           </div>
+
+          {/* Universe Cards — Filtros de área */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {UNIVERSE_OPTIONS.map((option, index) => {
+              const Icon = option.icon;
+              const isActive = universeFilter === option.id;
+              
+              return (
+                <motion.div
+                  key={option.id}
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.05 }}
+                >
+                  <FuturisticCard
+                    accentColor={option.accentColor as any}
+                    className={`p-4 cursor-pointer group hover:scale-[1.02] transition-all duration-300 ${
+                      isActive ? 'ring-2 ring-offset-2 ring-offset-background' : ''
+                    } ${
+                      isActive && option.accentColor === 'blue' ? 'ring-blue-500' : ''
+                    } ${
+                      isActive && option.accentColor === 'purple' ? 'ring-purple-500' : ''
+                    } ${
+                      isActive && option.accentColor === 'cyan' ? 'ring-cyan-500' : ''
+                    } ${
+                      isActive && option.accentColor === 'green' ? 'ring-emerald-500' : ''
+                    }`}
+                    onClick={() => handleUniverseSelect(option.id)}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div className={`
+                        p-2.5 rounded-xl 
+                        ${option.accentColor === 'blue' ? 'bg-blue-500/20 text-blue-400' : ''}
+                        ${option.accentColor === 'purple' ? 'bg-purple-500/20 text-purple-400' : ''}
+                        ${option.accentColor === 'cyan' ? 'bg-cyan-500/20 text-cyan-400' : ''}
+                        ${option.accentColor === 'green' ? 'bg-emerald-500/20 text-emerald-400' : ''}
+                      `}>
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                          {option.label}
+                        </h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                          {option.description}
+                        </p>
+                      </div>
+                      
+                      {isActive && (
+                        <div className="flex-shrink-0">
+                          <X className="h-4 w-4 text-muted-foreground hover:text-foreground" />
+                        </div>
+                      )}
+                    </div>
+                  </FuturisticCard>
+                </motion.div>
+              );
+            })}
+          </div>
+          
+          {/* Active Filter Indicator */}
+          {universeFilter !== 'all' && (
+            <div className="flex items-center gap-2 px-4 py-2 bg-primary/10 rounded-lg border border-primary/20">
+              <span className="text-sm text-muted-foreground">Filtrando por:</span>
+              <Badge variant="outline" className="border-primary/50 text-primary">
+                {UNIVERSE_OPTIONS.find(o => o.id === universeFilter)?.label}
+              </Badge>
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-6 px-2 text-xs"
+                onClick={() => setUniverseFilter('all')}
+              >
+                <X className="h-3 w-3 mr-1" />
+                Limpar
+              </Button>
+              <span className="ml-auto text-sm text-muted-foreground">
+                {students.length} alunos encontrados
+              </span>
+            </div>
+          )}
 
           {/* Search + Table */}
           <FuturisticCard accentColor="blue">
