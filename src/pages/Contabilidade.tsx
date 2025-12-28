@@ -56,12 +56,7 @@ interface MetricaMarketing {
   ltv: number;
 }
 
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
+import { formatCurrency } from "@/utils/format";
 
 const TOPICOS = [
   { value: "receitas", label: "📈 Receitas", subtopicos: ["Vendas Cursos", "Hotmart", "Afiliados", "Consultorias", "Outras"] },

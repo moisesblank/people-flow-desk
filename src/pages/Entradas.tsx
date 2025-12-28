@@ -30,15 +30,10 @@ interface Tax {
   categoria: string;
 }
 
+import { formatCurrency } from "@/utils/format";
+
 const FONTES = ["PJ 44", "PJ 53", "MEI", "Boletos", "Correios", "Hotmart", "Outros"];
 const BANCOS = ["Bradesco", "Stone", "Nubank", "Outros"];
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
 
 export default function Entradas() {
   const { user } = useAuth();
