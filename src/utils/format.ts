@@ -24,18 +24,22 @@
  * Formata valor em centavos para moeda brasileira (R$)
  * 
  * @param cents - Valor em CENTAVOS (ex: 10000 = R$ 100,00)
+ * @param fractionDigits - Casas decimais (default: 2). Use 0 para inteiros.
  * @returns String formatada (ex: "R$ 100,00")
  * 
  * @example
  * formatCurrency(10000) // "R$ 100,00"
+ * formatCurrency(10000, 0) // "R$ 100"
  * formatCurrency(0) // "R$ 0,00"
  * formatCurrency(null) // "R$ 0,00"
  */
-export function formatCurrency(cents: number | null | undefined): string {
-  if (cents === null || cents === undefined) return "R$ 0,00";
+export function formatCurrency(cents: number | null | undefined, fractionDigits = 2): string {
+  if (cents === null || cents === undefined) return fractionDigits === 0 ? "R$ 0" : "R$ 0,00";
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(cents / 100);
 }
 
@@ -43,16 +47,20 @@ export function formatCurrency(cents: number | null | undefined): string {
  * Formata valor em REAIS (não centavos) para moeda brasileira
  * 
  * @param value - Valor em REAIS (ex: 100 = R$ 100,00)
+ * @param fractionDigits - Casas decimais (default: 2). Use 0 para inteiros.
  * @returns String formatada (ex: "R$ 100,00")
  * 
  * @example
  * formatCurrencyFromReais(100) // "R$ 100,00"
+ * formatCurrencyFromReais(100, 0) // "R$ 100"
  */
-export function formatCurrencyFromReais(value: number | null | undefined): string {
-  if (value === null || value === undefined) return "R$ 0,00";
+export function formatCurrencyFromReais(value: number | null | undefined, fractionDigits = 2): string {
+  if (value === null || value === undefined) return fractionDigits === 0 ? "R$ 0" : "R$ 0,00";
   return new Intl.NumberFormat("pt-BR", {
     style: "currency",
     currency: "BRL",
+    minimumFractionDigits: fractionDigits,
+    maximumFractionDigits: fractionDigits,
   }).format(value);
 }
 
