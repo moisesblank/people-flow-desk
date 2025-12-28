@@ -49,7 +49,7 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, 
   UserPlus, ChevronLeft, ChevronRight, Search, Crown, Shield,
-  CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X, Eye
+  CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X, Eye, Package
 } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
@@ -82,6 +82,7 @@ interface Student {
   email: string;
   status: string;
   fonte: string | null;
+  tipo_produto: string | null;  // 'livroweb' | 'fisico' | null
   role: StudentRoleType | null;
   created_at: string;
 }
@@ -93,6 +94,8 @@ interface AlunosContadores {
   pendentes: number;
   cancelados: number;
   beta: number;
+  betaLivroweb: number;
+  betaFisico: number;
   gratuito: number;
 }
 
@@ -109,7 +112,7 @@ const STALE_TIME = 30_000;
 // UNIVERSOS — Cards de filtro rápido
 // ============================================
 
-type UniverseFilterType = 'all' | 'beta' | 'presencial' | 'presencial_online' | 'online' | 'registrados';
+type UniverseFilterType = 'all' | 'beta' | 'beta_livroweb' | 'beta_fisico' | 'presencial' | 'presencial_online' | 'online' | 'registrados';
 
 const UNIVERSE_OPTIONS: Array<{
   id: UniverseFilterType;
@@ -282,6 +285,16 @@ function matchesUniverseFilter(student: Student, filter: UniverseFilterType): bo
       // Beta/Pagos: todos os alunos pagantes (beta ou beta_expira)
       return effectiveRole === 'beta' || effectiveRole === 'beta_expira';
     
+    case 'beta_livroweb':
+      // Beta Livroweb: alunos pagantes com tipo_produto = 'livroweb'
+      return (effectiveRole === 'beta' || effectiveRole === 'beta_expira') && 
+             (student as any).tipo_produto === 'livroweb';
+    
+    case 'beta_fisico':
+      // Beta Físico: alunos pagantes com tipo_produto = 'fisico'
+      return (effectiveRole === 'beta' || effectiveRole === 'beta_expira') && 
+             (student as any).tipo_produto === 'fisico';
+    
     default:
       return true;
   }
@@ -335,6 +348,8 @@ export default function Alunos() {
         pendentesResult,
         canceladosResult,
         betaResult,
+        betaLivrowebResult,
+        betaFisicoResult,
         gratuitoResult,
       ] = await Promise.all([
         supabase.from('alunos').select('*', { count: 'exact', head: true }),
@@ -343,6 +358,8 @@ export default function Alunos() {
         supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'pendente'),
         supabase.from('alunos').select('*', { count: 'exact', head: true }).ilike('status', 'cancelado'),
         supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'beta'),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tipo_produto', 'livroweb'),
+        supabase.from('alunos').select('*', { count: 'exact', head: true }).eq('tipo_produto', 'fisico'),
         supabase.from('user_roles').select('*', { count: 'exact', head: true }).eq('role', 'aluno_gratuito'),
       ]);
 
@@ -353,6 +370,8 @@ export default function Alunos() {
         pendentes: pendentesResult.count || 0,
         cancelados: canceladosResult.count || 0,
         beta: betaResult.count || 0,
+        betaLivroweb: betaLivrowebResult.count || 0,
+        betaFisico: betaFisicoResult.count || 0,
         gratuito: gratuitoResult.count || 0,
       };
     },
@@ -370,9 +389,10 @@ export default function Alunos() {
       const to = from + PAGE_SIZE - 1;
 
       // Query base — TODOS os alunos (pagos + não pagos)
+      // Incluindo tipo_produto para filtro Livroweb/Físico
       let query = supabase
         .from('alunos')
-        .select('id, nome, email, status, fonte, created_at', { count: 'exact' });
+        .select('id, nome, email, status, fonte, tipo_produto, created_at', { count: 'exact' });
 
       // Busca global: nome OU email (case-insensitive, partial match)
       if (debouncedSearch.trim()) {
@@ -420,6 +440,7 @@ export default function Alunos() {
         email: a.email || '',
         status: a.status || 'Ativo',
         fonte: a.fonte || null,
+        tipo_produto: a.tipo_produto || null,
         role: roleMap[(a.email || '').toLowerCase()] || null,
         created_at: a.created_at || '',
       }));
@@ -561,7 +582,7 @@ export default function Alunos() {
   }), [allStudents]);
   
   const contadores = contadoresQuery.data || {
-    total: 0, ativos: 0, concluidos: 0, pendentes: 0, cancelados: 0, beta: 0, gratuito: 0,
+    total: 0, ativos: 0, concluidos: 0, pendentes: 0, cancelados: 0, beta: 0, betaLivroweb: 0, betaFisico: 0, gratuito: 0,
   };
   const isLoading = alunosQuery.isLoading;
 
@@ -684,6 +705,95 @@ export default function Alunos() {
                     {/* Label */}
                     <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.2em] mt-1">
                       {stat.label}
+                    </div>
+                  </div>
+                  
+                  {/* Corner accents */}
+                  <div className={`absolute top-1 left-1 w-2 h-2 border-t border-l ${stat.border} rounded-tl`} />
+                  <div className={`absolute top-1 right-1 w-2 h-2 border-t border-r ${stat.border} rounded-tr`} />
+                  <div className={`absolute bottom-1 left-1 w-2 h-2 border-b border-l ${stat.border} rounded-bl`} />
+                  <div className={`absolute bottom-1 right-1 w-2 h-2 border-b border-r ${stat.border} rounded-br`} />
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Subcards Beta — ALUNOS ONLINE SUBGRUPOS */}
+          <div className="grid grid-cols-2 gap-3">
+            {[
+              { 
+                icon: Globe, 
+                value: contadores.betaLivroweb, 
+                label: 'ONLINE - LIVROWEB', 
+                description: 'Material Digital',
+                gradient: 'from-violet-600 via-purple-500 to-fuchsia-400', 
+                glow: 'shadow-violet-500/30', 
+                border: 'border-violet-500/40', 
+                filterId: 'beta_livroweb' as UniverseFilterType 
+              },
+              { 
+                icon: Package, 
+                value: contadores.betaFisico, 
+                label: 'ONLINE - FÍSICO', 
+                description: 'Material Físico',
+                gradient: 'from-fuchsia-600 via-pink-500 to-rose-400', 
+                glow: 'shadow-fuchsia-500/30', 
+                border: 'border-fuchsia-500/40', 
+                filterId: 'beta_fisico' as UniverseFilterType 
+              },
+            ].map((stat, idx) => {
+              const StatIcon = stat.icon;
+              const isActive = universeFilter === stat.filterId;
+              
+              return (
+                <div
+                  key={`beta-sub-${idx}`}
+                  onClick={() => setUniverseFilter(universeFilter === stat.filterId ? 'all' : stat.filterId)}
+                  className={`
+                    relative group overflow-hidden rounded-xl border backdrop-blur-xl cursor-pointer
+                    bg-gradient-to-br from-background/80 via-background/60 to-background/40
+                    ${stat.border} hover:border-opacity-80
+                    shadow-lg ${stat.glow} hover:shadow-xl
+                    transition-all duration-300 hover:scale-[1.02]
+                    ${isActive ? 'ring-2 ring-purple-500/50 ring-offset-2 ring-offset-background' : ''}
+                  `}
+                >
+                  {/* Holographic shimmer */}
+                  <div className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500">
+                    <div className={`absolute inset-0 bg-gradient-to-r ${stat.gradient} opacity-10`} />
+                    <div className="absolute inset-0 bg-[linear-gradient(45deg,transparent_40%,rgba(255,255,255,0.1)_50%,transparent_60%)] bg-[length:250%_250%] animate-[shimmer_3s_infinite]" />
+                  </div>
+                  
+                  {/* Active indicator */}
+                  {isActive && (
+                    <div className={`absolute inset-0 bg-gradient-to-br ${stat.gradient} opacity-15`} />
+                  )}
+                  
+                  {/* Content */}
+                  <div className="relative z-10 p-4 flex items-center gap-4">
+                    {/* Icon with glow ring */}
+                    <div className={`
+                      inline-flex items-center justify-center w-12 h-12 rounded-lg
+                      bg-gradient-to-br ${stat.gradient} shadow-lg ${stat.glow}
+                    `}>
+                      <StatIcon className="h-6 w-6 text-white" />
+                    </div>
+                    
+                    <div className="flex-1">
+                      {/* Value with gradient text */}
+                      <div className={`text-2xl font-black bg-gradient-to-r ${stat.gradient} bg-clip-text text-transparent`}>
+                        {stat.value}
+                      </div>
+                      
+                      {/* Label */}
+                      <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-[0.15em]">
+                        {stat.label}
+                      </div>
+                      
+                      {/* Description */}
+                      <div className="text-[9px] text-muted-foreground/70 mt-0.5">
+                        {stat.description}
+                      </div>
                     </div>
                   </div>
                   

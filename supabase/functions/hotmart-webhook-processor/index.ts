@@ -990,6 +990,24 @@ async function handleHotmartPurchase(
   });
 
   // CRIAR ALUNO (AGORA SIM!)
+  // ============================================
+  // CLASSIFICAÇÃO POR PRODUCT_ID (Livroweb vs Físico)
+  // ID 6585429 = MATERIAL DIGITAL - WEB = livroweb
+  // ID 6656573 = MATERIAL FÍSICO = fisico
+  // ============================================
+  const productId = payload.data?.product?.id?.toString() || payload.product?.id?.toString() || null;
+  let tipoProduto: string | null = null;
+  
+  if (productId === '6585429') {
+    tipoProduto = 'livroweb';
+    logger.info("📚 Produto identificado: LIVROWEB (Material Digital)", { productId });
+  } else if (productId === '6656573') {
+    tipoProduto = 'fisico';
+    logger.info("📦 Produto identificado: FÍSICO (Material Físico)", { productId });
+  } else if (productId) {
+    logger.info("❓ Product ID não mapeado", { productId });
+  }
+  
   const alunoData = {
     nome: data.name || existingLead?.nome || "Aluno Hotmart",
     email: data.email,
@@ -999,6 +1017,7 @@ async function handleHotmartPurchase(
     valor_pago: data.purchaseValue,
     hotmart_transaction_id: data.transactionId || null,
     fonte: "Hotmart",
+    tipo_produto: tipoProduto,
     observacoes: [
       `Produto: ${data.productName}`,
       `Valor: R$ ${data.purchaseValue.toFixed(2)}`,
