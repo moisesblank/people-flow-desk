@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useExecutiveFinancials } from "@/hooks/useMonthlyFinancials";
 import { formatCurrency } from "@/utils";
 import {
   TrendingUp,
@@ -108,48 +109,18 @@ export function ExecutiveDashboardAdvanced() {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   // =====================================================
-  // AUDITORIA: Buscar dados REAIS do banco de dados
-  // Nenhum valor fictício - 0 se não houver dados
+  // AUDITORIA: Usar hook unificado para dados financeiros
+  // Substitui 85 linhas de query duplicada
   // =====================================================
-  const { data: realData, refetch } = useQuery({
-    queryKey: ["executive-dashboard-real", period],
+  const { data: financialData, refetch: refetchFinancials } = useExecutiveFinancials();
+
+  // Query para dados de evolução mensal (específica deste componente)
+  const { data: monthlyEvolutionData, refetch: refetchMonthly } = useQuery({
+    queryKey: ["executive-monthly-evolution", period],
     queryFn: async () => {
-      // Buscar receitas do mês atual
-      const startOfMonth = new Date();
-      startOfMonth.setDate(1);
-      startOfMonth.setHours(0, 0, 0, 0);
-      
-      const { data: entradas } = await supabase
-        .from("entradas")
-        .select("valor")
-        .gte("created_at", startOfMonth.toISOString());
-      
-      const totalReceita = (entradas || []).reduce((acc, e) => acc + (e.valor || 0), 0);
-
-      // Buscar gastos fixos e extras
-      const mesAtual = new Date().getMonth() + 1;
       const anoAtual = new Date().getFullYear();
+      const mesAtual = new Date().getMonth() + 1;
       
-      const [fixosRes, extrasRes] = await Promise.all([
-        supabase.from("company_fixed_expenses").select("valor").eq("mes", mesAtual).eq("ano", anoAtual),
-        supabase.from("company_extra_expenses").select("valor").eq("mes", mesAtual).eq("ano", anoAtual),
-      ]);
-      
-      const totalGastos = [
-        ...(fixosRes.data || []),
-        ...(extrasRes.data || [])
-      ].reduce((acc, g) => acc + (g.valor || 0), 0);
-
-      // Alunos ativos
-      const { count: alunosAtivos } = await supabase
-        .from("alunos")
-        .select("*", { count: "exact", head: true })
-        .eq("status", "ativo");
-
-      // Lucro e margem
-      const lucro = totalReceita - totalGastos;
-      const margem = totalReceita > 0 ? (lucro / totalReceita) * 100 : 0;
-
       // Buscar fechamentos mensais para evolução
       const { data: fechamentos } = await supabase
         .from("company_monthly_closures")
@@ -158,7 +129,7 @@ export function ExecutiveDashboardAdvanced() {
         .order("mes", { ascending: true });
 
       const meses = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-      const monthlyData = meses.map((month, index) => {
+      return meses.map((month, index) => {
         const fechamento = (fechamentos || []).find(f => f.mes === index + 1);
         if (fechamento) {
           return {
@@ -166,33 +137,43 @@ export function ExecutiveDashboardAdvanced() {
             receita: Number(fechamento.total_receitas || 0) / 100,
             despesas: (Number(fechamento.total_gastos_fixos || 0) + Number(fechamento.total_gastos_extras || 0)) / 100,
             lucro: Number(fechamento.saldo_periodo || 0) / 100,
-            alunos: 0 // TODO: histórico de alunos por mês
+            alunos: 0,
           };
         }
-        // Mês atual
-        if (index + 1 === mesAtual) {
+        // Mês atual com dados do hook
+        if (index + 1 === mesAtual && financialData) {
           return {
             month,
-            receita: totalReceita / 100,
-            despesas: totalGastos / 100,
-            lucro: lucro / 100,
-            alunos: alunosAtivos || 0
+            receita: (financialData.totalReceita || 0) / 100,
+            despesas: (financialData.totalGastos || 0) / 100,
+            lucro: (financialData.lucro || 0) / 100,
+            alunos: financialData.alunosAtivos || 0,
           };
         }
         return { month, receita: 0, despesas: 0, lucro: 0, alunos: 0 };
       }).filter(m => m.receita > 0 || m.despesas > 0);
-
-      return {
-        totalReceita,
-        totalGastos,
-        lucro,
-        margem,
-        alunosAtivos: alunosAtivos || 0,
-        monthlyData
-      };
     },
-    refetchInterval: 60000 // ⚡ DOGMA V.5K: 60s (de 30s)
+    refetchInterval: 60000,
+    enabled: !!financialData,
   });
+
+  // Combinar dados para compatibilidade
+  const realData = useMemo(() => {
+    if (!financialData) return null;
+    return {
+      totalReceita: financialData.totalReceita,
+      totalGastos: financialData.totalGastos,
+      lucro: financialData.lucro,
+      margem: financialData.margem,
+      alunosAtivos: financialData.alunosAtivos,
+      monthlyData: monthlyEvolutionData || [],
+    };
+  }, [financialData, monthlyEvolutionData]);
+
+  const refetch = () => {
+    refetchFinancials();
+    refetchMonthly();
+  };
 
   // KPIs dinâmicos baseados em dados reais
   const realKPIs: KPIMetric[] = useMemo(() => [
