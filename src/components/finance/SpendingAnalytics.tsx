@@ -6,6 +6,7 @@
 import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { formatCurrency } from "@/utils";
 import { 
   BarChart3, 
   TrendingUp, 
@@ -30,8 +31,7 @@ interface SpendingAnalyticsProps {
 }
 
 export function SpendingAnalytics({ categories, total }: SpendingAnalyticsProps) {
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value / 100);
+  // formatCurrency importado de @/utils
 
   // Top 5 categorias
   const topCategories = categories.slice(0, 5);

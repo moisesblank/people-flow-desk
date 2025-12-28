@@ -10,6 +10,7 @@ import { TrendingUp, TrendingDown, Minus, Calendar, BarChart3 } from "lucide-rea
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import type { PeriodFilter } from "@/hooks/useFinancialHistory";
+import { formatCurrencyFromReais } from "@/utils";
 
 interface ChartDataPoint {
   label: string;
@@ -25,14 +26,8 @@ interface FinancialHistoryChartProps {
   variacaoPercent: number;
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+// Usa formatação centralizada (valor em reais)
+const formatCurrency = formatCurrencyFromReais;
 
 function getPeriodLabel(period: PeriodFilter): string {
   switch (period) {

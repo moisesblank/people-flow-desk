@@ -8,6 +8,7 @@ import { useState, useMemo } from "react";
 import { motion } from "framer-motion";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { formatCurrency } from "@/utils";
 import {
   TrendingUp,
   TrendingDown,
@@ -88,12 +89,7 @@ interface PredictiveInsight {
   actionable: boolean;
 }
 
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
-}
+// formatCurrency importado de @/utils
 
 function formatValue(value: number, format: KPIMetric["format"]): string {
   switch (format) {

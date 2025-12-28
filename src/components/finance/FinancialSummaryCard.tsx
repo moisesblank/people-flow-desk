@@ -4,6 +4,7 @@
 // ============================================
 
 import { motion } from "framer-motion";
+import { formatCurrency } from "@/utils";
 import { 
   Wallet, 
   TrendingUp, 
@@ -36,12 +37,7 @@ export function FinancialSummaryCard({
   expenseChange = 0,
   currency = "BRL"
 }: FinancialSummaryCardProps) {
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency
-    }).format(value / 100);
-  };
+  // formatCurrency importado de @/utils
 
   const balance = income - expenses;
   const savingsRate = income > 0 ? Math.round((savings / income) * 100) : 0;

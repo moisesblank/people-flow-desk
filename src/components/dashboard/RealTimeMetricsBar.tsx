@@ -26,6 +26,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useSubspaceQuery, SUBSPACE_CACHE_PROFILES } from "@/hooks/useSubspaceCommunication";
+import { formatCurrencyCompact } from "@/utils";
 import type { LucideIcon } from "lucide-react";
 
 interface MetricItem {
@@ -42,11 +43,8 @@ interface RealTimeMetricsBarProps {
   className?: string;
 }
 
-function formatCurrency(value: number): string {
-  if (value >= 1000000) return `R$ ${(value / 1000000).toFixed(1)}M`;
-  if (value >= 1000) return `R$ ${(value / 1000).toFixed(1)}K`;
-  return `R$ ${value.toFixed(0)}`;
-}
+// Usa formatação compacta centralizada
+const formatCurrency = formatCurrencyCompact;
 
 function formatTime(date: Date): string {
   return date.toLocaleTimeString("pt-BR", { 

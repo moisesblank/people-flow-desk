@@ -11,15 +11,10 @@ import { AreaChart, Area, ResponsiveContainer, Tooltip } from "recharts";
 import { useFinancialHistory } from "@/hooks/useFinancialHistory";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
+import { formatCurrencyFromReais } from "@/utils";
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(value);
-}
+// Usa formatação centralizada (valor já em reais, não centavos)
+const formatCurrency = formatCurrencyFromReais;
 
 export function FinancialHistoryWidget() {
   const navigate = useNavigate();

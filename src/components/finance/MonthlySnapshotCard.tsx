@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { getMonthName } from "@/hooks/useFinancialHistory";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/utils";
 
 interface MonthlySnapshotCardProps {
   ano: number;
@@ -22,15 +23,6 @@ interface MonthlySnapshotCardProps {
   onClose?: () => void;
   onClick?: () => void;
   compact?: boolean;
-}
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
 }
 
 export function MonthlySnapshotCard({

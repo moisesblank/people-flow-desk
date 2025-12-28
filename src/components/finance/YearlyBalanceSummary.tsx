@@ -13,6 +13,7 @@ import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 import { getMonthName } from "@/hooks/useFinancialHistory";
 import { cn } from "@/lib/utils";
+import { formatCurrency } from "@/utils";
 
 interface YearlySummary {
   ano: number;
@@ -39,15 +40,6 @@ interface MonthlySnapshot {
 interface YearlyBalanceSummaryProps {
   snapshots: MonthlySnapshot[];
   currentYear?: number;
-}
-
-function formatCurrency(cents: number): string {
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(cents / 100);
 }
 
 export function YearlyBalanceSummary({ snapshots, currentYear = new Date().getFullYear() }: YearlyBalanceSummaryProps) {

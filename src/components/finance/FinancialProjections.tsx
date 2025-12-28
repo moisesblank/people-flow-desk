@@ -7,6 +7,7 @@ import { motion } from "framer-motion";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
+import { formatCurrency } from "@/utils";
 import { 
   TrendingUp, 
   TrendingDown, 
@@ -27,8 +28,7 @@ interface FinancialProjectionsProps {
 
 export function FinancialProjections({ totalFixed, totalExtra, type }: FinancialProjectionsProps) {
   const total = totalFixed + totalExtra;
-  const formatCurrency = (value: number) => 
-    new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(value / 100);
+  // formatCurrency importado de @/utils
 
   // Projeção dos próximos 6 meses
   const projectionData = [

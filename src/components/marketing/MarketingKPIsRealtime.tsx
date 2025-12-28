@@ -8,6 +8,7 @@ import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { formatCurrencyFromReais } from '@/utils';
 import { 
   DollarSign, 
   Users, 
@@ -111,8 +112,8 @@ export function MarketingKPIsRealtime() {
   
   const kpis = useMarketingKPIs();
 
-  const formatCurrency = (value: number) => 
-    `R$ ${value.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+  // Usa formatação centralizada (valor em reais)
+  const formatCurrency = formatCurrencyFromReais;
 
   if (isLoading) {
     return (

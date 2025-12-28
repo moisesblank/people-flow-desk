@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { formatCurrencyFromReais } from '@/utils';
 import { 
   MessageSquare, TrendingUp, TrendingDown, DollarSign,
   ExternalLink, Calendar, ArrowUpCircle, ArrowDownCircle
@@ -73,12 +74,8 @@ export function WhatsAppFinanceWidget({
     return config[type] || config.expense;
   };
   
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value);
-  };
+  // Usa formatação centralizada (valor em reais)
+  const formatCurrency = formatCurrencyFromReais;
   
   if (isLoading) {
     return (

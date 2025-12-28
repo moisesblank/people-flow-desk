@@ -18,6 +18,7 @@ import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper
 import type { Employee } from "@/types/employee";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { formatCurrency as formatCurrencyCentralized } from "@/utils";
 
 interface EmployeeCardProps {
   employee: Employee;
@@ -28,10 +29,7 @@ interface EmployeeCardProps {
 
 function formatCurrency(cents: number | null): string {
   if (cents === null) return "••••••";
-  return new Intl.NumberFormat("pt-BR", {
-    style: "currency",
-    currency: "BRL",
-  }).format(cents / 100);
+  return formatCurrencyCentralized(cents);
 }
 
 function getInitials(name: string): string {

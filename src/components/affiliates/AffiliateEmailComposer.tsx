@@ -5,6 +5,7 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import { formatCurrency } from "@/utils";
 import {
   Mail,
   Send,
@@ -217,12 +218,7 @@ export function AffiliateEmailComposer({
       .replace(/\{\{data_fim\}\}/g, new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toLocaleDateString("pt-BR"));
   };
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat("pt-BR", {
-      style: "currency",
-      currency: "BRL"
-    }).format(value / 100);
-  };
+  // formatCurrency importado de @/utils
 
   const sendEmails = async () => {
     if (selectedAffiliates.length === 0) {
