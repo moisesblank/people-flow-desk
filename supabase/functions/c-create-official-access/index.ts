@@ -660,30 +660,27 @@ serve(async (req) => {
     // - Isso é CORRETO para fluxo de Hotmart/acesso oficial
     // - Aluno pode "subir" de aluno_gratuito → beta
     // 
-    // 🎯 NOVO: expires_at para beta_expira
+    // 🎯 UNIFICADO: expires_at funciona para QUALQUER role (SYNAPSE Ω v10.x)
+    // - Se expires_days fornecido → calcula expires_at
+    // - Se não fornecido → expires_at = NULL (permanente)
     // ============================================
     
-    // Calcular expires_at se role === 'beta_expira' e expires_days fornecido
+    // Calcular expires_at se expires_days fornecido (para qualquer role)
     let expiresAt: string | null = null;
-    if (payload.role === 'beta_expira' && payload.expires_days) {
+    if (payload.expires_days) {
       const expirationDate = new Date();
       expirationDate.setDate(expirationDate.getDate() + payload.expires_days);
       expiresAt = expirationDate.toISOString();
       console.log(`[c-create-official-access] 📅 Role expires_at: ${expiresAt} (${payload.expires_days} days)`);
+    } else {
+      console.log(`[c-create-official-access] ♾️ Role permanente (sem expiração)`);
     }
     
     const roleData: Record<string, unknown> = {
       user_id: userId,
       role: payload.role,
+      expires_at: expiresAt, // NULL = permanente, DATE = expira
     };
-    
-    // Adicionar expires_at se calculado
-    if (expiresAt) {
-      roleData.expires_at = expiresAt;
-    } else {
-      // Limpar expires_at se role não requer expiração
-      roleData.expires_at = null;
-    }
     
     const { error: roleUpsertError } = await supabaseAdmin
       .from('user_roles')
