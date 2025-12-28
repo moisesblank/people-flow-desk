@@ -1,7 +1,46 @@
 // ============================================
-// GESTÃO DE ALUNOS — LISTA UNIFICADA v2.0
-// BLOCK 2: Todos alunos (pagos + não pagos) juntos
-// 100/página, ordem alfabética, busca global
+// GESTÃO DE ALUNOS — LISTA UNIFICADA v3.0
+// HARD BINDING CONTRACT ENFORCED
+// ============================================
+// 
+// DATA BINDING ARCHITECTURE:
+// ┌─────────────────────────────────────────────────────────────┐
+// │                    SINGLE SOURCE OF TRUTH                   │
+// │                     (alunos table + user_roles)             │
+// └───────────────────────────┬─────────────────────────────────┘
+//                             │
+//                             ▼
+// ┌─────────────────────────────────────────────────────────────┐
+// │                     allStudents (Query)                     │
+// │     TODOS os alunos carregados uma única vez                │
+// └───────────────────────────┬─────────────────────────────────┘
+//                             │
+//               ┌─────────────┴─────────────┐
+//               ▼                           ▼
+// ┌─────────────────────────┐   ┌───────────────────────────────┐
+// │    universeCounters     │   │      students (filtered)      │
+// │   Contadores por área   │   │   Lista filtrada por universo │
+// │   (derivado)            │   │   + busca (derivado)          │
+// └─────────────────────────┘   └───────────────────────────────┘
+//               │                           │
+//               ▼                           ▼
+// ┌─────────────────────────┐   ┌───────────────────────────────┐
+// │   4 UNIVERSE CARDS      │   │     SEARCH TABLE VIEW         │
+// │   (exibem contadores)   │   │   (exibe students filtrados)  │
+// └─────────────────────────┘   └───────────────────────────────┘
+//
+// BINDING RULES (IMMUTABLE):
+// 1. students = filter(allStudents, universeFilter)
+// 2. universeCounters = count(allStudents, each universe)
+// 3. totalCount = students.length (not raw query count)
+// 4. Table ALWAYS shows students (never raw query)
+// 5. Cards ALWAYS show universeCounters (never cached)
+// 6. ANY change in allStudents → IMMEDIATE propagation
+//
+// FORBIDDEN:
+// - Independent state for search view
+// - Cached counters not derived from allStudents
+// - Parallel queries for different views
 // ============================================
 
 import { useState, useEffect, useCallback, useMemo } from "react";
@@ -306,26 +345,6 @@ export default function Alunos() {
     };
   }, [queryClient]);
 
-  // ============================================
-  // PAGINATION
-  // ============================================
-  const totalCount = alunosQuery.data?.count || 0;
-  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
-  const hasNextPage = page < totalPages;
-  const hasPrevPage = page > 1;
-
-  const goToPage = useCallback((newPage: number) => {
-    setPage(Math.max(1, Math.min(newPage, totalPages)));
-  }, [totalPages]);
-
-  const nextPage = useCallback(() => {
-    if (hasNextPage) setPage(p => p + 1);
-  }, [hasNextPage]);
-
-  const prevPage = useCallback(() => {
-    if (hasPrevPage) setPage(p => p - 1);
-  }, [hasPrevPage]);
-
   const refetch = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ['alunos-unified'] });
     queryClient.invalidateQueries({ queryKey: ['alunos-contadores-unified'] });
@@ -419,15 +438,46 @@ export default function Alunos() {
   const allStudents = alunosQuery.data?.data || [];
   
   // Aplicar filtro de universo (client-side para evitar requery)
+  // HARD BINDING: students SEMPRE deriva de allStudents + universeFilter
   const students = useMemo(() => {
     if (universeFilter === 'all') return allStudents;
     return allStudents.filter(s => matchesUniverseFilter(s, universeFilter));
   }, [allStudents, universeFilter]);
   
+  // Contadores por universo — HARD BINDING: derivados de allStudents
+  const universeCounters = useMemo(() => ({
+    presencial: allStudents.filter(s => matchesUniverseFilter(s, 'presencial')).length,
+    presencial_online: allStudents.filter(s => matchesUniverseFilter(s, 'presencial_online')).length,
+    online: allStudents.filter(s => matchesUniverseFilter(s, 'online')).length,
+    registrados: allStudents.filter(s => matchesUniverseFilter(s, 'registrados')).length,
+  }), [allStudents]);
+  
   const contadores = contadoresQuery.data || {
     total: 0, ativos: 0, concluidos: 0, pendentes: 0, cancelados: 0, beta: 0, gratuito: 0,
   };
   const isLoading = alunosQuery.isLoading;
+
+  // ============================================
+  // PAGINATION — HARD BINDING TO FILTERED STUDENTS
+  // ============================================
+  // totalCount MUST equal students.length (filtered view)
+  // This ensures search area is DERIVED from universe filter
+  const totalCount = students.length;
+  const totalPages = Math.max(1, Math.ceil(totalCount / PAGE_SIZE));
+  const hasNextPage = page < totalPages;
+  const hasPrevPage = page > 1;
+
+  const goToPage = useCallback((newPage: number) => {
+    setPage(Math.max(1, Math.min(newPage, totalPages)));
+  }, [totalPages]);
+
+  const nextPage = useCallback(() => {
+    if (hasNextPage) setPage(p => p + 1);
+  }, [hasNextPage]);
+
+  const prevPage = useCallback(() => {
+    if (hasPrevPage) setPage(p => p - 1);
+  }, [hasPrevPage]);
   
   // Handler para selecionar universo
   const handleUniverseSelect = (id: UniverseFilterType) => {
@@ -501,11 +551,13 @@ export default function Alunos() {
             </FuturisticCard>
           </div>
 
-          {/* Universe Cards — Filtros de área */}
+          {/* Universe Cards — Filtros de área (HARD BINDING com contadores derivados) */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {UNIVERSE_OPTIONS.map((option, index) => {
               const Icon = option.icon;
               const isActive = universeFilter === option.id;
+              // HARD BINDING: contador deriva de universeCounters
+              const count = universeCounters[option.id as keyof typeof universeCounters] || 0;
               
               return (
                 <motion.div
@@ -541,10 +593,24 @@ export default function Alunos() {
                       </div>
                       
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                          {option.label}
-                        </h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                        <div className="flex items-center justify-between">
+                          <h3 className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+                            {option.label}
+                          </h3>
+                          {/* Contador derivado = HARD BINDING */}
+                          <Badge variant="secondary" className={`ml-2 text-xs ${
+                            option.accentColor === 'blue' ? 'bg-blue-500/20 text-blue-400' : ''
+                          } ${
+                            option.accentColor === 'purple' ? 'bg-purple-500/20 text-purple-400' : ''
+                          } ${
+                            option.accentColor === 'cyan' ? 'bg-cyan-500/20 text-cyan-400' : ''
+                          } ${
+                            option.accentColor === 'green' ? 'bg-emerald-500/20 text-emerald-400' : ''
+                          }`}>
+                            {count}
+                          </Badge>
+                        </div>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5">
                           {option.description}
                         </p>
                       </div>
