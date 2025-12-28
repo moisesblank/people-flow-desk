@@ -105,10 +105,10 @@ export function useAlunosPaginados(
     orderDirection = 'asc',
   } = options;
 
-  // ⚡ PARTE 6: Determinar role esperada baseada no universo
-  // D = aluno_gratuito, A/B/C = beta
-  const roleFromUniverso = universoFiltro === 'D' ? 'aluno_gratuito' : universoFiltro ? 'beta' : null;
-  const effectiveRoleFilter = roleFilter || roleFromUniverso;
+  // ⚡ PARTE 6 FIX: Role é informativo, NÃO filtro obrigatório
+  // Alunos cadastrados devem aparecer mesmo sem role associada
+  // Filtro por role só se explicitamente solicitado via roleFilter
+  const effectiveRoleFilter = roleFilter || null;
 
   const queryClient = useQueryClient();
   const [page, setPage] = useState(1);
@@ -183,17 +183,17 @@ export function useAlunosPaginados(
         query = query.or(`nome.ilike.%${searchTerm}%,email.ilike.%${searchTerm}%`);
       }
 
-      // ⚡ PARTE 6: Filtro por fonte/modalidade baseado no universo
-      // A = presencial, B = presencial+online (sem filtro extra), C = online
-      // Nota: fonte='Hotmart' é o único valor atual, mas estrutura preparada
+      // ⚡ PARTE 6 FIX: Filtro por fonte/modalidade baseado no universo
+      // A = presencial (fonte contém 'presencial')
+      // B = presencial+online (sem filtro por fonte - mostra todos)
+      // C = online (fonte NÃO contém 'presencial' - inclui Hotmart, Acesso Oficial, etc)
+      // D = registrados (sem filtro por fonte - mostra todos)
+      // NOTA: Atualmente fonte tem valores 'Hotmart' e 'Acesso Oficial (Gestão)'
       if (universoFiltro === 'A') {
-        // Presencial - fonte contém 'presencial' (quando disponível)
+        // Presencial - fonte contém 'presencial'
         query = query.ilike('fonte', '%presencial%');
-      } else if (universoFiltro === 'C') {
-        // Online - fonte não contém 'presencial'
-        query = query.or('fonte.is.null,fonte.neq.presencial');
       }
-      // B e D não filtram por fonte, apenas por role
+      // Universos B, C, D não filtram por fonte - mostram todos os alunos
 
       // Ordenação e paginação
       query = query
@@ -239,12 +239,9 @@ export function useAlunosPaginados(
         role: roleMap[(a.email || '').toLowerCase()] || null,
       }));
 
-      // ⚡ PARTE 6: Filtrar por role baseado no universo (server-side via roleMap)
-      const filteredAlunos = effectiveRoleFilter
-        ? alunos.filter(a => a.role === effectiveRoleFilter)
-        : alunos;
-
-      return { data: filteredAlunos, count: count || 0 };
+      // ⚡ FIX: Retornar TODOS os alunos, role é informativo
+      // Não filtrar por role aqui - a listagem deve mostrar todos os alunos cadastrados
+      return { data: alunos, count: count || 0 };
     },
     staleTime: STALE_TIME,
   });
