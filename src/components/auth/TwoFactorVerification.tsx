@@ -47,7 +47,11 @@ export function TwoFactorVerification({
   // Estado de seleção de canal
   const [selectedChannel, setSelectedChannel] = useState<Channel | null>(null);
   const [showChannelSelection, setShowChannelSelection] = useState(true);
-  
+
+  // 📌 Telefone efetivo (prop -> fallback no perfil)
+  const [profilePhone, setProfilePhone] = useState<string | null>(null);
+  const effectivePhone = (userPhone || profilePhone || "").replace(/\D/g, "");
+
   // Estado do código
   const [code, setCode] = useState(["", "", "", "", "", ""]);
   const [isLoading, setIsLoading] = useState(false);
@@ -60,8 +64,30 @@ export function TwoFactorVerification({
   const [currentChannel, setCurrentChannel] = useState<Channel>("email");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
+  // Buscar telefone do perfil caso não venha do login (libera SMS/WhatsApp)
+  useEffect(() => {
+    if (userPhone) return;
+    let cancelled = false;
+
+    (async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("phone")
+        .eq("id", userId)
+        .maybeSingle();
+
+      if (!cancelled && !error) {
+        setProfilePhone(data?.phone || null);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, userPhone]);
+
   // Verificar se tem WhatsApp disponível
-  const hasWhatsApp = Boolean(userPhone && userPhone.length >= 10);
+  const hasWhatsApp = Boolean(effectivePhone && effectivePhone.length >= 10);
 
   // Countdown para reenvio
   useEffect(() => {
