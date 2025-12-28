@@ -35,20 +35,8 @@ export function AlunoPerfilDesempenho({ userId, alunoId }: AlunoDesempenhoProps)
   });
 
   // Buscar métricas de performance
-  const { data: performanceMetrics } = useQuery({
-    queryKey: ['aluno-performance-metrics', userId],
-    queryFn: async () => {
-      if (!userId) return null;
-      const { data } = await supabase
-        .from('performance_metrics')
-        .select('*')
-        .eq('user_id', userId)
-        .order('recorded_at', { ascending: false })
-        .limit(30);
-      return data || [];
-    },
-    enabled: !!userId
-  });
+  // Placeholder for performance metrics
+  const performanceMetrics: any[] = [];
 
   // Calcular estatísticas
   const totalAttempts = attempts?.length || 0;
