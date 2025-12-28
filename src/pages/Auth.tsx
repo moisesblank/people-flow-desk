@@ -150,6 +150,16 @@ export default function Auth() {
   // ✅ P0 FIX: Log apenas uma vez na montagem (não no corpo do componente!)
   useEffect(() => {
     console.log('[AUTH] 1. Componente montado (/auth)');
+    
+    // 🎯 P0 FIX: Detectar ?reset=true para mostrar formulário de nova senha
+    const urlParams = new URLSearchParams(window.location.search);
+    const isReset = urlParams.get('reset') === 'true' || urlParams.get('type') === 'recovery';
+    
+    if (isReset) {
+      console.log('[AUTH] 🔐 Modo RESET PASSWORD detectado via URL');
+      setIsUpdatePassword(true);
+      setIsCheckingSession(false);
+    }
   }, []);
 
   // =====================================================
@@ -191,13 +201,18 @@ export default function Auth() {
   
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isUpdatePassword, setIsUpdatePassword] = useState(false); // 🎯 P0 FIX: Estado para definir nova senha
   const [isLoading, setIsLoading] = useState(false);
   const [isCheckingSession, setIsCheckingSession] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // 🎯 P0 FIX
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [focusedField, setFocusedField] = useState<string | null>(null);
   const [resetEmailSent, setResetEmailSent] = useState(false);
+  const [newPassword, setNewPassword] = useState(""); // 🎯 P0 FIX
+  const [confirmPassword, setConfirmPassword] = useState(""); // 🎯 P0 FIX
+  const [passwordUpdated, setPasswordUpdated] = useState(false); // 🎯 P0 FIX
   
   // Estado para 2FA
   const [show2FA, setShow2FA] = useState(false);
@@ -395,6 +410,64 @@ export default function Auth() {
       toast.success("Email de recuperação enviado!");
     } catch {
       toast.error("Erro ao enviar email de recuperação");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // 🎯 P0 FIX: Handler para DEFINIR NOVA SENHA (após clicar no link do email)
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrors({});
+    setIsLoading(true);
+
+    try {
+      // Validações
+      if (!newPassword || newPassword.length < 8) {
+        setErrors({ password: "Senha deve ter no mínimo 8 caracteres" });
+        setIsLoading(false);
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        setErrors({ confirmPassword: "As senhas não coincidem" });
+        setIsLoading(false);
+        return;
+      }
+
+      // Validar força da senha (mesma policy do backend)
+      const hasLower = /[a-z]/.test(newPassword);
+      const hasUpper = /[A-Z]/.test(newPassword);
+      const hasNumber = /\d/.test(newPassword);
+      const hasSpecial = /[!@#$%^&*()_+\-=[\]{};':"\\|<>?,./`~]/.test(newPassword);
+
+      if (!hasLower || !hasUpper || !hasNumber || !hasSpecial) {
+        setErrors({ password: "Senha deve conter: minúscula, maiúscula, número e caractere especial" });
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('[AUTH] 🔐 Atualizando senha via supabase.auth.updateUser...');
+
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
+
+      if (error) {
+        console.error('[AUTH] Erro ao atualizar senha:', error);
+        toast.error(error.message || "Erro ao atualizar senha");
+        setIsLoading(false);
+        return;
+      }
+
+      console.log('[AUTH] ✅ Senha atualizada com sucesso!');
+      setPasswordUpdated(true);
+      toast.success("Senha atualizada com sucesso!");
+
+      // Limpar URL params
+      window.history.replaceState({}, document.title, '/auth');
+
+    } catch (err: any) {
+      console.error('[AUTH] Erro inesperado:', err);
+      toast.error("Erro ao atualizar senha. Tente novamente.");
     } finally {
       setIsLoading(false);
     }
@@ -1065,8 +1138,113 @@ export default function Auth() {
               </div>
             )}
             
-            {/* Forgot Password Mode */}
-            {isForgotPassword ? (
+            {/* 🎯 P0 FIX: Modo DEFINIR NOVA SENHA (após clicar no link do email) */}
+            {isUpdatePassword ? (
+              <div className="space-y-4">
+                {passwordUpdated ? (
+                  <div className="text-center py-8 animate-scale-in">
+                    <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-green-500/20 flex items-center justify-center">
+                      <Lock className="h-8 w-8 text-green-500" />
+                    </div>
+                    <h3 className="text-lg font-semibold text-white mb-2">Senha Atualizada!</h3>
+                    <p className="text-sm text-gray-400 mb-6">
+                      Sua senha foi redefinida com sucesso. Agora você pode fazer login.
+                    </p>
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        setIsUpdatePassword(false);
+                        setPasswordUpdated(false);
+                        setNewPassword("");
+                        setConfirmPassword("");
+                      }}
+                      className="bg-gradient-to-r from-primary to-[#7D1128] text-white"
+                    >
+                      Fazer Login
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleUpdatePassword} className="space-y-4">
+                    <div className="text-center mb-4">
+                      <h3 className="text-lg font-semibold text-white mb-1">Definir Nova Senha</h3>
+                      <p className="text-sm text-gray-400">
+                        Digite sua nova senha de acesso
+                      </p>
+                    </div>
+                    
+                    <div>
+                      <Label htmlFor="new-password" className="text-sm font-medium text-gray-300">
+                        Nova Senha
+                      </Label>
+                      <div className="relative mt-1.5">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <Input
+                          id="new-password"
+                          type={showPassword ? "text" : "password"}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          placeholder="Mínimo 8 caracteres"
+                          className="pl-11 pr-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      {errors.password && (
+                        <p className="text-xs text-red-400 mt-1">{errors.password}</p>
+                      )}
+                    </div>
+
+                    <div>
+                      <Label htmlFor="confirm-password" className="text-sm font-medium text-gray-300">
+                        Confirmar Senha
+                      </Label>
+                      <div className="relative mt-1.5">
+                        <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+                        <Input
+                          id="confirm-password"
+                          type={showConfirmPassword ? "text" : "password"}
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          placeholder="Repita a senha"
+                          className="pl-11 pr-11 h-12 rounded-xl bg-white/5 border-white/10 text-white placeholder:text-gray-500 focus:border-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-500 hover:text-white"
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                      {errors.confirmPassword && (
+                        <p className="text-xs text-red-400 mt-1">{errors.confirmPassword}</p>
+                      )}
+                    </div>
+
+                    <p className="text-xs text-gray-500">
+                      A senha deve conter: letra minúscula, maiúscula, número e caractere especial
+                    </p>
+                    
+                    <Button
+                      type="submit"
+                      disabled={isLoading}
+                      className="w-full h-12 rounded-xl bg-gradient-to-r from-primary via-[#B22222] to-primary text-white font-semibold shadow-xl shadow-primary/30"
+                    >
+                      {isLoading ? (
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                      ) : (
+                        "Salvar Nova Senha"
+                      )}
+                    </Button>
+                  </form>
+                )}
+              </div>
+            ) : isForgotPassword ? (
               <div className="space-y-4">
                 {resetEmailSent ? (
                   <div className="text-center py-8 animate-scale-in">
