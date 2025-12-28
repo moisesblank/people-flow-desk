@@ -2,6 +2,7 @@
 // 🔐 2FA DECISION ENGINE — SYNAPSE Ω v10.x
 // Decisão DETERMINÍSTICA de quando solicitar 2FA
 // Anti-compartilhamento + Redução de atrito legítimo
+// OTIMIZADO: Cache local para reduzir latência
 // ============================================
 
 import { supabase } from '@/integrations/supabase/client';
@@ -50,6 +51,102 @@ export interface TwoFADecisionOptions {
 
 const TRUST_WINDOW_HOURS = 24; // 24 horas por dispositivo
 const HIGH_RISK_THRESHOLD = 60; // risk_score >= 60 = alto risco
+const TRUST_CACHE_KEY = 'mfa_trust_cache';
+
+// ============================================
+// CACHE LOCAL — OTIMIZAÇÃO DE LATÊNCIA
+// ============================================
+
+interface TrustCacheEntry {
+  userId: string;
+  deviceHash: string;
+  verifiedAt: number; // timestamp em ms
+  everVerified: boolean; // indica se já passou por 2FA alguma vez
+}
+
+/**
+ * Obtém cache de confiança do localStorage
+ */
+function getTrustCache(): TrustCacheEntry | null {
+  try {
+    const cached = localStorage.getItem(TRUST_CACHE_KEY);
+    if (!cached) return null;
+    return JSON.parse(cached) as TrustCacheEntry;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Salva cache de confiança no localStorage
+ */
+export function setTrustCache(userId: string, deviceHash: string): void {
+  try {
+    const entry: TrustCacheEntry = {
+      userId,
+      deviceHash,
+      verifiedAt: Date.now(),
+      everVerified: true,
+    };
+    localStorage.setItem(TRUST_CACHE_KEY, JSON.stringify(entry));
+    console.log('[2FA-CACHE] ✅ Trust cache salvo:', { userId, deviceHash });
+  } catch (err) {
+    console.warn('[2FA-CACHE] Erro ao salvar cache:', err);
+  }
+}
+
+/**
+ * Invalida cache de confiança (para reset de senha, novo dispositivo, etc)
+ */
+export function invalidateTrustCache(): void {
+  try {
+    localStorage.removeItem(TRUST_CACHE_KEY);
+    console.log('[2FA-CACHE] 🗑️ Trust cache invalidado');
+  } catch {
+    // Silencioso
+  }
+}
+
+/**
+ * Verifica se o cache é válido para este usuário/dispositivo
+ * Retorna: { isTrusted: boolean, everVerified: boolean }
+ */
+function checkTrustCache(userId: string, deviceHash: string): { 
+  isTrusted: boolean; 
+  everVerified: boolean;
+  hoursSinceVerification: number;
+} {
+  const cache = getTrustCache();
+  
+  if (!cache) {
+    return { isTrusted: false, everVerified: false, hoursSinceVerification: Infinity };
+  }
+  
+  // Usuário ou dispositivo diferente = cache inválido
+  if (cache.userId !== userId || cache.deviceHash !== deviceHash) {
+    console.log('[2FA-CACHE] Cache inválido - usuário/dispositivo diferente');
+    return { isTrusted: false, everVerified: false, hoursSinceVerification: Infinity };
+  }
+  
+  // Calcular horas desde verificação
+  const now = Date.now();
+  const hoursSinceVerification = (now - cache.verifiedAt) / (1000 * 60 * 60);
+  
+  // Dentro da janela de 24h?
+  const isTrusted = hoursSinceVerification <= TRUST_WINDOW_HOURS;
+  
+  console.log('[2FA-CACHE] Cache encontrado:', {
+    hoursSinceVerification: hoursSinceVerification.toFixed(2),
+    isTrusted,
+    everVerified: cache.everVerified,
+  });
+  
+  return { 
+    isTrusted, 
+    everVerified: cache.everVerified,
+    hoursSinceVerification,
+  };
+}
 
 // ============================================
 // FUNÇÃO PRINCIPAL: decide2FA
@@ -69,12 +166,21 @@ const HIGH_RISK_THRESHOLD = 60; // risk_score >= 60 = alto risco
  * TRUST WINDOW:
  * - Duração: 24 horas por dispositivo
  * - Reset em: new_device, country_change, high_risk, password_reset
+ * 
+ * OTIMIZAÇÃO:
+ * - Cache local para evitar queries redundantes
+ * - Fallback para banco se cache inválido
  */
 export async function decide2FA(options: TwoFADecisionOptions): Promise<TwoFADecisionResult> {
   const { userId, email, deviceHash, deviceSignals, isPasswordReset = false } = options;
 
   console.log('[2FA-DECISION] Iniciando decisão para:', { userId, email, deviceHash });
   console.log('[2FA-DECISION] Sinais recebidos:', deviceSignals);
+
+  // ============================================
+  // FAST PATH: Verificar cache local primeiro
+  // ============================================
+  const cacheResult = checkTrustCache(userId, deviceHash);
 
   // Inicializar sinais
   const signals = {
@@ -87,69 +193,102 @@ export async function decide2FA(options: TwoFADecisionOptions): Promise<TwoFADec
   };
 
   // ============================================
-  // REGRA 1: Primeiro login (nunca teve 2FA verificado)
+  // INVALIDADORES IMEDIATOS (bypass do cache)
   // ============================================
-  try {
-    const { data: anySession, error: sessionError } = await supabase
-      .from('active_sessions')
-      .select('id')
-      .eq('user_id', userId)
-      .eq('mfa_verified', true)
-      .limit(1)
-      .maybeSingle();
+  const hasImmediateInvalidator = 
+    signals.passwordReset || 
+    signals.isNewDevice || 
+    signals.countryChanged || 
+    signals.highRisk;
 
-    if (sessionError) {
-      console.warn('[2FA-DECISION] Erro ao verificar first_login:', sessionError);
+  if (hasImmediateInvalidator) {
+    // Invalidar cache por segurança
+    invalidateTrustCache();
+    console.log('[2FA-DECISION] Invalidador imediato detectado, cache limpo');
+  }
+
+  // ============================================
+  // REGRA 1: Primeiro login (nunca teve 2FA verificado)
+  // OTIMIZAÇÃO: Usar cache se disponível
+  // ============================================
+  if (cacheResult.everVerified) {
+    // Cache indica que já passou por 2FA antes = não é primeiro login
+    signals.firstLogin = false;
+    console.log('[2FA-DECISION] First login (via cache): false');
+  } else {
+    // Sem cache ou cache não confirma = verificar no banco
+    try {
+      const { data: anySession, error: sessionError } = await supabase
+        .from('active_sessions')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('mfa_verified', true)
+        .limit(1)
+        .maybeSingle();
+
+      if (sessionError) {
+        console.warn('[2FA-DECISION] Erro ao verificar first_login:', sessionError);
+      }
+
+      // Se nunca teve sessão com 2FA verificado = primeiro login
+      signals.firstLogin = !anySession;
+      console.log('[2FA-DECISION] First login (via banco):', signals.firstLogin);
+    } catch (err) {
+      console.error('[2FA-DECISION] Erro ao verificar first_login:', err);
+      // Em caso de erro, assumir que é primeiro login (segurança)
+      signals.firstLogin = true;
     }
-
-    // Se nunca teve sessão com 2FA verificado = primeiro login
-    signals.firstLogin = !anySession;
-    console.log('[2FA-DECISION] First login:', signals.firstLogin);
-  } catch (err) {
-    console.error('[2FA-DECISION] Erro ao verificar first_login:', err);
-    // Em caso de erro, assumir que é primeiro login (segurança)
-    signals.firstLogin = true;
   }
 
   // ============================================
   // REGRA 6: Trust window expirada (last_2fa_at > 24h)
-  // Verificar última verificação 2FA para este dispositivo específico
+  // OTIMIZAÇÃO: Usar cache se disponível
   // ============================================
-  if (!signals.firstLogin && !signals.passwordReset && !signals.isNewDevice && 
-      !signals.countryChanged && !signals.highRisk) {
-    try {
-      const { data: lastSession, error: lastError } = await supabase
-        .from('active_sessions')
-        .select('last_activity_at, mfa_verified')
-        .eq('user_id', userId)
-        .eq('device_hash', deviceHash)
-        .eq('mfa_verified', true)
-        .eq('status', 'active')
-        .order('last_activity_at', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-
-      if (lastError) {
-        console.warn('[2FA-DECISION] Erro ao verificar trust window:', lastError);
-      }
-
-      if (lastSession?.last_activity_at) {
-        const lastVerified = new Date(lastSession.last_activity_at);
-        const now = new Date();
-        const hoursSinceVerification = (now.getTime() - lastVerified.getTime()) / (1000 * 60 * 60);
-        
-        signals.trustWindowExpired = hoursSinceVerification > TRUST_WINDOW_HOURS;
-        console.log('[2FA-DECISION] Horas desde última verificação:', hoursSinceVerification.toFixed(2));
-        console.log('[2FA-DECISION] Trust window expirada:', signals.trustWindowExpired);
-      } else {
-        // Sem sessão prévia para este dispositivo = trust window "expirada"
-        signals.trustWindowExpired = true;
-        console.log('[2FA-DECISION] Sem sessão prévia para este dispositivo');
-      }
-    } catch (err) {
-      console.error('[2FA-DECISION] Erro ao verificar trust window:', err);
-      // Em caso de erro, considerar expirada (segurança)
+  if (!signals.firstLogin && !hasImmediateInvalidator) {
+    // FAST PATH: Cache válido dentro da janela
+    if (cacheResult.isTrusted) {
+      signals.trustWindowExpired = false;
+      console.log('[2FA-DECISION] Trust window OK (via cache)');
+    } else if (cacheResult.everVerified && cacheResult.hoursSinceVerification > TRUST_WINDOW_HOURS) {
+      // Cache existe mas expirou
       signals.trustWindowExpired = true;
+      console.log('[2FA-DECISION] Trust window expirada (via cache):', cacheResult.hoursSinceVerification.toFixed(2), 'horas');
+    } else {
+      // Sem cache confiável = verificar no banco
+      try {
+        const { data: lastSession, error: lastError } = await supabase
+          .from('active_sessions')
+          .select('last_activity_at, mfa_verified')
+          .eq('user_id', userId)
+          .eq('device_hash', deviceHash)
+          .eq('mfa_verified', true)
+          .eq('status', 'active')
+          .order('last_activity_at', { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (lastError) {
+          console.warn('[2FA-DECISION] Erro ao verificar trust window:', lastError);
+        }
+
+        if (lastSession?.last_activity_at) {
+          const lastVerified = new Date(lastSession.last_activity_at);
+          const now = new Date();
+          const hoursSinceVerification = (now.getTime() - lastVerified.getTime()) / (1000 * 60 * 60);
+          
+          signals.trustWindowExpired = hoursSinceVerification > TRUST_WINDOW_HOURS;
+          console.log('[2FA-DECISION] Horas desde última verificação (via banco):', hoursSinceVerification.toFixed(2));
+          console.log('[2FA-DECISION] Trust window expirada:', signals.trustWindowExpired);
+        } else {
+          // Sem sessão prévia para este dispositivo = trust window "expirada"
+          signals.trustWindowExpired = true;
+          console.log('[2FA-DECISION] Sem sessão prévia para este dispositivo');
+        }
+      } catch (err) {
+        console.error('[2FA-DECISION] Erro ao verificar trust window:', err);
+        // Em caso de erro, considerar expirada (segurança)
+        signals.trustWindowExpired = true;
+      }
     }
   }
 
@@ -200,6 +339,8 @@ export async function decide2FA(options: TwoFADecisionOptions): Promise<TwoFADec
 export function use2FADecision() {
   return {
     decide2FA,
+    setTrustCache,
+    invalidateTrustCache,
     TRUST_WINDOW_HOURS,
     HIGH_RISK_THRESHOLD,
   };

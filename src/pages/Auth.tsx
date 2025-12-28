@@ -31,8 +31,8 @@ import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
-// 2FA Decision Engine (SYNAPSE Ω v10.x)
-import { useDeviceFingerprint, decide2FA } from "@/hooks/auth";
+// 2FA Decision Engine (SYNAPSE Ω v10.x) com cache de confiança
+import { useDeviceFingerprint, decide2FA, setTrustCache } from "@/hooks/auth";
 import { simpleLoginSchema, simpleSignupSchema } from "@/lib/validations/schemas";
 import professorPhoto from "@/assets/professor-moises-novo.jpg";
 import logoMoises from "@/assets/logo-moises-medeiros.png";
@@ -201,7 +201,7 @@ export default function Auth() {
   
   // Estado para 2FA
   const [show2FA, setShow2FA] = useState(false);
-  const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string; phone?: string } | null>(null);
+  const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string; phone?: string; deviceHash?: string } | null>(null);
   
   // Estado para Cloudflare Turnstile (Anti-Bot)
   const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
@@ -612,6 +612,7 @@ export default function Auth() {
               userId: userFor2FA.id,
               nome: (userFor2FA.user_metadata as any)?.nome,
               phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
+              deviceHash, // ✅ Incluir deviceHash para cache após 2FA
             })
           );
 
@@ -620,6 +621,7 @@ export default function Auth() {
             userId: userFor2FA.id,
             nome: (userFor2FA.user_metadata as any)?.nome,
             phone: (userFor2FA.user_metadata as any)?.phone || (userFor2FA.user_metadata as any)?.telefone,
+            deviceHash, // ✅ Incluir deviceHash para cache após 2FA
           });
           setShow2FA(true);
           
@@ -743,6 +745,12 @@ export default function Auth() {
             userName={pending2FAUser.nome}
             userPhone={pending2FAUser.phone}
             onVerified={() => {
+              // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
+              if (pending2FAUser.deviceHash) {
+                setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
+                console.log('[AUTH] ✅ Trust cache salvo para próximos logins');
+              }
+              
               toast.success("Bem-vindo de volta!");
               // /auth NÃO redireciona. AuthProvider fará o redirect quando a sessão estiver READY.
               sessionStorage.removeItem("matriz_2fa_pending");
