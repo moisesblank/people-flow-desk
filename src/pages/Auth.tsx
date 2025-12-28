@@ -744,17 +744,45 @@ export default function Auth() {
             userId={pending2FAUser.userId}
             userName={pending2FAUser.nome}
             userPhone={pending2FAUser.phone}
-            onVerified={() => {
+            onVerified={async () => {
+              console.log('[AUTH] ✅ 2FA verificado com sucesso, iniciando redirect...');
+              
               // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
               if (pending2FAUser.deviceHash) {
                 setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
                 console.log('[AUTH] ✅ Trust cache salvo para próximos logins');
               }
               
-              toast.success("Bem-vindo de volta!");
-              // /auth NÃO redireciona. AuthProvider fará o redirect quando a sessão estiver READY.
+              // ✅ P0 FIX: Limpar flags ANTES de qualquer redirect
               sessionStorage.removeItem("matriz_2fa_pending");
               sessionStorage.removeItem("matriz_2fa_user");
+              
+              // ✅ P0 FIX CRÍTICO: Buscar role e fazer redirect EXPLÍCITO
+              // Não confiar no AuthProvider pois pode causar race condition
+              try {
+                const { data: roleData } = await supabase
+                  .from("user_roles")
+                  .select("role")
+                  .eq("user_id", pending2FAUser.userId)
+                  .maybeSingle();
+                
+                const userRole = roleData?.role || null;
+                const target = getPostLoginRedirect(userRole, pending2FAUser.email);
+                
+                console.log('[AUTH] ✅ 2FA completo - redirecionando para', target, '(role:', userRole, ')');
+                toast.success("Bem-vindo de volta!");
+                
+                // ✅ USAR window.location.replace para garantir que não há race condition
+                // navigate() pode não funcionar se o React ainda está processando estados
+                window.location.replace(target);
+              } catch (err) {
+                console.error('[AUTH] Erro ao buscar role pós-2FA:', err);
+                // Fallback seguro
+                toast.success("Bem-vindo de volta!");
+                window.location.replace('/gestaofc');
+              }
+              
+              // Limpar estados locais (pode não executar devido ao redirect acima)
               setShow2FA(false);
               setPending2FAUser(null);
             }}
