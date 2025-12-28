@@ -2,8 +2,11 @@
 // MOISÉS MEDEIROS v7.0 - ENTRADAS
 // Spider-Man Theme - Receitas e Impostos
 // ============================================
+// 
+// REFATORADO: Usando useAsyncData para padrão de loading
+// ============================================
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { motion } from "framer-motion";
 import { Plus, TrendingUp, Sparkles, Trash2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -15,6 +18,7 @@ import { StatCard } from "@/components/employees/StatCard";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { useAsyncData } from "@/hooks/useAsyncData";
 
 interface Income {
   id: number;
@@ -37,16 +41,18 @@ const BANCOS = ["Bradesco", "Stone", "Nubank", "Outros"];
 
 export default function Entradas() {
   const { user } = useAuth();
-  const [incomes, setIncomes] = useState<Income[]>([]);
-  const [taxes, setTaxes] = useState<Tax[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalType, setModalType] = useState<"income" | "tax">("income");
   const [editingItem, setEditingItem] = useState<Income | Tax | null>(null);
   const [formData, setFormData] = useState({ nome: "", fonte: "", banco: "", valor: "", categoria: "" });
 
-  const fetchData = async () => {
-    try {
+  // ✅ REFATORADO: Usando useAsyncData em vez de isLoading + fetchData manual
+  const { 
+    data: fetchedData, 
+    isLoading, 
+    refetch: fetchData 
+  } = useAsyncData({
+    fetcher: async () => {
       const [incomeRes, taxRes] = await Promise.all([
         supabase.from("income").select("id, fonte, banco, valor, created_at").order("created_at", { ascending: false }).limit(500),
         supabase.from("taxes").select("id, nome, categoria, valor").order("nome").limit(100),
@@ -55,30 +61,27 @@ export default function Entradas() {
       if (incomeRes.error) throw incomeRes.error;
       if (taxRes.error) throw taxRes.error;
 
-      setIncomes(incomeRes.data?.map(e => ({
-        id: e.id,
-        fonte: e.fonte,
-        banco: e.banco || "",
-        valor: e.valor,
-      })) || []);
+      return {
+        incomes: incomeRes.data?.map(e => ({
+          id: e.id,
+          fonte: e.fonte,
+          banco: e.banco || "",
+          valor: e.valor,
+        })) || [],
+        taxes: taxRes.data?.map(e => ({
+          id: e.id,
+          nome: e.nome,
+          valor: e.valor,
+          categoria: e.categoria || "",
+        })) || []
+      };
+    },
+    errorMessage: "Erro ao carregar dados",
+    initialData: { incomes: [], taxes: [] }
+  });
 
-      setTaxes(taxRes.data?.map(e => ({
-        id: e.id,
-        nome: e.nome,
-        valor: e.valor,
-        categoria: e.categoria || "",
-      })) || []);
-    } catch (error) {
-      console.error("Error fetching data:", error);
-      toast.error("Erro ao carregar dados");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchData();
-  }, []);
+  const incomes = fetchedData?.incomes || [];
+  const taxes = fetchedData?.taxes || [];
 
   const stats = useMemo(() => {
     const totalIncome = incomes.reduce((acc, e) => acc + e.valor, 0);

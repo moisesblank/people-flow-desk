@@ -2,8 +2,11 @@
 // 🏛️ LEI III + LEI VI: GERENCIADOR DE DISPOSITIVOS CONFIÁVEIS
 // UI para gerenciar dispositivos e ver trust scores
 // ============================================
+// 
+// REFATORADO: Usando useAsyncData para padrão de loading
+// ============================================
 
-import { useState, useEffect, useCallback, memo } from 'react';
+import { useState, useCallback, memo } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Shield, 
@@ -39,6 +42,7 @@ import {
 } from '@/components/ui/alert-dialog';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
+import { useAsyncData } from '@/hooks/useAsyncData';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { toast } from 'sonner';
@@ -79,17 +83,18 @@ function TrustedDevicesManagerComponent({
   compact = false 
 }: TrustedDevicesManagerProps) {
   const { user } = useAuth();
-  const [devices, setDevices] = useState<TrustedDevice[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
   const [deviceToRemove, setDeviceToRemove] = useState<TrustedDevice | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
 
-  // Buscar dispositivos do usuário
-  const fetchDevices = useCallback(async () => {
-    if (!user?.id) return;
-
-    try {
-      setIsLoading(true);
+  // ✅ REFATORADO: Usando useAsyncData em vez de isLoading + fetchDevices manual
+  const { 
+    data: devices = [], 
+    isLoading, 
+    refetch: fetchDevices 
+  } = useAsyncData({
+    fetcher: async () => {
+      if (!user?.id) return [];
+      
       const { data, error } = await supabase
         .from('device_trust_scores')
         .select('*')
@@ -97,18 +102,13 @@ function TrustedDevicesManagerComponent({
         .order('last_seen_at', { ascending: false });
 
       if (error) throw error;
-      setDevices(data || []);
-    } catch (err) {
-      console.error('[TrustedDevices] Erro ao buscar dispositivos:', err);
-      toast.error('Erro ao carregar dispositivos');
-    } finally {
-      setIsLoading(false);
-    }
-  }, [user?.id]);
-
-  useEffect(() => {
-    fetchDevices();
-  }, [fetchDevices]);
+      return (data || []) as TrustedDevice[];
+    },
+    deps: [user?.id],
+    immediate: !!user?.id,
+    errorMessage: 'Erro ao carregar dispositivos',
+    initialData: []
+  });
 
   // Remover dispositivo
   const handleRemoveDevice = async () => {
@@ -126,8 +126,8 @@ function TrustedDevicesManagerComponent({
 
       if (error) throw error;
 
-      // Atualizar lista local
-      setDevices(prev => prev.filter(d => d.id !== deviceToRemove.id));
+      // Recarregar lista após remoção
+      await fetchDevices();
       toast.success('Dispositivo removido com sucesso');
       setDeviceToRemove(null);
     } catch (err) {
