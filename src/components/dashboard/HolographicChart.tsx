@@ -19,6 +19,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Activity, BarChart3, TrendingUp, Zap } from "lucide-react";
+import { formatCurrency } from "@/utils/format";
 
 interface DataPoint {
   name: string;
@@ -56,11 +57,7 @@ function CustomTooltip({ active, payload, label }: any) {
             style={{ backgroundColor: entry.color }}
           />
           <span className="text-sm font-medium text-foreground">
-            {entry.name}: {new Intl.NumberFormat("pt-BR", {
-              style: "currency",
-              currency: "BRL",
-              minimumFractionDigits: 0,
-            }).format(entry.value / 100)}
+            {entry.name}: {formatCurrency(entry.value)}
           </span>
         </div>
       ))}
@@ -164,11 +161,7 @@ export function HolographicChart({
           <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted/50 border border-border/50">
             <Zap className="h-4 w-4 text-primary" />
             <span className="text-sm font-medium">
-              Total: {new Intl.NumberFormat("pt-BR", {
-                style: "currency",
-                currency: "BRL",
-                minimumFractionDigits: 0,
-              }).format(total / 100)}
+              Total: {formatCurrency(total)}
             </span>
           </div>
           <div className={`flex items-center gap-1 px-3 py-1.5 rounded-lg ${
