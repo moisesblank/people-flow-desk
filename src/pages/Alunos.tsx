@@ -607,23 +607,13 @@ export default function Alunos() {
               { label: "Gratuitos", value: contadores.gratuito, icon: Shield },
             ]}
             action={
-              <div className="flex gap-2">
-                <Button 
-                  onClick={() => setIsCriarAcessoModalOpen(true)}
-                  className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
-                >
-                  <UserPlus className="h-4 w-4 mr-2" />
-                  Criar Acesso Oficial
-                </Button>
-                <Button 
-                  onClick={() => openModal()}
-                  variant="outline"
-                  className="border-blue-500/50 text-blue-400 hover:bg-blue-500/10"
-                >
-                  <Plus className="h-4 w-4 mr-2" />
-                  Novo Aluno
-                </Button>
-              </div>
+              <Button 
+                onClick={() => setIsCriarAcessoModalOpen(true)}
+                className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-400 hover:to-cyan-500 text-white shadow-lg shadow-emerald-500/25"
+              >
+                <UserPlus className="h-4 w-4 mr-2" />
+                Criar Acesso Oficial
+              </Button>
             }
           />
 
