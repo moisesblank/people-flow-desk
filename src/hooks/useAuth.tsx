@@ -521,12 +521,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const signUp = async (email: string, password: string, nome: string) => {
     const redirectUrl = `${window.location.origin}/`;
     
+    // AXIOMA DE IDENTIDADE: 1 EMAIL = 1 PESSOA = 1 LOGIN
+    const normalizedEmail = email.toLowerCase().trim();
+    
     const { error } = await supabase.auth.signUp({
-      email: email.trim(),
+      email: normalizedEmail,
       password,
       options: {
         emailRedirectTo: redirectUrl,
-        data: { nome },
+        data: { nome: nome.trim() },
       },
     });
     return { error };

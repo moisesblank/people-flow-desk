@@ -15361,6 +15361,14 @@ export type Database = {
       decay_video_risk_scores: { Args: never; Returns: number }
       do_cleanup_expired_sessions: { Args: never; Returns: number }
       do_cleanup_rate_limits: { Args: never; Returns: number }
+      email_exists_globally: {
+        Args: {
+          check_email: string
+          exclude_id?: string
+          exclude_table?: string
+        }
+        Returns: boolean
+      }
       end_video_session: {
         Args: {
           p_completion_percentage?: number
@@ -16059,6 +16067,7 @@ export type Database = {
         Args: { p_error: string; p_webhook_id: string }
         Returns: string
       }
+      normalize_email: { Args: { email: string }; Returns: string }
       publish_event: {
         Args: {
           p_entity_id?: string
