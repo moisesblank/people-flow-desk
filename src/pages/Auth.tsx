@@ -47,6 +47,7 @@ const EditableImage = lazy(() => import("@/components/editor/EditableImage").the
 const EditModeToggle = lazy(() => import("@/components/editor/EditModeToggle").then(m => ({ default: m.EditModeToggle })));
 const TwoFactorVerification = lazy(() => import("@/components/auth/TwoFactorVerification").then(m => ({ default: m.TwoFactorVerification })));
 const PasswordStrengthMeter = lazy(() => import("@/components/auth/PasswordStrengthMeter").then(m => ({ default: m.PasswordStrengthMeter })));
+const ForcePasswordChange = lazy(() => import("@/components/auth/ForcePasswordChange").then(m => ({ default: m.ForcePasswordChange })));
 
 // Performance Optimized Cyber Grid - CSS Only
 function CyberGrid() {
@@ -262,6 +263,10 @@ export default function Auth() {
   const [confirmPassword, setConfirmPassword] = useState(""); // 🎯 P0 FIX
   const [passwordUpdated, setPasswordUpdated] = useState(false); // 🎯 P0 FIX
   
+  // 🎯 MAGIC PASSWORD FLOW: Estado para forçar troca de senha no primeiro login
+  const [showForcePasswordChange, setShowForcePasswordChange] = useState(false);
+  const [pendingPasswordChangeUser, setPendingPasswordChangeUser] = useState<{ email: string; userId: string } | null>(null);
+  
   // Estado para 2FA
   const [show2FA, setShow2FA] = useState(false);
   const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string; phone?: string; deviceHash?: string } | null>(null);
@@ -398,11 +403,12 @@ export default function Auth() {
       const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
       if (is2FAPending) return;
 
-      // ✅ P0 FIX CRÍTICO: Buscar role ANTES de decidir redirect
-      // Sem isso, funcionário cai no fallback /comunidade
+      // ✅ P0 FIX CRÍTICO: Buscar role E verificar password_change_required
       let userRole: string | null = null;
+      let needsPasswordChange = false;
       
       try {
+        // Buscar role
         const { data: roleData } = await supabase
           .from("user_roles")
           .select("role")
@@ -411,8 +417,30 @@ export default function Auth() {
         
         userRole = roleData?.role || null;
         console.log('[AUTH] Role carregada do banco:', userRole);
+        
+        // 🎯 MAGIC PASSWORD FLOW: Verificar se precisa trocar senha
+        const { data: profileData } = await supabase
+          .from("profiles")
+          .select("password_change_required")
+          .eq("id", session.user.id)
+          .maybeSingle();
+        
+        needsPasswordChange = profileData?.password_change_required === true;
+        console.log('[AUTH] Password change required:', needsPasswordChange);
       } catch (err) {
-        console.error('[AUTH] Erro ao buscar role:', err);
+        console.error('[AUTH] Erro ao buscar role/profile:', err);
+      }
+
+      // 🎯 MAGIC PASSWORD FLOW: Se precisa trocar senha, mostrar formulário
+      if (needsPasswordChange) {
+        console.log('[AUTH] 🔐 Usuário precisa trocar senha - mostrando formulário');
+        setPendingPasswordChangeUser({
+          email: session.user.email || '',
+          userId: session.user.id,
+        });
+        setShowForcePasswordChange(true);
+        setIsCheckingSession(false);
+        return; // NÃO redirecionar
       }
 
       // ✅ REGRA DEFINITIVA: Usa função centralizada COM role
@@ -978,6 +1006,29 @@ export default function Auth() {
               sessionStorage.removeItem("matriz_2fa_user");
               setShow2FA(false);
               setPending2FAUser(null);
+            }}
+          />
+        </Suspense>
+      </div>
+    );
+  }
+
+  // 🎯 MAGIC PASSWORD FLOW: Mostrar formulário de troca de senha obrigatória
+  if (showForcePasswordChange && pendingPasswordChangeUser) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+        <SpiderWebPattern />
+        <CyberGrid />
+        <GlowingOrbs />
+        <Suspense fallback={<div className="text-white">Carregando...</div>}>
+          <ForcePasswordChange
+            userEmail={pendingPasswordChangeUser.email}
+            userId={pendingPasswordChangeUser.userId}
+            onPasswordChanged={() => {
+              setShowForcePasswordChange(false);
+              setPendingPasswordChangeUser(null);
+              // Redirecionar para área correta após trocar senha
+              window.location.reload();
             }}
           />
         </Suspense>

@@ -7687,7 +7687,10 @@ export type Database = {
           last_login_at: string | null
           learning_style: string | null
           level: number | null
+          magic_password_created_at: string | null
           nome: string
+          password_change_required: boolean | null
+          password_changed_at: string | null
           phone: string | null
           preferences: Json | null
           streak_days: number | null
@@ -7710,7 +7713,10 @@ export type Database = {
           last_login_at?: string | null
           learning_style?: string | null
           level?: number | null
+          magic_password_created_at?: string | null
           nome: string
+          password_change_required?: boolean | null
+          password_changed_at?: string | null
           phone?: string | null
           preferences?: Json | null
           streak_days?: number | null
@@ -7733,7 +7739,10 @@ export type Database = {
           last_login_at?: string | null
           learning_style?: string | null
           level?: number | null
+          magic_password_created_at?: string | null
           nome?: string
+          password_change_required?: boolean | null
+          password_changed_at?: string | null
           phone?: string | null
           preferences?: Json | null
           streak_days?: number | null
@@ -16087,6 +16096,7 @@ export type Database = {
         Args: { p_envio_id: string; p_seen_via?: string }
         Returns: boolean
       }
+      mark_password_changed: { Args: { _user_id: string }; Returns: undefined }
       mark_webhook_processed:
         | {
             Args: {
@@ -16121,6 +16131,7 @@ export type Database = {
         Args: { p_error: string; p_webhook_id: string }
         Returns: string
       }
+      needs_password_change: { Args: { _user_id: string }; Returns: boolean }
       normalize_email: { Args: { email: string }; Returns: string }
       publish_event: {
         Args: {
