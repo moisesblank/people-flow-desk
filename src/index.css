@@ -191,22 +191,22 @@
      TEMA CLARO - Fundo Branco NEUTRO
      ============================================ */
   .light {
-    /* Background & Surfaces - BRANCO NEUTRO (sem rosa) */
-    --background: 0 0% 98%;
-    --foreground: 0 0% 10%;
+    /* Background & Surfaces - CINZA SUAVE (não tão branco) */
+    --background: 220 14% 92%;
+    --foreground: 220 20% 15%;
     
-    --card: 0 0% 100%;
-    --card-foreground: 0 0% 10%;
-    --card-hover: 0 0% 95%;
+    --card: 220 14% 96%;
+    --card-foreground: 220 20% 12%;
+    --card-hover: 220 14% 90%;
     
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 220 14% 96%;
+    --popover-foreground: 220 20% 12%;
     
-    --muted: 0 0% 94%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 220 14% 88%;
+    --muted-foreground: 220 10% 40%;
     
-    --border: 0 0% 85%;
-    --input: 0 0% 85%;
+    --border: 220 14% 80%;
+    --input: 220 14% 82%;
     
     /* Primary - Vermelho (mantém identidade) */
     --primary: 0 84% 50%;
@@ -214,9 +214,9 @@
     --primary-hover: 0 84% 45%;
     --primary-glow: 0 84% 60%;
     
-    /* Secondary - Cinza neutro */
-    --secondary: 0 0% 92%;
-    --secondary-foreground: 0 0% 10%;
+    /* Secondary - Cinza suave */
+    --secondary: 220 14% 85%;
+    --secondary-foreground: 220 20% 15%;
     
     /* Accent */
     --accent: 0 70% 50%;
@@ -241,9 +241,9 @@
     --status-active: 142 71% 40%;
     --status-vacation: 220 60% 50%;
     --status-away: 38 92% 50%;
-    --status-inactive: 0 0% 55%;
+    --status-inactive: 220 10% 50%;
     --status-online: 142 76% 35%;
-    --status-offline: 0 0% 55%;
+    --status-offline: 220 10% 55%;
     --status-recent: 158 64% 40%;
     
     /* Stats colors - Light */
@@ -264,14 +264,14 @@
     --glow-cyan: 180 100% 45%;
     --glow-wine: 0 70% 50%;
     
-    /* Sidebar - Light NEUTRO */
-    --sidebar-background: 0 0% 97%;
-    --sidebar-foreground: 0 0% 10%;
+    /* Sidebar - Light CINZA SUAVE */
+    --sidebar-background: 220 14% 94%;
+    --sidebar-foreground: 220 20% 15%;
     --sidebar-primary: 0 84% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 92%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 88%;
+    --sidebar-accent: 220 14% 88%;
+    --sidebar-accent-foreground: 220 20% 15%;
+    --sidebar-border: 220 14% 82%;
     --sidebar-ring: 0 84% 50%;
     
     /* Chart colors - Light */
@@ -295,9 +295,9 @@
     /* AI - Light */
     --ai-glow: 185 100% 40%;
     --ai-accent: 280 90% 50%;
-    --ai-surface: 0 0% 98%;
-    --ai-surface-hover: 220 14% 94%;
-    --ai-border: 220 14% 85%;
+    --ai-surface: 220 14% 94%;
+    --ai-surface-hover: 220 14% 90%;
+    --ai-border: 220 14% 80%;
   }
 }
 
