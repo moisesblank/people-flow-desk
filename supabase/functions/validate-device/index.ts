@@ -291,18 +291,10 @@ Deno.serve(async (req) => {
         riskFactors.push({ name: 'low_memory', points: 10, description: 'Memória muito baixa' });
       }
 
-      // Verificar se WebRTC detectou IP diferente (VPN)
-      if (fingerprintData.webrtcIPs && Array.isArray(fingerprintData.webrtcIPs)) {
-        const webrtcIPs = fingerprintData.webrtcIPs as string[];
-        const hasLocalIP = webrtcIPs.some(ip => ip.startsWith('192.168.') || ip.startsWith('10.') || ip.startsWith('172.'));
-        const hasPublicIP = webrtcIPs.some(ip => !ip.startsWith('192.168.') && !ip.startsWith('10.') && !ip.startsWith('172.'));
-        
-        if (hasPublicIP && !hasLocalIP) {
-          // Somente IPs públicos via WebRTC, pode indicar VPN/Proxy
-          riskScore += 10;
-          riskFactors.push({ name: 'possible_vpn', points: 10, description: 'Possível VPN detectada' });
-        }
-      }
+      // 🔐 BLOCO 1 FIX: REMOVIDO webrtcIPs como vetor de análise
+      // WebRTC pode expor IPs locais/públicos - não usamos mais como sinal
+      // Isso também elimina dependência de IP no fingerprint
+      // (Código removido: verificação de webrtcIPs)
     }
 
     // 5. Verificar IP na lista de bloqueio

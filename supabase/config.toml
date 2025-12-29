@@ -287,3 +287,8 @@ verify_jwt = true
 # 🔴 Requer JWT - Apenas Admin/Owner pode DELETAR PERMANENTEMENTE
 [functions.admin-delete-user]
 verify_jwt = true
+
+# --- BLOCO 1 FIX: Registro de Dispositivo Server-Side ---
+# 🟢 Requer JWT - Hash gerado no servidor com pepper secreto
+[functions.register-device-server]
+verify_jwt = true

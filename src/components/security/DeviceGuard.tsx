@@ -1,12 +1,12 @@
 // ============================================
-// 🛡️ DOGMA XI v2.0: Device Guard
+// 🛡️ DOGMA XI v3.0: Device Guard (BLOCO 1 FIX)
 // Verifica limite de dispositivos no login
-// Integrado com Single Session (DOGMA I)
+// Usa registro SERVER-SIDE (hash gerado no backend)
 // ============================================
 
 import { useEffect, useState, ReactNode, useCallback } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { useDeviceLimit } from '@/hooks/useDeviceLimit';
+import { useDeviceLimitServer } from '@/hooks/useDeviceLimitServer';
 import { DeviceLimitModal } from './DeviceLimitModal';
 
 interface DeviceGuardProps {
@@ -15,6 +15,7 @@ interface DeviceGuardProps {
 
 export function DeviceGuard({ children }: DeviceGuardProps) {
   const { user } = useAuth();
+  // 🔐 BLOCO 1 FIX: Usar hook server-side
   const { 
     isChecking, 
     deviceLimitExceeded, 
@@ -24,7 +25,7 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
     checkAndRegisterDevice, 
     deactivateDevice,
     clearLimitExceeded 
-  } = useDeviceLimit();
+  } = useDeviceLimitServer();
   
   const [hasChecked, setHasChecked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
