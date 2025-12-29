@@ -377,34 +377,84 @@ export function CriarAcessoOficialModal({
               <FormField
                 control={form.control}
                 name="expires_days"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      Expiração {selectedRole === 'beta_expira' ? '*' : '(opcional)'}
-                    </FormLabel>
-                    <Select 
-                      onValueChange={(value) => field.onChange(value === 'permanente' ? undefined : Number(value))} 
-                      value={field.value?.toString() || 'permanente'}
-                      disabled={isSubmitting}
-                    >
-                      <FormControl>
-                        <SelectTrigger className={selectedRole === 'beta_expira' ? "border-amber-500/30" : "border-muted-foreground/30"}>
-                          <SelectValue placeholder="Permanente" />
-                        </SelectTrigger>
-                      </FormControl>
-                      <SelectContent>
-                        <SelectItem value="permanente">♾️ Permanente</SelectItem>
-                        <SelectItem value="30">30 dias</SelectItem>
-                        <SelectItem value="60">60 dias</SelectItem>
-                        <SelectItem value="90">90 dias</SelectItem>
-                        <SelectItem value="180">180 dias</SelectItem>
-                        <SelectItem value="365">1 ano</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                render={({ field }) => {
+                  const [showCustomInput, setShowCustomInput] = useState(false);
+                  const [customDays, setCustomDays] = useState('');
+                  
+                  const handleSelectChange = (value: string) => {
+                    if (value === 'custom') {
+                      setShowCustomInput(true);
+                      setCustomDays('');
+                    } else {
+                      setShowCustomInput(false);
+                      field.onChange(value === 'permanente' ? undefined : Number(value));
+                    }
+                  };
+                  
+                  const handleCustomDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+                    const value = e.target.value.replace(/\D/g, '');
+                    setCustomDays(value);
+                    if (value && Number(value) > 0) {
+                      field.onChange(Number(value));
+                    }
+                  };
+                  
+                  const currentValue = showCustomInput 
+                    ? 'custom' 
+                    : (field.value?.toString() || 'permanente');
+                  
+                  return (
+                    <FormItem>
+                      <FormLabel className="flex items-center gap-1">
+                        <Calendar className="h-4 w-4" />
+                        Expiração {selectedRole === 'beta_expira' ? '*' : '(opcional)'}
+                      </FormLabel>
+                      <div className="space-y-2">
+                        <Select 
+                          onValueChange={handleSelectChange} 
+                          value={currentValue}
+                          disabled={isSubmitting}
+                        >
+                          <FormControl>
+                            <SelectTrigger className={selectedRole === 'beta_expira' ? "border-amber-500/30" : "border-muted-foreground/30"}>
+                              <SelectValue placeholder="Permanente" />
+                            </SelectTrigger>
+                          </FormControl>
+                          <SelectContent>
+                            <SelectItem value="permanente">♾️ Permanente</SelectItem>
+                            <SelectItem value="30">30 dias</SelectItem>
+                            <SelectItem value="60">60 dias</SelectItem>
+                            <SelectItem value="90">90 dias</SelectItem>
+                            <SelectItem value="180">180 dias</SelectItem>
+                            <SelectItem value="365">1 ano</SelectItem>
+                            <SelectItem value="custom">✏️ Personalizado...</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* Campo de dias personalizados */}
+                        {showCustomInput && (
+                          <div className="flex items-center gap-2">
+                            <Input
+                              type="number"
+                              min={1}
+                              max={3650}
+                              placeholder="Quantidade de dias"
+                              value={customDays}
+                              onChange={handleCustomDaysChange}
+                              className="border-amber-500/30 focus:border-amber-500"
+                              disabled={isSubmitting}
+                            />
+                            <span className="text-xs text-muted-foreground whitespace-nowrap">dias</span>
+                          </div>
+                        )}
+                      </div>
+                      <FormDescription className="text-[10px]">
+                        Quando expirar, aluno vai para Área Gratuita automaticamente
+                      </FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  );
+                }}
               />
             </div>
 
