@@ -125,28 +125,26 @@ export default function DeviceLimitGate() {
     setError(null);
 
     try {
-      console.log('[DeviceLimitGate] 🔐 Revogando e registrando...');
+      console.log('[DeviceLimitGate] 🔐 Revogando sessão específica:', selectedDeviceId);
       
-      const result = await revokeAndRegister(selectedDeviceId);
+      // 🛡️ MODELO HÍBRIDO: Usar RPC direta para revogar sessão
+      const { data: revokeResult, error: revokeError } = await supabase.rpc('revoke_specific_session', {
+        p_session_id: selectedDeviceId,
+      });
 
-      if (!result.success) {
+      const result = revokeResult as { success?: boolean; error?: string } | null;
+
+      if (revokeError || !result?.success) {
+        console.error('[DeviceLimitGate] ❌ Falha na revogação:', revokeError || result?.error);
         incrementRetry();
-        
-        if (result.error === 'DEVICE_LIMIT_EXCEEDED') {
-          setError('Limite ainda excedido. Tente desconectar outro dispositivo.');
-        } else {
-          setError(result.error || 'Erro ao processar. Tente novamente.');
-        }
-        
+        setError(result?.error || 'Erro ao revogar sessão. Tente novamente.');
         setRevoking(false);
         return;
       }
 
-      // Sucesso!
-      console.log('[DeviceLimitGate] ✅ Dispositivo trocado com sucesso!');
-      setIsSuccess(true);
+      console.log('[DeviceLimitGate] ✅ Sessão revogada com sucesso!');
 
-      // Criar sessão e redirecionar
+      // Criar nova sessão
       try {
         const SESSION_TOKEN_KEY = 'matriz_session_token';
         const ua = navigator.userAgent;
@@ -172,16 +170,35 @@ export default function DeviceLimitGate() {
           _device_type: device_type,
           _browser: browser,
           _os: os,
-          _device_hash_from_server: result.deviceHash ?? null,
+          _device_hash_from_server: null,
         });
 
-        if (!sessError && data?.[0]?.session_token) {
+        if (sessError) {
+          // Se ainda deu erro de limite, algo errado
+          if (sessError.message?.includes('DEVICE_LIMIT_EXCEEDED')) {
+            console.error('[DeviceLimitGate] ❌ Limite ainda excedido após revogação');
+            incrementRetry();
+            setError('Limite ainda excedido. Tente desconectar outro dispositivo.');
+            setRevoking(false);
+            return;
+          }
+          throw sessError;
+        }
+
+        if (data?.[0]?.session_token) {
           localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
-          console.log('[DeviceLimitGate] ✅ Sessão criada');
+          console.log('[DeviceLimitGate] ✅ Nova sessão criada');
         }
       } catch (sessErr) {
         console.warn('[DeviceLimitGate] Aviso: erro ao criar sessão:', sessErr);
+        incrementRetry();
+        setError('Erro ao criar nova sessão. Tente novamente.');
+        setRevoking(false);
+        return;
       }
+
+      // Sucesso total!
+      setIsSuccess(true);
 
       toast.success('Dispositivo trocado com sucesso!', {
         description: 'Sua conta está protegida.',
