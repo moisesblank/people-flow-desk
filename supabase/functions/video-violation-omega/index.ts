@@ -483,6 +483,7 @@ serve(async (req: Request) => {
     console.error("❌ Erro não tratado:", error);
 
     // SANCTUM: Mesmo em erro, retornamos sucesso para não bloquear UX
+    // 🛡️ PATCH-009: Mensagem genérica, sem error.message exposto
     return new Response(
       JSON.stringify({
         success: true,
@@ -491,7 +492,6 @@ serve(async (req: Request) => {
           action: "none",
           message: "Error processing, no action taken",
         },
-        error: error instanceof Error ? error.message : "Unknown",
       }),
       { status: 200, headers: CORS_HEADERS }
     );

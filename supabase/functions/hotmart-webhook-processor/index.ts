@@ -1473,7 +1473,7 @@ serve(async (req) => {
         event_type: "webhook_critical_error",
         source: "system",
         source_id: generateEventId("error"),
-        payload: { error: errorMessage, stack: error instanceof Error ? error.stack : null },
+        payload: { error: errorMessage }, // 🛡️ PATCH-009: Stack trace removido da resposta (fica só no log)
         processed: false,
       });
     } catch (e) {

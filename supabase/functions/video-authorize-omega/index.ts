@@ -570,12 +570,12 @@ serve(async (req: Request) => {
   } catch (error) {
     console.error("❌ Erro não tratado:", error);
     
+    // 🛡️ PATCH-009: Mensagem genérica, sem detalhes internos
     return new Response(
       JSON.stringify({
         success: false,
         error: "Erro interno do servidor",
         code: "INTERNAL_ERROR",
-        details: error instanceof Error ? error.message : "Unknown",
       }),
       { status: 500, headers: corsHeaders }
     );
