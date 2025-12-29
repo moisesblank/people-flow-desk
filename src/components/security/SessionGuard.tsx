@@ -85,6 +85,15 @@ export function SessionGuard({ children }: SessionGuardProps) {
    * Se o usuário está autenticado mas não existe matriz_session_token,
    * criamos a sessão única via backend (fonte da verdade).
    */
+  /**
+   * Bootstrap do token de sessão (P0):
+   * Se o usuário está autenticado mas não existe matriz_session_token,
+   * criamos a sessão única via backend (fonte da verdade).
+   * 
+   * 🔧 FIX CRÍTICO: Falha de bootstrap NUNCA força logout!
+   * O backend é a fonte da verdade - se não conseguimos criar sessão,
+   * apenas logamos o erro e tentamos novamente depois.
+   */
   const bootstrapSessionTokenIfMissing = useCallback(async () => {
     if (!user) return;
 
@@ -95,8 +104,13 @@ export function SessionGuard({ children }: SessionGuardProps) {
     if (isBootstrappingRef.current) return;
     if (now - lastBootstrapAtRef.current < BOOTSTRAP_RETRY_MS) return;
 
+    // 🔧 FIX: Após muitas tentativas, apenas loga erro (NÃO força logout!)
+    // O usuário pode ter perdido localStorage mas sessão ainda válida no Supabase Auth
     if (bootstrapAttemptsRef.current >= MAX_BOOTSTRAP_ATTEMPTS) {
-      await handleBackendRevocation('Falha crítica de segurança: sessão não inicializada.');
+      console.warn('[SessionGuard] ⚠️ Máximo de tentativas de bootstrap atingido. Aguardando próximo ciclo.');
+      // Reset para permitir nova tentativa após um tempo maior
+      bootstrapAttemptsRef.current = 0;
+      lastBootstrapAtRef.current = now + 60_000; // Espera 1 minuto antes de tentar novamente
       return;
     }
 
@@ -120,6 +134,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       const token = data?.[0]?.session_token;
       if (error || !token) {
         console.error('[SessionGuard] ❌ Bootstrap falhou:', error);
+        // 🔧 FIX: Apenas loga erro, NÃO força logout
         return;
       }
 
@@ -128,10 +143,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
       bootstrapAttemptsRef.current = 0;
     } catch (e) {
       console.error('[SessionGuard] ❌ Erro inesperado no bootstrap:', e);
+      // 🔧 FIX: Apenas loga erro, NÃO força logout
     } finally {
       isBootstrappingRef.current = false;
     }
-  }, [user, detectClientDeviceMeta, handleBackendRevocation]);
+  }, [user, detectClientDeviceMeta]);
 
   /**
    * Validar sessão consultando o BACKEND — nunca revoga por timer
