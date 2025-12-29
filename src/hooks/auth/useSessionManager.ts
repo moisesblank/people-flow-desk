@@ -37,7 +37,15 @@ export function useSessionManager() {
         .eq('user_id', userId)
         .eq('status', 'active');
 
-      // Criar nova sessão
+      // Buscar epoch atual do sistema
+      const { data: guardData } = await supabase
+        .from('system_guard')
+        .select('auth_epoch')
+        .single();
+      
+      const currentEpoch = guardData?.auth_epoch ?? 1;
+
+      // Criar nova sessão COM epoch
       const { error } = await supabase
         .from('active_sessions')
         .insert({
@@ -49,6 +57,7 @@ export function useSessionManager() {
           user_agent: navigator.userAgent,
           status: 'active',
           expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(), // 7 dias
+          auth_epoch_at_login: currentEpoch, // 🛡️ BLOCO 2: Registrar epoch no login
         });
 
       if (error) {

@@ -55,6 +55,7 @@ export type Database = {
       }
       active_sessions: {
         Row: {
+          auth_epoch_at_login: number | null
           city: string | null
           country_code: string | null
           created_at: string
@@ -80,6 +81,7 @@ export type Database = {
           validation_attempts: number | null
         }
         Insert: {
+          auth_epoch_at_login?: number | null
           city?: string | null
           country_code?: string | null
           created_at?: string
@@ -105,6 +107,7 @@ export type Database = {
           validation_attempts?: number | null
         }
         Update: {
+          auth_epoch_at_login?: number | null
           city?: string | null
           country_code?: string | null
           created_at?: string
@@ -10505,6 +10508,39 @@ export type Database = {
         }
         Relationships: []
       }
+      system_guard: {
+        Row: {
+          auth_enabled: boolean
+          auth_epoch: number
+          created_at: string
+          id: string
+          last_lockdown_at: string | null
+          last_lockdown_by: string | null
+          last_lockdown_reason: string | null
+          updated_at: string
+        }
+        Insert: {
+          auth_enabled?: boolean
+          auth_epoch?: number
+          created_at?: string
+          id?: string
+          last_lockdown_at?: string | null
+          last_lockdown_by?: string | null
+          last_lockdown_reason?: string | null
+          updated_at?: string
+        }
+        Update: {
+          auth_enabled?: boolean
+          auth_epoch?: number
+          created_at?: string
+          id?: string
+          last_lockdown_at?: string | null
+          last_lockdown_by?: string | null
+          last_lockdown_reason?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -15294,6 +15330,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_auth_enabled: { Args: never; Returns: boolean }
       check_beta_access: { Args: { _user_id: string }; Returns: Json }
       check_chat_rate_limit_v2: {
         Args: { p_live_id: string; p_user_id: string; p_window_ms?: number }
@@ -15860,6 +15897,7 @@ export type Database = {
       }
       get_cached_dashboard_stats: { Args: never; Returns: Json }
       get_content_ttl: { Args: { p_content_type: string }; Returns: number }
+      get_current_auth_epoch: { Args: never; Returns: number }
       get_dashboard_cached: {
         Args: { p_force_refresh?: boolean }
         Returns: Json
@@ -16288,6 +16326,10 @@ export type Database = {
       }
       needs_password_change: { Args: { _user_id: string }; Returns: boolean }
       normalize_email: { Args: { email: string }; Returns: string }
+      nuclear_revoke_all_sessions: {
+        Args: { p_reason?: string }
+        Returns: number
+      }
       publish_event: {
         Args: {
           p_entity_id?: string
@@ -16605,6 +16647,10 @@ export type Database = {
       }
       sna_realtime_stats: { Args: never; Returns: Json }
       sna_system_health: { Args: never; Returns: Json }
+      toggle_auth_lockdown: {
+        Args: { p_enabled: boolean; p_reason?: string }
+        Returns: boolean
+      }
       unban_user: { Args: { p_target_user_id: string }; Returns: Json }
       update_capacity_metric: {
         Args: { p_current_value: number; p_metric_name: string }
@@ -16694,6 +16740,13 @@ export type Database = {
           email: string
           user_id: string
           valid: boolean
+        }[]
+      }
+      validate_session_epoch: {
+        Args: { p_session_token: string }
+        Returns: {
+          is_valid: boolean
+          reason: string
         }[]
       }
       validate_session_token: {

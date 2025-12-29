@@ -7,6 +7,9 @@ export { useHeartbeat } from './useHeartbeat';
 export { useDeviceFingerprint, type FingerprintResult } from './useDeviceFingerprint';
 export { useSessionManager } from './useSessionManager';
 
+// 🛡️ NUCLEAR LOCKDOWN SYSTEM v1.0
+export { useSystemGuard, type AuthGuardError } from './useSystemGuard';
+
 // 2FA Decision Engine (SYNAPSE Ω v10.x) com cache de confiança
 export { 
   use2FADecision, 
