@@ -277,6 +277,7 @@ export default function Auth() {
   // 🔒 DOGMA I: Estado para bloqueio de sessão única
   const [showForceLogoutOption, setShowForceLogoutOption] = useState(false);
   const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [pendingPassword, setPendingPassword] = useState<string | null>(null); // 🎯 FIX: Guardar senha para login automático
   const [isForceLoggingOut, setIsForceLoggingOut] = useState(false);
   
   // Estado para Cloudflare Turnstile (Anti-Bot)
@@ -639,7 +640,12 @@ export default function Auth() {
   // 🔒 DOGMA I: FORÇAR ENCERRAMENTO DE OUTRAS SESSÕES
   // ============================================
   const handleForceLogout = async () => {
-    if (!pendingEmail) return;
+    if (!pendingEmail || !pendingPassword) {
+      console.error('[AUTH] handleForceLogout: pendingEmail ou pendingPassword ausentes');
+      toast.error("Erro interno", { description: "Tente fazer login novamente." });
+      setShowForceLogoutOption(false);
+      return;
+    }
     
     setIsForceLoggingOut(true);
     console.log('[AUTH] 🔒 Forçando encerramento de sessões para:', pendingEmail);
@@ -661,15 +667,85 @@ export default function Auth() {
       if (data) {
         console.log('[AUTH] ✅ Sessões anteriores encerradas com sucesso');
         toast.success("Outras sessões encerradas", {
-          description: "Agora você pode fazer login neste dispositivo."
+          description: "Fazendo login agora..."
         });
         
-        // Limpar estado e permitir login
+        // 🎯 FIX: Fazer login automaticamente após encerrar sessões
+        const savedEmail = pendingEmail;
+        const savedPassword = pendingPassword;
+        
+        // Limpar estado de bloqueio
         setShowForceLogoutOption(false);
         setPendingEmail(null);
+        setPendingPassword(null);
         
-        // Tentar login automaticamente
-        toast.info("Fazendo login...");
+        // Fazer login automaticamente
+        console.log('[AUTH] 🔄 Iniciando login automático...');
+        const result = await signIn(savedEmail, savedPassword, {});
+        
+        if (result.error) {
+          console.error('[AUTH] Erro no login automático:', result.error);
+          toast.error("Erro no login", {
+            description: result.error.message || "Tente novamente."
+          });
+          setIsForceLoggingOut(false);
+          return;
+        }
+        
+        // Login bem sucedido - continuar com fluxo normal (2FA, etc)
+        console.log('[AUTH] ✅ Login automático bem sucedido');
+        
+        // Restaurar formData para que o restante do fluxo funcione
+        setFormData(prev => ({ ...prev, email: savedEmail, password: savedPassword }));
+        
+        // Se há usuário, verificar 2FA
+        if (result.user) {
+          // Coletar fingerprint para decisão 2FA
+          const fp = await collectFingerprint();
+          const deviceHash = fp.hash;
+          
+          // Buscar dados do perfil para 2FA
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('nome, phone')
+            .eq('id', result.user.id)
+            .maybeSingle();
+          
+          // Verificar se precisa de 2FA
+          const twoFAResult = await decide2FA({
+            email: savedEmail,
+            userId: result.user.id,
+            deviceHash,
+            deviceSignals: {
+              isNewDevice: true, // Forçar 2FA após força logout
+              countryChanged: false,
+              rapidChange: false,
+              riskScore: 0,
+              deviceHash,
+            }
+          });
+          
+          if (twoFAResult.requires2FA) {
+            console.log('[AUTH] 2FA necessário após login automático');
+            setPending2FAUser({
+              email: savedEmail,
+              userId: result.user.id,
+              nome: profile?.nome ?? undefined,
+              phone: profile?.phone ?? undefined,
+              deviceHash,
+            });
+            setShow2FA(true);
+          }
+          // Se não precisa 2FA, o redirect será tratado pelo onAuthStateChange
+        }
+      } else {
+        console.warn('[AUTH] force_logout_other_sessions retornou false');
+        toast.warning("Nenhuma sessão ativa encontrada", {
+          description: "Tente fazer login normalmente."
+        });
+        setShowForceLogoutOption(false);
+        setPendingEmail(null);
+        setPendingPassword(null);
       }
     } catch (err: any) {
       console.error('[AUTH] Erro crítico ao forçar logout:', err);
@@ -760,6 +836,7 @@ export default function Auth() {
             // Mostrar opção de forçar logout
             setShowForceLogoutOption(true);
             setPendingEmail(formData.email.toLowerCase().trim());
+            setPendingPassword(formData.password); // 🎯 FIX: Guardar senha para login automático
             setIsLoading(false);
             return;
           }
@@ -1569,6 +1646,7 @@ export default function Auth() {
                 onClick={() => {
                   setShowForceLogoutOption(false);
                   setPendingEmail(null);
+                  setPendingPassword(null);
                 }}
                 className="w-full border-white/20 text-gray-300 hover:bg-white/5 h-12"
               >
