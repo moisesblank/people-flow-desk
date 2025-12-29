@@ -1224,16 +1224,17 @@ export default function Auth() {
                 
                 // FAIL-CLOSED: Bloquear login se limite excedido
                 if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
-                  await supabase.auth.signOut();
+                  console.log('[AUTH][BLOCO3] 🛡️ Limite excedido pós-2FA - redirecionando para DeviceLimitGate');
                   
-                  const errorMsg = getDeviceErrorMessage(deviceResult.error);
-                  toast.error(errorMsg.title, {
-                    description: `${errorMsg.description} (${deviceResult.deviceCount}/${deviceResult.maxDevices} dispositivos)`,
-                    duration: 10000,
-                  });
+                  // Salvar payload no store para o Gate
+                  if (deviceResult.gatePayload) {
+                    useDeviceGateStore.getState().setPayload(deviceResult.gatePayload);
+                  }
                   
+                  // NÃO fazer logout - manter sessão para que o Gate possa revogar dispositivos
                   setShow2FA(false);
                   setPending2FAUser(null);
+                  navigate('/security/device-limit', { replace: true });
                   return;
                 }
                 
