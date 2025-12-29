@@ -49,6 +49,7 @@ interface CreateAccessPayload {
   senha?: string;
   endereco?: EnderecoInput;
   expires_days?: number; // 30, 60, 90, 180, 365, ou custom
+  tipo_produto?: 'livroweb' | 'fisico'; // Tipo de produto Hotmart
 }
 
 interface CreateAccessResponse {
@@ -603,6 +604,12 @@ serve(async (req) => {
       fonte: 'Acesso Oficial (Gestão)',
       data_matricula: new Date().toISOString(),
     };
+    
+    // Tipo de produto (livroweb ou fisico) para roles beta/beta_expira
+    if (payload.tipo_produto) {
+      alunoData.tipo_produto = payload.tipo_produto;
+      console.log('[c-create-official-access] 📦 Tipo produto:', payload.tipo_produto);
+    }
 
     if (payload.telefone) {
       alunoData.telefone = payload.telefone;
