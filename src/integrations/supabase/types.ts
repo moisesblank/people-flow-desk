@@ -15841,10 +15841,7 @@ export type Database = {
         }
         Returns: Json
       }
-      force_logout_other_sessions: {
-        Args: { _email: string }
-        Returns: boolean
-      }
+      force_logout_other_sessions: { Args: { _email: string }; Returns: Json }
       fortress_cleanup_rate_limits: { Args: never; Returns: number }
       fortress_cleanup_security_events: { Args: never; Returns: number }
       fortress_cleanup_sessions: { Args: never; Returns: number }
