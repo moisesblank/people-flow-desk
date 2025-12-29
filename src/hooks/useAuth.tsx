@@ -317,6 +317,63 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ============================================
+  // 🔥 DOGMA SUPREMO: LISTENER REALTIME PARA LOGOUT FORÇADO
+  // Quando usuário é DELETADO, recebe broadcast e faz logout IMEDIATO
+  // ============================================
+  useEffect(() => {
+    if (!user?.id) return;
+
+    console.log('[AUTH][REALTIME] 📡 Inscrevendo no canal force-logout...');
+
+    const channel = supabase.channel('force-logout')
+      .on('broadcast', { event: 'user-deleted' }, async (payload) => {
+        const { userId, email, reason } = payload.payload as { 
+          userId: string; 
+          email: string; 
+          reason: string;
+        };
+
+        console.log('[AUTH][REALTIME] 🔥 Evento user-deleted recebido:', { userId, email });
+
+        // Verificar se o broadcast é para ESTE usuário
+        if (userId === user.id || email?.toLowerCase() === user.email?.toLowerCase()) {
+          console.error('[AUTH][REALTIME] 💀 ESTE USUÁRIO FOI DELETADO! Forçando logout...');
+          
+          // 1. Limpar TUDO do localStorage
+          const keysToRemove = [
+            'matriz_session_token',
+            'matriz_last_heartbeat',
+            'matriz_device_fingerprint',
+            'matriz_trusted_device',
+            'sb-fyikfsasudgzsjmumdlw-auth-token',
+          ];
+          keysToRemove.forEach(key => localStorage.removeItem(key));
+          
+          // 2. Limpar sessionStorage
+          sessionStorage.clear();
+          
+          // 3. Parar heartbeat
+          stopHeartbeatRef.current();
+          
+          // 4. Mostrar mensagem antes de fazer logout
+          alert(`Sua conta foi removida do sistema.\nMotivo: ${reason || 'Exclusão administrativa'}`);
+          
+          // 5. Signout e redirect
+          await supabase.auth.signOut();
+          window.location.replace('/auth?deleted=true');
+        }
+      })
+      .subscribe((status) => {
+        console.log('[AUTH][REALTIME] Status do canal force-logout:', status);
+      });
+
+    return () => {
+      console.log('[AUTH][REALTIME] 🔌 Desconectando do canal force-logout');
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, user?.email]);
+
+  // ============================================
   // ✅ ÚNICO DONO DO REDIRECT GLOBAL
   // Regra: se existe sessão e está em /auth, redireciona UMA VEZ.
   // Login (/auth) não decide nada.

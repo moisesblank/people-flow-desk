@@ -1,0 +1,278 @@
+// ============================================
+// 🔥 DOGMA SUPREMO: EXCLUIR = ANIQUILAR
+// Edge Function para Admin/Owner DELETAR usuário COMPLETAMENTE
+// DELETE de auth.users + CASCADE + Broadcast Realtime
+// ============================================
+
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
+
+const OWNER_EMAIL = "moisesblank@gmail.com";
+
+serve(async (req) => {
+  // Handle CORS preflight
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    // Verificar autenticação
+    const authHeader = req.headers.get("Authorization");
+    if (!authHeader) {
+      console.error("[admin-delete-user] ❌ Sem header de autorização");
+      return new Response(
+        JSON.stringify({ error: "Não autorizado" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verificar quem está chamando
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user: caller }, error: authError } = await supabaseAdmin.auth.getUser(token);
+
+    if (authError || !caller) {
+      console.error("[admin-delete-user] ❌ Token inválido:", authError);
+      return new Response(
+        JSON.stringify({ error: "Token inválido" }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Verificar se é Admin ou Owner
+    const callerEmail = (caller.email || "").toLowerCase();
+    const isOwner = callerEmail === OWNER_EMAIL;
+
+    if (!isOwner) {
+      // Verificar role no banco
+      const { data: roleData } = await supabaseAdmin
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", caller.id)
+        .maybeSingle();
+
+      const callerRole = roleData?.role;
+      if (callerRole !== "owner" && callerRole !== "admin") {
+        console.error("[admin-delete-user] ❌ Permissão negada. Role:", callerRole);
+        return new Response(
+          JSON.stringify({ error: "Apenas Admin ou Owner podem excluir usuários" }),
+          { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    }
+
+    // Parsear body
+    const body = await req.json();
+    const { targetUserId, targetEmail, reason } = body;
+
+    console.log("[admin-delete-user] 📥 Request:", { targetUserId, targetEmail, callerEmail });
+
+    // Resolver targetUserId se apenas email foi fornecido
+    let resolvedUserId = targetUserId;
+    let resolvedEmail = targetEmail?.toLowerCase();
+
+    if (!resolvedUserId && resolvedEmail) {
+      // Buscar por email no profiles ou auth
+      const { data: profileData } = await supabaseAdmin
+        .from("profiles")
+        .select("id, email")
+        .eq("email", resolvedEmail)
+        .maybeSingle();
+
+      if (profileData) {
+        resolvedUserId = profileData.id;
+      } else {
+        // Tentar buscar em auth.users via admin API
+        const { data: usersData } = await supabaseAdmin.auth.admin.listUsers();
+        const foundUser = usersData?.users?.find(u => u.email?.toLowerCase() === resolvedEmail);
+        if (foundUser) {
+          resolvedUserId = foundUser.id;
+        }
+      }
+    }
+
+    if (!resolvedUserId) {
+      return new Response(
+        JSON.stringify({ error: "Usuário não encontrado" }),
+        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Buscar email se não temos ainda
+    if (!resolvedEmail) {
+      const { data: profileData } = await supabaseAdmin
+        .from("profiles")
+        .select("email")
+        .eq("id", resolvedUserId)
+        .maybeSingle();
+      resolvedEmail = profileData?.email?.toLowerCase();
+    }
+
+    // 🛡️ PROTEÇÃO: Não permitir excluir o Owner
+    if (resolvedEmail === OWNER_EMAIL) {
+      console.error("[admin-delete-user] ❌ Tentativa de excluir Owner BLOQUEADA");
+      return new Response(
+        JSON.stringify({ error: "Não é possível excluir o Owner do sistema" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("[admin-delete-user] 🔥 INICIANDO ANIQUILAÇÃO:", { resolvedUserId, resolvedEmail });
+
+    // ============================================
+    // PASSO 1: Broadcast Realtime para LOGOUT FORÇADO
+    // ============================================
+    console.log("[admin-delete-user] 📡 Enviando broadcast de logout forçado...");
+    
+    const channel = supabaseAdmin.channel('force-logout');
+    await channel.send({
+      type: 'broadcast',
+      event: 'user-deleted',
+      payload: {
+        userId: resolvedUserId,
+        email: resolvedEmail,
+        reason: reason || 'Conta excluída pelo administrador',
+        timestamp: new Date().toISOString(),
+      },
+    });
+
+    // ============================================
+    // PASSO 2: Revogar TODAS as sessões ativas
+    // ============================================
+    console.log("[admin-delete-user] 🔐 Revogando sessões...");
+    
+    const { data: sessionsRevoked } = await supabaseAdmin
+      .from("active_sessions")
+      .update({
+        status: "revoked",
+        revoked_at: new Date().toISOString(),
+        revoked_reason: "user_deleted",
+      })
+      .eq("user_id", resolvedUserId)
+      .eq("status", "active")
+      .select();
+
+    console.log("[admin-delete-user] ✅ Sessões revogadas:", sessionsRevoked?.length || 0);
+
+    // ============================================
+    // PASSO 3: Desativar TODOS os dispositivos confiáveis
+    // ============================================
+    console.log("[admin-delete-user] 📱 Desativando dispositivos...");
+    
+    const { data: devicesDeactivated } = await supabaseAdmin
+      .from("user_devices")
+      .update({
+        is_active: false,
+        deactivated_at: new Date().toISOString(),
+        deactivated_by: caller.id,
+      })
+      .eq("user_id", resolvedUserId)
+      .eq("is_active", true)
+      .select();
+
+    console.log("[admin-delete-user] ✅ Dispositivos desativados:", devicesDeactivated?.length || 0);
+
+    // Também device_trust_scores
+    await supabaseAdmin
+      .from("device_trust_scores")
+      .delete()
+      .eq("user_id", resolvedUserId);
+
+    // ============================================
+    // PASSO 4: Limpar dados auxiliares (que podem não ter CASCADE)
+    // ============================================
+    console.log("[admin-delete-user] 🧹 Limpando dados auxiliares...");
+
+    // Tabelas que podem ter referência mas não CASCADE
+    const tablesToClean = [
+      "two_factor_codes",
+      "security_risk_state",
+      "user_presence",
+      "sensitive_operation_limits",
+      "password_reset_tokens",
+    ];
+
+    for (const table of tablesToClean) {
+      try {
+        await supabaseAdmin.from(table).delete().eq("user_id", resolvedUserId);
+      } catch (e) {
+        console.warn(`[admin-delete-user] ⚠️ Erro ao limpar ${table}:`, e);
+      }
+    }
+
+    // ============================================
+    // PASSO 5: Registrar no audit log ANTES de deletar
+    // ============================================
+    console.log("[admin-delete-user] 📝 Registrando auditoria...");
+    
+    await supabaseAdmin.from("audit_logs").insert({
+      action: "USER_DELETED_PERMANENTLY",
+      user_id: caller.id,
+      record_id: resolvedUserId,
+      table_name: "auth.users",
+      old_data: { email: resolvedEmail, deleted_at: new Date().toISOString() },
+      new_data: null,
+      metadata: {
+        reason: reason || "Exclusão administrativa",
+        deleted_by_email: callerEmail,
+        sessions_revoked: sessionsRevoked?.length || 0,
+        devices_deactivated: devicesDeactivated?.length || 0,
+      },
+    });
+
+    // ============================================
+    // PASSO 6: DELETAR do auth.users (CASCADE em profiles, user_roles, etc)
+    // ============================================
+    console.log("[admin-delete-user] 💀 DELETANDO de auth.users...");
+    
+    const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(resolvedUserId);
+
+    if (deleteError) {
+      console.error("[admin-delete-user] ❌ Erro ao deletar de auth.users:", deleteError);
+      return new Response(
+        JSON.stringify({ 
+          error: "Erro ao excluir usuário", 
+          details: deleteError.message,
+          partial: {
+            sessionsRevoked: sessionsRevoked?.length || 0,
+            devicesDeactivated: devicesDeactivated?.length || 0,
+          }
+        }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log("[admin-delete-user] ✅✅✅ USUÁRIO ANIQUILADO COM SUCESSO:", resolvedEmail);
+
+    return new Response(
+      JSON.stringify({
+        success: true,
+        message: "Usuário excluído permanentemente de TODAS as camadas",
+        deletedUserId: resolvedUserId,
+        deletedEmail: resolvedEmail,
+        stats: {
+          sessionsRevoked: sessionsRevoked?.length || 0,
+          devicesDeactivated: devicesDeactivated?.length || 0,
+          authUserDeleted: true,
+          broadcastSent: true,
+        },
+      }),
+      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+
+  } catch (error: any) {
+    console.error("[admin-delete-user] ❌ Erro crítico:", error);
+    return new Response(
+      JSON.stringify({ error: "Erro interno", message: error.message }),
+      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    );
+  }
+});
