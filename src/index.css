@@ -17,29 +17,37 @@
 
 @layer base {
   :root {
-    /* UPGRADE v10 - TEMA ESCURO VERMELHO PROFISSIONAL */
-    --background: 0 0% 7%;
-    --foreground: 0 0% 95%;
+    /* ============================================
+       TEMA SISTEMA - Spider-Man Original
+       Vermelho Vinho + Azul + Fundo Escuro Elegante
+       ============================================ */
     
-    --card: 0 0% 10%;
-    --card-foreground: 0 0% 95%;
-    --card-hover: 0 0% 12%;
+    /* Background & Surfaces - Escuro Elegante (não preto puro) */
+    --background: 220 25% 8%;
+    --foreground: 210 40% 98%;
     
-    --popover: 0 0% 10%;
-    --popover-foreground: 0 0% 95%;
+    --card: 220 25% 10%;
+    --card-foreground: 210 40% 98%;
+    --card-hover: 220 25% 13%;
     
-    --primary: 0 84% 50%;
+    --popover: 220 25% 10%;
+    --popover-foreground: 210 40% 98%;
+    
+    /* Primary - Vermelho Vinho Intenso */
+    --primary: 350 80% 45%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 84% 45%;
-    --primary-glow: 0 84% 60%;
+    --primary-hover: 350 80% 40%;
+    --primary-glow: 350 80% 55%;
     
-    --secondary: 0 0% 15%;
-    --secondary-foreground: 0 0% 95%;
+    /* Secondary - Azul Profundo */
+    --secondary: 220 60% 20%;
+    --secondary-foreground: 210 40% 98%;
     
-    --muted: 0 0% 15%;
-    --muted-foreground: 0 0% 65%;
+    --muted: 220 25% 15%;
+    --muted-foreground: 215 20% 65%;
     
-    --accent: 0 70% 45%;
+    /* Accent - Azul Vibrante */
+    --accent: 220 80% 55%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
@@ -54,51 +62,51 @@
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
     
-    --border: 0 0% 18%;
-    --input: 0 0% 18%;
-    --ring: 0 84% 50%;
+    --border: 220 25% 18%;
+    --input: 220 25% 18%;
+    --ring: 350 80% 45%;
     --radius: 0.75rem;
     
     /* Status colors */
     --status-active: 142 71% 45%;
     --status-vacation: 220 60% 50%;
     --status-away: 38 92% 50%;
-    --status-inactive: 0 0% 46%;
+    --status-inactive: 220 15% 46%;
     --status-online: 142 76% 36%;
-    --status-offline: 0 0% 40%;
+    --status-offline: 220 15% 40%;
     --status-recent: 158 64% 40%;
     
     /* Stats colors */
-    --stats-red: 0 84% 50%;
+    --stats-red: 350 80% 50%;
     --stats-green: 142 71% 45%;
-    --stats-blue: 220 70% 50%;
+    --stats-blue: 220 80% 55%;
     --stats-purple: 270 80% 55%;
     --stats-gold: 43 74% 49%;
     --stats-cyan: 180 100% 40%;
-    --stats-wine: 0 70% 40%;
+    --stats-wine: 350 70% 40%;
     
     /* Glow colors */
-    --glow-red: 0 84% 55%;
+    --glow-red: 350 80% 55%;
     --glow-green: 142 71% 45%;
-    --glow-blue: 220 70% 55%;
+    --glow-blue: 220 80% 60%;
     --glow-purple: 270 80% 60%;
     --glow-gold: 43 74% 60%;
     --glow-cyan: 180 100% 45%;
-    --glow-wine: 0 70% 50%;
+    --glow-wine: 350 70% 50%;
     
-    /* Sidebar - Dark Theme */
-    --sidebar-background: 0 0% 5%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-primary: 0 84% 50%;
+    /* Sidebar - Spider-Man Theme */
+    --sidebar-background: 220 25% 6%;
+    --sidebar-foreground: 210 40% 98%;
+    --sidebar-primary: 350 80% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 12%;
-    --sidebar-accent-foreground: 0 0% 95%;
-    --sidebar-border: 0 0% 15%;
-    --sidebar-ring: 0 84% 50%;
+    --sidebar-accent: 220 60% 20%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 220 25% 15%;
+    --sidebar-ring: 350 80% 45%;
     
     /* Chart colors */
-    --chart-1: 0 84% 50%;
-    --chart-2: 220 70% 50%;
+    --chart-1: 350 80% 50%;
+    --chart-2: 220 80% 55%;
     --chart-3: 142 71% 45%;
     --chart-4: 270 80% 55%;
     --chart-5: 43 74% 49%;
@@ -113,15 +121,15 @@
     --holo-cyan: 185 100% 50%;
     --holo-purple: 280 100% 60%;
     --holo-pink: 320 100% 60%;
-    --holo-blue: 210 100% 55%;
+    --holo-blue: 220 100% 55%;
     --holo-green: 160 100% 45%;
     
     /* AI Tutor specific */
     --ai-glow: 185 100% 50%;
     --ai-accent: 280 90% 60%;
-    --ai-surface: 220 40% 8%;
-    --ai-surface-hover: 220 40% 12%;
-    --ai-border: 220 40% 20%;
+    --ai-surface: 220 25% 10%;
+    --ai-surface-hover: 220 25% 14%;
+    --ai-border: 220 25% 22%;
     
     /* Holographic gradients */
     --gradient-holo: linear-gradient(135deg, hsl(185 100% 50% / 0.1), hsl(280 100% 60% / 0.1), hsl(320 100% 60% / 0.1));
