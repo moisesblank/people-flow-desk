@@ -22,15 +22,15 @@
        Vermelho Vinho + Azul + Fundo Escuro Elegante
        ============================================ */
     
-    /* Background & Surfaces - Escuro Elegante (não preto puro) */
-    --background: 220 25% 8%;
+    /* Background & Surfaces - Azul-noite (bem diferente do .dark) */
+    --background: 225 35% 11%;
     --foreground: 210 40% 98%;
     
-    --card: 220 25% 10%;
+    --card: 225 32% 14%;
     --card-foreground: 210 40% 98%;
-    --card-hover: 220 25% 13%;
+    --card-hover: 225 32% 17%;
     
-    --popover: 220 25% 10%;
+    --popover: 225 32% 14%;
     --popover-foreground: 210 40% 98%;
     
     /* Primary - Vermelho Vinho Intenso */
@@ -40,11 +40,11 @@
     --primary-glow: 350 80% 55%;
     
     /* Secondary - Azul Profundo */
-    --secondary: 220 60% 20%;
+    --secondary: 225 60% 22%;
     --secondary-foreground: 210 40% 98%;
     
-    --muted: 220 25% 15%;
-    --muted-foreground: 215 20% 65%;
+    --muted: 225 28% 18%;
+    --muted-foreground: 215 20% 70%;
     
     /* Accent - Azul Vibrante */
     --accent: 220 80% 55%;
@@ -62,8 +62,8 @@
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
     
-    --border: 220 25% 18%;
-    --input: 220 25% 18%;
+    --border: 225 25% 24%;
+    --input: 225 25% 24%;
     --ring: 350 80% 45%;
     --radius: 0.75rem;
     
@@ -71,9 +71,9 @@
     --status-active: 142 71% 45%;
     --status-vacation: 220 60% 50%;
     --status-away: 38 92% 50%;
-    --status-inactive: 220 15% 46%;
+    --status-inactive: 225 15% 52%;
     --status-online: 142 76% 36%;
-    --status-offline: 220 15% 40%;
+    --status-offline: 225 15% 46%;
     --status-recent: 158 64% 40%;
     
     /* Stats colors */
@@ -94,14 +94,14 @@
     --glow-cyan: 180 100% 45%;
     --glow-wine: 350 70% 50%;
     
-    /* Sidebar - Spider-Man Theme */
-    --sidebar-background: 220 25% 6%;
+    /* Sidebar - Spider-Man Theme (Azul-noite) */
+    --sidebar-background: 225 40% 9%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 350 80% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 60% 20%;
+    --sidebar-accent: 225 60% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 220 25% 15%;
+    --sidebar-border: 225 25% 20%;
     --sidebar-ring: 350 80% 45%;
     
     /* Chart colors */
