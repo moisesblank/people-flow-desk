@@ -1,13 +1,13 @@
 // ============================================
-// 🛡️ EVANGELHO DA SEGURANÇA v2.1
+// 🛡️ EVANGELHO DA SEGURANÇA v2.2
 // SESSION_BINDING_ENFORCEMENT — Revogação INSTANTÂNEA via Realtime
 // Frontend NUNCA revoga sessões — só reage a eventos do backend
 // ============================================
 
-import { useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
-import { toast } from 'sonner';
+import { SessionRevokedOverlay } from './SessionRevokedOverlay';
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
 const SESSION_CHECK_INTERVAL = 30000; // 30s
@@ -23,18 +23,60 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const bootstrapAttemptsRef = useRef(0);
   const lastBootstrapAtRef = useRef(0);
   const hasLoggedOutRef = useRef(false);
+  
+  // Estado para controlar o overlay visual
+  const [showRevokedOverlay, setShowRevokedOverlay] = useState(false);
 
   const BOOTSTRAP_RETRY_MS = 10_000;
   const MAX_BOOTSTRAP_ATTEMPTS = 3;
 
   /**
-   * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
-   * Guarda contra múltiplos logouts simultâneos
+   * Exibe overlay visual e prepara logout
+   * SOMENTE quando backend confirma revogação por novo dispositivo
    */
-  const handleBackendRevocation = useCallback(async (reason: string) => {
+  const handleDeviceRevocation = useCallback(() => {
     if (hasLoggedOutRef.current) return;
     hasLoggedOutRef.current = true;
 
+    console.error('[SessionGuard] 🔴 Sessão revogada - novo dispositivo detectado');
+
+    // Limpar tokens imediatamente
+    const keysToRemove = [
+      'matriz_session_token',
+      'matriz_last_heartbeat',
+      'matriz_device_fingerprint',
+      'matriz_trusted_device',
+      'mfa_trust_cache',
+    ];
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
+    sessionStorage.clear();
+
+    // Mostrar overlay visual
+    setShowRevokedOverlay(true);
+  }, []);
+
+  /**
+   * Callback quando usuário fecha o overlay
+   */
+  const handleOverlayClose = useCallback(async () => {
+    setShowRevokedOverlay(false);
+    await signOut();
+  }, [signOut]);
+
+  /**
+   * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
+   * Guarda contra múltiplos logouts simultâneos
+   */
+  const handleBackendRevocation = useCallback(async (reason: string, isDeviceChange = false) => {
+    if (hasLoggedOutRef.current) return;
+    
+    // Se é mudança de dispositivo, usar overlay visual
+    if (isDeviceChange) {
+      handleDeviceRevocation();
+      return;
+    }
+
+    hasLoggedOutRef.current = true;
     console.error(`[SessionGuard] 🔴 Backend confirmou revogação: ${reason}`);
 
     // Limpar TUDO
@@ -48,13 +90,8 @@ export function SessionGuard({ children }: SessionGuardProps) {
     keysToRemove.forEach((key) => localStorage.removeItem(key));
     sessionStorage.clear();
 
-    toast.error('Sessão encerrada', {
-      description: reason,
-      duration: 5000,
-    });
-
     await signOut();
-  }, [signOut]);
+  }, [signOut, handleDeviceRevocation]);
 
   const detectClientDeviceMeta = useCallback(() => {
     const ua = navigator.userAgent;
@@ -84,15 +121,8 @@ export function SessionGuard({ children }: SessionGuardProps) {
    * Bootstrap do token de sessão (P0):
    * Se o usuário está autenticado mas não existe matriz_session_token,
    * criamos a sessão única via backend (fonte da verdade).
-   */
-  /**
-   * Bootstrap do token de sessão (P0):
-   * Se o usuário está autenticado mas não existe matriz_session_token,
-   * criamos a sessão única via backend (fonte da verdade).
    * 
    * 🔧 FIX CRÍTICO: Falha de bootstrap NUNCA força logout!
-   * O backend é a fonte da verdade - se não conseguimos criar sessão,
-   * apenas logamos o erro e tentamos novamente depois.
    */
   const bootstrapSessionTokenIfMissing = useCallback(async () => {
     if (!user) return;
@@ -104,13 +134,10 @@ export function SessionGuard({ children }: SessionGuardProps) {
     if (isBootstrappingRef.current) return;
     if (now - lastBootstrapAtRef.current < BOOTSTRAP_RETRY_MS) return;
 
-    // 🔧 FIX: Após muitas tentativas, apenas loga erro (NÃO força logout!)
-    // O usuário pode ter perdido localStorage mas sessão ainda válida no Supabase Auth
     if (bootstrapAttemptsRef.current >= MAX_BOOTSTRAP_ATTEMPTS) {
       console.warn('[SessionGuard] ⚠️ Máximo de tentativas de bootstrap atingido. Aguardando próximo ciclo.');
-      // Reset para permitir nova tentativa após um tempo maior
       bootstrapAttemptsRef.current = 0;
-      lastBootstrapAtRef.current = now + 60_000; // Espera 1 minuto antes de tentar novamente
+      lastBootstrapAtRef.current = now + 60_000;
       return;
     }
 
@@ -134,7 +161,6 @@ export function SessionGuard({ children }: SessionGuardProps) {
       const token = data?.[0]?.session_token;
       if (error || !token) {
         console.error('[SessionGuard] ❌ Bootstrap falhou:', error);
-        // 🔧 FIX: Apenas loga erro, NÃO força logout
         return;
       }
 
@@ -143,7 +169,6 @@ export function SessionGuard({ children }: SessionGuardProps) {
       bootstrapAttemptsRef.current = 0;
     } catch (e) {
       console.error('[SessionGuard] ❌ Erro inesperado no bootstrap:', e);
-      // 🔧 FIX: Apenas loga erro, NÃO força logout
     } finally {
       isBootstrappingRef.current = false;
     }
@@ -180,33 +205,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
       if (!result?.is_valid) {
         const reason = result?.reason || 'SESSION_INVALID';
 
-        let message = 'Sessão inválida. Faça login novamente.';
-        switch (reason) {
-          case 'AUTH_DISABLED':
-            message = 'Sistema em manutenção. Por favor, aguarde.';
-            break;
-          case 'AUTH_EPOCH_REVOKED':
-            message = 'Sua sessão foi invalidada por medida de segurança.';
-            break;
-          case 'SESSION_NOT_FOUND':
-          case 'SESSION_REVOKED':
-            message = 'Você entrou em outro dispositivo.';
-            break;
-          case 'SESSION_EXPIRED':
-            message = 'Sessão expirada no servidor.';
-            break;
-          case 'USER_DELETED':
-            message = 'Sua conta foi removida.';
-            break;
-          case 'USER_DISABLED':
-            message = 'Sua conta foi desativada.';
-            break;
-          default:
-            break;
-        }
+        // Detectar se é mudança de dispositivo
+        const isDeviceChange = reason === 'SESSION_NOT_FOUND' || reason === 'SESSION_REVOKED';
 
         console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}`);
-        await handleBackendRevocation(message);
+        await handleBackendRevocation(reason, isDeviceChange);
 
         isValidatingRef.current = false;
         return false;
@@ -268,13 +271,18 @@ export function SessionGuard({ children }: SessionGuardProps) {
         console.error('[SessionGuard] 📡 USER DELETED recebido!');
         await handleBackendRevocation('Sua conta foi removida.');
       })
+      // 🚀 NOVO: Broadcast direto para revogação instantânea de sessão
+      .on('broadcast', { event: 'session-revoked' }, async () => {
+        console.error('[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!');
+        handleDeviceRevocation();
+      })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
       supabase.removeChannel(userChannel);
     };
-  }, [user, handleBackendRevocation, validateSession]);
+  }, [user, handleBackendRevocation, validateSession, handleDeviceRevocation]);
 
   // 🔒 SESSION_BINDING_ENFORCEMENT: Realtime listener on active_sessions
   // When MY session_token row is updated to status='revoked', logout IMMEDIATELY
@@ -283,6 +291,8 @@ export function SessionGuard({ children }: SessionGuardProps) {
 
     const myToken = localStorage.getItem(SESSION_TOKEN_KEY);
     if (!myToken) return;
+
+    console.log('[SessionGuard] 🔗 Iniciando listener Realtime para token:', myToken.slice(0, 8) + '...');
 
     const realtimeChannel = supabase
       .channel('session-revocation-realtime')
@@ -299,19 +309,29 @@ export function SessionGuard({ children }: SessionGuardProps) {
           console.log('[SessionGuard] 📡 Realtime UPDATE active_sessions:', newStatus);
 
           if (newStatus === 'revoked') {
-            console.error('[SessionGuard] 🔴 Sessão revogada via Realtime!');
-            await handleBackendRevocation('Você entrou em outro dispositivo.');
+            console.error('[SessionGuard] 🔴 Sessão revogada via Realtime INSTANTÂNEO!');
+            handleDeviceRevocation();
           }
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[SessionGuard] 📡 Realtime subscription status:', status);
+      });
 
     return () => {
       supabase.removeChannel(realtimeChannel);
     };
-  }, [user, handleBackendRevocation]);
+  }, [user, handleDeviceRevocation]);
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <SessionRevokedOverlay 
+        isVisible={showRevokedOverlay} 
+        onClose={handleOverlayClose} 
+      />
+    </>
+  );
 }
 
 export default SessionGuard;
