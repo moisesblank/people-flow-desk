@@ -6,7 +6,7 @@
 import { useState, useEffect, memo, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Menu, X, Rocket, Atom, Sparkles, Zap } from "lucide-react";
+import { Menu, X, Rocket, Atom, Sparkles, Zap, Gift } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePerformance } from "@/hooks/usePerformance";
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
@@ -67,22 +67,18 @@ const MobileMenu = memo(({
             ))}
             
             <div className="pt-6 border-t border-white/10 space-y-3">
+              <Link to="/area-gratuita" onClick={onClose}>
+                <Button variant="outline" className="w-full border-gray-700 hover:border-cyan-500/50 text-gray-300">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Área Gratuita
+                </Button>
+              </Link>
               <Link to="/auth" onClick={onClose}>
                 <Button className="w-full bg-gradient-to-r from-red-600 to-red-700 text-white font-bold">
                   <Rocket className="w-4 h-4 mr-2" />
                   Área do Aluno
                 </Button>
               </Link>
-              <a 
-                href="https://app.moisesmedeiros.com.br" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                onClick={onClose}
-              >
-                <Button variant="outline" className="w-full border-gray-700 hover:border-red-500/50">
-                  Começar Agora
-                </Button>
-              </a>
             </div>
           </div>
         </motion.div>
@@ -140,7 +136,13 @@ export const Navbar = memo(() => {
               ))}
             </div>
             
-            <div className="hidden lg:flex items-center">
+            <div className="hidden lg:flex items-center gap-3">
+              <Link to="/area-gratuita">
+                <Button className="btn-cta-secondary-2300 text-foreground font-semibold rounded-lg">
+                  <Gift className="w-4 h-4 mr-2" />
+                  Área Gratuita
+                </Button>
+              </Link>
               <Link to="/auth">
                 <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                   <Rocket className="w-4 h-4 mr-2" />
@@ -215,11 +217,17 @@ export const Navbar = memo(() => {
           
           {/* CTA - Desktop */}
           <motion.div 
-            className="hidden lg:flex items-center"
+            className="hidden lg:flex items-center gap-3"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
+            <Link to="/area-gratuita">
+              <Button className="btn-cta-secondary-2300 text-foreground font-semibold rounded-lg">
+                <Gift className="w-4 h-4 mr-2" />
+                Área Gratuita
+              </Button>
+            </Link>
             <Link to="/auth">
               <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                 <Rocket className="w-4 h-4 mr-2" />
