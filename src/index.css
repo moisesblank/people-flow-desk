@@ -16,7 +16,7 @@
    ============================================ */
 
 @layer base {
-  :root {
+  :root, .system {
     /* ============================================
        TEMA SISTEMA - Spider-Man Original (RESTAURADO)
        Vermelho Vinho + Azul Escuro Noturno
