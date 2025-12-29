@@ -8,6 +8,11 @@ import { supabase } from '@/integrations/supabase/client';
 import { collectFingerprintRawData, generateDeviceName } from '@/lib/deviceFingerprintRaw';
 import type { DeviceGatePayload } from '@/state/deviceGateStore';
 
+export interface DeviceNotice {
+  level: 'INFO' | 'WARNING' | 'HARD_WARNING' | null;
+  message: string | null;
+}
+
 export interface DeviceRegistrationResult {
   success: boolean;
   error?: string;
@@ -16,6 +21,8 @@ export interface DeviceRegistrationResult {
   isNewDevice?: boolean;
   deviceCount?: number;
   maxDevices?: number;
+  // 🔐 PIECE 1: Aviso progressivo
+  notice?: DeviceNotice;
   devices?: Array<{
     id?: string;
     device_id?: string;
@@ -142,6 +149,8 @@ export async function registerDeviceBeforeSession(): Promise<DeviceRegistrationR
       deviceHash: data.deviceHash,
       isNewDevice,
       deviceCount: data.deviceCount,
+      // 🔐 PIECE 1: Propagar aviso progressivo
+      notice: data.notice || undefined,
     };
 
   } catch (err) {

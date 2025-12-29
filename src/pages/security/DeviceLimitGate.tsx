@@ -125,26 +125,31 @@ export default function DeviceLimitGate() {
     setError(null);
 
     try {
-      console.log('[DeviceLimitGate] 🔐 Revogando sessão específica:', selectedDeviceId);
+      console.log('[DeviceLimitGate] 🔐 Revogando DISPOSITIVO:', selectedDeviceId);
       
-      // 🛡️ MODELO HÍBRIDO: Usar RPC direta para revogar sessão
-      const { data: revokeResult, error: revokeError } = await supabase.rpc('revoke_specific_session', {
-        p_session_id: selectedDeviceId,
-      });
+      // 🛡️ PIECE 3: Usar revokeAndRegister (revoga dispositivo + registra novo)
+      const result = await revokeAndRegister(selectedDeviceId);
 
-      const result = revokeResult as { success?: boolean; error?: string } | null;
-
-      if (revokeError || !result?.success) {
-        console.error('[DeviceLimitGate] ❌ Falha na revogação:', revokeError || result?.error);
+      if (!result.success) {
+        console.error('[DeviceLimitGate] ❌ Falha:', result.error);
+        
+        // Se ainda deu limite excedido, mostrar erro
+        if (result.error === 'DEVICE_LIMIT_EXCEEDED') {
+          incrementRetry();
+          setError('Limite ainda excedido. Tente desconectar outro dispositivo.');
+          setRevoking(false);
+          return;
+        }
+        
         incrementRetry();
-        setError(result?.error || 'Erro ao revogar sessão. Tente novamente.');
+        setError(result.error || 'Erro ao desconectar dispositivo. Tente novamente.');
         setRevoking(false);
         return;
       }
 
-      console.log('[DeviceLimitGate] ✅ Sessão revogada com sucesso!');
+      console.log('[DeviceLimitGate] ✅ Dispositivo revogado e novo registrado!');
 
-      // Criar nova sessão
+      // Criar sessão após registrar dispositivo
       try {
         const SESSION_TOKEN_KEY = 'matriz_session_token';
         const ua = navigator.userAgent;
@@ -170,19 +175,12 @@ export default function DeviceLimitGate() {
           _device_type: device_type,
           _browser: browser,
           _os: os,
-          _device_hash_from_server: null,
+          _device_hash_from_server: result.deviceHash || null,
         });
 
         if (sessError) {
-          // Se ainda deu erro de limite, algo errado
-          if (sessError.message?.includes('DEVICE_LIMIT_EXCEEDED')) {
-            console.error('[DeviceLimitGate] ❌ Limite ainda excedido após revogação');
-            incrementRetry();
-            setError('Limite ainda excedido. Tente desconectar outro dispositivo.');
-            setRevoking(false);
-            return;
-          }
-          throw sessError;
+          console.warn('[DeviceLimitGate] Aviso: erro ao criar sessão:', sessError);
+          // Continuar mesmo assim - dispositivo foi registrado
         }
 
         if (data?.[0]?.session_token) {
@@ -191,10 +189,7 @@ export default function DeviceLimitGate() {
         }
       } catch (sessErr) {
         console.warn('[DeviceLimitGate] Aviso: erro ao criar sessão:', sessErr);
-        incrementRetry();
-        setError('Erro ao criar nova sessão. Tente novamente.');
-        setRevoking(false);
-        return;
+        // Continuar mesmo assim
       }
 
       // Sucesso total!
