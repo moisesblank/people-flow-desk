@@ -219,13 +219,20 @@ serve(async (req) => {
     }
 
     // ============================================
-    // PASSO 5: Registrar no audit log ANTES de deletar
+    // PASSO 5: Limpar audit_logs do usuário-alvo (FK blocking)
     // ============================================
-    console.log("[admin-delete-user] 📝 Registrando auditoria...");
+    console.log("[admin-delete-user] 📝 Limpando audit_logs do usuário...");
     
+    // Remover logs onde o usuário-alvo é o user_id (para evitar FK block)
+    await supabaseAdmin
+      .from("audit_logs")
+      .delete()
+      .eq("user_id", resolvedUserId);
+
+    // Registrar a exclusão com caller.id (admin que está excluindo)
     await supabaseAdmin.from("audit_logs").insert({
       action: "USER_DELETED_PERMANENTLY",
-      user_id: caller.id,
+      user_id: caller.id, // Admin que executou, não o usuário deletado
       record_id: resolvedUserId,
       table_name: "auth.users",
       old_data: { email: resolvedEmail, deleted_at: new Date().toISOString() },
