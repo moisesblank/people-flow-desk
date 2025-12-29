@@ -1,7 +1,7 @@
 // ============================================
-// 🛡️ DOGMA XI v3.0: Device Guard (BLOCO 1 FIX)
-// Verifica limite de dispositivos no login
-// Usa registro SERVER-SIDE (hash gerado no backend)
+// 🛡️ DOGMA XI v3.1: Device Guard (BLOCO 3 COMPLIANT)
+// Agora é FALLBACK VISUAL apenas
+// O vínculo real acontece ANTES da sessão no Auth.tsx
 // ============================================
 
 import { useEffect, useState, ReactNode, useCallback } from 'react';
@@ -13,9 +13,18 @@ interface DeviceGuardProps {
   children: ReactNode;
 }
 
+/**
+ * 🔐 BLOCO 3: DeviceGuard agora é apenas FALLBACK VISUAL
+ * 
+ * O vínculo real usuário×dispositivo acontece ANTES da sessão ser criada,
+ * diretamente no fluxo de login (Auth.tsx).
+ * 
+ * Este componente serve apenas para:
+ * 1. Mostrar modal de gerenciamento caso algo escape (edge case)
+ * 2. Atualizar last_seen_at do dispositivo
+ */
 export function DeviceGuard({ children }: DeviceGuardProps) {
   const { user } = useAuth();
-  // 🔐 BLOCO 1 FIX: Usar hook server-side
   const { 
     isChecking, 
     deviceLimitExceeded, 
@@ -30,16 +39,19 @@ export function DeviceGuard({ children }: DeviceGuardProps) {
   const [hasChecked, setHasChecked] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
-  // Verificar dispositivo quando usuário loga
+  // Verificar dispositivo quando usuário loga (FALLBACK apenas)
   useEffect(() => {
     if (user && !hasChecked) {
-      console.log('[DeviceGuard] 🔐 Iniciando verificação de dispositivo...');
+      // 🔐 BLOCO 3: Apenas atualiza last_seen, não bloqueia
+      // O bloqueio real já aconteceu no Auth.tsx
+      console.log('[DeviceGuard] 🔐 Verificação de fallback...');
       
       checkAndRegisterDevice().then((result) => {
         setHasChecked(true);
         
         if (!result.success && result.error === 'DEVICE_LIMIT_EXCEEDED') {
-          console.log('[DeviceGuard] ⚠️ Abrindo modal de limite');
+          // Isso só deve acontecer se o login não passou pelo fluxo correto
+          console.warn('[DeviceGuard] ⚠️ Limite excedido (edge case) - mostrando modal');
           setIsModalOpen(true);
         }
       });
