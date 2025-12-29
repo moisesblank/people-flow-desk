@@ -98,17 +98,31 @@ export function useAlunosData(refetchPaginated: () => void): UseAlunosDataReturn
     }
   }, [refetchPaginated]);
 
+  // ============================================
+  // DELETE - RLS garante que só ADMIN/OWNER podem excluir
+  // ============================================
   const deleteStudent = useCallback(async (id: string): Promise<boolean> => {
     setIsLoading(true);
     try {
       const { error } = await supabase.from("alunos").delete().eq("id", id);
-      if (error) throw error;
-      toast.success("Aluno removido!");
+      if (error) {
+        // RLS bloqueou - usuário não tem permissão
+        if (error.code === '42501' || error.message.includes('policy')) {
+          toast.error("Sem permissão para excluir", {
+            description: "Apenas Admin ou Owner podem excluir alunos"
+          });
+          return false;
+        }
+        throw error;
+      }
+      toast.success("Aluno removido com sucesso!");
       refetchPaginated();
       return true;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting student:", error);
-      toast.error("Erro ao remover");
+      toast.error("Erro ao remover aluno", {
+        description: error.message || "Tente novamente"
+      });
       return false;
     } finally {
       setIsLoading(false);

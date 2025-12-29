@@ -560,15 +560,37 @@ export default function Alunos() {
     }
   };
 
+  // ============================================
+  // DELETE - APENAS ADMIN OU OWNER (CONSTITUIÇÃO v10.x)
+  // ============================================
   const handleDelete = async (id: string) => {
+    // Validação de permissão no frontend (backup - RLS é a fonte de verdade)
+    if (!isAdminOrOwner) {
+      toast.error("Sem permissão", {
+        description: "Apenas Admin ou Owner podem excluir alunos"
+      });
+      return;
+    }
+    
     try {
       const { error } = await supabase.from("alunos").delete().eq("id", id);
-      if (error) throw error;
-      toast.success("Aluno removido!");
+      if (error) {
+        // RLS bloqueou - usuário não tem permissão
+        if (error.code === '42501' || error.message.includes('policy')) {
+          toast.error("Sem permissão para excluir", {
+            description: "Apenas Admin ou Owner podem excluir alunos"
+          });
+          return;
+        }
+        throw error;
+      }
+      toast.success("Aluno removido com sucesso!");
       refetch();
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error deleting student:", error);
-      toast.error("Erro ao remover");
+      toast.error("Erro ao remover aluno", {
+        description: error.message || "Tente novamente"
+      });
     }
   };
 
@@ -1096,9 +1118,18 @@ export default function Alunos() {
                             <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); openModal(student); }}>
                               <Edit2 className="h-4 w-4 text-blue-400" />
                             </Button>
-                            <Button variant="ghost" size="icon" onClick={(e) => { e.stopPropagation(); handleDelete(student.id); }} className="text-red-400 hover:text-red-300">
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
+                            {/* Botão DELETE - APENAS ADMIN ou OWNER */}
+                            {isAdminOrOwner && (
+                              <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                onClick={(e) => { e.stopPropagation(); handleDelete(student.id); }} 
+                                className="text-red-400 hover:text-red-300"
+                                title="Excluir aluno (Admin/Owner)"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
