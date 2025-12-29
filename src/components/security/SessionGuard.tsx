@@ -11,7 +11,10 @@ import { toast } from 'sonner';
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
 const SESSION_CHECK_INTERVAL = 30000; // 30s (DOGMA I)
-const SESSION_BOOTSTRAP_GRACE_MS = 6000; // tempo para o login criar o token
+// ⚠️ Login pode demorar (Turnstile + device binding + 2FA). Se o guard cortar cedo, inverte o resultado.
+// Regra: em /auth damos uma janela maior para o Auth.tsx registrar o token antes do fail-closed.
+const SESSION_BOOTSTRAP_GRACE_MS_DEFAULT = 6000;
+const SESSION_BOOTSTRAP_GRACE_MS_AUTH = 20000;
 
 interface SessionGuardProps {
   children: React.ReactNode;
@@ -121,6 +124,10 @@ export function SessionGuard({ children }: SessionGuardProps) {
     let bootstrapTimeoutId: number | undefined;
 
     // 1) Grace period para o Auth.tsx criar o token
+    const graceMs = window.location.pathname.startsWith('/auth')
+      ? SESSION_BOOTSTRAP_GRACE_MS_AUTH
+      : SESSION_BOOTSTRAP_GRACE_MS_DEFAULT;
+
     bootstrapTimeoutId = window.setTimeout(async () => {
       const token = localStorage.getItem(SESSION_TOKEN_KEY);
       if (!token) {
@@ -134,7 +141,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       intervalId = window.setInterval(() => {
         validateSession();
       }, SESSION_CHECK_INTERVAL);
-    }, SESSION_BOOTSTRAP_GRACE_MS);
+    }, graceMs);
 
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
