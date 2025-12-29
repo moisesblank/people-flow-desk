@@ -218,15 +218,32 @@ serve(async (req) => {
       }
     }
 
+    // Se existir profile solto (ex: ban flag), remover explicitamente
+    // (profiles nem sempre está com FK/cascade no banco)
+    try {
+      await supabaseAdmin.from("profiles").delete().eq("id", resolvedUserId);
+    } catch (e) {
+      console.warn("[admin-delete-user] ⚠️ Erro ao remover profiles:", e);
+    }
+
     // ============================================
-    // PASSO 5: Limpar TODAS as tabelas com FK para auth.users
+    // PASSO 5: Remover/neutralizar referências a auth.users
     // ============================================
-    console.log("[admin-delete-user] 📝 Limpando tabelas com FK para auth.users...");
-    
-    // Tabelas com FK direta para auth.users (ordem importa!)
-    const fkTables = [
-      "audit_logs",
-      "activity_log",
+    console.log("[admin-delete-user] 📝 Neutralizando FKs para auth.users...");
+
+    // Logs/histórico: manter registro, mas soltar o vínculo com auth.users
+    const setNullRefs = ["audit_logs", "activity_log", "affiliates"] as const;
+    for (const table of setNullRefs) {
+      try {
+        await supabaseAdmin.from(table).update({ user_id: null }).eq("user_id", resolvedUserId);
+        console.log(`[admin-delete-user] ✅ user_id NULL em: ${table}`);
+      } catch (e) {
+        console.warn(`[admin-delete-user] ⚠️ Erro ao NULL em ${table}:`, e);
+      }
+    }
+
+    // Demais tabelas: deletar por user_id (onde o histórico não precisa ficar)
+    const deleteRefs = [
       "user_sessions",
       "notifications",
       "book_chat_messages",
@@ -243,12 +260,12 @@ serve(async (req) => {
       "enrollment",
     ];
 
-    for (const table of fkTables) {
+    for (const table of deleteRefs) {
       try {
         await supabaseAdmin.from(table).delete().eq("user_id", resolvedUserId);
-        console.log(`[admin-delete-user] ✅ Limpo: ${table}`);
+        console.log(`[admin-delete-user] ✅ Deletado: ${table}`);
       } catch (e) {
-        console.warn(`[admin-delete-user] ⚠️ Erro ao limpar ${table}:`, e);
+        console.warn(`[admin-delete-user] ⚠️ Erro ao deletar ${table}:`, e);
       }
     }
 
