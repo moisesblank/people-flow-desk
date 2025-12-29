@@ -7776,12 +7776,18 @@ export type Database = {
           level: number | null
           magic_password_created_at: string | null
           nome: string
+          onboarding_completed: boolean | null
+          onboarding_completed_at: string | null
+          onboarding_started_at: string | null
           password_change_required: boolean | null
           password_changed_at: string | null
           phone: string | null
+          platform_steps_completed: boolean | null
           preferences: Json | null
           streak_days: number | null
           study_preferences: Json | null
+          trusted_device_registered: boolean | null
+          ui_theme_selected: boolean | null
           updated_at: string | null
           xp_total: number | null
         }
@@ -7802,12 +7808,18 @@ export type Database = {
           level?: number | null
           magic_password_created_at?: string | null
           nome: string
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
           password_change_required?: boolean | null
           password_changed_at?: string | null
           phone?: string | null
+          platform_steps_completed?: boolean | null
           preferences?: Json | null
           streak_days?: number | null
           study_preferences?: Json | null
+          trusted_device_registered?: boolean | null
+          ui_theme_selected?: boolean | null
           updated_at?: string | null
           xp_total?: number | null
         }
@@ -7828,12 +7840,18 @@ export type Database = {
           level?: number | null
           magic_password_created_at?: string | null
           nome?: string
+          onboarding_completed?: boolean | null
+          onboarding_completed_at?: string | null
+          onboarding_started_at?: string | null
           password_change_required?: boolean | null
           password_changed_at?: string | null
           phone?: string | null
+          platform_steps_completed?: boolean | null
           preferences?: Json | null
           streak_days?: number | null
           study_preferences?: Json | null
+          trusted_device_registered?: boolean | null
+          ui_theme_selected?: boolean | null
           updated_at?: string | null
           xp_total?: number | null
         }
