@@ -10,7 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
-const SESSION_CHECK_INTERVAL = 5 * 60 * 1000; // 5 minutos
+// REMOVIDO: Validação periódica - agora usa apenas broadcast Realtime quando admin exclui
 
 interface SessionGuardProps {
   children: React.ReactNode;
@@ -18,7 +18,6 @@ interface SessionGuardProps {
 
 export function SessionGuard({ children }: SessionGuardProps) {
   const { user, signOut } = useAuth();
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const isValidatingRef = useRef(false);
 
   /**
@@ -113,39 +112,9 @@ export function SessionGuard({ children }: SessionGuardProps) {
     }
   }, [user, forceLogoutWithCleanup]);
 
-  // Iniciar verificação periódica de sessão
-  useEffect(() => {
-    if (!user) {
-      // Limpar intervalo quando usuário desloga
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-        checkIntervalRef.current = null;
-      }
-      return;
-    }
-
-    // Verificação periódica (DOGMA I) + PATCH-011: jitter anti-herd (0-30s)
-    const jitter = Math.floor(Math.random() * 30000);
-    checkIntervalRef.current = setInterval(() => {
-      validateSession();
-    }, SESSION_CHECK_INTERVAL + jitter);
-
-    // Verificar ao voltar para a aba
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        validateSession();
-      }
-    };
-    
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
-  }, [user, validateSession]);
+  // REMOVIDO: Validação periódica
+  // Agora usa APENAS broadcast Realtime quando admin exclui usuário
+  // Isso é mais eficiente: 0 queries periódicas, logout instantâneo via broadcast
 
   // 🛡️ BLOCO 3: Listener para broadcasts de lockdown/epoch
   useEffect(() => {
