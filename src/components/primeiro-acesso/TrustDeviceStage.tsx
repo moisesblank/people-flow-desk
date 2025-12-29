@@ -1,6 +1,7 @@
 // ============================================
 // ETAPA 4: CONFIANÇA NO DISPOSITIVO
 // Modelo Facebook: confiar ou sempre confirmar
+// Limite: Máximo 3 dispositivos confiáveis
 // ============================================
 
 import { useState, useEffect } from "react";
@@ -11,8 +12,8 @@ import {
   ShieldQuestion,
   Monitor,
   Tablet,
-  Chrome,
-  Globe
+  Globe,
+  AlertTriangle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
@@ -27,20 +28,53 @@ interface TrustDeviceStageProps {
 interface DeviceInfo {
   browser: string;
   os: string;
-  deviceType: string;
+  deviceType: 'desktop' | 'tablet' | 'mobile';
   fingerprint: string;
 }
 
+interface TrustedDevice {
+  id: string;
+  device_name: string | null;
+  device_type: string | null;
+  last_seen_at: string | null;
+}
+
+const MAX_TRUSTED_DEVICES = 3;
+
+// Exemplos visuais de dispositivos
+const DEVICE_EXAMPLES = [
+  { 
+    type: 'desktop', 
+    icon: Monitor, 
+    label: 'Computador',
+    description: 'Desktop ou Notebook'
+  },
+  { 
+    type: 'tablet', 
+    icon: Tablet, 
+    label: 'Tablet',
+    description: 'iPad ou Android Tablet'
+  },
+  { 
+    type: 'mobile', 
+    icon: Smartphone, 
+    label: 'Celular',
+    description: 'iPhone ou Android'
+  },
+];
+
 export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) {
   const [deviceInfo, setDeviceInfo] = useState<DeviceInfo | null>(null);
+  const [trustedDevices, setTrustedDevices] = useState<TrustedDevice[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedOption, setSelectedOption] = useState<'trust' | 'always_confirm' | null>(null);
 
-  // Coletar informações do dispositivo
+  // Coletar informações do dispositivo e dispositivos já confiáveis
   useEffect(() => {
-    const collectDevice = async () => {
+    const initialize = async () => {
       try {
+        // 1. Coletar fingerprint do dispositivo atual
         const fp = await collectEnhancedFingerprint();
         
         // Detectar browser
@@ -61,9 +95,11 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
         else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
 
         // Detectar tipo
-        let deviceType = 'desktop';
-        if (/Mobi|Android/i.test(ua)) {
-          deviceType = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+        let deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop';
+        if (/iPad|Tablet/i.test(ua)) {
+          deviceType = 'tablet';
+        } else if (/Mobi|Android/i.test(ua) && !/iPad|Tablet/i.test(ua)) {
+          deviceType = 'mobile';
         }
 
         setDeviceInfo({
@@ -72,6 +108,19 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
           deviceType,
           fingerprint: fp.hash,
         });
+
+        // 2. Buscar dispositivos já confiáveis
+        const { data: devices, error } = await supabase
+          .from('user_devices')
+          .select('id, device_name, device_type, last_seen_at')
+          .eq('user_id', userId)
+          .eq('is_trusted', true)
+          .order('last_seen_at', { ascending: false });
+
+        if (!error && devices) {
+          setTrustedDevices(devices);
+        }
+
       } catch (err) {
         console.error('[TrustDevice] Erro ao coletar:', err);
         setDeviceInfo({
@@ -85,8 +134,8 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
       }
     };
 
-    collectDevice();
-  }, []);
+    initialize();
+  }, [userId]);
 
   const handleConfirm = async () => {
     if (!selectedOption || !deviceInfo) return;
@@ -95,6 +144,15 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
 
     try {
       if (selectedOption === 'trust') {
+        // Verificar limite de dispositivos
+        if (trustedDevices.length >= MAX_TRUSTED_DEVICES) {
+          toast.error(`Limite de ${MAX_TRUSTED_DEVICES} dispositivos atingido`, {
+            description: "Remova um dispositivo antigo nas configurações para adicionar este.",
+          });
+          setIsSubmitting(false);
+          return;
+        }
+
         // Registrar dispositivo como confiável
         const { error } = await supabase
           .from('user_devices')
@@ -104,14 +162,13 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
             device_name: `${deviceInfo.browser} no ${deviceInfo.os}`,
             device_type: deviceInfo.deviceType,
             is_trusted: true,
-            last_active: new Date().toISOString(),
+            last_seen_at: new Date().toISOString(),
           }, {
             onConflict: 'user_id,device_fingerprint',
           });
 
         if (error) {
           console.error('[TrustDevice] Erro ao salvar dispositivo:', error);
-          // Não falha, apenas loga
         }
 
         // Salvar cache local de confiança
@@ -156,11 +213,15 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
     }
   };
 
-  const DeviceIcon = deviceInfo?.deviceType === 'mobile' 
+  const currentDeviceIcon = deviceInfo?.deviceType === 'mobile' 
     ? Smartphone 
     : deviceInfo?.deviceType === 'tablet' 
     ? Tablet 
     : Monitor;
+
+  const CurrentDeviceIcon = currentDeviceIcon;
+  const devicesRemaining = MAX_TRUSTED_DEVICES - trustedDevices.length;
+  const canTrustMore = devicesRemaining > 0;
 
   if (isLoading) {
     return (
@@ -193,11 +254,48 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
         </p>
       </div>
 
-      {/* Device info */}
-      <div className="bg-card border border-border rounded-2xl p-6 mb-8">
+      {/* Exemplos de tipos de dispositivos */}
+      <div className="mb-6">
+        <p className="text-sm font-medium text-muted-foreground mb-3">Tipos de dispositivos suportados:</p>
+        <div className="grid grid-cols-3 gap-3">
+          {DEVICE_EXAMPLES.map((example) => {
+            const ExampleIcon = example.icon;
+            const isCurrentType = deviceInfo?.deviceType === example.type;
+            
+            return (
+              <div 
+                key={example.type}
+                className={`text-center p-3 rounded-xl border-2 transition-all ${
+                  isCurrentType 
+                    ? 'border-primary bg-primary/5' 
+                    : 'border-border bg-card'
+                }`}
+              >
+                <ExampleIcon className={`w-8 h-8 mx-auto mb-2 ${
+                  isCurrentType ? 'text-primary' : 'text-muted-foreground'
+                }`} />
+                <p className={`text-sm font-medium ${
+                  isCurrentType ? 'text-primary' : 'text-foreground'
+                }`}>
+                  {example.label}
+                </p>
+                <p className="text-xs text-muted-foreground">{example.description}</p>
+                {isCurrentType && (
+                  <span className="inline-block mt-1 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                    Atual
+                  </span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Device info atual */}
+      <div className="bg-card border border-border rounded-2xl p-6 mb-6">
         <div className="flex items-center gap-4">
           <div className="w-16 h-16 rounded-xl bg-primary/10 flex items-center justify-center">
-            <DeviceIcon className="w-8 h-8 text-primary" />
+            <CurrentDeviceIcon className="w-8 h-8 text-primary" />
           </div>
           <div>
             <h3 className="font-semibold text-foreground">
@@ -205,26 +303,74 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
             </h3>
             <p className="text-sm text-muted-foreground flex items-center gap-1">
               <Globe className="w-4 h-4" />
-              Você também pode gerenciar dispositivos confiáveis nas configurações de segurança.
+              Dispositivo detectado automaticamente
             </p>
           </div>
         </div>
+      </div>
+
+      {/* Limite de dispositivos */}
+      <div className={`rounded-xl p-4 mb-6 ${
+        canTrustMore 
+          ? 'bg-muted/50 border border-border' 
+          : 'bg-destructive/10 border border-destructive/30'
+      }`}>
+        <div className="flex items-center gap-3">
+          {!canTrustMore && <AlertTriangle className="w-5 h-5 text-destructive shrink-0" />}
+          <div>
+            <p className={`text-sm font-medium ${!canTrustMore ? 'text-destructive' : 'text-foreground'}`}>
+              {trustedDevices.length} de {MAX_TRUSTED_DEVICES} dispositivos confiáveis
+            </p>
+            <p className="text-xs text-muted-foreground">
+              {canTrustMore 
+                ? `Você pode adicionar mais ${devicesRemaining} dispositivo${devicesRemaining > 1 ? 's' : ''}`
+                : 'Limite atingido. Remova um dispositivo nas configurações.'
+              }
+            </p>
+          </div>
+        </div>
+        
+        {/* Lista de dispositivos existentes */}
+        {trustedDevices.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-border">
+            <p className="text-xs text-muted-foreground mb-2">Dispositivos já confiáveis:</p>
+            <div className="space-y-1">
+              {trustedDevices.map((device) => (
+                <div key={device.id} className="text-xs text-muted-foreground flex items-center gap-2">
+                  {device.device_type === 'mobile' ? (
+                    <Smartphone className="w-3 h-3" />
+                  ) : device.device_type === 'tablet' ? (
+                    <Tablet className="w-3 h-3" />
+                  ) : (
+                    <Monitor className="w-3 h-3" />
+                  )}
+                  {device.device_name}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Options */}
       <div className="space-y-4 mb-8">
         <motion.button
           onClick={() => setSelectedOption('trust')}
-          whileHover={{ scale: 1.01 }}
-          whileTap={{ scale: 0.99 }}
+          disabled={!canTrustMore}
+          whileHover={canTrustMore ? { scale: 1.01 } : {}}
+          whileTap={canTrustMore ? { scale: 0.99 } : {}}
           className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
-            selectedOption === 'trust'
+            !canTrustMore
+              ? 'border-border bg-muted/50 opacity-50 cursor-not-allowed'
+              : selectedOption === 'trust'
               ? 'border-primary bg-primary text-primary-foreground'
               : 'border-border bg-card hover:border-primary/50'
           }`}
         >
           <div className="flex items-center gap-3">
-            <ShieldCheck className={`w-6 h-6 ${selectedOption === 'trust' ? '' : 'text-primary'}`} />
+            <ShieldCheck className={`w-6 h-6 ${
+              selectedOption === 'trust' ? '' : canTrustMore ? 'text-primary' : 'text-muted-foreground'
+            }`} />
             <span className="font-medium">Confiar neste dispositivo</span>
           </div>
         </motion.button>
@@ -261,6 +407,11 @@ export function TrustDeviceStage({ userId, onComplete }: TrustDeviceStageProps) 
           'Continuar'
         )}
       </Button>
+
+      {/* Note */}
+      <p className="text-xs text-muted-foreground text-center mt-4">
+        Você pode gerenciar dispositivos confiáveis nas configurações de segurança
+      </p>
     </div>
   );
 }
