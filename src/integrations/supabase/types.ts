@@ -12217,6 +12217,7 @@ export type Database = {
           is_trusted: boolean | null
           last_seen_at: string | null
           os: string | null
+          revoked_reason: string | null
           user_id: string
         }
         Insert: {
@@ -12233,6 +12234,7 @@ export type Database = {
           is_trusted?: boolean | null
           last_seen_at?: string | null
           os?: string | null
+          revoked_reason?: string | null
           user_id: string
         }
         Update: {
@@ -12249,6 +12251,7 @@ export type Database = {
           is_trusted?: boolean | null
           last_seen_at?: string | null
           os?: string | null
+          revoked_reason?: string | null
           user_id?: string
         }
         Relationships: []

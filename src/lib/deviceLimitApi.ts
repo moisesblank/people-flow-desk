@@ -211,29 +211,30 @@ export async function revokeAndRegister(deviceIdToRevoke: string): Promise<Regis
 /**
  * Security Lockdown - Revogar TUDO
  */
-export async function triggerSecurityLockdown(): Promise<{ success: boolean; error?: string }> {
+export async function triggerSecurityLockdown(): Promise<{ success: boolean; error?: string; devicesRevoked?: number; sessionsRevoked?: number }> {
   try {
     console.log('[DeviceLimitAPI] 🚨 SECURITY LOCKDOWN - Revogando tudo...');
 
-    // Primeiro, listar todos os dispositivos
-    const listResult = await listUserDevices();
-    if (!listResult.success) {
-      return { success: false, error: 'Falha ao listar dispositivos' };
-    }
+    // 🔐 BLOCO 2: Chamar backend para lockdown atômico
+    const { data, error } = await supabase.functions.invoke('revoke-device', {
+      body: { action: 'security_lockdown' },
+    });
 
-    // Revogar cada um
-    for (const device of listResult.devices) {
-      await revokeUserDevice(device.device_id, 'security_lockdown');
-    }
-
-    // Revogar todas as sessões também
-    const { error } = await supabase.rpc('invalidate_session');
     if (error) {
-      console.error('[DeviceLimitAPI] Erro ao invalidar sessões:', error);
+      console.error('[DeviceLimitAPI] Erro no lockdown:', error);
+      return { success: false, error: error.message };
     }
 
-    console.log('[DeviceLimitAPI] ✅ Security Lockdown completo');
-    return { success: true };
+    if (!data.success) {
+      return { success: false, error: data.error };
+    }
+
+    console.log('[DeviceLimitAPI] ✅ Security Lockdown completo:', data);
+    return { 
+      success: true, 
+      devicesRevoked: data.devicesRevoked,
+      sessionsRevoked: data.sessionsRevoked,
+    };
   } catch (err) {
     console.error('[DeviceLimitAPI] Erro no lockdown:', err);
     return { success: false, error: 'Erro ao executar lockdown' };
