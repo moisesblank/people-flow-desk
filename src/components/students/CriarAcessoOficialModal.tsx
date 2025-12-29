@@ -111,6 +111,8 @@ export function CriarAcessoOficialModal({
   onSuccess 
 }: CriarAcessoOficialModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showCustomExpires, setShowCustomExpires] = useState(false);
+  const [customExpiresValue, setCustomExpiresValue] = useState('');
 
   const form = useForm<CriarAcessoFormData>({
     resolver: zodResolver(criarAcessoSchema),
@@ -241,7 +243,8 @@ export function CriarAcessoOficialModal({
 
       // Reset form e fecha modal
       form.reset();
-      // Nada a limpar - sem estado de collapsible
+      setShowCustomExpires(false);
+      setCustomExpiresValue('');
       onOpenChange(false);
       
       // Callback de sucesso (para refetch/invalidate)
@@ -260,7 +263,8 @@ export function CriarAcessoOficialModal({
   const handleClose = () => {
     if (!isSubmitting) {
       form.reset();
-      // Nada a limpar - sem estado de collapsible
+      setShowCustomExpires(false);
+      setCustomExpiresValue('');
       onOpenChange(false);
     }
   };
@@ -378,28 +382,25 @@ export function CriarAcessoOficialModal({
                 control={form.control}
                 name="expires_days"
                 render={({ field }) => {
-                  const [showCustomInput, setShowCustomInput] = useState(false);
-                  const [customDays, setCustomDays] = useState('');
-                  
                   const handleSelectChange = (value: string) => {
                     if (value === 'custom') {
-                      setShowCustomInput(true);
-                      setCustomDays('');
+                      setShowCustomExpires(true);
+                      setCustomExpiresValue('');
                     } else {
-                      setShowCustomInput(false);
+                      setShowCustomExpires(false);
                       field.onChange(value === 'permanente' ? undefined : Number(value));
                     }
                   };
                   
                   const handleCustomDaysChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                     const value = e.target.value.replace(/\D/g, '');
-                    setCustomDays(value);
+                    setCustomExpiresValue(value);
                     if (value && Number(value) > 0) {
                       field.onChange(Number(value));
                     }
                   };
                   
-                  const currentValue = showCustomInput 
+                  const currentValue = showCustomExpires 
                     ? 'custom' 
                     : (field.value?.toString() || 'permanente');
                   
@@ -432,14 +433,14 @@ export function CriarAcessoOficialModal({
                         </Select>
                         
                         {/* Campo de dias personalizados */}
-                        {showCustomInput && (
+                        {showCustomExpires && (
                           <div className="flex items-center gap-2">
                             <Input
                               type="number"
                               min={1}
                               max={3650}
                               placeholder="Quantidade de dias"
-                              value={customDays}
+                              value={customExpiresValue}
                               onChange={handleCustomDaysChange}
                               className="border-amber-500/30 focus:border-amber-500"
                               disabled={isSubmitting}
