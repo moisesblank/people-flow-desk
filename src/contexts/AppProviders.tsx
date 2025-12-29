@@ -78,12 +78,18 @@ export function AppProviders({ children, queryClient }: AppProvidersProps) {
     // IMPORTANT:
     // - "Sistema" aqui é um TEMA SOBERANO (não segue o SO).
     // - Isolamento total: system | light | dark (sem herança automática).
+    // - "system" renomeado para "default" para evitar conflito com next-themes
     <ThemeProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme="default"
       enableSystem={false}
-      themes={["system", "light", "dark"]}
+      themes={["default", "light", "dark"]}
       storageKey="theme"
+      value={{
+        default: "system",
+        light: "light",
+        dark: "dark",
+      }}
     >
       <PerformanceProvider>
         <PerformanceStyles />

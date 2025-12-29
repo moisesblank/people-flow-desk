@@ -16,7 +16,7 @@ interface ThemeSelectionStageProps {
   onComplete: () => void;
 }
 
-type ThemeOption = 'light' | 'dark' | 'system';
+type ThemeOption = 'light' | 'dark' | 'default';
 
 const THEME_OPTIONS: Array<{
   id: ThemeOption;
@@ -40,11 +40,11 @@ const THEME_OPTIONS: Array<{
     preview: 'bg-gray-900 border-gray-700',
   },
   {
-    id: 'system',
-    label: 'Automático',
-    description: 'Segue a configuração do seu dispositivo automaticamente',
+    id: 'default',
+    label: 'Sistema',
+    description: 'Tema padrão da plataforma com identidade visual institucional',
     icon: Monitor,
-    preview: 'bg-gradient-to-r from-white to-gray-900 border-gray-400',
+    preview: 'bg-[#121212] border-red-900/50',
   },
 ];
 

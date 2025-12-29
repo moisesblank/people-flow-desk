@@ -16,6 +16,9 @@ import { useTheme } from "next-themes";
 export function ThemeToggle() {
   const { theme, setTheme } = useTheme();
 
+  // "default" mapeia para classe "system" no CSS
+  const isDefault = theme === "default";
+
   const getIcon = () => {
     if (theme === "light") return <Sun className="h-4 w-4" />;
     if (theme === "dark") return <Moon className="h-4 w-4" />;
@@ -40,10 +43,10 @@ export function ThemeToggle() {
           <span>Escuro</span>
           {theme === "dark" && <span className="ml-auto text-primary">✓</span>}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2 cursor-pointer">
+        <DropdownMenuItem onClick={() => setTheme("default")} className="gap-2 cursor-pointer">
           <Monitor className="h-4 w-4" />
           <span>Sistema</span>
-          {theme === "system" && <span className="ml-auto text-primary">✓</span>}
+          {isDefault && <span className="ml-auto text-primary">✓</span>}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

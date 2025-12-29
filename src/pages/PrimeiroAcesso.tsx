@@ -75,9 +75,11 @@ export default function PrimeiroAcesso() {
         // Aplicar tema salvo se existir
         if (data.preferences && typeof data.preferences === 'object') {
           const prefs = data.preferences as { theme?: string };
-          if (prefs.theme && ['light', 'dark', 'system'].includes(prefs.theme)) {
-            console.log('[PrimeiroAcesso] Aplicando tema salvo:', prefs.theme);
-            setTheme(prefs.theme);
+          if (prefs.theme && ['light', 'dark', 'system', 'default'].includes(prefs.theme)) {
+            // Mapear "system" legado para "default"
+            const mappedTheme = prefs.theme === 'system' ? 'default' : prefs.theme;
+            console.log('[PrimeiroAcesso] Aplicando tema salvo:', mappedTheme);
+            setTheme(mappedTheme);
           }
         }
 

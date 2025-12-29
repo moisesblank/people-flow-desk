@@ -36,11 +36,13 @@ export function useThemeInitializer() {
 
         if (data?.preferences && typeof data.preferences === 'object') {
           const prefs = data.preferences as { theme?: string };
-          if (prefs.theme && ['light', 'dark', 'system'].includes(prefs.theme)) {
+          if (prefs.theme && ['light', 'dark', 'system', 'default'].includes(prefs.theme)) {
+            // Mapear "system" legado para "default"
+            const mappedTheme = prefs.theme === 'system' ? 'default' : prefs.theme;
             // Só aplica se diferente do atual
-            if (prefs.theme !== theme) {
-              console.log('[ThemeInitializer] Aplicando tema salvo:', prefs.theme);
-              setTheme(prefs.theme);
+            if (mappedTheme !== theme) {
+              console.log('[ThemeInitializer] Aplicando tema salvo:', mappedTheme);
+              setTheme(mappedTheme);
             }
             hasInitialized.current = true;
           }
