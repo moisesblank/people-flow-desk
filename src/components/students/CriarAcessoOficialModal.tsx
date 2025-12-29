@@ -234,6 +234,38 @@ export function CriarAcessoOficialModal({
         throw new Error(errorMsg);
       }
 
+      // ============================================
+      // 🔁 PATCH P0 — GARANTIA DE tipo_produto (LIVROWEB / FÍSICO)
+      // Problema observado: acesso criado, mas tipo_produto fica NULL ⇒ contadores não atualizam.
+      // Estratégia: validar e, se necessário, corrigir via update pós-criação.
+      // ============================================
+      if ((data.role === 'beta' || data.role === 'beta_expira') && data.tipo_produto) {
+        try {
+          const { data: alunoRow, error: alunoFetchErr } = await supabase
+            .from('alunos')
+            .select('email, tipo_produto')
+            .eq('email', data.email)
+            .maybeSingle();
+
+          if (alunoFetchErr) {
+            console.warn('[CriarAcessoOficial] ⚠️ Falha ao conferir tipo_produto:', alunoFetchErr.message);
+          } else if (!alunoRow?.tipo_produto) {
+            const { error: alunoUpdateErr } = await supabase
+              .from('alunos')
+              .update({ tipo_produto: data.tipo_produto })
+              .eq('email', data.email);
+
+            if (alunoUpdateErr) {
+              console.warn('[CriarAcessoOficial] ⚠️ Falha ao aplicar tipo_produto:', alunoUpdateErr.message);
+            } else {
+              console.log('[CriarAcessoOficial] ✅ tipo_produto aplicado pós-criação:', data.tipo_produto);
+            }
+          }
+        } catch (e: any) {
+          console.warn('[CriarAcessoOficial] ⚠️ Exceção ao garantir tipo_produto:', e?.message || e);
+        }
+      }
+
       // Sucesso
       toast.success("✅ Acesso oficial criado!", {
         description: data.senha 
