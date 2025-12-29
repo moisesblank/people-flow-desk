@@ -18,33 +18,34 @@
 @layer base {
   :root {
     /* ============================================
-       TEMA SISTEMA - Spider-Man Original
-       Vermelho Vinho + Azul + Fundo Escuro Elegante
+       TEMA SISTEMA - Spider-Man Original (RESTAURADO)
+       Vermelho Vinho + Azul Escuro Noturno
+       REFERÊNCIA: Estado do dia anterior
        ============================================ */
     
-    /* Background & Surfaces - Azul-noite (bem diferente do .dark) */
-    --background: 225 35% 11%;
+    /* Background & Surfaces - Azul Noturno Profundo (7% lightness) */
+    --background: 230 40% 7%;
     --foreground: 210 40% 98%;
     
-    --card: 225 32% 14%;
+    --card: 230 35% 10%;
     --card-foreground: 210 40% 98%;
-    --card-hover: 225 32% 17%;
+    --card-hover: 230 35% 13%;
     
-    --popover: 225 32% 14%;
+    --popover: 230 35% 10%;
     --popover-foreground: 210 40% 98%;
     
-    /* Primary - Vermelho Vinho Intenso */
+    /* Primary - Vermelho Vinho */
     --primary: 350 80% 45%;
     --primary-foreground: 0 0% 100%;
     --primary-hover: 350 80% 40%;
     --primary-glow: 350 80% 55%;
     
-    /* Secondary - Azul Profundo */
-    --secondary: 225 60% 22%;
+    /* Secondary - Azul Escuro */
+    --secondary: 230 50% 18%;
     --secondary-foreground: 210 40% 98%;
     
-    --muted: 225 28% 18%;
-    --muted-foreground: 215 20% 70%;
+    --muted: 230 30% 14%;
+    --muted-foreground: 215 20% 65%;
     
     /* Accent - Azul Vibrante */
     --accent: 220 80% 55%;
@@ -62,8 +63,8 @@
     --info: 199 89% 48%;
     --info-foreground: 0 0% 100%;
     
-    --border: 225 25% 24%;
-    --input: 225 25% 24%;
+    --border: 230 30% 18%;
+    --input: 230 30% 18%;
     --ring: 350 80% 45%;
     --radius: 0.75rem;
     
@@ -71,9 +72,9 @@
     --status-active: 142 71% 45%;
     --status-vacation: 220 60% 50%;
     --status-away: 38 92% 50%;
-    --status-inactive: 225 15% 52%;
+    --status-inactive: 230 15% 50%;
     --status-online: 142 76% 36%;
-    --status-offline: 225 15% 46%;
+    --status-offline: 230 15% 42%;
     --status-recent: 158 64% 40%;
     
     /* Stats colors */
@@ -94,14 +95,14 @@
     --glow-cyan: 180 100% 45%;
     --glow-wine: 350 70% 50%;
     
-    /* Sidebar - Spider-Man Theme (Azul-noite) */
-    --sidebar-background: 225 40% 9%;
+    /* Sidebar - Azul Noturno Profundo */
+    --sidebar-background: 230 45% 5%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 350 80% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 60% 18%;
+    --sidebar-accent: 230 50% 15%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 225 25% 20%;
+    --sidebar-border: 230 30% 15%;
     --sidebar-ring: 350 80% 45%;
     
     /* Chart colors */
@@ -127,9 +128,9 @@
     /* AI Tutor specific */
     --ai-glow: 185 100% 50%;
     --ai-accent: 280 90% 60%;
-    --ai-surface: 220 25% 10%;
-    --ai-surface-hover: 220 25% 14%;
-    --ai-border: 220 25% 22%;
+    --ai-surface: 230 35% 10%;
+    --ai-surface-hover: 230 35% 14%;
+    --ai-border: 230 30% 20%;
     
     /* Holographic gradients */
     --gradient-holo: linear-gradient(135deg, hsl(185 100% 50% / 0.1), hsl(280 100% 60% / 0.1), hsl(320 100% 60% / 0.1));
