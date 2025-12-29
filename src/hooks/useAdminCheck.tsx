@@ -1,10 +1,14 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - ADMIN CHECK HOOK
+// MOISÉS MEDEIROS v10.0 - ADMIN CHECK HOOK
 // Verificação de Permissões Owner/Admin
+// 🎯 UNIFICADO: Owner por EMAIL (igual godModeStore)
 // MODO MASTER: Exclusivo para moisesblank@gmail.com
 // ============================================
 
 import { useAuth } from "@/hooks/useAuth";
+
+// 🎯 CONSTANTE ÚNICA - Igual ao godModeStore
+const OWNER_EMAIL = 'moisesblank@gmail.com';
 
 // P1-2 FIX: Sem 'employee' deprecated
 export type AppRole = "owner" | "admin" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade";
@@ -24,19 +28,24 @@ interface AdminCheckResult {
 }
 
 // ============================================
-// P0 FIX: Owner determinado APENAS por role (não por email)
-// Fonte da verdade: user_roles.role = 'owner'
+// 🎯 UNIFICADO: Owner determinado por EMAIL (igual godModeStore)
+// Isso garante que godModeStore e useAdminCheck usem a MESMA lógica
 // ============================================
 
 export function useAdminCheck(): AdminCheckResult {
-  // OTIMIZADO: Reutilizar role do useAuth ao invés de query duplicada
   const { user, role: authRole, isLoading: authLoading } = useAuth();
   const role = authRole as AppRole | null;
 
   const userEmail = user?.email || null;
   
-  // ✅ SEGURO: Verificação do OWNER apenas por role (não por email!)
-  const isOwner = role === "owner";
+  // 🎯 CRÍTICO: Owner verificado por EMAIL (igual godModeStore)
+  // Isso unifica a lógica com o store Zustand
+  const isOwnerByEmail = (userEmail || '').toLowerCase() === OWNER_EMAIL.toLowerCase();
+  const isOwnerByRole = role === "owner";
+  
+  // Owner = email OU role (email tem prioridade imediata)
+  const isOwner = isOwnerByEmail || isOwnerByRole;
+  
   const isAdmin = role === "admin";
   const isCoordinator = role === "coordenacao";
   const isAdminOrOwner = isOwner || isAdmin;
