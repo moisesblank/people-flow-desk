@@ -224,6 +224,28 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // ============================================
+    // PROTEÇÃO: x-internal-secret OBRIGATÓRIO
+    // ============================================
+    const internalSecret = req.headers.get("x-internal-secret");
+    const INTERNAL_SECRET = Deno.env.get("INTERNAL_SECRET");
+    
+    if (!INTERNAL_SECRET) {
+      console.error("[RD-GATEWAY] ❌ INTERNAL_SECRET não configurado no servidor");
+      return new Response(
+        JSON.stringify({ success: false, error: "Configuração de segurança ausente" }),
+        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+    
+    if (!internalSecret || internalSecret !== INTERNAL_SECRET) {
+      console.warn("[RD-GATEWAY] ❌ Chamada externa não autorizada");
+      return new Response(
+        JSON.stringify({ success: false, error: "Acesso não autorizado" }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL") ?? "",
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",

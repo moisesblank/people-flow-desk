@@ -57,11 +57,11 @@ function getCorsHeaders(req: Request): Record<string, string> {
 }
 
 // ============================================
-// RATE LIMITING + DEDUPE (ANTI-SPAM/DoS)
+// RATE LIMITING PERSISTENTE (DB) — ESCALA 5K+
 // ============================================
-const rateLimitCache = new Map<string, { count: number; resetAt: number; lastHash: string }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000;
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX = 50; // Video violations mais permissivo
+const RATE_LIMIT_ENDPOINT = 'video-violation-omega';
 
 async function hashForRateLimit(str: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -71,21 +71,63 @@ async function hashForRateLimit(str: string): Promise<string> {
   return hashArray.map(b => b.toString(16).padStart(2, "0")).join("").slice(0, 16);
 }
 
-function checkRateLimitAndDedupe(key: string, hash: string): { allowed: boolean; reason?: string } {
-  const now = Date.now();
-  const entry = rateLimitCache.get(key);
+async function checkPersistentRateLimitAndDedupe(
+  supabase: any,
+  clientId: string,
+  violationHash: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_SECONDS * 1000);
   
-  if (!entry || now > entry.resetAt) {
-    rateLimitCache.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS, lastHash: hash });
+  try {
+    // Buscar registro atual
+    const { data: existing } = await supabase
+      .from('api_rate_limits')
+      .select('request_count, window_start, metadata')
+      .eq('client_id', clientId)
+      .eq('endpoint', RATE_LIMIT_ENDPOINT)
+      .maybeSingle();
+    
+    // Se não existe ou janela expirou, criar/resetar
+    if (!existing || new Date(existing.window_start) < windowStart) {
+      await supabase
+        .from('api_rate_limits')
+        .upsert({
+          client_id: clientId,
+          endpoint: RATE_LIMIT_ENDPOINT,
+          request_count: 1,
+          window_start: now.toISOString(),
+          metadata: { last_hash: violationHash }
+        }, { onConflict: 'client_id,endpoint' });
+      return { allowed: true };
+    }
+    
+    // Dedupe: mesma violação em sequência
+    if (existing.metadata?.last_hash === violationHash) {
+      return { allowed: false, reason: 'DUPLICATE' };
+    }
+    
+    // Rate limit check
+    if (existing.request_count >= RATE_LIMIT_MAX) {
+      return { allowed: false, reason: 'RATE_LIMIT' };
+    }
+    
+    // Incrementar contador
+    await supabase
+      .from('api_rate_limits')
+      .update({ 
+        request_count: existing.request_count + 1,
+        metadata: { ...existing.metadata, last_hash: violationHash }
+      })
+      .eq('client_id', clientId)
+      .eq('endpoint', RATE_LIMIT_ENDPOINT);
+    
+    return { allowed: true };
+  } catch (err) {
+    console.error('[RATE LIMIT DB] Error:', err);
+    // Em caso de erro no DB, permite (fail-open para não bloquear UX)
     return { allowed: true };
   }
-  
-  if (entry.lastHash === hash) return { allowed: false, reason: 'DUPLICATE' };
-  if (entry.count >= RATE_LIMIT_MAX) return { allowed: false, reason: 'RATE_LIMIT' };
-  
-  entry.count++;
-  entry.lastHash = hash;
-  return { allowed: true };
 }
 
 // Roles completamente imunes — NUNCA sofrem ação punitiva
@@ -208,14 +250,19 @@ serve(async (req: Request) => {
       );
     }
 
+    // Cliente admin (criado antes do rate limit para usar no DB)
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
+      auth: { persistSession: false },
+    });
+
     // ============================================
-    // 1.5 RATE LIMIT + DEDUPE
+    // 1.5 RATE LIMIT + DEDUPE (PERSISTENTE NO DB)
     // ============================================
     const violationHash = await hashForRateLimit(`${session_token}|${violation_type}`);
-    const rateLimitResult = checkRateLimitAndDedupe(session_token.slice(0, 16), violationHash);
+    const rateLimitResult = await checkPersistentRateLimitAndDedupe(supabase, session_token.slice(0, 16), violationHash);
     
     if (!rateLimitResult.allowed) {
-      console.warn(`[RATE LIMIT] ${rateLimitResult.reason} for session: ${session_token.slice(0,8)}...`);
+      console.warn(`[RATE LIMIT DB] ${rateLimitResult.reason} for session: ${session_token.slice(0,8)}...`);
       return new Response(
         JSON.stringify({
           success: true,
@@ -226,10 +273,7 @@ serve(async (req: Request) => {
       );
     }
 
-    // Cliente admin
-    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_KEY, {
-      auth: { persistSession: false },
-    });
+    // (supabase já criado acima para rate limit)
 
     // ============================================
     // 2. BUSCAR SESSÃO
