@@ -76,7 +76,7 @@ export function useSingleSession() {
       if (data && data.length > 0) {
         const sessionInfo: SessionInfo = {
           session_token: data[0].session_token,
-          auth_epoch_at_login: data[0].auth_epoch_at_login,
+          auth_epoch_at_login: data[0].auth_epoch, // Mapped from RPC return
         };
         
         // Armazenar token localmente

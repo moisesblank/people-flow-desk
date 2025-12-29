@@ -15589,7 +15589,7 @@ export type Database = {
           _user_agent?: string
         }
         Returns: {
-          auth_epoch_at_login: number
+          auth_epoch: number
           session_token: string
         }[]
       }
