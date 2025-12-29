@@ -1,7 +1,7 @@
 // ============================================
 // 🛡️ EVANGELHO DA SEGURANÇA v2.0
-// COMPONENTE DE PROTEÇÃO DE SESSÃO ÚNICA
-// + NUCLEAR LOCKDOWN INTEGRATION
+// COMPONENTE DE PROTEÇÃO DE SESSÃO (OBSERVADOR PASSIVO)
+// Frontend NUNCA revoga sessões — só reage a eventos do backend
 // ============================================
 
 import { useEffect, useRef, useCallback } from 'react';
@@ -10,11 +10,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
-const SESSION_CHECK_INTERVAL = 30000; // 30s (DOGMA I)
-// ⚠️ Login pode demorar (Turnstile + device binding + 2FA). Se o guard cortar cedo, inverte o resultado.
-// Regra: em /auth damos uma janela maior para o Auth.tsx registrar o token antes do fail-closed.
-const SESSION_BOOTSTRAP_GRACE_MS_DEFAULT = 6000;
-const SESSION_BOOTSTRAP_GRACE_MS_AUTH = 20000;
+const SESSION_CHECK_INTERVAL = 30000; // 30s
 
 interface SessionGuardProps {
   children: React.ReactNode;
@@ -25,10 +21,10 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const isValidatingRef = useRef(false);
 
   /**
-   * Limpa TUDO e força logout (BLOCO 3: frontend_regras)
+   * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
    */
-  const forceLogoutWithCleanup = useCallback(async (reason: string) => {
-    console.error(`[SessionGuard] 🔴 Forçando logout: ${reason}`);
+  const handleBackendRevocation = useCallback(async (reason: string) => {
+    console.error(`[SessionGuard] 🔴 Backend confirmou revogação: ${reason}`);
 
     // Limpar TUDO
     const keysToRemove = [
@@ -50,35 +46,37 @@ export function SessionGuard({ children }: SessionGuardProps) {
   }, [signOut]);
 
   /**
-   * Validar sessão usando EPOCH
+   * Validar sessão consultando o BACKEND — nunca revoga por timer
    */
   const validateSession = useCallback(async (): Promise<boolean> => {
     if (!user || isValidatingRef.current) return true;
 
+    const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
+    
+    // ✅ SEM TOKEN = ainda não foi criado, NÃO derrubar
+    // O backend é a fonte da verdade. Esperar o token aparecer.
+    if (!storedToken) {
+      console.log('[SessionGuard] Token ainda não existe, aguardando...');
+      return true; // NÃO fazer logout
+    }
+
     isValidatingRef.current = true;
 
     try {
-      const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
-
-      // ✅ FAIL-CLOSED (com grace): usuário autenticado sem token de sessão de segurança = inválido
-      if (!storedToken) {
-        isValidatingRef.current = false;
-        return false;
-      }
-
       const { data, error } = await supabase.rpc('validate_session_epoch', {
         p_session_token: storedToken,
       });
 
       if (error) {
-        console.error('[SessionGuard] Erro na validação:', error);
+        console.error('[SessionGuard] Erro na validação (rede):', error);
         isValidatingRef.current = false;
-        // Não derrubar por erro de rede (mantém estabilidade)
+        // Erro de rede NÃO derruba sessão — mantém estabilidade
         return true;
       }
 
       const result = data?.[0];
 
+      // ✅ SOMENTE fazer logout se BACKEND confirmar sessão inválida
       if (!result?.is_valid) {
         const reason = result?.reason || 'SESSION_INVALID';
 
@@ -88,20 +86,26 @@ export function SessionGuard({ children }: SessionGuardProps) {
             message = 'Sistema em manutenção. Por favor, aguarde.';
             break;
           case 'AUTH_EPOCH_REVOKED':
-            message = 'Sua sessão foi invalidada por medida de segurança. Faça login novamente.';
+            message = 'Sua sessão foi invalidada por medida de segurança.';
             break;
           case 'SESSION_NOT_FOUND':
-            message = 'Sessão não encontrada. Faça login novamente.';
+            message = 'Sessão não encontrada no servidor.';
             break;
           case 'SESSION_EXPIRED':
-            message = 'Sessão expirada. Faça login novamente.';
+            message = 'Sessão expirada no servidor.';
+            break;
+          case 'USER_DELETED':
+            message = 'Sua conta foi removida.';
+            break;
+          case 'USER_DISABLED':
+            message = 'Sua conta foi desativada.';
             break;
           default:
             break;
         }
 
-        console.warn(`[SessionGuard] 🔴 ${reason}: ${message}`);
-        await forceLogoutWithCleanup(message);
+        console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}`);
+        await handleBackendRevocation(message);
 
         isValidatingRef.current = false;
         return false;
@@ -112,37 +116,21 @@ export function SessionGuard({ children }: SessionGuardProps) {
     } catch (err) {
       console.error('[SessionGuard] Erro na validação:', err);
       isValidatingRef.current = false;
+      // Erro de exceção NÃO derruba sessão
       return true;
     }
-  }, [user, forceLogoutWithCleanup]);
+  }, [user, handleBackendRevocation]);
 
-  // ✅ DOGMA I: verificação periódica + validação ao retornar para a aba
+  // ✅ Verificação periódica + visibilidade — SEM timer de grace period
   useEffect(() => {
     if (!user) return;
 
-    let intervalId: number | undefined;
-    let bootstrapTimeoutId: number | undefined;
+    // Validação periódica a cada 30s (consulta backend)
+    const intervalId = window.setInterval(() => {
+      validateSession();
+    }, SESSION_CHECK_INTERVAL);
 
-    // 1) Grace period para o Auth.tsx criar o token
-    const graceMs = window.location.pathname.startsWith('/auth')
-      ? SESSION_BOOTSTRAP_GRACE_MS_AUTH
-      : SESSION_BOOTSTRAP_GRACE_MS_DEFAULT;
-
-    bootstrapTimeoutId = window.setTimeout(async () => {
-      const token = localStorage.getItem(SESSION_TOKEN_KEY);
-      if (!token) {
-        await forceLogoutWithCleanup('Falha ao inicializar sessão de segurança. Faça login novamente.');
-        return;
-      }
-      // valida imediatamente após bootstrap
-      await validateSession();
-
-      // 2) validação periódica
-      intervalId = window.setInterval(() => {
-        validateSession();
-      }, SESSION_CHECK_INTERVAL);
-    }, graceMs);
-
+    // Validar ao retornar para a aba
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         validateSession();
@@ -151,11 +139,10 @@ export function SessionGuard({ children }: SessionGuardProps) {
     document.addEventListener('visibilitychange', handleVisibilityChange);
 
     return () => {
-      if (bootstrapTimeoutId) window.clearTimeout(bootstrapTimeoutId);
-      if (intervalId) window.clearInterval(intervalId);
+      window.clearInterval(intervalId);
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [user, validateSession, forceLogoutWithCleanup]);
+  }, [user, validateSession]);
 
   // 🛡️ Broadcasts de lockdown/epoch/device-revoked/user-deleted
   useEffect(() => {
@@ -165,7 +152,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       .channel('session-guard-lockdown')
       .on('broadcast', { event: 'auth-lockdown' }, async () => {
         console.error('[SessionGuard] 📡 LOCKDOWN BROADCAST recebido!');
-        await forceLogoutWithCleanup('Sistema em manutenção de emergência.');
+        await handleBackendRevocation('Sistema em manutenção de emergência.');
       })
       .on('broadcast', { event: 'epoch-increment' }, async () => {
         console.error('[SessionGuard] 📡 EPOCH INCREMENT recebido!');
@@ -177,11 +164,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
       .channel(`user:${user.id}`)
       .on('broadcast', { event: 'device-revoked' }, async (payload) => {
         console.error('[SessionGuard] 📡 DEVICE REVOKED recebido!', payload);
-        await forceLogoutWithCleanup('Este dispositivo foi removido. Faça login novamente.');
+        await handleBackendRevocation('Este dispositivo foi removido.');
       })
       .on('broadcast', { event: 'user-deleted' }, async () => {
         console.error('[SessionGuard] 📡 USER DELETED recebido!');
-        await forceLogoutWithCleanup('Sua conta foi removida.');
+        await handleBackendRevocation('Sua conta foi removida.');
       })
       .subscribe();
 
@@ -189,7 +176,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       supabase.removeChannel(channel);
       supabase.removeChannel(userChannel);
     };
-  }, [user, forceLogoutWithCleanup, validateSession]);
+  }, [user, handleBackendRevocation, validateSession]);
 
   return <>{children}</>;
 }
