@@ -35,6 +35,9 @@ interface DeviceData {
   last_seen_at: string;
   deactivated_at: string | null;
   active_count: number;
+  // Novos campos v2
+  has_active_session: boolean;  // true se tem sessão ativa agora
+  is_owner: boolean;            // true se o dono é owner (ilimitado)
 }
 
 interface BlockedAttempt {
@@ -53,6 +56,7 @@ interface BlockedAttempt {
 interface DeviceStats {
   total_devices: number;
   active_devices: number;
+  sessions_active: number;  // Novo: sessões ativas agora
   total_users: number;
   users_at_limit: number;
   recent_attempts: number;
@@ -121,13 +125,21 @@ export function DeviceManagementPanel() {
     fetchStats();
     fetchBlockedAttempts();
 
-    // Realtime para dispositivos
+    // Realtime para dispositivos e sessões
     const deviceChannel = supabase
       .channel('device-management-updates')
       .on('postgres_changes', {
         event: '*',
         schema: 'public',
         table: 'user_devices'
+      }, () => {
+        fetchDevices();
+        fetchStats();
+      })
+      .on('postgres_changes', {
+        event: '*',
+        schema: 'public',
+        table: 'active_sessions'  // Novo: escutar sessões para atualizar "Conectado"
       }, () => {
         fetchDevices();
         fetchStats();
@@ -396,20 +408,28 @@ export function DeviceManagementPanel() {
                             {userData.email}
                           </CardTitle>
                           <CardDescription className="text-xs">
-                            {userData.devices.length} dispositivos • {userData.activeCount} ativos
+                            {userData.devices.length} dispositivos • {userData.activeCount} registrados
                           </CardDescription>
                         </div>
                       </div>
                       
                       <div className="flex items-center gap-2">
-                        {userData.activeCount >= 3 && (
+                        {/* Badge de limite - só para não-owners */}
+                        {!userData.devices[0]?.is_owner && userData.activeCount >= 3 && (
                           <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/30">
                             <AlertTriangle className="w-3 h-3 mr-1" />
                             No Limite
                           </Badge>
                         )}
+                        {/* Badge de owner ilimitado */}
+                        {userData.devices[0]?.is_owner && (
+                          <Badge variant="outline" className="bg-emerald-500/10 text-emerald-500 border-emerald-500/30">
+                            <Shield className="w-3 h-3 mr-1" />
+                            Ilimitado
+                          </Badge>
+                        )}
                         <Badge variant={userData.activeCount > 0 ? 'default' : 'secondary'}>
-                          {userData.activeCount}/{3}
+                          {userData.activeCount}/{userData.devices[0]?.is_owner ? '∞' : 3}
                         </Badge>
                       </div>
                     </div>
@@ -460,11 +480,20 @@ export function DeviceManagementPanel() {
                               </div>
                               
                               <div className="flex items-center gap-2">
+                                {/* Dispositivo ativo/registrado */}
                                 {device.is_active ? (
                                   <>
-                                    <Badge variant="default" className="bg-green-500/20 text-green-500">
-                                      Ativo
-                                    </Badge>
+                                    {/* Sessão conectada AGORA */}
+                                    {device.has_active_session ? (
+                                      <Badge variant="default" className="bg-emerald-500 text-white">
+                                        <Wifi className="w-3 h-3 mr-1" />
+                                        Conectado
+                                      </Badge>
+                                    ) : (
+                                      <Badge variant="outline" className="bg-green-500/10 text-green-500 border-green-500/30">
+                                        Registrado
+                                      </Badge>
+                                    )}
                                     <Button
                                       size="sm"
                                       variant="ghost"
@@ -478,7 +507,7 @@ export function DeviceManagementPanel() {
                                     </Button>
                                   </>
                                 ) : (
-                                  <Badge variant="secondary">Inativo</Badge>
+                                  <Badge variant="secondary">Desativado</Badge>
                                 )}
                               </div>
                             </div>
