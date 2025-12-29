@@ -22,18 +22,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/hooks/useAuth";
-import { useBetaAccess } from "@/hooks/useBetaAccess";
 
 export default function AreaGratuita() {
   const navigate = useNavigate();
   const { user } = useAuth();
-  const { hasAccess, isStaff, isFreeUser } = useBetaAccess();
-
-  // Se tem acesso BETA, redirecionar para dashboard
-  if (hasAccess && !isFreeUser) {
-    navigate("/dashboard");
-    return null;
-  }
+  // 🎯 CONSTITUIÇÃO v10.x: Área Gratuita é PÚBLICA - qualquer um pode acessar
+  // Removido redirect para dashboard - usuários Beta/Premium podem ver esta página também
 
   const freeContent = [
     {
