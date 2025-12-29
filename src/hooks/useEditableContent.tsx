@@ -1,12 +1,13 @@
 // ============================================
-// MOISÉS MEDEIROS v9.0 - EDITABLE CONTENT HOOK
+// MOISÉS MEDEIROS v10.0 - EDITABLE CONTENT HOOK
 // Sistema de Edição MODO MASTER (Ctrl+Shift+E)
 // Exclusivo para Owner: moisesblank@gmail.com
+// 🎯 REFATORADO: Agora usa godModeStore como ÚNICA fonte de verdade
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useAdminCheck } from "@/hooks/useAdminCheck";
+import { useGodMode } from "@/stores/godModeStore";
 import { toast } from "sonner";
 
 interface EditableContent {
@@ -43,31 +44,33 @@ interface UseEditableContentReturn {
 
 export function useEditableContent(pageKey: string): UseEditableContentReturn {
   const [content, setContent] = useState<Record<string, EditableContent>>({});
-  const [isLoading, setIsLoading] = useState(false); // Não bloquear renderização
-  const [isEditMode, setIsEditMode] = useState(false);
-  const { canEdit, isOwner, userEmail } = useAdminCheck();
+  const [isLoading, setIsLoading] = useState(false);
   
-  // Verificar se é realmente o owner (verificação dupla)
-  const isGodMode = isOwner && canEdit;
+  // 🎯 ÚNICA FONTE DE VERDADE: godModeStore (Zustand)
+  const { isOwner, isActive, toggle } = useGodMode();
+  
+  // isGodMode = owner verificado por email no store
+  const isGodMode = isOwner;
+  // isEditMode = estado global do Master Mode
+  const isEditMode = isActive;
+  // canEdit = mesma coisa (owner pode editar)
+  const canEdit = isOwner;
 
-  // Atalho secreto Ctrl+Shift+E para ativar MODO MASTER
+  // 🎯 Atalho Ctrl+Shift+E agora usa toggle() global
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
-      if (e.ctrlKey && e.shiftKey && e.key === "E" && isGodMode) {
+      if (e.ctrlKey && e.shiftKey && e.key === "E" && isOwner) {
         e.preventDefault();
-        toggleEditMode();
+        toggle(); // USA O TOGGLE GLOBAL!
       }
     }
     
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isGodMode]);
+  }, [isOwner, toggle]);
 
-  // Fetch content from database - VISÍVEL PARA TODOS (edições Master Mode públicas)
-  // A edição continua restrita ao Owner via isGodMode checks em updateValue, uploadImage, etc.
+  // Fetch content from database - VISÍVEL PARA TODOS
   useEffect(() => {
-    // Carregar conteúdo editável para TODOS os usuários verem as edições do Owner
-    
     async function fetchContent() {
       setIsLoading(true);
       try {
@@ -91,30 +94,18 @@ export function useEditableContent(pageKey: string): UseEditableContentReturn {
     }
 
     fetchContent();
-  }, [pageKey, isGodMode]);
+  }, [pageKey]);
 
+  // 🎯 toggleEditMode agora chama o toggle() global
   const toggleEditMode = useCallback(() => {
-    if (isGodMode) {
-      setIsEditMode((prev) => {
-        const newMode = !prev;
-        if (newMode) {
-          toast.info("🎮 MODO MASTER ATIVADO", {
-            description: "Clique em qualquer texto/imagem para editar. Ctrl+Shift+E para sair.",
-            duration: 5000,
-          });
-        } else {
-          toast.success("MODO MASTER desativado", {
-            description: "Alterações salvas automaticamente",
-          });
-        }
-        return newMode;
-      });
+    if (isOwner) {
+      toggle(); // USA O TOGGLE GLOBAL!
     } else {
       toast.error("Acesso negado", {
         description: "MODO MASTER é exclusivo para o Owner",
       });
     }
-  }, [isGodMode]);
+  }, [isOwner, toggle]);
 
   const getValue = useCallback(
     (key: string, fallback: string = ""): string => {
