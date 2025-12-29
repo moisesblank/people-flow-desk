@@ -60,48 +60,70 @@ function getCorsHeaders(req: Request): Record<string, string> {
 }
 
 // ============================================
-// RATE LIMITING + DEDUPE (ANTI-SPAM/DoS)
+// RATE LIMITING PERSISTENTE (DB) — ESCALA 5K+
 // ============================================
-const rateLimitCache = new Map<string, { count: number; resetAt: number; lastHash: string }>();
-const RATE_LIMIT_WINDOW_MS = 60 * 1000; // 1 minuto
+const RATE_LIMIT_WINDOW_SECONDS = 60;
 const RATE_LIMIT_MAX = 30; // 30 violações por minuto por IP
+const RATE_LIMIT_ENDPOINT = 'sanctum-report-violation';
 
-function checkRateLimitAndDedupe(ipHash: string, violationHash: string): { allowed: boolean; reason?: string } {
-  const now = Date.now();
-  const key = ipHash;
+async function checkPersistentRateLimitAndDedupe(
+  supabase: any,
+  clientId: string,
+  violationHash: string
+): Promise<{ allowed: boolean; reason?: string }> {
+  const now = new Date();
+  const windowStart = new Date(now.getTime() - RATE_LIMIT_WINDOW_SECONDS * 1000);
   
-  const entry = rateLimitCache.get(key);
-  
-  if (!entry || now > entry.resetAt) {
-    // Nova janela
-    rateLimitCache.set(key, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS, lastHash: violationHash });
+  try {
+    // Buscar registro atual
+    const { data: existing } = await supabase
+      .from('api_rate_limits')
+      .select('request_count, window_start, metadata')
+      .eq('client_id', clientId)
+      .eq('endpoint', RATE_LIMIT_ENDPOINT)
+      .maybeSingle();
+    
+    // Se não existe ou janela expirou, criar/resetar
+    if (!existing || new Date(existing.window_start) < windowStart) {
+      await supabase
+        .from('api_rate_limits')
+        .upsert({
+          client_id: clientId,
+          endpoint: RATE_LIMIT_ENDPOINT,
+          request_count: 1,
+          window_start: now.toISOString(),
+          metadata: { last_hash: violationHash }
+        }, { onConflict: 'client_id,endpoint' });
+      return { allowed: true };
+    }
+    
+    // Dedupe: mesma violação em sequência
+    if (existing.metadata?.last_hash === violationHash) {
+      return { allowed: false, reason: 'DUPLICATE' };
+    }
+    
+    // Rate limit check
+    if (existing.request_count >= RATE_LIMIT_MAX) {
+      return { allowed: false, reason: 'RATE_LIMIT' };
+    }
+    
+    // Incrementar contador
+    await supabase
+      .from('api_rate_limits')
+      .update({ 
+        request_count: existing.request_count + 1,
+        metadata: { ...existing.metadata, last_hash: violationHash }
+      })
+      .eq('client_id', clientId)
+      .eq('endpoint', RATE_LIMIT_ENDPOINT);
+    
+    return { allowed: true };
+  } catch (err) {
+    console.error('[RATE LIMIT DB] Error:', err);
+    // Em caso de erro no DB, permite (fail-open para não bloquear UX)
     return { allowed: true };
   }
-  
-  // Dedupe: mesma violação em sequência
-  if (entry.lastHash === violationHash) {
-    return { allowed: false, reason: 'DUPLICATE' };
-  }
-  
-  // Rate limit
-  if (entry.count >= RATE_LIMIT_MAX) {
-    return { allowed: false, reason: 'RATE_LIMIT' };
-  }
-  
-  entry.count++;
-  entry.lastHash = violationHash;
-  return { allowed: true };
 }
-
-// Limpar cache periodicamente
-setInterval(() => {
-  const now = Date.now();
-  for (const [key, entry] of rateLimitCache.entries()) {
-    if (now > entry.resetAt) {
-      rateLimitCache.delete(key);
-    }
-  }
-}, 60000);
 
 // ============================================
 // TIPOS
@@ -193,10 +215,15 @@ serve(async (req: Request) => {
     // Hash único para dedupe
     const violationHash = await hashString(`${payload.violationType}|${payload.assetId || ''}|${ipHash}`);
     
-    // Verificar rate limit e dedupe
-    const rateLimitResult = checkRateLimitAndDedupe(ipHash, violationHash);
+    // Criar supabase client para rate limit e demais operações
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Verificar rate limit e dedupe (persistente no DB)
+    const rateLimitResult = await checkPersistentRateLimitAndDedupe(supabase, ipHash, violationHash);
     if (!rateLimitResult.allowed) {
-      console.warn(`[RATE LIMIT] ${rateLimitResult.reason} for IP hash: ${ipHash.slice(0,8)}...`);
+      console.warn(`[RATE LIMIT DB] ${rateLimitResult.reason} for IP hash: ${ipHash.slice(0,8)}...`);
       return new Response(
         JSON.stringify({ 
           success: true, // Retornamos success para não quebrar UX
@@ -223,10 +250,8 @@ serve(async (req: Request) => {
     const authHeader = req.headers.get("Authorization");
     let userId: string | null = null;
     let userEmail: string | null = null;
-
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    
+    // (supabase já criado acima para rate limit)
 
     if (authHeader?.startsWith("Bearer ")) {
       const token = authHeader.replace("Bearer ", "");
