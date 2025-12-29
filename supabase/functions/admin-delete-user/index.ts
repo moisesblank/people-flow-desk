@@ -154,13 +154,23 @@ serve(async (req) => {
       .update({
         status: "revoked",
         revoked_at: new Date().toISOString(),
-        revoked_reason: "user_deleted",
+        revoked_reason: "user_deleted_epoch_invalidated",
       })
       .eq("user_id", resolvedUserId)
       .eq("status", "active")
       .select();
 
     console.log("[admin-delete-user] ✅ Sessões revogadas:", sessionsRevoked?.length || 0);
+
+    // ============================================
+    // PASSO 2.5: 🛡️ BLOCO 3 - Invalidar magic links existentes
+    // ============================================
+    console.log("[admin-delete-user] 🔗 Invalidando magic links...");
+    await supabaseAdmin
+      .from("password_reset_tokens")
+      .update({ used: true })
+      .eq("user_id", resolvedUserId)
+      .eq("used", false);
 
     // ============================================
     // PASSO 3: Desativar TODOS os dispositivos confiáveis
