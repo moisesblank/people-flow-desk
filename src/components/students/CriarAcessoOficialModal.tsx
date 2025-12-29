@@ -11,7 +11,7 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2, Calendar } from "lucide-react";
+import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2, Calendar, Package, Globe } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,6 +49,9 @@ const criarAcessoSchema = z.object({
     .max(3650, "Dias não pode exceder 10 anos")
     .optional(),
 
+  // Novo: tipo_produto para Beta (livroweb ou fisico)
+  tipo_produto: z.enum(['livroweb', 'fisico']).optional(),
+
   // Campos opcionais
   telefone: z.string()
     .optional()
@@ -82,6 +85,14 @@ const criarAcessoSchema = z.object({
       path: ["expires_days"],
     });
   }
+  // Se role é beta ou beta_expira, tipo_produto é OBRIGATÓRIO
+  if ((data.role === 'beta' || data.role === 'beta_expira') && !data.tipo_produto) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Selecione o tipo de produto (Livroweb ou Físico)",
+      path: ["tipo_produto"],
+    });
+  }
 });
 
 type CriarAcessoFormData = z.infer<typeof criarAcessoSchema>;
@@ -107,6 +118,7 @@ export function CriarAcessoOficialModal({
       email: "",
       role: undefined,
       expires_days: undefined,
+      tipo_produto: undefined,
       telefone: "",
       foto_aluno: "",
       senha: "",
@@ -169,6 +181,7 @@ export function CriarAcessoOficialModal({
         ...(data.foto_aluno && { foto_aluno: data.foto_aluno.trim() }),
         ...(data.senha && { senha: data.senha }),
         ...(data.expires_days && { expires_days: data.expires_days }),
+        ...(data.tipo_produto && { tipo_produto: data.tipo_produto }),
         
         // Endereço (só envia se algum campo preenchido)
         ...((data.logradouro || data.numero || data.complemento || 
@@ -393,6 +406,72 @@ export function CriarAcessoOficialModal({
                 )}
               />
             </div>
+
+            {/* Tipo de Produto — Aparece APENAS para Beta ou Beta Expira */}
+            {(selectedRole === 'beta' || selectedRole === 'beta_expira') && (
+              <FormField
+                control={form.control}
+                name="tipo_produto"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Package className="h-4 w-4 text-purple-400" />
+                      Tipo de Produto *
+                    </FormLabel>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div
+                        onClick={() => !isSubmitting && field.onChange('livroweb')}
+                        className={`
+                          cursor-pointer rounded-lg border-2 p-3 transition-all
+                          ${field.value === 'livroweb' 
+                            ? 'border-violet-500 bg-violet-500/10 shadow-lg shadow-violet-500/20' 
+                            : 'border-muted-foreground/30 hover:border-violet-500/50 hover:bg-violet-500/5'
+                          }
+                          ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Globe className={`h-5 w-5 ${field.value === 'livroweb' ? 'text-violet-400' : 'text-muted-foreground'}`} />
+                          <div>
+                            <div className={`font-semibold text-sm ${field.value === 'livroweb' ? 'text-violet-400' : 'text-foreground'}`}>
+                              Livroweb
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              Material Digital
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div
+                        onClick={() => !isSubmitting && field.onChange('fisico')}
+                        className={`
+                          cursor-pointer rounded-lg border-2 p-3 transition-all
+                          ${field.value === 'fisico' 
+                            ? 'border-fuchsia-500 bg-fuchsia-500/10 shadow-lg shadow-fuchsia-500/20' 
+                            : 'border-muted-foreground/30 hover:border-fuchsia-500/50 hover:bg-fuchsia-500/5'
+                          }
+                          ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}
+                        `}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Package className={`h-5 w-5 ${field.value === 'fisico' ? 'text-fuchsia-400' : 'text-muted-foreground'}`} />
+                          <div>
+                            <div className={`font-semibold text-sm ${field.value === 'fisico' ? 'text-fuchsia-400' : 'text-foreground'}`}>
+                              Físico
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">
+                              Material Físico
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            )}
             
             {/* Descrição do tipo de acesso */}
             <p className="text-xs text-muted-foreground -mt-2">
