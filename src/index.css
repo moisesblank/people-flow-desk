@@ -128,117 +128,98 @@
     --gradient-holo-intense: linear-gradient(135deg, hsl(185 100% 50% / 0.3), hsl(280 100% 60% / 0.3));
   }
 
+  /* ============================================
+     TEMA ESCURO - Fundo PRETO PURO
+     ============================================ */
   .dark {
-    /* Dark mode usa as mesmas cores - tema já é escuro */
-    --background: 0 0% 5%;
+    /* Background & Surfaces - PRETO VERDADEIRO */
+    --background: 0 0% 0%;
     --foreground: 0 0% 98%;
     
-    --card: 0 0% 8%;
+    --card: 0 0% 6%;
     --card-foreground: 0 0% 98%;
-    --card-hover: 0 0% 12%;
+    --card-hover: 0 0% 10%;
     
-    --popover: 0 0% 8%;
+    --popover: 0 0% 6%;
     --popover-foreground: 0 0% 98%;
     
-    --muted: 0 0% 12%;
+    --muted: 0 0% 10%;
     --muted-foreground: 0 0% 65%;
     
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     
+    --secondary: 0 0% 12%;
+    --secondary-foreground: 0 0% 98%;
+    
+    /* Primary - Vermelho */
     --primary: 0 84% 55%;
+    --primary-foreground: 0 0% 100%;
     --primary-hover: 0 84% 50%;
     --primary-glow: 0 84% 65%;
     
-    --sidebar-background: 0 0% 4%;
+    /* Accent */
+    --accent: 0 70% 50%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Stats */
+    --stats-red: 0 84% 55%;
+    --stats-blue: 220 70% 55%;
+    --stats-wine: 0 70% 50%;
+    
+    /* Glows */
+    --glow-red: 0 84% 60%;
+    --glow-blue: 220 70% 60%;
+    --glow-wine: 0 70% 55%;
+    
+    /* Sidebar - PRETO */
+    --sidebar-background: 0 0% 0%;
     --sidebar-foreground: 0 0% 95%;
     --sidebar-border: 0 0% 12%;
-  }
-
-  .dark {
-    /* Background & Surfaces - Dark Spider-Man */
-    --background: 220 40% 6%;            /* Preto Azulado */
-    --foreground: 0 0% 98%;
+    --sidebar-primary: 0 84% 55%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 0 0% 8%;
+    --sidebar-accent-foreground: 0 0% 95%;
+    --sidebar-ring: 0 84% 55%;
     
-    --card: 220 35% 10%;
-    --card-foreground: 0 0% 98%;
-    --card-hover: 220 35% 14%;
-    
-    --popover: 220 35% 10%;
-    --popover-foreground: 0 0% 98%;
-    
-    --muted: 220 30% 15%;
-    --muted-foreground: 220 14% 65%;
-    
-    --border: 220 30% 18%;
-    --input: 220 30% 18%;
-    
-    /* Primary adjusted for dark - Vermelho Vinho Vibrante */
-    --primary: 345 85% 50%;
-    --primary-hover: 345 85% 55%;
-    --primary-glow: 345 85% 60%;
-    
-    /* Secondary - Azul Spider-Man */
-    --secondary: 220 60% 35%;
-    --secondary-foreground: 0 0% 98%;
-    
-    /* Accent */
-    --accent: 345 90% 55%;
-    
-    /* Stats - Mais vibrantes no dark */
-    --stats-red: 345 85% 55%;
-    --stats-blue: 220 80% 60%;
-    --stats-wine: 345 85% 50%;
-    
-    /* Glows - Mais intensos no dark */
-    --glow-red: 345 85% 55%;
-    --glow-blue: 220 80% 60%;
-    --glow-wine: 345 85% 55%;
-    
-    /* Sidebar - Dark */
-    --sidebar-background: 220 40% 5%;
-    --sidebar-foreground: 0 0% 95%;
-    --sidebar-border: 220 30% 15%;
-    --sidebar-primary: 345 85% 50%;
-    
-    /* God Mode - Dark */
+    /* God Mode */
     --god-mode-purple: 280 80% 60%;
     --god-mode-pink: 328 100% 60%;
   }
 
   /* ============================================
-     TEMA CLARO - Fundo Branco, Texto Escuro
+     TEMA CLARO - Fundo Branco NEUTRO
      ============================================ */
   .light {
-    /* Background & Surfaces - Light (BRANCO) */
-    --background: 0 0% 100%;
-    --foreground: 220 40% 10%;
+    /* Background & Surfaces - BRANCO NEUTRO (sem rosa) */
+    --background: 0 0% 98%;
+    --foreground: 0 0% 10%;
     
     --card: 0 0% 100%;
-    --card-foreground: 220 40% 10%;
-    --card-hover: 220 14% 96%;
+    --card-foreground: 0 0% 10%;
+    --card-hover: 0 0% 95%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 220 40% 10%;
+    --popover-foreground: 0 0% 10%;
     
-    --muted: 220 14% 96%;
-    --muted-foreground: 220 14% 46%;
+    --muted: 0 0% 94%;
+    --muted-foreground: 0 0% 45%;
     
-    --border: 220 14% 88%;
-    --input: 220 14% 88%;
+    --border: 0 0% 85%;
+    --input: 0 0% 85%;
     
     /* Primary - Vermelho (mantém identidade) */
-    --primary: 345 85% 45%;
+    --primary: 0 84% 50%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 345 85% 40%;
-    --primary-glow: 345 85% 55%;
+    --primary-hover: 0 84% 45%;
+    --primary-glow: 0 84% 60%;
     
-    /* Secondary - Azul suave */
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 220 40% 10%;
+    /* Secondary - Cinza neutro */
+    --secondary: 0 0% 92%;
+    --secondary-foreground: 0 0% 10%;
     
     /* Accent */
-    --accent: 345 90% 50%;
+    --accent: 0 70% 50%;
     --accent-foreground: 0 0% 100%;
     
     /* Destructive */
@@ -246,52 +227,52 @@
     --destructive-foreground: 0 0% 100%;
     
     /* Success/Warning/Info */
-    --success: 142 71% 35%;
+    --success: 142 71% 40%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 45%;
+    --warning: 38 92% 50%;
     --warning-foreground: 0 0% 0%;
-    --info: 199 89% 40%;
+    --info: 199 89% 45%;
     --info-foreground: 0 0% 100%;
     
     /* Ring */
-    --ring: 345 85% 45%;
+    --ring: 0 84% 50%;
     
     /* Status colors - Light */
-    --status-active: 142 71% 35%;
-    --status-vacation: 220 60% 45%;
-    --status-away: 38 92% 45%;
-    --status-inactive: 0 0% 50%;
-    --status-online: 142 76% 30%;
-    --status-offline: 0 0% 50%;
-    --status-recent: 158 64% 35%;
+    --status-active: 142 71% 40%;
+    --status-vacation: 220 60% 50%;
+    --status-away: 38 92% 50%;
+    --status-inactive: 0 0% 55%;
+    --status-online: 142 76% 35%;
+    --status-offline: 0 0% 55%;
+    --status-recent: 158 64% 40%;
     
     /* Stats colors - Light */
-    --stats-red: 345 85% 45%;
-    --stats-green: 142 71% 35%;
-    --stats-blue: 220 70% 45%;
-    --stats-purple: 270 80% 50%;
-    --stats-gold: 43 74% 45%;
-    --stats-cyan: 180 100% 35%;
-    --stats-wine: 345 70% 40%;
+    --stats-red: 0 84% 50%;
+    --stats-green: 142 71% 40%;
+    --stats-blue: 220 70% 50%;
+    --stats-purple: 270 80% 55%;
+    --stats-gold: 43 74% 50%;
+    --stats-cyan: 180 100% 40%;
+    --stats-wine: 0 70% 45%;
     
     /* Glow colors - Suaves no light */
-    --glow-red: 345 85% 50%;
-    --glow-green: 142 71% 40%;
-    --glow-blue: 220 70% 50%;
-    --glow-purple: 270 80% 55%;
+    --glow-red: 0 84% 55%;
+    --glow-green: 142 71% 45%;
+    --glow-blue: 220 70% 55%;
+    --glow-purple: 270 80% 60%;
     --glow-gold: 43 74% 55%;
-    --glow-cyan: 180 100% 40%;
-    --glow-wine: 345 70% 45%;
+    --glow-cyan: 180 100% 45%;
+    --glow-wine: 0 70% 50%;
     
-    /* Sidebar - Light */
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 220 40% 10%;
-    --sidebar-primary: 345 85% 45%;
+    /* Sidebar - Light NEUTRO */
+    --sidebar-background: 0 0% 97%;
+    --sidebar-foreground: 0 0% 10%;
+    --sidebar-primary: 0 84% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 94%;
-    --sidebar-accent-foreground: 220 40% 10%;
-    --sidebar-border: 220 14% 88%;
-    --sidebar-ring: 345 85% 45%;
+    --sidebar-accent: 0 0% 92%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 88%;
+    --sidebar-ring: 0 84% 50%;
     
     /* Chart colors - Light */
     --chart-1: 345 85% 45%;
