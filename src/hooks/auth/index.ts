@@ -20,3 +20,6 @@ export {
   type TwoFADecisionOptions,
   type DeviceValidationSignals 
 } from './use2FADecision';
+
+// 🔐 BLOCO 1 FIX: Fingerprint raw data (para servidor gerar hash)
+export { collectFingerprintRawData, generateDeviceName, type FingerprintRawData } from '@/lib/deviceFingerprintRaw';
