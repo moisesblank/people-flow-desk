@@ -961,14 +961,14 @@ export default function Afiliados() {
                         <div className="p-4 rounded-xl bg-muted/50">
                           <Label className="text-xs text-muted-foreground">URL do Webhook</Label>
                           <code className="block mt-2 text-sm break-all text-primary font-mono">
-                            {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-curso-quimica?source=hotmart`}
+                            {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-handler?source=hotmart`}
                           </code>
                           <Button 
                             variant="outline" 
                             size="sm" 
                             className="mt-3 w-full gap-2"
                             onClick={() => copyToClipboard(
-                              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-curso-quimica?source=hotmart`,
+                              `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-handler?source=hotmart`,
                               "URL do Webhook"
                             )}
                           >

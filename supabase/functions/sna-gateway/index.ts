@@ -253,13 +253,11 @@ serve(async (req) => {
       }
     }
 
+    // 🛡️ PATCH-007 (P1-004): REMOVIDO apikey bypass
+    // Agora JWT é OBRIGATÓRIO - não aceita mais apikey como fallback
     if (!userId) {
-      const apiKey = req.headers.get('apikey');
-      if (apiKey !== Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
-        return errorResponse(401, 'AUTH_REQUIRED', 'Autenticação necessária', correlationId, corsHeaders);
-      }
-      userId = context?.user_id || 'system';
-      userRole = 'system';
+      console.warn(`[SECURITY] Tentativa de acesso sem JWT: ${correlationId}`);
+      return errorResponse(401, 'AUTH_REQUIRED', 'Autenticação JWT obrigatória', correlationId, corsHeaders);
     }
 
     // 🛡️ PATCH-006: Endpoint de rate-limit CONSTANTE (anti-bypass)

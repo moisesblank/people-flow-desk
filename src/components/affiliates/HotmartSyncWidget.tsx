@@ -136,7 +136,7 @@ export function HotmartSyncWidget() {
       }, 500);
 
       // Trigger webhook check
-      const { data, error } = await supabase.functions.invoke("webhook-curso-quimica", {
+      const { data, error } = await supabase.functions.invoke("webhook-handler", {
         body: {
           source: "manual_sync",
           event: "SYNC_REQUEST",
@@ -355,14 +355,14 @@ export function HotmartSyncWidget() {
             <div className="p-4 rounded-lg bg-secondary/30">
               <Label className="text-xs text-muted-foreground">URL do Webhook</Label>
               <code className="block mt-2 text-xs break-all text-primary">
-                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-curso-quimica?source=hotmart`}
+                {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-handler?source=hotmart`}
               </code>
               <Button 
                 variant="outline" 
                 size="sm" 
                 className="mt-2 w-full"
                 onClick={() => {
-                  navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-curso-quimica?source=hotmart`);
+                  navigator.clipboard.writeText(`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-handler?source=hotmart`);
                   toast.success("URL copiada!");
                 }}
               >

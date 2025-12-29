@@ -173,7 +173,7 @@ export default function Integracoes() {
 
   const generateWebhookUrl = () => {
     const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID || "fyikfsasudgzsjmumdlw";
-    setWebhookUrl(`https://${projectId}.supabase.co/functions/v1/webhook-curso-quimica`);
+    setWebhookUrl(`https://${projectId}.supabase.co/functions/v1/webhook-handler`);
   };
 
   const copyWebhookUrl = (source?: string) => {
@@ -202,7 +202,7 @@ export default function Integracoes() {
 
   const testWebhook = async () => {
     try {
-      const response = await supabase.functions.invoke("webhook-curso-quimica", {
+      const response = await supabase.functions.invoke("webhook-handler", {
         body: {
           event: "test.webhook",
           source: "manual_test",

@@ -262,7 +262,7 @@ export function IntegrationCard({
                       <li>Configurar o webhook URL abaixo</li>
                     </ol>
                     <div className="p-3 rounded-lg bg-muted font-mono text-xs break-all">
-                      {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-curso-quimica?source=${integration.id}`}
+                      {`${import.meta.env.VITE_SUPABASE_URL}/functions/v1/webhook-handler?source=${integration.id}`}
                     </div>
                     {integration.configUrl && (
                       <Button variant="outline" className="w-full gap-2" asChild>
