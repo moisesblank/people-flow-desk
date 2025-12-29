@@ -123,7 +123,7 @@ const ChampionCard = memo(({ champion, index }: { champion: typeof champions[0];
           whileInView={{ scale: 1 }}
           transition={{ delay: 0.5, type: "spring" }}
         >
-          <div className="px-6 py-2 rounded-full bg-gradient-to-r from-amber-500 via-yellow-400 to-amber-500 text-black font-black text-sm shadow-2xl shadow-amber-500/50 flex items-center gap-2">
+          <div className="px-6 py-2 rounded-full bg-gradient-to-r from-stats-gold via-rarity-legendary to-stats-gold text-foreground font-black text-sm shadow-2xl shadow-stats-gold/50 flex items-center gap-2">
             <Trophy className="w-4 h-4" />
             {champion.posicao}
             <Trophy className="w-4 h-4" />

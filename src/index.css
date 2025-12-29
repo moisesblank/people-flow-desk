@@ -108,6 +108,27 @@
     --god-mode-pink: 328 100% 60%;
     
     /* ============================================
+       ROLE SEMANTIC COLORS - Adaptáveis ao Tema
+       ============================================ */
+    --role-owner: 280 80% 60%;
+    --role-admin: 220 70% 50%;
+    --role-coordenacao: 142 71% 45%;
+    --role-suporte: 43 74% 49%;
+    --role-monitoria: 245 80% 55%;
+    --role-afiliado: 328 80% 55%;
+    --role-marketing: 25 95% 55%;
+    --role-contabilidade: 175 70% 45%;
+    --role-employee: 220 10% 50%;
+    --role-beta: 38 92% 50%;
+    --role-aluno: 220 10% 45%;
+    
+    /* Rarity colors */
+    --rarity-common: 220 10% 50%;
+    --rarity-rare: 210 100% 55%;
+    --rarity-epic: 280 80% 60%;
+    --rarity-legendary: 43 100% 50%;
+    
+    /* ============================================
        FUTURISTIC 2300 - Holographic Tokens
        ============================================ */
     --holo-cyan: 185 100% 50%;
@@ -368,22 +389,22 @@
   }
 
   /* ============================================
-     GRADIENTS - SPIDER-MAN THEME
+     GRADIENTS - ADAPTÁVEIS AO TEMA
      ============================================ */
   .gradient-primary {
     background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--primary-hover)) 100%);
   }
 
   .gradient-hero {
-    background: linear-gradient(180deg, hsl(220 40% 6%) 0%, hsl(220 35% 12%) 100%);
+    background: linear-gradient(180deg, hsl(var(--background)) 0%, hsl(var(--card)) 100%);
   }
 
   .gradient-wine {
-    background: linear-gradient(135deg, hsl(345 80% 40%) 0%, hsl(345 80% 30%) 100%);
+    background: linear-gradient(135deg, hsl(var(--stats-wine)) 0%, hsl(var(--stats-wine) / 0.7) 100%);
   }
 
   .gradient-spider {
-    background: linear-gradient(135deg, hsl(345 85% 45%) 0%, hsl(220 70% 45%) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--stats-blue)) 100%);
   }
 
   .gradient-text {
@@ -398,7 +419,7 @@
   }
 
   .brand-text {
-    background: linear-gradient(135deg, hsl(345 85% 55%) 0%, hsl(220 80% 60%) 100%);
+    background: linear-gradient(135deg, hsl(var(--primary)) 0%, hsl(var(--stats-blue)) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -406,9 +427,9 @@
 
   .hero-gradient {
     background: linear-gradient(180deg, 
-      hsl(220 40% 6%) 0%, 
-      hsl(220 35% 10%) 50%, 
-      hsl(345 30% 8%) 100%
+      hsl(var(--background)) 0%, 
+      hsl(var(--card)) 50%, 
+      hsl(var(--muted)) 100%
     );
   }
 
@@ -456,8 +477,8 @@
 
   .spider-glow {
     box-shadow: 
-      0 0 30px hsl(345 85% 50% / 0.4),
-      0 0 60px hsl(220 70% 50% / 0.2);
+      0 0 30px hsl(var(--primary) / 0.4),
+      0 0 60px hsl(var(--stats-blue) / 0.2);
   }
 
   .heroic-glow {
