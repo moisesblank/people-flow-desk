@@ -23,3 +23,6 @@ export {
 
 // 🔐 BLOCO 1 FIX: Fingerprint raw data (para servidor gerar hash)
 export { collectFingerprintRawData, generateDeviceName, type FingerprintRawData } from '@/lib/deviceFingerprintRaw';
+
+// 🔐 BLOCO 3: Registro de dispositivo antes da sessão
+export { registerDeviceBeforeSession, getDeviceErrorMessage, type DeviceRegistrationResult } from '@/lib/deviceRegistration';

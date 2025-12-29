@@ -40,6 +40,7 @@ import { useEditableContent } from "@/hooks/useEditableContent";
 import { OptimizedImage } from "@/components/ui/optimized-image";
 import { isOwnerEmail } from "@/lib/security";
 import { getPostLoginRedirect } from "@/core/urlAccessControl";
+import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/deviceRegistration";
 
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
@@ -907,7 +908,44 @@ export default function Auth() {
             // ✅ NÃO PRECISA DE 2FA - Dispositivo confiável dentro da janela de 24h
             console.log('[AUTH] ✅ 2FA dispensado - dispositivo confiável');
             
-            // 🔒 DOGMA I: CRIAR SESSÃO ÚNICA IMEDIATAMENTE
+            // ============================================
+            // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO
+            // ============================================
+            console.log('[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão...');
+            const deviceResult = await registerDeviceBeforeSession();
+            
+            if (!deviceResult.success) {
+              console.error('[AUTH][BLOCO3] ❌ Falha no registro de dispositivo:', deviceResult.error);
+              
+              // FAIL-CLOSED: Bloquear login se limite excedido
+              if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
+                // Fazer logout parcial para não deixar sessão pendente
+                await supabase.auth.signOut();
+                
+                const errorMsg = getDeviceErrorMessage(deviceResult.error);
+                toast.error(errorMsg.title, {
+                  description: `${errorMsg.description} (${deviceResult.deviceCount}/${deviceResult.maxDevices} dispositivos)`,
+                  duration: 10000,
+                });
+                
+                // TODO: Mostrar modal de gerenciamento de dispositivos
+                resetTurnstile();
+                setIsLoading(false);
+                return;
+              }
+              
+              // Outros erros de dispositivo
+              const errorMsg = getDeviceErrorMessage(deviceResult.error || 'UNEXPECTED_ERROR');
+              toast.error(errorMsg.title, { description: errorMsg.description });
+              await supabase.auth.signOut();
+              resetTurnstile();
+              setIsLoading(false);
+              return;
+            }
+            
+            console.log('[AUTH][BLOCO3] ✅ Dispositivo vinculado:', deviceResult.deviceId);
+            
+            // 🔒 DOGMA I: CRIAR SESSÃO ÚNICA IMEDIATAMENTE (APÓS dispositivo vinculado)
             // ============================================
             try {
               const SESSION_TOKEN_KEY = 'matriz_session_token';
@@ -938,7 +976,7 @@ export default function Auth() {
 
               if (!sessionError && sessionData && sessionData.length > 0) {
                 localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
-                console.log('[AUTH][SESSAO] ✅ Sessão única criada (2FA dispensado)');
+                console.log('[AUTH][SESSAO] ✅ Sessão única criada (2FA dispensado, dispositivo vinculado)');
               } else if (sessionError) {
                 console.warn('[AUTH][SESSAO] Falha ao criar sessão (2FA dispensado):', sessionError);
               }
@@ -947,7 +985,9 @@ export default function Auth() {
             }
             
             toast.success("Bem-vindo de volta!", {
-              description: "Dispositivo reconhecido. Login realizado com sucesso."
+              description: deviceResult.isNewDevice 
+                ? "Novo dispositivo registrado com sucesso." 
+                : "Dispositivo reconhecido. Login realizado com sucesso."
             });
             
             // Buscar role e redirecionar
@@ -1125,8 +1165,42 @@ export default function Auth() {
               sessionStorage.removeItem("matriz_2fa_pending");
               sessionStorage.removeItem("matriz_2fa_user");
 
-              // ✅ P0: Sessão única só NASCE após 2FA validado
-              // (evita criação de sessão final antes do desafio)
+              // ============================================
+              // 🛡️ BLOCO 3: REGISTRAR DISPOSITIVO ANTES DA SESSÃO (pós-2FA)
+              // ============================================
+              console.log('[AUTH][BLOCO3] 🔐 Registrando dispositivo ANTES da sessão (pós-2FA)...');
+              const deviceResult = await registerDeviceBeforeSession();
+              
+              if (!deviceResult.success) {
+                console.error('[AUTH][BLOCO3] ❌ Falha no registro de dispositivo pós-2FA:', deviceResult.error);
+                
+                // FAIL-CLOSED: Bloquear login se limite excedido
+                if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
+                  await supabase.auth.signOut();
+                  
+                  const errorMsg = getDeviceErrorMessage(deviceResult.error);
+                  toast.error(errorMsg.title, {
+                    description: `${errorMsg.description} (${deviceResult.deviceCount}/${deviceResult.maxDevices} dispositivos)`,
+                    duration: 10000,
+                  });
+                  
+                  setShow2FA(false);
+                  setPending2FAUser(null);
+                  return;
+                }
+                
+                // Outros erros de dispositivo
+                const errorMsg = getDeviceErrorMessage(deviceResult.error || 'UNEXPECTED_ERROR');
+                toast.error(errorMsg.title, { description: errorMsg.description });
+                await supabase.auth.signOut();
+                setShow2FA(false);
+                setPending2FAUser(null);
+                return;
+              }
+              
+              console.log('[AUTH][BLOCO3] ✅ Dispositivo vinculado pós-2FA:', deviceResult.deviceId);
+
+              // ✅ P0: Sessão única só NASCE após dispositivo vinculado + 2FA validado
               try {
                 const SESSION_TOKEN_KEY = 'matriz_session_token';
                 const ua = navigator.userAgent;
@@ -1158,7 +1232,7 @@ export default function Auth() {
 
                 if (!sessionError && sessionData && sessionData.length > 0) {
                   localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
-                  console.log('[AUTH][SESSAO] ✅ Sessão única criada pós-2FA');
+                  console.log('[AUTH][SESSAO] ✅ Sessão única criada pós-2FA (dispositivo vinculado)');
                 } else if (sessionError) {
                   console.warn('[AUTH][SESSAO] Falha ao criar sessão pós-2FA:', sessionError);
                 }
@@ -1167,7 +1241,6 @@ export default function Auth() {
               }
 
               // ✅ P0 FIX CRÍTICO: Buscar role e fazer redirect EXPLÍCITO
-              // Não confiar no AuthProvider pois pode causar race condition
               try {
                 const { data: roleData } = await supabase
                   .from("user_roles")
@@ -1179,7 +1252,11 @@ export default function Auth() {
                 const target = getPostLoginRedirect(userRole, pending2FAUser.email);
 
                 console.log('[AUTH] ✅ 2FA completo - redirecionando para', target, '(role:', userRole, ')');
-                toast.success("Bem-vindo de volta!");
+                toast.success("Bem-vindo de volta!", {
+                  description: deviceResult.isNewDevice 
+                    ? "Novo dispositivo registrado com sucesso." 
+                    : "Dispositivo reconhecido."
+                });
 
                 window.location.replace(target);
               } catch (err) {
