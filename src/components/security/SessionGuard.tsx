@@ -19,6 +19,8 @@ interface SessionGuardProps {
 export function SessionGuard({ children }: SessionGuardProps) {
   const { user, signOut } = useAuth();
   const isValidatingRef = useRef(false);
+  const isBootstrappingRef = useRef(false);
+  const bootstrapAttemptedRef = useRef(false);
 
   /**
    * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
@@ -45,6 +47,77 @@ export function SessionGuard({ children }: SessionGuardProps) {
     await signOut();
   }, [signOut]);
 
+  const detectClientDeviceMeta = useCallback(() => {
+    const ua = navigator.userAgent;
+
+    let device_type = 'desktop';
+    if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+      device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+    }
+
+    let browser = 'unknown';
+    if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Edg')) browser = 'Edge';
+    else if (ua.includes('Chrome')) browser = 'Chrome';
+    else if (ua.includes('Safari')) browser = 'Safari';
+
+    let os = 'unknown';
+    if (ua.includes('Windows')) os = 'Windows';
+    else if (ua.includes('Mac')) os = 'macOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+    else if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iPhone')) os = 'iOS';
+
+    return { device_type, browser, os };
+  }, []);
+
+  /**
+   * Bootstrap do token de sessão (P0):
+   * Se o usuário está autenticado mas não existe matriz_session_token,
+   * criamos a sessão única via backend (fonte da verdade).
+   *
+   * Isso evita "sessão zumbi" sem token e restaura o DOGMA I.
+   */
+  const bootstrapSessionTokenIfMissing = useCallback(async () => {
+    if (!user) return;
+
+    const existing = localStorage.getItem(SESSION_TOKEN_KEY);
+    if (existing) return;
+
+    if (isBootstrappingRef.current || bootstrapAttemptedRef.current) return;
+    bootstrapAttemptedRef.current = true;
+    isBootstrappingRef.current = true;
+
+    try {
+      console.warn('[SessionGuard] ⚠️ Token ausente — bootstrap de sessão única (RPC)');
+      const meta = detectClientDeviceMeta();
+
+      const { data, error } = await supabase.rpc('create_single_session', {
+        _ip_address: null,
+        _user_agent: navigator.userAgent.slice(0, 255),
+        _device_type: meta.device_type,
+        _browser: meta.browser,
+        _os: meta.os,
+        _device_hash_from_server: null,
+      });
+
+      const token = data?.[0]?.session_token;
+      if (error || !token) {
+        console.error('[SessionGuard] ❌ Bootstrap falhou:', error);
+        await handleBackendRevocation('Falha crítica de segurança: sessão não inicializada.');
+        return;
+      }
+
+      localStorage.setItem(SESSION_TOKEN_KEY, token);
+      console.log('[SessionGuard] ✅ Bootstrap OK: matriz_session_token criado');
+    } catch (e) {
+      console.error('[SessionGuard] ❌ Erro inesperado no bootstrap:', e);
+      await handleBackendRevocation('Falha crítica de segurança: sessão não inicializada.');
+    } finally {
+      isBootstrappingRef.current = false;
+    }
+  }, [user, detectClientDeviceMeta, handleBackendRevocation]);
+
   /**
    * Validar sessão consultando o BACKEND — nunca revoga por timer
    */
@@ -52,12 +125,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
     if (!user || isValidatingRef.current) return true;
 
     const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
-    
-    // ✅ SEM TOKEN = ainda não foi criado, NÃO derrubar
-    // O backend é a fonte da verdade. Esperar o token aparecer.
+
+    // ✅ Se não há token, tentamos bootstrap (1x) e não derrubamos por timer
     if (!storedToken) {
-      console.log('[SessionGuard] Token ainda não existe, aguardando...');
-      return true; // NÃO fazer logout
+      await bootstrapSessionTokenIfMissing();
+      return true;
     }
 
     isValidatingRef.current = true;
@@ -119,7 +191,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
       // Erro de exceção NÃO derruba sessão
       return true;
     }
-  }, [user, handleBackendRevocation]);
+  }, [user, handleBackendRevocation, bootstrapSessionTokenIfMissing]);
 
   // ✅ Verificação periódica + visibilidade — SEM timer de grace period
   useEffect(() => {
