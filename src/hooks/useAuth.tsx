@@ -261,8 +261,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (newSession?.user) {
           // Role + heartbeat são iniciados em um useEffect baseado em user/session.
 
-          // Pós-login (SIGNED_IN): disparar criação da sessão única + validate-device UMA ÚNICA VEZ
-          if (event === 'SIGNED_IN') {
+          // Pós-login/restauração: garantir sessão única + token de segurança
+          // - SIGNED_IN: login explícito
+          // - INITIAL_SESSION: sessão restaurada (ex: segundo device abrindo com cookie)
+          // P0: evita sessões simultâneas por falta de criação do token
+          if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') {
+            const hasSecurityToken = typeof window !== 'undefined'
+              ? Boolean(localStorage.getItem(SESSION_TOKEN_KEY))
+              : false;
+
+            // Se já temos matriz_session_token, não precisa disparar novamente
+            if (hasSecurityToken) return;
+
             const tokenKey = newSession.access_token || `${newSession.user.id}:${new Date().toISOString()}`;
 
             if (processedSignInTokenRef.current !== tokenKey) {
