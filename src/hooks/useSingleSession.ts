@@ -13,8 +13,8 @@ const SESSION_TOKEN_KEY = 'matriz_session_token';
 const SESSION_CHECK_INTERVAL = 30000; // 30 segundos
 
 interface SessionInfo {
-  session_id: string;
   session_token: string;
+  auth_epoch_at_login?: number;
 }
 
 interface DeviceInfo {
@@ -75,8 +75,8 @@ export function useSingleSession() {
       
       if (data && data.length > 0) {
         const sessionInfo: SessionInfo = {
-          session_id: data[0].session_id,
           session_token: data[0].session_token,
+          auth_epoch_at_login: data[0].auth_epoch_at_login,
         };
         
         // Armazenar token localmente

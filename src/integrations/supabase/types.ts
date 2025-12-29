@@ -15333,6 +15333,14 @@ export type Database = {
         }
         Returns: boolean
       }
+      check_auth_before_login: {
+        Args: never
+        Returns: {
+          allowed: boolean
+          current_epoch: number
+          reason: string
+        }[]
+      }
       check_auth_enabled: { Args: never; Returns: boolean }
       check_beta_access: { Args: { _user_id: string }; Returns: Json }
       check_chat_rate_limit_v2: {
@@ -15551,7 +15559,7 @@ export type Database = {
           _user_agent?: string
         }
         Returns: {
-          session_id: string
+          auth_epoch_at_login: number
           session_token: string
         }[]
       }
@@ -16750,6 +16758,7 @@ export type Database = {
         Returns: {
           is_valid: boolean
           reason: string
+          user_id: string
         }[]
       }
       validate_session_token: {
