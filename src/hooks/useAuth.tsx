@@ -115,6 +115,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const postSignInPayloadRef = useRef<{ userId: string; email: string | null } | null>(null);
   const processedSignInTokenRef = useRef<string | null>(null);
   const [postSignInTick, setPostSignInTick] = useState(0);
+  const [securitySessionReady, setSecuritySessionReady] = useState(false);
 
   // ============================================
   // HEARTBEAT CONTÍNUO
@@ -317,6 +318,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   // ============================================
+  // ✅ Fonte da verdade do "token de sessão de segurança" no client
+  // - Mantém um flag reativo para impedir redirect antes do token existir
+  // ============================================
+  useEffect(() => {
+    if (!user) {
+      setSecuritySessionReady(false);
+      return;
+    }
+
+    const token = localStorage.getItem(SESSION_TOKEN_KEY);
+    setSecuritySessionReady(Boolean(token));
+  }, [user?.id]);
+
+  // ============================================
   // 🔥 DOGMA SUPREMO: LISTENER REALTIME PARA LOGOUT FORÇADO
   // Quando usuário é DELETADO, recebe broadcast e faz logout IMEDIATO
   // ============================================
@@ -391,16 +406,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const isAuthPath = path === "/auth" || path.startsWith("/auth/");
 
     if (user && session && isAuthPath) {
+      // ✅ BLOCO CRÍTICO: não sair de /auth sem o token de sessão de segurança.
+      // Se sair cedo, o SessionGuard em outras rotas aplica fail-closed (~6s) e desloga.
+      const token = localStorage.getItem(SESSION_TOKEN_KEY);
+      if (!token || !securitySessionReady) {
+        console.warn('[AUTH] Aguardando token de sessão de segurança antes de redirecionar...');
+        return;
+      }
+
       const email = (user.email || "").toLowerCase();
       const ownerEmail = "moisesblank@gmail.com";
-      
-      // ✅ P0 FIX: Owner pode redirecionar imediatamente (sem esperar role do banco)
+
+      // ✅ P0 FIX: Owner pode redirecionar sem esperar role do banco (MAS só após token pronto)
       if (email === ownerEmail) {
         console.log('[AUTH] Owner detectado - redirecionando para /gestaofc');
         window.location.replace("/gestaofc");
         return;
       }
-      
+
       // ✅ P0 FIX CRÍTICO: Para outros usuários, ESPERAR role ser carregada
       // Se derivedRole ainda é null, NÃO redirecionar ainda
       if (derivedRole === null) {
@@ -413,7 +436,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       console.log('[AUTH] Redirecionando para', target, '(role:', derivedRole, ')');
       window.location.replace(target);
     }
-  }, [isLoading, user?.id, session?.access_token, derivedRole]); // ✅ Inclui role para recálculo
+  }, [isLoading, user?.id, session?.access_token, derivedRole, securitySessionReady]);
 
   // ============================================
   // 🛡️ P0 FIX: CRIAÇÃO DE SESSÃO ÚNICA PÓS-LOGIN
@@ -448,6 +471,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     if (existingToken) {
       console.log('[AUTH][SESSAO] Token já existe - pulando criação de sessão única');
+      setSecuritySessionReady(true);
       startHeartbeatRef.current();
       postSignInPayloadRef.current = null;
       return;
@@ -495,6 +519,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (data && data.length > 0) {
           const sessionToken = data[0].session_token;
           localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
+          setSecuritySessionReady(true);
           console.log('[AUTH][SESSAO] ✅ Sessão única criada com sucesso');
 
           // Iniciar heartbeat
