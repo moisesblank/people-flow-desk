@@ -214,113 +214,137 @@
      PROIBIDO: #FFFFFF puro
      ============================================ */
   .light {
-    /* Background & Surfaces - Cinza Neutro Profissional */
-    --background: 220 12% 82%;           /* Cinza mais escuro e neutro */
-    --foreground: 220 20% 18%;           /* Texto mais contrastado */
+    /* ============================================
+       TEMA CINZA PROFISSIONAL - Legibilidade Máxima
+       Fundo cinza neutro com texto escuro
+       ============================================ */
     
-    --card: 220 12% 86%;                 /* Cards levemente mais claros que fundo */
-    --card-foreground: 220 20% 18%;
-    --card-hover: 220 12% 78%;           /* Hover mais visível */
+    /* Background & Surfaces - Cinza Médio */
+    --background: 220 10% 88%;           /* Cinza neutro confortável */
+    --foreground: 220 25% 15%;           /* Texto bem escuro para contraste máximo */
     
-    --popover: 220 12% 88%;
-    --popover-foreground: 220 20% 18%;
+    --card: 220 10% 92%;                 /* Cards mais claros que fundo */
+    --card-foreground: 220 25% 15%;
+    --card-hover: 220 10% 85%;
     
-    --muted: 220 12% 75%;
-    --muted-foreground: 220 10% 45%;     /* Texto secundário mais legível */
+    --popover: 220 10% 95%;              /* Popovers bem claros */
+    --popover-foreground: 220 25% 15%;
     
-    --border: 220 12% 68%;               /* Bordas mais definidas */
-    --input: 220 12% 68%;
+    --muted: 220 10% 82%;                /* Áreas mutadas mais escuras */
+    --muted-foreground: 220 15% 35%;     /* Texto secundário legível */
+    
+    --border: 220 10% 72%;               /* Bordas bem visíveis */
+    --input: 220 10% 95%;                /* Inputs claros para destaque */
     
     /* Primary - Vermelho (mantém identidade) */
-    --primary: 0 84% 50%;
+    --primary: 0 75% 45%;                /* Vermelho mais saturado para contraste */
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 84% 45%;
-    --primary-glow: 0 84% 60%;
+    --primary-hover: 0 75% 40%;
+    --primary-glow: 0 75% 55%;
     
-    /* Secondary - Hierarquia clara */
-    --secondary: 220 10% 88%;
-    --secondary-foreground: 220 10% 44%; /* #666E80 - Sem competir com conteúdo */
+    /* Secondary */
+    --secondary: 220 10% 82%;
+    --secondary-foreground: 220 20% 25%;
     
     /* Accent */
-    --accent: 0 70% 50%;
+    --accent: 0 65% 45%;
     --accent-foreground: 0 0% 100%;
     
     /* Destructive */
-    --destructive: 0 84% 50%;
+    --destructive: 0 75% 45%;
     --destructive-foreground: 0 0% 100%;
     
-    /* Success/Warning/Info */
-    --success: 142 71% 40%;
+    /* Success/Warning/Info - Cores mais fortes para contraste */
+    --success: 142 65% 35%;
     --success-foreground: 0 0% 100%;
-    --warning: 38 92% 50%;
+    --warning: 38 85% 45%;
     --warning-foreground: 0 0% 0%;
-    --info: 199 89% 45%;
+    --info: 199 80% 40%;
     --info-foreground: 0 0% 100%;
     
     /* Ring */
-    --ring: 0 84% 50%;
+    --ring: 0 75% 45%;
     
-    /* Status colors - Light */
-    --status-active: 142 71% 40%;
-    --status-vacation: 220 60% 50%;
-    --status-away: 38 92% 50%;
-    --status-inactive: 220 10% 50%;
-    --status-online: 142 76% 35%;
-    --status-offline: 220 10% 55%;
-    --status-recent: 158 64% 40%;
+    /* Status colors - Saturadas para visibilidade */
+    --status-active: 142 65% 35%;
+    --status-vacation: 220 55% 45%;
+    --status-away: 38 85% 45%;
+    --status-inactive: 220 10% 45%;
+    --status-online: 142 70% 32%;
+    --status-offline: 220 10% 50%;
+    --status-recent: 158 60% 35%;
     
-    /* Stats colors - Light */
-    --stats-red: 0 84% 50%;
-    --stats-green: 142 71% 40%;
-    --stats-blue: 220 70% 50%;
-    --stats-purple: 270 80% 55%;
-    --stats-gold: 43 74% 50%;
-    --stats-cyan: 180 100% 40%;
-    --stats-wine: 0 70% 45%;
+    /* Stats colors - Vibrantes */
+    --stats-red: 0 75% 45%;
+    --stats-green: 142 65% 35%;
+    --stats-blue: 220 65% 45%;
+    --stats-purple: 270 70% 50%;
+    --stats-gold: 43 70% 45%;
+    --stats-cyan: 180 80% 35%;
+    --stats-wine: 0 60% 40%;
     
-    /* Glow colors - Suaves no light */
-    --glow-red: 0 84% 55%;
-    --glow-green: 142 71% 45%;
-    --glow-blue: 220 70% 55%;
-    --glow-purple: 270 80% 60%;
-    --glow-gold: 43 74% 55%;
-    --glow-cyan: 180 100% 45%;
-    --glow-wine: 0 70% 50%;
+    /* Glow colors - Suaves */
+    --glow-red: 0 75% 50%;
+    --glow-green: 142 65% 40%;
+    --glow-blue: 220 65% 50%;
+    --glow-purple: 270 70% 55%;
+    --glow-gold: 43 70% 50%;
+    --glow-cyan: 180 80% 40%;
+    --glow-wine: 0 60% 45%;
     
-    /* Sidebar - Off-White Arquitetônico */
-    --sidebar-background: 220 10% 91%;
-    --sidebar-foreground: 220 18% 22%;
-    --sidebar-primary: 0 84% 50%;
+    /* Sidebar - Consistente com background */
+    --sidebar-background: 220 10% 85%;
+    --sidebar-foreground: 220 25% 15%;
+    --sidebar-primary: 0 75% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 10% 88%;
-    --sidebar-accent-foreground: 220 18% 22%;
-    --sidebar-border: 220 10% 78%;
-    --sidebar-ring: 0 84% 50%;
+    --sidebar-accent: 220 10% 80%;
+    --sidebar-accent-foreground: 220 25% 15%;
+    --sidebar-border: 220 10% 72%;
+    --sidebar-ring: 0 75% 45%;
     
-    /* Chart colors - Light */
-    --chart-1: 345 85% 45%;
-    --chart-2: 220 70% 45%;
-    --chart-3: 142 71% 35%;
-    --chart-4: 270 80% 50%;
-    --chart-5: 43 74% 45%;
+    /* Chart colors */
+    --chart-1: 0 75% 45%;
+    --chart-2: 220 65% 45%;
+    --chart-3: 142 65% 35%;
+    --chart-4: 270 70% 50%;
+    --chart-5: 43 70% 45%;
     
-    /* God Mode - Light */
-    --god-mode-purple: 280 80% 55%;
-    --god-mode-pink: 328 100% 55%;
+    /* God Mode */
+    --god-mode-purple: 280 70% 50%;
+    --god-mode-pink: 328 90% 50%;
     
-    /* Holographic - Suave no light */
-    --holo-cyan: 185 100% 40%;
-    --holo-purple: 280 100% 50%;
-    --holo-pink: 320 100% 50%;
-    --holo-blue: 210 100% 45%;
-    --holo-green: 160 100% 35%;
+    /* Holographic - Adaptado */
+    --holo-cyan: 185 80% 35%;
+    --holo-purple: 280 80% 45%;
+    --holo-pink: 320 80% 45%;
+    --holo-blue: 210 80% 40%;
+    --holo-green: 160 80% 32%;
     
-    /* AI - Light Off-White */
-    --ai-glow: 185 100% 40%;
-    --ai-accent: 280 90% 50%;
-    --ai-surface: 220 10% 91%;
-    --ai-surface-hover: 220 10% 88%;
-    --ai-border: 220 10% 78%;
+    /* AI */
+    --ai-glow: 185 80% 35%;
+    --ai-accent: 280 80% 45%;
+    --ai-surface: 220 10% 90%;
+    --ai-surface-hover: 220 10% 85%;
+    --ai-border: 220 10% 72%;
+    
+    /* Role colors - Mais escuros para legibilidade */
+    --role-owner: 280 70% 45%;
+    --role-admin: 220 60% 45%;
+    --role-coordenacao: 142 60% 35%;
+    --role-suporte: 43 70% 45%;
+    --role-monitoria: 245 70% 50%;
+    --role-afiliado: 328 70% 50%;
+    --role-marketing: 25 85% 50%;
+    --role-contabilidade: 175 60% 40%;
+    --role-employee: 220 10% 45%;
+    --role-beta: 38 85% 45%;
+    --role-aluno: 220 10% 40%;
+    
+    /* Rarity colors */
+    --rarity-common: 220 10% 45%;
+    --rarity-rare: 210 80% 50%;
+    --rarity-epic: 280 70% 55%;
+    --rarity-legendary: 43 90% 45%;
   }
 }
 
