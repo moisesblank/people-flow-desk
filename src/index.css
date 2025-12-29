@@ -197,25 +197,26 @@
   }
 
   /* ============================================
-     TEMA CLARO - Fundo Branco NEUTRO
+     TEMA CLARO (WHITE) - Branco Inteligente Acinzentado
+     ATUALIZADO conforme especificação do OWNER
      ============================================ */
   .light {
-    /* Background & Surfaces - CINZA SUAVE (não tão branco) */
-    --background: 220 14% 92%;
-    --foreground: 220 20% 15%;
+    /* Background & Surfaces - Branco Acinzentado Inteligente */
+    --background: 220 15% 96%;
+    --foreground: 220 20% 18%;
     
-    --card: 220 14% 96%;
-    --card-foreground: 220 20% 12%;
-    --card-hover: 220 14% 90%;
+    --card: 220 15% 98%;
+    --card-foreground: 220 20% 18%;
+    --card-hover: 220 15% 94%;
     
-    --popover: 220 14% 96%;
-    --popover-foreground: 220 20% 12%;
+    --popover: 220 15% 98%;
+    --popover-foreground: 220 20% 18%;
     
-    --muted: 220 14% 88%;
-    --muted-foreground: 220 10% 40%;
+    --muted: 220 15% 94%;
+    --muted-foreground: 220 8% 55%;
     
-    --border: 220 14% 80%;
-    --input: 220 14% 82%;
+    --border: 220 15% 88%;
+    --input: 220 15% 88%;
     
     /* Primary - Vermelho (mantém identidade) */
     --primary: 0 84% 50%;
@@ -223,9 +224,9 @@
     --primary-hover: 0 84% 45%;
     --primary-glow: 0 84% 60%;
     
-    /* Secondary - Cinza suave */
-    --secondary: 220 14% 85%;
-    --secondary-foreground: 220 20% 15%;
+    /* Secondary - Cinza inteligente */
+    --secondary: 220 15% 94%;
+    --secondary-foreground: 220 10% 40%;
     
     /* Accent */
     --accent: 0 70% 50%;
@@ -273,14 +274,14 @@
     --glow-cyan: 180 100% 45%;
     --glow-wine: 0 70% 50%;
     
-    /* Sidebar - Light CINZA SUAVE */
-    --sidebar-background: 220 14% 94%;
-    --sidebar-foreground: 220 20% 15%;
+    /* Sidebar - Light Acinzentado */
+    --sidebar-background: 220 15% 96%;
+    --sidebar-foreground: 220 20% 18%;
     --sidebar-primary: 0 84% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 14% 88%;
-    --sidebar-accent-foreground: 220 20% 15%;
-    --sidebar-border: 220 14% 82%;
+    --sidebar-accent: 220 15% 94%;
+    --sidebar-accent-foreground: 220 20% 18%;
+    --sidebar-border: 220 15% 88%;
     --sidebar-ring: 0 84% 50%;
     
     /* Chart colors - Light */
@@ -304,9 +305,9 @@
     /* AI - Light */
     --ai-glow: 185 100% 40%;
     --ai-accent: 280 90% 50%;
-    --ai-surface: 220 14% 94%;
-    --ai-surface-hover: 220 14% 90%;
-    --ai-border: 220 14% 80%;
+    --ai-surface: 220 15% 96%;
+    --ai-surface-hover: 220 15% 94%;
+    --ai-border: 220 15% 88%;
   }
 }
 
