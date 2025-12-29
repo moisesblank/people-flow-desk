@@ -214,22 +214,22 @@
      PROIBIDO: #FFFFFF puro
      ============================================ */
   .light {
-    /* Background & Surfaces - Off-White Arquitetônico */
-    --background: 220 10% 91%;           /* #E4E7EC - Base neutra e estável */
-    --foreground: 220 18% 22%;           /* #333846 - Contraste confortável */
+    /* Background & Surfaces - Cinza Neutro Profissional */
+    --background: 220 12% 82%;           /* Cinza mais escuro e neutro */
+    --foreground: 220 20% 18%;           /* Texto mais contrastado */
     
-    --card: 220 10% 93%;                 /* #E9ECF1 - Diferencia planos */
-    --card-foreground: 220 18% 22%;
-    --card-hover: 220 10% 88%;           /* #DADFE7 - Resposta visual clara */
+    --card: 220 12% 86%;                 /* Cards levemente mais claros que fundo */
+    --card-foreground: 220 20% 18%;
+    --card-hover: 220 12% 78%;           /* Hover mais visível */
     
-    --popover: 220 10% 93%;
-    --popover-foreground: 220 18% 22%;
+    --popover: 220 12% 88%;
+    --popover-foreground: 220 20% 18%;
     
-    --muted: 220 10% 88%;
-    --muted-foreground: 220 8% 60%;      /* #9AA1B0 - Informação de apoio */
+    --muted: 220 12% 75%;
+    --muted-foreground: 220 10% 45%;     /* Texto secundário mais legível */
     
-    --border: 220 10% 78%;               /* #C3CAD6 - Delimita sem fragmentar */
-    --input: 220 10% 78%;
+    --border: 220 12% 68%;               /* Bordas mais definidas */
+    --input: 220 12% 68%;
     
     /* Primary - Vermelho (mantém identidade) */
     --primary: 0 84% 50%;
