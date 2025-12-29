@@ -328,10 +328,14 @@ export default function Auth() {
       }
     };
 
-    // ✅ PRIMEIRO: Se o usuário já está autenticado, limpar 2FA pendente e redirecionar COM ROLE
+    // ✅ PRIMEIRO: Se o usuário já está autenticado
+    // ⚠️ P0: NUNCA limpar 2FA pendente aqui (senão cria bypass/race)
     if (user) {
-      sessionStorage.removeItem(pendingKey);
-      sessionStorage.removeItem(pendingUserKey);
+      const is2FAPending = sessionStorage.getItem(pendingKey) === "1";
+      if (!is2FAPending) {
+        sessionStorage.removeItem(pendingKey);
+        sessionStorage.removeItem(pendingUserKey);
+      }
       console.log('[AUTH] Usuário já autenticado - buscando role para redirect...');
       redirectWithRole(user.id, user.email);
       return;
@@ -961,17 +965,58 @@ export default function Auth() {
             userPhone={pending2FAUser.phone}
             onVerified={async () => {
               console.log('[AUTH] ✅ 2FA verificado com sucesso, iniciando redirect...');
-              
+
               // ✅ OTIMIZAÇÃO: Salvar cache de confiança após 2FA bem-sucedido
               if (pending2FAUser.deviceHash) {
                 setTrustCache(pending2FAUser.userId, pending2FAUser.deviceHash);
                 console.log('[AUTH] ✅ Trust cache salvo para próximos logins');
               }
-              
+
               // ✅ P0 FIX: Limpar flags ANTES de qualquer redirect
               sessionStorage.removeItem("matriz_2fa_pending");
               sessionStorage.removeItem("matriz_2fa_user");
-              
+
+              // ✅ P0: Sessão única só NASCE após 2FA validado
+              // (evita criação de sessão final antes do desafio)
+              try {
+                const SESSION_TOKEN_KEY = 'matriz_session_token';
+                const ua = navigator.userAgent;
+                let device_type = 'desktop';
+                if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+                  device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+                }
+
+                let browser = 'unknown';
+                if (ua.includes('Firefox')) browser = 'Firefox';
+                else if (ua.includes('Edg')) browser = 'Edge';
+                else if (ua.includes('Chrome')) browser = 'Chrome';
+                else if (ua.includes('Safari')) browser = 'Safari';
+
+                let os = 'unknown';
+                if (ua.includes('Windows')) os = 'Windows';
+                else if (ua.includes('Mac')) os = 'macOS';
+                else if (ua.includes('Linux')) os = 'Linux';
+                else if (ua.includes('Android')) os = 'Android';
+                else if (ua.includes('iPhone')) os = 'iOS';
+
+                const { data: sessionData, error: sessionError } = await supabase.rpc('create_single_session', {
+                  _ip_address: null,
+                  _user_agent: navigator.userAgent.slice(0, 255),
+                  _device_type: device_type,
+                  _browser: browser,
+                  _os: os,
+                });
+
+                if (!sessionError && sessionData && sessionData.length > 0) {
+                  localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
+                  console.log('[AUTH][SESSAO] ✅ Sessão única criada pós-2FA');
+                } else if (sessionError) {
+                  console.warn('[AUTH][SESSAO] Falha ao criar sessão pós-2FA:', sessionError);
+                }
+              } catch (err) {
+                console.warn('[AUTH][SESSAO] Erro crítico ao criar sessão pós-2FA:', err);
+              }
+
               // ✅ P0 FIX CRÍTICO: Buscar role e fazer redirect EXPLÍCITO
               // Não confiar no AuthProvider pois pode causar race condition
               try {
@@ -980,24 +1025,20 @@ export default function Auth() {
                   .select("role")
                   .eq("user_id", pending2FAUser.userId)
                   .maybeSingle();
-                
+
                 const userRole = roleData?.role || null;
                 const target = getPostLoginRedirect(userRole, pending2FAUser.email);
-                
+
                 console.log('[AUTH] ✅ 2FA completo - redirecionando para', target, '(role:', userRole, ')');
                 toast.success("Bem-vindo de volta!");
-                
-                // ✅ USAR window.location.replace para garantir que não há race condition
-                // navigate() pode não funcionar se o React ainda está processando estados
+
                 window.location.replace(target);
               } catch (err) {
                 console.error('[AUTH] Erro ao buscar role pós-2FA:', err);
-                // Fallback seguro
                 toast.success("Bem-vindo de volta!");
                 window.location.replace('/gestaofc');
               }
-              
-              // Limpar estados locais (pode não executar devido ao redirect acima)
+
               setShow2FA(false);
               setPending2FAUser(null);
             }}

@@ -367,7 +367,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!postSignInPayloadRef.current) return;
 
     const { userId, email } = postSignInPayloadRef.current;
-    
+
     // ✅ OWNER BYPASS: não criar sessão única para owner (LEI DE IMUNIDADE)
     const ownerEmail = "moisesblank@gmail.com";
     if (email?.toLowerCase() === ownerEmail) {
@@ -377,9 +377,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // 🔒 P0 INCIDENTE: se 2FA está pendente, NÃO criar sessão única (sessão final proibida)
+    const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
+    if (is2FAPending) {
+      console.warn('[AUTH][SESSAO] 2FA pendente - sessão única adiada (será criada pós-2FA no /auth)');
+      postSignInPayloadRef.current = null;
+      return;
+    }
+
     console.log('[AUTH][SESSAO] Criando sessão única pós-login para:', userId);
 
-    // Criar sessão única no banco
     const createSession = async () => {
       try {
         const ua = navigator.userAgent;
@@ -387,13 +394,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
           device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
         }
-        
+
         let browser = 'unknown';
         if (ua.includes('Firefox')) browser = 'Firefox';
         else if (ua.includes('Edg')) browser = 'Edge';
         else if (ua.includes('Chrome')) browser = 'Chrome';
         else if (ua.includes('Safari')) browser = 'Safari';
-        
+
         let os = 'unknown';
         if (ua.includes('Windows')) os = 'Windows';
         else if (ua.includes('Mac')) os = 'macOS';
@@ -418,7 +425,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           const sessionToken = data[0].session_token;
           localStorage.setItem(SESSION_TOKEN_KEY, sessionToken);
           console.log('[AUTH][SESSAO] ✅ Sessão única criada com sucesso');
-          
+
           // Iniciar heartbeat
           startHeartbeatRef.current();
         }
@@ -428,7 +435,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     createSession();
-    postSignInPayloadRef.current = null; // Limpa para não rodar novamente
+    postSignInPayloadRef.current = null;
   }, [postSignInTick]);
 
   const fetchUserRole = async (userId: string) => {
