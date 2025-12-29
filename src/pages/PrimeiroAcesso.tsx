@@ -1,6 +1,6 @@
 // ============================================
 // PRIMEIRO ACESSO - ONBOARDING OBRIGATÓRIO
-// 4 Etapas bloqueantes antes de usar a plataforma
+// 5 Etapas bloqueantes antes de usar a plataforma
 // ============================================
 
 import { useState, useEffect, useCallback } from "react";
@@ -10,6 +10,7 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useTheme } from "next-themes";
 
 // Etapas do onboarding
 import { PlatformStepsStage } from "@/components/primeiro-acesso/PlatformStepsStage";
@@ -32,12 +33,13 @@ interface OnboardingState {
 export default function PrimeiroAcesso() {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { setTheme } = useTheme();
   
   const [isLoading, setIsLoading] = useState(true);
   const [currentStage, setCurrentStage] = useState<OnboardingStage>('platform_steps');
   const [onboardingState, setOnboardingState] = useState<OnboardingState | null>(null);
 
-  // Carregar estado do onboarding
+  // Carregar estado do onboarding e aplicar tema salvo
   useEffect(() => {
     if (!user?.id) return;
 
@@ -52,7 +54,8 @@ export default function PrimeiroAcesso() {
             ui_theme_selected,
             password_change_required,
             trusted_device_registered,
-            onboarding_completed
+            onboarding_completed,
+            preferences
           `)
           .eq('id', user.id)
           .maybeSingle();
@@ -69,6 +72,15 @@ export default function PrimeiroAcesso() {
           return;
         }
 
+        // Aplicar tema salvo se existir
+        if (data.preferences && typeof data.preferences === 'object') {
+          const prefs = data.preferences as { theme?: string };
+          if (prefs.theme && ['light', 'dark', 'system'].includes(prefs.theme)) {
+            console.log('[PrimeiroAcesso] Aplicando tema salvo:', prefs.theme);
+            setTheme(prefs.theme);
+          }
+        }
+
         const state: OnboardingState = {
           platform_steps_completed: data.platform_steps_completed ?? false,
           ui_theme_selected: data.ui_theme_selected ?? false,
@@ -79,10 +91,10 @@ export default function PrimeiroAcesso() {
 
         setOnboardingState(state);
 
-        // Se já completou, redirecionar
+        // Se já completou, redirecionar para /alunos
         if (state.onboarding_completed) {
-          console.log('[PrimeiroAcesso] Onboarding já completo, redirecionando...');
-          navigate('/', { replace: true });
+          console.log('[PrimeiroAcesso] Onboarding já completo, redirecionando para /alunos...');
+          navigate('/alunos', { replace: true });
           return;
         }
 
@@ -115,7 +127,7 @@ export default function PrimeiroAcesso() {
     };
 
     loadOnboardingState();
-  }, [user?.id, navigate]);
+  }, [user?.id, navigate, setTheme]);
 
   // Completar etapa e avançar
   const completeStage = useCallback(async (stage: OnboardingStage, updateData: Partial<OnboardingState>) => {
@@ -170,7 +182,7 @@ export default function PrimeiroAcesso() {
     }
   }, [user?.id]);
 
-  // Finalizar onboarding
+  // Finalizar onboarding e redirecionar para /alunos
   const finalizeOnboarding = useCallback(async () => {
     if (!user?.id) return;
 
@@ -198,9 +210,9 @@ export default function PrimeiroAcesso() {
 
       toast.success('Configuração concluída! Bem-vindo à plataforma.');
       
-      // Redirecionar para home
+      // Redirecionar para portal do aluno
       setTimeout(() => {
-        navigate('/', { replace: true });
+        navigate('/alunos', { replace: true });
       }, 1500);
 
     } catch (err) {
@@ -220,9 +232,10 @@ export default function PrimeiroAcesso() {
     );
   }
 
-  // Progresso
+  // Progresso - agora são 5 etapas
   const stageIndex = ['platform_steps', 'theme', 'password', 'trust_device', 'complete'].indexOf(currentStage);
-  const progress = ((stageIndex) / 4) * 100;
+  const totalStages = 5;
+  const progress = ((stageIndex) / (totalStages - 1)) * 100;
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
@@ -235,7 +248,7 @@ export default function PrimeiroAcesso() {
                 Configuração Inicial
               </h1>
               <p className="text-sm text-muted-foreground">
-                Etapa {stageIndex + 1} de 4
+                Etapa {stageIndex + 1} de {totalStages}
               </p>
             </div>
             <div className="text-right">

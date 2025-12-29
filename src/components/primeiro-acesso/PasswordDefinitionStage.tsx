@@ -1,6 +1,6 @@
 // ============================================
 // ETAPA 3: DEFINIÇÃO DE SENHA OFICIAL
-// Política forte: 10 chars, upper, lower, number, symbol
+// Política forte: 8 chars, upper, lower, number, symbol
 // ============================================
 
 import { useState } from "react";
@@ -43,9 +43,9 @@ export function PasswordDefinitionStage({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Validação de senha forte (10+ chars, todos os critérios)
+  // Validação de senha forte (8+ chars, todos os critérios)
   const passwordChecks = {
-    length: newPassword.length >= 10,
+    length: newPassword.length >= 8,
     uppercase: /[A-Z]/.test(newPassword),
     lowercase: /[a-z]/.test(newPassword),
     number: /[0-9]/.test(newPassword),
@@ -201,7 +201,7 @@ export function PasswordDefinitionStage({
             </p>
             <div className="grid grid-cols-1 gap-2">
               {[
-                { key: "length", label: "Pelo menos 10 caracteres" },
+                { key: "length", label: "Pelo menos 8 caracteres" },
                 { key: "uppercase", label: "Letra maiúscula (A-Z)" },
                 { key: "lowercase", label: "Letra minúscula (a-z)" },
                 { key: "number", label: "Número (0-9)" },
