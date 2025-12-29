@@ -18,6 +18,7 @@ import { PerformanceProvider, PerformanceStyles } from "@/components/performance
 import { useGodModeStore } from "@/stores/godModeStore";
 import { useReactiveStore } from "@/stores/reactiveStore";
 import { PresenceInitializer } from "@/components/presence/PresenceInitializer";
+import { useThemeInitializer } from "@/hooks/useThemeInitializer";
 
 interface AppProvidersProps {
   children: ReactNode;
@@ -25,14 +26,17 @@ interface AppProvidersProps {
 }
 
 /**
- * Inicializador de Stores Zustand
- * Carrega dados iniciais dos stores globais
+ * Inicializador de Stores Zustand + Tema
+ * Carrega dados iniciais dos stores globais e tema do usuário
  */
 function StoreInitializer() {
   const checkOwner = useGodModeStore(s => s.checkOwner);
   const loadContent = useGodModeStore(s => s.loadContent);
   const fetchFromDB = useReactiveStore(s => s.fetchFromDB);
   const subscribeRealtime = useReactiveStore(s => s.subscribeRealtime);
+  
+  // Inicializar tema do usuário
+  useThemeInitializer();
   
   useEffect(() => {
     // Inicializar stores ao montar
