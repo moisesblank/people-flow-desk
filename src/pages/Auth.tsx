@@ -314,6 +314,14 @@ export default function Auth() {
       return;
     }
 
+    // 👑 OWNER DEV MODE: ?dev=1 permite owner acessar /auth para desenvolvimento
+    const isOwnerDevMode = urlParams.get('dev') === '1' && user?.email?.toLowerCase() === 'moisesblank@gmail.com';
+    if (isOwnerDevMode) {
+      console.log('[AUTH] 👑 OWNER DEV MODE - permanecendo em /auth para desenvolvimento');
+      setIsCheckingSession(false);
+      return;
+    }
+
     // Função assíncrona para buscar role e redirecionar
     const redirectWithRole = async (userId: string, email: string | undefined) => {
       try {
