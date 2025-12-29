@@ -30,8 +30,8 @@ interface TwoFactorVerificationProps {
   userId: string;
   userName?: string;
   userPhone?: string;
-  onVerified: () => void;
-  onCancel: () => void;
+  onVerified: () => void | Promise<void>;
+  onCancel: () => void | Promise<void>;
 }
 
 type Channel = "email" | "sms" | "whatsapp";

@@ -139,6 +139,15 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   }
 
   // ============================================
+  // 🔒 BLOQUEIO GLOBAL: 2FA pendente (anti “meio logado”)
+  // Se o usuário tem sessão mas ainda não concluiu 2FA, força /auth.
+  // ============================================
+  const is2FAPending = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
+  if (user && is2FAPending) {
+    return <Navigate to="/auth" replace state={{ from: location }} />;
+  }
+
+  // ============================================
   // 🛡️ LOADING STATE DETERMINÍSTICO
   // Spinner máximo 5s, depois prossegue
   // ============================================
@@ -159,7 +168,7 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🔒 BLOCO 3: POLÍTICA DE ACESSO À ROTA
   // /gestaofc/* → OWNER/STAFF permitido, outros = 404
   // ============================================
-  
+
   // Se tentando acessar /gestaofc sem ser staff/owner → 404 GENÉRICO
   // Não expõe que a área existe (BLOCO 3.2)
   if (isGestaoPath && !isStaffRole && !isOwner) {
