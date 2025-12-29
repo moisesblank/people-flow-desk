@@ -36,6 +36,7 @@ export default function AreaGratuita() {
       description: "Primeiros passos no mundo da química",
       icon: BookOpen,
       status: "free",
+      link: null, // Em breve
     },
     {
       id: 2,
@@ -43,6 +44,7 @@ export default function AreaGratuita() {
       description: "Conheça os elementos mais importantes",
       icon: GraduationCap,
       status: "free",
+      link: null, // Em breve
     },
     {
       id: 3,
@@ -50,6 +52,7 @@ export default function AreaGratuita() {
       description: "Conecte-se com outros estudantes",
       icon: Users,
       status: "free",
+      link: "/comunidade",
     },
   ];
 
@@ -110,7 +113,10 @@ export default function AreaGratuita() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
               >
-                <Card className="h-full hover:border-primary/50 transition-colors cursor-pointer group">
+                <Card 
+                  className="h-full hover:border-primary/50 transition-colors cursor-pointer group"
+                  onClick={() => item.link && navigate(item.link)}
+                >
                   <CardHeader>
                     <div className="flex items-center justify-between">
                       <div className="p-3 rounded-xl bg-primary/10 group-hover:bg-primary/20 transition-colors">
@@ -124,8 +130,17 @@ export default function AreaGratuita() {
                     <p className="text-sm text-muted-foreground mb-4">
                       {item.description}
                     </p>
-                    <Button variant="outline" size="sm" className="w-full gap-2">
-                      Acessar <ArrowRight className="h-4 w-4" />
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      className="w-full gap-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (item.link) navigate(item.link);
+                      }}
+                      disabled={!item.link}
+                    >
+                      {item.link ? "Acessar" : "Em breve"} <ArrowRight className="h-4 w-4" />
                     </Button>
                   </CardContent>
                 </Card>
