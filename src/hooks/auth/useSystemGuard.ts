@@ -144,7 +144,7 @@ export function useSystemGuard(): UseSystemGuardReturn {
         return 'VALID'; // Fail-open
       }
 
-      // Resultado é array com {is_valid, reason}
+      // Resultado é array com {is_valid, reason, user_id}
       const result = data?.[0];
       
       if (!result?.is_valid) {
