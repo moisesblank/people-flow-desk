@@ -16,6 +16,8 @@ const PerfilIncompleto = lazy(() => import("@/pages/PerfilIncompleto"));
 const GuiaDaPlataforma = lazy(() => import("@/pages/GuiaDaPlataforma"));
 const PrimeiroAcesso = lazy(() => import("@/pages/PrimeiroAcesso"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
+// 🛡️ BLOCO 1: Device Limit Gate
+const DeviceLimitGate = lazy(() => import("@/pages/security/DeviceLimitGate"));
 
 export const publicRoutes = (
   <>
@@ -31,6 +33,8 @@ export const publicRoutes = (
     <Route path="/guia-plataforma" element={<GuiaDaPlataforma />} />
     {/* 🔐 ONBOARDING OBRIGATÓRIO - Primeiro Acesso */}
     <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
+    {/* 🛡️ BLOCO 1: Device Limit Gate - Tela de limite de dispositivos */}
+    <Route path="/security/device-limit" element={<DeviceLimitGate />} />
     <Route path="*" element={<NotFound />} />
   </>
 );
