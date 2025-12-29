@@ -62,34 +62,34 @@ const ROLE_ICONS: Record<FullAppRole, React.ElementType> = {
   aluno_gratuito: Users2,
 };
 
-// Cores de gradiente para cada cargo
+// Cores de gradiente para cada cargo - USANDO TOKENS SEMÂNTICOS
 const ROLE_GRADIENTS: Record<FullAppRole, string> = {
-  owner: "from-purple-500 via-pink-500 to-rose-500",
-  admin: "from-blue-500 via-cyan-500 to-teal-500",
-  coordenacao: "from-green-500 via-emerald-500 to-teal-500",
-  suporte: "from-yellow-500 via-orange-500 to-amber-500",
-  monitoria: "from-indigo-500 via-violet-500 to-purple-500",
-  afiliado: "from-pink-500 via-rose-500 to-red-500",
-  marketing: "from-orange-500 via-red-500 to-rose-500",
-  contabilidade: "from-teal-500 via-cyan-500 to-blue-500",
-  employee: "from-slate-500 via-gray-500 to-zinc-500",
-  beta: "from-amber-500 via-yellow-400 to-orange-500",
-  aluno_gratuito: "from-gray-400 via-slate-400 to-zinc-400",
+  owner: "from-role-owner via-holo-pink to-primary",
+  admin: "from-role-admin via-holo-cyan to-role-contabilidade",
+  coordenacao: "from-role-coordenacao via-success to-role-contabilidade",
+  suporte: "from-role-suporte via-warning to-role-beta",
+  monitoria: "from-role-monitoria via-holo-purple to-role-owner",
+  afiliado: "from-role-afiliado via-primary to-stats-red",
+  marketing: "from-role-marketing via-primary to-stats-wine",
+  contabilidade: "from-role-contabilidade via-holo-cyan to-role-admin",
+  employee: "from-role-employee via-muted-foreground to-border",
+  beta: "from-role-beta via-warning to-role-marketing",
+  aluno_gratuito: "from-role-aluno via-muted-foreground to-border",
 };
 
-// Cores de fundo suave
+// Cores de fundo suave - USANDO TOKENS SEMÂNTICOS
 const ROLE_BG: Record<FullAppRole, string> = {
-  owner: "bg-purple-500/10 border-purple-500/30 hover:bg-purple-500/20",
-  admin: "bg-blue-500/10 border-blue-500/30 hover:bg-blue-500/20",
-  coordenacao: "bg-green-500/10 border-green-500/30 hover:bg-green-500/20",
-  suporte: "bg-yellow-500/10 border-yellow-500/30 hover:bg-yellow-500/20",
-  monitoria: "bg-indigo-500/10 border-indigo-500/30 hover:bg-indigo-500/20",
-  afiliado: "bg-pink-500/10 border-pink-500/30 hover:bg-pink-500/20",
-  marketing: "bg-orange-500/10 border-orange-500/30 hover:bg-orange-500/20",
-  contabilidade: "bg-teal-500/10 border-teal-500/30 hover:bg-teal-500/20",
-  employee: "bg-slate-500/10 border-slate-500/30 hover:bg-slate-500/20",
-  beta: "bg-amber-500/10 border-amber-500/30 hover:bg-amber-500/20",
-  aluno_gratuito: "bg-gray-500/10 border-gray-500/30 hover:bg-gray-500/20",
+  owner: "bg-role-owner/10 border-role-owner/30 hover:bg-role-owner/20",
+  admin: "bg-role-admin/10 border-role-admin/30 hover:bg-role-admin/20",
+  coordenacao: "bg-role-coordenacao/10 border-role-coordenacao/30 hover:bg-role-coordenacao/20",
+  suporte: "bg-role-suporte/10 border-role-suporte/30 hover:bg-role-suporte/20",
+  monitoria: "bg-role-monitoria/10 border-role-monitoria/30 hover:bg-role-monitoria/20",
+  afiliado: "bg-role-afiliado/10 border-role-afiliado/30 hover:bg-role-afiliado/20",
+  marketing: "bg-role-marketing/10 border-role-marketing/30 hover:bg-role-marketing/20",
+  contabilidade: "bg-role-contabilidade/10 border-role-contabilidade/30 hover:bg-role-contabilidade/20",
+  employee: "bg-role-employee/10 border-role-employee/30 hover:bg-role-employee/20",
+  beta: "bg-role-beta/10 border-role-beta/30 hover:bg-role-beta/20",
+  aluno_gratuito: "bg-role-aluno/10 border-role-aluno/30 hover:bg-role-aluno/20",
 };
 
 // Labels amigáveis para áreas principais

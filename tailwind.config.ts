@@ -123,6 +123,25 @@ export default {
           "surface-hover": "hsl(var(--ai-surface-hover))",
           border: "hsl(var(--ai-border))",
         },
+        role: {
+          owner: "hsl(var(--role-owner))",
+          admin: "hsl(var(--role-admin))",
+          coordenacao: "hsl(var(--role-coordenacao))",
+          suporte: "hsl(var(--role-suporte))",
+          monitoria: "hsl(var(--role-monitoria))",
+          afiliado: "hsl(var(--role-afiliado))",
+          marketing: "hsl(var(--role-marketing))",
+          contabilidade: "hsl(var(--role-contabilidade))",
+          employee: "hsl(var(--role-employee))",
+          beta: "hsl(var(--role-beta))",
+          aluno: "hsl(var(--role-aluno))",
+        },
+        rarity: {
+          common: "hsl(var(--rarity-common))",
+          rare: "hsl(var(--rarity-rare))",
+          epic: "hsl(var(--rarity-epic))",
+          legendary: "hsl(var(--rarity-legendary))",
+        },
       },
       borderRadius: {
         lg: "var(--radius)",
@@ -135,8 +154,8 @@ export default {
         'glow': '0 0 40px hsl(var(--primary) / 0.3)',
         'glow-sm': '0 0 20px hsl(var(--primary) / 0.2)',
         'glow-lg': '0 0 60px hsl(var(--primary) / 0.4)',
-        'spider': '0 0 30px hsl(345 85% 50% / 0.3), 0 0 60px hsl(220 70% 50% / 0.15)',
-        'wine': '0 0 40px hsl(345 80% 40% / 0.3)',
+        'spider': '0 0 30px hsl(var(--primary) / 0.3), 0 0 60px hsl(var(--stats-blue) / 0.15)',
+        'wine': '0 0 40px hsl(var(--stats-wine) / 0.3)',
       },
       keyframes: {
         "accordion-down": {

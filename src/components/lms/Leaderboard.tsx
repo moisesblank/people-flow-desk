@@ -19,28 +19,28 @@ interface LeaderboardProps {
   compact?: boolean;
 }
 
-// Spider-Man themed rank styles
+// Spider-Man themed rank styles - USANDO TOKENS SEMÂNTICOS
 const rankStyles = {
   1: {
     icon: Crown,
-    bg: 'bg-gradient-to-r from-stats-gold/20 to-amber-500/20',
+    bg: 'bg-gradient-to-r from-stats-gold/20 to-rarity-legendary/20',
     border: 'border-stats-gold/50',
     text: 'text-stats-gold',
-    badge: 'bg-gradient-to-r from-stats-gold to-amber-500 text-black',
+    badge: 'bg-gradient-to-r from-stats-gold to-rarity-legendary text-foreground',
   },
   2: {
     icon: Medal,
-    bg: 'bg-gradient-to-r from-slate-400/20 to-gray-400/20',
-    border: 'border-slate-400/50',
-    text: 'text-slate-400',
-    badge: 'bg-slate-400 text-slate-950',
+    bg: 'bg-gradient-to-r from-rarity-common/20 to-muted/20',
+    border: 'border-rarity-common/50',
+    text: 'text-rarity-common',
+    badge: 'bg-rarity-common text-foreground',
   },
   3: {
     icon: Trophy,
-    bg: 'bg-gradient-to-r from-primary/20 to-spider-blue/20',
+    bg: 'bg-gradient-to-r from-primary/20 to-stats-blue/20',
     border: 'border-primary/50',
     text: 'text-primary',
-    badge: 'bg-gradient-spider text-white',
+    badge: 'gradient-spider text-foreground',
   },
 };
 
