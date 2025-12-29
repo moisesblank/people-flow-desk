@@ -425,14 +425,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
     const { userId, email } = postSignInPayloadRef.current;
 
-    // ✅ OWNER BYPASS: não criar sessão única para owner (LEI DE IMUNIDADE)
+    // ✅ OWNER: Também precisa de sessão para SessionGuard funcionar
+    // (Sem sessão, SessionGuard faz logout após grace period)
     const ownerEmail = "moisesblank@gmail.com";
-    if (email?.toLowerCase() === ownerEmail) {
-      console.log('[AUTH][SESSAO] Owner bypass - não cria sessão única');
-      postSignInPayloadRef.current = null;
-      startHeartbeatRef.current();
-      return;
-    }
+    const isOwner = email?.toLowerCase() === ownerEmail;
 
     // 🔒 P0 INCIDENTE: se 2FA está pendente, NÃO criar sessão única (sessão final proibida)
     const is2FAPending = sessionStorage.getItem("matriz_2fa_pending") === "1";
