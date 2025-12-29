@@ -1,11 +1,10 @@
 // ============================================
-// HOOK: INICIALIZADOR DE TEMA v2.0
+// HOOK: INICIALIZADOR DE TEMA v2.1
 // Carrega tema salvo do usuário APENAS em áreas protegidas
 // Fora de /alunos ou /gestaofc → SEMPRE "default" (system)
 // ============================================
 
 import { useEffect, useRef } from "react";
-import { useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,16 +21,18 @@ function isProtectedThemeArea(pathname: string): boolean {
  * Hook que gerencia o tema:
  * - Áreas protegidas (/alunos, /gestaofc) + usuário logado → carrega preferência
  * - Qualquer outra rota → força tema "default" (system)
+ * 
+ * NOTA: Usa window.location.pathname pois é chamado fora do Router
  */
 export function useThemeInitializer() {
   const { user } = useAuth();
   const { setTheme, theme } = useTheme();
-  const location = useLocation();
   const hasInitialized = useRef(false);
   const lastPath = useRef<string>('');
 
   useEffect(() => {
-    const currentPath = location.pathname;
+    // Usa window.location pois este hook roda fora do Router
+    const currentPath = window.location.pathname;
     const isProtected = isProtectedThemeArea(currentPath);
     const pathChanged = lastPath.current !== currentPath;
     lastPath.current = currentPath;
@@ -91,5 +92,5 @@ export function useThemeInitializer() {
     };
 
     loadSavedTheme();
-  }, [user?.id, setTheme, theme, location.pathname]);
+  }, [user?.id, setTheme, theme]);
 }
