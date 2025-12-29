@@ -188,26 +188,27 @@
   }
 
   /* ============================================
-     TEMA CLARO (WHITE) - Branco Inteligente Acinzentado
-     ATUALIZADO conforme especificação do OWNER
+     TEMA CLARO (WHITE) - Branco Arquitetônico Off-White
+     Conforto visual para sessões longas
+     PROIBIDO: #FFFFFF puro
      ============================================ */
   .light {
-    /* Background & Surfaces - Branco Acinzentado Inteligente */
-    --background: 220 15% 96%;
-    --foreground: 220 20% 18%;
+    /* Background & Surfaces - Off-White Arquitetônico */
+    --background: 220 10% 91%;           /* #E4E7EC - Base neutra e estável */
+    --foreground: 220 18% 22%;           /* #333846 - Contraste confortável */
     
-    --card: 220 15% 98%;
-    --card-foreground: 220 20% 18%;
-    --card-hover: 220 15% 94%;
+    --card: 220 10% 93%;                 /* #E9ECF1 - Diferencia planos */
+    --card-foreground: 220 18% 22%;
+    --card-hover: 220 10% 88%;           /* #DADFE7 - Resposta visual clara */
     
-    --popover: 220 15% 98%;
-    --popover-foreground: 220 20% 18%;
+    --popover: 220 10% 93%;
+    --popover-foreground: 220 18% 22%;
     
-    --muted: 220 15% 94%;
-    --muted-foreground: 220 8% 55%;
+    --muted: 220 10% 88%;
+    --muted-foreground: 220 8% 60%;      /* #9AA1B0 - Informação de apoio */
     
-    --border: 220 15% 88%;
-    --input: 220 15% 88%;
+    --border: 220 10% 78%;               /* #C3CAD6 - Delimita sem fragmentar */
+    --input: 220 10% 78%;
     
     /* Primary - Vermelho (mantém identidade) */
     --primary: 0 84% 50%;
@@ -215,9 +216,9 @@
     --primary-hover: 0 84% 45%;
     --primary-glow: 0 84% 60%;
     
-    /* Secondary - Cinza inteligente */
-    --secondary: 220 15% 94%;
-    --secondary-foreground: 220 10% 40%;
+    /* Secondary - Hierarquia clara */
+    --secondary: 220 10% 88%;
+    --secondary-foreground: 220 10% 44%; /* #666E80 - Sem competir com conteúdo */
     
     /* Accent */
     --accent: 0 70% 50%;
@@ -265,14 +266,14 @@
     --glow-cyan: 180 100% 45%;
     --glow-wine: 0 70% 50%;
     
-    /* Sidebar - Light Acinzentado */
-    --sidebar-background: 220 15% 96%;
-    --sidebar-foreground: 220 20% 18%;
+    /* Sidebar - Off-White Arquitetônico */
+    --sidebar-background: 220 10% 91%;
+    --sidebar-foreground: 220 18% 22%;
     --sidebar-primary: 0 84% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 94%;
-    --sidebar-accent-foreground: 220 20% 18%;
-    --sidebar-border: 220 15% 88%;
+    --sidebar-accent: 220 10% 88%;
+    --sidebar-accent-foreground: 220 18% 22%;
+    --sidebar-border: 220 10% 78%;
     --sidebar-ring: 0 84% 50%;
     
     /* Chart colors - Light */
@@ -293,12 +294,12 @@
     --holo-blue: 210 100% 45%;
     --holo-green: 160 100% 35%;
     
-    /* AI - Light */
+    /* AI - Light Off-White */
     --ai-glow: 185 100% 40%;
     --ai-accent: 280 90% 50%;
-    --ai-surface: 220 15% 96%;
-    --ai-surface-hover: 220 15% 94%;
-    --ai-border: 220 15% 88%;
+    --ai-surface: 220 10% 91%;
+    --ai-surface-hover: 220 10% 88%;
+    --ai-border: 220 10% 78%;
   }
 }
 
