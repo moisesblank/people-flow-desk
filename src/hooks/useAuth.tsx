@@ -438,10 +438,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
-    // ✅ Regra: quando o usuário está na tela /auth, quem cria a sessão única é o Auth.tsx
-    // (após device binding / 2FA). Evita corrida e "entra e sai".
-    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/auth')) {
-      console.log('[AUTH][SESSAO] Em /auth - sessão única será criada pelo Auth.tsx');
+    // ✅ Regra: 2FA pendente = não criar sessão final ainda.
+    // Fora isso, SEMPRE garantir que o token exista rapidamente, mesmo em /auth,
+    // pois o redirect pode tirar o usuário de /auth antes do Auth.tsx terminar.
+    // (Evita logout ~5-6s pelo SessionGuard em rotas não-/auth)
+    const existingToken = typeof window !== 'undefined'
+      ? localStorage.getItem(SESSION_TOKEN_KEY)
+      : null;
+
+    if (existingToken) {
+      console.log('[AUTH][SESSAO] Token já existe - pulando criação de sessão única');
+      startHeartbeatRef.current();
       postSignInPayloadRef.current = null;
       return;
     }
