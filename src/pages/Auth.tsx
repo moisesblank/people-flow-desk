@@ -656,9 +656,14 @@ export default function Auth() {
       });
       
       if (error) {
-        console.error('[AUTH] Erro ao forçar logout:', error);
+        console.error('[AUTH] Erro ao forçar logout (RPC):', {
+          message: error.message,
+          details: (error as any).details,
+          hint: (error as any).hint,
+          code: (error as any).code,
+        });
         toast.error("Erro ao encerrar outras sessões", {
-          description: "Tente novamente em alguns segundos."
+          description: `${error.message}${(error as any).code ? ` (code: ${(error as any).code})` : ''}`
         });
         setIsForceLoggingOut(false);
         return;
