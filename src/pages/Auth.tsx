@@ -1014,8 +1014,75 @@ export default function Auth() {
                 _device_hash_from_server: deviceResult.deviceHash ?? null,
               });
 
-              if (error || !data?.[0]?.session_token) {
+              // 🛡️ MODELO HÍBRIDO: Tratar DEVICE_LIMIT_EXCEEDED para alunos
+              if (error) {
+                const errorMsg = error.message || '';
+                
+                // Verificar se é erro de limite de dispositivos (alunos)
+                if (errorMsg.includes('DEVICE_LIMIT_EXCEEDED')) {
+                  console.log('[AUTH][SESSAO] 🛡️ Limite de sessões excedido (aluno) - redirecionando para DeviceLimitGate');
+                  
+                  // Parse dos valores do erro: "DEVICE_LIMIT_EXCEEDED:max=3,current=3"
+                  const maxMatch = errorMsg.match(/max=(\d+)/);
+                  const currentMatch = errorMsg.match(/current=(\d+)/);
+                  const maxDevices = maxMatch ? parseInt(maxMatch[1]) : 3;
+                  const currentDevices = currentMatch ? parseInt(currentMatch[1]) : 3;
+                  
+                  // Buscar sessões ativas do usuário para mostrar no Gate
+                  const { data: activeSessions } = await supabase.rpc('get_user_active_sessions');
+                  
+                  const fingerprintData = await collectFingerprintRawData();
+                  const deviceName = generateDeviceName(fingerprintData);
+                  
+                  const currentDevice: CurrentDeviceInfo = {
+                    device_type: fingerprintData.deviceType,
+                    os_name: fingerprintData.os,
+                    browser_name: fingerprintData.browser,
+                    label: deviceName,
+                  };
+
+                  const devices: DeviceInfo[] = (activeSessions || []).map((s: any, index: number) => ({
+                    device_id: s.id,
+                    label: s.device_name || `${s.os || 'Sistema'} • ${s.browser || 'Navegador'}`,
+                    device_type: s.device_type || 'desktop',
+                    os_name: s.os || 'Desconhecido',
+                    browser_name: s.browser || 'Desconhecido',
+                    last_seen_at: s.last_activity_at,
+                    first_seen_at: s.created_at,
+                    is_recommended_to_disconnect: index === (activeSessions?.length || 1) - 1,
+                  }));
+
+                  const gatePayload: DeviceGatePayload = {
+                    code: 'DEVICE_LIMIT_EXCEEDED',
+                    message: 'Você ultrapassou o limite de dispositivos da sua conta',
+                    max_devices: maxDevices,
+                    current_devices: currentDevices,
+                    current_device: currentDevice,
+                    devices,
+                    action_required: 'REVOKE_ONE_DEVICE_TO_CONTINUE',
+                  };
+
+                  useDeviceGateStore.getState().setPayload(gatePayload);
+                  resetTurnstile();
+                  setIsLoading(false);
+                  navigate('/security/device-limit');
+                  return;
+                }
+                
+                // Outro erro genérico
                 console.error('[AUTH][SESSAO] ❌ Falha ao criar sessão única (RPC):', error);
+                toast.error('Falha crítica de segurança', {
+                  description: 'Não foi possível iniciar a sessão única. Faça login novamente.',
+                  duration: 9000,
+                });
+                await supabase.auth.signOut();
+                resetTurnstile();
+                setIsLoading(false);
+                return;
+              }
+              
+              if (!data?.[0]?.session_token) {
+                console.error('[AUTH][SESSAO] ❌ Sessão criada mas sem token');
                 toast.error('Falha crítica de segurança', {
                   description: 'Não foi possível iniciar a sessão única. Faça login novamente.',
                   duration: 9000,
@@ -1028,7 +1095,47 @@ export default function Auth() {
 
               localStorage.setItem(SESSION_TOKEN_KEY, data[0].session_token);
               console.log('[AUTH][SESSAO] ✅ Sessão única criada (RPC) e token armazenado');
-            } catch (sessErr) {
+            } catch (sessErr: any) {
+              // 🛡️ Também tratar exceção como possível DEVICE_LIMIT_EXCEEDED
+              const errMsg = sessErr?.message || String(sessErr);
+              if (errMsg.includes('DEVICE_LIMIT_EXCEEDED')) {
+                console.log('[AUTH][SESSAO] 🛡️ Limite excedido (catch) - redirecionando');
+                
+                const { data: activeSessions } = await supabase.rpc('get_user_active_sessions');
+                const fingerprintData = await collectFingerprintRawData();
+                const deviceName = generateDeviceName(fingerprintData);
+                
+                const gatePayload: DeviceGatePayload = {
+                  code: 'DEVICE_LIMIT_EXCEEDED',
+                  message: 'Você ultrapassou o limite de dispositivos da sua conta',
+                  max_devices: 3,
+                  current_devices: activeSessions?.length || 3,
+                  current_device: {
+                    device_type: fingerprintData.deviceType,
+                    os_name: fingerprintData.os,
+                    browser_name: fingerprintData.browser,
+                    label: deviceName,
+                  },
+                  devices: (activeSessions || []).map((s: any, i: number) => ({
+                    device_id: s.id,
+                    label: s.device_name || `${s.os || 'Sistema'} • ${s.browser || 'Navegador'}`,
+                    device_type: s.device_type || 'desktop',
+                    os_name: s.os || 'Desconhecido',
+                    browser_name: s.browser || 'Desconhecido',
+                    last_seen_at: s.last_activity_at,
+                    first_seen_at: s.created_at,
+                    is_recommended_to_disconnect: i === (activeSessions?.length || 1) - 1,
+                  })),
+                  action_required: 'REVOKE_ONE_DEVICE_TO_CONTINUE',
+                };
+
+                useDeviceGateStore.getState().setPayload(gatePayload);
+                resetTurnstile();
+                setIsLoading(false);
+                navigate('/security/device-limit');
+                return;
+              }
+              
               console.warn('[AUTH][SESSAO] Erro crítico ao criar sessão (RPC):', sessErr);
               toast.error('Falha crítica de segurança', {
                 description: 'Não foi possível iniciar a sessão única. Faça login novamente.',

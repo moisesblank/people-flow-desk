@@ -16060,6 +16060,18 @@ export type Database = {
           unique_users: number
         }[]
       }
+      get_user_active_sessions: {
+        Args: never
+        Returns: {
+          browser: string
+          created_at: string
+          device_name: string
+          device_type: string
+          id: string
+          last_activity_at: string
+          os: string
+        }[]
+      }
       get_user_chat_ban_status: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: {
@@ -16498,6 +16510,7 @@ export type Database = {
             Args: { p_current_session_token: string; p_user_id: string }
             Returns: number
           }
+      revoke_specific_session: { Args: { p_session_id: string }; Returns: Json }
       revoke_user_session: {
         Args: { p_reason?: string; p_session_id: string }
         Returns: boolean
