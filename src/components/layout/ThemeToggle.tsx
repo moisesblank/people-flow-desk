@@ -11,7 +11,6 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useTheme } from "next-themes";
 
 export function ThemeToggle() {
@@ -25,28 +24,23 @@ export function ThemeToggle() {
 
   return (
     <DropdownMenu>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon" className="header-btn-glow micro-hover">
-              {getIcon()}
-            </Button>
-          </DropdownMenuTrigger>
-        </TooltipTrigger>
-        <TooltipContent>Alterar Tema</TooltipContent>
-      </Tooltip>
+      <DropdownMenuTrigger asChild>
+        <Button variant="ghost" size="icon" className="header-btn-glow micro-hover" title="Alterar Tema">
+          {getIcon()}
+        </Button>
+      </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
-        <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2">
+        <DropdownMenuItem onClick={() => setTheme("light")} className="gap-2 cursor-pointer">
           <Sun className="h-4 w-4" />
           <span>Claro</span>
           {theme === "light" && <span className="ml-auto text-primary">✓</span>}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2">
+        <DropdownMenuItem onClick={() => setTheme("dark")} className="gap-2 cursor-pointer">
           <Moon className="h-4 w-4" />
           <span>Escuro</span>
           {theme === "dark" && <span className="ml-auto text-primary">✓</span>}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2">
+        <DropdownMenuItem onClick={() => setTheme("system")} className="gap-2 cursor-pointer">
           <Monitor className="h-4 w-4" />
           <span>Sistema</span>
           {theme === "system" && <span className="ml-auto text-primary">✓</span>}
