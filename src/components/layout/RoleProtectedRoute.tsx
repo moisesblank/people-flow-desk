@@ -1,7 +1,7 @@
 // ============================================
-// MOISÉS MEDEIROS v12.0 - ROLE PROTECTED ROUTE
+// MOISÉS MEDEIROS v12.1 - ROLE PROTECTED ROUTE
 // Rota protegida com verificação de permissão por cargo
-// 🔐 ATUALIZAÇÃO v12.0: 404 genérico para /gestaofc (não expor existência)
+// 🔐 ATUALIZAÇÃO v12.1: Onboarding obrigatório
 // BLOCO 2 & 3: Owner bypass total, alunos veem 404
 // ============================================
 
@@ -16,6 +16,7 @@ import {
   OWNER_EMAIL
 } from "@/hooks/useRolePermissions";
 import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
+import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { Button } from "@/components/ui/button";
 
 interface RoleProtectedRouteProps {
@@ -51,6 +52,7 @@ function NotFoundPage() {
 export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRouteProps) {
   const { user, isLoading: authLoading } = useAuth();
   const { hasAccess, hasAccessToUrl, isLoading: roleLoading, roleLabel, role, isOwner } = useRolePermissions();
+  const { isLoading: onboardingLoading, needsOnboarding } = useOnboardingStatus();
   const location = useLocation();
   
   // ============================================
@@ -125,11 +127,12 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // 🛡️ LÓGICA DE ACESSO (APÓS TODOS OS HOOKS)
   // ============================================
   const isGestaoPath = location.pathname.startsWith("/gestaofc");
+  const isOnPrimeiroAcesso = location.pathname === "/primeiro-acesso";
   // P1-2 FIX: Sem 'funcionario' e 'employee' deprecated
   const isStaffRole = ['owner', 'admin', 'coordenacao', 'suporte', 'monitoria', 'marketing', 'contabilidade', 'afiliado'].includes(role || '');
   const currentArea = requiredArea || URL_TO_AREA[location.pathname];
   const hasPermission = currentArea ? hasAccess(currentArea) : hasAccessToUrl(location.pathname);
-  const isActuallyLoading = (authLoading || roleLoading) && !loadingTimeout;
+  const isActuallyLoading = (authLoading || roleLoading || onboardingLoading) && !loadingTimeout;
 
   // ============================================
   // 🔥 OWNER BYPASS - DECISÃO (não estrutura)
@@ -162,6 +165,16 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // Not authenticated
   if (!user) {
     return <Navigate to="/auth" replace />;
+  }
+
+  // ============================================
+  // 🔐 ONBOARDING OBRIGATÓRIO
+  // Se onboarding incompleto, redirecionar
+  // (Exceto owner e se já estamos na página)
+  // ============================================
+  if (needsOnboarding && !isOnPrimeiroAcesso && !shouldBypassForOwner) {
+    console.log('[RoleProtectedRoute] Onboarding incompleto, redirecionando para /primeiro-acesso');
+    return <Navigate to="/primeiro-acesso" replace />;
   }
 
   // ============================================
