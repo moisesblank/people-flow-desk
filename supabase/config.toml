@@ -282,3 +282,8 @@ verify_jwt = false
 # 🟢 Requer JWT - Apenas Admin/Owner pode banir
 [functions.admin-ban-user]
 verify_jwt = true
+
+# --- Admin Delete User (DOGMA SUPREMO: EXCLUIR = ANIQUILAR) ---
+# 🔴 Requer JWT - Apenas Admin/Owner pode DELETAR PERMANENTEMENTE
+[functions.admin-delete-user]
+verify_jwt = true

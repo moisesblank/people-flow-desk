@@ -561,11 +561,10 @@ export default function Alunos() {
   };
 
   // ============================================
-  // DELETE + BAN - APENAS ADMIN OU OWNER (CONSTITUIÇÃO v10.x + DOGMA XI)
-  // Agora também revoga sessões e bloqueia login
+  // 🔥 DOGMA SUPREMO: EXCLUIR = ANIQUILAR
+  // DELETE PERMANENTE + CASCADE + LOGOUT FORÇADO
   // ============================================
   const handleDelete = async (id: string) => {
-    // Validação de permissão no frontend (backup - RLS é a fonte de verdade)
     if (!isAdminOrOwner) {
       toast.error("Sem permissão", {
         description: "Apenas Admin ou Owner podem excluir alunos"
@@ -573,35 +572,39 @@ export default function Alunos() {
       return;
     }
 
-    // Buscar o email do aluno para ban
     const studentToDelete = allStudents.find(s => s.id === id);
     const studentEmail = studentToDelete?.email;
     
+    // Confirmação extra para exclusão PERMANENTE
+    if (!confirm(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nO aluno "${studentToDelete?.nome || studentEmail}" será EXCLUÍDO PERMANENTEMENTE de TODAS as camadas do sistema.\n\nDeseja continuar?`)) {
+      return;
+    }
+    
     try {
-      // 🛡️ DOGMA XI: Primeiro, banir e revogar sessões
+      // 🔥 DOGMA SUPREMO: Deletar PERMANENTEMENTE via Edge Function
       if (studentEmail) {
-        console.log('[DELETE+BAN] Banindo e revogando sessões:', studentEmail);
+        console.log('[DELETE-PERMANENTE] 💀 Aniquilando usuário:', studentEmail);
         
-        const { data: banResult, error: banError } = await supabase.functions.invoke('admin-ban-user', {
+        const { data: deleteResult, error: deleteError } = await supabase.functions.invoke('admin-delete-user', {
           body: {
-            action: 'ban',
             targetEmail: studentEmail,
-            reason: 'Conta excluída pelo administrador',
+            reason: 'Aluno excluído pelo administrador',
           },
         });
 
-        if (banError) {
-          console.error('[DELETE+BAN] Erro ao banir:', banError);
-          // Continua com delete mesmo se ban falhar (graceful degradation)
+        if (deleteError) {
+          console.error('[DELETE-PERMANENTE] ❌ Erro:', deleteError);
+          toast.error("Erro ao excluir usuário do sistema de autenticação", {
+            description: deleteError.message
+          });
         } else {
-          console.log('[DELETE+BAN] ✅ Usuário banido:', banResult);
+          console.log('[DELETE-PERMANENTE] ✅ Usuário ANIQUILADO:', deleteResult);
         }
       }
 
       // 2. Deletar da tabela alunos
       const { error } = await supabase.from("alunos").delete().eq("id", id);
       if (error) {
-        // RLS bloqueou - usuário não tem permissão
         if (error.code === '42501' || error.message.includes('policy')) {
           toast.error("Sem permissão para excluir", {
             description: "Apenas Admin ou Owner podem excluir alunos"
@@ -611,8 +614,8 @@ export default function Alunos() {
         throw error;
       }
       
-      toast.success("Aluno removido e acesso revogado!", {
-        description: "O usuário foi deslogado e não poderá mais acessar a plataforma."
+      toast.success("🔥 Aluno EXCLUÍDO PERMANENTEMENTE!", {
+        description: "Removido de TODAS as camadas: auth, sessões, dispositivos, dados."
       });
       refetch();
     } catch (error: any) {
