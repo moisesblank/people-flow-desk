@@ -10518,6 +10518,7 @@ export type Database = {
           last_lockdown_by: string | null
           last_lockdown_reason: string | null
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
           auth_enabled?: boolean
@@ -10528,6 +10529,7 @@ export type Database = {
           last_lockdown_by?: string | null
           last_lockdown_reason?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
           auth_enabled?: boolean
@@ -10538,6 +10540,7 @@ export type Database = {
           last_lockdown_by?: string | null
           last_lockdown_reason?: string | null
           updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
