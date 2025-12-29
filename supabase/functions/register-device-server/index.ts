@@ -349,10 +349,10 @@ Deno.serve(async (req) => {
       // Buscar lista de dispositivos para o modal
       const { data: devices } = await supabase
         .from('user_devices')
-        .select('id, device_name, device_type, browser, os, last_seen_at')
+        .select('id, device_name, device_type, browser, os, last_seen_at, first_seen_at')
         .eq('user_id', userId)
         .eq('is_active', true)
-        .order('last_seen_at', { ascending: false });
+        .order('last_seen_at', { ascending: true }); // Mais antigo primeiro = recomendado desconectar
 
       console.warn(`[register-device-server] ⚠️ LIMITE EXCEDIDO: ${currentCount}/3 dispositivos`);
       
@@ -386,13 +386,39 @@ Deno.serve(async (req) => {
         console.warn('[register-device-server] ⚠️ Falha ao registrar evento de segurança:', securityEventError);
       }
 
+      // 🛡️ BLOCO 4: CONTRATO COMPLETO para DeviceLimitGate
+      const gatePayload = {
+        code: 'DEVICE_LIMIT_EXCEEDED',
+        message: 'Limite de dispositivos atingido',
+        max_devices: 3,
+        current_devices: currentCount,
+        action_required: 'REVOKE_ONE_DEVICE_TO_CONTINUE',
+        // Dispositivo atual tentando entrar
+        current_device: {
+          device_type: deviceType || 'desktop',
+          os_name: os || 'Sistema',
+          browser_name: browser || 'Navegador',
+          label: deviceName || `${browser || 'Navegador'} • ${os || 'Sistema'}`,
+        },
+        // Lista de dispositivos com is_recommended_to_disconnect
+        devices: (devices || []).map((d: any, index: number) => ({
+          device_id: d.id,
+          label: d.device_name || `${d.browser || 'Navegador'} • ${d.os || 'Sistema'}`,
+          device_type: d.device_type || 'desktop',
+          os_name: d.os || 'Sistema',
+          browser_name: d.browser || 'Navegador',
+          last_seen_at: d.last_seen_at,
+          first_seen_at: d.first_seen_at,
+          // Primeiro da lista (mais antigo) é recomendado para desconectar
+          is_recommended_to_disconnect: index === 0,
+        })),
+      };
+
       return new Response(
         JSON.stringify({ 
           success: false, 
           error: 'DEVICE_LIMIT_EXCEEDED',
-          maxDevices: 3,
-          currentCount,
-          devices: devices || []
+          ...gatePayload,
         }),
         { status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
