@@ -7,7 +7,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
-const EPOCH_CHECK_INTERVAL = 30_000; // 30 segundos
+// REMOVIDO: Validação periódica - agora usa apenas broadcast Realtime
 
 // Códigos de erro específicos
 export type AuthGuardError = 
@@ -44,8 +44,7 @@ export function useSystemGuard(): UseSystemGuardReturn {
     lastCheck: null,
     error: null,
   });
-
-  const checkIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  // Refs removidas - sem validação periódica
 
   /**
    * Limpa TUDO e força logout
@@ -180,31 +179,11 @@ export function useSystemGuard(): UseSystemGuardReturn {
     }
   }, [checkAuthStatus, validateSessionEpoch, forceLogout]);
 
-  // Verificação inicial e periódica
+  // Verificação APENAS no mount inicial (não periódica)
   useEffect(() => {
-    // Verificar imediatamente ao montar
+    // Verificar UMA VEZ ao montar
     fullValidation();
-
-    // Verificação periódica (30s)
-    checkIntervalRef.current = setInterval(() => {
-      fullValidation();
-    }, EPOCH_CHECK_INTERVAL);
-
-    // Verificar quando volta para a aba
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        fullValidation();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-
-    return () => {
-      if (checkIntervalRef.current) {
-        clearInterval(checkIntervalRef.current);
-      }
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-    };
+    // SEM intervalo periódico - usa apenas broadcast Realtime
   }, [fullValidation]);
 
   // Listener para broadcast de lockdown
