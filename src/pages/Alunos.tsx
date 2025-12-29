@@ -167,9 +167,9 @@ const ROLE_DISPLAY_CONFIG = {
     colorClass: 'border-blue-500/50 bg-blue-500/10 text-blue-400',
     icon: MapPin,
   },
-  // Card: "Presencial + Online" (verde/purple) = Beta Premium
+  // Card: "Presencial + Online" (verde/purple) = Beta
   beta: { 
-    label: 'Premium', 
+    label: 'Beta', 
     colorClass: 'border-purple-500/50 bg-purple-500/10 text-purple-400',
     icon: Globe,
   },
