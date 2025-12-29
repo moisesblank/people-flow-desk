@@ -442,6 +442,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       return;
     }
 
+    // ✅ Regra: quando o usuário está na tela /auth, quem cria a sessão única é o Auth.tsx
+    // (após device binding / 2FA). Evita corrida e "entra e sai".
+    if (typeof window !== 'undefined' && window.location.pathname.startsWith('/auth')) {
+      console.log('[AUTH][SESSAO] Em /auth - sessão única será criada pelo Auth.tsx');
+      postSignInPayloadRef.current = null;
+      return;
+    }
+
     console.log('[AUTH][SESSAO] Criando sessão única pós-login para:', userId);
 
     const createSession = async () => {
