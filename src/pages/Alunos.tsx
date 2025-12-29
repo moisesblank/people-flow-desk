@@ -60,6 +60,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
@@ -336,6 +337,10 @@ export default function Alunos() {
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
   const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
   const [isImportModalOpen, setIsImportModalOpen] = useState(false);
+  
+  // Estado para confirmação de exclusão (substitui confirm() nativo)
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [studentToDelete, setStudentToDelete] = useState<Student | null>(null);
 
   // Debounce search (300ms)
   useEffect(() => {
@@ -564,21 +569,30 @@ export default function Alunos() {
   // 🔥 DOGMA SUPREMO: EXCLUIR = ANIQUILAR
   // DELETE PERMANENTE + CASCADE + LOGOUT FORÇADO
   // ============================================
-  const handleDelete = async (id: string) => {
+  
+  // Abre o dialog de confirmação (substitui confirm() nativo)
+  const openDeleteConfirm = (id: string) => {
     if (!isAdminOrOwner) {
       toast.error("Sem permissão", {
         description: "Apenas Admin ou Owner podem excluir alunos"
       });
       return;
     }
-
-    const studentToDelete = allStudents.find(s => s.id === id);
-    const studentEmail = studentToDelete?.email;
-    
-    // Confirmação extra para exclusão PERMANENTE
-    if (!confirm(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nO aluno "${studentToDelete?.nome || studentEmail}" será EXCLUÍDO PERMANENTEMENTE de TODAS as camadas do sistema.\n\nDeseja continuar?`)) {
-      return;
+    const student = allStudents.find(s => s.id === id);
+    if (student) {
+      setStudentToDelete(student);
+      setDeleteConfirmOpen(true);
     }
+  };
+  
+  // Executa a exclusão após confirmação
+  const executeDelete = async () => {
+    if (!studentToDelete) return;
+    
+    const id = studentToDelete.id;
+    const studentEmail = studentToDelete.email;
+    
+    setDeleteConfirmOpen(false);
     
     try {
       // 🔥 DOGMA SUPREMO: Deletar PERMANENTEMENTE via Edge Function
@@ -623,6 +637,8 @@ export default function Alunos() {
       toast.error("Erro ao remover aluno", {
         description: error.message || "Tente novamente"
       });
+    } finally {
+      setStudentToDelete(null);
     }
   };
 
@@ -1155,7 +1171,7 @@ export default function Alunos() {
                               <Button 
                                 variant="ghost" 
                                 size="icon" 
-                                onClick={(e) => { e.stopPropagation(); handleDelete(student.id); }} 
+                                onClick={(e) => { e.stopPropagation(); openDeleteConfirm(student.id); }} 
                                 className="text-red-400 hover:text-red-300"
                                 title="Excluir aluno (Admin/Owner)"
                               >
@@ -1276,6 +1292,39 @@ export default function Alunos() {
             onOpenChange={setIsImportModalOpen}
             onImportComplete={refetch}
           />
+          
+          {/* AlertDialog de confirmação de exclusão (substitui confirm() nativo) */}
+          <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+            <AlertDialogContent className="bg-background border-red-500/30">
+              <AlertDialogHeader>
+                <AlertDialogTitle className="flex items-center gap-2 text-red-400">
+                  <AlertCircle className="h-5 w-5" />
+                  Confirmar Exclusão Permanente
+                </AlertDialogTitle>
+                <AlertDialogDescription className="text-muted-foreground space-y-3">
+                  <p className="font-semibold text-yellow-400">
+                    ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!
+                  </p>
+                  <p>
+                    O aluno <span className="font-bold text-foreground">"{studentToDelete?.nome || studentToDelete?.email}"</span> será 
+                    EXCLUÍDO PERMANENTEMENTE de TODAS as camadas do sistema.
+                  </p>
+                  <p className="text-sm">
+                    Isso inclui: autenticação, sessões, dispositivos e todos os dados associados.
+                  </p>
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="border-muted">Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={executeDelete}
+                  className="bg-red-600 hover:bg-red-700 text-white"
+                >
+                  Excluir Permanentemente
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
     </div>
