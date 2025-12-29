@@ -15518,6 +15518,7 @@ export type Database = {
         | { Args: never; Returns: number }
         | { Args: { p_days?: number }; Returns: number }
       cleanup_old_security_events_v2: { Args: never; Returns: number }
+      cleanup_old_security_logs: { Args: never; Returns: undefined }
       cleanup_old_sensitive_data: { Args: never; Returns: undefined }
       cleanup_old_webhooks: { Args: never; Returns: number }
       cleanup_rate_limits: { Args: never; Returns: number }
@@ -15578,6 +15579,7 @@ export type Database = {
       create_single_session: {
         Args: {
           _browser?: string
+          _device_hash_from_server?: string
           _device_type?: string
           _ip_address?: string
           _os?: string

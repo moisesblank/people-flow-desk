@@ -424,6 +424,30 @@ Deno.serve(async (req) => {
       );
     }
 
+    // 🔐 BLOCO 6: LOG_DE_NOVO_APARELHO (OBRIGATÓRIO)
+    // Registrar em security_events para monitoramento
+    try {
+      await supabase.from('security_events').insert({
+        user_id: userId,
+        event_type: 'NEW_DEVICE_REGISTERED',
+        severity: 'info',
+        description: `Novo dispositivo registrado: ${deviceName || browser + ' on ' + os}`,
+        metadata: {
+          device_id: newDevice.id,
+          device_hash_prefix: deviceHashFinal.slice(0, 16),
+          device_type: deviceType,
+          browser,
+          os,
+          total_devices: currentCount + 1,
+          max_devices: 3,
+        },
+        ip_address: null, // SEM IP conforme BLOCO 1
+      });
+      console.log('[register-device-server] 🔐 Evento de segurança registrado: NEW_DEVICE_REGISTERED');
+    } catch (securityEventError) {
+      console.warn('[register-device-server] ⚠️ Falha ao registrar evento de segurança:', securityEventError);
+    }
+
     // Log de auditoria
     await supabase.from('audit_logs').insert({
       action: 'DEVICE_REGISTERED_SERVER_SIDE',
