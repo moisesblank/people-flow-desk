@@ -171,23 +171,31 @@ export function useDeviceLimitServer() {
     }
   }, [user]);
 
-  // Desativar dispositivo
+  // 🔐 BLOCO 5: Desativar dispositivo E revogar sessões associadas
   const deactivateDevice = useCallback(async (deviceId: string): Promise<boolean> => {
     if (!user) return false;
 
     try {
-      const { error } = await supabase
-        .from('user_devices')
-        .update({
-          is_active: false,
-          deactivated_at: new Date().toISOString(),
-          deactivated_by: user.id,
-        })
-        .eq('id', deviceId)
-        .eq('user_id', user.id);
+      console.log('[BLOCO 5] 🔐 Revogando dispositivo via Edge Function...', deviceId);
+      
+      // 🔐 Usar Edge Function que revoga dispositivo E sessões
+      const { data, error } = await supabase.functions.invoke('revoke-device', {
+        body: { deviceId, reason: 'user_manual_revoke' },
+      });
 
       if (error) {
-        console.error('[DOGMA XI] Erro ao desativar dispositivo:', error);
+        console.error('[BLOCO 5] ❌ Erro ao revogar dispositivo:', error);
+        toast.error('Erro ao remover dispositivo', {
+          description: 'Tente novamente ou contate o suporte.',
+        });
+        return false;
+      }
+
+      if (!data?.success) {
+        console.error('[BLOCO 5] ❌ Falha na revogação:', data?.error);
+        toast.error('Erro ao remover dispositivo', {
+          description: data?.error || 'Falha desconhecida',
+        });
         return false;
       }
 
@@ -199,11 +207,18 @@ export function useDeviceLimitServer() {
       }));
 
       toast.success('Dispositivo removido', {
-        description: 'Você pode registrar um novo dispositivo agora.',
+        description: `${data.sessionsRevoked || 0} sessão(ões) encerrada(s). Você pode registrar um novo dispositivo.`,
+      });
+
+      console.log('[BLOCO 5] ✅ Dispositivo revogado:', {
+        deviceId,
+        sessionsRevoked: data.sessionsRevoked,
       });
 
       return true;
-    } catch {
+    } catch (err) {
+      console.error('[BLOCO 5] ❌ Erro inesperado:', err);
+      toast.error('Erro ao remover dispositivo');
       return false;
     }
   }, [user]);
