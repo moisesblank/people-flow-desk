@@ -1001,11 +1001,20 @@ export default function Auth() {
               setShow2FA(false);
               setPending2FAUser(null);
             }}
-            onCancel={() => {
+            onCancel={async () => {
+              // ✅ Fail-safe: nunca deixar usuário “meio logado” sem 2FA
               sessionStorage.removeItem("matriz_2fa_pending");
               sessionStorage.removeItem("matriz_2fa_user");
+              try {
+                await supabase.auth.signOut();
+              } catch (err) {
+                console.warn('[AUTH] Falha ao deslogar no cancel 2FA:', err);
+              }
               setShow2FA(false);
               setPending2FAUser(null);
+              toast.info("Login cancelado", {
+                description: "Você saiu com segurança. Faça login novamente para tentar o 2FA.",
+              });
             }}
           />
         </Suspense>
