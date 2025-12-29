@@ -49,6 +49,66 @@ Deno.serve(async (req) => {
     const userId = user.id;
     const body = await req.json();
     
+    // 🔐 AÇÃO: Security Lockdown (revogar TODOS os dispositivos)
+    if (body.action === 'security_lockdown') {
+      console.log(`[revoke-device] 🚨 SECURITY LOCKDOWN para usuário ${userId}...`);
+      
+      // Revogar TODOS os dispositivos
+      const { data: revokedDevices, error: revokeAllError } = await supabase
+        .from('user_devices')
+        .update({
+          is_active: false,
+          deactivated_at: new Date().toISOString(),
+          deactivated_by: userId,
+          revoked_reason: 'security_lockdown',
+        })
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .select('id');
+      
+      const devicesRevoked = revokedDevices?.length || 0;
+      
+      // Revogar TODAS as sessões
+      const { data: revokedSessions } = await supabase
+        .from('active_sessions')
+        .update({
+          status: 'revoked',
+          revoked_at: new Date().toISOString(),
+          revoked_reason: 'security_lockdown',
+        })
+        .eq('user_id', userId)
+        .eq('status', 'active')
+        .select('id');
+      
+      const sessionsRevoked = revokedSessions?.length || 0;
+      
+      // Registrar evento de segurança
+      await supabase.from('security_events').insert({
+        user_id: userId,
+        event_type: 'SECURITY_LOCKDOWN_TRIGGERED',
+        severity: 'critical',
+        description: `Lockdown de segurança: ${devicesRevoked} dispositivos e ${sessionsRevoked} sessões revogadas.`,
+        metadata: {
+          devices_revoked: devicesRevoked,
+          sessions_revoked: sessionsRevoked,
+          triggered_by: 'user_request',
+        },
+        ip_address: null,
+      });
+      
+      console.log(`[revoke-device] ✅ LOCKDOWN completo: ${devicesRevoked} devices, ${sessionsRevoked} sessões`);
+      
+      return new Response(
+        JSON.stringify({ 
+          success: true, 
+          devicesRevoked,
+          sessionsRevoked,
+          message: 'Security lockdown executado com sucesso',
+        }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     // 🔐 AÇÃO: Listar dispositivos
     if (body.action === 'list') {
       console.log(`[revoke-device] 📋 Listando dispositivos para usuário ${userId}...`);
@@ -111,11 +171,28 @@ Deno.serve(async (req) => {
         is_active: false,
         deactivated_at: new Date().toISOString(),
         deactivated_by: userId,
+        revoked_reason: reason, // 🔐 BLOCO 2: Campo obrigatório
       })
       .eq('id', deviceId);
 
     if (updateError) {
       console.error(`[revoke-device] ❌ Erro ao revogar dispositivo:`, updateError);
+      
+      // 🔐 BLOCO 2: Registrar evento de falha
+      await supabase.from('security_events').insert({
+        user_id: userId,
+        event_type: 'DEVICE_REVOKE_FAILED',
+        severity: 'error',
+        description: `Falha ao revogar dispositivo "${device.device_name}": ${updateError.message}`,
+        metadata: {
+          device_id: deviceId,
+          device_hash_prefix: deviceHash.slice(0, 16),
+          error: updateError.message,
+          reason,
+        },
+        ip_address: null,
+      });
+      
       return new Response(
         JSON.stringify({ success: false, error: 'REVOKE_FAILED' }),
         { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
