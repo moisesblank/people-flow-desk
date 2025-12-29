@@ -1,7 +1,7 @@
 // ============================================
-// 🛡️ DEVICE LIMIT GATE
+// 🛡️ DEVICE LIMIT GATE v2.0
 // Tela de bloqueio quando limite de dispositivos é excedido
-// BLOCO 1: UX tipo JusBrasil + Mobile First
+// Design: Linguagem simples + Mobile First + Alinhado com TrustDeviceStage
 // ============================================
 
 import { useState, useCallback, useEffect } from 'react';
@@ -14,14 +14,16 @@ import {
   LogOut, 
   AlertTriangle,
   Monitor,
+  Tablet,
   CheckCircle2,
   XCircle,
-  LockKeyhole
+  LockKeyhole,
+  ShieldCheck,
+  Globe,
+  Lock
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,52 +36,218 @@ import {
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
 
-import { useDeviceGateStore, CurrentDeviceInfo } from '@/state/deviceGateStore';
-import { DeviceLimitList } from '@/components/security/DeviceLimitList';
+import { useDeviceGateStore, CurrentDeviceInfo, DeviceInfo } from '@/state/deviceGateStore';
 import { revokeAndRegister, triggerSecurityLockdown } from '@/lib/deviceLimitApi';
 import { useAuth } from '@/hooks/useAuth';
 import { supabase } from '@/integrations/supabase/client';
 
 // ============================================
-// COMPONENTE: Novo dispositivo detectado
+// CONSTANTES
 // ============================================
 
-function NewDeviceCard({ device }: { device: CurrentDeviceInfo }) {
-  const getIcon = () => {
-    switch (device.device_type) {
-      case 'mobile':
-        return <Smartphone className="w-5 h-5" />;
-      case 'tablet':
-        return <Monitor className="w-5 h-5" />;
-      default:
-        return <Monitor className="w-5 h-5" />;
+const MAX_DEVICES = 3;
+
+const DEVICE_EXAMPLES = [
+  { 
+    type: 'desktop', 
+    icon: Monitor, 
+    label: 'Computador',
+    description: 'Desktop ou Notebook'
+  },
+  { 
+    type: 'tablet', 
+    icon: Tablet, 
+    label: 'Tablet',
+    description: 'iPad ou Android Tablet'
+  },
+  { 
+    type: 'mobile', 
+    icon: Smartphone, 
+    label: 'Celular',
+    description: 'iPhone ou Android'
+  },
+];
+
+// ============================================
+// FUNÇÕES HELPER
+// ============================================
+
+function getDeviceIcon(deviceType: string) {
+  switch (deviceType) {
+    case 'mobile':
+      return Smartphone;
+    case 'tablet':
+      return Tablet;
+    default:
+      return Monitor;
+  }
+}
+
+function formatLastSeen(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+
+    if (diffMins < 2) return 'agora';
+    if (diffMins < 60) return `há ${diffMins} minutos`;
+    if (diffHours < 24) {
+      const hora = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return `Hoje às ${hora}`;
     }
-  };
+    if (diffDays === 1) {
+      const hora = date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+      return `Ontem às ${hora}`;
+    }
+    return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + 
+           ' às ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  } catch {
+    return 'desconhecido';
+  }
+}
 
-  const label = device.label || `${device.os_name || 'Sistema'} • ${device.browser_name || 'Navegador'}`;
-  const osName = device.os_name || 'Sistema';
-  const browserName = device.browser_name || 'Navegador';
+// ============================================
+// COMPONENTE: Novo dispositivo detectado (card atual)
+// ============================================
 
+function CurrentDeviceCard({ device }: { device: CurrentDeviceInfo }) {
+  const DeviceIcon = getDeviceIcon(device.device_type);
+  const label = device.label || `${device.browser_name || 'Navegador'} no ${device.os_name || 'Sistema'}`;
+  
   return (
-    <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-      <div className="flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center text-primary">
-          {getIcon()}
+    <div className="bg-card border border-border rounded-2xl p-5">
+      <div className="flex items-center gap-4">
+        <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center">
+          <DeviceIcon className="w-7 h-7 text-primary" />
         </div>
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-medium text-foreground truncate">
-              {label}
-            </span>
-            <Badge className="bg-primary/20 text-primary border-0 text-xs">
-              Novo
-            </Badge>
-          </div>
-          <div className="text-xs text-muted-foreground">
-            {osName} • {browserName}
-          </div>
+          <h3 className="font-semibold text-foreground">
+            {label}
+          </h3>
+          <p className="text-sm text-muted-foreground flex items-center gap-1">
+            <Globe className="w-4 h-4" />
+            Dispositivo detectado automaticamente
+          </p>
+        </div>
+        <Badge className="bg-primary/20 text-primary border-0 shrink-0">
+          Novo
+        </Badge>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// COMPONENTE: Item de dispositivo registrado
+// ============================================
+
+function RegisteredDeviceItem({ 
+  device, 
+  isSelected, 
+  onSelect, 
+  isDisabled 
+}: { 
+  device: DeviceInfo; 
+  isSelected: boolean; 
+  onSelect: () => void;
+  isDisabled: boolean;
+}) {
+  const DeviceIcon = getDeviceIcon(device.device_type);
+  const lastSeen = formatLastSeen(device.last_seen_at);
+  
+  return (
+    <motion.button
+      onClick={onSelect}
+      disabled={isDisabled}
+      whileHover={!isDisabled ? { scale: 1.01 } : {}}
+      whileTap={!isDisabled ? { scale: 0.99 } : {}}
+      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+        isDisabled
+          ? 'opacity-50 cursor-not-allowed border-border bg-muted/30'
+          : isSelected
+          ? 'border-primary bg-primary/5'
+          : 'border-border bg-card hover:border-primary/50'
+      }`}
+      role="radio"
+      aria-checked={isSelected}
+    >
+      <div className="flex items-center gap-3">
+        {/* Radio visual */}
+        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center shrink-0 transition-colors ${
+          isSelected 
+            ? 'border-primary bg-primary' 
+            : 'border-muted-foreground/30'
+        }`}>
+          {isSelected && (
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="w-2 h-2 rounded-full bg-white"
+            />
+          )}
+        </div>
+        
+        {/* Ícone do dispositivo */}
+        <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${
+          isSelected ? 'bg-primary/20 text-primary' : 'bg-muted text-muted-foreground'
+        }`}>
+          <DeviceIcon className="w-5 h-5" />
+        </div>
+        
+        {/* Info */}
+        <div className="flex-1 min-w-0">
+          <p className={`font-medium truncate ${isSelected ? 'text-primary' : 'text-foreground'}`}>
+            {device.label}
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Último acesso: {lastSeen}
+          </p>
         </div>
       </div>
+    </motion.button>
+  );
+}
+
+// ============================================
+// COMPONENTE: Tipos de dispositivos (visual)
+// ============================================
+
+function DeviceTypesGrid({ currentType }: { currentType: string }) {
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {DEVICE_EXAMPLES.map((example) => {
+        const ExampleIcon = example.icon;
+        const isCurrentType = currentType === example.type;
+        
+        return (
+          <div 
+            key={example.type}
+            className={`text-center p-3 rounded-xl border-2 transition-all ${
+              isCurrentType 
+                ? 'border-primary bg-primary/5' 
+                : 'border-border bg-card'
+            }`}
+          >
+            <ExampleIcon className={`w-7 h-7 mx-auto mb-1.5 ${
+              isCurrentType ? 'text-primary' : 'text-muted-foreground'
+            }`} />
+            <p className={`text-sm font-medium ${
+              isCurrentType ? 'text-primary' : 'text-foreground'
+            }`}>
+              {example.label}
+            </p>
+            <p className="text-xs text-muted-foreground">{example.description}</p>
+            {isCurrentType && (
+              <span className="inline-block mt-1 text-xs bg-primary text-primary-foreground px-2 py-0.5 rounded-full">
+                Atual
+              </span>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }
@@ -127,13 +295,11 @@ export default function DeviceLimitGate() {
     try {
       console.log('[DeviceLimitGate] 🔐 Revogando DISPOSITIVO:', selectedDeviceId);
       
-      // 🛡️ PIECE 3: Usar revokeAndRegister (revoga dispositivo + registra novo)
       const result = await revokeAndRegister(selectedDeviceId);
 
       if (!result.success) {
         console.error('[DeviceLimitGate] ❌ Falha:', result.error);
         
-        // Se ainda deu limite excedido, mostrar erro
         if (result.error === 'DEVICE_LIMIT_EXCEEDED') {
           incrementRetry();
           setError('Limite ainda excedido. Tente desconectar outro dispositivo.');
@@ -180,7 +346,6 @@ export default function DeviceLimitGate() {
 
         if (sessError) {
           console.warn('[DeviceLimitGate] Aviso: erro ao criar sessão:', sessError);
-          // Continuar mesmo assim - dispositivo foi registrado
         }
 
         if (data?.[0]?.session_token) {
@@ -189,10 +354,8 @@ export default function DeviceLimitGate() {
         }
       } catch (sessErr) {
         console.warn('[DeviceLimitGate] Aviso: erro ao criar sessão:', sessErr);
-        // Continuar mesmo assim
       }
 
-      // Sucesso total!
       setIsSuccess(true);
 
       toast.success('Dispositivo trocado com sucesso!', {
@@ -200,7 +363,6 @@ export default function DeviceLimitGate() {
         duration: 4000,
       });
 
-      // Limpar store e navegar
       setTimeout(() => {
         reset();
         navigate('/alunos', { replace: true });
@@ -253,7 +415,7 @@ export default function DeviceLimitGate() {
     }
   }, [reset, signOut, navigate, setRevoking]);
 
-  // Se ainda não tem payload, mostrar loading
+  // Loading
   if (!payload) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -286,62 +448,92 @@ export default function DeviceLimitGate() {
   }
 
   const selectedDevice = payload.devices.find(d => d.device_id === selectedDeviceId);
+  const currentDeviceType = payload.current_device?.device_type || 'desktop';
 
   return (
     <div className="min-h-screen bg-background flex flex-col">
       {/* Header */}
-      <div className="bg-destructive/5 border-b border-destructive/10 px-4 py-6 sm:py-8">
-        <div className="max-w-lg mx-auto">
-          <div className="flex items-start gap-4">
-            <div className="flex-shrink-0 w-12 h-12 sm:w-14 sm:h-14 bg-destructive/20 rounded-full flex items-center justify-center">
-              <Shield className="w-6 h-6 sm:w-7 sm:h-7 text-destructive" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h1 className="text-xl sm:text-2xl font-bold text-foreground leading-tight">
-                {payload.message}
-              </h1>
-              <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-                Desconecte um dispositivo para continuar neste novo aparelho
-              </p>
-            </div>
+      <div className="bg-primary/5 border-b border-border px-4 py-6 sm:py-8">
+        <div className="max-w-lg mx-auto text-center">
+          <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-primary/20 flex items-center justify-center">
+            <Lock className="w-7 h-7 text-primary" />
           </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-foreground mb-2">
+            Novo dispositivo detectado
+          </h1>
+          <p className="text-muted-foreground">
+            Para proteger sua conta, controlamos o uso por aparelhos.
+          </p>
         </div>
       </div>
 
-      {/* Conteúdo */}
+      {/* Conteúdo scrollável */}
       <div className="flex-1 px-4 py-6 overflow-auto">
         <div className="max-w-lg mx-auto space-y-6">
-          {/* Aviso de segurança */}
-          <div className="flex items-start gap-3 text-sm text-muted-foreground bg-amber-500/10 border border-amber-500/20 rounded-xl p-4">
-            <AlertTriangle className="w-5 h-5 text-amber-500 shrink-0 mt-0.5" />
-            <p>
-              Isso protege sua conta contra compartilhamento. 
-              Se você não reconhece algum dispositivo, desconecte-o agora.
+          
+          {/* Como funciona */}
+          <div className="bg-card border border-border rounded-xl p-4">
+            <h2 className="flex items-center gap-2 font-semibold text-foreground mb-2">
+              <ShieldCheck className="w-5 h-5 text-primary" />
+              Como funciona
+            </h2>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Você pode usar sua conta em até <strong className="text-foreground">{MAX_DEVICES} aparelhos diferentes</strong>{' '}
+              (por exemplo: celular, notebook e tablet).
+              <br />
+              Mas <strong className="text-primary">apenas um aparelho</strong> pode estar conectado por vez.
             </p>
           </div>
 
-          {/* Novo dispositivo detectado */}
+          {/* Tipos de dispositivos */}
           <div>
-            <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">
-              Novo dispositivo detectado
-            </h2>
-            <NewDeviceCard device={payload.current_device} />
+            <p className="text-sm font-medium text-muted-foreground mb-3">
+              Tipos de dispositivos suportados:
+            </p>
+            <DeviceTypesGrid currentType={currentDeviceType} />
           </div>
 
-          <Separator />
-
-          {/* Lista de dispositivos cadastrados */}
+          {/* Dispositivo atual detectado */}
           <div>
-            <h2 className="text-sm font-medium text-muted-foreground mb-3 uppercase tracking-wider">
-              Dispositivos cadastrados ({payload.devices.length}/{payload.max_devices})
-            </h2>
-            
-            <DeviceLimitList
-              devices={payload.devices}
-              selectedDeviceId={selectedDeviceId}
-              onSelectDevice={setSelectedDevice}
-              isDisabled={isRevoking}
-            />
+            <p className="text-sm font-medium text-muted-foreground mb-3">
+              Novo aparelho tentando acessar:
+            </p>
+            <CurrentDeviceCard device={payload.current_device} />
+          </div>
+
+          {/* Aviso de limite */}
+          <div className="bg-destructive/10 border border-destructive/30 rounded-xl p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="w-5 h-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-destructive mb-1">
+                  Máximo atingido!
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  Você já tem <strong className="text-foreground">{payload.current_devices} aparelhos</strong> registrados.
+                  <br />
+                  Desconecte um aparelho para continuar neste novo.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Lista de dispositivos para desconectar */}
+          <div>
+            <p className="text-sm font-medium text-muted-foreground mb-3">
+              Aparelhos conectados à sua conta:
+            </p>
+            <div className="space-y-3" role="radiogroup" aria-label="Selecione um aparelho para desconectar">
+              {payload.devices.map((device) => (
+                <RegisteredDeviceItem
+                  key={device.device_id}
+                  device={device}
+                  isSelected={selectedDeviceId === device.device_id}
+                  onSelect={() => setSelectedDevice(device.device_id)}
+                  isDisabled={isRevoking}
+                />
+              ))}
+            </div>
           </div>
 
           {/* Erro */}
@@ -356,6 +548,27 @@ export default function DeviceLimitGate() {
             </motion.div>
           )}
 
+          {/* O que acontece */}
+          <div className="bg-muted/50 border border-border rounded-xl p-4">
+            <p className="text-sm font-medium text-foreground mb-2">
+              O que acontece agora:
+            </p>
+            <ul className="text-sm text-muted-foreground space-y-1">
+              <li>• O aparelho escolhido será desconectado imediatamente</li>
+              <li>• Este novo aparelho passará a ser o aparelho ativo</li>
+              <li>• Sua conta continuará protegida</li>
+            </ul>
+          </div>
+
+          {/* Segurança */}
+          <div className="text-center text-xs text-muted-foreground space-y-1 pt-2">
+            <p className="flex items-center justify-center gap-1">
+              <ShieldCheck className="w-4 h-4 text-primary" />
+              Só um aparelho conectado por vez
+            </p>
+            <p>Sua conta segura</p>
+          </div>
+
           {/* Link de segurança */}
           <button
             type="button"
@@ -369,8 +582,8 @@ export default function DeviceLimitGate() {
         </div>
       </div>
 
-      {/* Footer fixo (mobile friendly) */}
-      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border px-4 py-4 sm:py-6">
+      {/* Footer fixo */}
+      <div className="sticky bottom-0 bg-background/95 backdrop-blur-sm border-t border-border px-4 py-4 sm:py-5">
         <div className="max-w-lg mx-auto space-y-3">
           <Button
             onClick={() => setShowConfirmDialog(true)}
@@ -397,7 +610,7 @@ export default function DeviceLimitGate() {
             disabled={isRevoking}
             className="w-full h-10 text-muted-foreground"
           >
-            <LogOut className="w-4 h-4 mr-2" />
+            <XCircle className="w-4 h-4 mr-2" />
             Cancelar e sair
           </Button>
         </div>
@@ -411,8 +624,10 @@ export default function DeviceLimitGate() {
             <AlertDialogDescription>
               {selectedDevice && (
                 <>
-                  O dispositivo <strong>"{selectedDevice.label}"</strong> será desconectado 
+                  O aparelho <strong>"{selectedDevice.label}"</strong> será desconectado 
                   e perderá acesso à sua conta.
+                  <br /><br />
+                  Este novo aparelho passará a ser o aparelho ativo.
                 </>
               )}
             </AlertDialogDescription>
@@ -435,8 +650,8 @@ export default function DeviceLimitGate() {
               Lockdown de Segurança
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Isso irá revogar <strong>TODOS</strong> os dispositivos e sessões da sua conta.
-              Você precisará fazer login novamente em todos os aparelhos.
+              Isso irá desconectar <strong>TODOS</strong> os aparelhos da sua conta.
+              Você precisará fazer login novamente em todos os seus dispositivos.
               <br /><br />
               <span className="text-foreground font-medium">
                 Use esta opção se você suspeita que sua conta foi comprometida.
