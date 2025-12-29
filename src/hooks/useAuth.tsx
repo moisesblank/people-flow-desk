@@ -138,11 +138,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         missedHeartbeatsRef.current++;
         console.warn('[Heartbeat] Erro:', error.message);
         
+        // ✅ Frontend NUNCA revoga sessões por contador de falhas
+        // Backend é a fonte da verdade — SessionGuard valida via RPC
         if (missedHeartbeatsRef.current >= 3) {
-          // Sessão possivelmente revogada
-          console.warn('[Heartbeat] Sessão expirada após 3 falhas');
-          localStorage.removeItem(SESSION_TOKEN_KEY);
-          await supabase.auth.signOut();
+          console.warn('[Heartbeat] Múltiplas falhas — aguardando validação do backend');
         }
       } else {
         missedHeartbeatsRef.current = 0;

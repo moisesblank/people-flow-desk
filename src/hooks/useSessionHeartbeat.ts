@@ -57,21 +57,15 @@ export function useSessionHeartbeat(config: Partial<HeartbeatConfig> = {}) {
         .single();
 
       if (sessionError || !session) {
-        // Sessão não encontrada ou inativa
-        console.warn('[Heartbeat] Sessão inválida:', sessionError?.message);
+        // Sessão não encontrada ou inativa — apenas logar, NÃO fazer logout
+        // Frontend NUNCA revoga sessões. Backend é a fonte da verdade.
+        console.warn('[Heartbeat] Sessão não encontrada no update:', sessionError?.message);
         missedHeartbeatsRef.current++;
         
+        // Callback informativo apenas (sem logout)
         if (missedHeartbeatsRef.current >= finalConfig.maxMissedHeartbeats) {
-          // Revogar sessão local
-          localStorage.removeItem(SESSION_TOKEN_KEY);
-          finalConfig.onSessionRevoked?.('Sessão expirada ou revogada');
-          toast.error('Sua sessão expirou', {
-            description: 'Por favor, faça login novamente.',
-          });
-          stopHeartbeat();
-          
-          // Forçar logout
-          await supabase.auth.signOut();
+          console.warn('[Heartbeat] Múltiplas falhas de heartbeat — aguardando validação do backend');
+          finalConfig.onSessionRevoked?.('Heartbeat falhando — sessão será validada pelo backend');
         }
         return;
       }

@@ -105,19 +105,18 @@ export function useSanctumThreat(): UseSanctumThreatReturn {
       }
     }
     
-    // Aplicar logout se necessário
+    // ✅ Frontend NUNCA revoga sessões por threat level
+    // Apenas logar penalidade — backend decide via RPC validate_session_epoch
     if (response.shouldLogout && !logoutTriggeredRef.current) {
       logoutTriggeredRef.current = true;
       
-      // Logar penalidade
+      // Logar penalidade (informativo)
       logPenalty(user?.id, user?.email, currentLevel, state.score);
       
-      // Aplicar penalidade e fazer logout
+      // Aplicar penalidade no estado local apenas
       setState(prev => applyPenalty(prev, currentLevel));
       
-      setTimeout(async () => {
-        await signOut();
-      }, 2000);
+      console.warn('[SanctumThreat] Threat level crítico — backend decidirá revogação');
     }
   }, [state.level, state.score, isUserOwner, user, signOut]);
 
