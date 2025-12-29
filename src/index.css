@@ -205,6 +205,119 @@
     --god-mode-purple: 280 80% 60%;
     --god-mode-pink: 328 100% 60%;
   }
+
+  /* ============================================
+     TEMA CLARO - Fundo Branco, Texto Escuro
+     ============================================ */
+  .light {
+    /* Background & Surfaces - Light (BRANCO) */
+    --background: 0 0% 100%;
+    --foreground: 220 40% 10%;
+    
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 10%;
+    --card-hover: 220 14% 96%;
+    
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 40% 10%;
+    
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 14% 46%;
+    
+    --border: 220 14% 88%;
+    --input: 220 14% 88%;
+    
+    /* Primary - Vermelho (mantém identidade) */
+    --primary: 345 85% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 345 85% 40%;
+    --primary-glow: 345 85% 55%;
+    
+    /* Secondary - Azul suave */
+    --secondary: 220 14% 92%;
+    --secondary-foreground: 220 40% 10%;
+    
+    /* Accent */
+    --accent: 345 90% 50%;
+    --accent-foreground: 0 0% 100%;
+    
+    /* Destructive */
+    --destructive: 0 84% 50%;
+    --destructive-foreground: 0 0% 100%;
+    
+    /* Success/Warning/Info */
+    --success: 142 71% 35%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 45%;
+    --warning-foreground: 0 0% 0%;
+    --info: 199 89% 40%;
+    --info-foreground: 0 0% 100%;
+    
+    /* Ring */
+    --ring: 345 85% 45%;
+    
+    /* Status colors - Light */
+    --status-active: 142 71% 35%;
+    --status-vacation: 220 60% 45%;
+    --status-away: 38 92% 45%;
+    --status-inactive: 0 0% 50%;
+    --status-online: 142 76% 30%;
+    --status-offline: 0 0% 50%;
+    --status-recent: 158 64% 35%;
+    
+    /* Stats colors - Light */
+    --stats-red: 345 85% 45%;
+    --stats-green: 142 71% 35%;
+    --stats-blue: 220 70% 45%;
+    --stats-purple: 270 80% 50%;
+    --stats-gold: 43 74% 45%;
+    --stats-cyan: 180 100% 35%;
+    --stats-wine: 345 70% 40%;
+    
+    /* Glow colors - Suaves no light */
+    --glow-red: 345 85% 50%;
+    --glow-green: 142 71% 40%;
+    --glow-blue: 220 70% 50%;
+    --glow-purple: 270 80% 55%;
+    --glow-gold: 43 74% 55%;
+    --glow-cyan: 180 100% 40%;
+    --glow-wine: 345 70% 45%;
+    
+    /* Sidebar - Light */
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 220 40% 10%;
+    --sidebar-primary: 345 85% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 220 14% 94%;
+    --sidebar-accent-foreground: 220 40% 10%;
+    --sidebar-border: 220 14% 88%;
+    --sidebar-ring: 345 85% 45%;
+    
+    /* Chart colors - Light */
+    --chart-1: 345 85% 45%;
+    --chart-2: 220 70% 45%;
+    --chart-3: 142 71% 35%;
+    --chart-4: 270 80% 50%;
+    --chart-5: 43 74% 45%;
+    
+    /* God Mode - Light */
+    --god-mode-purple: 280 80% 55%;
+    --god-mode-pink: 328 100% 55%;
+    
+    /* Holographic - Suave no light */
+    --holo-cyan: 185 100% 40%;
+    --holo-purple: 280 100% 50%;
+    --holo-pink: 320 100% 50%;
+    --holo-blue: 210 100% 45%;
+    --holo-green: 160 100% 35%;
+    
+    /* AI - Light */
+    --ai-glow: 185 100% 40%;
+    --ai-accent: 280 90% 50%;
+    --ai-surface: 0 0% 98%;
+    --ai-surface-hover: 220 14% 94%;
+    --ai-border: 220 14% 85%;
+  }
 }
 
 @layer base {
