@@ -1023,10 +1023,9 @@ export default function Alunos() {
                 <table className="w-full">
                   <thead className="bg-blue-500/10">
                     <tr>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400 w-[5%]">🟢</th>
                       <th className="text-left p-4 text-sm font-medium text-blue-400 w-[27%]">Nome</th>
                       <th className="text-left p-4 text-sm font-medium text-blue-400 w-[23%]">Email</th>
-                      <th className="text-left p-4 text-sm font-medium text-blue-400 w-[10%]">Status</th>
+                      <th className="text-left p-4 text-sm font-medium text-blue-400 w-[10%]">Presença</th>
                       <th className="text-left p-4 text-sm font-medium text-blue-400 w-[12%]">Tipo</th>
                       <th className="text-right p-4 text-sm font-medium text-blue-400 w-[23%]">Ações</th>
                     </tr>
@@ -1048,9 +1047,16 @@ export default function Alunos() {
                   <table className="w-full">
                     <tbody>
                       <tr className="border-t border-blue-500/20 hover:bg-blue-500/5 transition-colors cursor-pointer" onClick={() => navigate(`/gestaofc/gestao-alunos/${student.id}`)}>
-                        {/* Coluna de Presença Online/Offline */}
-                        <td className="p-4 w-[5%]">
-                          <div className="flex items-center justify-center" title={
+                        <td className="p-4 text-foreground font-medium w-[27%]">
+                          <div className="flex items-center gap-2">
+                            {effectiveRole === 'beta' && <Crown className="h-4 w-4 text-yellow-400" />}
+                            <span className="hover:text-blue-400 transition-colors">{student.nome}</span>
+                          </div>
+                        </td>
+                        <td className="p-4 text-muted-foreground w-[23%]">{student.email || "-"}</td>
+                        {/* Coluna Presença: Online/Offline com bolinha */}
+                        <td className="p-4 w-[10%]">
+                          <div className="flex items-center gap-2" title={
                             isOnline ? 'Online agora' : 
                             isAway ? 'Visto recentemente' : 
                             'Offline'
@@ -1060,32 +1066,10 @@ export default function Alunos() {
                                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                                 <span className="relative inline-flex rounded-full h-3 w-3 bg-emerald-500"></span>
                               </span>
-                            ) : isAway ? (
-                              <span className="inline-flex rounded-full h-3 w-3 bg-yellow-500"></span>
                             ) : (
                               <span className="inline-flex rounded-full h-3 w-3 bg-gray-500"></span>
                             )}
                           </div>
-                        </td>
-                        <td className="p-4 text-foreground font-medium w-[27%]">
-                          <div className="flex items-center gap-2">
-                            {effectiveRole === 'beta' && <Crown className="h-4 w-4 text-yellow-400" />}
-                            <span className="hover:text-blue-400 transition-colors">{student.nome}</span>
-                          </div>
-                        </td>
-                        <td className="p-4 text-muted-foreground w-[23%]">{student.email || "-"}</td>
-                        <td className="p-4 w-[10%]">
-                          <Badge variant={
-                            student.status === "Ativo" ? "default" :
-                            student.status === "Concluído" ? "secondary" : "outline"
-                          } className={
-                            student.status === "Ativo" ? "bg-emerald-500/20 text-emerald-400" :
-                            student.status === "Concluído" ? "bg-purple-500/20 text-purple-400" :
-                            student.status === "Pendente" ? "bg-yellow-500/20 text-yellow-400" :
-                            "bg-red-500/20 text-red-400"
-                          }>
-                            {student.status}
-                          </Badge>
                         </td>
                         <td className="p-4 w-[12%]">
                           {/* TIPO: Sincronizado com user_roles e cards */}
