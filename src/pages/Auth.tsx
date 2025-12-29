@@ -271,6 +271,11 @@ export default function Auth() {
   const [show2FA, setShow2FA] = useState(false);
   const [pending2FAUser, setPending2FAUser] = useState<{ email: string; userId: string; nome?: string; phone?: string; deviceHash?: string } | null>(null);
   
+  // 🔒 DOGMA I: Estado para bloqueio de sessão única
+  const [showForceLogoutOption, setShowForceLogoutOption] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState<string | null>(null);
+  const [isForceLoggingOut, setIsForceLoggingOut] = useState(false);
+  
   // Estado para Cloudflare Turnstile (Anti-Bot)
   const { token: turnstileToken, isVerified: isTurnstileVerified, TurnstileProps, reset: resetTurnstile } = useTurnstile();
 
@@ -619,6 +624,50 @@ export default function Auth() {
     }
   };
 
+  // ============================================
+  // 🔒 DOGMA I: FORÇAR ENCERRAMENTO DE OUTRAS SESSÕES
+  // ============================================
+  const handleForceLogout = async () => {
+    if (!pendingEmail) return;
+    
+    setIsForceLoggingOut(true);
+    console.log('[AUTH] 🔒 Forçando encerramento de sessões para:', pendingEmail);
+    
+    try {
+      const { data, error } = await supabase.rpc('force_logout_other_sessions', {
+        _email: pendingEmail
+      });
+      
+      if (error) {
+        console.error('[AUTH] Erro ao forçar logout:', error);
+        toast.error("Erro ao encerrar outras sessões", {
+          description: "Tente novamente em alguns segundos."
+        });
+        setIsForceLoggingOut(false);
+        return;
+      }
+      
+      if (data) {
+        console.log('[AUTH] ✅ Sessões anteriores encerradas com sucesso');
+        toast.success("Outras sessões encerradas", {
+          description: "Agora você pode fazer login neste dispositivo."
+        });
+        
+        // Limpar estado e permitir login
+        setShowForceLogoutOption(false);
+        setPendingEmail(null);
+        
+        // Tentar login automaticamente
+        toast.info("Fazendo login...");
+      }
+    } catch (err: any) {
+      console.error('[AUTH] Erro crítico ao forçar logout:', err);
+      toast.error("Erro inesperado ao encerrar sessões");
+    } finally {
+      setIsForceLoggingOut(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('[AUTH] === INICIANDO FLUXO DE LOGIN/SIGNUP ===');
@@ -676,7 +725,39 @@ export default function Auth() {
       }
 
       if (isLogin) {
-        console.log('[AUTH] 4. Iniciando signInWithPassword...');
+        console.log('[AUTH] 4. Verificando sessão ativa existente...');
+
+        // ============================================
+        // 🔒 DOGMA I: SESSÃO ÚNICA GLOBAL - MODO BLOQUEIO
+        // Verifica se já existe sessão ativa ANTES do login
+        // ============================================
+        try {
+          const { data: sessionCheck, error: sessionCheckError } = await supabase.rpc(
+            'check_active_session_exists',
+            { _email: formData.email.toLowerCase().trim() }
+          );
+
+          if (!sessionCheckError && sessionCheck && sessionCheck.length > 0 && sessionCheck[0].has_active_session) {
+            const activeSession = sessionCheck[0];
+            console.warn('[AUTH] 🔴 BLOQUEIO: Sessão ativa detectada em outro dispositivo:', activeSession);
+            
+            toast.error("Sessão ativa detectada", {
+              description: `Você já está logado em: ${activeSession.device_name || activeSession.device_type || 'outro dispositivo'}. Encerre a outra sessão primeiro.`,
+              duration: 8000,
+            });
+            
+            // Mostrar opção de forçar logout
+            setShowForceLogoutOption(true);
+            setPendingEmail(formData.email.toLowerCase().trim());
+            setIsLoading(false);
+            return;
+          }
+        } catch (checkErr: any) {
+          console.warn('[AUTH] ⚠️ Erro ao verificar sessão ativa (prosseguindo):', checkErr);
+          // Se a verificação falhar, permite o login (fail-open temporário para não travar)
+        }
+
+        console.log('[AUTH] ✅ Nenhuma sessão ativa encontrada. Iniciando signInWithPassword...');
 
         const result = await withTimeout(
           'signInWithPassword',
@@ -825,6 +906,46 @@ export default function Auth() {
           if (!decision.requires2FA) {
             // ✅ NÃO PRECISA DE 2FA - Dispositivo confiável dentro da janela de 24h
             console.log('[AUTH] ✅ 2FA dispensado - dispositivo confiável');
+            
+            // 🔒 DOGMA I: CRIAR SESSÃO ÚNICA IMEDIATAMENTE
+            // ============================================
+            try {
+              const SESSION_TOKEN_KEY = 'matriz_session_token';
+              const ua = navigator.userAgent;
+              let device_type = 'desktop';
+              if (/Mobi|Android|iPhone|iPad/i.test(ua)) {
+                device_type = /iPad|Tablet/i.test(ua) ? 'tablet' : 'mobile';
+              }
+              let browser = 'unknown';
+              if (ua.includes('Firefox')) browser = 'Firefox';
+              else if (ua.includes('Edg')) browser = 'Edge';
+              else if (ua.includes('Chrome')) browser = 'Chrome';
+              else if (ua.includes('Safari')) browser = 'Safari';
+              let os = 'unknown';
+              if (ua.includes('Windows')) os = 'Windows';
+              else if (ua.includes('Mac')) os = 'macOS';
+              else if (ua.includes('Linux')) os = 'Linux';
+              else if (ua.includes('Android')) os = 'Android';
+              else if (ua.includes('iPhone')) os = 'iOS';
+
+              const { data: sessionData, error: sessionError } = await supabase.rpc('create_single_session', {
+                _ip_address: null,
+                _user_agent: navigator.userAgent.slice(0, 255),
+                _device_type: device_type,
+                _browser: browser,
+                _os: os,
+              });
+
+              if (!sessionError && sessionData && sessionData.length > 0) {
+                localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
+                console.log('[AUTH][SESSAO] ✅ Sessão única criada (2FA dispensado)');
+              } else if (sessionError) {
+                console.warn('[AUTH][SESSAO] Falha ao criar sessão (2FA dispensado):', sessionError);
+              }
+            } catch (sessErr) {
+              console.warn('[AUTH][SESSAO] Erro crítico ao criar sessão:', sessErr);
+            }
+            
             toast.success("Bem-vindo de volta!", {
               description: "Dispositivo reconhecido. Login realizado com sucesso."
             });
@@ -1110,6 +1231,80 @@ export default function Auth() {
             }}
           />
         </Suspense>
+      </div>
+    );
+  }
+
+  // ============================================
+  // 🔒 DOGMA I: MODAL DE SESSÃO ATIVA DETECTADA
+  // ============================================
+  if (showForceLogoutOption && pendingEmail) {
+    return (
+      <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
+        <SpiderWebPattern />
+        <CyberGrid />
+        <GlowingOrbs />
+        <div className="relative z-10 w-full max-w-md">
+          <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border border-primary/30 rounded-2xl p-8 shadow-2xl">
+            {/* Header */}
+            <div className="text-center mb-6">
+              <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary/20 mb-4">
+                <Shield className="w-8 h-8 text-primary" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2">
+                Sessão Ativa Detectada
+              </h2>
+              <p className="text-gray-400 text-sm">
+                Você já está logado em outro dispositivo
+              </p>
+            </div>
+
+            {/* Info */}
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
+              <p className="text-amber-300 text-sm text-center">
+                Por segurança, apenas <strong>uma sessão</strong> por usuário é permitida.
+              </p>
+            </div>
+
+            {/* Ações */}
+            <div className="space-y-3">
+              <Button
+                onClick={handleForceLogout}
+                disabled={isForceLoggingOut}
+                className="w-full bg-primary hover:bg-primary/90 text-white h-12"
+              >
+                {isForceLoggingOut ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Encerrando...
+                  </>
+                ) : (
+                  <>
+                    <Zap className="w-4 h-4 mr-2" />
+                    Encerrar Outra Sessão e Logar Aqui
+                  </>
+                )}
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowForceLogoutOption(false);
+                  setPendingEmail(null);
+                }}
+                className="w-full border-white/20 text-gray-300 hover:bg-white/5 h-12"
+              >
+                <ArrowLeft className="w-4 h-4 mr-2" />
+                Cancelar e Voltar
+              </Button>
+            </div>
+
+            {/* Rodapé */}
+            <p className="text-xs text-gray-500 text-center mt-6">
+              A outra sessão será encerrada imediatamente.
+            </p>
+          </div>
+        </div>
       </div>
     );
   }

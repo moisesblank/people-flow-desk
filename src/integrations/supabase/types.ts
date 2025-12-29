@@ -15313,6 +15313,16 @@ export type Database = {
       can_view_all_data: { Args: { _user_id?: string }; Returns: boolean }
       can_view_financial: { Args: { _user_id: string }; Returns: boolean }
       can_view_personal: { Args: { _user_id: string }; Returns: boolean }
+      check_active_session_exists: {
+        Args: { _email: string }
+        Returns: {
+          device_name: string
+          device_type: string
+          has_active_session: boolean
+          last_activity_at: string
+          session_created_at: string
+        }[]
+      }
       check_advanced_rate_limit: {
         Args: {
           p_block_seconds?: number
@@ -15810,6 +15820,10 @@ export type Database = {
           p_session_id?: string
         }
         Returns: Json
+      }
+      force_logout_other_sessions: {
+        Args: { _email: string }
+        Returns: boolean
       }
       fortress_cleanup_rate_limits: { Args: never; Returns: number }
       fortress_cleanup_security_events: { Args: never; Returns: number }
