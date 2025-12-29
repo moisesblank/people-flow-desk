@@ -541,8 +541,40 @@ serve(async (req) => {
       passwordEmailSent = !payload.senha; // Será enviada se foi gerada
       console.log('[c-create-official-access] ✅ User created:', userId);
     } else {
-      // Usuário já existe
-      emailStatus = 'password_set'; // Assume que já tem senha
+      // ============================================
+      // 🎯 P0 FIX: Usuário já existe - SEMPRE gera nova senha
+      // e atualiza no auth para garantir acesso funcional
+      // ============================================
+      const senhaParaExistente = payload.senha || generateSecurePassword();
+      generatedPassword = payload.senha ? undefined : senhaParaExistente;
+      
+      console.log('[c-create-official-access] 🔐 Updating existing user password (generated:', !payload.senha, ')');
+      
+      // Atualizar senha do usuário existente
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        userId!,
+        { 
+          password: senhaParaExistente,
+          email_confirm: true, // Garantir email confirmado
+          user_metadata: {
+            nome: payload.nome,
+            updated_by: caller.email,
+            updated_via: 'c-create-official-access',
+            password_was_regenerated: !payload.senha,
+            password_regenerated_at: new Date().toISOString(),
+          },
+        }
+      );
+      
+      if (updateError) {
+        console.error('[c-create-official-access] ⚠️ Error updating user password:', updateError.message);
+        // Não falha completamente, continua com o fluxo
+      } else {
+        console.log('[c-create-official-access] ✅ User password updated successfully');
+        passwordEmailSent = !payload.senha;
+      }
+      
+      emailStatus = 'password_set';
       console.log('[c-create-official-access] ℹ️ Using existing user:', userId);
     }
 
@@ -574,8 +606,8 @@ serve(async (req) => {
     }
 
     // 🎯 MAGIC PASSWORD FLOW: Forçar troca de senha no primeiro login
-    // Se senha foi gerada automaticamente, marca para forçar troca
-    if (generatedPassword && !userAlreadyExists) {
+    // Se senha foi gerada automaticamente (novo OU existente), marca para forçar troca
+    if (generatedPassword) {
       profileData.password_change_required = true;
       profileData.magic_password_created_at = new Date().toISOString();
       console.log('[c-create-official-access] 🔐 Magic password flow: will require password change on first login');
