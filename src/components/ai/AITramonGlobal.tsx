@@ -80,7 +80,7 @@ const quickActions = {
 
 export function AITramonGlobal() {
   const { user, role } = useAuth();
-  const { canAccessTramon, isLoading: roleLoading } = useAdminCheck();
+  const { canAccessTramon, isLoading: roleLoading, isOwner: ownerCheck, isAdmin } = useAdminCheck();
   const location = useLocation();
   
   const [isOpen, setIsOpen] = useState(false);
@@ -109,7 +109,12 @@ export function AITramonGlobal() {
   const speechTranscriptRef = useRef<string>("");
 
   const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-tramon`;
-  const hasAccess = canAccessTramon;
+  
+  // 🎯 REGRA: TRAMON só aparece para Owner/Admin na área /gestaofc
+  const isInGestaoArea = location.pathname.startsWith('/gestaofc');
+  const isOwnerOrAdmin = ownerCheck || isAdmin;
+  const hasAccess = isOwnerOrAdmin && isInGestaoArea;
+  
   // P1-2 FIX: Role-first, email como fallback UX
   const isOwner = role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
   const { invalidateAll } = useInvalidateCache();
