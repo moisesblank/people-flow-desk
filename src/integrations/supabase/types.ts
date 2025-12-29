@@ -15320,7 +15320,6 @@ export type Database = {
           device_type: string
           has_active_session: boolean
           last_activity_at: string
-          session_created_at: string
         }[]
       }
       check_advanced_rate_limit: {
