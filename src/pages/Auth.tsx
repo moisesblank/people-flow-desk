@@ -41,6 +41,8 @@ import { OptimizedImage } from "@/components/ui/optimized-image";
 import { isOwnerEmail } from "@/lib/security";
 import { getPostLoginRedirect } from "@/core/urlAccessControl";
 import { registerDeviceBeforeSession, getDeviceErrorMessage } from "@/lib/deviceRegistration";
+import { useDeviceGateStore, DeviceGatePayload, DeviceInfo, CurrentDeviceInfo } from "@/state/deviceGateStore";
+import { collectFingerprintRawData, generateDeviceName } from "@/lib/deviceFingerprintRaw";
 
 // Lazy load componentes pesados (apenas owner usa)
 const EditableText = lazy(() => import("@/components/editor/EditableText").then(m => ({ default: m.EditableText })));
@@ -919,18 +921,46 @@ export default function Auth() {
               
               // FAIL-CLOSED: Bloquear login se limite excedido
               if (deviceResult.error === 'DEVICE_LIMIT_EXCEEDED') {
-                // Fazer logout parcial para não deixar sessão pendente
-                await supabase.auth.signOut();
+                console.log('[AUTH][BLOCO3] 🛡️ Limite excedido - redirecionando para DeviceLimitGate');
                 
-                const errorMsg = getDeviceErrorMessage(deviceResult.error);
-                toast.error(errorMsg.title, {
-                  description: `${errorMsg.description} (${deviceResult.deviceCount}/${deviceResult.maxDevices} dispositivos)`,
-                  duration: 10000,
-                });
+                // Coletar dados do device atual para o payload
+                const fingerprintData = await collectFingerprintRawData();
+                const deviceName = generateDeviceName(fingerprintData);
                 
-                // TODO: Mostrar modal de gerenciamento de dispositivos
+                const currentDevice: CurrentDeviceInfo = {
+                  device_type: fingerprintData.deviceType,
+                  os_name: fingerprintData.os,
+                  browser_name: fingerprintData.browser,
+                  label: deviceName,
+                };
+
+                const devices: DeviceInfo[] = (deviceResult.devices || []).map((d: any, index: number) => ({
+                  device_id: d.id,
+                  label: d.device_name || `${d.os || 'Sistema'} • ${d.browser || 'Navegador'}`,
+                  device_type: d.device_type || 'desktop',
+                  os_name: d.os || 'Desconhecido',
+                  browser_name: d.browser || 'Desconhecido',
+                  last_seen_at: d.last_seen_at,
+                  first_seen_at: d.first_seen_at || d.last_seen_at,
+                  is_recommended_to_disconnect: index === (deviceResult.devices?.length || 1) - 1,
+                }));
+
+                const gatePayload: DeviceGatePayload = {
+                  code: 'DEVICE_LIMIT_EXCEEDED',
+                  message: 'Você ultrapassou o limite de dispositivos da sua conta',
+                  max_devices: deviceResult.maxDevices || 3,
+                  current_devices: deviceResult.deviceCount || 3,
+                  current_device: currentDevice,
+                  devices,
+                  action_required: 'REVOKE_ONE_DEVICE_TO_CONTINUE',
+                };
+
+                // Salvar no store e redirecionar
+                useDeviceGateStore.getState().setPayload(gatePayload);
+                
                 resetTurnstile();
                 setIsLoading(false);
+                navigate('/security/device-limit');
                 return;
               }
               
