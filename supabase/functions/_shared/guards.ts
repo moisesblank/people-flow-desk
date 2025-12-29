@@ -6,6 +6,29 @@
 // Supabase client type (any para compatibilidade edge functions)
 
 // ============================================
+// 🛡️ TIMING-SAFE COMPARISON (PATCH-008)
+// Previne timing attacks em comparações de secrets
+// ============================================
+
+function timingSafeEqual(a: string, b: string): boolean {
+  if (a.length !== b.length) {
+    // Mesmo com tamanhos diferentes, fazemos operações constantes
+    // para evitar vazamento de timing sobre o tamanho
+    let result = a.length ^ b.length;
+    for (let i = 0; i < Math.max(a.length, b.length); i++) {
+      result |= (a.charCodeAt(i % a.length) || 0) ^ (b.charCodeAt(i % b.length) || 0);
+    }
+    return false;
+  }
+  
+  let result = 0;
+  for (let i = 0; i < a.length; i++) {
+    result |= a.charCodeAt(i) ^ b.charCodeAt(i);
+  }
+  return result === 0;
+}
+
+// ============================================
 // TIPOS
 // ============================================
 
@@ -64,8 +87,8 @@ export async function validateHottok(
     };
   }
 
-  // Comparação segura
-  const isValid = receivedHottok.trim() === HOTMART_HOTTOK.trim();
+  // 🛡️ PATCH-008 (P1-002): Comparação timing-safe
+  const isValid = timingSafeEqual(receivedHottok.trim(), HOTMART_HOTTOK.trim());
 
   if (!isValid) {
     console.error("[GUARD] ❌ HOTTOK inválido - possível fraude");
