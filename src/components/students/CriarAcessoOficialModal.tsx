@@ -2,8 +2,8 @@
 // 📜 PARTE 9 — UI Criação de Acesso Oficial
 // CONSTITUIÇÃO SYNAPSE Ω v10.x — PATCH-ONLY
 // ============================================
-// Campos obrigatórios: nome, email, role
-// Campos opcionais: endereço, telefone, foto_aluno, senha
+// Campos obrigatórios: nome, email, role, telefone
+// Campos opcionais: endereço, foto_aluno, senha
 // Edge Function: c-create-official-access (PARTE 10)
 // ============================================
 
@@ -18,7 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+// Collapsible removido - campos sempre visíveis
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { StudentRole, STUDENT_ROLE_LABELS } from "@/types/studentIdentityContract";
@@ -52,11 +52,13 @@ const criarAcessoSchema = z.object({
   // Novo: tipo_produto para Beta (livroweb ou fisico)
   tipo_produto: z.enum(['livroweb', 'fisico']).optional(),
 
-  // Campos opcionais
+  // Telefone OBRIGATÓRIO
   telefone: z.string()
-    .optional()
-    .refine(val => !val || /^[\d\s()+-]+$/.test(val), "Telefone inválido"),
+    .min(8, "Telefone deve ter pelo menos 8 dígitos")
+    .max(20, "Telefone deve ter no máximo 20 caracteres")
+    .regex(/^[\d\s()+-]+$/, "Telefone inválido"),
   
+  // Campos opcionais
   foto_aluno: z.string()
     .url("URL da foto inválida")
     .optional()
@@ -109,7 +111,6 @@ export function CriarAcessoOficialModal({
   onSuccess 
 }: CriarAcessoOficialModalProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showOptionalFields, setShowOptionalFields] = useState(false);
 
   const form = useForm<CriarAcessoFormData>({
     resolver: zodResolver(criarAcessoSchema),
@@ -240,7 +241,7 @@ export function CriarAcessoOficialModal({
 
       // Reset form e fecha modal
       form.reset();
-      setShowOptionalFields(false);
+      // Nada a limpar - sem estado de collapsible
       onOpenChange(false);
       
       // Callback de sucesso (para refetch/invalidate)
@@ -259,7 +260,7 @@ export function CriarAcessoOficialModal({
   const handleClose = () => {
     if (!isSubmitting) {
       form.reset();
-      setShowOptionalFields(false);
+      // Nada a limpar - sem estado de collapsible
       onOpenChange(false);
     }
   };
@@ -483,35 +484,101 @@ export function CriarAcessoOficialModal({
             </p>
 
             {/* ============================================ */}
-            {/* CAMPOS OPCIONAIS (Collapsible) */}
+            {/* TELEFONE — OBRIGATÓRIO */}
             {/* ============================================ */}
-            <Collapsible open={showOptionalFields} onOpenChange={setShowOptionalFields}>
-              <CollapsibleTrigger asChild>
-                <Button 
-                  type="button" 
-                  variant="outline" 
-                  size="sm"
-                  className="w-full border-dashed border-muted-foreground/30"
-                >
-                  {showOptionalFields ? "Ocultar campos opcionais" : "Mostrar campos opcionais"}
-                </Button>
-              </CollapsibleTrigger>
-              
-              <CollapsibleContent className="space-y-4 pt-4">
-                {/* Telefone */}
+            <FormField
+              control={form.control}
+              name="telefone"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <Phone className="h-4 w-4" />
+                    Telefone *
+                  </FormLabel>
+                  <FormControl>
+                    <Input 
+                      {...field} 
+                      placeholder="(11) 99999-9999"
+                      className="border-muted-foreground/30"
+                      disabled={isSubmitting}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ============================================ */}
+            {/* CAMPOS ADICIONAIS (sempre visíveis) */}
+            {/* ============================================ */}
+            <div className="space-y-4 pt-2 border-t border-border/30">
+              {/* Foto URL */}
+              <FormField
+                control={form.control}
+                name="foto_aluno"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Image className="h-4 w-4" />
+                      URL da Foto
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        placeholder="https://exemplo.com/foto.jpg"
+                        className="border-muted-foreground/30"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Senha */}
+              <FormField
+                control={form.control}
+                name="senha"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="flex items-center gap-1">
+                      <Lock className="h-4 w-4" />
+                      Senha (opcional)
+                    </FormLabel>
+                    <FormControl>
+                      <Input 
+                        {...field} 
+                        type="password"
+                        placeholder="Deixe vazio para enviar email de definição"
+                        className="border-muted-foreground/30"
+                        disabled={isSubmitting}
+                      />
+                    </FormControl>
+                    <FormDescription className="text-xs">
+                      Se vazio, um email será enviado para o aluno definir a senha.
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Endereço - Título */}
+              <div className="flex items-center gap-2 pt-2">
+                <MapPin className="h-4 w-4 text-muted-foreground" />
+                <Label className="text-sm text-muted-foreground">Endereço</Label>
+              </div>
+
+              {/* Logradouro + Número */}
+              <div className="grid grid-cols-3 gap-2">
                 <FormField
                   control={form.control}
-                  name="telefone"
+                  name="logradouro"
                   render={({ field }) => (
-                    <FormItem>
-                      <FormLabel className="flex items-center gap-1">
-                        <Phone className="h-4 w-4" />
-                        Telefone
-                      </FormLabel>
+                    <FormItem className="col-span-2">
                       <FormControl>
                         <Input 
                           {...field} 
-                          placeholder="(11) 99999-9999"
+                          placeholder="Rua, Avenida..."
                           className="border-muted-foreground/30"
                           disabled={isSubmitting}
                         />
@@ -520,21 +587,15 @@ export function CriarAcessoOficialModal({
                     </FormItem>
                   )}
                 />
-
-                {/* Foto URL */}
                 <FormField
                   control={form.control}
-                  name="foto_aluno"
+                  name="numero"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-1">
-                        <Image className="h-4 w-4" />
-                        URL da Foto
-                      </FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
-                          placeholder="https://exemplo.com/foto.jpg"
+                          placeholder="Nº"
                           className="border-muted-foreground/30"
                           disabled={isSubmitting}
                         />
@@ -543,173 +604,102 @@ export function CriarAcessoOficialModal({
                     </FormItem>
                   )}
                 />
+              </div>
 
-                {/* Senha */}
+              {/* Complemento + Bairro */}
+              <div className="grid grid-cols-2 gap-2">
                 <FormField
                   control={form.control}
-                  name="senha"
+                  name="complemento"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel className="flex items-center gap-1">
-                        <Lock className="h-4 w-4" />
-                        Senha (opcional)
-                      </FormLabel>
                       <FormControl>
                         <Input 
                           {...field} 
-                          type="password"
-                          placeholder="Deixe vazio para enviar email de definição"
+                          placeholder="Complemento"
                           className="border-muted-foreground/30"
                           disabled={isSubmitting}
                         />
                       </FormControl>
-                      <FormDescription className="text-xs">
-                        Se vazio, um email será enviado para o aluno definir a senha.
-                      </FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
                 />
+                <FormField
+                  control={form.control}
+                  name="bairro"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Bairro"
+                          className="border-muted-foreground/30"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
 
-                {/* Endereço - Título */}
-                <div className="flex items-center gap-2 pt-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <Label className="text-sm text-muted-foreground">Endereço</Label>
-                </div>
-
-                {/* Logradouro + Número */}
-                <div className="grid grid-cols-3 gap-2">
-                  <FormField
-                    control={form.control}
-                    name="logradouro"
-                    render={({ field }) => (
-                      <FormItem className="col-span-2">
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Rua, Avenida..."
-                            className="border-muted-foreground/30"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="numero"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Nº"
-                            className="border-muted-foreground/30"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Complemento + Bairro */}
-                <div className="grid grid-cols-2 gap-2">
-                  <FormField
-                    control={form.control}
-                    name="complemento"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Complemento"
-                            className="border-muted-foreground/30"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="bairro"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Bairro"
-                            className="border-muted-foreground/30"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-
-                {/* Cidade + Estado + CEP */}
-                <div className="grid grid-cols-4 gap-2">
-                  <FormField
-                    control={form.control}
-                    name="cidade"
-                    render={({ field }) => (
-                      <FormItem className="col-span-2">
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="Cidade"
-                            className="border-muted-foreground/30"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="estado"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="UF"
-                            maxLength={2}
-                            className="border-muted-foreground/30 uppercase"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={form.control}
-                    name="cep"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input 
-                            {...field} 
-                            placeholder="CEP"
-                            className="border-muted-foreground/30"
-                            disabled={isSubmitting}
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                </div>
-              </CollapsibleContent>
-            </Collapsible>
+              {/* Cidade + Estado + CEP */}
+              <div className="grid grid-cols-4 gap-2">
+                <FormField
+                  control={form.control}
+                  name="cidade"
+                  render={({ field }) => (
+                    <FormItem className="col-span-2">
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="Cidade"
+                          className="border-muted-foreground/30"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="estado"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="UF"
+                          maxLength={2}
+                          className="border-muted-foreground/30 uppercase"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="cep"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormControl>
+                        <Input 
+                          {...field} 
+                          placeholder="CEP"
+                          className="border-muted-foreground/30"
+                          disabled={isSubmitting}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </div>
 
             {/* ============================================ */}
             {/* BOTÃO SUBMIT */}
