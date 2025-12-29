@@ -75,7 +75,16 @@ function StoreInitializer() {
  */
 export function AppProviders({ children, queryClient }: AppProvidersProps) {
   return (
-    <ThemeProvider attribute="class" defaultTheme="dark" enableSystem storageKey="theme">
+    // IMPORTANT:
+    // - "Sistema" aqui é um TEMA SOBERANO (não segue o SO).
+    // - Isolamento total: system | light | dark (sem herança automática).
+    <ThemeProvider
+      attribute="class"
+      defaultTheme="system"
+      enableSystem={false}
+      themes={["system", "light", "dark"]}
+      storageKey="theme"
+    >
       <PerformanceProvider>
         <PerformanceStyles />
         <QueryClientProvider client={queryClient}>
