@@ -152,20 +152,19 @@ export function PlatformStepsStage({ onComplete }: PlatformStepsStageProps) {
         </motion.div>
       </AnimatePresence>
 
-      {/* Step indicators */}
+      {/* Step indicators - SEM CLIQUE, apenas visual */}
       <div className="flex justify-center gap-2 mb-8">
         {PLATFORM_STEPS.map((_, index) => (
-          <button
+          <div
             key={index}
-            onClick={() => setCurrentStep(index)}
-            className={`w-3 h-3 rounded-full transition-all ${
+            className={`h-3 rounded-full transition-all ${
               index === currentStep
                 ? 'bg-primary w-8'
                 : index < currentStep
-                ? 'bg-primary/50'
-                : 'bg-muted'
+                ? 'bg-primary/50 w-3'
+                : 'bg-muted w-3'
             }`}
-            aria-label={`Ir para passo ${index + 1}`}
+            aria-label={`Passo ${index + 1}`}
           />
         ))}
       </div>
