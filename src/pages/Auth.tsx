@@ -1593,6 +1593,36 @@ export default function Auth() {
   // ============================================
   // 🔒 DOGMA I: MODAL DE SESSÃO ATIVA DETECTADA
   // ============================================
+  
+  // Detectar tipo de dispositivo atual
+  const detectCurrentDevice = () => {
+    const ua = navigator.userAgent;
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(ua);
+    const isTablet = /iPad|Android(?!.*Mobile)/i.test(ua);
+    
+    let deviceType: 'desktop' | 'tablet' | 'mobile' = 'desktop';
+    if (isTablet) deviceType = 'tablet';
+    else if (isMobile) deviceType = 'mobile';
+    
+    let browser = 'Navegador';
+    if (ua.includes('Chrome')) browser = 'Google Chrome';
+    else if (ua.includes('Firefox')) browser = 'Firefox';
+    else if (ua.includes('Safari')) browser = 'Safari';
+    else if (ua.includes('Edge')) browser = 'Microsoft Edge';
+    else if (ua.includes('Opera')) browser = 'Opera';
+    
+    let os = 'Sistema';
+    if (ua.includes('Windows')) os = 'Windows';
+    else if (ua.includes('Mac')) os = 'macOS';
+    else if (ua.includes('Linux')) os = 'Linux';
+    else if (ua.includes('Android')) os = 'Android';
+    else if (ua.includes('iPhone') || ua.includes('iPad')) os = 'iOS';
+    
+    return { deviceType, browser, os };
+  };
+  
+  const currentDevice = detectCurrentDevice();
+  
   if (showForceLogoutOption && pendingEmail) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
@@ -1615,10 +1645,69 @@ export default function Auth() {
             </div>
 
             {/* Info */}
-            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
+            <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-4">
               <p className="text-amber-300 text-sm text-center">
                 Por segurança, apenas <strong>uma sessão</strong> por usuário é permitida.
               </p>
+            </div>
+            
+            {/* Dispositivo Atual Detectado */}
+            <div className="mb-6">
+              <p className="text-xs text-gray-500 uppercase tracking-wider mb-3 text-center">
+                Dispositivo tentando conectar
+              </p>
+              
+              {/* Tipos de dispositivos */}
+              <div className="flex justify-center gap-4 mb-4">
+                <div className={`flex flex-col items-center p-3 rounded-lg border ${
+                  currentDevice.deviceType === 'desktop' 
+                    ? 'border-primary bg-primary/10 text-primary' 
+                    : 'border-white/10 text-gray-500'
+                }`}>
+                  <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-[10px]">Desktop</span>
+                </div>
+                <div className={`flex flex-col items-center p-3 rounded-lg border ${
+                  currentDevice.deviceType === 'tablet' 
+                    ? 'border-primary bg-primary/10 text-primary' 
+                    : 'border-white/10 text-gray-500'
+                }`}>
+                  <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-[10px]">Tablet</span>
+                </div>
+                <div className={`flex flex-col items-center p-3 rounded-lg border ${
+                  currentDevice.deviceType === 'mobile' 
+                    ? 'border-primary bg-primary/10 text-primary' 
+                    : 'border-white/10 text-gray-500'
+                }`}>
+                  <svg className="w-6 h-6 mb-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                  </svg>
+                  <span className="text-[10px]">Celular</span>
+                </div>
+              </div>
+              
+              {/* Info do dispositivo atual */}
+              <div className="bg-white/5 border border-white/10 rounded-lg p-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Fingerprint className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <p className="text-white text-sm font-medium">
+                    {currentDevice.browser} no {currentDevice.os}
+                  </p>
+                  <p className="text-gray-500 text-xs">
+                    Dispositivo detectado automaticamente
+                  </p>
+                </div>
+                <div className="px-2 py-1 bg-primary/20 rounded text-primary text-xs font-medium">
+                  Atual
+                </div>
+              </div>
             </div>
 
             {/* Ações */}
