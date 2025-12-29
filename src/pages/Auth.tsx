@@ -640,9 +640,20 @@ export default function Auth() {
   // 🔒 DOGMA I: FORÇAR ENCERRAMENTO DE OUTRAS SESSÕES
   // ============================================
   const handleForceLogout = async () => {
-    if (!pendingEmail || !pendingPassword) {
-      console.error('[AUTH] handleForceLogout: pendingEmail ou pendingPassword ausentes');
-      toast.error("Erro interno", { description: "Tente fazer login novamente." });
+    console.log('[AUTH] handleForceLogout iniciado. pendingEmail:', pendingEmail, 'pendingPassword:', pendingPassword ? '***SET***' : 'NULL');
+    
+    if (!pendingEmail) {
+      console.error('[AUTH] handleForceLogout: pendingEmail ausente');
+      toast.error("Erro interno", { description: "Email não encontrado. Tente fazer login novamente." });
+      setShowForceLogoutOption(false);
+      return;
+    }
+    
+    // Usar formData.password se pendingPassword estiver vazio
+    const passwordToUse = pendingPassword || formData.password;
+    if (!passwordToUse) {
+      console.error('[AUTH] handleForceLogout: senha ausente');
+      toast.error("Erro interno", { description: "Senha não encontrada. Tente fazer login novamente." });
       setShowForceLogoutOption(false);
       return;
     }
@@ -654,6 +665,8 @@ export default function Auth() {
       const { data, error } = await supabase.rpc('force_logout_other_sessions', {
         _email: pendingEmail
       });
+      
+      console.log('[AUTH] force_logout_other_sessions response:', { data, error });
       
       if (error) {
         console.error('[AUTH] Erro ao forçar logout (RPC):', {
@@ -677,7 +690,7 @@ export default function Auth() {
         
         // 🎯 FIX: Fazer login automaticamente após encerrar sessões
         const savedEmail = pendingEmail;
-        const savedPassword = pendingPassword;
+        const savedPassword = passwordToUse; // Usar a variável que já foi validada
         
         // Limpar estado de bloqueio
         setShowForceLogoutOption(false);
