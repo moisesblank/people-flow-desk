@@ -344,7 +344,7 @@ Deno.serve(async (req) => {
 
     const currentCount = deviceCount || 0;
 
-    // 🔐 VERIFICAR LIMITE DE 3 DISPOSITIVOS (exceto owner)
+    // 🔐 BLOCO 4: VERIFICAR LIMITE DE 3 DISPOSITIVOS (exceto owner)
     if (!isOwner && currentCount >= 3) {
       // Buscar lista de dispositivos para o modal
       const { data: devices } = await supabase
@@ -355,6 +355,37 @@ Deno.serve(async (req) => {
         .order('last_seen_at', { ascending: false });
 
       console.warn(`[register-device-server] ⚠️ LIMITE EXCEDIDO: ${currentCount}/3 dispositivos`);
+      
+      // 🔐 BLOCO 4: GERAR EVENTO DE SEGURANÇA (OBRIGATÓRIO)
+      try {
+        await supabase.from('security_events').insert({
+          user_id: userId,
+          event_type: 'DEVICE_LIMIT_EXCEEDED',
+          severity: 'warning',
+          description: `Tentativa de registro de 4º dispositivo bloqueada. Total atual: ${currentCount}`,
+          metadata: {
+            current_count: currentCount,
+            max_devices: 3,
+            attempted_device: {
+              device_type: deviceType,
+              browser,
+              os,
+              device_hash_prefix: deviceHashFinal.slice(0, 16),
+            },
+            existing_devices: (devices || []).map((d: any) => ({
+              id: d.id,
+              name: d.device_name,
+              type: d.device_type,
+              last_seen: d.last_seen_at,
+            })),
+          },
+          ip_address: null, // SEM IP conforme BLOCO 1
+        });
+        console.log('[register-device-server] 🔐 Evento de segurança registrado: DEVICE_LIMIT_EXCEEDED');
+      } catch (securityEventError) {
+        console.warn('[register-device-server] ⚠️ Falha ao registrar evento de segurança:', securityEventError);
+      }
+
       return new Response(
         JSON.stringify({ 
           success: false, 
