@@ -979,8 +979,62 @@ export default function Auth() {
               if (!sessionError && sessionData && sessionData.length > 0) {
                 localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
                 console.log('[AUTH][SESSAO] ✅ Sessão única criada (2FA dispensado, dispositivo vinculado)');
-              } else if (sessionError) {
-                console.warn('[AUTH][SESSAO] Falha ao criar sessão (2FA dispensado):', sessionError);
+              } else {
+                console.error('[AUTH][SESSAO] ❌ Sessão única NÃO foi criada - aplicando FAIL-CLOSED', sessionError);
+
+                // Fallback: registrar sessão diretamente (RLS garante user_id = auth.uid())
+                const fallbackToken = crypto.randomUUID();
+
+                const { data: guardData, error: guardError } = await supabase
+                  .from('system_guard')
+                  .select('auth_epoch')
+                  .single();
+
+                if (guardError) {
+                  console.error('[AUTH][SESSAO] ❌ Falha ao ler system_guard:', guardError);
+                }
+
+                const currentEpoch = (guardData as any)?.auth_epoch ?? 1;
+
+                // Revogar sessões anteriores (garantia de unicidade mesmo sem RPC)
+                await supabase
+                  .from('active_sessions')
+                  .update({
+                    status: 'revoked',
+                    revoked_at: new Date().toISOString(),
+                    revoked_reason: 'new_session_started',
+                  })
+                  .eq('user_id', userFor2FA.id)
+                  .eq('status', 'active');
+
+                const { error: insertError } = await supabase
+                  .from('active_sessions')
+                  .insert({
+                    user_id: userFor2FA.id,
+                    session_token: fallbackToken,
+                    device_hash: deviceResult.deviceHash || 'unknown',
+                    device_type,
+                    device_name: `${browser} on ${os}`,
+                    user_agent: navigator.userAgent,
+                    status: 'active',
+                    expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                    auth_epoch_at_login: currentEpoch,
+                  });
+
+                if (insertError) {
+                  console.error('[AUTH][SESSAO] ❌ Falha CRÍTICA ao registrar sessão fallback:', insertError);
+                  toast.error('Falha crítica de segurança', {
+                    description: 'Não foi possível iniciar a sessão única. Faça login novamente.',
+                    duration: 9000,
+                  });
+                  await supabase.auth.signOut();
+                  resetTurnstile();
+                  setIsLoading(false);
+                  return;
+                }
+
+                localStorage.setItem(SESSION_TOKEN_KEY, fallbackToken);
+                console.log('[AUTH][SESSAO] ✅ Sessão fallback criada e token armazenado');
               }
             } catch (sessErr) {
               console.warn('[AUTH][SESSAO] Erro crítico ao criar sessão:', sessErr);
@@ -1237,8 +1291,60 @@ export default function Auth() {
                 if (!sessionError && sessionData && sessionData.length > 0) {
                   localStorage.setItem(SESSION_TOKEN_KEY, sessionData[0].session_token);
                   console.log('[AUTH][SESSAO] ✅ Sessão única criada pós-2FA (dispositivo vinculado)');
-                } else if (sessionError) {
-                  console.warn('[AUTH][SESSAO] Falha ao criar sessão pós-2FA:', sessionError);
+                } else {
+                  console.error('[AUTH][SESSAO] ❌ Sessão única NÃO foi criada pós-2FA - aplicando FAIL-CLOSED', sessionError);
+
+                  const fallbackToken = crypto.randomUUID();
+
+                  const { data: guardData, error: guardError } = await supabase
+                    .from('system_guard')
+                    .select('auth_epoch')
+                    .single();
+
+                  if (guardError) {
+                    console.error('[AUTH][SESSAO] ❌ Falha ao ler system_guard (pós-2FA):', guardError);
+                  }
+
+                  const currentEpoch = (guardData as any)?.auth_epoch ?? 1;
+
+                  await supabase
+                    .from('active_sessions')
+                    .update({
+                      status: 'revoked',
+                      revoked_at: new Date().toISOString(),
+                      revoked_reason: 'new_session_started',
+                    })
+                    .eq('user_id', pending2FAUser.userId)
+                    .eq('status', 'active');
+
+                  const { error: insertError } = await supabase
+                    .from('active_sessions')
+                    .insert({
+                      user_id: pending2FAUser.userId,
+                      session_token: fallbackToken,
+                      device_hash: deviceResult.deviceHash || 'unknown',
+                      device_type,
+                      device_name: `${browser} on ${os}`,
+                      user_agent: navigator.userAgent,
+                      status: 'active',
+                      expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+                      auth_epoch_at_login: currentEpoch,
+                    });
+
+                  if (insertError) {
+                    console.error('[AUTH][SESSAO] ❌ Falha CRÍTICA ao registrar sessão fallback pós-2FA:', insertError);
+                    toast.error('Falha crítica de segurança', {
+                      description: 'Não foi possível iniciar a sessão única. Faça login novamente.',
+                      duration: 9000,
+                    });
+                    await supabase.auth.signOut();
+                    setShow2FA(false);
+                    setPending2FAUser(null);
+                    return;
+                  }
+
+                  localStorage.setItem(SESSION_TOKEN_KEY, fallbackToken);
+                  console.log('[AUTH][SESSAO] ✅ Sessão fallback criada pós-2FA e token armazenado');
                 }
               } catch (err) {
                 console.warn('[AUTH][SESSAO] Erro crítico ao criar sessão pós-2FA:', err);
