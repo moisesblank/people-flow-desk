@@ -418,11 +418,11 @@ export function CriarAcessoOficialModal({
                         >
                           <FormControl>
                             <SelectTrigger className={selectedRole === 'beta_expira' ? "border-amber-500/30" : "border-muted-foreground/30"}>
-                              <SelectValue placeholder="Permanente" />
+                              <SelectValue placeholder="Vitalício" />
                             </SelectTrigger>
                           </FormControl>
                           <SelectContent>
-                            <SelectItem value="permanente">♾️ Permanente</SelectItem>
+                            <SelectItem value="permanente">♾️ Vitalício</SelectItem>
                             <SelectItem value="30">30 dias</SelectItem>
                             <SelectItem value="60">60 dias</SelectItem>
                             <SelectItem value="90">90 dias</SelectItem>
