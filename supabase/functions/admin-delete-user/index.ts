@@ -219,15 +219,38 @@ serve(async (req) => {
     }
 
     // ============================================
-    // PASSO 5: Limpar audit_logs do usuário-alvo (FK blocking)
+    // PASSO 5: Limpar TODAS as tabelas com FK para auth.users
     // ============================================
-    console.log("[admin-delete-user] 📝 Limpando audit_logs do usuário...");
+    console.log("[admin-delete-user] 📝 Limpando tabelas com FK para auth.users...");
     
-    // Remover logs onde o usuário-alvo é o user_id (para evitar FK block)
-    await supabaseAdmin
-      .from("audit_logs")
-      .delete()
-      .eq("user_id", resolvedUserId);
+    // Tabelas com FK direta para auth.users (ordem importa!)
+    const fkTables = [
+      "audit_logs",
+      "activity_log",
+      "user_sessions",
+      "notifications",
+      "book_chat_messages",
+      "book_chat_threads",
+      "book_reading_sessions",
+      "book_ratings",
+      "calendar_tasks",
+      "xp_history",
+      "user_gamification",
+      "user_achievements",
+      "user_badges",
+      "quiz_attempts",
+      "lesson_progress",
+      "enrollment",
+    ];
+
+    for (const table of fkTables) {
+      try {
+        await supabaseAdmin.from(table).delete().eq("user_id", resolvedUserId);
+        console.log(`[admin-delete-user] ✅ Limpo: ${table}`);
+      } catch (e) {
+        console.warn(`[admin-delete-user] ⚠️ Erro ao limpar ${table}:`, e);
+      }
+    }
 
     // Registrar a exclusão com caller.id (admin que está excluindo)
     await supabaseAdmin.from("audit_logs").insert({
