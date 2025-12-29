@@ -49,7 +49,8 @@ import { useNavigate } from "react-router-dom";
 import { 
   Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, 
   UserPlus, ChevronLeft, ChevronRight, Search, Crown, Shield,
-  CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X, Eye, Package
+  CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X, Eye, Package,
+  Download, FileSpreadsheet, Loader2
 } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
@@ -68,6 +69,8 @@ import { VirtualTable } from "@/components/performance/VirtualTable";
 import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStudentPresence, getPresenceStatus } from "@/hooks/useStudentPresence";
+import { useExportStudents } from "@/hooks/useExportStudents";
+import { useAdminCheck } from "@/hooks/useAdminCheck";
 
 // ============================================
 // TYPES
@@ -309,6 +312,12 @@ export default function Alunos() {
   
   // Hook de presença para status online/offline em tempo real
   const { presenceMap } = useStudentPresence();
+  
+  // Hook de exportação (LEI CANÔNICA DO EXPORT)
+  const { exportStudents, isExporting } = useExportStudents();
+  
+  // Hook de verificação de admin (apenas OWNER/ADMIN podem exportar)
+  const { isOwner, isAdmin, isAdminOrOwner } = useAdminCheck();
   
   // Paginação
   const [page, setPage] = useState(1);
@@ -613,6 +622,21 @@ export default function Alunos() {
     setUniverseFilter(id === universeFilter ? 'all' : id);
     setPage(1);
   };
+
+  // ============================================
+  // HANDLER: EXPORTAR (LEI CANÔNICA)
+  // Gestão seleciona QUEM, Perfil fornece O QUE
+  // ============================================
+  const handleExport = useCallback(() => {
+    const filterLabel = universeFilter === 'all' 
+      ? 'Todos os Alunos' 
+      : UNIVERSE_OPTIONS.find(o => o.id === universeFilter)?.label || universeFilter;
+    
+    exportStudents(students, {
+      universeFilter,
+      filterLabel,
+    });
+  }, [students, universeFilter, exportStudents]);
 
   // ============================================
   // RENDER
@@ -941,9 +965,34 @@ export default function Alunos() {
                     />
                   </div>
                 </div>
-                <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                  <span>Página {page} de {totalPages}</span>
-                  <span className="text-blue-400">({totalCount} alunos)</span>
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <span>Página {page} de {totalPages}</span>
+                    <span className="text-blue-400">({totalCount} alunos)</span>
+                  </div>
+                  
+                  {/* BOTÃO EXPORTAR — LEI CANÔNICA (OWNER/ADMIN apenas) */}
+                  {isAdminOrOwner && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleExport}
+                      disabled={isExporting || students.length === 0}
+                      className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400"
+                    >
+                      {isExporting ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Exportando...
+                        </>
+                      ) : (
+                        <>
+                          <FileSpreadsheet className="h-4 w-4 mr-2" />
+                          EXPORTAR
+                        </>
+                      )}
+                    </Button>
+                  )}
                 </div>
               </div>
             </div>
