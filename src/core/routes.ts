@@ -272,6 +272,7 @@ export const COMMUNITY_ROUTES: RouteDefinition[] = [
   { path: "/comunidade/membros", domain: "comunidade", title: "Membros", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno", "viewer"] },
   { path: "/comunidade/eventos", domain: "comunidade", title: "Eventos", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno", "viewer"] },
   { path: "/comunidade/chat", domain: "comunidade", title: "Chat", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno", "viewer"] },
+  { path: "/comunidade/pps", domain: "comunidade", title: "PPS", authRequired: true, status: "active", requiresAuth: true, roles: ["owner", "admin", "beta", "aluno", "viewer"] },
 ];
 
 export const STUDENT_ROUTES: RouteDefinition[] = [
