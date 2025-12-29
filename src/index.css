@@ -16,7 +16,7 @@
    ============================================ */
 
 @layer base {
-  :root, .system {
+  :root {
     /* UPGRADE v10 - TEMA ESCURO VERMELHO PROFISSIONAL */
     --background: 0 0% 7%;
     --foreground: 0 0% 95%;
@@ -143,6 +143,145 @@
     --ai-surface: 220 40% 8%;
     --ai-surface-hover: 220 40% 12%;
     --ai-border: 220 40% 20%;
+    
+    /* Holographic gradients */
+    --gradient-holo: linear-gradient(135deg, hsl(185 100% 50% / 0.1), hsl(280 100% 60% / 0.1), hsl(320 100% 60% / 0.1));
+    --gradient-holo-intense: linear-gradient(135deg, hsl(185 100% 50% / 0.3), hsl(280 100% 60% / 0.3));
+  }
+
+  /* ============================================
+     TEMA SISTEMA - Céu à Noite (Azul Profundo)
+     Padrão institucional histórico do projeto
+     Spider-Man: Azul noturno + Vermelho vinho
+     ============================================ */
+  .system {
+    /* Background - Azul noturno profundo (céu à noite) */
+    --background: 230 40% 7%;
+    --foreground: 210 20% 95%;
+    
+    /* Cards com leve tom azulado */
+    --card: 225 35% 10%;
+    --card-foreground: 210 20% 95%;
+    --card-hover: 225 35% 13%;
+    
+    --popover: 225 35% 10%;
+    --popover-foreground: 210 20% 95%;
+    
+    /* Primary - Vermelho vinho (identidade Spider-Man) */
+    --primary: 0 75% 45%;
+    --primary-foreground: 0 0% 100%;
+    --primary-hover: 0 75% 40%;
+    --primary-glow: 0 75% 55%;
+    
+    /* Secondary com tom azulado */
+    --secondary: 225 30% 15%;
+    --secondary-foreground: 210 20% 95%;
+    
+    --muted: 225 25% 15%;
+    --muted-foreground: 210 15% 65%;
+    
+    /* Accent vermelho vinho */
+    --accent: 0 65% 42%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
+    
+    --info: 210 90% 55%;
+    --info-foreground: 0 0% 100%;
+    
+    /* Bordas com tom azulado */
+    --border: 225 25% 18%;
+    --input: 225 25% 18%;
+    --ring: 0 75% 45%;
+    --radius: 0.75rem;
+    
+    /* Status colors */
+    --status-active: 142 71% 45%;
+    --status-vacation: 220 60% 50%;
+    --status-away: 38 92% 50%;
+    --status-inactive: 220 15% 46%;
+    --status-online: 142 76% 36%;
+    --status-offline: 220 15% 40%;
+    --status-recent: 158 64% 40%;
+    
+    /* Stats colors */
+    --stats-red: 0 75% 50%;
+    --stats-green: 142 71% 45%;
+    --stats-blue: 215 80% 55%;
+    --stats-purple: 270 80% 55%;
+    --stats-gold: 43 74% 49%;
+    --stats-cyan: 185 100% 42%;
+    --stats-wine: 0 65% 42%;
+    
+    /* Glow colors com tom azulado */
+    --glow-red: 0 75% 55%;
+    --glow-green: 142 71% 48%;
+    --glow-blue: 215 80% 60%;
+    --glow-purple: 270 80% 60%;
+    --glow-gold: 43 74% 58%;
+    --glow-cyan: 185 100% 48%;
+    --glow-wine: 0 65% 50%;
+    
+    /* Sidebar - Azul noturno */
+    --sidebar-background: 230 45% 5%;
+    --sidebar-foreground: 210 20% 95%;
+    --sidebar-primary: 0 75% 45%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 225 35% 12%;
+    --sidebar-accent-foreground: 210 20% 95%;
+    --sidebar-border: 225 30% 15%;
+    --sidebar-ring: 0 75% 45%;
+    
+    /* Chart colors */
+    --chart-1: 0 75% 50%;
+    --chart-2: 215 80% 55%;
+    --chart-3: 142 71% 45%;
+    --chart-4: 270 80% 55%;
+    --chart-5: 43 74% 49%;
+    
+    /* God Mode */
+    --god-mode-purple: 280 80% 60%;
+    --god-mode-pink: 328 100% 60%;
+    
+    /* Role colors */
+    --role-owner: 280 80% 60%;
+    --role-admin: 215 80% 55%;
+    --role-coordenacao: 142 71% 45%;
+    --role-suporte: 43 74% 49%;
+    --role-monitoria: 245 80% 55%;
+    --role-afiliado: 328 80% 55%;
+    --role-marketing: 25 95% 55%;
+    --role-contabilidade: 175 70% 45%;
+    --role-employee: 215 20% 50%;
+    --role-beta: 38 92% 50%;
+    --role-aluno: 215 20% 45%;
+    
+    /* Rarity colors */
+    --rarity-common: 215 15% 50%;
+    --rarity-rare: 210 100% 55%;
+    --rarity-epic: 280 80% 60%;
+    --rarity-legendary: 43 100% 50%;
+    
+    /* Holographic tokens */
+    --holo-cyan: 185 100% 50%;
+    --holo-purple: 280 100% 60%;
+    --holo-pink: 320 100% 60%;
+    --holo-blue: 215 100% 58%;
+    --holo-green: 160 100% 45%;
+    
+    /* AI Tutor - tons azulados */
+    --ai-glow: 185 100% 50%;
+    --ai-accent: 280 90% 60%;
+    --ai-surface: 225 40% 8%;
+    --ai-surface-hover: 225 40% 12%;
+    --ai-border: 225 35% 20%;
     
     /* Holographic gradients */
     --gradient-holo: linear-gradient(135deg, hsl(185 100% 50% / 0.1), hsl(280 100% 60% / 0.1), hsl(320 100% 60% / 0.1));
