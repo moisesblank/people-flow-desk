@@ -7762,6 +7762,9 @@ export type Database = {
         Row: {
           access_expires_at: string | null
           avatar_url: string | null
+          banned_at: string | null
+          banned_by: string | null
+          banned_reason: string | null
           bio: string | null
           churn_risk_score: number | null
           cpf: string | null
@@ -7769,6 +7772,7 @@ export type Database = {
           current_focus_area_id: string | null
           email: string | null
           id: string
+          is_banned: boolean | null
           is_online: boolean | null
           last_activity_at: string | null
           last_login_at: string | null
@@ -7794,6 +7798,9 @@ export type Database = {
         Insert: {
           access_expires_at?: string | null
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
+          banned_reason?: string | null
           bio?: string | null
           churn_risk_score?: number | null
           cpf?: string | null
@@ -7801,6 +7808,7 @@ export type Database = {
           current_focus_area_id?: string | null
           email?: string | null
           id: string
+          is_banned?: boolean | null
           is_online?: boolean | null
           last_activity_at?: string | null
           last_login_at?: string | null
@@ -7826,6 +7834,9 @@ export type Database = {
         Update: {
           access_expires_at?: string | null
           avatar_url?: string | null
+          banned_at?: string | null
+          banned_by?: string | null
+          banned_reason?: string | null
           bio?: string | null
           churn_risk_score?: number | null
           cpf?: string | null
@@ -7833,6 +7844,7 @@ export type Database = {
           current_focus_area_id?: string | null
           email?: string | null
           id?: string
+          is_banned?: boolean | null
           is_online?: boolean | null
           last_activity_at?: string | null
           last_login_at?: string | null
@@ -15308,6 +15320,14 @@ export type Database = {
         }[]
       }
       auto_cleanup_for_load: { Args: never; Returns: undefined }
+      ban_user_and_revoke_sessions: {
+        Args: {
+          p_banned_by?: string
+          p_reason?: string
+          p_target_user_id: string
+        }
+        Returns: Json
+      }
       block_ip_auto: {
         Args: {
           p_duration_hours?: number
@@ -16166,6 +16186,7 @@ export type Database = {
       is_owner_uid: { Args: never; Returns: boolean }
       is_sna_admin: { Args: never; Returns: boolean }
       is_suporte: { Args: { _user_id?: string }; Returns: boolean }
+      is_user_banned: { Args: { p_user_id: string }; Returns: boolean }
       is_user_banned_from_chat: {
         Args: { p_live_id: string; p_user_id: string }
         Returns: boolean
@@ -16696,6 +16717,7 @@ export type Database = {
       }
       sna_realtime_stats: { Args: never; Returns: Json }
       sna_system_health: { Args: never; Returns: Json }
+      unban_user: { Args: { p_target_user_id: string }; Returns: Json }
       update_capacity_metric: {
         Args: { p_current_value: number; p_metric_name: string }
         Returns: undefined

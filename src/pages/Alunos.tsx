@@ -561,7 +561,8 @@ export default function Alunos() {
   };
 
   // ============================================
-  // DELETE - APENAS ADMIN OU OWNER (CONSTITUIÇÃO v10.x)
+  // DELETE + BAN - APENAS ADMIN OU OWNER (CONSTITUIÇÃO v10.x + DOGMA XI)
+  // Agora também revoga sessões e bloqueia login
   // ============================================
   const handleDelete = async (id: string) => {
     // Validação de permissão no frontend (backup - RLS é a fonte de verdade)
@@ -571,8 +572,33 @@ export default function Alunos() {
       });
       return;
     }
+
+    // Buscar o email do aluno para ban
+    const studentToDelete = allStudents.find(s => s.id === id);
+    const studentEmail = studentToDelete?.email;
     
     try {
+      // 🛡️ DOGMA XI: Primeiro, banir e revogar sessões
+      if (studentEmail) {
+        console.log('[DELETE+BAN] Banindo e revogando sessões:', studentEmail);
+        
+        const { data: banResult, error: banError } = await supabase.functions.invoke('admin-ban-user', {
+          body: {
+            action: 'ban',
+            targetEmail: studentEmail,
+            reason: 'Conta excluída pelo administrador',
+          },
+        });
+
+        if (banError) {
+          console.error('[DELETE+BAN] Erro ao banir:', banError);
+          // Continua com delete mesmo se ban falhar (graceful degradation)
+        } else {
+          console.log('[DELETE+BAN] ✅ Usuário banido:', banResult);
+        }
+      }
+
+      // 2. Deletar da tabela alunos
       const { error } = await supabase.from("alunos").delete().eq("id", id);
       if (error) {
         // RLS bloqueou - usuário não tem permissão
@@ -584,7 +610,10 @@ export default function Alunos() {
         }
         throw error;
       }
-      toast.success("Aluno removido com sucesso!");
+      
+      toast.success("Aluno removido e acesso revogado!", {
+        description: "O usuário foi deslogado e não poderá mais acessar a plataforma."
+      });
       refetch();
     } catch (error: any) {
       console.error("Error deleting student:", error);

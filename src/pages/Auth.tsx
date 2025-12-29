@@ -749,6 +749,34 @@ export default function Auth() {
         }
 
         // ============================================
+        // 🛡️ DOGMA XI: VERIFICAR SE USUÁRIO ESTÁ BANIDO
+        // ============================================
+        console.log('[AUTH] 6.1. Verificando se usuário está banido...');
+        const { data: isBanned, error: banCheckError } = await supabase.rpc('is_user_banned', {
+          p_user_id: userFor2FA.id,
+        });
+
+        if (banCheckError) {
+          console.warn('[AUTH] Erro ao verificar ban:', banCheckError);
+          // Continua mesmo com erro (fail-open para não travar legítimos)
+        } else if (isBanned === true) {
+          console.error('[AUTH] ❌ USUÁRIO BANIDO - Bloqueando acesso');
+          
+          // Fazer logout imediato
+          await supabase.auth.signOut();
+          
+          toast.error("Acesso Bloqueado", {
+            description: "Sua conta foi suspensa. Entre em contato com o suporte.",
+            duration: 10000,
+          });
+          resetTurnstile();
+          setIsLoading(false);
+          return;
+        }
+
+        console.log('[AUTH] 6.2. Usuário não está banido, prosseguindo...');
+
+        // ============================================
         // 🛡️ 2FA DECISION ENGINE (SYNAPSE Ω v10.x)
         // Decidir SE 2FA é necessário baseado em sinais
         // ============================================

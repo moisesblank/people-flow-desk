@@ -277,3 +277,8 @@ verify_jwt = true
 # 🟡 Chamado por cron ou manualmente, valida internamente
 [functions.process-beta-expirations]
 verify_jwt = false
+
+# --- Admin Ban User (DOGMA XI) ---
+# 🟢 Requer JWT - Apenas Admin/Owner pode banir
+[functions.admin-ban-user]
+verify_jwt = true
