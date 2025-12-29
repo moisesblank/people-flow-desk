@@ -14,6 +14,7 @@ const PoliticaPrivacidade = lazy(() => import("@/pages/PoliticaPrivacidade"));
 const AreaGratuita = lazy(() => import("@/pages/AreaGratuita"));
 const PerfilIncompleto = lazy(() => import("@/pages/PerfilIncompleto"));
 const GuiaDaPlataforma = lazy(() => import("@/pages/GuiaDaPlataforma"));
+const PrimeiroAcesso = lazy(() => import("@/pages/PrimeiroAcesso"));
 const NotFound = lazy(() => import("@/pages/NotFound"));
 
 export const publicRoutes = (
@@ -28,6 +29,8 @@ export const publicRoutes = (
     <Route path="/perfil-incompleto" element={<PerfilIncompleto />} />
     {/* 📚 Guia Educacional da Plataforma */}
     <Route path="/guia-plataforma" element={<GuiaDaPlataforma />} />
+    {/* 🔐 ONBOARDING OBRIGATÓRIO - Primeiro Acesso */}
+    <Route path="/primeiro-acesso" element={<PrimeiroAcesso />} />
     <Route path="*" element={<NotFound />} />
   </>
 );
