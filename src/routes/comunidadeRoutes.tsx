@@ -14,6 +14,7 @@ const ComunidadePosts = lazy(() => import("@/pages/comunidade/ComunidadePosts"))
 const ComunidadeMembros = lazy(() => import("@/pages/comunidade/ComunidadeMembros"));
 const ComunidadeEventos = lazy(() => import("@/pages/comunidade/ComunidadeEventos"));
 const ComunidadeChat = lazy(() => import("@/pages/comunidade/ComunidadeChat"));
+const ComunidadePPS = lazy(() => import("@/pages/comunidade/ComunidadePPS"));
 
 export const comunidadeRoutes = (
   <>
@@ -23,5 +24,6 @@ export const comunidadeRoutes = (
     <Route path="/comunidade/membros" element={<ProtectedPage><ComunidadeMembros /></ProtectedPage>} />
     <Route path="/comunidade/eventos" element={<ProtectedPage><ComunidadeEventos /></ProtectedPage>} />
     <Route path="/comunidade/chat" element={<ProtectedPage><ComunidadeChat /></ProtectedPage>} />
+    <Route path="/comunidade/pps" element={<ProtectedPage><ComunidadePPS /></ProtectedPage>} />
   </>
 );
