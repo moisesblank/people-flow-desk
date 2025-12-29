@@ -983,6 +983,26 @@ export default function Auth() {
             
             console.log('[AUTH][BLOCO3] ✅ Dispositivo vinculado:', deviceResult.deviceId);
             
+            // 🔐 PIECE 1: PROGRESSIVE AWARENESS RULES - Mostrar aviso se houver
+            if (deviceResult.notice?.level && deviceResult.notice?.message) {
+              if (deviceResult.notice.level === 'INFO') {
+                toast.info('Novo Dispositivo', {
+                  description: deviceResult.notice.message,
+                  duration: 5000,
+                });
+              } else if (deviceResult.notice.level === 'WARNING') {
+                toast.warning('Atenção', {
+                  description: deviceResult.notice.message,
+                  duration: 7000,
+                });
+              } else if (deviceResult.notice.level === 'HARD_WARNING') {
+                toast.warning('Último Slot Disponível', {
+                  description: deviceResult.notice.message,
+                  duration: 10000,
+                });
+              }
+            }
+            
             // 🔒 DOGMA I: CRIAR SESSÃO ÚNICA IMEDIATAMENTE (APÓS dispositivo vinculado)
             // ============================================
             try {

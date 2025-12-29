@@ -491,14 +491,37 @@ Deno.serve(async (req) => {
 
     console.log(`[register-device-server] ✅ NOVO dispositivo registrado (${currentCount + 1}/3): ${deviceHashFinal.slice(0, 16)}...`);
     
+    // 🔐 PIECE 1: PROGRESSIVE AWARENESS RULES
+    // Retornar aviso progressivo baseado na contagem
+    let deviceNotice: { level: 'INFO' | 'WARNING' | 'HARD_WARNING' | null; message: string | null } = {
+      level: null,
+      message: null,
+    };
+    
+    const newCount = currentCount + 1;
+    
+    if (newCount === 2) {
+      deviceNotice = {
+        level: 'INFO',
+        message: 'Novo dispositivo detectado. Você agora tem 2 dispositivos registrados.',
+      };
+    } else if (newCount === 3) {
+      deviceNotice = {
+        level: 'HARD_WARNING',
+        message: 'Este é seu último slot de dispositivo. Adicionar outro exigirá desconectar um existente.',
+      };
+    }
+    
     return new Response(
       JSON.stringify({ 
         success: true, 
         deviceId: newDevice.id, 
         status: 'NEW_DEVICE_REGISTERED',
         deviceHash: deviceHashFinal,
-        deviceCount: currentCount + 1,
-        isOwner 
+        deviceCount: newCount,
+        isOwner,
+        // 🔐 PIECE 1: Aviso progressivo
+        notice: deviceNotice,
       }),
       { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );

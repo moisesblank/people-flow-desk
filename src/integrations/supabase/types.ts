@@ -15589,7 +15589,7 @@ export type Database = {
           _user_agent?: string
         }
         Returns: {
-          auth_epoch: number
+          auth_epoch_at_login: number
           session_token: string
         }[]
       }
@@ -16081,6 +16081,7 @@ export type Database = {
           timeout_until: string
         }[]
       }
+      get_user_device_count: { Args: never; Returns: number }
       get_user_devices: { Args: { p_user_id?: string }; Returns: Json }
       get_user_role: { Args: { p_user_id: string }; Returns: string }
       get_user_role_secure: {
