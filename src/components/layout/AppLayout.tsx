@@ -4,6 +4,7 @@ import { Search, Command, Crown, MessageSquare, RefreshCw } from "lucide-react";
 import { AIAssistant, AIAssistantTrigger } from "@/components/ai/AIAssistant";
 import { SidebarProvider, SidebarTrigger, SidebarInset } from "@/components/ui/sidebar";
 import { RoleBasedSidebar } from "./RoleBasedSidebar";
+import { ThemeToggle } from "./ThemeToggle";
 import { GlobalSearch } from "@/components/GlobalSearch";
 import { CalculatorButton } from "@/components/Calculator";
 import { PeriodicTableButton } from "@/components/PeriodicTable";
@@ -130,6 +131,8 @@ const AppHeader = memo(({
       </Tooltip>
       
       <div className="flex-1" />
+
+      <ThemeToggle />
 
       <div data-notification-center>
         <NotificationCenter
