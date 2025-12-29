@@ -132,9 +132,9 @@ export const Navbar = memo(() => {
                 <a 
                   key={link.href} 
                   href={link.href} 
-                  className="flex items-center gap-2 text-sm font-bold text-gray-300 hover:text-white transition-colors"
+                  className="group nav-link-2300 flex items-center gap-2 text-sm font-bold text-gray-300 hover:text-white"
                 >
-                  <link.icon className="w-4 h-4 text-gray-500" />
+                  <link.icon className="w-4 h-4 nav-icon-2300 text-gray-500" />
                   {link.label}
                 </a>
               ))}
@@ -142,12 +142,12 @@ export const Navbar = memo(() => {
             
             <div className="hidden lg:flex items-center gap-3">
               <Link to="/auth">
-                <Button variant="ghost" className="text-gray-300 hover:text-white">
+                <Button variant="ghost" className="btn-ghost-2300 text-gray-300 hover:text-white font-semibold rounded-lg">
                   Entrar
                 </Button>
               </Link>
               <a href="https://app.moisesmedeiros.com.br" target="_blank" rel="noopener noreferrer">
-                <Button className="bg-gradient-to-r from-red-600 to-red-700 text-white font-bold">
+                <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                   <Rocket className="w-4 h-4 mr-2" />
                   Começar
                 </Button>
@@ -207,16 +207,13 @@ export const Navbar = memo(() => {
               <motion.a 
                 key={link.href} 
                 href={link.href} 
-                className="relative group flex items-center gap-2 text-sm font-bold text-gray-300 hover:text-white transition-colors"
+                className="group nav-link-2300 flex items-center gap-2 text-sm font-bold text-gray-300 hover:text-white"
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.1 * i }}
               >
-                <link.icon className="w-4 h-4 text-gray-500 group-hover:text-red-400 transition-colors" />
+                <link.icon className="w-4 h-4 nav-icon-2300 text-gray-500" />
                 <span>{link.label}</span>
-                
-                {/* Underline */}
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-red-600 to-amber-500 rounded-full group-hover:w-full transition-all duration-300" />
               </motion.a>
             ))}
           </div>
@@ -229,12 +226,12 @@ export const Navbar = memo(() => {
             transition={{ delay: 0.3 }}
           >
             <Link to="/auth">
-              <Button variant="ghost" className="text-gray-300 hover:text-white font-semibold">
+              <Button variant="ghost" className="btn-ghost-2300 text-gray-300 hover:text-white font-semibold rounded-lg">
                 Entrar
               </Button>
             </Link>
             <a href="https://app.moisesmedeiros.com.br" target="_blank" rel="noopener noreferrer">
-              <Button className="bg-gradient-to-r from-red-600 to-red-700 hover:from-red-700 hover:to-red-800 text-white font-bold shadow-lg shadow-red-600/20">
+              <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                 <Rocket className="w-4 h-4 mr-2" />
                 Começar Agora
               </Button>
