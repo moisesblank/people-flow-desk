@@ -177,10 +177,15 @@ export function errorResponse(
   const status = error instanceof AuthError ? error.status : 500;
   const code = error instanceof AuthError ? error.code : "INTERNAL_ERROR";
   
+  // 🛡️ PATCH-009: Mensagem genérica para erros internos
+  const safeMessage = error instanceof AuthError 
+    ? error.message 
+    : "Erro interno do servidor";
+  
   return new Response(
     JSON.stringify({
       success: false,
-      error: error.message,
+      error: safeMessage,
       code,
     }),
     {
