@@ -253,13 +253,12 @@ serve(async (req) => {
       }
     }
 
+    // 🛡️ PATCH-P1-003: REMOVIDO bypass de apikey
+    // Autenticação SEMPRE requer JWT válido
+    // Razão: apikey permitia impersonation se SERVICE_ROLE_KEY vazasse
     if (!userId) {
-      const apiKey = req.headers.get('apikey');
-      if (apiKey !== Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')) {
-        return errorResponse(401, 'AUTH_REQUIRED', 'Autenticação necessária', correlationId, corsHeaders);
-      }
-      userId = context?.user_id || 'system';
-      userRole = 'system';
+      console.warn(`[sna-gateway] ❌ Tentativa de acesso sem JWT - bloqueado [${correlationId}]`);
+      return errorResponse(401, 'AUTH_REQUIRED', 'Autenticação obrigatória via JWT', correlationId, corsHeaders);
     }
 
     // 🛡️ PATCH-006: Endpoint de rate-limit CONSTANTE (anti-bypass)
