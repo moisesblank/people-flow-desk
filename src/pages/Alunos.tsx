@@ -50,7 +50,7 @@ import {
   Plus, GraduationCap, Trash2, Edit2, Users, Award, TrendingUp, 
   UserPlus, ChevronLeft, ChevronRight, Search, Crown, Shield,
   CheckCircle, XCircle, Clock, AlertCircle, MapPin, Globe, Wifi, UserCheck, X, Eye, Package,
-  Download, FileSpreadsheet, Loader2
+  Download, FileSpreadsheet, Loader2, Upload
 } from "lucide-react";
 import { BetaAccessManager } from "@/components/students/BetaAccessManager";
 import { FuturisticPageHeader } from "@/components/ui/futuristic-page-header";
@@ -67,6 +67,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { AttachmentButton } from "@/components/attachments/AutoAttachmentWrapper";
 import { VirtualTable } from "@/components/performance/VirtualTable";
 import { CriarAcessoOficialModal } from "@/components/students/CriarAcessoOficialModal";
+import { ImportStudentsModal } from "@/components/students/ImportStudentsModal";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useStudentPresence, getPresenceStatus } from "@/hooks/useStudentPresence";
 import { useExportStudents } from "@/hooks/useExportStudents";
@@ -334,6 +335,7 @@ export default function Alunos() {
   const [editingItem, setEditingItem] = useState<Student | null>(null);
   const [formData, setFormData] = useState({ nome: "", email: "", curso: "", status: "Ativo" });
   const [isCriarAcessoModalOpen, setIsCriarAcessoModalOpen] = useState(false);
+  const [isImportModalOpen, setIsImportModalOpen] = useState(false);
 
   // Debounce search (300ms)
   useEffect(() => {
@@ -971,27 +973,41 @@ export default function Alunos() {
                     <span className="text-blue-400">({totalCount} alunos)</span>
                   </div>
                   
-                  {/* BOTÃO EXPORTAR — LEI CANÔNICA (OWNER/ADMIN apenas) */}
+                  {/* BOTÕES IMPORTAR + EXPORTAR — LEI CANÔNICA (OWNER/ADMIN apenas) */}
                   {isAdminOrOwner && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleExport}
-                      disabled={isExporting || students.length === 0}
-                      className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400"
-                    >
-                      {isExporting ? (
-                        <>
-                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                          Exportando...
-                        </>
-                      ) : (
-                        <>
-                          <FileSpreadsheet className="h-4 w-4 mr-2" />
-                          EXPORTAR
-                        </>
-                      )}
-                    </Button>
+                    <div className="flex items-center gap-2">
+                      {/* BOTÃO IMPORTAR (VERMELHO) */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsImportModalOpen(true)}
+                        className="border-red-500/50 text-red-400 hover:bg-red-500/10 hover:text-red-300 hover:border-red-400"
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        IMPORTAR
+                      </Button>
+                      
+                      {/* BOTÃO EXPORTAR (VERDE) */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={handleExport}
+                        disabled={isExporting || students.length === 0}
+                        className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-400"
+                      >
+                        {isExporting ? (
+                          <>
+                            <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                            Exportando...
+                          </>
+                        ) : (
+                          <>
+                            <FileSpreadsheet className="h-4 w-4 mr-2" />
+                            EXPORTAR
+                          </>
+                        )}
+                      </Button>
+                    </div>
                   )}
                 </div>
               </div>
@@ -1205,6 +1221,13 @@ export default function Alunos() {
             open={isCriarAcessoModalOpen}
             onOpenChange={setIsCriarAcessoModalOpen}
             onSuccess={refetch}
+          />
+
+          {/* Modal Importar Alunos (LEI CANÔNICA) */}
+          <ImportStudentsModal
+            open={isImportModalOpen}
+            onOpenChange={setIsImportModalOpen}
+            onImportComplete={refetch}
           />
         </div>
       </div>
