@@ -140,18 +140,13 @@ export const Navbar = memo(() => {
               ))}
             </div>
             
-            <div className="hidden lg:flex items-center gap-3">
+            <div className="hidden lg:flex items-center">
               <Link to="/auth">
-                <Button variant="ghost" className="btn-ghost-2300 text-gray-300 hover:text-white font-semibold rounded-lg">
-                  Entrar
-                </Button>
-              </Link>
-              <a href="https://app.moisesmedeiros.com.br" target="_blank" rel="noopener noreferrer">
                 <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                   <Rocket className="w-4 h-4 mr-2" />
-                  Começar
+                  Área do Aluno
                 </Button>
-              </a>
+              </Link>
             </div>
             
             {/* Mobile button */}
@@ -218,24 +213,19 @@ export const Navbar = memo(() => {
             ))}
           </div>
           
-          {/* CTAs - Desktop */}
+          {/* CTA - Desktop */}
           <motion.div 
-            className="hidden lg:flex items-center gap-3"
+            className="hidden lg:flex items-center"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.3 }}
           >
             <Link to="/auth">
-              <Button variant="ghost" className="btn-ghost-2300 text-gray-300 hover:text-white font-semibold rounded-lg">
-                Entrar
-              </Button>
-            </Link>
-            <a href="https://app.moisesmedeiros.com.br" target="_blank" rel="noopener noreferrer">
               <Button className="btn-cta-2300 text-white font-bold rounded-lg">
                 <Rocket className="w-4 h-4 mr-2" />
-                Começar Agora
+                Área do Aluno
               </Button>
-            </a>
+            </Link>
           </motion.div>
           
           {/* Mobile menu button */}
