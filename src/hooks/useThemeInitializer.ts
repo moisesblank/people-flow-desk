@@ -1,25 +1,63 @@
 // ============================================
-// HOOK: INICIALIZADOR DE TEMA
-// Carrega tema salvo no perfil do usuário
+// HOOK: INICIALIZADOR DE TEMA v2.0
+// Carrega tema salvo do usuário APENAS em áreas protegidas
+// Fora de /alunos ou /gestaofc → SEMPRE "default" (system)
 // ============================================
 
 import { useEffect, useRef } from "react";
+import { useLocation } from "react-router-dom";
 import { useTheme } from "next-themes";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
 /**
- * Hook que carrega o tema salvo do usuário na inicialização
- * Deve ser usado uma vez no nível do App
+ * Verifica se a rota atual é uma área protegida onde
+ * a preferência de tema do usuário deve ser respeitada
+ */
+function isProtectedThemeArea(pathname: string): boolean {
+  return pathname.startsWith('/alunos') || pathname.startsWith('/gestaofc');
+}
+
+/**
+ * Hook que gerencia o tema:
+ * - Áreas protegidas (/alunos, /gestaofc) + usuário logado → carrega preferência
+ * - Qualquer outra rota → força tema "default" (system)
  */
 export function useThemeInitializer() {
   const { user } = useAuth();
   const { setTheme, theme } = useTheme();
+  const location = useLocation();
   const hasInitialized = useRef(false);
+  const lastPath = useRef<string>('');
 
   useEffect(() => {
-    // Só inicializa uma vez e se tiver usuário
-    if (!user?.id || hasInitialized.current) return;
+    const currentPath = location.pathname;
+    const isProtected = isProtectedThemeArea(currentPath);
+    const pathChanged = lastPath.current !== currentPath;
+    lastPath.current = currentPath;
+
+    // 🎯 REGRA PRINCIPAL:
+    // Fora de área protegida → SEMPRE tema "default" (system)
+    if (!isProtected) {
+      if (theme !== 'default') {
+        console.log('[ThemeInitializer] 🌐 Rota pública - forçando tema system');
+        setTheme('default');
+      }
+      hasInitialized.current = false; // Reset para quando voltar
+      return;
+    }
+
+    // 🔐 Área protegida - mas sem usuário → manter system
+    if (!user?.id) {
+      if (theme !== 'default') {
+        setTheme('default');
+      }
+      return;
+    }
+
+    // 🔐 Área protegida + usuário logado → carregar preferência
+    // Só carrega uma vez por sessão (ou quando muda de rota pública → protegida)
+    if (hasInitialized.current && !pathChanged) return;
 
     const loadSavedTheme = async () => {
       try {
@@ -41,7 +79,7 @@ export function useThemeInitializer() {
             const mappedTheme = prefs.theme === 'system' ? 'default' : prefs.theme;
             // Só aplica se diferente do atual
             if (mappedTheme !== theme) {
-              console.log('[ThemeInitializer] Aplicando tema salvo:', mappedTheme);
+              console.log('[ThemeInitializer] 🎨 Área protegida - aplicando tema do usuário:', mappedTheme);
               setTheme(mappedTheme);
             }
             hasInitialized.current = true;
@@ -53,5 +91,5 @@ export function useThemeInitializer() {
     };
 
     loadSavedTheme();
-  }, [user?.id, setTheme, theme]);
+  }, [user?.id, setTheme, theme, location.pathname]);
 }
