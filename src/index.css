@@ -1141,6 +1141,131 @@
     box-shadow: 0 0 20px hsl(var(--primary) / 0.3);
   }
 
+  /* ============================================
+     🚀 NAVBAR 2300 - Botões Futuristas Ultra Performance
+     CSS-only animations para máxima performance
+     ============================================ */
+  
+  /* Nav Link Futurista - Hover com underline holográfica */
+  .nav-link-2300 {
+    @apply relative transition-all duration-300 ease-out;
+  }
+  .nav-link-2300::before {
+    content: '';
+    @apply absolute -bottom-1 left-0 w-0 h-[2px] rounded-full transition-all duration-300 ease-out;
+    background: linear-gradient(90deg, 
+      hsl(var(--primary)) 0%, 
+      hsl(var(--holo-cyan)) 50%,
+      hsl(var(--primary)) 100%
+    );
+    box-shadow: 0 0 8px hsl(var(--primary) / 0.5);
+  }
+  .nav-link-2300:hover::before {
+    @apply w-full;
+  }
+  .nav-link-2300:hover {
+    text-shadow: 0 0 10px hsl(var(--primary) / 0.5);
+  }
+  
+  /* Botão Ghost Futurista - Efeito cyber scanline */
+  .btn-ghost-2300 {
+    @apply relative transition-all duration-200 ease-out overflow-hidden;
+    border: 1px solid transparent;
+  }
+  .btn-ghost-2300::before {
+    content: '';
+    @apply absolute inset-0 rounded-lg opacity-0 transition-all duration-300;
+    background: linear-gradient(135deg,
+      hsl(var(--primary) / 0.1) 0%,
+      hsl(var(--holo-cyan) / 0.05) 50%,
+      hsl(var(--primary) / 0.1) 100%
+    );
+    border: 1px solid hsl(var(--primary) / 0.3);
+    border-radius: inherit;
+  }
+  .btn-ghost-2300::after {
+    content: '';
+    @apply absolute top-0 -left-full w-full h-full transition-all duration-500 ease-out pointer-events-none;
+    background: linear-gradient(90deg,
+      transparent 0%,
+      hsl(var(--foreground) / 0.1) 50%,
+      transparent 100%
+    );
+  }
+  .btn-ghost-2300:hover::before {
+    @apply opacity-100;
+  }
+  .btn-ghost-2300:hover::after {
+    @apply left-full;
+  }
+  .btn-ghost-2300:hover {
+    color: hsl(var(--foreground));
+    text-shadow: 0 0 15px hsl(var(--primary) / 0.3);
+  }
+  
+  /* Botão CTA Futurista - Neon glow pulsante */
+  .btn-cta-2300 {
+    @apply relative transition-all duration-200 ease-out overflow-hidden;
+    background: linear-gradient(135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary-hover)) 100%
+    );
+    box-shadow: 
+      0 4px 15px hsl(var(--primary) / 0.4),
+      inset 0 1px 0 hsl(var(--foreground) / 0.15);
+  }
+  .btn-cta-2300::before {
+    content: '';
+    @apply absolute inset-0 opacity-0 transition-opacity duration-300;
+    background: linear-gradient(135deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--holo-cyan) / 0.3) 50%,
+      hsl(var(--primary)) 100%
+    );
+  }
+  .btn-cta-2300::after {
+    content: '';
+    @apply absolute -inset-1 rounded-xl opacity-0 transition-opacity duration-300 -z-10;
+    background: linear-gradient(135deg,
+      hsl(var(--primary) / 0.6) 0%,
+      hsl(var(--holo-cyan) / 0.4) 50%,
+      hsl(var(--primary) / 0.6) 100%
+    );
+    filter: blur(8px);
+    animation: cta-glow-pulse 2s ease-in-out infinite;
+  }
+  .btn-cta-2300:hover::before {
+    @apply opacity-100;
+  }
+  .btn-cta-2300:hover::after {
+    @apply opacity-100;
+  }
+  .btn-cta-2300:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 8px 25px hsl(var(--primary) / 0.5),
+      0 0 40px hsl(var(--primary) / 0.3),
+      inset 0 1px 0 hsl(var(--foreground) / 0.2);
+  }
+  .btn-cta-2300:active {
+    transform: translateY(0) scale(0.98);
+  }
+  
+  @keyframes cta-glow-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(1); }
+    50% { opacity: 0.8; transform: scale(1.02); }
+  }
+  
+  /* Icon futurista com glow */
+  .nav-icon-2300 {
+    @apply transition-all duration-300;
+    filter: drop-shadow(0 0 0 transparent);
+  }
+  .group:hover .nav-icon-2300 {
+    color: hsl(var(--primary));
+    filter: drop-shadow(0 0 4px hsl(var(--primary) / 0.6));
+  }
+
   @keyframes border-shimmer {
     0% { background-position: 0% 50%; }
     50% { background-position: 100% 50%; }
