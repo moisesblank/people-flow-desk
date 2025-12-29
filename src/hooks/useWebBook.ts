@@ -322,11 +322,12 @@ export function useWebBook(bookId?: string) {
     const newScore = threatScore + severity;
     setThreatScore(newScore);
 
-    // Threshold de logout
+    // ✅ Frontend NUNCA revoga sessões por score local
+    // Apenas logar e alertar — backend decide via RPC validate_session_epoch
     if (newScore >= 50) {
-      toast.error('Atividade suspeita detectada. Sessão encerrada.');
-      await supabase.auth.signOut();
-      return;
+      toast.warning('Atividade suspeita detectada. Aguardando verificação.');
+      console.warn('[WebBook] Threat score crítico — backend decidirá revogação');
+      // NÃO fazer signOut() — backend é a autoridade
     }
 
     // Log da violação
