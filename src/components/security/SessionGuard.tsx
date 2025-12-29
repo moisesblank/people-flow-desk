@@ -116,7 +116,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
   // Agora usa APENAS broadcast Realtime quando admin exclui usuário
   // Isso é mais eficiente: 0 queries periódicas, logout instantâneo via broadcast
 
-  // 🛡️ BLOCO 3: Listener para broadcasts de lockdown/epoch
+  // 🛡️ BLOCO 3 + BLOCO 5: Listener para broadcasts de lockdown/epoch/device-revoked
   useEffect(() => {
     if (!user) return;
 
@@ -131,8 +131,21 @@ export function SessionGuard({ children }: SessionGuardProps) {
       })
       .subscribe();
 
+    // 🔐 BLOCO 5: Listener para dispositivo revogado (logout imediato)
+    const userChannel = supabase.channel(`user:${user.id}`)
+      .on('broadcast', { event: 'device-revoked' }, async (payload) => {
+        console.error('[SessionGuard] 📡 DEVICE REVOKED recebido!', payload);
+        await forceLogoutWithCleanup('Este dispositivo foi removido. Faça login novamente.');
+      })
+      .on('broadcast', { event: 'user-deleted' }, async () => {
+        console.error('[SessionGuard] 📡 USER DELETED recebido!');
+        await forceLogoutWithCleanup('Sua conta foi removida.');
+      })
+      .subscribe();
+
     return () => {
       supabase.removeChannel(channel);
+      supabase.removeChannel(userChannel);
     };
   }, [user, forceLogoutWithCleanup, validateSession]);
 

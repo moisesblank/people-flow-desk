@@ -292,3 +292,8 @@ verify_jwt = true
 # 🟢 Requer JWT - Hash gerado no servidor com pepper secreto
 [functions.register-device-server]
 verify_jwt = true
+
+# --- BLOCO 5: Revogação de Dispositivo + Sessões ---
+# 🟢 Requer JWT - Revoga dispositivo E invalida sessões associadas
+[functions.revoke-device]
+verify_jwt = true
