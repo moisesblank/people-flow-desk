@@ -48,42 +48,65 @@ serve(async (req: Request) => {
         );
       }
 
+      // 🎯 CONSTITUIÇÃO v10.x: Verificar PRIMEIRO se email existe no sistema
+      const { data: userExists, error: userCheckError } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("email", email)
+        .maybeSingle();
+      
+      // Se não existe perfil, verificar também em auth.users diretamente
+      if (!userExists) {
+        const { data: authUser } = await supabase.auth.admin.listUsers();
+        const emailExists = authUser?.users?.some(u => u.email?.toLowerCase() === email);
+        
+        if (!emailExists) {
+          console.log("[custom-password-reset] ❌ Email não cadastrado:", email);
+          return new Response(
+            JSON.stringify({ success: false, error: "Email não cadastrado no sistema." }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+      }
+
       // Gerar token via função do banco
       const { data: tokenData, error: tokenError } = await supabase.rpc("create_password_reset_token", {
         _email: email,
       });
 
-      // Sempre retornar sucesso (não revelar se email existe)
-      // Mas só enviar email se token foi gerado
-      if (tokenData && tokenData.length > 0) {
-        const token = tokenData[0].token;
-        const resetUrl = `https://pro.moisesmedeiros.com.br/auth?reset_token=${token}`;
-
-        console.log("[custom-password-reset] Token gerado, enviando email...");
-
-        // Enviar email usando send-notification-email
-        const { error: emailError } = await supabase.functions.invoke("send-notification-email", {
-          body: {
-            to: email,
-            type: "password_recovery",
-            data: {
-              confirmation_url: resetUrl,
-            },
-          },
-        });
-
-        if (emailError) {
-          console.error("[custom-password-reset] Erro ao enviar email:", emailError);
-        } else {
-          console.log("[custom-password-reset] ✅ Email enviado com sucesso");
-        }
-      } else {
-        console.log("[custom-password-reset] Email não encontrado ou erro:", tokenError);
+      // Se token não foi gerado (usuário deletado do auth mas tinha profile)
+      if (!tokenData || tokenData.length === 0) {
+        console.log("[custom-password-reset] ❌ Falha ao gerar token (usuário pode ter sido excluído):", tokenError);
+        return new Response(
+          JSON.stringify({ success: false, error: "Email não cadastrado no sistema." }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
       }
 
-      // Sempre retornar sucesso (segurança)
+      const token = tokenData[0].token;
+      const resetUrl = `https://pro.moisesmedeiros.com.br/auth?reset_token=${token}`;
+
+      console.log("[custom-password-reset] ✅ Token gerado, enviando email...");
+
+      // Enviar email usando send-notification-email
+      const { error: emailError } = await supabase.functions.invoke("send-notification-email", {
+        body: {
+          to: email,
+          type: "password_recovery",
+          data: {
+            confirmation_url: resetUrl,
+          },
+        },
+      });
+
+      if (emailError) {
+        console.error("[custom-password-reset] Erro ao enviar email:", emailError);
+      } else {
+        console.log("[custom-password-reset] ✅ Email enviado com sucesso");
+      }
+
       return new Response(
-        JSON.stringify({ success: true, message: "Se o email existir, você receberá instruções de recuperação." }),
+        JSON.stringify({ success: true, message: "Enviamos instruções de recuperação para seu email." }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
