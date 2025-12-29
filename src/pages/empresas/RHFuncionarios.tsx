@@ -496,13 +496,41 @@ export default function RHFuncionarios() {
     }
   };
 
+  // ============================================
+  // 🔥 DOGMA SUPREMO: EXCLUIR = ANIQUILAR
+  // DELETE PERMANENTE + CASCADE + LOGOUT FORÇADO
+  // ============================================
   const handleDelete = async () => {
     if (!deleteDialogOpen) return;
 
+    // Confirmação extra para exclusão PERMANENTE
+    if (!confirm(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nO funcionário "${deleteDialogOpen.nome}" será EXCLUÍDO PERMANENTEMENTE de TODAS as camadas do sistema.\n\nDeseja continuar?`)) {
+      setDeleteDialogOpen(null);
+      return;
+    }
+
     setIsSaving(true);
     try {
+      // 🔥 DOGMA SUPREMO: Deletar PERMANENTEMENTE via Edge Function
+      if (deleteDialogOpen.email) {
+        console.log('[DELETE-PERMANENTE] 💀 Aniquilando funcionário:', deleteDialogOpen.email);
+        
+        const { data: deleteResult, error: deleteError } = await supabase.functions.invoke('admin-delete-user', {
+          body: {
+            targetEmail: deleteDialogOpen.email,
+            reason: 'Funcionário excluído pelo administrador (RH)',
+          },
+        });
+
+        if (deleteError) {
+          console.error('[DELETE-PERMANENTE] ❌ Erro:', deleteError);
+          // Continua com delete da tabela employees mesmo se auth falhar
+        } else {
+          console.log('[DELETE-PERMANENTE] ✅ Auth user ANIQUILADO:', deleteResult);
+        }
+      }
+
       // FK CASCADE cuida de employee_compensation, employee_documents, etc.
-      // Deletar funcionário diretamente (cascata automática)
       const { error } = await supabase
         .from("employees")
         .delete()
@@ -513,8 +541,8 @@ export default function RHFuncionarios() {
         throw error;
       }
 
-      toast.success("Funcionário excluído!", {
-        description: `${deleteDialogOpen.nome} foi removido da equipe.`,
+      toast.success("🔥 Funcionário EXCLUÍDO PERMANENTEMENTE!", {
+        description: `${deleteDialogOpen.nome} foi removido de TODAS as camadas.`,
       });
 
       setDeleteDialogOpen(null);

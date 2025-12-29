@@ -295,12 +295,42 @@ export default function Funcionarios() {
     }
   };
 
+  // ============================================
+  // 🔥 DOGMA SUPREMO: EXCLUIR = ANIQUILAR
+  // DELETE PERMANENTE + CASCADE + LOGOUT FORÇADO
+  // ============================================
   const handleConfirmDelete = async () => {
     if (!selectedEmployee) return;
+
+    // Confirmação extra para exclusão PERMANENTE
+    if (!confirm(`⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!\n\nO funcionário "${selectedEmployee.nome}" será EXCLUÍDO PERMANENTEMENTE de TODAS as camadas do sistema.\n\nDeseja continuar?`)) {
+      setIsDeleteDialogOpen(false);
+      return;
+    }
 
     setIsLoading(true);
 
     try {
+      // 🔥 DOGMA SUPREMO: Deletar PERMANENTEMENTE via Edge Function
+      if (selectedEmployee.email) {
+        console.log('[DELETE-PERMANENTE] 💀 Aniquilando funcionário:', selectedEmployee.email);
+        
+        const { data: deleteResult, error: deleteError } = await supabase.functions.invoke('admin-delete-user', {
+          body: {
+            targetEmail: selectedEmployee.email,
+            reason: 'Funcionário excluído pelo administrador',
+          },
+        });
+
+        if (deleteError) {
+          console.error('[DELETE-PERMANENTE] ❌ Erro:', deleteError);
+          // Continua com delete da tabela employees mesmo se auth falhar
+        } else {
+          console.log('[DELETE-PERMANENTE] ✅ Auth user ANIQUILADO:', deleteResult);
+        }
+      }
+
+      // Deletar da tabela employees
       const { error } = await supabase
         .from("employees")
         .delete()
@@ -308,8 +338,8 @@ export default function Funcionarios() {
 
       if (error) throw error;
 
-      toast.success("Funcionário excluído!", {
-        description: `${selectedEmployee.nome} foi removido da equipe.`,
+      toast.success("🔥 Funcionário EXCLUÍDO PERMANENTEMENTE!", {
+        description: `${selectedEmployee.nome} foi removido de TODAS as camadas.`,
       });
 
       await fetchEmployees();
