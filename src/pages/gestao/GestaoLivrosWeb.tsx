@@ -65,6 +65,7 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
+import { useCacheManager } from '@/hooks/useCacheManager';
 
 // ============================================
 // TIPOS
@@ -371,6 +372,8 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
+  const { clearAllCache } = useCacheManager();
+
   // Carregar livros
   const loadBooks = useCallback(async () => {
     setIsLoading(true);
@@ -457,6 +460,16 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
         </div>
 
         <div className="flex gap-2">
+          <Button
+            variant="outline"
+            onClick={async () => {
+              await clearAllCache(true);
+              loadBooks();
+            }}
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            Limpar cache
+          </Button>
           <Button variant="outline" onClick={loadBooks}>
             <RefreshCw className="w-4 h-4 mr-2" />
             Atualizar

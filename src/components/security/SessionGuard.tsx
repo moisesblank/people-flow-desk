@@ -20,7 +20,11 @@ export function SessionGuard({ children }: SessionGuardProps) {
   const { user, signOut } = useAuth();
   const isValidatingRef = useRef(false);
   const isBootstrappingRef = useRef(false);
-  const bootstrapAttemptedRef = useRef(false);
+  const bootstrapAttemptsRef = useRef(0);
+  const lastBootstrapAtRef = useRef(0);
+
+  const BOOTSTRAP_RETRY_MS = 10_000;
+  const MAX_BOOTSTRAP_ATTEMPTS = 3;
 
   /**
    * Limpa TUDO e força logout — SOMENTE quando backend confirma revogação
@@ -84,8 +88,18 @@ export function SessionGuard({ children }: SessionGuardProps) {
     const existing = localStorage.getItem(SESSION_TOKEN_KEY);
     if (existing) return;
 
-    if (isBootstrappingRef.current || bootstrapAttemptedRef.current) return;
-    bootstrapAttemptedRef.current = true;
+    // Evitar spam e permitir retry (P0): se o token não existir, precisamos criar.
+    const now = Date.now();
+    if (isBootstrappingRef.current) return;
+    if (now - lastBootstrapAtRef.current < BOOTSTRAP_RETRY_MS) return;
+
+    if (bootstrapAttemptsRef.current >= MAX_BOOTSTRAP_ATTEMPTS) {
+      await handleBackendRevocation('Falha crítica de segurança: sessão não inicializada.');
+      return;
+    }
+
+    bootstrapAttemptsRef.current += 1;
+    lastBootstrapAtRef.current = now;
     isBootstrappingRef.current = true;
 
     try {
@@ -104,19 +118,26 @@ export function SessionGuard({ children }: SessionGuardProps) {
       const token = data?.[0]?.session_token;
       if (error || !token) {
         console.error('[SessionGuard] ❌ Bootstrap falhou:', error);
-        await handleBackendRevocation('Falha crítica de segurança: sessão não inicializada.');
         return;
       }
 
       localStorage.setItem(SESSION_TOKEN_KEY, token);
       console.log('[SessionGuard] ✅ Bootstrap OK: matriz_session_token criado');
+
+      // Reset contador após sucesso
+      bootstrapAttemptsRef.current = 0;
     } catch (e) {
       console.error('[SessionGuard] ❌ Erro inesperado no bootstrap:', e);
-      await handleBackendRevocation('Falha crítica de segurança: sessão não inicializada.');
     } finally {
       isBootstrappingRef.current = false;
     }
-  }, [user, detectClientDeviceMeta, handleBackendRevocation]);
+  }, [
+    user,
+    detectClientDeviceMeta,
+    handleBackendRevocation,
+    BOOTSTRAP_RETRY_MS,
+    MAX_BOOTSTRAP_ATTEMPTS,
+  ]);
 
   /**
    * Validar sessão consultando o BACKEND — nunca revoga por timer
