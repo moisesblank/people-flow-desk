@@ -6,6 +6,7 @@
 
 import { supabase } from '@/integrations/supabase/client';
 import { collectFingerprintRawData, generateDeviceName } from '@/lib/deviceFingerprintRaw';
+import type { DeviceGatePayload } from '@/state/deviceGateStore';
 
 export interface DeviceRegistrationResult {
   success: boolean;
@@ -16,13 +17,26 @@ export interface DeviceRegistrationResult {
   deviceCount?: number;
   maxDevices?: number;
   devices?: Array<{
-    id: string;
-    device_name: string;
+    id?: string;
+    device_id?: string;
+    device_name?: string;
+    label?: string;
     device_type: string;
-    browser: string;
-    os: string;
+    browser?: string;
+    os?: string;
     last_seen_at: string;
+    first_seen_at?: string;
+    is_recommended_to_disconnect?: boolean;
   }>;
+  // Dispositivo atual tentando entrar (para o Gate)
+  currentDevice?: {
+    device_type: string;
+    os_name?: string;
+    browser_name?: string;
+    label?: string;
+  };
+  // Payload completo para o Gate
+  gatePayload?: DeviceGatePayload;
 }
 
 /**
@@ -66,14 +80,37 @@ export async function registerDeviceBeforeSession(): Promise<DeviceRegistrationR
 
     // Tratar resposta
     if (!data.success) {
-      if (data.error === 'DEVICE_LIMIT_EXCEEDED') {
-        console.warn('[BLOCO 3] ⚠️ LIMITE DE DISPOSITIVOS EXCEDIDO:', data.currentCount);
+      if (data.error === 'DEVICE_LIMIT_EXCEEDED' || data.code === 'DEVICE_LIMIT_EXCEEDED') {
+        console.warn('[BLOCO 3] ⚠️ LIMITE DE DISPOSITIVOS EXCEDIDO:', data.current_devices || data.currentCount);
+        
+        // 🛡️ Construir payload completo para o DeviceLimitGate
+        const gatePayload: DeviceGatePayload = {
+          code: 'DEVICE_LIMIT_EXCEEDED',
+          message: data.message || 'Você ultrapassou o limite de dispositivos da sua conta',
+          max_devices: data.max_devices || data.maxDevices || 3,
+          current_devices: data.current_devices || data.currentCount || 3,
+          current_device: data.current_device,
+          devices: (data.devices || []).map((d: any) => ({
+            device_id: d.device_id || d.id,
+            label: d.label || d.device_name || `${d.browser || 'Navegador'} • ${d.os || 'Sistema'}`,
+            device_type: d.device_type || 'desktop',
+            last_seen_at: d.last_seen_at,
+            first_seen_at: d.first_seen_at,
+            browser: d.browser,
+            os: d.os,
+            is_recommended_to_disconnect: d.is_recommended_to_disconnect,
+          })),
+          action_required: data.action_required || 'REVOKE_ONE_DEVICE_TO_CONTINUE',
+        };
+        
         return {
           success: false,
           error: 'DEVICE_LIMIT_EXCEEDED',
-          maxDevices: data.maxDevices || 3,
-          deviceCount: data.currentCount,
+          maxDevices: gatePayload.max_devices,
+          deviceCount: gatePayload.current_devices,
           devices: data.devices || [],
+          currentDevice: data.current_device,
+          gatePayload,
         };
       }
 
