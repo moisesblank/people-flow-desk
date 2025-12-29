@@ -10,7 +10,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
 const SESSION_TOKEN_KEY = 'matriz_session_token';
-// REMOVIDO: Validação periódica - agora usa apenas broadcast Realtime quando admin exclui
+const SESSION_CHECK_INTERVAL = 30000; // 30s (DOGMA I)
+const SESSION_BOOTSTRAP_GRACE_MS = 6000; // tempo para o login criar o token
 
 interface SessionGuardProps {
   children: React.ReactNode;
@@ -34,10 +35,9 @@ export function SessionGuard({ children }: SessionGuardProps) {
       'matriz_trusted_device',
       'mfa_trust_cache',
     ];
-    keysToRemove.forEach(key => localStorage.removeItem(key));
+    keysToRemove.forEach((key) => localStorage.removeItem(key));
     sessionStorage.clear();
 
-    // Toast informativo
     toast.error('Sessão encerrada', {
       description: reason,
       duration: 5000,
@@ -47,40 +47,39 @@ export function SessionGuard({ children }: SessionGuardProps) {
   }, [signOut]);
 
   /**
-   * Validar sessão usando a nova função que verifica EPOCH
+   * Validar sessão usando EPOCH
    */
   const validateSession = useCallback(async (): Promise<boolean> => {
     if (!user || isValidatingRef.current) return true;
-    
+
     isValidatingRef.current = true;
-    
+
     try {
       const storedToken = localStorage.getItem(SESSION_TOKEN_KEY);
-      
+
+      // ✅ FAIL-CLOSED (com grace): usuário autenticado sem token de sessão de segurança = inválido
       if (!storedToken) {
         isValidatingRef.current = false;
-        return true; // Primeira vez, sessão ainda não criada
+        return false;
       }
-      
-      // 🛡️ BLOCO 2: Usar nova função que valida EPOCH
+
       const { data, error } = await supabase.rpc('validate_session_epoch', {
         p_session_token: storedToken,
       });
-      
+
       if (error) {
         console.error('[SessionGuard] Erro na validação:', error);
         isValidatingRef.current = false;
-        return true; // Não deslogar por erro de rede
+        // Não derrubar por erro de rede (mantém estabilidade)
+        return true;
       }
-      
+
       const result = data?.[0];
-      
+
       if (!result?.is_valid) {
         const reason = result?.reason || 'SESSION_INVALID';
-        
-        // 🛡️ BLOCO 2: Mensagens específicas para cada tipo de erro
-        let message = 'Sessão encerrada por motivo desconhecido.';
-        
+
+        let message = 'Sessão inválida. Faça login novamente.';
         switch (reason) {
           case 'AUTH_DISABLED':
             message = 'Sistema em manutenção. Por favor, aguarde.';
@@ -91,36 +90,72 @@ export function SessionGuard({ children }: SessionGuardProps) {
           case 'SESSION_NOT_FOUND':
             message = 'Sessão não encontrada. Faça login novamente.';
             break;
+          case 'SESSION_EXPIRED':
+            message = 'Sessão expirada. Faça login novamente.';
+            break;
           default:
-            message = 'Sessão inválida. Faça login novamente.';
+            break;
         }
-        
+
         console.warn(`[SessionGuard] 🔴 ${reason}: ${message}`);
-        
         await forceLogoutWithCleanup(message);
-        
+
         isValidatingRef.current = false;
         return false;
       }
-      
+
       isValidatingRef.current = false;
       return true;
     } catch (err) {
       console.error('[SessionGuard] Erro na validação:', err);
       isValidatingRef.current = false;
-      return true; // Não deslogar por erro
+      return true;
     }
   }, [user, forceLogoutWithCleanup]);
 
-  // REMOVIDO: Validação periódica
-  // Agora usa APENAS broadcast Realtime quando admin exclui usuário
-  // Isso é mais eficiente: 0 queries periódicas, logout instantâneo via broadcast
-
-  // 🛡️ BLOCO 3 + BLOCO 5: Listener para broadcasts de lockdown/epoch/device-revoked
+  // ✅ DOGMA I: verificação periódica + validação ao retornar para a aba
   useEffect(() => {
     if (!user) return;
 
-    const channel = supabase.channel('session-guard-lockdown')
+    let intervalId: number | undefined;
+    let bootstrapTimeoutId: number | undefined;
+
+    // 1) Grace period para o Auth.tsx criar o token
+    bootstrapTimeoutId = window.setTimeout(async () => {
+      const token = localStorage.getItem(SESSION_TOKEN_KEY);
+      if (!token) {
+        await forceLogoutWithCleanup('Falha ao inicializar sessão de segurança. Faça login novamente.');
+        return;
+      }
+      // valida imediatamente após bootstrap
+      await validateSession();
+
+      // 2) validação periódica
+      intervalId = window.setInterval(() => {
+        validateSession();
+      }, SESSION_CHECK_INTERVAL);
+    }, SESSION_BOOTSTRAP_GRACE_MS);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        validateSession();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      if (bootstrapTimeoutId) window.clearTimeout(bootstrapTimeoutId);
+      if (intervalId) window.clearInterval(intervalId);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [user, validateSession, forceLogoutWithCleanup]);
+
+  // 🛡️ Broadcasts de lockdown/epoch/device-revoked/user-deleted
+  useEffect(() => {
+    if (!user) return;
+
+    const channel = supabase
+      .channel('session-guard-lockdown')
       .on('broadcast', { event: 'auth-lockdown' }, async () => {
         console.error('[SessionGuard] 📡 LOCKDOWN BROADCAST recebido!');
         await forceLogoutWithCleanup('Sistema em manutenção de emergência.');
@@ -131,8 +166,8 @@ export function SessionGuard({ children }: SessionGuardProps) {
       })
       .subscribe();
 
-    // 🔐 BLOCO 5: Listener para dispositivo revogado (logout imediato)
-    const userChannel = supabase.channel(`user:${user.id}`)
+    const userChannel = supabase
+      .channel(`user:${user.id}`)
       .on('broadcast', { event: 'device-revoked' }, async (payload) => {
         console.error('[SessionGuard] 📡 DEVICE REVOKED recebido!', payload);
         await forceLogoutWithCleanup('Este dispositivo foi removido. Faça login novamente.');
