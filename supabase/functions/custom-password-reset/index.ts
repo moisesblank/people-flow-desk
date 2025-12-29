@@ -1,6 +1,7 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - Custom Password Reset
 // Fluxo customizado com email bonito
+// FIX: Separar validação (check) de consumo (consume)
 // ============================================
 
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
@@ -88,7 +89,7 @@ serve(async (req: Request) => {
     }
 
     // ============================================
-    // ACTION: VALIDATE - Verificar se token é válido
+    // ACTION: VALIDATE - Verificar se token é válido (SEM CONSUMIR)
     // ============================================
     if (body.action === "validate") {
       const token = body.token;
@@ -99,9 +100,12 @@ serve(async (req: Request) => {
         );
       }
 
-      const { data, error } = await supabase.rpc("validate_password_reset_token", {
+      // 🎯 FIX: Usar check_password_reset_token (NÃO CONSOME)
+      const { data, error } = await supabase.rpc("check_password_reset_token", {
         _token: token,
       });
+
+      console.log("[custom-password-reset] Validate result:", { data, error });
 
       if (error || !data || data.length === 0 || !data[0].valid) {
         return new Response(
@@ -117,7 +121,7 @@ serve(async (req: Request) => {
     }
 
     // ============================================
-    // ACTION: RESET - Definir nova senha
+    // ACTION: RESET - Definir nova senha (CONSOME TOKEN)
     // ============================================
     if (body.action === "reset") {
       const { token, newPassword } = body;
@@ -142,12 +146,15 @@ serve(async (req: Request) => {
         );
       }
 
-      // Validar token (isso também consome o token)
-      const { data: tokenData, error: tokenError } = await supabase.rpc("validate_password_reset_token", {
+      // 🎯 FIX: Usar consume_password_reset_token (CONSOME AGORA)
+      const { data: tokenData, error: tokenError } = await supabase.rpc("consume_password_reset_token", {
         _token: token,
       });
 
+      console.log("[custom-password-reset] Consume result:", { tokenData, tokenError });
+
       if (tokenError || !tokenData || tokenData.length === 0 || !tokenData[0].valid) {
+        console.error("[custom-password-reset] Token inválido:", tokenError);
         return new Response(
           JSON.stringify({ error: "Token inválido ou expirado. Solicite uma nova recuperação." }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -155,6 +162,7 @@ serve(async (req: Request) => {
       }
 
       const userId = tokenData[0].user_id;
+      console.log("[custom-password-reset] Atualizando senha para user:", userId);
 
       // Atualizar senha usando admin API
       const { error: updateError } = await supabase.auth.admin.updateUserById(userId, {

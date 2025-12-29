@@ -15369,6 +15369,14 @@ export type Database = {
       }
       check_device_limit: { Args: { p_user_id: string }; Returns: Json }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
+      check_password_reset_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          user_id: string
+          valid: boolean
+        }[]
+      }
       check_rate_limit: {
         Args: {
           p_max_requests?: number
@@ -15526,6 +15534,14 @@ export type Database = {
         Returns: boolean
       }
       comprehensive_security_cleanup: { Args: never; Returns: undefined }
+      consume_password_reset_token: {
+        Args: { _token: string }
+        Returns: {
+          email: string
+          user_id: string
+          valid: boolean
+        }[]
+      }
       count_entity_attachments: {
         Args: { p_entity_id: string; p_entity_type: string }
         Returns: number
