@@ -616,7 +616,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const resetPassword = async (email: string) => {
     try {
-      // 🎯 P0 FIX: Usar fluxo customizado com email bonito
+      // 🎯 CONSTITUIÇÃO v10.x: Usar fluxo customizado - REVELA se email não existe
       const { data, error } = await supabase.functions.invoke("custom-password-reset", {
         body: { action: "request", email: email.trim().toLowerCase() },
       });
@@ -626,7 +626,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error: new Error("Erro ao processar solicitação. Tente novamente.") };
       }
 
-      // Sempre retorna sucesso (segurança - não revelar se email existe)
+      // 🎯 NOVO: Se a edge function retornou erro, propagar
+      if (data?.error) {
+        console.log("[AUTH] ❌ Email não cadastrado:", data.error);
+        return { error: new Error(data.error) };
+      }
+
       return { error: null };
     } catch (err: any) {
       console.error("[AUTH] Erro inesperado no reset:", err);
