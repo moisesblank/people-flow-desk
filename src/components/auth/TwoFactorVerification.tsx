@@ -138,13 +138,14 @@ export function TwoFactorVerification({
       const { data, error } = await withTimeout(
         'send-2fa-code',
         supabase.functions.invoke("send-2fa-code", {
-          body: { 
-            email, 
-            userId, 
+          body: {
+            email,
+            userId,
             userName,
-            phone: userPhone,
-            channel 
-          }
+            // ✅ usar telefone efetivo (prop OU perfil) para WhatsApp/SMS
+            phone: effectivePhone || userPhone,
+            channel,
+          },
         })
       );
 
@@ -176,9 +177,9 @@ export function TwoFactorVerification({
         whatsapp: "WhatsApp"
       };
       const channelLabel = channelLabels[usedChannel as Channel] || usedChannel;
-      const destination = usedChannel === "email" 
+      const destination = usedChannel === "email"
         ? email
-        : formatPhone(userPhone || "");
+        : formatPhone(effectivePhone);
 
       toast.success(`Código enviado via ${channelLabel}!`, {
         description: `Verifique seu ${channelLabel}: ${destination}`,

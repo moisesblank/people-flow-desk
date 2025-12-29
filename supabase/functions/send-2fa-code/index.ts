@@ -299,6 +299,20 @@ const handler = async (req: Request): Promise<Response> => {
       );
     }
 
+    // Log forense: pedido de envio (independente do resultado)
+    // Ajuda a provar se o client realmente chamou a função.
+    await supabaseAdmin.from("activity_log").insert({
+      user_id: userId,
+      action: "2FA_SEND_REQUESTED",
+      new_value: {
+        channel_requested: channel,
+        has_phone_in_payload: Boolean(phone),
+        has_whatsapp_creds: Boolean(WHATSAPP_ACCESS_TOKEN && WHATSAPP_PHONE_NUMBER_ID),
+        has_twilio_creds: Boolean(TWILIO_ACCOUNT_SID && TWILIO_AUTH_TOKEN && TWILIO_PHONE_NUMBER),
+        has_resend_creds: Boolean(Deno.env.get("RESEND_API_KEY") && FROM_EMAIL),
+      },
+    });
+
     // Buscar telefone do perfil se não foi fornecido
     let userPhone = phone;
     if (!userPhone && (channel === "whatsapp" || channel === "sms")) {
@@ -307,7 +321,7 @@ const handler = async (req: Request): Promise<Response> => {
         .select("phone")
         .eq("id", userId)
         .single();
-      
+
       userPhone = profile?.phone;
     }
 
