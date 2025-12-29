@@ -150,142 +150,354 @@
   }
 
   /* ============================================
-     TEMA SISTEMA - Céu à Noite (Azul Profundo)
-     Padrão institucional histórico do projeto
-     Spider-Man: Azul noturno + Vermelho vinho
+     🌌 TEMA SISTEMA — DESIGNER 2300
+     Céu Noturno Cósmico + Vermelho Vinho Imperial
+     A MELHOR EXPERIÊNCIA VISUAL DO PROJETO
      ============================================ */
   .system {
-    /* Background - Azul noturno profundo (céu à noite) */
-    --background: 230 40% 7%;
-    --foreground: 210 20% 95%;
+    /* ═══════════════════════════════════════════
+       🌃 BACKGROUND — COSMOS NOTURNO
+       Azul profundo espacial com micropartículas
+       ═══════════════════════════════════════════ */
+    --background: 228 50% 4%;
+    --foreground: 210 40% 96%;
     
-    /* Cards com leve tom azulado */
-    --card: 225 35% 10%;
-    --card-foreground: 210 20% 95%;
-    --card-hover: 225 35% 13%;
+    /* ═══════════════════════════════════════════
+       💎 CARDS — CRISTAL NOTURNO
+       Superfícies com profundidade dimensional
+       ═══════════════════════════════════════════ */
+    --card: 225 45% 8%;
+    --card-foreground: 210 35% 96%;
+    --card-hover: 225 50% 11%;
     
-    --popover: 225 35% 10%;
-    --popover-foreground: 210 20% 95%;
+    --popover: 225 50% 7%;
+    --popover-foreground: 210 35% 96%;
     
-    /* Primary - Vermelho vinho (identidade Spider-Man) */
-    --primary: 0 75% 45%;
+    /* ═══════════════════════════════════════════
+       🍷 PRIMARY — VERMELHO VINHO IMPERIAL
+       O coração da identidade Spider-Man
+       ═══════════════════════════════════════════ */
+    --primary: 355 85% 48%;
     --primary-foreground: 0 0% 100%;
-    --primary-hover: 0 75% 40%;
-    --primary-glow: 0 75% 55%;
+    --primary-hover: 355 85% 42%;
+    --primary-glow: 355 90% 58%;
     
-    /* Secondary com tom azulado */
-    --secondary: 225 30% 15%;
-    --secondary-foreground: 210 20% 95%;
+    /* ═══════════════════════════════════════════
+       🌊 SECONDARY — OCEANO NOTURNO
+       Tons azulados que fluem como água escura
+       ═══════════════════════════════════════════ */
+    --secondary: 225 40% 12%;
+    --secondary-foreground: 210 35% 94%;
     
-    --muted: 225 25% 15%;
-    --muted-foreground: 210 15% 65%;
+    --muted: 225 35% 14%;
+    --muted-foreground: 210 25% 62%;
     
-    /* Accent vermelho vinho */
-    --accent: 0 65% 42%;
+    /* ═══════════════════════════════════════════
+       🔥 ACCENT — RUBI PROFUNDO
+       Acentos que capturam atenção
+       ═══════════════════════════════════════════ */
+    --accent: 355 75% 40%;
     --accent-foreground: 0 0% 100%;
     
-    --destructive: 0 75% 55%;
+    --destructive: 0 85% 55%;
     --destructive-foreground: 0 0% 100%;
     
-    --success: 142 71% 45%;
+    /* ═══════════════════════════════════════════
+       ✨ STATUS — CORES VIBRANTES 2300
+       Indicadores que brilham como estrelas
+       ═══════════════════════════════════════════ */
+    --success: 152 80% 42%;
     --success-foreground: 0 0% 100%;
     
-    --warning: 38 92% 50%;
+    --warning: 42 95% 52%;
     --warning-foreground: 0 0% 0%;
     
-    --info: 210 90% 55%;
+    --info: 205 95% 55%;
     --info-foreground: 0 0% 100%;
     
-    /* Bordas com tom azulado */
-    --border: 225 25% 18%;
-    --input: 225 25% 18%;
-    --ring: 0 75% 45%;
-    --radius: 0.75rem;
+    /* Bordas com luminescência sutil */
+    --border: 225 40% 16%;
+    --input: 225 40% 14%;
+    --ring: 355 85% 48%;
+    --radius: 0.875rem;
     
-    /* Status colors */
-    --status-active: 142 71% 45%;
-    --status-vacation: 220 60% 50%;
-    --status-away: 38 92% 50%;
-    --status-inactive: 220 15% 46%;
-    --status-online: 142 76% 36%;
-    --status-offline: 220 15% 40%;
-    --status-recent: 158 64% 40%;
+    /* ═══════════════════════════════════════════
+       🟢 STATUS INDICATORS — BIOLUMINESCENTES
+       Indicadores que pulsam com vida
+       ═══════════════════════════════════════════ */
+    --status-active: 152 80% 45%;
+    --status-vacation: 215 75% 55%;
+    --status-away: 42 95% 52%;
+    --status-inactive: 225 20% 42%;
+    --status-online: 152 85% 40%;
+    --status-offline: 225 20% 35%;
+    --status-recent: 165 75% 42%;
     
-    /* Stats colors */
-    --stats-red: 0 75% 50%;
-    --stats-green: 142 71% 45%;
-    --stats-blue: 215 80% 55%;
-    --stats-purple: 270 80% 55%;
-    --stats-gold: 43 74% 49%;
-    --stats-cyan: 185 100% 42%;
-    --stats-wine: 0 65% 42%;
+    /* ═══════════════════════════════════════════
+       📊 STATS — NEON CÓSMICO
+       Dados que brilham como displays holográficos
+       ═══════════════════════════════════════════ */
+    --stats-red: 355 85% 52%;
+    --stats-green: 152 80% 45%;
+    --stats-blue: 210 90% 58%;
+    --stats-purple: 275 85% 60%;
+    --stats-gold: 45 95% 52%;
+    --stats-cyan: 185 100% 45%;
+    --stats-wine: 355 70% 45%;
     
-    /* Glow colors com tom azulado */
-    --glow-red: 0 75% 55%;
-    --glow-green: 142 71% 48%;
-    --glow-blue: 215 80% 60%;
-    --glow-purple: 270 80% 60%;
-    --glow-gold: 43 74% 58%;
-    --glow-cyan: 185 100% 48%;
-    --glow-wine: 0 65% 50%;
+    /* ═══════════════════════════════════════════
+       💫 GLOWS — AURORA BOREAL
+       Brilhos que dançam como luzes polares
+       ═══════════════════════════════════════════ */
+    --glow-red: 355 90% 58%;
+    --glow-green: 152 85% 52%;
+    --glow-blue: 210 95% 62%;
+    --glow-purple: 275 90% 65%;
+    --glow-gold: 45 100% 58%;
+    --glow-cyan: 185 100% 52%;
+    --glow-wine: 355 80% 55%;
     
-    /* Sidebar - Azul noturno */
-    --sidebar-background: 230 45% 5%;
-    --sidebar-foreground: 210 20% 95%;
-    --sidebar-primary: 0 75% 45%;
+    /* ═══════════════════════════════════════════
+       📁 SIDEBAR — ABISMO ESTELAR
+       Navegação que emerge das profundezas
+       ═══════════════════════════════════════════ */
+    --sidebar-background: 228 55% 3%;
+    --sidebar-foreground: 210 35% 94%;
+    --sidebar-primary: 355 85% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 225 35% 12%;
-    --sidebar-accent-foreground: 210 20% 95%;
-    --sidebar-border: 225 30% 15%;
-    --sidebar-ring: 0 75% 45%;
+    --sidebar-accent: 225 50% 10%;
+    --sidebar-accent-foreground: 210 35% 94%;
+    --sidebar-border: 225 45% 12%;
+    --sidebar-ring: 355 85% 48%;
     
-    /* Chart colors */
-    --chart-1: 0 75% 50%;
-    --chart-2: 215 80% 55%;
-    --chart-3: 142 71% 45%;
-    --chart-4: 270 80% 55%;
-    --chart-5: 43 74% 49%;
+    /* ═══════════════════════════════════════════
+       📈 CHARTS — ESPECTRO GALÁCTICO
+       Visualizações que contam histórias
+       ═══════════════════════════════════════════ */
+    --chart-1: 355 85% 52%;
+    --chart-2: 210 90% 58%;
+    --chart-3: 152 80% 45%;
+    --chart-4: 275 85% 60%;
+    --chart-5: 45 95% 52%;
     
-    /* God Mode */
-    --god-mode-purple: 280 80% 60%;
-    --god-mode-pink: 328 100% 60%;
+    /* ═══════════════════════════════════════════
+       👑 GOD MODE — DIVINDADE DIGITAL
+       O poder absoluto do Owner
+       ═══════════════════════════════════════════ */
+    --god-mode-purple: 280 90% 62%;
+    --god-mode-pink: 325 100% 62%;
     
-    /* Role colors */
-    --role-owner: 280 80% 60%;
-    --role-admin: 215 80% 55%;
-    --role-coordenacao: 142 71% 45%;
-    --role-suporte: 43 74% 49%;
-    --role-monitoria: 245 80% 55%;
-    --role-afiliado: 328 80% 55%;
+    /* ═══════════════════════════════════════════
+       🎭 ROLES — HIERARQUIA CELESTIAL
+       Cada papel com sua própria constelação
+       ═══════════════════════════════════════════ */
+    --role-owner: 280 90% 62%;
+    --role-admin: 210 90% 58%;
+    --role-coordenacao: 152 80% 45%;
+    --role-suporte: 45 95% 52%;
+    --role-monitoria: 250 85% 60%;
+    --role-afiliado: 325 85% 58%;
     --role-marketing: 25 95% 55%;
-    --role-contabilidade: 175 70% 45%;
-    --role-employee: 215 20% 50%;
-    --role-beta: 38 92% 50%;
-    --role-aluno: 215 20% 45%;
+    --role-contabilidade: 175 80% 45%;
+    --role-employee: 210 25% 50%;
+    --role-beta: 42 95% 52%;
+    --role-aluno: 210 25% 45%;
     
-    /* Rarity colors */
-    --rarity-common: 215 15% 50%;
-    --rarity-rare: 210 100% 55%;
-    --rarity-epic: 280 80% 60%;
-    --rarity-legendary: 43 100% 50%;
+    /* ═══════════════════════════════════════════
+       💎 RARITY — TESOUROS CÓSMICOS
+       Do comum ao lendário
+       ═══════════════════════════════════════════ */
+    --rarity-common: 210 20% 52%;
+    --rarity-rare: 210 100% 58%;
+    --rarity-epic: 280 90% 62%;
+    --rarity-legendary: 45 100% 55%;
     
-    /* Holographic tokens */
-    --holo-cyan: 185 100% 50%;
-    --holo-purple: 280 100% 60%;
-    --holo-pink: 320 100% 60%;
-    --holo-blue: 215 100% 58%;
-    --holo-green: 160 100% 45%;
+    /* ═══════════════════════════════════════════
+       🌈 HOLOGRAPHIC — PRISMA DIMENSIONAL
+       Efeitos que transcendem a realidade
+       ═══════════════════════════════════════════ */
+    --holo-cyan: 185 100% 52%;
+    --holo-purple: 280 100% 62%;
+    --holo-pink: 320 100% 62%;
+    --holo-blue: 210 100% 60%;
+    --holo-green: 160 100% 48%;
     
-    /* AI Tutor - tons azulados */
-    --ai-glow: 185 100% 50%;
-    --ai-accent: 280 90% 60%;
-    --ai-surface: 225 40% 8%;
-    --ai-surface-hover: 225 40% 12%;
-    --ai-border: 225 35% 20%;
+    /* ═══════════════════════════════════════════
+       🤖 AI TUTOR — INTELIGÊNCIA CÓSMICA
+       A IA que guia através das estrelas
+       ═══════════════════════════════════════════ */
+    --ai-glow: 185 100% 52%;
+    --ai-accent: 280 95% 62%;
+    --ai-surface: 225 50% 6%;
+    --ai-surface-hover: 225 50% 10%;
+    --ai-border: 225 45% 18%;
     
-    /* Holographic gradients */
-    --gradient-holo: linear-gradient(135deg, hsl(185 100% 50% / 0.1), hsl(280 100% 60% / 0.1), hsl(320 100% 60% / 0.1));
-    --gradient-holo-intense: linear-gradient(135deg, hsl(185 100% 50% / 0.3), hsl(280 100% 60% / 0.3));
+    /* ═══════════════════════════════════════════
+       🌌 GRADIENTS — NEBULOSAS VISUAIS
+       Gradientes que hipnotizam
+       ═══════════════════════════════════════════ */
+    --gradient-holo: linear-gradient(135deg, hsl(185 100% 52% / 0.12), hsl(280 100% 62% / 0.12), hsl(320 100% 62% / 0.12));
+    --gradient-holo-intense: linear-gradient(135deg, hsl(185 100% 52% / 0.35), hsl(280 100% 62% / 0.35));
+    
+    /* 🆕 DESIGNER 2300 — TOKENS EXCLUSIVOS */
+    --system-glow-primary: 355 90% 55%;
+    --system-glow-secondary: 210 95% 60%;
+    --system-surface-glass: 225 50% 8%;
+    --system-border-glow: 225 50% 20%;
+    --system-text-bright: 210 40% 98%;
+    --system-text-dim: 210 20% 55%;
+    --system-cosmos-deep: 228 55% 3%;
+    --system-cosmos-mid: 225 50% 6%;
+    --system-accent-wine: 355 75% 42%;
+    --system-accent-sapphire: 210 90% 55%;
+  }
+
+  /* ═══════════════════════════════════════════════════════════════
+     🌌 TEMA SISTEMA — EFEITOS EXCLUSIVOS DESIGNER 2300
+     Estes estilos SÓ se aplicam quando .system está ativo
+     ═══════════════════════════════════════════════════════════════ */
+  
+  /* 🌃 Background com atmosfera cósmica sutil */
+  .system body {
+    background: 
+      radial-gradient(ellipse 120% 80% at 50% 0%, hsl(225 60% 12% / 0.4) 0%, transparent 50%),
+      radial-gradient(ellipse 100% 60% at 80% 100%, hsl(355 50% 15% / 0.2) 0%, transparent 40%),
+      radial-gradient(ellipse 80% 50% at 20% 80%, hsl(210 60% 12% / 0.15) 0%, transparent 40%),
+      hsl(228 50% 4%);
+  }
+
+  /* ✨ Cards com brilho de borda azulada */
+  .system .card-2300::before {
+    background: linear-gradient(135deg, 
+      hsl(355 85% 48% / 0.5) 0%, 
+      hsl(210 90% 55% / 0.4) 25%,
+      hsl(280 90% 62% / 0.3) 50%,
+      hsl(185 100% 52% / 0.4) 75%,
+      hsl(355 85% 48% / 0.5) 100%
+    );
+  }
+
+  /* 🌊 Sidebar com profundidade oceânica */
+  .system [data-sidebar] {
+    background: linear-gradient(180deg,
+      hsl(228 55% 3%) 0%,
+      hsl(225 50% 5%) 50%,
+      hsl(228 55% 3%) 100%
+    );
+  }
+
+  /* 💎 Scrollbar com tema azul-vinho */
+  .system ::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, 
+      hsl(355 85% 48% / 0.5) 0%, 
+      hsl(210 90% 55% / 0.3) 100%
+    );
+  }
+  .system ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, 
+      hsl(355 85% 48% / 0.7) 0%, 
+      hsl(210 90% 55% / 0.5) 100%
+    );
+  }
+  .system ::-webkit-scrollbar-track {
+    background: hsl(225 45% 8%);
+  }
+
+  /* 🔥 Botões primary com glow vinho */
+  .system .btn-primary,
+  .system [data-variant="default"] {
+    box-shadow: 
+      0 4px 15px hsl(355 85% 48% / 0.25),
+      0 0 30px hsl(355 90% 55% / 0.1);
+  }
+  .system .btn-primary:hover,
+  .system [data-variant="default"]:hover {
+    box-shadow: 
+      0 6px 20px hsl(355 85% 48% / 0.35),
+      0 0 40px hsl(355 90% 55% / 0.2),
+      0 0 60px hsl(210 90% 55% / 0.1);
+  }
+
+  /* 🎴 Hover states com aurora */
+  .system .card-2300:hover {
+    box-shadow: 
+      0 25px 50px hsl(355 85% 48% / 0.18),
+      0 0 80px hsl(210 90% 55% / 0.12),
+      0 0 120px hsl(185 100% 52% / 0.05),
+      inset 0 1px 0 hsl(210 40% 96% / 0.1);
+    border-color: hsl(210 90% 55% / 0.3);
+  }
+
+  /* 💫 Header com linha de luz cósmica */
+  .system .header-2300::after {
+    background: linear-gradient(90deg, 
+      transparent 0%, 
+      hsl(355 85% 48% / 0.5) 15%,
+      hsl(210 90% 55% / 0.8) 35%,
+      hsl(185 100% 52% / 0.9) 50%, 
+      hsl(210 90% 55% / 0.8) 65%,
+      hsl(355 85% 48% / 0.5) 85%, 
+      transparent 100%
+    );
+  }
+
+  /* ⚡ Inputs com foco azul cósmico */
+  .system .input-2300:focus {
+    border-color: hsl(210 90% 55% / 0.6);
+    box-shadow: 
+      0 0 0 3px hsl(210 90% 55% / 0.15),
+      0 0 35px hsl(210 90% 55% / 0.15),
+      0 0 60px hsl(185 100% 52% / 0.05),
+      inset 0 0 20px hsl(210 90% 55% / 0.03);
+  }
+
+  /* 🎯 Selection com cor do tema */
+  .system ::selection {
+    background: hsl(210 90% 55% / 0.3);
+    color: hsl(210 40% 98%);
+  }
+
+  /* 🌟 Links com hover luminoso */
+  .system a:hover {
+    text-shadow: 0 0 15px hsl(355 85% 48% / 0.4);
+  }
+
+  /* 🎨 Badges com brilho aprimorado */
+  .system .badge-status-online {
+    box-shadow: 
+      0 0 20px hsl(152 80% 42% / 0.3),
+      0 0 40px hsl(152 80% 42% / 0.1);
+  }
+
+  .system .badge-status-ai {
+    box-shadow: 
+      0 0 25px hsl(185 100% 52% / 0.3),
+      0 0 50px hsl(280 90% 62% / 0.15),
+      inset 0 1px 0 hsl(185 100% 52% / 0.25);
+  }
+
+  /* 🌈 Tabelas com linhas alternadas sutis */
+  .system tr:nth-child(even) {
+    background: hsl(225 45% 8% / 0.5);
+  }
+  .system tr:hover {
+    background: hsl(225 50% 10% / 0.8);
+  }
+
+  /* ⭐ Efeito de partículas no background (pseudo-element) */
+  .system .hero-section::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image: 
+      radial-gradient(1px 1px at 20% 30%, hsl(210 100% 80% / 0.3) 1px, transparent 0),
+      radial-gradient(1px 1px at 40% 70%, hsl(185 100% 70% / 0.2) 1px, transparent 0),
+      radial-gradient(1.5px 1.5px at 60% 20%, hsl(280 100% 80% / 0.25) 1px, transparent 0),
+      radial-gradient(1px 1px at 80% 60%, hsl(355 100% 70% / 0.2) 1px, transparent 0);
+    background-size: 200px 200px;
+    opacity: 0.6;
+    pointer-events: none;
+    z-index: 0;
   }
 
   /* ============================================
