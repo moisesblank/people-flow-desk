@@ -966,12 +966,14 @@ export default function Auth() {
               else if (ua.includes('Android')) os = 'Android';
               else if (ua.includes('iPhone')) os = 'iOS';
 
+              // 🔐 BLOCO 6: Passar device_hash do servidor para sessão
               const { data: sessionData, error: sessionError } = await supabase.rpc('create_single_session', {
                 _ip_address: null,
                 _user_agent: navigator.userAgent.slice(0, 255),
                 _device_type: device_type,
                 _browser: browser,
                 _os: os,
+                _device_hash_from_server: deviceResult.deviceHash || null,
               });
 
               if (!sessionError && sessionData && sessionData.length > 0) {
@@ -1222,12 +1224,14 @@ export default function Auth() {
                 else if (ua.includes('Android')) os = 'Android';
                 else if (ua.includes('iPhone')) os = 'iOS';
 
+                // 🔐 BLOCO 6: Passar device_hash do servidor para sessão
                 const { data: sessionData, error: sessionError } = await supabase.rpc('create_single_session', {
                   _ip_address: null,
                   _user_agent: navigator.userAgent.slice(0, 255),
                   _device_type: device_type,
                   _browser: browser,
                   _os: os,
+                  _device_hash_from_server: deviceResult.deviceHash || null,
                 });
 
                 if (!sessionError && sessionData && sessionData.length > 0) {

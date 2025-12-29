@@ -465,12 +465,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         else if (ua.includes('Android')) os = 'Android';
         else if (ua.includes('iPhone')) os = 'iOS';
 
+        // 🔐 BLOCO 6: Criar sessão (useAuth - fallback sem device_hash do servidor)
+        // Nota: O fluxo principal passa pelo Auth.tsx que usa device_hash do servidor
         const { data, error } = await supabase.rpc('create_single_session', {
           _ip_address: null,
           _user_agent: navigator.userAgent.slice(0, 255),
           _device_type: device_type,
           _browser: browser,
           _os: os,
+          _device_hash_from_server: null, // Fallback - usa hash local calculado pela função SQL
         });
 
         if (error) {
