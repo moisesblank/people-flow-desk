@@ -935,14 +935,14 @@ export default function Auth() {
                 };
 
                 const devices: DeviceInfo[] = (deviceResult.devices || []).map((d: any, index: number) => ({
-                  device_id: d.id,
-                  label: d.device_name || `${d.os || 'Sistema'} • ${d.browser || 'Navegador'}`,
+                  device_id: d.device_id || d.id,
+                  label: d.label || d.device_name || `${d.os_name || d.os || 'Sistema'} • ${d.browser_name || d.browser || 'Navegador'}`,
                   device_type: d.device_type || 'desktop',
-                  os_name: d.os || 'Desconhecido',
-                  browser_name: d.browser || 'Desconhecido',
+                  os_name: d.os_name || d.os || 'Desconhecido',
+                  browser_name: d.browser_name || d.browser || 'Desconhecido',
                   last_seen_at: d.last_seen_at,
                   first_seen_at: d.first_seen_at || d.last_seen_at,
-                  is_recommended_to_disconnect: index === (deviceResult.devices?.length || 1) - 1,
+                  is_recommended_to_disconnect: d.is_recommended_to_disconnect ?? (index === (deviceResult.devices?.length || 1) - 1),
                 }));
 
                 const gatePayload: DeviceGatePayload = {

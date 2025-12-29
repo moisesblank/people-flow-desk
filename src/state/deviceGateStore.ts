@@ -19,9 +19,9 @@ export interface DeviceInfo {
 
 export interface CurrentDeviceInfo {
   device_type: string;
-  os_name: string;
-  browser_name: string;
-  label: string;
+  os_name?: string;
+  browser_name?: string;
+  label?: string;
 }
 
 export interface DeviceGatePayload {

@@ -47,7 +47,33 @@ Deno.serve(async (req) => {
     }
 
     const userId = user.id;
-    const body: RevokeDeviceRequest = await req.json();
+    const body = await req.json();
+    
+    // 🔐 AÇÃO: Listar dispositivos
+    if (body.action === 'list') {
+      console.log(`[revoke-device] 📋 Listando dispositivos para usuário ${userId}...`);
+      
+      const { data: devices, error: listError } = await supabase
+        .from('user_devices')
+        .select('id, device_name, device_type, browser, os, last_seen_at, first_seen_at')
+        .eq('user_id', userId)
+        .eq('is_active', true)
+        .order('last_seen_at', { ascending: false });
+      
+      if (listError) {
+        console.error(`[revoke-device] ❌ Erro ao listar:`, listError);
+        return new Response(
+          JSON.stringify({ success: false, error: 'LIST_FAILED' }),
+          { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      return new Response(
+        JSON.stringify({ success: true, devices: devices || [] }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+    
     const { deviceId, reason = 'user_revoked' } = body;
 
     if (!deviceId) {

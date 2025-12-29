@@ -56,6 +56,10 @@ function NewDeviceCard({ device }: { device: CurrentDeviceInfo }) {
     }
   };
 
+  const label = device.label || `${device.os_name || 'Sistema'} • ${device.browser_name || 'Navegador'}`;
+  const osName = device.os_name || 'Sistema';
+  const browserName = device.browser_name || 'Navegador';
+
   return (
     <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
       <div className="flex items-center gap-3">
@@ -65,14 +69,14 @@ function NewDeviceCard({ device }: { device: CurrentDeviceInfo }) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <span className="font-medium text-foreground truncate">
-              {device.label}
+              {label}
             </span>
             <Badge className="bg-primary/20 text-primary border-0 text-xs">
               Novo
             </Badge>
           </div>
           <div className="text-xs text-muted-foreground">
-            {device.os_name} • {device.browser_name}
+            {osName} • {browserName}
           </div>
         </div>
       </div>
