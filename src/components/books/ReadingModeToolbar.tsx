@@ -113,32 +113,94 @@ export const ReadingModeToolbar = memo(function ReadingModeToolbar({
 
   return (
     <AnimatePresence>
-      {/* Botão de toggle no canto direito */}
+      {/* 🔶 BOTÃO CHAMATIVO DESIGNER 2300 - Posicionado ACIMA da seta */}
       <motion.div
         initial={{ x: 100, opacity: 0 }}
         animate={{ x: 0, opacity: 1 }}
         exit={{ x: 100, opacity: 0 }}
-        className="fixed right-0 top-1/2 -translate-y-1/2 z-50"
+        className="fixed right-4 top-28 z-50"
       >
-        {/* Toggle Button */}
+        {/* Toggle Button - Grande e Chamativo */}
         {!isExpanded && (
           <button
             onClick={() => setIsExpanded(true)}
-            className="flex flex-col items-center gap-2 p-3 bg-black/90 border-l-2 border-y-2 border-red-600/60 rounded-l-xl hover:border-red-500 transition-all group"
+            className="relative group transition-all duration-300 hover:scale-105 active:scale-95"
+            title="Abrir Anotações e Marcações"
           >
-            <StickyNote className="w-5 h-5 text-red-500 group-hover:text-red-400" />
-            {stats.totalAnnotations > 0 && (
-              <Badge variant="destructive" className="text-[10px] px-1.5">
-                {stats.totalAnnotations}
-              </Badge>
-            )}
-            <Bookmark className={cn("w-5 h-5", currentPageBookmarked ? "text-red-500 fill-red-500" : "text-muted-foreground")} />
-            {stats.totalBookmarks > 0 && (
-              <Badge variant="outline" className="text-[10px] px-1.5 border-red-600/50 text-red-400">
-                {stats.totalBookmarks}
-              </Badge>
-            )}
-            <ChevronRight className="w-4 h-4 text-muted-foreground mt-2 -rotate-180" />
+            {/* Glow externo pulsante */}
+            <div className="absolute -inset-3 rounded-2xl opacity-60 blur-lg bg-gradient-to-r from-amber-600 via-orange-500 to-amber-600 animate-pulse" />
+            
+            {/* Container principal */}
+            <div className="relative flex flex-col items-center gap-3 px-4 py-5 rounded-xl bg-gradient-to-br from-black via-gray-900 to-black border-2 border-amber-500/70 shadow-[0_0_30px_rgba(251,191,36,0.5),inset_0_0_20px_rgba(251,191,36,0.1)] group-hover:border-amber-400 group-hover:shadow-[0_0_40px_rgba(251,191,36,0.7)]">
+              {/* Efeito scanline futurístico */}
+              <div 
+                className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none opacity-20"
+                style={{
+                  background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)"
+                }}
+              />
+              
+              {/* Brilho superior */}
+              <div className="absolute top-0 left-3 right-3 h-px bg-gradient-to-r from-transparent via-amber-400/60 to-transparent" />
+              
+              {/* Ícone de Anotações com glow */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-amber-500 blur-md opacity-50" />
+                <StickyNote 
+                  className="relative w-8 h-8 text-amber-400" 
+                  style={{ filter: "drop-shadow(0 0 8px rgba(251,191,36,0.8))" }}
+                />
+              </div>
+              
+              {/* Badge de quantidade */}
+              {stats.totalAnnotations > 0 && (
+                <Badge 
+                  className="bg-amber-600 text-white border-0 text-sm px-2.5 py-1 font-bold"
+                  style={{ boxShadow: "0 0 15px rgba(251,191,36,0.6)" }}
+                >
+                  {stats.totalAnnotations}
+                </Badge>
+              )}
+              
+              {/* Separador */}
+              <div className="w-8 h-px bg-gradient-to-r from-transparent via-amber-500/50 to-transparent" />
+              
+              {/* Ícone de Favoritos */}
+              <div className="relative">
+                <Bookmark 
+                  className={cn(
+                    "w-7 h-7 transition-all",
+                    currentPageBookmarked 
+                      ? "text-amber-400 fill-amber-400" 
+                      : "text-amber-500/60"
+                  )} 
+                  style={{ filter: currentPageBookmarked ? "drop-shadow(0 0 8px rgba(251,191,36,0.8))" : undefined }}
+                />
+              </div>
+              
+              {stats.totalBookmarks > 0 && (
+                <Badge 
+                  variant="outline" 
+                  className="border-amber-500/60 text-amber-400 text-sm px-2"
+                >
+                  {stats.totalBookmarks}
+                </Badge>
+              )}
+              
+              {/* Texto indicador */}
+              <span 
+                className="text-[10px] font-bold tracking-wider uppercase text-amber-400 mt-1"
+                style={{ textShadow: "0 0 10px rgba(251,191,36,0.6)" }}
+              >
+                NOTAS
+              </span>
+              
+              {/* Seta de expansão */}
+              <ChevronRight 
+                className="w-5 h-5 text-amber-500 -rotate-180 group-hover:translate-x-1 transition-transform" 
+                style={{ filter: "drop-shadow(0 0 5px rgba(251,191,36,0.5))" }}
+              />
+            </div>
           </button>
         )}
 
