@@ -99,15 +99,18 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   const shouldBypassForOwner = useMemo(() => {
     // 1. Primeiro: verificar role (fonte da verdade)
     if (isOwnerByRole && user) return true;
+    // 1b. Verificar isOwner do hook (pode estar disponível antes de role)
+    if (isOwner && user) return true;
     // 2. Fallback: email (apenas UX bypass enquanto role carrega)
-    if (isOwnerEmailMatch && user && roleLoading) return true;
+    // CRÍTICO: Permite owner abrir novas abas sem redirect para login
+    if (isOwnerEmailMatch && user) return true;
     // 3. Se role já carregou e não é owner, não dar bypass
     if (!roleLoading && !isOwnerByRole && isOwnerEmailMatch) {
       console.warn(`[RoleProtectedRoute] Email owner mas role=${role} - verificar banco`);
       return false;
     }
     return false;
-  }, [isOwnerByRole, isOwnerEmailMatch, user, role, roleLoading]);
+  }, [isOwnerByRole, isOwnerEmailMatch, user, role, roleLoading, isOwner]);
 
   // ============================================
   // 🛡️ DOMAIN GUARD - LOG ONLY (sem redirect)
