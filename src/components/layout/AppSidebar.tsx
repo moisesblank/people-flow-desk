@@ -139,6 +139,7 @@ const laboratorioMenuItems = [
 const siteMenuItems = [
   { title: "Site/Programador", url: "/site-programador", icon: Code },
   { title: "Livros Web", url: "/livros-web", icon: BookOpen },
+  { title: "Lives", url: "/lives", icon: PlayCircle },
 ];
 
 // ATUALIZADO: Menu Vida Pessoal (apenas owner)
