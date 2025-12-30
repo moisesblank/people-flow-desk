@@ -3,7 +3,8 @@
 // Biblioteca e Leitor de Livros Web
 // ============================================
 
-import { memo, useState, useCallback } from 'react';
+import { memo, useState, useCallback, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { WebBookLibrary, WebBookViewer } from '@/components/books';
@@ -15,7 +16,15 @@ import { Button } from '@/components/ui/button';
 // ============================================
 
 const AlunoLivroWeb = memo(function AlunoLivroWeb() {
+  const location = useLocation();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+
+  // Permite abrir um livro direto via URL: /alunos/livro-web?book=<uuid>
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const bookId = params.get('book');
+    if (bookId) setSelectedBookId(bookId);
+  }, [location.search]);
 
   const handleBookSelect = useCallback((bookId: string) => {
     setSelectedBookId(bookId);
