@@ -814,7 +814,7 @@ export const WebBookViewer = memo(function WebBookViewer({
               {isFullscreen ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                  MODO LEITURA
+                  MODO LEITURA ATIVADO
                 </>
               ) : (
                 <>MODO LEITURA</>
