@@ -500,6 +500,16 @@ export const WebBookViewer = memo(function WebBookViewer({
     }
   }, []);
 
+  // Sincronizar estado com mudanças de fullscreen (ESC, clique fora, etc)
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+
+    document.addEventListener('fullscreenchange', handleFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
+  }, []);
+
   // Função para salvar histórico de anotações + overlays (desenhos/texto)
   const handleSaveHistory = useCallback(async () => {
     setIsSavingHistory(true);
