@@ -606,20 +606,27 @@ export function useWebBookLibrary() {
     setError(null);
 
     try {
-      const { data } = await supabase.rpc('fn_list_books_for_category', {
-        p_category: category || null
+      const { data, error: rpcError } = await supabase.rpc('fn_list_books_for_category', {
+        p_category: category || null,
       });
 
-      const result = data as unknown as { success: boolean; books: WebBookListItem[] };
+      if (rpcError) {
+        console.error('[WebBookLibrary] RPC error:', rpcError);
+        throw rpcError;
+      }
+
+      const result = data as unknown as { success: boolean; books: WebBookListItem[]; error?: string };
 
       if (result?.success) {
         setBooks(result.books || []);
       } else {
-        setError('Erro ao carregar livros');
+        console.error('[WebBookLibrary] RPC returned success=false:', result);
+        setError(result?.error || 'Erro ao carregar livros');
       }
     } catch (err) {
       console.error('[WebBookLibrary] Erro:', err);
-      setError('Erro ao carregar biblioteca');
+      const anyErr = err as any;
+      setError(anyErr?.message || 'Erro ao carregar biblioteca');
     } finally {
       setIsLoading(false);
     }

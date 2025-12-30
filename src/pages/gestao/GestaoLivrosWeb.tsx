@@ -702,7 +702,12 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                // Abre no portal do aluno em nova aba
+                                window.open(`/alunos/livro-web?book=${book.id}`, '_blank', 'noopener,noreferrer');
+                              }}
+                            >
                               <Eye className="w-4 h-4 mr-2" />
                               Visualizar
                             </DropdownMenuItem>
