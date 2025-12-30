@@ -413,6 +413,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [imageLoading, setImageLoading] = useState(true);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [isSavingHistory, setIsSavingHistory] = useState(false);
+  const [previewWatermark, setPreviewWatermark] = useState(false); // Toggle para OWNER ver o watermark
   
   // Estado de ferramentas de desenho
   const [activeTool, setActiveTool] = useState<ToolMode>('select');
@@ -681,8 +682,23 @@ export const WebBookViewer = memo(function WebBookViewer({
               {threatScore}
             </Badge>
           )}
-
-          {/* Zoom controls */}
+          
+          {/* Toggle Watermark Preview - APENAS PARA OWNER */}
+          {isOwner && (
+            <Button
+              variant={previewWatermark ? "default" : "outline"}
+              size="sm"
+              onClick={() => setPreviewWatermark(!previewWatermark)}
+              className={cn(
+                "gap-1.5 text-xs",
+                previewWatermark && "bg-amber-600 hover:bg-amber-700"
+              )}
+              title="Ver como aluno vê (CPF + Email)"
+            >
+              <Shield className="w-3.5 h-3.5" />
+              {previewWatermark ? "WATERMARK ON" : "VER WATERMARK"}
+            </Button>
+          )}
           <div className="hidden md:flex items-center gap-1 bg-muted rounded-lg px-2">
             <Button 
               variant="ghost" 
@@ -1012,8 +1028,11 @@ export const WebBookViewer = memo(function WebBookViewer({
                 </div>
               )}
 
-              {/* SANCTUM Watermark overlay */}
-              <SanctumWatermark text={watermarkText} isOwner={isOwner} />
+              {/* SANCTUM Watermark overlay - SEMPRE VISÍVEL para não-owners, toggle para owner */}
+              <SanctumWatermark 
+                text={watermarkText || (isOwner ? `CPF: 09290783491 | moisesblank@gmail.com` : '')} 
+                isOwner={isOwner && !previewWatermark} 
+              />
             </motion.div>
           </AnimatePresence>
         </div>
