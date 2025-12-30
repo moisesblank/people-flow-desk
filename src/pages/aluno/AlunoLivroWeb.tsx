@@ -10,6 +10,7 @@ import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { WebBookLibrary, WebBookViewer } from '@/components/books';
 import { BookOpen, ArrowLeft } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { MACRO_CATEGORIES, normalizeCategoryId, type MacroCategory } from '@/components/books/CategoryCover';
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -85,27 +86,46 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
               </div>
             </header>
 
+            {/* Filtros por Macro-Categoria com Capas */}
             <section className="mb-8">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {[
-                  { label: '⚗️ Química Geral', value: 'quimica_geral', color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500' },
-                  { label: '🧪 Orgânica', value: 'quimica_organica', color: 'from-green-500/20 to-green-600/10', border: 'border-green-500' },
-                  { label: '📊 Físico-Química', value: 'fisico_quimica', color: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-500' },
-                  { label: '🔄 Revisão', value: 'revisao_ciclica', color: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500' },
-                  { label: '🎯 Previsão', value: 'previsao_final', color: 'from-rose-500/20 to-rose-600/10', border: 'border-rose-500' },
-                ].map((cat) => (
-                  <button
-                    key={cat.value}
-                    onClick={() => handleCategoryClick(cat.value)}
-                    className={`p-4 rounded-xl bg-gradient-to-br ${cat.color} border text-center hover:scale-105 transition-all cursor-pointer ${
-                      selectedCategory === cat.value 
-                        ? `${cat.border} border-2 ring-2 ring-offset-2 ring-offset-background ring-primary/50` 
-                        : 'border-border/50'
-                    }`}
-                  >
-                    <span className="text-sm font-medium">{cat.label}</span>
-                  </button>
-                ))}
+                {MACRO_CATEGORIES.map((cat) => {
+                  const isActive = selectedCategory === cat.id || 
+                    normalizeCategoryId(selectedCategory) === cat.id;
+                  
+                  return (
+                    <button
+                      key={cat.id}
+                      onClick={() => handleCategoryClick(cat.id)}
+                      className={`relative overflow-hidden rounded-xl border-2 transition-all duration-300 hover:scale-105 ${
+                        isActive 
+                          ? 'border-primary ring-2 ring-primary/50 ring-offset-2 ring-offset-background shadow-lg' 
+                          : 'border-border/50 hover:border-primary/30'
+                      }`}
+                    >
+                      {/* Capa como fundo */}
+                      <div className="aspect-[4/3] relative">
+                        <img 
+                          src={cat.cover} 
+                          alt={cat.name}
+                          className="w-full h-full object-cover"
+                        />
+                        {/* Overlay escuro para legibilidade */}
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
+                        {/* Nome da categoria */}
+                        <div className="absolute bottom-0 left-0 right-0 p-3">
+                          <span className="text-white text-sm font-bold drop-shadow-lg">
+                            {cat.name}
+                          </span>
+                        </div>
+                        {/* Indicador ativo */}
+                        {isActive && (
+                          <div className="absolute top-2 right-2 w-3 h-3 bg-primary rounded-full animate-pulse" />
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </section>
 

@@ -28,6 +28,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { getCategoryCover, getCategoryConfig } from './CategoryCover';
 
 // ============================================
 // TIPOS
@@ -85,12 +86,19 @@ const BookCard = memo(function BookCard({
       onClick={onClick}
     >
       <div className="relative bg-card rounded-xl border border-border overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
-        {/* Capa */}
+        {/* Capa — Prioridade: coverUrl > categoria > fallback */}
         <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
           {book.coverUrl ? (
             <img
               src={book.coverUrl}
               alt={book.title}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+            />
+          ) : getCategoryCover(book.category) ? (
+            // ✅ Usar capa futurista da macro-categoria
+            <img
+              src={getCategoryCover(book.category)!}
+              alt={getCategoryConfig(book.category)?.name || book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
