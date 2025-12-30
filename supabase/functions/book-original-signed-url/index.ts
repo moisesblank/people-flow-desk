@@ -40,8 +40,8 @@ serve(async (req: Request) => {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
-    // IMPORTANTE: Propagar Authorization para permitir auth.uid() nas RPCs (fonte da verdade)
-    const supabase = createClient(supabaseUrl, supabaseKey, {
+    // Cliente COM Authorization propagado - para RPCs que usam auth.uid()
+    const supabaseWithAuth = createClient(supabaseUrl, supabaseKey, {
       global: {
         headers: {
           Authorization: authHeader,
@@ -49,28 +49,38 @@ serve(async (req: Request) => {
       },
     });
 
-    // 1) Validar acesso e (se possível) obter originalPath via RPC
-    const { data: bookData, error: bookError } = await supabase.rpc(
+    // Cliente SERVICE ROLE puro - para operações de storage que precisam bypassar RLS
+    const supabaseAdmin = createClient(supabaseUrl, supabaseKey);
+
+    // 1) Validar acesso via RPC (usa contexto do usuário para checar permissões)
+    const { data: bookData, error: bookError } = await supabaseWithAuth.rpc(
       "fn_get_book_for_reader",
       { p_book_id: bookId },
     );
 
+    console.log("[book-original-signed-url] RPC result:", JSON.stringify({ bookData, bookError }));
+
     if (bookError || !bookData?.success) {
       return new Response(
-        JSON.stringify({ success: false, error: bookData?.error || "Acesso negado" }),
+        JSON.stringify({ success: false, error: bookData?.error || "Acesso negado", details: bookError }),
         { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
 
     let originalPath: string | null = bookData?.pdfMode?.originalPath ?? null;
+    console.log("[book-original-signed-url] bookId:", bookId);
+    console.log("[book-original-signed-url] pdfMode:", JSON.stringify(bookData?.pdfMode));
+    console.log("[book-original-signed-url] originalPath from RPC:", originalPath);
 
-    // 2) Fallback: buscar do banco (não depende do pdfMode)
+    // 2) Fallback: buscar do banco (não depende do pdfMode) - usa supabaseAdmin para bypassar RLS
     if (!originalPath) {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("web_books")
-        .select("original_path")
+        .select("original_path, original_bucket, original_filename")
         .eq("id", bookId)
         .maybeSingle();
+
+      console.log("[book-original-signed-url] Fallback DB data:", JSON.stringify(data));
 
       if (error) {
         console.error("[book-original-signed-url] DB error:", error);
@@ -79,6 +89,9 @@ serve(async (req: Request) => {
       originalPath = data?.original_path ?? null;
     }
 
+    console.log("[book-original-signed-url] Final originalPath:", originalPath);
+    console.log("[book-original-signed-url] Bucket:", RAW_BUCKET);
+
     if (!originalPath) {
       return new Response(
         JSON.stringify({ success: false, error: "ORIGINAL_PATH_NOT_FOUND" }),
@@ -86,8 +99,8 @@ serve(async (req: Request) => {
       );
     }
 
-    // 3) Gerar URL assinada
-    const { data: signedData, error: signError } = await supabase.storage
+    // 3) Gerar URL assinada - USANDO supabaseAdmin para bypassar RLS do storage
+    const { data: signedData, error: signError } = await supabaseAdmin.storage
       .from(RAW_BUCKET)
       .createSignedUrl(originalPath, URL_TTL_SECONDS);
 
