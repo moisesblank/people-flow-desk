@@ -172,22 +172,41 @@ const handler = async (req: Request): Promise<Response> => {
     // ========================================
     // MARCAR SESSÃO COMO MFA_VERIFIED (SYNAPSE Ω v10.x)
     // Isso habilita o Trust Window de 24h para este dispositivo
+    // FIX: .order().limit() não funciona com UPDATE no Supabase
+    // Usar subquery para encontrar a sessão mais recente
     // ========================================
-    const { error: sessionError } = await supabaseAdmin
+    
+    // Primeiro, buscar o ID da sessão ativa mais recente
+    const { data: latestSession, error: findError } = await supabaseAdmin
       .from("active_sessions")
-      .update({ 
-        mfa_verified: true,
-        last_activity_at: new Date().toISOString()
-      })
+      .select("id")
       .eq("user_id", userId)
       .eq("status", "active")
       .order("created_at", { ascending: false })
-      .limit(1);
+      .limit(1)
+      .maybeSingle();
 
-    if (sessionError) {
-      console.error("[2FA Verify] Erro ao marcar sessão mfa_verified:", sessionError);
+    if (findError) {
+      console.error("[2FA Verify] Erro ao buscar sessão:", findError);
+    }
+
+    if (latestSession?.id) {
+      // Agora fazer o UPDATE usando o ID específico
+      const { error: sessionError, count } = await supabaseAdmin
+        .from("active_sessions")
+        .update({ 
+          mfa_verified: true,
+          last_activity_at: new Date().toISOString()
+        })
+        .eq("id", latestSession.id);
+
+      if (sessionError) {
+        console.error("[2FA Verify] Erro ao marcar sessão mfa_verified:", sessionError);
+      } else {
+        console.log("[2FA Verify] ✅ Sessão marcada como mfa_verified (id:", latestSession.id, ")");
+      }
     } else {
-      console.log("[2FA Verify] ✅ Sessão marcada como mfa_verified");
+      console.warn("[2FA Verify] ⚠️ Nenhuma sessão ativa encontrada para marcar mfa_verified");
     }
 
     // Registrar login bem-sucedido
