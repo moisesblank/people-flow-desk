@@ -437,17 +437,17 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Site/Programador Menu - DESENVOLVIMENTO */}
+        {/* Site Menu */}
         <SidebarGroup>
           {!collapsed && (
             <SidebarGroupBanner
-              title="Desenvolvimento"
+              title="Site"
               image={devImg}
               icon={<Code className="h-4 w-4 text-white" />}
               accentColor="cyan"
             />
           )}
-          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Desenvolvimento</SidebarGroupLabel>
+          <SidebarGroupLabel className={collapsed ? "" : "sr-only"}>Site</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {siteMenuItems.map((item) => (
