@@ -28,17 +28,20 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { userId, code }: Verify2FARequest = await req.json();
 
+    const rawCode = String(code ?? "");
+    const normalizedCode = rawCode.replace(/\D/g, "");
+
     console.log(`[2FA Verify] Verificando código para user: ${userId}`);
 
-    if (!userId || !code) {
+    if (!userId || !normalizedCode) {
       return new Response(
         JSON.stringify({ valid: false, error: "userId e código são obrigatórios" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Validar formato do código (6 dígitos)
-    if (!/^\d{6}$/.test(code)) {
+    // Validar formato do código (6 dígitos) — tolerante a espaços/traços vindos de copy/paste
+    if (!/^\d{6}$/.test(normalizedCode)) {
       return new Response(
         JSON.stringify({ valid: false, error: "Formato de código inválido" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -101,7 +104,7 @@ const handler = async (req: Request): Promise<Response> => {
       .from("two_factor_codes")
       .select("*")
       .eq("user_id", userId)
-      .eq("code", code)
+      .eq("code", normalizedCode)
       .eq("verified", false)
       .gt("expires_at", new Date().toISOString())
       .order("created_at", { ascending: false })
@@ -117,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from("two_factor_codes")
         .select("id")
         .eq("user_id", userId)
-        .eq("code", code)
+        .eq("code", normalizedCode)
         .eq("verified", true)
         .gt("expires_at", new Date().toISOString())
         .order("created_at", { ascending: false })
@@ -178,7 +181,7 @@ const handler = async (req: Request): Promise<Response> => {
           user_id: userId,
           action: "2FA_FAILED",
           new_value: {
-            attempted_code: code.substring(0, 2) + "****", // Log parcial por segurança
+            attempted_code: normalizedCode.substring(0, 2) + "****", // Log parcial por segurança
             timestamp: new Date().toISOString(),
             ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown",
           },
@@ -189,7 +192,7 @@ const handler = async (req: Request): Promise<Response> => {
         .from("two_factor_codes")
         .select("expires_at")
         .eq("user_id", userId)
-        .eq("code", code)
+        .eq("code", normalizedCode)
         .single();
 
       if (expiredCode) {
