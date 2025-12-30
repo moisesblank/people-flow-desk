@@ -33,6 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
+import { MFAPageGuard } from "@/components/security";
 
 interface ContabilidadeEntry {
   id: string;
@@ -73,7 +74,7 @@ const TIPOS = [
   { value: "imposto", label: "Imposto", color: "text-[hsl(var(--stats-gold))]" },
 ];
 
-export default function Contabilidade() {
+function ContabilidadeContent() {
   const { toast } = useToast();
   const { user } = useAuth();
   const [entries, setEntries] = useState<ContabilidadeEntry[]>([]);
@@ -674,5 +675,14 @@ export default function Contabilidade() {
         </Dialog>
       </div>
     </div>
+  );
+}
+
+// 🔐 WRAPPER COM 2FA — Proteção de 24h
+export default function Contabilidade() {
+  return (
+    <MFAPageGuard action="financial_access">
+      <ContabilidadeContent />
+    </MFAPageGuard>
   );
 }
