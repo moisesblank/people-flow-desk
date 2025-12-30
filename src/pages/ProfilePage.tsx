@@ -3,13 +3,14 @@
 // Página de perfil com gamificação completa
 // ============================================
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/hooks/useAuth';
 import { useGamification, useUserAchievements, getLevelInfo } from '@/hooks/useGamification';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 import { StudentDispatchSection } from '@/components/aluno/StudentDispatchSection';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -33,7 +34,9 @@ import {
   TrendingUp,
   BookOpen,
   CheckCircle2,
-  Clock
+  Clock,
+  Camera,
+  Loader2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -85,7 +88,70 @@ const RARITY_STYLES = {
 
 const ProfilePage = () => {
   const { user } = useAuth();
+  const queryClient = useQueryClient();
   const [activeTab, setActiveTab] = useState('overview');
+  const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // ============================================
+  // UPLOAD DE FOTO DE PERFIL
+  // ============================================
+  const handleAvatarUpload = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !user?.id) return;
+
+    // Validação: apenas PNG e máximo 5MB
+    if (file.type !== 'image/png') {
+      toast.error('Formato inválido', { description: 'Apenas arquivos PNG são permitidos.' });
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024; // 5MB
+    if (file.size > maxSize) {
+      toast.error('Arquivo muito grande', { description: 'O tamanho máximo é 5MB.' });
+      return;
+    }
+
+    setIsUploadingAvatar(true);
+
+    try {
+      // Nome único para o arquivo
+      const fileName = `${user.id}/avatar-${Date.now()}.png`;
+
+      // Upload para o bucket avatars
+      const { error: uploadError } = await supabase.storage
+        .from('avatars')
+        .upload(fileName, file, { upsert: true });
+
+      if (uploadError) throw uploadError;
+
+      // Obter URL pública
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(fileName);
+
+      // Atualizar profile no banco
+      const { error: updateError } = await supabase
+        .from('profiles')
+        .update({ avatar_url: urlData.publicUrl })
+        .eq('id', user.id);
+
+      if (updateError) throw updateError;
+
+      // Invalidar cache para atualizar em todo o app
+      queryClient.invalidateQueries({ queryKey: ['user-profile-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['profile'] });
+
+      toast.success('Foto atualizada!', { description: 'Sua foto de perfil foi alterada com sucesso.' });
+    } catch (error: any) {
+      console.error('[ProfilePage] Erro no upload:', error);
+      toast.error('Erro ao enviar foto', { description: error.message || 'Tente novamente.' });
+    } finally {
+      setIsUploadingAvatar(false);
+      // Limpar input para permitir re-upload do mesmo arquivo
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  }, [user?.id, queryClient]);
   
   const { gamification, levelInfo, userRank, isLoading: isLoadingGamification } = useGamification();
   const { data: achievements, isLoading: isLoadingAchievements } = useUserAchievements();
@@ -175,11 +241,22 @@ const ProfilePage = () => {
 
         <div className="relative p-6 md:p-8">
           <div className="flex flex-col md:flex-row gap-6 items-center md:items-start">
-            {/* Avatar with Level Ring */}
+            {/* Avatar with Level Ring + Upload Button */}
             <div className="relative">
+              {/* Input oculto para upload */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/png"
+                onChange={handleAvatarUpload}
+                className="hidden"
+                aria-label="Upload de foto de perfil"
+              />
+
               <motion.div
-                className="relative"
+                className="relative cursor-pointer group"
                 whileHover={{ scale: 1.05 }}
+                onClick={() => !isUploadingAvatar && fileInputRef.current?.click()}
               >
                 <div className="w-28 h-28 md:w-32 md:h-32 rounded-full p-1 bg-gradient-to-br from-primary via-secondary to-primary">
                   <Avatar className="w-full h-full border-4 border-background">
@@ -188,6 +265,18 @@ const ProfilePage = () => {
                       {profile.nome?.charAt(0)?.toUpperCase() || 'U'}
                     </AvatarFallback>
                   </Avatar>
+                </div>
+                
+                {/* Overlay de upload */}
+                <div className="absolute inset-0 rounded-full flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                  {isUploadingAvatar ? (
+                    <Loader2 className="w-8 h-8 text-white animate-spin" />
+                  ) : (
+                    <div className="flex flex-col items-center text-white">
+                      <Camera className="w-6 h-6 mb-1" />
+                      <span className="text-xs font-medium">Alterar</span>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Level Badge */}
