@@ -8,7 +8,8 @@ import {
   ChevronDown,
   ChevronUp,
   Sparkles,
-  X
+  X,
+  Loader2
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useUserCalculatorPersistence, CalculatorHistoryItem } from "@/hooks/useUserCalculatorPersistence";
 
 interface HistoryItem {
   expression: string;
@@ -78,34 +80,57 @@ function CalculatorContent() {
   const [isAnimating, setIsAnimating] = useState(false);
   const [openParens, setOpenParens] = useState(0);
   const displayRef = useRef<HTMLDivElement>(null);
+  const [isLoadingBackend, setIsLoadingBackend] = useState(true);
 
-  // Load history and memory from localStorage
+  // Persistência backend (por aluno)
+  const { loadFromBackend, saveToBackendDebounced } = useUserCalculatorPersistence();
+
+  // Carregar do backend ao montar (prioriza backend; localStorage é fallback offline)
   useEffect(() => {
-    const savedHistory = localStorage.getItem(STORAGE_KEY);
-    const savedMemory = localStorage.getItem(MEMORY_KEY);
-    if (savedHistory) {
+    let mounted = true;
+    (async () => {
       try {
-        setHistory(JSON.parse(savedHistory));
+        const payload = await loadFromBackend();
+        if (!mounted) return;
+        if (payload) {
+          setHistory(payload.history as HistoryItem[]);
+          setMemory(payload.memory);
+          // Sincronizar localStorage como cache
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(payload.history));
+          localStorage.setItem(MEMORY_KEY, String(payload.memory));
+        }
       } catch (e) {
-        console.error("Error loading calculator history:", e);
+        console.warn("[Calculator] Falha ao carregar do backend, usando localStorage:", e);
+        // Fallback localStorage
+        const savedHistory = localStorage.getItem(STORAGE_KEY);
+        const savedMemory = localStorage.getItem(MEMORY_KEY);
+        if (savedHistory) {
+          try {
+            setHistory(JSON.parse(savedHistory));
+          } catch {}
+        }
+        if (savedMemory) setMemory(parseFloat(savedMemory) || 0);
+      } finally {
+        if (mounted) setIsLoadingBackend(false);
       }
-    }
-    if (savedMemory) {
-      setMemory(parseFloat(savedMemory) || 0);
-    }
-  }, []);
+    })();
+    return () => { mounted = false; };
+  }, [loadFromBackend]);
 
-  // Save history to localStorage
+  // Salvar histórico + memória no backend (debounced) + localStorage
   const saveHistory = useCallback((newHistory: HistoryItem[]) => {
     setHistory(newHistory);
     localStorage.setItem(STORAGE_KEY, JSON.stringify(newHistory));
-  }, []);
+    // Persistir no backend (debounce 500ms)
+    saveToBackendDebounced({ history: newHistory as CalculatorHistoryItem[], memory });
+  }, [memory, saveToBackendDebounced]);
 
-  // Save memory to localStorage
   const saveMemory = useCallback((value: number) => {
     setMemory(value);
     localStorage.setItem(MEMORY_KEY, String(value));
-  }, []);
+    // Persistir no backend (debounce 500ms)
+    saveToBackendDebounced({ history: history as CalculatorHistoryItem[], memory: value });
+  }, [history, saveToBackendDebounced]);
 
   const clearHistory = () => {
     saveHistory([]);
@@ -644,6 +669,16 @@ function CalculatorContent() {
       </motion.button>
     );
   };
+
+  // Loading do backend
+  if (isLoadingBackend) {
+    return (
+      <div className="flex flex-col items-center justify-center p-8 gap-3 min-h-[300px]">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+        <span className="text-sm text-muted-foreground">Carregando histórico...</span>
+      </div>
+    );
+  }
 
   return (
     <Tabs defaultValue="calc" className="w-full">
