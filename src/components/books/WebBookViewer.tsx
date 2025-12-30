@@ -690,12 +690,58 @@ export const WebBookViewer = memo(function WebBookViewer({
     setImageLoading(true);
   }, [currentPage]);
 
-  // Carregar overlays persistidos quando mudar a página OU quando entrar no modo leitura
+  // ✅ P0-FIX: Carregar TODOS os overlays do banco ao ENTRAR no modo leitura
+  const [overlaysInitialized, setOverlaysInitialized] = useState(false);
+  
   useEffect(() => {
-    if (!isFullscreen) return;
+    // Quando ENTRAR no fullscreen, carregar TODOS os overlays de uma vez
+    if (isFullscreen && !overlaysInitialized) {
+      const allOverlays = Array.from({ length: effectiveTotalPages }, (_, i) => i + 1)
+        .map((page) => getOverlayForPage(page))
+        .filter(Boolean);
+      
+      const allStrokes: DrawingStroke[] = [];
+      const allTexts: TextAnnotation[] = [];
+      
+      allOverlays.forEach((overlay) => {
+        if (overlay) {
+          const strokes = (overlay.strokes as any[]) || [];
+          const texts = (overlay.texts as any[]) || [];
+          allStrokes.push(...strokes);
+          allTexts.push(...texts);
+        }
+      });
+      
+      if (allStrokes.length > 0 || allTexts.length > 0) {
+        console.log('[WebBookViewer] ✅ Carregando overlays do banco:', { 
+          strokes: allStrokes.length, 
+          texts: allTexts.length 
+        });
+        setDrawingStrokes(allStrokes);
+        setTextAnnotations(allTexts);
+      }
+      setOverlaysInitialized(true);
+    }
+    
+    // Resetar flag ao sair do fullscreen
+    if (!isFullscreen && overlaysInitialized) {
+      setOverlaysInitialized(false);
+    }
+  }, [isFullscreen, overlaysInitialized, effectiveTotalPages, getOverlayForPage]);
+
+  // Carregar overlays da página atual quando navegar (para páginas não carregadas ainda)
+  useEffect(() => {
+    if (!isFullscreen || !overlaysInitialized) return;
 
     // ✅ Se o usuário já mexeu nesta página e ainda não salvou, não sobrescrever pelo cache
     if (dirtyOverlayPages.has(currentPage)) return;
+
+    // Verificar se já temos strokes desta página
+    const existingStrokes = drawingStrokes.filter((s) => s.pageNumber === currentPage);
+    const existingTexts = textAnnotations.filter((t) => t.pageNumber === currentPage);
+    
+    // Se já tem dados locais para esta página, não sobrescrever
+    if (existingStrokes.length > 0 || existingTexts.length > 0) return;
 
     const overlay = getOverlayForPage(currentPage);
     if (!overlay) return;
@@ -703,16 +749,19 @@ export const WebBookViewer = memo(function WebBookViewer({
     const strokes = (overlay.strokes as any[]) || [];
     const texts = (overlay.texts as any[]) || [];
 
-    setDrawingStrokes((prev) => [
-      ...prev.filter((s) => s.pageNumber !== currentPage),
-      ...strokes,
-    ]);
+    if (strokes.length > 0 || texts.length > 0) {
+      console.log('[WebBookViewer] Carregando overlay da página', currentPage);
+      setDrawingStrokes((prev) => [
+        ...prev.filter((s) => s.pageNumber !== currentPage),
+        ...strokes,
+      ]);
 
-    setTextAnnotations((prev) => [
-      ...prev.filter((t) => t.pageNumber !== currentPage),
-      ...texts,
-    ]);
-  }, [isFullscreen, currentPage, getOverlayForPage, dirtyOverlayPages]);
+      setTextAnnotations((prev) => [
+        ...prev.filter((t) => t.pageNumber !== currentPage),
+        ...texts,
+      ]);
+    }
+  }, [isFullscreen, overlaysInitialized, currentPage, getOverlayForPage, dirtyOverlayPages, drawingStrokes, textAnnotations]);
 
   // Loading state (inclui loading do PDF)
   const isLoadingAnything = isLoading || (needsPdfMode && pdfRenderer.isLoading && !pdfRenderer.pdfLoaded);
