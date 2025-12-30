@@ -201,18 +201,22 @@ serve(async (req) => {
     // ============================================
     console.log("[admin-delete-user] 🧹 Limpando dados auxiliares...");
 
-    // Tabelas que podem ter referência mas não CASCADE
+    // Tabelas que podem ter referência mas não CASCADE (INCLUINDO security_events que bloqueia FK)
     const tablesToClean = [
       "two_factor_codes",
       "security_risk_state",
       "user_presence",
       "sensitive_operation_limits",
       "password_reset_tokens",
+      "security_events",       // 🔥 FK bloqueante - DEVE ser limpa antes de auth.users
+      "active_sessions",       // 🔥 Sessões (além do UPDATE já feito)
+      "user_roles",            // 🔥 Roles do usuário
     ];
 
     for (const table of tablesToClean) {
       try {
         await supabaseAdmin.from(table).delete().eq("user_id", resolvedUserId);
+        console.log(`[admin-delete-user] ✅ Limpo: ${table}`);
       } catch (e) {
         console.warn(`[admin-delete-user] ⚠️ Erro ao limpar ${table}:`, e);
       }
