@@ -213,6 +213,8 @@ const gestaoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Gestão Site", url: "/gestaofc/gestao-site", icon: Globe, area: "gestao-site" },
       { title: "Site/Programador", url: "/gestaofc/site-programador", icon: Code, area: "site-programador" },
+      { title: "Livros Web", url: "/gestaofc/livros-web", icon: BookOpen, area: "livros-web" },
+      { title: "Lives", url: "/gestaofc/lives", icon: PlayCircle, area: "lives" },
       { title: "Laboratório", url: "/gestaofc/laboratorio", icon: Zap, area: "laboratorio" },
     ],
   },
