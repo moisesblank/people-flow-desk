@@ -22,8 +22,13 @@ export { ProtectedPDFViewer } from './ProtectedPDFViewer';
 // Beta Access Guard
 export { BetaAccessGuard } from './BetaAccessGuard';
 
-// C021 - MFA Guard (Admin MFA Enforcement)
+// C021 - MFA Guard (Admin MFA Enforcement) - LEGADO
 export { MFAGuard } from './MFAGuard';
+
+// 🆕 MFA ACTION GUARD v2.0 — 2FA Isolado por Ação Sensível
+// Totalmente desacoplado de login/sessão/dispositivo
+export { MFAActionGuard, MFAProtectedButton } from './MFAActionGuard';
+export { MFAActionModal } from './MFAActionModal';
 
 // ============================================
 // COMPONENTES DE DASHBOARD
