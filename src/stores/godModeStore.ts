@@ -16,13 +16,12 @@ const OWNER_EMAIL = 'moisesblank@gmail.com';
  */
 function applyContentToDOM(cache: Record<string, string>) {
   const currentPageKey = window.location.pathname.replace(/\//g, '_') || 'global';
+  const currentPrefix = currentPageKey + '_';
   
   Object.entries(cache).forEach(([key, value]) => {
-    // Verificar se a key pertence a esta página
-    if (!key.startsWith(currentPageKey + '_') && !key.includes('#')) {
-      return;
-    }
-    
+    // ⚠️ P0: NÃO filtrar por prefixo aqui.
+    // A seleção por página já foi feita em loadContent (page_key = fonte da verdade).
+
     // 1. Tentar encontrar por data-editable-key
     const byDataKey = document.querySelector(`[data-editable-key="${key}"]`);
     if (byDataKey) {
@@ -53,7 +52,7 @@ function applyContentToDOM(cache: Record<string, string>) {
     }
     
     // 3. Para XPath-based keys, tentar reconstruir o caminho
-    const xpath = key.replace(currentPageKey + '_', '');
+    const xpath = key.startsWith(currentPrefix) ? key.replace(currentPrefix, '') : key;
     if (xpath.includes('>')) {
       try {
         const element = resolveXPathToElement(xpath);
