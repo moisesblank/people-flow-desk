@@ -38,7 +38,7 @@ import { useBookAnnotations } from '@/hooks/useBookAnnotations';
 import { CalculatorButton } from '@/components/Calculator';
 import { PeriodicTableButton } from '@/components/PeriodicTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
-import { DrawingCanvas, DrawingStroke } from './DrawingCanvas';
+import { DrawingCanvas, DrawingStroke, TextAnnotation } from './DrawingCanvas';
 
 // ============================================
 // TIPOS
@@ -418,6 +418,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [drawingColor, setDrawingColor] = useState('#fef08a'); // Amarelo padrão para marca-texto
   const [drawingSize, setDrawingSize] = useState(3);
   const [drawingStrokes, setDrawingStrokes] = useState<DrawingStroke[]>([]);
+  const [textAnnotations, setTextAnnotations] = useState<TextAnnotation[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -1002,6 +1003,8 @@ export const WebBookViewer = memo(function WebBookViewer({
                       pageNumber={currentPage}
                       strokes={drawingStrokes}
                       onStrokesChange={setDrawingStrokes}
+                      textAnnotations={textAnnotations}
+                      onTextAnnotationsChange={setTextAnnotations}
                     />
                   )}
                 </>
