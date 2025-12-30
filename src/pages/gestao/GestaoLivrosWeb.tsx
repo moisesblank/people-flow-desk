@@ -68,6 +68,7 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
 import { useCacheManager } from '@/hooks/useCacheManager';
+import { WebBookViewer } from '@/components/books';
 
 // ============================================
 // TIPOS
@@ -435,6 +436,10 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
   const [categoryFilter, setCategoryFilter] = useState<string>('');
   const [showUploadDialog, setShowUploadDialog] = useState(false);
 
+  // Preview (sem mudar de URL) — evita abrir nova aba e cair no /auth
+  const [previewBookId, setPreviewBookId] = useState<string | null>(null);
+  const [previewOpen, setPreviewOpen] = useState(false);
+
   const { clearAllCache } = useCacheManager();
 
   // Carregar livros
@@ -704,11 +709,10 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                           <DropdownMenuContent align="end">
                             <DropdownMenuItem
                               onClick={() => {
-                                // Abre no portal do aluno em nova aba
-                                // ⚠️ Evitar 'noreferrer' pois alguns navegadores podem isolar contexto e quebrar sessão
-                                const url = `/alunos/livro-web?book=${book.id}`;
-                                console.log('[GestaoLivrosWeb] Visualizar →', url);
-                                window.open(url, '_blank', 'noopener');
+                                // ✅ Preview na mesma URL (/gestaofc/livros-web)
+                                // Evita abrir nova aba e cair no /auth por inconsistência de sessão entre contextos.
+                                setPreviewBookId(book.id);
+                                setPreviewOpen(true);
                               }}
                             >
                               <Eye className="w-4 h-4 mr-2" />
@@ -742,6 +746,34 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
           )}
         </CardContent>
       </Card>
+
+      {/* Preview Dialog (mesma URL) */}
+      <Dialog
+        open={previewOpen}
+        onOpenChange={(open) => {
+          setPreviewOpen(open);
+          if (!open) setPreviewBookId(null);
+        }}
+      >
+        <DialogContent className="max-w-6xl w-[96vw] h-[90vh] p-0 overflow-hidden">
+          {previewBookId ? (
+            <div className="h-[90vh]">
+              <WebBookViewer
+                bookId={previewBookId}
+                className="h-full"
+                onClose={() => {
+                  setPreviewOpen(false);
+                  setPreviewBookId(null);
+                }}
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center h-[90vh]">
+              <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       {/* Upload Dialog */}
       <UploadDialog
