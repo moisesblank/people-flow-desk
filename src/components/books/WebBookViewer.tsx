@@ -711,8 +711,11 @@ export const WebBookViewer = memo(function WebBookViewer({
                 <img
                   src={currentPageUrl}
                   alt={`Página ${currentPage}`}
-                  className="max-h-[calc(100vh-200px)] w-auto rounded-lg shadow-2xl"
-                  style={{ pointerEvents: 'none' }}
+                  className="max-h-[calc(100vh-180px)] max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] 2xl:max-w-[75vw] w-auto h-auto rounded-lg shadow-2xl object-contain"
+                  style={{ 
+                    pointerEvents: 'none',
+                    imageRendering: 'auto',
+                  }}
                   onLoad={() => setImageLoading(false)}
                   onError={() => setImageLoading(false)}
                   draggable={false}
