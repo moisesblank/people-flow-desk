@@ -205,11 +205,21 @@ export function SessionGuard({ children }: SessionGuardProps) {
       if (!result?.is_valid) {
         const reason = result?.reason || 'SESSION_INVALID';
 
-        // Detectar se é mudança de dispositivo
-        const isDeviceChange = reason === 'SESSION_NOT_FOUND' || reason === 'SESSION_REVOKED';
+        // 🎯 DIFERENCIAR: user_logout não mostra overlay de conflito
+        // SESSION_NOT_FOUND pode ser user_logout ou conflito real
+        // Para ser preciso, verificamos se acabamos de fazer logout
+        const justLoggedOut = !localStorage.getItem(SESSION_TOKEN_KEY);
+        const isUserInitiatedLogout = justLoggedOut || reason === 'USER_LOGOUT';
 
-        console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}`);
-        await handleBackendRevocation(reason, isDeviceChange);
+        console.warn(`[SessionGuard] 🔴 Backend revogou: ${reason}, justLoggedOut: ${justLoggedOut}`);
+        
+        if (isUserInitiatedLogout) {
+          // Logout silencioso
+          await handleBackendRevocation(reason, false);
+        } else {
+          // Conflito de sessão: mostrar overlay
+          await handleBackendRevocation(reason, true);
+        }
 
         isValidatingRef.current = false;
         return false;
@@ -271,9 +281,19 @@ export function SessionGuard({ children }: SessionGuardProps) {
         console.error('[SessionGuard] 📡 USER DELETED recebido!');
         await handleBackendRevocation('Sua conta foi removida.');
       })
-      // 🚀 NOVO: Broadcast direto para revogação instantânea de sessão
-      .on('broadcast', { event: 'session-revoked' }, async () => {
-        console.error('[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!');
+      // 🚀 Broadcast direto para revogação de sessão (conflito)
+      // Só mostra overlay se NÃO for logout manual
+      .on('broadcast', { event: 'session-revoked' }, async (msg) => {
+        const reason = msg?.payload?.reason;
+        console.error('[SessionGuard] 📡 SESSION REVOKED BROADCAST recebido!', { reason });
+        
+        // Ignora se for logout manual do próprio usuário
+        if (reason === 'user_logout') {
+          console.log('[SessionGuard] ✅ Broadcast de logout manual - ignorando overlay');
+          return;
+        }
+        
+        // Conflito real: mostrar overlay
         handleDeviceRevocation();
       })
       .subscribe();
@@ -306,19 +326,41 @@ export function SessionGuard({ children }: SessionGuardProps) {
         async (payload) => {
           const newStatus = payload.new?.status;
           const payloadToken = payload.new?.session_token;
+          const revokedReason = payload.new?.revoked_reason;
           const currentToken = localStorage.getItem(SESSION_TOKEN_KEY);
           
           console.log('[SessionGuard] 📡 Realtime UPDATE active_sessions:', {
             newStatus,
+            revokedReason,
             payloadToken: payloadToken?.slice(0, 8) + '...',
             currentToken: currentToken?.slice(0, 8) + '...',
             match: payloadToken === currentToken
           });
 
-          // ⚡ Se MINHA sessão foi revogada → logout imediato
+          // ⚡ Se MINHA sessão foi revogada → verificar o motivo
           if (newStatus === 'revoked' && payloadToken === currentToken) {
-            console.error('[SessionGuard] 🔴 MINHA sessão revogada via Realtime INSTANTÂNEO!');
-            handleDeviceRevocation();
+            // 🎯 DIFERENCIAR: user_logout vs conflito de sessão
+            const isUserInitiatedLogout = revokedReason === 'user_logout';
+            
+            if (isUserInitiatedLogout) {
+              // Logout manual: não mostrar overlay de conflito
+              console.log('[SessionGuard] ✅ Logout manual detectado - sem overlay de conflito');
+              // Apenas limpar e sair silenciosamente
+              const keysToRemove = [
+                'matriz_session_token',
+                'matriz_last_heartbeat',
+                'matriz_device_fingerprint',
+                'matriz_trusted_device',
+                'mfa_trust_cache',
+              ];
+              keysToRemove.forEach((key) => localStorage.removeItem(key));
+              sessionStorage.clear();
+              await signOut();
+            } else {
+              // Conflito de sessão real: mostrar overlay
+              console.error('[SessionGuard] 🔴 Conflito de sessão detectado:', revokedReason);
+              handleDeviceRevocation();
+            }
           }
         }
       )
@@ -329,7 +371,7 @@ export function SessionGuard({ children }: SessionGuardProps) {
     return () => {
       supabase.removeChannel(realtimeChannel);
     };
-  }, [user, handleDeviceRevocation]);
+  }, [user, handleDeviceRevocation, signOut]);
 
   return (
     <>
