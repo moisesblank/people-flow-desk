@@ -41,15 +41,15 @@ interface EnderecoInput {
 type StudentRole = 'beta' | 'aluno_gratuito' | 'aluno_presencial' | 'beta_expira';
 
 interface CreateAccessPayload {
-  email: string;
+  email: string;          // 🔒 OBRIGATÓRIO e ÚNICO
   nome: string;
   role: StudentRole;
-  telefone?: string;
-  cpf?: string; // 🔒 CPF validado e único
+  telefone: string;       // 🔒 OBRIGATÓRIO e ÚNICO
+  cpf: string;            // 🔒 OBRIGATÓRIO e ÚNICO (validado na Receita Federal)
   foto_aluno?: string;
   senha?: string;
   endereco?: EnderecoInput;
-  expires_days?: number; // 30, 60, 90, 180, 365, ou custom
+  expires_days?: number;  // 30, 60, 90, 180, 365, ou custom
   tipo_produto?: 'livroweb' | 'fisico'; // Tipo de produto Hotmart
 }
 
@@ -133,12 +133,18 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
     return { valid: false, error: 'Senha deve ter pelo menos 8 caracteres' };
   }
 
-  // Validar CPF se fornecido (11 dígitos)
-  if (p.cpf) {
-    const cpfClean = String(p.cpf).replace(/\D/g, '');
-    if (cpfClean.length !== 11) {
-      return { valid: false, error: 'CPF deve ter 11 dígitos' };
-    }
+  // Validar CPF OBRIGATÓRIO (11 dígitos)
+  if (!p.cpf || typeof p.cpf !== 'string') {
+    return { valid: false, error: 'CPF é obrigatório' };
+  }
+  const cpfClean = String(p.cpf).replace(/\D/g, '');
+  if (cpfClean.length !== 11) {
+    return { valid: false, error: 'CPF deve ter 11 dígitos' };
+  }
+
+  // Validar Telefone OBRIGATÓRIO
+  if (!p.telefone || typeof p.telefone !== 'string' || !p.telefone.trim()) {
+    return { valid: false, error: 'Telefone é obrigatório' };
   }
 
   return {
@@ -147,8 +153,8 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
       email: (p.email as string).toLowerCase().trim(),
       nome: (p.nome as string).trim(),
       role: p.role as StudentRole,
-      telefone: typeof p.telefone === 'string' ? p.telefone.trim() : undefined,
-      cpf: typeof p.cpf === 'string' ? p.cpf.replace(/\D/g, '') : undefined,
+      telefone: (p.telefone as string).trim(), // Já validado como obrigatório
+      cpf: (p.cpf as string).replace(/\D/g, ''), // Já validado como obrigatório
       foto_aluno: typeof p.foto_aluno === 'string' ? p.foto_aluno.trim() : undefined,
       senha: typeof p.senha === 'string' ? p.senha : undefined,
       endereco: typeof p.endereco === 'object' ? p.endereco as EnderecoInput : undefined,
@@ -522,6 +528,62 @@ serve(async (req) => {
       }
       
       console.log('[c-create-official-access] ✅ CPF único confirmado');
+    }
+
+    // ============================================
+    // 3.3 VALIDAR UNICIDADE DO TELEFONE (OBRIGATÓRIO)
+    // Telefone deve ser único no sistema
+    // ============================================
+    if (payload.telefone) {
+      console.log('[c-create-official-access] 🔍 Verificando unicidade do telefone...');
+      
+      // Normalizar telefone (apenas dígitos)
+      const telefoneNormalizado = payload.telefone.replace(/\D/g, '');
+      
+      // Verificar em profiles (campo phone)
+      const { data: existingPhoneProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email, phone')
+        .or(`phone.eq.${telefoneNormalizado},phone.eq.${payload.telefone}`)
+        .maybeSingle();
+      
+      if (existingPhoneProfile && existingPhoneProfile.email?.toLowerCase() !== payload.email) {
+        console.error('[c-create-official-access] ❌ Telefone já cadastrado para outro usuário:', existingPhoneProfile.email);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Telefone já cadastrado para outro usuário (${existingPhoneProfile.email?.substring(0, 3)}***)`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Verificar também em alunos
+      const { data: existingPhoneAluno } = await supabaseAdmin
+        .from('alunos')
+        .select('id, email, telefone')
+        .or(`telefone.eq.${telefoneNormalizado},telefone.eq.${payload.telefone}`)
+        .maybeSingle();
+      
+      if (existingPhoneAluno && existingPhoneAluno.email?.toLowerCase() !== payload.email) {
+        console.error('[c-create-official-access] ❌ Telefone já cadastrado na tabela alunos:', existingPhoneAluno.email);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `Telefone já cadastrado para outro aluno (${existingPhoneAluno.email?.substring(0, 3)}***)`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('[c-create-official-access] ✅ Telefone único confirmado');
+    } else {
+      // Telefone é OBRIGATÓRIO
+      console.error('[c-create-official-access] ❌ Telefone não fornecido');
+      return new Response(
+        JSON.stringify({ success: false, error: 'Telefone é obrigatório' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     // ============================================
