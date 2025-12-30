@@ -18,6 +18,7 @@ import { Button } from '@/components/ui/button';
 const AlunoLivroWeb = memo(function AlunoLivroWeb() {
   const location = useLocation();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
 
   // Permite abrir um livro direto via URL: /alunos/livro-web?book=<uuid>
   useEffect(() => {
@@ -32,6 +33,10 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
 
   const handleCloseReader = useCallback(() => {
     setSelectedBookId(null);
+  }, []);
+
+  const handleCategoryClick = useCallback((categoryValue: string) => {
+    setSelectedCategory(prev => prev === categoryValue ? null : categoryValue);
   }, []);
 
   return (
@@ -80,28 +85,35 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
               </div>
             </header>
 
-            {/* Categorias destacadas */}
             <section className="mb-8">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {[
-                  { label: '⚗️ Química Geral', color: 'from-blue-500/20 to-blue-600/10' },
-                  { label: '🧪 Orgânica', color: 'from-green-500/20 to-green-600/10' },
-                  { label: '📊 Físico-Química', color: 'from-purple-500/20 to-purple-600/10' },
-                  { label: '🔄 Revisão', color: 'from-amber-500/20 to-amber-600/10' },
-                  { label: '🎯 Previsão', color: 'from-rose-500/20 to-rose-600/10' },
+                  { label: '⚗️ Química Geral', value: 'quimica_geral', color: 'from-blue-500/20 to-blue-600/10', border: 'border-blue-500' },
+                  { label: '🧪 Orgânica', value: 'quimica_organica', color: 'from-green-500/20 to-green-600/10', border: 'border-green-500' },
+                  { label: '📊 Físico-Química', value: 'fisico_quimica', color: 'from-purple-500/20 to-purple-600/10', border: 'border-purple-500' },
+                  { label: '🔄 Revisão', value: 'revisao_ciclica', color: 'from-amber-500/20 to-amber-600/10', border: 'border-amber-500' },
+                  { label: '🎯 Previsão', value: 'previsao_final', color: 'from-rose-500/20 to-rose-600/10', border: 'border-rose-500' },
                 ].map((cat) => (
-                  <div
-                    key={cat.label}
-                    className={`p-4 rounded-xl bg-gradient-to-br ${cat.color} border border-border/50 text-center hover:scale-105 transition-transform cursor-pointer`}
+                  <button
+                    key={cat.value}
+                    onClick={() => handleCategoryClick(cat.value)}
+                    className={`p-4 rounded-xl bg-gradient-to-br ${cat.color} border text-center hover:scale-105 transition-all cursor-pointer ${
+                      selectedCategory === cat.value 
+                        ? `${cat.border} border-2 ring-2 ring-offset-2 ring-offset-background ring-primary/50` 
+                        : 'border-border/50'
+                    }`}
                   >
                     <span className="text-sm font-medium">{cat.label}</span>
-                  </div>
+                  </button>
                 ))}
               </div>
             </section>
 
             {/* Biblioteca */}
-            <WebBookLibrary onBookSelect={handleBookSelect} />
+            <WebBookLibrary 
+              onBookSelect={handleBookSelect} 
+              externalCategory={selectedCategory}
+            />
           </motion.div>
         )}
       </AnimatePresence>
