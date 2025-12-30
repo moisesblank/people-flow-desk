@@ -35,7 +35,6 @@ export const DYNAMIC_PAGES = [
   '/dashboard',
   '/admin',
   '/perfil',
-  '/aluno',
 ];
 
 // ============================================
