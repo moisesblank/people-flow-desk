@@ -7,11 +7,14 @@ import React, { useState, useCallback, useEffect } from 'react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { InputOTP, InputOTPGroup, InputOTPSlot } from '@/components/ui/input-otp';
-import { Loader2, ShieldCheck, Mail, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Loader2, ShieldCheck, Mail, AlertCircle, CheckCircle2, MessageSquare, Smartphone } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'sonner';
 import type { MFAProtectedAction } from '@/hooks/useMFAGuard';
+import { cn } from '@/lib/utils';
+
+type MFAChannel = 'email' | 'sms' | 'whatsapp';
 
 interface MFAActionModalProps {
   isOpen: boolean;
@@ -75,6 +78,24 @@ export function MFAActionModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [codeSentAt, setCodeSentAt] = useState<Date | null>(null);
+  const [channel, setChannel] = useState<MFAChannel>('email');
+  const [userPhone, setUserPhone] = useState<string | null>(null);
+
+  // Buscar telefone do usuário
+  useEffect(() => {
+    if (user?.id) {
+      supabase
+        .from('profiles')
+        .select('phone')
+        .eq('id', user.id)
+        .single()
+        .then(({ data }) => {
+          if (data?.phone) {
+            setUserPhone(data.phone);
+          }
+        });
+    }
+  }, [user?.id]);
 
   const actionLabel = ACTION_LABELS[action] || { 
     title: 'Verificação de Segurança', 
@@ -87,11 +108,12 @@ export function MFAActionModal({
       setStep('send');
       setCode('');
       setError(null);
+      setChannel('email');
     }
   }, [isOpen]);
 
   /**
-   * Envia código 2FA por email
+   * Envia código 2FA pelo canal selecionado
    */
   const handleSendCode = useCallback(async () => {
     if (!user?.id || !user?.email) {
@@ -99,15 +121,30 @@ export function MFAActionModal({
       return;
     }
 
+    // Validar telefone para SMS/WhatsApp
+    if ((channel === 'sms' || channel === 'whatsapp') && !userPhone) {
+      setError('Telefone não cadastrado. Use e-mail ou atualize seu perfil.');
+      return;
+    }
+
     setIsLoading(true);
     setError(null);
 
     try {
+      const channelMessages: Record<MFAChannel, string> = {
+        email: 'Código enviado para seu e-mail',
+        sms: 'Código enviado por SMS',
+        whatsapp: 'Código enviado pelo WhatsApp'
+      };
+
       const { error: sendError } = await supabase.functions.invoke('send-2fa-code', {
         body: {
           userId: user.id,
           email: user.email,
-          action: action
+          phone: userPhone,
+          userName: user.user_metadata?.nome || user.email?.split('@')[0],
+          action: action,
+          channel: channel
         }
       });
 
@@ -117,7 +154,7 @@ export function MFAActionModal({
 
       setCodeSentAt(new Date());
       setStep('verify');
-      toast.success('Código enviado para seu e-mail');
+      toast.success(channelMessages[channel]);
     } catch (err: any) {
       console.error('[MFAActionModal] Erro ao enviar código:', err);
       setError(err.message || 'Erro ao enviar código');
@@ -125,7 +162,7 @@ export function MFAActionModal({
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id, user?.email, action]);
+  }, [user?.id, user?.email, user?.user_metadata?.nome, action, channel, userPhone]);
 
   /**
    * Verifica código 2FA
@@ -198,20 +235,87 @@ export function MFAActionModal({
         </DialogHeader>
 
         <div className="mt-4">
-          {/* Step: Enviar código */}
+          {/* Step: Escolher canal e enviar código */}
           {step === 'send' && (
             <div className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-4 flex items-start gap-3">
-                <Mail className="h-5 w-5 text-muted-foreground mt-0.5" />
-                <div className="text-sm">
-                  <p className="font-medium">Verificação por E-mail</p>
-                  <p className="text-muted-foreground mt-1">
-                    Enviaremos um código de 6 dígitos para{' '}
-                    <span className="font-medium text-foreground">
-                      {user?.email || 'seu e-mail'}
-                    </span>
+              <p className="text-sm text-muted-foreground">Escolha como receber o código:</p>
+              
+              {/* Seleção de Canal */}
+              <div className="grid grid-cols-3 gap-2">
+                {/* Email */}
+                <button
+                  type="button"
+                  onClick={() => setChannel('email')}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
+                    channel === 'email'
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border hover:border-primary/50 hover:bg-muted/50"
+                  )}
+                >
+                  <Mail className="h-5 w-5" />
+                  <span className="text-xs font-medium">E-mail</span>
+                </button>
+
+                {/* WhatsApp */}
+                <button
+                  type="button"
+                  onClick={() => userPhone && setChannel('whatsapp')}
+                  disabled={!userPhone}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
+                    channel === 'whatsapp'
+                      ? "border-green-500 bg-green-500/10 text-green-500"
+                      : !userPhone
+                        ? "border-border opacity-50 cursor-not-allowed"
+                        : "border-border hover:border-green-500/50 hover:bg-muted/50"
+                  )}
+                >
+                  <MessageSquare className="h-5 w-5" />
+                  <span className="text-xs font-medium">WhatsApp</span>
+                </button>
+
+                {/* SMS */}
+                <button
+                  type="button"
+                  onClick={() => userPhone && setChannel('sms')}
+                  disabled={!userPhone}
+                  className={cn(
+                    "flex flex-col items-center gap-2 p-3 rounded-lg border-2 transition-all",
+                    channel === 'sms'
+                      ? "border-blue-500 bg-blue-500/10 text-blue-500"
+                      : !userPhone
+                        ? "border-border opacity-50 cursor-not-allowed"
+                        : "border-border hover:border-blue-500/50 hover:bg-muted/50"
+                  )}
+                >
+                  <Smartphone className="h-5 w-5" />
+                  <span className="text-xs font-medium">SMS</span>
+                </button>
+              </div>
+
+              {/* Info do canal selecionado */}
+              <div className="bg-muted/50 rounded-lg p-3 text-sm">
+                {channel === 'email' && (
+                  <p className="text-muted-foreground">
+                    Código será enviado para: <span className="font-medium text-foreground">{user?.email}</span>
                   </p>
-                </div>
+                )}
+                {channel === 'whatsapp' && userPhone && (
+                  <p className="text-muted-foreground">
+                    Código será enviado para: <span className="font-medium text-foreground">{userPhone}</span> via WhatsApp
+                  </p>
+                )}
+                {channel === 'sms' && userPhone && (
+                  <p className="text-muted-foreground">
+                    Código será enviado para: <span className="font-medium text-foreground">{userPhone}</span> via SMS
+                  </p>
+                )}
+                {!userPhone && (channel === 'sms' || channel === 'whatsapp') && (
+                  <p className="text-yellow-500">
+                    Telefone não cadastrado. Atualize seu perfil para usar SMS/WhatsApp.
+                  </p>
+                )}
               </div>
 
               {error && (
@@ -253,7 +357,7 @@ export function MFAActionModal({
             <div className="space-y-4">
               <div className="text-center">
                 <p className="text-sm text-muted-foreground mb-4">
-                  Digite o código de 6 dígitos enviado para seu e-mail
+                  Digite o código de 6 dígitos enviado {channel === 'email' ? 'para seu e-mail' : channel === 'whatsapp' ? 'pelo WhatsApp' : 'por SMS'}
                 </p>
 
                 <div className="flex justify-center">
