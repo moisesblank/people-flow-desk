@@ -705,7 +705,10 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                             <DropdownMenuItem
                               onClick={() => {
                                 // Abre no portal do aluno em nova aba
-                                window.open(`/alunos/livro-web?book=${book.id}`, '_blank', 'noopener,noreferrer');
+                                // ⚠️ Evitar 'noreferrer' pois alguns navegadores podem isolar contexto e quebrar sessão
+                                const url = `/alunos/livro-web?book=${book.id}`;
+                                console.log('[GestaoLivrosWeb] Visualizar →', url);
+                                window.open(url, '_blank', 'noopener');
                               }}
                             >
                               <Eye className="w-4 h-4 mr-2" />
