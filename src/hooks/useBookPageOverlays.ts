@@ -71,12 +71,26 @@ export function useBookPageOverlays(bookId: string) {
         texts: i.texts,
       }));
 
+      console.log('[useBookPageOverlays] SALVANDO overlays:', {
+        userId: userData.user.id,
+        userEmail: userData.user.email,
+        bookId,
+        pages: items.map((i) => i.page_number),
+        totalStrokes: items.reduce((acc, i) => acc + ((i.strokes as any[])?.length || 0), 0),
+        totalTexts: items.reduce((acc, i) => acc + ((i.texts as any[])?.length || 0), 0),
+      });
+
       const { data, error } = await supabase
         .from('book_user_page_overlays')
         .upsert(payload, { onConflict: 'user_id,book_id,page_number' })
         .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('[useBookPageOverlays] ERRO ao salvar:', error);
+        throw error;
+      }
+
+      console.log('[useBookPageOverlays] ✅ SALVO com sucesso:', data?.length, 'registros');
       return data as BookUserPageOverlay[];
     },
     onSuccess: () => {
