@@ -219,7 +219,7 @@ serve(async (req: Request) => {
       }
 
       // ============================================
-      // CRIAR REGISTRO DO LIVRO (STATUS: pending_upload)
+      // CRIAR REGISTRO DO LIVRO (STATUS: draft)
       // ============================================
       const { error: bookError } = await supabase
         .from("web_books")
@@ -235,7 +235,8 @@ serve(async (req: Request) => {
           original_filename: fileName,
           original_size_bytes: fileSize,
           original_mime_type: mimeType,
-          status: "pending_upload",
+          // Enum permitido: draft | queued | processing | ready | error | archived
+          status: "draft",
           status_message: "Aguardando upload do arquivo",
           is_published: isPublished || false,
           created_by: user.id,
