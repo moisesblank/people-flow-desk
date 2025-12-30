@@ -21,7 +21,8 @@ import {
   CheckCircle,
   Clock,
   AlertCircle,
-  X
+  X,
+  Tag
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -59,6 +60,7 @@ import {
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import { TagInput } from '@/components/ui/tag-input';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -129,7 +131,7 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
     subtitle: '',
     category: 'quimica_geral',
     description: '',
-    tags: '',
+    tags: [] as string[],
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
 
@@ -180,7 +182,7 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
         subtitle: form.subtitle?.trim() || undefined,
         description: form.description?.trim() || undefined,
         category: form.category,
-        tags: form.tags?.trim() || undefined,
+        tags: form.tags.length > 0 ? form.tags : undefined,
         isPublished: true,
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
@@ -260,7 +262,7 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
       onClose();
 
       // Resetar form
-      setForm({ title: '', subtitle: '', category: 'quimica_geral', description: '', tags: '' });
+      setForm({ title: '', subtitle: '', category: 'quimica_geral', description: '', tags: [] });
       setSelectedFile(null);
 
     } catch (err) {
@@ -376,12 +378,12 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
             </div>
 
             <div>
-              <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
-              <Input
-                id="tags"
+              <Label htmlFor="tags">Tags</Label>
+              <TagInput
                 value={form.tags}
-                onChange={(e) => setForm(f => ({ ...f, tags: e.target.value }))}
-                placeholder="química, orgânica, revisão"
+                onChange={(tags) => setForm(f => ({ ...f, tags }))}
+                placeholder="Digite e pressione Enter..."
+                disabled={isUploading}
               />
             </div>
           </div>
