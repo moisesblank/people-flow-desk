@@ -12372,6 +12372,39 @@ export type Database = {
         }
         Relationships: []
       }
+      user_mfa_verifications: {
+        Row: {
+          action: string
+          created_at: string
+          device_hash: string | null
+          expires_at: string
+          id: string
+          ip_address: string | null
+          user_id: string
+          verified_at: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          device_hash?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          user_id: string
+          verified_at?: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          device_hash?: string | null
+          expires_at?: string
+          id?: string
+          ip_address?: string | null
+          user_id?: string
+          verified_at?: string
+        }
+        Relationships: []
+      }
       user_presence: {
         Row: {
           created_at: string | null
@@ -15386,6 +15419,10 @@ export type Database = {
       }
       check_device_limit: { Args: { p_user_id: string }; Returns: Json }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
+      check_mfa_valid: {
+        Args: { _action: string; _user_id: string }
+        Returns: boolean
+      }
       check_password_reset_token: {
         Args: { _token: string }
         Returns: {
@@ -15520,6 +15557,7 @@ export type Database = {
         }[]
       }
       cleanup_expired_2fa_codes: { Args: never; Returns: undefined }
+      cleanup_expired_mfa_verifications: { Args: never; Returns: number }
       cleanup_expired_sessions: { Args: never; Returns: number }
       cleanup_expired_sessions_v2: { Args: never; Returns: number }
       cleanup_expired_sessions_v3: { Args: never; Returns: number }
@@ -16456,6 +16494,15 @@ export type Database = {
           p_success: boolean
           p_test_name: string
           p_test_type: string
+        }
+        Returns: string
+      }
+      register_mfa_verification: {
+        Args: {
+          _action: string
+          _device_hash?: string
+          _ip_address?: string
+          _user_id: string
         }
         Returns: string
       }
