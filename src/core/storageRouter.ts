@@ -183,7 +183,7 @@ export async function logStorageAccess(log: StorageAuditLog): Promise<void> {
   try {
     await supabase.from('security_events').insert({
       event_type: `STORAGE_${log.action.toUpperCase()}`,
-      severity: log.success ? 'info' : 'warn',
+      severity: log.success ? 'info' : 'warning',
       source: 'storage-router',
       description: `${log.action} em ${log.bucket}/${log.path}`,
       user_id: log.userId,

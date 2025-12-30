@@ -173,7 +173,7 @@ serve(async (req) => {
       // Logar tentativa bloqueada
       await supabase.from('security_events').insert({
         event_type: 'RATE_LIMIT_EXCEEDED',
-        severity: config.priority === 'critical' ? 'critical' : 'warn',
+        severity: config.priority === 'critical' ? 'critical' : 'warning',
         source: 'rate-limit-gateway',
         description: `Rate limit excedido para ${safeEndpoint}`,
         payload: {
