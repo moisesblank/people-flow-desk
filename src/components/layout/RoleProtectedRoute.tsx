@@ -149,7 +149,13 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
   // Se o usuário tem sessão mas ainda não concluiu 2FA, força /auth.
   // ============================================
   const is2FAPending = typeof window !== "undefined" && sessionStorage.getItem("matriz_2fa_pending") === "1";
-  if (user && is2FAPending) {
+  if (user && is2FAPending && !shouldBypassForOwner) {
+    console.warn('[RoleProtectedRoute] 2FA pendente → redirect /auth', {
+      path: location.pathname,
+      email: user.email,
+      role,
+      hasSupabaseToken: !!localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token'),
+    });
     return <Navigate to="/auth" replace state={{ from: location }} />;
   }
 
@@ -167,6 +173,11 @@ export function RoleProtectedRoute({ children, requiredArea }: RoleProtectedRout
 
   // Not authenticated
   if (!user) {
+    console.warn('[RoleProtectedRoute] Sem usuário após loading → redirect /auth', {
+      path: location.pathname,
+      hasSupabaseToken: !!localStorage.getItem('sb-fyikfsasudgzsjmumdlw-auth-token'),
+      is2FAPending,
+    });
     return <Navigate to="/auth" replace />;
   }
 
