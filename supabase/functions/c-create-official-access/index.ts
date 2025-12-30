@@ -45,6 +45,7 @@ interface CreateAccessPayload {
   nome: string;
   role: StudentRole;
   telefone?: string;
+  cpf?: string; // 🔒 CPF validado e único
   foto_aluno?: string;
   senha?: string;
   endereco?: EnderecoInput;
@@ -132,6 +133,14 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
     return { valid: false, error: 'Senha deve ter pelo menos 8 caracteres' };
   }
 
+  // Validar CPF se fornecido (11 dígitos)
+  if (p.cpf) {
+    const cpfClean = String(p.cpf).replace(/\D/g, '');
+    if (cpfClean.length !== 11) {
+      return { valid: false, error: 'CPF deve ter 11 dígitos' };
+    }
+  }
+
   return {
     valid: true,
     data: {
@@ -139,10 +148,12 @@ function validateInput(payload: unknown): { valid: boolean; error?: string; data
       nome: (p.nome as string).trim(),
       role: p.role as StudentRole,
       telefone: typeof p.telefone === 'string' ? p.telefone.trim() : undefined,
+      cpf: typeof p.cpf === 'string' ? p.cpf.replace(/\D/g, '') : undefined,
       foto_aluno: typeof p.foto_aluno === 'string' ? p.foto_aluno.trim() : undefined,
       senha: typeof p.senha === 'string' ? p.senha : undefined,
       endereco: typeof p.endereco === 'object' ? p.endereco as EnderecoInput : undefined,
       expires_days: typeof p.expires_days === 'number' ? p.expires_days : undefined,
+      tipo_produto: typeof p.tipo_produto === 'string' ? p.tipo_produto as 'livroweb' | 'fisico' : undefined,
     },
   };
 }
@@ -468,6 +479,52 @@ serve(async (req) => {
     console.log('[c-create-official-access] 📝 Creating access for:', payload.email, 'Role:', payload.role);
 
     // ============================================
+    // 3.2 VALIDAR UNICIDADE DO CPF (SE FORNECIDO)
+    // CPF deve ser único no sistema
+    // ============================================
+    if (payload.cpf) {
+      console.log('[c-create-official-access] 🔍 Verificando unicidade do CPF...');
+      
+      // Verificar em profiles
+      const { data: existingCPFProfile } = await supabaseAdmin
+        .from('profiles')
+        .select('id, email, cpf')
+        .eq('cpf', payload.cpf)
+        .maybeSingle();
+      
+      if (existingCPFProfile && existingCPFProfile.email?.toLowerCase() !== payload.email) {
+        console.error('[c-create-official-access] ❌ CPF já cadastrado para outro usuário:', existingCPFProfile.email);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `CPF já cadastrado para outro usuário (${existingCPFProfile.email?.substring(0, 3)}***)`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      // Verificar também em alunos
+      const { data: existingCPFAluno } = await supabaseAdmin
+        .from('alunos')
+        .select('id, email, cpf')
+        .eq('cpf', payload.cpf)
+        .maybeSingle();
+      
+      if (existingCPFAluno && existingCPFAluno.email?.toLowerCase() !== payload.email) {
+        console.error('[c-create-official-access] ❌ CPF já cadastrado na tabela alunos:', existingCPFAluno.email);
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: `CPF já cadastrado para outro aluno (${existingCPFAluno.email?.substring(0, 3)}***)`
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+      
+      console.log('[c-create-official-access] ✅ CPF único confirmado');
+    }
+
+    // ============================================
     // 4. VERIFICAR SE USUÁRIO JÁ EXISTE (GLOBAL CHECK)
     // Verifica em auth.users E profiles
     // ============================================
@@ -601,6 +658,10 @@ serve(async (req) => {
       profileData.phone = payload.telefone;
     }
 
+    if (payload.cpf) {
+      profileData.cpf = payload.cpf;
+    }
+
     if (payload.foto_aluno) {
       profileData.avatar_url = payload.foto_aluno;
     }
@@ -645,6 +706,10 @@ serve(async (req) => {
 
     if (payload.telefone) {
       alunoData.telefone = payload.telefone;
+    }
+
+    if (payload.cpf) {
+      alunoData.cpf = payload.cpf;
     }
 
     if (payload.foto_aluno) {
