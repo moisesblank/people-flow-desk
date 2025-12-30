@@ -33,7 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
-import { MFAPageGuard } from "@/components/security";
+
 
 interface ContabilidadeEntry {
   id: string;
@@ -678,11 +678,7 @@ function ContabilidadeContent() {
   );
 }
 
-// 🔐 WRAPPER COM 2FA — Proteção de 24h
+// Exportação direta sem MFAPageGuard (removido - DeviceMFAGuard já cobre)
 export default function Contabilidade() {
-  return (
-    <MFAPageGuard action="financial_access">
-      <ContabilidadeContent />
-    </MFAPageGuard>
-  );
+  return <ContabilidadeContent />;
 }

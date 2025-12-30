@@ -54,7 +54,7 @@ import {
 } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { MFAPageGuard } from "@/components/security";
+
 
 type AppRole = "owner" | "admin" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade" | "employee";
 
@@ -718,11 +718,7 @@ function PermissoesContent() {
   );
 }
 
-// 🔐 WRAPPER COM 2FA — Proteção de 24h
+// Exportação direta sem MFAPageGuard (removido - DeviceMFAGuard já cobre)
 export default function Permissoes() {
-  return (
-    <MFAPageGuard action="manage_users">
-      <PermissoesContent />
-    </MFAPageGuard>
-  );
+  return <PermissoesContent />;
 }

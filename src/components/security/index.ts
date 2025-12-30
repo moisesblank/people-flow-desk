@@ -29,7 +29,7 @@ export { MFAGuard } from './MFAGuard';
 // Totalmente desacoplado de login/sessão/dispositivo
 export { MFAActionGuard, MFAProtectedButton } from './MFAActionGuard';
 export { MFAActionModal } from './MFAActionModal';
-export { MFAPageGuard } from './MFAPageGuard';
+// MFAPageGuard REMOVIDO - DeviceMFAGuard já cobre proteção por dispositivo
 
 // 🆕 DEVICE MFA GUARD — 2FA por Dispositivo (Gate de Entrada)
 // Exige verificação uma vez por dispositivo novo, cache 24h
