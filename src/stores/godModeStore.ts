@@ -171,10 +171,20 @@ export const useGodModeStore = create<GodModeStore>()(
           toast.error('Acesso negado');
           return;
         }
-        
+
+        // ✅ Se está desativando, permitir que guards cancelem (ex: mudanças pendentes)
+        if (isActive) {
+          const evt = new CustomEvent('master-mode-deactivating', { cancelable: true });
+          window.dispatchEvent(evt);
+          if (evt.defaultPrevented) {
+            console.log('[GodModeStore] ⛔ Deactivate blocked by guard');
+            return;
+          }
+        }
+
         const newState = !isActive;
         set({ isActive: newState });
-        
+
         if (newState) {
           toast.success('🔮 MODO MASTER ativado', {
             description: 'Clique em elementos para editar',
@@ -184,7 +194,7 @@ export const useGodModeStore = create<GodModeStore>()(
           set({ editingElement: null });
         }
       },
-      
+
       activate: () => {
         const { isOwner, isActive } = get();
         if (isOwner && !isActive) {
@@ -192,10 +202,17 @@ export const useGodModeStore = create<GodModeStore>()(
           toast.success('🔮 MODO MASTER ativado');
         }
       },
-      
+
       deactivate: () => {
         const { isActive } = get();
         if (isActive) {
+          const evt = new CustomEvent('master-mode-deactivating', { cancelable: true });
+          window.dispatchEvent(evt);
+          if (evt.defaultPrevented) {
+            console.log('[GodModeStore] ⛔ Deactivate blocked by guard');
+            return;
+          }
+
           set({ isActive: false, editingElement: null });
           toast.info('MODO MASTER desativado');
         }
