@@ -33,12 +33,13 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PdfPageViewer } from './PdfPageViewer';
-import { ReadingModeToolbar } from './ReadingModeToolbar';
+import { ReadingModeToolbar, ToolMode } from './ReadingModeToolbar';
 import { useBookAnnotations } from '@/hooks/useBookAnnotations';
 import { CalculatorButton } from '@/components/Calculator';
 import { PeriodicTableButton } from '@/components/PeriodicTable';
 import { Calculator, Atom } from 'lucide-react';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { DrawingCanvas, DrawingStroke } from './DrawingCanvas';
 
 // ============================================
 // TIPOS
@@ -373,6 +374,12 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [imageLoading, setImageLoading] = useState(true);
   const [pdfPath, setPdfPath] = useState<string | null>(null);
   const [isSavingHistory, setIsSavingHistory] = useState(false);
+  
+  // Estado de ferramentas de desenho
+  const [activeTool, setActiveTool] = useState<ToolMode>('select');
+  const [drawingColor, setDrawingColor] = useState('#fef08a'); // Amarelo padrão para marca-texto
+  const [drawingSize, setDrawingSize] = useState(3);
+  const [drawingStrokes, setDrawingStrokes] = useState<DrawingStroke[]>([]);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -951,19 +958,34 @@ export const WebBookViewer = memo(function WebBookViewer({
               )}
               
               {currentPageUrl ? (
-                <img
-                  src={currentPageUrl}
-                  alt={`Página ${currentPage}`}
-                  className="max-h-[calc(100vh-180px)] max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] 2xl:max-w-[75vw] w-auto h-auto rounded-lg shadow-2xl object-contain"
-                  style={{ 
-                    pointerEvents: 'none',
-                    imageRendering: 'auto',
-                  }}
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => setImageLoading(false)}
-                  draggable={false}
-                  onContextMenu={(e) => e.preventDefault()}
-                />
+                <>
+                  <img
+                    src={currentPageUrl}
+                    alt={`Página ${currentPage}`}
+                    className="max-h-[calc(100vh-180px)] max-w-[95vw] lg:max-w-[85vw] xl:max-w-[80vw] 2xl:max-w-[75vw] w-auto h-auto rounded-lg shadow-2xl object-contain"
+                    style={{ 
+                      pointerEvents: 'none',
+                      imageRendering: 'auto',
+                    }}
+                    onLoad={() => setImageLoading(false)}
+                    onError={() => setImageLoading(false)}
+                    draggable={false}
+                    onContextMenu={(e) => e.preventDefault()}
+                  />
+                  
+                  {/* 🎨 CANVAS DE DESENHO - Só ativo em Modo Leitura */}
+                  {isFullscreen && (
+                    <DrawingCanvas
+                      isActive={isFullscreen && activeTool !== 'select'}
+                      activeTool={activeTool}
+                      color={drawingColor}
+                      size={drawingSize}
+                      pageNumber={currentPage}
+                      strokes={drawingStrokes}
+                      onStrokesChange={setDrawingStrokes}
+                    />
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center bg-muted rounded-lg min-w-[300px] min-h-[400px] gap-3">
                   <BookOpen className="w-12 h-12 text-muted-foreground" />
@@ -1039,6 +1061,12 @@ export const WebBookViewer = memo(function WebBookViewer({
         currentPage={currentPage}
         isFullscreen={isFullscreen}
         onGoToPage={goToPage}
+        activeTool={activeTool}
+        onToolChange={setActiveTool}
+        drawingColor={drawingColor}
+        onColorChange={setDrawingColor}
+        drawingSize={drawingSize}
+        onSizeChange={setDrawingSize}
       />
 
       {/* Chat flutuante (placeholder) - Esconde em fullscreen para não conflitar */}
