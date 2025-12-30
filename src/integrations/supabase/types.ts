@@ -15889,15 +15889,24 @@ export type Database = {
         Returns: Json
       }
       fn_system_health_5k: { Args: never; Returns: Json }
-      fn_update_reading_progress: {
-        Args: {
-          p_book_id: string
-          p_current_page: number
-          p_reading_time_seconds?: number
-          p_session_id?: string
-        }
-        Returns: Json
-      }
+      fn_update_reading_progress:
+        | {
+            Args: {
+              p_book_id: string
+              p_current_page: number
+              p_reading_time_seconds?: number
+            }
+            Returns: Json
+          }
+        | {
+            Args: {
+              p_book_id: string
+              p_current_page: number
+              p_reading_time_seconds?: number
+              p_session_id?: string
+            }
+            Returns: Json
+          }
       force_logout_other_sessions: { Args: { _email: string }; Returns: Json }
       fortress_cleanup_rate_limits: { Args: never; Returns: number }
       fortress_cleanup_security_events: { Args: never; Returns: number }
