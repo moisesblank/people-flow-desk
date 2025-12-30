@@ -42,10 +42,10 @@ export function CalculatorButton() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-all duration-200 group"
+          className="h-9 w-9 hover:bg-blue-500/20 transition-all duration-200 group"
           title="Calculadora Científica"
         >
-          <CalculatorIcon className="h-5 w-5 group-hover:scale-110 transition-transform" />
+          <CalculatorIcon className="h-5 w-5 text-blue-400 group-hover:text-blue-300 group-hover:scale-110 transition-all duration-300" />
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[480px] p-0 gap-0 overflow-hidden bg-gradient-to-b from-background to-background/95 border-primary/20">
