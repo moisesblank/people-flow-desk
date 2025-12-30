@@ -3,7 +3,7 @@
 // Listagem e navegação de livros disponíveis
 // ============================================
 
-import React, { memo, useState, useCallback, useEffect } from 'react';
+import React, { memo, useState, useCallback, useEffect, useMemo } from 'react';
 import { useWebBookLibrary, WebBookListItem } from '@/hooks/useWebBook';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
@@ -28,7 +28,8 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
-import { getCategoryCover, getCategoryConfig } from './CategoryCover';
+import { getCategoryConfig, normalizeCategoryId } from './CategoryCover';
+import { useBookCategories } from '@/hooks/useBookCategories';
 
 // ============================================
 // TIPOS
@@ -62,19 +63,26 @@ const CATEGORIES = [
 // BOOK CARD
 // ============================================
 
-const BookCard = memo(function BookCard({
-  book,
-  onClick
-}: {
+interface BookCardProps {
   book: WebBookListItem;
   onClick: () => void;
-}) {
+  categoryCoverUrl?: string | null;
+}
+
+const BookCard = memo(function BookCard({
+  book,
+  onClick,
+  categoryCoverUrl
+}: BookCardProps) {
   const progress = book.progress?.progressPercent || 0;
   const isCompleted = book.progress?.isCompleted || false;
   const hasStarted = progress > 0;
   
   // ✅ P0: Livros com 0 páginas registradas ainda podem ser lidos via modo PDF direto
   const isPdfMode = book.totalPages === 0;
+
+  // Determinar capa: livro específico > categoria do banco > fallback estático > nenhum
+  const coverImage = book.coverUrl || categoryCoverUrl || getCategoryConfig(book.category)?.cover;
 
   return (
     <motion.div
@@ -86,19 +94,12 @@ const BookCard = memo(function BookCard({
       onClick={onClick}
     >
       <div className="relative bg-card rounded-xl border border-border overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
-        {/* Capa — Prioridade: coverUrl > categoria > fallback */}
+        {/* Capa — Prioridade: coverUrl > categoria banco > categoria estático > fallback */}
         <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
-          {book.coverUrl ? (
+          {coverImage ? (
             <img
-              src={book.coverUrl}
+              src={coverImage}
               alt={book.title}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
-          ) : getCategoryCover(book.category) ? (
-            // ✅ Usar capa futurista da macro-categoria
-            <img
-              src={getCategoryCover(book.category)!}
-              alt={getCategoryConfig(book.category)?.name || book.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
@@ -187,8 +188,29 @@ export const WebBookLibrary = memo(function WebBookLibrary({
   className
 }: WebBookLibraryProps) {
   const { books, isLoading, error, loadBooks } = useWebBookLibrary();
+  const { categories: dbCategories } = useBookCategories();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Mapa de categoria → capa do banco para lookup rápido
+  const categoryCoverMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    dbCategories.forEach(cat => {
+      if (cat.effectiveCover) {
+        map[cat.id] = cat.effectiveCover;
+      }
+    });
+    return map;
+  }, [dbCategories]);
+
+  // Função para obter capa da categoria do livro
+  const getCoverForBook = useCallback((book: WebBookListItem): string | null => {
+    const normalizedCatId = normalizeCategoryId(book.category);
+    if (normalizedCatId && categoryCoverMap[normalizedCatId]) {
+      return categoryCoverMap[normalizedCatId];
+    }
+    return null;
+  }, [categoryCoverMap]);
 
   // Sincroniza categoria externa (botões macro) com estado interno
   useEffect(() => {
@@ -306,7 +328,8 @@ export const WebBookLibrary = memo(function WebBookLibrary({
               >
                 <BookCard 
                   book={book} 
-                  onClick={() => onBookSelect(book.id)} 
+                  onClick={() => onBookSelect(book.id)}
+                  categoryCoverUrl={getCoverForBook(book)}
                 />
               </motion.div>
             ))}
