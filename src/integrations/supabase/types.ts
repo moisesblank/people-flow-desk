@@ -13059,6 +13059,48 @@ export type Database = {
         }
         Relationships: []
       }
+      web_book_categories: {
+        Row: {
+          banner_url: string | null
+          color: string | null
+          cover_url: string | null
+          created_at: string | null
+          gradient_end: string | null
+          gradient_start: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          position: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          banner_url?: string | null
+          color?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          gradient_end?: string | null
+          gradient_start?: string | null
+          id: string
+          is_active?: boolean | null
+          name: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          banner_url?: string | null
+          color?: string | null
+          cover_url?: string | null
+          created_at?: string | null
+          gradient_end?: string | null
+          gradient_start?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       web_book_chat_messages: {
         Row: {
           book_id: string

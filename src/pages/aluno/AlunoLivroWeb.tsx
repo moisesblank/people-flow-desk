@@ -1,16 +1,16 @@
 // ============================================
 // 📚 LIVROS DO MOISA - Página do Aluno
 // Biblioteca e Leitor de Livros Web
+// Agora com categorias dinâmicas do banco
 // ============================================
 
 import { memo, useState, useCallback, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { WebBookLibrary, WebBookViewer } from '@/components/books';
-import { BookOpen, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { BookOpen } from 'lucide-react';
 import { MACRO_CATEGORIES, normalizeCategoryId, type MacroCategory } from '@/components/books/CategoryCover';
+import { useBookCategories } from '@/hooks/useBookCategories';
 
 // ============================================
 // COMPONENTE PRINCIPAL
@@ -20,6 +20,9 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
   const location = useLocation();
   const [selectedBookId, setSelectedBookId] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Buscar categorias do banco (com imagens customizadas)
+  const { categories: dbCategories, isLoading: categoriesLoading } = useBookCategories();
 
   // Permite abrir um livro direto via URL: /alunos/livro-web?book=<uuid>
   useEffect(() => {
@@ -39,6 +42,21 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
   const handleCategoryClick = useCallback((categoryValue: string) => {
     setSelectedCategory(prev => prev === categoryValue ? null : categoryValue);
   }, []);
+
+  // Usar categorias do banco se disponíveis, senão fallback estático
+  const displayCategories = dbCategories.length > 0 ? dbCategories : MACRO_CATEGORIES.map(cat => ({
+    ...cat,
+    effectiveBanner: cat.banner,
+    effectiveCover: cat.cover,
+    banner_url: null,
+    cover_url: null,
+    gradient_start: null,
+    gradient_end: null,
+    position: 0,
+    is_active: true,
+    created_at: '',
+    updated_at: '',
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -86,12 +104,15 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
               </div>
             </header>
 
-            {/* Filtros por Macro-Categoria com Capas */}
+            {/* Filtros por Macro-Categoria com Capas (do banco) */}
             <section className="mb-8">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-                {MACRO_CATEGORIES.map((cat) => {
+                {displayCategories.map((cat) => {
                   const isActive = selectedCategory === cat.id || 
                     normalizeCategoryId(selectedCategory) === cat.id;
+                  
+                  // Usar banner para filtros horizontais
+                  const imageUrl = cat.effectiveBanner || cat.effectiveCover;
                   
                   return (
                     <button
@@ -103,10 +124,10 @@ const AlunoLivroWeb = memo(function AlunoLivroWeb() {
                           : 'border-border/50 hover:border-primary/30'
                       }`}
                     >
-                      {/* Capa como fundo */}
+                      {/* Capa/Banner como fundo */}
                       <div className="aspect-[4/3] relative">
                         <img 
-                          src={cat.cover} 
+                          src={imageUrl} 
                           alt={cat.name}
                           className="w-full h-full object-cover"
                         />

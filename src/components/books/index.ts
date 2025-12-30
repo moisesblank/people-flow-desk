@@ -5,8 +5,10 @@
 export { WebBookViewer } from './WebBookViewer';
 export { WebBookLibrary } from './WebBookLibrary';
 export { PdfPageViewer } from './PdfPageViewer';
+export { CategoryImageManager } from './CategoryImageManager';
 export { useWebBook, useWebBookLibrary } from '@/hooks/useWebBook';
 export { usePdfRenderer } from '@/hooks/usePdfRenderer';
+export { useBookCategories } from '@/hooks/useBookCategories';
 
 export type {
   WebBook,
@@ -19,3 +21,4 @@ export type {
 } from '@/hooks/useWebBook';
 
 export type { PdfPageRender } from '@/hooks/usePdfRenderer';
+export type { BookCategory, CategoryWithFallback } from '@/hooks/useBookCategories';
