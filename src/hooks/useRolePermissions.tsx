@@ -154,6 +154,8 @@ export type SystemArea =
   | "guia"
   | "laboratorio"
   | "site-programador"
+  | "livros-web"
+  | "lives"
   | "pessoal"
   | "vida-pessoal"
   | "permissoes"
@@ -239,6 +241,8 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/guia": "guia",
   "/laboratorio": "laboratorio",
   "/site-programador": "site-programador",
+  "/gestaofc/livros-web": "livros-web",
+  "/gestaofc/lives": "lives",
   "/pessoal": "pessoal",
   "/vida-pessoal": "vida-pessoal",
   "/permissoes": "permissoes",
@@ -306,10 +310,10 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "metricas", "arquivos", "planejamento-aula", "turmas-online", "turmas-presenciais",
     "financas-pessoais", "financas-empresa", "entradas", "pagamentos", "contabilidade",
     "cursos", "simulados", "afiliados", "alunos", "portal-aluno", "gestao-site",
-    "relatorios", "guia", "laboratorio", "site-programador", "pessoal", "vida-pessoal",
+    "relatorios", "guia", "laboratorio", "site-programador", "livros-web", "lives", "pessoal", "vida-pessoal",
     "permissoes", "configuracoes", "monitoramento", "central-whatsapp", "diagnostico-whatsapp",
     "auditoria-acessos", "central-monitoramento", "central-ias", "central-metricas", "documentos",
-    "dashboard-empresarial", "receitas-empresariais", "rh-funcionarios", "arquivos-empresariais", 
+    "dashboard-empresarial", "receitas-empresariais", "rh-funcionarios", "arquivos-empresariais",
     "fluxo-caixa", "contas-pagar", "contas-receber",
     // ÁREAS DE ALUNOS (OWNER VÊ TUDO)
     "area-beta", "area-gratuita", "comunidade", "portal-beta",
@@ -329,7 +333,7 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "metricas", "arquivos", "planejamento-aula", "turmas-online", "turmas-presenciais",
     "financas-empresa", "entradas", "pagamentos", "contabilidade",
     "cursos", "simulados", "afiliados", "alunos", "portal-aluno", "gestao-site",
-    "relatorios", "guia", "laboratorio", "site-programador",
+    "relatorios", "guia", "laboratorio", "site-programador", "livros-web", "lives",
     "permissoes", "configuracoes", "central-whatsapp", "diagnostico-whatsapp"
   ],
 
