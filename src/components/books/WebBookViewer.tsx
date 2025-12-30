@@ -52,7 +52,8 @@ interface WebBookViewerProps {
 
 // ============================================
 // SANCTUM WATERMARK OVERLAY
-// Com padrão de marca d'água distribuído
+// Com padrão de marca d'água FORENSE - CPF + EMAIL
+// TRANSLÚCIDO MAS VISÍVEL - Proteção de conteúdo
 // ============================================
 
 const SanctumWatermark = memo(function SanctumWatermark({
@@ -73,15 +74,16 @@ const SanctumWatermark = memo(function SanctumWatermark({
         MozUserSelect: 'none',
       }}
     >
-      {/* Padrão de marcas d'água diagonal */}
-      <div className="absolute inset-0 grid grid-cols-3 gap-12 p-8 opacity-[0.06]">
-        {Array.from({ length: 18 }).map((_, i) => (
+      {/* Padrão de marcas d'água diagonal AUMENTADO */}
+      <div className="absolute inset-0 grid grid-cols-2 md:grid-cols-3 gap-8 p-4 opacity-[0.12]">
+        {Array.from({ length: 24 }).map((_, i) => (
           <div
             key={i}
-            className="text-foreground font-mono text-xs whitespace-nowrap transform rotate-[-30deg] select-none"
+            className="text-gray-600 dark:text-gray-400 font-mono text-xs whitespace-nowrap transform rotate-[-25deg] select-none"
             style={{ 
-              fontSize: '11px',
-              letterSpacing: '0.05em'
+              fontSize: '10px',
+              letterSpacing: '0.03em',
+              textShadow: '0 0 2px rgba(0,0,0,0.3)'
             }}
           >
             {text}
@@ -89,11 +91,49 @@ const SanctumWatermark = memo(function SanctumWatermark({
         ))}
       </div>
       
-      {/* Marca central grande */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-[0.04]">
+      {/* MARCA CENTRAL GRANDE E VISÍVEL - CPF + EMAIL */}
+      <div className="absolute inset-0 flex items-center justify-center opacity-[0.15]">
         <div 
-          className="text-foreground font-mono text-2xl whitespace-nowrap transform rotate-[-30deg] select-none"
-          style={{ letterSpacing: '0.1em' }}
+          className="text-gray-700 dark:text-gray-300 font-mono font-bold whitespace-nowrap transform rotate-[-20deg] select-none text-center"
+          style={{ 
+            fontSize: 'clamp(16px, 3vw, 28px)',
+            letterSpacing: '0.08em',
+            textShadow: '0 1px 3px rgba(0,0,0,0.4), 0 0 8px rgba(0,0,0,0.2)'
+          }}
+        >
+          {text}
+        </div>
+      </div>
+      
+      {/* Marca adicional nos cantos para redundância */}
+      <div className="absolute top-4 left-4 opacity-[0.18]">
+        <div 
+          className="text-gray-600 dark:text-gray-400 font-mono text-[9px] whitespace-nowrap select-none"
+          style={{ textShadow: '0 0 2px rgba(0,0,0,0.3)' }}
+        >
+          {text}
+        </div>
+      </div>
+      <div className="absolute bottom-4 right-4 opacity-[0.18]">
+        <div 
+          className="text-gray-600 dark:text-gray-400 font-mono text-[9px] whitespace-nowrap select-none"
+          style={{ textShadow: '0 0 2px rgba(0,0,0,0.3)' }}
+        >
+          {text}
+        </div>
+      </div>
+      <div className="absolute top-4 right-4 opacity-[0.18]">
+        <div 
+          className="text-gray-600 dark:text-gray-400 font-mono text-[9px] whitespace-nowrap select-none"
+          style={{ textShadow: '0 0 2px rgba(0,0,0,0.3)' }}
+        >
+          {text}
+        </div>
+      </div>
+      <div className="absolute bottom-4 left-4 opacity-[0.18]">
+        <div 
+          className="text-gray-600 dark:text-gray-400 font-mono text-[9px] whitespace-nowrap select-none"
+          style={{ textShadow: '0 0 2px rgba(0,0,0,0.3)' }}
         >
           {text}
         </div>

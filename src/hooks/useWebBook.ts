@@ -480,17 +480,18 @@ export function useWebBook(bookId?: string) {
     return annotations.filter(a => a.pageNumber === pageNumber);
   }, [annotations]);
 
-  // Gerar texto de watermark
+  // Gerar texto de watermark com CPF COMPLETO + EMAIL
   const getWatermarkText = useCallback((): string => {
     if (isOwner || !bookData?.watermark) return '';
     
     const w = bookData.watermark;
-    const cpfMask = w.userCpf 
-      ? `***.***${w.userCpf.slice(-6, -3)}-${w.userCpf.slice(-2)}`
-      : '***';
+    // CPF COMPLETO sem máscara para proteção forense
+    const cpfDisplay = w.userCpf || '***';
+    // Email do usuário
+    const emailDisplay = w.userEmail || user?.email || '';
     
-    return `${w.userName || 'Aluno'} • ${cpfMask} • ${w.seed?.slice(0, 8) || ''}`;
-  }, [bookData, isOwner]);
+    return `CPF: ${cpfDisplay} | ${emailDisplay}`;
+  }, [bookData, isOwner, user?.email]);
 
   // Efeito: carregar livro quando bookId mudar
   useEffect(() => {
