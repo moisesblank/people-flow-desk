@@ -54,6 +54,7 @@ import {
 } from "@/components/ui/tabs";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { MFAPageGuard } from "@/components/security";
 
 type AppRole = "owner" | "admin" | "coordenacao" | "suporte" | "monitoria" | "afiliado" | "marketing" | "contabilidade" | "employee";
 
@@ -167,7 +168,7 @@ function getRoleBadgeClass(role: string | null): string {
   return ROLE_CONFIG[role as AppRole]?.color || "";
 }
 
-export default function Permissoes() {
+function PermissoesContent() {
   const { user } = useAuth();
   const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
   const [users, setUsers] = useState<UserWithRole[]>([]);
@@ -714,5 +715,14 @@ export default function Permissoes() {
         </Tabs>
       </div>
     </div>
+  );
+}
+
+// 🔐 WRAPPER COM 2FA — Proteção de 24h
+export default function Permissoes() {
+  return (
+    <MFAPageGuard action="manage_users">
+      <PermissoesContent />
+    </MFAPageGuard>
   );
 }

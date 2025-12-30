@@ -29,6 +29,7 @@ export { MFAGuard } from './MFAGuard';
 // Totalmente desacoplado de login/sessão/dispositivo
 export { MFAActionGuard, MFAProtectedButton } from './MFAActionGuard';
 export { MFAActionModal } from './MFAActionModal';
+export { MFAPageGuard } from './MFAPageGuard';
 
 // ============================================
 // COMPONENTES DE DASHBOARD

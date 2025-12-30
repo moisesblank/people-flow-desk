@@ -56,6 +56,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { useCompanyFinanceHistory, formatCompanyCurrency, type CompanyPeriodFilter, type CompanyExpense, type PaymentStatus } from "@/hooks/useCompanyFinanceHistory";
 import { usePaymentsHistory, formatPaymentCurrency, type Payment } from "@/hooks/usePaymentsHistory";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, ResponsiveContainer, BarChart, Bar, LineChart, Line, PieChart as RechartPieChart, Pie, Cell, Legend, Tooltip as RechartsTooltip } from "recharts";
+import { MFAPageGuard } from "@/components/security";
 
 // ═══════════════════════════════════════════════════════════════
 // CONSTANTES
@@ -104,7 +105,7 @@ type ItemType = "gasto_fixo" | "gasto_extra" | "pagamento";
 // COMPONENTE PRINCIPAL
 // ═══════════════════════════════════════════════════════════════
 
-export default function FinancasEmpresa() {
+function FinancasEmpresaContent() {
   const { user } = useAuth();
   const { gpuAnimationProps, shouldAnimate } = useQuantumReactivity();
   
@@ -2116,5 +2117,14 @@ export default function FinancasEmpresa() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+// 🔐 WRAPPER COM 2FA — Proteção de 24h
+export default function FinancasEmpresa() {
+  return (
+    <MFAPageGuard action="financial_access">
+      <FinancasEmpresaContent />
+    </MFAPageGuard>
   );
 }
