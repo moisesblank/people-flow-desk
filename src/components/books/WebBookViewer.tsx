@@ -1015,7 +1015,7 @@ export const WebBookViewer = memo(function WebBookViewer({
             {/* Container principal com glow */}
             <div className="relative">
               {/* Glow externo */}
-              <div className="absolute -inset-2 rounded-2xl opacity-40 blur-lg bg-gradient-to-b from-blue-600 via-teal-500 to-emerald-600 animate-pulse" />
+              <div className="absolute -inset-2 rounded-2xl opacity-40 blur-lg bg-gradient-to-b from-blue-600 via-teal-500 to-emerald-600 animate-pulse pointer-events-none" />
               
               {/* Painel de ferramentas */}
               <div className="relative flex flex-col gap-2 p-3 rounded-xl bg-gradient-to-br from-black via-gray-900 to-black border-2 border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.4),inset_0_0_15px_rgba(6,182,212,0.1)]">
