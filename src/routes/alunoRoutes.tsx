@@ -42,10 +42,8 @@ export const alunoRoutes = (
   <>
     <Route path="/alunos" element={<ProtectedPage><AlunosRouteSwitcher /></ProtectedPage>} />
     <Route path="/alunos/dashboard" element={<ProtectedPage><AlunoDashboard /></ProtectedPage>} />
-    {/* Canonical */}
+    {/* Canonical - Livros Web */}
     <Route path="/alunos/livro-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
-    {/* Alias (compat) */}
-    <Route path="/alunos/livros-web" element={<ProtectedPage><AlunoLivroWeb /></ProtectedPage>} />
     <Route path="/alunos/cronograma" element={<ProtectedPage><AlunoCronograma /></ProtectedPage>} />
     <Route path="/alunos/videoaulas" element={<ProtectedPage><AlunoVideoaulas /></ProtectedPage>} />
     <Route path="/alunos/materiais" element={<ProtectedPage><AlunoMateriais /></ProtectedPage>} />
