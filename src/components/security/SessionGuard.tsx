@@ -285,31 +285,39 @@ export function SessionGuard({ children }: SessionGuardProps) {
   }, [user, handleBackendRevocation, validateSession, handleDeviceRevocation]);
 
   // 🔒 SESSION_BINDING_ENFORCEMENT: Realtime listener on active_sessions
-  // When MY session_token row is updated to status='revoked', logout IMMEDIATELY
+  // Filtrar por user_id (suportado) e verificar session_token no callback
   useEffect(() => {
     if (!user) return;
 
     const myToken = localStorage.getItem(SESSION_TOKEN_KEY);
-    if (!myToken) return;
-
-    console.log('[SessionGuard] 🔗 Iniciando listener Realtime para token:', myToken.slice(0, 8) + '...');
+    
+    console.log('[SessionGuard] 🔗 Iniciando listener Realtime para user:', user.id, 'token:', myToken?.slice(0, 8) + '...');
 
     const realtimeChannel = supabase
-      .channel('session-revocation-realtime')
+      .channel(`session-revocation-${user.id}`)
       .on(
         'postgres_changes',
         {
           event: 'UPDATE',
           schema: 'public',
           table: 'active_sessions',
-          filter: `session_token=eq.${myToken}`,
+          filter: `user_id=eq.${user.id}`,
         },
         async (payload) => {
           const newStatus = payload.new?.status;
-          console.log('[SessionGuard] 📡 Realtime UPDATE active_sessions:', newStatus);
+          const payloadToken = payload.new?.session_token;
+          const currentToken = localStorage.getItem(SESSION_TOKEN_KEY);
+          
+          console.log('[SessionGuard] 📡 Realtime UPDATE active_sessions:', {
+            newStatus,
+            payloadToken: payloadToken?.slice(0, 8) + '...',
+            currentToken: currentToken?.slice(0, 8) + '...',
+            match: payloadToken === currentToken
+          });
 
-          if (newStatus === 'revoked') {
-            console.error('[SessionGuard] 🔴 Sessão revogada via Realtime INSTANTÂNEO!');
+          // ⚡ Se MINHA sessão foi revogada → logout imediato
+          if (newStatus === 'revoked' && payloadToken === currentToken) {
+            console.error('[SessionGuard] 🔴 MINHA sessão revogada via Realtime INSTANTÂNEO!');
             handleDeviceRevocation();
           }
         }
