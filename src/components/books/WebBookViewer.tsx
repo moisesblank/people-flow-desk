@@ -35,6 +35,7 @@ import { toast } from 'sonner';
 import { PdfPageViewer } from './PdfPageViewer';
 import { ReadingModeToolbar, ToolMode } from './ReadingModeToolbar';
 import { useBookAnnotations } from '@/hooks/useBookAnnotations';
+import { useBookPageOverlays } from '@/hooks/useBookPageOverlays';
 import { CalculatorButton } from '@/components/Calculator';
 import { PeriodicTableButton } from '@/components/PeriodicTable';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
@@ -401,8 +402,11 @@ export const WebBookViewer = memo(function WebBookViewer({
     pdfModeData
   } = useWebBook(bookId);
 
-  // Hook de anotações para salvar histórico
-  const { refetch: refetchAnnotations, isLoading: isSavingAnnotations } = useBookAnnotations(bookId);
+  // Hook de anotações para salvar histórico (anotações/bmarks)
+  const { refetch: refetchAnnotations } = useBookAnnotations(bookId);
+
+  // Hook de overlays (desenhos + texto do canvas) — persistência por aluno
+  const { getOverlayForPage, saveOverlays } = useBookPageOverlays(bookId);
 
   // Estado local
   const [zoom, setZoom] = useState(1);
@@ -496,21 +500,40 @@ export const WebBookViewer = memo(function WebBookViewer({
     }
   }, []);
 
-  // Função para salvar histórico de anotações
+  // Função para salvar histórico de anotações + overlays (desenhos/texto)
   const handleSaveHistory = useCallback(async () => {
     setIsSavingHistory(true);
     try {
+      // 1) Salvar overlays do canvas por página (por aluno)
+      const pagesWithData = new Set<number>();
+      drawingStrokes.forEach((s) => pagesWithData.add(s.pageNumber));
+      textAnnotations.forEach((t) => pagesWithData.add(t.pageNumber));
+
+      const overlayPayload = Array.from(pagesWithData).map((page) => ({
+        book_id: bookId,
+        page_number: page,
+        strokes: (drawingStrokes.filter((s) => s.pageNumber === page) as unknown) as any,
+        texts: (textAnnotations.filter((t) => t.pageNumber === page) as unknown) as any,
+      }));
+
+      if (overlayPayload.length) {
+        await saveOverlays(overlayPayload as any);
+      }
+
+      // 2) Refetch das anotações tradicionais (notes/bookmarks)
       await refetchAnnotations();
+
       toast.success('Histórico salvo com sucesso!', {
-        description: 'Suas anotações e marcações foram sincronizadas.',
+        description: 'Anotações, marcações e desenhos foram persistidos.',
         icon: <Save className="w-4 h-4 text-green-500" />,
       });
     } catch (error) {
+      console.error('Erro ao salvar histórico:', error);
       toast.error('Erro ao salvar histórico');
     } finally {
       setIsSavingHistory(false);
     }
-  }, [refetchAnnotations]);
+  }, [bookId, drawingStrokes, textAnnotations, saveOverlays, refetchAnnotations]);
 
   useEffect(() => {
     if (isOwner) return; // Owner não tem bloqueios
@@ -602,6 +625,25 @@ export const WebBookViewer = memo(function WebBookViewer({
   useEffect(() => {
     setImageLoading(true);
   }, [currentPage]);
+
+  // Carregar overlays persistidos quando mudar a página
+  useEffect(() => {
+    const overlay = getOverlayForPage(currentPage);
+    if (!overlay) return;
+
+    const strokes = (overlay.strokes as any[]) || [];
+    const texts = (overlay.texts as any[]) || [];
+
+    setDrawingStrokes((prev) => [
+      ...prev.filter((s) => s.pageNumber !== currentPage),
+      ...strokes,
+    ]);
+
+    setTextAnnotations((prev) => [
+      ...prev.filter((t) => t.pageNumber !== currentPage),
+      ...texts,
+    ]);
+  }, [currentPage, getOverlayForPage]);
 
   // Loading state (inclui loading do PDF)
   const isLoadingAnything = isLoading || (needsPdfMode && pdfRenderer.isLoading && !pdfRenderer.pdfLoaded);
