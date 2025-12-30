@@ -958,11 +958,11 @@ export const WebBookViewer = memo(function WebBookViewer({
             <motion.div
               key={currentPage}
               initial={{ opacity: 0, x: 50 }}
-              animate={{ opacity: 1, x: 0 }}
+              animate={{ opacity: 1, x: 0, scale: zoom }}
               exit={{ opacity: 0, x: -50 }}
-              transition={{ duration: 0.2 }}
+              transition={{ duration: 0.2, scale: { duration: 0.15 } }}
               className="relative"
-              style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
+              style={{ transformOrigin: 'center' }}
             >
               {/* Loading indicator */}
               {(imageLoading || (needsPdfMode && pdfRenderer.isLoading)) && (
