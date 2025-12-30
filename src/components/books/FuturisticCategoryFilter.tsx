@@ -1,581 +1,816 @@
 // ============================================
-// 🚀 CATEGORIA FILTER - IRON MAN HUD 2300
-// Interface de Nave Espacial / Stark Industries
-// Cinematográfico Ultra Premium
+// 🚀 STARK INDUSTRIES COMMAND CENTER v4.0
+// Iron Man JARVIS / Year 2300 HUD Interface
+// Cinematográfico Ultra Premium — Marvel Studios Level
 // ============================================
 
-import { memo, useEffect, useState } from 'react';
-import { Atom, FlaskConical, Hexagon, BookOpen, Globe } from 'lucide-react';
+import { memo, useMemo } from 'react';
+import { cn } from '@/lib/utils';
+import { Atom, FlaskConical, Flame, RefreshCw, Eye } from 'lucide-react';
 
 interface CategoryItem {
   id: string;
   name: string;
   subtitle: string;
+  systemCode: string;
+  powerLevel: number;
+  statusText: string;
   colors: {
+    hue: number;
+    hue2: number;
     main: string;
-    dark: string;
     glow: string;
     neon: string;
-    plasma: string;
     rgb: string;
   };
   icon: React.ElementType;
 }
 
-const CATEGORIES: CategoryItem[] = [
+const STARK_CATEGORIES: CategoryItem[] = [
   {
     id: 'quimica-geral',
-    name: 'QUÍMICA',
-    subtitle: 'GERAL',
+    name: 'QUÍMICA GERAL',
+    subtitle: 'QUANTUM REACTOR',
+    systemCode: 'QG-001',
+    powerLevel: 98,
+    statusText: 'NUCLEAR READY',
     colors: {
-      main: '#FF0040',
-      dark: '#4A0012',
-      glow: '#FF3366',
-      neon: '#FF6B8A',
-      plasma: '#FF99AA',
-      rgb: '255, 0, 64',
-    },
-    icon: FlaskConical,
-  },
-  {
-    id: 'quimica-organica',
-    name: 'QUÍMICA',
-    subtitle: 'ORGÂNICA',
-    colors: {
-      main: '#8B00FF',
-      dark: '#2D004D',
-      glow: '#A64DFF',
-      neon: '#BF80FF',
-      plasma: '#D9B3FF',
-      rgb: '139, 0, 255',
-    },
-    icon: Hexagon,
-  },
-  {
-    id: 'fisico-quimica',
-    name: 'FÍSICO',
-    subtitle: 'QUÍMICA',
-    colors: {
-      main: '#00FF88',
-      dark: '#003D21',
-      glow: '#33FF9F',
-      neon: '#66FFB6',
-      plasma: '#99FFCD',
-      rgb: '0, 255, 136',
+      hue: 350,
+      hue2: 10,
+      main: '#FF0A3C',
+      glow: '#FF4D6D',
+      neon: '#FF8FA3',
+      rgb: '255, 10, 60',
     },
     icon: Atom,
   },
   {
+    id: 'quimica-organica',
+    name: 'QUÍMICA ORGÂNICA',
+    subtitle: 'MOLECULAR MATRIX',
+    systemCode: 'QO-002',
+    powerLevel: 95,
+    statusText: 'SYNTHESIS ACTIVE',
+    colors: {
+      hue: 260,
+      hue2: 280,
+      main: '#8B00FF',
+      glow: '#A64DFF',
+      neon: '#C99DFF',
+      rgb: '139, 0, 255',
+    },
+    icon: FlaskConical,
+  },
+  {
+    id: 'fisico-quimica',
+    name: 'FÍSICO QUÍMICA',
+    subtitle: 'THERMO DYNAMICS',
+    systemCode: 'FQ-003',
+    powerLevel: 92,
+    statusText: 'ENERGY STABLE',
+    colors: {
+      hue: 150,
+      hue2: 170,
+      main: '#00FF88',
+      glow: '#33FF9F',
+      neon: '#80FFBE',
+      rgb: '0, 255, 136',
+    },
+    icon: Flame,
+  },
+  {
     id: 'revisao',
     name: 'REVISÃO',
-    subtitle: 'INTENSIVA',
+    subtitle: 'NEURAL SYNC',
+    systemCode: 'RV-004',
+    powerLevel: 88,
+    statusText: 'MEMORY LINKED',
     colors: {
-      main: '#00AAFF',
-      dark: '#002D44',
-      glow: '#33BBFF',
-      neon: '#66CCFF',
-      plasma: '#99DDFF',
-      rgb: '0, 170, 255',
+      hue: 200,
+      hue2: 220,
+      main: '#00C8FF',
+      glow: '#33D6FF',
+      neon: '#80E8FF',
+      rgb: '0, 200, 255',
     },
-    icon: BookOpen,
+    icon: RefreshCw,
   },
   {
     id: 'previsao',
     name: 'PREVISÃO',
-    subtitle: 'ESTRATÉGICA',
+    subtitle: 'ORACLE SYSTEM',
+    systemCode: 'PV-005',
+    powerLevel: 94,
+    statusText: 'FORECAST ONLINE',
     colors: {
+      hue: 45,
+      hue2: 60,
       main: '#FFD000',
-      dark: '#443800',
-      glow: '#FFD933',
-      neon: '#FFE266',
-      plasma: '#FFEB99',
+      glow: '#FFE033',
+      neon: '#FFEB80',
       rgb: '255, 208, 0',
     },
-    icon: Globe,
+    icon: Eye,
   },
 ];
 
 interface FuturisticCategoryFilterProps {
+  categories?: Array<{ id: string; name: string; slug?: string; }>;
   selectedCategory: string | null;
-  onCategoryClick: (categoryId: string) => void;
+  onCategorySelect?: (categoryId: string | null) => void;
+  onCategoryClick?: (categoryId: string) => void;
+  className?: string;
 }
 
 export const FuturisticCategoryFilter = memo(function FuturisticCategoryFilter({
   selectedCategory,
+  onCategorySelect,
   onCategoryClick,
+  className,
 }: FuturisticCategoryFilterProps) {
+  
+  const handleClick = (categoryId: string) => {
+    if (onCategorySelect) {
+      onCategorySelect(selectedCategory === categoryId ? null : categoryId);
+    } else if (onCategoryClick) {
+      onCategoryClick(categoryId);
+    }
+  };
+
   return (
-    <section className="relative mb-16 py-8">
-      {/* ═══ COSMIC BACKGROUND ═══ */}
-      <div className="absolute inset-0 -z-10 overflow-hidden rounded-3xl">
-        {/* Deep space */}
-        <div className="absolute inset-0 bg-gradient-to-b from-black via-slate-950 to-black" />
+    <section className={cn("relative py-12 overflow-hidden", className)}>
+      {/* ═══════════════════════════════════════════════════════════════════
+          LAYER 0: COSMIC VOID — Deep Space Background
+      ═══════════════════════════════════════════════════════════════════ */}
+      <div className="absolute inset-0 -z-10">
+        {/* Absolute black void */}
+        <div className="absolute inset-0 bg-gradient-to-b from-[#000000] via-[#030308] to-[#000000]" />
         
         {/* Nebula clouds */}
-        <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/20 rounded-full blur-[100px] animate-pulse" />
-        <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-blue-600/20 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: '1s' }} />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[600px] bg-cyan-600/10 rounded-full blur-[120px]" />
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: `
+              radial-gradient(ellipse 100% 60% at 20% 30%, hsla(280,100%,40%,0.12) 0%, transparent 50%),
+              radial-gradient(ellipse 80% 50% at 80% 70%, hsla(200,100%,50%,0.08) 0%, transparent 50%),
+              radial-gradient(ellipse 120% 80% at 50% 100%, hsla(350,100%,40%,0.06) 0%, transparent 40%)
+            `
+          }}
+        />
         
-        {/* Star field */}
-        <div className="stars-field absolute inset-0" />
-      </div>
-
-      {/* ═══ HUD FRAME ═══ */}
-      <div className="absolute inset-4 border border-cyan-500/20 rounded-2xl pointer-events-none">
-        <div className="absolute top-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
-        <div className="absolute bottom-0 left-8 right-8 h-px bg-gradient-to-r from-transparent via-cyan-400/50 to-transparent" />
-      </div>
-
-      {/* ═══ SECTION TITLE ═══ */}
-      <div className="relative text-center mb-8">
-        <div className="inline-flex items-center gap-4">
-          <div className="w-16 md:w-32 h-px bg-gradient-to-r from-transparent to-cyan-400" />
-          <h2 className="text-xs md:text-sm font-mono tracking-[0.5em] text-cyan-400/80 uppercase">
-            Selecione a Categoria
-          </h2>
-          <div className="w-16 md:w-32 h-px bg-gradient-to-l from-transparent to-cyan-400" />
-        </div>
-      </div>
-
-      {/* ═══ CARDS GRID ═══ */}
-      <div className="relative flex flex-col gap-6 md:gap-10 px-4">
-        {/* Row 1: 3 cards */}
-        <div className="grid grid-cols-3 gap-4 md:gap-8">
-          {CATEGORIES.slice(0, 3).map((cat, i) => (
-            <HolographicCard
-              key={cat.id}
-              category={cat}
-              isActive={selectedCategory === cat.id}
-              onClick={() => onCategoryClick(cat.id)}
-              index={i}
+        {/* Animated star field */}
+        <div className="absolute inset-0 overflow-hidden">
+          {[...Array(120)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: i % 10 === 0 ? '3px' : i % 5 === 0 ? '2px' : '1px',
+                height: i % 10 === 0 ? '3px' : i % 5 === 0 ? '2px' : '1px',
+                left: `${(i * 7.3) % 100}%`,
+                top: `${(i * 11.7) % 100}%`,
+                background: i % 3 === 0 ? 'hsl(200,100%,80%)' : i % 3 === 1 ? 'hsl(280,100%,85%)' : 'white',
+                boxShadow: `0 0 ${4 + (i % 8)}px currentColor`,
+                animation: `stark-star-twinkle ${1.5 + (i % 5) * 0.5}s ease-in-out infinite`,
+                animationDelay: `${(i % 20) * 0.1}s`,
+                opacity: 0.3 + (i % 10) * 0.07
+              }}
             />
           ))}
         </div>
         
-        {/* Row 2: 2 cards centered */}
-        <div className="grid grid-cols-2 gap-4 md:gap-8 max-w-[70%] mx-auto w-full">
-          {CATEGORIES.slice(3, 5).map((cat, i) => (
-            <HolographicCard
+        {/* Holographic grid */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(90deg, hsla(200,100%,70%,0.8) 1px, transparent 1px),
+              linear-gradient(0deg, hsla(200,100%,70%,0.8) 1px, transparent 1px)
+            `,
+            backgroundSize: '100px 100px',
+            animation: 'stark-grid-drift 30s linear infinite'
+          }}
+        />
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          LAYER 1: STARK INDUSTRIES HEADER
+      ═══════════════════════════════════════════════════════════════════ */}
+      <div className="relative z-10 text-center mb-12">
+        {/* Top tech ornament */}
+        <div className="flex items-center justify-center gap-3 mb-6">
+          <div className="h-[2px] w-24 md:w-40 bg-gradient-to-r from-transparent via-cyan-500/60 to-cyan-400" 
+               style={{ boxShadow: '0 0 20px hsla(180,100%,50%,0.4)' }} />
+          
+          <div className="flex items-center gap-2 px-4 py-1.5 rounded-full border border-cyan-500/30 bg-cyan-500/5"
+               style={{ boxShadow: '0 0 30px hsla(180,100%,50%,0.15), inset 0 0 20px hsla(180,100%,50%,0.05)' }}>
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" 
+                 style={{ boxShadow: '0 0 10px hsl(180,100%,50%)' }} />
+            <span className="text-[10px] md:text-xs font-mono text-cyan-400 tracking-[0.4em] uppercase">
+              Stark Industries
+            </span>
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" 
+                 style={{ boxShadow: '0 0 10px hsl(180,100%,50%)' }} />
+          </div>
+          
+          <div className="h-[2px] w-24 md:w-40 bg-gradient-to-l from-transparent via-cyan-500/60 to-cyan-400" 
+               style={{ boxShadow: '0 0 20px hsla(180,100%,50%,0.4)' }} />
+        </div>
+
+        {/* Main title */}
+        <h2 
+          className="text-4xl md:text-6xl lg:text-7xl font-black tracking-[0.15em] uppercase"
+          style={{
+            background: 'linear-gradient(180deg, hsl(200,100%,80%) 0%, hsl(180,100%,70%) 50%, hsl(200,100%,60%) 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            textShadow: '0 0 60px hsla(180,100%,50%,0.5)',
+            filter: 'drop-shadow(0 0 40px hsla(180,100%,50%,0.3))'
+          }}
+        >
+          Knowledge Hub
+        </h2>
+        
+        {/* Subtitle */}
+        <div className="mt-4 flex items-center justify-center gap-4">
+          <div className="w-4 h-4 rotate-45 border border-cyan-500/50" />
+          <p className="text-cyan-400/70 text-xs md:text-sm font-mono tracking-[0.5em] uppercase animate-pulse">
+            Select Quantum Module
+          </p>
+          <div className="w-4 h-4 rotate-45 border border-cyan-500/50" />
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════════════
+          LAYER 2: CATEGORY CARDS GRID
+      ═══════════════════════════════════════════════════════════════════ */}
+      <div className="relative z-10 max-w-7xl mx-auto px-4">
+        {/* Row 1: First 3 categories */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-6 lg:mb-8">
+          {STARK_CATEGORIES.slice(0, 3).map((cat, index) => (
+            <StarkModuleCard
               key={cat.id}
               category={cat}
               isActive={selectedCategory === cat.id}
-              onClick={() => onCategoryClick(cat.id)}
-              index={i + 3}
+              onClick={() => handleClick(cat.id)}
+              index={index}
+            />
+          ))}
+        </div>
+        
+        {/* Row 2: Last 2 categories centered */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto">
+          {STARK_CATEGORIES.slice(3, 5).map((cat, index) => (
+            <StarkModuleCard
+              key={cat.id}
+              category={cat}
+              isActive={selectedCategory === cat.id}
+              onClick={() => handleClick(cat.id)}
+              index={index + 3}
             />
           ))}
         </div>
       </div>
 
-      {/* ═══ GLOBAL STYLES ═══ */}
+      {/* ═══════════════════════════════════════════════════════════════════
+          GLOBAL KEYFRAME ANIMATIONS
+      ═══════════════════════════════════════════════════════════════════ */}
       <style>{`
-        .stars-field {
-          background-image: 
-            radial-gradient(2px 2px at 20px 30px, white, transparent),
-            radial-gradient(2px 2px at 40px 70px, rgba(255,255,255,0.8), transparent),
-            radial-gradient(1px 1px at 90px 40px, white, transparent),
-            radial-gradient(2px 2px at 160px 120px, rgba(255,255,255,0.9), transparent),
-            radial-gradient(1px 1px at 230px 80px, white, transparent),
-            radial-gradient(2px 2px at 300px 150px, rgba(255,255,255,0.7), transparent),
-            radial-gradient(1px 1px at 350px 30px, white, transparent),
-            radial-gradient(1px 1px at 400px 100px, rgba(255,255,255,0.8), transparent),
-            radial-gradient(2px 2px at 450px 60px, white, transparent),
-            radial-gradient(1px 1px at 500px 140px, rgba(255,255,255,0.6), transparent);
-          background-size: 550px 200px;
-          animation: stars-drift 60s linear infinite;
+        @keyframes stark-star-twinkle {
+          0%, 100% { opacity: 0.2; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.4); }
         }
-        @keyframes stars-drift {
-          from { background-position: 0 0; }
-          to { background-position: 550px 200px; }
+        @keyframes stark-grid-drift {
+          0% { transform: translate(0, 0); }
+          100% { transform: translate(100px, 100px); }
         }
-        @keyframes plasma-flow {
-          0%, 100% { opacity: 0.6; transform: scale(1) rotate(0deg); }
-          50% { opacity: 1; transform: scale(1.1) rotate(180deg); }
-        }
-        @keyframes hologram-flicker {
-          0%, 100% { opacity: 1; }
-          92% { opacity: 1; }
-          93% { opacity: 0.6; }
-          94% { opacity: 1; }
-          97% { opacity: 0.8; }
-          98% { opacity: 1; }
-        }
-        @keyframes energy-ring {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-        @keyframes energy-ring-reverse {
-          from { transform: rotate(360deg); }
-          to { transform: rotate(0deg); }
-        }
-        @keyframes power-surge {
-          0%, 100% { opacity: 0.3; transform: scaleY(1); }
-          50% { opacity: 0.8; transform: scaleY(1.5); }
-        }
-        @keyframes core-pulse {
+        @keyframes stark-core-pulse {
           0%, 100% { transform: scale(1); filter: brightness(1); }
-          50% { transform: scale(1.15); filter: brightness(1.3); }
+          50% { transform: scale(1.15); filter: brightness(1.4); }
         }
-        @keyframes scan-beam {
-          0% { transform: translateY(-200%) rotate(-5deg); }
-          100% { transform: translateY(400%) rotate(-5deg); }
+        @keyframes stark-ring-spin {
+          from { transform: translate(-50%, -50%) rotate(0deg); }
+          to { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        @keyframes circuit-trace {
-          0% { stroke-dashoffset: 200; }
-          100% { stroke-dashoffset: 0; }
+        @keyframes stark-ring-spin-reverse {
+          from { transform: translate(-50%, -50%) rotate(360deg); }
+          to { transform: translate(-50%, -50%) rotate(0deg); }
         }
-        @keyframes float-particle {
-          0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+        @keyframes stark-scan-sweep {
+          0% { transform: translateY(-100%); opacity: 0; }
           10% { opacity: 1; }
           90% { opacity: 1; }
-          100% { transform: translateY(-100px) translateX(20px); opacity: 0; }
+          100% { transform: translateY(500%); opacity: 0; }
         }
-        .holo-card {
+        @keyframes stark-data-stream {
+          0% { transform: translateY(0); opacity: 1; }
+          100% { transform: translateY(-200px); opacity: 0; }
+        }
+        @keyframes stark-bracket-pulse {
+          0%, 100% { opacity: 0.6; filter: brightness(1); }
+          50% { opacity: 1; filter: brightness(1.5); }
+        }
+        @keyframes stark-power-flow {
+          0%, 100% { transform: scaleX(0.3); opacity: 0.5; }
+          50% { transform: scaleX(1); opacity: 1; }
+        }
+        @keyframes stark-hex-rotate {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(60deg); }
+        }
+        @keyframes stark-particle-rise {
+          0%, 100% { transform: translateY(0) translateX(0); opacity: 0; }
+          10% { opacity: 1; }
+          90% { opacity: 0.8; }
+          100% { transform: translateY(-80px) translateX(10px); opacity: 0; }
+        }
+        @keyframes stark-circuit-flow {
+          0% { stroke-dashoffset: 300; }
+          100% { stroke-dashoffset: 0; }
+        }
+        @keyframes stark-energy-wave {
+          0%, 100% { transform: scale(0.9); opacity: 0.3; }
+          50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        @keyframes stark-hologram-glitch {
+          0%, 100% { opacity: 1; transform: translateX(0); }
+          92% { opacity: 1; }
+          93% { opacity: 0.4; transform: translateX(-2px); }
+          94% { opacity: 1; transform: translateX(2px); }
+          95% { opacity: 0.6; transform: translateX(-1px); }
+          96% { opacity: 1; transform: translateX(0); }
+        }
+        @keyframes stark-status-blink {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.3; }
+        }
+        @keyframes stark-shield-shimmer {
+          0% { background-position: -200% center; }
+          100% { background-position: 200% center; }
+        }
+        .stark-card {
           transform-style: preserve-3d;
-          perspective: 1500px;
-          transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+          transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
         }
-        .holo-card:hover {
-          transform: translateY(-12px) rotateX(8deg) scale(1.02);
+        .stark-card:hover {
+          transform: translateY(-8px) scale(1.02);
         }
-        .holo-card:active {
-          transform: translateY(-6px) scale(0.98);
-        }
-        .holo-card.active {
-          transform: translateY(-8px) scale(1.03);
+        .stark-card.active {
+          transform: translateY(-12px) scale(1.03);
         }
       `}</style>
     </section>
   );
 });
 
-interface HolographicCardProps {
+// ═══════════════════════════════════════════════════════════════════════════
+// STARK MODULE CARD — Individual HUD Module Component
+// ═══════════════════════════════════════════════════════════════════════════
+interface StarkModuleCardProps {
   category: CategoryItem;
   isActive: boolean;
   onClick: () => void;
   index: number;
 }
 
-const HolographicCard = memo(function HolographicCard({
+const StarkModuleCard = memo(function StarkModuleCard({
   category,
   isActive,
   onClick,
   index,
-}: HolographicCardProps) {
+}: StarkModuleCardProps) {
   const Icon = category.icon;
-  const { main, dark, glow, neon, plasma, rgb } = category.colors;
+  const { hue, hue2, main, glow, neon, rgb } = category.colors;
   
   return (
     <button
       onClick={onClick}
-      className={`holo-card group relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden cursor-pointer ${isActive ? 'active' : ''}`}
+      className={cn(
+        "stark-card group relative aspect-[16/11] rounded-xl overflow-hidden cursor-pointer",
+        "focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50",
+        isActive && "active"
+      )}
       style={{
-        background: `linear-gradient(145deg, ${dark} 0%, #000000 50%, ${dark} 100%)`,
+        background: `linear-gradient(145deg, hsl(${hue},30%,6%) 0%, hsl(${hue},20%,3%) 50%, hsl(${hue},25%,5%) 100%)`,
         boxShadow: isActive 
-          ? `0 0 80px rgba(${rgb}, 0.6), 0 0 160px rgba(${rgb}, 0.3), 0 30px 60px rgba(0,0,0,0.8), inset 0 0 100px rgba(${rgb}, 0.15)` 
-          : `0 20px 60px rgba(0,0,0,0.8), 0 0 40px rgba(${rgb}, 0.1)`,
-        animationDelay: `${index * 0.1}s`,
+          ? `0 0 60px rgba(${rgb},0.5), 0 0 120px rgba(${rgb},0.25), 0 25px 50px rgba(0,0,0,0.8), inset 0 0 60px rgba(${rgb},0.1)`
+          : `0 20px 40px rgba(0,0,0,0.7), 0 0 30px rgba(${rgb},0.1)`,
+        animationDelay: `${index * 100}ms`,
       }}
     >
-      {/* ══════ LAYER 1: Holographic Base ══════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 1: Hexagonal Grid Pattern
+      ══════════════════════════════════════════════════════════════════ */}
       <div 
-        className="absolute inset-0"
+        className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500"
         style={{
-          background: `
-            radial-gradient(ellipse at 50% 0%, rgba(${rgb}, 0.2) 0%, transparent 60%),
-            radial-gradient(ellipse at 50% 100%, rgba(${rgb}, 0.15) 0%, transparent 50%)
-          `,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52'%3E%3Cpath d='M30 0L60 15v22L30 52 0 37V15z' fill='none' stroke='${encodeURIComponent(main)}' stroke-width='0.5' opacity='0.5'/%3E%3C/svg%3E")`,
+          backgroundSize: '60px 52px',
+          animation: isActive ? 'stark-hex-rotate 30s linear infinite' : 'none'
         }}
       />
 
-      {/* ══════ LAYER 2: Circuit Pattern ══════ */}
-      <svg className="absolute inset-0 w-full h-full opacity-30" viewBox="0 0 200 300" preserveAspectRatio="none">
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 2: Circuit Board SVG
+      ══════════════════════════════════════════════════════════════════ */}
+      <svg className="absolute inset-0 w-full h-full opacity-20 group-hover:opacity-40 transition-opacity duration-500" viewBox="0 0 300 200">
         <defs>
-          <linearGradient id={`circuit-grad-${category.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={`circuit-${category.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor={glow} stopOpacity="0" />
             <stop offset="50%" stopColor={glow} stopOpacity="1" />
             <stop offset="100%" stopColor={glow} stopOpacity="0" />
           </linearGradient>
         </defs>
-        {/* Horizontal lines */}
-        <path d="M0 50 L80 50 L90 60 L200 60" fill="none" stroke={`url(#circuit-grad-${category.id})`} strokeWidth="0.5" strokeDasharray="200" style={{ animation: isActive ? 'circuit-trace 3s linear infinite' : undefined }} />
-        <path d="M0 150 L60 150 L70 140 L120 140 L130 150 L200 150" fill="none" stroke={`url(#circuit-grad-${category.id})`} strokeWidth="0.5" strokeDasharray="200" style={{ animation: isActive ? 'circuit-trace 4s linear infinite' : undefined }} />
-        <path d="M0 250 L100 250 L110 240 L200 240" fill="none" stroke={`url(#circuit-grad-${category.id})`} strokeWidth="0.5" strokeDasharray="200" style={{ animation: isActive ? 'circuit-trace 3.5s linear infinite' : undefined }} />
-        {/* Vertical lines */}
-        <path d="M50 0 L50 100 L60 110 L60 200" fill="none" stroke={`url(#circuit-grad-${category.id})`} strokeWidth="0.5" strokeDasharray="200" style={{ animation: isActive ? 'circuit-trace 4s linear infinite' : undefined }} />
-        <path d="M150 300 L150 200 L140 190 L140 100" fill="none" stroke={`url(#circuit-grad-${category.id})`} strokeWidth="0.5" strokeDasharray="200" style={{ animation: isActive ? 'circuit-trace 3.5s linear infinite' : undefined }} />
-        {/* Connection nodes */}
-        <circle cx="90" cy="60" r="3" fill={glow} opacity="0.8" />
-        <circle cx="70" cy="140" r="3" fill={glow} opacity="0.8" />
-        <circle cx="130" cy="150" r="3" fill={glow} opacity="0.8" />
-        <circle cx="50" cy="100" r="3" fill={glow} opacity="0.8" />
-        <circle cx="140" cy="190" r="3" fill={glow} opacity="0.8" />
+        
+        {/* Main circuit paths */}
+        <path 
+          d="M0,40 L60,40 L75,25 L140,25 L160,45 L250,45" 
+          fill="none" 
+          stroke={`url(#circuit-${category.id})`} 
+          strokeWidth="1"
+          strokeDasharray="300"
+          style={{ animation: isActive ? 'stark-circuit-flow 4s linear infinite' : 'none' }}
+        />
+        <path 
+          d="M300,80 L240,80 L220,100 L150,100 L130,80 L50,80" 
+          fill="none" 
+          stroke={`url(#circuit-${category.id})`} 
+          strokeWidth="1"
+          strokeDasharray="300"
+          style={{ animation: isActive ? 'stark-circuit-flow 5s linear infinite 0.5s' : 'none' }}
+        />
+        <path 
+          d="M0,150 L80,150 L100,130 L200,130 L220,150 L300,150" 
+          fill="none" 
+          stroke={`url(#circuit-${category.id})`} 
+          strokeWidth="1"
+          strokeDasharray="300"
+          style={{ animation: isActive ? 'stark-circuit-flow 4.5s linear infinite 1s' : 'none' }}
+        />
+        
+        {/* Circuit nodes */}
+        {[
+          { cx: 75, cy: 25 }, { cx: 160, cy: 45 }, { cx: 220, cy: 100 },
+          { cx: 130, cy: 80 }, { cx: 100, cy: 130 }, { cx: 220, cy: 150 }
+        ].map((node, i) => (
+          <g key={i}>
+            <circle cx={node.cx} cy={node.cy} r="4" fill={glow} opacity="0.8"
+              style={{ 
+                filter: `drop-shadow(0 0 6px ${main})`,
+                animation: isActive ? `stark-core-pulse 2s ease-in-out infinite ${i * 0.2}s` : 'none'
+              }}
+            />
+            <circle cx={node.cx} cy={node.cy} r="8" fill="none" stroke={glow} strokeWidth="0.5" opacity="0.4" />
+          </g>
+        ))}
       </svg>
 
-      {/* ══════ LAYER 3: Premium Frame ══════ */}
-      <div className="absolute inset-0 rounded-2xl md:rounded-3xl pointer-events-none">
-        {/* Outer glow border */}
-        <div 
-          className="absolute inset-0 rounded-2xl md:rounded-3xl"
-          style={{
-            border: `3px solid ${main}`,
-            boxShadow: `inset 0 0 30px rgba(${rgb}, 0.3), 0 0 20px rgba(${rgb}, 0.5)`,
-            animation: isActive ? 'hologram-flicker 4s infinite' : undefined,
-          }}
-        />
-        {/* Inner frame */}
-        <div 
-          className="absolute inset-2 rounded-xl md:rounded-2xl"
-          style={{
-            border: `1px solid rgba(${rgb}, 0.3)`,
-          }}
-        />
-      </div>
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 3: Premium Frame with Metallic Border
+      ══════════════════════════════════════════════════════════════════ */}
+      <div 
+        className="absolute inset-0 rounded-xl transition-all duration-500"
+        style={{
+          background: `
+            linear-gradient(135deg, rgba(${rgb},${isActive ? 0.2 : 0.1}) 0%, transparent 50%),
+            linear-gradient(-45deg, rgba(${rgb},${isActive ? 0.15 : 0.05}) 0%, transparent 50%)
+          `,
+          boxShadow: `inset 0 0 ${isActive ? 40 : 20}px rgba(${rgb},${isActive ? 0.2 : 0.1})`
+        }}
+      />
+      
+      {/* Border gradient with animation */}
+      <div 
+        className="absolute inset-0 rounded-xl pointer-events-none"
+        style={{
+          padding: '2px',
+          background: `linear-gradient(135deg, 
+            rgba(${rgb},${isActive ? 0.9 : 0.5}) 0%, 
+            rgba(${rgb},${isActive ? 0.4 : 0.2}) 25%,
+            rgba(${rgb},${isActive ? 0.6 : 0.3}) 50%,
+            rgba(${rgb},${isActive ? 0.4 : 0.2}) 75%,
+            rgba(${rgb},${isActive ? 0.9 : 0.5}) 100%
+          )`,
+          backgroundSize: '200% 200%',
+          animation: isActive ? 'stark-shield-shimmer 3s linear infinite' : 'none',
+          mask: 'linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0)',
+          maskComposite: 'exclude',
+          WebkitMaskComposite: 'xor'
+        }}
+      />
 
-      {/* ══════ LAYER 4: Corner Tech Brackets ══════ */}
-      <CornerBracket position="top-left" color={neon} isActive={isActive} />
-      <CornerBracket position="top-right" color={neon} isActive={isActive} />
-      <CornerBracket position="bottom-left" color={neon} isActive={isActive} />
-      <CornerBracket position="bottom-right" color={neon} isActive={isActive} />
-
-      {/* ══════ LAYER 5: Energy Core ══════ */}
-      <div className="absolute inset-0 flex items-center justify-center pb-16 md:pb-20">
-        {/* Outer rotating ring */}
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 4: Corner Tech Brackets with LEDs
+      ══════════════════════════════════════════════════════════════════ */}
+      {['top-2 left-2', 'top-2 right-2', 'bottom-2 right-2', 'bottom-2 left-2'].map((pos, i) => (
         <div 
-          className="absolute w-24 h-24 md:w-36 md:h-36 lg:w-44 lg:h-44 rounded-full"
+          key={i}
+          className={cn("absolute w-10 h-10 pointer-events-none", pos)}
+          style={{ 
+            transform: `rotate(${i * 90}deg)`,
+            animation: isActive ? `stark-bracket-pulse 2s ease-in-out infinite ${i * 0.2}s` : 'none'
+          }}
+        >
+          {/* L-bracket */}
+          <div 
+            className="absolute top-0 left-0 w-full h-[3px] rounded-full"
+            style={{
+              background: `linear-gradient(90deg, ${main} 0%, transparent 100%)`,
+              boxShadow: `0 0 12px ${main}`
+            }}
+          />
+          <div 
+            className="absolute top-0 left-0 w-[3px] h-full rounded-full"
+            style={{
+              background: `linear-gradient(180deg, ${main} 0%, transparent 100%)`,
+              boxShadow: `0 0 12px ${main}`
+            }}
+          />
+          {/* LED dot */}
+          <div 
+            className="absolute top-0 left-0 w-3 h-3 rounded-full"
+            style={{
+              background: main,
+              boxShadow: `0 0 15px ${main}, 0 0 30px ${main}`,
+              animation: isActive ? 'stark-core-pulse 1.5s ease-in-out infinite' : 'none'
+            }}
+          />
+        </div>
+      ))}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 5: Central Energy Core with Rotating Rings
+      ══════════════════════════════════════════════════════════════════ */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-4">
+        {/* Outer ring 3 - dashed */}
+        <div 
+          className="absolute w-36 h-36 md:w-44 md:h-44 rounded-full left-1/2 top-1/2 opacity-30 group-hover:opacity-50"
           style={{
-            border: `2px solid ${glow}`,
-            borderTopColor: 'transparent',
-            borderRightColor: 'transparent',
-            boxShadow: `0 0 30px rgba(${rgb}, 0.4)`,
-            animation: isActive ? 'energy-ring 8s linear infinite' : undefined,
+            border: `2px dashed ${glow}`,
+            animation: isActive ? 'stark-ring-spin 15s linear infinite' : 'none',
+            transform: 'translate(-50%, -50%)'
           }}
         />
         
-        {/* Middle counter-rotating ring */}
+        {/* Outer ring 2 - solid */}
         <div 
-          className="absolute w-20 h-20 md:w-28 md:h-28 lg:w-36 lg:h-36 rounded-full"
+          className="absolute w-28 h-28 md:w-36 md:h-36 rounded-full left-1/2 top-1/2 opacity-40 group-hover:opacity-60"
           style={{
-            border: `1px dashed ${neon}`,
-            opacity: 0.6,
-            animation: isActive ? 'energy-ring-reverse 12s linear infinite' : undefined,
+            border: `2px solid ${glow}`,
+            boxShadow: `0 0 20px rgba(${rgb},0.3)`,
+            animation: isActive ? 'stark-ring-spin-reverse 10s linear infinite' : 'none',
+            transform: 'translate(-50%, -50%)'
+          }}
+        />
+        
+        {/* Inner ring - thick glow */}
+        <div 
+          className="absolute w-20 h-20 md:w-28 md:h-28 rounded-full left-1/2 top-1/2 opacity-60 group-hover:opacity-80"
+          style={{
+            border: `3px solid ${main}`,
+            boxShadow: `0 0 30px rgba(${rgb},0.5), inset 0 0 20px rgba(${rgb},0.3)`,
+            animation: isActive ? 'stark-ring-spin 6s linear infinite' : 'none',
+            transform: 'translate(-50%, -50%)'
+          }}
+        />
+        
+        {/* Energy wave */}
+        <div 
+          className="absolute w-16 h-16 md:w-24 md:h-24 rounded-full left-1/2 top-1/2"
+          style={{
+            background: `radial-gradient(circle, rgba(${rgb},0.4) 0%, transparent 70%)`,
+            animation: isActive ? 'stark-energy-wave 3s ease-in-out infinite' : 'none',
+            transform: 'translate(-50%, -50%)'
           }}
         />
 
-        {/* Inner pulsing core */}
+        {/* Core background */}
         <div 
-          className="absolute w-16 h-16 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full"
+          className="relative w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-500"
           style={{
-            background: `radial-gradient(circle, rgba(${rgb}, 0.4) 0%, rgba(${rgb}, 0.1) 50%, transparent 70%)`,
-            boxShadow: `0 0 60px rgba(${rgb}, 0.6), inset 0 0 40px rgba(${rgb}, 0.3)`,
-            animation: isActive ? 'core-pulse 2s ease-in-out infinite' : undefined,
+            background: `radial-gradient(circle, rgba(${rgb},0.5) 0%, rgba(${rgb},0.2) 50%, rgba(${rgb},0.05) 100%)`,
+            boxShadow: isActive 
+              ? `0 0 40px rgba(${rgb},0.7), 0 0 80px rgba(${rgb},0.4), inset 0 0 30px rgba(${rgb},0.4)`
+              : `0 0 20px rgba(${rgb},0.4), inset 0 0 15px rgba(${rgb},0.2)`,
+            animation: isActive ? 'stark-core-pulse 2.5s ease-in-out infinite' : 'none'
           }}
-        />
-
-        {/* Icon */}
-        <div className="relative z-10 transition-transform duration-500 group-hover:scale-110">
+        >
           <Icon 
-            className="w-10 h-10 md:w-14 md:h-14 lg:w-16 lg:h-16"
-            strokeWidth={1}
+            className="w-8 h-8 md:w-10 md:h-10 transition-all duration-500 group-hover:scale-110"
+            strokeWidth={1.5}
             style={{
-              color: plasma,
-              filter: `drop-shadow(0 0 20px ${neon}) drop-shadow(0 0 40px ${glow}) drop-shadow(0 0 60px ${main})`,
+              color: neon,
+              filter: `drop-shadow(0 0 15px ${main}) drop-shadow(0 0 30px ${glow})`
             }}
           />
+        </div>
+
+        {/* Orbiting particles */}
+        {isActive && [...Array(8)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-2 h-2 rounded-full left-1/2 top-1/2"
+            style={{
+              background: neon,
+              boxShadow: `0 0 10px ${main}`,
+              transform: `translate(-50%, -50%) rotate(${i * 45}deg) translateX(70px)`,
+              animation: `stark-ring-spin 4s linear infinite`,
+              animationDelay: `${i * 0.1}s`
+            }}
+          />
+        ))}
+      </div>
+
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 6: Top Status Bar
+      ══════════════════════════════════════════════════════════════════ */}
+      <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+        {/* System code badge */}
+        <div 
+          className="flex items-center gap-2 px-2.5 py-1 rounded"
+          style={{
+            background: `linear-gradient(135deg, rgba(${rgb},0.2) 0%, rgba(${rgb},0.05) 100%)`,
+            border: `1px solid rgba(${rgb},0.4)`
+          }}
+        >
+          <div 
+            className="w-2 h-2 rounded-full"
+            style={{
+              background: isActive ? '#00FF00' : main,
+              boxShadow: isActive ? '0 0 10px #00FF00' : `0 0 8px ${main}`,
+              animation: 'stark-status-blink 1s ease-in-out infinite'
+            }}
+          />
+          <span className="text-[10px] md:text-xs font-mono font-bold tracking-widest" style={{ color: neon }}>
+            {category.systemCode}
+          </span>
+        </div>
+
+        {/* Status indicator */}
+        <div 
+          className="px-2.5 py-1 rounded text-[9px] md:text-[10px] font-mono font-bold tracking-wider"
+          style={{
+            background: `linear-gradient(135deg, rgba(${rgb},0.2) 0%, rgba(${rgb},0.05) 100%)`,
+            border: `1px solid rgba(${rgb},0.4)`,
+            color: isActive ? '#00FF00' : glow,
+            animation: isActive ? 'stark-hologram-glitch 5s ease-in-out infinite' : 'none'
+          }}
+        >
+          {isActive ? '● ONLINE' : category.statusText}
         </div>
       </div>
 
-      {/* ══════ LAYER 6: Power Lines (Active) ══════ */}
-      {isActive && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(4)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-[3px] rounded-full"
-              style={{
-                height: '40%',
-                left: `${20 + i * 20}%`,
-                bottom: 0,
-                background: `linear-gradient(0deg, ${main}, transparent)`,
-                boxShadow: `0 0 15px ${glow}`,
-                animation: `power-surge ${1 + i * 0.2}s ease-in-out infinite`,
-                animationDelay: `${i * 0.2}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* ══════ LAYER 7: Floating Particles ══════ */}
-      {isActive && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          {[...Array(8)].map((_, i) => (
-            <div
-              key={i}
-              className="absolute w-1.5 h-1.5 rounded-full"
-              style={{
-                left: `${10 + i * 11}%`,
-                bottom: '10%',
-                backgroundColor: neon,
-                boxShadow: `0 0 10px ${glow}`,
-                animation: `float-particle ${2 + i * 0.3}s ease-out infinite`,
-                animationDelay: `${i * 0.2}s`,
-              }}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* ══════ LAYER 8: Scan Beam ══════ */}
-      {isActive && (
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div 
-            className="absolute inset-x-0 h-1/4"
-            style={{
-              background: `linear-gradient(180deg, transparent, rgba(${rgb}, 0.2), transparent)`,
-              animation: 'scan-beam 4s linear infinite',
-            }}
-          />
-        </div>
-      )}
-
-      {/* ══════ LAYER 9: Bottom Panel ══════ */}
-      <div className="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-        {/* Top separator */}
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 7: Bottom Info Panel
+      ══════════════════════════════════════════════════════════════════ */}
+      <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8">
+        {/* Gradient fade */}
         <div 
-          className="absolute inset-x-6 top-0 h-px"
+          className="absolute inset-0"
           style={{
-            background: `linear-gradient(90deg, transparent, ${neon}, transparent)`,
-            boxShadow: `0 0 10px ${glow}`,
+            background: `linear-gradient(to top, hsl(${hue},20%,4%) 0%, transparent 100%)`
           }}
         />
-
-        {/* Category name */}
-        <div className="relative text-center pt-2">
-          <h3 
-            className="text-white text-sm sm:text-base md:text-xl lg:text-2xl font-black tracking-[0.3em] uppercase"
-            style={{
-              textShadow: `0 0 30px ${glow}, 0 0 60px ${main}, 0 2px 10px rgba(0,0,0,0.8)`,
-              animation: isActive ? 'hologram-flicker 5s infinite' : undefined,
-            }}
-          >
-            {category.name}
-          </h3>
+        
+        <div className="relative">
+          {/* Subtitle */}
           <p 
-            className="text-xs sm:text-sm md:text-base font-bold tracking-[0.25em] uppercase mt-1"
-            style={{
-              color: neon,
-              textShadow: `0 0 20px ${glow}`,
+            className="text-[10px] md:text-xs font-mono tracking-[0.35em] uppercase mb-1"
+            style={{ 
+              color: `rgba(${rgb},0.7)`,
+              textShadow: `0 0 15px rgba(${rgb},0.4)`
             }}
           >
             {category.subtitle}
           </p>
-        </div>
-
-        {/* Bottom progress bar */}
-        <div className="mt-3 relative h-1 rounded-full overflow-hidden bg-white/10">
-          <div 
-            className="absolute inset-y-0 left-0 rounded-full transition-all duration-700"
+          
+          {/* Main title */}
+          <h3 
+            className="text-lg md:text-xl lg:text-2xl font-black tracking-wider uppercase mb-3"
             style={{
-              width: isActive ? '100%' : '0%',
-              background: `linear-gradient(90deg, ${main}, ${neon})`,
-              boxShadow: `0 0 20px ${glow}`,
+              color: neon,
+              textShadow: isActive 
+                ? `0 0 30px rgba(${rgb},0.9), 0 0 60px rgba(${rgb},0.5)`
+                : `0 0 20px rgba(${rgb},0.5)`,
+              animation: isActive ? 'stark-hologram-glitch 6s ease-in-out infinite' : 'none'
             }}
-          />
+          >
+            {category.name}
+          </h3>
+          
+          {/* Power bar */}
+          <div className="flex items-center gap-3">
+            <span className="text-[9px] font-mono text-white/40 tracking-widest">PWR</span>
+            <div 
+              className="flex-1 h-2 rounded-full overflow-hidden"
+              style={{
+                background: `rgba(${rgb},0.15)`,
+                border: `1px solid rgba(${rgb},0.3)`
+              }}
+            >
+              <div 
+                className="h-full rounded-full transition-all duration-700 origin-left"
+                style={{
+                  width: `${category.powerLevel}%`,
+                  background: `linear-gradient(90deg, ${main} 0%, ${glow} 50%, ${neon} 100%)`,
+                  boxShadow: `0 0 15px rgba(${rgb},0.6)`,
+                  animation: isActive ? 'stark-power-flow 2s ease-in-out infinite' : 'none'
+                }}
+              />
+            </div>
+            <span className="text-xs font-mono font-bold" style={{ color: neon }}>
+              {category.powerLevel}%
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* ══════ LAYER 10: Status Indicator ══════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 8: Scan Beam (Active State)
+      ══════════════════════════════════════════════════════════════════ */}
       {isActive && (
-        <div className="absolute top-5 right-5 flex items-center gap-2">
-          <span 
-            className="text-[10px] font-mono tracking-wider uppercase"
-            style={{ color: neon, textShadow: `0 0 10px ${glow}` }}
-          >
-            ACTIVE
-          </span>
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
           <div 
-            className="w-3 h-3 rounded-full"
+            className="absolute inset-x-0 h-1"
             style={{
-              backgroundColor: main,
-              boxShadow: `0 0 15px ${glow}, 0 0 30px ${main}`,
-              animation: 'core-pulse 1s ease-in-out infinite',
+              background: `linear-gradient(90deg, transparent 0%, ${main} 50%, transparent 100%)`,
+              boxShadow: `0 0 30px ${main}, 0 0 60px ${glow}`,
+              animation: 'stark-scan-sweep 2.5s ease-in-out infinite'
             }}
           />
         </div>
       )}
 
-      {/* ══════ LAYER 11: Shine Effect ══════ */}
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 9: Data Streams (Sides)
+      ══════════════════════════════════════════════════════════════════ */}
+      {isActive && (
+        <>
+          <div className="absolute left-1.5 top-16 bottom-16 w-[2px] overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-full h-6 rounded-full"
+                style={{
+                  background: `linear-gradient(to top, transparent, ${main}, transparent)`,
+                  animation: `stark-data-stream 1.5s linear infinite`,
+                  animationDelay: `${i * 0.25}s`,
+                  top: `${i * 30}px`
+                }}
+              />
+            ))}
+          </div>
+          <div className="absolute right-1.5 top-16 bottom-16 w-[2px] overflow-hidden">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute w-full h-6 rounded-full"
+                style={{
+                  background: `linear-gradient(to top, transparent, ${main}, transparent)`,
+                  animation: `stark-data-stream 1.5s linear infinite`,
+                  animationDelay: `${i * 0.25 + 0.125}s`,
+                  top: `${i * 30}px`
+                }}
+              />
+            ))}
+          </div>
+        </>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 10: Floating Particles
+      ══════════════════════════════════════════════════════════════════ */}
+      {isActive && (
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(12)].map((_, i) => (
+            <div
+              key={i}
+              className="absolute w-1 h-1 rounded-full"
+              style={{
+                left: `${8 + i * 8}%`,
+                bottom: '15%',
+                background: neon,
+                boxShadow: `0 0 8px ${main}`,
+                animation: `stark-particle-rise ${2 + (i % 4) * 0.4}s ease-out infinite`,
+                animationDelay: `${i * 0.15}s`
+              }}
+            />
+          ))}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          LAYER 11: Hover Energy Surge
+      ══════════════════════════════════════════════════════════════════ */}
       <div 
-        className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-1000 pointer-events-none"
+        className="absolute inset-x-0 bottom-0 h-1 origin-left scale-x-0 group-hover:scale-x-100 transition-transform duration-500"
         style={{
-          background: 'linear-gradient(135deg, transparent 20%, rgba(255,255,255,0.1) 50%, transparent 80%)',
+          background: `linear-gradient(90deg, ${main} 0%, ${glow} 50%, ${neon} 100%)`,
+          boxShadow: `0 0 20px ${main}, 0 0 40px ${glow}`
         }}
       />
     </button>
   );
 });
 
-// ═══════════════════════════════════════
-// Corner Bracket Component
-// ═══════════════════════════════════════
-const CornerBracket = memo(function CornerBracket({ 
-  position, 
-  color, 
-  isActive 
-}: { 
-  position: 'top-left' | 'top-right' | 'bottom-left' | 'bottom-right'; 
-  color: string; 
-  isActive: boolean;
-}) {
-  const positionClasses = {
-    'top-left': 'top-4 left-4',
-    'top-right': 'top-4 right-4',
-    'bottom-left': 'bottom-4 left-4',
-    'bottom-right': 'bottom-4 right-4',
-  };
-
-  const lineStyles = {
-    'top-left': {
-      h: { top: 0, left: 0, width: '100%', height: 3, background: `linear-gradient(90deg, ${color}, transparent)` },
-      v: { top: 0, left: 0, width: 3, height: '100%', background: `linear-gradient(180deg, ${color}, transparent)` },
-      dot: { top: 0, left: 0 },
-    },
-    'top-right': {
-      h: { top: 0, right: 0, width: '100%', height: 3, background: `linear-gradient(-90deg, ${color}, transparent)` },
-      v: { top: 0, right: 0, width: 3, height: '100%', background: `linear-gradient(180deg, ${color}, transparent)` },
-      dot: { top: 0, right: 0 },
-    },
-    'bottom-left': {
-      h: { bottom: 0, left: 0, width: '100%', height: 3, background: `linear-gradient(90deg, ${color}, transparent)` },
-      v: { bottom: 0, left: 0, width: 3, height: '100%', background: `linear-gradient(0deg, ${color}, transparent)` },
-      dot: { bottom: 0, left: 0 },
-    },
-    'bottom-right': {
-      h: { bottom: 0, right: 0, width: '100%', height: 3, background: `linear-gradient(-90deg, ${color}, transparent)` },
-      v: { bottom: 0, right: 0, width: 3, height: '100%', background: `linear-gradient(0deg, ${color}, transparent)` },
-      dot: { bottom: 0, right: 0 },
-    },
-  };
-
-  const styles = lineStyles[position];
-
-  return (
-    <div className={`absolute w-8 h-8 md:w-12 md:h-12 ${positionClasses[position]}`}>
-      <div className="absolute rounded-sm" style={{ ...styles.h as React.CSSProperties, boxShadow: `0 0 10px ${color}` }} />
-      <div className="absolute rounded-sm" style={{ ...styles.v as React.CSSProperties, boxShadow: `0 0 10px ${color}` }} />
-      {(position === 'top-left' || position === 'top-right') && (
-        <div 
-          className="absolute w-2.5 h-2.5 rounded-full"
-          style={{ 
-            ...styles.dot as React.CSSProperties, 
-            backgroundColor: color,
-            boxShadow: `0 0 15px ${color}, 0 0 30px ${color}`,
-            animation: isActive ? 'core-pulse 2s ease-in-out infinite' : undefined,
-          }}
-        />
-      )}
-    </div>
-  );
-});
-
-export default FuturisticCategoryFilter;
+FuturisticCategoryFilter.displayName = "FuturisticCategoryFilter";
