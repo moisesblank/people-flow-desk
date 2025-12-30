@@ -176,11 +176,35 @@ export function useDeviceMFAGuard(): DeviceMFAGuardResult {
 
   // Verifica automaticamente ao montar (apenas uma vez)
   useEffect(() => {
-    if (user?.id && !hasChecked.current) {
+    // Se não há usuário, bypass imediato (não precisa verificar dispositivo)
+    if (!user?.id) {
+      setState(prev => ({ 
+        ...prev, 
+        isChecking: false, 
+        isVerified: true, // Bypass para páginas públicas
+        needsMFA: false 
+      }));
+      return;
+    }
+
+    // Owner bypass
+    if (isOwner) {
+      setState(prev => ({ 
+        ...prev, 
+        isChecking: false,
+        isVerified: true, 
+        needsMFA: false,
+        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000)
+      }));
+      return;
+    }
+
+    // Verificar apenas uma vez
+    if (!hasChecked.current) {
       hasChecked.current = true;
       checkDeviceMFA();
     }
-  }, [user?.id, checkDeviceMFA]);
+  }, [user?.id, isOwner, checkDeviceMFA]);
 
   return {
     ...state,
