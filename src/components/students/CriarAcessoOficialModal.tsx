@@ -717,8 +717,11 @@ export function CriarAcessoOficialModal({
                         disabled={isSubmitting}
                       />
                     </FormControl>
-                    <FormDescription className="text-xs">
-                      Se vazio, um email será enviado para o aluno definir a senha.
+                    <FormDescription className="text-xs space-y-1">
+                      <span className="block">Se vazio, um email será enviado para o aluno definir a senha.</span>
+                      <span className="block text-muted-foreground/70">
+                        Critérios: mínimo 8 caracteres, com letras maiúsculas, minúsculas, números e símbolos.
+                      </span>
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
