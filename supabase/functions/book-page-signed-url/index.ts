@@ -51,10 +51,17 @@ serve(async (req: Request) => {
       );
     }
 
-    const token = authHeader.replace("Bearer ", "");
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+     const token = authHeader.replace("Bearer ", "");
+     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+     const supabase = createClient(supabaseUrl, supabaseKey, {
+       global: {
+         headers: {
+           // ✅ Necessário para auth.uid() funcionar dentro das RPCs (fonte da verdade)
+           Authorization: authHeader,
+         },
+       },
+     });
 
     const { data: { user }, error: authError } = await supabase.auth.getUser(token);
     if (authError || !user) {

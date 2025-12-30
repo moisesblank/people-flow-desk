@@ -57,9 +57,9 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
   const pageCache = useRef<Map<number, PdfPageRender>>(new Map());
   const signedUrlRef = useRef<{ url: string; expiresAt: number } | null>(null);
 
-  // Buscar URL assinada do PDF original
+  // Buscar URL assinada do PDF original (via backend function — evita depender de policy client-side)
   const fetchPdfUrl = useCallback(async (): Promise<string | null> => {
-    if (!originalPath) return null;
+    if (!originalPath || !bookId) return null;
 
     // Verificar cache
     if (signedUrlRef.current && signedUrlRef.current.expiresAt > Date.now()) {
@@ -67,25 +67,31 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
     }
 
     try {
-      const { data, error } = await supabase.storage
-        .from(RAW_BUCKET)
-        .createSignedUrl(originalPath, URL_EXPIRY_SECONDS);
+      const { data, error } = await supabase.functions.invoke('book-original-signed-url', {
+        body: {
+          bookId,
+          // enviado como fallback, mas a função valida/deriva do banco
+          originalPath,
+        }
+      });
 
       if (error) throw error;
 
-      if (data?.signedUrl) {
+      if (data?.success && data?.signedUrl) {
         signedUrlRef.current = {
           url: data.signedUrl,
-          expiresAt: Date.now() + (URL_EXPIRY_SECONDS - 60) * 1000
+          expiresAt: Date.now() + (URL_EXPIRY_SECONDS - 60) * 1000,
         };
         return data.signedUrl;
       }
+
+      console.error('[PdfRenderer] Resposta inválida:', data);
     } catch (err) {
       console.error('[PdfRenderer] Erro ao buscar URL:', err);
     }
 
     return null;
-  }, [originalPath]);
+  }, [bookId, originalPath]);
 
   // Carregar documento PDF
   const loadPdf = useCallback(async () => {

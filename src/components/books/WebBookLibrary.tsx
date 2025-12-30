@@ -181,7 +181,10 @@ export const WebBookLibrary = memo(function WebBookLibrary({
   // Atualizar categoria
   const handleCategoryChange = useCallback((category: string) => {
     setSelectedCategory(category);
-    loadBooks(category || undefined);
+
+    // "all" significa sem filtro (fonte da verdade: backend)
+    const backendCategory = category === 'all' ? undefined : category;
+    loadBooks(backendCategory);
   }, [loadBooks]);
 
   // Loading state
