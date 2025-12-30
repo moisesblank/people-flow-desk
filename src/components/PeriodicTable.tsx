@@ -290,7 +290,7 @@ export function PeriodicTableButton() {
           <Atom className="h-5 w-5 text-foreground group-hover:text-primary group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-50 dark:bg-slate-900 border-primary/30">
+      <DialogContent className="dark max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-900 text-slate-50 border-primary/30">
         <DialogHeader className="px-4 py-3 border-b border-border/50 bg-gradient-to-r from-teal-600 via-sky-600 to-violet-600">
           <DialogTitle className="flex items-center gap-3 text-lg text-white">
             <div className="p-2 rounded-xl bg-white/20 backdrop-blur">
@@ -404,32 +404,32 @@ function PeriodicTableContent() {
                   
                   {/* Lanthanide/Actinide references */}
                   <div 
-                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-pink-200 dark:bg-pink-900/50 rounded border-2 border-pink-400"
+                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-pink-900/50 rounded border-2 border-pink-400"
                     style={{ gridColumn: 3, gridRow: 6 }}
                   >
-                    <span className="text-pink-600 dark:text-pink-300">57 a 71</span>
+                    <span className="text-pink-300">57 a 71</span>
                   </div>
                   <div 
-                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-rose-200 dark:bg-rose-900/50 rounded border-2 border-rose-400"
+                    className="w-[54px] h-[54px] flex items-center justify-center text-xs font-bold bg-rose-900/50 rounded border-2 border-rose-400"
                     style={{ gridColumn: 3, gridRow: 7 }}
                   >
-                    <span className="text-rose-600 dark:text-rose-300">89 a 103</span>
+                    <span className="text-rose-300">89 a 103</span>
                   </div>
                 </div>
               </div>
 
               {/* Transition elements label */}
               <div className="flex items-center justify-center mt-4 mb-2">
-                <div className="flex items-center gap-2 px-4 py-1 bg-sky-100 dark:bg-sky-900/30 rounded-full border border-sky-300">
+                <div className="flex items-center gap-2 px-4 py-1 bg-sky-900/30 rounded-full border border-sky-300">
                   <div className="h-px w-8 bg-sky-400" />
-                  <span className="text-sm font-bold text-sky-700 dark:text-sky-300">ELEMENTOS DE TRANSIÇÃO</span>
+                  <span className="text-sm font-bold text-sky-300">ELEMENTOS DE TRANSIÇÃO</span>
                   <div className="h-px w-8 bg-sky-400" />
                 </div>
               </div>
 
               {/* Lanthanides */}
               <div className="mt-4 ml-[55px]">
-                <div className="text-xs font-bold text-pink-600 dark:text-pink-400 mb-1">Lantanídeos (57-71)</div>
+                <div className="text-xs font-bold text-pink-400 mb-1">Lantanídeos (57-71)</div>
                 <div className="flex gap-0.5">
                   {elements.filter(e => e.category === "lanthanide").map(element => (
                     <ElementCell key={element.number} element={element} />
@@ -439,7 +439,7 @@ function PeriodicTableContent() {
 
               {/* Actinides */}
               <div className="mt-2 ml-[55px]">
-                <div className="text-xs font-bold text-rose-600 dark:text-rose-400 mb-1">Actinídeos (89-103)</div>
+                <div className="text-xs font-bold text-rose-400 mb-1">Actinídeos (89-103)</div>
                 <div className="flex gap-0.5">
                   {elements.filter(e => e.category === "actinide").map(element => (
                     <ElementCell key={element.number} element={element} />
@@ -448,7 +448,7 @@ function PeriodicTableContent() {
               </div>
 
               {/* Legend */}
-              <div className="mt-6 p-4 bg-white dark:bg-slate-800 rounded-lg border shadow-sm">
+              <div className="mt-6 p-4 bg-slate-800 rounded-lg border shadow-sm">
                 <div className="flex flex-wrap gap-3 justify-center">
                   {Object.entries(categoryColors).map(([category, colors]) => (
                     <div
@@ -468,7 +468,7 @@ function PeriodicTableContent() {
 
                 {/* Element key */}
                 <div className="mt-4 flex items-center justify-center gap-8">
-                  <div className="flex items-center gap-4 p-3 bg-slate-100 dark:bg-slate-700 rounded-lg">
+                  <div className="flex items-center gap-4 p-3 bg-slate-700 rounded-lg">
                     <div className="w-16 h-16 bg-teal-500 rounded border-2 border-teal-600 flex flex-col items-center justify-center text-white relative">
                       <span className="text-[8px] font-bold absolute top-0.5 left-1">3</span>
                       <span className="text-2xl font-black">Li</span>
@@ -493,7 +493,7 @@ function PeriodicTableContent() {
                   initial={{ opacity: 0, x: 50 }}
                   animate={{ opacity: 1, x: 0 }}
                   exit={{ opacity: 0, x: 50 }}
-                  className="w-[340px] bg-white dark:bg-slate-800 rounded-xl border shadow-lg p-4 flex-shrink-0 h-fit sticky top-4"
+                  className="w-[340px] bg-slate-800 rounded-xl border shadow-lg p-4 flex-shrink-0 h-fit sticky top-4"
                 >
                   <div className="flex items-start justify-between mb-4">
                     <div>
@@ -561,7 +561,7 @@ function PeriodicTableContent() {
                       {selectedElement.melt && (
                         <div className="bg-orange-500/10 rounded-lg p-2 border border-orange-500/20">
                           <div className="text-xs text-muted-foreground">P. Fusão</div>
-                          <div className="text-sm font-bold text-orange-600 dark:text-orange-400">
+                          <div className="text-sm font-bold text-orange-400">
                             {(selectedElement.melt - 273.15).toFixed(0)}°C
                           </div>
                         </div>
@@ -569,7 +569,7 @@ function PeriodicTableContent() {
                       {selectedElement.boil && (
                         <div className="bg-red-500/10 rounded-lg p-2 border border-red-500/20">
                           <div className="text-xs text-muted-foreground">P. Ebulição</div>
-                          <div className="text-sm font-bold text-red-600 dark:text-red-400">
+                          <div className="text-sm font-bold text-red-400">
                             {(selectedElement.boil - 273.15).toFixed(0)}°C
                           </div>
                         </div>
