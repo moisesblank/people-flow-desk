@@ -224,7 +224,8 @@ export const WebBookViewer = memo(function WebBookViewer({
     reportViolation,
     threatScore,
     needsPdfMode,
-    getOriginalPdfPath
+    getOriginalPdfPath,
+    pdfModeData
   } = useWebBook(bookId);
 
   // Estado local
@@ -242,13 +243,19 @@ export const WebBookViewer = memo(function WebBookViewer({
   // Carregar caminho do PDF se precisar de modo PDF
   useEffect(() => {
     if (needsPdfMode && !pdfPath) {
-      getOriginalPdfPath().then(path => {
-        if (path) {
-          setPdfPath(path);
-        }
-      });
+      // Primeiro: tentar usar dados do pdfModeData (já vem do RPC)
+      if (pdfModeData?.originalPath) {
+        setPdfPath(pdfModeData.originalPath);
+      } else {
+        // Fallback: buscar via getOriginalPdfPath
+        getOriginalPdfPath().then(path => {
+          if (path) {
+            setPdfPath(path);
+          }
+        });
+      }
     }
-  }, [needsPdfMode, pdfPath, getOriginalPdfPath]);
+  }, [needsPdfMode, pdfPath, pdfModeData?.originalPath, getOriginalPdfPath]);
 
   // Carregar PDF quando tiver o caminho
   useEffect(() => {
