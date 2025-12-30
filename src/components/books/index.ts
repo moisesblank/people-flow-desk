@@ -4,7 +4,9 @@
 
 export { WebBookViewer } from './WebBookViewer';
 export { WebBookLibrary } from './WebBookLibrary';
+export { PdfPageViewer } from './PdfPageViewer';
 export { useWebBook, useWebBookLibrary } from '@/hooks/useWebBook';
+export { usePdfRenderer } from '@/hooks/usePdfRenderer';
 
 export type {
   WebBook,
@@ -15,3 +17,5 @@ export type {
   WebBookListItem,
   Annotation
 } from '@/hooks/useWebBook';
+
+export type { PdfPageRender } from '@/hooks/usePdfRenderer';
