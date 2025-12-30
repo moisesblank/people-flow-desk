@@ -7,11 +7,11 @@
 // Edge Function: c-create-official-access (PARTE 10)
 // ============================================
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2, Calendar, Package, Globe, CreditCard } from "lucide-react";
+import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2, Calendar, Package, Globe, CreditCard, Upload, X, Camera } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -124,6 +124,12 @@ export function CriarAcessoOficialModal({
   const [customExpiresValue, setCustomExpiresValue] = useState('');
   const [cpfValidated, setCpfValidated] = useState(false);
   const [cpfValidating, setCpfValidating] = useState(false);
+  
+  // Estado para upload de foto
+  const [fotoFile, setFotoFile] = useState<File | null>(null);
+  const [fotoPreview, setFotoPreview] = useState<string | null>(null);
+  const [isUploadingFoto, setIsUploadingFoto] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const form = useForm<CriarAcessoFormData>({
     resolver: zodResolver(criarAcessoSchema),
@@ -149,6 +155,81 @@ export function CriarAcessoOficialModal({
 
   // Watch role para mostrar/ocultar campo de dias
   const selectedRole = form.watch("role");
+
+  // Função para lidar com seleção de foto
+  const handleFotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validar tipo de arquivo (apenas imagens)
+    if (!file.type.startsWith('image/')) {
+      toast.error("Arquivo inválido", { description: "Selecione uma imagem (PNG, JPG, etc.)" });
+      return;
+    }
+
+    // Validar tamanho (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Arquivo muito grande", { description: "A foto deve ter no máximo 5MB" });
+      return;
+    }
+
+    setFotoFile(file);
+    
+    // Criar preview
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      setFotoPreview(reader.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  // Função para remover foto selecionada
+  const handleRemoveFoto = () => {
+    setFotoFile(null);
+    setFotoPreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Função para fazer upload da foto no storage
+  const uploadFotoToStorage = async (email: string): Promise<string | null> => {
+    if (!fotoFile) return null;
+
+    setIsUploadingFoto(true);
+    try {
+      const fileExt = fotoFile.name.split('.').pop()?.toLowerCase() || 'png';
+      const fileName = `${email.replace(/[^a-zA-Z0-9]/g, '_')}_${Date.now()}.${fileExt}`;
+      const filePath = `alunos/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('avatars')
+        .upload(filePath, fotoFile, {
+          cacheControl: '3600',
+          upsert: true,
+        });
+
+      if (error) {
+        console.error('[Upload Foto] Erro:', error);
+        toast.error("Erro ao fazer upload da foto", { description: error.message });
+        return null;
+      }
+
+      // Obter URL pública
+      const { data: urlData } = supabase.storage
+        .from('avatars')
+        .getPublicUrl(filePath);
+
+      console.log('[Upload Foto] ✅ Sucesso:', urlData.publicUrl);
+      return urlData.publicUrl;
+
+    } catch (err: any) {
+      console.error('[Upload Foto] Exceção:', err);
+      return null;
+    } finally {
+      setIsUploadingFoto(false);
+    }
+  };
 
   const handleSubmit = async (data: CriarAcessoFormData) => {
     // 🔒 VALIDAÇÃO OBRIGATÓRIA: CPF deve estar validado na Receita Federal
@@ -192,6 +273,13 @@ export function CriarAcessoOficialModal({
       
       console.log('[CriarAcessoOficial] ✅ Sessão válida. Criando acesso...');
 
+      // 📸 Fazer upload da foto se houver
+      let fotoUrl: string | null = null;
+      if (fotoFile) {
+        console.log('[CriarAcessoOficial] Fazendo upload da foto...');
+        fotoUrl = await uploadFotoToStorage(data.email);
+      }
+
       // ⚡ PARTE 10: Chamar Edge Function c-create-official-access
       const payload = {
         // Campos obrigatórios e únicos
@@ -206,7 +294,8 @@ export function CriarAcessoOficialModal({
         cpf: cleanCPF(data.cpf),
         
         // Campos opcionais (só envia se preenchidos)
-        ...(data.foto_aluno && { foto_aluno: data.foto_aluno.trim() }),
+        ...(fotoUrl && { foto_aluno: fotoUrl }),
+        ...(data.foto_aluno && !fotoUrl && { foto_aluno: data.foto_aluno.trim() }),
         ...(data.senha && { senha: data.senha }),
         ...(data.expires_days && { expires_days: data.expires_days }),
         ...(data.tipo_produto && { tipo_produto: data.tipo_produto }),
@@ -302,6 +391,7 @@ export function CriarAcessoOficialModal({
       form.reset();
       setShowCustomExpires(false);
       setCustomExpiresValue('');
+      handleRemoveFoto(); // Limpar foto
       onOpenChange(false);
       
       // Callback de sucesso (para refetch/invalidate)
@@ -322,6 +412,7 @@ export function CriarAcessoOficialModal({
       form.reset();
       setShowCustomExpires(false);
       setCustomExpiresValue('');
+      handleRemoveFoto(); // Limpar foto
       onOpenChange(false);
     }
   };
@@ -675,28 +766,67 @@ export function CriarAcessoOficialModal({
             {/* CAMPOS ADICIONAIS (sempre visíveis) */}
             {/* ============================================ */}
             <div className="space-y-4 pt-2 border-t border-border/30">
-              {/* Foto URL */}
-              <FormField
-                control={form.control}
-                name="foto_aluno"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel className="flex items-center gap-1">
-                      <Image className="h-4 w-4" />
-                      URL da Foto
-                    </FormLabel>
-                    <FormControl>
-                      <Input 
-                        {...field} 
-                        placeholder="https://exemplo.com/foto.jpg"
-                        className="border-muted-foreground/30"
-                        disabled={isSubmitting}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
+              {/* Upload de Foto */}
+              <div className="space-y-2">
+                <Label className="flex items-center gap-1 text-sm">
+                  <Camera className="h-4 w-4" />
+                  Foto do Aluno
+                </Label>
+                
+                {/* Input de arquivo oculto */}
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFotoSelect}
+                  className="hidden"
+                  disabled={isSubmitting || isUploadingFoto}
+                />
+                
+                {fotoPreview ? (
+                  // Preview da foto
+                  <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-emerald-500/50 group">
+                    <img 
+                      src={fotoPreview} 
+                      alt="Preview" 
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={handleRemoveFoto}
+                      className="absolute top-1 right-1 p-1 bg-destructive/90 rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                      disabled={isSubmitting || isUploadingFoto}
+                    >
+                      <X className="h-3 w-3 text-white" />
+                    </button>
+                  </div>
+                ) : (
+                  // Botão de upload
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isSubmitting || isUploadingFoto}
+                    className="border-dashed border-muted-foreground/50 hover:border-emerald-500 hover:bg-emerald-500/5"
+                  >
+                    {isUploadingFoto ? (
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Enviando...
+                      </>
+                    ) : (
+                      <>
+                        <Upload className="h-4 w-4 mr-2" />
+                        Anexar Foto (PNG, JPG)
+                      </>
+                    )}
+                  </Button>
                 )}
-              />
+                
+                <p className="text-xs text-muted-foreground">
+                  Opcional. Máximo 5MB. A foto será associada ao perfil do aluno.
+                </p>
+              </div>
 
               {/* Senha */}
               <FormField
