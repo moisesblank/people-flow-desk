@@ -406,7 +406,7 @@ export const WebBookViewer = memo(function WebBookViewer({
   const { refetch: refetchAnnotations } = useBookAnnotations(bookId);
 
   // Hook de overlays (desenhos + texto do canvas) — persistência por aluno
-  const { getOverlayForPage, saveOverlays } = useBookPageOverlays(bookId);
+  const { getOverlayForPage, saveOverlays, refetchOverlays } = useBookPageOverlays(bookId);
 
   // Estado local
   const [zoom, setZoom] = useState(1);
@@ -541,6 +541,8 @@ export const WebBookViewer = memo(function WebBookViewer({
 
       if (overlayPayload.length) {
         await saveOverlays(overlayPayload as any);
+        // ✅ Garantir que os overlays em cache reflitam o que acabou de salvar
+        await refetchOverlays();
       }
 
       // 2) Refetch das anotações tradicionais (notes/bookmarks)
@@ -556,7 +558,7 @@ export const WebBookViewer = memo(function WebBookViewer({
     } finally {
       setIsSavingHistory(false);
     }
-  }, [bookId, drawingStrokes, textAnnotations, saveOverlays, refetchAnnotations]);
+  }, [bookId, drawingStrokes, textAnnotations, saveOverlays, refetchOverlays, refetchAnnotations]);
 
   useEffect(() => {
     if (isOwner) return; // Owner não tem bloqueios
@@ -649,8 +651,10 @@ export const WebBookViewer = memo(function WebBookViewer({
     setImageLoading(true);
   }, [currentPage]);
 
-  // Carregar overlays persistidos quando mudar a página
+  // Carregar overlays persistidos quando mudar a página OU quando entrar no modo leitura
   useEffect(() => {
+    if (!isFullscreen) return;
+
     const overlay = getOverlayForPage(currentPage);
     if (!overlay) return;
 
@@ -666,7 +670,7 @@ export const WebBookViewer = memo(function WebBookViewer({
       ...prev.filter((t) => t.pageNumber !== currentPage),
       ...texts,
     ]);
-  }, [currentPage, getOverlayForPage]);
+  }, [isFullscreen, currentPage, getOverlayForPage]);
 
   // Loading state (inclui loading do PDF)
   const isLoadingAnything = isLoading || (needsPdfMode && pdfRenderer.isLoading && !pdfRenderer.pdfLoaded);
