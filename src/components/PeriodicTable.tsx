@@ -284,10 +284,10 @@ export function PeriodicTableButton() {
         <Button
           variant="ghost"
           size="icon"
-          className="h-9 w-9 hover:bg-primary/10 hover:text-primary transition-all duration-200 group"
+          className="h-9 w-9 text-foreground hover:bg-primary/10 hover:text-primary transition-all duration-200 group"
           title="Tabela Periódica"
         >
-          <Atom className="h-5 w-5 group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
+          <Atom className="h-5 w-5 text-foreground group-hover:text-primary group-hover:scale-110 group-hover:rotate-180 transition-all duration-500" />
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-[98vw] w-[1500px] max-h-[95vh] p-0 gap-0 overflow-hidden bg-slate-50 dark:bg-slate-900 border-primary/30">
