@@ -15418,6 +15418,10 @@ export type Database = {
         }[]
       }
       check_device_limit: { Args: { p_user_id: string }; Returns: Json }
+      check_device_mfa_valid: {
+        Args: { _device_hash: string; _user_id: string }
+        Returns: boolean
+      }
       check_is_owner_email: { Args: { p_user_id: string }; Returns: boolean }
       check_mfa_valid: {
         Args: { _action: string; _user_id: string }
@@ -16458,6 +16462,10 @@ export type Database = {
           p_type: string
           p_version: string
         }
+        Returns: string
+      }
+      register_device_mfa_verification: {
+        Args: { _device_hash: string; _ip_address?: string; _user_id: string }
         Returns: string
       }
       register_device_trust: {

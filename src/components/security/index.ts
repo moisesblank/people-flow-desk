@@ -31,6 +31,10 @@ export { MFAActionGuard, MFAProtectedButton } from './MFAActionGuard';
 export { MFAActionModal } from './MFAActionModal';
 export { MFAPageGuard } from './MFAPageGuard';
 
+// 🆕 DEVICE MFA GUARD — 2FA por Dispositivo (Gate de Entrada)
+// Exige verificação uma vez por dispositivo novo, cache 24h
+export { DeviceMFAGuard } from './DeviceMFAGuard';
+
 // ============================================
 // COMPONENTES DE DASHBOARD
 // ============================================

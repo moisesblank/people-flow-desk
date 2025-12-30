@@ -12,6 +12,7 @@ export type MFAProtectedAction =
   | 'change_password'
   | 'change_email'
   | 'register_new_device'
+  | 'device_verification'  // 🆕 2FA por dispositivo
   | 'change_subscription'
   | 'access_admin'
   | 'manage_users'
