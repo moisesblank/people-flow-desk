@@ -154,22 +154,9 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
     }
 
     setIsUploading(true);
-    setUploadProgress(10);
+    setUploadProgress(5);
 
     try {
-      // Usar edge function genesis-book-upload diretamente
-      const formDataUpload = new FormData();
-      formDataUpload.append('file', selectedFile);
-      formDataUpload.append('title', form.title);
-      if (form.subtitle) formDataUpload.append('subtitle', form.subtitle);
-      if (form.description) formDataUpload.append('description', form.description);
-      formDataUpload.append('category', form.category);
-      if (form.tags) formDataUpload.append('tags', form.tags);
-      formDataUpload.append('isPublished', 'true');
-
-      setUploadProgress(30);
-
-      // Chamar edge function
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const { data: sessionData } = await supabase.auth.getSession();
       
@@ -177,34 +164,108 @@ const UploadDialog = memo(function UploadDialog({ open, onClose, onSuccess }: Up
         throw new Error('Não autenticado');
       }
 
-      const response = await fetch(`${supabaseUrl}/functions/v1/genesis-book-upload`, {
+      const authHeaders = {
+        'Authorization': `Bearer ${sessionData.session.access_token}`,
+        'Content-Type': 'application/json',
+      };
+
+      // ============================================
+      // FASE 1: INIT - Obter Signed URL para upload
+      // ============================================
+      setUploadProgress(10);
+      
+      const initPayload = {
+        phase: 'init',
+        title: form.title.trim(),
+        subtitle: form.subtitle?.trim() || undefined,
+        description: form.description?.trim() || undefined,
+        category: form.category,
+        tags: form.tags?.trim() || undefined,
+        isPublished: true,
+        fileName: selectedFile.name,
+        fileSize: selectedFile.size,
+        mimeType: selectedFile.type || 'application/pdf',
+      };
+
+      const initResponse = await fetch(`${supabaseUrl}/functions/v1/genesis-book-upload`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${sessionData.session.access_token}`,
-        },
-        body: formDataUpload,
+        headers: authHeaders,
+        body: JSON.stringify(initPayload),
       });
 
-      setUploadProgress(70);
+      const initResult = await initResponse.json();
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(result.error || 'Erro ao processar livro');
+      if (!initResponse.ok || !initResult.success) {
+        throw new Error(initResult.error || 'Erro ao iniciar upload');
       }
 
-      setUploadProgress(100);
-      toast.success('Livro enviado para processamento!', {
-        description: `Job ID: ${result.jobId?.substring(0, 8)}...`,
+      const { bookId, uploadUrl } = initResult;
+      
+      if (!uploadUrl || !bookId) {
+        throw new Error('URL de upload não gerada');
+      }
+
+      console.log('[UploadDialog] Fase 1 OK - Signed URL recebida');
+      setUploadProgress(25);
+
+      // ============================================
+      // FASE 2: UPLOAD DIRETO - Enviar arquivo para Storage
+      // ============================================
+      toast.info('Enviando arquivo...', { id: 'upload-progress' });
+
+      const uploadResponse = await fetch(uploadUrl, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': selectedFile.type || 'application/pdf',
+        },
+        body: selectedFile,
       });
+
+      if (!uploadResponse.ok) {
+        throw new Error(`Falha no upload: ${uploadResponse.status}`);
+      }
+
+      console.log('[UploadDialog] Fase 2 OK - Arquivo enviado ao Storage');
+      setUploadProgress(70);
+
+      // ============================================
+      // FASE 3: COMPLETE - Confirmar e criar job
+      // ============================================
+      const completePayload = {
+        phase: 'complete',
+        bookId,
+      };
+
+      const completeResponse = await fetch(`${supabaseUrl}/functions/v1/genesis-book-upload`, {
+        method: 'POST',
+        headers: authHeaders,
+        body: JSON.stringify(completePayload),
+      });
+
+      const completeResult = await completeResponse.json();
+
+      if (!completeResponse.ok || !completeResult.success) {
+        throw new Error(completeResult.error || 'Erro ao finalizar upload');
+      }
+
+      console.log('[UploadDialog] Fase 3 OK - Job criado:', completeResult.jobId);
+      setUploadProgress(100);
+
+      toast.dismiss('upload-progress');
+      toast.success('Livro enviado para processamento!', {
+        description: `O livro "${form.title}" está na fila de conversão.`,
+      });
+
       onSuccess();
       onClose();
 
       // Resetar form
       setForm({ title: '', subtitle: '', category: 'quimica_geral', description: '', tags: '' });
       setSelectedFile(null);
+
     } catch (err) {
       console.error('[UploadDialog] Erro:', err);
+      toast.dismiss('upload-progress');
       toast.error(err instanceof Error ? err.message : 'Erro ao enviar livro');
     } finally {
       setIsUploading(false);
