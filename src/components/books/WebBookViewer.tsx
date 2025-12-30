@@ -259,10 +259,24 @@ export const WebBookViewer = memo(function WebBookViewer({
 
   // Carregar PDF quando tiver o caminho
   useEffect(() => {
-    if (pdfPath && needsPdfMode && !pdfRenderer.pdfLoaded && !pdfRenderer.isLoading) {
+    // ✅ P0: Sem retry infinito — se deu erro, só recarrega via ação explícita do usuário
+    if (
+      pdfPath &&
+      needsPdfMode &&
+      !pdfRenderer.pdfLoaded &&
+      !pdfRenderer.isLoading &&
+      !pdfRenderer.error
+    ) {
       pdfRenderer.loadPdf();
     }
-  }, [pdfPath, needsPdfMode, pdfRenderer.pdfLoaded, pdfRenderer.isLoading, pdfRenderer.loadPdf]);
+  }, [
+    pdfPath,
+    needsPdfMode,
+    pdfRenderer.pdfLoaded,
+    pdfRenderer.isLoading,
+    pdfRenderer.error,
+    pdfRenderer.loadPdf,
+  ]);
 
   // Renderizar página do PDF quando mudar de página
   useEffect(() => {
