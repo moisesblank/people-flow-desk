@@ -1,11 +1,12 @@
 // ============================================
-// 📖 LIVROS DO MOISA - Visualizador v2.0
+// 📖 LIVROS DO MOISA - Visualizador v3.0
 // Leitor interativo com SANCTUM Integration
-// Signed URLs + Prefetch + Proteção Total
+// Suporta PDF direto + Signed URLs + Prefetch
 // ============================================
 
 import React, { memo, useState, useCallback, useEffect, useRef } from 'react';
 import { useWebBook } from '@/hooks/useWebBook';
+import { usePdfRenderer } from '@/hooks/usePdfRenderer';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from "@/hooks/useQuantumReactivity";
 import { 
@@ -21,7 +22,8 @@ import {
   Loader2,
   Shield,
   AlertTriangle,
-  MessageCircle
+  MessageCircle,
+  FileText
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Slider } from '@/components/ui/slider';
@@ -29,6 +31,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PdfPageViewer } from './PdfPageViewer';
 
 // ============================================
 // TIPOS
@@ -219,7 +222,9 @@ export const WebBookViewer = memo(function WebBookViewer({
     isOwner,
     getWatermarkText,
     reportViolation,
-    threatScore
+    threatScore,
+    needsPdfMode,
+    getOriginalPdfPath
   } = useWebBook(bookId);
 
   // Estado local
@@ -227,13 +232,50 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showToc, setShowToc] = useState(false);
   const [imageLoading, setImageLoading] = useState(true);
+  const [pdfPath, setPdfPath] = useState<string | null>(null);
   
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Página atual
+  // Hook de renderização de PDF (quando necessário)
+  const pdfRenderer = usePdfRenderer(bookId, pdfPath || undefined);
+
+  // Carregar caminho do PDF se precisar de modo PDF
+  useEffect(() => {
+    if (needsPdfMode && !pdfPath) {
+      getOriginalPdfPath().then(path => {
+        if (path) {
+          setPdfPath(path);
+        }
+      });
+    }
+  }, [needsPdfMode, pdfPath, getOriginalPdfPath]);
+
+  // Carregar PDF quando tiver o caminho
+  useEffect(() => {
+    if (pdfPath && needsPdfMode && !pdfRenderer.pdfLoaded && !pdfRenderer.isLoading) {
+      pdfRenderer.loadPdf();
+    }
+  }, [pdfPath, needsPdfMode, pdfRenderer.pdfLoaded, pdfRenderer.isLoading, pdfRenderer.loadPdf]);
+
+  // Renderizar página do PDF quando mudar de página
+  useEffect(() => {
+    if (needsPdfMode && pdfRenderer.pdfLoaded && currentPage > 0) {
+      pdfRenderer.renderPage(currentPage);
+      pdfRenderer.prefetchPages(currentPage);
+    }
+  }, [needsPdfMode, pdfRenderer.pdfLoaded, currentPage, pdfRenderer.renderPage, pdfRenderer.prefetchPages]);
+
+  // Página atual (modo imagem ou modo PDF)
   const currentPageData = bookData?.pages?.[currentPage - 1];
-  const currentPageUrl = currentPageData ? getPageUrl(currentPageData) : '';
+  const currentPageUrl = needsPdfMode 
+    ? pdfRenderer.currentPageData?.dataUrl || ''
+    : (currentPageData ? getPageUrl(currentPageData) : '');
   const watermarkText = getWatermarkText();
+
+  // Total de páginas (priorizar PDF se disponível)
+  const effectiveTotalPages = needsPdfMode && pdfRenderer.totalPages > 0 
+    ? pdfRenderer.totalPages 
+    : totalPages;
 
   // Fullscreen
   const toggleFullscreen = useCallback(async () => {
@@ -336,23 +378,34 @@ export const WebBookViewer = memo(function WebBookViewer({
     setImageLoading(true);
   }, [currentPage]);
 
-  // Loading state
-  if (isLoading) {
+  // Loading state (inclui loading do PDF)
+  const isLoadingAnything = isLoading || (needsPdfMode && pdfRenderer.isLoading && !pdfRenderer.pdfLoaded);
+  
+  if (isLoadingAnything) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4">
         <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        <p className="text-muted-foreground">Carregando livro...</p>
+        <p className="text-muted-foreground">
+          {needsPdfMode ? 'Carregando PDF...' : 'Carregando livro...'}
+        </p>
+        {needsPdfMode && (
+          <Badge variant="outline" className="gap-1">
+            <FileText className="w-3 h-3" />
+            Modo Renderização Direta
+          </Badge>
+        )}
       </div>
     );
   }
 
   // Error state
-  if (error || !bookData?.success) {
+  const effectiveError = error || pdfRenderer.error;
+  if (effectiveError || !bookData?.success) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] gap-4 text-center">
         <AlertTriangle className="w-12 h-12 text-destructive" />
         <h3 className="text-lg font-semibold">Erro ao carregar livro</h3>
-        <p className="text-muted-foreground">{error || bookData?.error}</p>
+        <p className="text-muted-foreground">{effectiveError || bookData?.error}</p>
         {onClose && (
           <Button variant="outline" onClick={onClose}>
             Voltar
@@ -464,7 +517,7 @@ export const WebBookViewer = memo(function WebBookViewer({
         {/* Navegação lateral direita */}
         <button
           onClick={nextPage}
-          disabled={currentPage >= totalPages}
+          disabled={currentPage >= effectiveTotalPages}
           className="absolute right-0 top-0 bottom-0 w-20 z-10 flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity disabled:pointer-events-none"
         >
           <div className="p-2 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg">
@@ -487,9 +540,15 @@ export const WebBookViewer = memo(function WebBookViewer({
               className="relative"
               style={{ transform: `scale(${zoom})`, transformOrigin: 'center' }}
             >
-              {imageLoading && (
+              {/* Loading indicator */}
+              {(imageLoading || (needsPdfMode && pdfRenderer.isLoading)) && (
                 <div className="absolute inset-0 flex items-center justify-center bg-muted rounded-lg min-w-[300px] min-h-[400px]">
-                  <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                  <div className="flex flex-col items-center gap-2">
+                    <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                    {needsPdfMode && (
+                      <span className="text-xs text-muted-foreground">Renderizando página {currentPage}...</span>
+                    )}
+                  </div>
                 </div>
               )}
               
@@ -505,8 +564,11 @@ export const WebBookViewer = memo(function WebBookViewer({
                   onContextMenu={(e) => e.preventDefault()}
                 />
               ) : (
-                <div className="flex items-center justify-center bg-muted rounded-lg min-w-[300px] min-h-[400px]">
+                <div className="flex flex-col items-center justify-center bg-muted rounded-lg min-w-[300px] min-h-[400px] gap-3">
                   <BookOpen className="w-12 h-12 text-muted-foreground" />
+                  {needsPdfMode && !pdfRenderer.pdfLoaded && (
+                    <p className="text-sm text-muted-foreground">Aguardando PDF...</p>
+                  )}
                 </div>
               )}
 
@@ -520,20 +582,28 @@ export const WebBookViewer = memo(function WebBookViewer({
       {/* Footer */}
       <footer className="px-4 py-3 border-t border-border bg-background/80 backdrop-blur-sm">
         <div className="flex items-center gap-4">
+          {/* Modo PDF indicator */}
+          {needsPdfMode && (
+            <Badge variant="outline" className="gap-1 text-xs">
+              <FileText className="w-3 h-3" />
+              PDF
+            </Badge>
+          )}
+
           {/* Progresso */}
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <span className="text-xs text-muted-foreground">
-                Página {currentPage} de {totalPages}
+                Página {currentPage} de {effectiveTotalPages}
               </span>
               <span className="text-xs text-muted-foreground">
-                {progressPercent.toFixed(0)}%
+                {effectiveTotalPages > 0 ? Math.round((currentPage / effectiveTotalPages) * 100) : 0}%
               </span>
             </div>
             <Slider
               value={[currentPage]}
               min={1}
-              max={totalPages || 1}
+              max={effectiveTotalPages || 1}
               step={1}
               onValueChange={([value]) => goToPage(value)}
               className="w-full"
@@ -554,7 +624,7 @@ export const WebBookViewer = memo(function WebBookViewer({
               variant="outline"
               size="icon"
               onClick={nextPage}
-              disabled={currentPage >= totalPages}
+              disabled={currentPage >= effectiveTotalPages}
             >
               <ChevronRight className="w-4 h-4" />
             </Button>

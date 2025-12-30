@@ -521,6 +521,30 @@ export function useWebBook(bookId?: string) {
     return () => clearInterval(interval);
   }, [bookId, currentPage, fetchSignedUrl]);
 
+  // Verificar se precisa de modo PDF direto (sem páginas pré-processadas)
+  const needsPdfMode = useMemo(() => {
+    return bookData?.success && 
+           (!bookData.pages || bookData.pages.length === 0) &&
+           bookData.book;
+  }, [bookData]);
+
+  // Obter caminho do PDF original
+  const getOriginalPdfPath = useCallback(async (): Promise<string | null> => {
+    if (!bookId) return null;
+    
+    try {
+      const { data } = await supabase
+        .from('web_books')
+        .select('original_path')
+        .eq('id', bookId)
+        .single();
+      
+      return data?.original_path || null;
+    } catch {
+      return null;
+    }
+  }, [bookId]);
+
   return {
     // Estado
     bookData,
@@ -557,7 +581,11 @@ export function useWebBook(bookId?: string) {
     totalPages: bookData?.book?.totalPages || 0,
     progressPercent: bookData?.progress?.progressPercent || 0,
     isOwner,
-    watermark: bookData?.watermark
+    watermark: bookData?.watermark,
+
+    // Modo PDF direto
+    needsPdfMode,
+    getOriginalPdfPath
   };
 }
 
