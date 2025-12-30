@@ -13182,14 +13182,18 @@ export type Database = {
           is_published: boolean
           job_id: string | null
           original_bucket: string
+          original_checksum: string | null
           original_filename: string | null
+          original_mime_type: string | null
           original_path: string
           original_size_bytes: number | null
           processed_at: string | null
           rating_average: number | null
           rating_count: number | null
           required_roles: string[]
+          slug: string | null
           status: Database["public"]["Enums"]["web_book_status"]
+          status_message: string | null
           subtitle: string | null
           summary: Json | null
           tags: string[] | null
@@ -13219,14 +13223,18 @@ export type Database = {
           is_published?: boolean
           job_id?: string | null
           original_bucket?: string
+          original_checksum?: string | null
           original_filename?: string | null
+          original_mime_type?: string | null
           original_path: string
           original_size_bytes?: number | null
           processed_at?: string | null
           rating_average?: number | null
           rating_count?: number | null
           required_roles?: string[]
+          slug?: string | null
           status?: Database["public"]["Enums"]["web_book_status"]
+          status_message?: string | null
           subtitle?: string | null
           summary?: Json | null
           tags?: string[] | null
@@ -13256,14 +13264,18 @@ export type Database = {
           is_published?: boolean
           job_id?: string | null
           original_bucket?: string
+          original_checksum?: string | null
           original_filename?: string | null
+          original_mime_type?: string | null
           original_path?: string
           original_size_bytes?: number | null
           processed_at?: string | null
           rating_average?: number | null
           rating_count?: number | null
           required_roles?: string[]
+          slug?: string | null
           status?: Database["public"]["Enums"]["web_book_status"]
+          status_message?: string | null
           subtitle?: string | null
           summary?: Json | null
           tags?: string[] | null
