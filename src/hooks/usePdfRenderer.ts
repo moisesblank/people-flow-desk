@@ -126,13 +126,23 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
         totalPages: pdf.numPages
       }));
 
-      // Atualizar total_pages no banco se estiver zerado
+      // ✅ P0: Atualizar total_pages no banco SEMPRE que carrega (sem filtro de total_pages=0)
+      // Isso corrige livros que foram publicados com 0 páginas
       if (bookId && pdf.numPages > 0) {
-        await supabase
+        console.log(`[PdfRenderer] Atualizando total_pages no banco: ${pdf.numPages}`);
+        const { error: updateError } = await supabase
           .from('web_books')
-          .update({ total_pages: pdf.numPages })
-          .eq('id', bookId)
-          .eq('total_pages', 0);
+          .update({ 
+            total_pages: pdf.numPages,
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', bookId);
+        
+        if (updateError) {
+          console.warn('[PdfRenderer] Erro ao atualizar total_pages:', updateError);
+        } else {
+          console.log('[PdfRenderer] total_pages atualizado com sucesso');
+        }
       }
 
     } catch (err) {
