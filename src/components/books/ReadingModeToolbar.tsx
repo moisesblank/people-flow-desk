@@ -54,6 +54,8 @@ import { toast } from 'sonner';
 // TIPOS
 // ============================================
 
+export type ToolMode = 'select' | 'highlight' | 'pencil' | 'eraser' | 'text' | 'ruler';
+
 interface ReadingModeToolbarProps {
   bookId: string;
   currentPage: number;
@@ -61,9 +63,14 @@ interface ReadingModeToolbarProps {
   onGoToPage: (page: number) => void;
   onZoomChange?: (zoom: number) => void;
   currentZoom?: number;
+  // Novos props para controle de ferramentas de desenho
+  activeTool?: ToolMode;
+  onToolChange?: (tool: ToolMode) => void;
+  drawingColor?: string;
+  onColorChange?: (color: string) => void;
+  drawingSize?: number;
+  onSizeChange?: (size: number) => void;
 }
-
-type ToolMode = 'select' | 'highlight' | 'pencil' | 'eraser' | 'text' | 'ruler';
 
 const ANNOTATION_TYPES: { type: AnnotationType; icon: typeof StickyNote; label: string; color: string; description: string }[] = [
   { type: 'note', icon: StickyNote, label: 'Nota', color: '#3b82f6', description: 'Anotação geral' },
@@ -100,20 +107,57 @@ export const ReadingModeToolbar = memo(function ReadingModeToolbar({
   isFullscreen,
   onGoToPage,
   onZoomChange,
-  currentZoom = 1
+  currentZoom = 1,
+  activeTool: externalActiveTool,
+  onToolChange,
+  drawingColor: externalDrawingColor,
+  onColorChange,
+  drawingSize: externalDrawingSize,
+  onSizeChange
 }: ReadingModeToolbarProps) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [activeTab, setActiveTab] = useState<'tools' | 'annotations' | 'bookmarks' | 'search'>('tools');
-  const [activeTool, setActiveTool] = useState<ToolMode>('select');
+  const [internalActiveTool, setInternalActiveTool] = useState<ToolMode>('select');
   const [newNoteType, setNewNoteType] = useState<AnnotationType>('note');
   const [newNoteContent, setNewNoteContent] = useState('');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editContent, setEditContent] = useState('');
-  const [selectedColor, setSelectedColor] = useState(HIGHLIGHT_COLORS[0]);
+  const [internalSelectedColor, setInternalSelectedColor] = useState(HIGHLIGHT_COLORS[0]);
   const [searchQuery, setSearchQuery] = useState('');
   const [showRuler, setShowRuler] = useState(false);
   const [rulerPosition, setRulerPosition] = useState(50);
-  const [pencilSize, setPencilSize] = useState(3);
+  const [internalPencilSize, setInternalPencilSize] = useState(3);
+
+  // Usar valores externos se fornecidos, senão usar internos
+  const activeTool = externalActiveTool ?? internalActiveTool;
+  const setActiveTool = useCallback((tool: ToolMode) => {
+    if (onToolChange) {
+      onToolChange(tool);
+    } else {
+      setInternalActiveTool(tool);
+    }
+  }, [onToolChange]);
+
+  const selectedColor = externalDrawingColor 
+    ? HIGHLIGHT_COLORS.find(c => c.color === externalDrawingColor) || HIGHLIGHT_COLORS[0]
+    : internalSelectedColor;
+  
+  const setSelectedColor = useCallback((color: typeof HIGHLIGHT_COLORS[0]) => {
+    if (onColorChange) {
+      onColorChange(color.color);
+    } else {
+      setInternalSelectedColor(color);
+    }
+  }, [onColorChange]);
+
+  const pencilSize = externalDrawingSize ?? internalPencilSize;
+  const setPencilSize = useCallback((size: number) => {
+    if (onSizeChange) {
+      onSizeChange(size);
+    } else {
+      setInternalPencilSize(size);
+    }
+  }, [onSizeChange]);
 
   const {
     annotations,
