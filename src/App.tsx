@@ -15,6 +15,7 @@ import { KeyboardShortcutsOverlay } from "@/components/onboarding/KeyboardShortc
 import { DuplicationClipboardIndicator } from "@/components/admin/DuplicationClipboardIndicator";
 import { SessionGuard } from "@/components/security/SessionGuard";
 import { DeviceGuard } from "@/components/security/DeviceGuard";
+import { DeviceMFAGuard } from "@/components/security/DeviceMFAGuard";
 import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
@@ -99,38 +100,40 @@ const AppContent = memo(() => {
     <>
       <SessionGuard>
         <DeviceGuard>
-          {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
-          
-          <Suspense fallback={null}>
-            <LazyGodModePanel />
-            <LazyInlineEditor />
-            <LazyMasterQuickAddMenu />
-            <LazyGlobalDuplication />
-            <LazyMasterUndoIndicator />
-            <LazyMasterDeleteOverlay />
-            <LazyMasterContextMenu />
-            {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
-            <LazyGlobalSaveBar />
-            <LazyNavigationGuard />
-            <LazyRealtimeEditOverlay />
-          </Suspense>
-          
-          <VisualEditMode />
-          <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
-          
-          <Suspense fallback={null}>
-            <LazyAITramon />
-          </Suspense>
-          
-          <Suspense fallback={<PageLoader />}>
-            <Routes>
-              {publicRoutes}
-              {comunidadeRoutes}
-              {gestaoRoutes}
-              {alunoRoutes}
-              {legacyRoutes}
-            </Routes>
-          </Suspense>
+          <DeviceMFAGuard>
+            {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
+            
+            <Suspense fallback={null}>
+              <LazyGodModePanel />
+              <LazyInlineEditor />
+              <LazyMasterQuickAddMenu />
+              <LazyGlobalDuplication />
+              <LazyMasterUndoIndicator />
+              <LazyMasterDeleteOverlay />
+              <LazyMasterContextMenu />
+              {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
+              <LazyGlobalSaveBar />
+              <LazyNavigationGuard />
+              <LazyRealtimeEditOverlay />
+            </Suspense>
+            
+            <VisualEditMode />
+            <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
+            
+            <Suspense fallback={null}>
+              <LazyAITramon />
+            </Suspense>
+            
+            <Suspense fallback={<PageLoader />}>
+              <Routes>
+                {publicRoutes}
+                {comunidadeRoutes}
+                {gestaoRoutes}
+                {alunoRoutes}
+                {legacyRoutes}
+              </Routes>
+            </Suspense>
+          </DeviceMFAGuard>
         </DeviceGuard>
       </SessionGuard>
     </>

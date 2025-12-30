@@ -54,6 +54,10 @@ const ACTION_LABELS: Record<MFAProtectedAction, { title: string; description: st
   delete_account: {
     title: 'Excluir Conta',
     description: 'Esta ação é irreversível. Confirme sua identidade.'
+  },
+  device_verification: {
+    title: 'Verificar Dispositivo',
+    description: 'Confirme sua identidade para autorizar este dispositivo.'
   }
 };
 

@@ -1,85 +1,43 @@
 // ============================================
-// 🔐 MFA PAGE GUARD — Proteção de Páginas Inteiras
-// Exige 2FA antes de acessar conteúdo sensível
-// Validade: 24 horas por ação
+// 🔐 DEVICE MFA GUARD — Gate de Entrada por Dispositivo
+// Exige 2FA uma vez por dispositivo novo
+// Validade: 24 horas por device_hash
+// NÃO TOCA em login/sessão/dispositivo
 // ============================================
 
 import { ReactNode, useState, useEffect } from 'react';
-import { useMFAGuard, MFAProtectedAction } from '@/hooks/useMFAGuard';
+import { useDeviceMFAGuard } from '@/hooks/useDeviceMFAGuard';
 import { MFAActionModal } from './MFAActionModal';
-import { Shield, Lock, Loader2 } from 'lucide-react';
+import { Shield, Smartphone, Loader2, Lock, Fingerprint } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
+import { generateDeviceName, detectDeviceType } from '@/lib/deviceFingerprint';
 
-interface MFAPageGuardProps {
-  action: MFAProtectedAction;
+interface DeviceMFAGuardProps {
   children: ReactNode;
-  title?: string;
-  description?: string;
-  icon?: ReactNode;
 }
 
-const ACTION_PAGE_LABELS: Record<MFAProtectedAction, { title: string; description: string }> = {
-  change_password: {
-    title: 'Alterar Senha',
-    description: 'Verificação necessária para alterar sua senha.'
-  },
-  change_email: {
-    title: 'Alterar Email',
-    description: 'Verificação necessária para alterar seu email.'
-  },
-  register_new_device: {
-    title: 'Novo Dispositivo',
-    description: 'Verificação necessária para registrar novo dispositivo.'
-  },
-  change_subscription: {
-    title: 'Alterar Assinatura',
-    description: 'Verificação necessária para alterar sua assinatura.'
-  },
-  access_admin: {
-    title: 'Área Administrativa',
-    description: 'Verificação necessária para acessar área administrativa.'
-  },
-  manage_users: {
-    title: 'Gerenciamento de Usuários',
-    description: 'Esta área contém dados sensíveis. Confirme sua identidade.'
-  },
-  financial_access: {
-    title: 'Área Financeira',
-    description: 'Esta área contém informações financeiras confidenciais.'
-  },
-  delete_account: {
-    title: 'Excluir Conta',
-    description: 'Ação irreversível. Confirme sua identidade.'
-  },
-  device_verification: {
-    title: 'Verificar Dispositivo',
-    description: 'Confirme sua identidade para autorizar este dispositivo.'
-  }
-};
-
-export function MFAPageGuard({ 
-  action, 
-  children, 
-  title,
-  description,
-  icon
-}: MFAPageGuardProps) {
+export function DeviceMFAGuard({ children }: DeviceMFAGuardProps) {
   const { 
     isChecking, 
     isVerified, 
     needsMFA, 
     error,
-    checkMFA,
+    deviceHash,
     onVerificationComplete 
-  } = useMFAGuard(action);
+  } = useDeviceMFAGuard();
 
   const [showModal, setShowModal] = useState(false);
+  const [deviceInfo, setDeviceInfo] = useState({ name: '', type: 'desktop' as 'desktop' | 'mobile' | 'tablet' });
 
-  const labels = ACTION_PAGE_LABELS[action];
-  const displayTitle = title || labels.title;
-  const displayDescription = description || labels.description;
+  // Detectar informações do dispositivo
+  useEffect(() => {
+    setDeviceInfo({
+      name: generateDeviceName(),
+      type: detectDeviceType()
+    });
+  }, []);
 
   // Quando precisa de MFA, abre modal automaticamente
   useEffect(() => {
@@ -91,6 +49,17 @@ export function MFAPageGuard({
   const handleVerificationSuccess = () => {
     onVerificationComplete(true);
     setShowModal(false);
+  };
+
+  const getDeviceIcon = () => {
+    switch (deviceInfo.type) {
+      case 'mobile':
+        return <Smartphone className="w-10 h-10 text-primary-foreground" />;
+      case 'tablet':
+        return <Fingerprint className="w-10 h-10 text-primary-foreground" />;
+      default:
+        return <Lock className="w-10 h-10 text-primary-foreground" />;
+    }
   };
 
   // Loading state
@@ -108,7 +77,7 @@ export function MFAPageGuard({
               <Loader2 className="w-8 h-8 text-primary-foreground animate-spin" />
             </div>
           </div>
-          <p className="text-muted-foreground">Verificando autorização...</p>
+          <p className="text-muted-foreground">Verificando dispositivo...</p>
         </motion.div>
       </div>
     );
@@ -119,7 +88,7 @@ export function MFAPageGuard({
     return <>{children}</>;
   }
 
-  // Needs MFA - show gate
+  // Needs MFA - show device verification gate
   return (
     <>
       <div className="min-h-[60vh] flex items-center justify-center p-4">
@@ -139,17 +108,39 @@ export function MFAPageGuard({
                 <div className="relative">
                   <div className="absolute inset-0 bg-primary/20 rounded-full blur-lg animate-pulse" />
                   <div className="relative w-20 h-20 rounded-full bg-gradient-to-br from-primary to-primary/60 flex items-center justify-center">
-                    {icon || <Lock className="w-10 h-10 text-primary-foreground" />}
+                    {getDeviceIcon()}
                   </div>
                 </div>
               </motion.div>
-              <CardTitle className="text-xl">{displayTitle}</CardTitle>
+              <CardTitle className="text-xl">Novo Dispositivo Detectado</CardTitle>
               <CardDescription className="text-base">
-                {displayDescription}
+                Verificação de segurança necessária para este dispositivo.
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="bg-muted/50 rounded-lg p-4 text-center">
+              {/* Device Info */}
+              <div className="bg-muted/50 rounded-lg p-4">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="p-2 rounded-lg bg-primary/10">
+                    {deviceInfo.type === 'mobile' ? (
+                      <Smartphone className="w-5 h-5 text-primary" />
+                    ) : (
+                      <Lock className="w-5 h-5 text-primary" />
+                    )}
+                  </div>
+                  <div>
+                    <p className="font-medium text-sm">{deviceInfo.name}</p>
+                    <p className="text-xs text-muted-foreground capitalize">{deviceInfo.type}</p>
+                  </div>
+                </div>
+                {deviceHash && (
+                  <p className="text-xs text-muted-foreground font-mono">
+                    ID: {deviceHash.slice(0, 16)}...
+                  </p>
+                )}
+              </div>
+
+              <div className="bg-muted/30 rounded-lg p-4 text-center">
                 <Shield className="w-6 h-6 mx-auto mb-2 text-primary" />
                 <p className="text-sm text-muted-foreground">
                   Para sua segurança, enviaremos um código de verificação para seu email.
@@ -172,11 +163,11 @@ export function MFAPageGuard({
                 size="lg"
               >
                 <Shield className="w-4 h-4" />
-                Verificar Identidade
+                Verificar Dispositivo
               </Button>
 
               <p className="text-xs text-center text-muted-foreground">
-                A verificação é válida por 24 horas para esta ação.
+                Após verificação, este dispositivo terá acesso por 24 horas.
               </p>
             </CardContent>
           </Card>
@@ -187,7 +178,9 @@ export function MFAPageGuard({
         isOpen={showModal}
         onClose={() => setShowModal(false)}
         onSuccess={handleVerificationSuccess}
-        action={action}
+        action="register_new_device"
+        title="Verificar Dispositivo"
+        description="Confirme sua identidade para autorizar este dispositivo."
       />
     </>
   );
