@@ -84,19 +84,39 @@ SectionLoader.displayName = "SectionLoader";
 // ============================================
 const Home = () => {
   const { isSlowConnection, disableAnimations } = usePerformance();
-  const [showIntro, setShowIntro] = useState(true);
-  const [isLoaded, setIsLoaded] = useState(false);
+  
+  // 🛡️ FIX TELA PRETA: Verificar sessionStorage ANTES de qualquer estado
+  const introAlreadySeen = typeof window !== 'undefined' && sessionStorage.getItem("intro_seen_v33") === "true";
+  
+  const [showIntro, setShowIntro] = useState(!introAlreadySeen);
+  const [isLoaded, setIsLoaded] = useState(introAlreadySeen);
 
+  // 🛡️ SAFETY: Se conexão lenta detectada, skip intro imediatamente
   useEffect(() => {
-    // Skip intro if already seen or slow connection
-    const introSeen = sessionStorage.getItem("intro_seen_v33");
-    if (introSeen || isSlowConnection) { 
+    if (isSlowConnection && showIntro) { 
+      console.log('[Home] Slow connection detected, skipping intro');
+      sessionStorage.setItem("intro_seen_v33", "true");
       setShowIntro(false); 
       setIsLoaded(true); 
     }
-  }, [isSlowConnection]);
+  }, [isSlowConnection, showIntro]);
+
+  // 🛡️ EMERGENCY TIMEOUT: Garante que NUNCA ficará em tela preta
+  useEffect(() => {
+    if (!showIntro) return;
+    
+    const emergencyTimeout = setTimeout(() => {
+      console.warn('[Home] ⚠️ EMERGENCY: Intro timeout exceeded, forcing completion');
+      sessionStorage.setItem("intro_seen_v33", "true");
+      setShowIntro(false);
+      setIsLoaded(true);
+    }, 6000); // 6s = 1s além do safety do CinematicIntro
+
+    return () => clearTimeout(emergencyTimeout);
+  }, [showIntro]);
 
   const handleIntroComplete = useCallback(() => {
+    console.log('[Home] Intro complete callback fired');
     sessionStorage.setItem("intro_seen_v33", "true");
     setShowIntro(false);
     requestAnimationFrame(() => setIsLoaded(true));
