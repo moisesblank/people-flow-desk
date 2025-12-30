@@ -261,40 +261,94 @@ export const DrawingCanvas = memo(function DrawingCanvas({
     }
   }, []);
 
-  // Salvar texto atual
+  // Salvar texto atual - usando refs para garantir persistência
+  const textInputRef = useRef<{ x: number; y: number } | null>(null);
+  const textValueRef = useRef('');
+  const editingIdRef = useRef<string | null>(null);
+  
+  // Manter refs sincronizados
+  useEffect(() => {
+    textInputRef.current = activeTextInput;
+    textValueRef.current = textInputValue;
+    editingIdRef.current = editingTextId;
+  }, [activeTextInput, textInputValue, editingTextId]);
+
   const saveTextAnnotation = useCallback(() => {
-    if (!activeTextInput || !textInputValue.trim()) {
+    const inputPos = textInputRef.current || activeTextInput;
+    const inputValue = textValueRef.current || textInputValue;
+    const editId = editingIdRef.current || editingTextId;
+    
+    if (!inputPos || !inputValue.trim()) {
       setActiveTextInput(null);
       setTextInputValue('');
       setEditingTextId(null);
+      textInputRef.current = null;
+      textValueRef.current = '';
+      editingIdRef.current = null;
       return;
     }
 
-    if (editingTextId) {
+    if (editId) {
       // Editando texto existente
       setTextAnnotations(prev => prev.map(t => 
-        t.id === editingTextId 
-          ? { ...t, text: textInputValue.trim() }
+        t.id === editId 
+          ? { ...t, text: inputValue.trim() }
           : t
       ));
     } else {
       // Novo texto
       const newText: TextAnnotation = {
         id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        x: activeTextInput.x,
-        y: activeTextInput.y,
-        text: textInputValue.trim(),
+        x: inputPos.x,
+        y: inputPos.y,
+        text: inputValue.trim(),
         color: color,
         fontSize: Math.max(16, size * 5),
         pageNumber
       };
+      console.log('[DrawingCanvas] Salvando novo texto:', newText);
       setTextAnnotations(prev => [...prev, newText]);
     }
 
     setActiveTextInput(null);
     setTextInputValue('');
     setEditingTextId(null);
-  }, [activeTextInput, textInputValue, editingTextId, color, size, pageNumber]);
+    textInputRef.current = null;
+    textValueRef.current = '';
+    editingIdRef.current = null;
+  }, [activeTextInput, textInputValue, editingTextId, color, size, pageNumber, setTextAnnotations]);
+
+  // Salvar texto pendente quando o componente for desmontado
+  useEffect(() => {
+    return () => {
+      // Cleanup: salvar texto se houver input ativo ao desmontar
+      if (textInputRef.current && textValueRef.current.trim()) {
+        const inputPos = textInputRef.current;
+        const inputValue = textValueRef.current;
+        const editId = editingIdRef.current;
+        
+        if (editId) {
+          onTextAnnotationsChange?.(
+            (externalTextAnnotations || []).map(t => 
+              t.id === editId ? { ...t, text: inputValue.trim() } : t
+            )
+          );
+        } else {
+          const newText: TextAnnotation = {
+            id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            x: inputPos.x,
+            y: inputPos.y,
+            text: inputValue.trim(),
+            color: color,
+            fontSize: Math.max(16, size * 5),
+            pageNumber
+          };
+          console.log('[DrawingCanvas] Salvando texto no unmount:', newText);
+          onTextAnnotationsChange?.([...(externalTextAnnotations || []), newText]);
+        }
+      }
+    };
+  }, [color, size, pageNumber, onTextAnnotationsChange, externalTextAnnotations]);
 
   // Iniciar desenho ou texto
   const handleStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
