@@ -423,7 +423,40 @@ export const WebBookViewer = memo(function WebBookViewer({
   const [drawingSize, setDrawingSize] = useState(3);
   const [drawingStrokes, setDrawingStrokes] = useState<DrawingStroke[]>([]);
   const [textAnnotations, setTextAnnotations] = useState<TextAnnotation[]>([]);
-  
+
+  // ✅ Dirty pages: evita sobrescrever edições locais quando o cache de overlays refetchar
+  const [dirtyOverlayPages, setDirtyOverlayPages] = useState<Set<number>>(() => new Set());
+  const markDirtyPage = useCallback((page: number) => {
+    setDirtyOverlayPages((prev) => {
+      const next = new Set(prev);
+      next.add(page);
+      return next;
+    });
+  }, []);
+  const clearDirtyPages = useCallback((pages: number[] | Set<number>) => {
+    const list = Array.isArray(pages) ? pages : Array.from(pages);
+    setDirtyOverlayPages((prev) => {
+      const next = new Set(prev);
+      list.forEach((p) => next.delete(p));
+      return next;
+    });
+  }, []);
+
+  const handleStrokesChange = useCallback(
+    (next: DrawingStroke[]) => {
+      setDrawingStrokes(next);
+      markDirtyPage(currentPage);
+    },
+    [currentPage, markDirtyPage]
+  );
+
+  const handleTextAnnotationsChange = useCallback(
+    (next: TextAnnotation[]) => {
+      setTextAnnotations(next);
+      markDirtyPage(currentPage);
+    },
+    [currentPage, markDirtyPage]
+  );
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Hook de renderização de PDF (quando necessário)
@@ -501,27 +534,31 @@ export const WebBookViewer = memo(function WebBookViewer({
   }, []);
 
   // Sincronizar estado com mudanças de fullscreen (ESC, clique fora, etc)
-  // Ao SAIR do modo leitura, DESCARTAR todas as alterações não salvas
+  // ✅ Ao sair do modo leitura: desativar ferramentas; e limpar overlays locais SOMENTE se não estiver salvando
   useEffect(() => {
     const handleFullscreenChange = () => {
       const nowFullscreen = !!document.fullscreenElement;
-      
+
       // Se SAIU do fullscreen (estava true, agora false)
       if (isFullscreen && !nowFullscreen) {
-        console.log('[WebBookViewer] Saindo do Modo Leitura - descartando alterações não salvas');
-        // Resetar ferramentas
+        console.log('[WebBookViewer] Saindo do Modo Leitura - desativando ferramentas');
         setActiveTool('select');
-        // Limpar desenhos e textos não salvos (recarrega do banco quando entrar novamente)
-        setDrawingStrokes([]);
-        setTextAnnotations([]);
+
+        // Evitar “limpar enquanto salva” (poderia zerar o payload)
+        if (!isSavingHistory) {
+          // Limpar estados locais (ao voltar, recarrega do banco)
+          setDrawingStrokes([]);
+          setTextAnnotations([]);
+          clearDirtyPages(dirtyOverlayPages);
+        }
       }
-      
+
       setIsFullscreen(nowFullscreen);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, [isFullscreen]);
+  }, [isFullscreen, isSavingHistory, clearDirtyPages, dirtyOverlayPages]);
 
   // Função para salvar histórico de anotações + overlays (desenhos/texto)
   const handleSaveHistory = useCallback(async () => {
@@ -543,6 +580,8 @@ export const WebBookViewer = memo(function WebBookViewer({
         await saveOverlays(overlayPayload as any);
         // ✅ Garantir que os overlays em cache reflitam o que acabou de salvar
         await refetchOverlays();
+        // ✅ Após salvar, liberar as páginas para serem sobrescritas pelo cache (agora é “fonte da verdade”)
+        clearDirtyPages(pagesWithData);
       }
 
       // 2) Refetch das anotações tradicionais (notes/bookmarks)
@@ -558,7 +597,7 @@ export const WebBookViewer = memo(function WebBookViewer({
     } finally {
       setIsSavingHistory(false);
     }
-  }, [bookId, drawingStrokes, textAnnotations, saveOverlays, refetchOverlays, refetchAnnotations]);
+  }, [bookId, drawingStrokes, textAnnotations, saveOverlays, refetchOverlays, refetchAnnotations, clearDirtyPages]);
 
   useEffect(() => {
     if (isOwner) return; // Owner não tem bloqueios
@@ -655,6 +694,9 @@ export const WebBookViewer = memo(function WebBookViewer({
   useEffect(() => {
     if (!isFullscreen) return;
 
+    // ✅ Se o usuário já mexeu nesta página e ainda não salvou, não sobrescrever pelo cache
+    if (dirtyOverlayPages.has(currentPage)) return;
+
     const overlay = getOverlayForPage(currentPage);
     if (!overlay) return;
 
@@ -670,7 +712,7 @@ export const WebBookViewer = memo(function WebBookViewer({
       ...prev.filter((t) => t.pageNumber !== currentPage),
       ...texts,
     ]);
-  }, [isFullscreen, currentPage, getOverlayForPage]);
+  }, [isFullscreen, currentPage, getOverlayForPage, dirtyOverlayPages]);
 
   // Loading state (inclui loading do PDF)
   const isLoadingAnything = isLoading || (needsPdfMode && pdfRenderer.isLoading && !pdfRenderer.pdfLoaded);
@@ -1071,9 +1113,9 @@ export const WebBookViewer = memo(function WebBookViewer({
                       size={drawingSize}
                       pageNumber={currentPage}
                       strokes={drawingStrokes}
-                      onStrokesChange={setDrawingStrokes}
+                      onStrokesChange={handleStrokesChange}
                       textAnnotations={textAnnotations}
-                      onTextAnnotationsChange={setTextAnnotations}
+                      onTextAnnotationsChange={handleTextAnnotationsChange}
                     />
                   )}
                 </>
