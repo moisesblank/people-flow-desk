@@ -12,22 +12,22 @@ import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { useGodMode } from '@/stores/godModeStore';
 import { useRealtimeEquivalences } from '@/hooks/useRealtimeEquivalences';
+import { useMasterTransaction } from '@/stores/masterModeTransactionStore';
 import { cn } from '@/lib/utils';
 
 export function RealtimeEditOverlay() {
   const { 
     editingElement, 
     setEditingElement, 
-    updateContent, 
     uploadImage,
     isOwner,
     isActive 
   } = useGodMode();
 
-  const { propagateChange, forceGlobalSync } = useRealtimeEquivalences();
+  const { propagateChange } = useRealtimeEquivalences();
+  const { stageChange } = useMasterTransaction();
 
   const [editValue, setEditValue] = useState('');
-  const [isSaving, setIsSaving] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement | HTMLTextAreaElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -50,40 +50,41 @@ export function RealtimeEditOverlay() {
     }
   }, [editValue, editingElement]);
 
-  // Salvar alteração
-  const handleSave = useCallback(async () => {
+  // Stage alteração (transacional - NÃO salva direto)
+  const handleSave = useCallback(() => {
     if (!editingElement || !editingElement.contentKey) return;
+    if (editValue === editingElement.originalContent) return;
 
-    setIsSaving(true);
-    try {
-      // Salvar no banco
-      const success = await updateContent(
-        editingElement.contentKey,
-        editValue,
-        editingElement.type
-      );
+    // ✅ STAGE: adicionar ao pendingChanges (não persiste ainda!)
+    stageChange({
+      type: 'content_edit',
+      table: 'editable_content',
+      operation: 'upsert',
+      key: editingElement.contentKey,
+      data: {
+        content_key: editingElement.contentKey,
+        content_value: editValue,
+        content_type: editingElement.type,
+        updated_at: new Date().toISOString(),
+      },
+      originalValue: editingElement.originalContent,
+    });
 
-      if (success) {
-        // Propagar para equivalentes
-        await propagateChange(
-          'editable_content',
-          'content_value',
-          editingElement.originalContent,
-          editValue,
-          editingElement.contentKey
-        );
+    // Propagar preview para equivalentes (visual apenas)
+    propagateChange(
+      'editable_content',
+      'content_value',
+      editingElement.originalContent,
+      editValue,
+      editingElement.contentKey
+    );
 
-        // Forçar sync global
-        await forceGlobalSync();
-
-        // Fechar editor
-        editingElement.element.removeAttribute('data-godmode-editing');
-        setEditingElement(null);
-      }
-    } finally {
-      setIsSaving(false);
-    }
-  }, [editingElement, editValue, updateContent, propagateChange, forceGlobalSync, setEditingElement]);
+    // Fechar editor
+    editingElement.element.removeAttribute('data-godmode-editing');
+    setEditingElement(null);
+    
+    console.log('[RealtimeEditOverlay] ✏️ Change staged:', editingElement.contentKey);
+  }, [editingElement, editValue, stageChange, propagateChange, setEditingElement]);
 
   // Cancelar edição
   const handleCancel = useCallback(() => {
@@ -99,7 +100,7 @@ export function RealtimeEditOverlay() {
     }
   }, [editingElement, setEditingElement]);
 
-  // Upload de imagem
+  // Upload de imagem (upload imediato, mas stage a referência)
   const handleImageUpload = useCallback(async (file: File) => {
     if (!editingElement || !editingElement.contentKey) return;
 
@@ -110,19 +111,36 @@ export function RealtimeEditOverlay() {
         setEditValue(url);
         (editingElement.element as HTMLImageElement).src = url;
         
-        // Propagar mudança
-        await propagateChange(
+        // ✅ STAGE: adicionar ao pendingChanges
+        stageChange({
+          type: 'content_edit',
+          table: 'editable_content',
+          operation: 'upsert',
+          key: editingElement.contentKey,
+          data: {
+            content_key: editingElement.contentKey,
+            content_value: url,
+            content_type: 'image',
+            updated_at: new Date().toISOString(),
+          },
+          originalValue: editingElement.originalContent,
+        });
+
+        // Propagar preview visual
+        propagateChange(
           'editable_content',
           'content_value',
           editingElement.originalContent,
           url,
           editingElement.contentKey
         );
+        
+        console.log('[RealtimeEditOverlay] 🖼️ Image change staged:', editingElement.contentKey);
       }
     } finally {
       setIsUploading(false);
     }
-  }, [editingElement, uploadImage, propagateChange]);
+  }, [editingElement, uploadImage, stageChange, propagateChange]);
 
   // Atalhos de teclado
   useEffect(() => {
@@ -271,17 +289,11 @@ export function RealtimeEditOverlay() {
             <Button
               size="sm"
               onClick={handleSave}
-              disabled={isSaving || editValue === editingElement.originalContent}
+              disabled={editValue === editingElement.originalContent}
               className="bg-gradient-to-r from-purple-600 to-pink-500 hover:from-purple-500 hover:to-pink-400"
             >
-              {isSaving ? (
-                <div className="animate-spin h-4 w-4 border-2 border-white border-t-transparent rounded-full" />
-              ) : (
-                <>
-                  <Check className="h-4 w-4 mr-1" />
-                  Salvar
-                </>
-              )}
+              <Check className="h-4 w-4 mr-1" />
+              Aplicar
             </Button>
           </div>
         </div>
