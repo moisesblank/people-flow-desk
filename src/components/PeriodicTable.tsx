@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { Atom, X, ExternalLink, Beaker, FlaskConical, Zap, ArrowRight, Sparkles, Info } from "lucide-react";
+import { Atom, X, ExternalLink, Beaker, FlaskConical, Zap, ArrowRight, Sparkles, Info, Search, MousePointer } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -308,6 +308,214 @@ export function PeriodicTableButton() {
   );
 }
 
+// Dados simplificados para a tabela interativa
+interface ElementoInterativo {
+  numero: number;
+  simbolo: string;
+  nome: string;
+  massaAtomica: number;
+  categoria: string;
+  grupo: number;
+  periodo: number;
+  configuracaoEletronica: string;
+  eletronegatividade?: number;
+  pontoFusao?: number;
+  pontoEbulicao?: number;
+}
+
+const elementosInterativos: ElementoInterativo[] = [
+  { numero: 1, simbolo: "H", nome: "Hidrogênio", massaAtomica: 1.008, categoria: "nao-metal", grupo: 1, periodo: 1, configuracaoEletronica: "1s¹", eletronegatividade: 2.2, pontoFusao: -259, pontoEbulicao: -253 },
+  { numero: 2, simbolo: "He", nome: "Hélio", massaAtomica: 4.003, categoria: "gas-nobre", grupo: 18, periodo: 1, configuracaoEletronica: "1s²", pontoFusao: -272, pontoEbulicao: -269 },
+  { numero: 3, simbolo: "Li", nome: "Lítio", massaAtomica: 6.941, categoria: "metal-alcalino", grupo: 1, periodo: 2, configuracaoEletronica: "1s² 2s¹", eletronegatividade: 0.98, pontoFusao: 180, pontoEbulicao: 1342 },
+  { numero: 4, simbolo: "Be", nome: "Berílio", massaAtomica: 9.012, categoria: "metal-alcalino-terroso", grupo: 2, periodo: 2, configuracaoEletronica: "1s² 2s²", eletronegatividade: 1.57, pontoFusao: 1287, pontoEbulicao: 2469 },
+  { numero: 5, simbolo: "B", nome: "Boro", massaAtomica: 10.81, categoria: "semi-metal", grupo: 13, periodo: 2, configuracaoEletronica: "1s² 2s² 2p¹", eletronegatividade: 2.04, pontoFusao: 2076, pontoEbulicao: 3927 },
+  { numero: 6, simbolo: "C", nome: "Carbono", massaAtomica: 12.011, categoria: "nao-metal", grupo: 14, periodo: 2, configuracaoEletronica: "1s² 2s² 2p²", eletronegatividade: 2.55, pontoFusao: 3550, pontoEbulicao: 4827 },
+  { numero: 7, simbolo: "N", nome: "Nitrogênio", massaAtomica: 14.007, categoria: "nao-metal", grupo: 15, periodo: 2, configuracaoEletronica: "1s² 2s² 2p³", eletronegatividade: 3.04, pontoFusao: -210, pontoEbulicao: -196 },
+  { numero: 8, simbolo: "O", nome: "Oxigênio", massaAtomica: 15.999, categoria: "nao-metal", grupo: 16, periodo: 2, configuracaoEletronica: "1s² 2s² 2p⁴", eletronegatividade: 3.44, pontoFusao: -218, pontoEbulicao: -183 },
+  { numero: 9, simbolo: "F", nome: "Flúor", massaAtomica: 18.998, categoria: "halogenio", grupo: 17, periodo: 2, configuracaoEletronica: "1s² 2s² 2p⁵", eletronegatividade: 3.98, pontoFusao: -220, pontoEbulicao: -188 },
+  { numero: 10, simbolo: "Ne", nome: "Neônio", massaAtomica: 20.180, categoria: "gas-nobre", grupo: 18, periodo: 2, configuracaoEletronica: "1s² 2s² 2p⁶", pontoFusao: -249, pontoEbulicao: -246 },
+  { numero: 11, simbolo: "Na", nome: "Sódio", massaAtomica: 22.990, categoria: "metal-alcalino", grupo: 1, periodo: 3, configuracaoEletronica: "1s² 2s² 2p⁶ 3s¹", eletronegatividade: 0.93, pontoFusao: 98, pontoEbulicao: 883 },
+  { numero: 12, simbolo: "Mg", nome: "Magnésio", massaAtomica: 24.305, categoria: "metal-alcalino-terroso", grupo: 2, periodo: 3, configuracaoEletronica: "1s² 2s² 2p⁶ 3s²", eletronegatividade: 1.31, pontoFusao: 650, pontoEbulicao: 1090 },
+  { numero: 13, simbolo: "Al", nome: "Alumínio", massaAtomica: 26.982, categoria: "metal-representativo", grupo: 13, periodo: 3, configuracaoEletronica: "[Ne] 3s² 3p¹", eletronegatividade: 1.61, pontoFusao: 660, pontoEbulicao: 2519 },
+  { numero: 14, simbolo: "Si", nome: "Silício", massaAtomica: 28.086, categoria: "semi-metal", grupo: 14, periodo: 3, configuracaoEletronica: "[Ne] 3s² 3p²", eletronegatividade: 1.90, pontoFusao: 1414, pontoEbulicao: 3265 },
+  { numero: 17, simbolo: "Cl", nome: "Cloro", massaAtomica: 35.45, categoria: "halogenio", grupo: 17, periodo: 3, configuracaoEletronica: "[Ne] 3s² 3p⁵", eletronegatividade: 3.16, pontoFusao: -101, pontoEbulicao: -34 },
+  { numero: 18, simbolo: "Ar", nome: "Argônio", massaAtomica: 39.948, categoria: "gas-nobre", grupo: 18, periodo: 3, configuracaoEletronica: "[Ne] 3s² 3p⁶", pontoFusao: -189, pontoEbulicao: -186 },
+  { numero: 19, simbolo: "K", nome: "Potássio", massaAtomica: 39.098, categoria: "metal-alcalino", grupo: 1, periodo: 4, configuracaoEletronica: "[Ar] 4s¹", eletronegatividade: 0.82, pontoFusao: 64, pontoEbulicao: 759 },
+  { numero: 20, simbolo: "Ca", nome: "Cálcio", massaAtomica: 40.078, categoria: "metal-alcalino-terroso", grupo: 2, periodo: 4, configuracaoEletronica: "[Ar] 4s²", eletronegatividade: 1.00, pontoFusao: 842, pontoEbulicao: 1484 },
+  { numero: 26, simbolo: "Fe", nome: "Ferro", massaAtomica: 55.845, categoria: "metal-transicao", grupo: 8, periodo: 4, configuracaoEletronica: "[Ar] 3d⁶ 4s²", eletronegatividade: 1.83, pontoFusao: 1538, pontoEbulicao: 2862 },
+  { numero: 29, simbolo: "Cu", nome: "Cobre", massaAtomica: 63.546, categoria: "metal-transicao", grupo: 11, periodo: 4, configuracaoEletronica: "[Ar] 3d¹⁰ 4s¹", eletronegatividade: 1.90, pontoFusao: 1085, pontoEbulicao: 2562 },
+  { numero: 30, simbolo: "Zn", nome: "Zinco", massaAtomica: 65.38, categoria: "metal-transicao", grupo: 12, periodo: 4, configuracaoEletronica: "[Ar] 3d¹⁰ 4s²", eletronegatividade: 1.65, pontoFusao: 420, pontoEbulicao: 907 },
+  { numero: 35, simbolo: "Br", nome: "Bromo", massaAtomica: 79.904, categoria: "halogenio", grupo: 17, periodo: 4, configuracaoEletronica: "[Ar] 3d¹⁰ 4s² 4p⁵", eletronegatividade: 2.96, pontoFusao: -7, pontoEbulicao: 59 },
+  { numero: 47, simbolo: "Ag", nome: "Prata", massaAtomica: 107.87, categoria: "metal-transicao", grupo: 11, periodo: 5, configuracaoEletronica: "[Kr] 4d¹⁰ 5s¹", eletronegatividade: 1.93, pontoFusao: 962, pontoEbulicao: 2162 },
+  { numero: 53, simbolo: "I", nome: "Iodo", massaAtomica: 126.90, categoria: "halogenio", grupo: 17, periodo: 5, configuracaoEletronica: "[Kr] 4d¹⁰ 5s² 5p⁵", eletronegatividade: 2.66, pontoFusao: 114, pontoEbulicao: 184 },
+  { numero: 79, simbolo: "Au", nome: "Ouro", massaAtomica: 196.97, categoria: "metal-transicao", grupo: 11, periodo: 6, configuracaoEletronica: "[Xe] 4f¹⁴ 5d¹⁰ 6s¹", eletronegatividade: 2.54, pontoFusao: 1064, pontoEbulicao: 2856 },
+  { numero: 80, simbolo: "Hg", nome: "Mercúrio", massaAtomica: 200.59, categoria: "metal-transicao", grupo: 12, periodo: 6, configuracaoEletronica: "[Xe] 4f¹⁴ 5d¹⁰ 6s²", eletronegatividade: 2.00, pontoFusao: -39, pontoEbulicao: 357 },
+  { numero: 82, simbolo: "Pb", nome: "Chumbo", massaAtomica: 207.2, categoria: "metal-representativo", grupo: 14, periodo: 6, configuracaoEletronica: "[Xe] 4f¹⁴ 5d¹⁰ 6s² 6p²", eletronegatividade: 2.33, pontoFusao: 327, pontoEbulicao: 1749 },
+];
+
+const categoriaInterativaCores: Record<string, string> = {
+  "metal-alcalino": "bg-red-500",
+  "metal-alcalino-terroso": "bg-orange-500",
+  "metal-transicao": "bg-yellow-500",
+  "metal-representativo": "bg-emerald-500",
+  "nao-metal": "bg-green-500",
+  "semi-metal": "bg-cyan-500",
+  "halogenio": "bg-teal-500",
+  "gas-nobre": "bg-purple-500",
+};
+
+function InteractiveTableContent() {
+  const [busca, setBusca] = useState("");
+  const [elementoSelecionado, setElementoSelecionado] = useState<ElementoInterativo | null>(null);
+
+  const elementosFiltrados = elementosInterativos.filter(e =>
+    e.nome.toLowerCase().includes(busca.toLowerCase()) ||
+    e.simbolo.toLowerCase().includes(busca.toLowerCase()) ||
+    e.numero.toString().includes(busca)
+  );
+
+  return (
+    <div className="p-6 space-y-6">
+      {/* Header */}
+      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+        <div>
+          <h2 className="text-2xl font-bold flex items-center gap-2 text-slate-50">
+            <Atom className="w-7 h-7 text-primary" />
+            Tabela Periódica Interativa
+          </h2>
+          <p className="text-muted-foreground">Explore os elementos e suas propriedades</p>
+        </div>
+        <div className="relative w-full md:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <input 
+            type="text"
+            placeholder="Buscar elemento..." 
+            className="w-full pl-10 pr-4 py-2 rounded-lg border bg-slate-800 border-slate-700 text-slate-50 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-primary"
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+          />
+        </div>
+      </div>
+
+      {/* Grid de Elementos */}
+      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-9 gap-2">
+        {elementosFiltrados.map((elemento) => (
+          <motion.div
+            key={elemento.numero}
+            whileHover={{ scale: 1.1, zIndex: 10 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={() => setElementoSelecionado(elemento)}
+            className={cn(
+              "cursor-pointer p-2 rounded-lg text-center text-white shadow-lg hover:shadow-xl transition-shadow relative",
+              categoriaInterativaCores[elemento.categoria] || "bg-gray-500"
+            )}
+          >
+            <div className="text-xs opacity-75">{elemento.numero}</div>
+            <div className="text-2xl font-bold">{elemento.simbolo}</div>
+            <div className="text-xs truncate">{elemento.nome}</div>
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Legenda de Categorias */}
+      <div className="p-4 bg-slate-800 rounded-lg border border-slate-700">
+        <h3 className="font-semibold mb-3 text-slate-50">Legenda</h3>
+        <div className="flex flex-wrap gap-2">
+          {Object.entries(categoriaInterativaCores).map(([categoria, cor]) => (
+            <span key={categoria} className={cn("px-3 py-1.5 rounded-full text-xs font-semibold text-white", cor)}>
+              {categoria.split("-").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ")}
+            </span>
+          ))}
+        </div>
+      </div>
+
+      {/* Modal de Detalhes do Elemento */}
+      <AnimatePresence>
+        {elementoSelecionado && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/70 flex items-center justify-center p-4 z-[100]"
+            onClick={() => setElementoSelecionado(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="bg-slate-900 rounded-xl border border-slate-700 shadow-2xl max-w-md w-full overflow-hidden"
+            >
+              <div className={cn("p-4 text-white", categoriaInterativaCores[elementoSelecionado.categoria] || "bg-gray-500")}>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <span className="text-sm opacity-75">Número atômico: {elementoSelecionado.numero}</span>
+                    <div className="text-4xl font-bold">{elementoSelecionado.simbolo}</div>
+                    <div className="text-white/80">{elementoSelecionado.nome}</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-sm opacity-75">Massa atômica</div>
+                    <div className="text-2xl font-bold">{elementoSelecionado.massaAtomica}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-1 flex items-center gap-2 text-slate-50">
+                    <Zap className="w-4 h-4 text-yellow-500" />
+                    Configuração Eletrônica
+                  </h4>
+                  <code className="bg-slate-800 px-2 py-1 rounded text-sm text-primary font-mono">
+                    {elementoSelecionado.configuracaoEletronica}
+                  </code>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-slate-50">
+                  {elementoSelecionado.eletronegatividade && (
+                    <div>
+                      <span className="text-sm text-muted-foreground">Eletronegatividade</span>
+                      <p className="font-semibold">{elementoSelecionado.eletronegatividade}</p>
+                    </div>
+                  )}
+                  <div>
+                    <span className="text-sm text-muted-foreground">Grupo / Período</span>
+                    <p className="font-semibold">{elementoSelecionado.grupo} / {elementoSelecionado.periodo}</p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-slate-50">
+                  {elementoSelecionado.pontoFusao !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-blue-500" />
+                      <div>
+                        <span className="text-xs text-muted-foreground">Ponto de Fusão</span>
+                        <p className="font-semibold">{elementoSelecionado.pontoFusao}°C</p>
+                      </div>
+                    </div>
+                  )}
+                  {elementoSelecionado.pontoEbulicao !== undefined && (
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded bg-red-500" />
+                      <div>
+                        <span className="text-xs text-muted-foreground">Ponto de Ebulição</span>
+                        <p className="font-semibold">{elementoSelecionado.pontoEbulicao}°C</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                <Button className="w-full" onClick={() => setElementoSelecionado(null)}>
+                  Fechar
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  );
+}
+
 function PeriodicTableContent() {
   const [selectedElement, setSelectedElement] = useState<Element | null>(null);
   const [activeTab, setActiveTab] = useState("tabela");
@@ -362,6 +570,10 @@ function PeriodicTableContent() {
         <TabsTrigger value="diagrama" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
           <ArrowRight className="h-4 w-4" />
           Diagrama de Linus Pauling
+        </TabsTrigger>
+        <TabsTrigger value="interativa" className="data-[state=active]:bg-primary/10 data-[state=active]:text-primary gap-2">
+          <MousePointer className="h-4 w-4" />
+          Tabela Interativa
         </TabsTrigger>
       </TabsList>
 
@@ -1001,6 +1213,12 @@ function PeriodicTableContent() {
               </div>
             </div>
           </div>
+        </ScrollArea>
+      </TabsContent>
+
+      <TabsContent value="interativa" className="flex-1 m-0">
+        <ScrollArea className="h-[calc(95vh-120px)]">
+          <InteractiveTableContent />
         </ScrollArea>
       </TabsContent>
     </Tabs>

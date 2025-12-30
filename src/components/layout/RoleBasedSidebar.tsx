@@ -294,7 +294,6 @@ const alunoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Laboratório Virtual", url: "/alunos/laboratorio", icon: Beaker, area: "aluno-laboratorio", badge: "3D" },
       { title: "Calculadora Química", url: "/alunos/calculadora", icon: CalcIcon, area: "aluno-calculadora" },
-      { title: "Tabela Periódica", url: "/alunos/tabela-periodica", icon: AtomIcon, area: "aluno-tabela-periodica", badge: "INTERATIVA" },
     ],
   },
   {
