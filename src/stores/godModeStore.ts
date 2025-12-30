@@ -271,19 +271,41 @@ export const useGodModeStore = create<GodModeStore>()(
         const { data } = await supabase
           .from('editable_content')
           .select('content_key, content_value, page_key');
-        
+
         if (data) {
           const cache: Record<string, string> = {};
-          data.forEach(item => {
+          data.forEach((item) => {
             if (item.content_value) {
               cache[item.content_key] = item.content_value;
             }
           });
           set({ contentCache: cache });
-          
-          // 🔧 FIX P0: Aplicar conteúdo salvo ao DOM após carregamento
+
+          // 🔧 FIX: Aplicar conteúdo salvo ao DOM da página atual
+          const currentPageKey = window.location.pathname.replace(/\//g, '_') || 'global';
+          const scopedCache: Record<string, string> = {};
+
+          data.forEach((item) => {
+            if (!item.content_value) return;
+            // Preferir page_key do banco (fonte da verdade)
+            if (item.page_key === currentPageKey || item.page_key === 'global') {
+              scopedCache[item.content_key] = item.content_value;
+              return;
+            }
+            // Compatibilidade com dados antigos sem page_key
+            if (!item.page_key) {
+              if (
+                item.content_key.startsWith(currentPageKey + '_') ||
+                item.content_key.includes('#') ||
+                item.content_key.startsWith('nav_')
+              ) {
+                scopedCache[item.content_key] = item.content_value;
+              }
+            }
+          });
+
           setTimeout(() => {
-            applyContentToDOM(cache);
+            applyContentToDOM(scopedCache);
           }, 500);
         }
       },

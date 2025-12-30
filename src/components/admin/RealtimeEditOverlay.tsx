@@ -25,7 +25,7 @@ export function RealtimeEditOverlay() {
   } = useGodMode();
 
   const { propagateChange } = useRealtimeEquivalences();
-  const { stageChange } = useMasterTransaction();
+  const { stageChange, commitAll, isCommitting } = useMasterTransaction();
 
   const [editValue, setEditValue] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -50,12 +50,12 @@ export function RealtimeEditOverlay() {
     }
   }, [editValue, editingElement]);
 
-  // Stage alteração (transacional - NÃO salva direto)
-  const handleSave = useCallback(() => {
+  // Stage alteração (transacional - salva automaticamente para evitar perda)
+  const handleSave = useCallback(async () => {
     if (!editingElement || !editingElement.contentKey) return;
     if (editValue === editingElement.originalContent) return;
 
-    // ✅ STAGE: adicionar ao pendingChanges (não persiste ainda!)
+    // ✅ STAGE: adicionar ao pendingChanges (garante Undo/Discard)
     stageChange({
       type: 'content_edit',
       table: 'editable_content',
@@ -65,6 +65,7 @@ export function RealtimeEditOverlay() {
         content_key: editingElement.contentKey,
         content_value: editValue,
         content_type: editingElement.type,
+        page_key: window.location.pathname.replace(/\//g, '_') || 'global',
         updated_at: new Date().toISOString(),
       },
       originalValue: editingElement.originalContent,
@@ -82,9 +83,17 @@ export function RealtimeEditOverlay() {
     // Fechar editor
     editingElement.element.removeAttribute('data-godmode-editing');
     setEditingElement(null);
-    
+
+    // ✅ AUTO-SAVE (P0): evita "apliquei e ao atualizar sumiu"
+    if (!isCommitting) {
+      const result = await commitAll();
+      if (!result.success) {
+        console.error('[RealtimeEditOverlay] ❌ Auto-save failed:', result.error);
+      }
+    }
+
     console.log('[RealtimeEditOverlay] ✏️ Change staged:', editingElement.contentKey);
-  }, [editingElement, editValue, stageChange, propagateChange, setEditingElement]);
+  }, [editingElement, editValue, stageChange, propagateChange, setEditingElement, commitAll, isCommitting]);
 
   // Cancelar edição
   const handleCancel = useCallback(() => {
@@ -110,7 +119,7 @@ export function RealtimeEditOverlay() {
       if (url) {
         setEditValue(url);
         (editingElement.element as HTMLImageElement).src = url;
-        
+
         // ✅ STAGE: adicionar ao pendingChanges
         stageChange({
           type: 'content_edit',
@@ -121,6 +130,7 @@ export function RealtimeEditOverlay() {
             content_key: editingElement.contentKey,
             content_value: url,
             content_type: 'image',
+            page_key: window.location.pathname.replace(/\//g, '_') || 'global',
             updated_at: new Date().toISOString(),
           },
           originalValue: editingElement.originalContent,
@@ -134,13 +144,21 @@ export function RealtimeEditOverlay() {
           url,
           editingElement.contentKey
         );
-        
+
+        // ✅ AUTO-SAVE (P0)
+        if (!isCommitting) {
+          const result = await commitAll();
+          if (!result.success) {
+            console.error('[RealtimeEditOverlay] ❌ Auto-save failed:', result.error);
+          }
+        }
+
         console.log('[RealtimeEditOverlay] 🖼️ Image change staged:', editingElement.contentKey);
       }
     } finally {
       setIsUploading(false);
     }
-  }, [editingElement, uploadImage, stageChange, propagateChange]);
+  }, [editingElement, uploadImage, stageChange, propagateChange, commitAll, isCommitting]);
 
   // Atalhos de teclado
   useEffect(() => {
