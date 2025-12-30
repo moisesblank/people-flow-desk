@@ -97,7 +97,7 @@ async function sendViaWhatsApp(
     return { success: false, error: "WhatsApp não configurado" };
   }
 
-  // Formatar telefone (remover caracteres e adicionar DDI)
+  // Formatar telefone (remover caracteres especiais)
   let formattedPhone = phone.replace(/\D/g, '');
   
   // Se não começa com código do país, adicionar Brasil (55)
@@ -105,7 +105,17 @@ async function sendViaWhatsApp(
     formattedPhone = `55${formattedPhone}`;
   }
 
-  console.log(`[2FA-WHATSAPP] Enviando para: ${formattedPhone}`);
+  // 🔒 VALIDAÇÃO: Telefone brasileiro deve ter 12-13 dígitos (55 + DDD 2 + número 8-9)
+  const phoneDigits = formattedPhone.length;
+  if (phoneDigits < 12 || phoneDigits > 13) {
+    console.error(`[2FA-WHATSAPP] ❌ Telefone inválido: ${formattedPhone} (${phoneDigits} dígitos, esperado 12-13)`);
+    return { 
+      success: false, 
+      error: `Telefone incompleto ou inválido (${phoneDigits} dígitos). Verifique se o número está completo no cadastro.` 
+    };
+  }
+
+  console.log(`[2FA-WHATSAPP] Enviando para: ${formattedPhone} (${phoneDigits} dígitos)`);
 
   try {
     // Usar template de mensagem (recomendado pela Meta para 2FA)
@@ -165,7 +175,7 @@ async function sendViaSMS(
     return { success: false, error: "SMS não configurado" };
   }
 
-  // Formatar telefone (remover caracteres e adicionar DDI)
+  // Formatar telefone (remover caracteres especiais)
   let formattedPhone = phone.replace(/\D/g, '');
   
   // Se não começa com código do país, adicionar Brasil (55)
@@ -173,10 +183,21 @@ async function sendViaSMS(
     formattedPhone = `55${formattedPhone}`;
   }
   
+  // 🔒 VALIDAÇÃO: Telefone brasileiro deve ter 12-13 dígitos (55 + DDD 2 + número 8-9)
+  // Formato: 55 + 83 + 99635409 (8 dígitos) OU 55 + 83 + 996354099 (9 dígitos com nono dígito)
+  const phoneDigits = formattedPhone.length;
+  if (phoneDigits < 12 || phoneDigits > 13) {
+    console.error(`[2FA-SMS] ❌ Telefone inválido: ${formattedPhone} (${phoneDigits} dígitos, esperado 12-13)`);
+    return { 
+      success: false, 
+      error: `Telefone incompleto ou inválido (${phoneDigits} dígitos). Verifique se o número está completo no cadastro.` 
+    };
+  }
+  
   // Adicionar + no início
   formattedPhone = `+${formattedPhone}`;
 
-  console.log(`[2FA-SMS] Enviando para: ${formattedPhone}`);
+  console.log(`[2FA-SMS] Enviando para: ${formattedPhone} (${phoneDigits} dígitos)`);
 
   try {
     const credentials = btoa(`${TWILIO_ACCOUNT_SID}:${TWILIO_AUTH_TOKEN}`);
