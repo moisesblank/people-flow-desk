@@ -8994,7 +8994,7 @@ export type Database = {
           resolved_at?: string | null
           resolved_by?: string | null
           severity?: string
-          source: string
+          source?: string
           user_agent?: string | null
           user_id?: string | null
         }
