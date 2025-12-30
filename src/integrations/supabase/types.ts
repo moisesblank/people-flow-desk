@@ -1503,6 +1503,94 @@ export type Database = {
           },
         ]
       }
+      book_user_annotations: {
+        Row: {
+          annotation_type: string
+          book_id: string
+          color: string | null
+          content: string
+          created_at: string
+          id: string
+          page_number: number
+          position_x: number | null
+          position_y: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          annotation_type?: string
+          book_id: string
+          color?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          page_number: number
+          position_x?: number | null
+          position_y?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          annotation_type?: string
+          book_id?: string
+          color?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          page_number?: number
+          position_x?: number | null
+          position_y?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_user_annotations_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      book_user_bookmarks: {
+        Row: {
+          book_id: string
+          color: string | null
+          created_at: string
+          id: string
+          label: string | null
+          page_number: number
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          page_number: number
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          color?: string | null
+          created_at?: string
+          id?: string
+          label?: string | null
+          page_number?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "book_user_bookmarks_book_id_fkey"
+            columns: ["book_id"]
+            isOneToOne: false
+            referencedRelation: "web_books"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       branding_settings: {
         Row: {
           company_name: string | null
