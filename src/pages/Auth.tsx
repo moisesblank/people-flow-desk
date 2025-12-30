@@ -684,6 +684,28 @@ export default function Auth() {
       
       if (data) {
         console.log('[AUTH] ✅ Sessões anteriores encerradas com sucesso');
+        
+        // 🚀 BROADCAST: Enviar evento session-revoked para logout instantâneo
+        // O user_id vem do data da RPC ou buscamos pelo email
+        try {
+          const { data: userData } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('email', pendingEmail.toLowerCase())
+            .maybeSingle();
+            
+          if (userData?.id) {
+            console.log('[AUTH] 📡 Enviando broadcast session-revoked para user:', userData.id);
+            await supabase.channel(`user:${userData.id}`).send({
+              type: 'broadcast',
+              event: 'session-revoked',
+              payload: { reason: 'force_logout', timestamp: new Date().toISOString() }
+            });
+          }
+        } catch (broadcastError) {
+          console.warn('[AUTH] ⚠️ Broadcast falhou (não crítico):', broadcastError);
+        }
+        
         toast.success("Outras sessões encerradas", {
           description: "Fazendo login agora..."
         });
