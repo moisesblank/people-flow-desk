@@ -236,55 +236,86 @@ const TableOfContents = memo(function TableOfContents({
                   </div>
                 ))
               ) : (
-                /* Prioridade 3: Navegação básica por páginas */
+                /* Prioridade 3: Navegação inteligente por seções do livro */
                 <div className="space-y-1">
                   <h4 className="text-sm font-medium text-muted-foreground mb-2 px-3">Navegação Rápida</h4>
-                  {/* Páginas em intervalos de 10 */}
-                  {Array.from({ length: Math.ceil(totalPages / 10) }, (_, i) => {
-                    const startPage = i * 10 + 1;
-                    const endPage = Math.min((i + 1) * 10, totalPages);
-                    
-                    // ✅ Gerar descrição automática baseada na posição no livro
-                    const getPageContext = (start: number, end: number, total: number): string => {
-                      const percentage = Math.round((start / total) * 100);
-                      if (start === 1) return 'Início do Livro';
-                      if (end >= total) return 'Final do Livro';
-                      if (percentage <= 15) return 'Introdução';
-                      if (percentage <= 35) return 'Parte Inicial';
-                      if (percentage <= 55) return 'Meio do Livro';
-                      if (percentage <= 75) return 'Parte Avançada';
-                      return 'Conclusão';
+                  {/* Gerar seções inteligentes baseadas na estrutura do livro */}
+                  {(() => {
+                    // ✅ Calcular seções de forma inteligente baseada no total de páginas
+                    const generateSmartSections = (total: number) => {
+                      const sections: { startPage: number; endPage: number; label: string; icon: string }[] = [];
+                      
+                      if (total <= 0) return sections;
+                      
+                      // Definir proporções das seções baseadas em estrutura típica de livros didáticos
+                      const structure = [
+                        { label: 'Início do Livro', icon: '📖', proportion: 0.05 },    // 0-5%
+                        { label: 'Introdução', icon: '📋', proportion: 0.10 },          // 5-15%
+                        { label: 'Parte Inicial', icon: '🔬', proportion: 0.20 },       // 15-35%
+                        { label: 'Meio do Livro', icon: '⚗️', proportion: 0.30 },       // 35-65%
+                        { label: 'Parte Avançada', icon: '🧪', proportion: 0.20 },      // 65-85%
+                        { label: 'Conclusão', icon: '🎯', proportion: 0.15 },           // 85-100%
+                      ];
+                      
+                      let currentPage = 1;
+                      
+                      for (const section of structure) {
+                        const pagesInSection = Math.max(1, Math.round(total * section.proportion));
+                        const endPage = Math.min(currentPage + pagesInSection - 1, total);
+                        
+                        if (currentPage <= total) {
+                          sections.push({
+                            startPage: currentPage,
+                            endPage: endPage,
+                            label: section.label,
+                            icon: section.icon,
+                          });
+                        }
+                        
+                        currentPage = endPage + 1;
+                        if (currentPage > total) break;
+                      }
+                      
+                      // Garantir que a última seção vai até o final
+                      if (sections.length > 0 && sections[sections.length - 1].endPage < total) {
+                        sections[sections.length - 1].endPage = total;
+                      }
+                      
+                      return sections;
                     };
                     
-                    const context = getPageContext(startPage, endPage, totalPages);
-                    const isCurrentRange = currentPage >= startPage && currentPage <= endPage;
+                    const smartSections = generateSmartSections(totalPages);
                     
-                    return (
-                      <button
-                        key={startPage}
-                        onClick={() => {
-                          onPageSelect(startPage);
-                          onClose();
-                        }}
-                        className={cn(
-                          "w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex justify-between items-center gap-2",
-                          isCurrentRange
-                            ? "bg-primary/10 text-primary font-medium"
-                            : "hover:bg-muted"
-                        )}
-                      >
-                        <span className="flex items-center gap-2">
-                          <span className="text-muted-foreground text-xs font-mono">
-                            {startPage === endPage ? `p.${startPage}` : `p.${startPage}-${endPage}`}
+                    return smartSections.map((section, index) => {
+                      const isCurrentRange = currentPage >= section.startPage && currentPage <= section.endPage;
+                      
+                      return (
+                        <button
+                          key={index}
+                          onClick={() => {
+                            onPageSelect(section.startPage);
+                            onClose();
+                          }}
+                          className={cn(
+                            "w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex justify-between items-center gap-2",
+                            isCurrentRange
+                              ? "bg-primary/10 text-primary font-medium"
+                              : "hover:bg-muted"
+                          )}
+                        >
+                          <span className="flex items-center gap-2">
+                            <span className="text-muted-foreground text-xs font-mono">
+                              p.{section.startPage}-{section.endPage}
+                            </span>
+                            <span>{section.icon} {section.label}</span>
                           </span>
-                          <span>{context}</span>
-                        </span>
-                        {isCurrentRange && (
-                          <span className="text-xs bg-primary/20 px-1.5 py-0.5 rounded">atual</span>
-                        )}
-                      </button>
-                    );
-                  })}
+                          {isCurrentRange && (
+                            <span className="text-xs bg-primary/20 px-1.5 py-0.5 rounded">atual</span>
+                          )}
+                        </button>
+                      );
+                    });
+                  })()}
                 </div>
               )}
             </div>
@@ -631,10 +662,10 @@ export const WebBookViewer = memo(function WebBookViewer({
         <button
           onClick={previousPage}
           disabled={currentPage <= 1}
-          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none transition-all hover:scale-110"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none transition-all hover:scale-110"
         >
-          <div className="p-4 rounded-full bg-primary/90 backdrop-blur-sm border-2 border-primary-foreground/20 shadow-xl hover:bg-primary text-primary-foreground">
-            <ChevronLeft className="w-8 h-8" strokeWidth={3} />
+          <div className="p-2.5 rounded-full bg-primary/90 backdrop-blur-sm border border-primary-foreground/20 shadow-lg hover:bg-primary text-primary-foreground">
+            <ChevronLeft className="w-5 h-5" strokeWidth={2.5} />
           </div>
         </button>
 
@@ -642,10 +673,10 @@ export const WebBookViewer = memo(function WebBookViewer({
         <button
           onClick={nextPage}
           disabled={currentPage >= effectiveTotalPages}
-          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none transition-all hover:scale-110"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none transition-all hover:scale-110"
         >
-          <div className="p-4 rounded-full bg-primary/90 backdrop-blur-sm border-2 border-primary-foreground/20 shadow-xl hover:bg-primary text-primary-foreground">
-            <ChevronRight className="w-8 h-8" strokeWidth={3} />
+          <div className="p-2.5 rounded-full bg-primary/90 backdrop-blur-sm border border-primary-foreground/20 shadow-lg hover:bg-primary text-primary-foreground">
+            <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
           </div>
         </button>
 
