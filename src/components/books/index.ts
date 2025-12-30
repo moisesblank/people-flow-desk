@@ -6,6 +6,7 @@ export { WebBookViewer } from './WebBookViewer';
 export { WebBookLibrary } from './WebBookLibrary';
 export { PdfPageViewer } from './PdfPageViewer';
 export { CategoryImageManager } from './CategoryImageManager';
+export { FuturisticCategoryFilter } from './FuturisticCategoryFilter';
 export { useWebBook, useWebBookLibrary } from '@/hooks/useWebBook';
 export { usePdfRenderer } from '@/hooks/usePdfRenderer';
 export { useBookCategories } from '@/hooks/useBookCategories';
