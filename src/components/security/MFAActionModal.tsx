@@ -167,12 +167,29 @@ export function MFAActionModal({
   /**
    * Verifica código 2FA
    */
+  // 🛡️ Refs para proteção contra chamadas duplicadas
+  const verifyingRef = React.useRef(false);
+  const lastVerifiedCodeRef = React.useRef<string | null>(null);
+
   const handleVerifyCode = useCallback(async () => {
     if (!user?.id || code.length !== 6) {
       setError('Digite o código completo');
       return;
     }
 
+    // 🛡️ PROTEÇÃO: Evitar chamadas duplicadas
+    if (verifyingRef.current) {
+      console.log('[MFAActionModal] Verificação já em andamento, ignorando...');
+      return;
+    }
+    
+    // 🛡️ PROTEÇÃO: Não verificar o mesmo código duas vezes
+    if (lastVerifiedCodeRef.current === code) {
+      console.log('[MFAActionModal] Código já foi verificado anteriormente, ignorando...');
+      return;
+    }
+
+    verifyingRef.current = true;
     setIsLoading(true);
     setError(null);
 
@@ -188,11 +205,14 @@ export function MFAActionModal({
         throw verifyError;
       }
 
-      if (!data?.success) {
+      // ✅ FIX: A edge function retorna { valid: true }, não { success: true }
+      if (!data?.valid) {
         setError(data?.error || 'Código inválido');
         return;
       }
 
+      // ✅ Sucesso - marcar código como verificado
+      lastVerifiedCodeRef.current = code;
       setStep('success');
       toast.success('Verificação concluída!');
       
@@ -205,6 +225,7 @@ export function MFAActionModal({
       setError(err.message || 'Código inválido ou expirado');
     } finally {
       setIsLoading(false);
+      verifyingRef.current = false;
     }
   }, [user?.id, code, onSuccess]);
 
