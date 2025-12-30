@@ -10,6 +10,107 @@ import { toast } from 'sonner';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
+/**
+ * 🔧 CORREÇÃO P0: Aplicar conteúdo salvo de volta ao DOM
+ * Procura elementos com data-editable-key ou reconstrói XPath
+ */
+function applyContentToDOM(cache: Record<string, string>) {
+  const currentPageKey = window.location.pathname.replace(/\//g, '_') || 'global';
+  
+  Object.entries(cache).forEach(([key, value]) => {
+    // Verificar se a key pertence a esta página
+    if (!key.startsWith(currentPageKey + '_') && !key.includes('#')) {
+      return;
+    }
+    
+    // 1. Tentar encontrar por data-editable-key
+    const byDataKey = document.querySelector(`[data-editable-key="${key}"]`);
+    if (byDataKey) {
+      if (byDataKey.tagName === 'IMG') {
+        (byDataKey as HTMLImageElement).src = value;
+      } else {
+        byDataKey.textContent = value;
+      }
+      console.log('[GodModeStore] ✅ Aplicado por data-key:', key);
+      return;
+    }
+    
+    // 2. Tentar encontrar por ID
+    if (key.includes('#')) {
+      const idMatch = key.match(/#([a-zA-Z0-9_-]+)/);
+      if (idMatch) {
+        const byId = document.getElementById(idMatch[1]);
+        if (byId) {
+          if (byId.tagName === 'IMG') {
+            (byId as HTMLImageElement).src = value;
+          } else {
+            byId.textContent = value;
+          }
+          console.log('[GodModeStore] ✅ Aplicado por ID:', idMatch[1]);
+          return;
+        }
+      }
+    }
+    
+    // 3. Para XPath-based keys, tentar reconstruir o caminho
+    const xpath = key.replace(currentPageKey + '_', '');
+    if (xpath.includes('>')) {
+      try {
+        const element = resolveXPathToElement(xpath);
+        if (element) {
+          if (element.tagName === 'IMG') {
+            (element as HTMLImageElement).src = value;
+          } else {
+            element.textContent = value;
+          }
+          console.log('[GodModeStore] ✅ Aplicado por XPath:', xpath);
+        }
+      } catch {
+        // XPath não encontrado, ok - elemento pode ter mudado
+      }
+    }
+  });
+}
+
+/**
+ * Resolver XPath simplificado de volta para elemento
+ */
+function resolveXPathToElement(xpath: string): HTMLElement | null {
+  const parts = xpath.split('>');
+  let current: HTMLElement = document.body;
+  
+  for (const part of parts) {
+    // Parse: tag.class[index] ou tag#id ou tag[index]
+    const match = part.match(/^(\w+)(?:\.([a-zA-Z0-9-_]+))?(?:#([a-zA-Z0-9-_]+))?\[(\d+)\]$/);
+    if (!match) continue;
+    
+    const [, tag, className, id, indexStr] = match;
+    const index = parseInt(indexStr, 10);
+    
+    if (id) {
+      const byId = document.getElementById(id);
+      if (byId) {
+        current = byId;
+        continue;
+      }
+    }
+    
+    // Encontrar filho pelo índice
+    const children = Array.from(current.children).filter(c => 
+      c.tagName.toLowerCase() === tag &&
+      (!className || c.className.includes(className))
+    );
+    
+    if (children[index]) {
+      current = children[index] as HTMLElement;
+    } else {
+      return null;
+    }
+  }
+  
+  return current !== document.body ? current : null;
+}
+
 interface EditingElement {
   id: string;
   type: 'text' | 'image';
@@ -152,7 +253,7 @@ export const useGodModeStore = create<GodModeStore>()(
       loadContent: async () => {
         const { data } = await supabase
           .from('editable_content')
-          .select('content_key, content_value');
+          .select('content_key, content_value, page_key');
         
         if (data) {
           const cache: Record<string, string> = {};
@@ -162,6 +263,11 @@ export const useGodModeStore = create<GodModeStore>()(
             }
           });
           set({ contentCache: cache });
+          
+          // 🔧 FIX P0: Aplicar conteúdo salvo ao DOM após carregamento
+          setTimeout(() => {
+            applyContentToDOM(cache);
+          }, 500);
         }
       },
     }),

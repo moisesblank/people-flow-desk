@@ -11,6 +11,55 @@ import { toast } from 'sonner';
 
 const OWNER_EMAIL = 'moisesblank@gmail.com';
 
+/**
+ * 🔧 CORREÇÃO P0: Gerar XPath ESTÁVEL para um elemento
+ * Isso garante que ao recarregar a página, o mesmo elemento tenha a mesma key
+ * Não usa timestamp, usa posição estrutural no DOM
+ */
+function generateStableXPath(element: HTMLElement): string {
+  const parts: string[] = [];
+  let current: HTMLElement | null = element;
+  let depth = 0;
+  const maxDepth = 6; // Limitar profundidade para evitar keys muito longas
+  
+  while (current && current !== document.body && depth < maxDepth) {
+    const tag = current.tagName.toLowerCase();
+    
+    // Pegar índice entre irmãos do mesmo tipo
+    const parent = current.parentElement;
+    let index = 0;
+    if (parent) {
+      const siblings = Array.from(parent.children).filter(
+        sibling => sibling.tagName === current!.tagName
+      );
+      index = siblings.indexOf(current);
+    }
+    
+    // Usar id se disponível para maior estabilidade
+    const id = current.id;
+    if (id) {
+      parts.unshift(`${tag}#${id}`);
+      break; // ID é único, não precisa ir mais acima
+    }
+    
+    // Usar classe principal se disponível
+    const mainClass = current.className && typeof current.className === 'string' 
+      ? current.className.split(' ')[0]?.replace(/[^a-zA-Z0-9-_]/g, '') 
+      : '';
+    
+    if (mainClass) {
+      parts.unshift(`${tag}.${mainClass}[${index}]`);
+    } else {
+      parts.unshift(`${tag}[${index}]`);
+    }
+    
+    current = parent;
+    depth++;
+  }
+  
+  return parts.join('>');
+}
+
 interface EditingElement {
   id: string;
   type: 'text' | 'image';
@@ -114,12 +163,12 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  // Carregar conteúdo editável
+  // Carregar conteúdo editável e APLICAR ao DOM
   useEffect(() => {
     const loadContent = async () => {
       const { data } = await supabase
         .from('editable_content')
-        .select('content_key, content_value');
+        .select('content_key, content_value, page_key');
       
       if (data) {
         const cache: Record<string, string> = {};
@@ -129,11 +178,119 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
           }
         });
         setContentCache(cache);
+        
+        // 🔧 FIX P0: Aplicar conteúdo salvo ao DOM após carregamento
+        // Atraso para garantir que o DOM esteja pronto
+        setTimeout(() => {
+          applyContentToDOM(cache);
+        }, 500);
       }
     };
 
     loadContent();
   }, []);
+
+  /**
+   * 🔧 CORREÇÃO P0: Aplicar conteúdo salvo de volta ao DOM
+   * Procura elementos com data-editable-key ou reconstrói XPath
+   */
+  const applyContentToDOM = useCallback((cache: Record<string, string>) => {
+    const currentPageKey = window.location.pathname.replace(/\//g, '_') || 'global';
+    
+    Object.entries(cache).forEach(([key, value]) => {
+      // Verificar se a key pertence a esta página
+      if (!key.startsWith(currentPageKey + '_') && !key.includes('#')) {
+        return;
+      }
+      
+      // 1. Tentar encontrar por data-editable-key
+      const byDataKey = document.querySelector(`[data-editable-key="${key}"]`);
+      if (byDataKey) {
+        if (byDataKey.tagName === 'IMG') {
+          (byDataKey as HTMLImageElement).src = value;
+        } else {
+          byDataKey.textContent = value;
+        }
+        console.log('[GodMode] ✅ Aplicado por data-key:', key);
+        return;
+      }
+      
+      // 2. Tentar encontrar por ID
+      if (key.includes('#')) {
+        const idMatch = key.match(/#([a-zA-Z0-9_-]+)/);
+        if (idMatch) {
+          const byId = document.getElementById(idMatch[1]);
+          if (byId) {
+            if (byId.tagName === 'IMG') {
+              (byId as HTMLImageElement).src = value;
+            } else {
+              byId.textContent = value;
+            }
+            console.log('[GodMode] ✅ Aplicado por ID:', idMatch[1]);
+            return;
+          }
+        }
+      }
+      
+      // 3. Para XPath-based keys, tentar reconstruir o caminho
+      // Formato: _gestaofc_div.class[0]>span[1]
+      const xpath = key.replace(currentPageKey + '_', '');
+      if (xpath.includes('>')) {
+        try {
+          const element = resolveXPathToElement(xpath);
+          if (element) {
+            if (element.tagName === 'IMG') {
+              (element as HTMLImageElement).src = value;
+            } else {
+              element.textContent = value;
+            }
+            console.log('[GodMode] ✅ Aplicado por XPath:', xpath);
+          }
+        } catch (e) {
+          // XPath não encontrado, ok - elemento pode ter mudado
+        }
+      }
+    });
+  }, []);
+
+  /**
+   * Resolver XPath simplificado de volta para elemento
+   */
+  const resolveXPathToElement = (xpath: string): HTMLElement | null => {
+    const parts = xpath.split('>');
+    let current: HTMLElement = document.body;
+    
+    for (const part of parts) {
+      // Parse: tag.class[index] ou tag#id ou tag[index]
+      const match = part.match(/^(\w+)(?:\.([a-zA-Z0-9-_]+))?(?:#([a-zA-Z0-9-_]+))?\[(\d+)\]$/);
+      if (!match) continue;
+      
+      const [, tag, className, id, indexStr] = match;
+      const index = parseInt(indexStr, 10);
+      
+      if (id) {
+        const byId = document.getElementById(id);
+        if (byId) {
+          current = byId;
+          continue;
+        }
+      }
+      
+      // Encontrar filho pelo índice
+      const children = Array.from(current.children).filter(c => 
+        c.tagName.toLowerCase() === tag &&
+        (!className || c.className.includes(className))
+      );
+      
+      if (children[index]) {
+        current = children[index] as HTMLElement;
+      } else {
+        return null;
+      }
+    }
+    
+    return current !== document.body ? current : null;
+  };
 
   // Adicionar estilos de hover nos elementos editáveis
   const addHoverStyles = useCallback(() => {
@@ -297,7 +454,7 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
 
         const rect = elementToEdit.getBoundingClientRect();
         
-        // Priorizar data-editable-key, depois id, depois gerar um baseado no conteúdo
+        // Priorizar data-editable-key, depois id, depois gerar baseado em XPath ESTÁVEL
         const dataKey = (elementToEdit as HTMLElement).dataset.editableKey;
         const elementId = elementToEdit.id;
         const textContent = elementToEdit.innerText || '';
@@ -308,9 +465,11 @@ export function GodModeProvider({ children }: { children: ReactNode }) {
         } else if (elementId) {
           contentKey = elementId;
         } else {
-          // Gerar key única baseada no conteúdo e posição
-          const sanitizedText = textContent.slice(0, 30).replace(/[^a-zA-Z0-9]/g, '_').toLowerCase();
-          contentKey = `${elementToEdit.tagName.toLowerCase()}_${sanitizedText}_${Date.now()}`;
+          // 🔧 FIX: Gerar key ESTÁVEL baseada em XPath (sem timestamp!)
+          // Isso garante que ao recarregar, o mesmo elemento tenha a mesma key
+          const xpath = generateStableXPath(elementToEdit);
+          const pageKey = window.location.pathname.replace(/\//g, '_') || 'global';
+          contentKey = `${pageKey}_${xpath}`;
         }
         
         console.log('🔮 Elemento selecionado para edição:', {
