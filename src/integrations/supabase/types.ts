@@ -8227,48 +8227,83 @@ export type Database = {
       }
       quiz_questions: {
         Row: {
+          ano: number | null
+          area_id: string | null
+          banca: string | null
           correct_answer: string | null
           created_at: string | null
           difficulty: string | null
           explanation: string | null
           id: string
+          is_active: boolean | null
+          lesson_id: string | null
           options: Json | null
           points: number | null
           position: number | null
           question_text: string
           question_type: string | null
-          quiz_id: string
+          quiz_id: string | null
+          tags: string[] | null
           topic: string | null
+          updated_at: string | null
         }
         Insert: {
+          ano?: number | null
+          area_id?: string | null
+          banca?: string | null
           correct_answer?: string | null
           created_at?: string | null
           difficulty?: string | null
           explanation?: string | null
           id?: string
+          is_active?: boolean | null
+          lesson_id?: string | null
           options?: Json | null
           points?: number | null
           position?: number | null
           question_text: string
           question_type?: string | null
-          quiz_id: string
+          quiz_id?: string | null
+          tags?: string[] | null
           topic?: string | null
+          updated_at?: string | null
         }
         Update: {
+          ano?: number | null
+          area_id?: string | null
+          banca?: string | null
           correct_answer?: string | null
           created_at?: string | null
           difficulty?: string | null
           explanation?: string | null
           id?: string
+          is_active?: boolean | null
+          lesson_id?: string | null
           options?: Json | null
           points?: number | null
           position?: number | null
           question_text?: string
           question_type?: string | null
-          quiz_id?: string
+          quiz_id?: string | null
+          tags?: string[] | null
           topic?: string | null
+          updated_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "quiz_questions_area_id_fkey"
+            columns: ["area_id"]
+            isOneToOne: false
+            referencedRelation: "areas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "quiz_questions_quiz_id_fkey"
             columns: ["quiz_id"]

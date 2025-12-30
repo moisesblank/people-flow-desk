@@ -36,6 +36,7 @@ const Cursos = lazy(() => import("@/pages/Cursos"));
 const Simulados = lazy(() => import("@/pages/Simulados"));
 const Lives = lazy(() => import("@/pages/Lives"));
 const GestaoLivrosWeb = lazy(() => import("@/pages/gestao/GestaoLivrosWeb"));
+const GestaoQuestoes = lazy(() => import("@/pages/gestao/GestaoQuestoes"));
 
 // Finanças
 const Entradas = lazy(() => import("@/pages/Entradas"));
@@ -109,6 +110,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc/simulados" element={<ProtectedPage><Simulados /></ProtectedPage>} />
     <Route path="/gestaofc/lives" element={<ProtectedPage><Lives /></ProtectedPage>} />
     <Route path="/gestaofc/livros-web" element={<ProtectedPage><GestaoLivrosWeb /></ProtectedPage>} />
+    <Route path="/gestaofc/questoes" element={<ProtectedPage><GestaoQuestoes /></ProtectedPage>} />
     
     {/* Finanças */}
     <Route path="/gestaofc/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
