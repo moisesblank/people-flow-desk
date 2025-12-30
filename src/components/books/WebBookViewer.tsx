@@ -1010,7 +1010,9 @@ export const WebBookViewer = memo(function WebBookViewer({
             initial={{ x: 50, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
-            className="absolute right-3 top-[calc(50%+80px)] z-30"
+            className="fixed right-3 top-[calc(50%+80px)] z-[70] pointer-events-auto"
+            onPointerDownCapture={(e) => e.stopPropagation()}
+            onClickCapture={(e) => e.stopPropagation()}
           >
             {/* Container principal com glow */}
             <div className="relative">
