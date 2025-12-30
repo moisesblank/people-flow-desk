@@ -64,8 +64,18 @@ export async function validateHottok(
     };
   }
 
-  // Comparação segura
-  const isValid = receivedHottok.trim() === HOTMART_HOTTOK.trim();
+  // 🛡️ PATCH-P1-002: Comparação timing-safe (anti side-channel)
+  const encoder = new TextEncoder();
+  const received = encoder.encode(receivedHottok.trim());
+  const expected = encoder.encode(HOTMART_HOTTOK.trim());
+
+  // XOR bit-a-bit em tempo constante
+  let mismatch = received.length !== expected.length ? 1 : 0;
+  const maxLen = Math.max(received.length, expected.length);
+  for (let i = 0; i < maxLen; i++) {
+    mismatch |= (received[i] || 0) ^ (expected[i] || 0);
+  }
+  const isValid = mismatch === 0;
 
   if (!isValid) {
     console.error("[GUARD] ❌ HOTTOK inválido - possível fraude");

@@ -1171,8 +1171,17 @@ serve(async (req) => {
       });
     }
 
-    // Comparação segura (timing-safe não disponível em Deno, mas usamos trim/lowercase)
-    const isValidHottok = receivedHottok.trim() === HOTMART_HOTTOK.trim();
+    // 🛡️ PATCH-P1-003: Comparação timing-safe (anti side-channel)
+    const encoder = new TextEncoder();
+    const received = encoder.encode(receivedHottok.trim());
+    const expected = encoder.encode(HOTMART_HOTTOK.trim());
+    
+    let mismatch = received.length !== expected.length ? 1 : 0;
+    const maxLen = Math.max(received.length, expected.length);
+    for (let i = 0; i < maxLen; i++) {
+      mismatch |= (received[i] || 0) ^ (expected[i] || 0);
+    }
+    const isValidHottok = mismatch === 0;
     
     if (!isValidHottok) {
       logger.error("❌ HOTTOK inválido - possível tentativa de fraude");
