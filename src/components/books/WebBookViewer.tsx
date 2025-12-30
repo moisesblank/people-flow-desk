@@ -501,14 +501,27 @@ export const WebBookViewer = memo(function WebBookViewer({
   }, []);
 
   // Sincronizar estado com mudanças de fullscreen (ESC, clique fora, etc)
+  // Ao SAIR do modo leitura, DESCARTAR todas as alterações não salvas
   useEffect(() => {
     const handleFullscreenChange = () => {
-      setIsFullscreen(!!document.fullscreenElement);
+      const nowFullscreen = !!document.fullscreenElement;
+      
+      // Se SAIU do fullscreen (estava true, agora false)
+      if (isFullscreen && !nowFullscreen) {
+        console.log('[WebBookViewer] Saindo do Modo Leitura - descartando alterações não salvas');
+        // Resetar ferramentas
+        setActiveTool('select');
+        // Limpar desenhos e textos não salvos (recarrega do banco quando entrar novamente)
+        setDrawingStrokes([]);
+        setTextAnnotations([]);
+      }
+      
+      setIsFullscreen(nowFullscreen);
     };
 
     document.addEventListener('fullscreenchange', handleFullscreenChange);
     return () => document.removeEventListener('fullscreenchange', handleFullscreenChange);
-  }, []);
+  }, [isFullscreen]);
 
   // Função para salvar histórico de anotações + overlays (desenhos/texto)
   const handleSaveHistory = useCallback(async () => {
