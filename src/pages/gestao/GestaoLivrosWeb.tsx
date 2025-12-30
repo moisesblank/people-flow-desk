@@ -527,24 +527,24 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
           />
         </div>
         
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
+        <Select value={statusFilter || "__all__"} onValueChange={(v) => setStatusFilter(v === "__all__" ? "" : v)}>
           <SelectTrigger className="w-full md:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todos</SelectItem>
+            <SelectItem value="__all__">Todos</SelectItem>
             {Object.entries(STATUS_MAP).map(([value, { label }]) => (
               <SelectItem key={value} value={value}>{label}</SelectItem>
             ))}
           </SelectContent>
         </Select>
 
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+        <Select value={categoryFilter || "__all__"} onValueChange={(v) => setCategoryFilter(v === "__all__" ? "" : v)}>
           <SelectTrigger className="w-full md:w-48">
             <SelectValue placeholder="Categoria" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">Todas</SelectItem>
+            <SelectItem value="__all__">Todas</SelectItem>
             {CATEGORIES.map(cat => (
               <SelectItem key={cat.value} value={cat.value}>{cat.label}</SelectItem>
             ))}
