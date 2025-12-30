@@ -109,21 +109,81 @@ const handler = async (req: Request): Promise<Response> => {
       .single();
 
     if (fetchError || !validCode) {
+      // ========================================
+      // IDEMPOTÊNCIA (UX): se o mesmo código já foi verificado e ainda não expirou,
+      // tratar como sucesso para evitar "código inválido" em double-submit.
+      // ========================================
+      const { data: alreadyVerified } = await supabaseAdmin
+        .from("two_factor_codes")
+        .select("id")
+        .eq("user_id", userId)
+        .eq("code", code)
+        .eq("verified", true)
+        .gt("expires_at", new Date().toISOString())
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (alreadyVerified?.id) {
+        console.log(`[2FA Verify] Código já verificado anteriormente (idempotente) para user: ${userId}`);
+
+        // Tentar marcar sessão como mfa_verified (mesma lógica do caminho de sucesso)
+        const { data: latestSession, error: findError } = await supabaseAdmin
+          .from("active_sessions")
+          .select("id")
+          .eq("user_id", userId)
+          .eq("status", "active")
+          .order("created_at", { ascending: false })
+          .limit(1)
+          .maybeSingle();
+
+        if (findError) {
+          console.error("[2FA Verify] Erro ao buscar sessão (idempotente):", findError);
+        }
+
+        if (latestSession?.id) {
+          const { error: sessionError } = await supabaseAdmin
+            .from("active_sessions")
+            .update({
+              mfa_verified: true,
+              last_activity_at: new Date().toISOString(),
+            })
+            .eq("id", latestSession.id);
+
+          if (sessionError) {
+            console.error("[2FA Verify] Erro ao marcar sessão mfa_verified (idempotente):", sessionError);
+          } else {
+            console.log("[2FA Verify] ✅ Sessão marcada como mfa_verified (idempotente) (id:", latestSession.id, ")");
+          }
+        } else {
+          console.warn("[2FA Verify] ⚠️ Nenhuma sessão ativa encontrada para marcar mfa_verified (idempotente)");
+        }
+
+        return new Response(
+          JSON.stringify({
+            valid: true,
+            message: "Código já verificado. Prosseguindo...",
+            verifiedAt: new Date().toISOString(),
+          }),
+          { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
       console.log(`[2FA Verify] Código inválido ou expirado para user: ${userId}`);
-      
+
       // Registrar tentativa falha
       await supabaseAdmin
         .from("activity_log")
         .insert({
           user_id: userId,
           action: "2FA_FAILED",
-          new_value: { 
+          new_value: {
             attempted_code: code.substring(0, 2) + "****", // Log parcial por segurança
             timestamp: new Date().toISOString(),
-            ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
-          }
+            ip_address: req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown",
+          },
         });
-      
+
       // Verificar se código existe mas expirou
       const { data: expiredCode } = await supabaseAdmin
         .from("two_factor_codes")
@@ -135,10 +195,10 @@ const handler = async (req: Request): Promise<Response> => {
       if (expiredCode) {
         const expiredAt = new Date(expiredCode.expires_at);
         return new Response(
-          JSON.stringify({ 
-            valid: false, 
+          JSON.stringify({
+            valid: false,
             error: "Código expirado. Por favor, solicite um novo código.",
-            expiredAt: expiredCode.expires_at
+            expiredAt: expiredCode.expires_at,
           }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
@@ -148,10 +208,10 @@ const handler = async (req: Request): Promise<Response> => {
       const attemptsRemaining = MAX_ATTEMPTS - (failedAttempts?.length || 0) - 1;
 
       return new Response(
-        JSON.stringify({ 
-          valid: false, 
+        JSON.stringify({
+          valid: false,
           error: "Código incorreto. Verifique e tente novamente.",
-          attemptsRemaining: Math.max(0, attemptsRemaining)
+          attemptsRemaining: Math.max(0, attemptsRemaining),
         }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
