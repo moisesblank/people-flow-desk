@@ -3,7 +3,7 @@
 // Listagem e navegação de livros disponíveis
 // ============================================
 
-import React, { memo, useState, useCallback } from 'react';
+import React, { memo, useState, useCallback, useEffect } from 'react';
 import { useWebBookLibrary, WebBookListItem } from '@/hooks/useWebBook';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
@@ -35,6 +35,7 @@ import { cn } from '@/lib/utils';
 
 interface WebBookLibraryProps {
   onBookSelect: (bookId: string) => void;
+  externalCategory?: string | null;
   className?: string;
 }
 
@@ -161,11 +162,21 @@ BookCard.displayName = 'BookCard';
 
 export const WebBookLibrary = memo(function WebBookLibrary({
   onBookSelect,
+  externalCategory,
   className
 }: WebBookLibraryProps) {
   const { books, isLoading, error, loadBooks } = useWebBookLibrary();
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
+
+  // Sincroniza categoria externa (botões macro) com estado interno
+  useEffect(() => {
+    if (externalCategory !== undefined) {
+      const category = externalCategory || 'all';
+      setSelectedCategory(category);
+      loadBooks(externalCategory || undefined);
+    }
+  }, [externalCategory, loadBooks]);
 
   // Filtrar livros
   const filteredBooks = books.filter(book => {
