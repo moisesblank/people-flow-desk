@@ -1,5 +1,5 @@
 // ============================================
-// MOISÉS MEDEIROS v17.0 - MASTER MODE WRAPPER
+// MOISÉS MEDEIROS v18.0 - MASTER MODE WRAPPER
 // Wrapper global para o sistema de edição MASTER
 // Integra TODOS os componentes de controle do OWNER
 // + Menu Contextual (Adicionar, Duplicar, Remover)
@@ -7,6 +7,7 @@
 // + Editor de URLs/Destinos (Ctrl+Click / Alt+Click)
 // + Painel Flutuante de Controle Total
 // + Organizador de Seções com Drag & Drop
+// + 🆕 SISTEMA TRANSACIONAL COM SAVE BAR GLOBAL
 // Owner exclusivo: moisesblank@gmail.com
 // ============================================
 
@@ -22,6 +23,8 @@ import { MasterAddModal } from './MasterAddModal';
 import { MasterUndoIndicator } from './MasterUndoIndicator';
 import { MasterURLEditor } from './MasterURLEditor';
 import { MasterFloatingPanel } from './MasterFloatingPanel';
+import { GlobalSaveBar } from './GlobalSaveBar';
+import { MasterModeNavigationGuard } from './MasterModeNavigationGuard';
 import { EditModeToggle } from '@/components/editor/EditModeToggle';
 import { toast } from 'sonner';
 
@@ -210,6 +213,12 @@ export function MasterModeWrapper({ children }: MasterModeWrapperProps) {
   return (
     <>
       {children}
+      
+      {/* 🆕 BARRA DE SALVAMENTO GLOBAL TRANSACIONAL */}
+      <GlobalSaveBar />
+      
+      {/* 🆕 GUARD DE NAVEGAÇÃO - Avisa antes de sair com mudanças */}
+      <MasterModeNavigationGuard />
       
       {/* Painel Flutuante MASTER - Controle Total */}
       {isOwner && (
