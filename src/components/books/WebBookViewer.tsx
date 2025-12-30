@@ -35,6 +35,10 @@ import { toast } from 'sonner';
 import { PdfPageViewer } from './PdfPageViewer';
 import { ReadingModeToolbar } from './ReadingModeToolbar';
 import { useBookAnnotations } from '@/hooks/useBookAnnotations';
+import { CalculatorButton } from '@/components/Calculator';
+import { PeriodicTableButton } from '@/components/PeriodicTable';
+import { Calculator, Atom } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
 // ============================================
 // TIPOS
@@ -839,6 +843,85 @@ export const WebBookViewer = memo(function WebBookViewer({
             <ChevronRight className="w-5 h-5" strokeWidth={2.5} />
           </div>
         </button>
+
+        {/* 🔶 FERRAMENTAS RÁPIDAS - Calculadora e Tabela Periódica (APENAS EM MODO LEITURA) */}
+        {isFullscreen && (
+          <motion.div 
+            initial={{ x: 50, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+            className="absolute right-3 top-[calc(50%+80px)] z-20"
+          >
+            {/* Container principal com glow */}
+            <div className="relative">
+              {/* Glow externo */}
+              <div className="absolute -inset-2 rounded-2xl opacity-40 blur-lg bg-gradient-to-b from-blue-600 via-teal-500 to-emerald-600 animate-pulse" />
+              
+              {/* Painel de ferramentas */}
+              <div className="relative flex flex-col gap-1.5 p-2 rounded-xl bg-gradient-to-br from-black via-gray-900 to-black border-2 border-cyan-500/50 shadow-[0_0_25px_rgba(6,182,212,0.4),inset_0_0_15px_rgba(6,182,212,0.1)]">
+                {/* Efeito scanline */}
+                <div 
+                  className="absolute inset-0 rounded-xl overflow-hidden pointer-events-none opacity-20"
+                  style={{
+                    background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.02) 2px, rgba(255,255,255,0.02) 4px)"
+                  }}
+                />
+                
+                {/* Brilho superior */}
+                <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-cyan-400/60 to-transparent" />
+                
+                {/* Label */}
+                <span 
+                  className="text-[8px] font-bold tracking-widest uppercase text-cyan-400 text-center mb-1"
+                  style={{ textShadow: "0 0 8px rgba(6,182,212,0.6)" }}
+                >
+                  QUÍMICA
+                </span>
+                
+                {/* Calculadora */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 rounded-lg opacity-0 group-hover:opacity-60 blur-sm bg-blue-500 transition-all duration-300" />
+                  <div className="relative p-1.5 rounded-lg bg-blue-600/20 border border-blue-500/40 hover:bg-blue-600/40 hover:border-blue-400 transition-all cursor-pointer">
+                    <CalculatorButton />
+                  </div>
+                  {/* Tooltip */}
+                  <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
+                    <span 
+                      className="px-2.5 py-1.5 rounded-lg bg-black/95 text-blue-400 text-[10px] font-bold whitespace-nowrap border border-blue-500/40 shadow-[0_0_15px_rgba(59,130,246,0.4)]"
+                      style={{ textShadow: "0 0 8px rgba(59,130,246,0.5)" }}
+                    >
+                      CALCULADORA
+                    </span>
+                    {/* Arrow */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-0 h-0 border-t-4 border-b-4 border-l-4 border-t-transparent border-b-transparent border-l-blue-500/40" />
+                  </div>
+                </div>
+                
+                {/* Separador */}
+                <div className="w-full h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+                
+                {/* Tabela Periódica */}
+                <div className="relative group">
+                  <div className="absolute -inset-0.5 rounded-lg opacity-0 group-hover:opacity-60 blur-sm bg-teal-500 transition-all duration-300" />
+                  <div className="relative p-1.5 rounded-lg bg-teal-600/20 border border-teal-500/40 hover:bg-teal-600/40 hover:border-teal-400 transition-all cursor-pointer">
+                    <PeriodicTableButton />
+                  </div>
+                  {/* Tooltip */}
+                  <div className="absolute right-full mr-2 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-all pointer-events-none">
+                    <span 
+                      className="px-2.5 py-1.5 rounded-lg bg-black/95 text-teal-400 text-[10px] font-bold whitespace-nowrap border border-teal-500/40 shadow-[0_0_15px_rgba(20,184,166,0.4)]"
+                      style={{ textShadow: "0 0 8px rgba(20,184,166,0.5)" }}
+                    >
+                      TABELA PERIÓDICA
+                    </span>
+                    {/* Arrow */}
+                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1 w-0 h-0 border-t-4 border-b-4 border-l-4 border-t-transparent border-b-transparent border-l-teal-500/40" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        )}
 
         {/* Página */}
         <div 
