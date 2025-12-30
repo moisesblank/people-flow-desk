@@ -1,6 +1,6 @@
 // ============================================
 // 🎨 DRAWING CANVAS - Camada de Desenho Interativa
-// Permite desenhar, marcar, apagar sobre o PDF
+// Permite desenhar, marcar, apagar e ESCREVER sobre o PDF
 // Integrado com ReadingModeToolbar
 // ============================================
 
@@ -18,6 +18,16 @@ export type DrawingTool = ToolMode;
 export interface DrawingPoint {
   x: number;
   y: number;
+}
+
+export interface TextAnnotation {
+  id: string;
+  x: number;
+  y: number;
+  text: string;
+  color: string;
+  fontSize: number;
+  pageNumber: number;
 }
 
 export interface DrawingStroke {
@@ -57,9 +67,16 @@ export const DrawingCanvas = memo(function DrawingCanvas({
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
   const [localStrokes, setLocalStrokes] = useState<DrawingStroke[]>([]);
+  
+  // Estado para anotações de texto
+  const [textAnnotations, setTextAnnotations] = useState<TextAnnotation[]>([]);
+  const [activeTextInput, setActiveTextInput] = useState<{ x: number; y: number } | null>(null);
+  const [textInputValue, setTextInputValue] = useState('');
+  const [editingTextId, setEditingTextId] = useState<string | null>(null);
 
   // Usar strokes externos se fornecidos
   const strokes = externalStrokes ?? localStrokes;
@@ -74,6 +91,7 @@ export const DrawingCanvas = memo(function DrawingCanvas({
 
   // Filtrar strokes da página atual
   const pageStrokes = strokes.filter(s => s.pageNumber === pageNumber);
+  const pageTextAnnotations = textAnnotations.filter(t => t.pageNumber === pageNumber);
 
   // Redimensionar canvas
   useEffect(() => {
@@ -93,10 +111,17 @@ export const DrawingCanvas = memo(function DrawingCanvas({
     return () => window.removeEventListener('resize', resize);
   }, [pageNumber]);
 
-  // Redesenhar quando strokes mudam
+  // Redesenhar quando strokes ou textos mudam
   useEffect(() => {
     redrawCanvas();
-  }, [pageStrokes, currentStroke]);
+  }, [pageStrokes, currentStroke, pageTextAnnotations]);
+
+  // Focar no input quando ativo
+  useEffect(() => {
+    if (activeTextInput && inputRef.current) {
+      inputRef.current.focus();
+    }
+  }, [activeTextInput]);
 
   // Função para redesenhar todo o canvas
   const redrawCanvas = useCallback(() => {
@@ -118,7 +143,27 @@ export const DrawingCanvas = memo(function DrawingCanvas({
     if (currentStroke) {
       drawStroke(ctx, currentStroke);
     }
-  }, [pageStrokes, currentStroke]);
+
+    // Desenhar textos
+    pageTextAnnotations.forEach(textAnno => {
+      if (textAnno.id !== editingTextId) {
+        drawText(ctx, textAnno);
+      }
+    });
+  }, [pageStrokes, currentStroke, pageTextAnnotations, editingTextId]);
+
+  // Desenhar texto no canvas
+  const drawText = (ctx: CanvasRenderingContext2D, textAnno: TextAnnotation) => {
+    ctx.save();
+    ctx.font = `bold ${textAnno.fontSize}px "Inter", "Segoe UI", sans-serif`;
+    ctx.fillStyle = textAnno.color;
+    ctx.shadowColor = 'rgba(0,0,0,0.5)';
+    ctx.shadowBlur = 3;
+    ctx.shadowOffsetX = 1;
+    ctx.shadowOffsetY = 1;
+    ctx.fillText(textAnno.text, textAnno.x, textAnno.y);
+    ctx.restore();
+  };
 
   // Desenhar um stroke individual
   const drawStroke = (ctx: CanvasRenderingContext2D, stroke: DrawingStroke) => {
@@ -201,15 +246,81 @@ export const DrawingCanvas = memo(function DrawingCanvas({
     }
   }, []);
 
-  // Iniciar desenho
+  // Salvar texto atual
+  const saveTextAnnotation = useCallback(() => {
+    if (!activeTextInput || !textInputValue.trim()) {
+      setActiveTextInput(null);
+      setTextInputValue('');
+      setEditingTextId(null);
+      return;
+    }
+
+    if (editingTextId) {
+      // Editando texto existente
+      setTextAnnotations(prev => prev.map(t => 
+        t.id === editingTextId 
+          ? { ...t, text: textInputValue.trim() }
+          : t
+      ));
+    } else {
+      // Novo texto
+      const newText: TextAnnotation = {
+        id: `text-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+        x: activeTextInput.x,
+        y: activeTextInput.y,
+        text: textInputValue.trim(),
+        color: color,
+        fontSize: Math.max(16, size * 5),
+        pageNumber
+      };
+      setTextAnnotations(prev => [...prev, newText]);
+    }
+
+    setActiveTextInput(null);
+    setTextInputValue('');
+    setEditingTextId(null);
+  }, [activeTextInput, textInputValue, editingTextId, color, size, pageNumber]);
+
+  // Iniciar desenho ou texto
   const handleStart = useCallback((e: React.MouseEvent | React.TouchEvent) => {
-    if (!isActive || activeTool === 'select' || activeTool === 'text' || activeTool === 'ruler') return;
+    if (!isActive || activeTool === 'select' || activeTool === 'ruler') return;
 
     const pos = getPosition(e);
     if (!pos) return;
 
     e.preventDefault();
     e.stopPropagation();
+
+    // Se é ferramenta de texto, abrir input
+    if (activeTool === 'text') {
+      // Verificar se clicou em um texto existente para editar
+      const clickedText = pageTextAnnotations.find(t => {
+        const canvas = canvasRef.current;
+        if (!canvas) return false;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return false;
+        
+        ctx.font = `bold ${t.fontSize}px "Inter", "Segoe UI", sans-serif`;
+        const metrics = ctx.measureText(t.text);
+        const textWidth = metrics.width;
+        const textHeight = t.fontSize;
+        
+        return pos.x >= t.x && pos.x <= t.x + textWidth &&
+               pos.y >= t.y - textHeight && pos.y <= t.y;
+      });
+
+      if (clickedText) {
+        // Editar texto existente
+        setEditingTextId(clickedText.id);
+        setActiveTextInput({ x: clickedText.x, y: clickedText.y });
+        setTextInputValue(clickedText.text);
+      } else {
+        // Novo texto
+        setActiveTextInput({ x: pos.x, y: pos.y });
+        setTextInputValue('');
+      }
+      return;
+    }
 
     setIsDrawing(true);
     setCurrentStroke({
@@ -221,7 +332,7 @@ export const DrawingCanvas = memo(function DrawingCanvas({
       opacity: activeTool === 'highlight' ? 0.35 : 1,
       pageNumber
     });
-  }, [isActive, activeTool, color, size, pageNumber, getPosition]);
+  }, [isActive, activeTool, color, size, pageNumber, getPosition, pageTextAnnotations]);
 
   // Continuar desenho
   const handleMove = useCallback((e: React.MouseEvent | React.TouchEvent) => {
@@ -260,10 +371,20 @@ export const DrawingCanvas = memo(function DrawingCanvas({
   // Limpar todos os desenhos da página
   const clearPage = useCallback(() => {
     setStrokes(prev => prev.filter(s => s.pageNumber !== pageNumber));
+    setTextAnnotations(prev => prev.filter(t => t.pageNumber !== pageNumber));
   }, [pageNumber, setStrokes]);
 
-  // Desfazer último stroke
+  // Desfazer último stroke ou texto
   const undo = useCallback(() => {
+    // Primeiro tenta desfazer texto
+    const pageTexts = textAnnotations.filter(t => t.pageNumber === pageNumber);
+    if (pageTexts.length > 0) {
+      const lastText = pageTexts[pageTexts.length - 1];
+      setTextAnnotations(prev => prev.filter(t => t.id !== lastText.id));
+      return;
+    }
+
+    // Depois tenta desfazer stroke
     setStrokes(prev => {
       const pageStrokesOnly = prev.filter(s => s.pageNumber === pageNumber);
       if (pageStrokesOnly.length === 0) return prev;
@@ -271,7 +392,7 @@ export const DrawingCanvas = memo(function DrawingCanvas({
       const lastPageStroke = pageStrokesOnly[pageStrokesOnly.length - 1];
       return prev.filter(s => s.id !== lastPageStroke.id);
     });
-  }, [pageNumber, setStrokes]);
+  }, [pageNumber, setStrokes, textAnnotations]);
 
   // Cursor baseado na ferramenta
   const getCursor = () => {
@@ -297,13 +418,26 @@ export const DrawingCanvas = memo(function DrawingCanvas({
     (window as any).__drawingCanvas = {
       clearPage,
       undo,
-      getStrokes: () => strokes
+      getStrokes: () => strokes,
+      getTextAnnotations: () => textAnnotations
     };
     
     return () => {
       delete (window as any).__drawingCanvas;
     };
-  }, [clearPage, undo, strokes]);
+  }, [clearPage, undo, strokes, textAnnotations]);
+
+  // Handler para input de texto
+  const handleTextKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      saveTextAnnotation();
+    } else if (e.key === 'Escape') {
+      setActiveTextInput(null);
+      setTextInputValue('');
+      setEditingTextId(null);
+    }
+  };
 
   return (
     <div 
@@ -333,6 +467,45 @@ export const DrawingCanvas = memo(function DrawingCanvas({
         onTouchCancel={handleEnd}
       />
       
+      {/* Input de texto flutuante */}
+      {activeTextInput && activeTool === 'text' && (
+        <div
+          className="absolute z-50"
+          style={{
+            left: activeTextInput.x,
+            top: activeTextInput.y - 10,
+            transform: 'translateY(-100%)'
+          }}
+        >
+          <div className="flex items-center gap-1 bg-black/90 rounded-lg p-1 border border-cyan-500/50 shadow-[0_0_20px_rgba(0,255,255,0.3)]">
+            <input
+              ref={inputRef}
+              type="text"
+              value={textInputValue}
+              onChange={(e) => setTextInputValue(e.target.value)}
+              onKeyDown={handleTextKeyDown}
+              onBlur={saveTextAnnotation}
+              placeholder="Digite aqui..."
+              className="bg-transparent border-none outline-none text-white px-2 py-1 min-w-[150px] max-w-[300px] text-sm placeholder:text-gray-500"
+              style={{ 
+                color: color,
+                fontSize: Math.max(14, size * 3) + 'px'
+              }}
+              autoFocus
+            />
+            <button
+              onClick={saveTextAnnotation}
+              className="px-2 py-1 bg-cyan-600 hover:bg-cyan-500 rounded text-white text-xs font-medium transition-colors"
+            >
+              OK
+            </button>
+          </div>
+          <div 
+            className="absolute left-2 top-full w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-cyan-500/50"
+          />
+        </div>
+      )}
+      
       {/* Indicador visual de ferramenta ativa */}
       {isActive && activeTool !== 'select' && (
         <div className="absolute top-2 left-2 px-2 py-1 rounded bg-black/70 text-white text-xs font-medium flex items-center gap-1.5 pointer-events-none">
@@ -341,13 +514,14 @@ export const DrawingCanvas = memo(function DrawingCanvas({
             style={{ 
               backgroundColor: activeTool === 'eraser' ? '#ef4444' : 
                                activeTool === 'highlight' ? '#eab308' : 
+                               activeTool === 'text' ? '#22c55e' :
                                color 
             }}
           />
           {activeTool === 'highlight' && 'Marca-texto'}
           {activeTool === 'pencil' && 'Lápis'}
           {activeTool === 'eraser' && 'Borracha'}
-          {activeTool === 'text' && 'Texto'}
+          {activeTool === 'text' && 'Texto - Clique para escrever'}
         </div>
       )}
     </div>
