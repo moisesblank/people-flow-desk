@@ -641,56 +641,79 @@ export const WebBookViewer = memo(function WebBookViewer({
         </div>
       </header>
 
-      {/* 🔶 MODO LEITURA - Botão Losango Centralizado no Topo - DESIGNER 2300 */}
-      <div className="absolute top-2 left-1/2 -translate-x-1/2 z-40">
+      {/* 🔶 MODO LEITURA - Botão Chamativo DESIGNER 2300 */}
+      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-40">
         <button
           onClick={toggleFullscreen}
-          className={cn(
-            "relative group transition-all duration-300 hover:scale-110",
-            isFullscreen && "scale-105"
-          )}
-          title={isFullscreen ? "Sair do Modo Leitura (ESC)" : "Ativar Modo Leitura"}
+          className="relative group transition-all duration-300 hover:scale-105 active:scale-95"
+          title={isFullscreen ? "Sair do Modo Leitura (ESC)" : "Clique para Modo Leitura Imersivo"}
         >
-          {/* Container do Losango */}
-          <div className="relative w-[140px] h-[48px] flex items-center justify-center">
-            {/* Fundo Losango (Diamond shape via clip-path) */}
+          {/* Glow externo pulsante */}
+          <div 
+            className={cn(
+              "absolute -inset-2 rounded-xl opacity-60 blur-md transition-all duration-500",
+              isFullscreen 
+                ? "bg-gradient-to-r from-red-600 via-red-500 to-red-600 animate-pulse" 
+                : "bg-gradient-to-r from-red-600/50 via-red-500/50 to-red-600/50 group-hover:opacity-80"
+            )}
+          />
+          
+          {/* Container principal */}
+          <div 
+            className={cn(
+              "relative px-6 py-2.5 rounded-lg transition-all duration-300",
+              "bg-gradient-to-br from-black via-gray-900 to-black",
+              "border-2",
+              isFullscreen 
+                ? "border-red-500 shadow-[0_0_30px_rgba(239,68,68,0.7),inset_0_0_20px_rgba(239,68,68,0.2)]" 
+                : "border-red-600/70 group-hover:border-red-500 group-hover:shadow-[0_0_25px_rgba(239,68,68,0.6)]"
+            )}
+          >
+            {/* Efeito scanline futurístico */}
             <div 
-              className={cn(
-                "absolute inset-0 bg-black border-2 transition-all duration-300",
-                isFullscreen 
-                  ? "border-red-500 shadow-[0_0_25px_rgba(239,68,68,0.6)]" 
-                  : "border-red-600/80 group-hover:border-red-500 group-hover:shadow-[0_0_20px_rgba(239,68,68,0.5)]"
-              )}
+              className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-20"
               style={{
-                clipPath: "polygon(8% 50%, 50% 5%, 92% 50%, 50% 95%)",
+                background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)"
               }}
             />
             
-            {/* Texto */}
+            {/* Brilho superior */}
+            <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-red-400/60 to-transparent" />
+            
+            {/* Texto com glow */}
             <span 
               className={cn(
-                "relative z-10 text-[11px] font-bold tracking-wider uppercase transition-all duration-300",
+                "relative z-10 text-sm font-bold tracking-widest uppercase flex items-center gap-2",
                 isFullscreen 
-                  ? "text-red-400 drop-shadow-[0_0_10px_rgba(239,68,68,0.9)]" 
+                  ? "text-red-400" 
                   : "text-red-500 group-hover:text-red-400"
               )}
+              style={{
+                textShadow: isFullscreen 
+                  ? "0 0 20px rgba(239,68,68,1), 0 0 40px rgba(239,68,68,0.8), 0 0 60px rgba(239,68,68,0.5)" 
+                  : "0 0 10px rgba(239,68,68,0.6), 0 0 20px rgba(239,68,68,0.4)"
+              }}
             >
-              {isFullscreen ? "LEITURA ✓" : "MODO LEITURA"}
+              {isFullscreen ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                  MODO LEITURA
+                </>
+              ) : (
+                <>MODO LEITURA</>
+              )}
             </span>
             
-            {/* Efeito de brilho quando ativo */}
-            {isFullscreen && (
-              <div 
-                className="absolute inset-0 animate-pulse"
-                style={{
-                  clipPath: "polygon(8% 50%, 50% 5%, 92% 50%, 50% 95%)",
-                  background: "radial-gradient(ellipse at center, rgba(239,68,68,0.25) 0%, transparent 70%)",
-                }}
-              />
+            {/* Indicador de ação - seta/ícone */}
+            {!isFullscreen && (
+              <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 group-hover:-bottom-3 transition-all duration-300">
+                <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[6px] border-l-transparent border-r-transparent border-t-red-500" />
+              </div>
             )}
           </div>
         </button>
       </div>
+
 
       <TableOfContents
         pages={bookData.pages || []}
