@@ -53,6 +53,13 @@ export interface WebBook {
   description?: string;
 }
 
+export interface PdfModeData {
+  enabled: boolean;
+  originalBucket?: string;
+  originalPath?: string;
+  originalFilename?: string;
+}
+
 export interface WebBookData {
   success: boolean;
   error?: string;
@@ -61,6 +68,7 @@ export interface WebBookData {
   progress?: WebBookProgress;
   watermark?: WebBookWatermark;
   isOwner?: boolean;
+  pdfMode?: PdfModeData;
 }
 
 export interface Annotation {
@@ -523,13 +531,22 @@ export function useWebBook(bookId?: string) {
 
   // Verificar se precisa de modo PDF direto (sem páginas pré-processadas)
   const needsPdfMode = useMemo(() => {
+    // Usar flag do backend se disponível
+    if (bookData?.pdfMode?.enabled) return true;
+    // Fallback: verificar se não há páginas
     return bookData?.success && 
            (!bookData.pages || bookData.pages.length === 0) &&
-           bookData.book;
+           !!bookData.book;
   }, [bookData]);
 
-  // Obter caminho do PDF original
+  // Obter caminho do PDF original - agora usa dados do RPC
   const getOriginalPdfPath = useCallback(async (): Promise<string | null> => {
+    // Primeiro: tentar usar dados do pdfMode (vem do RPC)
+    if (bookData?.pdfMode?.originalPath) {
+      return bookData.pdfMode.originalPath;
+    }
+    
+    // Fallback: buscar do banco
     if (!bookId) return null;
     
     try {
@@ -543,7 +560,7 @@ export function useWebBook(bookId?: string) {
     } catch {
       return null;
     }
-  }, [bookId]);
+  }, [bookId, bookData?.pdfMode?.originalPath]);
 
   return {
     // Estado
@@ -585,7 +602,8 @@ export function useWebBook(bookId?: string) {
 
     // Modo PDF direto
     needsPdfMode,
-    getOriginalPdfPath
+    getOriginalPdfPath,
+    pdfModeData: bookData?.pdfMode
   };
 }
 
