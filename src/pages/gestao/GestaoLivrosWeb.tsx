@@ -752,7 +752,11 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
         open={previewOpen}
         onOpenChange={(open) => {
           setPreviewOpen(open);
-          if (!open) setPreviewBookId(null);
+          if (!open) {
+            setPreviewBookId(null);
+            // ✅ P0: Recarregar livros ao fechar (reflete total_pages atualizado pelo pdfRenderer)
+            loadBooks();
+          }
         }}
       >
         <DialogContent className="max-w-6xl w-[96vw] h-[90vh] p-0 overflow-hidden">
@@ -764,6 +768,8 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                 onClose={() => {
                   setPreviewOpen(false);
                   setPreviewBookId(null);
+                  // ✅ P0: Recarregar ao fechar via botão interno
+                  loadBooks();
                 }}
               />
             </div>

@@ -71,6 +71,9 @@ const BookCard = memo(function BookCard({
   const progress = book.progress?.progressPercent || 0;
   const isCompleted = book.progress?.isCompleted || false;
   const hasStarted = progress > 0;
+  
+  // ✅ P0: Livros com 0 páginas registradas ainda podem ser lidos via modo PDF direto
+  const isPdfMode = book.totalPages === 0;
 
   return (
     <motion.div
@@ -105,6 +108,15 @@ const BookCard = memo(function BookCard({
               </Badge>
             </div>
           )}
+          
+          {/* Indicador de modo PDF */}
+          {isPdfMode && !isCompleted && (
+            <div className="absolute top-3 left-3">
+              <Badge variant="secondary" className="gap-1 text-xs">
+                PDF
+              </Badge>
+            </div>
+          )}
 
           {/* Barra de progresso */}
           {hasStarted && !isCompleted && (
@@ -133,7 +145,8 @@ const BookCard = memo(function BookCard({
           <div className="flex items-center justify-between text-xs text-muted-foreground">
             <span className="flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
-              {book.totalPages} páginas
+              {/* P0: Se 0 páginas, indicar modo PDF */}
+              {book.totalPages > 0 ? `${book.totalPages} páginas` : 'PDF interativo'}
             </span>
             <span className="flex items-center gap-1">
               <Eye className="w-3 h-3" />

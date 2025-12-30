@@ -370,7 +370,10 @@ export const WebBookViewer = memo(function WebBookViewer({
         case ' ':
           if (!e.ctrlKey) {
             e.preventDefault();
-            nextPage();
+            // ✅ P0: Limitar navegação pelo effectiveTotalPages
+            if (currentPage < effectiveTotalPages) {
+              nextPage();
+            }
           }
           break;
         case 'ArrowLeft':
@@ -385,14 +388,15 @@ export const WebBookViewer = memo(function WebBookViewer({
           goToPage(1);
           break;
         case 'End':
-          goToPage(totalPages);
+          // ✅ P0: Usar effectiveTotalPages em vez de totalPages
+          goToPage(effectiveTotalPages);
           break;
       }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [nextPage, previousPage, goToPage, totalPages, showToc, onClose]);
+  }, [nextPage, previousPage, goToPage, effectiveTotalPages, currentPage, showToc, onClose]);
 
   // Reset image loading on page change
   useEffect(() => {

@@ -361,15 +361,20 @@ export function useWebBook(bookId?: string) {
     if (!bookData?.book) return;
     
     const maxPage = bookData.book.totalPages;
-    const newPage = Math.max(1, Math.min(page, maxPage));
+    
+    // ✅ P0: Quando totalPages=0 (modo PDF), permitir navegação livre
+    // O WebBookViewer usa effectiveTotalPages (do pdfRenderer) para limitar
+    const newPage = maxPage > 0 
+      ? Math.max(1, Math.min(page, maxPage))
+      : Math.max(1, page); // Modo PDF: não limita aqui
     
     setCurrentPage(newPage);
     
-    // Buscar signed URL
-    await fetchSignedUrl(newPage);
-    
-    // Prefetch próximas
-    prefetchPages(newPage);
+    // Buscar signed URL (só faz sentido se não estiver em modo PDF)
+    if (maxPage > 0) {
+      await fetchSignedUrl(newPage);
+      prefetchPages(newPage);
+    }
     
     // Salvar progresso
     saveProgress(newPage);
