@@ -48,6 +48,8 @@ export interface DrawingCanvasProps {
   pageNumber: number;
   onStrokesChange?: (strokes: DrawingStroke[]) => void;
   strokes?: DrawingStroke[];
+  onTextAnnotationsChange?: (annotations: TextAnnotation[]) => void;
+  textAnnotations?: TextAnnotation[];
   className?: string;
 }
 
@@ -63,6 +65,8 @@ export const DrawingCanvas = memo(function DrawingCanvas({
   pageNumber,
   onStrokesChange,
   strokes: externalStrokes,
+  onTextAnnotationsChange,
+  textAnnotations: externalTextAnnotations,
   className
 }: DrawingCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -72,8 +76,8 @@ export const DrawingCanvas = memo(function DrawingCanvas({
   const [currentStroke, setCurrentStroke] = useState<DrawingStroke | null>(null);
   const [localStrokes, setLocalStrokes] = useState<DrawingStroke[]>([]);
   
-  // Estado para anotações de texto
-  const [textAnnotations, setTextAnnotations] = useState<TextAnnotation[]>([]);
+  // Estado para anotações de texto (local quando não há controle externo)
+  const [localTextAnnotations, setLocalTextAnnotations] = useState<TextAnnotation[]>([]);
   const [activeTextInput, setActiveTextInput] = useState<{ x: number; y: number } | null>(null);
   const [textInputValue, setTextInputValue] = useState('');
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
@@ -88,6 +92,17 @@ export const DrawingCanvas = memo(function DrawingCanvas({
       setLocalStrokes(newStrokes);
     }
   }, [onStrokesChange, strokes]);
+
+  // Usar textos externos se fornecidos
+  const textAnnotations = externalTextAnnotations ?? localTextAnnotations;
+  const setTextAnnotations = useCallback((newTexts: TextAnnotation[] | ((prev: TextAnnotation[]) => TextAnnotation[])) => {
+    if (onTextAnnotationsChange) {
+      const result = typeof newTexts === 'function' ? newTexts(textAnnotations) : newTexts;
+      onTextAnnotationsChange(result);
+    } else {
+      setLocalTextAnnotations(newTexts);
+    }
+  }, [onTextAnnotationsChange, textAnnotations]);
 
   // Filtrar strokes da página atual
   const pageStrokes = strokes.filter(s => s.pageNumber === pageNumber);
