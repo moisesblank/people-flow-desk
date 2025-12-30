@@ -690,12 +690,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     
     try {
       const sessionToken = localStorage.getItem(SESSION_TOKEN_KEY);
+      
+      // 🎯 LIMPAR TOKEN ANTES do RPC para que SessionGuard saiba que é logout manual
+      // Isso evita que o Realtime listener mostre overlay de conflito
+      localStorage.removeItem(SESSION_TOKEN_KEY);
+      console.log('[DOGMA I] Token removido ANTES do RPC');
+      
       if (sessionToken) {
         await supabase.rpc('invalidate_session', {
           p_session_token: sessionToken,
         });
-        localStorage.removeItem(SESSION_TOKEN_KEY);
-        console.log('[DOGMA I] ✅ Sessão invalidada');
+        console.log('[DOGMA I] ✅ Sessão invalidada no backend');
       }
     } catch (err) {
       console.error('[DOGMA I] Erro ao invalidar sessão:', err);
