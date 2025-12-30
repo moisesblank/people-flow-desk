@@ -243,6 +243,22 @@ const TableOfContents = memo(function TableOfContents({
                   {Array.from({ length: Math.ceil(totalPages / 10) }, (_, i) => {
                     const startPage = i * 10 + 1;
                     const endPage = Math.min((i + 1) * 10, totalPages);
+                    
+                    // ✅ Gerar descrição automática baseada na posição no livro
+                    const getPageContext = (start: number, end: number, total: number): string => {
+                      const percentage = Math.round((start / total) * 100);
+                      if (start === 1) return 'Início do Livro';
+                      if (end >= total) return 'Final do Livro';
+                      if (percentage <= 15) return 'Introdução';
+                      if (percentage <= 35) return 'Parte Inicial';
+                      if (percentage <= 55) return 'Meio do Livro';
+                      if (percentage <= 75) return 'Parte Avançada';
+                      return 'Conclusão';
+                    };
+                    
+                    const context = getPageContext(startPage, endPage, totalPages);
+                    const isCurrentRange = currentPage >= startPage && currentPage <= endPage;
+                    
                     return (
                       <button
                         key={startPage}
@@ -251,17 +267,21 @@ const TableOfContents = memo(function TableOfContents({
                           onClose();
                         }}
                         className={cn(
-                          "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                          currentPage >= startPage && currentPage <= endPage
-                            ? "bg-primary/10 text-primary"
+                          "w-full text-left px-3 py-2.5 rounded-lg text-sm transition-colors flex justify-between items-center gap-2",
+                          isCurrentRange
+                            ? "bg-primary/10 text-primary font-medium"
                             : "hover:bg-muted"
                         )}
                       >
-                        <span className="text-muted-foreground mr-2">
-                          {startPage === endPage ? `p.${startPage}` : `p.${startPage}-${endPage}`}
+                        <span className="flex items-center gap-2">
+                          <span className="text-muted-foreground text-xs font-mono">
+                            {startPage === endPage ? `p.${startPage}` : `p.${startPage}-${endPage}`}
+                          </span>
+                          <span>{context}</span>
                         </span>
-                        {startPage === 1 && 'Início'}
-                        {startPage !== 1 && `Páginas ${startPage} a ${endPage}`}
+                        {isCurrentRange && (
+                          <span className="text-xs bg-primary/20 px-1.5 py-0.5 rounded">atual</span>
+                        )}
                       </button>
                     );
                   })}
@@ -611,10 +631,10 @@ export const WebBookViewer = memo(function WebBookViewer({
         <button
           onClick={previousPage}
           disabled={currentPage <= 1}
-          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none transition-all hover:scale-110"
+          className="absolute left-4 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none transition-all hover:scale-110"
         >
-          <div className="p-3 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background">
-            <ChevronLeft className="w-6 h-6" />
+          <div className="p-4 rounded-full bg-primary/90 backdrop-blur-sm border-2 border-primary-foreground/20 shadow-xl hover:bg-primary text-primary-foreground">
+            <ChevronLeft className="w-8 h-8" strokeWidth={3} />
           </div>
         </button>
 
@@ -622,10 +642,10 @@ export const WebBookViewer = memo(function WebBookViewer({
         <button
           onClick={nextPage}
           disabled={currentPage >= effectiveTotalPages}
-          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none transition-all hover:scale-110"
+          className="absolute right-4 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-20 disabled:pointer-events-none transition-all hover:scale-110"
         >
-          <div className="p-3 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background">
-            <ChevronRight className="w-6 h-6" />
+          <div className="p-4 rounded-full bg-primary/90 backdrop-blur-sm border-2 border-primary-foreground/20 shadow-xl hover:bg-primary text-primary-foreground">
+            <ChevronRight className="w-8 h-8" strokeWidth={3} />
           </div>
         </button>
 
