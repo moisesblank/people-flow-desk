@@ -14,7 +14,11 @@ import { supabase } from "@/integrations/supabase/client";
  * a preferência de tema do usuário deve ser respeitada
  */
 function isProtectedThemeArea(pathname: string): boolean {
-  return pathname.startsWith('/alunos') || pathname.startsWith('/gestaofc');
+  return (
+    pathname.startsWith('/alunos') || 
+    pathname.startsWith('/gestaofc') || 
+    pathname.startsWith('/primeiro-acesso')
+  );
 }
 
 /**
