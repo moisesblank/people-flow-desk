@@ -32,6 +32,7 @@ import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
 import { PdfPageViewer } from './PdfPageViewer';
+import { ReadingModeToolbar } from './ReadingModeToolbar';
 
 // ============================================
 // TIPOS
@@ -859,15 +860,25 @@ export const WebBookViewer = memo(function WebBookViewer({
         </div>
       </footer>
 
-      {/* Chat flutuante (placeholder) */}
-      <Button
-        variant="default"
-        size="icon"
-        className="fixed bottom-24 right-6 w-12 h-12 rounded-full shadow-lg z-40"
-        onClick={() => toast.info('Chat em breve!')}
-      >
-        <MessageCircle className="w-5 h-5" />
-      </Button>
+      {/* 📝 TOOLBAR DE ANOTAÇÕES - Só aparece em Modo Leitura (fullscreen) */}
+      <ReadingModeToolbar
+        bookId={bookId}
+        currentPage={currentPage}
+        isFullscreen={isFullscreen}
+        onGoToPage={goToPage}
+      />
+
+      {/* Chat flutuante (placeholder) - Esconde em fullscreen para não conflitar */}
+      {!isFullscreen && (
+        <Button
+          variant="default"
+          size="icon"
+          className="fixed bottom-24 right-6 w-12 h-12 rounded-full shadow-lg z-40"
+          onClick={() => toast.info('Chat em breve!')}
+        >
+          <MessageCircle className="w-5 h-5" />
+        </Button>
+      )}
     </div>
   );
 });
