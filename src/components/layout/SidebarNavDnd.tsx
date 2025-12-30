@@ -369,7 +369,11 @@ export function SidebarNavDnd(props: {
         delay: idx * 0.05
       }}>
             <SidebarGroup>
-              <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+              <SidebarGroupLabel>
+                <span data-editable-key={`nav_group_${group.id}_label`}>
+                  {getContent(`nav_group_${group.id}_label`, group.label)}
+                </span>
+              </SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
                   {group.items.map(item => <SidebarMenuItem key={item.area}>
@@ -431,8 +435,13 @@ export function SidebarNavDnd(props: {
                                   <TooltipContent side="right">Duplicar grupo</TooltipContent>
                                 </Tooltip>
                               </div>}
-                            <span className="drop-shadow-lg text-base text-left font-extrabold font-sans text-primary-foreground">{group.label}</span>
-                          </div>
+                            <span
+                              data-editable-key={`nav_group_${group.id}_label`}
+                              className="drop-shadow-lg text-base text-left font-extrabold font-sans text-primary-foreground"
+                            >
+                              {getContent(`nav_group_${group.id}_label`, group.label)}
+                            </span>
+                           </div>
                         </div>
 
                         <SidebarGroupLabel className="sr-only">{group.label}</SidebarGroupLabel>
