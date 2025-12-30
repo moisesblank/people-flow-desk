@@ -386,7 +386,7 @@ const StarkModuleCard = memo(function StarkModuleCard({
     <button
       onClick={onClick}
       className={cn(
-        "stark-card group relative aspect-[16/11] rounded-xl overflow-hidden cursor-pointer",
+        "stark-card group relative aspect-[5/3] rounded-xl overflow-hidden cursor-pointer",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-400/50",
         isActive && "active"
       )}
@@ -541,10 +541,10 @@ const StarkModuleCard = memo(function StarkModuleCard({
       {/* ══════════════════════════════════════════════════════════════════
           LAYER 5: Central Energy Core with Rotating Rings
       ══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-4">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
         {/* Outer ring 3 - dashed */}
         <div 
-          className="absolute w-36 h-36 md:w-44 md:h-44 rounded-full left-1/2 top-1/2 opacity-30 group-hover:opacity-50"
+          className="absolute w-28 h-28 md:w-32 md:h-32 rounded-full left-1/2 top-1/2 opacity-30 group-hover:opacity-50"
           style={{
             border: `2px dashed ${glow}`,
             animation: isActive ? 'stark-ring-spin 15s linear infinite' : 'none',
@@ -554,7 +554,7 @@ const StarkModuleCard = memo(function StarkModuleCard({
         
         {/* Outer ring 2 - solid */}
         <div 
-          className="absolute w-28 h-28 md:w-36 md:h-36 rounded-full left-1/2 top-1/2 opacity-40 group-hover:opacity-60"
+          className="absolute w-20 h-20 md:w-24 md:h-24 rounded-full left-1/2 top-1/2 opacity-40 group-hover:opacity-60"
           style={{
             border: `2px solid ${glow}`,
             boxShadow: `0 0 20px rgba(${rgb},0.3)`,
@@ -565,7 +565,7 @@ const StarkModuleCard = memo(function StarkModuleCard({
         
         {/* Inner ring - thick glow */}
         <div 
-          className="absolute w-20 h-20 md:w-28 md:h-28 rounded-full left-1/2 top-1/2 opacity-60 group-hover:opacity-80"
+          className="absolute w-14 h-14 md:w-18 md:h-18 rounded-full left-1/2 top-1/2 opacity-60 group-hover:opacity-80"
           style={{
             border: `3px solid ${main}`,
             boxShadow: `0 0 30px rgba(${rgb},0.5), inset 0 0 20px rgba(${rgb},0.3)`,
@@ -576,7 +576,7 @@ const StarkModuleCard = memo(function StarkModuleCard({
         
         {/* Energy wave */}
         <div 
-          className="absolute w-16 h-16 md:w-24 md:h-24 rounded-full left-1/2 top-1/2"
+          className="absolute w-12 h-12 md:w-16 md:h-16 rounded-full left-1/2 top-1/2"
           style={{
             background: `radial-gradient(circle, rgba(${rgb},0.4) 0%, transparent 70%)`,
             animation: isActive ? 'stark-energy-wave 3s ease-in-out infinite' : 'none',
@@ -586,7 +586,7 @@ const StarkModuleCard = memo(function StarkModuleCard({
 
         {/* Core background */}
         <div 
-          className="relative w-16 h-16 md:w-20 md:h-20 rounded-full flex items-center justify-center transition-all duration-500"
+          className="relative w-12 h-12 md:w-14 md:h-14 rounded-full flex items-center justify-center transition-all duration-500"
           style={{
             background: `radial-gradient(circle, rgba(${rgb},0.5) 0%, rgba(${rgb},0.2) 50%, rgba(${rgb},0.05) 100%)`,
             boxShadow: isActive 
@@ -596,7 +596,7 @@ const StarkModuleCard = memo(function StarkModuleCard({
           }}
         >
           <Icon 
-            className="w-8 h-8 md:w-10 md:h-10 transition-all duration-500 group-hover:scale-110"
+            className="w-6 h-6 md:w-7 md:h-7 transition-all duration-500 group-hover:scale-110"
             strokeWidth={1.5}
             style={{
               color: neon,
@@ -606,14 +606,14 @@ const StarkModuleCard = memo(function StarkModuleCard({
         </div>
 
         {/* Orbiting particles */}
-        {isActive && [...Array(8)].map((_, i) => (
+        {isActive && [...Array(6)].map((_, i) => (
           <div
             key={i}
-            className="absolute w-2 h-2 rounded-full left-1/2 top-1/2"
+            className="absolute w-1.5 h-1.5 rounded-full left-1/2 top-1/2"
             style={{
               background: neon,
               boxShadow: `0 0 10px ${main}`,
-              transform: `translate(-50%, -50%) rotate(${i * 45}deg) translateX(70px)`,
+              transform: `translate(-50%, -50%) rotate(${i * 60}deg) translateX(50px)`,
               animation: `stark-ring-spin 4s linear infinite`,
               animationDelay: `${i * 0.1}s`
             }}
@@ -661,9 +661,9 @@ const StarkModuleCard = memo(function StarkModuleCard({
       </div>
 
       {/* ══════════════════════════════════════════════════════════════════
-          LAYER 7: Bottom Info Panel
+          LAYER 7: Bottom Info Panel — CENTRALIZADO
       ══════════════════════════════════════════════════════════════════ */}
-      <div className="absolute bottom-0 left-0 right-0 px-4 pb-4 pt-8">
+      <div className="absolute bottom-0 left-0 right-0 px-4 pb-3 pt-6">
         {/* Gradient fade */}
         <div 
           className="absolute inset-0"
@@ -672,21 +672,21 @@ const StarkModuleCard = memo(function StarkModuleCard({
           }}
         />
         
-        <div className="relative">
+        <div className="relative text-center">
           {/* Subtitle */}
           <p 
-            className="text-[10px] md:text-xs font-mono tracking-[0.35em] uppercase mb-1"
+            className="text-[11px] md:text-sm font-mono tracking-[0.4em] uppercase mb-1"
             style={{ 
-              color: `rgba(${rgb},0.7)`,
+              color: `rgba(${rgb},0.8)`,
               textShadow: `0 0 15px rgba(${rgb},0.4)`
             }}
           >
             {category.subtitle}
           </p>
           
-          {/* Main title */}
+          {/* Main title — MAIOR E CENTRALIZADO */}
           <h3 
-            className="text-lg md:text-xl lg:text-2xl font-black tracking-wider uppercase mb-3"
+            className="text-xl md:text-2xl lg:text-3xl font-black tracking-wider uppercase mb-2"
             style={{
               color: neon,
               textShadow: isActive 
@@ -698,11 +698,11 @@ const StarkModuleCard = memo(function StarkModuleCard({
             {category.name}
           </h3>
           
-          {/* Power bar */}
-          <div className="flex items-center gap-3">
+          {/* Power bar — CENTRALIZADO */}
+          <div className="flex items-center justify-center gap-3 max-w-[200px] mx-auto">
             <span className="text-[9px] font-mono text-white/40 tracking-widest">PWR</span>
             <div 
-              className="flex-1 h-2 rounded-full overflow-hidden"
+              className="flex-1 h-1.5 rounded-full overflow-hidden"
               style={{
                 background: `rgba(${rgb},0.15)`,
                 border: `1px solid rgba(${rgb},0.3)`
