@@ -1,9 +1,11 @@
 // ============================================
-// 🔄 LEGACY REDIRECTS v2.1
+// 🔄 LEGACY REDIRECTS v2.2
 // RETROCOMPATIBILIDADE DE ROTAS
 // ============================================
 //
 // 📍 MAPEAMENTO OBRIGATÓRIO:
+//   /aluno/* → /alunos/*
+//   /aluno/comunidade → /comunidade
 //   /admin/* → /
 //   /student/* → /alunos/*
 //
@@ -39,6 +41,33 @@ export interface RedirectResult {
 // ============================================
 
 export const LEGACY_REDIRECTS: LegacyRedirect[] = [
+  // /aluno/comunidade → /comunidade (específico - DEVE VIR ANTES do genérico)
+  {
+    from: /^\/aluno\/comunidade\/?$/,
+    to: "/comunidade",
+    permanent: true,
+    description: "Redirect /aluno/comunidade para /comunidade",
+    logEvent: true,
+  },
+  
+  // /aluno/* → /alunos/*
+  {
+    from: /^\/aluno\/(.*)$/,
+    to: (match) => `/alunos/${match[1] || ""}`.replace(/\/$/, ""),
+    permanent: true,
+    description: "Redirect /aluno/* para /alunos/*",
+    logEvent: true,
+  },
+  
+  // /aluno → /alunos
+  {
+    from: /^\/aluno\/?$/,
+    to: "/alunos",
+    permanent: true,
+    description: "Redirect /aluno para /alunos",
+    logEvent: true,
+  },
+  
   // /admin/* → / (MONO-DOMÍNIO: gestaofc é rota secreta, nunca expor)
   {
     from: /^\/admin\/(.*)$/,
