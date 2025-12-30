@@ -1,16 +1,21 @@
 // ============================================
-// 🚀 STARK INDUSTRIES COMMAND CENTER v4.0
+// 🚀 STARK INDUSTRIES COMMAND CENTER v5.0
 // Iron Man JARVIS / Year 2300 HUD Interface
 // Cinematográfico Ultra Premium — Marvel Studios Level
+// Usa imagens unificadas do useBookCategories (banco)
 // ============================================
 
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { Atom, FlaskConical, Flame, RefreshCw, Eye } from 'lucide-react';
+import { useBookCategories, type CategoryWithFallback } from '@/hooks/useBookCategories';
 
-interface CategoryItem {
+// ============================================
+// CORES E METADADOS VISUAIS POR CATEGORIA
+// (Usados para efeitos HUD, não para imagens)
+// ============================================
+interface CategoryVisualConfig {
   id: string;
-  name: string;
   subtitle: string;
   systemCode: string;
   powerLevel: number;
@@ -26,10 +31,9 @@ interface CategoryItem {
   icon: React.ElementType;
 }
 
-const STARK_CATEGORIES: CategoryItem[] = [
-  {
+const CATEGORY_VISUALS: Record<string, CategoryVisualConfig> = {
+  'quimica-geral': {
     id: 'quimica-geral',
-    name: 'QUÍMICA GERAL',
     subtitle: 'QUANTUM REACTOR',
     systemCode: 'QG-001',
     powerLevel: 98,
@@ -44,9 +48,8 @@ const STARK_CATEGORIES: CategoryItem[] = [
     },
     icon: Atom,
   },
-  {
+  'quimica-organica': {
     id: 'quimica-organica',
-    name: 'QUÍMICA ORGÂNICA',
     subtitle: 'MOLECULAR MATRIX',
     systemCode: 'QO-002',
     powerLevel: 95,
@@ -61,9 +64,8 @@ const STARK_CATEGORIES: CategoryItem[] = [
     },
     icon: FlaskConical,
   },
-  {
+  'fisico-quimica': {
     id: 'fisico-quimica',
-    name: 'FÍSICO QUÍMICA',
     subtitle: 'THERMO DYNAMICS',
     systemCode: 'FQ-003',
     powerLevel: 92,
@@ -78,9 +80,8 @@ const STARK_CATEGORIES: CategoryItem[] = [
     },
     icon: Flame,
   },
-  {
+  'revisao': {
     id: 'revisao',
-    name: 'REVISÃO',
     subtitle: 'NEURAL SYNC',
     systemCode: 'RV-004',
     powerLevel: 88,
@@ -95,9 +96,8 @@ const STARK_CATEGORIES: CategoryItem[] = [
     },
     icon: RefreshCw,
   },
-  {
+  'previsao': {
     id: 'previsao',
-    name: 'PREVISÃO',
     subtitle: 'ORACLE SYSTEM',
     systemCode: 'PV-005',
     powerLevel: 94,
@@ -112,7 +112,10 @@ const STARK_CATEGORIES: CategoryItem[] = [
     },
     icon: Eye,
   },
-];
+};
+
+// Ordem das categorias para exibição
+const CATEGORY_ORDER = ['quimica-geral', 'quimica-organica', 'fisico-quimica', 'revisao', 'previsao'];
 
 interface FuturisticCategoryFilterProps {
   categories?: Array<{ id: string; name: string; slug?: string; }>;
@@ -128,6 +131,22 @@ export const FuturisticCategoryFilter = memo(function FuturisticCategoryFilter({
   onCategoryClick,
   className,
 }: FuturisticCategoryFilterProps) {
+  // Buscar categorias do banco com fallback
+  const { categories: dbCategories, isLoading } = useBookCategories();
+  
+  // Ordenar categorias na ordem desejada e combinar com visuais
+  const orderedCategories = CATEGORY_ORDER
+    .map(id => {
+      const dbCat = dbCategories.find(c => c.id === id);
+      const visuals = CATEGORY_VISUALS[id];
+      if (!visuals) return null;
+      return {
+        ...visuals,
+        name: dbCat?.name || id.replace('-', ' ').toUpperCase(),
+        bannerUrl: dbCat?.effectiveBanner || '',
+      };
+    })
+    .filter(Boolean) as Array<CategoryVisualConfig & { name: string; bannerUrl: string }>;
   
   const handleClick = (categoryId: string) => {
     if (onCategorySelect) {
@@ -247,10 +266,11 @@ export const FuturisticCategoryFilter = memo(function FuturisticCategoryFilter({
       <div className="relative z-10 max-w-7xl mx-auto px-4">
         {/* Row 1: First 3 categories */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 mb-6 lg:mb-8">
-          {STARK_CATEGORIES.slice(0, 3).map((cat, index) => (
+          {orderedCategories.slice(0, 3).map((cat, index) => (
             <StarkModuleCard
               key={cat.id}
               category={cat}
+              bannerUrl={cat.bannerUrl}
               isActive={selectedCategory === cat.id}
               onClick={() => handleClick(cat.id)}
               index={index}
@@ -260,10 +280,11 @@ export const FuturisticCategoryFilter = memo(function FuturisticCategoryFilter({
         
         {/* Row 2: Last 2 categories centered */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 lg:gap-8 max-w-4xl mx-auto">
-          {STARK_CATEGORIES.slice(3, 5).map((cat, index) => (
+          {orderedCategories.slice(3, 5).map((cat, index) => (
             <StarkModuleCard
               key={cat.id}
               category={cat}
+              bannerUrl={cat.bannerUrl}
               isActive={selectedCategory === cat.id}
               onClick={() => handleClick(cat.id)}
               index={index + 3}
@@ -367,7 +388,8 @@ export const FuturisticCategoryFilter = memo(function FuturisticCategoryFilter({
 // STARK MODULE CARD — Individual HUD Module Component
 // ═══════════════════════════════════════════════════════════════════════════
 interface StarkModuleCardProps {
-  category: CategoryItem;
+  category: CategoryVisualConfig & { name: string; bannerUrl: string };
+  bannerUrl: string;
   isActive: boolean;
   onClick: () => void;
   index: number;
@@ -375,6 +397,7 @@ interface StarkModuleCardProps {
 
 const StarkModuleCard = memo(function StarkModuleCard({
   category,
+  bannerUrl,
   isActive,
   onClick,
   index,
@@ -399,10 +422,36 @@ const StarkModuleCard = memo(function StarkModuleCard({
       }}
     >
       {/* ══════════════════════════════════════════════════════════════════
+          LAYER 0.5: BANNER IMAGE FROM DATABASE
+      ══════════════════════════════════════════════════════════════════ */}
+      {bannerUrl && (
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={bannerUrl} 
+            alt={category.name}
+            className="w-full h-full object-cover opacity-60 group-hover:opacity-80 transition-opacity duration-500"
+            style={{
+              filter: isActive 
+                ? 'saturate(1.2) contrast(1.1)' 
+                : 'saturate(0.8) contrast(0.9)',
+            }}
+            draggable={false}
+          />
+          {/* Overlay gradient for text readability */}
+          <div 
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(to top, rgba(0,0,0,0.9) 0%, rgba(0,0,0,0.4) 50%, rgba(0,0,0,0.2) 100%)`
+            }}
+          />
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
           LAYER 1: Hexagonal Grid Pattern
       ══════════════════════════════════════════════════════════════════ */}
       <div 
-        className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500"
+        className="absolute inset-0 opacity-10 group-hover:opacity-20 transition-opacity duration-500 z-[1]"
         style={{
           backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='52'%3E%3Cpath d='M30 0L60 15v22L30 52 0 37V15z' fill='none' stroke='${encodeURIComponent(main)}' stroke-width='0.5' opacity='0.5'/%3E%3C/svg%3E")`,
           backgroundSize: '60px 52px',
