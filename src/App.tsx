@@ -44,6 +44,10 @@ const LazyGlobalDuplication = lazy(() => import("@/components/admin/GlobalDuplic
 const LazyMasterUndoIndicator = lazy(() => import("@/components/admin/MasterUndoIndicator").then(m => ({ default: m.MasterUndoIndicator })));
 const LazyMasterDeleteOverlay = lazy(() => import("@/components/admin/MasterDeleteOverlay").then(m => ({ default: m.MasterDeleteOverlay })));
 const LazyMasterContextMenu = lazy(() => import("@/components/admin/MasterContextMenu").then(m => ({ default: m.MasterContextMenu })));
+// 🆕 TRANSACTIONAL SAVE SYSTEM
+const LazyGlobalSaveBar = lazy(() => import("@/components/admin/GlobalSaveBar").then(m => ({ default: m.GlobalSaveBar })));
+const LazyNavigationGuard = lazy(() => import("@/components/admin/MasterModeNavigationGuard").then(m => ({ default: m.MasterModeNavigationGuard })));
+const LazyRealtimeEditOverlay = lazy(() => import("@/components/admin/RealtimeEditOverlay").then(m => ({ default: m.RealtimeEditOverlay })));
 
 // ⚡ QueryClient Sagrado
 const queryClient = createSacredQueryClient();
@@ -105,6 +109,10 @@ const AppContent = memo(() => {
             <LazyMasterUndoIndicator />
             <LazyMasterDeleteOverlay />
             <LazyMasterContextMenu />
+            {/* 🆕 BARRA DE SALVAMENTO GLOBAL + GUARD DE NAVEGAÇÃO */}
+            <LazyGlobalSaveBar />
+            <LazyNavigationGuard />
+            <LazyRealtimeEditOverlay />
           </Suspense>
           
           <VisualEditMode />
