@@ -492,16 +492,20 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
     }
   };
 
-  // Publicar livro
+  // Publicar livro (força status = ready para aparecer para alunos)
   const handlePublish = async (bookId: string) => {
     try {
       const { error } = await supabase
         .from('web_books')
-        .update({ status: 'ready' })
+        .update({ 
+          status: 'ready',
+          is_published: true,
+          updated_at: new Date().toISOString(),
+        })
         .eq('id', bookId);
 
       if (error) throw error;
-      toast.success('Livro publicado');
+      toast.success('Livro publicado! Agora está visível para alunos.');
       loadBooks();
     } catch (err) {
       toast.error('Erro ao publicar');
@@ -706,10 +710,10 @@ const GestaoLivrosWeb = memo(function GestaoLivrosWeb() {
                               <Edit className="w-4 h-4 mr-2" />
                               Editar
                             </DropdownMenuItem>
-                            {book.status === 'draft' && (
+                            {(book.status === 'draft' || book.status === 'queued') && (
                               <DropdownMenuItem onClick={() => handlePublish(book.id)}>
                                 <CheckCircle className="w-4 h-4 mr-2" />
-                                Publicar
+                                {book.status === 'queued' ? 'Forçar Publicação' : 'Publicar'}
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuItem 
