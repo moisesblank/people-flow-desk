@@ -1591,6 +1591,39 @@ export type Database = {
           },
         ]
       }
+      book_user_page_overlays: {
+        Row: {
+          book_id: string
+          created_at: string
+          id: string
+          page_number: number
+          strokes: Json
+          texts: Json
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          book_id: string
+          created_at?: string
+          id?: string
+          page_number: number
+          strokes?: Json
+          texts?: Json
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          book_id?: string
+          created_at?: string
+          id?: string
+          page_number?: number
+          strokes?: Json
+          texts?: Json
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       branding_settings: {
         Row: {
           company_name: string | null
