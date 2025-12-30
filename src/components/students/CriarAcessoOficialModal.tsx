@@ -606,11 +606,14 @@ export function CriarAcessoOficialModal({
                   <FormControl>
                     <Input 
                       {...field} 
-                      placeholder="(11) 99999-9999"
+                      placeholder="(83) 99999-9999"
                       className="border-muted-foreground/30"
                       disabled={isSubmitting}
                     />
                   </FormControl>
+                  <FormDescription className="text-xs text-muted-foreground">
+                    Formato obrigatório: <span className="font-mono text-emerald-400">+55 83 9 9999-9999</span>
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
