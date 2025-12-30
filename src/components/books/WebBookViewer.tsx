@@ -682,27 +682,30 @@ export const WebBookViewer = memo(function WebBookViewer({
           )}
           
           
-          <div className="hidden md:flex items-center gap-1 bg-muted rounded-lg px-2">
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8"
-              onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
-              disabled={zoom <= 0.5}
-            >
-              <ZoomOut className="w-4 h-4" />
-            </Button>
-            <span className="text-xs w-12 text-center">{Math.round(zoom * 100)}%</span>
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="h-8 w-8"
-              onClick={() => setZoom(z => Math.min(3, z + 0.25))}
-              disabled={zoom >= 3}
-            >
-              <ZoomIn className="w-4 h-4" />
-            </Button>
-          </div>
+          {/* Controles de Zoom - APENAS NO MODO LEITURA (fullscreen) */}
+          {isFullscreen && (
+            <div className="flex items-center gap-1 bg-black/60 backdrop-blur-sm rounded-lg px-3 py-1 border border-red-500/30">
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-white hover:bg-red-500/20"
+                onClick={() => setZoom(z => Math.max(0.5, z - 0.25))}
+                disabled={zoom <= 0.5}
+              >
+                <ZoomOut className="w-4 h-4" />
+              </Button>
+              <span className="text-xs w-14 text-center text-white font-medium">{Math.round(zoom * 100)}%</span>
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="h-8 w-8 text-white hover:bg-red-500/20"
+                onClick={() => setZoom(z => Math.min(3, z + 0.25))}
+                disabled={zoom >= 3}
+              >
+                <ZoomIn className="w-4 h-4" />
+              </Button>
+            </div>
+          )}
 
           {onClose && (
             <Button variant="ghost" size="icon" onClick={onClose}>
