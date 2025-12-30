@@ -93,9 +93,9 @@ const BookCard = memo(function BookCard({
       className="group cursor-pointer"
       onClick={onClick}
     >
-      <div className="relative bg-card rounded-xl border border-border overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300">
+      <div className="relative bg-card rounded-xl border border-border overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 h-full flex flex-col">
         {/* Capa — Prioridade: coverUrl > categoria banco > categoria estático > fallback */}
-        <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5">
+        <div className="aspect-[3/4] relative overflow-hidden bg-gradient-to-br from-primary/20 to-primary/5 flex-shrink-0">
           {coverImage ? (
             <img
               src={coverImage}
@@ -139,19 +139,17 @@ const BookCard = memo(function BookCard({
           )}
         </div>
 
-        {/* Info */}
-        <div className="p-4 space-y-2">
+        {/* Info - altura fixa para uniformidade */}
+        <div className="p-4 space-y-2 flex-1 flex flex-col min-h-[120px]">
           <h3 className="font-semibold line-clamp-2 group-hover:text-primary transition-colors">
             {book.title}
           </h3>
           
-          {book.subtitle && (
-            <p className="text-sm text-muted-foreground line-clamp-1">
-              {book.subtitle}
-            </p>
-          )}
+          <p className="text-sm text-muted-foreground line-clamp-1 min-h-[20px]">
+            {book.subtitle || '\u00A0'}
+          </p>
 
-          <div className="flex items-center justify-between text-xs text-muted-foreground">
+          <div className="flex items-center justify-between text-xs text-muted-foreground mt-auto">
             <span className="flex items-center gap-1">
               <BookOpen className="w-3 h-3" />
               {/* P0: Se 0 páginas, indicar modo PDF */}
