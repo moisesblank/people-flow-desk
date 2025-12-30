@@ -735,73 +735,75 @@ export const WebBookViewer = memo(function WebBookViewer({
           </div>
         </button>
 
-        {/* 🔶 SALVAR HISTÓRICO - Botão ao lado do MODO LEITURA */}
-        <button
-          onClick={handleSaveHistory}
-          disabled={isSavingHistory}
-          className="relative group transition-all duration-300 hover:scale-105 active:scale-95 ml-3"
-          title="Salvar suas anotações e marcações"
-        >
-          {/* Glow externo pulsante - verde */}
-          <div 
-            className={cn(
-              "absolute -inset-2 rounded-xl opacity-50 blur-md transition-all duration-500",
-              isSavingHistory
-                ? "bg-gradient-to-r from-green-600 via-green-500 to-green-600 animate-pulse" 
-                : "bg-gradient-to-r from-green-600/40 via-green-500/40 to-green-600/40 group-hover:opacity-70"
-            )}
-          />
-          
-          {/* Container principal */}
-          <div 
-            className={cn(
-              "relative px-5 py-2.5 rounded-lg transition-all duration-300",
-              "bg-gradient-to-br from-black via-gray-900 to-black",
-              "border-2",
-              isSavingHistory 
-                ? "border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.7),inset_0_0_20px_rgba(34,197,94,0.2)]" 
-                : "border-green-600/60 group-hover:border-green-500 group-hover:shadow-[0_0_25px_rgba(34,197,94,0.6)]"
-            )}
+        {/* 🔶 SALVAR HISTÓRICO - SÓ APARECE EM MODO LEITURA (fullscreen) */}
+        {isFullscreen && (
+          <button
+            onClick={handleSaveHistory}
+            disabled={isSavingHistory}
+            className="relative group transition-all duration-300 hover:scale-105 active:scale-95 ml-3"
+            title="Salvar suas anotações e marcações"
           >
-            {/* Efeito scanline futurístico */}
+            {/* Glow externo pulsante - verde */}
             <div 
-              className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-20"
-              style={{
-                background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)"
-              }}
+              className={cn(
+                "absolute -inset-2 rounded-xl opacity-50 blur-md transition-all duration-500",
+                isSavingHistory
+                  ? "bg-gradient-to-r from-green-600 via-green-500 to-green-600 animate-pulse" 
+                  : "bg-gradient-to-r from-green-600/40 via-green-500/40 to-green-600/40 group-hover:opacity-70"
+              )}
             />
             
-            {/* Brilho superior */}
-            <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-green-400/60 to-transparent" />
-            
-            {/* Texto com glow */}
-            <span 
+            {/* Container principal */}
+            <div 
               className={cn(
-                "relative z-10 text-sm font-bold tracking-widest uppercase flex items-center gap-2",
+                "relative px-5 py-2.5 rounded-lg transition-all duration-300",
+                "bg-gradient-to-br from-black via-gray-900 to-black",
+                "border-2",
                 isSavingHistory 
-                  ? "text-green-400" 
-                  : "text-green-500 group-hover:text-green-400"
+                  ? "border-green-500 shadow-[0_0_30px_rgba(34,197,94,0.7),inset_0_0_20px_rgba(34,197,94,0.2)]" 
+                  : "border-green-600/60 group-hover:border-green-500 group-hover:shadow-[0_0_25px_rgba(34,197,94,0.6)]"
               )}
-              style={{
-                textShadow: isSavingHistory 
-                  ? "0 0 20px rgba(34,197,94,1), 0 0 40px rgba(34,197,94,0.8), 0 0 60px rgba(34,197,94,0.5)" 
-                  : "0 0 10px rgba(34,197,94,0.6), 0 0 20px rgba(34,197,94,0.4)"
-              }}
             >
-              {isSavingHistory ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  SALVANDO...
-                </>
-              ) : (
-                <>
-                  <Save className="w-4 h-4" />
-                  SALVAR HISTÓRICO
-                </>
-              )}
-            </span>
-          </div>
-        </button>
+              {/* Efeito scanline futurístico */}
+              <div 
+                className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none opacity-20"
+                style={{
+                  background: "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(255,255,255,0.03) 2px, rgba(255,255,255,0.03) 4px)"
+                }}
+              />
+              
+              {/* Brilho superior */}
+              <div className="absolute top-0 left-2 right-2 h-px bg-gradient-to-r from-transparent via-green-400/60 to-transparent" />
+              
+              {/* Texto com glow */}
+              <span 
+                className={cn(
+                  "relative z-10 text-sm font-bold tracking-widest uppercase flex items-center gap-2",
+                  isSavingHistory 
+                    ? "text-green-400" 
+                    : "text-green-500 group-hover:text-green-400"
+                )}
+                style={{
+                  textShadow: isSavingHistory 
+                    ? "0 0 20px rgba(34,197,94,1), 0 0 40px rgba(34,197,94,0.8), 0 0 60px rgba(34,197,94,0.5)" 
+                    : "0 0 10px rgba(34,197,94,0.6), 0 0 20px rgba(34,197,94,0.4)"
+                }}
+              >
+                {isSavingHistory ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    SALVANDO...
+                  </>
+                ) : (
+                  <>
+                    <Save className="w-4 h-4" />
+                    SALVAR HISTÓRICO
+                  </>
+                )}
+              </span>
+            </div>
+          </button>
+        )}
       </div>
 
       <TableOfContents
