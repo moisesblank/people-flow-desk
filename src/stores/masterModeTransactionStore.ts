@@ -9,6 +9,20 @@ import { create } from 'zustand';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+function formatDbError(err: unknown): string {
+  if (!err) return 'Unknown error';
+  if (typeof err === 'string') return err;
+
+  // PostgrestError shape (supabase-js)
+  const anyErr = err as any;
+  const msg = anyErr?.message || anyErr?.error_description || anyErr?.toString?.();
+  const code = anyErr?.code ? ` (code: ${anyErr.code})` : '';
+  const details = anyErr?.details ? ` — ${anyErr.details}` : '';
+  const hint = anyErr?.hint ? ` — hint: ${anyErr.hint}` : '';
+
+  return `${msg || 'Unknown error'}${code}${details}${hint}`.trim();
+}
+
 // Tipos de mudanças suportadas
 export type ChangeType = 
   | 'content_edit'    // Edição de texto/imagem
@@ -160,7 +174,7 @@ export const useMasterModeTransaction = create<TransactionState>((set, get) => (
           }
 
           if (result.error) {
-            errors.push(`${table}: ${(result.error as Error).message || 'Unknown error'}`);
+            errors.push(`${table}: ${formatDbError(result.error)}`);
           }
         }
 
