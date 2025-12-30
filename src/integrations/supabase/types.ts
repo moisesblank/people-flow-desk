@@ -8972,6 +8972,7 @@ export type Database = {
           event_type: string
           id: string
           ip_address: string | null
+          metadata: Json | null
           payload: Json | null
           resolved: boolean | null
           resolved_at: string | null
@@ -8987,6 +8988,7 @@ export type Database = {
           event_type: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
           payload?: Json | null
           resolved?: boolean | null
           resolved_at?: string | null
@@ -9002,6 +9004,7 @@ export type Database = {
           event_type?: string
           id?: string
           ip_address?: string | null
+          metadata?: Json | null
           payload?: Json | null
           resolved?: boolean | null
           resolved_at?: string | null
