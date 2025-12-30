@@ -6,11 +6,12 @@
 
 import { useState, useCallback, useRef, useEffect } from 'react';
 import * as pdfjsLib from 'pdfjs-dist';
+import pdfWorkerUrl from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
-// Configurar worker do PDF.js
-pdfjsLib.GlobalWorkerOptions.workerSrc = `https://cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// Configurar worker do PDF.js (bundled — sem CDN)
+pdfjsLib.GlobalWorkerOptions.workerSrc = pdfWorkerUrl;
 
 // ============================================
 // TIPOS
@@ -108,11 +109,8 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
 
       console.log('[PdfRenderer] Carregando PDF...', bookId);
 
-      const loadingTask = pdfjsLib.getDocument({
-        url,
-        cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/4.4.168/cmaps/',
-        cMapPacked: true,
-      });
+      // ✅ Worker local já configurado acima; não depender de cMap CDN
+      const loadingTask = pdfjsLib.getDocument({ url });
 
       const pdf = await loadingTask.promise;
       pdfDocRef.current = pdf;
