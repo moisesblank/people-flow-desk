@@ -41,6 +41,15 @@ export interface RedirectResult {
 // ============================================
 
 export const LEGACY_REDIRECTS: LegacyRedirect[] = [
+  // /alunos/livros-web → /alunos/livro-web (consolidação: singular é canônico)
+  {
+    from: /^\/alunos\/livros-web\/?$/,
+    to: "/alunos/livro-web",
+    permanent: true,
+    description: "Redirect /alunos/livros-web para /alunos/livro-web (canônico)",
+    logEvent: true,
+  },
+  
   // /aluno/comunidade → /comunidade (específico - DEVE VIR ANTES do genérico)
   {
     from: /^\/aluno\/comunidade\/?$/,
