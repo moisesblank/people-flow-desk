@@ -35,6 +35,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useNavigate } from "react-router-dom";
 import { useValidateCPFReal, formatCPF, validateCPFFormat } from "@/hooks/useValidateCPFReal";
+import { MFAActionGuard } from "@/components/security";
 
 export default function Perfil() {
   const { user, role, signOut } = useAuth();
@@ -167,9 +168,8 @@ export default function Perfil() {
     }
   };
 
-  const handlePasswordChange = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  // Executa a alteração de senha (chamado APÓS 2FA ser verificado)
+  const executePasswordChange = async () => {
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast.error("As senhas não coincidem");
       return;
@@ -530,7 +530,7 @@ export default function Perfil() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handlePasswordChange} className="space-y-4">
+                <div className="space-y-4">
                   <div className="space-y-4">
                     <div className="space-y-2">
                       <Label htmlFor="newPassword">Nova Senha</Label>
@@ -574,15 +574,23 @@ export default function Perfil() {
                     </div>
                   </div>
 
-                  <Button type="submit" disabled={isSaving} variant="outline" className="w-full md:w-auto">
-                    {isSaving ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    ) : (
-                      <Shield className="h-4 w-4 mr-2" />
-                    )}
-                    Alterar Senha
-                  </Button>
-                </form>
+                  {/* 🔐 Botão protegido por 2FA */}
+                  <MFAActionGuard action="change_password" onVerified={executePasswordChange}>
+                    <Button 
+                      type="button" 
+                      disabled={isSaving || !passwordData.newPassword || !passwordData.confirmPassword} 
+                      variant="outline" 
+                      className="w-full md:w-auto"
+                    >
+                      {isSaving ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <Shield className="h-4 w-4 mr-2" />
+                      )}
+                      Alterar Senha
+                    </Button>
+                  </MFAActionGuard>
+                </div>
               </CardContent>
             </Card>
 
