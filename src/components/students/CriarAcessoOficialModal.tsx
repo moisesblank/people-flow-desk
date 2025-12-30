@@ -11,14 +11,14 @@ import { useState } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2, Calendar, Package, Globe } from "lucide-react";
+import { UserPlus, Mail, User, Phone, MapPin, Lock, Image, Loader2, Calendar, Package, Globe, CreditCard } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
-// Collapsible removido - campos sempre visíveis
+import { CPFInput, cleanCPF } from "@/components/ui/cpf-input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { StudentRole, STUDENT_ROLE_LABELS } from "@/types/studentIdentityContract";
@@ -57,6 +57,15 @@ const criarAcessoSchema = z.object({
     .min(8, "Telefone deve ter pelo menos 8 dígitos")
     .max(20, "Telefone deve ter no máximo 20 caracteres")
     .regex(/^[\d\s()+-]+$/, "Telefone inválido"),
+  
+  // CPF OBRIGATÓRIO — Validado na Receita Federal + Único no sistema
+  cpf: z.string()
+    .min(11, "CPF deve ter 11 dígitos")
+    .max(14, "CPF inválido")
+    .refine(val => {
+      const digits = val.replace(/\D/g, '');
+      return digits.length === 11;
+    }, "CPF deve ter 11 dígitos"),
   
   // Campos opcionais
   foto_aluno: z.string()
@@ -113,6 +122,8 @@ export function CriarAcessoOficialModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showCustomExpires, setShowCustomExpires] = useState(false);
   const [customExpiresValue, setCustomExpiresValue] = useState('');
+  const [cpfValidated, setCpfValidated] = useState(false);
+  const [cpfValidating, setCpfValidating] = useState(false);
 
   const form = useForm<CriarAcessoFormData>({
     resolver: zodResolver(criarAcessoSchema),
@@ -123,6 +134,7 @@ export function CriarAcessoOficialModal({
       expires_days: undefined,
       tipo_produto: undefined,
       telefone: "",
+      cpf: "",
       foto_aluno: "",
       senha: "",
       logradouro: "",
@@ -139,6 +151,14 @@ export function CriarAcessoOficialModal({
   const selectedRole = form.watch("role");
 
   const handleSubmit = async (data: CriarAcessoFormData) => {
+    // 🔒 VALIDAÇÃO OBRIGATÓRIA: CPF deve estar validado na Receita Federal
+    if (!cpfValidated) {
+      toast.error("CPF não validado", {
+        description: "Aguarde a validação do CPF na Receita Federal antes de continuar."
+      });
+      return;
+    }
+    
     setIsSubmitting(true);
     
     try {
@@ -178,6 +198,9 @@ export function CriarAcessoOficialModal({
         nome: data.nome.trim(),
         email: data.email,
         role: data.role,
+        
+        // CPF (obrigatório, apenas dígitos)
+        cpf: cleanCPF(data.cpf),
         
         // Campos opcionais (só envia se preenchidos)
         ...(data.telefone && { telefone: data.telefone.trim() }),
@@ -586,6 +609,58 @@ export function CriarAcessoOficialModal({
                       disabled={isSubmitting}
                     />
                   </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            {/* ============================================ */}
+            {/* CPF — OBRIGATÓRIO + VALIDAÇÃO RECEITA FEDERAL */}
+            {/* ============================================ */}
+            <FormField
+              control={form.control}
+              name="cpf"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex items-center gap-1">
+                    <CreditCard className="h-4 w-4" />
+                    CPF * 
+                    <span className="text-[10px] text-muted-foreground ml-1">
+                      (validado na Receita Federal)
+                    </span>
+                  </FormLabel>
+                  <FormControl>
+                    <CPFInput
+                      value={field.value || ""}
+                      onChange={(val) => {
+                        field.onChange(val);
+                        // Reset validação quando CPF muda
+                        if (cpfValidated) setCpfValidated(false);
+                      }}
+                      validateOnBlur={true}
+                      showStatusIcon={true}
+                      showSecurityBadge={true}
+                      disabled={isSubmitting}
+                      onValidationComplete={(isValid, nome) => {
+                        setCpfValidated(isValid);
+                        setCpfValidating(false);
+                        if (isValid && nome) {
+                          // Opcional: preencher nome automaticamente se vazio
+                          const currentNome = form.getValues("nome");
+                          if (!currentNome && nome) {
+                            form.setValue("nome", nome);
+                            toast.info("Nome preenchido automaticamente", {
+                              description: `CPF pertence a: ${nome}`
+                            });
+                          }
+                        }
+                      }}
+                      className="border-muted-foreground/30"
+                    />
+                  </FormControl>
+                  <FormDescription className="text-[10px]">
+                    CPF será validado na Receita Federal. Deve ser único no sistema.
+                  </FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
