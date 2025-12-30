@@ -498,11 +498,10 @@ ${isOwner ? '\n🔐 **"ativar modo programador"** para editar o site' : ''}
     inputRef.current?.focus();
   };
 
-  // SEMPRE MOSTRAR O BOTÃO - Mesmo sem acesso, mostra o botão
-  // Se não tem acesso, clica e mostra toast para fazer login
-  const showButton = true; // Sempre mostrar o botão visualmente
-  
+  // 🎯 CONSTITUIÇÃO P0: TRAMON só visível para Owner/Admin em /gestaofc
+  // NÃO mostrar o botão se não tem acesso - seguir regra estrita
   if (roleLoading) return null;
+  if (!hasAccess) return null; // ← FIX: Ocultar completamente se não for Owner/Admin em /gestaofc
 
   // ========================================
   // 🎨 RENDER - BUILD 2024.12.17.v9
