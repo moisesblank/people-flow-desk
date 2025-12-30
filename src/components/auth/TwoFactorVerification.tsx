@@ -63,6 +63,10 @@ export function TwoFactorVerification({
   const [lockoutTime, setLockoutTime] = useState(0);
   const [currentChannel, setCurrentChannel] = useState<Channel>("email");
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
+  
+  // 🛡️ Proteção contra chamadas duplicadas
+  const verifyingRef = useRef(false);
+  const lastVerifiedCodeRef = useRef<string | null>(null);
 
   // Buscar telefone do perfil caso não venha do login (libera SMS/WhatsApp)
   useEffect(() => {
@@ -235,7 +239,20 @@ export function TwoFactorVerification({
   };
 
   const verifyCode = async (fullCode: string) => {
+    // 🛡️ PROTEÇÃO: Evitar chamadas duplicadas
+    if (verifyingRef.current) {
+      console.log('[AUTH][2FA] Verificação já em andamento, ignorando...');
+      return;
+    }
+    
+    // 🛡️ PROTEÇÃO: Não verificar o mesmo código duas vezes
+    if (lastVerifiedCodeRef.current === fullCode) {
+      console.log('[AUTH][2FA] Código já foi verificado anteriormente, ignorando...');
+      return;
+    }
+
     console.log('[AUTH][2FA] Verificando código...');
+    verifyingRef.current = true;
     setIsLoading(true);
     setError("");
 
@@ -279,6 +296,9 @@ export function TwoFactorVerification({
         return;
       }
 
+      // ✅ Sucesso - marcar código como verificado para evitar reuso
+      lastVerifiedCodeRef.current = fullCode;
+
       toast.success("Verificação concluída!", {
         description: "Bem-vindo(a) de volta!"
       });
@@ -290,6 +310,7 @@ export function TwoFactorVerification({
       setCode(["", "", "", "", "", ""]);
     } finally {
       setIsLoading(false);
+      verifyingRef.current = false;
     }
   };
 
