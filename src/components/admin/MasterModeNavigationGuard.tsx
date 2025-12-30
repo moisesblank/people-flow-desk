@@ -1,10 +1,9 @@
 // ============================================
 // 🛡️ MASTER MODE NAVIGATION GUARDS
-// Impede navegação/refresh com mudanças pendentes
-// Integra com React Router e eventos do browser
+// Impede navegação/refresh e SAÍDA do Master Mode com mudanças pendentes
 // ============================================
 
-import { useEffect, useCallback } from 'react';
+import { useEffect, useCallback, useState } from 'react';
 import { useBlocker } from 'react-router-dom';
 import { useMasterTransaction } from '@/stores/masterModeTransactionStore';
 import { useGodMode } from '@/stores/godModeStore';
@@ -20,17 +19,17 @@ import {
 } from '@/components/ui/alert-dialog';
 
 export function MasterModeNavigationGuard() {
-  const { isOwner, isActive } = useGodMode();
+  const { isOwner, isActive, deactivate } = useGodMode();
   const { isDirty, discardAll, commitAll, isCommitting } = useMasterTransaction();
+
+  const [exitConfirmOpen, setExitConfirmOpen] = useState(false);
 
   // Bloquear navegação via React Router quando há mudanças pendentes
   const shouldBlock = isOwner && isActive && isDirty;
 
-  const blocker = useBlocker(
-    useCallback(() => shouldBlock, [shouldBlock])
-  );
+  const blocker = useBlocker(useCallback(() => shouldBlock, [shouldBlock]));
 
-  // Handler para salvar e prosseguir
+  // Handler para salvar e prosseguir (navegação)
   const handleSaveAndProceed = async () => {
     const result = await commitAll();
     if (result.success && blocker.state === 'blocked') {
@@ -38,7 +37,7 @@ export function MasterModeNavigationGuard() {
     }
   };
 
-  // Handler para descartar e prosseguir
+  // Handler para descartar e prosseguir (navegação)
   const handleDiscardAndProceed = () => {
     discardAll();
     if (blocker.state === 'blocked') {
@@ -53,29 +52,26 @@ export function MasterModeNavigationGuard() {
     }
   };
 
-  // Listener para desativar Master Mode com mudanças pendentes
+  // ✅ Listener: tentativa de desativar Master Mode com mudanças pendentes
   useEffect(() => {
     const handleMasterModeDeactivate = (e: CustomEvent) => {
-      if (isDirty) {
+      if (isOwner && isActive && isDirty) {
         e.preventDefault();
-        // Disparar modal de confirmação
-        window.dispatchEvent(new CustomEvent('master-mode-confirm-exit'));
+        setExitConfirmOpen(true);
       }
     };
 
     window.addEventListener('master-mode-deactivating', handleMasterModeDeactivate as EventListener);
     return () => window.removeEventListener('master-mode-deactivating', handleMasterModeDeactivate as EventListener);
-  }, [isDirty]);
+  }, [isOwner, isActive, isDirty]);
 
   // Listener para reversão visual ao descartar
   useEffect(() => {
     const handleDiscardAll = (e: CustomEvent) => {
       const { changes } = e.detail;
-      
-      // Reverter mudanças visuais no DOM
+
       changes.forEach((change: { type: string; key?: string; originalValue?: unknown }) => {
         if (change.type === 'content_edit' && change.key && change.originalValue !== undefined) {
-          // Tentar encontrar elemento e reverter
           const element = document.querySelector(`[data-editable-key="${change.key}"]`);
           if (element) {
             if (element.tagName === 'IMG') {
@@ -92,44 +88,98 @@ export function MasterModeNavigationGuard() {
     return () => window.removeEventListener('master-discard-all', handleDiscardAll as EventListener);
   }, []);
 
-  // Modal de confirmação quando blocker está ativo
-  if (blocker.state !== 'blocked') {
-    return null;
-  }
+  // ✅ A) Modal de confirmação para NAVEGAÇÃO (React Router blocker)
+  const navigationDialogOpen = blocker.state === 'blocked';
+
+  // ✅ B) Modal de confirmação para SAIR do Master Mode
+  const handleExitSave = async () => {
+    const result = await commitAll();
+    if (result.success) {
+      setExitConfirmOpen(false);
+      deactivate();
+    }
+  };
+
+  const handleExitDiscard = () => {
+    discardAll();
+    setExitConfirmOpen(false);
+    deactivate();
+  };
+
+  const handleExitCancel = () => setExitConfirmOpen(false);
+
+  if (!navigationDialogOpen && !exitConfirmOpen) return null;
 
   return (
-    <AlertDialog open={blocker.state === 'blocked'}>
-      <AlertDialogContent className="bg-gradient-to-br from-purple-950 to-slate-900 border-purple-500/30">
-        <AlertDialogHeader>
-          <AlertDialogTitle className="text-white flex items-center gap-2">
-            ⚠️ Alterações não salvas
-          </AlertDialogTitle>
-          <AlertDialogDescription className="text-purple-200/80">
-            Você tem alterações pendentes no Modo Master. O que deseja fazer?
-          </AlertDialogDescription>
-        </AlertDialogHeader>
-        <AlertDialogFooter className="flex gap-2">
-          <AlertDialogCancel 
-            onClick={handleCancel}
-            className="bg-transparent border-purple-500/30 text-purple-200 hover:bg-purple-800/30"
-          >
-            Continuar editando
-          </AlertDialogCancel>
-          <AlertDialogAction
-            onClick={handleDiscardAndProceed}
-            className="bg-red-600/80 hover:bg-red-700 text-white"
-          >
-            Descartar e sair
-          </AlertDialogAction>
-          <AlertDialogAction
-            onClick={handleSaveAndProceed}
-            disabled={isCommitting}
-            className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
-          >
-            {isCommitting ? 'Salvando...' : 'Salvar e sair'}
-          </AlertDialogAction>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
+    <>
+      <AlertDialog open={navigationDialogOpen}>
+        <AlertDialogContent className="bg-gradient-to-br from-purple-950 to-slate-900 border-purple-500/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              ⚠️ Alterações não salvas
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-purple-200/80">
+              Você tem alterações pendentes no Modo Master. O que deseja fazer?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel
+              onClick={handleCancel}
+              className="bg-transparent border-purple-500/30 text-purple-200 hover:bg-purple-800/30"
+            >
+              Continuar editando
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDiscardAndProceed}
+              className="bg-red-600/80 hover:bg-red-700 text-white"
+            >
+              Descartar e sair
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleSaveAndProceed}
+              disabled={isCommitting}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+            >
+              {isCommitting ? 'Salvando...' : 'Salvar e sair'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={exitConfirmOpen}>
+        <AlertDialogContent className="bg-gradient-to-br from-purple-950 to-slate-900 border-purple-500/30">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-white flex items-center gap-2">
+              ✅ Confirmar correção
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-purple-200/80">
+              Você tem alterações pendentes. Para valer de verdade, confirme e salve agora.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="flex gap-2">
+            <AlertDialogCancel
+              onClick={handleExitCancel}
+              className="bg-transparent border-purple-500/30 text-purple-200 hover:bg-purple-800/30"
+            >
+              Continuar editando
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleExitDiscard}
+              className="bg-red-600/80 hover:bg-red-700 text-white"
+            >
+              Descartar
+            </AlertDialogAction>
+            <AlertDialogAction
+              onClick={handleExitSave}
+              disabled={isCommitting}
+              className="bg-gradient-to-r from-green-500 to-emerald-600 hover:from-green-600 hover:to-emerald-700 text-white"
+            >
+              {isCommitting ? 'Salvando...' : 'Confirmar e salvar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
+
