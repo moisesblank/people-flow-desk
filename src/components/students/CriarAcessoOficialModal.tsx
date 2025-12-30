@@ -194,16 +194,18 @@ export function CriarAcessoOficialModal({
 
       // ⚡ PARTE 10: Chamar Edge Function c-create-official-access
       const payload = {
-        // Campos obrigatórios
+        // Campos obrigatórios e únicos
         nome: data.nome.trim(),
         email: data.email,
         role: data.role,
         
-        // CPF (obrigatório, apenas dígitos)
+        // Telefone (OBRIGATÓRIO e ÚNICO)
+        telefone: data.telefone.trim(),
+        
+        // CPF (OBRIGATÓRIO e ÚNICO, apenas dígitos)
         cpf: cleanCPF(data.cpf),
         
         // Campos opcionais (só envia se preenchidos)
-        ...(data.telefone && { telefone: data.telefone.trim() }),
         ...(data.foto_aluno && { foto_aluno: data.foto_aluno.trim() }),
         ...(data.senha && { senha: data.senha }),
         ...(data.expires_days && { expires_days: data.expires_days }),
