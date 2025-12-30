@@ -24,12 +24,21 @@ export interface PdfPageRender {
   height: number;
 }
 
+// ✅ Sumário inteligente extraído do PDF
+export interface PdfOutlineItem {
+  title: string;
+  pageNumber: number;
+  level: number;
+  children?: PdfOutlineItem[];
+}
+
 export interface PdfRendererState {
   isLoading: boolean;
   pdfLoaded: boolean;
   totalPages: number;
   error: string | null;
   currentPageData: PdfPageRender | null;
+  outline: PdfOutlineItem[];
 }
 
 // ============================================
@@ -42,6 +51,57 @@ const PAGE_CACHE_SIZE = 10;
 const URL_EXPIRY_SECONDS = 3600; // 1 hora
 
 // ============================================
+// FUNÇÕES AUXILIARES
+// ============================================
+
+// Parsear outline recursivamente e resolver página de destino
+async function parseOutline(
+  pdf: pdfjsLib.PDFDocumentProxy,
+  items: any[],
+  level: number
+): Promise<PdfOutlineItem[]> {
+  const result: PdfOutlineItem[] = [];
+
+  for (const item of items) {
+    let pageNumber = 1;
+
+    // Resolver destino para número de página
+    try {
+      if (item.dest) {
+        let dest = item.dest;
+        // Se for string, resolver via getDestination
+        if (typeof dest === 'string') {
+          dest = await pdf.getDestination(dest);
+        }
+        if (dest && Array.isArray(dest)) {
+          const ref = dest[0];
+          if (ref) {
+            pageNumber = await pdf.getPageIndex(ref) + 1;
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('[parseOutline] Erro ao resolver destino:', item.title, err);
+    }
+
+    const outlineItem: PdfOutlineItem = {
+      title: item.title || 'Sem título',
+      pageNumber,
+      level,
+    };
+
+    // Processar filhos recursivamente
+    if (item.items && item.items.length > 0) {
+      outlineItem.children = await parseOutline(pdf, item.items, level + 1);
+    }
+
+    result.push(outlineItem);
+  }
+
+  return result;
+}
+
+// ============================================
 // HOOK: usePdfRenderer
 // ============================================
 
@@ -51,7 +111,8 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
     pdfLoaded: false,
     totalPages: 0,
     error: null,
-    currentPageData: null
+    currentPageData: null,
+    outline: []
   });
 
   const pdfDocRef = useRef<pdfjsLib.PDFDocumentProxy | null>(null);
@@ -117,11 +178,26 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
 
       console.log(`[PdfRenderer] PDF carregado: ${pdf.numPages} páginas`);
 
+      // ✅ Extrair sumário inteligente do PDF
+      let extractedOutline: PdfOutlineItem[] = [];
+      try {
+        const rawOutline = await pdf.getOutline();
+        if (rawOutline && rawOutline.length > 0) {
+          extractedOutline = await parseOutline(pdf, rawOutline, 0);
+          console.log(`[PdfRenderer] Sumário extraído: ${extractedOutline.length} itens`);
+        } else {
+          console.log('[PdfRenderer] PDF não possui sumário nativo');
+        }
+      } catch (outlineErr) {
+        console.warn('[PdfRenderer] Erro ao extrair sumário:', outlineErr);
+      }
+
       setState(s => ({
         ...s,
         isLoading: false,
         pdfLoaded: true,
-        totalPages: pdf.numPages
+        totalPages: pdf.numPages,
+        outline: extractedOutline
       }));
 
       // ✅ P0: Atualizar total_pages no banco SEMPRE que carrega (sem filtro de total_pages=0)
@@ -256,7 +332,8 @@ export function usePdfRenderer(bookId?: string, originalPath?: string) {
       pdfLoaded: false,
       totalPages: 0,
       error: null,
-      currentPageData: null
+      currentPageData: null,
+      outline: []
     });
   }, []);
 

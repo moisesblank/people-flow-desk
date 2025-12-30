@@ -123,25 +123,62 @@ ProtectionBadge.displayName = 'ProtectionBadge';
 // SUMÁRIO SIDEBAR
 // ============================================
 
+// Importar tipo do outline
+import type { PdfOutlineItem } from '@/hooks/usePdfRenderer';
+
 const TableOfContents = memo(function TableOfContents({
   pages,
   currentPage,
   onPageSelect,
   isOpen,
-  onClose
+  onClose,
+  pdfOutline,
+  totalPages
 }: {
   pages: any[];
   currentPage: number;
   onPageSelect: (page: number) => void;
   isOpen: boolean;
   onClose: () => void;
+  pdfOutline?: PdfOutlineItem[];
+  totalPages: number;
 }) {
+  // ✅ Priorizar outline do PDF se disponível
+  const hasPdfOutline = pdfOutline && pdfOutline.length > 0;
+
+  // Renderizar item do outline recursivamente
+  const renderOutlineItem = (item: PdfOutlineItem, index: number) => (
+    <div key={`${item.title}-${index}`}>
+      <button
+        onClick={() => {
+          onPageSelect(item.pageNumber);
+          onClose();
+        }}
+        className={cn(
+          "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+          item.pageNumber === currentPage
+            ? "bg-primary/10 text-primary font-medium"
+            : "hover:bg-muted"
+        )}
+        style={{ paddingLeft: `${12 + item.level * 12}px` }}
+      >
+        <span className="text-muted-foreground mr-2 text-xs">p.{item.pageNumber}</span>
+        <span className="line-clamp-2">{item.title}</span>
+      </button>
+      {item.children && item.children.map((child, i) => renderOutlineItem(child, i))}
+    </div>
+  );
+
+  // Fallback: agrupar por capítulo se tiver páginas processadas
   const chapters = pages.reduce((acc, page) => {
     const chapter = page.chapterTitle || 'Páginas';
     if (!acc[chapter]) acc[chapter] = [];
     acc[chapter].push(page);
     return acc;
   }, {} as Record<string, any[]>);
+
+  // Se não tiver nada, gerar sumário básico por páginas
+  const hasChapters = Object.keys(chapters).length > 0 && pages.length > 0;
 
   return (
     <AnimatePresence>
@@ -157,6 +194,9 @@ const TableOfContents = memo(function TableOfContents({
             <h3 className="font-semibold flex items-center gap-2">
               <List className="w-4 h-4" />
               Sumário
+              {hasPdfOutline && (
+                <Badge variant="outline" className="text-xs">Inteligente</Badge>
+              )}
             </h3>
             <Button variant="ghost" size="icon" onClick={onClose}>
               <X className="w-4 h-4" />
@@ -164,32 +204,69 @@ const TableOfContents = memo(function TableOfContents({
           </div>
           
           <ScrollArea className="flex-1">
-            <div className="p-4 space-y-4">
-              {Object.entries(chapters).map(([chapter, chapterPages]) => (
-                <div key={chapter}>
-                  <h4 className="text-sm font-medium text-muted-foreground mb-2">{chapter}</h4>
-                  <div className="space-y-1">
-                    {(chapterPages as any[]).map((page) => (
+            <div className="p-4 space-y-1">
+              {/* ✅ Prioridade 1: Outline do PDF */}
+              {hasPdfOutline ? (
+                pdfOutline!.map((item, i) => renderOutlineItem(item, i))
+              ) : hasChapters ? (
+                /* Prioridade 2: Capítulos das páginas processadas */
+                Object.entries(chapters).map(([chapter, chapterPages]) => (
+                  <div key={chapter} className="mb-4">
+                    <h4 className="text-sm font-medium text-muted-foreground mb-2 px-3">{chapter}</h4>
+                    <div className="space-y-1">
+                      {(chapterPages as any[]).map((page) => (
+                        <button
+                          key={page.pageNumber}
+                          onClick={() => {
+                            onPageSelect(page.pageNumber);
+                            onClose();
+                          }}
+                          className={cn(
+                            "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
+                            page.pageNumber === currentPage
+                              ? "bg-primary/10 text-primary"
+                              : "hover:bg-muted"
+                          )}
+                        >
+                          <span className="text-muted-foreground mr-2">p.{page.pageNumber}</span>
+                          {page.sectionTitle || `Página ${page.pageNumber}`}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                ))
+              ) : (
+                /* Prioridade 3: Navegação básica por páginas */
+                <div className="space-y-1">
+                  <h4 className="text-sm font-medium text-muted-foreground mb-2 px-3">Navegação Rápida</h4>
+                  {/* Páginas em intervalos de 10 */}
+                  {Array.from({ length: Math.ceil(totalPages / 10) }, (_, i) => {
+                    const startPage = i * 10 + 1;
+                    const endPage = Math.min((i + 1) * 10, totalPages);
+                    return (
                       <button
-                        key={page.pageNumber}
+                        key={startPage}
                         onClick={() => {
-                          onPageSelect(page.pageNumber);
+                          onPageSelect(startPage);
                           onClose();
                         }}
                         className={cn(
                           "w-full text-left px-3 py-2 rounded-lg text-sm transition-colors",
-                          page.pageNumber === currentPage
+                          currentPage >= startPage && currentPage <= endPage
                             ? "bg-primary/10 text-primary"
                             : "hover:bg-muted"
                         )}
                       >
-                        <span className="text-muted-foreground mr-2">p.{page.pageNumber}</span>
-                        {page.sectionTitle || `Página ${page.pageNumber}`}
+                        <span className="text-muted-foreground mr-2">
+                          {startPage === endPage ? `p.${startPage}` : `p.${startPage}-${endPage}`}
+                        </span>
+                        {startPage === 1 && 'Início'}
+                        {startPage !== 1 && `Páginas ${startPage} a ${endPage}`}
                       </button>
-                    ))}
-                  </div>
+                    );
+                  })}
                 </div>
-              ))}
+              )}
             </div>
           </ScrollArea>
         </motion.div>
@@ -524,28 +601,30 @@ export const WebBookViewer = memo(function WebBookViewer({
         onPageSelect={goToPage}
         isOpen={showToc}
         onClose={() => setShowToc(false)}
+        pdfOutline={needsPdfMode ? pdfRenderer.outline : undefined}
+        totalPages={effectiveTotalPages}
       />
 
       {/* Área principal */}
       <div className="flex-1 relative overflow-hidden">
-        {/* Navegação lateral esquerda */}
+        {/* Navegação lateral esquerda - SEMPRE VISÍVEL */}
         <button
           onClick={previousPage}
           disabled={currentPage <= 1}
-          className="absolute left-0 top-0 bottom-0 w-20 z-10 flex items-center justify-start pl-2 opacity-0 hover:opacity-100 transition-opacity disabled:pointer-events-none"
+          className="absolute left-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none transition-all hover:scale-110"
         >
-          <div className="p-2 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg">
+          <div className="p-3 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background">
             <ChevronLeft className="w-6 h-6" />
           </div>
         </button>
 
-        {/* Navegação lateral direita */}
+        {/* Navegação lateral direita - SEMPRE VISÍVEL */}
         <button
           onClick={nextPage}
           disabled={currentPage >= effectiveTotalPages}
-          className="absolute right-0 top-0 bottom-0 w-20 z-10 flex items-center justify-end pr-2 opacity-0 hover:opacity-100 transition-opacity disabled:pointer-events-none"
+          className="absolute right-2 top-1/2 -translate-y-1/2 z-10 flex items-center justify-center disabled:opacity-30 disabled:pointer-events-none transition-all hover:scale-110"
         >
-          <div className="p-2 rounded-full bg-background/80 backdrop-blur-sm border border-border shadow-lg">
+          <div className="p-3 rounded-full bg-background/90 backdrop-blur-sm border border-border shadow-lg hover:bg-background">
             <ChevronRight className="w-6 h-6" />
           </div>
         </button>
