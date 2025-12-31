@@ -1,51 +1,62 @@
 // ============================================
 // CENTRAL DO ALUNO - VIDEOAULAS
-// Química ENEM - Prof. Moisés Medeiros
+// Sincronizado em tempo real com /gestaofc/videoaulas
 // ============================================
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  PlayCircle, Search, Clock, BookOpen, Filter, 
+  PlayCircle, Search, Clock, BookOpen,
   ChevronRight, Lock, CheckCircle2, Star
 } from "lucide-react";
 import { motion } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
 
-interface Modulo {
-  id: string;
-  titulo: string;
-  descricao: string;
-  aulas: number;
-  duracao: string;
-  progresso: number;
-  bloqueado: boolean;
-  destaque: boolean;
+// Hook para buscar videoaulas publicadas
+function useVideoaulasAluno() {
+  return useQuery({
+    queryKey: ['aluno-videoaulas'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select('*, module:modules(id, title)')
+        .eq('is_published', true)
+        .order('position', { ascending: true });
+      
+      if (error) throw error;
+      return data || [];
+    }
+  });
 }
 
-const modulos: Modulo[] = [
-  { id: "1", titulo: "Introdução à Química", descricao: "Fundamentos e conceitos básicos", aulas: 8, duracao: "3h 20min", progresso: 100, bloqueado: false, destaque: false },
-  { id: "2", titulo: "Estrutura Atômica", descricao: "Modelos atômicos e distribuição eletrônica", aulas: 12, duracao: "5h 45min", progresso: 85, bloqueado: false, destaque: false },
-  { id: "3", titulo: "Tabela Periódica", descricao: "Propriedades periódicas e classificação", aulas: 10, duracao: "4h 30min", progresso: 60, bloqueado: false, destaque: true },
-  { id: "4", titulo: "Ligações Químicas", descricao: "Iônica, covalente e metálica", aulas: 15, duracao: "6h 15min", progresso: 25, bloqueado: false, destaque: false },
-  { id: "5", titulo: "Estequiometria", descricao: "Cálculos químicos e balanceamento", aulas: 18, duracao: "7h 40min", progresso: 0, bloqueado: false, destaque: true },
-  { id: "6", titulo: "Soluções", descricao: "Concentração e diluição", aulas: 10, duracao: "4h 20min", progresso: 0, bloqueado: true, destaque: false },
-  { id: "7", titulo: "Termoquímica", descricao: "Energia nas reações químicas", aulas: 12, duracao: "5h 10min", progresso: 0, bloqueado: true, destaque: false },
-  { id: "8", titulo: "Cinética Química", descricao: "Velocidade das reações", aulas: 8, duracao: "3h 50min", progresso: 0, bloqueado: true, destaque: false },
-];
-
 export default function AlunoVideoaulas() {
+  const queryClient = useQueryClient();
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("todos");
+  
+  const { data: lessons, isLoading } = useVideoaulasAluno();
 
-  const modulosFiltrados = modulos.filter(m => 
-    m.titulo.toLowerCase().includes(busca.toLowerCase()) ||
-    m.descricao.toLowerCase().includes(busca.toLowerCase())
-  );
+  // Realtime sync
+  useEffect(() => {
+    const channel = supabase
+      .channel('videoaulas-aluno-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'lessons' }, () => {
+        queryClient.invalidateQueries({ queryKey: ['aluno-videoaulas'] });
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [queryClient]);
+
+  const filteredLessons = lessons?.filter(l => 
+    l.title.toLowerCase().includes(busca.toLowerCase()) ||
+    l.description?.toLowerCase().includes(busca.toLowerCase())
+  ) || [];
 
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">

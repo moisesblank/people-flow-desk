@@ -6024,18 +6024,25 @@ export type Database = {
           duration_minutes: number | null
           id: string
           is_free: boolean | null
+          is_published: boolean | null
+          likes_count: number | null
           material_nome: string | null
           material_url: string | null
           module_id: string
+          panda_video_id: string | null
           position: number | null
           status: string | null
+          thumbnail_url: string | null
           tipo: string | null
           title: string
           transcript: string | null
           updated_at: string | null
           video_duration: number | null
+          video_provider: string | null
           video_url: string | null
+          views_count: number | null
           xp_reward: number | null
+          youtube_video_id: string | null
         }
         Insert: {
           area_id?: string | null
@@ -6045,18 +6052,25 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
           material_nome?: string | null
           material_url?: string | null
           module_id: string
+          panda_video_id?: string | null
           position?: number | null
           status?: string | null
+          thumbnail_url?: string | null
           tipo?: string | null
           title: string
           transcript?: string | null
           updated_at?: string | null
           video_duration?: number | null
+          video_provider?: string | null
           video_url?: string | null
+          views_count?: number | null
           xp_reward?: number | null
+          youtube_video_id?: string | null
         }
         Update: {
           area_id?: string | null
@@ -6066,18 +6080,25 @@ export type Database = {
           duration_minutes?: number | null
           id?: string
           is_free?: boolean | null
+          is_published?: boolean | null
+          likes_count?: number | null
           material_nome?: string | null
           material_url?: string | null
           module_id?: string
+          panda_video_id?: string | null
           position?: number | null
           status?: string | null
+          thumbnail_url?: string | null
           tipo?: string | null
           title?: string
           transcript?: string | null
           updated_at?: string | null
           video_duration?: number | null
+          video_provider?: string | null
           video_url?: string | null
+          views_count?: number | null
           xp_reward?: number | null
+          youtube_video_id?: string | null
         }
         Relationships: [
           {
