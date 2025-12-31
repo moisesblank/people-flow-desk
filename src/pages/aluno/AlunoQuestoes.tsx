@@ -31,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
 
 // ============================================
 // TIPOS
@@ -81,16 +82,7 @@ const DIFFICULTY_LABELS = {
   dificil: "Difícil",
 };
 
-const BANCAS = [
-  { value: 'enem', label: 'ENEM' },
-  { value: 'fuvest', label: 'FUVEST' },
-  { value: 'unicamp', label: 'UNICAMP' },
-  { value: 'unesp', label: 'UNESP' },
-  { value: 'unifesp', label: 'UNIFESP' },
-  { value: 'ita', label: 'ITA' },
-  { value: 'ime', label: 'IME' },
-  { value: 'propria', label: 'Própria' },
-];
+// BANCAS importado de @/constants/bancas (fonte única de verdade)
 
 // ============================================
 // ESTRUTURA HIERÁRQUICA: MACRO → MICRO → TEMA → SUBTEMA
@@ -477,7 +469,7 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                   </Badge>
                   {question.banca && (
                     <Badge variant="outline">
-                      {BANCAS.find(b => b.value === question.banca)?.label || question.banca}
+                      {getBancaLabel(question.banca)}
                     </Badge>
                   )}
                   {question.ano && (
@@ -1010,10 +1002,17 @@ export default function AlunoQuestoes() {
               <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Banca" />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="max-h-[300px]">
                 <SelectItem value="todas">Todas as bancas</SelectItem>
-                {BANCAS.map(b => (
-                  <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
+                  <div key={categoria}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                      {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                    </div>
+                    {bancas.map(b => (
+                      <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                    ))}
+                  </div>
                 ))}
               </SelectContent>
             </Select>

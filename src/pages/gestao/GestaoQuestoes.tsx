@@ -38,6 +38,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
+import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from '@/constants/bancas';
 import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
@@ -130,19 +131,7 @@ interface QuestionStats {
 // Taxonomia hierárquica agora é dinâmica via useQuestionTaxonomy hook
 // Sincronizada em tempo real com o TaxonomyManager
 
-const BANCAS = [
-  { value: 'enem', label: 'ENEM' },
-  { value: 'fuvest', label: 'FUVEST' },
-  { value: 'unicamp', label: 'UNICAMP' },
-  { value: 'unesp', label: 'UNESP' },
-  { value: 'unifesp', label: 'UNIFESP' },
-  { value: 'ita', label: 'ITA' },
-  { value: 'ime', label: 'IME' },
-  { value: 'uerj', label: 'UERJ' },
-  { value: 'ufrj', label: 'UFRJ' },
-  { value: 'ufmg', label: 'UFMG' },
-  { value: 'propria', label: 'Própria' },
-];
+// BANCAS importado de @/constants/bancas (fonte única de verdade)
 
 const DIFFICULTY_MAP = {
   facil: { label: 'Fácil', color: 'bg-green-500/20 text-green-500 border-green-500/30' },
@@ -592,9 +581,16 @@ const QuestionDialog = memo(function QuestionDialog({
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  {BANCAS.map(b => (
-                    <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
+                    <div key={categoria}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                        {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                      </div>
+                      {bancas.map(b => (
+                        <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                      ))}
+                    </div>
                   ))}
                 </SelectContent>
               </Select>
@@ -1005,10 +1001,17 @@ function GestaoQuestoes() {
                   <SelectTrigger className="w-[140px]">
                     <SelectValue placeholder="Banca" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-h-[300px]">
                     <SelectItem value="all">Todas</SelectItem>
-                    {BANCAS.map(b => (
-                      <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                    {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
+                      <div key={categoria}>
+                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                          {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                        </div>
+                        {bancas.map(b => (
+                          <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                        ))}
+                      </div>
                     ))}
                   </SelectContent>
                 </Select>
