@@ -187,8 +187,9 @@ const gestaoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Finanças Pessoais", url: "/gestaofc/financas-pessoais", icon: Wallet, area: "financas-pessoais" },
       { title: "Finanças Empresa", url: "/gestaofc/financas-empresa", icon: Building2, area: "financas-empresa", badge: "CENTRAL" },
-      { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "dashboard" },
-      { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "dashboard" },
+      // 🔑 IMPORTANTE: 'area' precisa bater com nav_sidebar_layout_v1 (editable_content)
+      { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "flashcards" },
+      { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "mapas-mentais" },
       { title: "Entradas", url: "/gestaofc/entradas", icon: TrendingUp, area: "entradas" },
       { title: "Contabilidade", url: "/gestaofc/contabilidade", icon: Calculator, area: "contabilidade" },
     ],
@@ -215,8 +216,9 @@ const gestaoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Gestão Site", url: "/gestaofc/gestao-site", icon: Globe, area: "gestao-site" },
       { title: "Site/Programador", url: "/gestaofc/site-programador", icon: Code, area: "site-programador" },
-      { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "cursos" },
-      { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "cursos" },
+      // 🔑 IMPORTANTE: 'area' precisa bater com nav_sidebar_layout_v1 (editable_content)
+      { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "flashcards" },
+      { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "mapas-mentais" },
       { title: "Livros Web", url: "/gestaofc/livros-web", icon: BookOpen, area: "livros-web" },
       { title: "Questões", url: "/gestaofc/questoes", icon: Brain, area: "cursos" },
       { title: "Lives", url: "/gestaofc/lives", icon: PlayCircle, area: "lives" },
