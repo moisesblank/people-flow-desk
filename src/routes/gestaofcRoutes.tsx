@@ -38,6 +38,7 @@ const Lives = lazy(() => import("@/pages/Lives"));
 const GestaoLivrosWeb = lazy(() => import("@/pages/gestao/GestaoLivrosWeb"));
 const GestaoQuestoes = lazy(() => import("@/pages/gestao/GestaoQuestoes"));
 const GestaoFlashcards = lazy(() => import("@/pages/gestao/GestaoFlashcards"));
+const GestaoMapasMentais = lazy(() => import("@/pages/gestao/GestaoMapasMentais"));
 
 // Finanças
 const Entradas = lazy(() => import("@/pages/Entradas"));
@@ -113,6 +114,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc/livros-web" element={<ProtectedPage><GestaoLivrosWeb /></ProtectedPage>} />
     <Route path="/gestaofc/questoes" element={<ProtectedPage><GestaoQuestoes /></ProtectedPage>} />
     <Route path="/gestaofc/flashcards" element={<ProtectedPage><GestaoFlashcards /></ProtectedPage>} />
+    <Route path="/gestaofc/mapas-mentais" element={<ProtectedPage><GestaoMapasMentais /></ProtectedPage>} />
     
     {/* Finanças */}
     <Route path="/gestaofc/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
