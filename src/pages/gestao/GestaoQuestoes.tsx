@@ -33,8 +33,14 @@ import {
   Settings2,
   TrendingUp,
   FolderTree,
-  Video
+  Video,
+  Image as ImageIcon
 } from 'lucide-react';
+import { 
+  QuestionImageUploader, 
+  SingleImageUploader,
+  type QuestionImage 
+} from '@/components/gestao/questoes/QuestionImageUploader';
 import { Button } from '@/components/ui/button';
 import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
@@ -90,10 +96,17 @@ import { useCacheManager } from '@/hooks/useCacheManager';
 // TIPOS
 // ============================================
 
+interface QuestionOptionImage {
+  id: string;
+  url: string;
+  path: string;
+  name: string;
+}
+
 interface QuestionOption {
   id: string;
   text: string;
-  [key: string]: string; // Index signature for JSON compatibility
+  image?: QuestionOptionImage | null; // Imagem opcional da alternativa
 }
 
 interface Question {
@@ -195,6 +208,8 @@ const QuestionDialog = memo(function QuestionDialog({
     habilidade: '',
     // Tipo Pedagógico
     tipo_pedagogico: 'direta' as 'direta' | 'contextualizada',
+    // Imagens do enunciado
+    images: [] as QuestionImage[],
   });
 
   // Preencher form ao editar
@@ -235,6 +250,8 @@ const QuestionDialog = memo(function QuestionDialog({
         habilidade: (question as any).habilidade || '',
         // Tipo Pedagógico
         tipo_pedagogico: (question as any).tipo_pedagogico || 'direta',
+        // Imagens do enunciado
+        images: ((question as any).images || []) as QuestionImage[],
       });
     } else {
       // Reset para nova questão
@@ -273,6 +290,8 @@ const QuestionDialog = memo(function QuestionDialog({
         habilidade: '',
         // Tipo Pedagógico
         tipo_pedagogico: 'direta',
+        // Imagens do enunciado
+        images: [],
       });
     }
   }, [question, open]);
@@ -305,10 +324,19 @@ const QuestionDialog = memo(function QuestionDialog({
 
     setIsSubmitting(true);
     try {
+      // Serializar options para JSON (compatível com Supabase)
+      const optionsJson = form.options
+        .filter(o => o.text.trim())
+        .map(o => ({
+          id: o.id,
+          text: o.text,
+          ...(o.image ? { image: { id: o.image.id, url: o.image.url, path: o.image.path, name: o.image.name } } : {})
+        }));
+
       const payload = {
         question_text: form.question_text.trim(),
         question_type: form.question_type,
-        options: form.options.filter(o => o.text.trim()),
+        options: optionsJson as unknown as Record<string, unknown>[],
         correct_answer: form.correct_answer,
         explanation: form.explanation.trim() || null,
         difficulty: form.difficulty,
@@ -327,13 +355,17 @@ const QuestionDialog = memo(function QuestionDialog({
         has_video_resolution: form.has_video_resolution,
         video_provider: form.has_video_resolution && form.video_provider ? form.video_provider : null,
         video_url: form.has_video_resolution && form.video_url ? form.video_url.trim() : null,
+        // Imagens do enunciado
+        images: form.images.map(img => ({
+          id: img.id, url: img.url, path: img.path, name: img.name, size: img.size, position: img.position
+        })) as unknown as Record<string, unknown>[],
       };
 
       if (question?.id) {
         // Atualizar
         const { error } = await supabase
           .from('quiz_questions')
-          .update({ ...payload, updated_at: new Date().toISOString() })
+          .update({ ...payload, updated_at: new Date().toISOString() } as any)
           .eq('id', question.id);
 
         if (error) throw error;
@@ -342,7 +374,7 @@ const QuestionDialog = memo(function QuestionDialog({
         // Criar nova
         const { error } = await supabase
           .from('quiz_questions')
-          .insert([payload]);
+          .insert([payload as any]);
 
         if (error) throw error;
         toast.success('Questão criada com sucesso!');
@@ -583,6 +615,20 @@ const QuestionDialog = memo(function QuestionDialog({
             />
           </div>
 
+          {/* Upload de Imagens do Enunciado */}
+          <div className="p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+            <div className="flex items-center gap-2 mb-3">
+              <ImageIcon className="h-4 w-4 text-blue-400" />
+              <Label className="font-semibold text-blue-400">Imagens do Enunciado</Label>
+            </div>
+            <QuestionImageUploader
+              images={form.images}
+              onChange={(images) => setForm(f => ({ ...f, images }))}
+              maxImages={5}
+              description="Adicione gráficos, tabelas ou ilustrações à questão"
+            />
+          </div>
+
           {/* Alternativas - Apenas para Múltipla Escolha */}
           {form.question_type === 'multiple_choice' && (
             <div className="space-y-3">
@@ -611,11 +657,21 @@ const QuestionDialog = memo(function QuestionDialog({
                       onChange={(e) => handleOptionChange(idx, e.target.value)}
                       className="flex-1"
                     />
+                    {/* Upload de imagem na alternativa */}
+                    <SingleImageUploader
+                      image={option.image ? { ...option.image, size: 0, position: 0 } : null}
+                      onChange={(img) => {
+                        const newOptions = [...form.options];
+                        newOptions[idx] = { ...newOptions[idx], image: img ? { id: img.id, url: img.url, path: img.path, name: img.name } : undefined };
+                        setForm(f => ({ ...f, options: newOptions }));
+                      }}
+                      compact
+                    />
                   </div>
                 ))}
               </RadioGroup>
               <p className="text-xs text-muted-foreground">
-                Selecione o radio button para marcar a alternativa correta
+                Selecione o radio button para marcar a alternativa correta. Clique no ícone 📷 para adicionar imagem à alternativa.
               </p>
             </div>
           )}
@@ -875,7 +931,7 @@ function GestaoQuestoes() {
       // Mapear para o tipo Question com fallbacks seguros
       const mapped = (data || []).map(q => ({
         ...q,
-        options: (Array.isArray(q.options) ? q.options : []) as QuestionOption[],
+        options: (Array.isArray(q.options) ? q.options : []) as unknown as QuestionOption[],
         difficulty: q.difficulty || 'medio',
         points: q.points || 10,
         is_active: q.is_active ?? true,
@@ -985,14 +1041,21 @@ function GestaoQuestoes() {
 
   const handleDuplicate = async (question: Question) => {
     try {
-      const { id, created_at, updated_at, ...rest } = question;
+      const { id, created_at, updated_at, options, ...rest } = question;
+      // Serializar options para compatibilidade com Supabase
+      const optionsJson = (options || []).map(o => ({
+        id: o.id,
+        text: o.text,
+        ...(o.image ? { image: o.image } : {})
+      }));
       const { error } = await supabase
         .from('quiz_questions')
         .insert([{ 
           ...rest, 
+          options: optionsJson,
           question_text: `[CÓPIA] ${rest.question_text}`,
           is_active: false 
-        }]);
+        } as any]);
 
       if (error) throw error;
       
