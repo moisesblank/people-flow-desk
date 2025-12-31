@@ -435,6 +435,12 @@ export default function AlunoQuestoes() {
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [questionModalOpen, setQuestionModalOpen] = useState(false);
   
+  // Filtros hierárquicos
+  const [filterMacro, setFilterMacro] = useState("todas");
+  const [filterMicro, setFilterMicro] = useState("todas");
+  const [filterTema, setFilterTema] = useState("todas");
+  const [filterSubtema, setFilterSubtema] = useState("todas");
+  
   // Buscar questões do banco
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['student-questions'],
@@ -558,6 +564,20 @@ export default function AlunoQuestoes() {
       filtered = filtered.filter(q => q.banca === banca);
     }
 
+    // Filtros hierárquicos
+    if (filterMacro !== 'todas') {
+      filtered = filtered.filter(q => q.macro === filterMacro);
+    }
+    if (filterMicro !== 'todas') {
+      filtered = filtered.filter(q => q.micro === filterMicro);
+    }
+    if (filterTema !== 'todas') {
+      filtered = filtered.filter(q => q.tema === filterTema);
+    }
+    if (filterSubtema !== 'todas') {
+      filtered = filtered.filter(q => q.subtema === filterSubtema);
+    }
+
     // Filtro por busca
     if (busca.trim()) {
       const term = busca.toLowerCase();
@@ -568,7 +588,7 @@ export default function AlunoQuestoes() {
     }
 
     return filtered;
-  }, [questions, activeTab, dificuldade, banca, busca, attemptsByQuestion]);
+  }, [questions, activeTab, dificuldade, banca, busca, attemptsByQuestion, filterMacro, filterMicro, filterTema, filterSubtema]);
 
   // Handlers
   const handleOpenQuestion = (question: Question) => {
@@ -649,10 +669,101 @@ export default function AlunoQuestoes() {
         </TabsList>
       </Tabs>
 
-      {/* Filtros */}
-      <Card>
-        <CardContent className="p-4">
-          <div className="flex flex-col md:flex-row gap-4">
+      {/* Filtros Hierárquicos */}
+      <Card className="border-primary/20">
+        <CardContent className="p-4 space-y-4">
+          {/* Linha 1: Filtros MACRO → MICRO → TEMA → SUBTEMA */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">MACRO</Label>
+              <Select 
+                value={filterMacro} 
+                onValueChange={(v) => {
+                  setFilterMacro(v);
+                  setFilterMicro('todas');
+                  setFilterTema('todas');
+                  setFilterSubtema('todas');
+                }}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  {MACROS.map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">MICRO</Label>
+              <Select 
+                value={filterMicro} 
+                onValueChange={(v) => {
+                  setFilterMicro(v);
+                  setFilterTema('todas');
+                  setFilterSubtema('todas');
+                }}
+                disabled={filterMacro === 'todas'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  {(filterMacro !== 'todas' && MICROS[filterMacro] || []).map(m => (
+                    <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">TEMA</Label>
+              <Select 
+                value={filterTema} 
+                onValueChange={(v) => {
+                  setFilterTema(v);
+                  setFilterSubtema('todas');
+                }}
+                disabled={filterMicro === 'todas'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  {(filterMicro !== 'todas' && TEMAS[filterMicro] || []).map(t => (
+                    <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs uppercase tracking-wide text-muted-foreground">SUBTEMA</Label>
+              <Select 
+                value={filterSubtema} 
+                onValueChange={setFilterSubtema}
+                disabled={filterTema === 'todas'}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todas">Todas</SelectItem>
+                  {(filterTema !== 'todas' && SUBTEMAS[filterTema] || []).map(s => (
+                    <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {/* Linha 2: Busca + Banca + Dificuldade + Ação */}
+          <div className="flex flex-col md:flex-row gap-4 pt-2 border-t border-border/50">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input 
