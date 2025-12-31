@@ -93,6 +93,10 @@ import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
 // TIPOS
 // ============================================
 
+type NivelCognitivo = 'memorizar' | 'compreender' | 'aplicar' | 'analisar' | 'avaliar';
+type OrigemQuestao = 'oficial' | 'adaptada' | 'autoral_prof_moises';
+type StatusRevisao = 'rascunho' | 'revisado' | 'publicado';
+
 interface ParsedQuestion {
   id: string;
   question_text: string;
@@ -107,6 +111,12 @@ interface ParsedQuestion {
   tema?: string;
   subtema?: string;
   tags?: string[];
+  // Novos campos pedagógicos
+  tempo_medio_segundos: number;
+  nivel_cognitivo: NivelCognitivo;
+  origem: OrigemQuestao;
+  // Metadados de importação
+  campos_inferidos: string[];
   // Status de importação
   status: 'pending' | 'valid' | 'warning' | 'error';
   errors: string[];
@@ -188,6 +198,24 @@ const ANSWER_MAPPING: Record<string, string> = {
   'e': 'e', '5': 'e', 'v': 'e',
 };
 
+// Mapeamento de Nível Cognitivo (Taxonomia de Bloom)
+const NIVEL_COGNITIVO_MAPPING: Record<string, NivelCognitivo> = {
+  'memorizar': 'memorizar', 'lembrar': 'memorizar', 'definir': 'memorizar', 'citar': 'memorizar', 'listar': 'memorizar',
+  'compreender': 'compreender', 'explicar': 'compreender', 'descrever': 'compreender', 'interpretar': 'compreender',
+  'aplicar': 'aplicar', 'calcular': 'aplicar', 'resolver': 'aplicar', 'determinar': 'aplicar', 'usar': 'aplicar',
+  'analisar': 'analisar', 'comparar': 'analisar', 'relacionar': 'analisar', 'diferenciar': 'analisar',
+  'avaliar': 'avaliar', 'julgar': 'avaliar', 'criticar': 'avaliar', 'justificar': 'avaliar',
+};
+
+// Verbos para inferência de nível cognitivo
+const VERBOS_COGNITIVOS: Record<NivelCognitivo, string[]> = {
+  'memorizar': ['defina', 'cite', 'liste', 'nomeie', 'identifique', 'reproduza', 'descreva', 'enumere'],
+  'compreender': ['explique', 'resuma', 'interprete', 'classifique', 'exemplifique', 'traduza'],
+  'aplicar': ['calcule', 'determine', 'resolva', 'aplique', 'demonstre', 'use', 'execute', 'construa'],
+  'analisar': ['compare', 'relacione', 'diferencie', 'analise', 'distinga', 'examine', 'investigue'],
+  'avaliar': ['julgue', 'avalie', 'critique', 'justifique', 'argumente', 'defenda', 'recomende'],
+};
+
 // ============================================
 // FUNÇÕES DE PARSE
 // ============================================
@@ -248,6 +276,45 @@ function parseCorrectAnswer(value: any): string {
   if (!value) return 'a';
   const normalized = String(value).toLowerCase().trim();
   return ANSWER_MAPPING[normalized] || 'a';
+}
+
+// Inferir nível cognitivo baseado em verbos do enunciado
+function inferNivelCognitivo(text: string): { nivel: NivelCognitivo; inferido: boolean } {
+  const lower = text.toLowerCase();
+  
+  // Verificar verbos de cada nível (do mais específico ao mais geral)
+  for (const nivel of ['avaliar', 'analisar', 'aplicar', 'compreender', 'memorizar'] as NivelCognitivo[]) {
+    for (const verbo of VERBOS_COGNITIVOS[nivel]) {
+      if (lower.includes(verbo)) {
+        return { nivel, inferido: true };
+      }
+    }
+  }
+  
+  return { nivel: 'aplicar', inferido: true }; // Default
+}
+
+// Inferir tempo médio baseado na dificuldade
+function inferTempoMedio(difficulty: 'facil' | 'medio' | 'dificil'): number {
+  switch (difficulty) {
+    case 'facil': return 60;
+    case 'medio': return 120;
+    case 'dificil': return 180;
+    default: return 120;
+  }
+}
+
+// Inferir origem baseado na banca
+function inferOrigem(banca?: string): OrigemQuestao {
+  if (!banca) return 'autoral_prof_moises';
+  
+  // Se tem banca conhecida, é oficial
+  const bancaEncontrada = BANCAS.find(b => 
+    b.value.toLowerCase() === banca.toLowerCase() || 
+    b.label.toLowerCase() === banca.toLowerCase()
+  );
+  
+  return bancaEncontrada ? 'oficial' : 'adaptada';
 }
 
 function extractTextFromHtml(html: string): string {
@@ -470,6 +537,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     
     try {
       const questions: ParsedQuestion[] = rawData.map((row, index) => {
+        const camposInferidos: string[] = [];
+        
         const question: ParsedQuestion = {
           id: generateQuestionId(),
           question_text: '',
@@ -482,6 +551,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           micro: globalDefaults.micro || undefined,
           tema: globalDefaults.tema || undefined,
           subtema: globalDefaults.subtema || undefined,
+          // Novos campos pedagógicos (serão inferidos após parse)
+          tempo_medio_segundos: 120,
+          nivel_cognitivo: 'aplicar',
+          origem: 'oficial',
+          campos_inferidos: [],
+          // Status
           status: 'pending',
           errors: [],
           warnings: [],
@@ -564,7 +639,32 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         }
         question.options.sort((a, b) => a.id.localeCompare(b.id));
 
-        // Validação
+        // ============================================
+        // INFERÊNCIA DE CAMPOS PEDAGÓGICOS
+        // ============================================
+        
+        // Inferir nível cognitivo baseado no enunciado
+        if (question.question_text) {
+          const { nivel, inferido } = inferNivelCognitivo(question.question_text);
+          question.nivel_cognitivo = nivel;
+          if (inferido) camposInferidos.push('nivel_cognitivo');
+        }
+        
+        // Inferir tempo médio baseado na dificuldade
+        question.tempo_medio_segundos = inferTempoMedio(question.difficulty);
+        camposInferidos.push('tempo_medio_segundos');
+        
+        // Inferir origem baseado na banca
+        question.origem = inferOrigem(question.banca);
+        camposInferidos.push('origem');
+        
+        // Registrar campos inferidos
+        question.campos_inferidos = camposInferidos;
+
+        // ============================================
+        // VALIDAÇÃO
+        // ============================================
+        
         if (!question.question_text.trim()) {
           question.errors.push('Enunciado vazio');
         }
@@ -722,6 +822,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       const q = toImport[i];
       
       try {
+        // IMPORTAÇÃO SEMPRE COMO RASCUNHO (is_active = false, status_revisao = 'rascunho')
         const payload = {
           question_text: q.question_text,
           question_type: 'multiple_choice',
@@ -737,7 +838,15 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           subtema: q.subtema || null,
           tags: q.tags || [],
           points: 10,
-          is_active: true,
+          // REGRA: Importação sempre como inativo/rascunho para revisão
+          is_active: false,
+          status_revisao: 'rascunho',
+          // Novos campos pedagógicos
+          tempo_medio_segundos: q.tempo_medio_segundos,
+          nivel_cognitivo: q.nivel_cognitivo,
+          origem: q.origem,
+          // Metadado de campos inferidos
+          campos_inferidos: q.campos_inferidos,
         };
 
         const { error } = await supabase
