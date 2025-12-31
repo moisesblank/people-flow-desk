@@ -1,0 +1,1088 @@
+// ============================================
+// 🧠 GESTÃO DE FLASHCARDS
+// CRUD + Importação Inteligente + Sync com /alunos/flashcards
+// Estrutura: src/types/flashcards.ts (FONTE DA VERDADE)
+// ============================================
+
+import { memo, useState, useCallback, useMemo } from 'react';
+import { 
+  Brain, 
+  Plus, 
+  Upload, 
+  Edit, 
+  Trash2,
+  Loader2,
+  Search,
+  Filter,
+  MoreVertical,
+  FileUp,
+  RefreshCw,
+  CheckCircle,
+  Clock,
+  Users,
+  TrendingUp,
+  Download,
+  Copy,
+  Eye,
+  FileText,
+  Sparkles,
+  Target,
+  BarChart3,
+  X
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Badge } from '@/components/ui/badge';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableHead, 
+  TableHeader, 
+  TableRow 
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Progress } from '@/components/ui/progress';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
+import { useDropzone } from 'react-dropzone';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { 
+  Flashcard, 
+  FlashcardState, 
+  FlashcardDifficulty,
+  FSRS_PARAMS,
+  numberToDifficulty 
+} from '@/types/flashcards';
+
+// ============================================
+// TIPOS LOCAIS
+// ============================================
+
+interface FlashcardAdmin extends Flashcard {
+  profiles?: {
+    nome: string | null;
+    email: string | null;
+  } | null;
+}
+
+interface ImportedCard {
+  question: string;
+  answer: string;
+  tags?: string[];
+}
+
+interface StatsData {
+  total: number;
+  byState: Record<FlashcardState, number>;
+  bySource: Record<string, number>;
+  totalUsers: number;
+  avgDifficulty: number;
+  avgReps: number;
+}
+
+// ============================================
+// CONSTANTES
+// ============================================
+
+const STATE_BADGES: Record<FlashcardState, { label: string; variant: 'default' | 'secondary' | 'destructive' | 'outline' }> = {
+  new: { label: 'Novo', variant: 'outline' },
+  learning: { label: 'Aprendendo', variant: 'secondary' },
+  review: { label: 'Revisão', variant: 'default' },
+  relearning: { label: 'Reaprendendo', variant: 'destructive' },
+};
+
+const SOURCE_OPTIONS = [
+  { value: 'manual', label: '✍️ Manual' },
+  { value: 'import', label: '📥 Importado' },
+  { value: 'ai', label: '🤖 IA' },
+  { value: 'lesson', label: '📚 Aula' },
+];
+
+// ============================================
+// HOOKS DE DADOS
+// ============================================
+
+function useFlashcardsAdmin() {
+  return useQuery({
+    queryKey: ['flashcards-admin'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('study_flashcards')
+        .select(`
+          *,
+          profiles:user_id (
+            nome,
+            email
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(500);
+      
+      if (error) throw error;
+      return data as FlashcardAdmin[];
+    },
+    staleTime: 30_000,
+  });
+}
+
+function useFlashcardsStats() {
+  return useQuery({
+    queryKey: ['flashcards-stats-admin'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('study_flashcards')
+        .select('state, source, difficulty, reps, user_id');
+      
+      if (error) throw error;
+      
+      const stats: StatsData = {
+        total: data.length,
+        byState: { new: 0, learning: 0, review: 0, relearning: 0 },
+        bySource: {},
+        totalUsers: new Set(data.map(d => d.user_id)).size,
+        avgDifficulty: 0,
+        avgReps: 0,
+      };
+
+      let totalDiff = 0;
+      let totalReps = 0;
+
+      data.forEach(card => {
+        const state = (card.state || 'new') as FlashcardState;
+        stats.byState[state] = (stats.byState[state] || 0) + 1;
+        
+        const source = card.source || 'manual';
+        stats.bySource[source] = (stats.bySource[source] || 0) + 1;
+        
+        totalDiff += card.difficulty || 0.5;
+        totalReps += card.reps || 0;
+      });
+
+      if (data.length > 0) {
+        stats.avgDifficulty = totalDiff / data.length;
+        stats.avgReps = totalReps / data.length;
+      }
+
+      return stats;
+    },
+    staleTime: 60_000,
+  });
+}
+
+// ============================================
+// COMPONENTE: MODAL DE CRIAÇÃO/EDIÇÃO
+// ============================================
+
+interface FlashcardFormProps {
+  open: boolean;
+  onClose: () => void;
+  flashcard?: FlashcardAdmin | null;
+  onSuccess: () => void;
+}
+
+const FlashcardFormDialog = memo(function FlashcardFormDialog({ 
+  open, 
+  onClose, 
+  flashcard, 
+  onSuccess 
+}: FlashcardFormProps) {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [form, setForm] = useState({
+    question: flashcard?.question || '',
+    answer: flashcard?.answer || '',
+    source: flashcard?.source || 'manual',
+    tags: flashcard?.tags?.join(', ') || '',
+  });
+
+  const isEditing = !!flashcard;
+
+  const handleSubmit = async () => {
+    if (!form.question.trim() || !form.answer.trim()) {
+      toast.error('Preencha pergunta e resposta');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const tagsArray = form.tags
+        .split(',')
+        .map(t => t.trim())
+        .filter(Boolean);
+
+      if (isEditing) {
+        const { error } = await supabase
+          .from('study_flashcards')
+          .update({
+            question: form.question,
+            answer: form.answer,
+            source: form.source,
+            tags: tagsArray.length > 0 ? tagsArray : null,
+          })
+          .eq('id', flashcard.id);
+        
+        if (error) throw error;
+        toast.success('Flashcard atualizado!');
+      } else {
+        // Criar para o owner (será visível para todos no modo global)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error('Não autenticado');
+
+        const { error } = await supabase
+          .from('study_flashcards')
+          .insert({
+            user_id: user.id,
+            question: form.question,
+            answer: form.answer,
+            source: form.source,
+            tags: tagsArray.length > 0 ? tagsArray : null,
+            due_date: new Date().toISOString().split('T')[0],
+            stability: FSRS_PARAMS.initialStability[0],
+            difficulty: 0.5,
+            state: 'new',
+            reps: 0,
+            lapses: 0,
+            elapsed_days: 0,
+            scheduled_days: 0,
+          });
+        
+        if (error) throw error;
+        toast.success('Flashcard criado!');
+      }
+
+      onSuccess();
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Brain className="w-5 h-5 text-primary" />
+            {isEditing ? 'Editar Flashcard' : 'Novo Flashcard'}
+          </DialogTitle>
+          <DialogDescription>
+            {isEditing 
+              ? 'Atualize o conteúdo do flashcard'
+              : 'Crie um novo flashcard para os alunos estudarem'}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="question">Pergunta (Frente)</Label>
+            <Textarea
+              id="question"
+              placeholder="Digite a pergunta..."
+              value={form.question}
+              onChange={(e) => setForm(f => ({ ...f, question: e.target.value }))}
+              rows={3}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="answer">Resposta (Verso)</Label>
+            <Textarea
+              id="answer"
+              placeholder="Digite a resposta..."
+              value={form.answer}
+              onChange={(e) => setForm(f => ({ ...f, answer: e.target.value }))}
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Origem</Label>
+              <Select 
+                value={form.source} 
+                onValueChange={(v) => setForm(f => ({ ...f, source: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="tags">Tags (separadas por vírgula)</Label>
+              <Input
+                id="tags"
+                placeholder="química, orgânica, ..."
+                value={form.tags}
+                onChange={(e) => setForm(f => ({ ...f, tags: e.target.value }))}
+              />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={isSubmitting}>
+            {isSubmitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+            {isEditing ? 'Salvar' : 'Criar'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+// ============================================
+// COMPONENTE: MODAL DE IMPORTAÇÃO
+// ============================================
+
+interface ImportDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSuccess: () => void;
+}
+
+const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: ImportDialogProps) {
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [parsedCards, setParsedCards] = useState<ImportedCard[]>([]);
+  const [rawText, setRawText] = useState('');
+  const [step, setStep] = useState<'upload' | 'preview' | 'importing'>('upload');
+  const [importProgress, setImportProgress] = useState(0);
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      'text/plain': ['.txt'],
+      'text/csv': ['.csv'],
+      'application/json': ['.json'],
+    },
+    maxFiles: 1,
+    onDrop: async (files) => {
+      if (files[0]) {
+        const text = await files[0].text();
+        processText(text);
+      }
+    },
+  });
+
+  const processText = useCallback((text: string) => {
+    setRawText(text);
+    const cards: ImportedCard[] = [];
+
+    // Tenta detectar formato
+    const lines = text.trim().split('\n');
+    
+    // Formato JSON
+    if (text.trim().startsWith('[') || text.trim().startsWith('{')) {
+      try {
+        const json = JSON.parse(text);
+        const items = Array.isArray(json) ? json : [json];
+        items.forEach((item: any) => {
+          if (item.question && item.answer) {
+            cards.push({
+              question: item.question,
+              answer: item.answer,
+              tags: item.tags,
+            });
+          } else if (item.front && item.back) {
+            cards.push({
+              question: item.front,
+              answer: item.back,
+              tags: item.tags,
+            });
+          }
+        });
+      } catch {
+        toast.error('JSON inválido');
+      }
+    }
+    // Formato CSV (pergunta;resposta ou pergunta,resposta)
+    else if (lines[0].includes(';') || lines[0].includes(',')) {
+      const separator = lines[0].includes(';') ? ';' : ',';
+      lines.forEach(line => {
+        const parts = line.split(separator).map(p => p.trim().replace(/^"|"$/g, ''));
+        if (parts.length >= 2 && parts[0] && parts[1]) {
+          cards.push({
+            question: parts[0],
+            answer: parts[1],
+            tags: parts[2]?.split(',').map(t => t.trim()).filter(Boolean),
+          });
+        }
+      });
+    }
+    // Formato Q&A (Q: ... A: ...)
+    else if (text.toLowerCase().includes('q:') || text.toLowerCase().includes('pergunta:')) {
+      const blocks = text.split(/(?=q:|pergunta:)/gi);
+      blocks.forEach(block => {
+        const qMatch = block.match(/(?:q:|pergunta:)\s*(.+?)(?=a:|resposta:|$)/is);
+        const aMatch = block.match(/(?:a:|resposta:)\s*(.+)/is);
+        if (qMatch && aMatch) {
+          cards.push({
+            question: qMatch[1].trim(),
+            answer: aMatch[1].trim(),
+          });
+        }
+      });
+    }
+    // Formato linha dupla (pergunta na linha 1, resposta na linha 2, linha em branco)
+    else {
+      for (let i = 0; i < lines.length; i += 3) {
+        if (lines[i]?.trim() && lines[i + 1]?.trim()) {
+          cards.push({
+            question: lines[i].trim(),
+            answer: lines[i + 1].trim(),
+          });
+        }
+      }
+    }
+
+    if (cards.length === 0) {
+      toast.error('Nenhum flashcard detectado. Use formato: Q: pergunta A: resposta');
+      return;
+    }
+
+    setParsedCards(cards);
+    setStep('preview');
+    toast.success(`${cards.length} flashcards detectados!`);
+  }, []);
+
+  const handleImport = async () => {
+    if (parsedCards.length === 0) return;
+
+    setStep('importing');
+    setIsProcessing(true);
+    setImportProgress(0);
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Não autenticado');
+
+      const batchSize = 50;
+      let imported = 0;
+
+      for (let i = 0; i < parsedCards.length; i += batchSize) {
+        const batch = parsedCards.slice(i, i + batchSize).map(card => ({
+          user_id: user.id,
+          question: card.question,
+          answer: card.answer,
+          source: 'import',
+          tags: card.tags || null,
+          due_date: new Date().toISOString().split('T')[0],
+          stability: FSRS_PARAMS.initialStability[0],
+          difficulty: 0.5,
+          state: 'new',
+          reps: 0,
+          lapses: 0,
+          elapsed_days: 0,
+          scheduled_days: 0,
+        }));
+
+        const { error } = await supabase
+          .from('study_flashcards')
+          .insert(batch);
+
+        if (error) throw error;
+
+        imported += batch.length;
+        setImportProgress(Math.round((imported / parsedCards.length) * 100));
+      }
+
+      toast.success(`${parsedCards.length} flashcards importados com sucesso!`);
+      onSuccess();
+      handleReset();
+      onClose();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro na importação');
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const handleReset = () => {
+    setParsedCards([]);
+    setRawText('');
+    setStep('upload');
+    setImportProgress(0);
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Upload className="w-5 h-5 text-primary" />
+            Importar Flashcards
+          </DialogTitle>
+          <DialogDescription>
+            Importe flashcards de arquivos TXT, CSV ou JSON
+          </DialogDescription>
+        </DialogHeader>
+
+        {step === 'upload' && (
+          <div className="space-y-4 py-4">
+            <div
+              {...getRootProps()}
+              className={cn(
+                "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+              )}
+            >
+              <input {...getInputProps()} />
+              <FileUp className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+              <p className="text-lg font-medium">
+                {isDragActive ? 'Solte o arquivo aqui' : 'Arraste um arquivo ou clique'}
+              </p>
+              <p className="text-sm text-muted-foreground mt-1">
+                Suporta: TXT, CSV, JSON
+              </p>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+              </div>
+              <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-background px-2 text-muted-foreground">ou cole o texto</span>
+              </div>
+            </div>
+
+            <Textarea
+              placeholder="Cole aqui o conteúdo...&#10;&#10;Formatos aceitos:&#10;• Q: pergunta A: resposta&#10;• pergunta;resposta&#10;• JSON: [{question, answer}]&#10;• Linha dupla (pergunta, resposta, linha em branco)"
+              rows={6}
+              value={rawText}
+              onChange={(e) => setRawText(e.target.value)}
+            />
+
+            <Button 
+              onClick={() => processText(rawText)} 
+              disabled={!rawText.trim()}
+              className="w-full"
+            >
+              <Sparkles className="w-4 h-4 mr-2" />
+              Processar Texto
+            </Button>
+          </div>
+        )}
+
+        {step === 'preview' && (
+          <div className="space-y-4 py-4">
+            <div className="flex items-center justify-between">
+              <Badge variant="secondary" className="text-base px-3 py-1">
+                {parsedCards.length} flashcards detectados
+              </Badge>
+              <Button variant="ghost" size="sm" onClick={handleReset}>
+                <RefreshCw className="w-4 h-4 mr-1" />
+                Recomeçar
+              </Button>
+            </div>
+
+            <div className="max-h-64 overflow-y-auto border rounded-lg">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-12">#</TableHead>
+                    <TableHead>Pergunta</TableHead>
+                    <TableHead>Resposta</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {parsedCards.slice(0, 20).map((card, idx) => (
+                    <TableRow key={idx}>
+                      <TableCell className="text-muted-foreground">{idx + 1}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{card.question}</TableCell>
+                      <TableCell className="max-w-[200px] truncate">{card.answer}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+              {parsedCards.length > 20 && (
+                <p className="text-center text-sm text-muted-foreground py-2">
+                  ... e mais {parsedCards.length - 20} flashcards
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {step === 'importing' && (
+          <div className="py-8 space-y-4">
+            <div className="text-center">
+              <Loader2 className="w-12 h-12 mx-auto text-primary animate-spin mb-4" />
+              <p className="text-lg font-medium">Importando flashcards...</p>
+              <p className="text-sm text-muted-foreground">{importProgress}%</p>
+            </div>
+            <Progress value={importProgress} className="h-2" />
+          </div>
+        )}
+
+        <DialogFooter>
+          {step === 'preview' && (
+            <>
+              <Button variant="outline" onClick={handleReset}>
+                Voltar
+              </Button>
+              <Button onClick={handleImport}>
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Importar {parsedCards.length} Flashcards
+              </Button>
+            </>
+          )}
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+// ============================================
+// COMPONENTE: PREVIEW DE FLASHCARD
+// ============================================
+
+interface PreviewDialogProps {
+  open: boolean;
+  onClose: () => void;
+  flashcard: FlashcardAdmin | null;
+}
+
+const PreviewDialog = memo(function PreviewDialog({ open, onClose, flashcard }: PreviewDialogProps) {
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  if (!flashcard) return null;
+
+  return (
+    <Dialog open={open} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Eye className="w-5 h-5 text-primary" />
+            Visualizar Flashcard
+          </DialogTitle>
+        </DialogHeader>
+
+        <div 
+          className="min-h-[200px] p-6 bg-gradient-to-br from-card to-muted rounded-xl border cursor-pointer flex flex-col items-center justify-center text-center"
+          onClick={() => setIsFlipped(!isFlipped)}
+        >
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-2">
+            {isFlipped ? 'Resposta' : 'Pergunta'}
+          </p>
+          <p className="text-lg font-medium">
+            {isFlipped ? flashcard.answer : flashcard.question}
+          </p>
+          <p className="text-xs text-muted-foreground mt-4">
+            👆 Clique para virar
+          </p>
+        </div>
+
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>Estado: <Badge variant={STATE_BADGES[flashcard.state as FlashcardState]?.variant || 'outline'}>
+            {STATE_BADGES[flashcard.state as FlashcardState]?.label || flashcard.state}
+          </Badge></span>
+          <span>Reps: {flashcard.reps}</span>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+});
+
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
+
+const GestaoFlashcards = memo(function GestaoFlashcards() {
+  const queryClient = useQueryClient();
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterState, setFilterState] = useState<string>('all');
+  const [filterSource, setFilterSource] = useState<string>('all');
+  
+  // Modais
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [isImportOpen, setIsImportOpen] = useState(false);
+  const [editingCard, setEditingCard] = useState<FlashcardAdmin | null>(null);
+  const [previewCard, setPreviewCard] = useState<FlashcardAdmin | null>(null);
+  const [deletingCard, setDeletingCard] = useState<FlashcardAdmin | null>(null);
+
+  // Dados
+  const { data: flashcards, isLoading, refetch } = useFlashcardsAdmin();
+  const { data: stats } = useFlashcardsStats();
+
+  // Filtrar flashcards
+  const filteredCards = useMemo(() => {
+    if (!flashcards) return [];
+    
+    return flashcards.filter(card => {
+      // Busca
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase();
+        if (!card.question.toLowerCase().includes(query) && 
+            !card.answer.toLowerCase().includes(query)) {
+          return false;
+        }
+      }
+      
+      // Estado
+      if (filterState !== 'all' && card.state !== filterState) {
+        return false;
+      }
+      
+      // Origem
+      if (filterSource !== 'all' && card.source !== filterSource) {
+        return false;
+      }
+      
+      return true;
+    });
+  }, [flashcards, searchQuery, filterState, filterSource]);
+
+  // Deletar flashcard
+  const handleDelete = async () => {
+    if (!deletingCard) return;
+
+    try {
+      const { error } = await supabase
+        .from('study_flashcards')
+        .delete()
+        .eq('id', deletingCard.id);
+
+      if (error) throw error;
+
+      toast.success('Flashcard excluído');
+      setDeletingCard(null);
+      refetch();
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao excluir');
+    }
+  };
+
+  const handleRefresh = () => {
+    queryClient.invalidateQueries({ queryKey: ['flashcards-admin'] });
+    queryClient.invalidateQueries({ queryKey: ['flashcards-stats-admin'] });
+    toast.success('Dados atualizados!');
+  };
+
+  return (
+    <div className="min-h-screen bg-background p-4 md:p-6">
+      <div className="max-w-7xl mx-auto space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-3">
+              <Brain className="w-8 h-8 text-primary" />
+              Gestão de Flashcards
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              CRUD + Importação → Sincronizado com /alunos/flashcards
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="icon" onClick={handleRefresh}>
+              <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+              <Upload className="w-4 h-4 mr-2" />
+              Importar
+            </Button>
+            <Button onClick={() => setIsCreateOpen(true)}>
+              <Plus className="w-4 h-4 mr-2" />
+              Novo Flashcard
+            </Button>
+          </div>
+        </div>
+
+        {/* Estatísticas */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-primary/10">
+                  <Brain className="w-5 h-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats?.total || 0}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-green-500/10">
+                  <CheckCircle className="w-5 h-5 text-green-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats?.byState.review || 0}</p>
+                  <p className="text-xs text-muted-foreground">Em Revisão</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-blue-500/10">
+                  <Sparkles className="w-5 h-5 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats?.byState.new || 0}</p>
+                  <p className="text-xs text-muted-foreground">Novos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-amber-500/10">
+                  <Users className="w-5 h-5 text-amber-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats?.totalUsers || 0}</p>
+                  <p className="text-xs text-muted-foreground">Alunos</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-purple-500/10">
+                  <Target className="w-5 h-5 text-purple-500" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{stats?.avgReps.toFixed(1) || '0'}</p>
+                  <p className="text-xs text-muted-foreground">Média Reps</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filtros */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar pergunta ou resposta..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={filterState} onValueChange={setFilterState}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Estado" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos estados</SelectItem>
+                  <SelectItem value="new">Novo</SelectItem>
+                  <SelectItem value="learning">Aprendendo</SelectItem>
+                  <SelectItem value="review">Revisão</SelectItem>
+                  <SelectItem value="relearning">Reaprendendo</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <Select value={filterSource} onValueChange={setFilterSource}>
+                <SelectTrigger className="w-[150px]">
+                  <SelectValue placeholder="Origem" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas origens</SelectItem>
+                  {SOURCE_OPTIONS.map(opt => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Tabela */}
+        <Card>
+          <CardContent className="p-0">
+            {isLoading ? (
+              <div className="p-8 text-center">
+                <Loader2 className="w-8 h-8 mx-auto animate-spin text-primary" />
+                <p className="text-muted-foreground mt-2">Carregando flashcards...</p>
+              </div>
+            ) : filteredCards.length === 0 ? (
+              <div className="p-8 text-center">
+                <Brain className="w-12 h-12 mx-auto text-muted-foreground/50 mb-4" />
+                <p className="text-lg font-medium">Nenhum flashcard encontrado</p>
+                <p className="text-muted-foreground">Crie ou importe flashcards para começar</p>
+              </div>
+            ) : (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="w-[40%]">Pergunta</TableHead>
+                    <TableHead className="w-[25%]">Resposta</TableHead>
+                    <TableHead>Estado</TableHead>
+                    <TableHead>Origem</TableHead>
+                    <TableHead>Reps</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {filteredCards.map((card) => (
+                    <TableRow key={card.id}>
+                      <TableCell className="max-w-[300px]">
+                        <p className="truncate font-medium">{card.question}</p>
+                        {card.tags && card.tags.length > 0 && (
+                          <div className="flex gap-1 mt-1">
+                            {card.tags.slice(0, 2).map((tag, i) => (
+                              <Badge key={i} variant="outline" className="text-xs">
+                                {tag}
+                              </Badge>
+                            ))}
+                          </div>
+                        )}
+                      </TableCell>
+                      <TableCell className="max-w-[200px]">
+                        <p className="truncate text-muted-foreground">{card.answer}</p>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={STATE_BADGES[card.state as FlashcardState]?.variant || 'outline'}>
+                          {STATE_BADGES[card.state as FlashcardState]?.label || card.state}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm text-muted-foreground">
+                          {SOURCE_OPTIONS.find(s => s.value === card.source)?.label || card.source}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="text-sm">{card.reps}</span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreVertical className="w-4 h-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => setPreviewCard(card)}>
+                              <Eye className="w-4 h-4 mr-2" />
+                              Visualizar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setEditingCard(card)}>
+                              <Edit className="w-4 h-4 mr-2" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              onClick={() => setDeletingCard(card)}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="w-4 h-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Rodapé com contagem */}
+        <div className="flex items-center justify-between text-sm text-muted-foreground">
+          <span>Exibindo {filteredCards.length} de {flashcards?.length || 0} flashcards</span>
+          <span>Sincronizado com /alunos/flashcards</span>
+        </div>
+      </div>
+
+      {/* Modais */}
+      <FlashcardFormDialog
+        open={isCreateOpen || !!editingCard}
+        onClose={() => { setIsCreateOpen(false); setEditingCard(null); }}
+        flashcard={editingCard}
+        onSuccess={refetch}
+      />
+
+      <ImportDialog
+        open={isImportOpen}
+        onClose={() => setIsImportOpen(false)}
+        onSuccess={refetch}
+      />
+
+      <PreviewDialog
+        open={!!previewCard}
+        onClose={() => setPreviewCard(null)}
+        flashcard={previewCard}
+      />
+
+      {/* Dialog de confirmação de exclusão */}
+      <Dialog open={!!deletingCard} onOpenChange={() => setDeletingCard(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir Flashcard?</DialogTitle>
+            <DialogDescription>
+              Esta ação não pode ser desfeita. O flashcard será removido permanentemente.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeletingCard(null)}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDelete}>
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+});
+
+export default GestaoFlashcards;
