@@ -131,6 +131,31 @@ const SOURCE_OPTIONS = [
 // HOOKS DE DADOS
 // ============================================
 
+// Hook para buscar aulas disponíveis
+function useLessonsForSelect() {
+  return useQuery({
+    queryKey: ['lessons-for-flashcards'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('lessons')
+        .select(`
+          id,
+          title,
+          area_id,
+          areas:area_id (
+            id,
+            name
+          )
+        `)
+        .order('title');
+      
+      if (error) throw error;
+      return data as { id: string; title: string; area_id: string | null; areas: { id: string; name: string } | null }[];
+    },
+    staleTime: 60_000,
+  });
+}
+
 function useFlashcardsAdmin() {
   return useQuery({
     queryKey: ['flashcards-admin'],
@@ -142,13 +167,17 @@ function useFlashcardsAdmin() {
           profiles:user_id (
             nome,
             email
+          ),
+          lessons:lesson_id (
+            id,
+            title
           )
         `)
         .order('created_at', { ascending: false })
         .limit(500);
       
       if (error) throw error;
-      return data as FlashcardAdmin[];
+      return data as (FlashcardAdmin & { lessons?: { id: string; title: string } | null })[];
     },
     staleTime: 30_000,
   });
@@ -216,14 +245,34 @@ const FlashcardFormDialog = memo(function FlashcardFormDialog({
   onSuccess 
 }: FlashcardFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const { data: lessons = [] } = useLessonsForSelect();
   const [form, setForm] = useState({
     question: flashcard?.question || '',
     answer: flashcard?.answer || '',
     source: flashcard?.source || 'manual',
     tags: flashcard?.tags?.join(', ') || '',
+    lesson_id: flashcard?.lesson_id || '',
+    area_id: flashcard?.area_id || '',
   });
 
   const isEditing = !!flashcard;
+
+  // Agrupa aulas por área para melhor navegação
+  const lessonsByArea = useMemo(() => {
+    const grouped: Record<string, { areaName: string; lessons: typeof lessons }> = {};
+    
+    lessons.forEach(lesson => {
+      const areaId = lesson.areas?.id || 'sem-area';
+      const areaName = lesson.areas?.name || 'Sem Área';
+      
+      if (!grouped[areaId]) {
+        grouped[areaId] = { areaName, lessons: [] };
+      }
+      grouped[areaId].lessons.push(lesson);
+    });
+    
+    return grouped;
+  }, [lessons]);
 
   const handleSubmit = async () => {
     if (!form.question.trim() || !form.answer.trim()) {
@@ -238,6 +287,10 @@ const FlashcardFormDialog = memo(function FlashcardFormDialog({
         .map(t => t.trim())
         .filter(Boolean);
 
+      // Encontra a área da aula selecionada
+      const selectedLesson = lessons.find(l => l.id === form.lesson_id);
+      const areaId = selectedLesson?.area_id || form.area_id || null;
+
       if (isEditing) {
         const { error } = await supabase
           .from('study_flashcards')
@@ -246,6 +299,8 @@ const FlashcardFormDialog = memo(function FlashcardFormDialog({
             answer: form.answer,
             source: form.source,
             tags: tagsArray.length > 0 ? tagsArray : null,
+            lesson_id: form.lesson_id || null,
+            area_id: areaId,
           })
           .eq('id', flashcard.id);
         
@@ -264,6 +319,8 @@ const FlashcardFormDialog = memo(function FlashcardFormDialog({
             answer: form.answer,
             source: form.source,
             tags: tagsArray.length > 0 ? tagsArray : null,
+            lesson_id: form.lesson_id || null,
+            area_id: areaId,
             due_date: new Date().toISOString().split('T')[0],
             stability: FSRS_PARAMS.initialStability[0],
             difficulty: 0.5,
@@ -323,6 +380,37 @@ const FlashcardFormDialog = memo(function FlashcardFormDialog({
               onChange={(e) => setForm(f => ({ ...f, answer: e.target.value }))}
               rows={3}
             />
+          </div>
+
+          {/* Seletor de Aula */}
+          <div className="space-y-2">
+            <Label>Vincular a Aula (opcional)</Label>
+            <Select 
+              value={form.lesson_id} 
+              onValueChange={(v) => setForm(f => ({ ...f, lesson_id: v === 'none' ? '' : v }))}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione uma aula..." />
+              </SelectTrigger>
+              <SelectContent className="max-h-60">
+                <SelectItem value="none">📌 Sem vínculo</SelectItem>
+                {Object.entries(lessonsByArea).map(([areaId, { areaName, lessons: areaLessons }]) => (
+                  <div key={areaId}>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                      📚 {areaName}
+                    </div>
+                    {areaLessons.map(lesson => (
+                      <SelectItem key={lesson.id} value={lesson.id}>
+                        {lesson.title}
+                      </SelectItem>
+                    ))}
+                  </div>
+                ))}
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-muted-foreground">
+              Vincule o flashcard a uma aula específica para organização
+            </p>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -387,6 +475,8 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
   const [rawText, setRawText] = useState('');
   const [step, setStep] = useState<'upload' | 'preview' | 'importing'>('upload');
   const [importProgress, setImportProgress] = useState(0);
+  const [selectedLessonId, setSelectedLessonId] = useState<string>('');
+  const { data: lessons = [] } = useLessonsForSelect();
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -499,12 +589,17 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
       let imported = 0;
 
       for (let i = 0; i < parsedCards.length; i += batchSize) {
+        const selectedLesson = lessons.find(l => l.id === selectedLessonId);
+        const areaId = selectedLesson?.area_id || null;
+
         const batch = parsedCards.slice(i, i + batchSize).map(card => ({
           user_id: user.id,
           question: card.question,
           answer: card.answer,
           source: 'import',
           tags: card.tags || null,
+          lesson_id: selectedLessonId || null,
+          area_id: areaId,
           due_date: new Date().toISOString().split('T')[0],
           stability: FSRS_PARAMS.initialStability[0],
           difficulty: 0.5,
@@ -731,6 +826,7 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterState, setFilterState] = useState<string>('all');
   const [filterSource, setFilterSource] = useState<string>('all');
+  const [filterLesson, setFilterLesson] = useState<string>('all');
   
   // Modais
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -742,6 +838,7 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
   // Dados
   const { data: flashcards, isLoading, refetch } = useFlashcardsAdmin();
   const { data: stats } = useFlashcardsStats();
+  const { data: lessons = [] } = useLessonsForSelect();
 
   // Filtrar flashcards
   const filteredCards = useMemo(() => {
@@ -766,10 +863,16 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
       if (filterSource !== 'all' && card.source !== filterSource) {
         return false;
       }
+
+      // Aula
+      if (filterLesson !== 'all') {
+        if (filterLesson === 'no-lesson' && card.lesson_id) return false;
+        if (filterLesson !== 'no-lesson' && card.lesson_id !== filterLesson) return false;
+      }
       
       return true;
     });
-  }, [flashcards, searchQuery, filterState, filterSource]);
+  }, [flashcards, searchQuery, filterState, filterSource, filterLesson]);
 
   // Deletar flashcard
   const handleDelete = async () => {
@@ -938,6 +1041,21 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
                   ))}
                 </SelectContent>
               </Select>
+
+              <Select value={filterLesson} onValueChange={setFilterLesson}>
+                <SelectTrigger className="w-[180px]">
+                  <SelectValue placeholder="Aula" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectItem value="all">Todas aulas</SelectItem>
+                  <SelectItem value="no-lesson">📌 Sem vínculo</SelectItem>
+                  {lessons.map(lesson => (
+                    <SelectItem key={lesson.id} value={lesson.id}>
+                      {lesson.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </CardContent>
         </Card>
@@ -960,8 +1078,9 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[40%]">Pergunta</TableHead>
-                    <TableHead className="w-[25%]">Resposta</TableHead>
+                    <TableHead className="w-[35%]">Pergunta</TableHead>
+                    <TableHead className="w-[20%]">Resposta</TableHead>
+                    <TableHead>Aula</TableHead>
                     <TableHead>Estado</TableHead>
                     <TableHead>Origem</TableHead>
                     <TableHead>Reps</TableHead>
@@ -971,7 +1090,7 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
                 <TableBody>
                   {filteredCards.map((card) => (
                     <TableRow key={card.id}>
-                      <TableCell className="max-w-[300px]">
+                      <TableCell className="max-w-[280px]">
                         <p className="truncate font-medium">{card.question}</p>
                         {card.tags && card.tags.length > 0 && (
                           <div className="flex gap-1 mt-1">
@@ -983,8 +1102,17 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
                           </div>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-[200px]">
+                      <TableCell className="max-w-[180px]">
                         <p className="truncate text-muted-foreground">{card.answer}</p>
+                      </TableCell>
+                      <TableCell>
+                        {(card as any).lessons?.title ? (
+                          <span className="text-sm text-primary truncate max-w-[120px] block">
+                            📚 {(card as any).lessons.title}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Badge variant={STATE_BADGES[card.state as FlashcardState]?.variant || 'outline'}>
