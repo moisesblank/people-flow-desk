@@ -147,13 +147,17 @@ const MICROS: Record<string, { value: string; label: string }[]> = {
     { value: 'calculos_quimicos', label: 'Cálculos Químicos' },
   ],
   quimica_organica: [
-    { value: 'introducao_organica', label: 'Introdução à Orgânica' },
-    { value: 'hidrocarbonetos', label: 'Hidrocarbonetos' },
-    { value: 'funcoes_oxigenadas', label: 'Funções Oxigenadas' },
-    { value: 'funcoes_nitrogenadas', label: 'Funções Nitrogenadas' },
+    { value: 'fundamentos_da_quimica_organica', label: 'Fundamentos da Química Orgânica' },
+    { value: 'estrutura_e_representacao', label: 'Estrutura e Representação' },
+    { value: 'cadeias_carbonicas', label: 'Cadeias Carbônicas' },
+    { value: 'nomenclatura_organica', label: 'Nomenclatura Orgânica' },
+    { value: 'funcoes_organicas', label: 'Funções Orgânicas' },
     { value: 'isomeria', label: 'Isomeria' },
+    { value: 'propriedades_dos_compostos_organicos', label: 'Propriedades dos Compostos Orgânicos' },
+    { value: 'reacoes_organicas', label: 'Reações Orgânicas' },
     { value: 'polimeros', label: 'Polímeros' },
-    { value: 'bioquimica', label: 'Bioquímica' },
+    { value: 'bioquimica_organica', label: 'Bioquímica Orgânica' },
+    { value: 'aplicacoes_e_contextualizacao', label: 'Aplicações e Contextualização' },
   ],
   fisico_quimica: [
     { value: 'termoquimica', label: 'Termoquímica' },
@@ -227,11 +231,71 @@ const TEMAS: Record<string, { value: string; label: string }[]> = {
     { value: 'grandezas_quimicas', label: 'Grandezas Químicas' },
   ],
   // === QUÍMICA ORGÂNICA ===
-  hidrocarbonetos: [
-    { value: 'alcanos', label: 'Alcanos' },
-    { value: 'alcenos', label: 'Alcenos' },
-    { value: 'alcinos', label: 'Alcinos' },
-    { value: 'aromaticos', label: 'Aromáticos' },
+  fundamentos_da_quimica_organica: [
+    { value: 'objeto_de_estudo', label: 'Objeto de Estudo' },
+    { value: 'historico_e_evolucao', label: 'Histórico e Evolução' },
+    { value: 'propriedades_fundamentais_do_carbono', label: 'Propriedades Fundamentais do Carbono' },
+  ],
+  estrutura_e_representacao: [
+    { value: 'ligacoes_quimicas_no_carbono', label: 'Ligações Químicas no Carbono' },
+    { value: 'hibridizacao', label: 'Hibridização' },
+    { value: 'representacoes_estruturais', label: 'Representações Estruturais' },
+  ],
+  cadeias_carbonicas: [
+    { value: 'classificacao_geral', label: 'Classificação Geral' },
+    { value: 'tipo_de_ligacao', label: 'Tipo de Ligação' },
+    { value: 'ramificacao', label: 'Ramificação' },
+    { value: 'heterogeneidade', label: 'Heterogeneidade' },
+    { value: 'aromaticidade', label: 'Aromaticidade' },
+  ],
+  nomenclatura_organica: [
+    { value: 'fundamentos_da_nomenclatura', label: 'Fundamentos da Nomenclatura' },
+    { value: 'estrutura_do_nome', label: 'Estrutura do Nome' },
+    { value: 'nomenclatura_dos_hidrocarbonetos', label: 'Nomenclatura dos Hidrocarbonetos' },
+    { value: 'nomenclatura_das_funcoes_organicas', label: 'Nomenclatura das Funções Orgânicas' },
+    { value: 'nomenclatura_usual', label: 'Nomenclatura Usual' },
+  ],
+  funcoes_organicas: [
+    { value: 'hidrocarbonetos', label: 'Hidrocarbonetos' },
+    { value: 'funcoes_halogenadas', label: 'Funções Halogenadas' },
+    { value: 'funcoes_oxigenadas', label: 'Funções Oxigenadas' },
+    { value: 'funcoes_nitrogenadas', label: 'Funções Nitrogenadas' },
+    { value: 'funcoes_sulfuradas', label: 'Funções Sulfuradas' },
+  ],
+  isomeria: [
+    { value: 'isomeria_plana', label: 'Isomeria Plana' },
+    { value: 'isomeria_espacial', label: 'Isomeria Espacial' },
+  ],
+  propriedades_dos_compostos_organicos: [
+    { value: 'propriedades_fisicas', label: 'Propriedades Físicas' },
+    { value: 'propriedades_quimicas', label: 'Propriedades Químicas' },
+  ],
+  reacoes_organicas: [
+    { value: 'reacoes_de_adicao', label: 'Reações de Adição' },
+    { value: 'reacoes_de_substituicao', label: 'Reações de Substituição' },
+    { value: 'reacoes_de_eliminacao', label: 'Reações de Eliminação' },
+    { value: 'reacoes_de_oxidacao', label: 'Reações de Oxidação' },
+    { value: 'reacoes_de_reducao', label: 'Reações de Redução' },
+    { value: 'reacoes_de_polimerizacao', label: 'Reações de Polimerização' },
+  ],
+  polimeros: [
+    { value: 'fundamentos', label: 'Fundamentos' },
+    { value: 'tipos_de_polimerizacao', label: 'Tipos de Polimerização' },
+    { value: 'classificacao', label: 'Classificação' },
+    { value: 'polimeros_de_interesse', label: 'Polímeros de Interesse' },
+  ],
+  bioquimica_organica: [
+    { value: 'carboidratos', label: 'Carboidratos' },
+    { value: 'lipidios', label: 'Lipídios' },
+    { value: 'proteinas', label: 'Proteínas' },
+    { value: 'enzimas', label: 'Enzimas' },
+    { value: 'vitaminas', label: 'Vitaminas' },
+  ],
+  aplicacoes_e_contextualizacao: [
+    { value: 'petroleo_e_derivados', label: 'Petróleo e Derivados' },
+    { value: 'combustiveis', label: 'Combustíveis' },
+    { value: 'quimica_organica_e_saude', label: 'Química Orgânica e Saúde' },
+    { value: 'quimica_organica_e_meio_ambiente', label: 'Química Orgânica e Meio Ambiente' },
   ],
   // === FÍSICO-QUÍMICA ===
   termoquimica: [
@@ -434,10 +498,260 @@ const SUBTEMAS: Record<string, { value: string; label: string }[]> = {
     { value: 'massa', label: 'Massa' },
     { value: 'volume', label: 'Volume' },
   ],
-  // === QUÍMICA ORGÂNICA ===
-  alcanos: [
-    { value: 'nomenclatura_alcanos', label: 'Nomenclatura de Alcanos' },
-    { value: 'propriedades_alcanos', label: 'Propriedades de Alcanos' },
+  // === QUÍMICA ORGÂNICA - FUNDAMENTOS ===
+  objeto_de_estudo: [
+    { value: 'compostos_do_carbono', label: 'Compostos do Carbono' },
+    { value: 'excecoes_da_quimica_organica', label: 'Exceções da Química Orgânica' },
+    { value: 'fronteira_com_a_quimica_inorganica', label: 'Fronteira com a Química Inorgânica' },
+  ],
+  historico_e_evolucao: [
+    { value: 'teoria_vitalista', label: 'Teoria Vitalista' },
+    { value: 'sintese_da_ureia', label: 'Síntese da Ureia' },
+    { value: 'queda_do_vitalismo', label: 'Queda do Vitalismo' },
+    { value: 'consolidacao_da_quimica_organica', label: 'Consolidação da Química Orgânica' },
+  ],
+  propriedades_fundamentais_do_carbono: [
+    { value: 'tetravalencia', label: 'Tetravalência' },
+    { value: 'catenacao', label: 'Catenação' },
+    { value: 'estabilidade_das_ligacoes', label: 'Estabilidade das Ligações' },
+    { value: 'variedade_estrutural', label: 'Variedade Estrutural' },
+  ],
+  // === QUÍMICA ORGÂNICA - ESTRUTURA E REPRESENTAÇÃO ===
+  ligacoes_quimicas_no_carbono: [
+    { value: 'ligacao_simples', label: 'Ligação Simples' },
+    { value: 'ligacao_dupla', label: 'Ligação Dupla' },
+    { value: 'ligacao_tripla', label: 'Ligação Tripla' },
+    { value: 'sigma_e_pi', label: 'Sigma e Pi' },
+  ],
+  hibridizacao: [
+    { value: 'sp', label: 'sp' },
+    { value: 'sp2', label: 'sp²' },
+    { value: 'sp3', label: 'sp³' },
+    { value: 'relacao_hibridizacao_geometria', label: 'Relação Hibridização-Geometria' },
+  ],
+  representacoes_estruturais: [
+    { value: 'formula_molecular', label: 'Fórmula Molecular' },
+    { value: 'formula_estrutural_plana', label: 'Fórmula Estrutural Plana' },
+    { value: 'formula_semidesenvolvida', label: 'Fórmula Semidesenvolvida' },
+    { value: 'formula_condensada', label: 'Fórmula Condensada' },
+    { value: 'formula_em_linha', label: 'Fórmula em Linha' },
+    { value: 'formula_de_lewis', label: 'Fórmula de Lewis' },
+  ],
+  // === QUÍMICA ORGÂNICA - CADEIAS CARBÔNICAS ===
+  classificacao_geral: [
+    { value: 'aberta', label: 'Aberta' },
+    { value: 'fechada', label: 'Fechada' },
+    { value: 'mista', label: 'Mista' },
+  ],
+  tipo_de_ligacao: [
+    { value: 'saturada', label: 'Saturada' },
+    { value: 'insaturada', label: 'Insaturada' },
+  ],
+  ramificacao: [
+    { value: 'normal', label: 'Normal' },
+    { value: 'ramificada', label: 'Ramificada' },
+  ],
+  heterogeneidade: [
+    { value: 'homogenea', label: 'Homogênea' },
+    { value: 'heterogenea', label: 'Heterogênea' },
+  ],
+  aromaticidade: [
+    { value: 'aromatica', label: 'Aromática' },
+    { value: 'aliciclica', label: 'Alicíclica' },
+    { value: 'nao_aromatica', label: 'Não-Aromática' },
+  ],
+  // === QUÍMICA ORGÂNICA - NOMENCLATURA ===
+  fundamentos_da_nomenclatura: [
+    { value: 'cadeia_principal', label: 'Cadeia Principal' },
+    { value: 'numeracao_da_cadeia', label: 'Numeração da Cadeia' },
+    { value: 'prioridade_de_funcoes', label: 'Prioridade de Funções' },
+  ],
+  estrutura_do_nome: [
+    { value: 'prefixo', label: 'Prefixo' },
+    { value: 'infixo', label: 'Infixo' },
+    { value: 'sufixo', label: 'Sufixo' },
+  ],
+  nomenclatura_dos_hidrocarbonetos: [
+    { value: 'alcanos', label: 'Alcanos' },
+    { value: 'alcenos', label: 'Alcenos' },
+    { value: 'alcinos', label: 'Alcinos' },
+    { value: 'dienos', label: 'Dienos' },
+    { value: 'aromaticos', label: 'Aromáticos' },
+  ],
+  nomenclatura_das_funcoes_organicas: [
+    { value: 'oxigenadas', label: 'Oxigenadas' },
+    { value: 'nitrogenadas', label: 'Nitrogenadas' },
+    { value: 'halogenadas', label: 'Halogenadas' },
+    { value: 'sulfuradas', label: 'Sulfuradas' },
+  ],
+  nomenclatura_usual: [
+    { value: 'nomes_triviais', label: 'Nomes Triviais' },
+    { value: 'aplicacoes_no_cotidiano', label: 'Aplicações no Cotidiano' },
+  ],
+  // === QUÍMICA ORGÂNICA - FUNÇÕES ORGÂNICAS ===
+  hidrocarbonetos: [
+    { value: 'alcanos', label: 'Alcanos' },
+    { value: 'alcenos', label: 'Alcenos' },
+    { value: 'alcinos', label: 'Alcinos' },
+    { value: 'dienos', label: 'Dienos' },
+    { value: 'aromaticos', label: 'Aromáticos' },
+  ],
+  funcoes_halogenadas: [
+    { value: 'haleto_organico', label: 'Haleto Orgânico' },
+  ],
+  funcoes_oxigenadas: [
+    { value: 'alcool', label: 'Álcool' },
+    { value: 'fenol', label: 'Fenol' },
+    { value: 'aldeido', label: 'Aldeído' },
+    { value: 'cetona', label: 'Cetona' },
+    { value: 'acido_carboxilico', label: 'Ácido Carboxílico' },
+    { value: 'ester', label: 'Éster' },
+    { value: 'eter', label: 'Éter' },
+    { value: 'anidrido', label: 'Anidrido' },
+  ],
+  funcoes_nitrogenadas: [
+    { value: 'amina', label: 'Amina' },
+    { value: 'amida', label: 'Amida' },
+    { value: 'nitrila', label: 'Nitrila' },
+    { value: 'nitrocomposto', label: 'Nitrocomposto' },
+  ],
+  funcoes_sulfuradas: [
+    { value: 'tiol', label: 'Tiol' },
+    { value: 'sulfeto', label: 'Sulfeto' },
+    { value: 'acido_sulfonico', label: 'Ácido Sulfônico' },
+  ],
+  // === QUÍMICA ORGÂNICA - ISOMERIA ===
+  isomeria_plana: [
+    { value: 'cadeia', label: 'Cadeia' },
+    { value: 'posicao', label: 'Posição' },
+    { value: 'funcao', label: 'Função' },
+    { value: 'metameria', label: 'Metameria' },
+    { value: 'tautomeria', label: 'Tautomeria' },
+  ],
+  isomeria_espacial: [
+    { value: 'geometrica', label: 'Geométrica' },
+    { value: 'optica', label: 'Óptica' },
+    { value: 'atividade_optica', label: 'Atividade Óptica' },
+  ],
+  // === QUÍMICA ORGÂNICA - PROPRIEDADES ===
+  propriedades_fisicas: [
+    { value: 'ponto_de_fusao', label: 'Ponto de Fusão' },
+    { value: 'ponto_de_ebulicao', label: 'Ponto de Ebulição' },
+    { value: 'densidade', label: 'Densidade' },
+    { value: 'solubilidade', label: 'Solubilidade' },
+    { value: 'volatilidade', label: 'Volatilidade' },
+  ],
+  propriedades_quimicas: [
+    { value: 'reatividade', label: 'Reatividade' },
+    { value: 'polaridade', label: 'Polaridade' },
+    { value: 'inflamabilidade', label: 'Inflamabilidade' },
+    { value: 'estabilidade_termica', label: 'Estabilidade Térmica' },
+  ],
+  // === QUÍMICA ORGÂNICA - REAÇÕES ===
+  reacoes_de_adicao: [
+    { value: 'hidrogenacao', label: 'Hidrogenação' },
+    { value: 'halogenacao', label: 'Halogenação' },
+    { value: 'hidratacao', label: 'Hidratação' },
+    { value: 'hidrohalogenacao', label: 'Hidrohalogenação' },
+  ],
+  reacoes_de_substituicao: [
+    { value: 'halogenacao', label: 'Halogenação' },
+    { value: 'nitracao', label: 'Nitração' },
+    { value: 'sulfonacao', label: 'Sulfonação' },
+  ],
+  reacoes_de_eliminacao: [
+    { value: 'desidratacao', label: 'Desidratação' },
+    { value: 'desidrohalogenacao', label: 'Desidrohalogenação' },
+  ],
+  reacoes_de_oxidacao: [
+    { value: 'oxidacao_de_alcoois', label: 'Oxidação de Álcoois' },
+    { value: 'oxidacao_de_aldeidos', label: 'Oxidação de Aldeídos' },
+    { value: 'combustao', label: 'Combustão' },
+  ],
+  reacoes_de_reducao: [
+    { value: 'reducao_de_nitrocompostos', label: 'Redução de Nitrocompostos' },
+    { value: 'reducao_de_cetonas', label: 'Redução de Cetonas' },
+  ],
+  reacoes_de_polimerizacao: [
+    { value: 'adicao', label: 'Adição' },
+    { value: 'condensacao', label: 'Condensação' },
+  ],
+  // === QUÍMICA ORGÂNICA - POLÍMEROS ===
+  fundamentos: [
+    { value: 'monomero', label: 'Monômero' },
+    { value: 'polimero', label: 'Polímero' },
+    { value: 'grau_de_polimerizacao', label: 'Grau de Polimerização' },
+    { value: 'massa_molar_media', label: 'Massa Molar Média' },
+  ],
+  tipos_de_polimerizacao: [
+    { value: 'adicao', label: 'Adição' },
+    { value: 'condensacao', label: 'Condensação' },
+  ],
+  classificacao: [
+    { value: 'naturais', label: 'Naturais' },
+    { value: 'artificiais', label: 'Artificiais' },
+    { value: 'sinteticos', label: 'Sintéticos' },
+  ],
+  polimeros_de_interesse: [
+    { value: 'polietileno', label: 'Polietileno' },
+    { value: 'polipropileno', label: 'Polipropileno' },
+    { value: 'pvc', label: 'PVC' },
+    { value: 'polietileno_tereftalato', label: 'PET' },
+    { value: 'nylon', label: 'Nylon' },
+    { value: 'borracha', label: 'Borracha' },
+  ],
+  // === QUÍMICA ORGÂNICA - BIOQUÍMICA ===
+  carboidratos: [
+    { value: 'monossacarideos', label: 'Monossacarídeos' },
+    { value: 'dissacarideos', label: 'Dissacarídeos' },
+    { value: 'polissacarideos', label: 'Polissacarídeos' },
+    { value: 'funcao_biologica', label: 'Função Biológica' },
+  ],
+  lipidios: [
+    { value: 'acidos_graxos', label: 'Ácidos Graxos' },
+    { value: 'triglicerideos', label: 'Triglicerídeos' },
+    { value: 'fosfolipidios', label: 'Fosfolipídios' },
+    { value: 'esteroides', label: 'Esteroides' },
+  ],
+  proteinas: [
+    { value: 'aminoacidos', label: 'Aminoácidos' },
+    { value: 'ligacao_peptidica', label: 'Ligação Peptídica' },
+    { value: 'estrutura_primaria', label: 'Estrutura Primária' },
+    { value: 'estrutura_secundaria', label: 'Estrutura Secundária' },
+  ],
+  enzimas: [
+    { value: 'catalise', label: 'Catálise' },
+    { value: 'especificidade', label: 'Especificidade' },
+    { value: 'fatores_que_afetam_a_atividade', label: 'Fatores que Afetam a Atividade' },
+  ],
+  vitaminas: [
+    { value: 'lipossoluveis', label: 'Lipossolúveis' },
+    { value: 'hidrossoluveis', label: 'Hidrossolúveis' },
+    { value: 'funcao_metabolica', label: 'Função Metabólica' },
+  ],
+  // === QUÍMICA ORGÂNICA - APLICAÇÕES ===
+  petroleo_e_derivados: [
+    { value: 'origem_do_petroleo', label: 'Origem do Petróleo' },
+    { value: 'fracionamento', label: 'Fracionamento' },
+    { value: 'craqueamento', label: 'Craqueamento' },
+    { value: 'derivados', label: 'Derivados' },
+  ],
+  combustiveis: [
+    { value: 'etanol', label: 'Etanol' },
+    { value: 'gasolina', label: 'Gasolina' },
+    { value: 'diesel', label: 'Diesel' },
+    { value: 'biodiesel', label: 'Biodiesel' },
+    { value: 'impacto_ambiental', label: 'Impacto Ambiental' },
+  ],
+  quimica_organica_e_saude: [
+    { value: 'farmacos', label: 'Fármacos' },
+    { value: 'drogas_terapeuticas', label: 'Drogas Terapêuticas' },
+    { value: 'toxicologia', label: 'Toxicologia' },
+  ],
+  quimica_organica_e_meio_ambiente: [
+    { value: 'poluicao_organica', label: 'Poluição Orgânica' },
+    { value: 'biodegradacao', label: 'Biodegradação' },
+    { value: 'quimica_verde', label: 'Química Verde' },
   ],
   // === FÍSICO-QUÍMICA ===
   ph_poh: [
