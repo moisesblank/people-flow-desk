@@ -1281,9 +1281,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           subtema: q.subtema || null,
           tags: q.tags || [],
           points: 10,
-          // CONTROLE EDITORIAL (CONTRATO)
-          is_active: false,
-          status_revisao: 'rascunho',
+          // IMPORTAÇÃO DIRETA - Questões já entram ATIVAS e PUBLICADAS
+          is_active: true,
+          status_revisao: 'publicada',
           // Metadados pedagógicos
           tempo_medio_segundos: q.tempo_medio_segundos || 120,
           nivel_cognitivo: q.nivel_cognitivo || null,
