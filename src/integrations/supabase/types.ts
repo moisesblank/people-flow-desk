@@ -9015,6 +9015,7 @@ export type Database = {
           ano: number | null
           area_id: string | null
           banca: string | null
+          campos_inferidos: string[] | null
           correct_answer: string | null
           created_at: string | null
           difficulty: string | null
@@ -9025,16 +9026,20 @@ export type Database = {
           lesson_id: string | null
           macro: string | null
           micro: string | null
+          nivel_cognitivo: string | null
           options: Json | null
           orgao_cargo: string | null
+          origem: string | null
           points: number | null
           position: number | null
           question_text: string
           question_type: string | null
           quiz_id: string | null
+          status_revisao: string | null
           subtema: string | null
           tags: string[] | null
           tema: string | null
+          tempo_medio_segundos: number | null
           topic: string | null
           updated_at: string | null
           video_provider: string | null
@@ -9044,6 +9049,7 @@ export type Database = {
           ano?: number | null
           area_id?: string | null
           banca?: string | null
+          campos_inferidos?: string[] | null
           correct_answer?: string | null
           created_at?: string | null
           difficulty?: string | null
@@ -9054,16 +9060,20 @@ export type Database = {
           lesson_id?: string | null
           macro?: string | null
           micro?: string | null
+          nivel_cognitivo?: string | null
           options?: Json | null
           orgao_cargo?: string | null
+          origem?: string | null
           points?: number | null
           position?: number | null
           question_text: string
           question_type?: string | null
           quiz_id?: string | null
+          status_revisao?: string | null
           subtema?: string | null
           tags?: string[] | null
           tema?: string | null
+          tempo_medio_segundos?: number | null
           topic?: string | null
           updated_at?: string | null
           video_provider?: string | null
@@ -9073,6 +9083,7 @@ export type Database = {
           ano?: number | null
           area_id?: string | null
           banca?: string | null
+          campos_inferidos?: string[] | null
           correct_answer?: string | null
           created_at?: string | null
           difficulty?: string | null
@@ -9083,16 +9094,20 @@ export type Database = {
           lesson_id?: string | null
           macro?: string | null
           micro?: string | null
+          nivel_cognitivo?: string | null
           options?: Json | null
           orgao_cargo?: string | null
+          origem?: string | null
           points?: number | null
           position?: number | null
           question_text?: string
           question_type?: string | null
           quiz_id?: string | null
+          status_revisao?: string | null
           subtema?: string | null
           tags?: string[] | null
           tema?: string | null
+          tempo_medio_segundos?: number | null
           topic?: string | null
           updated_at?: string | null
           video_provider?: string | null
