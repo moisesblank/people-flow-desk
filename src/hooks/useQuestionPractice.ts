@@ -59,6 +59,8 @@ export function usePracticeQuestions(options?: {
       let query = supabase
         .from("quiz_questions")
         .select("*")
+        // REGRA CRÍTICA: Apenas questões ativas/publicadas aparecem para alunos
+        .eq("is_active", true)
         .order("position", { ascending: true });
 
       if (options?.limit) {
