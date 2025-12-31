@@ -1462,7 +1462,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto p-4 min-h-0">
+                <div className="flex-1 overflow-auto p-4 min-h-0 pb-44">
                   <div className="min-w-[1100px]">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {headers.map(header => (
@@ -1643,7 +1643,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </div>
                 </div>
 
-                <DialogFooter className="p-4 border-t bg-background">
+                <DialogFooter className="sticky bottom-0 z-20 p-4 border-t bg-background/80 backdrop-blur">
                   <Button variant="outline" onClick={reset}>
                     <X className="h-4 w-4 mr-2" />
                     Cancelar
