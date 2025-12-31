@@ -263,6 +263,11 @@ const URL_TO_AREA: Record<string, SystemArea> = {
   "/empresas/fluxo-caixa": "fluxo-caixa",
   "/empresas/contas-pagar": "contas-pagar",
   "/empresas/contas-receber": "contas-receber",
+
+  // ÁREAS DE GESTÃO (itens do menu /gestaofc)
+  "/gestaofc/flashcards": "flashcards",
+  "/gestaofc/mapas-mentais": "mapas-mentais",
+
   // ÁREAS DE ALUNOS
   "/area-beta": "area-beta",
   "/area-gratuita": "area-gratuita",
