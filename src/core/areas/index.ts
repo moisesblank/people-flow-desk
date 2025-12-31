@@ -72,6 +72,7 @@ export const SYSTEM_AREAS = [
   "videoaulas",
   "tutoria",
   "forum",
+  "cronograma",
   
   // ===== DESENVOLVIMENTO & OWNER =====
   "site-programador",
@@ -261,6 +262,7 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/gestaofc/videoaulas": "videoaulas",
   "/gestaofc/tutoria": "tutoria",
   "/gestaofc/forum": "forum",
+  "/gestaofc/cronograma": "cronograma",
   
   // ===== ROTAS /empresas/* =====
   "/empresas/dashboard": "financas-empresa",
@@ -329,7 +331,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "funcionarios", "area-professor", "gestao-equipe",
     "planejamento-aula", "turmas-online", "turmas-presenciais",
     "cursos", "simulados", "alunos", "portal-aluno",
-    "relatorios", "guia", "laboratorio", "videoaulas", "tutoria", "forum",
+    "relatorios", "guia", "laboratorio", "videoaulas", "tutoria", "forum", "cronograma",
     "flashcards", "mapas-mentais", "livros-web", "lives",
     // Áreas de aluno (para visualização)
     "aluno-dashboard", "aluno-cronograma", "aluno-videoaulas",

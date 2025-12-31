@@ -9306,6 +9306,53 @@ export type Database = {
         }
         Relationships: []
       }
+      schedule_progress: {
+        Row: {
+          actual_minutes: number | null
+          block_id: string | null
+          completion_rate: number | null
+          created_at: string | null
+          date: string
+          id: string
+          mood: string | null
+          notes: string | null
+          planned_minutes: number | null
+          student_id: string
+        }
+        Insert: {
+          actual_minutes?: number | null
+          block_id?: string | null
+          completion_rate?: number | null
+          created_at?: string | null
+          date: string
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          planned_minutes?: number | null
+          student_id: string
+        }
+        Update: {
+          actual_minutes?: number | null
+          block_id?: string | null
+          completion_rate?: number | null
+          created_at?: string | null
+          date?: string
+          id?: string
+          mood?: string | null
+          notes?: string | null
+          planned_minutes?: number | null
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "schedule_progress_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "study_blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       security_access_attempts: {
         Row: {
           attempted_resource: string
@@ -10689,6 +10736,86 @@ export type Database = {
           },
         ]
       }
+      study_blocks: {
+        Row: {
+          activity_type: string | null
+          color: string | null
+          completed_at: string | null
+          created_at: string | null
+          day_of_week: number | null
+          duration_minutes: number | null
+          end_time: string | null
+          id: string
+          is_recurring: boolean | null
+          notes: string | null
+          plan_id: string | null
+          priority: string | null
+          recurrence_pattern: Json | null
+          start_time: string | null
+          status: string | null
+          student_id: string | null
+          subject: string
+          title: string
+          topic: string | null
+          updated_at: string | null
+          week_number: number | null
+        }
+        Insert: {
+          activity_type?: string | null
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          day_of_week?: number | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          notes?: string | null
+          plan_id?: string | null
+          priority?: string | null
+          recurrence_pattern?: Json | null
+          start_time?: string | null
+          status?: string | null
+          student_id?: string | null
+          subject: string
+          title: string
+          topic?: string | null
+          updated_at?: string | null
+          week_number?: number | null
+        }
+        Update: {
+          activity_type?: string | null
+          color?: string | null
+          completed_at?: string | null
+          created_at?: string | null
+          day_of_week?: number | null
+          duration_minutes?: number | null
+          end_time?: string | null
+          id?: string
+          is_recurring?: boolean | null
+          notes?: string | null
+          plan_id?: string | null
+          priority?: string | null
+          recurrence_pattern?: Json | null
+          start_time?: string | null
+          status?: string | null
+          student_id?: string | null
+          subject?: string
+          title?: string
+          topic?: string | null
+          updated_at?: string | null
+          week_number?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_blocks_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "study_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       study_flashcards: {
         Row: {
           answer: string
@@ -10794,6 +10921,116 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      study_goals: {
+        Row: {
+          achieved_at: string | null
+          created_at: string | null
+          current_value: number | null
+          description: string | null
+          end_date: string | null
+          goal_type: string | null
+          id: string
+          is_achieved: boolean | null
+          plan_id: string | null
+          start_date: string | null
+          student_id: string | null
+          subject: string | null
+          target_value: number | null
+          title: string
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          achieved_at?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          end_date?: string | null
+          goal_type?: string | null
+          id?: string
+          is_achieved?: boolean | null
+          plan_id?: string | null
+          start_date?: string | null
+          student_id?: string | null
+          subject?: string | null
+          target_value?: number | null
+          title: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          achieved_at?: string | null
+          created_at?: string | null
+          current_value?: number | null
+          description?: string | null
+          end_date?: string | null
+          goal_type?: string | null
+          id?: string
+          is_achieved?: boolean | null
+          plan_id?: string | null
+          start_date?: string | null
+          student_id?: string | null
+          subject?: string | null
+          target_value?: number | null
+          title?: string
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "study_goals_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "study_plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      study_plans: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          description: string | null
+          difficulty_level: string | null
+          duration_weeks: number | null
+          id: string
+          is_active: boolean | null
+          is_template: boolean | null
+          target_exam: string | null
+          title: string
+          updated_at: string | null
+          weekly_hours: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_weeks?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_template?: boolean | null
+          target_exam?: string | null
+          title: string
+          updated_at?: string | null
+          weekly_hours?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          description?: string | null
+          difficulty_level?: string | null
+          duration_weeks?: number | null
+          id?: string
+          is_active?: boolean | null
+          is_template?: boolean | null
+          target_exam?: string | null
+          title?: string
+          updated_at?: string | null
+          weekly_hours?: number | null
+        }
+        Relationships: []
       }
       subscriptions: {
         Row: {
