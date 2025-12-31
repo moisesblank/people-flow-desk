@@ -190,6 +190,9 @@ const QuestionDialog = memo(function QuestionDialog({
     video_url: '',
     // Multidisciplinar
     is_multidisciplinar: false,
+    // Competências e Habilidades (Matriz ENEM)
+    competencia: '' as '' | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7',
+    habilidade: '',
   });
 
   // Preencher form ao editar
@@ -225,6 +228,9 @@ const QuestionDialog = memo(function QuestionDialog({
         video_url: (question as any).video_url || '',
         // Multidisciplinar
         is_multidisciplinar: (question as any).is_multidisciplinar || false,
+        // Competências e Habilidades
+        competencia: (question as any).competencia || '',
+        habilidade: (question as any).habilidade || '',
       });
     } else {
       // Reset para nova questão
@@ -258,6 +264,9 @@ const QuestionDialog = memo(function QuestionDialog({
         video_url: '',
         // Multidisciplinar
         is_multidisciplinar: false,
+        // Competências e Habilidades
+        competencia: '',
+        habilidade: '',
       });
     }
   }, [question, open]);
@@ -647,7 +656,88 @@ const QuestionDialog = memo(function QuestionDialog({
             </div>
           </div>
 
-          {/* Resolução da Questão */}
+          {/* Competências e Habilidades ENEM */}
+          <div className="bg-blue-500/10 border border-blue-500/20 rounded-lg p-4 space-y-4">
+            <div className="flex items-center gap-2 text-blue-400">
+              <Target className="h-4 w-4" />
+              <span className="text-sm font-semibold">Competências e Habilidades (Matriz ENEM)</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Competência (Ciências da Natureza)</Label>
+                <Select
+                  value={form.competencia}
+                  onValueChange={(v) => setForm(f => ({ ...f, competencia: v as any }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="C1">C1 - Compreender ciências naturais e tecnologias</SelectItem>
+                    <SelectItem value="C2">C2 - Identificar situações-problema</SelectItem>
+                    <SelectItem value="C3">C3 - Associar conhecimentos</SelectItem>
+                    <SelectItem value="C4">C4 - Avaliar propostas de intervenção</SelectItem>
+                    <SelectItem value="C5">C5 - Fenômenos naturais e processos tecnológicos</SelectItem>
+                    <SelectItem value="C6">C6 - Apropriar-se de conhecimentos da Química</SelectItem>
+                    <SelectItem value="C7">C7 - Apropriar-se de conhecimentos da Biologia</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Habilidade</Label>
+                <Select
+                  value={form.habilidade}
+                  onValueChange={(v) => setForm(f => ({ ...f, habilidade: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[300px]">
+                    <SelectItem value="">Nenhuma</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C1 - Habilidades</div>
+                    <SelectItem value="H1">H1</SelectItem>
+                    <SelectItem value="H2">H2</SelectItem>
+                    <SelectItem value="H3">H3</SelectItem>
+                    <SelectItem value="H4">H4</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C2 - Habilidades</div>
+                    <SelectItem value="H5">H5</SelectItem>
+                    <SelectItem value="H6">H6</SelectItem>
+                    <SelectItem value="H7">H7</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C3 - Habilidades</div>
+                    <SelectItem value="H8">H8</SelectItem>
+                    <SelectItem value="H9">H9</SelectItem>
+                    <SelectItem value="H10">H10</SelectItem>
+                    <SelectItem value="H11">H11</SelectItem>
+                    <SelectItem value="H12">H12</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C4 - Habilidades</div>
+                    <SelectItem value="H13">H13</SelectItem>
+                    <SelectItem value="H14">H14</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C5 - Habilidades</div>
+                    <SelectItem value="H15">H15</SelectItem>
+                    <SelectItem value="H16">H16</SelectItem>
+                    <SelectItem value="H17">H17</SelectItem>
+                    <SelectItem value="H18">H18</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C6 - Habilidades</div>
+                    <SelectItem value="H19">H19</SelectItem>
+                    <SelectItem value="H20">H20</SelectItem>
+                    <SelectItem value="H21">H21</SelectItem>
+                    <SelectItem value="H22">H22</SelectItem>
+                    <SelectItem value="H23">H23</SelectItem>
+                    <SelectItem value="H24">H24</SelectItem>
+                    <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C7 - Habilidades</div>
+                    <SelectItem value="H25">H25</SelectItem>
+                    <SelectItem value="H26">H26</SelectItem>
+                    <SelectItem value="H27">H27</SelectItem>
+                    <SelectItem value="H28">H28</SelectItem>
+                    <SelectItem value="H29">H29</SelectItem>
+                    <SelectItem value="H30">H30</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
           <div className="space-y-2">
             <Label>Resolução da Questão</Label>
             <Textarea
