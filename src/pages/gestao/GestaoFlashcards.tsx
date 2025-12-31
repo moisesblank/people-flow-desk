@@ -74,6 +74,8 @@ import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useDropzone } from 'react-dropzone';
+import JSZip from 'jszip';
+import initSqlJs from 'sql.js';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { 
   Flashcard, 
@@ -128,8 +130,89 @@ const SOURCE_OPTIONS = [
 ];
 
 // ============================================
+// PARSER APKG (ANKI) - FRONTEND
+// ============================================
+
+let sqlInitPromise: ReturnType<typeof initSqlJs> | null = null;
+
+function getSql() {
+  if (!sqlInitPromise) {
+    sqlInitPromise = initSqlJs({
+      locateFile: (file: string) => new URL(`sql.js/dist/${file}`, import.meta.url).toString(),
+    });
+  }
+  return sqlInitPromise;
+}
+
+function stripHtml(html: string): string {
+  return html
+    .replace(/<br\s*\/?>(?=\s|$)/gi, '\n')
+    .replace(/<div[^>]*>/gi, '\n')
+    .replace(/<\/div>/gi, '')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/\n+/g, '\n')
+    .trim();
+}
+
+function parseAnkiFields(flds: string): { front: string; back: string } {
+  const parts = flds.split('\x1f');
+  return {
+    front: stripHtml(parts[0] || ''),
+    back: stripHtml(parts[1] || parts[0] || ''),
+  };
+}
+
+async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
+  const arrayBuffer = await file.arrayBuffer();
+  const zip = await JSZip.loadAsync(arrayBuffer);
+
+  const dbObj =
+    zip.file('collection.anki2') ||
+    zip.file('collection.anki21') ||
+    Object.values(zip.files).find((f) => !f.dir && (f.name.endsWith('.anki2') || f.name.endsWith('.anki21')));
+
+  if (!dbObj) {
+    throw new Error('collection.anki2 não encontrado dentro do APKG');
+  }
+
+  const dbData = await dbObj.async('uint8array');
+  const SQL = await getSql();
+  const db = new SQL.Database(dbData);
+
+  const cards: ImportedCard[] = [];
+  try {
+    const result = db.exec(`SELECT flds, tags FROM notes ORDER BY id LIMIT 10000`);
+    if (result.length > 0) {
+      for (const row of result[0].values) {
+        const flds = row[0] as string;
+        const tags = (row[1] as string) || '';
+        const { front, back } = parseAnkiFields(flds);
+        if (front && back && front !== back) {
+          cards.push({
+            question: front.slice(0, 2000),
+            answer: back.slice(0, 5000),
+            tags: tags ? tags.trim().split(' ').filter(Boolean) : undefined,
+          });
+        }
+      }
+    }
+  } finally {
+    db.close();
+  }
+
+  return cards;
+}
+
+// ============================================
 // HOOKS DE DADOS
 // ============================================
+
 
 // Hook para buscar aulas disponíveis
 function useLessonsForSelect() {
@@ -479,54 +562,29 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
   const [processingApkg, setProcessingApkg] = useState(false);
   const { data: lessons = [] } = useLessonsForSelect();
 
-  // Processa arquivo APKG via Edge Function
+  // Processa arquivo APKG localmente (frontend)
   const processApkgFile = useCallback(async (file: File) => {
     setProcessingApkg(true);
     toast.info('Processando arquivo Anki... Isso pode levar alguns segundos.');
-    
+
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session?.access_token) {
-        throw new Error('Não autenticado');
-      }
+      const cards = await parseApkgToCards(file);
 
-      const formData = new FormData();
-      formData.append('file', file);
-      if (selectedLessonId) {
-        formData.append('lesson_id', selectedLessonId);
-      }
-
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-anki-apkg`,
-        {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${session.access_token}`,
-          },
-          body: formData,
-        }
-      );
-
-      const result = await response.json();
-
-      if (!response.ok) {
-        throw new Error(result.error || 'Erro ao processar arquivo APKG');
-      }
-
-      if (result.cards && result.cards.length > 0) {
-        setParsedCards(result.cards);
+      if (cards.length > 0) {
+        setParsedCards(cards);
         setStep('preview');
-        toast.success(`${result.cards.length} flashcards extraídos do Anki!`);
+        toast.success(`${cards.length} flashcards extraídos do Anki!`);
       } else {
         toast.error('Nenhum flashcard encontrado no arquivo');
       }
     } catch (error: any) {
       console.error('Erro ao processar APKG:', error);
-      toast.error(error.message || 'Erro ao processar arquivo Anki');
+      toast.error(error?.message || 'Erro ao processar arquivo Anki');
     } finally {
       setProcessingApkg(false);
     }
-  }, [selectedLessonId]);
+  }, []);
+
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
