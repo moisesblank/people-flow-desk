@@ -792,14 +792,16 @@ const QuestionDialog = memo(function QuestionDialog({
               <div className="space-y-2">
                 <Label>Competência (Ciências da Natureza)</Label>
                 <Select
-                  value={form.competencia}
-                  onValueChange={(v) => setForm(f => ({ ...f, competencia: v as any }))}
+                  value={form.competencia || undefined}
+                  onValueChange={(v) =>
+                    setForm((f) => ({ ...f, competencia: (v === '__none__' ? '' : (v as any)) }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="__none__">Nenhuma</SelectItem>
                     <SelectItem value="C1">C1 - Compreender ciências naturais e tecnologias</SelectItem>
                     <SelectItem value="C2">C2 - Identificar situações-problema</SelectItem>
                     <SelectItem value="C3">C3 - Associar conhecimentos</SelectItem>
@@ -814,14 +816,14 @@ const QuestionDialog = memo(function QuestionDialog({
               <div className="space-y-2">
                 <Label>Habilidade</Label>
                 <Select
-                  value={form.habilidade}
-                  onValueChange={(v) => setForm(f => ({ ...f, habilidade: v }))}
+                  value={form.habilidade || undefined}
+                  onValueChange={(v) => setForm((f) => ({ ...f, habilidade: v === '__none__' ? '' : v }))}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent className="max-h-[300px]">
-                    <SelectItem value="">Nenhuma</SelectItem>
+                    <SelectItem value="__none__">Nenhuma</SelectItem>
                     <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">C1 - Habilidades</div>
                     <SelectItem value="H1">H1</SelectItem>
                     <SelectItem value="H2">H2</SelectItem>
