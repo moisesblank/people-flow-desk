@@ -40,6 +40,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
+import { FlashcardRenderer, processFlashcardText } from '@/components/aluno/flashcards/FlashcardRenderer';
 
 type Rating = 1 | 2 | 3 | 4;
 
@@ -51,28 +52,8 @@ const RATING_BUTTONS = [
 ];
 
 // Processa texto do Anki (Cloze, HTML, etc) para exibição limpa
-function processAnkiText(text: string | null | undefined, showAnswer = false): string {
-  if (!text) return '';
-  let processed = text;
-  
-  // Processa formato Cloze: {{c1::resposta}} → [___] ou resposta
-  processed = processed.replace(/\{\{c\d+::([^}]+)\}\}/g, (_, answer) => 
-    showAnswer ? answer : '[___]'
-  );
-  
-  // Remove tags HTML básicas
-  processed = processed.replace(/<br\s*\/?>/gi, '\n');
-  processed = processed.replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi, '🖼️ $1');
-  processed = processed.replace(/<[^>]+>/g, '');
-  
-  // Limpa entidades HTML
-  processed = processed.replace(/&nbsp;/g, ' ');
-  processed = processed.replace(/&lt;/g, '<');
-  processed = processed.replace(/&gt;/g, '>');
-  processed = processed.replace(/&amp;/g, '&');
-  
-  return processed.trim();
-}
+// Usa o processador centralizado do FlashcardRenderer
+const processAnkiText = processFlashcardText;
 
 export default function FlashcardsPage() {
   const navigate = useNavigate();

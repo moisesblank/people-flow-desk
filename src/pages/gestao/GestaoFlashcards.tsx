@@ -100,6 +100,7 @@ interface ImportedCard {
   question: string;
   answer: string;
   tags?: string[];
+  media?: string[]; // Arquivos de mídia referenciados (ex: [img:filename.jpg])
 }
 
 interface StatsData {
@@ -145,8 +146,37 @@ function getSql() {
   return sqlInitPromise;
 }
 
+/**
+ * Converte referências de imagem do Anki para token padronizado [img:filename]
+ * Suporta: <img src="..."> e referências de Image Occlusion
+ */
+function normalizeAnkiMedia(html: string): { text: string; media: string[] } {
+  const media: string[] = [];
+  let text = html;
+  
+  // Extrai imagens: <img src="filename.jpg"> → [img:filename.jpg]
+  text = text.replace(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi, (_, src) => {
+    // Extrai apenas o nome do arquivo (sem path)
+    const filename = src.split('/').pop() || src;
+    media.push(filename);
+    return `[img:${filename}]`;
+  });
+  
+  // Suporte a Image Occlusion: mantém referência de máscara
+  // Formato típico: {{c1::image-occlusion-xxx.svg}}
+  text = text.replace(/\{\{c\d+::([^}]*image-occlusion[^}]*)\}\}/gi, (_, mask) => {
+    media.push(mask);
+    return `[img:${mask}]`;
+  });
+  
+  return { text, media };
+}
+
 function stripHtml(html: string): string {
-  return html
+  // Primeiro normaliza mídia
+  const { text: withMedia } = normalizeAnkiMedia(html);
+  
+  return withMedia
     .replace(/<br\s*\/?>(?=\s|$)/gi, '\n')
     .replace(/<div[^>]*>/gi, '\n')
     .replace(/<\/div>/gi, '')
@@ -909,7 +939,31 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
               </Button>
             </div>
 
-            <div className="max-h-64 overflow-y-auto border rounded-lg">
+            {/* Seletor de Aula (opcional) */}
+            <div className="p-3 bg-muted/50 rounded-lg border">
+              <Label className="text-sm font-medium mb-2 block">
+                📚 Vincular a uma Aula (opcional)
+              </Label>
+              <Select value={selectedLessonId} onValueChange={setSelectedLessonId}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Nenhuma aula selecionada" />
+                </SelectTrigger>
+                <SelectContent className="max-h-60">
+                  <SelectItem value="">Nenhuma (flashcards avulsos)</SelectItem>
+                  {lessons.map(lesson => (
+                    <SelectItem key={lesson.id} value={lesson.id}>
+                      {lesson.areas?.name ? `[${lesson.areas.name}] ` : ''}
+                      {lesson.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                Ao vincular a uma aula, o aluno verá esses flashcards na aba de estudos da aula
+              </p>
+            </div>
+
+            <div className="max-h-52 overflow-y-auto border rounded-lg">
               <Table>
                 <TableHeader>
                   <TableRow>
