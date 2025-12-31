@@ -149,6 +149,10 @@ export {
 // ROLE PERMISSIONS
 // ============================================
 
+// 🎯 RE-EXPORTAR ÁREAS DA FONTE ÚNICA
+export type { SystemArea } from '@/core/areas';
+export { SYSTEM_AREAS, URL_TO_AREA as CANONICAL_URL_TO_AREA, ROLE_AREA_PERMISSIONS } from '@/core/areas';
+
 export {
   useRolePermissions,
   OWNER_EMAIL,
@@ -162,7 +166,6 @@ export {
   isPublicHost,
   type UserRole,
   type FullAppRole,
-  type SystemArea,
 } from '@/hooks/useRolePermissions';
 
 // ============================================

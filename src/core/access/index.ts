@@ -3,6 +3,18 @@
 // Import direto: import { isOwner } from "@/core/access"
 // ============================================
 
+// 🎯 RE-EXPORTAR ÁREAS DA FONTE ÚNICA
+export type { SystemArea } from "../areas";
+export {
+  SYSTEM_AREAS,
+  URL_TO_AREA,
+  ROLE_AREA_PERMISSIONS,
+  isValidArea,
+  getAreaFromUrl,
+  roleHasAccess,
+  getRoleAreas,
+} from "../areas";
+
 export {
   OWNER_EMAIL,
   isOwner,

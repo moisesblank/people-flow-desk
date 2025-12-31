@@ -11,10 +11,10 @@ import { Loader2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { 
   useRolePermissions, 
-  type SystemArea, 
-  URL_TO_AREA,
   OWNER_EMAIL
 } from "@/hooks/useRolePermissions";
+// 🎯 FONTE ÚNICA DE VERDADE - ÁREAS
+import { type SystemArea, URL_TO_AREA } from "@/core/areas";
 import { validateDomainAccessForLogin, type DomainAppRole } from "@/hooks/useDomainAccess";
 import { useOnboardingStatus } from "@/hooks/useOnboardingStatus";
 import { Button } from "@/components/ui/button";

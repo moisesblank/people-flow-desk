@@ -134,11 +134,11 @@ export type FullAppRole =
 // SystemArea é importado de @/core/areas
 export type { SystemArea } from "@/core/areas";
 
-// URL_TO_AREA agora usa a fonte canônica
-const URL_TO_AREA = CANONICAL_URL_TO_AREA;
+// URL_TO_AREA agora usa a fonte canônica (exportado para compatibilidade)
+export const URL_TO_AREA = CANONICAL_URL_TO_AREA;
 
-// ROLE_PERMISSIONS agora usa a fonte canônica
-const ROLE_PERMISSIONS = ROLE_AREA_PERMISSIONS;
+// ROLE_PERMISSIONS agora usa a fonte canônica (exportado para compatibilidade)
+export const ROLE_PERMISSIONS = ROLE_AREA_PERMISSIONS;
 
 // Rótulos amigáveis para cada cargo
 export const ROLE_LABELS: Record<FullAppRole, string> = {
@@ -499,12 +499,8 @@ export function useDomainAccessValidation() {
   };
 }
 
-// Re-exportar tudo para garantir acessibilidade
-export { 
-  ROLE_PERMISSIONS, 
-  URL_TO_AREA, 
-  FUNCIONARIO_OR_ABOVE_ROLES
-};
+// Re-exportar para garantir acessibilidade (aliases)
+export { FUNCIONARIO_OR_ABOVE_ROLES };
 
 // Alias para compatibilidade com código legado
 export const FULL_ROLE_LABELS = ROLE_LABELS;

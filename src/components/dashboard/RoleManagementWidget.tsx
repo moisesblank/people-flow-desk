@@ -37,12 +37,12 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Progress } from "@/components/ui/progress";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { 
-  ROLE_PERMISSIONS, 
   ROLE_LABELS, 
   ROLE_DESCRIPTIONS,
   type FullAppRole,
-  type SystemArea 
 } from "@/hooks/useRolePermissions";
+// 🎯 FONTE ÚNICA DE VERDADE - ÁREAS
+import { type SystemArea, SYSTEM_AREAS, ROLE_AREA_PERMISSIONS } from "@/core/areas";
 import { useAdminCheck } from "@/hooks/useAdminCheck";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
@@ -109,8 +109,8 @@ const AREA_LABELS: Record<string, string> = {
   "monitoramento": "Monitoramento",
 };
 
-// Todas as áreas disponíveis
-const ALL_AREAS = Object.keys(ROLE_PERMISSIONS.owner) as SystemArea[];
+// Todas as áreas disponíveis - USANDO FONTE ÚNICA
+const ALL_AREAS = SYSTEM_AREAS as unknown as SystemArea[];
 
 // Ordem de exibição dos cargos
 const ROLE_ORDER: FullAppRole[] = [
@@ -286,7 +286,7 @@ function RoleCardsView({
           {ROLE_ORDER.map((role, index) => {
             const Icon = ROLE_ICONS[role];
             const isSelected = selectedRole === role;
-            const areas = ROLE_PERMISSIONS[role];
+            const areas = ROLE_AREA_PERMISSIONS[role] || [];
             const userCount = roleStats[role] || 0;
             const accessPercent = Math.round((areas.length / ALL_AREAS.length) * 100);
             
@@ -464,7 +464,7 @@ function RoleMatrixView() {
             <tbody>
               {ROLE_ORDER.map((role, index) => {
                 const Icon = ROLE_ICONS[role];
-                const areas = ROLE_PERMISSIONS[role];
+                const areas = ROLE_AREA_PERMISSIONS[role] || [];
                 
                 return (
                   <motion.tr 
