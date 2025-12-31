@@ -665,9 +665,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   // ============================================
 
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('[IMPORT] handleFileSelect triggered');
     const selectedFile = event.target.files?.[0];
-    if (!selectedFile) return;
+    if (!selectedFile) {
+      console.log('[IMPORT] No file selected');
+      return;
+    }
 
+    console.log('[IMPORT] File selected:', selectedFile.name, selectedFile.size, 'bytes');
     setFile(selectedFile);
     setIsProcessing(true);
     setFlowState('arquivo_carregado');
@@ -725,6 +730,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       });
       setColumnMapping(autoMapping);
       
+      console.log('[IMPORT] Headers detected:', detectedHeaders);
+      console.log('[IMPORT] Auto mapping:', autoMapping);
+      console.log('[IMPORT] Data rows:', data.length);
+      
       if (data.length > 0) {
         setUiStep('mapping');
         toast.success(`${data.length} linhas detectadas no arquivo`);
@@ -733,8 +742,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         setFlowState(null);
       }
     } catch (err) {
-      console.error('Erro ao processar arquivo:', err);
-      toast.error('Erro ao processar arquivo');
+      console.error('[IMPORT] Erro ao processar arquivo:', err);
+      toast.error('Erro ao processar arquivo: ' + (err instanceof Error ? err.message : String(err)));
       setFlowState(null);
     } finally {
       setIsProcessing(false);
