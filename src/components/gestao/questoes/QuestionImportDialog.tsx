@@ -1723,7 +1723,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
                 {/* Questions list */}
                 <div className="flex-1 overflow-auto min-h-0">
-                  <div className="p-4 space-y-2 min-w-[980px]">
+                  <div className="p-4 pb-44 space-y-2 min-w-[980px]">
                     {filteredQuestions.map((q, index) => (
                       <Card
                         key={q.id}
@@ -1919,8 +1919,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </div>
                 </div>
 
-                {/* Footer com autorização */}
-                <div className="p-4 border-t bg-background space-y-4">
+                {/* Footer com autorização (sempre visível) */}
+                <div className="sticky bottom-0 z-20 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-4 space-y-4">
                   {/* Checkbox de autorização explícita */}
                   <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
                     <Checkbox
@@ -1938,18 +1938,26 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     <Label htmlFor="human-auth" className="text-sm cursor-pointer flex-1">
                       <span className="font-semibold text-primary">Autorizo a importação</span>
                       <span className="text-muted-foreground ml-1">
-                        — Revisei as {stats.selected} questões selecionadas. Campos null permanecerão vazios. 
+                        — Revisei as {stats.selected} questões selecionadas. Campos null permanecerão vazios.
                         Questões serão importadas como <strong>RASCUNHO</strong> (inativas).
                       </span>
                     </Label>
-                    <ShieldCheck className={cn(
-                      "h-5 w-5 transition-colors",
-                      humanAuthorization ? "text-green-500" : "text-muted-foreground"
-                    )} />
+                    <ShieldCheck
+                      className={cn(
+                        "h-5 w-5 transition-colors",
+                        humanAuthorization ? "text-green-500" : "text-muted-foreground"
+                      )}
+                    />
                   </div>
 
-                  <DialogFooter>
-                    <Button variant="outline" onClick={() => { setUiStep('mapping'); setFlowState('arquivo_carregado'); }}>
+                  <DialogFooter className="gap-2">
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setUiStep('mapping');
+                        setFlowState('arquivo_carregado');
+                      }}
+                    >
                       <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
                       Voltar
                     </Button>
