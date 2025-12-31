@@ -484,6 +484,9 @@ export default function FlashcardsPage() {
             💡 Tente lembrar antes de revelar. A memória se fortalece com o esforço!
           </p>
         )}
+
+        {/* Dashboard Anki - Estatísticas Completas (visível durante revisão) */}
+        <AnkiDashboard className="mt-8" defaultExpanded={false} />
       </div>
 
       {/* Modals */}
