@@ -322,6 +322,54 @@ export type Database = {
           },
         ]
       }
+      ai_tutor_logs: {
+        Row: {
+          ai_response: string | null
+          created_at: string
+          feedback: string | null
+          id: string
+          lesson_context: string | null
+          mode: string
+          response_time_ms: number | null
+          tokens_used: number | null
+          user_email: string | null
+          user_id: string | null
+          user_message: string
+          user_name: string | null
+          was_helpful: boolean | null
+        }
+        Insert: {
+          ai_response?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          lesson_context?: string | null
+          mode?: string
+          response_time_ms?: number | null
+          tokens_used?: number | null
+          user_email?: string | null
+          user_id?: string | null
+          user_message: string
+          user_name?: string | null
+          was_helpful?: boolean | null
+        }
+        Update: {
+          ai_response?: string | null
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          lesson_context?: string | null
+          mode?: string
+          response_time_ms?: number | null
+          tokens_used?: number | null
+          user_email?: string | null
+          user_id?: string | null
+          user_message?: string
+          user_name?: string | null
+          was_helpful?: boolean | null
+        }
+        Relationships: []
+      }
       alertas_sistema: {
         Row: {
           acao_sugerida: string | null
@@ -10226,6 +10274,92 @@ export type Database = {
         }
         Relationships: []
       }
+      student_doubts: {
+        Row: {
+          answer: string | null
+          answered_at: string | null
+          answered_by: string | null
+          assigned_name: string | null
+          assigned_to: string | null
+          attachments: Json | null
+          category: string | null
+          content: string
+          created_at: string
+          id: string
+          is_public: boolean | null
+          lesson_id: string | null
+          priority: string | null
+          status: string
+          student_email: string | null
+          student_id: string | null
+          student_name: string | null
+          subject: string | null
+          tags: string[] | null
+          title: string
+          updated_at: string
+          upvotes: number | null
+          views: number | null
+        }
+        Insert: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          assigned_name?: string | null
+          assigned_to?: string | null
+          attachments?: Json | null
+          category?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          lesson_id?: string | null
+          priority?: string | null
+          status?: string
+          student_email?: string | null
+          student_id?: string | null
+          student_name?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          upvotes?: number | null
+          views?: number | null
+        }
+        Update: {
+          answer?: string | null
+          answered_at?: string | null
+          answered_by?: string | null
+          assigned_name?: string | null
+          assigned_to?: string | null
+          attachments?: Json | null
+          category?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_public?: boolean | null
+          lesson_id?: string | null
+          priority?: string | null
+          status?: string
+          student_email?: string | null
+          student_id?: string | null
+          student_name?: string | null
+          subject?: string | null
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          upvotes?: number | null
+          views?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_doubts_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       students: {
         Row: {
           created_at: string | null
@@ -11717,6 +11851,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      tutoring_sessions: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          ended_at: string | null
+          feedback_rating: number | null
+          feedback_text: string | null
+          id: string
+          meeting_url: string | null
+          notes: string | null
+          recording_url: string | null
+          scheduled_at: string | null
+          session_type: string
+          started_at: string | null
+          status: string
+          student_email: string | null
+          student_id: string | null
+          student_name: string | null
+          tags: string[] | null
+          title: string
+          tutor_id: string | null
+          tutor_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          feedback_rating?: number | null
+          feedback_text?: string | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          recording_url?: string | null
+          scheduled_at?: string | null
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          student_email?: string | null
+          student_id?: string | null
+          student_name?: string | null
+          tags?: string[] | null
+          title: string
+          tutor_id?: string | null
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          ended_at?: string | null
+          feedback_rating?: number | null
+          feedback_text?: string | null
+          id?: string
+          meeting_url?: string | null
+          notes?: string | null
+          recording_url?: string | null
+          scheduled_at?: string | null
+          session_type?: string
+          started_at?: string | null
+          status?: string
+          student_email?: string | null
+          student_id?: string | null
+          student_name?: string | null
+          tags?: string[] | null
+          title?: string
+          tutor_id?: string | null
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       two_factor_codes: {
         Row: {
