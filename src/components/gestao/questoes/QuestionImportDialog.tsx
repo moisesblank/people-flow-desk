@@ -356,6 +356,163 @@ function inferOrigem(banca?: string): InferenceResult<OrigemQuestao> {
   return { value: 'adaptada', inferido: true, metodo: 'banca_desconhecida' };
 }
 
+// ============================================
+// INFERÊNCIA DE MACRO POR PALAVRAS-CHAVE (QUÍMICA)
+// ============================================
+
+const MACRO_KEYWORDS: Record<string, string[]> = {
+  // Química Geral
+  'quimica_geral': [
+    'atomística', 'atomistica', 'átomo', 'atomo', 'modelo atômico', 'modelo atomico',
+    'tabela periódica', 'tabela periodica', 'elemento químico', 'elemento quimico',
+    'ligação química', 'ligacao quimica', 'ligações químicas', 'ligacoes quimicas',
+    'ligação iônica', 'ligacao ionica', 'ligação covalente', 'ligacao covalente',
+    'ligação metálica', 'ligacao metalica', 'geometria molecular', 'polaridade',
+    'forças intermoleculares', 'forcas intermoleculares', 'dipolo', 'hibridização',
+    'número atômico', 'numero atomico', 'massa atômica', 'massa atomica',
+    'isótopos', 'isotopos', 'íons', 'ions', 'cátion', 'cation', 'ânion', 'anion',
+    'configuração eletrônica', 'configuracao eletronica', 'orbital', 'elétron', 'eletron',
+    'próton', 'proton', 'nêutron', 'neutron', 'rutherford', 'bohr', 'dalton',
+  ],
+  // Físico-Química
+  'fisico_quimica': [
+    'estequiometria', 'mol', 'massa molar', 'reação química', 'reacao quimica',
+    'balanceamento', 'reagente limitante', 'excesso', 'rendimento',
+    'termoquímica', 'termoquimica', 'entalpia', 'exotérmica', 'exotermica',
+    'endotérmica', 'endotermica', 'lei de hess', 'energia de ligação',
+    'cinética química', 'cinetica quimica', 'velocidade de reação', 'velocidade de reacao',
+    'catalisador', 'equilíbrio químico', 'equilibrio quimico', 'kc', 'kp',
+    'le chatelier', 'deslocamento de equilíbrio', 'deslocamento de equilibrio',
+    'eletroquímica', 'eletroquimica', 'oxirredução', 'oxirreducao', 'nox',
+    'pilha', 'eletrólise', 'eletrolise', 'potencial de redução', 'potencial de reducao',
+    'cátodo', 'catodo', 'ânodo', 'anodo', 'corrosão', 'corrosao',
+    'soluções', 'solucoes', 'concentração', 'concentracao', 'molaridade',
+    'diluição', 'diluicao', 'mistura', 'soluto', 'solvente',
+    'propriedades coligativas', 'tonoscopia', 'ebulioscopia', 'crioscopia', 'osmose',
+    'ph', 'poh', 'ácido', 'acido', 'base', 'ácido-base', 'acido-base',
+    'ka', 'kb', 'hidrólise', 'hidrolise', 'tampão', 'tampao', 'neutralização',
+    'gases', 'lei dos gases', 'pv=nrt', 'pressão parcial', 'pressao parcial',
+    'radioatividade', 'meia-vida', 'fusão nuclear', 'fusao nuclear', 'fissão', 'fissao',
+  ],
+  // Química Orgânica
+  'quimica_organica': [
+    'química orgânica', 'quimica organica', 'carbono', 'hidrocarboneto',
+    'alcano', 'alceno', 'alcino', 'alcadieno', 'ciclano', 'aromático', 'aromatico',
+    'benzeno', 'cadeia carbônica', 'cadeia carbonica', 'isomeria', 'isômero', 'isomero',
+    'função orgânica', 'funcao organica', 'álcool', 'alcool', 'fenol', 'éter', 'eter',
+    'aldeído', 'aldeido', 'cetona', 'ácido carboxílico', 'acido carboxilico',
+    'éster', 'ester', 'amina', 'amida', 'nitrocomposto', 'haleto', 'halogênio',
+    'reação de substituição', 'reacao de substituicao', 'reação de adição', 'reacao de adicao',
+    'reação de eliminação', 'reacao de eliminacao', 'oxidação de álcoois', 'oxidacao de alcoois',
+    'polímero', 'polimero', 'polimerização', 'polimerizacao', 'monômero', 'monomero',
+    'plástico', 'plastico', 'borracha', 'nylon', 'pet', 'polietileno',
+    'bioquímica', 'bioquimica', 'carboidrato', 'lipídio', 'lipidio', 'proteína', 'proteina',
+    'aminoácido', 'aminoacido', 'enzima', 'dna', 'rna', 'nucleotídeo', 'nucleotideo',
+    'saponificação', 'saponificacao', 'gordura', 'sabão', 'sabao', 'triglicerídeo',
+    'petróleo', 'petroleo', 'destilação fracionada', 'destilacao fracionada', 'gasolina', 'diesel',
+    'biodiesel', 'etanol', 'biocombustível', 'biocombustivel',
+  ],
+  // Química Ambiental
+  'quimica_ambiental': [
+    'meio ambiente', 'poluição', 'poluicao', 'impacto ambiental',
+    'efeito estufa', 'aquecimento global', 'camada de ozônio', 'camada de ozonio',
+    'cfc', 'chuva ácida', 'chuva acida', 'dióxido de carbono', 'dioxido de carbono',
+    'monóxido de carbono', 'monoxido de carbono', 'metano', 'tratamento de água',
+    'tratamento de agua', 'eutrofização', 'eutrofizacao', 'lixo', 'reciclagem',
+    'sustentabilidade', 'energia renovável', 'energia renovavel', 'energia limpa',
+  ],
+};
+
+function inferMacro(text: string): InferenceResult<string> {
+  const lower = text.toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, ''); // Remove acentos para comparação
+  
+  // Contagem de matches por macro
+  const scores: Record<string, number> = {};
+  
+  for (const [macro, keywords] of Object.entries(MACRO_KEYWORDS)) {
+    let score = 0;
+    for (const keyword of keywords) {
+      const keywordNorm = keyword
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '');
+      if (lower.includes(keywordNorm)) {
+        score++;
+      }
+    }
+    if (score > 0) {
+      scores[macro] = score;
+    }
+  }
+  
+  // Encontrar macro com maior score
+  let bestMacro: string | undefined;
+  let bestScore = 0;
+  
+  for (const [macro, score] of Object.entries(scores)) {
+    if (score > bestScore) {
+      bestScore = score;
+      bestMacro = macro;
+    }
+  }
+  
+  if (bestMacro && bestScore >= 1) {
+    return { value: bestMacro, inferido: true, metodo: 'analise_palavras_chave' };
+  }
+  
+  return { value: undefined, inferido: false, metodo: 'nao_identificado' };
+}
+
+// ============================================
+// INFERÊNCIA DE DIFICULDADE POR ANÁLISE DE TEXTO
+// ============================================
+
+function inferDificuldade(text: string): InferenceResult<'facil' | 'medio' | 'dificil'> {
+  const lower = text.toLowerCase();
+  const wordCount = text.split(/\s+/).length;
+  
+  // Indicadores de dificuldade alta
+  const indicadoresDificil = [
+    'considere', 'analise criticamente', 'discuta', 'avalie',
+    'compare e contraste', 'demonstre', 'justifique',
+    'explique detalhadamente', 'elabore', 'correlacione',
+    'mecanismo', 'intermediário', 'complexo', 'multietapa',
+  ];
+  
+  // Indicadores de dificuldade baixa
+  const indicadoresFacil = [
+    'defina', 'cite', 'liste', 'nomeie', 'identifique',
+    'qual é', 'qual o', 'o que é', 'o que significa',
+    'assinale a alternativa', 'marque a opção',
+  ];
+  
+  let scoreDificil = 0;
+  let scoreFacil = 0;
+  
+  for (const ind of indicadoresDificil) {
+    if (lower.includes(ind)) scoreDificil++;
+  }
+  
+  for (const ind of indicadoresFacil) {
+    if (lower.includes(ind)) scoreFacil++;
+  }
+  
+  // Palavras longas também indicam complexidade
+  if (wordCount > 150) scoreDificil += 2;
+  else if (wordCount > 80) scoreDificil++;
+  else if (wordCount < 30) scoreFacil++;
+  
+  if (scoreDificil >= 2) {
+    return { value: 'dificil', inferido: true, metodo: 'analise_complexidade' };
+  } else if (scoreFacil >= 2 || wordCount < 25) {
+    return { value: 'facil', inferido: true, metodo: 'analise_complexidade' };
+  }
+  
+  // Fallback: médio
+  return { value: 'medio', inferido: true, metodo: 'fallback_medio' };
+}
+
 function extractTextFromHtml(html: string): string {
   if (!html) return '';
   const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
@@ -777,12 +934,36 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           if (!question.competencia_enem) camposNull.push('competencia_enem');
           if (!question.habilidade_enem) camposNull.push('habilidade_enem');
           
-          // Classificação hierárquica
-          if (!question.macro) camposNull.push('macro');
+          // ============================================
+          // INFERÊNCIA DE MACRO POR PALAVRAS-CHAVE
+          // ============================================
+          if (!question.macro) {
+            const macroResult = inferMacro(enunciado);
+            if (macroResult.value) {
+              question.macro = macroResult.value;
+              camposInferidos.push(`macro:${macroResult.metodo}`);
+            } else {
+              camposNull.push('macro');
+            }
+          }
+          
+          // Micro/tema/subtema dependem de taxonomia dinâmica - só marcar como null
           if (!question.micro) camposNull.push('micro');
           if (!question.tema) camposNull.push('tema');
           if (!question.subtema) camposNull.push('subtema');
-          if (!question.difficulty) camposNull.push('difficulty');
+          
+          // ============================================
+          // INFERÊNCIA DE DIFICULDADE
+          // ============================================
+          if (!question.difficulty) {
+            const diffResult = inferDificuldade(enunciado);
+            if (diffResult.value) {
+              question.difficulty = diffResult.value;
+              camposInferidos.push(`difficulty:${diffResult.metodo}`);
+            } else {
+              camposNull.push('difficulty');
+            }
+          }
 
           // Ordenar alternativas
           const existingIds = question.options.map(o => o.id);
@@ -816,12 +997,20 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             question.errors.push('Alternativa correta não tem texto');
           }
 
-          // Warnings para campos null importantes
+          // Warnings para campos null ou inferidos importantes
           if (!question.banca || question.banca === 'autoral_prof_moises') {
             question.warnings.push('Banca não identificada (será "Autoral Prof. Moisés")');
           }
           if (!question.ano) {
             question.warnings.push('Ano não identificado');
+          }
+          if (!question.macro) {
+            question.warnings.push('Macro não identificado - classificação manual necessária');
+          } else if (question.campos_inferidos?.some(c => c.startsWith('macro:'))) {
+            question.warnings.push(`Macro inferido automaticamente: ${question.macro}`);
+          }
+          if (question.campos_inferidos?.some(c => c.startsWith('difficulty:'))) {
+            question.warnings.push(`Dificuldade inferida: ${question.difficulty}`);
           }
 
           // Definir status
