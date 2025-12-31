@@ -1,12 +1,13 @@
 // ============================================
 // HOOK: TAXONOMIA HIERÁRQUICA DE QUESTÕES
 // MACRO → MICRO → TEMA → SUBTEMA
-// OWNER pode gerenciar via UI
+// COM SUPABASE REALTIME - ATUALIZAÇÃO INSTANTÂNEA
 // ============================================
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useEffect } from "react";
 
 export interface TaxonomyItem {
   id: string;
@@ -28,11 +29,39 @@ export interface TaxonomyTree {
   getTemas: (microValue: string) => TaxonomyItem[];
   getSubtemas: (temaValue: string) => TaxonomyItem[];
   getByValue: (value: string) => TaxonomyItem | undefined;
+  getById: (id: string) => TaxonomyItem | undefined;
   getByParentId: (parentId: string) => TaxonomyItem[];
+  allItems: TaxonomyItem[];
 }
 
-// Buscar toda a taxonomia
+// Hook principal com Realtime
 export function useQuestionTaxonomy() {
+  const queryClient = useQueryClient();
+
+  // Setup Realtime subscription
+  useEffect(() => {
+    const channel = supabase
+      .channel('question-taxonomy-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'question_taxonomy'
+        },
+        (payload) => {
+          console.log('[Taxonomy Realtime] Change detected:', payload.eventType);
+          // Invalidar cache imediatamente
+          queryClient.invalidateQueries({ queryKey: ["question-taxonomy"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
   return useQuery({
     queryKey: ["question-taxonomy"],
     queryFn: async () => {
@@ -46,7 +75,7 @@ export function useQuestionTaxonomy() {
 
       const items = (data || []) as TaxonomyItem[];
 
-      // Construir árvore hierárquica
+      // Construir árvore hierárquica com funções utilitárias
       const tree: TaxonomyTree = {
         macros: items.filter((i) => i.level === "macro"),
         getMicros: (macroValue: string) => {
@@ -65,13 +94,49 @@ export function useQuestionTaxonomy() {
           return items.filter((i) => i.parent_id === tema.id && i.level === "subtema");
         },
         getByValue: (value: string) => items.find((i) => i.value === value),
+        getById: (id: string) => items.find((i) => i.id === id),
         getByParentId: (parentId: string) => items.filter((i) => i.parent_id === parentId),
+        allItems: items,
       };
 
       return { items, tree };
     },
-    staleTime: 1000 * 60 * 10, // 10 minutos - taxonomia é estável
+    staleTime: 1000 * 60 * 5, // 5 minutos - mas Realtime atualiza instantaneamente
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
+}
+
+// Hook para obter arrays formatados para Select components
+export function useTaxonomyForSelects() {
+  const { data, isLoading, error } = useQuestionTaxonomy();
+  
+  const macros = data?.tree.macros.map(m => ({ value: m.value, label: m.icon ? `${m.icon} ${m.label}` : m.label })) || [];
+  
+  const getMicrosForSelect = (macroValue: string) => {
+    if (!data || !macroValue) return [];
+    return data.tree.getMicros(macroValue).map(m => ({ value: m.value, label: m.icon ? `${m.icon} ${m.label}` : m.label }));
+  };
+  
+  const getTemasForSelect = (microValue: string) => {
+    if (!data || !microValue) return [];
+    return data.tree.getTemas(microValue).map(m => ({ value: m.value, label: m.icon ? `${m.icon} ${m.label}` : m.label }));
+  };
+  
+  const getSubtemasForSelect = (temaValue: string) => {
+    if (!data || !temaValue) return [];
+    return data.tree.getSubtemas(temaValue).map(m => ({ value: m.value, label: m.icon ? `${m.icon} ${m.label}` : m.label }));
+  };
+
+  return {
+    isLoading,
+    error,
+    macros,
+    getMicrosForSelect,
+    getTemasForSelect,
+    getSubtemasForSelect,
+    tree: data?.tree,
+  };
 }
 
 // Buscar apenas MACROs para select
@@ -138,12 +203,15 @@ export function useCreateTaxonomy() {
 
   return useMutation({
     mutationFn: async (input: CreateTaxonomyInput) => {
+      // Gerar value do label se não fornecido
+      const value = input.value || input.label.toLowerCase().replace(/\s+/g, "_").normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+      
       const { data, error } = await supabase
         .from("question_taxonomy")
         .insert({
           parent_id: input.parent_id || null,
           level: input.level,
-          value: input.value.toLowerCase().replace(/\s+/g, "_").normalize("NFD").replace(/[\u0300-\u036f]/g, ""),
+          value,
           label: input.label,
           icon: input.icon,
           position: input.position || 0,
