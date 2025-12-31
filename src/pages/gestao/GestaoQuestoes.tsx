@@ -32,7 +32,8 @@ import {
   Upload,
   Settings2,
   TrendingUp,
-  FolderTree
+  FolderTree,
+  Video
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
@@ -1119,6 +1120,10 @@ const QuestionDialog = memo(function QuestionDialog({
     tema: '',
     subtema: '',
     orgao_cargo: '',
+    // Resolução em vídeo
+    has_video_resolution: false,
+    video_provider: '' as '' | 'youtube' | 'panda',
+    video_url: '',
   });
 
   // Preencher form ao editar
@@ -1148,6 +1153,10 @@ const QuestionDialog = memo(function QuestionDialog({
         tema: (question as any).tema || '',
         subtema: (question as any).subtema || '',
         orgao_cargo: (question as any).orgao_cargo || '',
+        // Resolução em vídeo
+        has_video_resolution: (question as any).has_video_resolution || false,
+        video_provider: (question as any).video_provider || '',
+        video_url: (question as any).video_url || '',
       });
     } else {
       // Reset para nova questão
@@ -1175,6 +1184,10 @@ const QuestionDialog = memo(function QuestionDialog({
         tema: '',
         subtema: '',
         orgao_cargo: '',
+        // Resolução em vídeo
+        has_video_resolution: false,
+        video_provider: '',
+        video_url: '',
       });
     }
   }, [question, open]);
@@ -1225,6 +1238,10 @@ const QuestionDialog = memo(function QuestionDialog({
         tema: form.tema || null,
         subtema: form.subtema || null,
         orgao_cargo: form.orgao_cargo || null,
+        // Resolução em vídeo
+        has_video_resolution: form.has_video_resolution,
+        video_provider: form.has_video_resolution && form.video_provider ? form.video_provider : null,
+        video_url: form.has_video_resolution && form.video_url ? form.video_url.trim() : null,
       };
 
       if (question?.id) {
@@ -1355,6 +1372,74 @@ const QuestionDialog = memo(function QuestionDialog({
                 </Select>
               </div>
             </div>
+          </div>
+
+          {/* Resolução em Vídeo */}
+          <div className="space-y-4 p-4 rounded-lg border border-amber-500/20 bg-amber-500/5">
+            <div className="flex items-center gap-3">
+              <Switch
+                id="has_video_resolution"
+                checked={form.has_video_resolution}
+                onCheckedChange={(checked) => setForm(f => ({ 
+                  ...f, 
+                  has_video_resolution: checked,
+                  video_provider: checked ? f.video_provider || 'youtube' : '',
+                  video_url: checked ? f.video_url : ''
+                }))}
+              />
+              <Label htmlFor="has_video_resolution" className="font-semibold text-amber-600 dark:text-amber-400 cursor-pointer flex items-center gap-2">
+                <Video className="h-4 w-4" />
+                Tem Resolução em Vídeo
+              </Label>
+            </div>
+            
+            {form.has_video_resolution && (
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-3">
+                <div className="space-y-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">Provedor</Label>
+                  <Select 
+                    value={form.video_provider} 
+                    onValueChange={(v: 'youtube' | 'panda') => setForm(f => ({ ...f, video_provider: v }))}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="youtube">
+                        <span className="flex items-center gap-2">
+                          <span className="text-red-500">▶</span> YouTube
+                        </span>
+                      </SelectItem>
+                      <SelectItem value="panda">
+                        <span className="flex items-center gap-2">
+                          <span className="text-green-500">🐼</span> Panda Video
+                        </span>
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label className="text-xs uppercase tracking-wide text-muted-foreground">
+                    {form.video_provider === 'youtube' ? 'URL ou ID do YouTube' : 'ID do Panda Video'}
+                  </Label>
+                  <Input
+                    placeholder={form.video_provider === 'youtube' 
+                      ? 'https://youtube.com/watch?v=... ou ID do vídeo' 
+                      : 'ID do vídeo no Panda'
+                    }
+                    value={form.video_url}
+                    onChange={(e) => setForm(f => ({ ...f, video_url: e.target.value }))}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    {form.video_provider === 'youtube' 
+                      ? 'Cole a URL completa ou apenas o ID do vídeo' 
+                      : 'Cole o ID do vídeo da plataforma Panda'
+                    }
+                  </p>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Enunciado */}
