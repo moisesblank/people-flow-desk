@@ -396,10 +396,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   const [filterStatus, setFilterStatus] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   
-  // Defaults globais para aplicar a todas as questões
+  // Defaults globais para aplicar a todas as questões (opcional)
   const [globalDefaults, setGlobalDefaults] = useState({
-    banca: '',
-    ano: new Date().getFullYear(),
+    banca: '' as string,
+    ano: '' as '' | number,
     difficulty: 'medio' as 'facil' | 'medio' | 'dificil',
     macro: '',
     micro: '',
@@ -545,8 +545,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           options: [],
           correct_answer: 'a',
           difficulty: globalDefaults.difficulty,
-          banca: globalDefaults.banca || undefined,
-          ano: globalDefaults.ano || undefined,
+          banca: undefined,
+          ano: undefined,
           macro: globalDefaults.macro || undefined,
           micro: globalDefaults.micro || undefined,
           tema: globalDefaults.tema || undefined,
@@ -603,14 +603,19 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             case 'difficulty':
               question.difficulty = parseDifficulty(value);
               break;
-            case 'banca':
-              const detectedBanca = detectBanca(String(value));
-              question.banca = detectedBanca || String(value).toLowerCase();
+            case 'banca': {
+              const raw = String(value).trim();
+              const detectedBanca = detectBanca(raw);
+              question.banca = detectedBanca || (raw ? raw.toLowerCase() : undefined);
               break;
-            case 'ano':
-              const detectedYear = detectYear(String(value));
-              question.ano = detectedYear || parseInt(value) || undefined;
+            }
+            case 'ano': {
+              const raw = String(value).trim();
+              const detectedYear = detectYear(raw);
+              const parsed = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : NaN;
+              question.ano = detectedYear || (Number.isFinite(parsed) ? parsed : undefined);
               break;
+            }
             case 'macro':
               question.macro = String(value).trim();
               break;
@@ -628,6 +633,29 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
               break;
           }
         }
+
+        // Inferir banca/ano a partir do enunciado (se não veio em coluna)
+        if (question.question_text) {
+          if (!question.banca) {
+            const inferredBanca = detectBanca(question.question_text);
+            if (inferredBanca) {
+              question.banca = inferredBanca;
+              camposInferidos.push('banca');
+            }
+          }
+
+          if (!question.ano) {
+            const inferredYear = detectYear(question.question_text);
+            if (inferredYear) {
+              question.ano = inferredYear;
+              camposInferidos.push('ano');
+            }
+          }
+        }
+
+        // Aplicar defaults SOMENTE se o usuário setou explicitamente
+        if (!question.banca && globalDefaults.banca) question.banca = globalDefaults.banca;
+        if (!question.ano && typeof globalDefaults.ano === 'number') question.ano = globalDefaults.ano;
 
         // Ordenar e preencher alternativas faltantes
         const existingIds = question.options.map(o => o.id);
@@ -1073,13 +1101,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       <div className="space-y-2">
                         <Label className="text-xs">Banca</Label>
                         <Select
-                          value={globalDefaults.banca}
-                          onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, banca: v }))}
+                          value={globalDefaults.banca || '_none'}
+                          onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, banca: v === '_none' ? '' : v }))}
                         >
                           <SelectTrigger className="h-9 text-xs">
                             <SelectValue placeholder="Selecione..." />
                           </SelectTrigger>
                           <SelectContent className="max-h-[200px]">
+                            <SelectItem value="_none">— Sem banca —</SelectItem>
                             {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
                               <div key={categoria}>
                                 <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
@@ -1102,7 +1131,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                           min={1990}
                           max={new Date().getFullYear() + 1}
                           value={globalDefaults.ano}
-                          onChange={(e) => setGlobalDefaults(prev => ({ ...prev, ano: parseInt(e.target.value) || new Date().getFullYear() }))}
+                          placeholder="(vazio)"
+                          onChange={(e) => {
+                            const raw = e.target.value;
+                            if (!raw) {
+                              setGlobalDefaults(prev => ({ ...prev, ano: '' }));
+                              return;
+                            }
+                            const parsed = parseInt(raw, 10);
+                            setGlobalDefaults(prev => ({ ...prev, ano: Number.isFinite(parsed) ? parsed : '' }));
+                          }}
                           className="h-9 text-xs"
                         />
                       </div>
@@ -1186,7 +1224,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </Button>
                   <Button
                     onClick={processQuestions}
-                    disabled={!columnMapping.question_text || isProcessing}
+                    disabled={!Object.values(columnMapping).includes('question_text') || isProcessing}
                     className="bg-gradient-to-r from-primary to-purple-600"
                   >
                     {isProcessing ? (
