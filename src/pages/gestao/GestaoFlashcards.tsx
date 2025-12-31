@@ -188,8 +188,8 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
   const zip = await JSZip.loadAsync(arrayBuffer);
 
   // Procurar banco de dados - Anki pode usar diferentes nomes
-  let dbObj = zip.file('collection.anki2') || zip.file('collection.anki21');
-  
+  // Preferir collection.anki21 (formato mais novo) quando existir
+  let dbObj = zip.file('collection.anki21') || zip.file('collection.anki2');
   // Fallback para qualquer arquivo .anki2 ou .anki21
   if (!dbObj) {
     dbObj = Object.values(zip.files).find((f) => 
@@ -262,6 +262,15 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
 
   if (cards.length === 0) {
     throw new Error('Nenhum flashcard encontrado. Verifique se o arquivo APKG está correto.');
+  }
+
+  // Alguns exports de Anki (formato novo/V3) viram um "placeholder" com esta mensagem
+  // e acabam retornando 1 nota apenas.
+  const firstQ = (cards[0]?.question || '').toLowerCase();
+  if (cards.length === 1 && firstQ.includes('atualize para a versão mais recente')) {
+    throw new Error(
+      'Esse APKG foi exportado no formato novo do Anki e vira um “placeholder”.\n\nNo Anki, ao exportar, marque: “Suporta versões antigas do Anki (lento/arquivos grandes)”.\nDepois exporte novamente como .apkg (com “Incluir mídia”).'
+    );
   }
 
   return cards;
