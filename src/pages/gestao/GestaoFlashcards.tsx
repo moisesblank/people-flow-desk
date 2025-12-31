@@ -187,50 +187,81 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
   const arrayBuffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(arrayBuffer);
 
-  const dbObj =
-    zip.file('collection.anki2') ||
-    zip.file('collection.anki21') ||
-    Object.values(zip.files).find((f) => !f.dir && (f.name.endsWith('.anki2') || f.name.endsWith('.anki21')));
-
+  // Procurar banco de dados - Anki pode usar diferentes nomes
+  let dbObj = zip.file('collection.anki2') || zip.file('collection.anki21');
+  
+  // Fallback para qualquer arquivo .anki2 ou .anki21
   if (!dbObj) {
-    throw new Error('collection.anki2 não encontrado dentro do APKG');
+    dbObj = Object.values(zip.files).find((f) => 
+      !f.dir && (f.name.endsWith('.anki2') || f.name.endsWith('.anki21'))
+    ) || null;
   }
 
+  if (!dbObj) {
+    // Listar arquivos no ZIP para debug
+    const files = Object.keys(zip.files).join(', ');
+    console.error('[APKG] Arquivos no ZIP:', files);
+    throw new Error(`Formato de arquivo não reconhecido. Arquivos encontrados: ${files}`);
+  }
+
+  console.log('[APKG] Usando banco:', dbObj.name);
   const dbData = await dbObj.async('uint8array');
   const SQL = await getSql();
   const db = new SQL.Database(dbData);
 
   const cards: ImportedCard[] = [];
+  const seenQuestions = new Set<string>();
+  
   try {
+    // Múltiplas queries para diferentes formatos de deck Anki
     const queries = [
-      `SELECT flds, tags FROM notes ORDER BY id LIMIT 20000`,
-      // Alguns decks ficam mais confiáveis via cards->notes
-      `SELECT n.flds, n.tags FROM cards c JOIN notes n ON n.id = c.nid GROUP BY n.id ORDER BY n.id LIMIT 20000`,
+      // Query padrão para notes
+      `SELECT flds, tags FROM notes ORDER BY id LIMIT 25000`,
+      // Query via cards->notes (alguns decks organizam assim)
+      `SELECT n.flds, n.tags FROM cards c JOIN notes n ON n.id = c.nid GROUP BY n.id ORDER BY n.id LIMIT 25000`,
+      // Query alternativa para decks com estrutura diferente
+      `SELECT sfld, tags FROM notes ORDER BY id LIMIT 25000`,
     ];
 
     for (const q of queries) {
-      const result = db.exec(q);
-      if (result.length === 0) continue;
+      try {
+        const result = db.exec(q);
+        if (result.length === 0) continue;
 
-      for (const row of result[0].values) {
-        const flds = sqlValueToString(row[0]);
-        const tags = sqlValueToString(row[1]).trim();
-        const { front, back } = parseAnkiFields(flds);
+        console.log(`[APKG] Query "${q.slice(0, 30)}..." retornou ${result[0].values.length} linhas`);
 
-        // Aceita notas com 1 campo (back pode ser vazio)
-        if (front) {
-          cards.push({
-            question: front.slice(0, 2000),
-            answer: (back || '').slice(0, 5000),
-            tags: tags ? tags.split(' ').filter(Boolean) : undefined,
-          });
+        for (const row of result[0].values) {
+          const flds = sqlValueToString(row[0]);
+          const tags = sqlValueToString(row[1]).trim();
+          const { front, back } = parseAnkiFields(flds);
+
+          // Deduplica por conteúdo da pergunta
+          const questionKey = front.toLowerCase().slice(0, 200);
+          if (front && !seenQuestions.has(questionKey)) {
+            seenQuestions.add(questionKey);
+            cards.push({
+              question: front.slice(0, 2000),
+              answer: (back || front).slice(0, 5000), // Se não tem back, usa front como fallback para IO cards
+              tags: tags ? tags.split(' ').filter(Boolean) : undefined,
+            });
+          }
         }
-      }
 
-      if (cards.length > 0) break;
+        if (cards.length > 0) {
+          console.log(`[APKG] Total de ${cards.length} cards únicos extraídos`);
+          break;
+        }
+      } catch (queryError) {
+        console.warn('[APKG] Query falhou:', q.slice(0, 40), queryError);
+        // Continua para próxima query
+      }
     }
   } finally {
     db.close();
+  }
+
+  if (cards.length === 0) {
+    throw new Error('Nenhum flashcard encontrado. Verifique se o arquivo APKG está correto.');
   }
 
   return cards;
