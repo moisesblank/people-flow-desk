@@ -7648,6 +7648,51 @@ export type Database = {
         }
         Relationships: []
       }
+      performance_global_daily: {
+        Row: {
+          accuracy_percent: number
+          avg_time_seconds: number | null
+          calculated_at: string
+          correct_attempts: number
+          created_at: string
+          id: string
+          macro: string
+          micro: string | null
+          tema: string | null
+          total_attempts: number
+          unique_users: number | null
+          updated_at: string
+        }
+        Insert: {
+          accuracy_percent?: number
+          avg_time_seconds?: number | null
+          calculated_at?: string
+          correct_attempts?: number
+          created_at?: string
+          id?: string
+          macro: string
+          micro?: string | null
+          tema?: string | null
+          total_attempts?: number
+          unique_users?: number | null
+          updated_at?: string
+        }
+        Update: {
+          accuracy_percent?: number
+          avg_time_seconds?: number | null
+          calculated_at?: string
+          correct_attempts?: number
+          created_at?: string
+          id?: string
+          macro?: string
+          micro?: string | null
+          tema?: string | null
+          total_attempts?: number
+          unique_users?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       performance_metrics: {
         Row: {
           cache_hit_ratio: number | null
@@ -17550,6 +17595,47 @@ export type Database = {
         }[]
       }
       get_security_dashboard_v3: { Args: never; Returns: Json }
+      get_student_performance_stats: {
+        Args: { p_days_back?: number; p_user_id: string }
+        Returns: {
+          avg_time_seconds: number
+          best_macro: string
+          best_macro_accuracy: number
+          current_streak: number
+          overall_accuracy: number
+          total_correct: number
+          total_questions: number
+          total_xp: number
+          worst_macro: string
+          worst_macro_accuracy: number
+        }[]
+      }
+      get_student_taxonomy_performance: {
+        Args: { p_days_back?: number; p_user_id: string }
+        Returns: {
+          accuracy_percent: number
+          avg_time_seconds: number
+          correct_attempts: number
+          difficulty_distribution: Json
+          macro: string
+          micro: string
+          subtema: string
+          tema: string
+          total_attempts: number
+        }[]
+      }
+      get_student_trends: {
+        Args: { p_period_days?: number; p_user_id: string }
+        Returns: {
+          is_statistically_valid: boolean
+          macro: string
+          previous_accuracy: number
+          previous_attempts: number
+          recent_accuracy: number
+          recent_attempts: number
+          trend: string
+        }[]
+      }
       get_system_load: { Args: never; Returns: Json }
       get_url_access_result: {
         Args: { p_url: string; p_user_id?: string }
@@ -17905,6 +17991,7 @@ export type Database = {
         Returns: number
       }
       refresh_dashboard_stats: { Args: never; Returns: undefined }
+      refresh_global_performance_stats: { Args: never; Returns: undefined }
       refresh_realtime_stats: { Args: never; Returns: undefined }
       register_deployment: {
         Args: {
