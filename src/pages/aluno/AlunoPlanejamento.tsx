@@ -1,7 +1,7 @@
 // ============================================
-// 📚 PLANEJAMENTO DO ALUNO
+// 📚 PLANEJAMENTO DO ALUNO - ESTUDAR (VIDEOAULA)
 // /alunos/planejamento
-// Consumo: semanas, aulas, progresso, notas
+// Interface completa: video, aulas, fórum, progresso
 // ============================================
 
 import { useState, useMemo, useEffect } from "react";
@@ -27,6 +27,7 @@ import {
   MessageCircle,
   ChevronLeft,
   ChevronRight,
+  ChevronDown,
   Lock,
   Trophy,
   Target,
@@ -43,6 +44,10 @@ import {
   AlertCircle,
   Timer,
   RotateCcw,
+  Bot,
+  Radio,
+  Eye,
+  Pencil,
 } from "lucide-react";
 
 // Components
@@ -57,13 +62,25 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 // Types
 interface PlanningWeek {
@@ -126,16 +143,10 @@ interface PlanningNote {
   created_at: string;
 }
 
-interface ReviewTopic {
-  id: string;
-  lesson_id: string;
-  topic: string;
-  importance: string;
-  position: number;
-}
-
-// Week Selector Component
-function WeekSelector({
+// ============================================
+// COMPONENTE: Seletor de Semana (Dropdown)
+// ============================================
+function WeekDropdownSelector({
   weeks,
   selectedWeek,
   onSelectWeek,
@@ -146,153 +157,173 @@ function WeekSelector({
   onSelectWeek: (week: PlanningWeek) => void;
   weekProgress: Record<string, WeekProgress>;
 }) {
+  const selected = selectedWeek;
+  const progress = selected ? weekProgress[selected.id] : null;
+
   return (
-    <ScrollArea className="w-full">
-      <div className="flex gap-3 pb-4">
+    <Select
+      value={selected?.id || ""}
+      onValueChange={(value) => {
+        const week = weeks.find((w) => w.id === value);
+        if (week) onSelectWeek(week);
+      }}
+    >
+      <SelectTrigger className="w-full max-w-md bg-card border-primary/30 hover:border-primary">
+        <div className="flex items-center gap-3">
+          <Calendar className="h-4 w-4 text-primary" />
+          <span className="font-medium">
+            {selected ? `Semana ${selected.week_number} - ${selected.title}` : "Selecione uma semana"}
+          </span>
+        </div>
+      </SelectTrigger>
+      <SelectContent>
         {weeks.map((week) => {
-          const progress = weekProgress[week.id];
-          const progressPercent = progress?.progress_percent || 0;
-          const isSelected = selectedWeek?.id === week.id;
-          const isCompleted = progress?.is_completed;
-
+          const wp = weekProgress[week.id];
+          const isCompleted = wp?.is_completed;
           return (
-            <motion.button
-              key={week.id}
-              onClick={() => onSelectWeek(week)}
-              className={`relative flex-shrink-0 w-48 p-4 rounded-xl border-2 transition-all text-left ${
-                isSelected
-                  ? "border-primary bg-primary/10 shadow-lg"
-                  : "border-border hover:border-primary/50 hover:bg-muted/50"
-              }`}
-              whileHover={{ scale: 1.02 }}
-              whileTap={{ scale: 0.98 }}
-            >
-              {isCompleted && (
-                <div className="absolute -top-2 -right-2 bg-green-500 rounded-full p-1">
-                  <CheckCircle2 className="h-4 w-4 text-white" />
-                </div>
-              )}
-
-              <div className="flex items-center gap-2 mb-2">
-                <Calendar className="h-4 w-4 text-primary" />
-                <span className="font-semibold text-sm">Semana {week.week_number}</span>
+            <SelectItem key={week.id} value={week.id}>
+              <div className="flex items-center gap-2">
+                {isCompleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                <span>Semana {week.week_number} - {week.title}</span>
+                {wp && <Badge variant="outline" className="ml-2 text-xs">{wp.progress_percent}%</Badge>}
               </div>
-
-              <h4 className="font-medium text-sm line-clamp-2 mb-3">{week.title}</h4>
-
-              <Progress value={progressPercent} className="h-1.5" />
-              <span className="text-xs text-muted-foreground mt-1 block">
-                {progressPercent}% concluído
-              </span>
-            </motion.button>
+            </SelectItem>
           );
         })}
-      </div>
-    </ScrollArea>
+      </SelectContent>
+    </Select>
   );
 }
 
-// Lesson Card Component
-function LessonCard({
+// ============================================
+// COMPONENTE: Header com Info da Semana
+// ============================================
+function WeekHeader({
+  week,
+  weekProgress,
+  lessons,
+  lessonProgress,
+}: {
+  week: PlanningWeek;
+  weekProgress: WeekProgress | undefined;
+  lessons: PlanningLesson[];
+  lessonProgress: Record<string, LessonProgress>;
+}) {
+  const completedLessons = lessons.filter((l) => lessonProgress[l.id]?.is_completed).length;
+  const totalMinutes = lessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+  const remainingMinutes = lessons
+    .filter((l) => !lessonProgress[l.id]?.is_completed)
+    .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+
+  return (
+    <div className="flex items-center justify-between gap-4 flex-wrap">
+      <div className="flex items-center gap-4">
+        <Clock className="h-5 w-5 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">
+          Tempo sugerido: <strong className="text-foreground">{Math.round(totalMinutes / 60)}h</strong>
+        </span>
+      </div>
+
+      <div className="flex items-center gap-4">
+        {week.difficulty && (
+          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
+            Revisão: {week.title.split("-")[1]?.trim() || week.title}
+          </Badge>
+        )}
+      </div>
+
+      <Button variant="outline" size="sm" className="gap-2">
+        <Pencil className="h-4 w-4" />
+        Minhas Observações
+      </Button>
+    </div>
+  );
+}
+
+// ============================================
+// COMPONENTE: Card de Aula no Sidebar
+// ============================================
+function LessonSidebarCard({
   lesson,
+  index,
   progress,
   isActive,
   onClick,
 }: {
   lesson: PlanningLesson;
+  index: number;
   progress: LessonProgress | undefined;
   isActive: boolean;
   onClick: () => void;
 }) {
   const isCompleted = progress?.is_completed;
-  const progressPercent = progress?.progress_percent || 0;
-
-  const typeConfig: Record<string, { icon: React.ComponentType<any>; label: string; color: string }> = {
-    video: { icon: Video, label: "Videoaula", color: "text-blue-500" },
-    reading: { icon: BookOpen, label: "Leitura", color: "text-green-500" },
-    exercise: { icon: PenLine, label: "Exercício", color: "text-orange-500" },
-    quiz: { icon: Brain, label: "Quiz", color: "text-purple-500" },
-    live: { icon: Play, label: "Live", color: "text-red-500" },
-  };
-
-  const config = typeConfig[lesson.lesson_type] || typeConfig.video;
-  const Icon = config.icon;
 
   return (
     <motion.button
       onClick={onClick}
-      className={`w-full p-4 rounded-xl border-2 transition-all text-left ${
+      className={`w-full p-3 rounded-lg text-left transition-all ${
         isActive
-          ? "border-primary bg-primary/5 shadow-md"
+          ? "bg-primary/20 border-l-4 border-primary"
           : isCompleted
-          ? "border-green-500/30 bg-green-500/5"
-          : "border-border hover:border-primary/30 hover:bg-muted/30"
+          ? "bg-green-500/10 hover:bg-green-500/20"
+          : "hover:bg-muted/50"
       }`}
-      whileHover={{ x: 4 }}
+      whileHover={{ x: 2 }}
     >
-      <div className="flex items-start gap-4">
-        {/* Icon/Status */}
+      <div className="flex items-start gap-3">
+        {/* Número/Status */}
         <div
-          className={`p-3 rounded-xl ${
+          className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold shrink-0 ${
             isCompleted
-              ? "bg-green-500/20"
+              ? "bg-green-500/20 text-green-500"
               : isActive
-              ? "bg-primary/20"
-              : "bg-muted"
+              ? "bg-primary/20 text-primary"
+              : "bg-muted text-muted-foreground"
           }`}
         >
-          {isCompleted ? (
-            <CheckCircle2 className="h-5 w-5 text-green-500" />
-          ) : (
-            <Icon className={`h-5 w-5 ${config.color}`} />
-          )}
+          {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
         </div>
 
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <Badge variant="outline" className="text-xs">
-              {config.label}
-            </Badge>
-            {lesson.xp_reward && (
-              <Badge className="bg-yellow-500/20 text-yellow-600 border-yellow-500/30 text-xs">
-                +{lesson.xp_reward} XP
-              </Badge>
+            <h4 className="font-medium text-sm line-clamp-1">{lesson.title}</h4>
+            {isActive && (
+              <Badge className="bg-primary text-primary-foreground text-xs">Atual</Badge>
             )}
           </div>
-
-          <h4 className="font-medium line-clamp-1">{lesson.title}</h4>
-
-          {lesson.description && (
-            <p className="text-sm text-muted-foreground line-clamp-1 mt-1">
-              {lesson.description}
-            </p>
-          )}
-
-          <div className="flex items-center gap-4 mt-2 text-xs text-muted-foreground">
-            {lesson.duration_minutes && (
-              <span className="flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {lesson.duration_minutes} min
-              </span>
-            )}
-            {progressPercent > 0 && !isCompleted && (
-              <span className="flex items-center gap-1">
-                <Timer className="h-3 w-3" />
-                {progressPercent}% assistido
+          <div className="flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {lesson.duration_minutes}:00
+            </span>
+            {isCompleted && (
+              <span className="text-green-500 flex items-center gap-1">
+                <CheckCircle2 className="h-3 w-3" />
+                Concluída
               </span>
             )}
           </div>
         </div>
 
-        {/* Arrow */}
-        <ChevronRight className="h-5 w-5 text-muted-foreground shrink-0" />
+        {/* Play Button */}
+        <div className="shrink-0">
+          <div
+            className={`w-8 h-8 rounded-full flex items-center justify-center ${
+              isActive ? "bg-primary text-primary-foreground" : "bg-muted"
+            }`}
+          >
+            <Play className="h-3 w-3 ml-0.5" />
+          </div>
+        </div>
       </div>
     </motion.button>
   );
 }
 
-// Video Player Component
+// ============================================
+// COMPONENTE: Player de Vídeo
+// ============================================
 function VideoPlayer({
   lesson,
   onComplete,
@@ -302,216 +333,385 @@ function VideoPlayer({
 }) {
   const [isPlaying, setIsPlaying] = useState(false);
 
-  // Placeholder for video player
+  // Generate embed URL based on provider
+  const getEmbedUrl = () => {
+    if (!lesson.video_url) return null;
+    
+    // YouTube
+    if (lesson.video_url.includes("youtube") || lesson.video_url.includes("youtu.be")) {
+      const videoId = lesson.video_url.includes("youtu.be")
+        ? lesson.video_url.split("/").pop()
+        : new URLSearchParams(new URL(lesson.video_url).search).get("v");
+      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+    }
+    
+    // Panda
+    if (lesson.video_url.includes("panda")) {
+      return lesson.video_url;
+    }
+    
+    // Vimeo
+    if (lesson.video_url.includes("vimeo")) {
+      const videoId = lesson.video_url.split("/").pop();
+      return `https://player.vimeo.com/video/${videoId}`;
+    }
+    
+    return lesson.video_url;
+  };
+
+  const embedUrl = getEmbedUrl();
+
   return (
     <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
-      {lesson.video_url ? (
-        <div className="absolute inset-0 flex items-center justify-center">
-          <Button
-            size="lg"
-            className="rounded-full h-16 w-16"
-            onClick={() => setIsPlaying(!isPlaying)}
-          >
-            {isPlaying ? (
-              <Pause className="h-8 w-8" />
-            ) : (
-              <Play className="h-8 w-8 ml-1" />
-            )}
-          </Button>
-        </div>
+      {embedUrl && isPlaying ? (
+        <iframe
+          src={embedUrl}
+          className="absolute inset-0 w-full h-full"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+          allowFullScreen
+          title={lesson.title}
+        />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center text-white/70">
-          <Video className="h-16 w-16 mb-4" />
-          <p>Vídeo em breve</p>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          {/* Thumbnail or placeholder */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background/50 to-background" />
+          
+          {/* Play Button */}
+          <motion.button
+            onClick={() => setIsPlaying(true)}
+            className="relative z-10 w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl"
+            whileHover={{ scale: 1.1 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            <Play className="h-10 w-10 ml-1" fill="currentColor" />
+          </motion.button>
+          
+          {!lesson.video_url && (
+            <p className="relative z-10 mt-4 text-muted-foreground">Vídeo em breve</p>
+          )}
         </div>
       )}
 
       {/* Progress Bar */}
       <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-        <div className="h-full bg-primary w-1/3" />
+        <div className="h-full bg-primary w-0 transition-all" />
       </div>
     </div>
   );
 }
 
-// Notes Panel Component
-function NotesPanel({
-  lessonId,
-  notes,
-  onAddNote,
-  isAdding,
+// ============================================
+// COMPONENTE: Info da Aula Atual
+// ============================================
+function LessonInfo({
+  lesson,
+  onComplete,
+  isCompleted,
+  isPending,
 }: {
-  lessonId: string;
-  notes: PlanningNote[];
-  onAddNote: (content: string) => void;
-  isAdding: boolean;
+  lesson: PlanningLesson;
+  onComplete: () => void;
+  isCompleted: boolean;
+  isPending: boolean;
 }) {
-  const [newNote, setNewNote] = useState("");
-
-  const handleSubmit = () => {
-    if (newNote.trim()) {
-      onAddNote(newNote.trim());
-      setNewNote("");
-    }
-  };
+  const [rating, setRating] = useState(0);
 
   return (
-    <Card>
+    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-card rounded-xl border">
+      <div>
+        <h2 className="text-lg font-semibold">{lesson.title}</h2>
+        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
+          <span>Duração: {lesson.duration_minutes}:00</span>
+          {lesson.description && <span>•</span>}
+          {lesson.description && <span className="line-clamp-1">{lesson.description}</span>}
+        </div>
+      </div>
+
+      <div className="flex items-center gap-4">
+        {/* Rating Stars */}
+        <div className="flex items-center gap-1">
+          <span className="text-sm text-muted-foreground mr-2">Avalie esta aula:</span>
+          {[1, 2, 3, 4, 5].map((star) => (
+            <button
+              key={star}
+              onClick={() => setRating(star)}
+              className="p-0.5 transition-transform hover:scale-110"
+            >
+              <Star
+                className={`h-5 w-5 ${
+                  star <= rating
+                    ? "fill-yellow-500 text-yellow-500"
+                    : "text-muted-foreground/50"
+                }`}
+              />
+            </button>
+          ))}
+        </div>
+
+        {/* TRAMON Button */}
+        <Button variant="outline" className="gap-2 bg-primary/10 border-primary/30 hover:bg-primary/20">
+          <Bot className="h-4 w-4" />
+          <span className="font-semibold">TRAMON</span>
+          <span className="text-xs text-muted-foreground">IA Assistente</span>
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// COMPONENTE: Fórum de Dúvidas
+// ============================================
+function ForumSection({
+  lessonId,
+  userName,
+}: {
+  lessonId: string;
+  userName: string;
+}) {
+  const [newQuestion, setNewQuestion] = useState("");
+  const [questions] = useState([
+    {
+      id: "1",
+      userName: "João Silva",
+      content: "Professor, não entendi a parte sobre distribuição eletrônica. Pode explicar novamente?",
+      createdAt: new Date(),
+      isPinned: true,
+      isAnswered: true,
+      replies: [
+        {
+          id: "r1",
+          userName: "Prof. Moisés Medeiros",
+          content: "Claro, João! A distribuição eletrônica segue a regra de Aufbau. Vou explicar...",
+          isOfficial: true,
+        },
+      ],
+    },
+    {
+      id: "2",
+      userName: "Maria Santos",
+      content: "Qual a diferença entre número atômico e número de massa?",
+      createdAt: new Date(),
+      isPinned: false,
+      isAnswered: false,
+      replies: [],
+    },
+  ]);
+
+  return (
+    <Card className="border-border/50">
       <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <PenLine className="h-5 w-5" />
-          Minhas Anotações
-        </CardTitle>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <MessageCircle className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Fórum de Dúvidas</CardTitle>
+            <Badge variant="secondary">{questions.length}</Badge>
+          </div>
+          <span className="text-xs text-muted-foreground flex items-center gap-1">
+            <AlertCircle className="h-3 w-3" />
+            Respostas em até 24h por e-mail
+          </span>
+        </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Add Note */}
-        <div className="space-y-2">
-          <Textarea
-            placeholder="Adicione uma anotação..."
-            value={newNote}
-            onChange={(e) => setNewNote(e.target.value)}
-            rows={3}
-          />
-          <Button
-            onClick={handleSubmit}
-            disabled={!newNote.trim() || isAdding}
-            className="w-full"
-          >
-            <Send className="h-4 w-4 mr-2" />
-            Salvar Anotação
+        {/* Input de nova dúvida */}
+        <div className="flex items-start gap-3">
+          <Avatar className="h-10 w-10">
+            <AvatarFallback className="bg-primary/20 text-primary">
+              {userName?.charAt(0) || "U"}
+            </AvatarFallback>
+          </Avatar>
+          <div className="flex-1">
+            <Textarea
+              value={newQuestion}
+              onChange={(e) => setNewQuestion(e.target.value)}
+              placeholder="Digite sua dúvida sobre esta aula..."
+              rows={2}
+              className="resize-none"
+            />
+          </div>
+        </div>
+        <div className="flex justify-between items-center">
+          <Badge variant="outline" className="text-green-500 border-green-500/30">
+            {questions.filter((q) => q.isPinned).length} fixada
+          </Badge>
+          <Button disabled={!newQuestion.trim()} className="gap-2">
+            <Send className="h-4 w-4" />
+            Enviar Dúvida
           </Button>
         </div>
 
         <Separator />
 
-        {/* Notes List */}
-        <ScrollArea className="h-[300px]">
-          {notes.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <Lightbulb className="h-10 w-10 mb-2" />
-              <p className="text-sm">Nenhuma anotação ainda</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {notes.map((note) => (
-                <motion.div
-                  key={note.id}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="p-3 rounded-lg bg-muted/50 border"
-                  style={{ borderLeftColor: note.color, borderLeftWidth: 3 }}
-                >
-                  <p className="text-sm whitespace-pre-wrap">{note.content}</p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    {formatDistanceToNow(new Date(note.created_at), {
-                      addSuffix: true,
-                      locale: ptBR,
-                    })}
-                  </p>
-                </motion.div>
+        {/* Lista de dúvidas */}
+        <div className="space-y-4">
+          {questions.map((question) => (
+            <div key={question.id} className="p-4 rounded-lg bg-muted/30 border space-y-3">
+              <div className="flex items-start gap-3">
+                <Avatar className="h-10 w-10">
+                  <AvatarFallback>{question.userName.charAt(0)}</AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 flex-wrap mb-1">
+                    <span className="font-medium">{question.userName}</span>
+                    {question.isPinned && (
+                      <Badge className="bg-green-500/20 text-green-500 text-xs">Fixada</Badge>
+                    )}
+                    {question.isAnswered && (
+                      <Badge className="bg-blue-500/20 text-blue-500 text-xs">
+                        <CheckCircle2 className="h-3 w-3 mr-1" />
+                        Respondido
+                      </Badge>
+                    )}
+                    <span className="text-xs text-muted-foreground">
+                      {format(question.createdAt, "dd/MM/yyyy")}
+                    </span>
+                  </div>
+                  <p className="text-sm">{question.content}</p>
+                  <button className="text-xs text-primary mt-2 flex items-center gap-1 hover:underline">
+                    ← Responder
+                  </button>
+                </div>
+              </div>
+
+              {/* Respostas */}
+              {question.replies.map((reply) => (
+                <div key={reply.id} className="ml-12 pl-4 border-l-2 border-primary/30">
+                  <div className="flex items-start gap-3">
+                    <Avatar className="h-8 w-8">
+                      <AvatarFallback className="bg-primary text-primary-foreground text-xs">P</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="font-medium text-sm">{reply.userName}</span>
+                        {reply.isOfficial && (
+                          <>
+                            <Badge variant="outline" className="text-primary border-primary/30 text-xs">
+                              Professor
+                            </Badge>
+                            <Badge className="bg-green-500/20 text-green-500 text-xs">
+                              Resposta Oficial
+                            </Badge>
+                          </>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground">{reply.content}</p>
+                    </div>
+                  </div>
+                </div>
               ))}
             </div>
-          )}
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
+// ============================================
+// COMPONENTE: Cronograma Inteligente
+// ============================================
+function SmartSchedule({
+  lessons,
+  lessonProgress,
+}: {
+  lessons: PlanningLesson[];
+  lessonProgress: Record<string, LessonProgress>;
+}) {
+  const completedCount = lessons.filter((l) => lessonProgress[l.id]?.is_completed).length;
+  const progressPercent = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
+
+  return (
+    <Card className="border-border/50">
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Target className="h-5 w-5 text-primary" />
+            <CardTitle className="text-lg">Cronograma Inteligente</CardTitle>
+            <Badge className="bg-primary/20 text-primary">ENA IA</Badge>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-2xl font-bold text-primary">{progressPercent}%</span>
+            <Progress value={progressPercent} className="w-24 h-2" />
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          {completedCount} de {lessons.length} atividades concluídas
+        </p>
+      </CardHeader>
+      <CardContent>
+        {/* Table Header */}
+        <div className="grid grid-cols-9 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b">
+          <span>Atividade</span>
+          <span>Categoria</span>
+          <span>%</span>
+          <span className="text-center">Resumos</span>
+          <span className="text-center">Flashcards</span>
+          <span className="text-center">Simulado</span>
+          <span className="text-center">Questões</span>
+          <span className="text-center">Link</span>
+          <span className="text-center">Resolvido?</span>
+        </div>
+
+        {/* Table Rows */}
+        <ScrollArea className="h-[150px]">
+          <div className="space-y-1 pt-2">
+            {lessons.slice(0, 5).map((lesson, index) => {
+              const progress = lessonProgress[lesson.id];
+              return (
+                <div key={lesson.id} className="grid grid-cols-9 gap-2 items-center text-sm py-2 hover:bg-muted/30 rounded">
+                  <span className="font-medium truncate">PED - D{index + 1}</span>
+                  <Badge variant="outline" className="text-xs justify-center">GASTRO</Badge>
+                  <div className="flex items-center gap-1">
+                    <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
+                      <div 
+                        className="h-full bg-primary transition-all" 
+                        style={{ width: `${progress?.progress_percent || 0}%` }}
+                      />
+                    </div>
+                    <span className="text-xs">{progress?.progress_percent || 0}%</span>
+                  </div>
+                  <div className="flex justify-center">
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex justify-center">
+                    <BookOpen className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex justify-center">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex justify-center">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <div className="flex justify-center">
+                    <Eye className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary" />
+                  </div>
+                  <div className="flex justify-center">
+                    {progress?.is_completed ? (
+                      <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    ) : (
+                      <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
         </ScrollArea>
       </CardContent>
     </Card>
   );
 }
 
-// Review Topics Component
-function ReviewTopics({ topics }: { topics: ReviewTopic[] }) {
-  const importanceConfig: Record<string, { label: string; color: string }> = {
-    low: { label: "Baixa", color: "bg-gray-500/20 text-gray-500" },
-    medium: { label: "Média", color: "bg-yellow-500/20 text-yellow-500" },
-    high: { label: "Alta", color: "bg-orange-500/20 text-orange-500" },
-    critical: { label: "Crítica", color: "bg-red-500/20 text-red-500" },
-  };
-
-  if (topics.length === 0) return null;
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Target className="h-5 w-5" />
-          Tópicos para Revisão
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="space-y-2">
-          {topics.map((topic) => (
-            <div
-              key={topic.id}
-              className="flex items-center justify-between p-3 rounded-lg bg-muted/50"
-            >
-              <span className="text-sm">{topic.topic}</span>
-              <Badge className={importanceConfig[topic.importance]?.color || importanceConfig.medium.color}>
-                {importanceConfig[topic.importance]?.label || "Média"}
-              </Badge>
-            </div>
-          ))}
-        </div>
-      </CardContent>
-    </Card>
-  );
-}
-
-// Rating Component
-function LessonRating({
-  lessonId,
-  currentRating,
-  onRate,
-}: {
-  lessonId: string;
-  currentRating: number | null;
-  onRate: (rating: number) => void;
-}) {
-  const [hoveredRating, setHoveredRating] = useState<number | null>(null);
-
-  return (
-    <Card>
-      <CardHeader className="pb-3">
-        <CardTitle className="text-lg flex items-center gap-2">
-          <Star className="h-5 w-5" />
-          Avalie esta aula
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="flex items-center gap-2 justify-center py-2">
-          {[1, 2, 3, 4, 5].map((rating) => (
-            <button
-              key={rating}
-              onClick={() => onRate(rating)}
-              onMouseEnter={() => setHoveredRating(rating)}
-              onMouseLeave={() => setHoveredRating(null)}
-              className="p-1 transition-transform hover:scale-110"
-            >
-              <Star
-                className={`h-8 w-8 ${
-                  (hoveredRating !== null ? rating <= hoveredRating : rating <= (currentRating || 0))
-                    ? "text-yellow-500 fill-yellow-500"
-                    : "text-muted-foreground"
-                }`}
-              />
-            </button>
-          ))}
-        </div>
-        {currentRating && (
-          <p className="text-center text-sm text-muted-foreground mt-2">
-            Você avaliou com {currentRating} estrela{currentRating > 1 ? "s" : ""}
-          </p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-// Main Component
+// ============================================
+// COMPONENTE PRINCIPAL
+// ============================================
 export default function AlunoPlanejamento() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [selectedWeek, setSelectedWeek] = useState<PlanningWeek | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<PlanningLesson | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Fetch active weeks
   const { data: weeks = [], isLoading: weeksLoading } = useQuery({
@@ -573,39 +773,6 @@ export default function AlunoPlanejamento() {
     enabled: !!user?.id,
   });
 
-  // Fetch notes for selected lesson
-  const { data: notes = [] } = useQuery({
-    queryKey: ["student-lesson-notes", selectedLesson?.id, user?.id],
-    queryFn: async () => {
-      if (!selectedLesson || !user?.id) return [];
-      const { data, error } = await supabase
-        .from("planning_notes")
-        .select("*")
-        .eq("lesson_id", selectedLesson.id)
-        .eq("user_id", user.id)
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as PlanningNote[];
-    },
-    enabled: !!selectedLesson && !!user?.id,
-  });
-
-  // Fetch review topics for selected lesson
-  const { data: reviewTopics = [] } = useQuery({
-    queryKey: ["student-review-topics", selectedLesson?.id],
-    queryFn: async () => {
-      if (!selectedLesson) return [];
-      const { data, error } = await supabase
-        .from("planning_review_topics")
-        .select("*")
-        .eq("lesson_id", selectedLesson.id)
-        .order("position", { ascending: true });
-      if (error) throw error;
-      return data as ReviewTopic[];
-    },
-    enabled: !!selectedLesson,
-  });
-
   // Realtime subscriptions
   useEffect(() => {
     const channel = supabase
@@ -630,16 +797,15 @@ export default function AlunoPlanejamento() {
     }
   }, [weeks, selectedWeek]);
 
-  // Auto-select first lesson when week changes
+  // Auto-select first incomplete lesson when week changes
   useEffect(() => {
     if (lessons.length > 0) {
-      // Find first incomplete lesson or first lesson
-      const lessonProgress = lessonProgressList.reduce((acc, lp) => {
+      const lessonProgressMap = lessonProgressList.reduce((acc, lp) => {
         acc[lp.lesson_id] = lp;
         return acc;
       }, {} as Record<string, LessonProgress>);
 
-      const firstIncomplete = lessons.find(l => !lessonProgress[l.id]?.is_completed);
+      const firstIncomplete = lessons.find((l) => !lessonProgressMap[l.id]?.is_completed);
       setSelectedLesson(firstIncomplete || lessons[0]);
     } else {
       setSelectedLesson(null);
@@ -660,52 +826,6 @@ export default function AlunoPlanejamento() {
       return acc;
     }, {} as Record<string, LessonProgress>);
   }, [lessonProgressList]);
-
-  // Add note mutation
-  const addNoteMutation = useMutation({
-    mutationFn: async (content: string) => {
-      if (!user?.id || !selectedLesson) throw new Error("Missing data");
-      const { data, error } = await supabase
-        .from("planning_notes")
-        .insert({
-          user_id: user.id,
-          lesson_id: selectedLesson.id,
-          content,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["student-lesson-notes"] });
-      toast.success("Anotação salva!");
-    },
-    onError: (error) => {
-      toast.error("Erro ao salvar anotação");
-    },
-  });
-
-  // Rate lesson mutation
-  const rateLessonMutation = useMutation({
-    mutationFn: async (rating: number) => {
-      if (!user?.id || !selectedLesson) throw new Error("Missing data");
-      const { data, error } = await supabase
-        .from("planning_ratings")
-        .upsert({
-          user_id: user.id,
-          lesson_id: selectedLesson.id,
-          rating,
-        })
-        .select()
-        .single();
-      if (error) throw error;
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Avaliação registrada!");
-    },
-  });
 
   // Mark lesson complete mutation
   const markCompleteMutation = useMutation({
@@ -728,9 +848,16 @@ export default function AlunoPlanejamento() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["student-lesson-progress"] });
-      toast.success("Aula concluída! +" + (selectedLesson?.xp_reward || 0) + " XP");
+      toast.success(`Aula concluída! +${selectedLesson?.xp_reward || 0} XP`);
     },
   });
+
+  // Calculate progress
+  const completedLessons = lessons.filter((l) => lessonProgress[l.id]?.is_completed).length;
+  const totalMinutes = lessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+  const remainingMinutes = lessons
+    .filter((l) => !lessonProgress[l.id]?.is_completed)
+    .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
 
   if (weeksLoading) {
     return (
@@ -753,154 +880,123 @@ export default function AlunoPlanejamento() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
-      <div className="container mx-auto p-6 space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <Calendar className="h-8 w-8 text-primary" />
-            Meu Planejamento
-          </h1>
-          <p className="text-muted-foreground mt-1">
-            Siga seu cronograma de estudos e acompanhe seu progresso
-          </p>
-        </div>
-
-        {/* Week Selector */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">Semanas de Estudo</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <WeekSelector
+    <div className="min-h-screen bg-background">
+      {/* Top Bar */}
+      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex items-center gap-4 flex-wrap">
+            {/* Week Selector */}
+            <WeekDropdownSelector
               weeks={weeks}
               selectedWeek={selectedWeek}
               onSelectWeek={setSelectedWeek}
               weekProgress={weekProgress}
             />
-          </CardContent>
-        </Card>
 
-        {/* Main Content */}
-        {selectedWeek && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Lessons List */}
-            <div className="lg:col-span-1 space-y-4">
-              <Card>
-                <CardHeader className="pb-3">
-                  <CardTitle className="text-lg">
-                    {selectedWeek.title}
-                  </CardTitle>
-                  <CardDescription>
-                    {lessons.length} aulas • {selectedWeek.estimated_hours}h estimadas
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <ScrollArea className="h-[500px] pr-4">
-                    <div className="space-y-3">
-                      {lessons.map((lesson) => (
-                        <LessonCard
-                          key={lesson.id}
-                          lesson={lesson}
-                          progress={lessonProgress[lesson.id]}
-                          isActive={selectedLesson?.id === lesson.id}
-                          onClick={() => setSelectedLesson(lesson)}
-                        />
-                      ))}
-                    </div>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Lesson Content */}
-            <div className="lg:col-span-2 space-y-6">
-              {selectedLesson ? (
-                <>
-                  {/* Video Player */}
-                  <VideoPlayer
-                    lesson={selectedLesson}
-                    onComplete={() => markCompleteMutation.mutate()}
-                  />
-
-                  {/* Lesson Info & Actions */}
-                  <Card>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <CardTitle>{selectedLesson.title}</CardTitle>
-                          <CardDescription className="mt-1">
-                            {selectedLesson.description}
-                          </CardDescription>
-                        </div>
-                        <Button
-                          onClick={() => markCompleteMutation.mutate()}
-                          disabled={
-                            lessonProgress[selectedLesson.id]?.is_completed ||
-                            markCompleteMutation.isPending
-                          }
-                          className="shrink-0"
-                        >
-                          {lessonProgress[selectedLesson.id]?.is_completed ? (
-                            <>
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Concluída
-                            </>
-                          ) : (
-                            <>
-                              <CheckCircle2 className="h-4 w-4 mr-2" />
-                              Marcar como Concluída
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </CardHeader>
-                  </Card>
-
-                  {/* Tabs for Notes, Topics, Rating */}
-                  <Tabs defaultValue="notes" className="w-full">
-                    <TabsList className="grid w-full grid-cols-3">
-                      <TabsTrigger value="notes">Anotações</TabsTrigger>
-                      <TabsTrigger value="topics">Revisão</TabsTrigger>
-                      <TabsTrigger value="rating">Avaliar</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="notes" className="mt-4">
-                      <NotesPanel
-                        lessonId={selectedLesson.id}
-                        notes={notes}
-                        onAddNote={(content) => addNoteMutation.mutate(content)}
-                        isAdding={addNoteMutation.isPending}
-                      />
-                    </TabsContent>
-
-                    <TabsContent value="topics" className="mt-4">
-                      <ReviewTopics topics={reviewTopics} />
-                    </TabsContent>
-
-                    <TabsContent value="rating" className="mt-4">
-                      <LessonRating
-                        lessonId={selectedLesson.id}
-                        currentRating={null}
-                        onRate={(rating) => rateLessonMutation.mutate(rating)}
-                      />
-                    </TabsContent>
-                  </Tabs>
-                </>
-              ) : (
-                <Card className="py-12">
-                  <div className="flex flex-col items-center justify-center text-center">
-                    <BookOpen className="h-16 w-16 text-muted-foreground/50 mb-4" />
-                    <h3 className="text-lg font-semibold">Selecione uma aula</h3>
-                    <p className="text-muted-foreground">
-                      Clique em uma aula na lista para começar
-                    </p>
-                  </div>
-                </Card>
-              )}
-            </div>
+            {selectedWeek && (
+              <WeekHeader
+                week={selectedWeek}
+                weekProgress={weekProgress[selectedWeek.id]}
+                lessons={lessons}
+                lessonProgress={lessonProgress}
+              />
+            )}
           </div>
-        )}
+        </div>
+      </div>
+
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Video + Info Column */}
+          <div className="lg:col-span-2 space-y-6">
+            {selectedLesson ? (
+              <>
+                {/* Video Player */}
+                <VideoPlayer
+                  lesson={selectedLesson}
+                  onComplete={() => markCompleteMutation.mutate()}
+                />
+
+                {/* Lesson Info */}
+                <LessonInfo
+                  lesson={selectedLesson}
+                  onComplete={() => markCompleteMutation.mutate()}
+                  isCompleted={!!lessonProgress[selectedLesson.id]?.is_completed}
+                  isPending={markCompleteMutation.isPending}
+                />
+
+                {/* Forum */}
+                <ForumSection
+                  lessonId={selectedLesson.id}
+                  userName={user?.user_metadata?.full_name || user?.email || "Aluno"}
+                />
+
+                {/* Smart Schedule */}
+                <SmartSchedule lessons={lessons} lessonProgress={lessonProgress} />
+              </>
+            ) : (
+              <Card className="py-12">
+                <div className="flex flex-col items-center justify-center text-center">
+                  <Video className="h-16 w-16 text-muted-foreground/50 mb-4" />
+                  <h3 className="text-lg font-semibold">Selecione uma aula</h3>
+                  <p className="text-muted-foreground">
+                    Escolha uma aula na lista ao lado para começar
+                  </p>
+                </div>
+              </Card>
+            )}
+          </div>
+
+          {/* Lessons Sidebar */}
+          <div className="lg:col-span-1">
+            <Card className="sticky top-24">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Video className="h-5 w-5 text-primary" />
+                      {selectedWeek?.title || "Aulas"}
+                    </CardTitle>
+                    <CardDescription>
+                      {completedLessons} de {lessons.length} aulas concluídas
+                    </CardDescription>
+                  </div>
+                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                </div>
+
+                {/* Progress Bar */}
+                <div className="space-y-2 mt-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span>{Math.round((completedLessons / Math.max(lessons.length, 1)) * 100)}% concluído</span>
+                    <span className="text-muted-foreground flex items-center gap-1">
+                      <Clock className="h-3 w-3" />
+                      {remainingMinutes} min restantes
+                    </span>
+                  </div>
+                  <Progress value={(completedLessons / Math.max(lessons.length, 1)) * 100} className="h-2" />
+                </div>
+              </CardHeader>
+
+              <CardContent>
+                <ScrollArea className="h-[500px] pr-2">
+                  <div className="space-y-2">
+                    {lessons.map((lesson, index) => (
+                      <LessonSidebarCard
+                        key={lesson.id}
+                        lesson={lesson}
+                        index={index}
+                        progress={lessonProgress[lesson.id]}
+                        isActive={selectedLesson?.id === lesson.id}
+                        onClick={() => setSelectedLesson(lesson)}
+                      />
+                    ))}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
     </div>
   );
