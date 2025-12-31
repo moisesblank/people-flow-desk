@@ -476,19 +476,79 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
   const [step, setStep] = useState<'upload' | 'preview' | 'importing'>('upload');
   const [importProgress, setImportProgress] = useState(0);
   const [selectedLessonId, setSelectedLessonId] = useState<string>('');
+  const [processingApkg, setProcessingApkg] = useState(false);
   const { data: lessons = [] } = useLessonsForSelect();
+
+  // Processa arquivo APKG via Edge Function
+  const processApkgFile = useCallback(async (file: File) => {
+    setProcessingApkg(true);
+    toast.info('Processando arquivo Anki... Isso pode levar alguns segundos.');
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.access_token) {
+        throw new Error('Não autenticado');
+      }
+
+      const formData = new FormData();
+      formData.append('file', file);
+      if (selectedLessonId) {
+        formData.append('lesson_id', selectedLessonId);
+      }
+
+      const response = await fetch(
+        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/parse-anki-apkg`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`,
+          },
+          body: formData,
+        }
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erro ao processar arquivo APKG');
+      }
+
+      if (result.cards && result.cards.length > 0) {
+        setParsedCards(result.cards);
+        setStep('preview');
+        toast.success(`${result.cards.length} flashcards extraídos do Anki!`);
+      } else {
+        toast.error('Nenhum flashcard encontrado no arquivo');
+      }
+    } catch (error: any) {
+      console.error('Erro ao processar APKG:', error);
+      toast.error(error.message || 'Erro ao processar arquivo Anki');
+    } finally {
+      setProcessingApkg(false);
+    }
+  }, [selectedLessonId]);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       'text/plain': ['.txt'],
       'text/csv': ['.csv'],
       'application/json': ['.json'],
+      'application/octet-stream': ['.apkg'],
+      'application/zip': ['.apkg'],
     },
     maxFiles: 1,
+    maxSize: 100 * 1024 * 1024, // 100MB para APKG
     onDrop: async (files) => {
       if (files[0]) {
-        const text = await files[0].text();
-        processText(text);
+        const file = files[0];
+        const isApkg = file.name.toLowerCase().endsWith('.apkg');
+        
+        if (isApkg) {
+          await processApkgFile(file);
+        } else {
+          const text = await file.text();
+          processText(text);
+        }
       }
     },
   });
@@ -647,53 +707,68 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
             Importar Flashcards
           </DialogTitle>
           <DialogDescription>
-            Importe flashcards de arquivos TXT, CSV ou JSON
+            Importe flashcards de arquivos <strong>APKG (Anki)</strong>, TXT, CSV ou JSON
           </DialogDescription>
         </DialogHeader>
 
         {step === 'upload' && (
           <div className="space-y-4 py-4">
-            <div
-              {...getRootProps()}
-              className={cn(
-                "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
-                isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
-              )}
-            >
-              <input {...getInputProps()} />
-              <FileUp className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
-              <p className="text-lg font-medium">
-                {isDragActive ? 'Solte o arquivo aqui' : 'Arraste um arquivo ou clique'}
-              </p>
-              <p className="text-sm text-muted-foreground mt-1">
-                Suporta: TXT, CSV, JSON
-              </p>
-            </div>
-
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <span className="w-full border-t" />
+            {processingApkg && (
+              <div className="p-6 bg-primary/5 rounded-lg text-center">
+                <Loader2 className="w-10 h-10 mx-auto text-primary animate-spin mb-3" />
+                <p className="text-lg font-medium">Processando arquivo Anki...</p>
+                <p className="text-sm text-muted-foreground">Extraindo flashcards do banco de dados</p>
               </div>
-              <div className="relative flex justify-center text-xs uppercase">
-                <span className="bg-background px-2 text-muted-foreground">ou cole o texto</span>
-              </div>
-            </div>
+            )}
+            
+            {!processingApkg && (
+              <>
+                <div
+                  {...getRootProps()}
+                  className={cn(
+                    "border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors",
+                    isDragActive ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+                  )}
+                >
+                  <input {...getInputProps()} />
+                  <FileUp className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+                  <p className="text-lg font-medium">
+                    {isDragActive ? 'Solte o arquivo aqui' : 'Arraste um arquivo ou clique'}
+                  </p>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    Suporta: <strong>APKG (Anki)</strong>, TXT, CSV, JSON
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Máximo: 100MB
+                  </p>
+                </div>
 
-            <Textarea
-              placeholder="Cole aqui o conteúdo...&#10;&#10;Formatos aceitos:&#10;• Q: pergunta A: resposta&#10;• pergunta;resposta&#10;• JSON: [{question, answer}]&#10;• Linha dupla (pergunta, resposta, linha em branco)"
-              rows={6}
-              value={rawText}
-              onChange={(e) => setRawText(e.target.value)}
-            />
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">ou cole o texto</span>
+                  </div>
+                </div>
 
-            <Button 
-              onClick={() => processText(rawText)} 
-              disabled={!rawText.trim()}
-              className="w-full"
-            >
-              <Sparkles className="w-4 h-4 mr-2" />
-              Processar Texto
-            </Button>
+                <Textarea
+                  placeholder="Cole aqui o conteúdo...&#10;&#10;Formatos aceitos:&#10;• Q: pergunta A: resposta&#10;• pergunta;resposta&#10;• JSON: [{question, answer}]&#10;• Linha dupla (pergunta, resposta, linha em branco)"
+                  rows={6}
+                  value={rawText}
+                  onChange={(e) => setRawText(e.target.value)}
+                />
+
+                <Button 
+                  onClick={() => processText(rawText)} 
+                  disabled={!rawText.trim()}
+                  className="w-full"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Processar Texto
+                </Button>
+              </>
+            )}
           </div>
         )}
 
