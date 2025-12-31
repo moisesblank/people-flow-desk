@@ -207,7 +207,10 @@ export type SystemArea =
   | "aluno-agenda"
   | "aluno-certificados"
   | "aluno-perfil"
-  | "aluno-livro-web";
+  | "aluno-livro-web"
+  // ÁREAS DE GESTÃO ACADÊMICA (/gestaofc)
+  | "flashcards"
+  | "mapas-mentais";
 
 // Mapeamento de URLs para áreas
 const URL_TO_AREA: Record<string, SystemArea> = {
@@ -328,7 +331,9 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-tutoria", "aluno-forum", "aluno-lives", "aluno-duvidas",
     "aluno-revisao", "aluno-laboratorio", "aluno-calculadora", "aluno-tabela-periodica",
     "aluno-flashcards", "aluno-metas", "aluno-agenda", "aluno-certificados", "aluno-perfil",
-    "aluno-livro-web"
+    "aluno-livro-web",
+    // ÁREAS DE GESTÃO ACADÊMICA
+    "flashcards", "mapas-mentais"
   ],
 
   // ADMIN - Igual owner mas sem vida pessoal e monitoramento
@@ -339,7 +344,9 @@ const ROLE_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "financas-empresa", "entradas", "pagamentos", "contabilidade",
     "cursos", "simulados", "afiliados", "alunos", "portal-aluno", "gestao-site",
     "relatorios", "guia", "laboratorio", "site-programador", "livros-web", "lives",
-    "permissoes", "configuracoes", "central-whatsapp", "diagnostico-whatsapp"
+    "permissoes", "configuracoes", "central-whatsapp", "diagnostico-whatsapp",
+    // ÁREAS DE GESTÃO ACADÊMICA
+    "flashcards", "mapas-mentais"
   ],
 
   // COORDENAÇÃO - Gestão de equipe, turmas, professores
