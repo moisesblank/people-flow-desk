@@ -9,6 +9,7 @@ import { lazy } from "react";
 import { ProtectedPage } from "./routeHelpers";
 
 // Lazy imports - Core
+const GestaoPlanejamento = lazy(() => import("@/pages/gestao/GestaoPlanejamento"));
 const Dashboard = lazy(() => import("@/pages/Dashboard"));
 const DashboardExecutivo = lazy(() => import("@/pages/DashboardExecutivo"));
 const Tarefas = lazy(() => import("@/pages/Tarefas"));
