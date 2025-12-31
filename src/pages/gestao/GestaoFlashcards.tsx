@@ -161,12 +161,26 @@ function stripHtml(html: string): string {
     .trim();
 }
 
+function sqlValueToString(value: unknown): string {
+  if (value == null) return '';
+  if (typeof value === 'string') return value;
+  if (value instanceof Uint8Array) return new TextDecoder().decode(value);
+  return String(value);
+}
+
 function parseAnkiFields(flds: string): { front: string; back: string } {
-  const parts = flds.split('\x1f');
-  return {
-    front: stripHtml(parts[0] || ''),
-    back: stripHtml(parts[1] || parts[0] || ''),
-  };
+  // Anki separa campos por Unit Separator (\x1f). Alguns decks usam muitos campos;
+  // então pegamos os 2 primeiros campos NÃO VAZIOS como frente/verso.
+  const parts = flds
+    .split("\x1f")
+    .map((p) => stripHtml(p || ""))
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  const front = parts[0] || "";
+  const back = parts[1] || "";
+
+  return { front, back };
 }
 
 async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
@@ -188,20 +202,32 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
 
   const cards: ImportedCard[] = [];
   try {
-    const result = db.exec(`SELECT flds, tags FROM notes ORDER BY id LIMIT 10000`);
-    if (result.length > 0) {
+    const queries = [
+      `SELECT flds, tags FROM notes ORDER BY id LIMIT 20000`,
+      // Alguns decks ficam mais confiáveis via cards->notes
+      `SELECT n.flds, n.tags FROM cards c JOIN notes n ON n.id = c.nid GROUP BY n.id ORDER BY n.id LIMIT 20000`,
+    ];
+
+    for (const q of queries) {
+      const result = db.exec(q);
+      if (result.length === 0) continue;
+
       for (const row of result[0].values) {
-        const flds = row[0] as string;
-        const tags = (row[1] as string) || '';
+        const flds = sqlValueToString(row[0]);
+        const tags = sqlValueToString(row[1]).trim();
         const { front, back } = parseAnkiFields(flds);
-        if (front && back && front !== back) {
+
+        // Aceita notas com 1 campo (back pode ser vazio)
+        if (front) {
           cards.push({
             question: front.slice(0, 2000),
-            answer: back.slice(0, 5000),
-            tags: tags ? tags.trim().split(' ').filter(Boolean) : undefined,
+            answer: (back || '').slice(0, 5000),
+            tags: tags ? tags.split(' ').filter(Boolean) : undefined,
           });
         }
       }
+
+      if (cards.length > 0) break;
     }
   } finally {
     db.close();
