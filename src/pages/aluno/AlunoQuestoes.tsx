@@ -4,7 +4,7 @@
 // Versão com dados reais do banco
 // ============================================
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
+
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
@@ -106,7 +106,7 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
   const [hasAnswered, setHasAnswered] = useState(false);
 
   // Reset state when question changes
-  useState(() => {
+  useEffect(() => {
     if (question && userAttempt) {
       setSelectedOption(userAttempt.selected_answer);
       setHasAnswered(true);
@@ -116,7 +116,7 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
       setHasAnswered(false);
       setShowExplanation(false);
     }
-  });
+  }, [question?.id, userAttempt]);
 
   const handleSubmitAnswer = () => {
     if (!question || !selectedOption) return;
