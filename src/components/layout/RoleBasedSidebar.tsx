@@ -187,6 +187,8 @@ const gestaoMenuGroups: MenuGroup[] = [
     items: [
       { title: "Finanças Pessoais", url: "/gestaofc/financas-pessoais", icon: Wallet, area: "financas-pessoais" },
       { title: "Finanças Empresa", url: "/gestaofc/financas-empresa", icon: Building2, area: "financas-empresa", badge: "CENTRAL" },
+      { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "dashboard" },
+      { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "dashboard" },
       { title: "Entradas", url: "/gestaofc/entradas", icon: TrendingUp, area: "entradas" },
       { title: "Contabilidade", url: "/gestaofc/contabilidade", icon: Calculator, area: "contabilidade" },
     ],
