@@ -160,10 +160,14 @@ function VideoPlayer({
   const embedUrl = getEmbedUrl();
 
   return (
-    <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
-      {/* Video label */}
-      <div className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs text-white/80">
-        Aula<br/>{lesson.description || "Introdução"}
+    <div className="relative aspect-video bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10">
+      {/* Glow effect border */}
+      <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-destructive/20 via-transparent to-purple-500/10 pointer-events-none" />
+      
+      {/* Video label - Futuristic */}
+      <div className="absolute top-4 left-4 z-10 bg-gradient-to-r from-black/80 to-black/60 backdrop-blur-md px-3 py-2 rounded-lg border border-white/10">
+        <span className="text-[10px] uppercase tracking-wider text-white/60">Aula</span>
+        <p className="text-sm font-medium text-white">{lesson.description || "Conceitos"}</p>
       </div>
 
       {embedUrl && isPlaying ? (
@@ -175,27 +179,30 @@ function VideoPlayer({
           title={lesson.title}
         />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
-          {/* Play Button */}
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950">
+          {/* Animated glow behind play button */}
+          <div className="absolute w-32 h-32 bg-destructive/30 rounded-full blur-3xl animate-pulse" />
+          
+          {/* Play Button - Futuristic */}
           <motion.button
             onClick={() => setIsPlaying(true)}
-            className="relative z-10 w-20 h-20 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-2xl hover:bg-destructive/90 transition-all"
+            className="relative z-10 w-24 h-24 rounded-full bg-gradient-to-br from-destructive to-destructive/80 text-white flex items-center justify-center shadow-[0_0_40px_rgba(220,38,38,0.4)] hover:shadow-[0_0_60px_rgba(220,38,38,0.6)] transition-all duration-300 border-2 border-white/20"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
-            <Play className="h-10 w-10 ml-1" fill="currentColor" />
+            <Play className="h-12 w-12 ml-1" fill="currentColor" />
           </motion.button>
           
           {!lesson.video_url && (
-            <p className="relative z-10 mt-4 text-muted-foreground text-sm">Vídeo em breve</p>
+            <p className="relative z-10 mt-4 text-white/60 text-sm">Vídeo em breve</p>
           )}
         </div>
       )}
 
-      {/* Bottom controls bar (mimicking the design) */}
-      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent flex items-end pb-2 px-4">
-        <div className="w-full h-1 bg-white/30 rounded-full overflow-hidden">
-          <div className="h-full w-0 bg-destructive rounded-full transition-all" />
+      {/* Bottom controls bar - Futuristic */}
+      <div className="absolute bottom-0 left-0 right-0 h-14 bg-gradient-to-t from-black via-black/80 to-transparent flex items-end pb-3 px-4">
+        <div className="w-full h-1.5 bg-white/20 rounded-full overflow-hidden backdrop-blur-sm">
+          <div className="h-full w-0 bg-gradient-to-r from-destructive to-pink-500 rounded-full transition-all" />
         </div>
       </div>
     </div>
@@ -220,37 +227,39 @@ function LessonInfo({
   const [hoverRating, setHoverRating] = useState(0);
 
   return (
-    <div className="bg-card rounded-xl border p-4 space-y-3">
+    <div className="bg-gradient-to-r from-card via-card to-card/80 rounded-2xl border border-border/50 p-5 space-y-4 ring-1 ring-white/5 shadow-xl">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-semibold">{lesson.title}</h2>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
-            <Clock className="h-4 w-4" />
-            <span>Duração: {lesson.duration_minutes || 0}:00</span>
-            <span className="text-primary">•</span>
-            <span className="text-primary">{lesson.description || "Introdução"}</span>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text">{lesson.title}</h2>
+          <div className="flex items-center gap-3 text-sm text-muted-foreground mt-2">
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-muted/50">
+              <Clock className="h-4 w-4 text-primary" />
+              <span>Duração: {lesson.duration_minutes || 0}:00</span>
+            </div>
+            <span className="text-destructive font-medium">•</span>
+            <span className="text-destructive font-medium">{lesson.description || "Conceitos"}</span>
           </div>
         </div>
       </div>
 
-      <div className="flex items-center justify-between flex-wrap gap-4 pt-2 border-t">
+      <div className="flex items-center justify-between flex-wrap gap-4 pt-4 border-t border-border/30">
         {/* Rating Stars */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <span className="text-sm text-muted-foreground">Avalie esta aula:</span>
-          <div className="flex gap-0.5">
+          <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((star) => (
               <button
                 key={star}
                 onClick={() => setRating(star)}
                 onMouseEnter={() => setHoverRating(star)}
                 onMouseLeave={() => setHoverRating(0)}
-                className="p-0.5 transition-transform hover:scale-110"
+                className="p-1 transition-all duration-200 hover:scale-125"
               >
                 <Star
-                  className={`h-5 w-5 transition-colors ${
+                  className={`h-5 w-5 transition-all duration-200 ${
                     star <= (hoverRating || rating)
-                      ? "fill-yellow-500 text-yellow-500"
-                      : "text-muted-foreground/30"
+                      ? "fill-amber-400 text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+                      : "text-muted-foreground/30 hover:text-muted-foreground/50"
                   }`}
                 />
               </button>
@@ -258,14 +267,14 @@ function LessonInfo({
           </div>
         </div>
 
-        {/* TRAMON Button */}
+        {/* TRAMON Button - Futuristic */}
         <Button 
           variant="outline" 
-          className="gap-2 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:bg-primary/20"
+          className="gap-2 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-pink-500/10 border-pink-500/40 hover:border-pink-500/60 hover:bg-pink-500/20 shadow-[0_0_20px_rgba(236,72,153,0.15)] transition-all duration-300"
         >
-          <Sparkles className="h-4 w-4 text-primary" />
-          <span className="font-semibold">TRAMON</span>
-          <span className="text-xs text-muted-foreground">IA Assistente</span>
+          <Sparkles className="h-4 w-4 text-pink-400 animate-pulse" />
+          <span className="font-bold text-pink-400">TRAMON</span>
+          <span className="text-xs text-muted-foreground ml-1">IA Assistente</span>
         </Button>
       </div>
     </div>
@@ -299,40 +308,49 @@ function LessonsSidebar({
     .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
 
   return (
-    <Card className="border-border/50 overflow-hidden">
+    <Card className="border-border/40 overflow-hidden bg-gradient-to-b from-card to-card/50 ring-1 ring-white/5 shadow-xl">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
         <CollapsibleTrigger asChild>
-          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors pb-3">
+          <CardHeader className="cursor-pointer hover:bg-gradient-to-r hover:from-destructive/5 hover:to-transparent transition-all duration-300 pb-3">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2">
-                <Video className="h-5 w-5 text-destructive" />
+              <div className="flex items-center gap-3">
+                <div className="p-2 rounded-xl bg-gradient-to-br from-destructive/20 to-pink-500/10 border border-destructive/30">
+                  <Video className="h-5 w-5 text-destructive" />
+                </div>
                 <div>
-                  <CardTitle className="text-base">Semana {week.week_number} - {week.title}</CardTitle>
+                  <CardTitle className="text-base font-bold">Semana {week.week_number} - {week.title}</CardTitle>
                   <CardDescription className="text-xs">
                     {completedCount} de {lessons.length} aulas concluídas
                   </CardDescription>
                 </div>
               </div>
-              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <div className={`p-1.5 rounded-full transition-colors ${isOpen ? 'bg-destructive/20' : 'bg-muted/50'}`}>
+                {isOpen ? <ChevronUp className="h-4 w-4 text-destructive" /> : <ChevronDown className="h-4 w-4" />}
+              </div>
             </div>
           </CardHeader>
         </CollapsibleTrigger>
 
-        {/* Progress Bar */}
-        <div className="px-4 pb-3">
-          <div className="flex items-center gap-2 mb-1">
-            <Progress value={progressPercent} className="flex-1 h-2" />
-            <span className="text-xs text-muted-foreground">{progressPercent}% concluído</span>
+        {/* Progress Bar - Futuristic */}
+        <div className="px-4 pb-4">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex-1 h-2.5 bg-muted/50 rounded-full overflow-hidden ring-1 ring-white/10">
+              <div 
+                className="h-full bg-gradient-to-r from-destructive via-pink-500 to-destructive rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(220,38,38,0.5)]"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-xs font-medium text-foreground">{progressPercent}% concluído</span>
           </div>
-          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-            <Clock className="h-3 w-3" />
+          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+            <Clock className="h-3.5 w-3.5 text-primary" />
             <span>{remainingMinutes} min restantes</span>
           </div>
         </div>
 
         <CollapsibleContent>
-          <ScrollArea className="h-[350px]">
-            <div className="px-2 pb-2 space-y-1">
+          <ScrollArea className="h-[380px]">
+            <div className="px-3 pb-3 space-y-2">
               {lessons.map((lesson, index) => {
                 const progress = lessonProgress[lesson.id];
                 const isActive = selectedLesson?.id === lesson.id;
@@ -342,23 +360,23 @@ function LessonsSidebar({
                   <button
                     key={lesson.id}
                     onClick={() => onSelectLesson(lesson)}
-                    className={`w-full p-3 rounded-lg text-left transition-all ${
+                    className={`w-full p-4 rounded-xl text-left transition-all duration-200 ${
                       isActive
-                        ? "bg-destructive/20 border-l-4 border-destructive"
+                        ? "bg-gradient-to-r from-destructive/20 via-pink-500/10 to-transparent border-l-4 border-destructive shadow-[inset_0_0_20px_rgba(220,38,38,0.1)]"
                         : isCompleted
-                        ? "bg-green-500/5 hover:bg-green-500/10"
-                        : "hover:bg-muted/50"
+                        ? "bg-gradient-to-r from-emerald-500/10 to-transparent hover:from-emerald-500/15 border border-emerald-500/20"
+                        : "hover:bg-gradient-to-r hover:from-muted/50 hover:to-transparent border border-transparent hover:border-border/50"
                     }`}
                   >
-                    <div className="flex items-start gap-3">
-                      {/* Número/Check */}
+                    <div className="flex items-start gap-4">
+                      {/* Número/Check - Futuristic */}
                       <div
-                        className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 ${
+                        className={`flex items-center justify-center w-8 h-8 rounded-xl text-xs font-bold shrink-0 transition-all duration-200 ${
                           isCompleted
-                            ? "bg-destructive/20 text-destructive"
+                            ? "bg-gradient-to-br from-emerald-500/30 to-green-500/20 text-emerald-400 shadow-[0_0_10px_rgba(16,185,129,0.3)]"
                             : isActive
-                            ? "bg-destructive text-destructive-foreground"
-                            : "bg-muted text-muted-foreground"
+                            ? "bg-gradient-to-br from-destructive to-pink-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]"
+                            : "bg-muted/80 text-muted-foreground"
                         }`}
                       >
                         {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
@@ -366,12 +384,12 @@ function LessonsSidebar({
 
                       {/* Content */}
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h4 className={`font-medium text-sm line-clamp-1 ${isActive ? "text-destructive" : ""}`}>
+                        <div className="flex items-center gap-2 mb-1">
+                          <h4 className={`font-semibold text-sm line-clamp-1 ${isActive ? "text-destructive" : ""}`}>
                             {lesson.title}
                           </h4>
                           {isActive && (
-                            <Badge className="bg-destructive/80 text-destructive-foreground text-[10px] px-1.5 py-0">
+                            <Badge className="bg-gradient-to-r from-destructive to-pink-600 text-white text-[10px] px-2 py-0 border-0 shadow-lg">
                               Atual
                             </Badge>
                           )}
@@ -382,7 +400,7 @@ function LessonsSidebar({
                             {lesson.duration_minutes || 0}:00
                           </span>
                           {isCompleted && (
-                            <span className="text-green-500 flex items-center gap-1">
+                            <span className="text-emerald-400 flex items-center gap-1 font-medium">
                               <CheckCircle2 className="h-3 w-3" />
                               Concluída
                             </span>
@@ -390,16 +408,16 @@ function LessonsSidebar({
                         </div>
                       </div>
 
-                      {/* Play Button */}
+                      {/* Play Button - Futuristic */}
                       <div className="shrink-0">
                         <div
-                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                          className={`w-9 h-9 rounded-xl flex items-center justify-center transition-all duration-200 ${
                             isActive 
-                              ? "bg-destructive text-destructive-foreground" 
-                              : "bg-muted hover:bg-muted-foreground/20"
+                              ? "bg-gradient-to-br from-destructive to-pink-600 text-white shadow-[0_0_15px_rgba(220,38,38,0.4)]" 
+                              : "bg-muted/60 hover:bg-destructive/20 hover:text-destructive"
                           }`}
                         >
-                          <Play className="h-3 w-3 ml-0.5" />
+                          <Play className="h-4 w-4 ml-0.5" />
                         </div>
                       </div>
                     </div>
@@ -456,31 +474,33 @@ function ForumSection({
   const pinnedCount = questions.filter(q => q.isPinned).length;
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <MessageCircle className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Fórum de Dúvidas</CardTitle>
-            <Badge variant="secondary" className="rounded-full">{questions.length}</Badge>
-          </div>
+    <Card className="border-border/40 overflow-hidden bg-gradient-to-b from-card to-card/50 ring-1 ring-white/5 shadow-xl">
+      <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
+        <div className="flex items-center justify-between flex-wrap gap-3">
           <div className="flex items-center gap-3">
-            <span className="text-xs text-muted-foreground flex items-center gap-1">
-              <AlertCircle className="h-3 w-3" />
+            <div className="p-2.5 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/10 border border-primary/30">
+              <MessageCircle className="h-5 w-5 text-primary" />
+            </div>
+            <CardTitle className="text-lg font-bold">Fórum de Dúvidas</CardTitle>
+            <Badge className="bg-primary/20 text-primary border-primary/30 rounded-full px-2.5">{questions.length}</Badge>
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-muted-foreground flex items-center gap-1.5 bg-muted/30 px-3 py-1.5 rounded-full">
+              <Clock className="h-3 w-3 text-primary" />
               Respostas em até 24h por e-mail
             </span>
-            <Badge variant="outline" className="text-green-500 border-green-500/30">
+            <Badge className="bg-gradient-to-r from-emerald-500/20 to-green-500/10 text-emerald-400 border-emerald-500/30">
               <Pin className="h-3 w-3 mr-1" />
               {pinnedCount} fixada
             </Badge>
           </div>
         </div>
       </CardHeader>
-      <CardContent className="space-y-4">
-        {/* Input de nova dúvida */}
-        <div className="flex items-start gap-3">
-          <Avatar className="h-10 w-10">
-            <AvatarFallback className="bg-primary/20 text-primary">
+      <CardContent className="space-y-5">
+        {/* Input de nova dúvida - Futuristic */}
+        <div className="flex items-start gap-4 p-4 rounded-xl bg-gradient-to-r from-muted/30 via-muted/20 to-transparent border border-border/30">
+          <Avatar className="h-11 w-11 ring-2 ring-primary/30">
+            <AvatarFallback className="bg-gradient-to-br from-primary/30 to-purple-500/20 text-primary font-bold">
               {userName?.charAt(0) || "U"}
             </AvatarFallback>
           </Avatar>
@@ -490,12 +510,15 @@ function ForumSection({
               onChange={(e) => setNewQuestion(e.target.value)}
               placeholder="Digite sua dúvida sobre esta aula..."
               rows={2}
-              className="resize-none bg-muted/30 border-muted"
+              className="resize-none bg-background/50 border-border/50 focus:border-primary/50 transition-colors"
             />
           </div>
         </div>
         <div className="flex justify-end">
-          <Button disabled={!newQuestion.trim()} className="gap-2 bg-destructive hover:bg-destructive/90">
+          <Button 
+            disabled={!newQuestion.trim()} 
+            className="gap-2 bg-gradient-to-r from-destructive to-pink-600 hover:from-destructive/90 hover:to-pink-600/90 shadow-[0_0_20px_rgba(220,38,38,0.3)] border-0"
+          >
             <Send className="h-4 w-4" />
             Enviar Dúvida
           </Button>
@@ -593,37 +616,42 @@ function SmartSchedule({
   ];
 
   return (
-    <Card className="border-border/50">
-      <CardHeader className="pb-3">
+    <Card className="border-border/40 overflow-hidden bg-gradient-to-b from-card to-card/50 ring-1 ring-white/5 shadow-xl">
+      <CardHeader className="pb-4 bg-gradient-to-r from-primary/5 to-transparent">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/10">
-              <Target className="h-5 w-5 text-primary" />
+          <div className="flex items-center gap-4">
+            <div className="p-3 rounded-xl bg-gradient-to-br from-primary/20 to-purple-500/10 border border-primary/30 shadow-[0_0_15px_rgba(139,92,246,0.2)]">
+              <Target className="h-6 w-6 text-primary" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <CardTitle className="text-lg">Cronograma Inteligente</CardTitle>
-                <Badge className="bg-primary/20 text-primary border-primary/30">
-                  <Sparkles className="h-3 w-3 mr-1" />
+              <div className="flex items-center gap-3">
+                <CardTitle className="text-xl font-bold">Cronograma Inteligente</CardTitle>
+                <Badge className="bg-gradient-to-r from-primary/20 to-purple-500/20 text-primary border-primary/30 shadow-sm">
+                  <Sparkles className="h-3 w-3 mr-1 animate-pulse" />
                   ENA vIA
                 </Badge>
               </div>
-              <CardDescription>
+              <CardDescription className="mt-1">
                 {completedCount} de {activities.length} atividades concluídas
               </CardDescription>
             </div>
           </div>
           
-          <div className="text-right">
-            <div className="text-2xl font-bold text-destructive">{progressPercent}%</div>
-            <Progress value={progressPercent} className="w-20 h-2 mt-1" />
-            <span className="text-xs text-muted-foreground">progresso geral</span>
+          <div className="text-right bg-gradient-to-br from-destructive/10 to-pink-500/5 p-4 rounded-xl border border-destructive/20">
+            <div className="text-3xl font-black bg-gradient-to-r from-destructive to-pink-500 bg-clip-text text-transparent">{progressPercent}%</div>
+            <div className="w-24 h-2.5 bg-muted/50 rounded-full overflow-hidden mt-2 ring-1 ring-white/10">
+              <div 
+                className="h-full bg-gradient-to-r from-destructive to-pink-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(220,38,38,0.5)]"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+            <span className="text-xs text-muted-foreground mt-1 block">progresso geral</span>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
-        {/* Table Header */}
-        <div className="grid grid-cols-10 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b mb-2">
+      <CardContent className="pt-2">
+        {/* Table Header - Futuristic */}
+        <div className="grid grid-cols-10 gap-2 text-xs font-semibold text-muted-foreground pb-3 border-b border-border/30 mb-3 uppercase tracking-wider">
           <span>Atividade</span>
           <span>Categoria</span>
           <span className="text-center">%</span>
@@ -636,74 +664,92 @@ function SmartSchedule({
           <span className="text-center">Resolvido?</span>
         </div>
 
-        {/* Table Rows */}
-        <div className="space-y-1">
+        {/* Table Rows - Futuristic */}
+        <div className="space-y-2">
           {activities.map((activity, index) => {
             const isCompleted = activity.progress === 100;
             return (
-              <div key={index} className="grid grid-cols-10 gap-2 items-center text-sm py-3 hover:bg-muted/30 rounded-lg transition-colors">
+              <div 
+                key={index} 
+                className={`grid grid-cols-10 gap-2 items-center text-sm py-4 px-3 rounded-xl transition-all duration-200 ${
+                  isCompleted 
+                    ? 'bg-gradient-to-r from-emerald-500/10 to-transparent border border-emerald-500/20' 
+                    : 'hover:bg-gradient-to-r hover:from-muted/40 hover:to-transparent border border-transparent hover:border-border/30'
+                }`}
+              >
                 {/* Atividade */}
-                <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4 text-muted-foreground" />
-                  <span className="font-medium">{activity.code}</span>
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 rounded-lg bg-muted/50">
+                    <Video className="h-4 w-4 text-muted-foreground" />
+                  </div>
+                  <span className="font-semibold">{activity.code}</span>
                 </div>
 
                 {/* Categoria */}
-                <Badge variant="outline" className={`text-xs justify-center ${activity.categoryColor} text-white border-0`}>
+                <Badge className={`text-xs justify-center ${activity.categoryColor} text-white border-0 shadow-sm`}>
                   {activity.category}
                 </Badge>
 
-                {/* Progress */}
-                <div className="flex items-center justify-center gap-1">
-                  <div className={`w-16 h-1.5 rounded-full overflow-hidden ${
-                    activity.progress === 100 ? 'bg-destructive' : activity.progress > 0 ? 'bg-destructive/30' : 'bg-blue-500/30'
+                {/* Progress - Futuristic */}
+                <div className="flex items-center justify-center gap-2">
+                  <div className={`w-14 h-2 rounded-full overflow-hidden ring-1 ring-white/10 ${
+                    activity.progress === 100 ? 'bg-emerald-500/30' : activity.progress > 0 ? 'bg-destructive/20' : 'bg-muted/50'
                   }`}>
                     <div 
-                      className={`h-full transition-all ${
-                        activity.progress === 100 ? 'bg-destructive' : activity.progress > 0 ? 'bg-destructive' : 'bg-blue-500'
+                      className={`h-full transition-all duration-300 rounded-full ${
+                        activity.progress === 100 ? 'bg-gradient-to-r from-emerald-500 to-green-400' : activity.progress > 0 ? 'bg-gradient-to-r from-destructive to-pink-500' : 'bg-blue-500'
                       }`}
                       style={{ width: `${activity.progress}%` }}
                     />
                   </div>
-                  <span className="text-xs w-8">{activity.progress}%</span>
+                  <span className="text-xs font-medium w-8">{activity.progress}%</span>
                 </div>
 
-                {/* Resumos */}
+                {/* Icons - Futuristic hover effects */}
                 <div className="flex justify-center">
-                  <BookOpen className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_10px_rgba(139,92,246,0.2)] transition-all cursor-pointer group">
+                    <BookOpen className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
 
-                {/* Flashcards */}
                 <div className="flex justify-center">
-                  <BrainCircuit className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_10px_rgba(139,92,246,0.2)] transition-all cursor-pointer group">
+                    <BrainCircuit className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
 
-                {/* Simulado */}
                 <div className="flex justify-center">
-                  <FileText className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_10px_rgba(139,92,246,0.2)] transition-all cursor-pointer group">
+                    <FileText className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
 
-                {/* Questões */}
                 <div className="flex justify-center">
-                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_10px_rgba(139,92,246,0.2)] transition-all cursor-pointer group">
+                    <HelpCircle className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
 
-                {/* Link */}
                 <div className="flex justify-center">
-                  <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_10px_rgba(139,92,246,0.2)] transition-all cursor-pointer group">
+                    <ExternalLink className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
 
-                {/* Mapa Mental */}
                 <div className="flex justify-center">
-                  <BrainCircuit className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                  <div className="p-2 rounded-lg hover:bg-primary/10 hover:shadow-[0_0_10px_rgba(139,92,246,0.2)] transition-all cursor-pointer group">
+                    <BrainCircuit className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors" />
+                  </div>
                 </div>
 
-                {/* Checkbox */}
+                {/* Checkbox - Futuristic */}
                 <div className="flex justify-center">
                   {isCompleted ? (
-                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                    <div className="p-1 rounded-lg bg-emerald-500/20 shadow-[0_0_10px_rgba(16,185,129,0.3)]">
+                      <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+                    </div>
                   ) : (
-                    <div className="w-5 h-5 rounded border-2 border-muted-foreground/30 hover:border-primary cursor-pointer transition-colors" />
+                    <div className="w-6 h-6 rounded-lg border-2 border-muted-foreground/30 hover:border-primary hover:bg-primary/10 cursor-pointer transition-all duration-200" />
                   )}
                 </div>
               </div>
@@ -711,15 +757,15 @@ function SmartSchedule({
           })}
         </div>
 
-        {/* TRAMON v8 floating button */}
-        <div className="flex justify-center mt-4">
+        {/* TRAMON v8 floating button - Futuristic */}
+        <div className="flex justify-center mt-6">
           <Button 
             variant="outline" 
-            className="gap-2 bg-gradient-to-r from-primary/10 via-background to-primary/10 border-primary/30 shadow-lg"
+            className="gap-3 bg-gradient-to-r from-pink-500/10 via-purple-500/10 to-pink-500/10 border-pink-500/40 hover:border-pink-500/60 shadow-[0_0_30px_rgba(236,72,153,0.2)] hover:shadow-[0_0_40px_rgba(236,72,153,0.3)] transition-all duration-300 px-6 py-5"
           >
-            <Sparkles className="h-5 w-5 text-primary" />
-            <span className="font-bold">TRAMON v8</span>
-            <Sparkles className="h-5 w-5 text-primary" />
+            <Sparkles className="h-5 w-5 text-pink-400 animate-pulse" />
+            <span className="font-black text-lg bg-gradient-to-r from-pink-400 to-purple-400 bg-clip-text text-transparent">TRAMON v8</span>
+            <Sparkles className="h-5 w-5 text-pink-400 animate-pulse" />
           </Button>
         </div>
       </CardContent>
@@ -901,12 +947,12 @@ export default function AlunoPlanejamento() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Top Bar */}
-      <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
-        <div className="container mx-auto px-4 py-3">
+    <div className="min-h-screen bg-gradient-to-b from-background via-background to-background/95">
+      {/* Top Bar - Futuristic */}
+      <div className="border-b border-border/40 bg-gradient-to-r from-card/80 via-card/60 to-card/80 backdrop-blur-xl sticky top-0 z-10 shadow-lg">
+        <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between gap-4 flex-wrap">
-            {/* Week Selector */}
+            {/* Week Selector - Futuristic */}
             <Select
               value={selectedWeek?.id || ""}
               onValueChange={(value) => {
@@ -914,22 +960,24 @@ export default function AlunoPlanejamento() {
                 if (week) setSelectedWeek(week);
               }}
             >
-              <SelectTrigger className="w-full max-w-md bg-destructive/90 text-destructive-foreground border-destructive hover:bg-destructive">
-                <div className="flex items-center gap-2">
-                  <Video className="h-4 w-4" />
-                  <span className="font-medium">
+              <SelectTrigger className="w-full max-w-md bg-gradient-to-r from-destructive to-pink-600 text-white border-0 hover:from-destructive/90 hover:to-pink-600/90 shadow-[0_0_25px_rgba(220,38,38,0.4)] rounded-xl h-11 transition-all duration-300">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 rounded-lg bg-white/20">
+                    <Video className="h-4 w-4" />
+                  </div>
+                  <span className="font-semibold">
                     {selectedWeek ? `Semana ${selectedWeek.week_number} - ${selectedWeek.title}` : "Selecione uma semana"}
                   </span>
                 </div>
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent className="bg-card/95 backdrop-blur-xl border-border/50">
                 {weeks.map((week) => {
                   const wp = weekProgress[week.id];
                   const isCompleted = wp?.is_completed;
                   return (
                     <SelectItem key={week.id} value={week.id}>
                       <div className="flex items-center gap-2">
-                        {isCompleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        {isCompleted && <CheckCircle2 className="h-4 w-4 text-emerald-400" />}
                         <span>Semana {week.week_number} - {week.title}</span>
                         {wp && <Badge variant="outline" className="ml-2 text-xs">{wp.progress_percent}%</Badge>}
                       </div>
@@ -939,30 +987,33 @@ export default function AlunoPlanejamento() {
               </SelectContent>
             </Select>
 
-            {/* Quick Stats */}
-            <div className="flex items-center gap-4">
+            {/* Quick Stats - Futuristic */}
+            <div className="flex items-center gap-3">
               {/* Tempo sugerido */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
-                <Timer className="h-4 w-4 text-muted-foreground" />
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-muted/50 to-muted/30 rounded-xl border border-border/40 ring-1 ring-white/5">
+                <Timer className="h-4 w-4 text-primary" />
                 <span className="text-sm text-muted-foreground">Tempo sugerido:</span>
-                <Badge variant="secondary">{Math.ceil(remainingMinutes / 60)}h</Badge>
+                <Badge className="bg-primary/20 text-primary border-primary/30">{Math.ceil(remainingMinutes / 60)}h</Badge>
               </div>
 
               {/* Próxima Live */}
-              <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg border border-destructive/30">
-                <Radio className="h-4 w-4 text-destructive" />
-                <span className="text-sm">Próxima Live</span>
+              <div className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-destructive/10 to-pink-500/10 rounded-xl border border-destructive/30 shadow-[0_0_15px_rgba(220,38,38,0.1)]">
+                <div className="relative">
+                  <Radio className="h-4 w-4 text-destructive" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2 h-2 bg-destructive rounded-full animate-ping" />
+                </div>
+                <span className="text-sm font-medium">Próxima Live</span>
               </div>
 
               {/* Revisão */}
               {selectedWeek && (
-                <Badge className="bg-destructive text-destructive-foreground border-0 py-1.5 px-4">
+                <Badge className="bg-gradient-to-r from-destructive to-pink-600 text-white border-0 py-2 px-5 shadow-[0_0_20px_rgba(220,38,38,0.3)] text-sm font-semibold">
                   Revisão: {selectedWeek.title.split("-")[1]?.trim() || "Geral"}
                 </Badge>
               )}
 
               {/* Minhas Observações */}
-              <Button variant="outline" size="sm" className="gap-2">
+              <Button variant="outline" size="sm" className="gap-2 bg-muted/30 border-border/50 hover:bg-muted/50 hover:border-primary/30 transition-all duration-200">
                 <Pencil className="h-4 w-4" />
                 Minhas Observações
               </Button>
