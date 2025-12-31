@@ -2,12 +2,13 @@
 // 🧠 PARSE ANKI APKG - Edge Function
 // Processa arquivos .apkg (formato Anki) e extrai flashcards
 // APKG = ZIP contendo SQLite com cards
+// Usa sqlite3 nativo do Deno
 // ============================================
 
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import JSZip from "https://esm.sh/jszip@3.10.1";
-import initSqlJs from "https://esm.sh/sql.js@1.9.0";
+import { DB } from "https://deno.land/x/sqlite@v3.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -33,6 +34,7 @@ function stripHtml(html: string): string {
     .replace(/&amp;/g, '&')
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
+    .replace(/\n+/g, '\n')
     .trim();
 }
 
@@ -85,7 +87,6 @@ serve(async (req) => {
     // Obter arquivo do request
     const formData = await req.formData();
     const file = formData.get("file") as File;
-    const lessonId = formData.get("lesson_id") as string | null;
 
     if (!file) {
       return new Response(
@@ -103,22 +104,25 @@ serve(async (req) => {
     const zip = await JSZip.loadAsync(arrayBuffer);
     console.log("[parse-anki-apkg] ZIP extraído, procurando collection.anki2...");
 
-    // Procurar o banco SQLite (collection.anki2)
+    // Procurar o banco SQLite (collection.anki2 ou collection.anki21)
     let dbFile: JSZip.JSZipObject | null = null;
+    let dbFileName: string = "";
     
     for (const [filename, zipObject] of Object.entries(zip.files)) {
-      console.log(`[parse-anki-apkg] Arquivo no ZIP: ${filename}`);
-      if (filename.endsWith('.anki2') || filename === 'collection.anki2') {
+      if (filename === 'collection.anki2' || filename === 'collection.anki21') {
         dbFile = zipObject;
+        dbFileName = filename;
+        console.log(`[parse-anki-apkg] Encontrado: ${filename}`);
         break;
       }
     }
 
     if (!dbFile) {
-      // Tentar encontrar qualquer arquivo que possa ser SQLite
+      // Tentar encontrar qualquer arquivo .anki2 ou .anki21
       for (const [filename, zipObject] of Object.entries(zip.files)) {
-        if (!zipObject.dir && !filename.includes('media')) {
+        if (filename.endsWith('.anki2') || filename.endsWith('.anki21')) {
           dbFile = zipObject;
+          dbFileName = filename;
           console.log(`[parse-anki-apkg] Usando arquivo alternativo: ${filename}`);
           break;
         }
@@ -126,75 +130,84 @@ serve(async (req) => {
     }
 
     if (!dbFile) {
+      console.error("[parse-anki-apkg] Nenhum arquivo de banco de dados encontrado");
+      const fileList = Object.keys(zip.files).join(', ');
       return new Response(
-        JSON.stringify({ error: "Arquivo collection.anki2 não encontrado no APKG" }),
+        JSON.stringify({ 
+          error: "Arquivo collection.anki2 não encontrado no APKG",
+          details: `Arquivos no ZIP: ${fileList}`
+        }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Extrair banco SQLite
+    // Extrair banco SQLite para arquivo temporário
     const dbData = await dbFile.async("uint8array");
     console.log(`[parse-anki-apkg] Banco SQLite extraído: ${dbData.length} bytes`);
 
-    // Inicializar SQL.js
-    const SQL = await initSqlJs({
-      locateFile: (file: string) => `https://sql.js.org/dist/${file}`
-    });
+    // Salvar em arquivo temporário
+    const tempPath = `/tmp/anki_${Date.now()}.db`;
+    await Deno.writeFile(tempPath, dbData);
+    console.log(`[parse-anki-apkg] Banco salvo em: ${tempPath}`);
 
-    // Carregar banco de dados
-    const db = new SQL.Database(dbData);
+    // Abrir banco de dados com sqlite nativo do Deno
+    const db = new DB(tempPath, { mode: "read" });
 
     // Extrair cards da tabela notes
     const cards: AnkiCard[] = [];
     
     try {
       // Query para obter notas (cards)
-      const result = db.exec(`
-        SELECT n.flds, n.tags 
-        FROM notes n 
-        ORDER BY n.id
+      const rows = db.query<[string, string]>(`
+        SELECT flds, tags 
+        FROM notes 
+        ORDER BY id
         LIMIT 10000
       `);
 
-      if (result.length > 0) {
-        const rows = result[0].values;
-        console.log(`[parse-anki-apkg] Encontrados ${rows.length} cards`);
-
-        for (const row of rows) {
-          const flds = row[0] as string;
-          const tags = row[1] as string;
-
-          const { front, back } = parseAnkiFields(flds);
-          
-          if (front && back && front !== back) {
-            cards.push({
-              question: front.slice(0, 2000), // Limitar tamanho
-              answer: back.slice(0, 5000),
-              tags: tags ? tags.trim().split(' ').filter(Boolean) : undefined,
-            });
-          }
+      console.log(`[parse-anki-apkg] Query executada, processando resultados...`);
+      
+      let count = 0;
+      for (const [flds, tags] of rows) {
+        const { front, back } = parseAnkiFields(flds);
+        
+        if (front && back && front !== back) {
+          cards.push({
+            question: front.slice(0, 2000), // Limitar tamanho
+            answer: back.slice(0, 5000),
+            tags: tags ? tags.trim().split(' ').filter(Boolean) : undefined,
+          });
+          count++;
         }
       }
+      
+      console.log(`[parse-anki-apkg] ${count} cards extraídos`);
+      
     } catch (sqlError) {
       console.error("[parse-anki-apkg] Erro SQL:", sqlError);
       
-      // Tentar query alternativa
+      // Tentar query alternativa (sem tags)
       try {
-        const result = db.exec(`SELECT flds FROM notes LIMIT 10000`);
-        if (result.length > 0) {
-          for (const row of result[0].values) {
-            const { front, back } = parseAnkiFields(row[0] as string);
-            if (front && back) {
-              cards.push({ question: front, answer: back });
-            }
+        const rows = db.query<[string]>(`SELECT flds FROM notes LIMIT 10000`);
+        for (const [flds] of rows) {
+          const { front, back } = parseAnkiFields(flds);
+          if (front && back) {
+            cards.push({ question: front.slice(0, 2000), answer: back.slice(0, 5000) });
           }
         }
+        console.log(`[parse-anki-apkg] Fallback: ${cards.length} cards extraídos`);
       } catch (fallbackError) {
         console.error("[parse-anki-apkg] Fallback também falhou:", fallbackError);
       }
     }
 
+    // Fechar banco e limpar arquivo temporário
     db.close();
+    try {
+      await Deno.remove(tempPath);
+    } catch (e) {
+      console.warn("[parse-anki-apkg] Não foi possível remover arquivo temporário:", e);
+    }
 
     if (cards.length === 0) {
       return new Response(
@@ -205,7 +218,7 @@ serve(async (req) => {
 
     console.log(`[parse-anki-apkg] ${cards.length} flashcards extraídos com sucesso`);
 
-    // Retornar cards parseados (não inserir ainda - deixar o frontend decidir)
+    // Retornar cards parseados
     return new Response(
       JSON.stringify({
         success: true,
