@@ -169,24 +169,39 @@ interface QuestionImportDialogProps {
 // ============================================
 
 const COLUMN_MAPPINGS: Record<string, string[]> = {
-  question_text: ['pergunta', 'enunciado', 'questao', 'questão', 'question', 'texto', 'statement'],
-  option_a: ['a', 'alternativa_a', 'opcao_a', 'opção_a', 'option_a', 'alt_a'],
-  option_b: ['b', 'alternativa_b', 'opcao_b', 'opção_b', 'option_b', 'alt_b'],
-  option_c: ['c', 'alternativa_c', 'opcao_c', 'opção_c', 'option_c', 'alt_c'],
-  option_d: ['d', 'alternativa_d', 'opcao_d', 'opção_d', 'option_d', 'alt_d'],
-  option_e: ['e', 'alternativa_e', 'opcao_e', 'opção_e', 'option_e', 'alt_e'],
-  correct_answer: ['resposta', 'gabarito', 'correta', 'correct', 'answer', 'resp'],
-  explanation: ['explicacao', 'explicação', 'resolucao', 'resolução', 'explanation', 'justificativa'],
-  difficulty: ['dificuldade', 'nivel', 'nível', 'difficulty', 'level'],
-  banca: ['banca', 'organizadora', 'board', 'institution'],
-  ano: ['ano', 'year', 'data', 'date'],
-  macro: ['macro', 'area', 'área', 'grande_area', 'macroArea'],
-  micro: ['micro', 'disciplina', 'subject', 'microArea'],
-  tema: ['tema', 'topic', 'assunto', 'conteudo', 'conteúdo'],
-  subtema: ['subtema', 'subtopic', 'subassunto'],
-  tags: ['tags', 'etiquetas', 'labels', 'keywords', 'palavras_chave'],
-  competencia_enem: ['competencia', 'competência', 'competencia_enem'],
-  habilidade_enem: ['habilidade', 'habilidade_enem', 'h'],
+  // Enunciado - suporte ao seu Excel
+  question_text: ['enunciado', 'pergunta', 'questao', 'questão', 'question', 'texto', 'statement'],
+  
+  // Alternativas - suporte a "ALTERNATIVA A", "ALTERNATIVA_A", "A", etc.
+  option_a: ['alternativa a', 'alternativa_a', 'opcao_a', 'opção_a', 'option_a', 'alt_a', 'a'],
+  option_b: ['alternativa b', 'alternativa_b', 'opcao_b', 'opção_b', 'option_b', 'alt_b', 'b'],
+  option_c: ['alternativa c', 'alternativa_c', 'opcao_c', 'opção_c', 'option_c', 'alt_c', 'c'],
+  option_d: ['alternativa d', 'alternativa_d', 'opcao_d', 'opção_d', 'option_d', 'alt_d', 'd'],
+  option_e: ['alternativa e', 'alternativa_e', 'opcao_e', 'opção_e', 'option_e', 'alt_e', 'e'],
+  
+  // Gabarito
+  correct_answer: ['gabarito', 'resposta', 'correta', 'correct', 'answer', 'resp', 'resposta_correta'],
+  
+  // Explicação/Resolução
+  explanation: ['explicacao', 'explicação', 'resolucao', 'resolução', 'explanation', 'justificativa', 'comentario', 'comentário'],
+  
+  // Dificuldade
+  difficulty: ['dificuldade', 'nivel', 'nível', 'difficulty', 'level', 'grau'],
+  
+  // Banca e Ano
+  banca: ['banca', 'organizadora', 'board', 'institution', 'instituicao', 'instituição'],
+  ano: ['ano', 'year', 'data', 'date', 'edicao', 'edição'],
+  
+  // Taxonomia - suporte direto às suas colunas
+  macro: ['macro', 'area', 'área', 'grande_area', 'grande área', 'macroArea', 'macro_area'],
+  micro: ['micro', 'disciplina', 'subject', 'microArea', 'micro_area'],
+  tema: ['tema', 'topic', 'assunto', 'conteudo', 'conteúdo', 'topico', 'tópico'],
+  subtema: ['subtema', 'subtopic', 'subassunto', 'sub_tema', 'sub tema'],
+  
+  // Extras
+  tags: ['tags', 'etiquetas', 'labels', 'keywords', 'palavras_chave', 'palavras chave'],
+  competencia_enem: ['competencia', 'competência', 'competencia_enem', 'comp'],
+  habilidade_enem: ['habilidade', 'habilidade_enem', 'hab'],
 };
 
 const DIFFICULTY_MAPPING: Record<string, 'facil' | 'medio' | 'dificil'> = {
