@@ -223,6 +223,8 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Questões", url: "/gestaofc/questoes", icon: Brain, area: "cursos" },
       { title: "Lives", url: "/gestaofc/lives", icon: PlayCircle, area: "lives" },
       { title: "Laboratório", url: "/gestaofc/laboratorio", icon: Zap, area: "laboratorio" },
+      { title: "Videoaulas", url: "/gestaofc/videoaulas", icon: PlayCircle, area: "videoaulas" },
+      { title: "Tutoria", url: "/gestaofc/tutoria", icon: MessageSquareText, area: "tutoria" },
     ],
   },
   {
