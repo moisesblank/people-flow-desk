@@ -741,7 +741,7 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
   const [rawText, setRawText] = useState('');
   const [step, setStep] = useState<'upload' | 'preview' | 'importing'>('upload');
   const [importProgress, setImportProgress] = useState(0);
-  const [selectedLessonId, setSelectedLessonId] = useState<string>('');
+  const [selectedLessonId, setSelectedLessonId] = useState<string>('none');
   const [processingApkg, setProcessingApkg] = useState(false);
   const { data: lessons = [] } = useLessonsForSelect();
 
@@ -899,7 +899,7 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
           answer: card.answer,
           source: 'import',
           tags: card.tags || null,
-          lesson_id: selectedLessonId || null,
+          lesson_id: selectedLessonId === 'none' ? null : selectedLessonId,
           area_id: areaId,
           due_date: new Date().toISOString().split('T')[0],
           stability: FSRS_PARAMS.initialStability[0],
@@ -1035,7 +1035,7 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
                   <SelectValue placeholder="Nenhuma aula selecionada" />
                 </SelectTrigger>
                 <SelectContent className="max-h-60">
-                  <SelectItem value="">Nenhuma (flashcards avulsos)</SelectItem>
+                  <SelectItem value="none">Nenhuma (flashcards avulsos)</SelectItem>
                   {lessons.map(lesson => (
                     <SelectItem key={lesson.id} value={lesson.id}>
                       {lesson.areas?.name ? `[${lesson.areas.name}] ` : ''}
