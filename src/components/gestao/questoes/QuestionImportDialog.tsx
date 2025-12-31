@@ -228,12 +228,41 @@ function normalizeColumnName(name: string): string {
 
 function findColumnMapping(columnName: string): string | null {
   const normalized = normalizeColumnName(columnName);
+
+  // Scoring para evitar falsos positivos (ex: alias "a" bater em "alternativa_b")
+  let best: { field: string; score: number } | null = null;
+
   for (const [field, aliases] of Object.entries(COLUMN_MAPPINGS)) {
-    if (aliases.some(alias => normalizeColumnName(alias) === normalized || normalized.includes(normalizeColumnName(alias)))) {
-      return field;
+    for (const alias of aliases) {
+      const aliasNorm = normalizeColumnName(alias);
+      if (!aliasNorm) continue;
+
+      // Match exato é sempre o melhor
+      if (normalized === aliasNorm) {
+        const score = 1000 + aliasNorm.length;
+        if (!best || score > best.score) best = { field, score };
+        continue;
+      }
+
+      // Evita que aliases curtos ("a", "b", "c") batam por substring
+      if (aliasNorm.length <= 2) {
+        const tokens = normalized.split('_').filter(Boolean);
+        if (tokens.includes(aliasNorm)) {
+          const score = 200 + aliasNorm.length;
+          if (!best || score > best.score) best = { field, score };
+        }
+        continue;
+      }
+
+      // Substring apenas para aliases "de verdade" (>=3)
+      if (normalized.includes(aliasNorm)) {
+        const score = 100 + aliasNorm.length;
+        if (!best || score > best.score) best = { field, score };
+      }
     }
   }
-  return null;
+
+  return best?.field ?? null;
 }
 
 function detectBanca(text: string): string | null {
