@@ -887,6 +887,7 @@ function SmartSchedule({
       </Card>
     </div>
   );
+}
 
 // ============================================
 // COMPONENTE PRINCIPAL
