@@ -52,6 +52,11 @@ interface Question {
   ano?: number | null;
   points: number;
   is_active: boolean;
+  // Estrutura hierárquica
+  macro?: string | null;
+  micro?: string | null;
+  tema?: string | null;
+  subtema?: string | null;
 }
 
 interface QuestionAttempt {
@@ -86,6 +91,98 @@ const BANCAS = [
   { value: 'ime', label: 'IME' },
   { value: 'propria', label: 'Própria' },
 ];
+
+// ============================================
+// ESTRUTURA HIERÁRQUICA: MACRO → MICRO → TEMA → SUBTEMA
+// ============================================
+
+const MACROS = [
+  { value: 'quimica_geral', label: '⚗️ Química Geral' },
+  { value: 'quimica_organica', label: '🧪 Química Orgânica' },
+  { value: 'fisico_quimica', label: '📊 Físico-Química' },
+];
+
+const MICROS: Record<string, { value: string; label: string }[]> = {
+  quimica_geral: [
+    { value: 'introducao_inorganica', label: 'Introdução à Inorgânica' },
+    { value: 'atomistica', label: 'Atomística' },
+    { value: 'tabela_periodica', label: 'Tabela Periódica' },
+    { value: 'ligacoes_quimicas', label: 'Ligações Químicas' },
+    { value: 'funcoes_inorganicas', label: 'Funções Inorgânicas' },
+    { value: 'estequiometria', label: 'Estequiometria' },
+    { value: 'solucoes', label: 'Soluções' },
+    { value: 'reacoes_quimicas', label: 'Reações Químicas' },
+  ],
+  quimica_organica: [
+    { value: 'introducao_organica', label: 'Introdução à Orgânica' },
+    { value: 'hidrocarbonetos', label: 'Hidrocarbonetos' },
+    { value: 'funcoes_oxigenadas', label: 'Funções Oxigenadas' },
+    { value: 'funcoes_nitrogenadas', label: 'Funções Nitrogenadas' },
+    { value: 'isomeria', label: 'Isomeria' },
+    { value: 'polimeros', label: 'Polímeros' },
+    { value: 'bioquimica', label: 'Bioquímica' },
+  ],
+  fisico_quimica: [
+    { value: 'termoquimica', label: 'Termoquímica' },
+    { value: 'cinetica', label: 'Cinética Química' },
+    { value: 'equilibrio', label: 'Equilíbrio Químico' },
+    { value: 'eletroquimica', label: 'Eletroquímica' },
+    { value: 'radioatividade', label: 'Radioatividade' },
+    { value: 'propriedades_coligativas', label: 'Propriedades Coligativas' },
+  ],
+};
+
+const TEMAS: Record<string, { value: string; label: string }[]> = {
+  introducao_inorganica: [
+    { value: 'separacao_mistura', label: 'Separação de Mistura' },
+    { value: 'substancias_puras', label: 'Substâncias Puras' },
+    { value: 'estados_fisicos', label: 'Estados Físicos' },
+  ],
+  atomistica: [
+    { value: 'modelos_atomicos', label: 'Modelos Atômicos' },
+    { value: 'distribuicao_eletronica', label: 'Distribuição Eletrônica' },
+    { value: 'numeros_quanticos', label: 'Números Quânticos' },
+  ],
+  hidrocarbonetos: [
+    { value: 'alcanos', label: 'Alcanos' },
+    { value: 'alcenos', label: 'Alcenos' },
+    { value: 'alcinos', label: 'Alcinos' },
+    { value: 'aromaticos', label: 'Aromáticos' },
+  ],
+  termoquimica: [
+    { value: 'entalpia', label: 'Entalpia' },
+    { value: 'lei_hess', label: 'Lei de Hess' },
+    { value: 'energia_ligacao', label: 'Energia de Ligação' },
+  ],
+  equilibrio: [
+    { value: 'constante_equilibrio', label: 'Constante de Equilíbrio' },
+    { value: 'deslocamento', label: 'Deslocamento de Equilíbrio' },
+    { value: 'equilibrio_ionico', label: 'Equilíbrio Iônico' },
+    { value: 'ph_poh', label: 'pH e pOH' },
+  ],
+};
+
+const SUBTEMAS: Record<string, { value: string; label: string }[]> = {
+  separacao_mistura: [
+    { value: 'mistura_homogenea', label: 'Mistura Homogênea' },
+    { value: 'mistura_heterogenea', label: 'Mistura Heterogênea' },
+    { value: 'destilacao', label: 'Destilação' },
+    { value: 'filtracao', label: 'Filtração' },
+    { value: 'decantacao', label: 'Decantação' },
+  ],
+  distribuicao_eletronica: [
+    { value: 'diagrama_linus_pauling', label: 'Diagrama de Linus Pauling' },
+    { value: 'camada_valencia', label: 'Camada de Valência' },
+  ],
+  alcanos: [
+    { value: 'nomenclatura_alcanos', label: 'Nomenclatura de Alcanos' },
+    { value: 'propriedades_alcanos', label: 'Propriedades de Alcanos' },
+  ],
+  ph_poh: [
+    { value: 'calculo_ph', label: 'Cálculo de pH' },
+    { value: 'solucao_tampao', label: 'Solução Tampão' },
+  ],
+};
 
 // ============================================
 // COMPONENTE: Modal de Resolução de Questão
