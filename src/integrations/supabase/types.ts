@@ -8972,13 +8972,18 @@ export type Database = {
           id: string
           is_active: boolean | null
           lesson_id: string | null
+          macro: string | null
+          micro: string | null
           options: Json | null
+          orgao_cargo: string | null
           points: number | null
           position: number | null
           question_text: string
           question_type: string | null
           quiz_id: string | null
+          subtema: string | null
           tags: string[] | null
+          tema: string | null
           topic: string | null
           updated_at: string | null
         }
@@ -8993,13 +8998,18 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           lesson_id?: string | null
+          macro?: string | null
+          micro?: string | null
           options?: Json | null
+          orgao_cargo?: string | null
           points?: number | null
           position?: number | null
           question_text: string
           question_type?: string | null
           quiz_id?: string | null
+          subtema?: string | null
           tags?: string[] | null
+          tema?: string | null
           topic?: string | null
           updated_at?: string | null
         }
@@ -9014,13 +9024,18 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           lesson_id?: string | null
+          macro?: string | null
+          micro?: string | null
           options?: Json | null
+          orgao_cargo?: string | null
           points?: number | null
           position?: number | null
           question_text?: string
           question_type?: string | null
           quiz_id?: string | null
+          subtema?: string | null
           tags?: string[] | null
+          tema?: string | null
           topic?: string | null
           updated_at?: string | null
         }

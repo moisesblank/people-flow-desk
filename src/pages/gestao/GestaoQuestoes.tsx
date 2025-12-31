@@ -122,20 +122,99 @@ interface QuestionStats {
 // CONSTANTES
 // ============================================
 
-const AREAS = [
+// ============================================
+// ESTRUTURA HIERÁRQUICA: MACRO → MICRO → TEMA → SUBTEMA
+// ============================================
+
+const MACROS = [
   { value: 'quimica_geral', label: '⚗️ Química Geral' },
   { value: 'quimica_organica', label: '🧪 Química Orgânica' },
   { value: 'fisico_quimica', label: '📊 Físico-Química' },
-  { value: 'termoquimica', label: '🔥 Termoquímica' },
-  { value: 'eletroquimica', label: '⚡ Eletroquímica' },
-  { value: 'cinetica', label: '⏱️ Cinética' },
-  { value: 'equilibrio', label: '⚖️ Equilíbrio' },
-  { value: 'estequiometria', label: '🧮 Estequiometria' },
-  { value: 'solucoes', label: '💧 Soluções' },
-  { value: 'tabela_periodica', label: '📋 Tabela Periódica' },
-  { value: 'atomistica', label: '⚛️ Atomística' },
-  { value: 'ligacoes', label: '🔗 Ligações Químicas' },
 ];
+
+const MICROS: Record<string, { value: string; label: string }[]> = {
+  quimica_geral: [
+    { value: 'introducao_inorganica', label: 'Introdução à Inorgânica' },
+    { value: 'atomistica', label: 'Atomística' },
+    { value: 'tabela_periodica', label: 'Tabela Periódica' },
+    { value: 'ligacoes_quimicas', label: 'Ligações Químicas' },
+    { value: 'funcoes_inorganicas', label: 'Funções Inorgânicas' },
+    { value: 'estequiometria', label: 'Estequiometria' },
+    { value: 'solucoes', label: 'Soluções' },
+    { value: 'reacoes_quimicas', label: 'Reações Químicas' },
+  ],
+  quimica_organica: [
+    { value: 'introducao_organica', label: 'Introdução à Orgânica' },
+    { value: 'hidrocarbonetos', label: 'Hidrocarbonetos' },
+    { value: 'funcoes_oxigenadas', label: 'Funções Oxigenadas' },
+    { value: 'funcoes_nitrogenadas', label: 'Funções Nitrogenadas' },
+    { value: 'isomeria', label: 'Isomeria' },
+    { value: 'polimeros', label: 'Polímeros' },
+    { value: 'bioquimica', label: 'Bioquímica' },
+  ],
+  fisico_quimica: [
+    { value: 'termoquimica', label: 'Termoquímica' },
+    { value: 'cinetica', label: 'Cinética Química' },
+    { value: 'equilibrio', label: 'Equilíbrio Químico' },
+    { value: 'eletroquimica', label: 'Eletroquímica' },
+    { value: 'radioatividade', label: 'Radioatividade' },
+    { value: 'propriedades_coligativas', label: 'Propriedades Coligativas' },
+  ],
+};
+
+const TEMAS: Record<string, { value: string; label: string }[]> = {
+  introducao_inorganica: [
+    { value: 'separacao_mistura', label: 'Separação de Mistura' },
+    { value: 'substancias_puras', label: 'Substâncias Puras' },
+    { value: 'estados_fisicos', label: 'Estados Físicos' },
+  ],
+  atomistica: [
+    { value: 'modelos_atomicos', label: 'Modelos Atômicos' },
+    { value: 'distribuicao_eletronica', label: 'Distribuição Eletrônica' },
+    { value: 'numeros_quanticos', label: 'Números Quânticos' },
+  ],
+  hidrocarbonetos: [
+    { value: 'alcanos', label: 'Alcanos' },
+    { value: 'alcenos', label: 'Alcenos' },
+    { value: 'alcinos', label: 'Alcinos' },
+    { value: 'aromaticos', label: 'Aromáticos' },
+  ],
+  termoquimica: [
+    { value: 'entalpia', label: 'Entalpia' },
+    { value: 'lei_hess', label: 'Lei de Hess' },
+    { value: 'energia_ligacao', label: 'Energia de Ligação' },
+  ],
+  equilibrio: [
+    { value: 'constante_equilibrio', label: 'Constante de Equilíbrio' },
+    { value: 'deslocamento', label: 'Deslocamento de Equilíbrio' },
+    { value: 'equilibrio_ionico', label: 'Equilíbrio Iônico' },
+    { value: 'ph_poh', label: 'pH e pOH' },
+  ],
+  // Adicione mais conforme necessário
+};
+
+const SUBTEMAS: Record<string, { value: string; label: string }[]> = {
+  separacao_mistura: [
+    { value: 'mistura_homogenea', label: 'Mistura Homogênea' },
+    { value: 'mistura_heterogenea', label: 'Mistura Heterogênea' },
+    { value: 'destilacao', label: 'Destilação' },
+    { value: 'filtracao', label: 'Filtração' },
+    { value: 'decantacao', label: 'Decantação' },
+  ],
+  distribuicao_eletronica: [
+    { value: 'diagrama_linus_pauling', label: 'Diagrama de Linus Pauling' },
+    { value: 'camada_valencia', label: 'Camada de Valência' },
+  ],
+  alcanos: [
+    { value: 'nomenclatura_alcanos', label: 'Nomenclatura de Alcanos' },
+    { value: 'propriedades_alcanos', label: 'Propriedades de Alcanos' },
+  ],
+  ph_poh: [
+    { value: 'calculo_ph', label: 'Cálculo de pH' },
+    { value: 'solucao_tampao', label: 'Solução Tampão' },
+  ],
+  // Adicione mais conforme necessário
+};
 
 const BANCAS = [
   { value: 'enem', label: 'ENEM' },
@@ -193,6 +272,12 @@ const QuestionDialog = memo(function QuestionDialog({
     tags: [] as string[],
     points: 10,
     is_active: true,
+    // Estrutura hierárquica
+    macro: '',
+    micro: '',
+    tema: '',
+    subtema: '',
+    orgao_cargo: '',
   });
 
   // Preencher form ao editar
@@ -216,6 +301,12 @@ const QuestionDialog = memo(function QuestionDialog({
         tags: question.tags || [],
         points: question.points || 10,
         is_active: question.is_active ?? true,
+        // Estrutura hierárquica
+        macro: (question as any).macro || '',
+        micro: (question as any).micro || '',
+        tema: (question as any).tema || '',
+        subtema: (question as any).subtema || '',
+        orgao_cargo: (question as any).orgao_cargo || '',
       });
     } else {
       // Reset para nova questão
@@ -237,6 +328,12 @@ const QuestionDialog = memo(function QuestionDialog({
         tags: [],
         points: 10,
         is_active: true,
+        // Estrutura hierárquica
+        macro: '',
+        micro: '',
+        tema: '',
+        subtema: '',
+        orgao_cargo: '',
       });
     }
   }, [question, open]);
@@ -281,6 +378,12 @@ const QuestionDialog = memo(function QuestionDialog({
         tags: form.tags,
         points: form.points,
         is_active: form.is_active,
+        // Estrutura hierárquica
+        macro: form.macro || null,
+        micro: form.micro || null,
+        tema: form.tema || null,
+        subtema: form.subtema || null,
+        orgao_cargo: form.orgao_cargo || null,
       };
 
       if (question?.id) {
@@ -326,6 +429,93 @@ const QuestionDialog = memo(function QuestionDialog({
         </DialogHeader>
 
         <div className="grid gap-6 py-4">
+          {/* ============================================ */}
+          {/* ESTRUTURA HIERÁRQUICA: MACRO → MICRO → TEMA → SUBTEMA */}
+          {/* ============================================ */}
+          <div className="space-y-4 p-4 rounded-lg border border-primary/20 bg-primary/5">
+            <div className="flex items-center gap-2 mb-2">
+              <Target className="h-4 w-4 text-primary" />
+              <Label className="font-semibold text-primary">Classificação Hierárquica</Label>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+              {/* MACRO */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Macro</Label>
+                <Select 
+                  value={form.macro} 
+                  onValueChange={(v) => setForm(f => ({ ...f, macro: v, micro: '', tema: '', subtema: '' }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {MACROS.map(m => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* MICRO */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Micro</Label>
+                <Select 
+                  value={form.micro} 
+                  onValueChange={(v) => setForm(f => ({ ...f, micro: v, tema: '', subtema: '' }))}
+                  disabled={!form.macro}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(MICROS[form.macro] || []).map(m => (
+                      <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* TEMA */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Tema</Label>
+                <Select 
+                  value={form.tema} 
+                  onValueChange={(v) => setForm(f => ({ ...f, tema: v, subtema: '' }))}
+                  disabled={!form.micro}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(TEMAS[form.micro] || []).map(t => (
+                      <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* SUBTEMA */}
+              <div className="space-y-2">
+                <Label className="text-xs uppercase tracking-wide text-muted-foreground">Subtema</Label>
+                <Select 
+                  value={form.subtema} 
+                  onValueChange={(v) => setForm(f => ({ ...f, subtema: v }))}
+                  disabled={!form.tema}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(SUBTEMAS[form.tema] || []).map(s => (
+                      <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+          </div>
+
           {/* Enunciado */}
           <div className="space-y-2">
             <Label>Enunciado da Questão *</Label>
