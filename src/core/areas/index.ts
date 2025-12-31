@@ -72,6 +72,7 @@ export const SYSTEM_AREAS = [
   "videoaulas",
   "tutoria",
   "forum",
+  "planejamento",
   "cronograma",
   
   // ===== DESENVOLVIMENTO & OWNER =====
@@ -131,6 +132,7 @@ export const SYSTEM_AREAS = [
   "aluno-certificados",
   "aluno-perfil",
   "aluno-livro-web",
+  "aluno-planejamento",
 ] as const;
 
 // ============================================
@@ -263,6 +265,7 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/gestaofc/tutoria": "tutoria",
   "/gestaofc/forum": "forum",
   "/gestaofc/cronograma": "cronograma",
+  "/gestaofc/planejamento": "planejamento",
   
   // ===== ROTAS /empresas/* =====
   "/empresas/dashboard": "financas-empresa",
@@ -301,6 +304,7 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/alunos/certificados": "aluno-certificados",
   "/alunos/perfil": "aluno-perfil",
   "/alunos/livro-web": "aluno-livro-web",
+  "/alunos/planejamento": "aluno-planejamento",
   
   // Comunidade
   "/comunidade": "comunidade",
@@ -331,7 +335,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "funcionarios", "area-professor", "gestao-equipe",
     "planejamento-aula", "turmas-online", "turmas-presenciais",
     "cursos", "simulados", "alunos", "portal-aluno",
-    "relatorios", "guia", "laboratorio", "videoaulas", "tutoria", "forum", "cronograma",
+    "relatorios", "guia", "laboratorio", "videoaulas", "tutoria", "forum", "cronograma", "planejamento",
     "flashcards", "mapas-mentais", "livros-web", "lives",
     // Áreas de aluno (para visualização)
     "aluno-dashboard", "aluno-cronograma", "aluno-videoaulas",
@@ -387,7 +391,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-duvidas", "aluno-revisao", "aluno-laboratorio",
     "aluno-calculadora", "aluno-tabela-periodica", "aluno-flashcards",
     "aluno-metas", "aluno-agenda", "aluno-certificados",
-    "aluno-perfil", "aluno-livro-web",
+    "aluno-perfil", "aluno-livro-web", "aluno-planejamento",
   ],
   
   // 👨‍🎓 ALUNO GRATUITO - Limitado
@@ -407,7 +411,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-duvidas", "aluno-revisao", "aluno-laboratorio",
     "aluno-calculadora", "aluno-tabela-periodica", "aluno-flashcards",
     "aluno-metas", "aluno-agenda", "aluno-certificados",
-    "aluno-perfil", "aluno-livro-web",
+    "aluno-perfil", "aluno-livro-web", "aluno-planejamento",
   ],
   
   // 👨‍🎓 BETA EXPIRA - Similar ao beta
@@ -421,7 +425,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "aluno-duvidas", "aluno-revisao", "aluno-laboratorio",
     "aluno-calculadora", "aluno-tabela-periodica", "aluno-flashcards",
     "aluno-metas", "aluno-agenda", "aluno-certificados",
-    "aluno-perfil", "aluno-livro-web",
+    "aluno-perfil", "aluno-livro-web", "aluno-planejamento",
   ],
 };
 

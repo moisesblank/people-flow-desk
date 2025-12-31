@@ -69,5 +69,6 @@ export const alunoRoutes = (
     <Route path="/alunos/agenda" element={<ProtectedPage><AlunoAgenda /></ProtectedPage>} />
     <Route path="/alunos/certificados" element={<ProtectedPage><AlunoCertificados /></ProtectedPage>} />
     <Route path="/alunos/perfil" element={<ProtectedPage><AlunoPerfil /></ProtectedPage>} />
+    <Route path="/alunos/planejamento" element={<ProtectedPage><AlunoPlanejamento /></ProtectedPage>} />
   </>
 );

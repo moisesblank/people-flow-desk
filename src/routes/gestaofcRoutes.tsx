@@ -124,6 +124,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc/tutoria" element={<ProtectedPage><GestaoTutoria /></ProtectedPage>} />
     <Route path="/gestaofc/forum" element={<ProtectedPage><GestaoForum /></ProtectedPage>} />
     <Route path="/gestaofc/cronograma" element={<ProtectedPage><GestaoCronograma /></ProtectedPage>} />
+    <Route path="/gestaofc/planejamento" element={<ProtectedPage><GestaoPlanejamento /></ProtectedPage>} />
     
     {/* Finanças */}
     <Route path="/gestaofc/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
