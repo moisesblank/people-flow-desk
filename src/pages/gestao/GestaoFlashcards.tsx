@@ -964,6 +964,9 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
 
+      const totalOps = (apkgMediaMap.size || 0) + parsedCards.length;
+      let doneOps = 0;
+
       // =============================================
       // UPLOAD DE MÍDIA PARA O BUCKET 'materiais'
       // Faz upload de todas as imagens extraídas do APKG
@@ -972,34 +975,34 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
         console.log(`[APKG] Iniciando upload de ${apkgMediaMap.size} arquivos de mídia...`);
         let mediaUploaded = 0;
         const mediaTotal = apkgMediaMap.size;
-        
+
         for (const [path, blob] of apkgMediaMap) {
           try {
             // Determinar MIME type
             const ext = path.split('.').pop()?.toLowerCase() || '';
             const mimeTypes: Record<string, string> = {
-              'jpg': 'image/jpeg',
-              'jpeg': 'image/jpeg',
-              'png': 'image/png',
-              'gif': 'image/gif',
-              'webp': 'image/webp',
-              'svg': 'image/svg+xml',
-              'mp3': 'audio/mpeg',
-              'wav': 'audio/wav',
-              'ogg': 'audio/ogg',
+              jpg: 'image/jpeg',
+              jpeg: 'image/jpeg',
+              png: 'image/png',
+              gif: 'image/gif',
+              webp: 'image/webp',
+              svg: 'image/svg+xml',
+              mp3: 'audio/mpeg',
+              wav: 'audio/wav',
+              ogg: 'audio/ogg',
             };
             const contentType = mimeTypes[ext] || 'application/octet-stream';
-            
+
             // Upload para bucket 'materiais' com path: flashcards/deckname/filename
             const storagePath = `flashcards/${path}`;
-            
+
             const { error: uploadError } = await supabase.storage
               .from('materiais')
               .upload(storagePath, blob, {
                 contentType,
                 upsert: true, // Substitui se já existir
               });
-            
+
             if (uploadError) {
               console.warn(`[APKG] Erro ao fazer upload de ${path}:`, uploadError.message);
             } else {
@@ -1007,12 +1010,15 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
             }
           } catch (e) {
             console.warn(`[APKG] Falha ao processar ${path}:`, e);
+          } finally {
+            doneOps++;
+            setImportProgress(Math.max(1, Math.round((doneOps / totalOps) * 100)));
           }
         }
-        
+
         console.log(`[APKG] ✅ Upload concluído: ${mediaUploaded}/${mediaTotal} arquivos`);
         if (mediaUploaded > 0) {
-          toast.info(`${mediaUploaded} imagens enviadas para o storage`);
+          toast.info(`${mediaUploaded} mídias enviadas para o storage`);
         }
       }
 
@@ -1048,7 +1054,8 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
         if (error) throw error;
 
         imported += batch.length;
-        setImportProgress(Math.round((imported / parsedCards.length) * 100));
+        doneOps += batch.length;
+        setImportProgress(Math.round((doneOps / totalOps) * 100));
       }
 
       toast.success(`${parsedCards.length} flashcards importados com sucesso!`);
