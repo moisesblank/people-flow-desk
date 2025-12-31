@@ -671,9 +671,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   }, [parsedQuestions, filterStatus]);
 
   // ============================================
-  // VALIDAÇÃO DE ESTADO PARA BOTÃO PROCESSAR
+  // VALIDAÇÃO DE ESTADO PARA BOTÕES / GATES
   // ============================================
-  
+
+  const mappingValid = useMemo(() => {
+    return Object.values(columnMapping).includes('question_text');
+  }, [columnMapping]);
+
   const canProcess = useMemo(() => {
     // Condição única: estado === autorizacao_explicita
     return (
@@ -1472,14 +1476,21 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 exit={{ opacity: 0, x: -20 }}
                 className="h-full flex flex-col overflow-hidden min-h-0"
               >
-                <div className="flex items-center justify-between p-4 border-b">
+                <div className="flex items-center justify-between p-4 border-b gap-3">
                   <div>
                     <h3 className="font-semibold">Mapeamento de Colunas</h3>
                     <p className="text-sm text-muted-foreground">
                       {rawData.length} linhas • {headers.length} colunas detectadas
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    {!mappingValid && (
+                      <Badge variant="destructive" className="gap-1">
+                        <AlertOctagon className="h-3 w-3" />
+                        Mapear “Enunciado”
+                      </Badge>
+                    )}
                     <Badge variant="outline" className="gap-1">
                       <Sparkles className="h-3 w-3" />
                       {Object.keys(columnMapping).length} auto-detectadas
@@ -1488,6 +1499,34 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       <Clock className="h-3 w-3" />
                       {flowState}
                     </Badge>
+
+                    {/* CTA redundante (topo) para evitar loop de tela sem avanço */}
+                    <Button
+                      size="sm"
+                      onClick={() => {
+                        if (!mappingValid) {
+                          console.log('[IMPORT] CTA topo bloqueado: mapping inválido');
+                          toast.error('Mapeie a coluna "Enunciado" para continuar');
+                          return;
+                        }
+                        console.log('[IMPORT] CTA topo: processQuestions()');
+                        processQuestions();
+                      }}
+                      disabled={!mappingValid || isProcessing}
+                      className="whitespace-nowrap"
+                    >
+                      {isProcessing ? (
+                        <>
+                          <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                          Processando…
+                        </>
+                      ) : (
+                        <>
+                          <Brain className="h-4 w-4 mr-2" />
+                          Executar Inferência
+                        </>
+                      )}
+                    </Button>
                   </div>
                 </div>
 
@@ -1678,8 +1717,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     Cancelar
                   </Button>
                   <Button
-                    onClick={processQuestions}
-                    disabled={!Object.values(columnMapping).includes('question_text') || isProcessing}
+                    onClick={() => {
+                      if (!mappingValid) {
+                        console.log('[IMPORT] CTA rodapé bloqueado: mapping inválido');
+                        toast.error('Mapeie a coluna "Enunciado" para continuar');
+                        return;
+                      }
+                      console.log('[IMPORT] CTA rodapé: processQuestions()');
+                      processQuestions();
+                    }}
+                    disabled={!mappingValid || isProcessing}
                     className="bg-gradient-to-r from-primary to-purple-600"
                   >
                     {isProcessing ? (
@@ -1979,6 +2026,30 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
                 {/* Footer com autorização (sempre visível) */}
                 <div className="sticky bottom-0 z-20 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-4 space-y-4">
+                  {/* Resumo final (obrigatório) */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Total carregadas</div>
+                      <div className="text-lg font-semibold">{stats.total}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Campos inferidos</div>
+                      <div className="text-lg font-semibold">{stats.camposInferidos}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Campos vazios</div>
+                      <div className="text-lg font-semibold">{stats.camposNull}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Warnings</div>
+                      <div className="text-lg font-semibold">{stats.warnings}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Selecionadas</div>
+                      <div className="text-lg font-semibold">{stats.selected}</div>
+                    </div>
+                  </div>
+
                   {/* Checkbox de autorização explícita */}
                   <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
                     <Checkbox
@@ -1996,8 +2067,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     <Label htmlFor="human-auth" className="text-sm cursor-pointer flex-1">
                       <span className="font-semibold text-primary">Autorizo a importação</span>
                       <span className="text-muted-foreground ml-1">
-                        — Revisei as {stats.selected} questões selecionadas. Campos null permanecerão vazios.
-                        Questões serão importadas como <strong>RASCUNHO</strong> (inativas).
+                        — I confirm that I reviewed the inferred data and accept that non-identified fields remain empty.
                       </span>
                     </Label>
                     <ShieldCheck
