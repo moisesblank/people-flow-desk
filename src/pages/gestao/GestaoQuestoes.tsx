@@ -5,6 +5,7 @@
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Brain, 
@@ -902,6 +903,7 @@ const QuestionDialog = memo(function QuestionDialog({
 // ============================================
 
 function GestaoQuestoes() {
+  const navigate = useNavigate();
   const [questions, setQuestions] = useState<Question[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -1355,6 +1357,10 @@ function GestaoQuestoes() {
                             </button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end" sideOffset={4}>
+                            <DropdownMenuItem onClick={() => navigate(`/gestaofc/questoes/${question.id}`)}>
+                              <Eye className="h-4 w-4 mr-2" />
+                              Ver Detalhe
+                            </DropdownMenuItem>
                             <DropdownMenuItem onClick={() => handleEdit(question)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Editar
