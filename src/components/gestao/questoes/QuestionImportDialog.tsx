@@ -837,12 +837,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           return question;
         });
 
+        console.log('[IMPORT] Questões processadas:', questions.length);
         setParsedQuestions(questions);
+        console.log('[IMPORT] setFlowState(inferencia_concluida)');
         setFlowState('inferencia_concluida');
+        console.log('[IMPORT] setUiStep(preview)');
         setUiStep('preview');
         
         // Avançar para validação humana
         setTimeout(() => {
+          console.log('[IMPORT] setFlowState(validacao_humana_obrigatoria)');
           setFlowState('validacao_humana_obrigatoria');
         }, 100);
         
