@@ -94,96 +94,117 @@ export default function AlunoVideoaulas() {
         </Tabs>
       </div>
 
-      {/* Grid de Módulos */}
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {modulosFiltrados.map((modulo, index) => (
-          <motion.div
-            key={modulo.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.05 }}
-          >
-            <Card className={`relative overflow-hidden transition-all hover:shadow-lg ${
-              modulo.bloqueado ? "opacity-60" : ""
-            } ${modulo.destaque ? "ring-2 ring-primary" : ""}`}>
-              {modulo.destaque && (
-                <div className="absolute top-2 right-2">
-                  <Badge className="bg-primary">
-                    <Star className="w-3 h-3 mr-1 fill-current" />
-                    Recomendado
-                  </Badge>
-                </div>
-              )}
-              
+      {/* Loading State */}
+      {isLoading && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {[1, 2, 3, 4, 5, 6].map((i) => (
+            <Card key={i} className="animate-pulse">
               <CardHeader className="pb-2">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-2">
-                    {modulo.progresso === 100 ? (
-                      <CheckCircle2 className="w-5 h-5 text-green-500" />
-                    ) : modulo.bloqueado ? (
-                      <Lock className="w-5 h-5 text-muted-foreground" />
-                    ) : (
-                      <PlayCircle className="w-5 h-5 text-primary" />
-                    )}
-                    <CardTitle className="text-lg">{modulo.titulo}</CardTitle>
-                  </div>
-                </div>
-                <CardDescription>{modulo.descricao}</CardDescription>
+                <div className="h-5 bg-muted rounded w-3/4" />
+                <div className="h-4 bg-muted rounded w-1/2 mt-2" />
               </CardHeader>
-              
               <CardContent className="space-y-4">
-                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                  <span className="flex items-center gap-1">
-                    <BookOpen className="w-4 h-4" />
-                    {modulo.aulas} aulas
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <Clock className="w-4 h-4" />
-                    {modulo.duracao}
-                  </span>
-                </div>
-
-                {!modulo.bloqueado && (
-                  <div className="space-y-1">
-                    <div className="flex justify-between text-sm">
-                      <span>Progresso</span>
-                      <span className="font-medium">{modulo.progresso}%</span>
-                    </div>
-                    <Progress value={modulo.progresso} className="h-2" />
-                  </div>
-                )}
-
-                <Button 
-                  className="w-full" 
-                  variant={modulo.bloqueado ? "secondary" : "default"}
-                  disabled={modulo.bloqueado}
-                >
-                  {modulo.bloqueado ? (
-                    <>
-                      <Lock className="w-4 h-4 mr-2" />
-                      Bloqueado
-                    </>
-                  ) : modulo.progresso === 100 ? (
-                    <>
-                      Revisar módulo
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </>
-                  ) : modulo.progresso > 0 ? (
-                    <>
-                      Continuar
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </>
-                  ) : (
-                    <>
-                      Começar agora
-                      <ChevronRight className="w-4 h-4 ml-2" />
-                    </>
-                  )}
-                </Button>
+                <div className="h-4 bg-muted rounded w-full" />
+                <div className="h-10 bg-muted rounded w-full" />
               </CardContent>
             </Card>
-          </motion.div>
-        ))}
+          ))}
+        </div>
+      )}
+
+      {/* Empty State */}
+      {!isLoading && filteredLessons.length === 0 && (
+        <Card className="p-8 text-center">
+          <PlayCircle className="w-12 h-12 mx-auto text-muted-foreground mb-4" />
+          <h3 className="text-lg font-semibold mb-2">Nenhuma videoaula disponível</h3>
+          <p className="text-muted-foreground">
+            {busca ? "Nenhuma aula encontrada para sua busca." : "Em breve novas aulas serão publicadas."}
+          </p>
+        </Card>
+      )}
+
+      {/* Grid de Videoaulas */}
+      {!isLoading && filteredLessons.length > 0 && (
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredLessons.map((lesson, index) => (
+            <motion.div
+              key={lesson.id}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: index * 0.05 }}
+            >
+              <Card className="relative overflow-hidden transition-all hover:shadow-lg group">
+                {/* Thumbnail */}
+                {lesson.thumbnail_url && (
+                  <div className="relative aspect-video bg-muted overflow-hidden">
+                    <img 
+                      src={lesson.thumbnail_url} 
+                      alt={lesson.title}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                      <PlayCircle className="w-12 h-12 text-white" />
+                    </div>
+                    {lesson.duration_minutes && (
+                      <Badge className="absolute bottom-2 right-2 bg-black/70">
+                        <Clock className="w-3 h-3 mr-1" />
+                        {lesson.duration_minutes} min
+                      </Badge>
+                    )}
+                  </div>
+                )}
+                
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <PlayCircle className="w-5 h-5 text-primary" />
+                      <CardTitle className="text-lg line-clamp-2">{lesson.title}</CardTitle>
+                    </div>
+                  </div>
+                  {lesson.module?.title && (
+                    <Badge variant="outline" className="w-fit">
+                      <BookOpen className="w-3 h-3 mr-1" />
+                      {lesson.module.title}
+                    </Badge>
+                  )}
+                  {lesson.description && (
+                    <CardDescription className="line-clamp-2">{lesson.description}</CardDescription>
+                  )}
+                </CardHeader>
+                
+                <CardContent className="space-y-4">
+                  <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                    {lesson.duration_minutes && (
+                      <span className="flex items-center gap-1">
+                        <Clock className="w-4 h-4" />
+                        {lesson.duration_minutes} min
+                      </span>
+                    )}
+                    {lesson.views_count > 0 && (
+                      <span className="flex items-center gap-1">
+                        <Star className="w-4 h-4" />
+                        {lesson.views_count} views
+                      </span>
+                    )}
+                  </div>
+
+                  <Button className="w-full">
+                    Assistir aula
+                    <ChevronRight className="w-4 h-4 ml-2" />
+                  </Button>
+                </CardContent>
+              </Card>
+            </motion.div>
+          ))}
+        </div>
+      )}
+
+      {/* Badge contador atualizado */}
+      <div className="flex items-center gap-2 fixed bottom-4 right-4">
+        <Badge variant="secondary" className="text-sm py-1 px-3">
+          <PlayCircle className="w-4 h-4 mr-2" />
+          {filteredLessons.length} aula{filteredLessons.length !== 1 ? 's' : ''} disponíve{filteredLessons.length !== 1 ? 'is' : 'l'}
+        </Badge>
       </div>
     </div>
   );
