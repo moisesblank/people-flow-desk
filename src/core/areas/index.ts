@@ -69,6 +69,8 @@ export const SYSTEM_AREAS = [
   "relatorios",
   "guia",
   "laboratorio",
+  "videoaulas",
+  "tutoria",
   
   // ===== DESENVOLVIMENTO & OWNER =====
   "site-programador",
@@ -255,6 +257,8 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/gestaofc/gestao-site": "gestao-site",
   "/gestaofc/portal-aluno": "portal-aluno",
   "/gestaofc/monitoramento": "monitoramento",
+  "/gestaofc/videoaulas": "videoaulas",
+  "/gestaofc/tutoria": "tutoria",
   
   // ===== ROTAS /empresas/* =====
   "/empresas/dashboard": "financas-empresa",
@@ -323,7 +327,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
     "funcionarios", "area-professor", "gestao-equipe",
     "planejamento-aula", "turmas-online", "turmas-presenciais",
     "cursos", "simulados", "alunos", "portal-aluno",
-    "relatorios", "guia", "laboratorio",
+    "relatorios", "guia", "laboratorio", "videoaulas", "tutoria",
     "flashcards", "mapas-mentais", "livros-web", "lives",
     // Áreas de aluno (para visualização)
     "aluno-dashboard", "aluno-cronograma", "aluno-videoaulas",
@@ -350,7 +354,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
   // 👔 MONITORIA - Acompanhamento
   monitoria: [
     "dashboard", "alunos", "portal-aluno", "simulados",
-    "flashcards", "mapas-mentais", "relatorios",
+    "flashcards", "mapas-mentais", "relatorios", "tutoria",
     // Áreas de aluno
     "aluno-dashboard", "aluno-cronograma", "aluno-videoaulas",
     "aluno-questoes", "aluno-simulados", "aluno-desempenho",
