@@ -522,6 +522,23 @@ const QuestionDialog = memo(function QuestionDialog({
             )}
           </div>
 
+          {/* Formato da Questão */}
+          <div className="space-y-2">
+            <Label>Formato da Questão *</Label>
+            <Select
+              value={form.question_type}
+              onValueChange={(v) => setForm(f => ({ ...f, question_type: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="multiple_choice">📝 Múltipla Escolha (A, B, C, D, E)</SelectItem>
+                <SelectItem value="discursive">✍️ Discursiva</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Enunciado */}
           <div className="space-y-2">
             <Label>Enunciado da Questão *</Label>
@@ -533,40 +550,58 @@ const QuestionDialog = memo(function QuestionDialog({
             />
           </div>
 
-          {/* Alternativas */}
-          <div className="space-y-3">
-            <Label>Alternativas *</Label>
-            <RadioGroup
-              value={form.correct_answer}
-              onValueChange={(v) => setForm(f => ({ ...f, correct_answer: v }))}
-            >
-              {form.options.map((option, idx) => (
-                <div key={option.id} className="flex items-center gap-3">
-                  <RadioGroupItem value={option.id} id={option.id} />
-                  <Label 
-                    htmlFor={option.id}
-                    className={cn(
-                      "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm cursor-pointer",
-                      form.correct_answer === option.id 
-                        ? "border-green-500 bg-green-500/20 text-green-500" 
-                        : "border-muted-foreground/30"
-                    )}
-                  >
-                    {option.id.toUpperCase()}
-                  </Label>
-                  <Input
-                    placeholder={`Alternativa ${option.id.toUpperCase()}`}
-                    value={option.text}
-                    onChange={(e) => handleOptionChange(idx, e.target.value)}
-                    className="flex-1"
-                  />
-                </div>
-              ))}
-            </RadioGroup>
-            <p className="text-xs text-muted-foreground">
-              Selecione o radio button para marcar a alternativa correta
-            </p>
-          </div>
+          {/* Alternativas - Apenas para Múltipla Escolha */}
+          {form.question_type === 'multiple_choice' && (
+            <div className="space-y-3">
+              <Label>Alternativas *</Label>
+              <RadioGroup
+                value={form.correct_answer}
+                onValueChange={(v) => setForm(f => ({ ...f, correct_answer: v }))}
+              >
+                {form.options.map((option, idx) => (
+                  <div key={option.id} className="flex items-center gap-3">
+                    <RadioGroupItem value={option.id} id={option.id} />
+                    <Label 
+                      htmlFor={option.id}
+                      className={cn(
+                        "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm cursor-pointer",
+                        form.correct_answer === option.id 
+                          ? "border-green-500 bg-green-500/20 text-green-500" 
+                          : "border-muted-foreground/30"
+                      )}
+                    >
+                      {option.id.toUpperCase()}
+                    </Label>
+                    <Input
+                      placeholder={`Alternativa ${option.id.toUpperCase()}`}
+                      value={option.text}
+                      onChange={(e) => handleOptionChange(idx, e.target.value)}
+                      className="flex-1"
+                    />
+                  </div>
+                ))}
+              </RadioGroup>
+              <p className="text-xs text-muted-foreground">
+                Selecione o radio button para marcar a alternativa correta
+              </p>
+            </div>
+          )}
+
+          {/* Gabarito Discursivo - Apenas para Discursiva */}
+          {form.question_type === 'discursive' && (
+            <div className="space-y-2 bg-amber-500/10 border border-amber-500/20 rounded-lg p-4">
+              <Label className="text-amber-400">Gabarito / Resposta Esperada</Label>
+              <Textarea
+                placeholder="Descreva a resposta esperada para a questão discursiva..."
+                value={form.correct_answer}
+                onChange={(e) => setForm(f => ({ ...f, correct_answer: e.target.value }))}
+                className="min-h-[100px]"
+              />
+              <p className="text-xs text-muted-foreground">
+                Insira a resposta modelo que será usada como referência na correção
+              </p>
+            </div>
+          )}
 
           {/* Grid 3 colunas */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
