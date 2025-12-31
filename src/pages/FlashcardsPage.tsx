@@ -31,14 +31,15 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { cn } from '@/lib/utils';
-import { 
+import {
   RotateCcw, Zap, Check, X, ThumbsUp, Brain, 
   Sparkles, Trophy, Flame, Plus, BookOpen,
   ChevronLeft, Target, Clock, TrendingUp,
-  AlertTriangle, PartyPopper
+  AlertTriangle, PartyPopper, ChartBar
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
+import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
 
 type Rating = 1 | 2 | 3 | 4;
 
@@ -322,37 +323,8 @@ export default function FlashcardsPage() {
             </div>
           </motion.div>
 
-          {/* Stats Card */}
-          {stats && stats.total > 0 && (
-            <Card className="mt-8">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-lg">
-                  <TrendingUp className="w-5 h-5 text-primary" />
-                  Suas Estatísticas
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-primary">{stats.total}</div>
-                    <div className="text-xs text-muted-foreground">Total de Cards</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-green-500">{stats.retention}%</div>
-                    <div className="text-xs text-muted-foreground">Retenção</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-amber-500">{stats.totalReps}</div>
-                    <div className="text-xs text-muted-foreground">Revisões Totais</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-2xl font-bold text-blue-500">{stats.recentReviews}</div>
-                    <div className="text-xs text-muted-foreground">Esta Semana</div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
+          {/* Dashboard Anki - Estatísticas Completas */}
+          <AnkiDashboard className="mt-8" defaultExpanded={true} />
         </div>
 
         {/* Create Modal */}
