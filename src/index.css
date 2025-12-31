@@ -1,8 +1,5 @@
-/* 🌌 SANCTUM 3.0 — Proteção de Conteúdo */
 @import "./styles/sanctum.css";
 @import "./styles/watermark.css";
-
-/* ⚡ PERFORMANCE OMEGA — Otimização Nível NASA */
 @import "./styles/performance.css";
 
 @tailwind base;
