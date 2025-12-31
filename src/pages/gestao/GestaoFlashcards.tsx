@@ -270,7 +270,6 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
   }
 
   if (!dbObj) {
-    // Listar arquivos no ZIP para debug
     const files = Object.keys(zip.files).join(', ');
     console.error('[APKG] Arquivos no ZIP:', files);
     throw new Error(`Formato de arquivo não reconhecido. Arquivos encontrados: ${files}`);
@@ -282,16 +281,51 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
   const db = new SQL.Database(dbData);
 
   const cards: ImportedCard[] = [];
-  const seenQuestions = new Set<string>();
+  const seenCardKeys = new Set<string>();
+  
+  // =============================================
+  // EXTRAIR NAMESPACE DO DECK (para organizar mídia)
+  // =============================================
+  let deckName = 'default';
+  try {
+    const colResult = db.exec(`SELECT decks FROM col LIMIT 1`);
+    if (colResult.length > 0 && colResult[0].values.length > 0) {
+      const decksJson = sqlValueToString(colResult[0].values[0][0]);
+      const decks = JSON.parse(decksJson);
+      const firstDeck = Object.values(decks).find((d: any) => d.name && d.name !== 'Default') as any;
+      if (firstDeck?.name) {
+        deckName = firstDeck.name
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, '-')
+          .replace(/-+/g, '-')
+          .replace(/^-|-$/g, '')
+          .slice(0, 50) || 'default';
+      }
+    }
+  } catch (e) {
+    console.warn('[APKG] Não foi possível extrair nome do deck:', e);
+  }
+  
+  console.log('[APKG] Namespace de mídia:', deckName);
   
   try {
-    // Múltiplas queries para diferentes formatos de deck Anki
+    // =============================================
+    // CRÍTICO: FSRS opera por CARD, não por NOTE
+    // Uma note pode gerar múltiplos cards (cloze c1, c2, c3...)
+    // A query DEVE expandir por card, SEM GROUP BY
+    // =============================================
+    
     const queries = [
-      // Query padrão para notes
+      // Query principal: expande por CARD (cada card = 1 flashcard FSRS)
+      // ord = índice do card dentro da note (para cloze: c1=0, c2=1, etc)
+      `SELECT c.id as card_id, c.ord, n.flds, n.tags 
+       FROM cards c 
+       JOIN notes n ON n.id = c.nid 
+       ORDER BY c.id 
+       LIMIT 50000`,
+      // Fallback: notes direto (decks simples sem múltiplos cards por note)
       `SELECT flds, tags FROM notes ORDER BY id LIMIT 25000`,
-      // Query via cards->notes (alguns decks organizam assim)
-      `SELECT n.flds, n.tags FROM cards c JOIN notes n ON n.id = c.nid GROUP BY n.id ORDER BY n.id LIMIT 25000`,
-      // Query alternativa para decks com estrutura diferente
+      // Fallback alternativo
       `SELECT sfld, tags FROM notes ORDER BY id LIMIT 25000`,
     ];
 
@@ -300,32 +334,44 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
         const result = db.exec(q);
         if (result.length === 0) continue;
 
-        console.log(`[APKG] Query "${q.slice(0, 30)}..." retornou ${result[0].values.length} linhas`);
+        const hasCardInfo = q.includes('card_id');
+        console.log(`[APKG] Query ${hasCardInfo ? 'CARDS' : 'NOTES'} retornou ${result[0].values.length} linhas`);
 
         for (const row of result[0].values) {
-          const flds = sqlValueToString(row[0]);
-          const tags = sqlValueToString(row[1]).trim();
-          const { front, back } = parseAnkiFields(flds);
-
-          // Deduplica por conteúdo da pergunta
-          const questionKey = front.toLowerCase().slice(0, 200);
-          if (front && !seenQuestions.has(questionKey)) {
-            seenQuestions.add(questionKey);
+          let flds: string, tags: string, cardOrd = 0;
+          
+          if (hasCardInfo) {
+            // card_id, ord, flds, tags
+            cardOrd = Number(row[1]) || 0;
+            flds = sqlValueToString(row[2]);
+            tags = sqlValueToString(row[3]).trim();
+          } else {
+            flds = sqlValueToString(row[0]);
+            tags = sqlValueToString(row[1]).trim();
+          }
+          
+          const { front, back, media } = parseAnkiFieldsWithMedia(flds, deckName, cardOrd);
+          
+          // Chave única: combina pergunta + ordinal do card (para cloze diferentes)
+          const cardKey = `${front.toLowerCase().slice(0, 200)}::${cardOrd}`;
+          
+          if (front && !seenCardKeys.has(cardKey)) {
+            seenCardKeys.add(cardKey);
             cards.push({
               question: front.slice(0, 2000),
-              answer: (back || front).slice(0, 5000), // Se não tem back, usa front como fallback para IO cards
+              answer: (back || front).slice(0, 5000),
               tags: tags ? tags.split(' ').filter(Boolean) : undefined,
+              media: media.length > 0 ? media : undefined,
             });
           }
         }
 
         if (cards.length > 0) {
-          console.log(`[APKG] Total de ${cards.length} cards únicos extraídos`);
+          console.log(`[APKG] ✅ Total de ${cards.length} CARDS únicos extraídos (FSRS-ready)`);
           break;
         }
       } catch (queryError) {
         console.warn('[APKG] Query falhou:', q.slice(0, 40), queryError);
-        // Continua para próxima query
       }
     }
   } finally {
@@ -336,12 +382,10 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
     throw new Error('Nenhum flashcard encontrado. Verifique se o arquivo APKG está correto.');
   }
 
-  // Alguns exports de Anki (formato novo/V3) viram um "placeholder" com esta mensagem
-  // e acabam retornando 1 nota apenas.
   const firstQ = (cards[0]?.question || '').toLowerCase();
   if (cards.length === 1 && firstQ.includes('atualize para a versão mais recente')) {
     throw new Error(
-      'Esse APKG foi exportado no formato novo do Anki e vira um “placeholder”.\n\nNo Anki, ao exportar, marque: “Suporta versões antigas do Anki (lento/arquivos grandes)”.\nDepois exporte novamente como .apkg (com “Incluir mídia”).'
+      'Esse APKG foi exportado no formato novo do Anki e vira um "placeholder".\n\nNo Anki, ao exportar, marque: "Suporta versões antigas do Anki (lento/arquivos grandes)".\nDepois exporte novamente como .apkg (com "Incluir mídia").'
     );
   }
 
