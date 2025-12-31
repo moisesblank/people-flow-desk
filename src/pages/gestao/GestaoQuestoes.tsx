@@ -630,11 +630,11 @@ const QuestionDialog = memo(function QuestionDialog({
             </div>
           </div>
 
-          {/* Explicação */}
+          {/* Resolução da Questão */}
           <div className="space-y-2">
-            <Label>Explicação (opcional)</Label>
+            <Label>Resolução da Questão</Label>
             <Textarea
-              placeholder="Explique o raciocínio para a resposta correta..."
+              placeholder="Explique o raciocínio e a resolução passo a passo..."
               value={form.explanation}
               onChange={(e) => setForm(f => ({ ...f, explanation: e.target.value }))}
               className="min-h-[80px]"
