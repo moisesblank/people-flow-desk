@@ -103,6 +103,12 @@ interface ImportedCard {
   media?: string[]; // Arquivos de mídia referenciados (ex: [img:filename.jpg])
 }
 
+interface ApkgParseResult {
+  cards: ImportedCard[];
+  mediaMap: Map<string, Uint8Array>; // namespace/filename → blob
+  deckName: string;
+}
+
 interface StatsData {
   total: number;
   byState: Record<FlashcardState, number>;
@@ -255,7 +261,7 @@ function parseAnkiFields(flds: string): { front: string; back: string } {
   return { front, back };
 }
 
-async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
+async function parseApkgToCards(file: File): Promise<ApkgParseResult> {
   const arrayBuffer = await file.arrayBuffer();
   const zip = await JSZip.loadAsync(arrayBuffer);
 
@@ -282,6 +288,7 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
 
   const cards: ImportedCard[] = [];
   const seenCardKeys = new Set<string>();
+  const mediaMap = new Map<string, Uint8Array>();
   
   // =============================================
   // EXTRAIR NAMESPACE DO DECK (para organizar mídia)
@@ -307,6 +314,29 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
   }
   
   console.log('[APKG] Namespace de mídia:', deckName);
+
+  // =============================================
+  // EXTRAIR MAPA DE MÍDIA DO APKG
+  // O arquivo "media" mapeia IDs numéricos para nomes reais
+  // Ex: {"0": "image1.png", "1": "audio.mp3"}
+  // =============================================
+  let ankiMediaMapping: Record<string, string> = {};
+  try {
+    const mediaFile = zip.file('media');
+    if (mediaFile) {
+      const mediaJson = await mediaFile.async('string');
+      ankiMediaMapping = JSON.parse(mediaJson);
+      console.log(`[APKG] Mapa de mídia encontrado: ${Object.keys(ankiMediaMapping).length} arquivos`);
+    }
+  } catch (e) {
+    console.warn('[APKG] Não foi possível ler mapa de mídia:', e);
+  }
+
+  // =============================================
+  // EXTRAIR BLOBS DE MÍDIA
+  // Arquivos na raiz do ZIP com nomes numéricos (0, 1, 2...)
+  // =============================================
+  const referencedMedia = new Set<string>();
   
   try {
     // =============================================
@@ -352,6 +382,9 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
           
           const { front, back, media } = parseAnkiFieldsWithMedia(flds, deckName, cardOrd);
           
+          // Registra mídia referenciada
+          media.forEach(m => referencedMedia.add(m));
+          
           // Chave única: combina pergunta + ordinal do card (para cloze diferentes)
           const cardKey = `${front.toLowerCase().slice(0, 200)}::${cardOrd}`;
           
@@ -378,6 +411,46 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
     db.close();
   }
 
+  // =============================================
+  // EXTRAIR BLOBS APENAS DE MÍDIA REFERENCIADA
+  // =============================================
+  const neededFilenames = new Set<string>();
+  referencedMedia.forEach(ref => {
+    // ref = "deckname/filename.jpg" → extrair filename.jpg
+    const filename = ref.split('/').pop();
+    if (filename) neededFilenames.add(filename);
+  });
+
+  console.log(`[APKG] Mídia referenciada: ${neededFilenames.size} arquivos únicos`);
+
+  // Mapear nome → ID para busca reversa
+  const filenameToId: Record<string, string> = {};
+  Object.entries(ankiMediaMapping).forEach(([id, filename]) => {
+    filenameToId[filename] = id;
+  });
+
+  // Extrair blobs necessários
+  for (const filename of neededFilenames) {
+    const mediaId = filenameToId[filename];
+    if (!mediaId) {
+      console.warn(`[APKG] Mídia não encontrada no mapa: ${filename}`);
+      continue;
+    }
+
+    const mediaFile = zip.file(mediaId);
+    if (mediaFile) {
+      try {
+        const blob = await mediaFile.async('uint8array');
+        const namespacedPath = `${deckName}/${filename}`;
+        mediaMap.set(namespacedPath, blob);
+      } catch (e) {
+        console.warn(`[APKG] Erro ao extrair mídia ${filename}:`, e);
+      }
+    }
+  }
+
+  console.log(`[APKG] ✅ ${mediaMap.size} arquivos de mídia extraídos para upload`);
+
   if (cards.length === 0) {
     throw new Error('Nenhum flashcard encontrado. Verifique se o arquivo APKG está correto.');
   }
@@ -389,7 +462,7 @@ async function parseApkgToCards(file: File): Promise<ImportedCard[]> {
     );
   }
 
-  return cards;
+  return { cards, mediaMap, deckName };
 }
 
 // ============================================
@@ -743,6 +816,8 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
   const [importProgress, setImportProgress] = useState(0);
   const [selectedLessonId, setSelectedLessonId] = useState<string>('none');
   const [processingApkg, setProcessingApkg] = useState(false);
+  const [apkgMediaMap, setApkgMediaMap] = useState<Map<string, Uint8Array>>(new Map());
+  const [apkgDeckName, setApkgDeckName] = useState<string>('');
   const { data: lessons = [] } = useLessonsForSelect();
 
   // Processa arquivo APKG localmente (frontend)
@@ -751,12 +826,15 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
     toast.info('Processando arquivo Anki... Isso pode levar alguns segundos.');
 
     try {
-      const cards = await parseApkgToCards(file);
+      const result = await parseApkgToCards(file);
 
-      if (cards.length > 0) {
-        setParsedCards(cards);
+      if (result.cards.length > 0) {
+        setParsedCards(result.cards);
+        setApkgMediaMap(result.mediaMap);
+        setApkgDeckName(result.deckName);
         setStep('preview');
-        toast.success(`${cards.length} flashcards extraídos do Anki!`);
+        const mediaCount = result.mediaMap.size;
+        toast.success(`${result.cards.length} flashcards extraídos do Anki!${mediaCount > 0 ? ` (${mediaCount} mídias)` : ''}`);
       } else {
         toast.error('Nenhum flashcard encontrado no arquivo');
       }
@@ -886,6 +964,58 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Não autenticado');
 
+      // =============================================
+      // UPLOAD DE MÍDIA PARA O BUCKET 'materiais'
+      // Faz upload de todas as imagens extraídas do APKG
+      // =============================================
+      if (apkgMediaMap.size > 0) {
+        console.log(`[APKG] Iniciando upload de ${apkgMediaMap.size} arquivos de mídia...`);
+        let mediaUploaded = 0;
+        const mediaTotal = apkgMediaMap.size;
+        
+        for (const [path, blob] of apkgMediaMap) {
+          try {
+            // Determinar MIME type
+            const ext = path.split('.').pop()?.toLowerCase() || '';
+            const mimeTypes: Record<string, string> = {
+              'jpg': 'image/jpeg',
+              'jpeg': 'image/jpeg',
+              'png': 'image/png',
+              'gif': 'image/gif',
+              'webp': 'image/webp',
+              'svg': 'image/svg+xml',
+              'mp3': 'audio/mpeg',
+              'wav': 'audio/wav',
+              'ogg': 'audio/ogg',
+            };
+            const contentType = mimeTypes[ext] || 'application/octet-stream';
+            
+            // Upload para bucket 'materiais' com path: flashcards/deckname/filename
+            const storagePath = `flashcards/${path}`;
+            
+            const { error: uploadError } = await supabase.storage
+              .from('materiais')
+              .upload(storagePath, blob, {
+                contentType,
+                upsert: true, // Substitui se já existir
+              });
+            
+            if (uploadError) {
+              console.warn(`[APKG] Erro ao fazer upload de ${path}:`, uploadError.message);
+            } else {
+              mediaUploaded++;
+            }
+          } catch (e) {
+            console.warn(`[APKG] Falha ao processar ${path}:`, e);
+          }
+        }
+        
+        console.log(`[APKG] ✅ Upload concluído: ${mediaUploaded}/${mediaTotal} arquivos`);
+        if (mediaUploaded > 0) {
+          toast.info(`${mediaUploaded} imagens enviadas para o storage`);
+        }
+      }
+
       const batchSize = 50;
       let imported = 0;
 
@@ -937,6 +1067,8 @@ const ImportDialog = memo(function ImportDialog({ open, onClose, onSuccess }: Im
     setRawText('');
     setStep('upload');
     setImportProgress(0);
+    setApkgMediaMap(new Map());
+    setApkgDeckName('');
   };
 
   return (
