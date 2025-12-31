@@ -187,6 +187,9 @@ verify_jwt = true
 [functions.reschedule-flashcard]
 verify_jwt = true
 
+[functions.parse-anki-apkg]
+verify_jwt = true
+
 # --- OCR e Documentos ---
 [functions.extract-document]
 verify_jwt = true
