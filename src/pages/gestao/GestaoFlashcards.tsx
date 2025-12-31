@@ -1174,6 +1174,8 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
   const [editingCard, setEditingCard] = useState<FlashcardAdmin | null>(null);
   const [previewCard, setPreviewCard] = useState<FlashcardAdmin | null>(null);
   const [deletingCard, setDeletingCard] = useState<FlashcardAdmin | null>(null);
+  const [isDeleteAllOpen, setIsDeleteAllOpen] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
 
   // Dados
   const { data: flashcards, isLoading, refetch } = useFlashcardsAdmin();
@@ -1240,6 +1242,39 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
     toast.success('Dados atualizados!');
   };
 
+  // =============================================
+  // EXCLUIR TODOS OS FLASHCARDS (NUCLEAR)
+  // =============================================
+  const handleDeleteAll = async () => {
+    setIsDeletingAll(true);
+    
+    try {
+      // 1. Excluir todos da tabela study_flashcards
+      const { error: flashcardsError } = await supabase
+        .from('study_flashcards')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Deleta tudo (workaround para delete all)
+      
+      if (flashcardsError) throw flashcardsError;
+
+      // 2. Invalidar caches relacionados
+      queryClient.invalidateQueries({ queryKey: ['flashcards-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards-stats-admin'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcard-analytics'] });
+      queryClient.invalidateQueries({ queryKey: ['study-flashcards'] });
+      
+      toast.success(`✅ Todos os flashcards foram excluídos com sucesso!`);
+      setIsDeleteAllOpen(false);
+      refetch();
+    } catch (error: any) {
+      console.error('Erro ao excluir flashcards:', error);
+      toast.error(error.message || 'Erro ao excluir flashcards');
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background p-4 md:p-6">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -1258,6 +1293,14 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="icon" onClick={handleRefresh}>
               <RefreshCw className="w-4 h-4" />
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => setIsDeleteAllOpen(true)}
+              disabled={(stats?.total || 0) === 0}
+            >
+              <Trash2 className="w-4 h-4 mr-2" />
+              Excluir Todos
             </Button>
             <Button variant="outline" onClick={() => setIsImportOpen(true)}>
               <Upload className="w-4 h-4 mr-2" />
@@ -1529,7 +1572,7 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
         flashcard={previewCard}
       />
 
-      {/* Dialog de confirmação de exclusão */}
+      {/* Dialog de confirmação de exclusão individual */}
       <Dialog open={!!deletingCard} onOpenChange={() => setDeletingCard(null)}>
         <DialogContent>
           <DialogHeader>
@@ -1545,6 +1588,54 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
             <Button variant="destructive" onClick={handleDelete}>
               <Trash2 className="w-4 h-4 mr-2" />
               Excluir
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de confirmação de exclusão TOTAL */}
+      <Dialog open={isDeleteAllOpen} onOpenChange={setIsDeleteAllOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-destructive">
+              <Trash2 className="w-5 h-5" />
+              EXCLUIR TODOS OS FLASHCARDS?
+            </DialogTitle>
+            <DialogDescription className="space-y-2">
+              <p className="font-semibold text-destructive">
+                ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!
+              </p>
+              <p>
+                Serão excluídos <strong>{stats?.total || 0} flashcards</strong> de todos os usuários, 
+                incluindo todo o histórico de revisões FSRS.
+              </p>
+              <p>
+                Dados que serão perdidos:
+              </p>
+              <ul className="list-disc list-inside text-sm text-muted-foreground">
+                <li>Todos os flashcards da tabela study_flashcards</li>
+                <li>Histórico de repetição espaçada (FSRS)</li>
+                <li>Progresso de todos os alunos</li>
+                <li>Estatísticas de revisão</li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setIsDeleteAllOpen(false)} disabled={isDeletingAll}>
+              Cancelar
+            </Button>
+            <Button variant="destructive" onClick={handleDeleteAll} disabled={isDeletingAll}>
+              {isDeletingAll ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="w-4 h-4 mr-2" />
+                  SIM, EXCLUIR TODOS
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
