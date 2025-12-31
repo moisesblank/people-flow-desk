@@ -193,6 +193,8 @@ const QuestionDialog = memo(function QuestionDialog({
     // Competências e Habilidades (Matriz ENEM)
     competencia: '' as '' | 'C1' | 'C2' | 'C3' | 'C4' | 'C5' | 'C6' | 'C7',
     habilidade: '',
+    // Tipo Pedagógico
+    tipo_pedagogico: 'direta' as 'direta' | 'contextualizada',
   });
 
   // Preencher form ao editar
@@ -231,6 +233,8 @@ const QuestionDialog = memo(function QuestionDialog({
         // Competências e Habilidades
         competencia: (question as any).competencia || '',
         habilidade: (question as any).habilidade || '',
+        // Tipo Pedagógico
+        tipo_pedagogico: (question as any).tipo_pedagogico || 'direta',
       });
     } else {
       // Reset para nova questão
@@ -267,6 +271,8 @@ const QuestionDialog = memo(function QuestionDialog({
         // Competências e Habilidades
         competencia: '',
         habilidade: '',
+        // Tipo Pedagógico
+        tipo_pedagogico: 'direta',
       });
     }
   }, [question, open]);
@@ -535,6 +541,33 @@ const QuestionDialog = memo(function QuestionDialog({
               <SelectContent>
                 <SelectItem value="multiple_choice">📝 Múltipla Escolha (A, B, C, D, E)</SelectItem>
                 <SelectItem value="discursive">✍️ Discursiva</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Tipo Pedagógico */}
+          <div className="space-y-2">
+            <Label>Tipo da Questão (Pedagógico)</Label>
+            <Select
+              value={form.tipo_pedagogico}
+              onValueChange={(v: 'direta' | 'contextualizada') => setForm(f => ({ ...f, tipo_pedagogico: v }))}
+            >
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="direta">
+                  <div className="flex flex-col">
+                    <span>🎯 Direta</span>
+                    <span className="text-xs text-muted-foreground">Objetiva, foco conceitual ou cálculo simples</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="contextualizada">
+                  <div className="flex flex-col">
+                    <span>📊 Contextualizada</span>
+                    <span className="text-xs text-muted-foreground">Situação-problema, interpretação de texto/gráfico</span>
+                  </div>
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
