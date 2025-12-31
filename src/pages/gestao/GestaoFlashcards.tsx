@@ -138,7 +138,8 @@ let sqlInitPromise: ReturnType<typeof initSqlJs> | null = null;
 function getSql() {
   if (!sqlInitPromise) {
     sqlInitPromise = initSqlJs({
-      locateFile: (file: string) => new URL(`sql.js/dist/${file}`, import.meta.url).toString(),
+      // Evita problemas de bundler (Vite) com assets do sql.js
+      locateFile: (file: string) => `https://sql.js.org/dist/${file}`,
     });
   }
   return sqlInitPromise;
