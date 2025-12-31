@@ -1,81 +1,99 @@
 // ============================================
 // MAPA MENTAL TAB - Visualização do conteúdo
-// Gerado por IA
+// Integrado com IA via useLessonAI
+// ANTES: Usava SAMPLE_MINDMAP estático
+// DEPOIS: Gera via IA + cache + fallback
 // ============================================
 
-import { useState } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
-import { Network, Download, RefreshCw, ZoomIn, ZoomOut } from 'lucide-react';
+import { Network, Download, RefreshCw, ZoomIn, ZoomOut, Loader2, Sparkles, Brain } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { cn } from '@/lib/utils';
+import { useLessonAI } from '@/hooks/ai/useLessonAI';
+import { useQuery } from '@tanstack/react-query';
+import type { MindmapNode, Mindmap } from '@/types/flashcards';
 
 interface MindmapTabProps {
   lessonId: string;
+  lessonTitle?: string;
 }
 
-interface MindmapNode {
-  id: string;
-  label: string;
-  children?: MindmapNode[];
-  color?: string;
-}
-
-const SAMPLE_MINDMAP: MindmapNode = {
-  id: 'root',
-  label: 'Diagramas de Fases',
-  color: 'from-primary to-purple-500',
-  children: [
+// Mapa mental de fallback
+const FALLBACK_MINDMAP: Mindmap = {
+  title: 'Diagramas de Fases',
+  nodes: [
     {
-      id: 'estados',
-      label: 'Estados Físicos',
-      color: 'from-blue-500 to-cyan-500',
+      id: 'root',
+      label: 'Diagramas de Fases',
+      type: 'root',
+      color: 'from-primary to-purple-500',
       children: [
-        { id: 'solido', label: 'Sólido' },
-        { id: 'liquido', label: 'Líquido' },
-        { id: 'gasoso', label: 'Gasoso' },
-        { id: 'supercritico', label: 'Supercrítico' }
-      ]
-    },
-    {
-      id: 'pontos',
-      label: 'Pontos Especiais',
-      color: 'from-amber-500 to-orange-500',
-      children: [
-        { id: 'triplo', label: 'Ponto Triplo' },
-        { id: 'critico', label: 'Ponto Crítico' },
-        { id: 'fusao', label: 'Ponto de Fusão' },
-        { id: 'ebulicao', label: 'Ponto de Ebulição' }
-      ]
-    },
-    {
-      id: 'mudancas',
-      label: 'Mudanças de Estado',
-      color: 'from-green-500 to-emerald-500',
-      children: [
-        { id: 'fusao-m', label: 'Fusão' },
-        { id: 'vaporizacao', label: 'Vaporização' },
-        { id: 'sublimacao', label: 'Sublimação' },
-        { id: 'solidificacao', label: 'Solidificação' }
-      ]
-    },
-    {
-      id: 'agua',
-      label: 'Água - Caso Especial',
-      color: 'from-pink-500 to-rose-500',
-      children: [
-        { id: 'anomalia', label: 'Anomalia da Água' },
-        { id: 'densidade', label: 'Gelo menos denso' },
-        { id: 'inclinacao', label: 'Linha de fusão negativa' }
+        {
+          id: 'estados',
+          label: 'Estados Físicos',
+          type: 'branch',
+          color: 'from-blue-500 to-cyan-500',
+          children: [
+            { id: 'solido', label: 'Sólido', type: 'leaf' },
+            { id: 'liquido', label: 'Líquido', type: 'leaf' },
+            { id: 'gasoso', label: 'Gasoso', type: 'leaf' },
+            { id: 'supercritico', label: 'Supercrítico', type: 'leaf' }
+          ]
+        },
+        {
+          id: 'pontos',
+          label: 'Pontos Especiais',
+          type: 'branch',
+          color: 'from-amber-500 to-orange-500',
+          children: [
+            { id: 'triplo', label: 'Ponto Triplo', type: 'leaf' },
+            { id: 'critico', label: 'Ponto Crítico', type: 'leaf' },
+            { id: 'fusao', label: 'Ponto de Fusão', type: 'leaf' },
+            { id: 'ebulicao', label: 'Ponto de Ebulição', type: 'leaf' }
+          ]
+        },
+        {
+          id: 'mudancas',
+          label: 'Mudanças de Estado',
+          type: 'branch',
+          color: 'from-green-500 to-emerald-500',
+          children: [
+            { id: 'fusao-m', label: 'Fusão', type: 'leaf' },
+            { id: 'vaporizacao', label: 'Vaporização', type: 'leaf' },
+            { id: 'sublimacao', label: 'Sublimação', type: 'leaf' },
+            { id: 'solidificacao', label: 'Solidificação', type: 'leaf' }
+          ]
+        },
+        {
+          id: 'agua',
+          label: 'Água - Caso Especial',
+          type: 'branch',
+          color: 'from-pink-500 to-rose-500',
+          children: [
+            { id: 'anomalia', label: 'Anomalia da Água', type: 'leaf' },
+            { id: 'densidade', label: 'Gelo menos denso', type: 'leaf' },
+            { id: 'inclinacao', label: 'Linha de fusão negativa', type: 'leaf' }
+          ]
+        }
       ]
     }
-  ]
+  ],
 };
 
-function MindmapNode({ node, level = 0, index = 0 }: { node: MindmapNode; level?: number; index?: number }) {
+// Componente recursivo para renderizar nós
+function MindmapNodeComponent({ node, level = 0, index = 0 }: { node: MindmapNode; level?: number; index?: number }) {
   const isRoot = level === 0;
   const delay = level * 0.1 + index * 0.05;
+
+  // Determinar cor baseada no nível se não especificada
+  const getColor = () => {
+    if (node.color) return node.color;
+    if (isRoot) return 'from-primary to-purple-500';
+    if (level === 1) return 'from-blue-500 to-cyan-500';
+    return '';
+  };
 
   return (
     <motion.div
@@ -93,9 +111,9 @@ function MindmapNode({ node, level = 0, index = 0 }: { node: MindmapNode; level?
           "px-4 py-2 rounded-xl font-medium text-center transition-all",
           "hover:scale-105 cursor-pointer",
           isRoot 
-            ? `bg-gradient-to-r ${node.color} text-white text-lg py-3 px-6 shadow-lg` 
+            ? `bg-gradient-to-r ${getColor()} text-white text-lg py-3 px-6 shadow-lg` 
             : level === 1 
-              ? `bg-gradient-to-r ${node.color} text-white shadow-md`
+              ? `bg-gradient-to-r ${getColor()} text-white shadow-md`
               : "bg-muted/80 text-foreground text-sm border border-border"
         )}
       >
@@ -119,7 +137,7 @@ function MindmapNode({ node, level = 0, index = 0 }: { node: MindmapNode; level?
               {!isRoot && (
                 <div className="absolute -left-4 top-1/2 w-4 h-px bg-border" />
               )}
-              <MindmapNode node={child} level={level + 1} index={idx} />
+              <MindmapNodeComponent node={child} level={level + 1} index={idx} />
             </div>
           ))}
         </div>
@@ -128,11 +146,78 @@ function MindmapNode({ node, level = 0, index = 0 }: { node: MindmapNode; level?
   );
 }
 
-function MindmapTab({ lessonId }: MindmapTabProps) {
+function MindmapTab({ lessonId, lessonTitle }: MindmapTabProps) {
+  const { generateContent, getCachedContent, isLoading: isGenerating } = useLessonAI();
   const [zoom, setZoom] = useState(1);
+  const [mindmap, setMindmap] = useState<Mindmap | null>(null);
+
+  // Buscar mapa mental do cache IA
+  const { data: cachedMindmap, isLoading, refetch } = useQuery({
+    queryKey: ['lesson-mindmap', lessonId],
+    queryFn: async () => {
+      const cached = await getCachedContent(lessonId, 'mindmap');
+      if (cached?.content) {
+        return parseAIMindmap(cached.content, lessonTitle);
+      }
+      return null;
+    },
+    enabled: !!lessonId,
+    staleTime: 1000 * 60 * 30, // 30 min
+  });
+
+  // Atualizar mindmap quando cache carregar
+  useEffect(() => {
+    if (cachedMindmap) {
+      setMindmap(cachedMindmap);
+    } else if (!isLoading) {
+      // Usar fallback se não tem cache
+      setMindmap(FALLBACK_MINDMAP);
+    }
+  }, [cachedMindmap, isLoading]);
 
   const handleZoomIn = () => setZoom(prev => Math.min(prev + 0.1, 1.5));
   const handleZoomOut = () => setZoom(prev => Math.max(prev - 0.1, 0.5));
+
+  const handleRegenerate = useCallback(async () => {
+    const content = await generateContent(lessonId, 'mindmap', lessonTitle);
+    if (content) {
+      const newMindmap = parseAIMindmap(content, lessonTitle);
+      if (newMindmap) {
+        setMindmap(newMindmap);
+      }
+    }
+    refetch();
+  }, [lessonId, lessonTitle, generateContent, refetch]);
+
+  const handleExport = useCallback(() => {
+    if (!mindmap) return;
+    
+    // Exportar como JSON
+    const dataStr = JSON.stringify(mindmap, null, 2);
+    const blob = new Blob([dataStr], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `mindmap-${lessonId}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }, [mindmap, lessonId]);
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+          <p className="text-sm text-muted-foreground">Carregando mapa mental...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Usar fallback se não tem mindmap
+  const displayMindmap = mindmap || FALLBACK_MINDMAP;
+  const rootNode = displayMindmap.nodes?.[0] || { id: 'empty', label: displayMindmap.title || 'Mapa Mental' };
 
   return (
     <div className="space-y-4">
@@ -145,7 +230,7 @@ function MindmapTab({ lessonId }: MindmapTabProps) {
           <div>
             <h3 className="font-semibold">Mapa Mental</h3>
             <p className="text-xs text-muted-foreground">
-              Visualização hierárquica do conteúdo
+              {mindmap === FALLBACK_MINDMAP ? 'Exemplo • Gere o seu!' : 'Visualização hierárquica do conteúdo'}
             </p>
           </div>
         </div>
@@ -162,11 +247,20 @@ function MindmapTab({ lessonId }: MindmapTabProps) {
               <ZoomIn className="h-4 w-4" />
             </Button>
           </div>
-          <Button variant="outline" size="sm">
-            <RefreshCw className="h-4 w-4 mr-1" />
-            Regenerar
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={handleRegenerate}
+            disabled={isGenerating}
+          >
+            {isGenerating ? (
+              <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+            ) : (
+              <RefreshCw className="h-4 w-4 mr-1" />
+            )}
+            {isGenerating ? 'Gerando...' : 'Regenerar'}
           </Button>
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" onClick={handleExport}>
             <Download className="h-4 w-4 mr-1" />
             Exportar
           </Button>
@@ -179,7 +273,7 @@ function MindmapTab({ lessonId }: MindmapTabProps) {
           className="flex justify-center transition-transform duration-200"
           style={{ transform: `scale(${zoom})`, transformOrigin: 'top center' }}
         >
-          <MindmapNode node={SAMPLE_MINDMAP} />
+          <MindmapNodeComponent node={rootNode} />
         </div>
       </div>
 
@@ -197,9 +291,106 @@ function MindmapTab({ lessonId }: MindmapTabProps) {
           <div className="w-2 h-2 rounded-full bg-muted" />
           Conceitos
         </Badge>
+        {mindmap === FALLBACK_MINDMAP && (
+          <Badge variant="secondary" className="gap-1">
+            <Sparkles className="h-3 w-3" />
+            Clique em Regenerar para criar com IA
+          </Badge>
+        )}
       </div>
     </div>
   );
+}
+
+// ============================================
+// HELPERS
+// ============================================
+
+/**
+ * Parseia mapa mental gerado pela IA
+ */
+function parseAIMindmap(content: unknown, fallbackTitle?: string): Mindmap | null {
+  try {
+    if (!content) return null;
+    
+    // Se já é um Mindmap válido
+    if (typeof content === 'object' && content !== null) {
+      const obj = content as Record<string, unknown>;
+      
+      // Formato esperado: { title, nodes, summary }
+      if (obj.title && Array.isArray(obj.nodes)) {
+        return {
+          title: String(obj.title),
+          nodes: convertNodesToHierarchy(obj.nodes as unknown[]),
+          summary: obj.summary ? String(obj.summary) : undefined,
+        };
+      }
+      
+      // Formato alternativo: { mindmap: {...} }
+      if (obj.mindmap && typeof obj.mindmap === 'object') {
+        return parseAIMindmap(obj.mindmap, fallbackTitle);
+      }
+      
+      // Formato flat: array de nodes com parent
+      if (Array.isArray(obj)) {
+        return {
+          title: fallbackTitle || 'Mapa Mental',
+          nodes: convertNodesToHierarchy(obj),
+        };
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error('Erro ao parsear mindmap IA:', error);
+    return null;
+  }
+}
+
+/**
+ * Converte array flat de nodes para estrutura hierárquica
+ */
+function convertNodesToHierarchy(flatNodes: unknown[]): MindmapNode[] {
+  const nodeMap = new Map<string, MindmapNode>();
+  const rootNodes: MindmapNode[] = [];
+  
+  // Primeiro passo: criar todos os nós
+  flatNodes.forEach((item) => {
+    if (typeof item !== 'object' || item === null) return;
+    const obj = item as Record<string, unknown>;
+    
+    const node: MindmapNode = {
+      id: String(obj.id || `node-${Math.random()}`),
+      label: String(obj.label || obj.name || ''),
+      type: (obj.type as MindmapNode['type']) || 'leaf',
+      color: obj.color ? String(obj.color) : undefined,
+      children: [],
+    };
+    
+    nodeMap.set(node.id, node);
+  });
+  
+  // Segundo passo: construir hierarquia
+  flatNodes.forEach((item) => {
+    if (typeof item !== 'object' || item === null) return;
+    const obj = item as Record<string, unknown>;
+    
+    const nodeId = String(obj.id || '');
+    const parentId = obj.parent ? String(obj.parent) : null;
+    const node = nodeMap.get(nodeId);
+    
+    if (!node) return;
+    
+    if (parentId && nodeMap.has(parentId)) {
+      const parent = nodeMap.get(parentId)!;
+      if (!parent.children) parent.children = [];
+      parent.children.push(node);
+    } else if (!parentId || obj.type === 'root') {
+      rootNodes.push(node);
+    }
+  });
+  
+  return rootNodes.length > 0 ? rootNodes : Array.from(nodeMap.values()).slice(0, 1);
 }
 
 export default MindmapTab;

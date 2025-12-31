@@ -7,36 +7,23 @@
 import { useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/hooks/useAuth';
-import { useSubspaceQuery, useOptimisticMutation, SUBSPACE_CACHE_PROFILES } from './useSubspaceCommunication';
+import { useSubspaceQuery, useOptimisticMutation } from './useSubspaceCommunication';
 
-// Interface alinhada com a tabela study_flashcards
-export interface Flashcard {
-  id: string;
-  user_id: string;
-  area_id: string | null;
-  question: string;
-  answer: string;
-  due_date: string;
-  stability: number;
-  difficulty: number;
-  elapsed_days: number;
-  scheduled_days: number;
-  reps: number;
-  lapses: number;
-  state: 'new' | 'learning' | 'review' | 'relearning';
-  last_review: string | null;
-  created_at: string;
-}
+// ============================================
+// IMPORTAR TIPOS UNIFICADOS
+// ============================================
+import type { 
+  Flashcard, 
+  FlashcardRating as Rating,
+  FlashcardStats,
+  CreateFlashcardInput,
+  RescheduleFlashcardInput,
+  RescheduleFlashcardResult
+} from '@/types/flashcards';
+import { FSRS_PARAMS } from '@/types/flashcards';
 
-// FSRS Parameters
-const FSRS_PARAMS = {
-  w: [0.4, 0.6, 2.4, 5.8, 4.93, 0.94, 0.86, 0.01, 1.49, 0.14, 0.94, 2.18, 0.05, 0.34, 1.26, 0.29, 2.61],
-  requestRetention: 0.9,
-  maximumInterval: 36500,
-  initialStability: [0.4, 0.6, 2.4, 5.8],
-};
-
-type Rating = 1 | 2 | 3 | 4; // 1=Again, 2=Hard, 3=Good, 4=Easy
+// Re-exportar tipos para compatibilidade
+export type { Flashcard, Rating };
 
 // Calcula próximo intervalo usando FSRS
 function calculateFSRS(
