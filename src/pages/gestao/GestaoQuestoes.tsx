@@ -188,6 +188,8 @@ const QuestionDialog = memo(function QuestionDialog({
     has_video_resolution: false,
     video_provider: '' as '' | 'youtube' | 'panda',
     video_url: '',
+    // Multidisciplinar
+    is_multidisciplinar: false,
   });
 
   // Preencher form ao editar
@@ -221,6 +223,8 @@ const QuestionDialog = memo(function QuestionDialog({
         has_video_resolution: (question as any).has_video_resolution || false,
         video_provider: (question as any).video_provider || '',
         video_url: (question as any).video_url || '',
+        // Multidisciplinar
+        is_multidisciplinar: (question as any).is_multidisciplinar || false,
       });
     } else {
       // Reset para nova questão
@@ -252,6 +256,8 @@ const QuestionDialog = memo(function QuestionDialog({
         has_video_resolution: false,
         video_provider: '',
         video_url: '',
+        // Multidisciplinar
+        is_multidisciplinar: false,
       });
     }
   }, [question, open]);
@@ -626,6 +632,17 @@ const QuestionDialog = memo(function QuestionDialog({
               <Switch
                 checked={form.is_active}
                 onCheckedChange={(v) => setForm(f => ({ ...f, is_active: v }))}
+              />
+            </div>
+
+            <div className="space-y-2 flex items-center justify-between pt-2">
+              <div>
+                <Label>Multidisciplinar</Label>
+                <p className="text-xs text-muted-foreground">Envolve mais de uma área</p>
+              </div>
+              <Switch
+                checked={form.is_multidisciplinar}
+                onCheckedChange={(v) => setForm(f => ({ ...f, is_multidisciplinar: v }))}
               />
             </div>
           </div>
