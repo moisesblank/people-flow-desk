@@ -1,10 +1,10 @@
 // ============================================
 // 📥 IMPORTADOR DE QUESTÕES - Sistema Completo
-// Parser inteligente com classificação automática
+// CONTRATO v3.0 - State Machine + Inferência Rastreável
 // Visual Futurístico Ano 2300
 // ============================================
 
-import { memo, useState, useCallback, useMemo } from 'react';
+import { memo, useState, useCallback, useMemo, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload,
@@ -35,7 +35,10 @@ import {
   Edit3,
   Save,
   ArrowRight,
-  Wand2
+  Wand2,
+  ShieldCheck,
+  Clock,
+  AlertOctagon,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -69,12 +72,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '@/components/ui/accordion';
-import {
   Table,
   TableBody,
   TableCell,
@@ -97,27 +94,51 @@ type NivelCognitivo = 'memorizar' | 'compreender' | 'aplicar' | 'analisar' | 'av
 type OrigemQuestao = 'oficial' | 'adaptada' | 'autoral_prof_moises';
 type StatusRevisao = 'rascunho' | 'revisado' | 'publicado';
 
+// ============================================
+// STATE MACHINE - 5 ESTADOS CONTROLADOS
+// ============================================
+
+type ImportFlowState = 
+  | 'arquivo_carregado'
+  | 'inferencia_em_execucao'
+  | 'inferencia_concluida'
+  | 'validacao_humana_obrigatoria'
+  | 'autorizacao_explicita';
+
 interface ParsedQuestion {
   id: string;
   question_text: string;
   options: { id: string; text: string }[];
   correct_answer: string;
   explanation?: string;
-  difficulty: 'facil' | 'medio' | 'dificil';
+  difficulty?: 'facil' | 'medio' | 'dificil';
+  // Origem e Identidade
   banca?: string;
   ano?: number;
+  origem?: OrigemQuestao;
+  // Classificação Hierárquica
   macro?: string;
   micro?: string;
   tema?: string;
   subtema?: string;
   tags?: string[];
-  // Novos campos pedagógicos
-  tempo_medio_segundos: number;
-  nivel_cognitivo: NivelCognitivo;
-  origem: OrigemQuestao;
-  // Metadados de importação
+  // Metadados Pedagógicos
+  competencia_enem?: string;
+  habilidade_enem?: string;
+  nivel_cognitivo?: NivelCognitivo;
+  tempo_medio_segundos?: number;
+  multidisciplinar?: boolean;
+  // Mídia
+  imagens_enunciado?: string[];
+  imagens_alternativas?: Record<string, string>;
+  tipo_imagem?: 'ilustrativa' | 'essencial' | 'decorativa';
+  // Controle Editorial
+  is_active: false;
+  status_revisao: 'rascunho';
+  // RASTREABILIDADE
   campos_inferidos: string[];
-  // Status de importação
+  campos_null: string[];
+  // Status de Validação
   status: 'pending' | 'valid' | 'warning' | 'error';
   errors: string[];
   warnings: string[];
@@ -132,6 +153,8 @@ interface ImportStats {
   warnings: number;
   errors: number;
   selected: number;
+  camposInferidos: number;
+  camposNull: number;
 }
 
 interface QuestionImportDialogProps {
@@ -144,7 +167,6 @@ interface QuestionImportDialogProps {
 // MAPEAMENTOS INTELIGENTES
 // ============================================
 
-// Mapeamento de colunas do Excel para campos
 const COLUMN_MAPPINGS: Record<string, string[]> = {
   question_text: ['pergunta', 'enunciado', 'questao', 'questão', 'question', 'texto', 'statement'],
   option_a: ['a', 'alternativa_a', 'opcao_a', 'opção_a', 'option_a', 'alt_a'],
@@ -162,34 +184,16 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   tema: ['tema', 'topic', 'assunto', 'conteudo', 'conteúdo'],
   subtema: ['subtema', 'subtopic', 'subassunto'],
   tags: ['tags', 'etiquetas', 'labels', 'keywords', 'palavras_chave'],
+  competencia_enem: ['competencia', 'competência', 'competencia_enem'],
+  habilidade_enem: ['habilidade', 'habilidade_enem', 'h'],
 };
 
-// Mapeamento de dificuldade
 const DIFFICULTY_MAPPING: Record<string, 'facil' | 'medio' | 'dificil'> = {
-  'facil': 'facil',
-  'fácil': 'facil',
-  'easy': 'facil',
-  'baixa': 'facil',
-  'low': 'facil',
-  '1': 'facil',
-  'f': 'facil',
-  'medio': 'medio',
-  'médio': 'medio',
-  'medium': 'medio',
-  'média': 'medio',
-  'normal': 'medio',
-  '2': 'medio',
-  'm': 'medio',
-  'dificil': 'dificil',
-  'difícil': 'dificil',
-  'hard': 'dificil',
-  'alta': 'dificil',
-  'high': 'dificil',
-  '3': 'dificil',
-  'd': 'dificil',
+  'facil': 'facil', 'fácil': 'facil', 'easy': 'facil', 'baixa': 'facil', 'low': 'facil', '1': 'facil', 'f': 'facil',
+  'medio': 'medio', 'médio': 'medio', 'medium': 'medio', 'média': 'medio', 'normal': 'medio', '2': 'medio', 'm': 'medio',
+  'dificil': 'dificil', 'difícil': 'dificil', 'hard': 'dificil', 'alta': 'dificil', 'high': 'dificil', '3': 'dificil', 'd': 'dificil',
 };
 
-// Mapeamento de gabarito
 const ANSWER_MAPPING: Record<string, string> = {
   'a': 'a', '1': 'a', 'i': 'a',
   'b': 'b', '2': 'b', 'ii': 'b',
@@ -198,16 +202,7 @@ const ANSWER_MAPPING: Record<string, string> = {
   'e': 'e', '5': 'e', 'v': 'e',
 };
 
-// Mapeamento de Nível Cognitivo (Taxonomia de Bloom)
-const NIVEL_COGNITIVO_MAPPING: Record<string, NivelCognitivo> = {
-  'memorizar': 'memorizar', 'lembrar': 'memorizar', 'definir': 'memorizar', 'citar': 'memorizar', 'listar': 'memorizar',
-  'compreender': 'compreender', 'explicar': 'compreender', 'descrever': 'compreender', 'interpretar': 'compreender',
-  'aplicar': 'aplicar', 'calcular': 'aplicar', 'resolver': 'aplicar', 'determinar': 'aplicar', 'usar': 'aplicar',
-  'analisar': 'analisar', 'comparar': 'analisar', 'relacionar': 'analisar', 'diferenciar': 'analisar',
-  'avaliar': 'avaliar', 'julgar': 'avaliar', 'criticar': 'avaliar', 'justificar': 'avaliar',
-};
-
-// Verbos para inferência de nível cognitivo
+// Verbos para inferência de nível cognitivo (Taxonomia de Bloom)
 const VERBOS_COGNITIVOS: Record<NivelCognitivo, string[]> = {
   'memorizar': ['defina', 'cite', 'liste', 'nomeie', 'identifique', 'reproduza', 'descreva', 'enumere'],
   'compreender': ['explique', 'resuma', 'interprete', 'classifique', 'exemplifique', 'traduza'],
@@ -232,26 +227,21 @@ function normalizeColumnName(name: string): string {
 
 function findColumnMapping(columnName: string): string | null {
   const normalized = normalizeColumnName(columnName);
-  
   for (const [field, aliases] of Object.entries(COLUMN_MAPPINGS)) {
     if (aliases.some(alias => normalizeColumnName(alias) === normalized || normalized.includes(normalizeColumnName(alias)))) {
       return field;
     }
   }
-  
   return null;
 }
 
 function detectBanca(text: string): string | null {
   const lower = text.toLowerCase();
-  
-  // Procurar por bancas conhecidas
   for (const banca of BANCAS) {
     if (lower.includes(banca.value.toLowerCase()) || lower.includes(banca.label.toLowerCase())) {
       return banca.value;
     }
   }
-  
   return null;
 }
 
@@ -266,10 +256,10 @@ function detectYear(text: string): number | null {
   return null;
 }
 
-function parseDifficulty(value: any): 'facil' | 'medio' | 'dificil' {
-  if (!value) return 'medio';
+function parseDifficulty(value: any): 'facil' | 'medio' | 'dificil' | undefined {
+  if (!value) return undefined;
   const normalized = String(value).toLowerCase().trim();
-  return DIFFICULTY_MAPPING[normalized] || 'medio';
+  return DIFFICULTY_MAPPING[normalized] || undefined;
 }
 
 function parseCorrectAnswer(value: any): string {
@@ -278,50 +268,97 @@ function parseCorrectAnswer(value: any): string {
   return ANSWER_MAPPING[normalized] || 'a';
 }
 
-// Inferir nível cognitivo baseado em verbos do enunciado
-function inferNivelCognitivo(text: string): { nivel: NivelCognitivo; inferido: boolean } {
+// ============================================
+// INFERÊNCIA POR CAMPO (CONTRATO PARTE 3)
+// ============================================
+
+interface InferenceResult<T> {
+  value: T | undefined;
+  inferido: boolean;
+  metodo: string;
+}
+
+function inferBanca(text: string, fromColumn?: string): InferenceResult<string> {
+  // Método: analise_textual_por_questao
+  if (fromColumn) {
+    const detected = detectBanca(fromColumn);
+    if (detected) return { value: detected, inferido: false, metodo: 'coluna_explicita' };
+    // Se tem valor na coluna mas não é reconhecido, usar como está
+    const trimmed = fromColumn.trim();
+    if (trimmed) return { value: trimmed.toLowerCase(), inferido: false, metodo: 'coluna_explicita' };
+  }
+  
+  // Tentar inferir do texto
+  const detected = detectBanca(text);
+  if (detected) return { value: detected, inferido: true, metodo: 'analise_textual_por_questao' };
+  
+  // Fallback: autoral_prof_moises (NÃO forçar, apenas marcar como inferido)
+  return { value: 'autoral_prof_moises', inferido: true, metodo: 'fallback_autoral' };
+}
+
+function inferAno(text: string, fromColumn?: string): InferenceResult<number> {
+  // Método: coluna_ano_ou_texto
+  if (fromColumn) {
+    const parsed = parseInt(String(fromColumn).trim(), 10);
+    if (Number.isFinite(parsed) && parsed >= 1990 && parsed <= new Date().getFullYear() + 1) {
+      return { value: parsed, inferido: false, metodo: 'coluna_explicita' };
+    }
+  }
+  
+  // Tentar inferir do texto
+  const detected = detectYear(text);
+  if (detected) return { value: detected, inferido: true, metodo: 'analise_textual_por_questao' };
+  
+  // Fallback: null (NÃO forçar)
+  return { value: undefined, inferido: false, metodo: 'nao_identificado' };
+}
+
+function inferNivelCognitivo(text: string): InferenceResult<NivelCognitivo> {
+  // Método: analise_de_verbo_e_estrutura
   const lower = text.toLowerCase();
   
-  // Verificar verbos de cada nível (do mais específico ao mais geral)
   for (const nivel of ['avaliar', 'analisar', 'aplicar', 'compreender', 'memorizar'] as NivelCognitivo[]) {
     for (const verbo of VERBOS_COGNITIVOS[nivel]) {
       if (lower.includes(verbo)) {
-        return { nivel, inferido: true };
+        return { value: nivel, inferido: true, metodo: 'analise_de_verbo_e_estrutura' };
       }
     }
   }
   
-  return { nivel: 'aplicar', inferido: true }; // Default
+  // Fallback: null
+  return { value: undefined, inferido: false, metodo: 'nao_identificado' };
 }
 
-// Inferir tempo médio baseado na dificuldade
-function inferTempoMedio(difficulty: 'facil' | 'medio' | 'dificil'): number {
+function inferTempoMedio(difficulty?: 'facil' | 'medio' | 'dificil'): InferenceResult<number> {
+  // Método: inferir_por_dificuldade
+  if (!difficulty) {
+    // Fallback: 120 segundos
+    return { value: 120, inferido: true, metodo: 'fallback_padrao' };
+  }
+  
   switch (difficulty) {
-    case 'facil': return 60;
-    case 'medio': return 120;
-    case 'dificil': return 180;
-    default: return 120;
+    case 'facil': return { value: 60, inferido: true, metodo: 'inferir_por_dificuldade' };
+    case 'medio': return { value: 120, inferido: true, metodo: 'inferir_por_dificuldade' };
+    case 'dificil': return { value: 180, inferido: true, metodo: 'inferir_por_dificuldade' };
   }
 }
 
-// Inferir origem baseado na banca
-function inferOrigem(banca?: string): OrigemQuestao {
-  if (!banca) return 'autoral_prof_moises';
+function inferOrigem(banca?: string): InferenceResult<OrigemQuestao> {
+  if (!banca) return { value: 'autoral_prof_moises', inferido: true, metodo: 'sem_banca' };
   
-  // Se tem banca conhecida, é oficial
   const bancaEncontrada = BANCAS.find(b => 
     b.value.toLowerCase() === banca.toLowerCase() || 
     b.label.toLowerCase() === banca.toLowerCase()
   );
   
-  return bancaEncontrada ? 'oficial' : 'adaptada';
+  if (bancaEncontrada) return { value: 'oficial', inferido: true, metodo: 'banca_conhecida' };
+  if (banca === 'autoral_prof_moises') return { value: 'autoral_prof_moises', inferido: false, metodo: 'explicito' };
+  return { value: 'adaptada', inferido: true, metodo: 'banca_desconhecida' };
 }
 
 function extractTextFromHtml(html: string): string {
   if (!html) return '';
-  // Remover tags HTML
   const text = html.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
-  // Decodificar entidades HTML
   const textarea = document.createElement('textarea');
   textarea.innerHTML = text;
   return textarea.value;
@@ -331,11 +368,8 @@ function parseAlternativesFromHtml(html: string): { options: { id: string; text:
   const options: { id: string; text: string }[] = [];
   let correctAnswer = 'a';
   
-  // Padrões comuns de alternativas em HTML
   const patterns = [
-    // Formato: (A) texto ou A) texto ou A. texto
     /\(?([A-Ea-e])\)?\s*[\.\)\-]?\s*([^(A-E][^\n]+?)(?=\(?[A-Ea-e]\)|$)/gi,
-    // Formato com lista
     /<li[^>]*>\s*\(?([A-Ea-e])\)?\s*[\.\)\-]?\s*(.*?)<\/li>/gi,
   ];
   
@@ -351,7 +385,6 @@ function parseAlternativesFromHtml(html: string): { options: { id: string; text:
     if (options.length >= 2) break;
   }
   
-  // Detectar resposta correta (pode estar marcada com ✓, [X], (correto), etc)
   const correctPatterns = [
     /\(?([A-Ea-e])\)?\s*[\.\)\-]?\s*✓/i,
     /\(?([A-Ea-e])\)?\s*[\.\)\-]?\s*\[x\]/i,
@@ -384,30 +417,42 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   onClose,
   onSuccess,
 }: QuestionImportDialogProps) {
-  const [step, setStep] = useState<'upload' | 'mapping' | 'preview' | 'importing'>('upload');
+  // UI Step (upload | mapping | preview | importing)
+  const [uiStep, setUiStep] = useState<'upload' | 'mapping' | 'preview' | 'importing'>('upload');
+  
+  // STATE MACHINE - Fluxo Controlado
+  const [flowState, setFlowState] = useState<ImportFlowState | null>(null);
+  
+  // Dados
   const [file, setFile] = useState<File | null>(null);
   const [rawData, setRawData] = useState<Record<string, any>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
   const [parsedQuestions, setParsedQuestions] = useState<ParsedQuestion[]>([]);
+  
+  // Processing
   const [isProcessing, setIsProcessing] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  
+  // UI state
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
   const [filterStatus, setFilterStatus] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   
-  // Defaults globais para aplicar a todas as questões (opcional)
+  // AUTORIZAÇÃO EXPLÍCITA (checkbox obrigatório)
+  const [humanAuthorization, setHumanAuthorization] = useState(false);
+  
+  // Defaults globais OPCIONAIS (não forçados automaticamente)
   const [globalDefaults, setGlobalDefaults] = useState({
     banca: '' as string,
     ano: '' as '' | number,
-    difficulty: 'medio' as 'facil' | 'medio' | 'dificil',
+    difficulty: '' as '' | 'facil' | 'medio' | 'dificil',
     macro: '',
     micro: '',
     tema: '',
     subtema: '',
   });
   
-  // Hook de taxonomia
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
 
   // ============================================
@@ -419,21 +464,35 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     const warnings = parsedQuestions.filter(q => q.status === 'warning').length;
     const errors = parsedQuestions.filter(q => q.status === 'error').length;
     const selected = parsedQuestions.filter(q => q.selected).length;
+    const camposInferidos = parsedQuestions.reduce((acc, q) => acc + q.campos_inferidos.length, 0);
+    const camposNull = parsedQuestions.reduce((acc, q) => acc + q.campos_null.length, 0);
     
-    return {
-      total: parsedQuestions.length,
-      valid,
-      warnings,
-      errors,
-      selected,
-    };
+    return { total: parsedQuestions.length, valid, warnings, errors, selected, camposInferidos, camposNull };
   }, [parsedQuestions]);
 
-  // Questões filtradas
   const filteredQuestions = useMemo(() => {
     if (filterStatus === 'all') return parsedQuestions;
     return parsedQuestions.filter(q => q.status === filterStatus);
   }, [parsedQuestions, filterStatus]);
+
+  // ============================================
+  // VALIDAÇÃO DE ESTADO PARA BOTÃO PROCESSAR
+  // ============================================
+  
+  const canProcess = useMemo(() => {
+    // Condição única: estado === autorizacao_explicita
+    return (
+      flowState === 'autorizacao_explicita' &&
+      humanAuthorization === true &&
+      parsedQuestions.length > 0 &&
+      stats.selected > 0
+    );
+  }, [flowState, humanAuthorization, parsedQuestions.length, stats.selected]);
+
+  // Reset autorização quando questões mudam
+  useEffect(() => {
+    setHumanAuthorization(false);
+  }, [parsedQuestions]);
 
   // ============================================
   // HANDLERS
@@ -445,6 +504,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
     setFile(selectedFile);
     setIsProcessing(true);
+    setFlowState('arquivo_carregado');
 
     try {
       const isExcel = selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls');
@@ -461,7 +521,6 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const sheet = workbook.Sheets[sheetName];
         data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[];
         
-        // Primeira linha como headers
         if (data.length > 0) {
           detectedHeaders = (data[0] as any[]).map(h => String(h || '').trim());
           data = data.slice(1).map(row => {
@@ -474,7 +533,6 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         }
       } else if (isTxt) {
         const text = await selectedFile.text();
-        // Tentar detectar se é delimitado por tab ou vírgula
         const lines = text.split('\n').filter(l => l.trim());
         if (lines.length > 0) {
           const delimiter = lines[0].includes('\t') ? '\t' : ',';
@@ -493,25 +551,25 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       setRawData(data);
       setHeaders(detectedHeaders);
       
-      // Auto-detectar mapeamento de colunas
+      // Auto-detectar mapeamento
       const autoMapping: Record<string, string> = {};
       detectedHeaders.forEach(header => {
         const mapped = findColumnMapping(header);
-        if (mapped) {
-          autoMapping[header] = mapped;
-        }
+        if (mapped) autoMapping[header] = mapped;
       });
       setColumnMapping(autoMapping);
       
       if (data.length > 0) {
-        setStep('mapping');
+        setUiStep('mapping');
         toast.success(`${data.length} linhas detectadas no arquivo`);
       } else {
         toast.error('Nenhum dado encontrado no arquivo');
+        setFlowState(null);
       }
     } catch (err) {
       console.error('Erro ao processar arquivo:', err);
       toast.error('Erro ao processar arquivo');
+      setFlowState(null);
     } finally {
       setIsProcessing(false);
     }
@@ -521,7 +579,6 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     event.preventDefault();
     const droppedFile = event.dataTransfer.files[0];
     if (droppedFile) {
-      // Simular input change
       const input = document.getElementById('file-import-input') as HTMLInputElement;
       if (input) {
         const dt = new DataTransfer();
@@ -532,214 +589,274 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     }
   }, []);
 
+  // ============================================
+  // PROCESSAMENTO COM INFERÊNCIA RASTREÁVEL
+  // ============================================
+
   const processQuestions = useCallback(() => {
-    setIsProcessing(true);
-    
-    try {
-      const questions: ParsedQuestion[] = rawData.map((row, index) => {
-        const camposInferidos: string[] = [];
-        
-        const question: ParsedQuestion = {
-          id: generateQuestionId(),
-          question_text: '',
-          options: [],
-          correct_answer: 'a',
-          difficulty: globalDefaults.difficulty,
-          banca: undefined,
-          ano: undefined,
-          macro: globalDefaults.macro || undefined,
-          micro: globalDefaults.micro || undefined,
-          tema: globalDefaults.tema || undefined,
-          subtema: globalDefaults.subtema || undefined,
-          // Novos campos pedagógicos (serão inferidos após parse)
-          tempo_medio_segundos: 120,
-          nivel_cognitivo: 'aplicar',
-          origem: 'oficial',
-          campos_inferidos: [],
-          // Status
-          status: 'pending',
-          errors: [],
-          warnings: [],
-          selected: true,
-          rawData: row,
-        };
-
-        // Mapear campos com base no mapeamento de colunas
-        for (const [header, field] of Object.entries(columnMapping)) {
-          const value = row[header];
-          if (!value) continue;
-
-          switch (field) {
-            case 'question_text':
-              question.question_text = extractTextFromHtml(String(value));
-              // Tentar extrair alternativas do HTML se estiverem embutidas
-              if (String(value).includes('<')) {
-                const { options, correctAnswer } = parseAlternativesFromHtml(String(value));
-                if (options.length >= 2) {
-                  question.options = options;
-                  question.correct_answer = correctAnswer;
-                }
-              }
-              break;
-            case 'option_a':
-            case 'option_b':
-            case 'option_c':
-            case 'option_d':
-            case 'option_e':
-              const optionId = field.replace('option_', '');
-              const existing = question.options.find(o => o.id === optionId);
-              if (existing) {
-                existing.text = extractTextFromHtml(String(value));
-              } else {
-                question.options.push({ id: optionId, text: extractTextFromHtml(String(value)) });
-              }
-              break;
-            case 'correct_answer':
-              question.correct_answer = parseCorrectAnswer(value);
-              break;
-            case 'explanation':
-              question.explanation = extractTextFromHtml(String(value));
-              break;
-            case 'difficulty':
-              question.difficulty = parseDifficulty(value);
-              break;
-            case 'banca': {
-              const raw = String(value).trim();
-              const detectedBanca = detectBanca(raw);
-              question.banca = detectedBanca || (raw ? raw.toLowerCase() : undefined);
-              break;
-            }
-            case 'ano': {
-              const raw = String(value).trim();
-              const detectedYear = detectYear(raw);
-              const parsed = Number.isFinite(Number(raw)) ? parseInt(raw, 10) : NaN;
-              question.ano = detectedYear || (Number.isFinite(parsed) ? parsed : undefined);
-              break;
-            }
-            case 'macro':
-              question.macro = String(value).trim();
-              break;
-            case 'micro':
-              question.micro = String(value).trim();
-              break;
-            case 'tema':
-              question.tema = String(value).trim();
-              break;
-            case 'subtema':
-              question.subtema = String(value).trim();
-              break;
-            case 'tags':
-              question.tags = String(value).split(/[,;]/).map(t => t.trim()).filter(t => t);
-              break;
-          }
-        }
-
-        // Inferir banca/ano a partir do enunciado (se não veio em coluna)
-        if (question.question_text) {
-          if (!question.banca) {
-            const inferredBanca = detectBanca(question.question_text);
-            if (inferredBanca) {
-              question.banca = inferredBanca;
-              camposInferidos.push('banca');
-            }
-          }
-
-          if (!question.ano) {
-            const inferredYear = detectYear(question.question_text);
-            if (inferredYear) {
-              question.ano = inferredYear;
-              camposInferidos.push('ano');
-            }
-          }
-        }
-
-        // Aplicar defaults SOMENTE se o usuário setou explicitamente
-        if (!question.banca && globalDefaults.banca) question.banca = globalDefaults.banca;
-        if (!question.ano && typeof globalDefaults.ano === 'number') question.ano = globalDefaults.ano;
-
-        // Ordenar e preencher alternativas faltantes
-        const existingIds = question.options.map(o => o.id);
-        const allIds = ['a', 'b', 'c', 'd', 'e'];
-        for (const id of allIds) {
-          if (!existingIds.includes(id)) {
-            question.options.push({ id, text: '' });
-          }
-        }
-        question.options.sort((a, b) => a.id.localeCompare(b.id));
-
-        // ============================================
-        // INFERÊNCIA DE CAMPOS PEDAGÓGICOS
-        // ============================================
-        
-        // Inferir nível cognitivo baseado no enunciado
-        if (question.question_text) {
-          const { nivel, inferido } = inferNivelCognitivo(question.question_text);
-          question.nivel_cognitivo = nivel;
-          if (inferido) camposInferidos.push('nivel_cognitivo');
-        }
-        
-        // Inferir tempo médio baseado na dificuldade
-        question.tempo_medio_segundos = inferTempoMedio(question.difficulty);
-        camposInferidos.push('tempo_medio_segundos');
-        
-        // Inferir origem baseado na banca
-        question.origem = inferOrigem(question.banca);
-        camposInferidos.push('origem');
-        
-        // Registrar campos inferidos
-        question.campos_inferidos = camposInferidos;
-
-        // ============================================
-        // VALIDAÇÃO
-        // ============================================
-        
-        if (!question.question_text.trim()) {
-          question.errors.push('Enunciado vazio');
-        }
-        
-        const filledOptions = question.options.filter(o => o.text.trim());
-        if (filledOptions.length < 2) {
-          question.errors.push('Menos de 2 alternativas preenchidas');
-        }
-
-        const correctOption = question.options.find(o => o.id === question.correct_answer);
-        if (!correctOption?.text.trim()) {
-          question.errors.push('Alternativa correta não tem texto');
-        }
-
-        if (!question.banca) {
-          question.warnings.push('Banca não identificada');
-        }
-
-        if (!question.ano) {
-          question.warnings.push('Ano não identificado');
-        }
-
-        // Definir status
-        if (question.errors.length > 0) {
-          question.status = 'error';
-          question.selected = false; // Não selecionar questões com erro
-        } else if (question.warnings.length > 0) {
-          question.status = 'warning';
-        } else {
-          question.status = 'valid';
-        }
-
-        return question;
-      });
-
-      setParsedQuestions(questions);
-      setStep('preview');
-      
-      const validCount = questions.filter(q => q.status !== 'error').length;
-      toast.success(`${validCount} questões prontas para importar`);
-    } catch (err) {
-      console.error('Erro ao processar questões:', err);
-      toast.error('Erro ao processar questões');
-    } finally {
-      setIsProcessing(false);
+    if (!Object.values(columnMapping).includes('question_text')) {
+      toast.error('Mapeie a coluna "Enunciado" para continuar');
+      return;
     }
-  }, [rawData, columnMapping, globalDefaults]);
+
+    setIsProcessing(true);
+    setFlowState('inferencia_em_execucao');
+    
+    // Simular delay para mostrar estado
+    setTimeout(() => {
+      try {
+        const questions: ParsedQuestion[] = rawData.map((row, index) => {
+          const camposInferidos: string[] = [];
+          const camposNull: string[] = [];
+          
+          // Inicializar questão com TUDO undefined/null
+          const question: ParsedQuestion = {
+            id: generateQuestionId(),
+            question_text: '',
+            options: [],
+            correct_answer: 'a',
+            explanation: undefined,
+            difficulty: undefined,
+            banca: undefined,
+            ano: undefined,
+            origem: undefined,
+            macro: undefined,
+            micro: undefined,
+            tema: undefined,
+            subtema: undefined,
+            tags: undefined,
+            competencia_enem: undefined,
+            habilidade_enem: undefined,
+            nivel_cognitivo: undefined,
+            tempo_medio_segundos: undefined,
+            multidisciplinar: undefined,
+            imagens_enunciado: undefined,
+            imagens_alternativas: undefined,
+            tipo_imagem: undefined,
+            // Controle Editorial - SEMPRE
+            is_active: false,
+            status_revisao: 'rascunho',
+            // Rastreabilidade
+            campos_inferidos: [],
+            campos_null: [],
+            // Status
+            status: 'pending',
+            errors: [],
+            warnings: [],
+            selected: true,
+            rawData: row,
+          };
+
+          // ============================================
+          // MAPEAR CAMPOS EXPLÍCITOS DAS COLUNAS
+          // ============================================
+          
+          for (const [header, field] of Object.entries(columnMapping)) {
+            const value = row[header];
+            if (value === undefined || value === null || String(value).trim() === '') continue;
+
+            switch (field) {
+              case 'question_text':
+                question.question_text = extractTextFromHtml(String(value));
+                if (String(value).includes('<')) {
+                  const { options, correctAnswer } = parseAlternativesFromHtml(String(value));
+                  if (options.length >= 2) {
+                    question.options = options;
+                    question.correct_answer = correctAnswer;
+                  }
+                }
+                break;
+              case 'option_a':
+              case 'option_b':
+              case 'option_c':
+              case 'option_d':
+              case 'option_e':
+                const optionId = field.replace('option_', '');
+                const existing = question.options.find(o => o.id === optionId);
+                if (existing) {
+                  existing.text = extractTextFromHtml(String(value));
+                } else {
+                  question.options.push({ id: optionId, text: extractTextFromHtml(String(value)) });
+                }
+                break;
+              case 'correct_answer':
+                question.correct_answer = parseCorrectAnswer(value);
+                break;
+              case 'explanation':
+                question.explanation = extractTextFromHtml(String(value));
+                break;
+              case 'difficulty':
+                question.difficulty = parseDifficulty(value);
+                break;
+              case 'banca':
+                question.banca = String(value).trim().toLowerCase() || undefined;
+                break;
+              case 'ano':
+                const anoVal = parseInt(String(value).trim(), 10);
+                question.ano = Number.isFinite(anoVal) ? anoVal : undefined;
+                break;
+              case 'macro':
+                question.macro = String(value).trim() || undefined;
+                break;
+              case 'micro':
+                question.micro = String(value).trim() || undefined;
+                break;
+              case 'tema':
+                question.tema = String(value).trim() || undefined;
+                break;
+              case 'subtema':
+                question.subtema = String(value).trim() || undefined;
+                break;
+              case 'tags':
+                question.tags = String(value).split(/[,;]/).map(t => t.trim()).filter(t => t);
+                break;
+              case 'competencia_enem':
+                question.competencia_enem = String(value).trim() || undefined;
+                break;
+              case 'habilidade_enem':
+                question.habilidade_enem = String(value).trim() || undefined;
+                break;
+            }
+          }
+
+          // ============================================
+          // INFERÊNCIA POR CAMPO (CONTRATO PARTE 3)
+          // ============================================
+          
+          const enunciado = question.question_text || '';
+
+          // BANCA: analise_textual_por_questao, fallback = autoral_prof_moises
+          if (!question.banca) {
+            const bancaResult = inferBanca(enunciado);
+            if (bancaResult.value) {
+              question.banca = bancaResult.value;
+              if (bancaResult.inferido) camposInferidos.push(`banca:${bancaResult.metodo}`);
+            }
+          }
+
+          // ANO: coluna_ano_ou_texto, fallback = null
+          if (!question.ano) {
+            const anoResult = inferAno(enunciado);
+            if (anoResult.value) {
+              question.ano = anoResult.value;
+              if (anoResult.inferido) camposInferidos.push(`ano:${anoResult.metodo}`);
+            } else {
+              camposNull.push('ano');
+            }
+          }
+
+          // NIVEL_COGNITIVO: analise_de_verbo_e_estrutura, fallback = null
+          if (!question.nivel_cognitivo) {
+            const nivelResult = inferNivelCognitivo(enunciado);
+            if (nivelResult.value) {
+              question.nivel_cognitivo = nivelResult.value;
+              camposInferidos.push(`nivel_cognitivo:${nivelResult.metodo}`);
+            } else {
+              camposNull.push('nivel_cognitivo');
+            }
+          }
+
+          // TEMPO_MEDIO: inferir_por_dificuldade, fallback = 120
+          if (!question.tempo_medio_segundos) {
+            const tempoResult = inferTempoMedio(question.difficulty);
+            question.tempo_medio_segundos = tempoResult.value;
+            camposInferidos.push(`tempo_medio_segundos:${tempoResult.metodo}`);
+          }
+
+          // ORIGEM: baseado na banca
+          if (!question.origem) {
+            const origemResult = inferOrigem(question.banca);
+            question.origem = origemResult.value;
+            if (origemResult.inferido) camposInferidos.push(`origem:${origemResult.metodo}`);
+          }
+
+          // TIPO_IMAGEM: fallback = ilustrativa (se houver imagens)
+          // Por enquanto, sem imagens detectadas
+          
+          // COMPETENCIA/HABILIDADE: só se existir coluna (já mapeado acima)
+          if (!question.competencia_enem) camposNull.push('competencia_enem');
+          if (!question.habilidade_enem) camposNull.push('habilidade_enem');
+          
+          // Classificação hierárquica
+          if (!question.macro) camposNull.push('macro');
+          if (!question.micro) camposNull.push('micro');
+          if (!question.tema) camposNull.push('tema');
+          if (!question.subtema) camposNull.push('subtema');
+          if (!question.difficulty) camposNull.push('difficulty');
+
+          // Ordenar alternativas
+          const existingIds = question.options.map(o => o.id);
+          const allIds = ['a', 'b', 'c', 'd', 'e'];
+          for (const id of allIds) {
+            if (!existingIds.includes(id)) {
+              question.options.push({ id, text: '' });
+            }
+          }
+          question.options.sort((a, b) => a.id.localeCompare(b.id));
+
+          // Registrar rastreabilidade
+          question.campos_inferidos = camposInferidos;
+          question.campos_null = camposNull;
+
+          // ============================================
+          // VALIDAÇÃO
+          // ============================================
+          
+          if (!question.question_text.trim()) {
+            question.errors.push('Enunciado vazio');
+          }
+          
+          const filledOptions = question.options.filter(o => o.text.trim());
+          if (filledOptions.length < 2) {
+            question.errors.push('Menos de 2 alternativas preenchidas');
+          }
+
+          const correctOption = question.options.find(o => o.id === question.correct_answer);
+          if (!correctOption?.text.trim()) {
+            question.errors.push('Alternativa correta não tem texto');
+          }
+
+          // Warnings para campos null importantes
+          if (!question.banca || question.banca === 'autoral_prof_moises') {
+            question.warnings.push('Banca não identificada (será "Autoral Prof. Moisés")');
+          }
+          if (!question.ano) {
+            question.warnings.push('Ano não identificado');
+          }
+
+          // Definir status
+          if (question.errors.length > 0) {
+            question.status = 'error';
+            question.selected = false;
+          } else if (question.warnings.length > 0) {
+            question.status = 'warning';
+          } else {
+            question.status = 'valid';
+          }
+
+          return question;
+        });
+
+        setParsedQuestions(questions);
+        setFlowState('inferencia_concluida');
+        setUiStep('preview');
+        
+        // Avançar para validação humana
+        setTimeout(() => {
+          setFlowState('validacao_humana_obrigatoria');
+        }, 100);
+        
+        const validCount = questions.filter(q => q.status !== 'error').length;
+        toast.success(`Inferência concluída: ${validCount} questões prontas para revisão`);
+      } catch (err) {
+        console.error('Erro ao processar questões:', err);
+        toast.error('Erro ao processar questões');
+        setFlowState('arquivo_carregado');
+      } finally {
+        setIsProcessing(false);
+      }
+    }, 500);
+  }, [rawData, columnMapping]);
 
   const toggleSelectAll = useCallback((selected: boolean) => {
     setParsedQuestions(prev => prev.map(q => ({
@@ -780,10 +897,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         updated.errors.push('Alternativa correta não tem texto');
       }
 
-      if (!updated.banca) {
+      if (!updated.banca || updated.banca === 'autoral_prof_moises') {
         updated.warnings.push('Banca não identificada');
       }
-
       if (!updated.ano) {
         updated.warnings.push('Ano não identificado');
       }
@@ -802,20 +918,49 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   }, []);
 
   const applyGlobalDefaults = useCallback(() => {
+    if (!globalDefaults.banca && !globalDefaults.ano && !globalDefaults.macro && !globalDefaults.difficulty) {
+      toast.info('Nenhum valor padrão definido para aplicar');
+      return;
+    }
+
     setParsedQuestions(prev => prev.map(q => {
       const updated = { ...q };
+      const newInferidos = [...q.campos_inferidos];
+      const newNull = [...q.campos_null];
       
-      if (globalDefaults.banca && !q.banca) updated.banca = globalDefaults.banca;
-      if (globalDefaults.ano && !q.ano) updated.ano = globalDefaults.ano;
-      if (globalDefaults.macro && !q.macro) updated.macro = globalDefaults.macro;
-      if (globalDefaults.micro && !q.micro) updated.micro = globalDefaults.micro;
-      if (globalDefaults.tema && !q.tema) updated.tema = globalDefaults.tema;
-      if (globalDefaults.subtema && !q.subtema) updated.subtema = globalDefaults.subtema;
-      if (globalDefaults.difficulty) updated.difficulty = globalDefaults.difficulty;
+      if (globalDefaults.banca && !q.banca) {
+        updated.banca = globalDefaults.banca;
+        newInferidos.push('banca:aplicado_manual');
+        const idx = newNull.indexOf('banca');
+        if (idx > -1) newNull.splice(idx, 1);
+      }
+      if (typeof globalDefaults.ano === 'number' && !q.ano) {
+        updated.ano = globalDefaults.ano;
+        newInferidos.push('ano:aplicado_manual');
+        const idx = newNull.indexOf('ano');
+        if (idx > -1) newNull.splice(idx, 1);
+      }
+      if (globalDefaults.macro && !q.macro) {
+        updated.macro = globalDefaults.macro;
+        newInferidos.push('macro:aplicado_manual');
+        const idx = newNull.indexOf('macro');
+        if (idx > -1) newNull.splice(idx, 1);
+      }
+      if (globalDefaults.difficulty && !q.difficulty) {
+        updated.difficulty = globalDefaults.difficulty;
+        newInferidos.push('difficulty:aplicado_manual');
+        const idx = newNull.indexOf('difficulty');
+        if (idx > -1) newNull.splice(idx, 1);
+      }
+      
+      updated.campos_inferidos = newInferidos;
+      updated.campos_null = newNull;
       
       // Revalidar warnings
       updated.warnings = [];
-      if (!updated.banca) updated.warnings.push('Banca não identificada');
+      if (!updated.banca || updated.banca === 'autoral_prof_moises') {
+        updated.warnings.push('Banca não identificada');
+      }
       if (!updated.ano) updated.warnings.push('Ano não identificado');
       
       if (updated.errors.length > 0) {
@@ -829,10 +974,19 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       return updated;
     }));
     
-    toast.success('Valores padrão aplicados!');
+    toast.success('Valores padrão aplicados às questões com campos vazios!');
   }, [globalDefaults]);
 
+  // ============================================
+  // IMPORTAÇÃO FINAL
+  // ============================================
+
   const handleImport = useCallback(async () => {
+    if (!canProcess) {
+      toast.error('Autorização explícita necessária para importar');
+      return;
+    }
+
     const toImport = parsedQuestions.filter(q => q.selected && q.status !== 'error');
     
     if (toImport.length === 0) {
@@ -840,7 +994,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       return;
     }
 
-    setStep('importing');
+    setUiStep('importing');
     setImportProgress(0);
 
     let imported = 0;
@@ -850,14 +1004,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       const q = toImport[i];
       
       try {
-        // IMPORTAÇÃO SEMPRE COMO RASCUNHO (is_active = false, status_revisao = 'rascunho')
+        // RESULTADO FINAL OBRIGATÓRIO DO CONTRATO
         const payload = {
           question_text: q.question_text,
           question_type: 'multiple_choice',
           options: q.options.filter(o => o.text.trim()).map(o => ({ id: o.id, text: o.text })),
           correct_answer: q.correct_answer,
           explanation: q.explanation || null,
-          difficulty: q.difficulty,
+          difficulty: q.difficulty || null,
           banca: q.banca || null,
           ano: q.ano || null,
           macro: q.macro || null,
@@ -866,14 +1020,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           subtema: q.subtema || null,
           tags: q.tags || [],
           points: 10,
-          // REGRA: Importação sempre como inativo/rascunho para revisão
+          // CONTROLE EDITORIAL (CONTRATO)
           is_active: false,
           status_revisao: 'rascunho',
-          // Novos campos pedagógicos
-          tempo_medio_segundos: q.tempo_medio_segundos,
-          nivel_cognitivo: q.nivel_cognitivo,
-          origem: q.origem,
-          // Metadado de campos inferidos
+          // Metadados pedagógicos
+          tempo_medio_segundos: q.tempo_medio_segundos || 120,
+          nivel_cognitivo: q.nivel_cognitivo || null,
+          origem: q.origem || 'autoral_prof_moises',
+          competencia_enem: q.competencia_enem || null,
+          habilidade_enem: q.habilidade_enem || null,
+          // Rastreabilidade
           campos_inferidos: q.campos_inferidos,
         };
 
@@ -892,17 +1048,18 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     }
 
     if (failed === 0) {
-      toast.success(`${imported} questões importadas com sucesso!`);
+      toast.success(`${imported} questões importadas como RASCUNHO!`);
     } else {
       toast.warning(`${imported} importadas, ${failed} falharam`);
     }
 
     onSuccess();
     onClose();
-  }, [parsedQuestions, onSuccess, onClose]);
+  }, [canProcess, parsedQuestions, onSuccess, onClose]);
 
   const reset = useCallback(() => {
-    setStep('upload');
+    setUiStep('upload');
+    setFlowState(null);
     setFile(null);
     setRawData([]);
     setHeaders([]);
@@ -912,6 +1069,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     setExpandedQuestion(null);
     setEditingQuestion(null);
     setFilterStatus('all');
+    setHumanAuthorization(false);
+    setGlobalDefaults({
+      banca: '',
+      ano: '',
+      difficulty: '',
+      macro: '',
+      micro: '',
+      tema: '',
+      subtema: '',
+    });
   }, []);
 
   const handleClose = useCallback(() => {
@@ -933,21 +1100,26 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             </div>
             <span>Importar Questões</span>
             <Badge variant="outline" className="ml-2">
-              {step === 'upload' && 'Upload'}
-              {step === 'mapping' && 'Mapeamento'}
-              {step === 'preview' && 'Preview'}
-              {step === 'importing' && 'Importando...'}
+              {uiStep === 'upload' && 'Upload'}
+              {uiStep === 'mapping' && 'Mapeamento'}
+              {uiStep === 'preview' && 'Validação Humana'}
+              {uiStep === 'importing' && 'Importando...'}
             </Badge>
+            {flowState && (
+              <Badge variant="secondary" className="ml-1 text-[10px]">
+                {flowState.replace(/_/g, ' ')}
+              </Badge>
+            )}
           </DialogTitle>
           <DialogDescription>
-            Importe questões de arquivos Excel, CSV ou TXT com classificação automática
+            Importe questões com inferência rastreável. Campos não identificados permanecerão vazios.
           </DialogDescription>
         </DialogHeader>
 
         <div className="flex-1 overflow-hidden">
           <AnimatePresence mode="wait">
             {/* STEP 1: UPLOAD */}
-            {step === 'upload' && (
+            {uiStep === 'upload' && (
               <motion.div
                 key="upload"
                 initial={{ opacity: 0, x: 20 }}
@@ -987,24 +1159,45 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       </p>
                     </div>
                     
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Badge variant="outline">.xlsx</Badge>
-                      <Badge variant="outline">.xls</Badge>
-                      <Badge variant="outline">.csv</Badge>
-                      <Badge variant="outline">.txt</Badge>
+                    <div className="flex flex-wrap gap-2 justify-center">
+                      <Badge variant="outline" className="gap-1">
+                        <FileSpreadsheet className="h-3 w-3" />
+                        Excel
+                      </Badge>
+                      <Badge variant="outline" className="gap-1">
+                        <FileText className="h-3 w-3" />
+                        CSV
+                      </Badge>
+                      <Badge variant="outline" className="gap-1">
+                        <FileText className="h-3 w-3" />
+                        TXT
+                      </Badge>
                     </div>
                   </div>
                 </div>
+                
+                {/* Regras do contrato */}
+                <div className="mt-6 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 max-w-lg">
+                  <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 mb-2">
+                    <AlertTriangle className="h-4 w-4" />
+                    <span className="font-semibold text-sm">Regras de Importação</span>
+                  </div>
+                  <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• Campos não identificáveis permanecerão <strong>NULL</strong></li>
+                    <li>• Nenhum valor padrão será forçado automaticamente</li>
+                    <li>• Questões serão importadas como <strong>RASCUNHO</strong> (inativas)</li>
+                    <li>• Autorização explícita será exigida antes da importação</li>
+                  </ul>
+                </div>
 
-                {/* Template download */}
-                <div className="mt-6 text-center">
+                <div className="mt-4 text-center">
                   <p className="text-sm text-muted-foreground mb-2">
                     Não tem um arquivo? Baixe nosso template:
                   </p>
                   <Button variant="outline" size="sm" onClick={() => {
                     const template = [
                       ['Pergunta', 'A', 'B', 'C', 'D', 'E', 'Resposta', 'Explicação', 'Dificuldade', 'Banca', 'Ano', 'Macro', 'Micro', 'Tema'],
-                      ['Qual é o símbolo do elemento Ouro?', 'Au', 'Ag', 'Fe', 'Cu', 'Zn', 'A', 'O símbolo Au vem do latim Aurum', 'Fácil', 'ENEM', '2023', 'Química Geral', 'Tabela Periódica', 'Elementos'],
+                      ['Qual é o símbolo do elemento Ouro?', 'Au', 'Ag', 'Fe', 'Cu', 'Zn', 'A', 'O símbolo Au vem do latim Aurum', 'Fácil', 'ENEM', '2023', 'Ciências da Natureza', 'Química', 'Tabela Periódica'],
                     ];
                     const ws = XLSX.utils.aoa_to_sheet(template);
                     const wb = XLSX.utils.book_new();
@@ -1020,7 +1213,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             )}
 
             {/* STEP 2: MAPPING */}
-            {step === 'mapping' && (
+            {uiStep === 'mapping' && (
               <motion.div
                 key="mapping"
                 initial={{ opacity: 0, x: 20 }}
@@ -1035,10 +1228,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       {rawData.length} linhas • {headers.length} colunas detectadas
                     </p>
                   </div>
-                  <Badge variant="outline" className="gap-1">
-                    <Sparkles className="h-3 w-3" />
-                    {Object.keys(columnMapping).length} auto-detectadas
-                  </Badge>
+                  <div className="flex items-center gap-2">
+                    <Badge variant="outline" className="gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      {Object.keys(columnMapping).length} auto-detectadas
+                    </Badge>
+                    <Badge variant="secondary" className="gap-1">
+                      <Clock className="h-3 w-3" />
+                      {flowState}
+                    </Badge>
+                  </div>
                 </div>
 
                 <div className="flex-1 overflow-auto p-4">
@@ -1066,7 +1265,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                             <SelectTrigger className="h-9 text-xs">
                               <SelectValue placeholder="Pular" />
                             </SelectTrigger>
-                            <SelectContent>
+                            <SelectContent className="z-[9999]">
                               <SelectItem value="_skip">— Pular —</SelectItem>
                               <SelectItem value="question_text">📝 Enunciado</SelectItem>
                               <SelectItem value="option_a">🅰️ Alternativa A</SelectItem>
@@ -1084,142 +1283,145 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               <SelectItem value="tema">📖 Tema</SelectItem>
                               <SelectItem value="subtema">📑 Subtema</SelectItem>
                               <SelectItem value="tags">🏷️ Tags</SelectItem>
+                              <SelectItem value="competencia_enem">🎓 Competência ENEM</SelectItem>
+                              <SelectItem value="habilidade_enem">📐 Habilidade ENEM</SelectItem>
                             </SelectContent>
                           </Select>
                         </div>
                       ))}
                     </div>
 
-                  {/* Valores Padrão Globais */}
-                  <div className="mt-8 p-4 rounded-lg border border-primary/20 bg-primary/5">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Wand2 className="h-4 w-4 text-primary" />
-                      <h4 className="font-semibold text-primary">Valores Padrão (aplicar a todas)</h4>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                      {/* Banca */}
-                      <div className="space-y-2">
-                        <Label className="text-xs">Banca</Label>
-                        <Select
-                          value={globalDefaults.banca || '_none'}
-                          onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, banca: v === '_none' ? '' : v }))}
-                        >
-                          <SelectTrigger className="h-9 text-xs">
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent className="max-h-[200px]">
-                            <SelectItem value="_none">— Sem banca —</SelectItem>
-                            {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
-                              <div key={categoria}>
-                                <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
-                                  {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                    {/* Valores Padrão (OPCIONAIS) */}
+                    <div className="mt-8 p-4 rounded-lg border border-blue-500/20 bg-blue-500/5">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Wand2 className="h-4 w-4 text-blue-500" />
+                        <h4 className="font-semibold text-blue-600 dark:text-blue-400">Valores Padrão (opcionais - aplicar manualmente depois)</h4>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-4">
+                        Estes valores <strong>NÃO serão aplicados automaticamente</strong>. Use "Aplicar Padrões" na próxima tela.
+                      </p>
+                      
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="space-y-2">
+                          <Label className="text-xs">Banca</Label>
+                          <Select
+                            value={globalDefaults.banca || '_none'}
+                            onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, banca: v === '_none' ? '' : v }))}
+                          >
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="— Não definir —" />
+                            </SelectTrigger>
+                            <SelectContent className="max-h-[200px] z-[9999]">
+                              <SelectItem value="_none">— Não definir —</SelectItem>
+                              {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
+                                <div key={categoria}>
+                                  <div className="px-2 py-1 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                                    {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                                  </div>
+                                  {bancas.map(b => (
+                                    <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                                  ))}
                                 </div>
-                                {bancas.map(b => (
-                                  <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
-                                ))}
-                              </div>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                      {/* Ano */}
-                      <div className="space-y-2">
-                        <Label className="text-xs">Ano</Label>
-                        <Input
-                          type="number"
-                          min={1990}
-                          max={new Date().getFullYear() + 1}
-                          value={globalDefaults.ano}
-                          placeholder="(vazio)"
-                          onChange={(e) => {
-                            const raw = e.target.value;
-                            if (!raw) {
-                              setGlobalDefaults(prev => ({ ...prev, ano: '' }));
-                              return;
-                            }
-                            const parsed = parseInt(raw, 10);
-                            setGlobalDefaults(prev => ({ ...prev, ano: Number.isFinite(parsed) ? parsed : '' }));
-                          }}
-                          className="h-9 text-xs"
-                        />
-                      </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Ano</Label>
+                          <Input
+                            type="number"
+                            min={1990}
+                            max={new Date().getFullYear() + 1}
+                            value={globalDefaults.ano}
+                            placeholder="(não definir)"
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              if (!raw) {
+                                setGlobalDefaults(prev => ({ ...prev, ano: '' }));
+                                return;
+                              }
+                              const parsed = parseInt(raw, 10);
+                              setGlobalDefaults(prev => ({ ...prev, ano: Number.isFinite(parsed) ? parsed : '' }));
+                            }}
+                            className="h-9 text-xs"
+                          />
+                        </div>
 
-                      {/* Dificuldade */}
-                      <div className="space-y-2">
-                        <Label className="text-xs">Dificuldade</Label>
-                        <Select
-                          value={globalDefaults.difficulty}
-                          onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, difficulty: v as any }))}
-                        >
-                          <SelectTrigger className="h-9 text-xs">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="facil">🟢 Fácil</SelectItem>
-                            <SelectItem value="medio">🟡 Médio</SelectItem>
-                            <SelectItem value="dificil">🔴 Difícil</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Dificuldade</Label>
+                          <Select
+                            value={globalDefaults.difficulty || '_none'}
+                            onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, difficulty: v === '_none' ? '' : v as any }))}
+                          >
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="— Não definir —" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[9999]">
+                              <SelectItem value="_none">— Não definir —</SelectItem>
+                              <SelectItem value="facil">🟢 Fácil</SelectItem>
+                              <SelectItem value="medio">🟡 Médio</SelectItem>
+                              <SelectItem value="dificil">🔴 Difícil</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
 
-                      {/* Macro */}
-                      <div className="space-y-2">
-                        <Label className="text-xs">Macro</Label>
-                        <Select
-                          value={globalDefaults.macro}
-                          onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, macro: v, micro: '', tema: '', subtema: '' }))}
-                          disabled={taxonomyLoading}
-                        >
-                          <SelectTrigger className="h-9 text-xs">
-                            <SelectValue placeholder="Selecione..." />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {macros.map(m => (
-                              <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
+                        <div className="space-y-2">
+                          <Label className="text-xs">Macro</Label>
+                          <Select
+                            value={globalDefaults.macro || '_none'}
+                            onValueChange={(v) => setGlobalDefaults(prev => ({ ...prev, macro: v === '_none' ? '' : v, micro: '', tema: '', subtema: '' }))}
+                            disabled={taxonomyLoading}
+                          >
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="— Não definir —" />
+                            </SelectTrigger>
+                            <SelectContent className="z-[9999]">
+                              <SelectItem value="_none">— Não definir —</SelectItem>
+                              {macros.map(m => (
+                                <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
                       </div>
                     </div>
-                  </div>
 
-                  {/* Preview dos dados */}
-                  <div className="mt-6">
-                    <h4 className="font-semibold mb-2 text-sm">Preview dos dados (primeiras 3 linhas)</h4>
-                    <div className="overflow-x-auto">
-                      <Table>
-                        <TableHeader>
-                          <TableRow>
-                            {headers.map(h => (
-                              <TableHead key={h} className="text-xs whitespace-nowrap">
-                                {h}
-                                {columnMapping[h] && (
-                                  <span className="ml-1 text-primary">→ {columnMapping[h]}</span>
-                                )}
-                              </TableHead>
-                            ))}
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          {rawData.slice(0, 3).map((row, i) => (
-                            <TableRow key={i}>
+                    {/* Preview */}
+                    <div className="mt-6">
+                      <h4 className="font-semibold mb-2 text-sm">Preview dos dados (primeiras 3 linhas)</h4>
+                      <div className="overflow-x-auto rounded border">
+                        <Table>
+                          <TableHeader>
+                            <TableRow>
                               {headers.map(h => (
-                                <TableCell key={h} className="text-xs max-w-[200px] truncate">
-                                  {String(row[h] || '').slice(0, 50)}
-                                </TableCell>
+                                <TableHead key={h} className="text-xs whitespace-nowrap">
+                                  {h}
+                                  {columnMapping[h] && (
+                                    <span className="ml-1 text-primary">→ {columnMapping[h]}</span>
+                                  )}
+                                </TableHead>
                               ))}
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
+                          </TableHeader>
+                          <TableBody>
+                            {rawData.slice(0, 3).map((row, i) => (
+                              <TableRow key={i}>
+                                {headers.map(h => (
+                                  <TableCell key={h} className="text-xs max-w-[200px] truncate">
+                                    {String(row[h] || '').slice(0, 50)}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))}
+                          </TableBody>
+                        </Table>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <DialogFooter className="p-4 border-t relative z-50 bg-background">
+                <DialogFooter className="p-4 border-t bg-background">
                   <Button variant="outline" onClick={reset}>
                     <X className="h-4 w-4 mr-2" />
                     Cancelar
@@ -1230,18 +1432,23 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     className="bg-gradient-to-r from-primary to-purple-600"
                   >
                     {isProcessing ? (
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <>
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                        Executando Inferência...
+                      </>
                     ) : (
-                      <ArrowRight className="h-4 w-4 mr-2" />
+                      <>
+                        <Brain className="h-4 w-4 mr-2" />
+                        Executar Inferência
+                      </>
                     )}
-                    Processar Questões
                   </Button>
                 </DialogFooter>
               </motion.div>
             )}
 
-            {/* STEP 3: PREVIEW */}
-            {step === 'preview' && (
+            {/* STEP 3: PREVIEW (VALIDAÇÃO HUMANA) */}
+            {uiStep === 'preview' && (
               <motion.div
                 key="preview"
                 initial={{ opacity: 0, x: 20 }}
@@ -1251,7 +1458,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
               >
                 {/* Stats bar */}
                 <div className="flex items-center justify-between p-4 border-b gap-4 flex-wrap">
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-3 flex-wrap">
                     <Badge variant="outline" className="gap-1">
                       <FileQuestion className="h-3 w-3" />
                       {stats.total} total
@@ -1272,6 +1479,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         {stats.errors} erros
                       </Badge>
                     )}
+                    <Badge className="bg-blue-500/20 text-blue-500 border-blue-500/30 gap-1">
+                      <Sparkles className="h-3 w-3" />
+                      {stats.camposInferidos} inferidos
+                    </Badge>
+                    <Badge className="bg-orange-500/20 text-orange-500 border-orange-500/30 gap-1">
+                      <AlertOctagon className="h-3 w-3" />
+                      {stats.camposNull} null
+                    </Badge>
                   </div>
 
                   <div className="flex items-center gap-2">
@@ -1280,7 +1495,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         <Filter className="h-3 w-3 mr-1" />
                         <SelectValue />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="z-[9999]">
                         <SelectItem value="all">Todas</SelectItem>
                         <SelectItem value="valid">Válidas</SelectItem>
                         <SelectItem value="warning">Com Aviso</SelectItem>
@@ -1337,7 +1552,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                             />
                             
                             <div className="flex-1 min-w-0">
-                              <div className="flex items-center gap-2 mb-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
                                 <span className="text-xs font-mono text-muted-foreground">
                                   #{index + 1}
                                 </span>
@@ -1361,98 +1576,98 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                                   </Badge>
                                 )}
                                 
+                                {/* Campos Inferidos */}
+                                {q.campos_inferidos.length > 0 && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Badge className="bg-blue-500/20 text-blue-500 text-[10px] h-5 cursor-help">
+                                          <Sparkles className="h-2.5 w-2.5 mr-1" />
+                                          {q.campos_inferidos.length} inferidos
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <div className="text-xs space-y-1">
+                                          {q.campos_inferidos.map((c, i) => (
+                                            <div key={i} className="text-blue-400">• {c}</div>
+                                          ))}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                                
+                                {/* Campos NULL */}
+                                {q.campos_null.length > 0 && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger>
+                                        <Badge className="bg-orange-500/20 text-orange-500 text-[10px] h-5 cursor-help">
+                                          <AlertOctagon className="h-2.5 w-2.5 mr-1" />
+                                          {q.campos_null.length} null
+                                        </Badge>
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <div className="text-xs space-y-1">
+                                          {q.campos_null.map((c, i) => (
+                                            <div key={i} className="text-orange-400">• {c}</div>
+                                          ))}
+                                        </div>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
+                                
+                                {/* Metadados */}
                                 {q.banca && (
-                                  <Badge variant="outline" className="text-[10px] h-5">
-                                    {findBancaByValue(q.banca)?.label || q.banca}
+                                  <Badge variant="outline" className={cn(
+                                    "text-[10px] h-5",
+                                    q.campos_inferidos.some(c => c.startsWith('banca:')) && "border-blue-500/50 bg-blue-500/10"
+                                  )}>
+                                    🏛️ {q.banca}
                                   </Badge>
                                 )}
                                 {q.ano && (
-                                  <Badge variant="outline" className="text-[10px] h-5">
-                                    {q.ano}
+                                  <Badge variant="outline" className={cn(
+                                    "text-[10px] h-5",
+                                    q.campos_inferidos.some(c => c.startsWith('ano:')) && "border-blue-500/50 bg-blue-500/10"
+                                  )}>
+                                    📅 {q.ano}
                                   </Badge>
                                 )}
-                                <Badge
-                                  variant="outline"
-                                  className={cn(
-                                    "text-[10px] h-5",
-                                    q.difficulty === 'facil' && "text-green-500 border-green-500/30",
-                                    q.difficulty === 'medio' && "text-yellow-500 border-yellow-500/30",
-                                    q.difficulty === 'dificil' && "text-red-500 border-red-500/30",
-                                  )}
-                                >
-                                  {q.difficulty === 'facil' ? '🟢 Fácil' : q.difficulty === 'medio' ? '🟡 Médio' : '🔴 Difícil'}
-                                </Badge>
+                                {q.difficulty && (
+                                  <Badge variant="outline" className="text-[10px] h-5">
+                                    {q.difficulty === 'facil' && '🟢'}
+                                    {q.difficulty === 'medio' && '🟡'}
+                                    {q.difficulty === 'dificil' && '🔴'}
+                                    {' '}{q.difficulty}
+                                  </Badge>
+                                )}
                               </div>
-
+                              
                               <p className="text-sm line-clamp-2">
-                                {q.question_text || <span className="text-muted-foreground italic">Sem enunciado</span>}
+                                {q.question_text || <span className="text-red-500 italic">Enunciado vazio</span>}
                               </p>
-
-                              {/* Errors/Warnings */}
+                              
+                              {/* Erros/Warnings */}
                               {(q.errors.length > 0 || q.warnings.length > 0) && (
                                 <div className="mt-2 space-y-1">
                                   {q.errors.map((e, i) => (
-                                    <p key={i} className="text-xs text-red-500 flex items-center gap-1">
+                                    <div key={i} className="text-xs text-red-500 flex items-center gap-1">
                                       <XCircle className="h-3 w-3" />
                                       {e}
-                                    </p>
+                                    </div>
                                   ))}
                                   {q.warnings.map((w, i) => (
-                                    <p key={i} className="text-xs text-yellow-500 flex items-center gap-1">
+                                    <div key={i} className="text-xs text-yellow-500 flex items-center gap-1">
                                       <AlertTriangle className="h-3 w-3" />
                                       {w}
-                                    </p>
+                                    </div>
                                   ))}
                                 </div>
                               )}
-
-                              {/* Expandido */}
-                              {expandedQuestion === q.id && (
-                                <motion.div
-                                  initial={{ opacity: 0, height: 0 }}
-                                  animate={{ opacity: 1, height: 'auto' }}
-                                  exit={{ opacity: 0, height: 0 }}
-                                  className="mt-3 pt-3 border-t space-y-3"
-                                >
-                                  {/* Alternativas */}
-                                  <div className="space-y-1">
-                                    {q.options.filter(o => o.text).map(opt => (
-                                      <div
-                                        key={opt.id}
-                                        className={cn(
-                                          "flex items-center gap-2 text-xs p-2 rounded",
-                                          opt.id === q.correct_answer && "bg-green-500/10 border border-green-500/30"
-                                        )}
-                                      >
-                                        <span className="font-mono font-bold uppercase">{opt.id})</span>
-                                        <span>{opt.text}</span>
-                                        {opt.id === q.correct_answer && (
-                                          <CheckCircle className="h-3 w-3 text-green-500 ml-auto" />
-                                        )}
-                                      </div>
-                                    ))}
-                                  </div>
-
-                                  {/* Explicação */}
-                                  {q.explanation && (
-                                    <div className="p-2 rounded bg-muted/50">
-                                      <p className="text-xs font-medium mb-1">Explicação:</p>
-                                      <p className="text-xs text-muted-foreground">{q.explanation}</p>
-                                    </div>
-                                  )}
-
-                                  {/* Classificação */}
-                                  {(q.macro || q.micro || q.tema) && (
-                                    <div className="flex flex-wrap gap-1">
-                                      {q.macro && <Badge variant="outline" className="text-[10px]">Macro: {q.macro}</Badge>}
-                                      {q.micro && <Badge variant="outline" className="text-[10px]">Micro: {q.micro}</Badge>}
-                                      {q.tema && <Badge variant="outline" className="text-[10px]">Tema: {q.tema}</Badge>}
-                                    </div>
-                                  )}
-                                </motion.div>
-                              )}
                             </div>
-
+                            
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1465,52 +1680,135 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                               )}
                             </Button>
                           </div>
+                          
+                          {/* Expanded view */}
+                          {expandedQuestion === q.id && (
+                            <div className="mt-4 pt-4 border-t space-y-3">
+                              <div className="grid grid-cols-5 gap-2">
+                                {q.options.map(opt => (
+                                  <div
+                                    key={opt.id}
+                                    className={cn(
+                                      "p-2 rounded text-xs",
+                                      opt.id === q.correct_answer
+                                        ? "bg-green-500/20 border border-green-500/30"
+                                        : "bg-muted/50"
+                                    )}
+                                  >
+                                    <span className="font-bold uppercase">{opt.id})</span>{' '}
+                                    {opt.text || <span className="text-muted-foreground italic">vazio</span>}
+                                  </div>
+                                ))}
+                              </div>
+                              
+                              {q.explanation && (
+                                <div className="p-2 rounded bg-blue-500/10 text-xs">
+                                  <strong>Explicação:</strong> {q.explanation}
+                                </div>
+                              )}
+                              
+                              <div className="flex flex-wrap gap-2 text-[10px]">
+                                {q.nivel_cognitivo && (
+                                  <Badge variant="secondary">🧠 {q.nivel_cognitivo}</Badge>
+                                )}
+                                {q.tempo_medio_segundos && (
+                                  <Badge variant="secondary">⏱️ {q.tempo_medio_segundos}s</Badge>
+                                )}
+                                {q.origem && (
+                                  <Badge variant="secondary">📌 {q.origem}</Badge>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </CardContent>
                       </Card>
                     ))}
                   </div>
                 </div>
 
-                <DialogFooter className="p-4 border-t">
-                  <div className="flex items-center gap-2 mr-auto">
-                    <Badge className="bg-primary/20 text-primary">
-                      {stats.selected} selecionadas para importar
-                    </Badge>
+                {/* Footer com autorização */}
+                <div className="p-4 border-t bg-background space-y-4">
+                  {/* Checkbox de autorização explícita */}
+                  <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
+                    <Checkbox
+                      id="human-auth"
+                      checked={humanAuthorization}
+                      onCheckedChange={(checked) => {
+                        setHumanAuthorization(checked === true);
+                        if (checked) {
+                          setFlowState('autorizacao_explicita');
+                        } else {
+                          setFlowState('validacao_humana_obrigatoria');
+                        }
+                      }}
+                    />
+                    <Label htmlFor="human-auth" className="text-sm cursor-pointer flex-1">
+                      <span className="font-semibold text-primary">Autorizo a importação</span>
+                      <span className="text-muted-foreground ml-1">
+                        — Revisei as {stats.selected} questões selecionadas. Campos null permanecerão vazios. 
+                        Questões serão importadas como <strong>RASCUNHO</strong> (inativas).
+                      </span>
+                    </Label>
+                    <ShieldCheck className={cn(
+                      "h-5 w-5 transition-colors",
+                      humanAuthorization ? "text-green-500" : "text-muted-foreground"
+                    )} />
                   </div>
-                  <Button variant="outline" onClick={() => setStep('mapping')}>
-                    Voltar
-                  </Button>
-                  <Button
-                    onClick={handleImport}
-                    disabled={stats.selected === 0}
-                    className="bg-gradient-to-r from-primary to-purple-600"
-                  >
-                    <Upload className="h-4 w-4 mr-2" />
-                    Importar {stats.selected} Questões
-                  </Button>
-                </DialogFooter>
+
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => { setUiStep('mapping'); setFlowState('arquivo_carregado'); }}>
+                      <ArrowRight className="h-4 w-4 mr-2 rotate-180" />
+                      Voltar
+                    </Button>
+                    <Button
+                      onClick={handleImport}
+                      disabled={!canProcess}
+                      className={cn(
+                        "bg-gradient-to-r",
+                        canProcess ? "from-green-600 to-emerald-600" : "from-gray-500 to-gray-600"
+                      )}
+                    >
+                      {canProcess ? (
+                        <>
+                          <CheckCircle className="h-4 w-4 mr-2" />
+                          Importar {stats.selected} Questões como Rascunho
+                        </>
+                      ) : (
+                        <>
+                          <AlertOctagon className="h-4 w-4 mr-2" />
+                          Autorização Necessária
+                        </>
+                      )}
+                    </Button>
+                  </DialogFooter>
+                </div>
               </motion.div>
             )}
 
             {/* STEP 4: IMPORTING */}
-            {step === 'importing' && (
+            {uiStep === 'importing' && (
               <motion.div
                 key="importing"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                className="h-full flex flex-col items-center justify-center p-12"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="h-full flex flex-col items-center justify-center p-8"
               >
-                <div className="p-6 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-500/20 mb-6">
-                  <Loader2 className="h-16 w-16 text-primary animate-spin" />
-                </div>
-                
-                <h3 className="text-xl font-bold mb-2">Importando questões...</h3>
-                <p className="text-muted-foreground mb-6">
-                  {Math.round(importProgress)}% concluído
-                </p>
-                
-                <div className="w-full max-w-md">
-                  <Progress value={importProgress} className="h-3" />
+                <div className="w-full max-w-md text-center space-y-6">
+                  <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-500/20 inline-block">
+                    <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                  </div>
+                  
+                  <div>
+                    <h3 className="text-lg font-semibold mb-2">Importando Questões...</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {stats.selected} questões sendo importadas como <strong>RASCUNHO</strong>
+                    </p>
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Progress value={importProgress} className="h-2" />
+                    <p className="text-sm font-mono">{importProgress}%</p>
+                  </div>
                 </div>
               </motion.div>
             )}
@@ -1520,5 +1818,3 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     </Dialog>
   );
 });
-
-export default QuestionImportDialog;
