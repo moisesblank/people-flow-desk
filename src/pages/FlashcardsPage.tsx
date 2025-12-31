@@ -40,6 +40,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
+import { MindmapSection } from '@/components/aluno/flashcards/MindmapSection';
 import { FlashcardRenderer, processFlashcardText } from '@/components/aluno/flashcards/FlashcardRenderer';
 
 type Rating = 1 | 2 | 3 | 4;
@@ -306,6 +307,9 @@ export default function FlashcardsPage() {
 
           {/* Dashboard Anki - Estatísticas Completas */}
           <AnkiDashboard className="mt-8" defaultExpanded={true} />
+
+          {/* Mapas Mentais - Sincronizado em tempo real */}
+          <MindmapSection className="mt-4" defaultExpanded={true} />
         </div>
 
         {/* Create Modal */}
@@ -487,6 +491,9 @@ export default function FlashcardsPage() {
 
         {/* Dashboard Anki - Estatísticas Completas (visível durante revisão) */}
         <AnkiDashboard className="mt-8" defaultExpanded={true} />
+
+        {/* Mapas Mentais - Sincronizado em tempo real */}
+        <MindmapSection className="mt-4" defaultExpanded={false} />
       </div>
 
       {/* Modals */}
