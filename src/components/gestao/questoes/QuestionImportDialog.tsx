@@ -170,38 +170,38 @@ interface QuestionImportDialogProps {
 
 const COLUMN_MAPPINGS: Record<string, string[]> = {
   // Enunciado - suporte ao seu Excel
-  question_text: ['enunciado', 'pergunta', 'questao', 'questão', 'question', 'texto', 'statement'],
-  
+  question_text: ['enunciado', 'question_text', 'pergunta', 'questao', 'questão', 'question', 'texto', 'statement'],
+
   // Alternativas - suporte a "ALTERNATIVA A", "ALTERNATIVA_A", "A", etc.
   option_a: ['alternativa a', 'alternativa_a', 'opcao_a', 'opção_a', 'option_a', 'alt_a', 'a'],
   option_b: ['alternativa b', 'alternativa_b', 'opcao_b', 'opção_b', 'option_b', 'alt_b', 'b'],
   option_c: ['alternativa c', 'alternativa_c', 'opcao_c', 'opção_c', 'option_c', 'alt_c', 'c'],
   option_d: ['alternativa d', 'alternativa_d', 'opcao_d', 'opção_d', 'option_d', 'alt_d', 'd'],
   option_e: ['alternativa e', 'alternativa_e', 'opcao_e', 'opção_e', 'option_e', 'alt_e', 'e'],
-  
+
   // Gabarito
-  correct_answer: ['gabarito', 'resposta', 'correta', 'correct', 'answer', 'resp', 'resposta_correta'],
-  
+  correct_answer: ['gabarito', 'correct_answer', 'resposta', 'correta', 'correct', 'answer', 'resp', 'resposta_correta'],
+
   // Explicação/Resolução
-  explanation: ['explicacao', 'explicação', 'resolucao', 'resolução', 'explanation', 'justificativa', 'comentario', 'comentário'],
-  
+  explanation: ['resolucao', 'resolução', 'resolucao_texto', 'explicacao', 'explicação', 'explanation', 'justificativa', 'comentario', 'comentário'],
+
   // Dificuldade
-  difficulty: ['dificuldade', 'nivel', 'nível', 'difficulty', 'level', 'grau'],
-  
+  difficulty: ['dificuldade', 'difficulty', 'dificuldade_texto', 'nivel', 'nível', 'level', 'grau'],
+
   // Banca e Ano
-  banca: ['banca', 'organizadora', 'board', 'institution', 'instituicao', 'instituição'],
+  banca: ['banca', 'board', 'organizadora', 'institution', 'instituicao', 'instituição'],
   ano: ['ano', 'year', 'data', 'date', 'edicao', 'edição'],
-  
+
   // Taxonomia - suporte direto às suas colunas
-  macro: ['macro', 'area', 'área', 'grande_area', 'grande área', 'macroArea', 'macro_area'],
-  micro: ['micro', 'disciplina', 'subject', 'microArea', 'micro_area'],
-  tema: ['tema', 'topic', 'assunto', 'conteudo', 'conteúdo', 'topico', 'tópico'],
-  subtema: ['subtema', 'subtopic', 'subassunto', 'sub_tema', 'sub tema'],
-  
+  macro: ['macro', 'macro_assunto_texto', 'macro_texto', 'area', 'área', 'grande_area', 'grande área', 'macroArea', 'macro_area'],
+  micro: ['micro', 'micro_assunto_texto', 'micro_texto', 'disciplina', 'subject', 'microArea', 'micro_area'],
+  tema: ['tema', 'tema_texto', 'topic', 'assunto', 'conteudo', 'conteúdo', 'topico', 'tópico'],
+  subtema: ['subtema', 'subtema_texto', 'subtopic', 'subassunto', 'sub_tema', 'sub tema'],
+
   // Extras
   tags: ['tags', 'etiquetas', 'labels', 'keywords', 'palavras_chave', 'palavras chave'],
-  competencia_enem: ['competencia', 'competência', 'competencia_enem', 'comp'],
-  habilidade_enem: ['habilidade', 'habilidade_enem', 'hab'],
+  competencia_enem: ['competencia', 'competência', 'competencia_enem', 'competencia_area', 'competencia area', 'comp'],
+  habilidade_enem: ['habilidade', 'habilidade_enem', 'habilidade_area', 'habilidade area', 'hab'],
 };
 
 const DIFFICULTY_MAPPING: Record<string, 'facil' | 'medio' | 'dificil'> = {
@@ -1064,13 +1064,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             question.errors.push('Alternativa correta não tem texto');
           }
 
-          // Warnings para campos null ou inferidos importantes
-          if (!question.banca || question.banca === 'autoral_prof_moises') {
-            question.warnings.push('Banca não identificada (será "Autoral Prof. Moisés")');
-          }
-          if (!question.ano) {
-            question.warnings.push('Ano não identificado');
-          }
+          // Warnings (somente o que realmente exige ação manual)
+          // Banca e Ano: quando ausentes, aplicamos defaults silenciosos (zero trabalho extra)
+
           if (!question.macro) {
             question.warnings.push('Macro não identificado - classificação manual necessária');
           } else if (question.campos_inferidos?.some(c => c.startsWith('macro:'))) {
@@ -1158,12 +1154,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         updated.errors.push('Alternativa correta não tem texto');
       }
 
-      if (!updated.banca || updated.banca === 'autoral_prof_moises') {
-        updated.warnings.push('Banca não identificada');
-      }
-      if (!updated.ano) {
-        updated.warnings.push('Ano não identificado');
-      }
+      // Banca/Ano: defaults silenciosos (sem aviso)
+      // Mantemos warnings apenas para campos que realmente travam seu objetivo (taxonomia)
+
 
       if (updated.errors.length > 0) {
         updated.status = 'error';
