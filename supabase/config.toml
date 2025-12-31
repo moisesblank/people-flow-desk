@@ -300,3 +300,8 @@ verify_jwt = true
 # 🟢 Requer JWT - Revoga dispositivo E invalida sessões associadas
 [functions.revoke-device]
 verify_jwt = true
+
+# --- Refresh Global Performance (Cron/Scheduled) ---
+# 🟡 Chamado por cron, sem JWT (valida internamente via service key)
+[functions.refresh-global-performance]
+verify_jwt = false
