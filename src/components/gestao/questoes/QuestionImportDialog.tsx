@@ -1092,7 +1092,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[min(98vw,90rem)] max-w-none max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[min(98vw,90rem)] max-w-none max-h-[95vh] overflow-hidden flex flex-col min-h-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30">
@@ -1116,7 +1116,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden">
+        <div className="flex-1 overflow-hidden min-h-0">
           <AnimatePresence mode="wait">
             {/* STEP 1: UPLOAD */}
             {uiStep === 'upload' && (
@@ -1219,7 +1219,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col overflow-hidden"
+                className="h-full flex flex-col overflow-hidden min-h-0"
               >
                 <div className="flex items-center justify-between p-4 border-b">
                   <div>
@@ -1454,7 +1454,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col overflow-hidden"
+                className="h-full flex flex-col overflow-hidden min-h-0"
               >
                 {/* Stats bar */}
                 <div className="flex items-center justify-between p-4 border-b gap-4 flex-wrap">
@@ -1529,7 +1529,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 </div>
 
                 {/* Questions list */}
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto min-h-0">
                   <div className="p-4 space-y-2 min-w-[980px]">
                     {filteredQuestions.map((q, index) => (
                       <Card
