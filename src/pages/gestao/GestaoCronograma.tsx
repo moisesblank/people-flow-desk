@@ -48,6 +48,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS } from "@/constants/bancas";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/integrations/supabase/client";
@@ -257,13 +258,17 @@ const PlanDialog = memo(({ open, onOpenChange, plan, onSave }: PlanDialogProps) 
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ENEM">ENEM</SelectItem>
-                  <SelectItem value="FUVEST">FUVEST</SelectItem>
-                  <SelectItem value="UNICAMP">UNICAMP</SelectItem>
-                  <SelectItem value="UNESP">UNESP</SelectItem>
-                  <SelectItem value="UERJ">UERJ</SelectItem>
-                  <SelectItem value="Outro">Outro</SelectItem>
+                <SelectContent className="max-h-[300px]">
+                  {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
+                    <div key={categoria}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50">
+                        {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                      </div>
+                      {bancas.map(b => (
+                        <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                      ))}
+                    </div>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
