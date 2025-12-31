@@ -41,6 +41,7 @@ import {
   SingleImageUploader,
   type QuestionImage 
 } from '@/components/gestao/questoes/QuestionImageUploader';
+import { QuestionImportDialog } from '@/components/gestao/questoes/QuestionImportDialog';
 import { Button } from '@/components/ui/button';
 import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
@@ -913,6 +914,7 @@ function GestaoQuestoes() {
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [taxonomyManagerOpen, setTaxonomyManagerOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
 
   const { clearQueryCache } = useCacheManager();
   const { isOwner } = useRolePermissions();
@@ -1105,6 +1107,14 @@ function GestaoQuestoes() {
             </Button>
           )}
           <Button 
+            variant="outline"
+            onClick={() => setImportDialogOpen(true)}
+            className="gap-2"
+          >
+            <Upload className="h-4 w-4" />
+            Importar
+          </Button>
+          <Button 
             onClick={() => {
               setSelectedQuestion(null);
               setQuestionDialog(true);
@@ -1115,6 +1125,13 @@ function GestaoQuestoes() {
             Nova Questão
           </Button>
         </div>
+
+        {/* Import Dialog */}
+        <QuestionImportDialog
+          open={importDialogOpen}
+          onClose={() => setImportDialogOpen(false)}
+          onSuccess={loadQuestions}
+        />
       </motion.div>
 
       {/* Taxonomy Manager - OWNER ONLY */}
