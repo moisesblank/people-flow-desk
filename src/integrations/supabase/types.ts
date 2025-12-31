@@ -9019,6 +9019,7 @@ export type Database = {
           created_at: string | null
           difficulty: string | null
           explanation: string | null
+          has_video_resolution: boolean | null
           id: string
           is_active: boolean | null
           lesson_id: string | null
@@ -9036,6 +9037,8 @@ export type Database = {
           tema: string | null
           topic: string | null
           updated_at: string | null
+          video_provider: string | null
+          video_url: string | null
         }
         Insert: {
           ano?: number | null
@@ -9045,6 +9048,7 @@ export type Database = {
           created_at?: string | null
           difficulty?: string | null
           explanation?: string | null
+          has_video_resolution?: boolean | null
           id?: string
           is_active?: boolean | null
           lesson_id?: string | null
@@ -9062,6 +9066,8 @@ export type Database = {
           tema?: string | null
           topic?: string | null
           updated_at?: string | null
+          video_provider?: string | null
+          video_url?: string | null
         }
         Update: {
           ano?: number | null
@@ -9071,6 +9077,7 @@ export type Database = {
           created_at?: string | null
           difficulty?: string | null
           explanation?: string | null
+          has_video_resolution?: boolean | null
           id?: string
           is_active?: boolean | null
           lesson_id?: string | null
@@ -9088,6 +9095,8 @@ export type Database = {
           tema?: string | null
           topic?: string | null
           updated_at?: string | null
+          video_provider?: string | null
+          video_url?: string | null
         }
         Relationships: [
           {
