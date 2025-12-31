@@ -1092,6 +1092,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         
         const validCount = questions.filter(q => q.status !== 'error').length;
         toast.success(`Inferência concluída: ${validCount} questões prontas para revisão`);
+        toast.message('As questões ainda NÃO foram salvas. Para persistir, confirme e clique em “Finalizar Import”.');
       } catch (err) {
         console.error('Erro ao processar questões:', err);
         toast.error('Erro ao processar questões');
@@ -2090,11 +2091,26 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       Voltar
                     </Button>
                     <Button
-                      onClick={handleImport}
-                      disabled={!canProcess}
+                      onClick={() => {
+                        // Mantém sempre clicável para evitar sensação de "não acontece nada"
+                        if (!canProcess) {
+                          console.log('[IMPORT] Import bloqueado:', {
+                            flowState,
+                            humanAuthorization,
+                            parsedQuestions: parsedQuestions.length,
+                            selected: stats.selected,
+                          });
+                          toast.error('Para importar: marque a confirmação e mantenha ao menos 1 questão selecionada.');
+                          // Levar o usuário ao checkbox de autorização
+                          document.getElementById('human-auth')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          return;
+                        }
+                        console.log('[IMPORT] handleImport()');
+                        handleImport();
+                      }}
                       className={cn(
                         "bg-gradient-to-r",
-                        canProcess ? "from-green-600 to-emerald-600" : "from-gray-500 to-gray-600"
+                        canProcess ? "from-green-600 to-emerald-600" : "from-muted to-muted"
                       )}
                     >
                       {canProcess ? (
@@ -2105,7 +2121,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       ) : (
                         <>
                           <AlertOctagon className="h-4 w-4 mr-2" />
-                          Autorização Necessária
+                          Finalizar Import (exige confirmação)
                         </>
                       )}
                     </Button>
