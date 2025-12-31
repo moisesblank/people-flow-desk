@@ -84,6 +84,8 @@ export function useDueFlashcards() {
         .from('study_flashcards')
         .select('*')
         .eq('user_id', user!.id)
+        // Filtra placeholders de exportação do Anki (evita travar a revisão)
+        .not('question', 'ilike', '%atualize para a versão%')
         .lte('due_date', today)
         .order('due_date', { ascending: true });
 
@@ -119,6 +121,8 @@ export function useAllFlashcards() {
         .from('study_flashcards')
         .select('*')
         .eq('user_id', user!.id)
+        // Filtra placeholders de exportação do Anki (evita cards “fantasma” no Cram)
+        .not('question', 'ilike', '%atualize para a versão%')
         .order('created_at', { ascending: false });
 
       if (error) throw error;
