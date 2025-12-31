@@ -160,12 +160,17 @@ const MICROS: Record<string, { value: string; label: string }[]> = {
     { value: 'aplicacoes_e_contextualizacao', label: 'Aplicações e Contextualização' },
   ],
   fisico_quimica: [
+    { value: 'fundamentos_da_fisico_quimica', label: 'Fundamentos da Físico-Química' },
     { value: 'termoquimica', label: 'Termoquímica' },
-    { value: 'cinetica', label: 'Cinética Química' },
-    { value: 'equilibrio', label: 'Equilíbrio Químico' },
+    { value: 'cinetica_quimica', label: 'Cinética Química' },
+    { value: 'equilibrio_quimico', label: 'Equilíbrio Químico' },
+    { value: 'equilibrio_ionico', label: 'Equilíbrio Iônico' },
+    { value: 'solubilidade_e_equilibrio_heterogeneo', label: 'Solubilidade e Equilíbrio Heterogêneo' },
     { value: 'eletroquimica', label: 'Eletroquímica' },
-    { value: 'radioatividade', label: 'Radioatividade' },
     { value: 'propriedades_coligativas', label: 'Propriedades Coligativas' },
+    { value: 'solucoes', label: 'Soluções' },
+    { value: 'gases_fisico_quimica', label: 'Gases' },
+    { value: 'radioatividade', label: 'Radioatividade' },
   ],
 };
 
@@ -298,16 +303,71 @@ const TEMAS: Record<string, { value: string; label: string }[]> = {
     { value: 'quimica_organica_e_meio_ambiente', label: 'Química Orgânica e Meio Ambiente' },
   ],
   // === FÍSICO-QUÍMICA ===
-  termoquimica: [
-    { value: 'entalpia', label: 'Entalpia' },
-    { value: 'lei_hess', label: 'Lei de Hess' },
-    { value: 'energia_ligacao', label: 'Energia de Ligação' },
+  fundamentos_da_fisico_quimica: [
+    { value: 'conceitos_estruturais', label: 'Conceitos Estruturais' },
+    { value: 'classificacao_dos_sistemas', label: 'Classificação dos Sistemas' },
+    { value: 'variaveis_termodinamicas', label: 'Variáveis Termodinâmicas' },
   ],
-  equilibrio: [
-    { value: 'constante_equilibrio', label: 'Constante de Equilíbrio' },
-    { value: 'deslocamento', label: 'Deslocamento de Equilíbrio' },
-    { value: 'equilibrio_ionico', label: 'Equilíbrio Iônico' },
-    { value: 'ph_poh', label: 'pH e pOH' },
+  termoquimica: [
+    { value: 'energia_e_calor', label: 'Energia e Calor' },
+    { value: 'entalpia', label: 'Entalpia' },
+    { value: 'reacoes_termoquimicas', label: 'Reações Termoquímicas' },
+    { value: 'leis_termoquimicas', label: 'Leis Termoquímicas' },
+    { value: 'aplicacoes_termoquimicas', label: 'Aplicações Termoquímicas' },
+  ],
+  cinetica_quimica: [
+    { value: 'velocidade_das_reacoes', label: 'Velocidade das Reações' },
+    { value: 'fatores_cineticos', label: 'Fatores Cinéticos' },
+    { value: 'energia_de_ativacao', label: 'Energia de Ativação' },
+    { value: 'catalise', label: 'Catálise' },
+  ],
+  equilibrio_quimico: [
+    { value: 'fundamentos_do_equilibrio', label: 'Fundamentos do Equilíbrio' },
+    { value: 'constantes_de_equilibrio', label: 'Constantes de Equilíbrio' },
+    { value: 'deslocamento_do_equilibrio', label: 'Deslocamento do Equilíbrio' },
+    { value: 'equilibrios_quimicos_especiais', label: 'Equilíbrios Químicos Especiais' },
+  ],
+  equilibrio_ionico: [
+    { value: 'teorias_acido_base', label: 'Teorias Ácido-Base' },
+    { value: 'forca_dos_acidos_e_bases', label: 'Força dos Ácidos e Bases' },
+    { value: 'constantes_de_ionizacao', label: 'Constantes de Ionização' },
+    { value: 'ph_e_poh', label: 'pH e pOH' },
+    { value: 'solucoes_tampao', label: 'Soluções Tampão' },
+  ],
+  solubilidade_e_equilibrio_heterogeneo: [
+    { value: 'produto_de_solubilidade', label: 'Produto de Solubilidade' },
+    { value: 'precipitacao', label: 'Precipitação' },
+  ],
+  eletroquimica: [
+    { value: 'conceitos_fundamentais_eletro', label: 'Conceitos Fundamentais' },
+    { value: 'pilhas_eletroquimicas', label: 'Pilhas Eletroquímicas' },
+    { value: 'forca_eletromotriz', label: 'Força Eletromotriz' },
+    { value: 'eletrolise', label: 'Eletrólise' },
+    { value: 'aplicacoes_eletroquimicas', label: 'Aplicações Eletroquímicas' },
+  ],
+  propriedades_coligativas: [
+    { value: 'fundamentos_coligativos', label: 'Fundamentos' },
+    { value: 'tonoscopia', label: 'Tonoscopia' },
+    { value: 'ebulioscopia', label: 'Ebulioscopia' },
+    { value: 'crioscopia', label: 'Crioscopia' },
+    { value: 'osmose', label: 'Osmose' },
+  ],
+  solucoes: [
+    { value: 'conceitos_fundamentais_solucoes', label: 'Conceitos Fundamentais' },
+    { value: 'classificacao_das_solucoes', label: 'Classificação das Soluções' },
+    { value: 'coeficiente_de_solubilidade', label: 'Coeficiente de Solubilidade' },
+    { value: 'formas_de_concentracao', label: 'Formas de Concentração' },
+  ],
+  gases_fisico_quimica: [
+    { value: 'propriedades_dos_gases', label: 'Propriedades dos Gases' },
+    { value: 'leis_dos_gases', label: 'Leis dos Gases' },
+    { value: 'equacao_geral_dos_gases', label: 'Equação Geral dos Gases' },
+  ],
+  radioatividade: [
+    { value: 'estrutura_nuclear', label: 'Estrutura Nuclear' },
+    { value: 'tipos_de_radiacao', label: 'Tipos de Radiação' },
+    { value: 'desintegracao_radioativa', label: 'Desintegração Radioativa' },
+    { value: 'aplicacoes_da_radioatividade', label: 'Aplicações da Radioatividade' },
   ],
 };
 
@@ -753,10 +813,244 @@ const SUBTEMAS: Record<string, { value: string; label: string }[]> = {
     { value: 'biodegradacao', label: 'Biodegradação' },
     { value: 'quimica_verde', label: 'Química Verde' },
   ],
-  // === FÍSICO-QUÍMICA ===
-  ph_poh: [
-    { value: 'calculo_ph', label: 'Cálculo de pH' },
-    { value: 'solucao_tampao', label: 'Solução Tampão' },
+  // === FÍSICO-QUÍMICA - FUNDAMENTOS ===
+  conceitos_estruturais: [
+    { value: 'materia', label: 'Matéria' },
+    { value: 'energia', label: 'Energia' },
+    { value: 'trabalho', label: 'Trabalho' },
+    { value: 'calor', label: 'Calor' },
+    { value: 'sistema', label: 'Sistema' },
+    { value: 'vizinhanca', label: 'Vizinhança' },
+    { value: 'universo', label: 'Universo' },
+  ],
+  classificacao_dos_sistemas: [
+    { value: 'sistema_aberto', label: 'Sistema Aberto' },
+    { value: 'sistema_fechado', label: 'Sistema Fechado' },
+    { value: 'sistema_isolado', label: 'Sistema Isolado' },
+    { value: 'sistema_homogeneo', label: 'Sistema Homogêneo' },
+    { value: 'sistema_heterogeneo', label: 'Sistema Heterogêneo' },
+  ],
+  variaveis_termodinamicas: [
+    { value: 'pressao', label: 'Pressão' },
+    { value: 'volume', label: 'Volume' },
+    { value: 'temperatura', label: 'Temperatura' },
+    { value: 'quantidade_de_materia', label: 'Quantidade de Matéria' },
+  ],
+  // === FÍSICO-QUÍMICA - TERMOQUÍMICA ===
+  energia_e_calor: [
+    { value: 'energia_interna', label: 'Energia Interna' },
+    { value: 'transferencia_de_calor', label: 'Transferência de Calor' },
+    { value: 'capacidade_termica', label: 'Capacidade Térmica' },
+    { value: 'calor_especifico', label: 'Calor Específico' },
+  ],
+  entalpia: [
+    { value: 'conceito_de_entalpia', label: 'Conceito de Entalpia' },
+    { value: 'variacao_de_entalpia', label: 'Variação de Entalpia' },
+    { value: 'entalpia_padrao', label: 'Entalpia Padrão' },
+  ],
+  reacoes_termoquimicas: [
+    { value: 'reacoes_endotermicas', label: 'Reações Endotérmicas' },
+    { value: 'reacoes_exotermicas', label: 'Reações Exotérmicas' },
+    { value: 'diagramas_energeticos', label: 'Diagramas Energéticos' },
+    { value: 'energia_dos_reagentes_e_produtos', label: 'Energia dos Reagentes e Produtos' },
+  ],
+  leis_termoquimicas: [
+    { value: 'lei_de_lavoisier_energetica', label: 'Lei de Lavoisier Energética' },
+    { value: 'lei_de_hess', label: 'Lei de Hess' },
+    { value: 'entalpia_de_formacao', label: 'Entalpia de Formação' },
+    { value: 'entalpia_de_combustao', label: 'Entalpia de Combustão' },
+    { value: 'entalpia_de_neutralizacao', label: 'Entalpia de Neutralização' },
+  ],
+  aplicacoes_termoquimicas: [
+    { value: 'poder_calorifico', label: 'Poder Calorífico' },
+    { value: 'balanco_energetico', label: 'Balanço Energético' },
+    { value: 'impactos_ambientais', label: 'Impactos Ambientais' },
+    { value: 'eficiencia_energetica', label: 'Eficiência Energética' },
+  ],
+  // === FÍSICO-QUÍMICA - CINÉTICA ===
+  velocidade_das_reacoes: [
+    { value: 'conceito_de_velocidade', label: 'Conceito de Velocidade' },
+    { value: 'lei_da_velocidade', label: 'Lei da Velocidade' },
+    { value: 'ordem_da_reacao', label: 'Ordem da Reação' },
+    { value: 'constante_cinetica', label: 'Constante Cinética' },
+  ],
+  fatores_cineticos: [
+    { value: 'concentracao', label: 'Concentração' },
+    { value: 'temperatura', label: 'Temperatura' },
+    { value: 'superficie_de_contato', label: 'Superfície de Contato' },
+    { value: 'pressao_em_sistemas_gasosos', label: 'Pressão em Sistemas Gasosos' },
+    { value: 'natureza_dos_reagentes', label: 'Natureza dos Reagentes' },
+  ],
+  energia_de_ativacao: [
+    { value: 'complexo_ativado', label: 'Complexo Ativado' },
+    { value: 'perfil_energetico', label: 'Perfil Energético' },
+    { value: 'diagramas_de_reacao', label: 'Diagramas de Reação' },
+  ],
+  catalise: [
+    { value: 'catalise_homogenea', label: 'Catálise Homogênea' },
+    { value: 'catalise_heterogenea', label: 'Catálise Heterogênea' },
+    { value: 'catalise_enzimatica', label: 'Catálise Enzimática' },
+    { value: 'inibidores_de_reacao', label: 'Inibidores de Reação' },
+  ],
+  // === FÍSICO-QUÍMICA - EQUILÍBRIO QUÍMICO ===
+  fundamentos_do_equilibrio: [
+    { value: 'reacoes_reversiveis', label: 'Reações Reversíveis' },
+    { value: 'estado_de_equilibrio', label: 'Estado de Equilíbrio' },
+    { value: 'dinamica_do_equilibrio', label: 'Dinâmica do Equilíbrio' },
+  ],
+  constantes_de_equilibrio: [
+    { value: 'kc', label: 'Kc' },
+    { value: 'kp', label: 'Kp' },
+    { value: 'relacao_kc_kp', label: 'Relação Kc-Kp' },
+    { value: 'quociente_reacional', label: 'Quociente Reacional' },
+  ],
+  deslocamento_do_equilibrio: [
+    { value: 'efeito_da_concentracao', label: 'Efeito da Concentração' },
+    { value: 'efeito_da_pressao', label: 'Efeito da Pressão' },
+    { value: 'efeito_da_temperatura', label: 'Efeito da Temperatura' },
+    { value: 'efeito_do_volume', label: 'Efeito do Volume' },
+    { value: 'efeito_do_catalisador', label: 'Efeito do Catalisador' },
+  ],
+  equilibrios_quimicos_especiais: [
+    { value: 'equilibrio_homogeneo', label: 'Equilíbrio Homogêneo' },
+    { value: 'equilibrio_heterogeneo', label: 'Equilíbrio Heterogêneo' },
+    { value: 'equilibrio_em_fase_gasosa', label: 'Equilíbrio em Fase Gasosa' },
+  ],
+  // === FÍSICO-QUÍMICA - EQUILÍBRIO IÔNICO ===
+  teorias_acido_base: [
+    { value: 'arrhenius', label: 'Arrhenius' },
+    { value: 'bronsted_lowry', label: 'Brønsted-Lowry' },
+    { value: 'lewis', label: 'Lewis' },
+  ],
+  forca_dos_acidos_e_bases: [
+    { value: 'acidos_fortes', label: 'Ácidos Fortes' },
+    { value: 'acidos_fracos', label: 'Ácidos Fracos' },
+    { value: 'bases_fortes', label: 'Bases Fortes' },
+    { value: 'bases_fracas', label: 'Bases Fracas' },
+  ],
+  constantes_de_ionizacao: [
+    { value: 'ka', label: 'Ka' },
+    { value: 'kb', label: 'Kb' },
+    { value: 'kw', label: 'Kw' },
+  ],
+  ph_e_poh: [
+    { value: 'escala_logaritmica', label: 'Escala Logarítmica' },
+    { value: 'calculo_de_ph', label: 'Cálculo de pH' },
+    { value: 'calculo_de_poh', label: 'Cálculo de pOH' },
+    { value: 'relacao_ph_poh', label: 'Relação pH-pOH' },
+  ],
+  solucoes_tampao: [
+    { value: 'conceito_de_tampao', label: 'Conceito de Tampão' },
+    { value: 'acao_tamponante', label: 'Ação Tamponante' },
+    { value: 'aplicacoes_biologicas', label: 'Aplicações Biológicas' },
+  ],
+  // === FÍSICO-QUÍMICA - SOLUBILIDADE ===
+  produto_de_solubilidade: [
+    { value: 'kps', label: 'Kps' },
+    { value: 'relacao_kps_solubilidade', label: 'Relação Kps-Solubilidade' },
+    { value: 'efeito_do_ion_comum', label: 'Efeito do Íon Comum' },
+  ],
+  precipitacao: [
+    { value: 'formacao_de_precipitado', label: 'Formação de Precipitado' },
+    { value: 'condicoes_de_precipitacao', label: 'Condições de Precipitação' },
+    { value: 'aplicacoes_analiticas', label: 'Aplicações Analíticas' },
+  ],
+  // === FÍSICO-QUÍMICA - ELETROQUÍMICA ===
+  conceitos_fundamentais_eletro: [
+    { value: 'oxidacao', label: 'Oxidação' },
+    { value: 'reducao', label: 'Redução' },
+    { value: 'nox', label: 'NOX' },
+    { value: 'agente_oxidante', label: 'Agente Oxidante' },
+    { value: 'agente_redutor', label: 'Agente Redutor' },
+  ],
+  pilhas_eletroquimicas: [
+    { value: 'pilha_galvanica', label: 'Pilha Galvânica' },
+    { value: 'pilha_de_daniell', label: 'Pilha de Daniell' },
+    { value: 'notacao_de_pilhas', label: 'Notação de Pilhas' },
+    { value: 'potencial_padrao_de_eletrodo', label: 'Potencial Padrão de Eletrodo' },
+  ],
+  forca_eletromotriz: [
+    { value: 'ddp', label: 'DDP' },
+    { value: 'calculo_da_fem', label: 'Cálculo da FEM' },
+    { value: 'espontaneidade_da_reacao', label: 'Espontaneidade da Reação' },
+  ],
+  eletrolise: [
+    { value: 'eletrolise_ignea', label: 'Eletrólise Ígnea' },
+    { value: 'eletrolise_aquosa', label: 'Eletrólise Aquosa' },
+    { value: 'leis_de_faraday', label: 'Leis de Faraday' },
+    { value: 'calculos_eletroliticos', label: 'Cálculos Eletrolíticos' },
+  ],
+  aplicacoes_eletroquimicas: [
+    { value: 'corrosao', label: 'Corrosão' },
+    { value: 'protecao_catodica', label: 'Proteção Catódica' },
+    { value: 'baterias', label: 'Baterias' },
+    { value: 'acumuladores', label: 'Acumuladores' },
+  ],
+  // === FÍSICO-QUÍMICA - PROPRIEDADES COLIGATIVAS ===
+  fundamentos_coligativos: [
+    { value: 'dependencia_do_numero_de_particulas', label: 'Dependência do Número de Partículas' },
+    { value: 'fator_de_vant_hoff', label: 'Fator de Van\'t Hoff' },
+  ],
+  tonoscopia: [
+    { value: 'diminuicao_da_pressao_de_vapor', label: 'Diminuição da Pressão de Vapor' },
+  ],
+  ebulioscopia: [
+    { value: 'elevacao_do_ponto_de_ebulicao', label: 'Elevação do Ponto de Ebulição' },
+  ],
+  crioscopia: [
+    { value: 'abaixamento_do_ponto_de_fusao', label: 'Abaixamento do Ponto de Fusão' },
+  ],
+  osmose: [
+    { value: 'pressao_osmotica', label: 'Pressão Osmótica' },
+    { value: 'osmose_reversa', label: 'Osmose Reversa' },
+    { value: 'aplicacoes_biologicas', label: 'Aplicações Biológicas' },
+  ],
+  // === FÍSICO-QUÍMICA - SOLUÇÕES ===
+  conceitos_fundamentais_solucoes: [
+    { value: 'soluto', label: 'Soluto' },
+    { value: 'solvente', label: 'Solvente' },
+    { value: 'solucao', label: 'Solução' },
+  ],
+  classificacao_das_solucoes: [
+    { value: 'diluida', label: 'Diluída' },
+    { value: 'concentrada', label: 'Concentrada' },
+    { value: 'saturada', label: 'Saturada' },
+    { value: 'insaturada', label: 'Insaturada' },
+    { value: 'supersaturada', label: 'Supersaturada' },
+  ],
+  coeficiente_de_solubilidade: [
+    { value: 'curvas_de_solubilidade', label: 'Curvas de Solubilidade' },
+    { value: 'fatores_que_influenciam', label: 'Fatores que Influenciam' },
+  ],
+  formas_de_concentracao: [
+    { value: 'concentracao_comum', label: 'Concentração Comum' },
+    { value: 'concentracao_molar', label: 'Concentração Molar' },
+    { value: 'concentracao_em_massa', label: 'Concentração em Massa' },
+    { value: 'concentracao_percentual', label: 'Concentração Percentual' },
+    { value: 'fracao_molar', label: 'Fração Molar' },
+  ],
+  // === FÍSICO-QUÍMICA - GASES (usa subtemas de Química Geral) ===
+  // propriedades_dos_gases, leis_dos_gases já definidos em Química Geral
+  // === FÍSICO-QUÍMICA - RADIOATIVIDADE ===
+  estrutura_nuclear: [
+    { value: 'nucleos_estaveis', label: 'Núcleos Estáveis' },
+    { value: 'nucleos_instaveis', label: 'Núcleos Instáveis' },
+    { value: 'radioisotopos', label: 'Radioisótopos' },
+  ],
+  tipos_de_radiacao: [
+    { value: 'radiacao_alfa', label: 'Radiação Alfa' },
+    { value: 'radiacao_beta', label: 'Radiação Beta' },
+    { value: 'radiacao_gama', label: 'Radiação Gama' },
+  ],
+  desintegracao_radioativa: [
+    { value: 'meia_vida', label: 'Meia-Vida' },
+    { value: 'equacao_da_desintegracao', label: 'Equação da Desintegração' },
+    { value: 'series_radioativas', label: 'Séries Radioativas' },
+  ],
+  aplicacoes_da_radioatividade: [
+    { value: 'medicina_nuclear', label: 'Medicina Nuclear' },
+    { value: 'geracao_de_energia', label: 'Geração de Energia' },
+    { value: 'datacao_radioativa', label: 'Datação Radioativa' },
   ],
 };
 
