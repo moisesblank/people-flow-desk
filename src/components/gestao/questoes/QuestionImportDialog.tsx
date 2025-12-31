@@ -631,7 +631,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   
   // UI state
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<'all' | 'valid' | 'warning' | 'error'>('all');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'ready' | 'valid' | 'warning' | 'error'>('all');
   const [editingQuestion, setEditingQuestion] = useState<string | null>(null);
   
   // AUTORIZAÇÃO EXPLÍCITA (checkbox obrigatório)
@@ -667,6 +667,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
   const filteredQuestions = useMemo(() => {
     if (filterStatus === 'all') return parsedQuestions;
+    if (filterStatus === 'ready') return parsedQuestions.filter(q => q.status !== 'error');
     return parsedQuestions.filter(q => q.status === filterStatus);
   }, [parsedQuestions, filterStatus]);
 
@@ -1764,7 +1765,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     </Badge>
                     <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1">
                       <CheckCircle className="h-3 w-3" />
-                      {stats.valid} válidas
+                      {stats.valid} sem avisos
                     </Badge>
                     {stats.warnings > 0 && (
                       <Badge className="bg-yellow-500/20 text-yellow-500 border-yellow-500/30 gap-1">
@@ -1790,13 +1791,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
                   <div className="flex items-center gap-2">
                     <Select value={filterStatus} onValueChange={(v: any) => setFilterStatus(v)}>
-                      <SelectTrigger className="w-[130px] h-8 text-xs">
+                      <SelectTrigger className="w-[170px] h-8 text-xs">
                         <Filter className="h-3 w-3 mr-1" />
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent className="z-[9999]">
                         <SelectItem value="all">Todas</SelectItem>
-                        <SelectItem value="valid">Válidas</SelectItem>
+                        <SelectItem value="ready">Prontas (sem erros)</SelectItem>
+                        <SelectItem value="valid">Sem avisos</SelectItem>
                         <SelectItem value="warning">Com Aviso</SelectItem>
                         <SelectItem value="error">Com Erro</SelectItem>
                       </SelectContent>
