@@ -44,10 +44,34 @@ type Rating = 1 | 2 | 3 | 4;
 
 const RATING_BUTTONS = [
   { rating: 1 as Rating, label: 'Esqueci', emoji: '😓', color: 'border-red-500/30 hover:bg-red-500/10 hover:border-red-500 text-red-500', interval: '<1min' },
-  { rating: 2 as Rating, label: 'Difícil', emoji: '😅', color: 'border-orange-500/30 hover:bg-orange-500/10 hover:border-orange-500 text-orange-500', interval: '~1d' },
+  { rating: 2 as Rating, label: 'Difícil', emoji: '😅', color: 'border-orange-500/10 hover:bg-orange-500/10 hover:border-orange-500 text-orange-500', interval: '~1d' },
   { rating: 3 as Rating, label: 'Bom', emoji: '😊', color: 'border-green-500/30 hover:bg-green-500/10 hover:border-green-500 text-green-500', interval: '~3d' },
   { rating: 4 as Rating, label: 'Fácil', emoji: '🤩', color: 'border-blue-500/30 hover:bg-blue-500/10 hover:border-blue-500 text-blue-500', interval: '~7d' },
 ];
+
+// Processa texto do Anki (Cloze, HTML, etc) para exibição limpa
+function processAnkiText(text: string | null | undefined, showAnswer = false): string {
+  if (!text) return '';
+  let processed = text;
+  
+  // Processa formato Cloze: {{c1::resposta}} → [___] ou resposta
+  processed = processed.replace(/\{\{c\d+::([^}]+)\}\}/g, (_, answer) => 
+    showAnswer ? answer : '[___]'
+  );
+  
+  // Remove tags HTML básicas
+  processed = processed.replace(/<br\s*\/?>/gi, '\n');
+  processed = processed.replace(/<img[^>]*alt="([^"]*)"[^>]*>/gi, '🖼️ $1');
+  processed = processed.replace(/<[^>]+>/g, '');
+  
+  // Limpa entidades HTML
+  processed = processed.replace(/&nbsp;/g, ' ');
+  processed = processed.replace(/&lt;/g, '<');
+  processed = processed.replace(/&gt;/g, '>');
+  processed = processed.replace(/&amp;/g, '&');
+  
+  return processed.trim();
+}
 
 export default function FlashcardsPage() {
   const navigate = useNavigate();
@@ -446,8 +470,8 @@ export default function FlashcardsPage() {
               
               <Brain className="w-12 h-12 text-primary/30 mb-4" />
               <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2">Pergunta</p>
-              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed">
-                {currentCard?.question}
+              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line">
+                {processAnkiText(currentCard?.question, false)}
               </p>
               <p className="text-sm text-muted-foreground mt-8 animate-pulse">
                 👆 Clique para revelar
@@ -464,8 +488,8 @@ export default function FlashcardsPage() {
             >
               <Sparkles className="w-12 h-12 text-primary/30 mb-4" />
               <p className="text-sm text-muted-foreground uppercase tracking-wider mb-2">Resposta</p>
-              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed">
-                {currentCard?.answer}
+              <p className="text-xl md:text-2xl font-medium text-center leading-relaxed whitespace-pre-line">
+                {processAnkiText(currentCard?.answer, true)}
               </p>
             </Card>
           </motion.div>
