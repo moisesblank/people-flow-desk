@@ -1429,7 +1429,7 @@ const GestaoFlashcards = memo(function GestaoFlashcards() {
             <Button 
               variant="destructive" 
               onClick={() => setIsDeleteAllOpen(true)}
-              disabled={(stats?.total || 0) === 0}
+              disabled={isDeletingAll}
             >
               <Trash2 className="w-4 h-4 mr-2" />
               Excluir Todos
