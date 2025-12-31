@@ -214,6 +214,7 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Gestão Site", url: "/gestaofc/gestao-site", icon: Globe, area: "gestao-site" },
       { title: "Site/Programador", url: "/gestaofc/site-programador", icon: Code, area: "site-programador" },
       { title: "Flashcards", url: "/gestaofc/flashcards", icon: Brain, area: "cursos" },
+      { title: "Mapas Mentais", url: "/gestaofc/mapas-mentais", icon: Network, area: "cursos" },
       { title: "Livros Web", url: "/gestaofc/livros-web", icon: BookOpen, area: "livros-web" },
       { title: "Questões", url: "/gestaofc/questoes", icon: Brain, area: "cursos" },
       { title: "Lives", url: "/gestaofc/lives", icon: PlayCircle, area: "lives" },
