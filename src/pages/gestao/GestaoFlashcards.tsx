@@ -147,34 +147,43 @@ function getSql() {
 }
 
 /**
- * Converte referências de imagem do Anki para token padronizado [img:filename]
- * Suporta: <img src="..."> e referências de Image Occlusion
+ * Converte referências de imagem do Anki para token padronizado [img:namespace/filename]
+ * Suporta: <img src="..."> e referências de Image Occlusion (BASE + MASK)
+ * 
+ * Image Occlusion no Anki Enhanced:
+ * - BASE: imagem original (ex: image-occlusion-xxxxx.png)
+ * - MASK: overlay SVG que esconde partes (ex: image-occlusion-xxxxx-Q.svg para pergunta)
+ * - Na resposta: remove máscara ou mostra MASK-A
  */
-function normalizeAnkiMedia(html: string): { text: string; media: string[] } {
+function normalizeAnkiMedia(html: string, namespace = 'default'): { text: string; media: string[] } {
   const media: string[] = [];
   let text = html;
   
-  // Extrai imagens: <img src="filename.jpg"> → [img:filename.jpg]
+  // Extrai imagens: <img src="filename.jpg"> → [img:namespace/filename.jpg]
   text = text.replace(/<img[^>]*src=["']([^"']+)["'][^>]*>/gi, (_, src) => {
     // Extrai apenas o nome do arquivo (sem path)
     const filename = src.split('/').pop() || src;
-    media.push(filename);
-    return `[img:${filename}]`;
+    const namespacedFile = `${namespace}/${filename}`;
+    media.push(namespacedFile);
+    return `[img:${namespacedFile}]`;
   });
   
-  // Suporte a Image Occlusion: mantém referência de máscara
-  // Formato típico: {{c1::image-occlusion-xxx.svg}}
-  text = text.replace(/\{\{c\d+::([^}]*image-occlusion[^}]*)\}\}/gi, (_, mask) => {
-    media.push(mask);
-    return `[img:${mask}]`;
+  // Suporte a Image Occlusion Enhanced: detecta BASE e MASKs
+  // Formato típico: {{c1::image-occlusion-xxx.svg}} ou referência direta
+  // Marca com tipo: [img:namespace/filename|type=mask-q] para pergunta
+  text = text.replace(/\{\{c(\d+)::([^}]*image-occlusion[^}]*)\}\}/gi, (_, clozeNum, mask) => {
+    const namespacedFile = `${namespace}/${mask}`;
+    media.push(namespacedFile);
+    // Marcar como máscara de pergunta (cloze)
+    return `[img:${namespacedFile}|type=mask-q|cloze=${clozeNum}]`;
   });
   
   return { text, media };
 }
 
-function stripHtml(html: string): string {
+function stripHtml(html: string, namespace = 'default'): string {
   // Primeiro normaliza mídia
-  const { text: withMedia } = normalizeAnkiMedia(html);
+  const { text: withMedia } = normalizeAnkiMedia(html, namespace);
   
   return withMedia
     .replace(/<br\s*\/?>(?=\s|$)/gi, '\n')
@@ -198,18 +207,51 @@ function sqlValueToString(value: unknown): string {
   return String(value);
 }
 
+/**
+ * Parse campos do Anki COM suporte a mídia namespacada
+ * Retorna front, back e lista de mídia
+ */
+function parseAnkiFieldsWithMedia(
+  flds: string, 
+  namespace: string, 
+  cardOrd = 0
+): { front: string; back: string; media: string[] } {
+  const allMedia: string[] = [];
+  
+  // Anki separa campos por Unit Separator (\x1f)
+  const rawParts = flds.split("\x1f");
+  
+  // Para Image Occlusion Enhanced, estrutura típica:
+  // Campo 0: Imagem base com máscaras como cloze
+  // Campo 1: (opcional) resposta adicional
+  
+  const processedParts = rawParts.map((p) => {
+    const { text, media } = normalizeAnkiMedia(p || '', namespace);
+    allMedia.push(...media);
+    return text
+      .replace(/<br\s*\/?>(?=\s|$)/gi, '\n')
+      .replace(/<div[^>]*>/gi, '\n')
+      .replace(/<\/div>/gi, '')
+      .replace(/<[^>]+>/g, '')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/&lt;/g, '<')
+      .replace(/&gt;/g, '>')
+      .replace(/&amp;/g, '&')
+      .replace(/&quot;/g, '"')
+      .replace(/&#39;/g, "'")
+      .replace(/\n+/g, '\n')
+      .trim();
+  }).filter(Boolean);
+
+  const front = processedParts[0] || "";
+  const back = processedParts[1] || "";
+
+  return { front, back, media: allMedia };
+}
+
+// Mantém versão simples para compatibilidade
 function parseAnkiFields(flds: string): { front: string; back: string } {
-  // Anki separa campos por Unit Separator (\x1f). Alguns decks usam muitos campos;
-  // então pegamos os 2 primeiros campos NÃO VAZIOS como frente/verso.
-  const parts = flds
-    .split("\x1f")
-    .map((p) => stripHtml(p || ""))
-    .map((p) => p.trim())
-    .filter(Boolean);
-
-  const front = parts[0] || "";
-  const back = parts[1] || "";
-
+  const { front, back } = parseAnkiFieldsWithMedia(flds, 'default', 0);
   return { front, back };
 }
 
