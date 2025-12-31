@@ -31,9 +31,12 @@ import {
   Download,
   Upload,
   Settings2,
-  TrendingUp
+  TrendingUp,
+  FolderTree
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
+import { useRolePermissions } from '@/hooks/useRolePermissions';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -1521,8 +1524,10 @@ function GestaoQuestoes() {
   const [questionDialog, setQuestionDialog] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [taxonomyManagerOpen, setTaxonomyManagerOpen] = useState(false);
 
   const { clearQueryCache } = useCacheManager();
+  const { isOwner } = useRolePermissions();
 
   // Carregar questões
   const loadQuestions = useCallback(async () => {
@@ -1694,6 +1699,16 @@ function GestaoQuestoes() {
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
+          {isOwner && (
+            <Button 
+              variant="outline"
+              onClick={() => setTaxonomyManagerOpen(true)}
+              className="gap-2"
+            >
+              <FolderTree className="h-4 w-4" />
+              Gerenciar Taxonomia
+            </Button>
+          )}
           <Button 
             onClick={() => {
               setSelectedQuestion(null);
@@ -1706,6 +1721,14 @@ function GestaoQuestoes() {
           </Button>
         </div>
       </motion.div>
+
+      {/* Taxonomy Manager - OWNER ONLY */}
+      {isOwner && (
+        <TaxonomyManager
+          open={taxonomyManagerOpen}
+          onClose={() => setTaxonomyManagerOpen(false)}
+        />
+      )}
 
       {/* Stats Cards */}
       <motion.div
