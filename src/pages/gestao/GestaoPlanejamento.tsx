@@ -563,6 +563,272 @@ function WeekFormDialog({
   );
 }
 
+// Lessons Management Dialog
+function LessonsManagementDialog({
+  open,
+  onOpenChange,
+  week,
+  lessons,
+  onAddLesson,
+  onDeleteLesson,
+  isLoading,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  week: PlanningWeek | null;
+  lessons: PlanningLesson[];
+  onAddLesson: (data: Partial<PlanningLesson>) => void;
+  onDeleteLesson: (id: string) => void;
+  isLoading: boolean;
+}) {
+  const [showAddForm, setShowAddForm] = useState(false);
+  const [newLesson, setNewLesson] = useState({
+    title: "",
+    description: "",
+    video_url: "",
+    duration_minutes: 30,
+    lesson_type: "video" as const,
+    is_required: true,
+    xp_reward: 10,
+  });
+
+  const weekLessons = lessons.filter(l => l.week_id === week?.id).sort((a, b) => a.position - b.position);
+
+  const handleSubmit = () => {
+    if (!newLesson.title.trim()) {
+      toast.error("Título da aula é obrigatório");
+      return;
+    }
+    onAddLesson({
+      ...newLesson,
+      week_id: week!.id,
+      position: weekLessons.length + 1,
+    });
+    setNewLesson({
+      title: "",
+      description: "",
+      video_url: "",
+      duration_minutes: 30,
+      lesson_type: "video",
+      is_required: true,
+      xp_reward: 10,
+    });
+    setShowAddForm(false);
+  };
+
+  const typeConfig: Record<string, { icon: React.ComponentType<any>; label: string; color: string }> = {
+    video: { icon: Video, label: "Videoaula", color: "text-blue-500 bg-blue-500/20" },
+    reading: { icon: BookOpen, label: "Leitura", color: "text-green-500 bg-green-500/20" },
+    exercise: { icon: FileText, label: "Exercício", color: "text-orange-500 bg-orange-500/20" },
+    quiz: { icon: Target, label: "Quiz", color: "text-purple-500 bg-purple-500/20" },
+    live: { icon: Play, label: "Live", color: "text-red-500 bg-red-500/20" },
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Video className="h-5 w-5 text-primary" />
+            Gerenciar Aulas - {week?.title}
+          </DialogTitle>
+          <DialogDescription>
+            Semana {week?.week_number} • {weekLessons.length} aulas cadastradas
+          </DialogDescription>
+        </DialogHeader>
+
+        <ScrollArea className="flex-1 -mx-6 px-6">
+          <div className="space-y-4 py-4">
+            {/* Add Lesson Button / Form */}
+            {!showAddForm ? (
+              <Button onClick={() => setShowAddForm(true)} variant="outline" className="w-full border-dashed">
+                <Plus className="h-4 w-4 mr-2" />
+                Adicionar Nova Aula
+              </Button>
+            ) : (
+              <Card className="border-primary/50">
+                <CardHeader className="pb-3">
+                  <CardTitle className="text-base">Nova Aula</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="grid gap-2">
+                    <Label>Título *</Label>
+                    <Input
+                      value={newLesson.title}
+                      onChange={(e) => setNewLesson({ ...newLesson, title: e.target.value })}
+                      placeholder="Ex: Aula 1 - Introdução"
+                    />
+                  </div>
+                  
+                  <div className="grid gap-2">
+                    <Label>Descrição</Label>
+                    <Textarea
+                      value={newLesson.description}
+                      onChange={(e) => setNewLesson({ ...newLesson, description: e.target.value })}
+                      placeholder="Descrição da aula..."
+                      rows={2}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>Tipo</Label>
+                      <Select 
+                        value={newLesson.lesson_type} 
+                        onValueChange={(v) => setNewLesson({ ...newLesson, lesson_type: v as any })}
+                      >
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="video">Videoaula</SelectItem>
+                          <SelectItem value="reading">Leitura</SelectItem>
+                          <SelectItem value="exercise">Exercício</SelectItem>
+                          <SelectItem value="quiz">Quiz</SelectItem>
+                          <SelectItem value="live">Live</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>Duração (min)</Label>
+                      <Input
+                        type="number"
+                        min={1}
+                        value={newLesson.duration_minutes}
+                        onChange={(e) => setNewLesson({ ...newLesson, duration_minutes: parseInt(e.target.value) || 30 })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="grid gap-2">
+                      <Label>URL do Vídeo</Label>
+                      <Input
+                        value={newLesson.video_url}
+                        onChange={(e) => setNewLesson({ ...newLesson, video_url: e.target.value })}
+                        placeholder="https://..."
+                      />
+                    </div>
+
+                    <div className="grid gap-2">
+                      <Label>XP Recompensa</Label>
+                      <Input
+                        type="number"
+                        min={0}
+                        value={newLesson.xp_reward}
+                        onChange={(e) => setNewLesson({ ...newLesson, xp_reward: parseInt(e.target.value) || 10 })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={newLesson.is_required}
+                      onCheckedChange={(v) => setNewLesson({ ...newLesson, is_required: v })}
+                    />
+                    <Label>Aula obrigatória</Label>
+                  </div>
+
+                  <div className="flex gap-2">
+                    <Button onClick={handleSubmit} disabled={isLoading}>
+                      {isLoading ? "Salvando..." : "Salvar Aula"}
+                    </Button>
+                    <Button variant="outline" onClick={() => setShowAddForm(false)}>
+                      Cancelar
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Lessons List */}
+            {weekLessons.length === 0 && !showAddForm ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <Video className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                <p>Nenhuma aula cadastrada nesta semana</p>
+                <p className="text-sm">Clique no botão acima para adicionar</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {weekLessons.map((lesson, index) => {
+                  const config = typeConfig[lesson.lesson_type] || typeConfig.video;
+                  const Icon = config.icon;
+                  
+                  return (
+                    <motion.div
+                      key={lesson.id}
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      className="flex items-center gap-4 p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                    >
+                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-muted text-sm font-bold">
+                        {index + 1}
+                      </div>
+                      
+                      <div className={`p-2 rounded-lg ${config.color}`}>
+                        <Icon className="h-4 w-4" />
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium truncate">{lesson.title}</p>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>{config.label}</span>
+                          {lesson.duration_minutes && (
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {lesson.duration_minutes} min
+                            </span>
+                          )}
+                          {lesson.xp_reward && (
+                            <span className="text-yellow-500">+{lesson.xp_reward} XP</span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-2">
+                        {lesson.is_required && (
+                          <Badge variant="outline" className="text-xs">Obrigatória</Badge>
+                        )}
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                if (confirm("Excluir esta aula?")) {
+                                  onDeleteLesson(lesson.id);
+                                }
+                              }}
+                              className="text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4 mr-2" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
+                    </motion.div>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Fechar
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // Main Component
 export default function GestaoPlanejamento() {
   const queryClient = useQueryClient();
@@ -679,6 +945,53 @@ export default function GestaoPlanejamento() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["planning-weeks"] });
       toast.success("Semana excluída!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir: " + error.message);
+    },
+  });
+
+  // Create lesson mutation
+  const createLessonMutation = useMutation({
+    mutationFn: async (data: Partial<PlanningLesson>) => {
+      const { data: result, error } = await supabase
+        .from("planning_lessons")
+        .insert({
+          week_id: data.week_id!,
+          title: data.title!,
+          description: data.description,
+          video_url: data.video_url,
+          video_provider: data.video_url?.includes("panda") ? "panda" : data.video_url?.includes("youtube") ? "youtube" : "vimeo",
+          duration_minutes: data.duration_minutes,
+          position: data.position || 1,
+          lesson_type: data.lesson_type || "video",
+          is_required: data.is_required ?? true,
+          estimated_time_minutes: data.duration_minutes,
+          xp_reward: data.xp_reward || 10,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+      toast.success("Aula adicionada com sucesso!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao adicionar aula: " + error.message);
+    },
+  });
+
+  // Delete lesson mutation
+  const deleteLessonMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("planning_lessons").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+      toast.success("Aula excluída!");
     },
     onError: (error) => {
       toast.error("Erro ao excluir: " + error.message);
@@ -844,6 +1157,17 @@ export default function GestaoPlanejamento() {
           week={editingWeek}
           onSave={handleSaveWeek}
           isLoading={createWeekMutation.isPending || updateWeekMutation.isPending}
+        />
+
+        {/* Lessons Management Dialog */}
+        <LessonsManagementDialog
+          open={selectedWeek !== null}
+          onOpenChange={(open) => !open && setSelectedWeek(null)}
+          week={selectedWeek}
+          lessons={lessons}
+          onAddLesson={(data) => createLessonMutation.mutate(data)}
+          onDeleteLesson={(id) => deleteLessonMutation.mutate(id)}
+          isLoading={createLessonMutation.isPending}
         />
       </div>
     </div>
