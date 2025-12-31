@@ -486,7 +486,7 @@ export default function FlashcardsPage() {
         )}
 
         {/* Dashboard Anki - Estatísticas Completas (visível durante revisão) */}
-        <AnkiDashboard className="mt-8" defaultExpanded={false} />
+        <AnkiDashboard className="mt-8" defaultExpanded={true} />
       </div>
 
       {/* Modals */}
