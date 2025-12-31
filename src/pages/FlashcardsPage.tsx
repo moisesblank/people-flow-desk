@@ -4,8 +4,11 @@
 // Lei I: Performance | Lei IV: Poder do Arquiteto
 // ============================================
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/hooks/useAuth';
 import { useQuantumReactivity } from '@/hooks/useQuantumReactivity';
 import { 
   useDueFlashcards, 
@@ -40,7 +43,6 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { AnkiDashboard } from '@/components/aluno/flashcards/AnkiDashboard';
-import { MindmapSection } from '@/components/aluno/flashcards/MindmapSection';
 import { FlashcardRenderer, processFlashcardText } from '@/components/aluno/flashcards/FlashcardRenderer';
 
 type Rating = 1 | 2 | 3 | 4;
@@ -58,6 +60,8 @@ const processAnkiText = processFlashcardText;
 
 export default function FlashcardsPage() {
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [isFlipped, setIsFlipped] = useState(false);
   const [isCramMode, setIsCramMode] = useState(false);
   const [isCramModalOpen, setIsCramModalOpen] = useState(false);
@@ -71,6 +75,43 @@ export default function FlashcardsPage() {
   const { data: stats } = useFlashcardStats();
   const rescheduleMutation = useRescheduleFlashcard();
   const createMutation = useCreateFlashcard();
+
+  // ============================================
+  // REALTIME: Sincronização em tempo real
+  // Atualiza automaticamente quando flashcards são criados/editados na gestão
+  // ============================================
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const channel = supabase
+      .channel('flashcards-realtime-sync')
+      .on(
+        'postgres_changes',
+        {
+          event: '*', // INSERT, UPDATE, DELETE
+          schema: 'public',
+          table: 'study_flashcards',
+          filter: `user_id=eq.${user.id}`
+        },
+        (payload) => {
+          console.log('[Realtime] Flashcard change:', payload.eventType);
+          
+          // Invalidar todas as queries de flashcards
+          queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
+          queryClient.invalidateQueries({ queryKey: ['flashcards-all'] });
+          queryClient.invalidateQueries({ queryKey: ['flashcard-stats'] });
+          queryClient.invalidateQueries({ queryKey: ['flashcard-analytics'] });
+          queryClient.invalidateQueries({ queryKey: ['pending-flashcards'] });
+        }
+      )
+      .subscribe((status) => {
+        console.log('[Realtime] Flashcards channel status:', status);
+      });
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, queryClient]);
 
   const cards = isCramMode ? allCards : dueCards;
   const isLoading = isCramMode ? isLoadingAll : isLoadingDue;
@@ -307,9 +348,6 @@ export default function FlashcardsPage() {
 
           {/* Dashboard Anki - Estatísticas Completas */}
           <AnkiDashboard className="mt-8" defaultExpanded={true} />
-
-          {/* Mapas Mentais - Sincronizado em tempo real */}
-          <MindmapSection className="mt-4" defaultExpanded={true} />
         </div>
 
         {/* Create Modal */}
@@ -491,9 +529,6 @@ export default function FlashcardsPage() {
 
         {/* Dashboard Anki - Estatísticas Completas (visível durante revisão) */}
         <AnkiDashboard className="mt-8" defaultExpanded={true} />
-
-        {/* Mapas Mentais - Sincronizado em tempo real */}
-        <MindmapSection className="mt-4" defaultExpanded={false} />
       </div>
 
       {/* Modals */}
