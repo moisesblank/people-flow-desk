@@ -17,6 +17,7 @@ const AlunoSimulados = lazy(() => import("@/pages/aluno/AlunoSimulados"));
 const AlunoRanking = lazy(() => import("@/pages/RankingPage"));
 const AlunoTabelaPeriodica = lazy(() => import("@/pages/aluno/AlunoTabelaPeriodica"));
 const TutoriaIA = lazy(() => import("@/pages/aluno/TutoriaIA"));
+const AlunoPlanejamento = lazy(() => import("@/pages/aluno/AlunoPlanejamento"));
 const AlunoFlashcards = lazy(() => import("@/pages/FlashcardsPage"));
 const AlunoPerfil = lazy(() => import("@/pages/ProfilePage"));
 

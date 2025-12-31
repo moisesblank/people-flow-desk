@@ -7998,6 +7998,454 @@ export type Database = {
         }
         Relationships: []
       }
+      planning_discussions: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          is_answered: boolean | null
+          is_pinned: boolean | null
+          lesson_id: string
+          likes_count: number | null
+          parent_id: string | null
+          replies_count: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean | null
+          is_pinned?: boolean | null
+          lesson_id: string
+          likes_count?: number | null
+          parent_id?: string | null
+          replies_count?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          is_answered?: boolean | null
+          is_pinned?: boolean | null
+          lesson_id?: string
+          likes_count?: number | null
+          parent_id?: string | null
+          replies_count?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_discussions_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "planning_lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "planning_discussions_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "planning_discussions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_lesson_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_completed: boolean | null
+          lesson_id: string
+          progress_percent: number | null
+          started_at: string | null
+          time_spent_minutes: number | null
+          updated_at: string
+          user_id: string
+          video_position_seconds: number | null
+          xp_earned: number | null
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          lesson_id: string
+          progress_percent?: number | null
+          started_at?: string | null
+          time_spent_minutes?: number | null
+          updated_at?: string
+          user_id: string
+          video_position_seconds?: number | null
+          xp_earned?: number | null
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          lesson_id?: string
+          progress_percent?: number | null
+          started_at?: string | null
+          time_spent_minutes?: number | null
+          updated_at?: string
+          user_id?: string
+          video_position_seconds?: number | null
+          xp_earned?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_lesson_progress_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "planning_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_lessons: {
+        Row: {
+          created_at: string
+          description: string | null
+          duration_minutes: number | null
+          estimated_time_minutes: number | null
+          id: string
+          is_required: boolean | null
+          lesson_type: string | null
+          position: number
+          title: string
+          updated_at: string
+          video_provider: string | null
+          video_url: string | null
+          week_id: string
+          xp_reward: number | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          estimated_time_minutes?: number | null
+          id?: string
+          is_required?: boolean | null
+          lesson_type?: string | null
+          position?: number
+          title: string
+          updated_at?: string
+          video_provider?: string | null
+          video_url?: string | null
+          week_id: string
+          xp_reward?: number | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          duration_minutes?: number | null
+          estimated_time_minutes?: number | null
+          id?: string
+          is_required?: boolean | null
+          lesson_type?: string | null
+          position?: number
+          title?: string
+          updated_at?: string
+          video_provider?: string | null
+          video_url?: string | null
+          week_id?: string
+          xp_reward?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_lessons_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "planning_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_materials: {
+        Row: {
+          created_at: string
+          description: string | null
+          file_size: number | null
+          file_type: string | null
+          file_url: string | null
+          id: string
+          is_downloadable: boolean | null
+          lesson_id: string
+          position: number | null
+          title: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_downloadable?: boolean | null
+          lesson_id: string
+          position?: number | null
+          title: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          file_size?: number | null
+          file_type?: string | null
+          file_url?: string | null
+          id?: string
+          is_downloadable?: boolean | null
+          lesson_id?: string
+          position?: number | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_materials_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "planning_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_notes: {
+        Row: {
+          color: string | null
+          content: string
+          created_at: string
+          id: string
+          is_pinned: boolean | null
+          lesson_id: string
+          timestamp_seconds: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          color?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          lesson_id: string
+          timestamp_seconds?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          color?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_pinned?: boolean | null
+          lesson_id?: string
+          timestamp_seconds?: number | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_notes_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "planning_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_ratings: {
+        Row: {
+          created_at: string
+          feedback: string | null
+          id: string
+          lesson_id: string
+          rating: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          lesson_id: string
+          rating: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          feedback?: string | null
+          id?: string
+          lesson_id?: string
+          rating?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_ratings_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "planning_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_review_topics: {
+        Row: {
+          created_at: string
+          id: string
+          importance: string | null
+          lesson_id: string
+          position: number | null
+          topic: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          importance?: string | null
+          lesson_id: string
+          position?: number | null
+          topic: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          importance?: string | null
+          lesson_id?: string
+          position?: number | null
+          topic?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_review_topics_lesson_id_fkey"
+            columns: ["lesson_id"]
+            isOneToOne: false
+            referencedRelation: "planning_lessons"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_week_progress: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          id: string
+          is_completed: boolean | null
+          lessons_completed: number | null
+          progress_percent: number | null
+          started_at: string | null
+          time_spent_minutes: number | null
+          total_lessons: number | null
+          updated_at: string
+          user_id: string
+          week_id: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          lessons_completed?: number | null
+          progress_percent?: number | null
+          started_at?: string | null
+          time_spent_minutes?: number | null
+          total_lessons?: number | null
+          updated_at?: string
+          user_id: string
+          week_id: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          id?: string
+          is_completed?: boolean | null
+          lessons_completed?: number | null
+          progress_percent?: number | null
+          started_at?: string | null
+          time_spent_minutes?: number | null
+          total_lessons?: number | null
+          updated_at?: string
+          user_id?: string
+          week_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_week_progress_week_id_fkey"
+            columns: ["week_id"]
+            isOneToOne: false
+            referencedRelation: "planning_weeks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      planning_weeks: {
+        Row: {
+          course_id: string | null
+          created_at: string
+          created_by: string | null
+          description: string | null
+          difficulty: string | null
+          end_date: string | null
+          estimated_hours: number | null
+          id: string
+          is_template: boolean | null
+          start_date: string | null
+          status: string
+          thumbnail_url: string | null
+          title: string
+          updated_at: string
+          week_number: number
+        }
+        Insert: {
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_template?: boolean | null
+          start_date?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title: string
+          updated_at?: string
+          week_number: number
+        }
+        Update: {
+          course_id?: string | null
+          created_at?: string
+          created_by?: string | null
+          description?: string | null
+          difficulty?: string | null
+          end_date?: string | null
+          estimated_hours?: number | null
+          id?: string
+          is_template?: boolean | null
+          start_date?: string | null
+          status?: string
+          thumbnail_url?: string | null
+          title?: string
+          updated_at?: string
+          week_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "planning_weeks_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ponto_eletronico: {
         Row: {
           aprovado: boolean | null

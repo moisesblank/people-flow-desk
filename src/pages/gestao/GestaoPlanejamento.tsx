@@ -1,0 +1,851 @@
+// ============================================
+// 📋 GESTÃO DE PLANEJAMENTO SEMANAL
+// /gestaofc/planejamento
+// Gestão: CRUD de semanas, aulas, materiais
+// ============================================
+
+import { useState, useMemo, useEffect } from "react";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
+import { motion, AnimatePresence } from "framer-motion";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
+
+// Icons
+import {
+  Plus,
+  Calendar,
+  Play,
+  FileText,
+  Clock,
+  Users,
+  Search,
+  Filter,
+  MoreHorizontal,
+  Edit,
+  Trash2,
+  Eye,
+  BookOpen,
+  Video,
+  CheckCircle2,
+  AlertCircle,
+  Archive,
+  Copy,
+  LayoutGrid,
+  List,
+  ChevronRight,
+  Settings,
+  Target,
+  Zap,
+  GraduationCap,
+  TrendingUp,
+} from "lucide-react";
+
+// Components
+import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import { Separator } from "@/components/ui/separator";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+
+// Types
+interface PlanningWeek {
+  id: string;
+  title: string;
+  description: string | null;
+  week_number: number;
+  status: "draft" | "active" | "archived";
+  start_date: string | null;
+  end_date: string | null;
+  thumbnail_url: string | null;
+  estimated_hours: number | null;
+  difficulty: "easy" | "medium" | "hard";
+  is_template: boolean;
+  course_id: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+interface PlanningLesson {
+  id: string;
+  week_id: string;
+  title: string;
+  description: string | null;
+  video_url: string | null;
+  video_provider: "panda" | "youtube" | "vimeo" | null;
+  duration_minutes: number | null;
+  position: number;
+  lesson_type: "video" | "reading" | "exercise" | "quiz" | "live";
+  is_required: boolean;
+  estimated_time_minutes: number | null;
+  xp_reward: number | null;
+  created_at: string;
+  updated_at: string;
+}
+
+// Stats Component
+function StatsCards({ weeks, lessons }: { weeks: PlanningWeek[]; lessons: PlanningLesson[] }) {
+  const stats = useMemo(() => {
+    const active = weeks.filter(w => w.status === "active").length;
+    const draft = weeks.filter(w => w.status === "draft").length;
+    const templates = weeks.filter(w => w.is_template).length;
+    const totalLessons = lessons.length;
+    const totalHours = weeks.reduce((sum, w) => sum + (w.estimated_hours || 0), 0);
+    
+    return { active, draft, templates, totalLessons, totalHours, total: weeks.length };
+  }, [weeks, lessons]);
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <Card className="bg-gradient-to-br from-primary/10 to-primary/5 border-primary/20">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/20">
+              <Calendar className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.total}</p>
+              <p className="text-xs text-muted-foreground">Total Semanas</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-green-500/10 to-green-500/5 border-green-500/20">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-green-500/20">
+              <CheckCircle2 className="h-5 w-5 text-green-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.active}</p>
+              <p className="text-xs text-muted-foreground">Ativas</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-yellow-500/10 to-yellow-500/5 border-yellow-500/20">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-yellow-500/20">
+              <AlertCircle className="h-5 w-5 text-yellow-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.draft}</p>
+              <p className="text-xs text-muted-foreground">Rascunhos</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-purple-500/10 to-purple-500/5 border-purple-500/20">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/20">
+              <Copy className="h-5 w-5 text-purple-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.templates}</p>
+              <p className="text-xs text-muted-foreground">Templates</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-cyan-500/10 to-cyan-500/5 border-cyan-500/20">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-cyan-500/20">
+              <Video className="h-5 w-5 text-cyan-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.totalLessons}</p>
+              <p className="text-xs text-muted-foreground">Total Aulas</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card className="bg-gradient-to-br from-orange-500/10 to-orange-500/5 border-orange-500/20">
+        <CardContent className="p-4">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-orange-500/20">
+              <Clock className="h-5 w-5 text-orange-500" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold">{stats.totalHours}h</p>
+              <p className="text-xs text-muted-foreground">Horas Estimadas</p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+}
+
+// Week Card Component
+function WeekCard({ 
+  week, 
+  lessons,
+  onEdit, 
+  onDelete, 
+  onDuplicate,
+  onViewLessons,
+}: { 
+  week: PlanningWeek;
+  lessons: PlanningLesson[];
+  onEdit: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  onViewLessons: () => void;
+}) {
+  const weekLessons = lessons.filter(l => l.week_id === week.id);
+  const totalMinutes = weekLessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+  
+  const statusConfig = {
+    draft: { label: "Rascunho", color: "bg-yellow-500/20 text-yellow-500 border-yellow-500/30" },
+    active: { label: "Ativa", color: "bg-green-500/20 text-green-500 border-green-500/30" },
+    archived: { label: "Arquivada", color: "bg-gray-500/20 text-gray-500 border-gray-500/30" },
+  };
+
+  const difficultyConfig = {
+    easy: { label: "Fácil", color: "text-green-500" },
+    medium: { label: "Médio", color: "text-yellow-500" },
+    hard: { label: "Difícil", color: "text-red-500" },
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      whileHover={{ y: -4 }}
+      transition={{ duration: 0.2 }}
+    >
+      <Card className="group relative overflow-hidden hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/30">
+        {/* Thumbnail */}
+        <div className="relative h-32 bg-gradient-to-br from-primary/20 via-primary/10 to-background overflow-hidden">
+          {week.thumbnail_url ? (
+            <img src={week.thumbnail_url} alt={week.title} className="w-full h-full object-cover" />
+          ) : (
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Calendar className="h-16 w-16 text-primary/30" />
+            </div>
+          )}
+          
+          {/* Status Badge */}
+          <Badge className={`absolute top-3 left-3 ${statusConfig[week.status].color}`}>
+            {statusConfig[week.status].label}
+          </Badge>
+          
+          {/* Template Badge */}
+          {week.is_template && (
+            <Badge className="absolute top-3 right-3 bg-purple-500/20 text-purple-500 border-purple-500/30">
+              Template
+            </Badge>
+          )}
+          
+          {/* Week Number */}
+          <div className="absolute bottom-3 right-3 bg-background/90 backdrop-blur-sm px-3 py-1 rounded-full">
+            <span className="text-sm font-bold">Semana {week.week_number}</span>
+          </div>
+        </div>
+
+        <CardHeader className="pb-2">
+          <div className="flex items-start justify-between">
+            <div className="flex-1 min-w-0">
+              <CardTitle className="text-lg truncate">{week.title}</CardTitle>
+              {week.description && (
+                <CardDescription className="line-clamp-2 mt-1">
+                  {week.description}
+                </CardDescription>
+              )}
+            </div>
+            
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon" className="shrink-0 -mt-1 -mr-2">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onViewLessons}>
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver Aulas
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onEdit}>
+                  <Edit className="h-4 w-4 mr-2" />
+                  Editar
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onDuplicate}>
+                  <Copy className="h-4 w-4 mr-2" />
+                  Duplicar
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem onClick={onDelete} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </CardHeader>
+
+        <CardContent className="space-y-3 pb-4">
+          {/* Stats Row */}
+          <div className="flex items-center gap-4 text-sm text-muted-foreground">
+            <div className="flex items-center gap-1.5">
+              <Video className="h-4 w-4" />
+              <span>{weekLessons.length} aulas</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" />
+              <span>{Math.round(totalMinutes / 60)}h {totalMinutes % 60}min</span>
+            </div>
+            <div className={`flex items-center gap-1.5 ${difficultyConfig[week.difficulty].color}`}>
+              <Target className="h-4 w-4" />
+              <span>{difficultyConfig[week.difficulty].label}</span>
+            </div>
+          </div>
+
+          {/* Date Range */}
+          {(week.start_date || week.end_date) && (
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 rounded-lg px-3 py-2">
+              <Calendar className="h-3.5 w-3.5" />
+              <span>
+                {week.start_date && format(new Date(week.start_date), "dd MMM", { locale: ptBR })}
+                {week.start_date && week.end_date && " - "}
+                {week.end_date && format(new Date(week.end_date), "dd MMM yyyy", { locale: ptBR })}
+              </span>
+            </div>
+          )}
+        </CardContent>
+
+        <CardFooter className="pt-0">
+          <Button variant="outline" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" onClick={onViewLessons}>
+            <Eye className="h-4 w-4 mr-2" />
+            Gerenciar Aulas
+            <ChevronRight className="h-4 w-4 ml-auto" />
+          </Button>
+        </CardFooter>
+      </Card>
+    </motion.div>
+  );
+}
+
+// Create/Edit Week Dialog
+function WeekFormDialog({
+  open,
+  onOpenChange,
+  week,
+  onSave,
+  isLoading,
+}: {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  week?: PlanningWeek | null;
+  onSave: (data: Partial<PlanningWeek>) => void;
+  isLoading: boolean;
+}) {
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    week_number: 1,
+    status: "draft" as PlanningWeek["status"],
+    difficulty: "medium" as PlanningWeek["difficulty"],
+    estimated_hours: 10,
+    is_template: false,
+    start_date: "",
+    end_date: "",
+  });
+
+  useEffect(() => {
+    if (week) {
+      setFormData({
+        title: week.title,
+        description: week.description || "",
+        week_number: week.week_number,
+        status: week.status,
+        difficulty: week.difficulty,
+        estimated_hours: week.estimated_hours || 10,
+        is_template: week.is_template,
+        start_date: week.start_date || "",
+        end_date: week.end_date || "",
+      });
+    } else {
+      setFormData({
+        title: "",
+        description: "",
+        week_number: 1,
+        status: "draft",
+        difficulty: "medium",
+        estimated_hours: 10,
+        is_template: false,
+        start_date: "",
+        end_date: "",
+      });
+    }
+  }, [week, open]);
+
+  const handleSubmit = () => {
+    if (!formData.title.trim()) {
+      toast.error("Título é obrigatório");
+      return;
+    }
+    onSave({
+      ...formData,
+      start_date: formData.start_date || null,
+      end_date: formData.end_date || null,
+    });
+  };
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[600px]">
+        <DialogHeader>
+          <DialogTitle>{week ? "Editar Semana" : "Nova Semana de Planejamento"}</DialogTitle>
+          <DialogDescription>
+            {week ? "Atualize os dados da semana" : "Crie uma nova semana de estudo para os alunos"}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="grid gap-4 py-4">
+          <div className="grid gap-2">
+            <Label htmlFor="title">Título *</Label>
+            <Input
+              id="title"
+              value={formData.title}
+              onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+              placeholder="Ex: Semana 1 - Introdução à Química"
+            />
+          </div>
+
+          <div className="grid gap-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Descreva o conteúdo desta semana..."
+              rows={3}
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="week_number">Número da Semana</Label>
+              <Input
+                id="week_number"
+                type="number"
+                min={1}
+                value={formData.week_number}
+                onChange={(e) => setFormData({ ...formData, week_number: parseInt(e.target.value) || 1 })}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="estimated_hours">Horas Estimadas</Label>
+              <Input
+                id="estimated_hours"
+                type="number"
+                min={1}
+                value={formData.estimated_hours}
+                onChange={(e) => setFormData({ ...formData, estimated_hours: parseInt(e.target.value) || 10 })}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="status">Status</Label>
+              <Select value={formData.status} onValueChange={(v) => setFormData({ ...formData, status: v as PlanningWeek["status"] })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="draft">Rascunho</SelectItem>
+                  <SelectItem value="active">Ativa</SelectItem>
+                  <SelectItem value="archived">Arquivada</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="difficulty">Dificuldade</Label>
+              <Select value={formData.difficulty} onValueChange={(v) => setFormData({ ...formData, difficulty: v as PlanningWeek["difficulty"] })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="easy">Fácil</SelectItem>
+                  <SelectItem value="medium">Médio</SelectItem>
+                  <SelectItem value="hard">Difícil</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="grid gap-2">
+              <Label htmlFor="start_date">Data Início</Label>
+              <Input
+                id="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+              />
+            </div>
+
+            <div className="grid gap-2">
+              <Label htmlFor="end_date">Data Fim</Label>
+              <Input
+                id="end_date"
+                type="date"
+                value={formData.end_date}
+                onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+              />
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-2">
+            <Switch
+              id="is_template"
+              checked={formData.is_template}
+              onCheckedChange={(checked) => setFormData({ ...formData, is_template: checked })}
+            />
+            <Label htmlFor="is_template">Salvar como template (modelo reutilizável)</Label>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? "Salvando..." : week ? "Salvar Alterações" : "Criar Semana"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Main Component
+export default function GestaoPlanejamento() {
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
+  const [formDialogOpen, setFormDialogOpen] = useState(false);
+  const [editingWeek, setEditingWeek] = useState<PlanningWeek | null>(null);
+  const [selectedWeek, setSelectedWeek] = useState<PlanningWeek | null>(null);
+
+  // Fetch weeks
+  const { data: weeks = [], isLoading: weeksLoading } = useQuery({
+    queryKey: ["planning-weeks"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("planning_weeks")
+        .select("*")
+        .order("week_number", { ascending: true });
+      if (error) throw error;
+      return data as PlanningWeek[];
+    },
+  });
+
+  // Fetch lessons
+  const { data: lessons = [] } = useQuery({
+    queryKey: ["planning-lessons"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("planning_lessons")
+        .select("*")
+        .order("position", { ascending: true });
+      if (error) throw error;
+      return data as PlanningLesson[];
+    },
+  });
+
+  // Realtime subscriptions
+  useEffect(() => {
+    const channel = supabase
+      .channel("planning-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "planning_weeks" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["planning-weeks"] });
+      })
+      .on("postgres_changes", { event: "*", schema: "public", table: "planning_lessons" }, () => {
+        queryClient.invalidateQueries({ queryKey: ["planning-lessons"] });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [queryClient]);
+
+  // Create week mutation
+  const createWeekMutation = useMutation({
+    mutationFn: async (data: Partial<PlanningWeek>) => {
+      const { data: result, error } = await supabase
+        .from("planning_weeks")
+        .insert({
+          title: data.title!,
+          description: data.description,
+          week_number: data.week_number!,
+          status: data.status || "draft",
+          difficulty: data.difficulty || "medium",
+          estimated_hours: data.estimated_hours,
+          is_template: data.is_template || false,
+          start_date: data.start_date,
+          end_date: data.end_date,
+        })
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["planning-weeks"] });
+      toast.success("Semana criada com sucesso!");
+      setFormDialogOpen(false);
+    },
+    onError: (error) => {
+      toast.error("Erro ao criar semana: " + error.message);
+    },
+  });
+
+  // Update week mutation
+  const updateWeekMutation = useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: Partial<PlanningWeek> }) => {
+      const { data: result, error } = await supabase
+        .from("planning_weeks")
+        .update(data)
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return result;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["planning-weeks"] });
+      toast.success("Semana atualizada!");
+      setFormDialogOpen(false);
+      setEditingWeek(null);
+    },
+    onError: (error) => {
+      toast.error("Erro ao atualizar: " + error.message);
+    },
+  });
+
+  // Delete week mutation
+  const deleteWeekMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("planning_weeks").delete().eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["planning-weeks"] });
+      toast.success("Semana excluída!");
+    },
+    onError: (error) => {
+      toast.error("Erro ao excluir: " + error.message);
+    },
+  });
+
+  // Filter weeks
+  const filteredWeeks = useMemo(() => {
+    return weeks.filter((week) => {
+      const matchesSearch = week.title.toLowerCase().includes(search.toLowerCase()) ||
+        week.description?.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "all" || week.status === statusFilter;
+      return matchesSearch && matchesStatus;
+    });
+  }, [weeks, search, statusFilter]);
+
+  const handleSaveWeek = (data: Partial<PlanningWeek>) => {
+    if (editingWeek) {
+      updateWeekMutation.mutate({ id: editingWeek.id, data });
+    } else {
+      createWeekMutation.mutate(data);
+    }
+  };
+
+  const handleDuplicate = (week: PlanningWeek) => {
+    createWeekMutation.mutate({
+      ...week,
+      title: `${week.title} (Cópia)`,
+      status: "draft",
+      is_template: false,
+    });
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-background via-background to-muted/20">
+      <div className="container mx-auto p-6 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
+              <Calendar className="h-8 w-8 text-primary" />
+              Planejamento Semanal
+            </h1>
+            <p className="text-muted-foreground mt-1">
+              Gerencie as semanas de estudo e aulas para os alunos
+            </p>
+          </div>
+
+          <Button onClick={() => {
+            setEditingWeek(null);
+            setFormDialogOpen(true);
+          }} size="lg" className="gap-2">
+            <Plus className="h-5 w-5" />
+            Nova Semana
+          </Button>
+        </div>
+
+        {/* Stats */}
+        <StatsCards weeks={weeks} lessons={lessons} />
+
+        {/* Filters & Search */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col md:flex-row gap-4">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar semanas..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="pl-10"
+                />
+              </div>
+
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-[180px]">
+                  <Filter className="h-4 w-4 mr-2" />
+                  <SelectValue placeholder="Filtrar status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="draft">Rascunhos</SelectItem>
+                  <SelectItem value="active">Ativas</SelectItem>
+                  <SelectItem value="archived">Arquivadas</SelectItem>
+                </SelectContent>
+              </Select>
+
+              <div className="flex items-center gap-1 border rounded-lg p-1">
+                <Button
+                  variant={viewMode === "grid" ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => setViewMode("grid")}
+                >
+                  <LayoutGrid className="h-4 w-4" />
+                </Button>
+                <Button
+                  variant={viewMode === "list" ? "secondary" : "ghost"}
+                  size="icon"
+                  onClick={() => setViewMode("list")}
+                >
+                  <List className="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Weeks Grid */}
+        {weeksLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary" />
+          </div>
+        ) : filteredWeeks.length === 0 ? (
+          <Card className="py-12">
+            <div className="flex flex-col items-center justify-center text-center">
+              <Calendar className="h-16 w-16 text-muted-foreground/50 mb-4" />
+              <h3 className="text-lg font-semibold">Nenhuma semana encontrada</h3>
+              <p className="text-muted-foreground mb-4">
+                {search || statusFilter !== "all" 
+                  ? "Tente ajustar os filtros de busca"
+                  : "Crie a primeira semana de planejamento"}
+              </p>
+              {!search && statusFilter === "all" && (
+                <Button onClick={() => setFormDialogOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Criar Primeira Semana
+                </Button>
+              )}
+            </div>
+          </Card>
+        ) : (
+          <div className={viewMode === "grid" 
+            ? "grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            : "space-y-4"
+          }>
+            <AnimatePresence mode="popLayout">
+              {filteredWeeks.map((week) => (
+                <WeekCard
+                  key={week.id}
+                  week={week}
+                  lessons={lessons}
+                  onEdit={() => {
+                    setEditingWeek(week);
+                    setFormDialogOpen(true);
+                  }}
+                  onDelete={() => {
+                    if (confirm("Tem certeza que deseja excluir esta semana?")) {
+                      deleteWeekMutation.mutate(week.id);
+                    }
+                  }}
+                  onDuplicate={() => handleDuplicate(week)}
+                  onViewLessons={() => setSelectedWeek(week)}
+                />
+              ))}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* Form Dialog */}
+        <WeekFormDialog
+          open={formDialogOpen}
+          onOpenChange={setFormDialogOpen}
+          week={editingWeek}
+          onSave={handleSaveWeek}
+          isLoading={createWeekMutation.isPending || updateWeekMutation.isPending}
+        />
+      </div>
+    </div>
+  );
+}
