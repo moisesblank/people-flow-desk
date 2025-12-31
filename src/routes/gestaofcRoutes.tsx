@@ -41,6 +41,7 @@ const GestaoFlashcards = lazy(() => import("@/pages/gestao/GestaoFlashcards"));
 const GestaoMapasMentais = lazy(() => import("@/pages/gestao/GestaoMapasMentais"));
 const GestaoVideoaulas = lazy(() => import("@/pages/gestao/GestaoVideoaulas"));
 const GestaoTutoria = lazy(() => import("@/pages/gestao/GestaoTutoria"));
+const GestaoForum = lazy(() => import("@/pages/gestao/GestaoForum"));
 
 // Finanças
 const Entradas = lazy(() => import("@/pages/Entradas"));
@@ -119,6 +120,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc/mapas-mentais" element={<ProtectedPage><GestaoMapasMentais /></ProtectedPage>} />
     <Route path="/gestaofc/videoaulas" element={<ProtectedPage><GestaoVideoaulas /></ProtectedPage>} />
     <Route path="/gestaofc/tutoria" element={<ProtectedPage><GestaoTutoria /></ProtectedPage>} />
+    <Route path="/gestaofc/forum" element={<ProtectedPage><GestaoForum /></ProtectedPage>} />
     
     {/* Finanças */}
     <Route path="/gestaofc/entradas" element={<ProtectedPage><Entradas /></ProtectedPage>} />
