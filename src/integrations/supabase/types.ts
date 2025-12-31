@@ -8752,6 +8752,56 @@ export type Database = {
           },
         ]
       }
+      question_taxonomy: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          label: string
+          level: string
+          parent_id: string | null
+          position: number | null
+          updated_at: string | null
+          value: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label: string
+          level: string
+          parent_id?: string | null
+          position?: number | null
+          updated_at?: string | null
+          value: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          label?: string
+          level?: string
+          parent_id?: string | null
+          position?: number | null
+          updated_at?: string | null
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "question_taxonomy_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "question_taxonomy"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       questions: {
         Row: {
           ano: number | null
