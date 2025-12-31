@@ -1179,7 +1179,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </div>
                 </ScrollArea>
 
-                <DialogFooter className="p-4 border-t">
+                <DialogFooter className="p-4 border-t relative z-50 bg-background">
                   <Button variant="outline" onClick={reset}>
                     <X className="h-4 w-4 mr-2" />
                     Cancelar
