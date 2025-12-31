@@ -5430,6 +5430,224 @@ export type Database = {
         }
         Relationships: []
       }
+      forum_categories: {
+        Row: {
+          color: string | null
+          created_at: string
+          description: string | null
+          icon: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          position: number | null
+          slug: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          position?: number | null
+          slug: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string | null
+          created_at?: string
+          description?: string | null
+          icon?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          position?: number | null
+          slug?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      forum_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string | null
+          topic_id: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          topic_id?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string | null
+          topic_id?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_likes_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_posts: {
+        Row: {
+          author_email: string | null
+          author_id: string | null
+          author_name: string | null
+          content: string
+          created_at: string
+          edited_at: string | null
+          id: string
+          is_edited: boolean | null
+          is_solution: boolean | null
+          likes_count: number | null
+          parent_id: string | null
+          topic_id: string
+          updated_at: string
+        }
+        Insert: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          content: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_solution?: boolean | null
+          likes_count?: number | null
+          parent_id?: string | null
+          topic_id: string
+          updated_at?: string
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          content?: string
+          created_at?: string
+          edited_at?: string | null
+          id?: string
+          is_edited?: boolean | null
+          is_solution?: boolean | null
+          likes_count?: number | null
+          parent_id?: string | null
+          topic_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_posts_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "forum_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "forum_posts_topic_id_fkey"
+            columns: ["topic_id"]
+            isOneToOne: false
+            referencedRelation: "forum_topics"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      forum_topics: {
+        Row: {
+          author_email: string | null
+          author_id: string | null
+          author_name: string | null
+          category_id: string | null
+          content: string
+          created_at: string
+          id: string
+          is_hot: boolean | null
+          is_pinned: boolean | null
+          is_solved: boolean | null
+          last_reply_at: string | null
+          last_reply_by: string | null
+          likes_count: number | null
+          replies_count: number | null
+          slug: string | null
+          status: string
+          tags: string[] | null
+          title: string
+          updated_at: string
+          views_count: number | null
+        }
+        Insert: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          category_id?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          is_hot?: boolean | null
+          is_pinned?: boolean | null
+          is_solved?: boolean | null
+          last_reply_at?: string | null
+          last_reply_by?: string | null
+          likes_count?: number | null
+          replies_count?: number | null
+          slug?: string | null
+          status?: string
+          tags?: string[] | null
+          title: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Update: {
+          author_email?: string | null
+          author_id?: string | null
+          author_name?: string | null
+          category_id?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          is_hot?: boolean | null
+          is_pinned?: boolean | null
+          is_solved?: boolean | null
+          last_reply_at?: string | null
+          last_reply_by?: string | null
+          likes_count?: number | null
+          replies_count?: number | null
+          slug?: string | null
+          status?: string
+          tags?: string[] | null
+          title?: string
+          updated_at?: string
+          views_count?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "forum_topics_category_id_fkey"
+            columns: ["category_id"]
+            isOneToOne: false
+            referencedRelation: "forum_categories"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       gastos: {
         Row: {
           categoria: string | null
