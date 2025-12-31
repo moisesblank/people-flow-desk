@@ -1344,13 +1344,17 @@ function GestaoQuestoes() {
                         </Badge>
                       </TableCell>
                       <TableCell className="text-right">
-                        <DropdownMenu>
+                        <DropdownMenu modal={false}>
                           <DropdownMenuTrigger asChild>
-                            <Button variant="ghost" size="icon">
+                            <button
+                              type="button"
+                              className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors"
+                            >
                               <MoreVertical className="h-4 w-4" />
-                            </Button>
+                              <span className="sr-only">Abrir menu</span>
+                            </button>
                           </DropdownMenuTrigger>
-                          <DropdownMenuContent align="end">
+                          <DropdownMenuContent align="end" sideOffset={4}>
                             <DropdownMenuItem onClick={() => handleEdit(question)}>
                               <Edit className="h-4 w-4 mr-2" />
                               Editar
