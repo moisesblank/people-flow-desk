@@ -103,7 +103,8 @@ type ImportFlowState =
   | 'inferencia_em_execucao'
   | 'inferencia_concluida'
   | 'validacao_humana_obrigatoria'
-  | 'autorizacao_explicita';
+  | 'autorizacao_explicita'
+  | 'importacao_concluida';
 
 interface ParsedQuestion {
   id: string;
@@ -574,8 +575,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   onClose,
   onSuccess,
 }: QuestionImportDialogProps) {
-  // UI Step (upload | mapping | preview | importing)
-  const [uiStep, setUiStep] = useState<'upload' | 'mapping' | 'preview' | 'importing'>('upload');
+  // UI Step (upload | mapping | preview | importing | resultado)
+  const [uiStep, setUiStep] = useState<'upload' | 'mapping' | 'preview' | 'importing' | 'resultado'>('upload');
   
   // STATE MACHINE - Fluxo Controlado
   const [flowState, setFlowState] = useState<ImportFlowState | null>(null);
@@ -590,6 +591,14 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   // Processing
   const [isProcessing, setIsProcessing] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  
+  // Resultado final da importação
+  const [importResult, setImportResult] = useState<{
+    imported: number;
+    failed: number;
+    camposInferidos: string[];
+    camposNull: string[];
+  } | null>(null);
   
   // UI state
   const [expandedQuestion, setExpandedQuestion] = useState<string | null>(null);
@@ -1240,15 +1249,24 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       setImportProgress(Math.round(((i + 1) / toImport.length) * 100));
     }
 
-    if (failed === 0) {
-      toast.success(`${imported} questões importadas como RASCUNHO!`);
-    } else {
-      toast.warning(`${imported} importadas, ${failed} falharam`);
-    }
+    // Consolidar campos inferidos e null únicos
+    const allInferidos = new Set<string>();
+    const allNull = new Set<string>();
+    toImport.forEach(q => {
+      q.campos_inferidos.forEach(c => allInferidos.add(c.split(':')[0]));
+      q.campos_null.forEach(c => allNull.add(c));
+    });
 
-    onSuccess();
-    onClose();
-  }, [canProcess, parsedQuestions, onSuccess, onClose]);
+    // Salvar resultado e ir para estado terminal
+    setImportResult({
+      imported,
+      failed,
+      camposInferidos: Array.from(allInferidos),
+      camposNull: Array.from(allNull),
+    });
+    setFlowState('importacao_concluida');
+    setUiStep('resultado');
+  }, [canProcess, parsedQuestions]);
 
   const reset = useCallback(() => {
     setUiStep('upload');
@@ -1263,6 +1281,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     setEditingQuestion(null);
     setFilterStatus('all');
     setHumanAuthorization(false);
+    setImportResult(null);
     setGlobalDefaults({
       banca: '',
       ano: '',
@@ -1297,6 +1316,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
               {uiStep === 'mapping' && 'Mapeamento'}
               {uiStep === 'preview' && 'Validação Humana'}
               {uiStep === 'importing' && 'Importando...'}
+              {uiStep === 'resultado' && 'Concluído'}
             </Badge>
             {flowState && (
               <Badge variant="secondary" className="ml-1 text-[10px]">
@@ -2009,6 +2029,136 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   <div className="space-y-2">
                     <Progress value={importProgress} className="h-2" />
                     <p className="text-sm font-mono">{importProgress}%</p>
+                  </div>
+                </div>
+              </motion.div>
+            )}
+
+            {/* STEP 5: RESULTADO FINAL (ESTADO TERMINAL) */}
+            {uiStep === 'resultado' && importResult && (
+              <motion.div
+                key="resultado"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="h-full flex flex-col items-center justify-center p-8"
+              >
+                <div className="w-full max-w-2xl space-y-6">
+                  {/* Ícone de sucesso */}
+                  <div className="text-center">
+                    <div className="p-4 rounded-2xl bg-gradient-to-br from-green-500/20 to-emerald-500/20 inline-block mb-4">
+                      <CheckCircle className="h-16 w-16 text-green-500" />
+                    </div>
+                    <h2 className="text-2xl font-bold text-green-500">Importação Concluída!</h2>
+                    <p className="text-muted-foreground mt-1">
+                      Questões salvas como <strong>RASCUNHO</strong> (is_active: false)
+                    </p>
+                  </div>
+
+                  {/* Resumo estatístico */}
+                  <Card className="border-green-500/30">
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Target className="h-4 w-4 text-primary" />
+                        Resumo Final da Importação
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="text-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
+                          <div className="text-2xl font-bold text-green-500">{importResult.imported}</div>
+                          <div className="text-xs text-muted-foreground">Importadas</div>
+                        </div>
+                        {importResult.failed > 0 && (
+                          <div className="text-center p-3 rounded-lg bg-red-500/10 border border-red-500/20">
+                            <div className="text-2xl font-bold text-red-500">{importResult.failed}</div>
+                            <div className="text-xs text-muted-foreground">Falharam</div>
+                          </div>
+                        )}
+                        <div className="text-center p-3 rounded-lg bg-blue-500/10 border border-blue-500/20">
+                          <div className="text-2xl font-bold text-blue-500">{importResult.camposInferidos.length}</div>
+                          <div className="text-xs text-muted-foreground">Campos Inferidos</div>
+                        </div>
+                        <div className="text-center p-3 rounded-lg bg-orange-500/10 border border-orange-500/20">
+                          <div className="text-2xl font-bold text-orange-500">{importResult.camposNull.length}</div>
+                          <div className="text-xs text-muted-foreground">Campos Vazios</div>
+                        </div>
+                      </div>
+
+                      {/* Detalhes dos campos */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {importResult.camposInferidos.length > 0 && (
+                          <div className="p-3 rounded-lg border border-blue-500/20 bg-blue-500/5">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Sparkles className="h-4 w-4 text-blue-500" />
+                              <span className="text-sm font-semibold text-blue-500">Campos Inferidos</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {importResult.camposInferidos.map((campo, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs bg-blue-500/10 text-blue-400">
+                                  {campo}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                        {importResult.camposNull.length > 0 && (
+                          <div className="p-3 rounded-lg border border-orange-500/20 bg-orange-500/5">
+                            <div className="flex items-center gap-2 mb-2">
+                              <AlertOctagon className="h-4 w-4 text-orange-500" />
+                              <span className="text-sm font-semibold text-orange-500">Campos Não Identificados</span>
+                            </div>
+                            <div className="flex flex-wrap gap-1">
+                              {importResult.camposNull.map((campo, i) => (
+                                <Badge key={i} variant="secondary" className="text-xs bg-orange-500/10 text-orange-400">
+                                  {campo}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Status final */}
+                      <div className="p-3 rounded-lg border border-primary/30 bg-primary/5">
+                        <div className="flex items-center gap-2 text-sm">
+                          <ShieldCheck className="h-4 w-4 text-green-500" />
+                          <span>
+                            <strong>Status Final:</strong> Todas as questões foram salvas como{' '}
+                            <Badge variant="outline" className="text-yellow-500 border-yellow-500/30">
+                              RASCUNHO
+                            </Badge>{' '}
+                            e precisam de <strong>revisão editorial</strong> antes de serem publicadas.
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Botão de finalização */}
+                  <div className="flex justify-center gap-4">
+                    <Button
+                      size="lg"
+                      onClick={() => {
+                        onSuccess();
+                        onClose();
+                        toast.success('Importação concluída com sucesso. Questões salvas como rascunho.');
+                      }}
+                      className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
+                    >
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Finalizar Importação
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      onClick={() => {
+                        reset();
+                        toast.info('Pronto para nova importação');
+                      }}
+                    >
+                      <RefreshCw className="h-4 w-4 mr-2" />
+                      Nova Importação
+                    </Button>
                   </div>
                 </div>
               </motion.div>
