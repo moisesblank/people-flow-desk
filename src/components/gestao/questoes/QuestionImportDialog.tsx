@@ -925,7 +925,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="max-w-6xl max-h-[95vh] overflow-hidden flex flex-col">
+      <DialogContent className="w-[min(98vw,90rem)] max-w-none max-h-[95vh] overflow-hidden flex flex-col">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30">
@@ -1041,53 +1041,54 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </Badge>
                 </div>
 
-                <ScrollArea className="flex-1 p-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {headers.map(header => (
-                      <div key={header} className="space-y-2">
-                        <Label className="text-xs font-medium flex items-center gap-2">
-                          {header}
-                          {columnMapping[header] && (
-                            <CheckCircle className="h-3 w-3 text-green-500" />
-                          )}
-                        </Label>
-                        <Select
-                          value={columnMapping[header] || '_skip'}
-                          onValueChange={(v) => {
-                            if (v === '_skip') {
-                              const { [header]: _, ...rest } = columnMapping;
-                              setColumnMapping(rest);
-                            } else {
-                              setColumnMapping(prev => ({ ...prev, [header]: v }));
-                            }
-                          }}
-                        >
-                          <SelectTrigger className="h-9 text-xs">
-                            <SelectValue placeholder="Pular" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="_skip">— Pular —</SelectItem>
-                            <SelectItem value="question_text">📝 Enunciado</SelectItem>
-                            <SelectItem value="option_a">🅰️ Alternativa A</SelectItem>
-                            <SelectItem value="option_b">🅱️ Alternativa B</SelectItem>
-                            <SelectItem value="option_c">©️ Alternativa C</SelectItem>
-                            <SelectItem value="option_d">🅳 Alternativa D</SelectItem>
-                            <SelectItem value="option_e">🅴 Alternativa E</SelectItem>
-                            <SelectItem value="correct_answer">✅ Resposta Correta</SelectItem>
-                            <SelectItem value="explanation">💡 Explicação</SelectItem>
-                            <SelectItem value="difficulty">📊 Dificuldade</SelectItem>
-                            <SelectItem value="banca">🏛️ Banca</SelectItem>
-                            <SelectItem value="ano">📅 Ano</SelectItem>
-                            <SelectItem value="macro">🎯 Macro</SelectItem>
-                            <SelectItem value="micro">📚 Micro</SelectItem>
-                            <SelectItem value="tema">📖 Tema</SelectItem>
-                            <SelectItem value="subtema">📑 Subtema</SelectItem>
-                            <SelectItem value="tags">🏷️ Tags</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    ))}
-                  </div>
+                <div className="flex-1 overflow-auto p-4">
+                  <div className="min-w-[1100px]">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {headers.map(header => (
+                        <div key={header} className="space-y-2">
+                          <Label className="text-xs font-medium flex items-center gap-2">
+                            {header}
+                            {columnMapping[header] && (
+                              <CheckCircle className="h-3 w-3 text-green-500" />
+                            )}
+                          </Label>
+                          <Select
+                            value={columnMapping[header] || '_skip'}
+                            onValueChange={(v) => {
+                              if (v === '_skip') {
+                                const { [header]: _, ...rest } = columnMapping;
+                                setColumnMapping(rest);
+                              } else {
+                                setColumnMapping(prev => ({ ...prev, [header]: v }));
+                              }
+                            }}
+                          >
+                            <SelectTrigger className="h-9 text-xs">
+                              <SelectValue placeholder="Pular" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="_skip">— Pular —</SelectItem>
+                              <SelectItem value="question_text">📝 Enunciado</SelectItem>
+                              <SelectItem value="option_a">🅰️ Alternativa A</SelectItem>
+                              <SelectItem value="option_b">🅱️ Alternativa B</SelectItem>
+                              <SelectItem value="option_c">©️ Alternativa C</SelectItem>
+                              <SelectItem value="option_d">🅳 Alternativa D</SelectItem>
+                              <SelectItem value="option_e">🅴 Alternativa E</SelectItem>
+                              <SelectItem value="correct_answer">✅ Resposta Correta</SelectItem>
+                              <SelectItem value="explanation">💡 Explicação</SelectItem>
+                              <SelectItem value="difficulty">📊 Dificuldade</SelectItem>
+                              <SelectItem value="banca">🏛️ Banca</SelectItem>
+                              <SelectItem value="ano">📅 Ano</SelectItem>
+                              <SelectItem value="macro">🎯 Macro</SelectItem>
+                              <SelectItem value="micro">📚 Micro</SelectItem>
+                              <SelectItem value="tema">📖 Tema</SelectItem>
+                              <SelectItem value="subtema">📑 Subtema</SelectItem>
+                              <SelectItem value="tags">🏷️ Tags</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                      ))}
+                    </div>
 
                   {/* Valores Padrão Globais */}
                   <div className="mt-8 p-4 rounded-lg border border-primary/20 bg-primary/5">
@@ -1215,9 +1216,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       </Table>
                     </div>
                   </div>
-                </ScrollArea>
+                </div>
+              </div>
 
-                <DialogFooter className="p-4 border-t relative z-50 bg-background">
+              <DialogFooter className="p-4 border-t relative z-50 bg-background">
                   <Button variant="outline" onClick={reset}>
                     <X className="h-4 w-4 mr-2" />
                     Cancelar
@@ -1312,8 +1314,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 </div>
 
                 {/* Questions list */}
-                <ScrollArea className="flex-1">
-                  <div className="p-4 space-y-2">
+                <div className="flex-1 overflow-auto">
+                  <div className="p-4 space-y-2 min-w-[980px]">
                     {filteredQuestions.map((q, index) => (
                       <Card
                         key={q.id}
@@ -1467,7 +1469,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       </Card>
                     ))}
                   </div>
-                </ScrollArea>
+                </div>
 
                 <DialogFooter className="p-4 border-t">
                   <div className="flex items-center gap-2 mr-auto">
