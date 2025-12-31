@@ -1,7 +1,7 @@
 // ============================================
-// 📚 PLANEJAMENTO DO ALUNO - ESTUDAR (VIDEOAULA)
+// 📚 ESTUDAR (VIDEOAULA) - Portal do Aluno
 // /alunos/planejamento
-// Interface completa: video, aulas, fórum, progresso
+// Interface completa baseada no design original
 // ============================================
 
 import { useState, useMemo, useEffect } from "react";
@@ -16,7 +16,6 @@ import { toast } from "sonner";
 // Icons
 import {
   Play,
-  Pause,
   CheckCircle2,
   Clock,
   Calendar,
@@ -25,29 +24,25 @@ import {
   FileText,
   Star,
   MessageCircle,
-  ChevronLeft,
-  ChevronRight,
   ChevronDown,
-  Lock,
-  Trophy,
-  Target,
-  Zap,
-  Brain,
-  Lightbulb,
-  PenLine,
-  Send,
-  ThumbsUp,
-  Heart,
-  Bookmark,
-  Share2,
-  MoreHorizontal,
-  AlertCircle,
+  ChevronUp,
   Timer,
-  RotateCcw,
   Bot,
-  Radio,
   Eye,
   Pencil,
+  Send,
+  Pin,
+  ExternalLink,
+  Sparkles,
+  Radio,
+  Bookmark,
+  Target,
+  BrainCircuit,
+  HelpCircle,
+  Link,
+  SquareCheck,
+  Square,
+  AlertCircle,
 } from "lucide-react";
 
 // Components
@@ -55,7 +50,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
@@ -73,14 +67,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "@/components/ui/collapsible";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Types
 interface PlanningWeek {
@@ -132,197 +119,8 @@ interface WeekProgress {
   is_completed: boolean;
 }
 
-interface PlanningNote {
-  id: string;
-  user_id: string;
-  lesson_id: string;
-  content: string;
-  timestamp_seconds: number | null;
-  color: string;
-  is_pinned: boolean;
-  created_at: string;
-}
-
 // ============================================
-// COMPONENTE: Seletor de Semana (Dropdown)
-// ============================================
-function WeekDropdownSelector({
-  weeks,
-  selectedWeek,
-  onSelectWeek,
-  weekProgress,
-}: {
-  weeks: PlanningWeek[];
-  selectedWeek: PlanningWeek | null;
-  onSelectWeek: (week: PlanningWeek) => void;
-  weekProgress: Record<string, WeekProgress>;
-}) {
-  const selected = selectedWeek;
-  const progress = selected ? weekProgress[selected.id] : null;
-
-  return (
-    <Select
-      value={selected?.id || ""}
-      onValueChange={(value) => {
-        const week = weeks.find((w) => w.id === value);
-        if (week) onSelectWeek(week);
-      }}
-    >
-      <SelectTrigger className="w-full max-w-md bg-card border-primary/30 hover:border-primary">
-        <div className="flex items-center gap-3">
-          <Calendar className="h-4 w-4 text-primary" />
-          <span className="font-medium">
-            {selected ? `Semana ${selected.week_number} - ${selected.title}` : "Selecione uma semana"}
-          </span>
-        </div>
-      </SelectTrigger>
-      <SelectContent>
-        {weeks.map((week) => {
-          const wp = weekProgress[week.id];
-          const isCompleted = wp?.is_completed;
-          return (
-            <SelectItem key={week.id} value={week.id}>
-              <div className="flex items-center gap-2">
-                {isCompleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
-                <span>Semana {week.week_number} - {week.title}</span>
-                {wp && <Badge variant="outline" className="ml-2 text-xs">{wp.progress_percent}%</Badge>}
-              </div>
-            </SelectItem>
-          );
-        })}
-      </SelectContent>
-    </Select>
-  );
-}
-
-// ============================================
-// COMPONENTE: Header com Info da Semana
-// ============================================
-function WeekHeader({
-  week,
-  weekProgress,
-  lessons,
-  lessonProgress,
-}: {
-  week: PlanningWeek;
-  weekProgress: WeekProgress | undefined;
-  lessons: PlanningLesson[];
-  lessonProgress: Record<string, LessonProgress>;
-}) {
-  const completedLessons = lessons.filter((l) => lessonProgress[l.id]?.is_completed).length;
-  const totalMinutes = lessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
-  const remainingMinutes = lessons
-    .filter((l) => !lessonProgress[l.id]?.is_completed)
-    .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
-
-  return (
-    <div className="flex items-center justify-between gap-4 flex-wrap">
-      <div className="flex items-center gap-4">
-        <Clock className="h-5 w-5 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground">
-          Tempo sugerido: <strong className="text-foreground">{Math.round(totalMinutes / 60)}h</strong>
-        </span>
-      </div>
-
-      <div className="flex items-center gap-4">
-        {week.difficulty && (
-          <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30">
-            Revisão: {week.title.split("-")[1]?.trim() || week.title}
-          </Badge>
-        )}
-      </div>
-
-      <Button variant="outline" size="sm" className="gap-2">
-        <Pencil className="h-4 w-4" />
-        Minhas Observações
-      </Button>
-    </div>
-  );
-}
-
-// ============================================
-// COMPONENTE: Card de Aula no Sidebar
-// ============================================
-function LessonSidebarCard({
-  lesson,
-  index,
-  progress,
-  isActive,
-  onClick,
-}: {
-  lesson: PlanningLesson;
-  index: number;
-  progress: LessonProgress | undefined;
-  isActive: boolean;
-  onClick: () => void;
-}) {
-  const isCompleted = progress?.is_completed;
-
-  return (
-    <motion.button
-      onClick={onClick}
-      className={`w-full p-3 rounded-lg text-left transition-all ${
-        isActive
-          ? "bg-primary/20 border-l-4 border-primary"
-          : isCompleted
-          ? "bg-green-500/10 hover:bg-green-500/20"
-          : "hover:bg-muted/50"
-      }`}
-      whileHover={{ x: 2 }}
-    >
-      <div className="flex items-start gap-3">
-        {/* Número/Status */}
-        <div
-          className={`flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold shrink-0 ${
-            isCompleted
-              ? "bg-green-500/20 text-green-500"
-              : isActive
-              ? "bg-primary/20 text-primary"
-              : "bg-muted text-muted-foreground"
-          }`}
-        >
-          {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
-        </div>
-
-        {/* Content */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1">
-            <h4 className="font-medium text-sm line-clamp-1">{lesson.title}</h4>
-            {isActive && (
-              <Badge className="bg-primary text-primary-foreground text-xs">Atual</Badge>
-            )}
-          </div>
-          <div className="flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <Clock className="h-3 w-3" />
-              {lesson.duration_minutes}:00
-            </span>
-            {isCompleted && (
-              <span className="text-green-500 flex items-center gap-1">
-                <CheckCircle2 className="h-3 w-3" />
-                Concluída
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Play Button */}
-        <div className="shrink-0">
-          <div
-            className={`w-8 h-8 rounded-full flex items-center justify-center ${
-              isActive ? "bg-primary text-primary-foreground" : "bg-muted"
-            }`}
-          >
-            <Play className="h-3 w-3 ml-0.5" />
-          </div>
-        </div>
-      </div>
-    </motion.button>
-  );
-}
-
-// ============================================
-// COMPONENTE: Player de Vídeo
+// COMPONENTE: Player de Vídeo com proteção
 // ============================================
 function VideoPlayer({
   lesson,
@@ -340,13 +138,13 @@ function VideoPlayer({
     // YouTube
     if (lesson.video_url.includes("youtube") || lesson.video_url.includes("youtu.be")) {
       const videoId = lesson.video_url.includes("youtu.be")
-        ? lesson.video_url.split("/").pop()
+        ? lesson.video_url.split("/").pop()?.split("?")[0]
         : new URLSearchParams(new URL(lesson.video_url).search).get("v");
-      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1`;
+      return `https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&showinfo=0`;
     }
     
     // Panda
-    if (lesson.video_url.includes("panda")) {
+    if (lesson.video_url.includes("panda") || lesson.video_url.includes("player.pandavideo")) {
       return lesson.video_url;
     }
     
@@ -362,7 +160,12 @@ function VideoPlayer({
   const embedUrl = getEmbedUrl();
 
   return (
-    <div className="relative aspect-video bg-black rounded-xl overflow-hidden">
+    <div className="relative aspect-video bg-black rounded-xl overflow-hidden shadow-2xl">
+      {/* Video label */}
+      <div className="absolute top-3 left-3 z-10 bg-black/60 backdrop-blur-sm px-2 py-1 rounded text-xs text-white/80">
+        Aula<br/>{lesson.description || "Introdução"}
+      </div>
+
       {embedUrl && isPlaying ? (
         <iframe
           src={embedUrl}
@@ -372,14 +175,11 @@ function VideoPlayer({
           title={lesson.title}
         />
       ) : (
-        <div className="absolute inset-0 flex flex-col items-center justify-center">
-          {/* Thumbnail or placeholder */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/20 via-background/50 to-background" />
-          
+        <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900">
           {/* Play Button */}
           <motion.button
             onClick={() => setIsPlaying(true)}
-            className="relative z-10 w-20 h-20 rounded-full bg-primary text-primary-foreground flex items-center justify-center shadow-2xl"
+            className="relative z-10 w-20 h-20 rounded-full bg-destructive text-destructive-foreground flex items-center justify-center shadow-2xl hover:bg-destructive/90 transition-all"
             whileHover={{ scale: 1.1 }}
             whileTap={{ scale: 0.95 }}
           >
@@ -387,21 +187,23 @@ function VideoPlayer({
           </motion.button>
           
           {!lesson.video_url && (
-            <p className="relative z-10 mt-4 text-muted-foreground">Vídeo em breve</p>
+            <p className="relative z-10 mt-4 text-muted-foreground text-sm">Vídeo em breve</p>
           )}
         </div>
       )}
 
-      {/* Progress Bar */}
-      <div className="absolute bottom-0 left-0 right-0 h-1 bg-white/20">
-        <div className="h-full bg-primary w-0 transition-all" />
+      {/* Bottom controls bar (mimicking the design) */}
+      <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/80 to-transparent flex items-end pb-2 px-4">
+        <div className="w-full h-1 bg-white/30 rounded-full overflow-hidden">
+          <div className="h-full w-0 bg-destructive rounded-full transition-all" />
+        </div>
       </div>
     </div>
   );
 }
 
 // ============================================
-// COMPONENTE: Info da Aula Atual
+// COMPONENTE: Info da Aula + Rating + TRAMON
 // ============================================
 function LessonInfo({
   lesson,
@@ -415,47 +217,200 @@ function LessonInfo({
   isPending: boolean;
 }) {
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
 
   return (
-    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 bg-card rounded-xl border">
-      <div>
-        <h2 className="text-lg font-semibold">{lesson.title}</h2>
-        <div className="flex items-center gap-3 text-sm text-muted-foreground mt-1">
-          <span>Duração: {lesson.duration_minutes}:00</span>
-          {lesson.description && <span>•</span>}
-          {lesson.description && <span className="line-clamp-1">{lesson.description}</span>}
+    <div className="bg-card rounded-xl border p-4 space-y-3">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-semibold">{lesson.title}</h2>
+          <div className="flex items-center gap-2 text-sm text-muted-foreground mt-1">
+            <Clock className="h-4 w-4" />
+            <span>Duração: {lesson.duration_minutes || 0}:00</span>
+            <span className="text-primary">•</span>
+            <span className="text-primary">{lesson.description || "Introdução"}</span>
+          </div>
         </div>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center justify-between flex-wrap gap-4 pt-2 border-t">
         {/* Rating Stars */}
-        <div className="flex items-center gap-1">
-          <span className="text-sm text-muted-foreground mr-2">Avalie esta aula:</span>
-          {[1, 2, 3, 4, 5].map((star) => (
-            <button
-              key={star}
-              onClick={() => setRating(star)}
-              className="p-0.5 transition-transform hover:scale-110"
-            >
-              <Star
-                className={`h-5 w-5 ${
-                  star <= rating
-                    ? "fill-yellow-500 text-yellow-500"
-                    : "text-muted-foreground/50"
-                }`}
-              />
-            </button>
-          ))}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Avalie esta aula:</span>
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                onClick={() => setRating(star)}
+                onMouseEnter={() => setHoverRating(star)}
+                onMouseLeave={() => setHoverRating(0)}
+                className="p-0.5 transition-transform hover:scale-110"
+              >
+                <Star
+                  className={`h-5 w-5 transition-colors ${
+                    star <= (hoverRating || rating)
+                      ? "fill-yellow-500 text-yellow-500"
+                      : "text-muted-foreground/30"
+                  }`}
+                />
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* TRAMON Button */}
-        <Button variant="outline" className="gap-2 bg-primary/10 border-primary/30 hover:bg-primary/20">
-          <Bot className="h-4 w-4" />
+        <Button 
+          variant="outline" 
+          className="gap-2 bg-gradient-to-r from-primary/10 to-primary/5 border-primary/30 hover:bg-primary/20"
+        >
+          <Sparkles className="h-4 w-4 text-primary" />
           <span className="font-semibold">TRAMON</span>
           <span className="text-xs text-muted-foreground">IA Assistente</span>
         </Button>
       </div>
     </div>
+  );
+}
+
+// ============================================
+// COMPONENTE: Sidebar de Aulas
+// ============================================
+function LessonsSidebar({
+  week,
+  lessons,
+  selectedLesson,
+  onSelectLesson,
+  lessonProgress,
+  weekProgress,
+}: {
+  week: PlanningWeek;
+  lessons: PlanningLesson[];
+  selectedLesson: PlanningLesson | null;
+  onSelectLesson: (lesson: PlanningLesson) => void;
+  lessonProgress: Record<string, LessonProgress>;
+  weekProgress: WeekProgress | undefined;
+}) {
+  const [isOpen, setIsOpen] = useState(true);
+  
+  const completedCount = lessons.filter(l => lessonProgress[l.id]?.is_completed).length;
+  const progressPercent = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
+  const remainingMinutes = lessons
+    .filter(l => !lessonProgress[l.id]?.is_completed)
+    .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+
+  return (
+    <Card className="border-border/50 overflow-hidden">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <CollapsibleTrigger asChild>
+          <CardHeader className="cursor-pointer hover:bg-muted/30 transition-colors pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Video className="h-5 w-5 text-destructive" />
+                <div>
+                  <CardTitle className="text-base">Semana {week.week_number} - {week.title}</CardTitle>
+                  <CardDescription className="text-xs">
+                    {completedCount} de {lessons.length} aulas concluídas
+                  </CardDescription>
+                </div>
+              </div>
+              {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </div>
+          </CardHeader>
+        </CollapsibleTrigger>
+
+        {/* Progress Bar */}
+        <div className="px-4 pb-3">
+          <div className="flex items-center gap-2 mb-1">
+            <Progress value={progressPercent} className="flex-1 h-2" />
+            <span className="text-xs text-muted-foreground">{progressPercent}% concluído</span>
+          </div>
+          <div className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Clock className="h-3 w-3" />
+            <span>{remainingMinutes} min restantes</span>
+          </div>
+        </div>
+
+        <CollapsibleContent>
+          <ScrollArea className="h-[350px]">
+            <div className="px-2 pb-2 space-y-1">
+              {lessons.map((lesson, index) => {
+                const progress = lessonProgress[lesson.id];
+                const isActive = selectedLesson?.id === lesson.id;
+                const isCompleted = progress?.is_completed;
+
+                return (
+                  <button
+                    key={lesson.id}
+                    onClick={() => onSelectLesson(lesson)}
+                    className={`w-full p-3 rounded-lg text-left transition-all ${
+                      isActive
+                        ? "bg-destructive/20 border-l-4 border-destructive"
+                        : isCompleted
+                        ? "bg-green-500/5 hover:bg-green-500/10"
+                        : "hover:bg-muted/50"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      {/* Número/Check */}
+                      <div
+                        className={`flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold shrink-0 ${
+                          isCompleted
+                            ? "bg-destructive/20 text-destructive"
+                            : isActive
+                            ? "bg-destructive text-destructive-foreground"
+                            : "bg-muted text-muted-foreground"
+                        }`}
+                      >
+                        {isCompleted ? <CheckCircle2 className="h-4 w-4" /> : index + 1}
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <h4 className={`font-medium text-sm line-clamp-1 ${isActive ? "text-destructive" : ""}`}>
+                            {lesson.title}
+                          </h4>
+                          {isActive && (
+                            <Badge className="bg-destructive/80 text-destructive-foreground text-[10px] px-1.5 py-0">
+                              Atual
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="flex items-center gap-3 text-xs text-muted-foreground">
+                          <span className="flex items-center gap-1">
+                            <Clock className="h-3 w-3" />
+                            {lesson.duration_minutes || 0}:00
+                          </span>
+                          {isCompleted && (
+                            <span className="text-green-500 flex items-center gap-1">
+                              <CheckCircle2 className="h-3 w-3" />
+                              Concluída
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Play Button */}
+                      <div className="shrink-0">
+                        <div
+                          className={`w-7 h-7 rounded-full flex items-center justify-center transition-colors ${
+                            isActive 
+                              ? "bg-destructive text-destructive-foreground" 
+                              : "bg-muted hover:bg-muted-foreground/20"
+                          }`}
+                        >
+                          <Play className="h-3 w-3 ml-0.5" />
+                        </div>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          </ScrollArea>
+        </CollapsibleContent>
+      </Collapsible>
+    </Card>
   );
 }
 
@@ -498,6 +453,8 @@ function ForumSection({
     },
   ]);
 
+  const pinnedCount = questions.filter(q => q.isPinned).length;
+
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-3">
@@ -505,12 +462,18 @@ function ForumSection({
           <div className="flex items-center gap-2">
             <MessageCircle className="h-5 w-5 text-primary" />
             <CardTitle className="text-lg">Fórum de Dúvidas</CardTitle>
-            <Badge variant="secondary">{questions.length}</Badge>
+            <Badge variant="secondary" className="rounded-full">{questions.length}</Badge>
           </div>
-          <span className="text-xs text-muted-foreground flex items-center gap-1">
-            <AlertCircle className="h-3 w-3" />
-            Respostas em até 24h por e-mail
-          </span>
+          <div className="flex items-center gap-3">
+            <span className="text-xs text-muted-foreground flex items-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Respostas em até 24h por e-mail
+            </span>
+            <Badge variant="outline" className="text-green-500 border-green-500/30">
+              <Pin className="h-3 w-3 mr-1" />
+              {pinnedCount} fixada
+            </Badge>
+          </div>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
@@ -527,15 +490,12 @@ function ForumSection({
               onChange={(e) => setNewQuestion(e.target.value)}
               placeholder="Digite sua dúvida sobre esta aula..."
               rows={2}
-              className="resize-none"
+              className="resize-none bg-muted/30 border-muted"
             />
           </div>
         </div>
-        <div className="flex justify-between items-center">
-          <Badge variant="outline" className="text-green-500 border-green-500/30">
-            {questions.filter((q) => q.isPinned).length} fixada
-          </Badge>
-          <Button disabled={!newQuestion.trim()} className="gap-2">
+        <div className="flex justify-end">
+          <Button disabled={!newQuestion.trim()} className="gap-2 bg-destructive hover:bg-destructive/90">
             <Send className="h-4 w-4" />
             Enviar Dúvida
           </Button>
@@ -549,16 +509,19 @@ function ForumSection({
             <div key={question.id} className="p-4 rounded-lg bg-muted/30 border space-y-3">
               <div className="flex items-start gap-3">
                 <Avatar className="h-10 w-10">
-                  <AvatarFallback>{question.userName.charAt(0)}</AvatarFallback>
+                  <AvatarFallback className="bg-muted">{question.userName.charAt(0)}</AvatarFallback>
                 </Avatar>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 flex-wrap mb-1">
                     <span className="font-medium">{question.userName}</span>
                     {question.isPinned && (
-                      <Badge className="bg-green-500/20 text-green-500 text-xs">Fixada</Badge>
+                      <Badge className="bg-green-500/20 text-green-500 text-xs border-green-500/30">
+                        <Pin className="h-3 w-3 mr-1" />
+                        Fixada
+                      </Badge>
                     )}
                     {question.isAnswered && (
-                      <Badge className="bg-blue-500/20 text-blue-500 text-xs">
+                      <Badge className="bg-blue-500/20 text-blue-500 text-xs border-blue-500/30">
                         <CheckCircle2 className="h-3 w-3 mr-1" />
                         Respondido
                       </Badge>
@@ -589,7 +552,7 @@ function ForumSection({
                             <Badge variant="outline" className="text-primary border-primary/30 text-xs">
                               Professor
                             </Badge>
-                            <Badge className="bg-green-500/20 text-green-500 text-xs">
+                            <Badge className="bg-green-500/20 text-green-500 text-xs border-green-500/30">
                               Resposta Oficial
                             </Badge>
                           </>
@@ -621,83 +584,144 @@ function SmartSchedule({
   const completedCount = lessons.filter((l) => lessonProgress[l.id]?.is_completed).length;
   const progressPercent = lessons.length > 0 ? Math.round((completedCount / lessons.length) * 100) : 0;
 
+  // Mock data para atividades do cronograma
+  const activities = [
+    { code: "PED - D1", category: "GASTRO", categoryColor: "bg-red-500", progress: 0 },
+    { code: "CIR - D2", category: "CARDIOVASCULAR", categoryColor: "bg-red-600", progress: 50 },
+    { code: "CLI - D3", category: "NEURO", categoryColor: "bg-gray-500", progress: 100 },
+    { code: "GO - D4", category: "OBSTETRÍCIA", categoryColor: "bg-blue-500", progress: 25 },
+  ];
+
   return (
     <Card className="border-border/50">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Target className="h-5 w-5 text-primary" />
-            <CardTitle className="text-lg">Cronograma Inteligente</CardTitle>
-            <Badge className="bg-primary/20 text-primary">ENA IA</Badge>
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Target className="h-5 w-5 text-primary" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <CardTitle className="text-lg">Cronograma Inteligente</CardTitle>
+                <Badge className="bg-primary/20 text-primary border-primary/30">
+                  <Sparkles className="h-3 w-3 mr-1" />
+                  ENA vIA
+                </Badge>
+              </div>
+              <CardDescription>
+                {completedCount} de {activities.length} atividades concluídas
+              </CardDescription>
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-2xl font-bold text-primary">{progressPercent}%</span>
-            <Progress value={progressPercent} className="w-24 h-2" />
+          
+          <div className="text-right">
+            <div className="text-2xl font-bold text-destructive">{progressPercent}%</div>
+            <Progress value={progressPercent} className="w-20 h-2 mt-1" />
+            <span className="text-xs text-muted-foreground">progresso geral</span>
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          {completedCount} de {lessons.length} atividades concluídas
-        </p>
       </CardHeader>
       <CardContent>
         {/* Table Header */}
-        <div className="grid grid-cols-9 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b">
+        <div className="grid grid-cols-10 gap-2 text-xs font-medium text-muted-foreground pb-2 border-b mb-2">
           <span>Atividade</span>
           <span>Categoria</span>
-          <span>%</span>
+          <span className="text-center">%</span>
           <span className="text-center">Resumos</span>
           <span className="text-center">Flashcards</span>
           <span className="text-center">Simulado</span>
           <span className="text-center">Questões</span>
           <span className="text-center">Link</span>
+          <span className="text-center">Mapa Mental</span>
           <span className="text-center">Resolvido?</span>
         </div>
 
         {/* Table Rows */}
-        <ScrollArea className="h-[150px]">
-          <div className="space-y-1 pt-2">
-            {lessons.slice(0, 5).map((lesson, index) => {
-              const progress = lessonProgress[lesson.id];
-              return (
-                <div key={lesson.id} className="grid grid-cols-9 gap-2 items-center text-sm py-2 hover:bg-muted/30 rounded">
-                  <span className="font-medium truncate">PED - D{index + 1}</span>
-                  <Badge variant="outline" className="text-xs justify-center">GASTRO</Badge>
-                  <div className="flex items-center gap-1">
-                    <div className="w-12 h-1.5 bg-muted rounded-full overflow-hidden">
-                      <div 
-                        className="h-full bg-primary transition-all" 
-                        style={{ width: `${progress?.progress_percent || 0}%` }}
-                      />
-                    </div>
-                    <span className="text-xs">{progress?.progress_percent || 0}%</span>
-                  </div>
-                  <div className="flex justify-center">
-                    <BookOpen className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex justify-center">
-                    <BookOpen className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex justify-center">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex justify-center">
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                  </div>
-                  <div className="flex justify-center">
-                    <Eye className="h-4 w-4 text-muted-foreground cursor-pointer hover:text-primary" />
-                  </div>
-                  <div className="flex justify-center">
-                    {progress?.is_completed ? (
-                      <CheckCircle2 className="h-5 w-5 text-green-500" />
-                    ) : (
-                      <div className="w-5 h-5 rounded-full border-2 border-muted-foreground/30" />
-                    )}
-                  </div>
+        <div className="space-y-1">
+          {activities.map((activity, index) => {
+            const isCompleted = activity.progress === 100;
+            return (
+              <div key={index} className="grid grid-cols-10 gap-2 items-center text-sm py-3 hover:bg-muted/30 rounded-lg transition-colors">
+                {/* Atividade */}
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4 text-muted-foreground" />
+                  <span className="font-medium">{activity.code}</span>
                 </div>
-              );
-            })}
-          </div>
-        </ScrollArea>
+
+                {/* Categoria */}
+                <Badge variant="outline" className={`text-xs justify-center ${activity.categoryColor} text-white border-0`}>
+                  {activity.category}
+                </Badge>
+
+                {/* Progress */}
+                <div className="flex items-center justify-center gap-1">
+                  <div className={`w-16 h-1.5 rounded-full overflow-hidden ${
+                    activity.progress === 100 ? 'bg-destructive' : activity.progress > 0 ? 'bg-destructive/30' : 'bg-blue-500/30'
+                  }`}>
+                    <div 
+                      className={`h-full transition-all ${
+                        activity.progress === 100 ? 'bg-destructive' : activity.progress > 0 ? 'bg-destructive' : 'bg-blue-500'
+                      }`}
+                      style={{ width: `${activity.progress}%` }}
+                    />
+                  </div>
+                  <span className="text-xs w-8">{activity.progress}%</span>
+                </div>
+
+                {/* Resumos */}
+                <div className="flex justify-center">
+                  <BookOpen className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                </div>
+
+                {/* Flashcards */}
+                <div className="flex justify-center">
+                  <BrainCircuit className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                </div>
+
+                {/* Simulado */}
+                <div className="flex justify-center">
+                  <FileText className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                </div>
+
+                {/* Questões */}
+                <div className="flex justify-center">
+                  <HelpCircle className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                </div>
+
+                {/* Link */}
+                <div className="flex justify-center">
+                  <ExternalLink className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                </div>
+
+                {/* Mapa Mental */}
+                <div className="flex justify-center">
+                  <BrainCircuit className="h-4 w-4 text-muted-foreground hover:text-primary cursor-pointer transition-colors" />
+                </div>
+
+                {/* Checkbox */}
+                <div className="flex justify-center">
+                  {isCompleted ? (
+                    <CheckCircle2 className="h-5 w-5 text-green-500" />
+                  ) : (
+                    <div className="w-5 h-5 rounded border-2 border-muted-foreground/30 hover:border-primary cursor-pointer transition-colors" />
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* TRAMON v8 floating button */}
+        <div className="flex justify-center mt-4">
+          <Button 
+            variant="outline" 
+            className="gap-2 bg-gradient-to-r from-primary/10 via-background to-primary/10 border-primary/30 shadow-lg"
+          >
+            <Sparkles className="h-5 w-5 text-primary" />
+            <span className="font-bold">TRAMON v8</span>
+            <Sparkles className="h-5 w-5 text-primary" />
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );
@@ -711,7 +735,6 @@ export default function AlunoPlanejamento() {
   const queryClient = useQueryClient();
   const [selectedWeek, setSelectedWeek] = useState<PlanningWeek | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<PlanningLesson | null>(null);
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Fetch active weeks
   const { data: weeks = [], isLoading: weeksLoading } = useQuery({
@@ -852,9 +875,7 @@ export default function AlunoPlanejamento() {
     },
   });
 
-  // Calculate progress
-  const completedLessons = lessons.filter((l) => lessonProgress[l.id]?.is_completed).length;
-  const totalMinutes = lessons.reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
+  // Calculate remaining time
   const remainingMinutes = lessons
     .filter((l) => !lessonProgress[l.id]?.is_completed)
     .reduce((sum, l) => sum + (l.duration_minutes || 0), 0);
@@ -884,23 +905,68 @@ export default function AlunoPlanejamento() {
       {/* Top Bar */}
       <div className="border-b bg-card/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="container mx-auto px-4 py-3">
-          <div className="flex items-center gap-4 flex-wrap">
+          <div className="flex items-center justify-between gap-4 flex-wrap">
             {/* Week Selector */}
-            <WeekDropdownSelector
-              weeks={weeks}
-              selectedWeek={selectedWeek}
-              onSelectWeek={setSelectedWeek}
-              weekProgress={weekProgress}
-            />
+            <Select
+              value={selectedWeek?.id || ""}
+              onValueChange={(value) => {
+                const week = weeks.find((w) => w.id === value);
+                if (week) setSelectedWeek(week);
+              }}
+            >
+              <SelectTrigger className="w-full max-w-md bg-destructive/90 text-destructive-foreground border-destructive hover:bg-destructive">
+                <div className="flex items-center gap-2">
+                  <Video className="h-4 w-4" />
+                  <span className="font-medium">
+                    {selectedWeek ? `Semana ${selectedWeek.week_number} - ${selectedWeek.title}` : "Selecione uma semana"}
+                  </span>
+                </div>
+              </SelectTrigger>
+              <SelectContent>
+                {weeks.map((week) => {
+                  const wp = weekProgress[week.id];
+                  const isCompleted = wp?.is_completed;
+                  return (
+                    <SelectItem key={week.id} value={week.id}>
+                      <div className="flex items-center gap-2">
+                        {isCompleted && <CheckCircle2 className="h-4 w-4 text-green-500" />}
+                        <span>Semana {week.week_number} - {week.title}</span>
+                        {wp && <Badge variant="outline" className="ml-2 text-xs">{wp.progress_percent}%</Badge>}
+                      </div>
+                    </SelectItem>
+                  );
+                })}
+              </SelectContent>
+            </Select>
 
-            {selectedWeek && (
-              <WeekHeader
-                week={selectedWeek}
-                weekProgress={weekProgress[selectedWeek.id]}
-                lessons={lessons}
-                lessonProgress={lessonProgress}
-              />
-            )}
+            {/* Quick Stats */}
+            <div className="flex items-center gap-4">
+              {/* Tempo sugerido */}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-muted/50 rounded-lg">
+                <Timer className="h-4 w-4 text-muted-foreground" />
+                <span className="text-sm text-muted-foreground">Tempo sugerido:</span>
+                <Badge variant="secondary">{Math.ceil(remainingMinutes / 60)}h</Badge>
+              </div>
+
+              {/* Próxima Live */}
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-destructive/10 rounded-lg border border-destructive/30">
+                <Radio className="h-4 w-4 text-destructive" />
+                <span className="text-sm">Próxima Live</span>
+              </div>
+
+              {/* Revisão */}
+              {selectedWeek && (
+                <Badge className="bg-destructive text-destructive-foreground border-0 py-1.5 px-4">
+                  Revisão: {selectedWeek.title.split("-")[1]?.trim() || "Geral"}
+                </Badge>
+              )}
+
+              {/* Minhas Observações */}
+              <Button variant="outline" size="sm" className="gap-2">
+                <Pencil className="h-4 w-4" />
+                Minhas Observações
+              </Button>
+            </div>
           </div>
         </div>
       </div>
@@ -950,51 +1016,18 @@ export default function AlunoPlanejamento() {
 
           {/* Lessons Sidebar */}
           <div className="lg:col-span-1">
-            <Card className="sticky top-24">
-              <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <CardTitle className="text-lg flex items-center gap-2">
-                      <Video className="h-5 w-5 text-primary" />
-                      {selectedWeek?.title || "Aulas"}
-                    </CardTitle>
-                    <CardDescription>
-                      {completedLessons} de {lessons.length} aulas concluídas
-                    </CardDescription>
-                  </div>
-                  <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                </div>
-
-                {/* Progress Bar */}
-                <div className="space-y-2 mt-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{Math.round((completedLessons / Math.max(lessons.length, 1)) * 100)}% concluído</span>
-                    <span className="text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      {remainingMinutes} min restantes
-                    </span>
-                  </div>
-                  <Progress value={(completedLessons / Math.max(lessons.length, 1)) * 100} className="h-2" />
-                </div>
-              </CardHeader>
-
-              <CardContent>
-                <ScrollArea className="h-[500px] pr-2">
-                  <div className="space-y-2">
-                    {lessons.map((lesson, index) => (
-                      <LessonSidebarCard
-                        key={lesson.id}
-                        lesson={lesson}
-                        index={index}
-                        progress={lessonProgress[lesson.id]}
-                        isActive={selectedLesson?.id === lesson.id}
-                        onClick={() => setSelectedLesson(lesson)}
-                      />
-                    ))}
-                  </div>
-                </ScrollArea>
-              </CardContent>
-            </Card>
+            {selectedWeek && (
+              <div className="sticky top-24">
+                <LessonsSidebar
+                  week={selectedWeek}
+                  lessons={lessons}
+                  selectedLesson={selectedLesson}
+                  onSelectLesson={setSelectedLesson}
+                  lessonProgress={lessonProgress}
+                  weekProgress={weekProgress[selectedWeek.id]}
+                />
+              </div>
+            )}
           </div>
         </div>
       </div>
