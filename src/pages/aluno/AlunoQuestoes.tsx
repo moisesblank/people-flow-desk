@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
 import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
+import { predictSuccessRate, getSuccessRateColor } from "@/lib/questionSuccessPredictor";
 
 // ============================================
 // TIPOS
@@ -578,28 +579,49 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                       : "bg-red-500/10 border-red-500"
                   )}
                 >
-                  <div className="flex items-center gap-3">
-                    {isCorrect ? (
-                      <>
-                        <CheckCircle2 className="h-6 w-6 text-green-500" />
-                        <div>
-                          <p className="font-bold text-green-600">Parabéns! Você acertou!</p>
-                          <p className="text-sm text-muted-foreground">
-                            +{question.points} pontos de XP
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      {isCorrect ? (
+                        <>
+                          <CheckCircle2 className="h-6 w-6 text-green-500" />
+                          <div>
+                            <p className="font-bold text-green-600">Parabéns! Você acertou!</p>
+                            <p className="text-sm text-muted-foreground">
+                              +{question.points} pontos de XP
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-6 w-6 text-red-500" />
+                          <div>
+                            <p className="font-bold text-red-600">Resposta incorreta</p>
+                            <p className="text-sm text-muted-foreground">
+                              A resposta correta era: {question.correct_answer.toUpperCase()}
+                            </p>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    
+                    {/* Taxa de Acerto Prevista - Só aparece após responder */}
+                    {(() => {
+                      const prediction = predictSuccessRate({
+                        difficulty: question.difficulty,
+                        questionText: question.question_text,
+                        options: question.options,
+                        tema: question.tema,
+                        macro: question.macro,
+                      });
+                      return (
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Taxa de acerto esperada</p>
+                          <p className={cn("text-lg font-bold", getSuccessRateColor(prediction.rate))}>
+                            {prediction.rate}%
                           </p>
                         </div>
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-6 w-6 text-red-500" />
-                        <div>
-                          <p className="font-bold text-red-600">Resposta incorreta</p>
-                          <p className="text-sm text-muted-foreground">
-                            A resposta correta era: {question.correct_answer.toUpperCase()}
-                          </p>
-                        </div>
-                      </>
-                    )}
+                      );
+                    })()}
                   </div>
                 </motion.div>
               )}
