@@ -33,6 +33,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
 import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
+import QuestionResolution from "@/components/shared/QuestionResolution";
 
 // ============================================
 // TIPOS
@@ -611,15 +612,17 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   exit={{ opacity: 0, height: 0 }}
-                  className="bg-blue-500/10 border border-blue-500/30 rounded-xl p-4"
+                  className="bg-emerald-500/10 border border-emerald-500/30 rounded-xl p-4"
                 >
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="h-5 w-5 text-blue-500" />
-                    <h4 className="font-semibold text-blue-600">Explicação</h4>
-                  </div>
-                  <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                    {question.explanation}
-                  </p>
+                  <QuestionResolution
+                    resolutionText={question.explanation}
+                    banca={question.banca}
+                    ano={question.ano}
+                    difficulty={question.difficulty}
+                    tema={question.tema}
+                    macro={question.macro}
+                    micro={question.micro}
+                  />
                 </motion.div>
               )}
             </AnimatePresence>

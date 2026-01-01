@@ -49,6 +49,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
+import QuestionResolution from '@/components/shared/QuestionResolution';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -430,15 +431,19 @@ function GestaoQuestaoDetalhe() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
         >
-          <Card className="border-blue-500/30">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-blue-500">
-                <Sparkles className="h-5 w-5" />
-                Resolução
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="whitespace-pre-wrap">{question.explanation}</p>
+          <Card className="border-emerald-500/30">
+            <CardContent className="pt-6">
+              <QuestionResolution
+                resolutionText={question.explanation}
+                banca={question.banca}
+                ano={question.ano}
+                difficulty={question.difficulty}
+                tema={question.tema}
+                macro={question.macro}
+                micro={question.micro}
+                competenciaEnem={question.competencia_enem}
+                habilidadeEnem={question.habilidade_enem}
+              />
             </CardContent>
           </Card>
         </motion.div>
