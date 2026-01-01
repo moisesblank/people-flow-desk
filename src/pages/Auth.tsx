@@ -1,12 +1,11 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - AUTH PAGE
-// Design: YEAR 2300 ULTRA-FUTURISTIC
-// Estética: Holographic / Quantum / Cinematic
-// COM VERIFICAÇÃO 2FA POR EMAIL
-// UPGRADE: Feedback melhorado, mensagens claras
+// Design: SPIDER-MAN CINEMATIC 2300
+// Estética: Vermelho/Azul Heroico • Cinematográfico
+// Performance: CSS-only GPU-accelerated
 // ============================================
 
-import "@/styles/auth-2300.css";
+import "@/styles/auth-spiderman-2300.css";
 
 import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -55,51 +54,108 @@ const PasswordStrengthMeter = lazy(() => import("@/components/auth/PasswordStren
 const ForcePasswordChange = lazy(() => import("@/components/auth/ForcePasswordChange").then(m => ({ default: m.ForcePasswordChange })));
 
 // ============================================
-// 🌌 YEAR 2300 ULTRA-FUTURISTIC COMPONENTS
+// 🕷️ SPIDER-MAN CINEMATIC 2300 COMPONENTS
 // Performance: CSS-only GPU-accelerated animations
+// Cores: Vermelho/Azul heroico profundo
 // ============================================
 
-// Quantum Particle Field - Floating holographic particles
-function QuantumParticleField() {
+// Spider-Man Deep Space Background
+function SpiderBackground() {
   return (
-    <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Holographic scanning lines */}
-      <div className="absolute inset-0">
-        <div 
-          className="absolute h-[2px] w-full auth-scan-line"
-          style={{
-            background: 'linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.6), hsl(var(--holo-purple) / 0.4), transparent)',
-            boxShadow: '0 0 20px hsl(var(--holo-cyan) / 0.5), 0 0 40px hsl(var(--holo-purple) / 0.3)',
-          }}
-        />
-      </div>
+    <div className="absolute inset-0 overflow-hidden pointer-events-none auth-spider-bg">
+      {/* Spider Web Pattern Layer */}
+      <div className="absolute inset-0 spider-web-layer" />
       
-      {/* Floating quantum particles */}
-      {[...Array(20)].map((_, i) => (
+      {/* City Stars - New York Night */}
+      {[...Array(60)].map((_, i) => (
         <div
           key={i}
-          className="absolute rounded-full auth-particle"
+          className="absolute rounded-full spider-star"
           style={{
-            width: `${2 + Math.random() * 4}px`,
-            height: `${2 + Math.random() * 4}px`,
+            width: `${1 + Math.random() * 2}px`,
+            height: `${1 + Math.random() * 2}px`,
             left: `${Math.random() * 100}%`,
-            top: `${Math.random() * 100}%`,
-            background: i % 3 === 0 
-              ? 'hsl(var(--holo-cyan))' 
-              : i % 3 === 1 
-                ? 'hsl(var(--holo-purple))' 
-                : 'hsl(var(--primary))',
-            boxShadow: i % 3 === 0 
-              ? '0 0 10px hsl(var(--holo-cyan)), 0 0 20px hsl(var(--holo-cyan) / 0.5)' 
-              : i % 3 === 1 
-                ? '0 0 10px hsl(var(--holo-purple)), 0 0 20px hsl(var(--holo-purple) / 0.5)'
-                : '0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.5)',
-            animationDelay: `${i * 0.3}s`,
-            animationDuration: `${8 + Math.random() * 8}s`,
+            top: `${Math.random() * 60}%`,
+            background: '#fff',
+            animationDelay: `${Math.random() * 5}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
           }}
         />
       ))}
     </div>
+  );
+}
+
+// Spider Eyes - Vigilant Orbs (Red Glows)
+function SpiderEyes() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Left Eye */}
+      <div 
+        className="absolute w-[500px] h-[400px] rounded-full spider-eye-left"
+        style={{
+          top: '10%',
+          left: '5%',
+          background: 'radial-gradient(ellipse, hsl(0 85% 45% / 0.25) 0%, hsl(0 85% 40% / 0.1) 40%, transparent 70%)',
+          filter: 'blur(50px)',
+        }}
+      />
+      {/* Right Eye */}
+      <div 
+        className="absolute w-[400px] h-[350px] rounded-full spider-eye-right"
+        style={{
+          bottom: '15%',
+          right: '8%',
+          background: 'radial-gradient(ellipse, hsl(220 80% 50% / 0.2) 0%, hsl(220 80% 40% / 0.08) 40%, transparent 70%)',
+          filter: 'blur(50px)',
+        }}
+      />
+    </div>
+  );
+}
+
+// Energy Veins - Power Lines (Red/Blue)
+function SpiderVeins() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Red Power Vein */}
+      <div 
+        className="absolute h-[2px] w-1/2 spider-vein-red"
+        style={{ top: '30%' }}
+      />
+      {/* Blue Power Vein */}
+      <div 
+        className="absolute h-[2px] w-1/2 spider-vein-blue"
+        style={{ top: '70%' }}
+      />
+      {/* Diagonal Red */}
+      <div 
+        className="absolute h-[1px] w-3/4 spider-vein-red"
+        style={{ 
+          top: '50%', 
+          transform: 'rotate(-15deg)',
+          animationDelay: '2s',
+        }}
+      />
+    </div>
+  );
+}
+
+// Spider Card Frame - Tech Interface
+function SpiderCardFrame() {
+  return (
+    <>
+      {/* Animated corner brackets - Red/Blue */}
+      <div className="absolute -top-1 -left-1 w-8 h-8 border-l-2 border-t-2 spider-corner spider-corner-red" />
+      <div className="absolute -top-1 -right-1 w-8 h-8 border-r-2 border-t-2 spider-corner spider-corner-blue" style={{ animationDelay: '0.6s' }} />
+      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-l-2 border-b-2 spider-corner spider-corner-blue" style={{ animationDelay: '1.2s' }} />
+      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-r-2 border-b-2 spider-corner spider-corner-red" style={{ animationDelay: '1.8s' }} />
+      
+      {/* Scanning beam effect - Red/Blue gradient */}
+      <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <div className="spider-card-scan absolute inset-x-0 h-[2px]" />
+      </div>
+    </>
   );
 }
 
@@ -1646,9 +1702,8 @@ export default function Auth() {
   if (isCheckingSession) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 relative overflow-hidden">
-        <CosmicBackground />
-        <HolographicGrid />
-        <QuantumParticleField />
+        <SpiderBackground />
+        <SpiderEyes />
         <div className="flex flex-col items-center gap-3 text-center">
           <Loader2 className="h-7 w-7 text-primary animate-spin" />
           <p className="text-sm text-muted-foreground">Verificando sessão…</p>
@@ -1661,9 +1716,8 @@ export default function Auth() {
   if (show2FA && pending2FAUser) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
-        <CosmicBackground />
-        <HolographicGrid />
-        <QuantumParticleField />
+        <SpiderBackground />
+        <SpiderEyes />
         <Suspense fallback={<div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />}>
           <TwoFactorVerification
             email={pending2FAUser.email}
@@ -1829,9 +1883,8 @@ export default function Auth() {
   if (showForcePasswordChange && pendingPasswordChangeUser) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-        <CosmicBackground />
-        <HolographicGrid />
-        <QuantumParticleField />
+        <SpiderBackground />
+        <SpiderEyes />
         <Suspense fallback={<div className="text-white">Carregando...</div>}>
           <ForcePasswordChange
             userEmail={pendingPasswordChangeUser.email}
@@ -1884,9 +1937,8 @@ export default function Auth() {
   if (showForceLogoutOption && pendingEmail) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-        <CosmicBackground />
-        <HolographicGrid />
-        <QuantumParticleField />
+        <SpiderBackground />
+        <SpiderEyes />
         <div className="relative z-10 w-full max-w-md">
           <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border border-primary/30 rounded-2xl p-8 shadow-2xl">
             {/* Header */}
@@ -2024,45 +2076,43 @@ export default function Auth() {
         </Suspense>
       )}
       
-      {/* Background Effects */}
-      <CosmicBackground />
-      <HolographicGrid />
-      <QuantumParticleField />
-      <OrbitalRings />
-      <DNAHelix />
+      {/* 🕷️ SPIDER-MAN Background Effects */}
+      <SpiderBackground />
+      <SpiderEyes />
+      <SpiderVeins />
       
       {/* Left Panel - Visual Side - YEAR 2300 */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative">
-        {/* Holographic Gradient Overlay */}
+        {/* 🕷️ SPIDER-MAN Gradient Overlay */}
         <div 
           className="absolute inset-0"
           style={{
-            background: 'radial-gradient(ellipse at 30% 30%, hsl(var(--holo-cyan) / 0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, hsl(var(--holo-purple) / 0.06) 0%, transparent 50%), linear-gradient(135deg, hsl(280 30% 5% / 0.95), hsl(220 30% 3% / 0.98))',
+            background: 'radial-gradient(ellipse at 20% 30%, hsl(0 85% 45% / 0.12) 0%, transparent 50%), radial-gradient(ellipse at 80% 70%, hsl(220 80% 40% / 0.08) 0%, transparent 50%), linear-gradient(135deg, hsl(230 40% 4%) 0%, hsl(230 40% 2%) 100%)',
           }}
         />
         
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center items-center w-full p-12">
-          {/* Logo / Brand - Holographic Frame */}
-          <div className="mb-8 animate-scale-in">
+          {/* Professor Photo - Spider Frame */}
+          <div className="mb-8 spider-entrance">
             <div className="relative">
-              {/* Holographic Glow Effect */}
+              {/* Spider Glow Effect - Red/Blue */}
               <div
                 className="absolute inset-0 rounded-full blur-3xl"
                 style={{ 
-                  background: 'radial-gradient(circle, hsl(var(--holo-cyan) / 0.2) 0%, hsl(var(--holo-purple) / 0.15) 50%, transparent 70%)',
+                  background: 'radial-gradient(circle, hsl(0 85% 45% / 0.25) 0%, hsl(220 80% 40% / 0.15) 50%, transparent 70%)',
                 }}
               />
               
-              {/* Holographic Hexagonal Frame */}
+              {/* Hexagonal Frame - Spider Colors */}
               <div className="relative w-72 h-72 flex items-center justify-center">
                 {/* Outer rotating ring */}
-                <div className="absolute inset-0 auth-orbital-ring" style={{ animationDuration: '20s' }}>
+                <div className="absolute inset-0" style={{ animation: 'auth-orbit 25s linear infinite' }}>
                   <svg className="w-full h-full" viewBox="0 0 100 100">
                     <polygon
                       points="50,2 95,25 95,75 50,98 5,75 5,25"
                       fill="none"
-                      stroke="url(#hexGradient2300)"
+                      stroke="url(#spiderHexGradient)"
                       strokeWidth="0.8"
                       opacity="0.6"
                     />
@@ -2074,20 +2124,19 @@ export default function Auth() {
                   <polygon
                     points="50,2 95,25 95,75 50,98 5,75 5,25"
                     fill="none"
-                    stroke="url(#hexGradient2300)"
+                    stroke="url(#spiderHexGradient)"
                     strokeWidth="1.5"
                   />
                   <defs>
-                    <linearGradient id="hexGradient2300" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="hsl(185 100% 50%)" />
-                      <stop offset="33%" stopColor="hsl(280 100% 60%)" />
-                      <stop offset="66%" stopColor="hsl(0 84% 50%)" />
-                      <stop offset="100%" stopColor="hsl(185 100% 50%)" />
+                    <linearGradient id="spiderHexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="hsl(0 90% 55%)" />
+                      <stop offset="50%" stopColor="hsl(220 100% 60%)" />
+                      <stop offset="100%" stopColor="hsl(0 90% 55%)" />
                     </linearGradient>
                   </defs>
                 </svg>
                 
-                {/* Professor Photo - Holographic Border */}
+                {/* Professor Photo - Spider Border */}
                 {canEdit && isEditMode ? (
                   <Suspense fallback={<img src={professorPhoto} alt="Professor Moisés" className="w-56 h-56 rounded-full object-cover [object-position:50%_15%]" />}>
                     <EditableImage
@@ -2097,18 +2146,17 @@ export default function Auth() {
                       isEditMode={isEditMode}
                       canEdit={canEdit}
                       className="w-full h-full object-cover [object-position:50%_15%]"
-                      containerClassName="w-56 h-56 rounded-full overflow-hidden border-2 border-holo-cyan/60"
+                      containerClassName="w-56 h-56 rounded-full overflow-hidden spider-professor-frame"
                     />
                   </Suspense>
                 ) : (
                   <div 
-                    className="relative w-56 h-56 rounded-full overflow-hidden"
+                    className="relative w-56 h-56 rounded-full overflow-hidden spider-professor-frame"
                     style={{ 
                       border: '3px solid transparent',
-                      backgroundImage: 'linear-gradient(hsl(220 30% 5%), hsl(220 30% 5%)), linear-gradient(135deg, hsl(185 100% 50%), hsl(280 100% 60%), hsl(0 84% 50%))',
+                      backgroundImage: 'linear-gradient(hsl(230 40% 4%), hsl(230 40% 4%)), linear-gradient(135deg, hsl(0 90% 55%), hsl(220 100% 60%), hsl(0 90% 55%))',
                       backgroundOrigin: 'border-box',
                       backgroundClip: 'padding-box, border-box',
-                      boxShadow: '0 0 30px hsl(185 100% 50% / 0.3), 0 0 60px hsl(280 100% 60% / 0.2), inset 0 0 20px hsl(185 100% 50% / 0.1)',
                     }}
                   >
                     <OptimizedImage
@@ -2128,18 +2176,16 @@ export default function Auth() {
                 )}
               </div>
               
-              {/* Status Indicator - Holographic */}
+              {/* Status Indicator - Spider Style */}
               <div
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-5 py-2 rounded-full backdrop-blur-sm auth-corner-pulse"
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-5 py-2 rounded-full backdrop-blur-sm spider-corner"
                 style={{ 
-                  background: 'linear-gradient(135deg, hsl(185 100% 50% / 0.2), hsl(280 100% 60% / 0.2))',
-                  border: '1px solid hsl(185 100% 50% / 0.4)',
-                  boxShadow: '0 0 20px hsl(185 100% 50% / 0.3)',
+                  background: 'linear-gradient(135deg, hsl(0 85% 45% / 0.3), hsl(220 80% 50% / 0.2))',
+                  border: '1px solid hsl(0 90% 55% / 0.5)',
+                  color: 'hsl(0 90% 55%)',
                 }}
               >
-                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider"
-                  style={{ color: 'hsl(185 100% 70%)' }}
-                >
+                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider">
                   <Zap className="h-3 w-3" />
                   VERIFICADO
                 </span>
@@ -2147,14 +2193,11 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* Title - Holographic Gradient */}
-          <div className="text-center mb-6 animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'backwards' }}>
+          {/* Title - Spider-Man Gradient */}
+          <div className="text-center mb-6 spider-entrance spider-entrance-delay-1">
             <h1 className="text-4xl xl:text-5xl font-bold text-white mb-3">
-              <span style={{ color: 'hsl(185 100% 70% / 0.7)' }}>Prof.</span>{" "}
-              <span 
-                className="bg-clip-text text-transparent"
-                style={{ backgroundImage: 'linear-gradient(135deg, hsl(185 100% 60%), hsl(280 100% 70%), hsl(0 84% 60%), hsl(185 100% 60%))' }}
-              >
+              <span style={{ color: 'hsl(220 90% 70% / 0.8)' }}>Prof.</span>{" "}
+              <span className="spider-title">
                 {canEdit && isEditMode ? (
                   <Suspense fallback="Moisés Medeiros">
                     <EditableText
@@ -2169,7 +2212,7 @@ export default function Auth() {
                 )}
               </span>
             </h1>
-            <p className="text-lg animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'backwards', color: 'hsl(280 50% 70% / 0.8)' }}>
+            <p className="text-lg spider-entrance spider-entrance-delay-2" style={{ color: 'hsl(220 70% 70% / 0.9)' }}>
               {canEdit && isEditMode ? (
                 <Suspense fallback="O professor que mais aprova em Medicina">
                   <EditableText
@@ -2259,26 +2302,16 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* Card - Holographic 2300 */}
-          <div className="relative rounded-2xl p-8 backdrop-blur-xl border shadow-2xl auth-glow-border"
-            style={{
-              background: 'linear-gradient(135deg, hsl(0 0% 6% / 0.95), hsl(280 20% 5% / 0.9))',
-              borderColor: 'hsl(var(--holo-cyan) / 0.2)',
-            }}
-          >
-            {/* Holographic Frame */}
-            <HoloCardFrame />
+          {/* Card - 🕷️ SPIDER-MAN Tech Interface */}
+          <div className="relative rounded-2xl p-8 backdrop-blur-xl shadow-2xl spider-card">
+            {/* Spider Frame */}
+            <SpiderCardFrame />
             
-            {/* Holographic overlay shimmer */}
-            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
-              <div className="absolute inset-0 auth-holo-shimmer opacity-30" />
-            </div>
-            
-            {/* Glow Effect - Cyan/Purple gradient */}
+            {/* Spider Glow Effect - Red/Blue gradient */}
             <div 
               className="absolute inset-0 rounded-2xl pointer-events-none"
               style={{
-                background: 'radial-gradient(ellipse at top left, hsl(var(--holo-cyan) / 0.1), transparent 50%), radial-gradient(ellipse at bottom right, hsl(var(--holo-purple) / 0.08), transparent 50%)',
+                background: 'radial-gradient(ellipse at top left, hsl(0 85% 45% / 0.08), transparent 50%), radial-gradient(ellipse at bottom right, hsl(220 80% 50% / 0.06), transparent 50%)',
               }}
             />
             
