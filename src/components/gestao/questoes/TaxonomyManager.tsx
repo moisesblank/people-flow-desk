@@ -285,7 +285,7 @@ export const TaxonomyManager = memo(function TaxonomyManager({
   return (
     <>
       <Dialog open={open} onOpenChange={onClose}>
-        <DialogContent className="max-w-3xl max-h-[85vh] flex flex-col">
+        <DialogContent className="max-w-3xl h-[85vh] flex flex-col overflow-hidden">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <FolderTree className="w-5 h-5 text-primary" />
@@ -307,7 +307,7 @@ export const TaxonomyManager = memo(function TaxonomyManager({
             </Button>
           </div>
 
-          <ScrollArea className="flex-1 -mx-6 px-6">
+          <ScrollArea className="flex-1 min-h-0 -mx-6 px-6">
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
