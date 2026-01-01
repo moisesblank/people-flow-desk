@@ -476,33 +476,71 @@ function getSectionTitle(section: ParsedSection): string {
 }
 
 /**
- * Bloco visual para cada seção — Design profissional
+ * Formata conteúdo com fórmulas químicas
+ */
+const formatContent = (content: string) => {
+  return formatChemicalFormulas(
+    content
+      .replace(/👉\s*/g, '\n• ')
+      .replace(/Reunindo:/gi, '\n📋 Reunindo:')
+      .trim()
+  );
+};
+
+/**
+ * Item de alternativa dentro do bloco agrupado
+ */
+const AlternativaItem = memo(function AlternativaItem({ section }: { section: ParsedSection }) {
+  const isCorrect = section.type === 'alternativa_correta' || section.type === 'afirmacao_correta';
+  const isErrada = section.type === 'alternativa_errada' || section.type === 'afirmacao_incorreta';
+  
+  const letter = section.alternativaLetter || section.afirmacaoNumber || '';
+  const icon = isCorrect ? '✅' : isErrada ? '❌' : '🔵';
+  const statusText = isCorrect ? 'CORRETA' : isErrada ? 'ERRADA' : '';
+  
+  return (
+    <div className={cn(
+      "py-3 border-l-4 pl-4",
+      isCorrect && "border-l-green-500 bg-green-500/5",
+      isErrada && "border-l-red-500 bg-red-500/5",
+      !isCorrect && !isErrada && "border-l-blue-500 bg-blue-500/5"
+    )}>
+      <div className="flex items-start gap-2">
+        <span className={cn(
+          "font-bold text-sm shrink-0",
+          isCorrect && "text-green-500",
+          isErrada && "text-red-500",
+          !isCorrect && !isErrada && "text-blue-500"
+        )}>
+          {icon} Alternativa {letter}
+          {statusText && <span className="ml-1">— {statusText}</span>}
+        </span>
+      </div>
+      <p className="text-sm text-foreground/90 mt-1 leading-relaxed">
+        {formatContent(section.content)}
+      </p>
+    </div>
+  );
+});
+
+/**
+ * Bloco visual para seções NÃO-alternativas
  */
 const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSection }) {
   const Icon = getSectionIcon(section.type, section.stepNumber);
   const styles = getSectionStyles(section.type, section.isCorrect);
   const title = getSectionTitle(section);
 
-  // Formatar conteúdo
-  const formatContent = (content: string) => {
-    return formatChemicalFormulas(
-      content
-        .replace(/👉\s*/g, '\n• ')
-        .replace(/Reunindo:/gi, '\n📋 Reunindo:')
-        .trim()
-    );
-  };
-
   // INTRO — Bloco especial
   if (section.type === 'intro') {
     return (
-      <div className="p-5 rounded-xl border border-border/50 bg-muted/20">
-        <div className="flex items-start gap-4">
-          <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-500/20">
+      <div className="p-4 rounded-xl border border-border/50 bg-muted/20">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-emerald-500/20">
             <Sparkles className="h-5 w-5 text-emerald-500" />
           </div>
           <div className="flex-1 min-w-0">
-            <h4 className="font-bold text-sm text-emerald-500 mb-3">
+            <h4 className="font-bold text-sm text-emerald-500 mb-2">
               📝 ANÁLISE DA QUESTÃO
             </h4>
             <p className="text-justify leading-relaxed text-sm text-foreground/90">
@@ -517,20 +555,15 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
   return (
     <div className={cn("rounded-xl overflow-hidden", styles.border, styles.bg)}>
       {/* Header do bloco */}
-      <div className={cn("px-4 py-3 flex items-center gap-3", styles.accentColor)}>
-        <div className={cn(
-          "flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-background/60",
-          styles.iconColor
-        )}>
-          <Icon className="h-4 w-4" />
-        </div>
+      <div className={cn("px-4 py-2.5 flex items-center gap-2", styles.accentColor)}>
+        <Icon className={cn("h-4 w-4", styles.iconColor)} />
         <h4 className={cn("font-bold text-sm", styles.titleColor)}>
           {title}
         </h4>
       </div>
       
       {/* Conteúdo do bloco */}
-      <div className="px-5 py-4">
+      <div className="px-4 py-3">
         <div className="text-justify leading-relaxed text-sm text-foreground/90 whitespace-pre-wrap">
           {formatContent(section.content)}
         </div>
@@ -663,17 +696,21 @@ const QuestionResolution = memo(function QuestionResolution({
         <SectionBlock section={introSection} />
       )}
 
-      {/* ========== ALTERNATIVAS / AFIRMAÇÕES ========== */}
+      {/* ========== ALTERNATIVAS / AFIRMAÇÕES — BLOCO ÚNICO ========== */}
       {alternativasSections.length > 0 && (
-        <div className="space-y-4">
-          <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-            <div className="h-px flex-1 bg-border/50" />
-            <span>ANÁLISE DAS ALTERNATIVAS</span>
-            <div className="h-px flex-1 bg-border/50" />
+        <div className="rounded-xl border border-border/50 overflow-hidden bg-muted/10">
+          {/* Header do bloco de alternativas */}
+          <div className="px-4 py-3 bg-muted/30 border-b border-border/30 flex items-center gap-2">
+            <Target className="h-4 w-4 text-primary" />
+            <h4 className="font-bold text-sm text-primary uppercase tracking-wide">
+              📋 Análise das Alternativas
+            </h4>
           </div>
-          <div className="space-y-3">
+          
+          {/* Alternativas como tópicos dentro do bloco */}
+          <div className="divide-y divide-border/30">
             {alternativasSections.map((section, index) => (
-              <SectionBlock key={`alt-${section.type}-${index}`} section={section} />
+              <AlternativaItem key={`alt-${section.type}-${index}`} section={section} />
             ))}
           </div>
         </div>
