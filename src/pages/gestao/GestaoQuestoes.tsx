@@ -1856,22 +1856,6 @@ function GestaoQuestoes() {
                         Exibe: Status | Publicado | Dificuldade | Banca | Ano | Tipo | Área
                     ══════════════════════════════════════════════════════════════ */}
                       <div className="flex flex-wrap items-center justify-center gap-2 mb-3 pb-3 border-b border-border/30">
-                        {/* Grupo Esquerdo: Status + Publicado */}
-                        <div className="flex items-center gap-2">
-                          {question.is_active ? (
-                            <Badge className="text-sm px-4 py-1.5 bg-green-500/90 text-white border-0 font-semibold">
-                              Ativa
-                            </Badge>
-                          ) : (
-                            <Badge className="text-sm px-4 py-1.5 bg-gray-600 text-white border-0 font-semibold">
-                              Inativa
-                            </Badge>
-                          )}
-                          <Badge className="text-sm px-4 py-1.5 bg-emerald-600 text-white border-0 font-semibold">
-                            Publicado
-                          </Badge>
-                        </div>
-
                         {/* Grupo Central: Dificuldade + Banca + Ano */}
                         <div className="flex items-center gap-2">
                           <Badge className={cn(
