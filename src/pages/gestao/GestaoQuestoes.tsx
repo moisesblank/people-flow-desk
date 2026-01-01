@@ -2392,12 +2392,15 @@ function GestaoQuestoes() {
                           </div>
                           
                           {/* Enunciado com Imagem - Componente Universal (Gestão: imagem maior) */}
+                          {/* PADRÃO UNIFICADO: Header da banca + texto justificado para TODAS as questões */}
                           <QuestionEnunciado
                             questionText={question.question_text}
                             imageUrl={question.image_url}
+                            banca={question.banca}
+                            ano={question.ano}
                             textSize="sm"
                             compact={false}
-                            hideHeader
+                            hideHeader={false}
                             maxImageHeight="max-h-64"
                             showImageLabel={false}
                             className="mb-3"
