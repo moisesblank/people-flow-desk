@@ -1062,6 +1062,22 @@ function GestaoQuestoes() {
     };
   }, [questions, classifyMacroArea]);
 
+  // Handler SINCRONIZADO para cards e dropdown (toggle + sync)
+  const handleMacroAreaFilterChange = useCallback((area: 'all' | 'organica' | 'fisico_quimica' | 'geral') => {
+    // Toggle: se já está selecionado, volta para 'all'
+    const newArea = macroAreaFilter === area ? 'all' : area;
+    setMacroAreaFilter(newArea);
+    
+    // Sincroniza macroFilter para filtros legados
+    const areaToMacro: Record<string, string> = {
+      'organica': 'quimica_organica',
+      'fisico_quimica': 'fisico_quimica',
+      'geral': 'quimica_geral',
+      'all': 'all'
+    };
+    setMacroFilter(areaToMacro[newArea] || 'all');
+  }, [macroAreaFilter]);
+
   // Top Micro Assuntos (filtrados por macroAreaFilter se ativo)
   const topMicroAssuntos = useMemo(() => {
     let filteredByArea = questions;
@@ -1490,7 +1506,7 @@ function GestaoQuestoes() {
               ? "bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500" 
               : "bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/50"
           )}
-          onClick={() => setMacroAreaFilter(macroAreaFilter === 'organica' ? 'all' : 'organica')}
+          onClick={() => handleMacroAreaFilterChange('organica')}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -1522,7 +1538,7 @@ function GestaoQuestoes() {
               ? "bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-500" 
               : "bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/20 hover:border-cyan-500/50"
           )}
-          onClick={() => setMacroAreaFilter(macroAreaFilter === 'fisico_quimica' ? 'all' : 'fisico_quimica')}
+          onClick={() => handleMacroAreaFilterChange('fisico_quimica')}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -1554,7 +1570,7 @@ function GestaoQuestoes() {
               ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500" 
               : "bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20 hover:border-amber-500/50"
           )}
-          onClick={() => setMacroAreaFilter(macroAreaFilter === 'geral' ? 'all' : 'geral')}
+          onClick={() => handleMacroAreaFilterChange('geral')}
         >
           <CardContent className="p-4">
             <div className="flex items-center justify-between">
@@ -1681,18 +1697,29 @@ function GestaoQuestoes() {
 
             {/* Linha 2: Filtros em grid organizado */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {/* 1. Macroassuntos - CANÔNICOS da taxonomia */}
-              <Select value={macroFilter} onValueChange={setMacroFilter}>
+              {/* 1. Macroassuntos - SINCRONIZADO com os cards do topo */}
+              <Select 
+                value={macroAreaFilter} 
+                onValueChange={(value) => {
+                  // Set direto sem toggle (dropdown não é toggle)
+                  setMacroAreaFilter(value as 'all' | 'organica' | 'fisico_quimica' | 'geral');
+                  const areaToMacro: Record<string, string> = {
+                    'organica': 'quimica_organica',
+                    'fisico_quimica': 'fisico_quimica',
+                    'geral': 'quimica_geral',
+                    'all': 'all'
+                  };
+                  setMacroFilter(areaToMacro[value] || 'all');
+                }}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Macroassuntos" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   <SelectItem value="all">Macroassuntos: Todos</SelectItem>
-                  {taxonomyMacros.map(macro => (
-                    <SelectItem key={macro.value} value={macro.value}>
-                      {macro.label}
-                    </SelectItem>
-                  ))}
+                  <SelectItem value="organica">Química Orgânica</SelectItem>
+                  <SelectItem value="fisico_quimica">Físico-Química</SelectItem>
+                  <SelectItem value="geral">Química Geral</SelectItem>
                 </SelectContent>
               </Select>
 
