@@ -97,7 +97,7 @@ export interface QuizQuestion {
   lesson_id?: string;
   area_id?: string;
   question: string;
-  options: string[];
+  options: { id: string; text: string; image_url?: string }[];
   correct_answer: number;
   explanation?: string;
   difficulty: 'easy' | 'medium' | 'hard';

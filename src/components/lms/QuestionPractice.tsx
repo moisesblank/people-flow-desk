@@ -305,31 +305,41 @@ function PracticeSession({
                     optionClass += " border-muted hover:border-primary/50 hover:bg-muted/50";
                   }
 
-                  return (
-                    <div key={option.id} className={optionClass}>
-                      <RadioGroupItem value={option.id} id={option.id} className="sr-only" />
-                      <Label 
-                        htmlFor={option.id} 
-                        className="flex items-center gap-3 cursor-pointer w-full"
-                      >
-                        <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 font-medium text-sm
-                          ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'}
-                          ${showResult && isCorrectOption ? 'border-green-500 bg-green-500 text-white' : ''}
-                          ${showResult && isSelected && !isCorrectOption ? 'border-red-500 bg-red-500 text-white' : ''}
-                        `}>
-                          {String.fromCharCode(65 + idx)}
-                        </div>
-                        <span className="flex-1">{option.text}</span>
-                        
-                        {showResult && isCorrectOption && (
-                          <CheckCircle2 className="h-5 w-5 text-green-500" />
-                        )}
-                        {showResult && isSelected && !isCorrectOption && (
-                          <XCircle className="h-5 w-5 text-red-500" />
-                        )}
-                      </Label>
-                    </div>
-                  );
+                    return (
+                      <div key={option.id} className={optionClass}>
+                        <RadioGroupItem value={option.id} id={option.id} className="sr-only" />
+                        <Label 
+                          htmlFor={option.id} 
+                          className="flex flex-col gap-2 cursor-pointer w-full"
+                        >
+                          <div className="flex items-center gap-3">
+                            <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 font-medium text-sm
+                              ${isSelected ? 'border-primary bg-primary text-primary-foreground' : 'border-muted-foreground/30'}
+                              ${showResult && isCorrectOption ? 'border-green-500 bg-green-500 text-white' : ''}
+                              ${showResult && isSelected && !isCorrectOption ? 'border-red-500 bg-red-500 text-white' : ''}
+                            `}>
+                              {String.fromCharCode(65 + idx)}
+                            </div>
+                            <span className="flex-1">{option.text}</span>
+                            
+                            {showResult && isCorrectOption && (
+                              <CheckCircle2 className="h-5 w-5 text-green-500" />
+                            )}
+                            {showResult && isSelected && !isCorrectOption && (
+                              <XCircle className="h-5 w-5 text-red-500" />
+                            )}
+                          </div>
+                          {option.image_url && (
+                            <img 
+                              src={option.image_url} 
+                              alt={`Imagem alternativa ${option.id.toUpperCase()}`}
+                              className="max-h-[300px] w-auto object-contain rounded-lg ml-11"
+                              onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                            />
+                          )}
+                        </Label>
+                      </div>
+                    );
                 })}
               </RadioGroup>
 

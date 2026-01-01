@@ -33,7 +33,7 @@ export interface QuizQuestion {
   quiz_id: string;
   question_text: string;
   question_type: 'multiple_choice' | 'true_false' | 'essay';
-  options: Array<{ id: string; text: string }>;
+  options: Array<{ id: string; text: string; image_url?: string }>;
   correct_answer: string;
   explanation: string | null;
   points: number;
