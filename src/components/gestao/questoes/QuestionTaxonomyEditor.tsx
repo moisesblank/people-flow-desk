@@ -1,0 +1,395 @@
+// ============================================
+// 🏷️ EDITOR DE TAXONOMIA DA QUESTÃO
+// Permite OWNER/ADMIN definir manualmente:
+// MACRO → MICRO → TEMA → SUBTEMA
+// ============================================
+
+import { memo, useState, useEffect, useCallback } from 'react';
+import { motion } from 'framer-motion';
+import { 
+  FolderTree, 
+  Save, 
+  X, 
+  Edit2, 
+  Check, 
+  Loader2,
+  ChevronRight,
+  Sparkles,
+} from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import { supabase } from '@/integrations/supabase/client';
+import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
+
+interface QuestionTaxonomyEditorProps {
+  questionId: string;
+  currentMacro?: string | null;
+  currentMicro?: string | null;
+  currentTema?: string | null;
+  currentSubtema?: string | null;
+  onUpdate?: () => void;
+  className?: string;
+}
+
+const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
+  questionId,
+  currentMacro,
+  currentMicro,
+  currentTema,
+  currentSubtema,
+  onUpdate,
+  className,
+}: QuestionTaxonomyEditorProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  // Local state for selections
+  const [macro, setMacro] = useState(currentMacro || '');
+  const [micro, setMicro] = useState(currentMicro || '');
+  const [tema, setTema] = useState(currentTema || '');
+  const [subtema, setSubtema] = useState(currentSubtema || '');
+  
+  // Taxonomy hook
+  const { 
+    macros, 
+    getMicrosForSelect, 
+    getTemasForSelect, 
+    getSubtemasForSelect,
+    isLoading: taxonomyLoading 
+  } = useTaxonomyForSelects();
+  
+  // Derived options based on current selections
+  const microOptions = macro ? getMicrosForSelect(macro) : [];
+  const temaOptions = micro ? getTemasForSelect(micro) : [];
+  const subtemaOptions = tema ? getSubtemasForSelect(tema) : [];
+  
+  // Reset to current values when editing is cancelled
+  useEffect(() => {
+    if (!isEditing) {
+      setMacro(currentMacro || '');
+      setMicro(currentMicro || '');
+      setTema(currentTema || '');
+      setSubtema(currentSubtema || '');
+    }
+  }, [isEditing, currentMacro, currentMicro, currentTema, currentSubtema]);
+  
+  // Cascade reset when parent changes
+  const handleMacroChange = useCallback((value: string) => {
+    setMacro(value);
+    setMicro('');
+    setTema('');
+    setSubtema('');
+  }, []);
+  
+  const handleMicroChange = useCallback((value: string) => {
+    setMicro(value);
+    setTema('');
+    setSubtema('');
+  }, []);
+  
+  const handleTemaChange = useCallback((value: string) => {
+    setTema(value);
+    setSubtema('');
+  }, []);
+  
+  // Save to database
+  const handleSave = useCallback(async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('quiz_questions')
+        .update({
+          macro: macro || null,
+          micro: micro || null,
+          tema: tema || null,
+          subtema: subtema || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', questionId);
+      
+      if (error) throw error;
+      
+      toast.success('Taxonomia atualizada com sucesso!');
+      setIsEditing(false);
+      onUpdate?.();
+    } catch (err) {
+      console.error('Erro ao salvar taxonomia:', err);
+      toast.error('Erro ao salvar taxonomia');
+    } finally {
+      setIsSaving(false);
+    }
+  }, [questionId, macro, micro, tema, subtema, onUpdate]);
+  
+  // Check if there are changes
+  const hasChanges = 
+    macro !== (currentMacro || '') ||
+    micro !== (currentMicro || '') ||
+    tema !== (currentTema || '') ||
+    subtema !== (currentSubtema || '');
+  
+  return (
+    <Card className={cn("border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5", className)}>
+      <CardHeader className="pb-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <div className="p-2 rounded-lg bg-amber-500/20">
+              <FolderTree className="h-5 w-5 text-amber-500" />
+            </div>
+            <div>
+              <CardTitle className="text-lg text-amber-500 flex items-center gap-2">
+                Classificação Taxonômica
+                <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-500">
+                  OWNER
+                </Badge>
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Defina manualmente a hierarquia: MACRO → MICRO → TEMA → SUBTEMA
+              </CardDescription>
+            </div>
+          </div>
+          
+          {!isEditing ? (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => setIsEditing(true)}
+              className="border-amber-500/50 text-amber-500 hover:bg-amber-500/10"
+            >
+              <Edit2 className="h-4 w-4 mr-1" />
+              Editar
+            </Button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={() => setIsEditing(false)}
+                disabled={isSaving}
+              >
+                <X className="h-4 w-4 mr-1" />
+                Cancelar
+              </Button>
+              <Button 
+                size="sm" 
+                onClick={handleSave}
+                disabled={isSaving || !hasChanges}
+                className="bg-amber-500 hover:bg-amber-600 text-white"
+              >
+                {isSaving ? (
+                  <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-1" />
+                )}
+                Salvar
+              </Button>
+            </div>
+          )}
+        </div>
+      </CardHeader>
+      
+      <CardContent>
+        {isEditing ? (
+          <motion.div 
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="space-y-4"
+          >
+            {taxonomyLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-amber-500" />
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {/* MACRO */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-amber-500 flex items-center gap-1">
+                    <span className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-xs">1</span>
+                    MACRO
+                  </label>
+                  <Select value={macro} onValueChange={handleMacroChange}>
+                    <SelectTrigger className="border-amber-500/30 focus:ring-amber-500">
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {macros.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* MICRO */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-orange-500 flex items-center gap-1">
+                    <span className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center text-xs">2</span>
+                    MICRO
+                  </label>
+                  <Select 
+                    value={micro} 
+                    onValueChange={handleMicroChange}
+                    disabled={!macro || microOptions.length === 0}
+                  >
+                    <SelectTrigger className="border-orange-500/30 focus:ring-orange-500">
+                      <SelectValue placeholder={macro ? "Selecione..." : "Selecione MACRO primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {microOptions.map((m) => (
+                        <SelectItem key={m.value} value={m.value}>
+                          {m.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* TEMA */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-rose-500 flex items-center gap-1">
+                    <span className="w-5 h-5 rounded-full bg-rose-500/20 flex items-center justify-center text-xs">3</span>
+                    TEMA
+                  </label>
+                  <Select 
+                    value={tema} 
+                    onValueChange={handleTemaChange}
+                    disabled={!micro || temaOptions.length === 0}
+                  >
+                    <SelectTrigger className="border-rose-500/30 focus:ring-rose-500">
+                      <SelectValue placeholder={micro ? "Selecione..." : "Selecione MICRO primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {temaOptions.map((t) => (
+                        <SelectItem key={t.value} value={t.value}>
+                          {t.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                {/* SUBTEMA */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-purple-500 flex items-center gap-1">
+                    <span className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-xs">4</span>
+                    SUBTEMA
+                  </label>
+                  <Select 
+                    value={subtema} 
+                    onValueChange={setSubtema}
+                    disabled={!tema || subtemaOptions.length === 0}
+                  >
+                    <SelectTrigger className="border-purple-500/30 focus:ring-purple-500">
+                      <SelectValue placeholder={tema ? (subtemaOptions.length === 0 ? "Nenhum subtema" : "Selecione...") : "Selecione TEMA primeiro"} />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subtemaOptions.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>
+                          {s.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            )}
+            
+            {/* Preview da seleção */}
+            {(macro || micro || tema || subtema) && (
+              <div className="mt-4 p-3 rounded-lg bg-muted/30 border border-border/50">
+                <p className="text-xs text-muted-foreground mb-2">Hierarquia selecionada:</p>
+                <div className="flex items-center gap-1 flex-wrap text-sm">
+                  {macro && (
+                    <Badge variant="outline" className="border-amber-500/50 text-amber-500">
+                      {macros.find(m => m.value === macro)?.label || macro}
+                    </Badge>
+                  )}
+                  {micro && (
+                    <>
+                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                      <Badge variant="outline" className="border-orange-500/50 text-orange-500">
+                        {microOptions.find(m => m.value === micro)?.label || micro}
+                      </Badge>
+                    </>
+                  )}
+                  {tema && (
+                    <>
+                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                      <Badge variant="outline" className="border-rose-500/50 text-rose-500">
+                        {temaOptions.find(t => t.value === tema)?.label || tema}
+                      </Badge>
+                    </>
+                  )}
+                  {subtema && (
+                    <>
+                      <ChevronRight className="h-3 w-3 text-muted-foreground" />
+                      <Badge variant="outline" className="border-purple-500/50 text-purple-500">
+                        {subtemaOptions.find(s => s.value === subtema)?.label || subtema}
+                      </Badge>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </motion.div>
+        ) : (
+          /* Modo visualização */
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div>
+              <p className="text-muted-foreground text-xs mb-1">MACRO</p>
+              {currentMacro ? (
+                <Badge variant="outline" className="border-amber-500/50 text-amber-500">
+                  {macros.find(m => m.value === currentMacro)?.label || currentMacro}
+                </Badge>
+              ) : (
+                <span className="text-muted-foreground italic">Não definido</span>
+              )}
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs mb-1">MICRO</p>
+              {currentMicro ? (
+                <Badge variant="outline" className="border-orange-500/50 text-orange-500">
+                  {currentMicro}
+                </Badge>
+              ) : (
+                <span className="text-muted-foreground italic">Não definido</span>
+              )}
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs mb-1">TEMA</p>
+              {currentTema ? (
+                <Badge variant="outline" className="border-rose-500/50 text-rose-500">
+                  {currentTema}
+                </Badge>
+              ) : (
+                <span className="text-muted-foreground italic">Não definido</span>
+              )}
+            </div>
+            <div>
+              <p className="text-muted-foreground text-xs mb-1">SUBTEMA</p>
+              {currentSubtema ? (
+                <Badge variant="outline" className="border-purple-500/50 text-purple-500">
+                  {currentSubtema}
+                </Badge>
+              ) : (
+                <span className="text-muted-foreground italic">Não definido</span>
+              )}
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+});
+
+export default QuestionTaxonomyEditor;
