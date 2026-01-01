@@ -1216,6 +1216,38 @@ function GestaoQuestoes() {
     };
   }, [questions]);
 
+  // DETECÇÃO DE QUESTÕES REPETIDAS (baseado no enunciado normalizado)
+  const duplicateQuestionIds = useMemo(() => {
+    // Normaliza o enunciado: lowercase, trim, remove espaços múltiplos
+    const normalizeText = (text: string) => 
+      text.toLowerCase().trim().replace(/\s+/g, ' ');
+    
+    // Mapa de enunciado normalizado → array de IDs
+    const enunciadoMap = new Map<string, string[]>();
+    
+    questions.forEach(q => {
+      const normalized = normalizeText(q.question_text);
+      const existing = enunciadoMap.get(normalized) || [];
+      existing.push(q.id);
+      enunciadoMap.set(normalized, existing);
+    });
+    
+    // Coleta IDs que aparecem mais de uma vez (todas as ocorrências são duplicatas)
+    const duplicateIds = new Set<string>();
+    enunciadoMap.forEach((ids) => {
+      if (ids.length > 1) {
+        ids.forEach(id => duplicateIds.add(id));
+      }
+    });
+    
+    return duplicateIds;
+  }, [questions]);
+
+  // Função helper para verificar se uma questão é duplicata
+  const isDuplicateQuestion = useCallback((questionId: string) => {
+    return duplicateQuestionIds.has(questionId);
+  }, [duplicateQuestionIds]);
+
   // Questões filtradas e ordenadas
   const filteredQuestions = useMemo(() => {
     let filtered = [...questions];
@@ -2280,6 +2312,12 @@ function GestaoQuestoes() {
                             <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
                               #{String(globalIndex + 1).padStart(3, '0')}
                             </span>
+                            {/* LABEL DE QUESTÃO REPETIDA */}
+                            {isDuplicateQuestion(question.id) && (
+                              <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30">
+                                (REPETIDA)
+                              </span>
+                            )}
                           </div>
                           
                           {/* Enunciado com Imagem - Componente Universal (Gestão: imagem maior) */}
