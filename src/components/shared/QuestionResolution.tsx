@@ -246,16 +246,22 @@ function parseResolutionText(text: string): ParsedSection[] {
     return [{ type: 'intro', content: cleanedText.trim() }];
   }
 
-  // Intro (texto antes da primeira seção)
+  // Intro (texto antes da primeira seção) - LIMPAR referências a alternativas
   const firstSection = allStarts[0];
   if (firstSection.index > 0) {
-    const introText = cleanedText.substring(0, firstSection.index).trim();
-    const cleanedIntro = introText
+    let introText = cleanedText.substring(0, firstSection.index).trim();
+    
+    // Remover qualquer menção a alternativas que possa ter vazado para a intro
+    introText = introText
       .replace(/🔬\s*RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
       .replace(/RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
+      .replace(/[❌✅✔️✓✗✖️🔵🔹▪️•]\s*Alternativa\s*[A-E][^\n]*/gi, '') // Remove linhas de alternativa
+      .replace(/Alternativa\s*[A-E]\s*[-–→:][^\n]*/gi, '') // Remove padrões alternativos
+      .replace(/\n{3,}/g, '\n\n') // Limpa linhas vazias extras
       .trim();
-    if (cleanedIntro) {
-      sections.push({ type: 'intro', content: cleanedIntro });
+    
+    if (introText) {
+      sections.push({ type: 'intro', content: introText });
     }
   }
 
