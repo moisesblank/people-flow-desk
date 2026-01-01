@@ -990,7 +990,10 @@ function GestaoQuestoes() {
     }
   }, [loadQuestions]);
 
-  // Extrair valores únicos para filtros dinâmicos
+  // MACROs CANÔNICOS da taxonomia (quimica_geral, quimica_organica, fisico_quimica)
+  const { macros: taxonomyMacros, getMicrosForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
+  
+  // Extrair valores únicos de macro das questões (para fallback/debug)
   const uniqueMacros = useMemo(() => {
     const macros = questions.map(q => q.macro).filter(Boolean) as string[];
     return [...new Set(macros)].sort();
@@ -1001,21 +1004,11 @@ function GestaoQuestoes() {
     return [...new Set(anos)].sort((a, b) => b - a);
   }, [questions]);
 
-  // Micros filtrados pelo macro selecionado
-  const uniqueMicros = useMemo(() => {
-    let filtered = questions;
-    if (macroFilter !== 'all') {
-      filtered = questions.filter(q => q.macro === macroFilter);
-    }
-    const micros = filtered.map(q => q.micro).filter(Boolean) as string[];
-    return [...new Set(micros)].sort();
-  }, [questions, macroFilter]);
-
   useEffect(() => {
     loadQuestions();
   }, [loadQuestions]);
 
-  // Helper: classificar macro em grande área
+  // Helper: classificar macro em grande área - MOVIDO PARA CIMA
   const classifyMacroArea = useCallback((macro: string | null | undefined): 'organica' | 'fisico_quimica' | 'geral' => {
     if (!macro) return 'geral';
     const m = macro.toLowerCase();
@@ -1032,6 +1025,33 @@ function GestaoQuestoes() {
     // Química Geral: eletroquímica, estequiometria, soluções, atomística, ligações, tabela, nuclear
     return 'geral';
   }, []);
+
+  // Micros filtrados pelo macro selecionado - USAR TAXONOMIA ou DADOS
+  const uniqueMicros = useMemo(() => {
+    // Se filtro macro ativo, usar micros da taxonomia OU extrair dos dados
+    if (macroFilter !== 'all') {
+      // Primeiro tenta buscar da taxonomia
+      const taxonomyMicros = getMicrosForSelect(macroFilter);
+      if (taxonomyMicros.length > 0) {
+        return taxonomyMicros.map(m => m.label);
+      }
+      // Fallback: filtrar por classificação e extrair micros dos dados
+      const macroToAreaMap: Record<string, 'organica' | 'fisico_quimica' | 'geral'> = {
+        'quimica_organica': 'organica',
+        'fisico_quimica': 'fisico_quimica',
+        'quimica_geral': 'geral',
+      };
+      const targetArea = macroToAreaMap[macroFilter];
+      if (targetArea) {
+        const filtered = questions.filter(q => classifyMacroArea(q.macro) === targetArea);
+        const micros = filtered.map(q => q.micro).filter(Boolean) as string[];
+        return [...new Set(micros)].sort();
+      }
+    }
+    // Sem filtro: mostrar todos os micros únicos dos dados
+    const micros = questions.map(q => q.micro).filter(Boolean) as string[];
+    return [...new Set(micros)].sort();
+  }, [questions, macroFilter, getMicrosForSelect, classifyMacroArea]);
 
   // Estatísticas por Grande Área
   const macroAreaStats = useMemo(() => {
@@ -1100,9 +1120,22 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.banca === bancaFilter);
     }
 
-    // Filtro por macro (área de conhecimento)
+    // Filtro por macro CANÔNICO (área de conhecimento)
+    // Mapeia macro filter para classifyMacroArea se for valor canônico
     if (macroFilter !== 'all') {
-      filtered = filtered.filter(q => q.macro === macroFilter);
+      const macroToAreaMap: Record<string, 'organica' | 'fisico_quimica' | 'geral'> = {
+        'quimica_organica': 'organica',
+        'fisico_quimica': 'fisico_quimica',
+        'quimica_geral': 'geral',
+      };
+      const targetArea = macroToAreaMap[macroFilter];
+      if (targetArea) {
+        // Usar classificação inteligente
+        filtered = filtered.filter(q => classifyMacroArea(q.macro) === targetArea);
+      } else {
+        // Fallback: match direto
+        filtered = filtered.filter(q => q.macro === macroFilter);
+      }
     }
 
     // Filtro por ano
@@ -1648,16 +1681,16 @@ function GestaoQuestoes() {
 
             {/* Linha 2: Filtros em grid organizado */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {/* 1. Macroassuntos */}
+              {/* 1. Macroassuntos - CANÔNICOS da taxonomia */}
               <Select value={macroFilter} onValueChange={setMacroFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Macroassuntos" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
                   <SelectItem value="all">Macroassuntos: Todos</SelectItem>
-                  {uniqueMacros.map(macro => (
-                    <SelectItem key={macro} value={macro}>
-                      {macro.length > 25 ? macro.substring(0, 25) + '...' : macro}
+                  {taxonomyMacros.map(macro => (
+                    <SelectItem key={macro.value} value={macro.value}>
+                      {macro.label}
                     </SelectItem>
                   ))}
                 </SelectContent>
