@@ -56,6 +56,7 @@ interface Question {
   ano?: number | null;
   points: number;
   is_active: boolean;
+  created_at: string;
   // Estrutura hierárquica
   macro?: string | null;
   micro?: string | null;
@@ -696,6 +697,10 @@ export default function AlunoQuestoes() {
   const [filterTema, setFilterTema] = useState("todas");
   const [filterSubtema, setFilterSubtema] = useState("todas");
   
+  // Filtros adicionais (ORDEM CANÔNICA: Macro → Micro → Ano → Banca → Dificuldade → Ordenação)
+  const [anoFilter, setAnoFilter] = useState("todas");
+  const [sortOrder, setSortOrder] = useState("newest");
+  
   // Buscar questões do banco
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['student-questions'],
@@ -788,6 +793,12 @@ export default function AlunoQuestoes() {
     return map;
   }, [attempts]);
 
+  // Anos únicos para filtro (ORDEM CANÔNICA)
+  const uniqueAnos = useMemo(() => {
+    const anos = questions.map(q => q.ano).filter(Boolean) as number[];
+    return [...new Set(anos)].sort((a, b) => b - a);
+  }, [questions]);
+
   // Questões filtradas
   const filteredQuestions = useMemo(() => {
     let filtered = [...questions];
@@ -833,6 +844,11 @@ export default function AlunoQuestoes() {
       filtered = filtered.filter(q => q.subtema === filterSubtema);
     }
 
+    // Filtro por ano (ORDEM CANÔNICA: após Micro, antes de Banca)
+    if (anoFilter !== 'todas') {
+      filtered = filtered.filter(q => q.ano === parseInt(anoFilter));
+    }
+
     // Filtro por busca
     if (busca.trim()) {
       const term = busca.toLowerCase();
@@ -842,8 +858,32 @@ export default function AlunoQuestoes() {
       );
     }
 
+    // Ordenação (ORDEM CANÔNICA: último filtro)
+    switch (sortOrder) {
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case 'ano_desc':
+        filtered.sort((a, b) => (b.ano || 0) - (a.ano || 0));
+        break;
+      case 'ano_asc':
+        filtered.sort((a, b) => (a.ano || 0) - (b.ano || 0));
+        break;
+      case 'difficulty_asc':
+        const diffOrder = { facil: 1, medio: 2, dificil: 3 };
+        filtered.sort((a, b) => (diffOrder[a.difficulty as keyof typeof diffOrder] || 2) - (diffOrder[b.difficulty as keyof typeof diffOrder] || 2));
+        break;
+      case 'difficulty_desc':
+        const diffOrderDesc = { facil: 1, medio: 2, dificil: 3 };
+        filtered.sort((a, b) => (diffOrderDesc[b.difficulty as keyof typeof diffOrderDesc] || 2) - (diffOrderDesc[a.difficulty as keyof typeof diffOrderDesc] || 2));
+        break;
+    }
+
     return filtered;
-  }, [questions, activeTab, dificuldade, banca, busca, attemptsByQuestion, filterMacro, filterMicro, filterTema, filterSubtema]);
+  }, [questions, activeTab, dificuldade, banca, busca, attemptsByQuestion, filterMacro, filterMicro, filterTema, filterSubtema, anoFilter, sortOrder]);
 
   // Handlers
   const handleOpenQuestion = (question: Question) => {
@@ -1017,7 +1057,7 @@ export default function AlunoQuestoes() {
             </div>
           </div>
 
-          {/* Linha 2: Busca + Banca + Dificuldade + Ação */}
+          {/* Linha 2: ORDEM CANÔNICA - Ano → Banca → Dificuldade → Ordenação */}
           <div className="flex flex-col md:flex-row gap-4 pt-2 border-t border-border/50">
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -1029,6 +1069,20 @@ export default function AlunoQuestoes() {
               />
             </div>
             
+            {/* 1. Ano */}
+            <Select value={anoFilter} onValueChange={setAnoFilter}>
+              <SelectTrigger className="w-full md:w-[140px]">
+                <SelectValue placeholder="Ano" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todas">Ano: Todos</SelectItem>
+                {uniqueAnos.map(ano => (
+                  <SelectItem key={ano} value={String(ano)}>{ano}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* 2. Banca */}
             <Select value={banca} onValueChange={setBanca}>
               <SelectTrigger className="w-full md:w-[180px]">
                 <SelectValue placeholder="Banca" />
@@ -1048,15 +1102,31 @@ export default function AlunoQuestoes() {
               </SelectContent>
             </Select>
 
+            {/* 3. Dificuldade */}
             <Select value={dificuldade} onValueChange={setDificuldade}>
-              <SelectTrigger className="w-full md:w-[180px]">
+              <SelectTrigger className="w-full md:w-[160px]">
                 <SelectValue placeholder="Dificuldade" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="todas">Todas</SelectItem>
+                <SelectItem value="todas">Dificuldade: Todas</SelectItem>
                 <SelectItem value="facil">🟢 Fácil</SelectItem>
                 <SelectItem value="medio">🟡 Médio</SelectItem>
                 <SelectItem value="dificil">🔴 Difícil</SelectItem>
+              </SelectContent>
+            </Select>
+
+            {/* 4. Ordenação */}
+            <Select value={sortOrder} onValueChange={setSortOrder}>
+              <SelectTrigger className="w-full md:w-[160px]">
+                <SelectValue placeholder="Ordenar" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="newest">📅 Mais recentes</SelectItem>
+                <SelectItem value="oldest">📅 Mais antigas</SelectItem>
+                <SelectItem value="ano_desc">🗓️ Ano ↓</SelectItem>
+                <SelectItem value="ano_asc">🗓️ Ano ↑</SelectItem>
+                <SelectItem value="difficulty_asc">📊 Fácil → Difícil</SelectItem>
+                <SelectItem value="difficulty_desc">📊 Difícil → Fácil</SelectItem>
               </SelectContent>
             </Select>
 
