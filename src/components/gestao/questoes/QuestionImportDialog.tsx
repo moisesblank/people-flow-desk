@@ -92,7 +92,7 @@ import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
 
 type NivelCognitivo = 'memorizar' | 'compreender' | 'aplicar' | 'analisar' | 'avaliar';
 type OrigemQuestao = 'oficial' | 'adaptada' | 'autoral_prof_moises';
-type StatusRevisao = 'rascunho' | 'revisado' | 'publicado';
+type StatusRevisao = 'rascunho' | 'revisado' | 'publicada';
 
 // ============================================
 // STATE MACHINE - 5 ESTADOS CONTROLADOS
@@ -134,8 +134,8 @@ interface ParsedQuestion {
   imagens_alternativas?: Record<string, string>;
   tipo_imagem?: 'ilustrativa' | 'essencial' | 'decorativa';
   // Controle Editorial
-  is_active: false;
-  status_revisao: 'rascunho';
+  is_active: boolean;
+  status_revisao: StatusRevisao;
   // RASTREABILIDADE
   campos_inferidos: string[];
   campos_null: string[];
@@ -880,9 +880,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             imagens_enunciado: undefined,
             imagens_alternativas: undefined,
             tipo_imagem: undefined,
-            // Controle Editorial - SEMPRE
-            is_active: false,
-            status_revisao: 'rascunho',
+            // Controle Editorial - padrão de importação
+            is_active: true,
+            status_revisao: 'publicada',
             // Rastreabilidade
             campos_inferidos: [],
             campos_null: [],
@@ -1240,11 +1240,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       
       // Revalidar warnings
       updated.warnings = [];
-      if (!updated.banca || updated.banca === 'autoral_prof_moises') {
-        updated.warnings.push('Banca não identificada');
-      }
-      if (!updated.ano) updated.warnings.push('Ano não identificado');
-      
+      // Banca/Ano: defaults silenciosos (zero trabalho extra)
+
       if (updated.errors.length > 0) {
         updated.status = 'error';
       } else if (updated.warnings.length > 0) {
@@ -1309,8 +1306,6 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           tempo_medio_segundos: q.tempo_medio_segundos || 120,
           nivel_cognitivo: q.nivel_cognitivo || null,
           origem: q.origem || 'autoral_prof_moises',
-          competencia_enem: q.competencia_enem || null,
-          habilidade_enem: q.habilidade_enem || null,
           // Rastreabilidade
           campos_inferidos: q.campos_inferidos,
         };
@@ -2173,7 +2168,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       {canProcess ? (
                         <>
                           <CheckCircle className="h-4 w-4 mr-2" />
-                          Importar {stats.selected} Questões como Rascunho
+                          Importar {stats.selected} Questões (ATIVAS)
                         </>
                       ) : (
                         <>
@@ -2203,7 +2198,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   <div>
                     <h3 className="text-lg font-semibold mb-2">Importando Questões...</h3>
                     <p className="text-sm text-muted-foreground">
-                      {stats.selected} questões sendo importadas como <strong>RASCUNHO</strong>
+                      {stats.selected} questões sendo importadas como <strong>ATIVAS</strong>
                     </p>
                   </div>
                   
@@ -2231,7 +2226,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     </div>
                     <h2 className="text-2xl font-bold text-green-500">Importação Concluída!</h2>
                     <p className="text-muted-foreground mt-1">
-                      Questões salvas como <strong>RASCUNHO</strong> (is_active: false)
+                      Questões salvas como <strong>ATIVAS</strong> (status: publicada)
                     </p>
                   </div>
 
@@ -2305,10 +2300,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                           <ShieldCheck className="h-4 w-4 text-green-500" />
                           <span>
                             <strong>Status Final:</strong> Todas as questões foram salvas como{' '}
-                            <Badge variant="outline" className="text-yellow-500 border-yellow-500/30">
-                              RASCUNHO
+                            <Badge variant="outline" className="text-green-500 border-green-500/30">
+                              ATIVAS
                             </Badge>{' '}
-                            e precisam de <strong>revisão editorial</strong> antes de serem publicadas.
+                            e já estão <strong>publicadas</strong>.
                           </span>
                         </div>
                       </div>
@@ -2322,7 +2317,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       onClick={() => {
                         onSuccess();
                         onClose();
-                        toast.success('Importação concluída com sucesso. Questões salvas como rascunho.');
+                        toast.success('Importação concluída com sucesso. Questões ATIVAS e publicadas.');
                       }}
                       className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                     >
