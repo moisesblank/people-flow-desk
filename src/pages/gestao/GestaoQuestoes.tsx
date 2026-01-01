@@ -1188,10 +1188,12 @@ function GestaoQuestoes() {
   const stats = useMemo(() => {
     const active = questions.filter(q => q.is_active);
     const simulados = questions.filter(q => q.tags?.includes('SIMULADOS'));
+    const modoTreino = questions.filter(q => q.tags?.includes('MODO_TREINO'));
     return {
       total: questions.length,
       active: active.length,
       simulados: simulados.length,
+      modoTreino: modoTreino.length,
       byDifficulty: {
         facil: questions.filter(q => q.difficulty === 'facil').length,
         medio: questions.filter(q => q.difficulty === 'medio').length,
@@ -1212,6 +1214,8 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => !q.is_active);
     } else if (activeTab === 'simulados') {
       filtered = filtered.filter(q => q.tags?.includes('SIMULADOS'));
+    } else if (activeTab === 'modo_treino') {
+      filtered = filtered.filter(q => q.tags?.includes('MODO_TREINO'));
     }
 
     // Filtro por dificuldade
@@ -1780,6 +1784,7 @@ function GestaoQuestoes() {
                   <TabsTrigger value="ativas">Ativas ({stats.active})</TabsTrigger>
                   <TabsTrigger value="inativas">Inativas ({stats.total - stats.active})</TabsTrigger>
                   <TabsTrigger value="simulados" className="text-primary">Simulados ({stats.simulados})</TabsTrigger>
+                  <TabsTrigger value="modo_treino" className="text-purple-500">Modo Treino ({stats.modoTreino})</TabsTrigger>
                 </TabsList>
               </Tabs>
 
