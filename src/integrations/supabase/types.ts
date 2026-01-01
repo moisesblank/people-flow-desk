@@ -17191,6 +17191,7 @@ export type Database = {
       cleanup_old_audit_logs: { Args: never; Returns: number }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
+      cleanup_old_logs: { Args: never; Returns: undefined }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
       cleanup_old_security_events:
@@ -17679,6 +17680,7 @@ export type Database = {
         }
       }
       get_live_chat_stats: { Args: { p_live_id: string }; Returns: Json }
+      get_log_file_path: { Args: { p_date?: string }; Returns: string }
       get_masked_location: {
         Args: { p_address: string; p_latitude: number; p_longitude: number }
         Returns: Json
