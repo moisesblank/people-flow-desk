@@ -1413,6 +1413,27 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       q.campos_null.forEach(c => allNull.add(c));
     });
 
+    // Salvar histórico de importação
+    const startTime = Date.now();
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      await supabase.from('question_import_history').insert({
+        imported_by: user?.id,
+        file_names: files.map(f => f.name),
+        total_files: files.length,
+        total_questions: toImport.length,
+        imported_count: imported,
+        failed_count: failed,
+        target_group: selectedGroup,
+        campos_inferidos: Array.from(allInferidos),
+        campos_null: Array.from(allNull),
+        duration_ms: Date.now() - startTime,
+        status: failed === 0 ? 'completed' : imported > 0 ? 'partial' : 'failed',
+      });
+    } catch (historyErr) {
+      console.error('Erro ao salvar histórico:', historyErr);
+    }
+
     // Salvar resultado e ir para estado terminal
     setImportResult({
       imported,
@@ -1423,7 +1444,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     });
     setFlowState('importacao_concluida');
     setUiStep('resultado');
-  }, [canProcess, parsedQuestions, selectedGroup]); // CRITICAL: selectedGroup deve estar nas deps
+  }, [canProcess, parsedQuestions, selectedGroup, files]); // CRITICAL: selectedGroup e files devem estar nas deps
 
   const reset = useCallback(() => {
     hasAutoAuthorizedRef.current = false;

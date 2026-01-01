@@ -44,6 +44,7 @@ import {
   type QuestionImage 
 } from '@/components/gestao/questoes/QuestionImageUploader';
 import { QuestionImportDialog } from '@/components/gestao/questoes/QuestionImportDialog';
+import { QuestionImportHistory } from '@/components/gestao/questoes/QuestionImportHistory';
 import { Button } from '@/components/ui/button';
 import { TaxonomyManager } from '@/components/gestao/questoes/TaxonomyManager';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
@@ -937,6 +938,7 @@ function GestaoQuestoes() {
   const [annihilationCheckbox, setAnnihilationCheckbox] = useState(false);
   const [taxonomyManagerOpen, setTaxonomyManagerOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [importHistoryOpen, setImportHistoryOpen] = useState(false);
   
   // MODO TREINO deletion states
   const [deleteTreinoConfirm, setDeleteTreinoConfirm] = useState(false);
@@ -1583,6 +1585,14 @@ function GestaoQuestoes() {
           )}
           <Button 
             variant="outline"
+            onClick={() => setImportHistoryOpen(true)}
+            className="gap-2 border-purple-500/50 text-purple-500 hover:bg-purple-500/10 hover:text-purple-400"
+          >
+            <Clock className="h-4 w-4" />
+            Histórico
+          </Button>
+          <Button 
+            variant="outline"
             onClick={() => setImportDialogOpen(true)}
             className="gap-2 border-green-500/50 text-green-600 hover:bg-green-500/10 hover:text-green-500"
           >
@@ -1593,7 +1603,7 @@ function GestaoQuestoes() {
             <Button 
               variant="outline"
               onClick={() => setDeleteTreinoConfirm(true)}
-              className="gap-2 border-purple-500/50 text-purple-500 hover:bg-purple-500/10 hover:text-purple-400"
+              className="gap-2 border-orange-500/50 text-orange-500 hover:bg-orange-500/10 hover:text-orange-400"
             >
               <Trash2 className="h-4 w-4" />
               Excluir Treino ({stats.modoTreino})
@@ -1626,6 +1636,12 @@ function GestaoQuestoes() {
           open={importDialogOpen}
           onClose={() => setImportDialogOpen(false)}
           onSuccess={handleImportSuccess}
+        />
+
+        {/* Import History Dialog */}
+        <QuestionImportHistory
+          open={importHistoryOpen}
+          onClose={() => setImportHistoryOpen(false)}
         />
       </motion.div>
 

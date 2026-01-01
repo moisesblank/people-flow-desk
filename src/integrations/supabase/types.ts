@@ -8797,6 +8797,54 @@ export type Database = {
           },
         ]
       }
+      question_import_history: {
+        Row: {
+          campos_inferidos: string[] | null
+          campos_null: string[] | null
+          created_at: string
+          duration_ms: number | null
+          failed_count: number
+          file_names: string[]
+          id: string
+          imported_by: string | null
+          imported_count: number
+          status: string
+          target_group: string
+          total_files: number
+          total_questions: number
+        }
+        Insert: {
+          campos_inferidos?: string[] | null
+          campos_null?: string[] | null
+          created_at?: string
+          duration_ms?: number | null
+          failed_count?: number
+          file_names?: string[]
+          id?: string
+          imported_by?: string | null
+          imported_count?: number
+          status?: string
+          target_group?: string
+          total_files?: number
+          total_questions?: number
+        }
+        Update: {
+          campos_inferidos?: string[] | null
+          campos_null?: string[] | null
+          created_at?: string
+          duration_ms?: number | null
+          failed_count?: number
+          file_names?: string[]
+          id?: string
+          imported_by?: string | null
+          imported_count?: number
+          status?: string
+          target_group?: string
+          total_files?: number
+          total_questions?: number
+        }
+        Relationships: []
+      }
       question_taxonomy: {
         Row: {
           created_at: string | null
