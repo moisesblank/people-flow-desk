@@ -408,25 +408,35 @@ function GestaoQuestaoDetalhe() {
               <div
                 key={opt.id}
                 className={cn(
-                  "p-3 rounded-lg border flex items-start gap-3",
+                  "p-3 rounded-lg border flex flex-col gap-2",
                   opt.id === question.correct_answer
                     ? "bg-green-500/10 border-green-500/30"
                     : "bg-muted/30"
                 )}
               >
-                <span
-                  className={cn(
-                    "font-bold uppercase w-6 h-6 flex items-center justify-center rounded-full text-sm",
-                    opt.id === question.correct_answer
-                      ? "bg-green-500 text-white"
-                      : "bg-muted"
+                <div className="flex items-start gap-3">
+                  <span
+                    className={cn(
+                      "font-bold uppercase w-6 h-6 flex items-center justify-center rounded-full text-sm flex-shrink-0",
+                      opt.id === question.correct_answer
+                        ? "bg-green-500 text-white"
+                        : "bg-muted"
+                    )}
+                  >
+                    {opt.id}
+                  </span>
+                  <span className="flex-1">{opt.text || <em className="text-muted-foreground">vazio</em>}</span>
+                  {opt.id === question.correct_answer && (
+                    <CheckCircle className="h-5 w-5 text-green-500 flex-shrink-0" />
                   )}
-                >
-                  {opt.id}
-                </span>
-                <span className="flex-1">{opt.text || <em className="text-muted-foreground">vazio</em>}</span>
-                {opt.id === question.correct_answer && (
-                  <CheckCircle className="h-5 w-5 text-green-500" />
+                </div>
+                {(opt as any).image_url && (
+                  <img 
+                    src={(opt as any).image_url} 
+                    alt={`Imagem alternativa ${opt.id.toUpperCase()}`}
+                    className="max-h-[400px] w-auto object-contain rounded-lg ml-9"
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
                 )}
               </div>
             ))}

@@ -225,6 +225,9 @@ function QuizTab({ lessonId }: QuizTabProps) {
               const showCorrect = showResult && isCorrect;
               const showWrong = showResult && isSelected && !isCorrect;
 
+              const optionText = typeof option === 'string' ? option : (option as any).text;
+              const optionImageUrl = typeof option === 'object' ? (option as any).image_url : null;
+
               return (
                 <motion.button
                   key={idx}
@@ -234,25 +237,35 @@ function QuizTab({ lessonId }: QuizTabProps) {
                   disabled={showResult}
                   className={cn(
                     "w-full p-4 rounded-xl border text-left transition-all",
-                    "flex items-center gap-3",
+                    "flex flex-col gap-2",
                     showCorrect && "bg-green-500/10 border-green-500 text-green-700 dark:text-green-400",
                     showWrong && "bg-red-500/10 border-red-500 text-red-700 dark:text-red-400",
                     !showResult && isSelected && "bg-primary/10 border-primary",
                     !showResult && !isSelected && "bg-card hover:bg-muted/50 border-border"
                   )}
                 >
-                  <span className={cn(
-                    "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-medium",
-                    showCorrect && "bg-green-500 text-white",
-                    showWrong && "bg-red-500 text-white",
-                    !showResult && isSelected && "bg-primary text-primary-foreground",
-                    !showResult && !isSelected && "bg-muted"
-                  )}>
-                    {showCorrect ? <CheckCircle className="h-4 w-4" /> : 
-                     showWrong ? <XCircle className="h-4 w-4" /> :
-                     String.fromCharCode(65 + idx)}
-                  </span>
-                  <span className="flex-1">{option}</span>
+                  <div className="flex items-center gap-3">
+                    <span className={cn(
+                      "w-8 h-8 rounded-full flex items-center justify-center shrink-0 text-sm font-medium",
+                      showCorrect && "bg-green-500 text-white",
+                      showWrong && "bg-red-500 text-white",
+                      !showResult && isSelected && "bg-primary text-primary-foreground",
+                      !showResult && !isSelected && "bg-muted"
+                    )}>
+                      {showCorrect ? <CheckCircle className="h-4 w-4" /> : 
+                       showWrong ? <XCircle className="h-4 w-4" /> :
+                       String.fromCharCode(65 + idx)}
+                    </span>
+                    <span className="flex-1">{optionText}</span>
+                  </div>
+                  {optionImageUrl && (
+                    <img 
+                      src={optionImageUrl} 
+                      alt={`Imagem alternativa ${String.fromCharCode(65 + idx)}`}
+                      className="max-h-[300px] w-auto object-contain rounded-lg ml-11"
+                      onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                    />
+                  )}
                 </motion.button>
               );
             })}
