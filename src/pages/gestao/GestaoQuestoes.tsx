@@ -919,6 +919,7 @@ function GestaoQuestoes() {
   const [anoFilter, setAnoFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<string>('newest');
   const [activeTab, setActiveTab] = useState('todas');
+  const [macroAreaFilter, setMacroAreaFilter] = useState<'all' | 'organica' | 'fisico_quimica' | 'geral'>('all');
   
   // Dialog states
   const [questionDialog, setQuestionDialog] = useState(false);
@@ -970,6 +971,7 @@ function GestaoQuestoes() {
     setMacroFilter('all');
     setAnoFilter('all');
     setSortOrder('newest');
+    setMacroAreaFilter('all');
     
     // 2. Forçar reload do banco (ignora cache)
     loadQuestions();
@@ -994,6 +996,33 @@ function GestaoQuestoes() {
   useEffect(() => {
     loadQuestions();
   }, [loadQuestions]);
+
+  // Helper: classificar macro em grande área
+  const classifyMacroArea = useCallback((macro: string | null | undefined): 'organica' | 'fisico_quimica' | 'geral' => {
+    if (!macro) return 'geral';
+    const m = macro.toLowerCase();
+    // Química Orgânica: polímeros, isomeria, bioquímica, funções orgânicas
+    if (m.includes('orgânica') || m.includes('organica') || m.includes('polímero') || m.includes('polimero') || 
+        m.includes('isomeria') || m.includes('bioquímica') || m.includes('bioquimica')) {
+      return 'organica';
+    }
+    // Físico-Química: termoquímica, cinética, equilíbrio, propriedades, gases
+    if (m.includes('físico') || m.includes('fisico') || m.includes('termo') || m.includes('cinética') || 
+        m.includes('cinetica') || m.includes('equilíbrio') || m.includes('equilibrio') || m.includes('gase')) {
+      return 'fisico_quimica';
+    }
+    // Química Geral: eletroquímica, estequiometria, soluções, atomística, ligações, tabela, nuclear
+    return 'geral';
+  }, []);
+
+  // Estatísticas por Grande Área
+  const macroAreaStats = useMemo(() => {
+    return {
+      organica: questions.filter(q => classifyMacroArea(q.macro) === 'organica').length,
+      fisico_quimica: questions.filter(q => classifyMacroArea(q.macro) === 'fisico_quimica').length,
+      geral: questions.filter(q => classifyMacroArea(q.macro) === 'geral').length,
+    };
+  }, [questions, classifyMacroArea]);
 
   // Estatísticas
   const stats: QuestionStats = useMemo(() => {
@@ -1041,6 +1070,11 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.ano === parseInt(anoFilter));
     }
 
+    // Filtro por Grande Área (macro agrupada)
+    if (macroAreaFilter !== 'all') {
+      filtered = filtered.filter(q => classifyMacroArea(q.macro) === macroAreaFilter);
+    }
+
     // Filtro por busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -1081,7 +1115,7 @@ function GestaoQuestoes() {
     }
 
     return filtered;
-  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder]);
+  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, classifyMacroArea]);
 
   // Handlers
   const handleEdit = (question: Question) => {
@@ -1293,6 +1327,110 @@ function GestaoQuestoes() {
         </Card>
       </motion.div>
 
+      {/* Cards de Controle por Grande Área */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        className="grid grid-cols-1 md:grid-cols-3 gap-4"
+      >
+        {/* Química Orgânica */}
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:scale-[1.02] border-2",
+            macroAreaFilter === 'organica' 
+              ? "bg-gradient-to-br from-purple-500/20 to-pink-500/20 border-purple-500" 
+              : "bg-gradient-to-br from-purple-500/10 to-pink-500/10 border-purple-500/20 hover:border-purple-500/50"
+          )}
+          onClick={() => setMacroAreaFilter(macroAreaFilter === 'organica' ? 'all' : 'organica')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-purple-500/20">
+                  <FolderTree className="h-6 w-6 text-purple-400" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-purple-300">Química Orgânica</p>
+                  <p className="text-xs text-muted-foreground">Isomeria, Polímeros, Funções</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-purple-400">{macroAreaStats.organica}</p>
+                <p className="text-xs text-muted-foreground">questões</p>
+              </div>
+            </div>
+            {macroAreaFilter === 'organica' && (
+              <Badge className="mt-2 bg-purple-500/30 text-purple-300">Filtrando</Badge>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Físico-Química */}
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:scale-[1.02] border-2",
+            macroAreaFilter === 'fisico_quimica' 
+              ? "bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border-cyan-500" 
+              : "bg-gradient-to-br from-cyan-500/10 to-blue-500/10 border-cyan-500/20 hover:border-cyan-500/50"
+          )}
+          onClick={() => setMacroAreaFilter(macroAreaFilter === 'fisico_quimica' ? 'all' : 'fisico_quimica')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-cyan-500/20">
+                  <BarChart3 className="h-6 w-6 text-cyan-400" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-cyan-300">Físico-Química</p>
+                  <p className="text-xs text-muted-foreground">Termoquímica, Cinética, Equilíbrio</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-cyan-400">{macroAreaStats.fisico_quimica}</p>
+                <p className="text-xs text-muted-foreground">questões</p>
+              </div>
+            </div>
+            {macroAreaFilter === 'fisico_quimica' && (
+              <Badge className="mt-2 bg-cyan-500/30 text-cyan-300">Filtrando</Badge>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Química Geral */}
+        <Card 
+          className={cn(
+            "cursor-pointer transition-all hover:scale-[1.02] border-2",
+            macroAreaFilter === 'geral' 
+              ? "bg-gradient-to-br from-amber-500/20 to-orange-500/20 border-amber-500" 
+              : "bg-gradient-to-br from-amber-500/10 to-orange-500/10 border-amber-500/20 hover:border-amber-500/50"
+          )}
+          onClick={() => setMacroAreaFilter(macroAreaFilter === 'geral' ? 'all' : 'geral')}
+        >
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="p-3 rounded-xl bg-amber-500/20">
+                  <Brain className="h-6 w-6 text-amber-400" />
+                </div>
+                <div>
+                  <p className="text-lg font-bold text-amber-300">Química Geral</p>
+                  <p className="text-xs text-muted-foreground">Eletroquímica, Estequiometria, Soluções</p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="text-3xl font-bold text-amber-400">{macroAreaStats.geral}</p>
+                <p className="text-xs text-muted-foreground">questões</p>
+              </div>
+            </div>
+            {macroAreaFilter === 'geral' && (
+              <Badge className="mt-2 bg-amber-500/30 text-amber-300">Filtrando</Badge>
+            )}
+          </CardContent>
+        </Card>
+      </motion.div>
+
       {/* Filtros Avançados */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -1404,7 +1542,7 @@ function GestaoQuestoes() {
               </Select>
 
               {/* Botão Limpar Filtros */}
-              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || searchTerm.trim()) && (
+              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || searchTerm.trim()) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1413,6 +1551,7 @@ function GestaoQuestoes() {
                     setBancaFilter('all');
                     setMacroFilter('all');
                     setAnoFilter('all');
+                    setMacroAreaFilter('all');
                     setSearchTerm('');
                     setSortOrder('newest');
                   }}
