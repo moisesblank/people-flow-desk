@@ -109,7 +109,7 @@ type ImportFlowState =
 interface ParsedQuestion {
   id: string;
   question_text: string;
-  options: { id: string; text: string }[];
+  options: { id: string; text: string; image_url?: string }[];
   correct_answer: string;
   explanation?: string;
   difficulty?: 'facil' | 'medio' | 'dificil';
@@ -179,6 +179,13 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   option_c: ['alternativa c', 'alternativa_c', 'opcao_c', 'opção_c', 'option_c', 'alt_c', 'c'],
   option_d: ['alternativa d', 'alternativa_d', 'opcao_d', 'opção_d', 'option_d', 'alt_d', 'd'],
   option_e: ['alternativa e', 'alternativa_e', 'opcao_e', 'opção_e', 'option_e', 'alt_e', 'e'],
+
+  // Imagens das alternativas (NOVO PADRÃO)
+  image_a: ['imagem_a', 'image_a', 'img_a', 'figura_a', 'imagem_alternativa_a', 'image_option_a'],
+  image_b: ['imagem_b', 'image_b', 'img_b', 'figura_b', 'imagem_alternativa_b', 'image_option_b'],
+  image_c: ['imagem_c', 'image_c', 'img_c', 'figura_c', 'imagem_alternativa_c', 'image_option_c'],
+  image_d: ['imagem_d', 'image_d', 'img_d', 'figura_d', 'imagem_alternativa_d', 'image_option_d'],
+  image_e: ['imagem_e', 'image_e', 'img_e', 'figura_e', 'imagem_alternativa_e', 'image_option_e'],
 
   // Gabarito
   correct_answer: ['gabarito', 'correct_answer', 'resposta', 'correta', 'correct', 'answer', 'resp', 'resposta_correta'],
@@ -1042,6 +1049,24 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 url = url.replace(/^\[/, '').replace(/\]$/, '');
                 question.image_url = url || undefined;
                 break;
+              // IMAGENS DAS ALTERNATIVAS (NOVO PADRÃO PERMANENTE)
+              case 'image_a':
+              case 'image_b':
+              case 'image_c':
+              case 'image_d':
+              case 'image_e':
+                const imgOptionId = field.replace('image_', '');
+                let imgUrl = String(value).trim();
+                imgUrl = imgUrl.replace(/^\[/, '').replace(/\]$/, '');
+                if (imgUrl) {
+                  const existingOpt = question.options.find(o => o.id === imgOptionId);
+                  if (existingOpt) {
+                    existingOpt.image_url = imgUrl;
+                  } else {
+                    question.options.push({ id: imgOptionId, text: '', image_url: imgUrl });
+                  }
+                }
+                break;
             }
           }
 
@@ -1366,7 +1391,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         const payload = {
           question_text: q.question_text,
           question_type: 'multiple_choice',
-          options: q.options.filter(o => o.text.trim()).map(o => ({ id: o.id, text: o.text })),
+          options: q.options.filter(o => o.text.trim() || o.image_url).map(o => ({ id: o.id, text: o.text, ...(o.image_url && { image_url: o.image_url }) })),
           correct_answer: q.correct_answer,
           explanation: q.explanation || null,
           difficulty: q.difficulty || null,

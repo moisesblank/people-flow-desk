@@ -195,14 +195,24 @@ export function QuizPlayer({ quiz, questions, onSubmit, isSubmitting }: QuizPlay
                       <Label
                         htmlFor={option.id}
                         className={cn(
-                          "flex items-center gap-3 p-4 rounded-xl border cursor-pointer transition-all",
+                          "flex flex-col gap-2 p-4 rounded-xl border cursor-pointer transition-all",
                           answers[currentQuestion.id] === option.id
                             ? "border-primary bg-primary/10"
                             : "border-border/50 hover:border-primary/50 hover:bg-muted/50"
                         )}
                       >
-                        <RadioGroupItem value={option.id} id={option.id} />
-                        <span className="flex-1">{option.text}</span>
+                        <div className="flex items-center gap-3">
+                          <RadioGroupItem value={option.id} id={option.id} />
+                          <span className="flex-1">{option.text}</span>
+                        </div>
+                        {option.image_url && (
+                          <img 
+                            src={option.image_url} 
+                            alt={`Imagem alternativa ${option.id.toUpperCase()}`}
+                            className="max-h-[300px] w-auto object-contain rounded-lg ml-7"
+                            onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                          />
+                        )}
                       </Label>
                     </motion.div>
                   ))}
