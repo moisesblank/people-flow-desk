@@ -1261,6 +1261,8 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.tags?.includes('SIMULADOS'));
     } else if (activeTab === 'modo_treino') {
       filtered = filtered.filter(q => q.tags?.includes('MODO_TREINO'));
+    } else if (activeTab === 'repetidas') {
+      filtered = filtered.filter(q => duplicateQuestionIds.has(q.id));
     }
 
     // Filtro por dificuldade
@@ -1357,7 +1359,7 @@ function GestaoQuestoes() {
     }
 
     return filtered;
-  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, temaFilter, subtemaFilter, classifyMacroArea]);
+  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, temaFilter, subtemaFilter, classifyMacroArea, duplicateQuestionIds]);
 
   // PAGINATION: Calcular total de páginas e slice da página atual
   const totalPages = useMemo(() => Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE), [filteredQuestions.length, ITEMS_PER_PAGE]);
@@ -1964,6 +1966,7 @@ function GestaoQuestoes() {
                   <TabsTrigger value="inativas">Inativas ({stats.total - stats.active})</TabsTrigger>
                   <TabsTrigger value="simulados" className="text-primary">Simulados ({stats.simulados})</TabsTrigger>
                   <TabsTrigger value="modo_treino" className="text-purple-500">Modo Treino ({stats.modoTreino})</TabsTrigger>
+                  <TabsTrigger value="repetidas" className="text-red-500">Repetidas ({duplicateQuestionIds.size})</TabsTrigger>
                 </TabsList>
               </Tabs>
 
