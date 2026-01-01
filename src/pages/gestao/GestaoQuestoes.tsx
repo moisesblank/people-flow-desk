@@ -1905,26 +1905,14 @@ function GestaoQuestoes() {
                             className="mb-3"
                           />
                           
-                          {/* Taxonomia Completa */}
-                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
-                            {question.macro && (
-                              <div className="flex items-center gap-1">
-                                <span className="text-muted-foreground">Macro:</span>
-                                <span className="font-medium text-foreground/80">{question.macro.length > 25 ? question.macro.substring(0, 25) + '...' : question.macro}</span>
-                              </div>
-                            )}
-                            {question.micro && (
-                              <div className="flex items-center gap-1">
-                                <span className="text-muted-foreground">Micro:</span>
-                                <span className="font-medium text-foreground/80">{question.micro.length > 20 ? question.micro.substring(0, 20) + '...' : question.micro}</span>
-                              </div>
-                            )}
-                            {question.tema && (
-                              <div className="flex items-center gap-1">
-                                <span className="text-muted-foreground">Tema:</span>
-                                <span className="font-medium text-foreground/80">{question.tema.length > 20 ? question.tema.substring(0, 20) + '...' : question.tema}</span>
-                              </div>
-                            )}
+                          {/* Badges de Associação: SIMULADO e TREINO */}
+                          <div className="flex items-center gap-3 text-sm">
+                            <Badge className="px-4 py-1.5 bg-red-600 text-white border-0 font-bold">
+                              🎯 SIMULADO
+                            </Badge>
+                            <Badge className="px-4 py-1.5 bg-purple-600 text-white border-0 font-bold">
+                              💪 TREINO
+                            </Badge>
                           </div>
                         </div>
                         
