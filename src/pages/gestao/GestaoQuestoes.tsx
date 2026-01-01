@@ -929,6 +929,7 @@ function GestaoQuestoes() {
   const [microFilter, setMicroFilter] = useState<string>('all');
   const [temaFilter, setTemaFilter] = useState<string>('all');
   const [subtemaFilter, setSubtemaFilter] = useState<string>('all');
+  const [questionTypeFilter, setQuestionTypeFilter] = useState<'all' | 'multiple_choice' | 'discursive'>('all');
   
   // Dialog states
   const [questionDialog, setQuestionDialog] = useState(false);
@@ -1333,6 +1334,11 @@ function GestaoQuestoes() {
     // Filtro por Subtema (MACRO → MICRO → TEMA → SUBTEMA)
     if (subtemaFilter !== 'all') {
       filtered = filtered.filter(q => q.subtema?.includes(subtemaFilter.replace('...', '')));
+    }
+
+    // Filtro por Estilo da Questão (múltipla escolha ou discursiva)
+    if (questionTypeFilter !== 'all') {
+      filtered = filtered.filter(q => q.question_type === questionTypeFilter);
     }
 
     // Filtro por busca
@@ -2232,8 +2238,20 @@ function GestaoQuestoes() {
                 </SelectContent>
               </Select>
 
+              {/* 7. Estilo da Questão */}
+              <Select value={questionTypeFilter} onValueChange={(v) => setQuestionTypeFilter(v as 'all' | 'multiple_choice' | 'discursive')}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Estilo" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">📋 Estilo: Todos</SelectItem>
+                  <SelectItem value="multiple_choice">✅ Múltipla Escolha</SelectItem>
+                  <SelectItem value="discursive">📝 Discursiva</SelectItem>
+                </SelectContent>
+              </Select>
+
               {/* Botão Limpar Filtros */}
-              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || microFilter !== 'all' || temaFilter !== 'all' || subtemaFilter !== 'all' || searchTerm.trim()) && (
+              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || microFilter !== 'all' || temaFilter !== 'all' || subtemaFilter !== 'all' || questionTypeFilter !== 'all' || searchTerm.trim()) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -2246,6 +2264,7 @@ function GestaoQuestoes() {
                     setMicroFilter('all');
                     setTemaFilter('all');
                     setSubtemaFilter('all');
+                    setQuestionTypeFilter('all');
                     setSearchTerm('');
                     setSortOrder('newest');
                   }}
