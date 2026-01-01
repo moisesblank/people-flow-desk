@@ -9067,6 +9067,7 @@ export type Database = {
           explanation: string | null
           has_video_resolution: boolean | null
           id: string
+          image_url: string | null
           is_active: boolean | null
           lesson_id: string | null
           macro: string | null
@@ -9101,6 +9102,7 @@ export type Database = {
           explanation?: string | null
           has_video_resolution?: boolean | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           lesson_id?: string | null
           macro?: string | null
@@ -9135,6 +9137,7 @@ export type Database = {
           explanation?: string | null
           has_video_resolution?: boolean | null
           id?: string
+          image_url?: string | null
           is_active?: boolean | null
           lesson_id?: string | null
           macro?: string | null
