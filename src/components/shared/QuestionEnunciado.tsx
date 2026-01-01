@@ -98,7 +98,7 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
   textSize = 'base',
   className,
   showImageLabel = true,
-  maxImageHeight = 'max-h-[600px]',
+  maxImageHeight = 'max-h-[900px]',
   compact = false,
   hideHeader = false,
 }: QuestionEnunciadoProps) {
