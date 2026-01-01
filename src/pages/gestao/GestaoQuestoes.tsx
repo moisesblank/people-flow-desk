@@ -1681,13 +1681,13 @@ function GestaoQuestoes() {
                 </SelectContent>
               </Select>
 
-              {/* Macro (Área de Conhecimento) */}
+              {/* Macroassuntos */}
               <Select value={macroFilter} onValueChange={setMacroFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Área" />
+                  <SelectValue placeholder="Macroassuntos" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  <SelectItem value="all">Área: Todas</SelectItem>
+                  <SelectItem value="all">Macroassuntos: Todos</SelectItem>
                   {uniqueMacros.map(macro => (
                     <SelectItem key={macro} value={macro}>
                       {macro.length > 25 ? macro.substring(0, 25) + '...' : macro}
