@@ -920,6 +920,7 @@ function GestaoQuestoes() {
   const [sortOrder, setSortOrder] = useState<string>('newest');
   const [activeTab, setActiveTab] = useState('todas');
   const [macroAreaFilter, setMacroAreaFilter] = useState<'all' | 'organica' | 'fisico_quimica' | 'geral'>('all');
+  const [microFilter, setMicroFilter] = useState<string>('all');
   
   // Dialog states
   const [questionDialog, setQuestionDialog] = useState(false);
@@ -972,6 +973,7 @@ function GestaoQuestoes() {
     setAnoFilter('all');
     setSortOrder('newest');
     setMacroAreaFilter('all');
+    setMicroFilter('all');
     
     // 2. Forçar reload do banco (ignora cache)
     loadQuestions();
@@ -1024,6 +1026,28 @@ function GestaoQuestoes() {
     };
   }, [questions, classifyMacroArea]);
 
+  // Top Micro Assuntos (filtrados por macroAreaFilter se ativo)
+  const topMicroAssuntos = useMemo(() => {
+    let filteredByArea = questions;
+    if (macroAreaFilter !== 'all') {
+      filteredByArea = questions.filter(q => classifyMacroArea(q.macro) === macroAreaFilter);
+    }
+    
+    const microCounts: Record<string, number> = {};
+    filteredByArea.forEach(q => {
+      if (q.micro) {
+        // Truncar micro longo para agrupamento
+        const microKey = q.micro.length > 50 ? q.micro.substring(0, 50) + '...' : q.micro;
+        microCounts[microKey] = (microCounts[microKey] || 0) + 1;
+      }
+    });
+    
+    return Object.entries(microCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 8)
+      .map(([micro, count]) => ({ micro, count }));
+  }, [questions, macroAreaFilter, classifyMacroArea]);
+
   // Estatísticas
   const stats: QuestionStats = useMemo(() => {
     const active = questions.filter(q => q.is_active);
@@ -1075,6 +1099,11 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => classifyMacroArea(q.macro) === macroAreaFilter);
     }
 
+    // Filtro por Micro Assunto
+    if (microFilter !== 'all') {
+      filtered = filtered.filter(q => q.micro?.includes(microFilter.replace('...', '')));
+    }
+
     // Filtro por busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -1115,7 +1144,7 @@ function GestaoQuestoes() {
     }
 
     return filtered;
-  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, classifyMacroArea]);
+  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, classifyMacroArea]);
 
   // Handlers
   const handleEdit = (question: Question) => {
@@ -1431,6 +1460,75 @@ function GestaoQuestoes() {
         </Card>
       </motion.div>
 
+      {/* Cards de Micro Assuntos (Top 8) */}
+      <AnimatePresence>
+        {topMicroAssuntos.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ delay: 0.18 }}
+          >
+            <Card className="border-border/50">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Tag className="h-4 w-4 text-primary" />
+                    <CardTitle className="text-sm font-medium">
+                      Micro Assuntos {macroAreaFilter !== 'all' && (
+                        <span className="text-muted-foreground font-normal">
+                          ({macroAreaFilter === 'organica' ? 'Química Orgânica' : macroAreaFilter === 'fisico_quimica' ? 'Físico-Química' : 'Química Geral'})
+                        </span>
+                      )}
+                    </CardTitle>
+                  </div>
+                  {microFilter !== 'all' && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => setMicroFilter('all')}
+                      className="h-7 text-xs"
+                    >
+                      <X className="h-3 w-3 mr-1" />
+                      Limpar micro
+                    </Button>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex flex-wrap gap-2">
+                  {topMicroAssuntos.map(({ micro, count }) => (
+                    <Badge
+                      key={micro}
+                      variant="outline"
+                      className={cn(
+                        "cursor-pointer transition-all hover:scale-105 px-3 py-1.5",
+                        microFilter === micro
+                          ? "bg-primary/20 text-primary border-primary"
+                          : "hover:bg-muted hover:border-primary/50"
+                      )}
+                      onClick={() => setMicroFilter(microFilter === micro ? 'all' : micro)}
+                    >
+                      <span className="text-xs font-medium mr-2">
+                        {micro.length > 35 ? micro.substring(0, 35) + '...' : micro}
+                      </span>
+                      <span className={cn(
+                        "text-[10px] px-1.5 py-0.5 rounded-full",
+                        microFilter === micro
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted-foreground/20"
+                      )}>
+                        {count}
+                      </span>
+                    </Badge>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Filtros Avançados */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -1542,7 +1640,7 @@ function GestaoQuestoes() {
               </Select>
 
               {/* Botão Limpar Filtros */}
-              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || searchTerm.trim()) && (
+              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || microFilter !== 'all' || searchTerm.trim()) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1552,6 +1650,7 @@ function GestaoQuestoes() {
                     setMacroFilter('all');
                     setAnoFilter('all');
                     setMacroAreaFilter('all');
+                    setMicroFilter('all');
                     setSearchTerm('');
                     setSortOrder('newest');
                   }}
@@ -1564,7 +1663,7 @@ function GestaoQuestoes() {
             </div>
 
             {/* Indicador de filtros ativos */}
-            {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all') && (
+            {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || microFilter !== 'all') && (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Filter className="h-4 w-4" />
                 <span>
