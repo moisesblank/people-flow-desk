@@ -374,9 +374,9 @@ const QuestionResolution = memo(function QuestionResolution({
       </div>
 
       {/* TÍTULO DA RESOLUÇÃO */}
-      <div className="flex items-center gap-2 pt-2">
-        <Sparkles className="h-5 w-5 text-emerald-500" />
-        <h4 className="font-bold text-emerald-500">
+      <div className="text-center pt-4 pb-2">
+        <h4 className="text-xl font-bold text-emerald-500 inline-flex items-center gap-2">
+          <Sparkles className="h-6 w-6" />
           🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
         </h4>
       </div>
