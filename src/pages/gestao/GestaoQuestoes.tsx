@@ -1557,16 +1557,27 @@ function GestaoQuestoes() {
       // 1. Deletar questões que têm APENAS MODO_TREINO
       if (toDelete.length > 0) {
         const deleteIds = toDelete.map(q => q.id);
-        const { error } = await supabase
+        const { data: deletedRows, error } = await supabase
           .from('quiz_questions')
           .delete()
-          .in('id', deleteIds);
+          .in('id', deleteIds)
+          .select('id');
 
         if (error) {
           console.error('[EXCLUIR_TREINO] Erro ao deletar:', error);
           throw error;
         }
-        deletedCount = deleteIds.length;
+
+        deletedCount = deletedRows?.length ?? 0;
+
+        if (deletedCount === 0 && deleteIds.length > 0) {
+          throw new Error('Nenhuma questão foi excluída (provável bloqueio de permissão).');
+        }
+
+        if (deletedCount !== deleteIds.length) {
+          console.warn(`[EXCLUIR_TREINO] Deleção parcial: solicitado=${deleteIds.length}, efetivado=${deletedCount}`);
+        }
+
         console.log(`[EXCLUIR_TREINO] ${deletedCount} questões deletadas com sucesso`);
       }
 
@@ -1574,15 +1585,21 @@ function GestaoQuestoes() {
       if (toUpdate.length > 0) {
         for (const q of toUpdate) {
           const newTags = ((q.tags as string[]) || []).filter(t => t !== 'MODO_TREINO');
-          const { error } = await supabase
+          const { data: updatedRows, error } = await supabase
             .from('quiz_questions')
             .update({ tags: newTags, updated_at: new Date().toISOString() })
-            .eq('id', q.id);
+            .eq('id', q.id)
+            .select('id');
 
           if (error) {
             console.error(`[EXCLUIR_TREINO] Erro ao atualizar ${q.id}:`, error);
             throw error;
           }
+
+          if (!updatedRows || updatedRows.length === 0) {
+            throw new Error(`Questão ${q.id} não foi atualizada (provável bloqueio de permissão).`);
+          }
+
           updatedCount++;
         }
         console.log(`[EXCLUIR_TREINO] ${updatedCount} questões atualizadas com sucesso`);
