@@ -1754,7 +1754,7 @@ function GestaoQuestoes() {
               // Recarregar dados
               loadQuestions();
             }}
-            className="bg-red-600 hover:bg-red-700 text-white border-red-600 animate-pulse"
+            className="bg-red-600 hover:bg-red-700 text-white border-red-600"
           >
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
