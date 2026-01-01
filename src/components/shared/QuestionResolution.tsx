@@ -9,7 +9,7 @@
 // - Design profissional de 2300
 // ============================================
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
 import { getBancaLabel } from '@/constants/bancas';
@@ -479,29 +479,94 @@ function getSectionTitle(section: ParsedSection): string {
  * Formata conteúdo com fórmulas químicas
  */
 const formatContent = (content: string) => {
-  return formatChemicalFormulas(content.trim());
+  return formatChemicalFormulas(
+    content
+      .replace(/👉\s*/g, '\n• ')
+      .replace(/Reunindo:/gi, '\n📋 Reunindo:')
+      .trim()
+  );
 };
 
 /**
- * Bloco visual SIMPLES para seções especiais (conclusão, dica, etc.)
+ * Item de alternativa dentro do bloco agrupado
+ */
+const AlternativaItem = memo(function AlternativaItem({ section }: { section: ParsedSection }) {
+  const isCorrect = section.type === 'alternativa_correta' || section.type === 'afirmacao_correta';
+  const isErrada = section.type === 'alternativa_errada' || section.type === 'afirmacao_incorreta';
+  
+  const letter = section.alternativaLetter || section.afirmacaoNumber || '';
+  const icon = isCorrect ? '✅' : isErrada ? '❌' : '🔵';
+  const statusText = isCorrect ? 'CORRETA' : isErrada ? 'ERRADA' : '';
+  
+  return (
+    <div className={cn(
+      "py-3 border-l-4 pl-4",
+      isCorrect && "border-l-green-500 bg-green-500/5",
+      isErrada && "border-l-red-500 bg-red-500/5",
+      !isCorrect && !isErrada && "border-l-blue-500 bg-blue-500/5"
+    )}>
+      <div className="flex items-start gap-2">
+        <span className={cn(
+          "font-bold text-sm shrink-0",
+          isCorrect && "text-green-500",
+          isErrada && "text-red-500",
+          !isCorrect && !isErrada && "text-blue-500"
+        )}>
+          {icon} Alternativa {letter}
+          {statusText && <span className="ml-1">— {statusText}</span>}
+        </span>
+      </div>
+      <p className="text-sm text-foreground/90 mt-1 leading-relaxed">
+        {formatContent(section.content)}
+      </p>
+    </div>
+  );
+});
+
+/**
+ * Bloco visual para seções NÃO-alternativas
  */
 const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSection }) {
   const Icon = getSectionIcon(section.type, section.stepNumber);
   const styles = getSectionStyles(section.type, section.isCorrect);
   const title = getSectionTitle(section);
 
+  // INTRO — Bloco especial
+  if (section.type === 'intro') {
+    return (
+      <div className="p-4 rounded-xl border border-border/50 bg-muted/20">
+        <div className="flex items-start gap-3">
+          <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-emerald-500/20">
+            <Sparkles className="h-5 w-5 text-emerald-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-sm text-emerald-500 mb-2">
+              📝 ANÁLISE DA QUESTÃO
+            </h4>
+            <p className="text-justify leading-relaxed text-sm text-foreground/90">
+              {formatContent(section.content)}
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <div className={cn("rounded-lg overflow-hidden", styles.border, styles.bg)}>
+    <div className={cn("rounded-xl overflow-hidden", styles.border, styles.bg)}>
+      {/* Header do bloco */}
       <div className={cn("px-4 py-2.5 flex items-center gap-2", styles.accentColor)}>
         <Icon className={cn("h-4 w-4", styles.iconColor)} />
         <h4 className={cn("font-bold text-sm", styles.titleColor)}>
           {title}
         </h4>
       </div>
+      
+      {/* Conteúdo do bloco */}
       <div className="px-4 py-3">
-        <p className="text-justify leading-relaxed text-sm text-foreground/90 whitespace-pre-wrap">
+        <div className="text-justify leading-relaxed text-sm text-foreground/90 whitespace-pre-wrap">
           {formatContent(section.content)}
-        </p>
+        </div>
       </div>
     </div>
   );
@@ -537,15 +602,26 @@ const QuestionResolution = memo(function QuestionResolution({
   const bancaHeader = formatBancaHeader(banca, ano);
   const difficultyData = difficulty ? DIFFICULTY_LABELS[difficulty] : null;
 
-  // Texto limpo (sem lixo de interface)
-  const cleanedText = cleanResolutionText(resolutionText);
+  // Parser inteligente AVANÇADO
+  const parsedSections = useMemo(() => parseResolutionText(resolutionText), [resolutionText]);
 
-  const hasClassification = Boolean(macro || micro);
-
-  // Para não duplicar conteúdo, mostramos a resolução como texto corrido.
-  // Só exibimos o bloco ENEM quando NÃO estiver presente no texto.
-  const hasEnemInText = /COMPETÊNCIA\s+E\s+HABILIDADE/i.test(cleanedText);
+  // Verificações
+  const hasClassification = macro || micro;
+  const hasEnemInText = parsedSections.some(s => s.type === 'competencia');
   const showEnemBlock = (competenciaEnem || habilidadeEnem) && !hasEnemInText;
+
+  // Agrupar seções por categoria para melhor visualização
+  const alternativasSections = parsedSections.filter(s => 
+    s.type === 'alternativa_correta' || 
+    s.type === 'alternativa_errada' || 
+    s.type === 'alternativa_analise' ||
+    s.type === 'afirmacao_correta' ||
+    s.type === 'afirmacao_incorreta'
+  );
+  const otherSections = parsedSections.filter(s => 
+    !alternativasSections.includes(s) && s.type !== 'intro'
+  );
+  const introSection = parsedSections.find(s => s.type === 'intro');
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -606,19 +682,49 @@ const QuestionResolution = memo(function QuestionResolution({
       </div>
 
       {/* ========== TÍTULO PRINCIPAL ========== */}
-      <div className="text-center py-3">
-        <h4 className="text-xl font-bold text-emerald-500 inline-flex items-center gap-2">
-          <Sparkles className="h-5 w-5" />
-          🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
-        </h4>
+      <div className="text-center py-4">
+        <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border border-emerald-500/30">
+          <Sparkles className="h-6 w-6 text-emerald-500" />
+          <h4 className="text-xl font-bold text-emerald-500">
+            🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
+          </h4>
+        </div>
       </div>
 
-      {/* ========== CONTEÚDO DA RESOLUÇÃO — TEXTO CORRIDO ========== */}
-      <div className="p-4 rounded-lg border border-border/30 bg-muted/10">
-        <p className="text-justify leading-relaxed text-sm whitespace-pre-wrap">
-          {formatChemicalFormulas(cleanResolutionText(resolutionText))}
-        </p>
-      </div>
+      {/* ========== INTRO (ANÁLISE) ========== */}
+      {introSection && (
+        <SectionBlock section={introSection} />
+      )}
+
+      {/* ========== ALTERNATIVAS / AFIRMAÇÕES — BLOCO ÚNICO ========== */}
+      {alternativasSections.length > 0 && (
+        <div className="rounded-xl border border-border/50 overflow-hidden bg-muted/10">
+          {/* Header do bloco de alternativas */}
+          <div className="px-4 py-3 bg-muted/30 border-b border-border/30 flex items-center gap-2">
+            <Target className="h-4 w-4 text-primary" />
+            <h4 className="font-bold text-sm text-primary uppercase tracking-wide">
+              📋 Análise das Alternativas
+            </h4>
+          </div>
+          
+          {/* Alternativas como tópicos dentro do bloco */}
+          <div className="divide-y divide-border/30">
+            {alternativasSections.map((section, index) => (
+              <AlternativaItem key={`alt-${section.type}-${index}`} section={section} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ========== OUTRAS SEÇÕES ========== */}
+      {otherSections.length > 0 && (
+        <div className="space-y-3">
+          {otherSections.map((section, index) => (
+            <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
+          ))}
+        </div>
+      )}
+
       {/* ========== COMPETÊNCIA ENEM (se não no texto) ========== */}
       {showEnemBlock && (
         <div className="rounded-xl overflow-hidden border-l-4 border-l-purple-500 border-t border-r border-b border-purple-500/30 bg-purple-500/5">
