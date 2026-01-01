@@ -709,6 +709,19 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     setHumanAuthorization(false);
   }, [parsedQuestions]);
 
+  // Garantia P0: seleção automática (zero trabalho manual)
+  useEffect(() => {
+    if (uiStep !== 'preview') return;
+    if (parsedQuestions.length === 0) return;
+
+    const anySelected = parsedQuestions.some((q) => q.status !== 'error' && q.selected);
+    if (anySelected) return;
+
+    setParsedQuestions((prev) =>
+      prev.map((q) => ({ ...q, selected: q.status !== 'error' }))
+    );
+  }, [uiStep, parsedQuestions]);
+
   // ============================================
   // HANDLERS
   // ============================================
@@ -1082,8 +1095,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             question.selected = false;
           } else if (question.warnings.length > 0) {
             question.status = 'warning';
+            question.selected = true;
           } else {
             question.status = 'valid';
+            question.selected = true;
           }
 
           return question;
@@ -1123,11 +1138,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   }, []);
 
   const toggleSelect = useCallback((id: string) => {
-    setParsedQuestions(prev => prev.map(q => 
-      q.id === id && q.status !== 'error' 
-        ? { ...q, selected: !q.selected } 
-        : q
-    ));
+    setParsedQuestions((prev) =>
+      prev.map((q) =>
+        q.id === id && q.status !== 'error'
+          ? { ...q, selected: !q.selected }
+          : q
+      )
+    );
   }, []);
 
   const updateQuestion = useCallback((id: string, updates: Partial<ParsedQuestion>) => {
@@ -2102,6 +2119,24 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     </Button>
                     <Button
                       onClick={() => {
+                        // Garantia P0: se por qualquer motivo nada estiver selecionado,
+                        // selecionamos tudo automaticamente e seguimos.
+                        if (stats.selected === 0 && parsedQuestions.length > 0) {
+                          console.log('[IMPORT] Auto-select all (selected estava 0)');
+                          toggleSelectAll(true);
+
+                          if (flowState === 'autorizacao_explicita' && humanAuthorization) {
+                            setTimeout(() => {
+                              console.log('[IMPORT] handleImport() (after auto-select)');
+                              handleImport();
+                            }, 0);
+                          } else {
+                            toast.info('Selecionamos todas automaticamente. Agora marque a confirmação para importar.');
+                            document.getElementById('human-auth')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                          }
+                          return;
+                        }
+
                         // Mantém sempre clicável para evitar sensação de "não acontece nada"
                         if (!canProcess) {
                           console.log('[IMPORT] Import bloqueado:', {
