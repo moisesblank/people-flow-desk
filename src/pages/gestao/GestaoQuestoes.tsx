@@ -1553,10 +1553,14 @@ function GestaoQuestoes() {
 
       let deletedCount = 0;
       let updatedCount = 0;
+      const deletedRequestedIds: string[] = [];
+      const updatedRequestedIds: string[] = [];
 
       // 1. Deletar questões que têm APENAS MODO_TREINO
       if (toDelete.length > 0) {
         const deleteIds = toDelete.map(q => q.id);
+        deletedRequestedIds.push(...deleteIds);
+
         const { data: deletedRows, error } = await supabase
           .from('quiz_questions')
           .delete()
@@ -1584,7 +1588,9 @@ function GestaoQuestoes() {
       // 2. Atualizar questões removendo apenas a tag MODO_TREINO
       if (toUpdate.length > 0) {
         for (const q of toUpdate) {
+          updatedRequestedIds.push(q.id);
           const newTags = ((q.tags as string[]) || []).filter(t => t !== 'MODO_TREINO');
+
           const { data: updatedRows, error } = await supabase
             .from('quiz_questions')
             .update({ tags: newTags, updated_at: new Date().toISOString() })
@@ -1603,6 +1609,35 @@ function GestaoQuestoes() {
           updatedCount++;
         }
         console.log(`[EXCLUIR_TREINO] ${updatedCount} questões atualizadas com sucesso`);
+      }
+
+      // 3. Validação pós-ação (sem isso, é PROIBIDO mostrar sucesso)
+      // - Deletadas: não podem mais existir
+      // - Atualizadas: não podem mais conter MODO_TREINO
+      if (deletedRequestedIds.length > 0) {
+        const { data: stillExists, error } = await supabase
+          .from('quiz_questions')
+          .select('id')
+          .in('id', deletedRequestedIds);
+
+        if (error) throw error;
+        if (stillExists && stillExists.length > 0) {
+          throw new Error(`Validação falhou: ${stillExists.length} questões que deveriam ser ANIQUILADAS ainda existem.`);
+        }
+      }
+
+      if (updatedRequestedIds.length > 0) {
+        const { data: updatedNow, error } = await supabase
+          .from('quiz_questions')
+          .select('id, tags')
+          .in('id', updatedRequestedIds);
+
+        if (error) throw error;
+
+        const stillHasTreino = (updatedNow || []).filter(r => (r.tags as string[] | null)?.includes('MODO_TREINO'));
+        if (stillHasTreino.length > 0) {
+          throw new Error(`Validação falhou: ${stillHasTreino.length} questões ainda estão marcadas como MODO_TREINO.`);
+        }
       }
 
       // Limpar cache e recarregar
