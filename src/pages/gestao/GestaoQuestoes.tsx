@@ -1906,7 +1906,7 @@ function GestaoQuestoes() {
                           />
                           
                           {/* Badges de Associação: SIMULADO e TREINO */}
-                          <div className="flex items-center gap-3 text-sm">
+                          <div className="flex items-center justify-between text-sm">
                             <Badge className="px-4 py-1.5 bg-red-600 text-white border-0 font-bold">
                               🎯 SIMULADO
                             </Badge>
