@@ -214,18 +214,18 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                       initial={{ opacity: 0, x: -10 }}
                       animate={{ opacity: 1, x: 0 }}
                       className={cn(
-                        "flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all",
+                        "flex flex-col gap-2 p-4 rounded-xl border-2 cursor-pointer transition-all",
                         optionClass,
                         hasAnswered && "cursor-not-allowed"
                       )}
                       onClick={() => !hasAnswered && setSelectedOption(option.id)}
                     >
-                      <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
-                      <div className="flex-1">
+                      <div className="flex items-center gap-3">
+                        <RadioGroupItem value={option.id} id={option.id} className="mt-1" />
                         <Label
                           htmlFor={option.id}
                           className={cn(
-                            "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm cursor-pointer mr-3",
+                            "w-8 h-8 flex items-center justify-center rounded-full border-2 font-bold text-sm cursor-pointer",
                             isSelected ? "border-primary bg-primary text-primary-foreground" : "border-muted-foreground/30",
                             hasAnswered && isCorrectOption && "border-green-500 bg-green-500 text-white",
                             hasAnswered && isSelected && !isCorrectOption && "border-red-500 bg-red-500 text-white"
@@ -233,13 +233,21 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                         >
                           {option.id.toUpperCase()}
                         </Label>
+                        <p className="flex-1 text-sm">{option.text}</p>
+                        {hasAnswered && isCorrectOption && (
+                          <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
+                        )}
+                        {hasAnswered && isSelected && !isCorrectOption && (
+                          <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                        )}
                       </div>
-                      <p className="flex-1 text-sm">{option.text}</p>
-                      {hasAnswered && isCorrectOption && (
-                        <CheckCircle2 className="h-5 w-5 text-green-500 flex-shrink-0" />
-                      )}
-                      {hasAnswered && isSelected && !isCorrectOption && (
-                        <XCircle className="h-5 w-5 text-red-500 flex-shrink-0" />
+                      {(option as any).image_url && (
+                        <img 
+                          src={(option as any).image_url} 
+                          alt={`Imagem alternativa ${option.id.toUpperCase()}`}
+                          className="max-h-[300px] w-auto object-contain rounded-lg ml-11"
+                          onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                        />
                       )}
                     </motion.div>
                   );
