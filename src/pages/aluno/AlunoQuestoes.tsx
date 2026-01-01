@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
+import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 
 // ============================================
 // TIPOS
@@ -487,11 +488,14 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
 
         <ScrollArea className="flex-1 px-1">
           <div className="space-y-6 py-4">
-            {/* Enunciado */}
+            {/* Enunciado com Imagem - Componente Universal */}
             <div className="bg-muted/50 rounded-xl p-4 border">
-              <p className="text-sm leading-relaxed whitespace-pre-wrap">
-                {question.question_text}
-              </p>
+              <QuestionEnunciado
+                questionText={question.question_text}
+                imageUrl={(question as any).image_url}
+                textSize="sm"
+                showImageLabel
+              />
             </div>
 
             {/* Alternativas */}
@@ -1102,7 +1106,7 @@ export default function AlunoQuestoes() {
                             </Badge>
                           )}
                         </div>
-                        <p className="text-sm line-clamp-2">{questao.question_text}</p>
+                        <p className="text-sm line-clamp-2">{cleanQuestionText(questao.question_text)}</p>
                       </div>
                       <Button variant={hasAttempt ? "outline" : "default"} size="sm">
                         {hasAttempt ? "Revisar" : "Resolver"}
