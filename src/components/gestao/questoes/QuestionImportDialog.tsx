@@ -629,8 +629,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   // STATE MACHINE - Fluxo Controlado
   const [flowState, setFlowState] = useState<ImportFlowState | null>(null);
   
-  // Dados
-  const [file, setFile] = useState<File | null>(null);
+  // Dados - MÚLTIPLOS ARQUIVOS
+  const [files, setFiles] = useState<File[]>([]);
+  const [currentFileIndex, setCurrentFileIndex] = useState(0);
+  const [fileResults, setFileResults] = useState<{ name: string; rows: number; status: 'pending' | 'processing' | 'done' | 'error'; error?: string }[]>([]);
   const [rawData, setRawData] = useState<Record<string, any>[]>([]);
   const [headers, setHeaders] = useState<string[]>([]);
   const [columnMapping, setColumnMapping] = useState<Record<string, string>>({});
@@ -639,6 +641,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   // Processing
   const [isProcessing, setIsProcessing] = useState(false);
   const [importProgress, setImportProgress] = useState(0);
+  const [batchMode, setBatchMode] = useState(false);
   
   // Resultado final da importação
   const [importResult, setImportResult] = useState<{
@@ -646,6 +649,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     failed: number;
     camposInferidos: string[];
     camposNull: string[];
+    filesProcessed: number;
   } | null>(null);
   
   // UI state
@@ -744,100 +748,150 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   // HANDLERS
   // ============================================
 
+  // Função para processar um único arquivo Excel
+  const parseExcelFile = useCallback(async (file: File): Promise<{ data: Record<string, any>[]; headers: string[] }> => {
+    const isExcel = file.name.endsWith('.xlsx') || file.name.endsWith('.xls');
+    const isCsv = file.name.endsWith('.csv');
+    const isTxt = file.name.endsWith('.txt');
+
+    let data: Record<string, any>[] = [];
+    let detectedHeaders: string[] = [];
+
+    if (isExcel || isCsv) {
+      const buffer = await file.arrayBuffer();
+      const workbook = XLSX.read(buffer, { type: 'array' });
+      const sheetName = workbook.SheetNames[0];
+      const sheet = workbook.Sheets[sheetName];
+      data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[];
+      
+      if (data.length > 0) {
+        detectedHeaders = (data[0] as any[]).map(h => String(h || '').trim());
+        data = data.slice(1).map(row => {
+          const obj: Record<string, any> = {};
+          detectedHeaders.forEach((header, i) => {
+            obj[header] = (row as any[])[i];
+          });
+          return obj;
+        }).filter(row => Object.values(row).some(v => v));
+      }
+    } else if (isTxt) {
+      const text = await file.text();
+      const lines = text.split('\n').filter(l => l.trim());
+      if (lines.length > 0) {
+        const delimiter = lines[0].includes('\t') ? '\t' : ',';
+        detectedHeaders = lines[0].split(delimiter).map(h => h.trim());
+        data = lines.slice(1).map(line => {
+          const values = line.split(delimiter);
+          const obj: Record<string, any> = {};
+          detectedHeaders.forEach((header, i) => {
+            obj[header] = values[i]?.trim() || '';
+          });
+          return obj;
+        });
+      }
+    }
+
+    return { data, headers: detectedHeaders };
+  }, []);
+
+  // Handler para seleção de MÚLTIPLOS arquivos
   const handleFileSelect = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     console.log('[IMPORT] handleFileSelect triggered');
-    const selectedFile = event.target.files?.[0];
-    if (!selectedFile) {
-      console.log('[IMPORT] No file selected');
+    const selectedFiles = event.target.files;
+    if (!selectedFiles || selectedFiles.length === 0) {
+      console.log('[IMPORT] No files selected');
       return;
     }
 
-    console.log('[IMPORT] File selected:', selectedFile.name, selectedFile.size, 'bytes');
-    setFile(selectedFile);
+    const fileArray = Array.from(selectedFiles);
+    console.log('[IMPORT] Files selected:', fileArray.length);
+    
+    setFiles(fileArray);
+    setBatchMode(fileArray.length > 1);
+    setFileResults(fileArray.map(f => ({ name: f.name, rows: 0, status: 'pending' as const })));
     setIsProcessing(true);
     setFlowState('arquivo_carregado');
 
     try {
-      const isExcel = selectedFile.name.endsWith('.xlsx') || selectedFile.name.endsWith('.xls');
-      const isCsv = selectedFile.name.endsWith('.csv');
-      const isTxt = selectedFile.name.endsWith('.txt');
+      // Processar TODOS os arquivos e combinar dados
+      let allData: Record<string, any>[] = [];
+      let combinedHeaders: string[] = [];
+      const results: typeof fileResults = [];
 
-      let data: Record<string, any>[] = [];
-      let detectedHeaders: string[] = [];
-
-      if (isExcel || isCsv) {
-        const buffer = await selectedFile.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: 'array' });
-        const sheetName = workbook.SheetNames[0];
-        const sheet = workbook.Sheets[sheetName];
-        data = XLSX.utils.sheet_to_json(sheet, { header: 1 }) as any[];
+      for (let i = 0; i < fileArray.length; i++) {
+        const file = fileArray[i];
+        setCurrentFileIndex(i);
         
-        if (data.length > 0) {
-          detectedHeaders = (data[0] as any[]).map(h => String(h || '').trim());
-          data = data.slice(1).map(row => {
-            const obj: Record<string, any> = {};
-            detectedHeaders.forEach((header, i) => {
-              obj[header] = (row as any[])[i];
-            });
-            return obj;
-          }).filter(row => Object.values(row).some(v => v));
-        }
-      } else if (isTxt) {
-        const text = await selectedFile.text();
-        const lines = text.split('\n').filter(l => l.trim());
-        if (lines.length > 0) {
-          const delimiter = lines[0].includes('\t') ? '\t' : ',';
-          detectedHeaders = lines[0].split(delimiter).map(h => h.trim());
-          data = lines.slice(1).map(line => {
-            const values = line.split(delimiter);
-            const obj: Record<string, any> = {};
-            detectedHeaders.forEach((header, i) => {
-              obj[header] = values[i]?.trim() || '';
-            });
-            return obj;
+        try {
+          const { data, headers: fileHeaders } = await parseExcelFile(file);
+          
+          // Na primeira iteração, usar os headers como base
+          if (i === 0) {
+            combinedHeaders = fileHeaders;
+          }
+          
+          allData = [...allData, ...data];
+          results.push({ name: file.name, rows: data.length, status: 'done' });
+          
+          console.log(`[IMPORT] File ${i + 1}/${fileArray.length}: ${file.name} - ${data.length} rows`);
+        } catch (err) {
+          console.error(`[IMPORT] Error processing ${file.name}:`, err);
+          results.push({ 
+            name: file.name, 
+            rows: 0, 
+            status: 'error', 
+            error: err instanceof Error ? err.message : String(err) 
           });
         }
+        
+        setFileResults([...results]);
       }
 
-      setRawData(data);
-      setHeaders(detectedHeaders);
+      setRawData(allData);
+      setHeaders(combinedHeaders);
       
       // Auto-detectar mapeamento
       const autoMapping: Record<string, string> = {};
-      detectedHeaders.forEach(header => {
+      combinedHeaders.forEach(header => {
         const mapped = findColumnMapping(header);
         if (mapped) autoMapping[header] = mapped;
       });
       setColumnMapping(autoMapping);
       
-      console.log('[IMPORT] Headers detected:', detectedHeaders);
-      console.log('[IMPORT] Auto mapping:', autoMapping);
-      console.log('[IMPORT] Data rows:', data.length);
+      const successCount = results.filter(r => r.status === 'done').length;
+      const totalRows = results.reduce((acc, r) => acc + r.rows, 0);
       
-      if (data.length > 0) {
+      console.log('[IMPORT] Headers detected:', combinedHeaders);
+      console.log('[IMPORT] Auto mapping:', autoMapping);
+      console.log('[IMPORT] Total data rows:', allData.length);
+      
+      if (allData.length > 0) {
         setUiStep('mapping');
-        toast.success(`${data.length} linhas detectadas no arquivo`);
+        toast.success(`✅ ${successCount}/${fileArray.length} arquivos processados • ${totalRows} questões detectadas`, {
+          duration: 5000,
+        });
       } else {
-        toast.error('Nenhum dado encontrado no arquivo');
+        toast.error('Nenhum dado encontrado nos arquivos');
         setFlowState(null);
       }
     } catch (err) {
-      console.error('[IMPORT] Erro ao processar arquivo:', err);
-      toast.error('Erro ao processar arquivo: ' + (err instanceof Error ? err.message : String(err)));
+      console.error('[IMPORT] Erro ao processar arquivos:', err);
+      toast.error('Erro ao processar arquivos: ' + (err instanceof Error ? err.message : String(err)));
       setFlowState(null);
     } finally {
       setIsProcessing(false);
     }
-  }, []);
+  }, [parseExcelFile]);
 
   const handleDrop = useCallback((event: React.DragEvent) => {
     event.preventDefault();
-    const droppedFile = event.dataTransfer.files[0];
-    if (droppedFile) {
+    const droppedFiles = event.dataTransfer.files;
+    if (droppedFiles && droppedFiles.length > 0) {
       const input = document.getElementById('file-import-input') as HTMLInputElement;
       if (input) {
         const dt = new DataTransfer();
-        dt.items.add(droppedFile);
+        // Suportar múltiplos arquivos
+        Array.from(droppedFiles).forEach(file => dt.items.add(file));
         input.files = dt.files;
         input.dispatchEvent(new Event('change', { bubbles: true }));
       }
@@ -1365,6 +1419,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       failed,
       camposInferidos: Array.from(allInferidos),
       camposNull: Array.from(allNull),
+      filesProcessed: files.length,
     });
     setFlowState('importacao_concluida');
     setUiStep('resultado');
@@ -1374,7 +1429,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     hasAutoAuthorizedRef.current = false;
     setUiStep('upload');
     setFlowState(null);
-    setFile(null);
+    setFiles([]);
+    setCurrentFileIndex(0);
+    setFileResults([]);
+    setBatchMode(false);
     setRawData([]);
     setHeaders([]);
     setColumnMapping({});
@@ -1447,62 +1505,136 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 <div
                   onDrop={handleDrop}
                   onDragOver={(e) => e.preventDefault()}
-                  className="w-full max-w-lg p-12 border-2 border-dashed border-primary/30 rounded-xl bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer"
+                  className="w-full max-w-2xl p-12 border-2 border-dashed border-primary/30 rounded-xl bg-primary/5 hover:bg-primary/10 hover:border-primary/50 transition-all cursor-pointer"
                   onClick={() => document.getElementById('file-import-input')?.click()}
                 >
                   <input
                     id="file-import-input"
                     type="file"
                     accept=".xlsx,.xls,.csv,.txt"
+                    multiple
                     onChange={handleFileSelect}
                     className="hidden"
                   />
                   
                   <div className="flex flex-col items-center gap-4 text-center">
                     {isProcessing ? (
-                      <Loader2 className="h-16 w-16 text-primary animate-spin" />
+                      <>
+                        <Loader2 className="h-16 w-16 text-primary animate-spin" />
+                        <div className="space-y-2 w-full max-w-md">
+                          <p className="text-sm font-medium">
+                            Processando {currentFileIndex + 1} de {files.length} arquivos...
+                          </p>
+                          <Progress value={(currentFileIndex / files.length) * 100} className="h-2" />
+                        </div>
+                      </>
                     ) : (
                       <div className="p-4 rounded-2xl bg-gradient-to-br from-primary/20 to-purple-500/20">
                         <FileSpreadsheet className="h-12 w-12 text-primary" />
                       </div>
                     )}
                     
-                    <div>
-                      <h3 className="text-lg font-semibold">
-                        {isProcessing ? 'Processando...' : 'Arraste o arquivo aqui'}
-                      </h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        ou clique para selecionar
-                      </p>
-                    </div>
+                    {!isProcessing && (
+                      <div>
+                        <h3 className="text-lg font-semibold">
+                          Arraste os arquivos aqui
+                        </h3>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          ou clique para selecionar <strong>(até 20 arquivos)</strong>
+                        </p>
+                      </div>
+                    )}
                     
                     <div className="flex flex-wrap gap-2 justify-center">
                       <Badge variant="outline" className="gap-1">
                         <FileSpreadsheet className="h-3 w-3" />
-                        Excel
+                        Excel (.xlsx)
                       </Badge>
                       <Badge variant="outline" className="gap-1">
                         <FileText className="h-3 w-3" />
                         CSV
                       </Badge>
-                      <Badge variant="outline" className="gap-1">
-                        <FileText className="h-3 w-3" />
-                        TXT
+                      <Badge className="bg-green-500/20 text-green-500 border-green-500/30 gap-1">
+                        <Zap className="h-3 w-3" />
+                        Múltiplos arquivos
                       </Badge>
                     </div>
                   </div>
                 </div>
+
+                {/* Lista de arquivos selecionados (se houver) */}
+                {fileResults.length > 0 && (
+                  <div className="mt-6 w-full max-w-2xl">
+                    <div className="p-4 rounded-lg border bg-card">
+                      <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                        <FileSpreadsheet className="h-4 w-4" />
+                        Arquivos Selecionados ({fileResults.length})
+                      </h4>
+                      <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                        {fileResults.map((fr, i) => (
+                          <div 
+                            key={i} 
+                            className={cn(
+                              "flex items-center justify-between p-2 rounded text-sm",
+                              fr.status === 'done' && "bg-green-500/10",
+                              fr.status === 'processing' && "bg-blue-500/10",
+                              fr.status === 'error' && "bg-red-500/10",
+                              fr.status === 'pending' && "bg-muted/50"
+                            )}
+                          >
+                            <div className="flex items-center gap-2">
+                              {fr.status === 'done' && <CheckCircle className="h-4 w-4 text-green-500" />}
+                              {fr.status === 'processing' && <Loader2 className="h-4 w-4 text-blue-500 animate-spin" />}
+                              {fr.status === 'error' && <XCircle className="h-4 w-4 text-red-500" />}
+                              {fr.status === 'pending' && <Clock className="h-4 w-4 text-muted-foreground" />}
+                              <span className="truncate max-w-[250px]">{fr.name}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              {fr.rows > 0 && (
+                                <Badge variant="outline" className="text-xs">
+                                  {fr.rows} questões
+                                </Badge>
+                              )}
+                              {fr.error && (
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger>
+                                      <AlertCircle className="h-4 w-4 text-red-500" />
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p className="text-xs max-w-[200px]">{fr.error}</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                      {fileResults.some(f => f.status === 'done') && (
+                        <div className="mt-3 pt-3 border-t flex justify-between items-center">
+                          <span className="text-sm text-muted-foreground">
+                            Total: <strong>{fileResults.reduce((acc, f) => acc + f.rows, 0)}</strong> questões
+                          </span>
+                          <Badge className="bg-green-500/20 text-green-500 border-green-500/30">
+                            {fileResults.filter(f => f.status === 'done').length} arquivos OK
+                          </Badge>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
                 
                 {/* Regras do contrato */}
-                <div className="mt-6 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 max-w-lg">
+                <div className="mt-6 p-4 rounded-lg border border-yellow-500/30 bg-yellow-500/5 max-w-2xl w-full">
                   <div className="flex items-center gap-2 text-yellow-600 dark:text-yellow-400 mb-2">
                     <AlertTriangle className="h-4 w-4" />
-                    <span className="font-semibold text-sm">Regras de Importação</span>
+                    <span className="font-semibold text-sm">Regras de Importação em Lote</span>
                   </div>
                   <ul className="text-xs text-muted-foreground space-y-1">
+                    <li>• <strong>Múltiplos arquivos</strong> serão combinados em uma única importação</li>
+                    <li>• Todos os arquivos devem ter a <strong>mesma estrutura de colunas</strong></li>
                     <li>• Campos não identificáveis permanecerão <strong>NULL</strong></li>
-                    <li>• Nenhum valor padrão será forçado automaticamente</li>
-                    <li>• Questões serão importadas como <strong>RASCUNHO</strong> (inativas)</li>
                     <li>• Autorização explícita será exigida antes da importação</li>
                   </ul>
                 </div>
@@ -1513,17 +1645,17 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </p>
                   <Button variant="outline" size="sm" onClick={() => {
                     const template = [
-                      ['Pergunta', 'A', 'B', 'C', 'D', 'E', 'Resposta', 'Explicação', 'Dificuldade', 'Banca', 'Ano', 'Macro', 'Micro', 'Tema'],
-                      ['Qual é o símbolo do elemento Ouro?', 'Au', 'Ag', 'Fe', 'Cu', 'Zn', 'A', 'O símbolo Au vem do latim Aurum', 'Fácil', 'ENEM', '2023', 'Ciências da Natureza', 'Química', 'Tabela Periódica'],
+                      ['ENUNCIADO', 'ALTERNATIVA A', 'ALTERNATIVA B', 'ALTERNATIVA C', 'ALTERNATIVA D', 'ALTERNATIVA E', 'GABARITO', 'RESOLUCAO', 'DIFICULDADE', 'BANCA', 'ANO', 'MACRO', 'MICRO', 'TEMA', 'SUBTEMA', 'IMAGEM', 'COMPETENCIA_ENEM', 'HABILIDADE_ENEM', 'TAGS'],
+                      ['Qual é o símbolo do elemento Ouro?', 'Au', 'Ag', 'Fe', 'Cu', 'Zn', 'A', '✅ ALTERNATIVA A (CORRETA)\nO símbolo Au vem do latim Aurum.\n\n❌ ALTERNATIVA B (INCORRETA)\nAg é o símbolo da Prata (Argentum).\n\n🎯 CONCLUSÃO:\nO ouro é representado pelo símbolo Au devido à sua origem latina.', 'Fácil', 'ENEM', '2023', 'Química Geral', 'Tabela Periódica', 'Elementos Químicos', 'Metais', '', '', '', 'SIMULADOS'],
                     ];
                     const ws = XLSX.utils.aoa_to_sheet(template);
                     const wb = XLSX.utils.book_new();
                     XLSX.utils.book_append_sheet(wb, ws, 'Questões');
-                    XLSX.writeFile(wb, 'template_questoes.xlsx');
+                    XLSX.writeFile(wb, 'template_questoes_padrao.xlsx');
                     toast.success('Template baixado!');
                   }}>
                     <Download className="h-4 w-4 mr-2" />
-                    Baixar Template Excel
+                    Baixar Template Excel (19 colunas)
                   </Button>
                 </div>
               </motion.div>
@@ -1542,7 +1674,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   <div>
                     <h3 className="font-semibold">Mapeamento de Colunas</h3>
                     <p className="text-sm text-muted-foreground">
-                      {rawData.length} linhas • {headers.length} colunas detectadas
+                      {batchMode && <><strong>{files.length} arquivos</strong> • </>}
+                      {rawData.length} questões • {headers.length} colunas detectadas
                     </p>
                   </div>
 
@@ -2320,7 +2453,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                       </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+                        {importResult.filesProcessed > 1 && (
+                          <div className="text-center p-3 rounded-lg bg-purple-500/10 border border-purple-500/20">
+                            <div className="text-2xl font-bold text-purple-500">{importResult.filesProcessed}</div>
+                            <div className="text-xs text-muted-foreground">Arquivos</div>
+                          </div>
+                        )}
                         <div className="text-center p-3 rounded-lg bg-green-500/10 border border-green-500/20">
                           <div className="text-2xl font-bold text-green-500">{importResult.imported}</div>
                           <div className="text-xs text-muted-foreground">Importadas</div>
