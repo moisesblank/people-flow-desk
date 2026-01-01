@@ -38,7 +38,8 @@ import {
   Video,
   Image as ImageIcon,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Sparkles
 } from 'lucide-react';
 import { 
   QuestionImageUploader, 
@@ -930,6 +931,7 @@ function GestaoQuestoes() {
   const [temaFilter, setTemaFilter] = useState<string>('all');
   const [subtemaFilter, setSubtemaFilter] = useState<string>('all');
   const [questionTypeFilter, setQuestionTypeFilter] = useState<'all' | 'multiple_choice' | 'discursive'>('all');
+  const [estiloEnemFilter, setEstiloEnemFilter] = useState(false);
   
   // Dialog states
   const [questionDialog, setQuestionDialog] = useState(false);
@@ -1205,12 +1207,26 @@ function GestaoQuestoes() {
     const modoTreino = questions.filter(q => q.tags?.includes('MODO_TREINO'));
     // NÃO ASSOCIADA: questões que NÃO têm MACRO e MICRO juntos
     const naoAssociada = questions.filter(q => !q.macro || !q.micro);
+    // ESTILO ENEM: questões com características ENEM
+    const estiloEnem = questions.filter(q => {
+      const qAny = q as any;
+      if (qAny.is_estilo_enem === true) return true;
+      if (qAny.tem_situacao_problema === true) return true;
+      if (qAny.tem_texto_base === true) return true;
+      if (qAny.tipo_estrutura === 'situacao_problema') return true;
+      if (qAny.tipo_estrutura === 'interpretacao_texto') return true;
+      if (qAny.demanda_cognitiva === 'alta' || qAny.demanda_cognitiva === 'muito_alta') return true;
+      if (qAny.habilidades_enem?.length > 0) return true;
+      if (q.question_text && q.question_text.length > 500) return true;
+      return false;
+    });
     return {
       total: questions.length,
       active: active.length,
       simulados: simulados.length,
       modoTreino: modoTreino.length,
       naoAssociada: naoAssociada.length,
+      estiloEnem: estiloEnem.length,
       byDifficulty: {
         facil: questions.filter(q => q.difficulty === 'facil').length,
         medio: questions.filter(q => q.difficulty === 'medio').length,
@@ -1347,6 +1363,29 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.question_type === questionTypeFilter);
     }
 
+    // ==========================================
+    // FILTRO ESTILO ENEM (Enterprise-Level)
+    // Questões com características ENEM: situação-problema, texto-base, contexto
+    // ==========================================
+    if (estiloEnemFilter) {
+      filtered = filtered.filter(q => {
+        const qAny = q as any;
+        // Verifica flag explícita
+        if (qAny.is_estilo_enem === true) return true;
+        // Verifica características ENEM (heurística)
+        if (qAny.tem_situacao_problema === true) return true;
+        if (qAny.tem_texto_base === true) return true;
+        if (qAny.tipo_estrutura === 'situacao_problema') return true;
+        if (qAny.tipo_estrutura === 'interpretacao_texto') return true;
+        if (qAny.tipo_estrutura === 'analise_dados') return true;
+        if (qAny.demanda_cognitiva === 'alta' || qAny.demanda_cognitiva === 'muito_alta') return true;
+        if (qAny.habilidades_enem?.length > 0) return true;
+        // Heurística por tamanho do enunciado (>500 chars = provavelmente contextualizada)
+        if (q.question_text && q.question_text.length > 500) return true;
+        return false;
+      });
+    }
+
     // Filtro por busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -1402,7 +1441,7 @@ function GestaoQuestoes() {
     }
 
     return filtered;
-  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, temaFilter, subtemaFilter, classifyMacroArea, duplicateQuestionIds, getGroupNumber]);
+  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, temaFilter, subtemaFilter, classifyMacroArea, duplicateQuestionIds, getGroupNumber, questionTypeFilter, estiloEnemFilter]);
 
   // PAGINATION: Calcular total de páginas e slice da página atual
   const totalPages = useMemo(() => Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE), [filteredQuestions.length, ITEMS_PER_PAGE]);
@@ -1416,7 +1455,7 @@ function GestaoQuestoes() {
   // Reset página ao mudar filtros
   useEffect(() => {
     setCurrentPage(1);
-  }, [activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, macroAreaFilter, microFilter, temaFilter, subtemaFilter]);
+  }, [activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, macroAreaFilter, microFilter, temaFilter, subtemaFilter, estiloEnemFilter]);
 
   // Handlers
   const handleEdit = (question: Question) => {
@@ -1749,6 +1788,7 @@ function GestaoQuestoes() {
               setBancaFilter('all');
               setAnoFilter('all');
               setQuestionTypeFilter('all');
+              setEstiloEnemFilter(false);
               setSearchTerm('');
               setSortOrder('newest');
               // Recarregar dados
@@ -2278,8 +2318,27 @@ function GestaoQuestoes() {
                 </SelectContent>
               </Select>
 
+              {/* 8. ESTILO ENEM - Toggle Filter (Enterprise) */}
+              <Button
+                variant={estiloEnemFilter ? "default" : "outline"}
+                size="sm"
+                onClick={() => setEstiloEnemFilter(!estiloEnemFilter)}
+                className={cn(
+                  "h-10 gap-2 font-semibold transition-all",
+                  estiloEnemFilter 
+                    ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-lg shadow-blue-500/30" 
+                    : "border-blue-500/50 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500"
+                )}
+              >
+                <Sparkles className={cn("h-4 w-4", estiloEnemFilter && "animate-pulse")} />
+                ESTILO ENEM
+                {estiloEnemFilter && (
+                  <Badge className="ml-1 bg-white/20 text-white border-0 text-[10px] px-1.5">ON</Badge>
+                )}
+              </Button>
+
               {/* Botão Limpar Filtros */}
-              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || microFilter !== 'all' || temaFilter !== 'all' || subtemaFilter !== 'all' || questionTypeFilter !== 'all' || searchTerm.trim()) && (
+              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || microFilter !== 'all' || temaFilter !== 'all' || subtemaFilter !== 'all' || questionTypeFilter !== 'all' || estiloEnemFilter || searchTerm.trim()) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -2293,6 +2352,7 @@ function GestaoQuestoes() {
                     setTemaFilter('all');
                     setSubtemaFilter('all');
                     setQuestionTypeFilter('all');
+                    setEstiloEnemFilter(false);
                     setSearchTerm('');
                     setSortOrder('newest');
                   }}

@@ -9119,108 +9119,174 @@ export type Database = {
         Row: {
           ano: number | null
           area_id: string | null
+          autor_id: string | null
           banca: string | null
           campos_inferidos: string[] | null
+          contexto_tematico: string | null
           correct_answer: string | null
           created_at: string | null
+          data_criacao_original: string | null
+          demanda_cognitiva: string | null
           difficulty: string | null
+          disciplinas_relacionadas: string[] | null
           explanation: string | null
+          feedback_agregado: Json | null
+          habilidades_enem: string[] | null
           has_video_resolution: boolean | null
           id: string
           image_url: string | null
           image_urls: Json | null
+          indice_discriminacao: number | null
           is_active: boolean | null
+          is_estilo_enem: boolean | null
           lesson_id: string | null
           macro: string | null
           micro: string | null
           nivel_cognitivo: string | null
+          objeto_conhecimento: string | null
           options: Json | null
           orgao_cargo: string | null
           origem: string | null
           points: number | null
           position: number | null
+          problemas_reportados: number | null
+          qualidade_score: number | null
+          questao_pai_id: string | null
           question_text: string
           question_type: string | null
           quiz_id: string | null
+          recursos_visuais: string[] | null
+          status_curadoria: string | null
           status_revisao: string | null
           subtema: string | null
           tags: string[] | null
+          taxa_acerto_media: number | null
+          tem_situacao_problema: boolean | null
+          tem_texto_base: boolean | null
           tema: string | null
+          tempo_estimado_segundos: number | null
           tempo_medio_segundos: number | null
+          tipo_estrutura: string | null
           topic: string | null
           updated_at: string | null
+          versao: number | null
+          vezes_utilizada: number | null
           video_provider: string | null
           video_url: string | null
         }
         Insert: {
           ano?: number | null
           area_id?: string | null
+          autor_id?: string | null
           banca?: string | null
           campos_inferidos?: string[] | null
+          contexto_tematico?: string | null
           correct_answer?: string | null
           created_at?: string | null
+          data_criacao_original?: string | null
+          demanda_cognitiva?: string | null
           difficulty?: string | null
+          disciplinas_relacionadas?: string[] | null
           explanation?: string | null
+          feedback_agregado?: Json | null
+          habilidades_enem?: string[] | null
           has_video_resolution?: boolean | null
           id?: string
           image_url?: string | null
           image_urls?: Json | null
+          indice_discriminacao?: number | null
           is_active?: boolean | null
+          is_estilo_enem?: boolean | null
           lesson_id?: string | null
           macro?: string | null
           micro?: string | null
           nivel_cognitivo?: string | null
+          objeto_conhecimento?: string | null
           options?: Json | null
           orgao_cargo?: string | null
           origem?: string | null
           points?: number | null
           position?: number | null
+          problemas_reportados?: number | null
+          qualidade_score?: number | null
+          questao_pai_id?: string | null
           question_text: string
           question_type?: string | null
           quiz_id?: string | null
+          recursos_visuais?: string[] | null
+          status_curadoria?: string | null
           status_revisao?: string | null
           subtema?: string | null
           tags?: string[] | null
+          taxa_acerto_media?: number | null
+          tem_situacao_problema?: boolean | null
+          tem_texto_base?: boolean | null
           tema?: string | null
+          tempo_estimado_segundos?: number | null
           tempo_medio_segundos?: number | null
+          tipo_estrutura?: string | null
           topic?: string | null
           updated_at?: string | null
+          versao?: number | null
+          vezes_utilizada?: number | null
           video_provider?: string | null
           video_url?: string | null
         }
         Update: {
           ano?: number | null
           area_id?: string | null
+          autor_id?: string | null
           banca?: string | null
           campos_inferidos?: string[] | null
+          contexto_tematico?: string | null
           correct_answer?: string | null
           created_at?: string | null
+          data_criacao_original?: string | null
+          demanda_cognitiva?: string | null
           difficulty?: string | null
+          disciplinas_relacionadas?: string[] | null
           explanation?: string | null
+          feedback_agregado?: Json | null
+          habilidades_enem?: string[] | null
           has_video_resolution?: boolean | null
           id?: string
           image_url?: string | null
           image_urls?: Json | null
+          indice_discriminacao?: number | null
           is_active?: boolean | null
+          is_estilo_enem?: boolean | null
           lesson_id?: string | null
           macro?: string | null
           micro?: string | null
           nivel_cognitivo?: string | null
+          objeto_conhecimento?: string | null
           options?: Json | null
           orgao_cargo?: string | null
           origem?: string | null
           points?: number | null
           position?: number | null
+          problemas_reportados?: number | null
+          qualidade_score?: number | null
+          questao_pai_id?: string | null
           question_text?: string
           question_type?: string | null
           quiz_id?: string | null
+          recursos_visuais?: string[] | null
+          status_curadoria?: string | null
           status_revisao?: string | null
           subtema?: string | null
           tags?: string[] | null
+          taxa_acerto_media?: number | null
+          tem_situacao_problema?: boolean | null
+          tem_texto_base?: boolean | null
           tema?: string | null
+          tempo_estimado_segundos?: number | null
           tempo_medio_segundos?: number | null
+          tipo_estrutura?: string | null
           topic?: string | null
           updated_at?: string | null
+          versao?: number | null
+          vezes_utilizada?: number | null
           video_provider?: string | null
           video_url?: string | null
         }
@@ -9237,6 +9303,13 @@ export type Database = {
             columns: ["lesson_id"]
             isOneToOne: false
             referencedRelation: "lessons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quiz_questions_questao_pai_id_fkey"
+            columns: ["questao_pai_id"]
+            isOneToOne: false
+            referencedRelation: "quiz_questions"
             referencedColumns: ["id"]
           },
           {
