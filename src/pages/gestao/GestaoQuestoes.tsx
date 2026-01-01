@@ -1923,102 +1923,65 @@ function GestaoQuestoes() {
                           </div>
                         </div>
                         
-                        {/* Right: Metadata Cards */}
-                        <div className="flex items-center gap-3 shrink-0">
-                          {/* Dificuldade */}
-                          <div className={cn(
-                            "text-center px-3 py-2 rounded-lg border",
-                            question.difficulty === 'facil' && 'bg-green-500/10 border-green-500/30',
-                            question.difficulty === 'medio' && 'bg-yellow-500/10 border-yellow-500/30',
-                            question.difficulty === 'dificil' && 'bg-red-500/10 border-red-500/30',
-                          )}>
-                            <div className="text-lg">
-                              {question.difficulty === 'facil' && '🟢'}
-                              {question.difficulty === 'medio' && '🟡'}
-                              {question.difficulty === 'dificil' && '🔴'}
-                            </div>
-                            <div className={cn(
-                              "text-[10px] font-semibold uppercase tracking-wide",
-                              question.difficulty === 'facil' && 'text-green-400',
-                              question.difficulty === 'medio' && 'text-yellow-400',
-                              question.difficulty === 'dificil' && 'text-red-400',
-                            )}>
-                              {question.difficulty === 'facil' && 'Fácil'}
-                              {question.difficulty === 'medio' && 'Médio'}
-                              {question.difficulty === 'dificil' && 'Difícil'}
-                            </div>
-                          </div>
-                          
-                          {/* Banca + Ano */}
-                          <div className="text-center px-3 py-2 rounded-lg bg-muted/50 border border-border/50 min-w-[80px]">
-                            <div className="text-xs font-bold text-foreground">
-                              {getBancaLabel(question.banca) || '—'}
-                            </div>
-                            <div className="text-lg font-mono text-primary">
-                              {question.ano || '—'}
-                            </div>
-                          </div>
-                          
-                          {/* Ações Rápidas */}
-                          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-primary/20 hover:text-primary"
-                              onClick={() => navigate(`/gestaofc/questoes/${question.id}`)}
-                              title="Ver Detalhe"
-                            >
-                              <Eye className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 hover:bg-blue-500/20 hover:text-blue-400"
-                              onClick={() => handleEdit(question)}
-                              title="Editar"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <DropdownMenu modal={false}>
-                              <DropdownMenuTrigger asChild>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8"
-                                  title="Mais opções"
-                                >
-                                  <MoreVertical className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" sideOffset={4}>
-                                <DropdownMenuItem onClick={() => handleDuplicate(question)}>
-                                  <Copy className="h-4 w-4 mr-2" />
-                                  Duplicar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleToggleActive(question.id, question.is_active)}>
-                                  {question.is_active ? (
-                                    <>
-                                      <Archive className="h-4 w-4 mr-2" />
-                                      Desativar
-                                    </>
-                                  ) : (
-                                    <>
-                                      <CheckCircle className="h-4 w-4 mr-2" />
-                                      Ativar
-                                    </>
-                                  )}
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem 
-                                  className="text-destructive"
-                                  onClick={() => setDeleteConfirm(question.id)}
-                                >
-                                  <Trash2 className="h-4 w-4 mr-2" />
-                                  Excluir
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                        {/* Right: Ações Rápidas (Dificuldade e Banca já estão na barra de badges acima) */}
+                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-primary/20 hover:text-primary"
+                            onClick={() => navigate(`/gestaofc/questoes/${question.id}`)}
+                            title="Ver Detalhe"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 hover:bg-blue-500/20 hover:text-blue-400"
+                            onClick={() => handleEdit(question)}
+                            title="Editar"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <DropdownMenu modal={false}>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8"
+                                title="Mais opções"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" sideOffset={4}>
+                              <DropdownMenuItem onClick={() => handleDuplicate(question)}>
+                                <Copy className="h-4 w-4 mr-2" />
+                                Duplicar
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleToggleActive(question.id, question.is_active)}>
+                                {question.is_active ? (
+                                  <>
+                                    <Archive className="h-4 w-4 mr-2" />
+                                    Desativar
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="h-4 w-4 mr-2" />
+                                    Ativar
+                                  </>
+                                )}
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              <DropdownMenuItem 
+                                className="text-destructive"
+                                onClick={() => setDeleteConfirm(question.id)}
+                              >
+                                <Trash2 className="h-4 w-4 mr-2" />
+                                Excluir
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         </div>
                       </div>
                       
