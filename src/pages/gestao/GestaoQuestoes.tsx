@@ -1026,32 +1026,30 @@ function GestaoQuestoes() {
     return 'geral';
   }, []);
 
-  // Micros filtrados pelo macro selecionado - USAR TAXONOMIA ou DADOS
+  // Micros filtrados pelo macroAreaFilter selecionado - SINCRONIZADO com cards
   const uniqueMicros = useMemo(() => {
-    // Se filtro macro ativo, usar micros da taxonomia OU extrair dos dados
-    if (macroFilter !== 'all') {
-      // Primeiro tenta buscar da taxonomia
-      const taxonomyMicros = getMicrosForSelect(macroFilter);
+    // Se filtro macro ativo, filtrar micros por área classificada
+    if (macroAreaFilter !== 'all') {
+      // Primeiro tenta buscar da taxonomia (mapeando area para macro value)
+      const areaToMacroValue: Record<string, string> = {
+        'organica': 'quimica_organica',
+        'fisico_quimica': 'fisico_quimica',
+        'geral': 'quimica_geral',
+      };
+      const macroValue = areaToMacroValue[macroAreaFilter];
+      const taxonomyMicros = getMicrosForSelect(macroValue);
       if (taxonomyMicros.length > 0) {
         return taxonomyMicros.map(m => m.label);
       }
       // Fallback: filtrar por classificação e extrair micros dos dados
-      const macroToAreaMap: Record<string, 'organica' | 'fisico_quimica' | 'geral'> = {
-        'quimica_organica': 'organica',
-        'fisico_quimica': 'fisico_quimica',
-        'quimica_geral': 'geral',
-      };
-      const targetArea = macroToAreaMap[macroFilter];
-      if (targetArea) {
-        const filtered = questions.filter(q => classifyMacroArea(q.macro) === targetArea);
-        const micros = filtered.map(q => q.micro).filter(Boolean) as string[];
-        return [...new Set(micros)].sort();
-      }
+      const filtered = questions.filter(q => classifyMacroArea(q.macro) === macroAreaFilter);
+      const micros = filtered.map(q => q.micro).filter(Boolean) as string[];
+      return [...new Set(micros)].sort();
     }
     // Sem filtro: mostrar todos os micros únicos dos dados
     const micros = questions.map(q => q.micro).filter(Boolean) as string[];
     return [...new Set(micros)].sort();
-  }, [questions, macroFilter, getMicrosForSelect, classifyMacroArea]);
+  }, [questions, macroAreaFilter, getMicrosForSelect, classifyMacroArea]);
 
   // Estatísticas por Grande Área
   const macroAreaStats = useMemo(() => {
