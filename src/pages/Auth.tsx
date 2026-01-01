@@ -2036,7 +2036,7 @@ export default function Auth() {
                   </div>
                   <h2 className="text-lg md:text-xl font-bold text-white text-center leading-tight">
                     <EditableText
-                      value={getValue(isLogin ? "auth_login_title" : "auth_signup_title", isLogin ? "GESTÃO CURSO QUÍMICA MOISÉS MEDEIROS" : "Criar Nova Conta")}
+                      value={getValue(isLogin ? "auth_login_title" : "auth_signup_title", isLogin ? "CURSO QUÍMICA MOISÉS MEDEIROS" : "Criar Nova Conta")}
                       onSave={(v) => updateValue(isLogin ? "auth_login_title" : "auth_signup_title", v)}
                       isEditMode={isEditMode}
                       canEdit={canEdit}
