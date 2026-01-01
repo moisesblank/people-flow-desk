@@ -1376,7 +1376,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           micro: q.micro || null,
           tema: q.tema || null,
           subtema: q.subtema || null,
-          tags: [...(q.tags || []), selectedGroup], // QUESTION_DOMAIN: Adiciona grupo
+          tags: [...new Set([...(q.tags || []), selectedGroup])], // QUESTION_DOMAIN: Deduplicado
           points: selectedGroup === 'MODO_TREINO' ? 0 : 10, // MODO_TREINO: 0 pts, SIMULADOS: 10 pts
           // IMPORTAÇÃO DIRETA - Questões já entram ATIVAS e PUBLICADAS
           is_active: true,
