@@ -19,6 +19,7 @@ export const SYSTEM_AREAS = [
   "tarefas",
   "integracoes",
   "calendario",
+  "logs",
   
   // ===== EQUIPE & RH =====
   "funcionarios",
@@ -155,6 +156,8 @@ export const URL_TO_AREA: Record<string, SystemArea> = {
   "/tarefas": "tarefas",
   "/integracoes": "integracoes",
   "/calendario": "calendario",
+  "/logs": "logs",
+  "/gestaofc/logs": "logs",
   
   // Equipe & RH
   "/funcionarios": "funcionarios",
@@ -331,7 +334,7 @@ export const ROLE_AREA_PERMISSIONS: Record<FullAppRole, SystemArea[]> = {
   
   // 👔 COORDENAÇÃO - Gestão acadêmica
   coordenacao: [
-    "dashboard", "tarefas", "calendario",
+    "dashboard", "tarefas", "calendario", "logs",
     "funcionarios", "area-professor", "gestao-equipe",
     "planejamento-aula", "turmas-online", "turmas-presenciais",
     "cursos", "simulados", "alunos", "portal-aluno",
