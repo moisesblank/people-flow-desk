@@ -131,29 +131,30 @@ export function predictSuccessRate(input: QuestionAnalysisInput): PredictionResu
   const { difficulty, questionText, options, explanation, hasImage, tema } = input;
   const factors: string[] = [];
   
-  // 1. Base range por dificuldade
+  // 1. Base range por dificuldade (RANGES DEFINIDOS)
+  // Fácil: 80-100% | Médio: 50-79% | Difícil: 1-49%
   let baseMin: number;
   let baseMax: number;
   
   switch (difficulty?.toLowerCase()) {
     case 'facil':
-      baseMin = 70;
-      baseMax = 95;
+      baseMin = 80;
+      baseMax = 100;
       factors.push('Dificuldade: Fácil');
       break;
     case 'medio':
-      baseMin = 40;
-      baseMax = 70;
+      baseMin = 50;
+      baseMax = 79;
       factors.push('Dificuldade: Médio');
       break;
     case 'dificil':
-      baseMin = 5;
-      baseMax = 35;
+      baseMin = 1;
+      baseMax = 49;
       factors.push('Dificuldade: Difícil');
       break;
     default:
-      baseMin = 40;
-      baseMax = 60;
+      baseMin = 50;
+      baseMax = 79;
       factors.push('Dificuldade: Não definida');
   }
 
