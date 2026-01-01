@@ -1826,7 +1826,7 @@ function GestaoQuestoes() {
                         BARRA DE BADGES - Visibilidade Organizacional Expandida
                         Exibe: Status | Publicado | Dificuldade | Banca | Ano | Tipo | Área
                     ══════════════════════════════════════════════════════════════ */}
-                      <div className="flex flex-wrap items-center justify-between gap-2 mb-3 pb-3 border-b border-border/30">
+                      <div className="flex flex-wrap items-center justify-center gap-2 mb-3 pb-3 border-b border-border/30">
                         {/* Grupo Esquerdo: Status + Publicado */}
                         <div className="flex items-center gap-2">
                           {question.is_active ? (
