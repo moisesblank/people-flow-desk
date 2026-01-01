@@ -124,6 +124,10 @@ interface Question {
   difficulty: string;
   banca?: string | null;
   ano?: number | null;
+  macro?: string | null;
+  micro?: string | null;
+  tema?: string | null;
+  subtema?: string | null;
   tags?: string[] | null;
   points: number;
   position: number;
@@ -911,6 +915,9 @@ function GestaoQuestoes() {
   const [searchTerm, setSearchTerm] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState<string>('all');
   const [bancaFilter, setBancaFilter] = useState<string>('all');
+  const [macroFilter, setMacroFilter] = useState<string>('all');
+  const [anoFilter, setAnoFilter] = useState<string>('all');
+  const [sortOrder, setSortOrder] = useState<string>('newest');
   const [activeTab, setActiveTab] = useState('todas');
   
   // Dialog states
@@ -960,6 +967,9 @@ function GestaoQuestoes() {
     setSearchTerm('');
     setDifficultyFilter('all');
     setBancaFilter('all');
+    setMacroFilter('all');
+    setAnoFilter('all');
+    setSortOrder('newest');
     
     // 2. Forçar reload do banco (ignora cache)
     loadQuestions();
@@ -969,6 +979,17 @@ function GestaoQuestoes() {
       toast.success(`${importedCount} questões importadas e visíveis na lista!`);
     }
   }, [loadQuestions]);
+
+  // Extrair valores únicos para filtros dinâmicos
+  const uniqueMacros = useMemo(() => {
+    const macros = questions.map(q => q.macro).filter(Boolean) as string[];
+    return [...new Set(macros)].sort();
+  }, [questions]);
+
+  const uniqueAnos = useMemo(() => {
+    const anos = questions.map(q => q.ano).filter(Boolean) as number[];
+    return [...new Set(anos)].sort((a, b) => b - a);
+  }, [questions]);
 
   useEffect(() => {
     loadQuestions();
@@ -989,7 +1010,7 @@ function GestaoQuestoes() {
     };
   }, [questions]);
 
-  // Questões filtradas
+  // Questões filtradas e ordenadas
   const filteredQuestions = useMemo(() => {
     let filtered = [...questions];
 
@@ -1010,17 +1031,57 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.banca === bancaFilter);
     }
 
+    // Filtro por macro (área de conhecimento)
+    if (macroFilter !== 'all') {
+      filtered = filtered.filter(q => q.macro === macroFilter);
+    }
+
+    // Filtro por ano
+    if (anoFilter !== 'all') {
+      filtered = filtered.filter(q => q.ano === parseInt(anoFilter));
+    }
+
     // Filtro por busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
       filtered = filtered.filter(q => 
         q.question_text.toLowerCase().includes(term) ||
-        q.banca?.toLowerCase().includes(term)
+        q.banca?.toLowerCase().includes(term) ||
+        q.macro?.toLowerCase().includes(term) ||
+        q.micro?.toLowerCase().includes(term) ||
+        q.tema?.toLowerCase().includes(term)
       );
     }
 
+    // Ordenação
+    switch (sortOrder) {
+      case 'newest':
+        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+        break;
+      case 'oldest':
+        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+        break;
+      case 'ano_desc':
+        filtered.sort((a, b) => (b.ano || 0) - (a.ano || 0));
+        break;
+      case 'ano_asc':
+        filtered.sort((a, b) => (a.ano || 0) - (b.ano || 0));
+        break;
+      case 'difficulty_asc':
+        const diffOrder = { facil: 1, medio: 2, dificil: 3 };
+        filtered.sort((a, b) => (diffOrder[a.difficulty as keyof typeof diffOrder] || 2) - (diffOrder[b.difficulty as keyof typeof diffOrder] || 2));
+        break;
+      case 'difficulty_desc':
+        const diffOrderDesc = { facil: 1, medio: 2, dificil: 3 };
+        filtered.sort((a, b) => (diffOrderDesc[b.difficulty as keyof typeof diffOrderDesc] || 2) - (diffOrderDesc[a.difficulty as keyof typeof diffOrderDesc] || 2));
+        break;
+      case 'alphabetical':
+        filtered.sort((a, b) => a.question_text.localeCompare(b.question_text));
+        break;
+    }
+
     return filtered;
-  }, [questions, activeTab, difficultyFilter, bancaFilter, searchTerm]);
+  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder]);
 
   // Handlers
   const handleEdit = (question: Question) => {
@@ -1232,68 +1293,146 @@ function GestaoQuestoes() {
         </Card>
       </motion.div>
 
-      {/* Tabs e Filtros */}
+      {/* Filtros Avançados */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
       >
         <Card>
-          <CardContent className="p-4">
+          <CardContent className="p-4 space-y-4">
+            {/* Linha 1: Tabs + Busca */}
             <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
               {/* Tabs */}
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full md:w-auto">
                 <TabsList>
-                  <TabsTrigger value="todas">Todas</TabsTrigger>
-                  <TabsTrigger value="ativas">Ativas</TabsTrigger>
-                  <TabsTrigger value="inativas">Inativas</TabsTrigger>
+                  <TabsTrigger value="todas">Todas ({stats.total})</TabsTrigger>
+                  <TabsTrigger value="ativas">Ativas ({stats.active})</TabsTrigger>
+                  <TabsTrigger value="inativas">Inativas ({stats.total - stats.active})</TabsTrigger>
                 </TabsList>
               </Tabs>
 
-              {/* Filtros */}
-              <div className="flex flex-wrap gap-3 w-full md:w-auto">
-                <div className="relative flex-1 md:flex-none md:w-64">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Buscar questões..." 
-                    className="pl-10"
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                  />
-                </div>
-
-                <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Dificuldade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas</SelectItem>
-                    <SelectItem value="facil">🟢 Fácil</SelectItem>
-                    <SelectItem value="medio">🟡 Médio</SelectItem>
-                    <SelectItem value="dificil">🔴 Difícil</SelectItem>
-                  </SelectContent>
-                </Select>
-
-                <Select value={bancaFilter} onValueChange={setBancaFilter}>
-                  <SelectTrigger className="w-[140px]">
-                    <SelectValue placeholder="Banca" />
-                  </SelectTrigger>
-                  <SelectContent className="max-h-[300px]">
-                    <SelectItem value="all">Todas</SelectItem>
-                    {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
-                      <div key={categoria}>
-                        <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
-                          {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
-                        </div>
-                        {bancas.map(b => (
-                          <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
-                        ))}
-                      </div>
-                    ))}
-                  </SelectContent>
-                </Select>
+              {/* Busca */}
+              <div className="relative flex-1 md:flex-none md:w-80">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input 
+                  placeholder="Buscar por enunciado, banca, tema..." 
+                  className="pl-10"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
               </div>
             </div>
+
+            {/* Linha 2: Filtros em grid organizado */}
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+              {/* Dificuldade */}
+              <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Dificuldade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Dificuldade: Todas</SelectItem>
+                  <SelectItem value="facil">🟢 Fácil</SelectItem>
+                  <SelectItem value="medio">🟡 Médio</SelectItem>
+                  <SelectItem value="dificil">🔴 Difícil</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Banca */}
+              <Select value={bancaFilter} onValueChange={setBancaFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Banca" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">Banca: Todas</SelectItem>
+                  {Object.entries(BANCAS_POR_CATEGORIA).map(([categoria, bancas]) => (
+                    <div key={categoria}>
+                      <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground bg-muted/50 sticky top-0">
+                        {CATEGORIA_LABELS[categoria as keyof typeof CATEGORIA_LABELS]}
+                      </div>
+                      {bancas.map(b => (
+                        <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>
+                      ))}
+                    </div>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Macro (Área de Conhecimento) */}
+              <Select value={macroFilter} onValueChange={setMacroFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Área" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">Área: Todas</SelectItem>
+                  {uniqueMacros.map(macro => (
+                    <SelectItem key={macro} value={macro}>
+                      {macro.length > 25 ? macro.substring(0, 25) + '...' : macro}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Ano */}
+              <Select value={anoFilter} onValueChange={setAnoFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Ano: Todos</SelectItem>
+                  {uniqueAnos.map(ano => (
+                    <SelectItem key={ano} value={String(ano)}>{ano}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Ordenação */}
+              <Select value={sortOrder} onValueChange={setSortOrder}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">📅 Mais recentes</SelectItem>
+                  <SelectItem value="oldest">📅 Mais antigas</SelectItem>
+                  <SelectItem value="ano_desc">🗓️ Ano ↓</SelectItem>
+                  <SelectItem value="ano_asc">🗓️ Ano ↑</SelectItem>
+                  <SelectItem value="difficulty_asc">📊 Fácil → Difícil</SelectItem>
+                  <SelectItem value="difficulty_desc">📊 Difícil → Fácil</SelectItem>
+                  <SelectItem value="alphabetical">🔤 Alfabética</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {/* Botão Limpar Filtros */}
+              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || searchTerm.trim()) && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setDifficultyFilter('all');
+                    setBancaFilter('all');
+                    setMacroFilter('all');
+                    setAnoFilter('all');
+                    setSearchTerm('');
+                    setSortOrder('newest');
+                  }}
+                  className="h-10"
+                >
+                  <X className="h-4 w-4 mr-1" />
+                  Limpar
+                </Button>
+              )}
+            </div>
+
+            {/* Indicador de filtros ativos */}
+            {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all') && (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <Filter className="h-4 w-4" />
+                <span>
+                  Exibindo <strong className="text-foreground">{filteredQuestions.length}</strong> de {questions.length} questões
+                </span>
+              </div>
+            )}
           </CardContent>
         </Card>
       </motion.div>
@@ -1315,7 +1454,7 @@ function GestaoQuestoes() {
                 <FileQuestion className="h-16 w-16 text-muted-foreground/50 mb-4" />
                 <h3 className="text-lg font-semibold">Nenhuma questão encontrada</h3>
                 <p className="text-sm text-muted-foreground mb-4">
-                  {searchTerm || difficultyFilter !== 'all' || bancaFilter !== 'all'
+                  {searchTerm || difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all'
                     ? 'Tente ajustar os filtros'
                     : 'Clique em "Nova Questão" para começar'}
                 </p>
@@ -1331,7 +1470,8 @@ function GestaoQuestoes() {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[50%]">Enunciado</TableHead>
+                    <TableHead className="w-[40%]">Enunciado</TableHead>
+                    <TableHead>Área</TableHead>
                     <TableHead>Dificuldade</TableHead>
                     <TableHead>Banca</TableHead>
                     <TableHead>Ano</TableHead>
@@ -1350,16 +1490,25 @@ function GestaoQuestoes() {
                         </div>
                       </TableCell>
                       <TableCell>
+                        {question.macro ? (
+                          <Badge variant="outline" className="text-xs max-w-[120px] truncate" title={question.macro}>
+                            {question.macro.length > 15 ? question.macro.substring(0, 15) + '...' : question.macro}
+                          </Badge>
+                        ) : (
+                          <span className="text-muted-foreground text-xs">—</span>
+                        )}
+                      </TableCell>
+                      <TableCell>
                         <Badge className={cn("border", DIFFICULTY_MAP[question.difficulty]?.color)}>
                           {DIFFICULTY_MAP[question.difficulty]?.label}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         <Badge variant="outline">
-                          {BANCAS.find(b => b.value === question.banca)?.label || question.banca}
+                          {BANCAS.find(b => b.value === question.banca)?.label || question.banca || '—'}
                         </Badge>
                       </TableCell>
-                      <TableCell>{question.ano}</TableCell>
+                      <TableCell>{question.ano || '—'}</TableCell>
                       <TableCell>
                         <Badge variant={question.is_active ? "default" : "secondary"}>
                           {question.is_active ? 'Ativa' : 'Inativa'}
