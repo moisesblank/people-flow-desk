@@ -161,7 +161,7 @@ interface ImportStats {
 interface QuestionImportDialogProps {
   open: boolean;
   onClose: () => void;
-  onSuccess: () => void;
+  onSuccess: (importedCount?: number) => void;
 }
 
 // ============================================
@@ -2315,9 +2315,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     <Button
                       size="lg"
                       onClick={() => {
-                        onSuccess();
+                        // Passa a quantidade importada para o pai poder exibir toast informativo
+                        onSuccess(importResult?.imported ?? 0);
                         onClose();
-                        toast.success('Importação concluída com sucesso. Questões ATIVAS e publicadas.');
                       }}
                       className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700"
                     >

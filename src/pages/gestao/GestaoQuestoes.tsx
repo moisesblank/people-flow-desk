@@ -953,12 +953,21 @@ function GestaoQuestoes() {
   }, []);
 
   // Após importar: recarrega e zera filtros para garantir visibilidade imediata
-  const handleImportSuccess = useCallback(() => {
+  // BLINDADO: Este callback SEMPRE é chamado pelo QuestionImportDialog.onSuccess
+  const handleImportSuccess = useCallback((importedCount?: number) => {
+    // 1. Resetar todos os filtros para exibir TODAS as questões
     setActiveTab('todas');
     setSearchTerm('');
     setDifficultyFilter('all');
     setBancaFilter('all');
+    
+    // 2. Forçar reload do banco (ignora cache)
     loadQuestions();
+    
+    // 3. Toast informativo com quantidade (se disponível)
+    if (importedCount && importedCount > 0) {
+      toast.success(`${importedCount} questões importadas e visíveis na lista!`);
+    }
   }, [loadQuestions]);
 
   useEffect(() => {
