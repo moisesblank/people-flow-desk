@@ -8764,7 +8764,7 @@ export type Database = {
             foreignKeyName: "question_attempts_question_id_fkey"
             columns: ["question_id"]
             isOneToOne: false
-            referencedRelation: "sanctuary_questions"
+            referencedRelation: "quiz_questions"
             referencedColumns: ["id"]
           },
           {
@@ -16743,6 +16743,7 @@ export type Database = {
           total_time: number
         }[]
       }
+      annihilate_all_questions: { Args: never; Returns: Json }
       apply_chat_timeout: {
         Args: {
           p_duration_minutes?: number
@@ -17189,6 +17190,10 @@ export type Database = {
       current_user_email: { Args: never; Returns: string }
       deactivate_device: { Args: { p_device_id: string }; Returns: Json }
       decay_video_risk_scores: { Args: never; Returns: number }
+      delete_question_cascade: {
+        Args: { p_question_id: string }
+        Returns: Json
+      }
       do_cleanup_expired_sessions: { Args: never; Returns: number }
       do_cleanup_rate_limits: { Args: never; Returns: number }
       email_exists_globally: {
