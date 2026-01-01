@@ -488,28 +488,23 @@ const formatContent = (content: string) => {
 };
 
 /**
- * Item de alternativa dentro do bloco agrupado — SIMPLIFICADO
+ * Item de alternativa — TUDO NA MESMA LINHA
  */
 const AlternativaItem = memo(function AlternativaItem({ section }: { section: ParsedSection }) {
   const isCorrect = section.type === 'alternativa_correta' || section.type === 'afirmacao_correta';
-  const isErrada = section.type === 'alternativa_errada' || section.type === 'afirmacao_incorreta';
   
   const letter = section.alternativaLetter || section.afirmacaoNumber || '';
   const icon = isCorrect ? '✅' : '❌';
   
   return (
-    <div className="px-4 py-3">
-      <div className="flex items-start gap-2">
-        <span className={cn(
-          "font-semibold text-sm shrink-0",
-          isCorrect ? "text-green-500" : "text-red-500"
-        )}>
-          {icon} Alternativa {letter}
-          {isCorrect && <span className="ml-1">— CORRETA</span>}
-        </span>
-      </div>
-      <p className="text-sm text-foreground/80 mt-1 leading-relaxed pl-6">
-        {formatContent(section.content)}
+    <div className="px-4 py-2.5">
+      <p className={cn(
+        "text-sm leading-relaxed",
+        isCorrect ? "text-green-500" : "text-red-500"
+      )}>
+        <span className="font-semibold">{icon} Alternativa {letter}</span>
+        {isCorrect && <span className="font-semibold"> — CORRETA</span>}
+        <span className="text-foreground/80"> → {formatContent(section.content)}</span>
       </p>
     </div>
   );
