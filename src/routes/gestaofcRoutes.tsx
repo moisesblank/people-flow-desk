@@ -45,7 +45,7 @@ const GestaoVideoaulas = lazy(() => import("@/pages/gestao/GestaoVideoaulas"));
 const GestaoTutoria = lazy(() => import("@/pages/gestao/GestaoTutoria"));
 const GestaoForum = lazy(() => import("@/pages/gestao/GestaoForum"));
 const GestaoCronograma = lazy(() => import("@/pages/gestao/GestaoCronograma"));
-
+const GestaoLogs = lazy(() => import("@/pages/gestao/GestaoLogs")); // 🔴 REGRA PERMANENTE: Logs em tempo real
 // Finanças
 const Entradas = lazy(() => import("@/pages/Entradas"));
 const FinancasEmpresa = lazy(() => import("@/pages/FinancasEmpresa"));
@@ -96,7 +96,7 @@ export const gestaofcRoutes = (
     <Route path="/gestaofc/tarefas" element={<ProtectedPage><Tarefas /></ProtectedPage>} />
     <Route path="/gestaofc/funcionarios" element={<ProtectedPage><Funcionarios /></ProtectedPage>} />
     <Route path="/gestaofc/calendario" element={<ProtectedPage><Calendario /></ProtectedPage>} />
-    <Route path="/gestaofc/integracoes" element={<ProtectedPage><Integracoes /></ProtectedPage>} />
+    <Route path="/gestaofc/logs" element={<ProtectedPage><GestaoLogs /></ProtectedPage>} /> {/* 🔴 REGRA PERMANENTE */}
     <Route path="/gestaofc/documentos" element={<ProtectedPage><Documentos /></ProtectedPage>} />
     <Route path="/gestaofc/perfil" element={<ProtectedPage><Perfil /></ProtectedPage>} />
     <Route path="/gestaofc/guia" element={<ProtectedPage><Guia /></ProtectedPage>} />

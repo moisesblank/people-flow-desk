@@ -94,6 +94,7 @@ const mainMenuItems = [
   { title: "Leads WhatsApp", url: "/leads-whatsapp", icon: MessageSquare },
   { title: "Integrações", url: "/integracoes", icon: Link2 },
   { title: "Calendário", url: "/calendario", icon: Calendar },
+  { title: "Logs", url: "/gestaofc/logs", icon: Activity, badge: "LIVE" }, // 🔴 REGRA PERMANENTE: Logs em tempo real
   { title: "Funcionários", url: "/funcionarios", icon: Users },
   
   { title: "Área Professor", url: "/area-professor", icon: ClipboardCheck },
