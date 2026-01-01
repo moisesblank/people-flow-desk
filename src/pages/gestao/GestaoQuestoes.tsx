@@ -1869,7 +1869,7 @@ function GestaoQuestoes() {
                           )}
                         </div>
 
-                        {/* Grupo Direito: Tipo + Área */}
+                        {/* Grupo Direito: Tipo + Macro + Micro */}
                         <div className="flex items-center gap-2">
                           <Badge className="text-sm px-4 py-1.5 bg-primary/80 text-primary-foreground border-0 font-semibold flex items-center gap-1">
                             ⭐ {question.question_type === 'multiple_choice' ? 'Múltipla Escolha' : 'Discursiva'}
@@ -1877,6 +1877,11 @@ function GestaoQuestoes() {
                           <Badge className={cn("text-sm px-4 py-1.5 border-0 font-bold", config.badge)}>
                             {config.icon} {config.label}
                           </Badge>
+                          {question.micro && (
+                            <Badge className="text-sm px-4 py-1.5 bg-muted text-foreground border border-border/50 font-medium">
+                              📚 {question.micro.length > 20 ? question.micro.substring(0, 20) + '...' : question.micro}
+                            </Badge>
+                          )}
                         </div>
                       </div>
 
