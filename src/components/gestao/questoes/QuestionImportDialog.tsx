@@ -2268,31 +2268,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
                 {/* Footer com autorização */}
                 <div className="border-t bg-background p-4 space-y-4 mt-4">
-                  {/* Resumo final (obrigatório) */}
-                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
-                    <div className="p-3 rounded-lg border bg-muted/20">
-                      <div className="text-xs text-muted-foreground">Total carregadas</div>
-                      <div className="text-lg font-semibold">{stats.total}</div>
-                    </div>
-                    <div className="p-3 rounded-lg border bg-muted/20">
-                      <div className="text-xs text-muted-foreground">Campos inferidos</div>
-                      <div className="text-lg font-semibold">{stats.camposInferidos}</div>
-                    </div>
-                    <div className="p-3 rounded-lg border bg-muted/20">
-                      <div className="text-xs text-muted-foreground">Campos vazios</div>
-                      <div className="text-lg font-semibold">{stats.camposNull}</div>
-                    </div>
-                    <div className="p-3 rounded-lg border bg-muted/20">
-                      <div className="text-xs text-muted-foreground">Warnings</div>
-                      <div className="text-lg font-semibold">{stats.warnings}</div>
-                    </div>
-                    <div className="p-3 rounded-lg border bg-muted/20">
-                      <div className="text-xs text-muted-foreground">Selecionadas</div>
-                      <div className="text-lg font-semibold">{stats.selected}</div>
-                    </div>
-                  </div>
-
-                  {/* QUESTION_DOMAIN: Seleção de Grupo pós-importação */}
+                  {/* QUESTION_DOMAIN: Seleção de Grupo pós-importação - MOVIDO PARA O TOPO */}
                   <div className="p-4 rounded-lg border border-purple-500/30 bg-purple-500/5">
                     <div className="flex items-center gap-2 mb-3">
                       <Target className="h-4 w-4 text-purple-500" />
@@ -2365,6 +2341,30 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                         humanAuthorization ? "text-green-500" : "text-muted-foreground"
                       )}
                     />
+                  </div>
+
+                  {/* Resumo final (obrigatório) */}
+                  <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Total carregadas</div>
+                      <div className="text-lg font-semibold">{stats.total}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Campos inferidos</div>
+                      <div className="text-lg font-semibold">{stats.camposInferidos}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Campos vazios</div>
+                      <div className="text-lg font-semibold">{stats.camposNull}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Warnings</div>
+                      <div className="text-lg font-semibold">{stats.warnings}</div>
+                    </div>
+                    <div className="p-3 rounded-lg border bg-muted/20">
+                      <div className="text-xs text-muted-foreground">Selecionadas</div>
+                      <div className="text-lg font-semibold">{stats.selected}</div>
+                    </div>
                   </div>
 
                   <DialogFooter className="gap-2">
