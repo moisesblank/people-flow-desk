@@ -117,9 +117,9 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
   }[textSize];
 
   const headerSizeClass = {
-    sm: 'text-sm',
-    base: 'text-base',
-    lg: 'text-lg',
+    sm: 'text-base',
+    base: 'text-lg',
+    lg: 'text-xl',
   }[textSize];
 
   return (
