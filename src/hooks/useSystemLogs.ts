@@ -59,7 +59,7 @@ function getSessionId(): string {
   return sessionId;
 }
 
-// Função global para enviar logs ao banco
+// Função global para enviar logs (TXT + banco para realtime)
 export async function sendSystemLog(
   severity: LogSeverity,
   category: string,
@@ -73,22 +73,45 @@ export async function sendSystemLog(
   } = {}
 ): Promise<void> {
   try {
+    const now = new Date();
     const deviceInfo = navigator.userAgent;
     
-    await supabase.rpc('insert_system_log', {
-      p_severity: severity,
-      p_category: category,
-      p_source: options.source || 'frontend',
-      p_affected_url: options.affectedUrl || window.location.pathname,
-      p_triggered_action: options.triggeredAction || null,
-      p_error_message: errorMessage.slice(0, 2000), // Limitar tamanho
-      p_stack_trace: options.stackTrace?.slice(0, 5000) || null,
-      p_metadata: (options.metadata || {}) as unknown as Record<string, never>,
-      p_session_id: getSessionId(),
-      p_device_info: deviceInfo,
-    });
+    // Enviar para edge function que salva em TXT + banco
+    const response = await fetch(
+      `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/log-writer`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+        },
+        body: JSON.stringify({
+          timestamp: now.toISOString(),
+          severity,
+          affected_url_or_area: options.affectedUrl || window.location.pathname,
+          triggered_action: options.triggeredAction || category,
+          error_message: errorMessage.slice(0, 2000),
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      // Fallback: enviar direto ao banco se edge function falhar
+      await supabase.rpc('insert_system_log', {
+        p_severity: severity,
+        p_category: category,
+        p_source: options.source || 'frontend',
+        p_affected_url: options.affectedUrl || window.location.pathname,
+        p_triggered_action: options.triggeredAction || null,
+        p_error_message: errorMessage.slice(0, 2000),
+        p_stack_trace: options.stackTrace?.slice(0, 5000) || null,
+        p_metadata: (options.metadata || {}) as unknown as Record<string, never>,
+        p_session_id: getSessionId(),
+        p_device_info: deviceInfo,
+      });
+    }
   } catch (err) {
-    // Fallback: log no console se falhar enviar ao banco
+    // Fallback final: log no console se tudo falhar
     console.error('[SystemLog] Failed to send log:', err);
   }
 }
