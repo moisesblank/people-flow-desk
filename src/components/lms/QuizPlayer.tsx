@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import QuestionEnunciado, { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
+import QuestionResolution from '@/components/shared/QuestionResolution';
 import { predictSuccessRate, getSuccessRateColor } from '@/lib/questionSuccessPredictor';
 import type { Quiz, QuizQuestion, QuizAttempt } from '@/hooks/useQuiz';
 
@@ -469,9 +470,13 @@ export function QuizResult({ attempt, quiz, questions, onRetry, onBack }: QuizRe
                         </p>
                       )}
                       {q.explanation && (
-                        <p className="text-sm text-muted-foreground mt-2 p-2 bg-muted/50 rounded">
-                          💡 {q.explanation}
-                        </p>
+                        <div className="mt-3">
+                          <QuestionResolution
+                            resolutionText={q.explanation}
+                            difficulty={q.difficulty}
+                            tema={q.topic}
+                          />
+                        </div>
                       )}
                     </div>
                   </div>
