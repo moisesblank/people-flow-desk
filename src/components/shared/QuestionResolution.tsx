@@ -78,19 +78,42 @@ function cleanResolutionText(text: string): string {
   
   let cleaned = text;
   
-  // Remover metadados de HTML/interface que podem ter sido copiados
+  // PASSO 1: Remover TODO o lixo de HTML/interface copiado antes do conteúdo real
+  // Encontrar onde começa o conteúdo real (QUESTÃO, 🔬, ✨, ou afirmação)
+  const contentStartPatterns = [
+    /QUESTÃO\s+SIMULADO/i,
+    /🔬\s*RESOLUÇÃO/i,
+    /✨\s*QUESTÃO/i,
+    /O\s+gráfico/i,
+    /Observando/i,
+    /Analis/i,
+    /A\s+questão/i,
+  ];
+  
+  for (const pattern of contentStartPatterns) {
+    const match = cleaned.match(pattern);
+    if (match && match.index !== undefined && match.index > 0) {
+      // Se o conteúdo real começa depois de posição 0, remover o lixo antes
+      cleaned = cleaned.substring(match.index);
+      break;
+    }
+  }
+  
+  // PASSO 2: Limpar metadados específicos que podem ter sido copiados
   cleaned = cleaned
     // Remover atributos de HTML copiados
-    .replace(/\*\]:pointer-events-auto[^"]*"[^>]*>/g, '')
+    .replace(/\*\]:[^"]*"[^>]*>/g, '')
+    .replace(/\*\]:pointer-events[^"]*"[^>]*>/g, '')
     .replace(/\*\][^"]*scroll-mt[^"]*"[^>]*>/g, '')
     .replace(/dir="auto"[^>]*>/g, '')
     .replace(/tabindex="-?\d+"[^>]*>/g, '')
-    .replace(/data-[a-z-]+="[^"]*"/g, '')
+    .replace(/data-[a-z-]+="[^"]*"/gi, '')
     // Remover padrões de metadados copiados
-    .replace(/\*\]:[^*]+\*\]/g, '')
-    // Limpar início com lixo
-    .replace(/^[\s\S]*?(?=QUESTÃO|🔬|✨)/i, '')
-    // Remover duplicatas de header que já renderizamos
+    .replace(/\*\]:[^\s]+/g, '')
+    .trim();
+  
+  // PASSO 3: Remover duplicatas de header que já renderizamos
+  cleaned = cleaned
     .replace(/QUESTÃO SIMULADO PROF\. MOISÉS MEDEIROS/gi, '')
     .replace(/✨\s*QUESTÃO:\s*NÍVEL\s*(FÁCIL|MÉDIO|DIFÍCIL)/gi, '')
     .replace(/🧪\s*TEMA:[^\n]*/gi, '')
