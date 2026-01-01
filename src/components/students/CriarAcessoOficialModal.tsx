@@ -345,6 +345,19 @@ export function CriarAcessoOficialModal({
         if (errorMsg.includes('Token') || errorMsg.includes('session') || errorMsg.includes('Auth')) {
           throw new Error('Sessão expirada. Faça logout e login novamente.');
         }
+        
+        // 🎯 MENSAGENS ESPECÍFICAS PARA CAMPOS DUPLICADOS
+        const errorLower = errorMsg.toLowerCase();
+        if (errorLower.includes('cpf') && (errorLower.includes('cadastrado') || errorLower.includes('existe') || errorLower.includes('outro'))) {
+          throw new Error('CPF_DUPLICADO');
+        }
+        if (errorLower.includes('email') && (errorLower.includes('cadastrado') || errorLower.includes('existe') || errorLower.includes('outro'))) {
+          throw new Error('EMAIL_DUPLICADO');
+        }
+        if (errorLower.includes('telefone') && (errorLower.includes('cadastrado') || errorLower.includes('existe') || errorLower.includes('outro'))) {
+          throw new Error('TELEFONE_DUPLICADO');
+        }
+        
         throw new Error(errorMsg);
       }
 
@@ -399,9 +412,30 @@ export function CriarAcessoOficialModal({
 
     } catch (error: any) {
       console.error("Erro ao criar acesso:", error);
-      toast.error("Erro ao criar acesso", {
-        description: error.message || "Tente novamente",
-      });
+      
+      // 🎯 MENSAGENS ESPECÍFICAS E CLARAS PARA DUPLICADOS
+      const errorCode = error.message || '';
+      
+      if (errorCode === 'CPF_DUPLICADO') {
+        toast.error("❌ CPF JÁ CADASTRADO", {
+          description: "Este CPF já está vinculado a outro usuário no sistema.",
+          duration: 8000,
+        });
+      } else if (errorCode === 'EMAIL_DUPLICADO') {
+        toast.error("❌ EMAIL JÁ CADASTRADO", {
+          description: "Este email já está vinculado a outro usuário no sistema.",
+          duration: 8000,
+        });
+      } else if (errorCode === 'TELEFONE_DUPLICADO') {
+        toast.error("❌ TELEFONE JÁ CADASTRADO", {
+          description: "Este telefone já está vinculado a outro usuário no sistema.",
+          duration: 8000,
+        });
+      } else {
+        toast.error("Erro ao criar acesso", {
+          description: error.message || "Tente novamente",
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
