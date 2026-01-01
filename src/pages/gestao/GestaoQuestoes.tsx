@@ -1203,11 +1203,14 @@ function GestaoQuestoes() {
     const active = questions.filter(q => q.is_active);
     const simulados = questions.filter(q => q.tags?.includes('SIMULADOS'));
     const modoTreino = questions.filter(q => q.tags?.includes('MODO_TREINO'));
+    // NÃO ASSOCIADA: questões que NÃO têm MACRO e MICRO juntos
+    const naoAssociada = questions.filter(q => !q.macro || !q.micro);
     return {
       total: questions.length,
       active: active.length,
       simulados: simulados.length,
       modoTreino: modoTreino.length,
+      naoAssociada: naoAssociada.length,
       byDifficulty: {
         facil: questions.filter(q => q.difficulty === 'facil').length,
         medio: questions.filter(q => q.difficulty === 'medio').length,
@@ -1281,6 +1284,9 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.tags?.includes('MODO_TREINO'));
     } else if (activeTab === 'repetidas') {
       filtered = filtered.filter(q => duplicateQuestionIds.has(q.id));
+    } else if (activeTab === 'nao_associada') {
+      // NÃO ASSOCIADA: questões sem MACRO e/ou MICRO
+      filtered = filtered.filter(q => !q.macro || !q.micro);
     }
 
     // Filtro por dificuldade
@@ -2072,6 +2078,7 @@ function GestaoQuestoes() {
                   <TabsTrigger value="simulados" className="text-primary">Simulados ({stats.simulados})</TabsTrigger>
                   <TabsTrigger value="modo_treino" className="text-purple-500">Modo Treino ({stats.modoTreino})</TabsTrigger>
                   <TabsTrigger value="repetidas" className="text-red-500">Repetidas ({duplicateQuestionIds.size})</TabsTrigger>
+                  <TabsTrigger value="nao_associada" className="text-orange-500 font-bold animate-pulse">⚠️ Não Associada ({stats.naoAssociada})</TabsTrigger>
                 </TabsList>
               </Tabs>
 
