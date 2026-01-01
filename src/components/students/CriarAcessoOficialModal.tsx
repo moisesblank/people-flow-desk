@@ -19,6 +19,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage, FormDescription } from "@/components/ui/form";
 import { CPFInput, cleanCPF } from "@/components/ui/cpf-input";
+import { PhoneInput, cleanPhone } from "@/components/ui/phone-input";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { StudentRole, STUDENT_ROLE_LABELS } from "@/types/studentIdentityContract";
@@ -287,8 +288,8 @@ export function CriarAcessoOficialModal({
         email: data.email,
         role: data.role,
         
-        // Telefone (OBRIGATÓRIO e ÚNICO)
-        telefone: data.telefone.trim(),
+        // Telefone (OBRIGATÓRIO e ÚNICO) — Formato: +55XXXXXXXXXXX
+        telefone: '+55' + cleanPhone(data.telefone),
         
         // CPF (OBRIGATÓRIO e ÚNICO, apenas dígitos)
         cpf: cleanCPF(data.cpf),
@@ -729,11 +730,12 @@ export function CriarAcessoOficialModal({
                     Telefone *
                   </FormLabel>
                   <FormControl>
-                    <Input 
-                      {...field} 
-                      placeholder="(83) 99999-9999"
-                      className="border-muted-foreground/30"
+                    <PhoneInput
+                      value={field.value || ""}
+                      onChange={(val) => field.onChange(val)}
+                      showStatusIcon={true}
                       disabled={isSubmitting}
+                      className="border-muted-foreground/30"
                     />
                   </FormControl>
                   <FormDescription className="text-xs text-muted-foreground">
