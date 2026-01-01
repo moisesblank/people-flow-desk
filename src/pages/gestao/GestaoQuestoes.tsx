@@ -921,6 +921,7 @@ function GestaoQuestoes() {
   const [anoFilter, setAnoFilter] = useState<string>('all');
   const [sortOrder, setSortOrder] = useState<string>('newest');
   const [activeTab, setActiveTab] = useState('todas');
+  const [simuladosFilter, setSimuladosFilter] = useState(false);
   const [macroAreaFilter, setMacroAreaFilter] = useState<'all' | 'organica' | 'fisico_quimica' | 'geral'>('all');
   const [microFilter, setMicroFilter] = useState<string>('all');
   const [temaFilter, setTemaFilter] = useState<string>('all');
@@ -1184,11 +1185,13 @@ function GestaoQuestoes() {
   }, [questions, macroAreaFilter, classifyMacroArea]);
 
   // Estatísticas
-  const stats: QuestionStats = useMemo(() => {
+  const stats = useMemo(() => {
     const active = questions.filter(q => q.is_active);
+    const simulados = questions.filter(q => q.tags?.includes('SIMULADOS'));
     return {
       total: questions.length,
       active: active.length,
+      simulados: simulados.length,
       byDifficulty: {
         facil: questions.filter(q => q.difficulty === 'facil').length,
         medio: questions.filter(q => q.difficulty === 'medio').length,
@@ -1207,6 +1210,8 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.is_active);
     } else if (activeTab === 'inativas') {
       filtered = filtered.filter(q => !q.is_active);
+    } else if (activeTab === 'simulados') {
+      filtered = filtered.filter(q => q.tags?.includes('SIMULADOS'));
     }
 
     // Filtro por dificuldade
@@ -1774,6 +1779,7 @@ function GestaoQuestoes() {
                   <TabsTrigger value="todas">Todas ({stats.total})</TabsTrigger>
                   <TabsTrigger value="ativas">Ativas ({stats.active})</TabsTrigger>
                   <TabsTrigger value="inativas">Inativas ({stats.total - stats.active})</TabsTrigger>
+                  <TabsTrigger value="simulados" className="text-primary">Simulados ({stats.simulados})</TabsTrigger>
                 </TabsList>
               </Tabs>
 
