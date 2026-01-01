@@ -1583,7 +1583,7 @@ function GestaoQuestoes() {
         transition={{ delay: 0.3 }}
       >
         <Card>
-          <CardContent className="p-0">
+          <CardContent className="p-4">
             {isLoading ? (
               <div className="flex items-center justify-center p-12">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -1606,175 +1606,219 @@ function GestaoQuestoes() {
                 </Button>
               </div>
             ) : (
-              <Table>
-                <TableHeader>
-                  <TableRow className="bg-muted/30">
-                    <TableHead className="w-[60px]">ID</TableHead>
-                    <TableHead className="w-[35%]">Enunciado</TableHead>
-                    <TableHead className="w-[15%]">Classificação</TableHead>
-                    <TableHead className="w-[100px] text-center">Dificuldade</TableHead>
-                    <TableHead className="w-[100px]">Banca/Ano</TableHead>
-                    <TableHead className="w-[80px] text-center">Status</TableHead>
-                    <TableHead className="w-[60px] text-right">Ações</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredQuestions.map((question, index) => {
-                    const area = classifyMacroArea(question.macro);
-                    const areaColors = {
-                      organica: 'bg-purple-500/20 text-purple-300 border-purple-500/30',
-                      fisico_quimica: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/30',
-                      geral: 'bg-amber-500/20 text-amber-300 border-amber-500/30',
-                    };
-                    const areaLabels = {
-                      organica: 'ORG',
-                      fisico_quimica: 'F-Q',
-                      geral: 'GER',
-                    };
-                    
-                    return (
-                      <TableRow 
-                        key={question.id}
-                        className="group hover:bg-muted/50 transition-colors"
-                      >
-                        {/* ID */}
-                        <TableCell className="font-mono text-xs text-muted-foreground">
-                          <span className="opacity-60">#{index + 1}</span>
-                        </TableCell>
-                        
-                        {/* Enunciado */}
-                        <TableCell>
-                          <div className="space-y-1">
-                            <p className="line-clamp-2 text-sm font-medium leading-tight">
-                              {question.question_text}
-                            </p>
-                            {/* Tags inline */}
-                            {question.tags && question.tags.length > 0 && (
-                              <div className="flex flex-wrap gap-1">
-                                {question.tags.slice(0, 3).map((tag, i) => (
-                                  <span key={i} className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">
-                                    {tag}
-                                  </span>
-                                ))}
-                                {question.tags.length > 3 && (
-                                  <span className="text-[10px] text-muted-foreground">+{question.tags.length - 3}</span>
-                                )}
+              <div className="space-y-3">
+                {filteredQuestions.map((question, index) => {
+                  const area = classifyMacroArea(question.macro);
+                  const areaConfig = {
+                    organica: { 
+                      bg: 'from-purple-500/5 to-pink-500/5', 
+                      border: 'border-l-purple-500',
+                      badge: 'bg-purple-500/20 text-purple-300 border-purple-500/40',
+                      icon: '🧪',
+                      label: 'Química Orgânica'
+                    },
+                    fisico_quimica: { 
+                      bg: 'from-cyan-500/5 to-blue-500/5', 
+                      border: 'border-l-cyan-500',
+                      badge: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+                      icon: '⚡',
+                      label: 'Físico-Química'
+                    },
+                    geral: { 
+                      bg: 'from-amber-500/5 to-orange-500/5', 
+                      border: 'border-l-amber-500',
+                      badge: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                      icon: '⚗️',
+                      label: 'Química Geral'
+                    },
+                  };
+                  const config = areaConfig[area];
+                  
+                  return (
+                    <motion.div
+                      key={question.id}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: index * 0.02 }}
+                      className={cn(
+                        "group relative rounded-lg border-l-4 bg-gradient-to-r p-4 transition-all hover:shadow-lg",
+                        config.border,
+                        config.bg,
+                        "border border-border/50 hover:border-border"
+                      )}
+                    >
+                      {/* Header Row */}
+                      <div className="flex items-start justify-between gap-4">
+                        {/* Left: ID + Enunciado */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
+                              #{String(index + 1).padStart(3, '0')}
+                            </span>
+                            <Badge className={cn("text-[10px] font-bold border", config.badge)}>
+                              {config.icon} {config.label}
+                            </Badge>
+                            {question.is_active ? (
+                              <Badge className="text-[10px] bg-green-500/20 text-green-400 border-green-500/40">
+                                ✓ Ativa
+                              </Badge>
+                            ) : (
+                              <Badge className="text-[10px] bg-gray-500/20 text-gray-400 border-gray-500/40">
+                                ○ Inativa
+                              </Badge>
+                            )}
+                          </div>
+                          
+                          {/* Enunciado */}
+                          <p className="text-sm font-medium leading-relaxed line-clamp-2 mb-3">
+                            {question.question_text}
+                          </p>
+                          
+                          {/* Taxonomia Completa */}
+                          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
+                            {question.macro && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-muted-foreground">Macro:</span>
+                                <span className="font-medium text-foreground/80">{question.macro.length > 25 ? question.macro.substring(0, 25) + '...' : question.macro}</span>
+                              </div>
+                            )}
+                            {question.micro && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-muted-foreground">Micro:</span>
+                                <span className="font-medium text-foreground/80">{question.micro.length > 20 ? question.micro.substring(0, 20) + '...' : question.micro}</span>
+                              </div>
+                            )}
+                            {question.tema && (
+                              <div className="flex items-center gap-1">
+                                <span className="text-muted-foreground">Tema:</span>
+                                <span className="font-medium text-foreground/80">{question.tema.length > 20 ? question.tema.substring(0, 20) + '...' : question.tema}</span>
                               </div>
                             )}
                           </div>
-                        </TableCell>
+                        </div>
                         
-                        {/* Classificação (Área agrupada + Macro) */}
-                        <TableCell>
-                          <div className="space-y-1">
-                            <Badge className={cn("text-[10px] font-bold", areaColors[area])}>
-                              {areaLabels[area]}
-                            </Badge>
-                            {question.macro && (
-                              <p className="text-[11px] text-muted-foreground line-clamp-1" title={question.macro}>
-                                {question.macro.length > 20 ? question.macro.substring(0, 20) + '...' : question.macro}
-                              </p>
-                            )}
+                        {/* Right: Metadata Cards */}
+                        <div className="flex items-center gap-3 shrink-0">
+                          {/* Dificuldade */}
+                          <div className={cn(
+                            "text-center px-3 py-2 rounded-lg border",
+                            question.difficulty === 'facil' && 'bg-green-500/10 border-green-500/30',
+                            question.difficulty === 'medio' && 'bg-yellow-500/10 border-yellow-500/30',
+                            question.difficulty === 'dificil' && 'bg-red-500/10 border-red-500/30',
+                          )}>
+                            <div className="text-lg">
+                              {question.difficulty === 'facil' && '🟢'}
+                              {question.difficulty === 'medio' && '🟡'}
+                              {question.difficulty === 'dificil' && '🔴'}
+                            </div>
+                            <div className={cn(
+                              "text-[10px] font-semibold uppercase tracking-wide",
+                              question.difficulty === 'facil' && 'text-green-400',
+                              question.difficulty === 'medio' && 'text-yellow-400',
+                              question.difficulty === 'dificil' && 'text-red-400',
+                            )}>
+                              {question.difficulty === 'facil' && 'Fácil'}
+                              {question.difficulty === 'medio' && 'Médio'}
+                              {question.difficulty === 'dificil' && 'Difícil'}
+                            </div>
                           </div>
-                        </TableCell>
-                        
-                        {/* Dificuldade */}
-                        <TableCell className="text-center">
-                          <Badge 
-                            className={cn(
-                              "text-xs font-semibold border",
-                              question.difficulty === 'facil' && 'bg-green-500/20 text-green-400 border-green-500/30',
-                              question.difficulty === 'medio' && 'bg-yellow-500/20 text-yellow-400 border-yellow-500/30',
-                              question.difficulty === 'dificil' && 'bg-red-500/20 text-red-400 border-red-500/30',
-                            )}
-                          >
-                            {question.difficulty === 'facil' && '🟢 Fácil'}
-                            {question.difficulty === 'medio' && '🟡 Médio'}
-                            {question.difficulty === 'dificil' && '🔴 Difícil'}
-                          </Badge>
-                        </TableCell>
-                        
-                        {/* Banca/Ano */}
-                        <TableCell>
-                          <div className="space-y-0.5">
-                            <span className="text-xs font-medium block">
+                          
+                          {/* Banca + Ano */}
+                          <div className="text-center px-3 py-2 rounded-lg bg-muted/50 border border-border/50 min-w-[80px]">
+                            <div className="text-xs font-bold text-foreground">
                               {getBancaLabel(question.banca) || '—'}
-                            </span>
-                            {question.ano && (
-                              <span className="text-[11px] text-muted-foreground">{question.ano}</span>
+                            </div>
+                            <div className="text-lg font-mono text-primary">
+                              {question.ano || '—'}
+                            </div>
+                          </div>
+                          
+                          {/* Ações Rápidas */}
+                          <div className="flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-primary/20 hover:text-primary"
+                              onClick={() => navigate(`/gestaofc/questoes/${question.id}`)}
+                              title="Ver Detalhe"
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 hover:bg-blue-500/20 hover:text-blue-400"
+                              onClick={() => handleEdit(question)}
+                              title="Editar"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <DropdownMenu modal={false}>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8"
+                                  title="Mais opções"
+                                >
+                                  <MoreVertical className="h-4 w-4" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" sideOffset={4}>
+                                <DropdownMenuItem onClick={() => handleDuplicate(question)}>
+                                  <Copy className="h-4 w-4 mr-2" />
+                                  Duplicar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleToggleActive(question.id, question.is_active)}>
+                                  {question.is_active ? (
+                                    <>
+                                      <Archive className="h-4 w-4 mr-2" />
+                                      Desativar
+                                    </>
+                                  ) : (
+                                    <>
+                                      <CheckCircle className="h-4 w-4 mr-2" />
+                                      Ativar
+                                    </>
+                                  )}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem 
+                                  className="text-destructive"
+                                  onClick={() => setDeleteConfirm(question.id)}
+                                >
+                                  <Trash2 className="h-4 w-4 mr-2" />
+                                  Excluir
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      {/* Footer: Tags + Metadata */}
+                      {(question.tags && question.tags.length > 0) && (
+                        <div className="mt-3 pt-3 border-t border-border/30 flex items-center gap-2">
+                          <Tag className="h-3 w-3 text-muted-foreground" />
+                          <div className="flex flex-wrap gap-1">
+                            {question.tags.slice(0, 5).map((tag, i) => (
+                              <span 
+                                key={i} 
+                                className="text-[10px] px-2 py-0.5 rounded-full bg-muted/80 text-muted-foreground border border-border/50"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                            {question.tags.length > 5 && (
+                              <span className="text-[10px] text-muted-foreground">+{question.tags.length - 5} mais</span>
                             )}
                           </div>
-                        </TableCell>
-                        
-                        {/* Status */}
-                        <TableCell className="text-center">
-                          <Badge 
-                            variant="outline"
-                            className={cn(
-                              "text-xs",
-                              question.is_active 
-                                ? 'bg-green-500/10 text-green-400 border-green-500/30' 
-                                : 'bg-gray-500/10 text-gray-400 border-gray-500/30'
-                            )}
-                          >
-                            {question.is_active ? '✓ Ativa' : '○ Inativa'}
-                          </Badge>
-                        </TableCell>
-                        
-                        {/* Ações */}
-                        <TableCell className="text-right">
-                          <DropdownMenu modal={false}>
-                            <DropdownMenuTrigger asChild>
-                              <button
-                                type="button"
-                                className="inline-flex items-center justify-center h-8 w-8 rounded-md hover:bg-muted transition-colors opacity-0 group-hover:opacity-100"
-                              >
-                                <MoreVertical className="h-4 w-4" />
-                                <span className="sr-only">Abrir menu</span>
-                              </button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" sideOffset={4}>
-                              <DropdownMenuItem onClick={() => navigate(`/gestaofc/questoes/${question.id}`)}>
-                                <Eye className="h-4 w-4 mr-2" />
-                                Ver Detalhe
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleEdit(question)}>
-                                <Edit className="h-4 w-4 mr-2" />
-                                Editar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDuplicate(question)}>
-                                <Copy className="h-4 w-4 mr-2" />
-                                Duplicar
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleToggleActive(question.id, question.is_active)}>
-                                {question.is_active ? (
-                                  <>
-                                    <Archive className="h-4 w-4 mr-2" />
-                                    Desativar
-                                  </>
-                                ) : (
-                                  <>
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Ativar
-                                  </>
-                                )}
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem 
-                                className="text-destructive"
-                                onClick={() => setDeleteConfirm(question.id)}
-                              >
-                                <Trash2 className="h-4 w-4 mr-2" />
-                                Excluir
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                        </div>
+                      )}
+                    </motion.div>
+                  );
+                })}
+              </div>
             )}
           </CardContent>
         </Card>
