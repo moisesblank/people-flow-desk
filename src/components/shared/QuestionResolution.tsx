@@ -2,116 +2,277 @@
 // 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL
 // PADRÃO OBRIGATÓRIO PARA TODAS AS RESOLUÇÕES
 // 
-// ESTRUTURA:
-// 1. BANCA HEADER (centralizado, bold, uppercase)
-// 2. QUEST METADATA (Nível + Tema)
-// 3. CLASSIFICATION BLOCK (Macro + Micro)
-// 4. RESOLUTION BODY (texto justificado)
-// 5. ENEM COMPETENCE/SKILLS
-// 6. STRATEGY BLOCK (opcional)
-// 7. COMMON TRAPS BLOCK (opcional)
-// 8. GOLDEN TIP BLOCK (opcional)
+// ESTRUTURA VISUAL ORGANIZADA:
+// - Parser inteligente detecta seções no texto
+// - Cada seção renderizada em bloco visual distinto
+// - Passos numerados destacados visualmente
 // ============================================
 
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
 import { getBancaLabel } from '@/constants/bancas';
 import { 
   Sparkles, 
   Target, 
   FolderTree, 
-  BookOpen, 
   Lightbulb,
   AlertTriangle,
-  Compass
+  Compass,
+  CheckCircle,
+  Beaker,
+  Cog,
+  BarChart3,
+  GraduationCap,
+  Zap,
 } from 'lucide-react';
 
-// Fallback padrão quando não há banca
+// Fallback padrão
 const DEFAULT_BANCA_HEADER = 'QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS';
 
-// Mapa de dificuldade para exibição
-const DIFFICULTY_LABELS: Record<string, string> = {
-  'facil': 'FÁCIL',
-  'medio': 'MÉDIO',
-  'dificil': 'DIFÍCIL',
+// Mapa de dificuldade
+const DIFFICULTY_LABELS: Record<string, { label: string; color: string }> = {
+  'facil': { label: 'FÁCIL', color: 'text-green-500' },
+  'medio': { label: 'MÉDIO', color: 'text-yellow-500' },
+  'dificil': { label: 'DIFÍCIL', color: 'text-red-500' },
 };
 
+// Tipos de seção detectáveis
+type SectionType = 
+  | 'intro' 
+  | 'passo' 
+  | 'conclusao' 
+  | 'competencia' 
+  | 'estrategia' 
+  | 'pegadinhas' 
+  | 'dica';
+
+interface ParsedSection {
+  type: SectionType;
+  title?: string;
+  content: string;
+  stepNumber?: number;
+}
+
 interface QuestionResolutionProps {
-  /** Texto da resolução/explicação */
   resolutionText: string;
-  /** Código da banca (ex: 'enem', 'unicamp') */
   banca?: string | null;
-  /** Ano da questão */
   ano?: number | null;
-  /** Dificuldade (facil, medio, dificil) */
   difficulty?: string | null;
-  /** Tema da questão */
   tema?: string | null;
-  /** Macro assunto */
   macro?: string | null;
-  /** Micro assunto */
   micro?: string | null;
-  /** Competência ENEM */
   competenciaEnem?: string | null;
-  /** Habilidade ENEM */
   habilidadeEnem?: string | null;
-  /** Texto de estratégia (opcional - pode ser extraído do texto) */
-  strategyText?: string | null;
-  /** Texto de pegadinhas comuns (opcional) */
-  commonTrapsText?: string | null;
-  /** Dica de ouro (opcional) */
-  goldenTipText?: string | null;
-  /** Classe adicional para o container */
   className?: string;
 }
 
 /**
- * Bloco de seção com título e conteúdo
+ * Parser inteligente que detecta seções no texto da resolução
  */
-const ResolutionSection = memo(function ResolutionSection({
-  icon: Icon,
-  title,
-  children,
-  iconColor = 'text-primary',
-}: {
-  icon: React.ElementType;
-  title: string;
-  children: React.ReactNode;
-  iconColor?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      <h4 className={cn("font-bold flex items-center gap-2", iconColor)}>
-        <Icon className="h-5 w-5" />
-        {title}
-      </h4>
-      <div className="pl-7">
-        {children}
-      </div>
-    </div>
-  );
-});
+function parseResolutionText(text: string): ParsedSection[] {
+  if (!text) return [];
+
+  const sections: ParsedSection[] = [];
+  
+  // Padrões de detecção (ordem importa!)
+  const patterns = [
+    { regex: /💡\s*DICA DE OURO[:\s]*/gi, type: 'dica' as SectionType },
+    { regex: /⚠️\s*PEGADINHAS? COMUNS?[:\s]*/gi, type: 'pegadinhas' as SectionType },
+    { regex: /📌\s*DIRECIONAMENTO\s*\/?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    { regex: /🎯\s*COMPETÊNCIA E HABILIDADE\s*-?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
+    { regex: /[📊⚗️⚙️🔬]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    { regex: /[📊]\s*Conclusão e Gabarito[:\s]*/gi, type: 'conclusao' as SectionType },
+    { regex: /Gabarito:\s*Letra\s+([A-E])/gi, type: 'conclusao' as SectionType },
+  ];
+
+  // Primeiro, encontrar todas as posições de início de seção
+  const sectionStarts: { index: number; type: SectionType; match: string; stepNumber?: number }[] = [];
+  
+  for (const pattern of patterns) {
+    let match;
+    const regex = new RegExp(pattern.regex.source, 'gi');
+    while ((match = regex.exec(text)) !== null) {
+      sectionStarts.push({
+        index: match.index,
+        type: pattern.type,
+        match: match[0],
+        stepNumber: pattern.type === 'passo' ? parseInt(match[1] || '0') : undefined,
+      });
+    }
+  }
+
+  // Ordenar por posição
+  sectionStarts.sort((a, b) => a.index - b.index);
+
+  // Extrair conteúdo de cada seção
+  if (sectionStarts.length === 0) {
+    // Sem seções detectadas, retorna como intro
+    return [{ type: 'intro', content: text.trim() }];
+  }
+
+  // Intro (texto antes da primeira seção detectada)
+  const firstSection = sectionStarts[0];
+  if (firstSection.index > 0) {
+    const introText = text.substring(0, firstSection.index).trim();
+    // Limpar marcadores já processados do intro
+    const cleanedIntro = introText
+      .replace(/🔬\s*RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
+      .replace(/RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
+      .trim();
+    if (cleanedIntro) {
+      sections.push({ type: 'intro', content: cleanedIntro });
+    }
+  }
+
+  // Processar cada seção
+  for (let i = 0; i < sectionStarts.length; i++) {
+    const current = sectionStarts[i];
+    const next = sectionStarts[i + 1];
+    
+    const startIndex = current.index + current.match.length;
+    const endIndex = next ? next.index : text.length;
+    const content = text.substring(startIndex, endIndex).trim();
+
+    if (content) {
+      sections.push({
+        type: current.type,
+        content,
+        stepNumber: current.stepNumber,
+        title: current.match.trim(),
+      });
+    }
+  }
+
+  return sections;
+}
 
 /**
- * Item de metadado com label e valor
+ * Ícone para cada tipo de seção
  */
-const MetadataItem = memo(function MetadataItem({
-  label,
-  value,
-  emoji,
-}: {
-  label: string;
-  value: string;
-  emoji?: string;
-}) {
+function getSectionIcon(type: SectionType, stepNumber?: number) {
+  switch (type) {
+    case 'passo':
+      if (stepNumber === 1) return Cog;
+      if (stepNumber === 2) return Beaker;
+      if (stepNumber === 3) return BarChart3;
+      if (stepNumber === 4) return CheckCircle;
+      return Zap;
+    case 'conclusao':
+      return CheckCircle;
+    case 'competencia':
+      return GraduationCap;
+    case 'estrategia':
+      return Compass;
+    case 'pegadinhas':
+      return AlertTriangle;
+    case 'dica':
+      return Lightbulb;
+    default:
+      return Sparkles;
+  }
+}
+
+/**
+ * Cor para cada tipo de seção
+ */
+function getSectionColor(type: SectionType): string {
+  switch (type) {
+    case 'passo':
+      return 'border-blue-500/40 bg-blue-500/5';
+    case 'conclusao':
+      return 'border-emerald-500/40 bg-emerald-500/5';
+    case 'competencia':
+      return 'border-purple-500/40 bg-purple-500/5';
+    case 'estrategia':
+      return 'border-amber-500/40 bg-amber-500/5';
+    case 'pegadinhas':
+      return 'border-orange-500/40 bg-orange-500/5';
+    case 'dica':
+      return 'border-yellow-500/40 bg-yellow-500/5';
+    default:
+      return 'border-border/50 bg-muted/30';
+  }
+}
+
+function getSectionIconColor(type: SectionType): string {
+  switch (type) {
+    case 'passo':
+      return 'text-blue-500';
+    case 'conclusao':
+      return 'text-emerald-500';
+    case 'competencia':
+      return 'text-purple-500';
+    case 'estrategia':
+      return 'text-amber-500';
+    case 'pegadinhas':
+      return 'text-orange-500';
+    case 'dica':
+      return 'text-yellow-500';
+    default:
+      return 'text-primary';
+  }
+}
+
+function getSectionTitle(section: ParsedSection): string {
+  switch (section.type) {
+    case 'passo':
+      return `PASSO ${section.stepNumber || ''}`;
+    case 'conclusao':
+      return '✅ CONCLUSÃO E GABARITO';
+    case 'competencia':
+      return '🎯 COMPETÊNCIA E HABILIDADE - ENEM';
+    case 'estrategia':
+      return '📌 DIRECIONAMENTO / ESTRATÉGIA';
+    case 'pegadinhas':
+      return '⚠️ PEGADINHAS COMUNS';
+    case 'dica':
+      return '💡 DICA DE OURO';
+    default:
+      return '';
+  }
+}
+
+/**
+ * Bloco visual para cada seção
+ */
+const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSection }) {
+  const Icon = getSectionIcon(section.type, section.stepNumber);
+  const colorClass = getSectionColor(section.type);
+  const iconColor = getSectionIconColor(section.type);
+  const title = getSectionTitle(section);
+
+  if (section.type === 'intro') {
+    return (
+      <div className="p-4 rounded-xl border border-border/50 bg-muted/20">
+        <div className="flex items-start gap-3">
+          <Sparkles className="h-5 w-5 text-emerald-500 mt-0.5 flex-shrink-0" />
+          <p className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
+            {section.content}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <p className="text-sm">
-      <span className="font-semibold">
-        {emoji && <span className="mr-1">{emoji}</span>}
-        {label}:
-      </span>{' '}
-      <span className="text-muted-foreground">{value}</span>
-    </p>
+    <div className={cn("p-4 rounded-xl border", colorClass)}>
+      <div className="flex items-start gap-3">
+        <div className={cn("flex items-center justify-center h-8 w-8 rounded-lg bg-background/50 flex-shrink-0", iconColor)}>
+          <Icon className="h-4 w-4" />
+        </div>
+        <div className="flex-1 min-w-0">
+          {title && (
+            <h4 className={cn("font-bold text-sm mb-2", iconColor)}>
+              {title}
+            </h4>
+          )}
+          <p className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
+            {section.content}
+          </p>
+        </div>
+      </div>
+    </div>
   );
 });
 
@@ -128,16 +289,7 @@ const formatBancaHeader = (banca?: string | null, ano?: number | null): string =
 
 /**
  * Componente universal para exibir resolução de questão
- * 
- * ESTRUTURA OBRIGATÓRIA:
- * 1. Header da Banca (centralizado, bold, uppercase)
- * 2. Metadados (Nível + Tema)
- * 3. Classificação (Macro + Micro)
- * 4. Corpo da Resolução (justificado)
- * 5. Competência/Habilidade ENEM
- * 6. Estratégia (opcional)
- * 7. Pegadinhas (opcional)
- * 8. Dica de Ouro (opcional)
+ * Com parsing inteligente e organização visual em blocos
  */
 const QuestionResolution = memo(function QuestionResolution({
   resolutionText,
@@ -149,145 +301,120 @@ const QuestionResolution = memo(function QuestionResolution({
   micro,
   competenciaEnem,
   habilidadeEnem,
-  strategyText,
-  commonTrapsText,
-  goldenTipText,
   className,
 }: QuestionResolutionProps) {
   const bancaHeader = formatBancaHeader(banca, ano);
-  const difficultyLabel = difficulty ? DIFFICULTY_LABELS[difficulty] || difficulty.toUpperCase() : null;
+  const difficultyData = difficulty ? DIFFICULTY_LABELS[difficulty] : null;
+
+  // Parser inteligente
+  const parsedSections = useMemo(() => parseResolutionText(resolutionText), [resolutionText]);
 
   // Verifica se tem classificação
   const hasClassification = macro || micro;
   
-  // Verifica se tem metadados ENEM
-  const hasEnemData = competenciaEnem || habilidadeEnem;
+  // Verifica se o texto já tem seção de competência
+  const hasEnemInText = parsedSections.some(s => s.type === 'competencia');
+  const showEnemBlock = (competenciaEnem || habilidadeEnem) && !hasEnemInText;
 
   return (
-    <div className={cn("space-y-6", className)}>
-      {/* 1. BANCA HEADER — Centralizado, Bold, Uppercase */}
-      <div className="text-center">
+    <div className={cn("space-y-4", className)}>
+      {/* HEADER — Centralizado */}
+      <div className="text-center pb-2 border-b border-border/30">
         <h3 className="text-2xl font-bold uppercase tracking-wide text-primary">
           {bancaHeader}
         </h3>
       </div>
 
-      {/* 2. QUEST METADATA — Nível + Tema */}
-      {(difficultyLabel || tema) && (
-        <div className="flex flex-wrap gap-4 p-4 rounded-lg bg-muted/30 border border-border/50">
-          {difficultyLabel && (
-            <MetadataItem 
-              emoji="✨" 
-              label="QUESTÃO" 
-              value={`NÍVEL ${difficultyLabel}`} 
-            />
-          )}
-          {tema && (
-            <MetadataItem 
-              emoji="🧪" 
-              label="TEMA" 
-              value={tema} 
-            />
-          )}
+      {/* METADADOS — Nível + Tema + Classificação */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {/* Card Nível + Tema */}
+        {(difficultyData || tema) && (
+          <div className="p-3 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+              {difficultyData && (
+                <span>
+                  <span className="font-semibold">✨ NÍVEL:</span>{' '}
+                  <span className={cn("font-bold", difficultyData.color)}>{difficultyData.label}</span>
+                </span>
+              )}
+              {tema && (
+                <span>
+                  <span className="font-semibold">🧪 TEMA:</span>{' '}
+                  <span className="text-muted-foreground">{tema}</span>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Card Classificação */}
+        {hasClassification && (
+          <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-500/5 border border-blue-500/20">
+            <div className="flex items-center gap-2 mb-1">
+              <FolderTree className="h-4 w-4 text-blue-500" />
+              <span className="font-semibold text-sm text-blue-500">CLASSIFICAÇÃO</span>
+            </div>
+            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+              {macro && (
+                <span>
+                  <span className="font-medium text-blue-400">Macro:</span>{' '}
+                  <span className="text-muted-foreground">{macro}</span>
+                </span>
+              )}
+              {micro && (
+                <span>
+                  <span className="font-medium text-blue-400">Micro:</span>{' '}
+                  <span className="text-muted-foreground">{micro}</span>
+                </span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* TÍTULO DA RESOLUÇÃO */}
+      <div className="flex items-center gap-2 pt-2">
+        <Sparkles className="h-5 w-5 text-emerald-500" />
+        <h4 className="font-bold text-emerald-500">
+          🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
+        </h4>
+      </div>
+
+      {/* SEÇÕES PARSEADAS — Cada uma em seu bloco visual */}
+      <div className="space-y-3">
+        {parsedSections.map((section, index) => (
+          <SectionBlock key={`${section.type}-${index}`} section={section} />
+        ))}
+      </div>
+
+      {/* COMPETÊNCIA ENEM — Se não estiver no texto */}
+      {showEnemBlock && (
+        <div className="p-4 rounded-xl border border-purple-500/40 bg-purple-500/5">
+          <div className="flex items-start gap-3">
+            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-background/50 text-purple-500 flex-shrink-0">
+              <Target className="h-4 w-4" />
+            </div>
+            <div className="flex-1">
+              <h4 className="font-bold text-sm mb-2 text-purple-500">
+                🎯 COMPETÊNCIA E HABILIDADE - ENEM
+              </h4>
+              <div className="space-y-1 text-sm">
+                {competenciaEnem && (
+                  <p>
+                    <span className="font-medium text-purple-400">📘 Competência:</span>{' '}
+                    <span className="text-muted-foreground">{competenciaEnem}</span>
+                  </p>
+                )}
+                {habilidadeEnem && (
+                  <p>
+                    <span className="font-medium text-purple-400">📘 Habilidade:</span>{' '}
+                    <span className="text-muted-foreground">{habilidadeEnem}</span>
+                  </p>
+                )}
+              </div>
+            </div>
+          </div>
         </div>
-      )}
-
-      {/* 3. CLASSIFICATION BLOCK — Macro + Micro */}
-      {hasClassification && (
-        <ResolutionSection 
-          icon={FolderTree} 
-          title="🗂️ CLASSIFICAÇÃO"
-          iconColor="text-blue-500"
-        >
-          <div className="space-y-1">
-            {macro && (
-              <p className="text-sm">
-                <span className="font-semibold text-blue-400">🔹 Macro Assunto:</span>{' '}
-                <span className="text-muted-foreground">{macro}</span>
-              </p>
-            )}
-            {micro && (
-              <p className="text-sm">
-                <span className="font-semibold text-blue-400">🔹 Micro Assunto:</span>{' '}
-                <span className="text-muted-foreground">{micro}</span>
-              </p>
-            )}
-          </div>
-        </ResolutionSection>
-      )}
-
-      {/* 4. RESOLUTION BODY — Texto Justificado */}
-      <ResolutionSection 
-        icon={Sparkles} 
-        title="🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS"
-        iconColor="text-emerald-500"
-      >
-        <p className="text-justify leading-relaxed whitespace-pre-wrap">
-          {resolutionText}
-        </p>
-      </ResolutionSection>
-
-      {/* 5. ENEM COMPETENCE/SKILLS */}
-      {hasEnemData && (
-        <ResolutionSection 
-          icon={Target} 
-          title="🎯 COMPETÊNCIA E HABILIDADE - ENEM"
-          iconColor="text-purple-500"
-        >
-          <div className="space-y-1">
-            {competenciaEnem && (
-              <p className="text-sm">
-                <span className="font-semibold text-purple-400">📘 Competência:</span>{' '}
-                <span className="text-muted-foreground">{competenciaEnem}</span>
-              </p>
-            )}
-            {habilidadeEnem && (
-              <p className="text-sm">
-                <span className="font-semibold text-purple-400">📘 Habilidade:</span>{' '}
-                <span className="text-muted-foreground">{habilidadeEnem}</span>
-              </p>
-            )}
-          </div>
-        </ResolutionSection>
-      )}
-
-      {/* 6. STRATEGY BLOCK — Opcional */}
-      {strategyText && (
-        <ResolutionSection 
-          icon={Compass} 
-          title="📌 DIRECIONAMENTO / ESTRATÉGIA"
-          iconColor="text-amber-500"
-        >
-          <p className="text-justify leading-relaxed whitespace-pre-wrap">
-            {strategyText}
-          </p>
-        </ResolutionSection>
-      )}
-
-      {/* 7. COMMON TRAPS BLOCK — Opcional */}
-      {commonTrapsText && (
-        <ResolutionSection 
-          icon={AlertTriangle} 
-          title="⚠️ PEGADINHAS COMUNS"
-          iconColor="text-orange-500"
-        >
-          <p className="text-justify leading-relaxed whitespace-pre-wrap">
-            {commonTrapsText}
-          </p>
-        </ResolutionSection>
-      )}
-
-      {/* 8. GOLDEN TIP BLOCK — Opcional */}
-      {goldenTipText && (
-        <ResolutionSection 
-          icon={Lightbulb} 
-          title="💡 DICA DE OURO"
-          iconColor="text-yellow-500"
-        >
-          <p className="text-justify leading-relaxed whitespace-pre-wrap">
-            {goldenTipText}
-          </p>
-        </ResolutionSection>
       )}
     </div>
   );
@@ -296,12 +423,9 @@ const QuestionResolution = memo(function QuestionResolution({
 export default QuestionResolution;
 
 // ============================================
-// REGRAS DE USO OBRIGATÓRIAS:
-// 
-// 1. TODA resolução DEVE usar este componente
-// 2. SEMPRE passar banca, ano, difficulty, tema quando disponíveis
-// 3. Campos opcionais só aparecem se preenchidos
-// 4. Texto é SEMPRE justificado
-// 5. Header é SEMPRE centralizado e bold
-// 6. NÃO MODIFICA o conteúdo original, apenas organiza
+// REGRAS:
+// 1. Parser detecta automaticamente seções no texto
+// 2. Cada seção exibida em bloco visual distinto
+// 3. Cores e ícones específicos por tipo
+// 4. NÃO modifica conteúdo, apenas organiza visualmente
 // ============================================
