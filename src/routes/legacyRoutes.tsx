@@ -37,7 +37,7 @@ export const legacyRoutes = (
     <Route path="/arquivos" element={<LegacyRedirect />} />
     <Route path="/leads-whatsapp" element={<LegacyRedirect />} />
     <Route path="/area-professor" element={<LegacyRedirect />} />
-    <Route path="/planejamento-aula" element={<LegacyRedirect />} />
+    {/* /planejamento-aula REMOVIDO */}
     <Route path="/laboratorio" element={<LegacyRedirect />} />
     <Route path="/turmas-online" element={<LegacyRedirect />} />
     <Route path="/turmas-presenciais" element={<LegacyRedirect />} />
