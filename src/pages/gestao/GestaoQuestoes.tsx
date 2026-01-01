@@ -937,6 +937,11 @@ function GestaoQuestoes() {
   const [annihilationCheckbox, setAnnihilationCheckbox] = useState(false);
   const [taxonomyManagerOpen, setTaxonomyManagerOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
+  
+  // MODO TREINO deletion states
+  const [deleteTreinoConfirm, setDeleteTreinoConfirm] = useState(false);
+  const [isDeletingTreino, setIsDeletingTreino] = useState(false);
+  const [treinoConfirmText, setTreinoConfirmText] = useState('');
 
   const { clearQueryCache } = useCacheManager();
   const { isOwner } = useRolePermissions();
@@ -1443,6 +1448,68 @@ function GestaoQuestoes() {
     }
   };
 
+  // EXCLUIR APENAS MODO TREINO
+  const handleDeleteTreinoQuestions = async () => {
+    if (!isOwner) {
+      toast.error('Apenas o Owner pode executar esta ação');
+      return;
+    }
+
+    if (treinoConfirmText !== 'EXCLUIR TREINO') {
+      toast.error('Digite exatamente: EXCLUIR TREINO');
+      return;
+    }
+
+    setIsDeletingTreino(true);
+    
+    try {
+      // Buscar IDs das questões com tag MODO_TREINO
+      const treinoIds = questions
+        .filter(q => q.tags?.includes('MODO_TREINO'))
+        .map(q => q.id);
+
+      if (treinoIds.length === 0) {
+        toast.info('Nenhuma questão do Modo Treino encontrada');
+        setDeleteTreinoConfirm(false);
+        return;
+      }
+
+      // Deletar todas as questões do Modo Treino
+      const { error } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .in('id', treinoIds);
+
+      if (error) throw error;
+
+      // Limpar cache e recarregar
+      clearQueryCache();
+      await loadQuestions();
+      
+      toast.success(`💪 ${treinoIds.length} questões do Modo Treino excluídas!`, {
+        description: 'Apenas questões de treino foram removidas. Simulados intactos.',
+        duration: 5000,
+      });
+      
+      // Reset do modal
+      setDeleteTreinoConfirm(false);
+      setTreinoConfirmText('');
+    } catch (err) {
+      console.error('Erro ao excluir modo treino:', err);
+      toast.error('Erro ao excluir: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsDeletingTreino(false);
+    }
+  };
+
+  // Resetar campos quando fechar modal de Treino
+  const handleCloseTreinoModal = (open: boolean) => {
+    setDeleteTreinoConfirm(open);
+    if (!open) {
+      setTreinoConfirmText('');
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
@@ -1488,6 +1555,16 @@ function GestaoQuestoes() {
             <Upload className="h-4 w-4" />
             Importar
           </Button>
+          {isOwner && stats.modoTreino > 0 && (
+            <Button 
+              variant="outline"
+              onClick={() => setDeleteTreinoConfirm(true)}
+              className="gap-2 border-purple-500/50 text-purple-500 hover:bg-purple-500/10 hover:text-purple-400"
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir Treino ({stats.modoTreino})
+            </Button>
+          )}
           {isOwner && questions.length > 0 && (
             <Button 
               variant="outline"
@@ -2386,6 +2463,82 @@ function GestaoQuestoes() {
                 <>
                   <Trash2 className="h-4 w-4 mr-2" />
                   CONFIRMAR EXCLUSÃO TOTAL
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de EXCLUSÃO MODO TREINO */}
+      <Dialog open={deleteTreinoConfirm} onOpenChange={handleCloseTreinoModal}>
+        <DialogContent className="border-purple-500/50 max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-purple-500 text-xl">
+              <Trash2 className="h-6 w-6" />
+              💪 Excluir Modo Treino
+            </DialogTitle>
+            <DialogDescription className="space-y-4 pt-4">
+              <div className="bg-purple-500/20 border border-purple-500/50 p-4 rounded-lg">
+                <p className="text-purple-400 font-bold text-lg mb-2">
+                  ⚠️ Esta ação remove apenas questões de TREINO
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir <strong className="text-purple-400">{stats.modoTreino} questões</strong> do Modo Treino.
+                </p>
+              </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-purple-500">✗</span>
+                  Questões com tag MODO_TREINO serão removidas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões de SIMULADOS permanecerão intactas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-green-500">✓</span>
+                  Questões sem grupo também permanecerão
+                </li>
+              </ul>
+
+              {/* Confirmação por digitação */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-purple-500/20 px-2 py-1 rounded text-purple-400">EXCLUIR TREINO</code> para continuar:
+                </label>
+                <Input 
+                  value={treinoConfirmText}
+                  onChange={(e) => setTreinoConfirmText(e.target.value)}
+                  placeholder="EXCLUIR TREINO"
+                  className="border-purple-500/50 focus-visible:ring-purple-500"
+                />
+              </div>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseTreinoModal(false)} 
+              disabled={isDeletingTreino}
+            >
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleDeleteTreinoQuestions}
+              disabled={isDeletingTreino || treinoConfirmText !== 'EXCLUIR TREINO'}
+              className="bg-purple-600 hover:bg-purple-700 text-white"
+            >
+              {isDeletingTreino ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir Modo Treino
                 </>
               )}
             </Button>
