@@ -8859,13 +8859,17 @@ export type Database = {
           id: string
           is_active: boolean | null
           lesson_id: string | null
+          macro_area: string | null
+          micro_area: string | null
           options: Json
           points: number | null
           position: number | null
           question_text: string
           question_type: string | null
           quiz_id: string | null
+          subtema: string | null
           tags: string[] | null
+          tema: string | null
           updated_at: string
         }
         Insert: {
@@ -8879,13 +8883,17 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           lesson_id?: string | null
+          macro_area?: string | null
+          micro_area?: string | null
           options?: Json
           points?: number | null
           position?: number | null
           question_text: string
           question_type?: string | null
           quiz_id?: string | null
+          subtema?: string | null
           tags?: string[] | null
+          tema?: string | null
           updated_at?: string
         }
         Update: {
@@ -8899,13 +8907,17 @@ export type Database = {
           id?: string
           is_active?: boolean | null
           lesson_id?: string | null
+          macro_area?: string | null
+          micro_area?: string | null
           options?: Json
           points?: number | null
           position?: number | null
           question_text?: string
           question_type?: string | null
           quiz_id?: string | null
+          subtema?: string | null
           tags?: string[] | null
+          tema?: string | null
           updated_at?: string
         }
         Relationships: [
