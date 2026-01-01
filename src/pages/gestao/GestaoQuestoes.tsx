@@ -1217,7 +1217,8 @@ function GestaoQuestoes() {
   }, [questions]);
 
   // DETECÇÃO DE QUESTÕES REPETIDAS (baseado no enunciado normalizado)
-  const duplicateQuestionIds = useMemo(() => {
+  // Mapa de duplicatas: ID → grupo de IDs duplicados (para agrupamento visual)
+  const { duplicateQuestionIds, duplicateGroups, getGroupNumber, getGroupMembers } = useMemo(() => {
     // Normaliza o enunciado: lowercase, trim, remove espaços múltiplos
     const normalizeText = (text: string) => 
       text.toLowerCase().trim().replace(/\s+/g, ' ');
@@ -1234,13 +1235,29 @@ function GestaoQuestoes() {
     
     // Coleta IDs que aparecem mais de uma vez (todas as ocorrências são duplicatas)
     const duplicateIds = new Set<string>();
+    // Mapa: ID → array de IDs no mesmo grupo (incluindo a própria)
+    const groups = new Map<string, string[]>();
+    // Mapa: ID → número do grupo (para ordenação)
+    const idToGroupNumber = new Map<string, number>();
+    
+    let groupNumber = 1;
     enunciadoMap.forEach((ids) => {
       if (ids.length > 1) {
-        ids.forEach(id => duplicateIds.add(id));
+        ids.forEach(id => {
+          duplicateIds.add(id);
+          groups.set(id, ids);
+          idToGroupNumber.set(id, groupNumber);
+        });
+        groupNumber++;
       }
     });
     
-    return duplicateIds;
+    return {
+      duplicateQuestionIds: duplicateIds,
+      duplicateGroups: groups,
+      getGroupNumber: (id: string) => idToGroupNumber.get(id) || 0,
+      getGroupMembers: (id: string) => groups.get(id) || [],
+    };
   }, [questions]);
 
   // Função helper para verificar se uma questão é duplicata
@@ -1331,35 +1348,49 @@ function GestaoQuestoes() {
       );
     }
 
-    // Ordenação
-    switch (sortOrder) {
-      case 'newest':
-        filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
-        break;
-      case 'oldest':
-        filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-        break;
-      case 'ano_desc':
-        filtered.sort((a, b) => (b.ano || 0) - (a.ano || 0));
-        break;
-      case 'ano_asc':
-        filtered.sort((a, b) => (a.ano || 0) - (b.ano || 0));
-        break;
-      case 'difficulty_asc':
-        const diffOrder = { facil: 1, medio: 2, dificil: 3 };
-        filtered.sort((a, b) => (diffOrder[a.difficulty as keyof typeof diffOrder] || 2) - (diffOrder[b.difficulty as keyof typeof diffOrder] || 2));
-        break;
-      case 'difficulty_desc':
-        const diffOrderDesc = { facil: 1, medio: 2, dificil: 3 };
-        filtered.sort((a, b) => (diffOrderDesc[b.difficulty as keyof typeof diffOrderDesc] || 2) - (diffOrderDesc[a.difficulty as keyof typeof diffOrderDesc] || 2));
-        break;
-      case 'alphabetical':
-        filtered.sort((a, b) => a.question_text.localeCompare(b.question_text));
-        break;
+    // Ordenação especial para aba "Repetidas": agrupa duplicatas juntas
+    if (activeTab === 'repetidas') {
+      // Ordenar por número do grupo, depois por data de criação
+      filtered.sort((a, b) => {
+        const groupA = getGroupNumber(a.id);
+        const groupB = getGroupNumber(b.id);
+        if (groupA !== groupB) {
+          return groupA - groupB; // Agrupa por número do grupo
+        }
+        // Dentro do mesmo grupo, ordena por data (mais antiga primeiro)
+        return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+      });
+    } else {
+      // Ordenação padrão
+      switch (sortOrder) {
+        case 'newest':
+          filtered.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+          break;
+        case 'oldest':
+          filtered.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+          break;
+        case 'ano_desc':
+          filtered.sort((a, b) => (b.ano || 0) - (a.ano || 0));
+          break;
+        case 'ano_asc':
+          filtered.sort((a, b) => (a.ano || 0) - (b.ano || 0));
+          break;
+        case 'difficulty_asc':
+          const diffOrder = { facil: 1, medio: 2, dificil: 3 };
+          filtered.sort((a, b) => (diffOrder[a.difficulty as keyof typeof diffOrder] || 2) - (diffOrder[b.difficulty as keyof typeof diffOrder] || 2));
+          break;
+        case 'difficulty_desc':
+          const diffOrderDesc = { facil: 1, medio: 2, dificil: 3 };
+          filtered.sort((a, b) => (diffOrderDesc[b.difficulty as keyof typeof diffOrderDesc] || 2) - (diffOrderDesc[a.difficulty as keyof typeof diffOrderDesc] || 2));
+          break;
+        case 'alphabetical':
+          filtered.sort((a, b) => a.question_text.localeCompare(b.question_text));
+          break;
+      }
     }
 
     return filtered;
-  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, temaFilter, subtemaFilter, classifyMacroArea, duplicateQuestionIds]);
+  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, temaFilter, subtemaFilter, classifyMacroArea, duplicateQuestionIds, getGroupNumber]);
 
   // PAGINATION: Calcular total de páginas e slice da página atual
   const totalPages = useMemo(() => Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE), [filteredQuestions.length, ITEMS_PER_PAGE]);
@@ -2383,10 +2414,13 @@ function GestaoQuestoes() {
                             <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
                               #{String(globalIndex + 1).padStart(3, '0')}
                             </span>
-                            {/* LABEL DE QUESTÃO REPETIDA */}
+                            {/* LABEL DE QUESTÃO REPETIDA COM NÚMERO DO GRUPO */}
                             {isDuplicateQuestion(question.id) && (
-                              <span className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30">
-                                (REPETIDA)
+                              <span 
+                                className="text-xs font-bold text-red-500 bg-red-500/10 px-2 py-0.5 rounded border border-red-500/30"
+                                title={`Grupo ${getGroupNumber(question.id)} - ${getGroupMembers(question.id).length} questões idênticas`}
+                              >
+                                🔁 GRUPO {getGroupNumber(question.id)} ({getGroupMembers(question.id).length}x)
                               </span>
                             )}
                           </div>
