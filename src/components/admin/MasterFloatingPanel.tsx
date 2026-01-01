@@ -13,7 +13,8 @@ import {
   Eye, EyeOff, Wand2, RotateCcw, Redo2,
   MousePointer, Sparkles, ChevronRight, X,
   Grid3X3, Move, Palette, Code, Zap, Shield,
-  GripVertical, RefreshCw, Save, Download, Menu
+  GripVertical, RefreshCw, Save, Download, Menu,
+  LogIn
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useGodMode } from '@/stores/godModeStore';
@@ -22,6 +23,7 @@ import { MasterMenuEditor } from './MasterMenuEditor';
 import { useMasterDrag } from '@/hooks/useMasterDrag';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { useNavigate } from 'react-router-dom';
 
 interface MasterFloatingPanelProps {
   isOpen: boolean;
@@ -33,6 +35,7 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
   const [showSectionOrganizer, setShowSectionOrganizer] = useState(false);
   const [showMenuEditor, setShowMenuEditor] = useState(false);
   const { isDragModeActive, setIsDragModeActive, resetAllPositions } = useMasterDrag();
+  const navigate = useNavigate();
 
   // Atalho para abrir painel
   useEffect(() => {
@@ -63,6 +66,16 @@ export function MasterFloatingPanel({ isOpen, onToggle }: MasterFloatingPanelPro
   if (!isOwner) return null;
 
   const tools = [
+    {
+      id: 'owner-login',
+      label: 'Login Owner',
+      description: 'Acessar tela de login como Owner',
+      icon: LogIn,
+      active: false,
+      onClick: () => navigate('/auth?dev=1'),
+      color: 'from-amber-500 to-yellow-500',
+      shortcut: '',
+    },
     {
       id: 'edit-mode',
       label: 'Modo Edição',
