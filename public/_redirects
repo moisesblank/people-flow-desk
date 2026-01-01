@@ -1,0 +1,2 @@
+# SPA fallback (evita 404 ao acessar URLs direto como /auth?dev=1)
+/*    /index.html   200
