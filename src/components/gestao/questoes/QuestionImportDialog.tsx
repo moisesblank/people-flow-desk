@@ -130,6 +130,7 @@ interface ParsedQuestion {
   tempo_medio_segundos?: number;
   multidisciplinar?: boolean;
   // Mídia
+  image_url?: string;
   imagens_enunciado?: string[];
   imagens_alternativas?: Record<string, string>;
   tipo_imagem?: 'ilustrativa' | 'essencial' | 'decorativa';
@@ -202,6 +203,9 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   tags: ['tags', 'etiquetas', 'labels', 'keywords', 'palavras_chave', 'palavras chave'],
   competencia_enem: ['competencia', 'competência', 'competencia_enem', 'competencia_area', 'competencia area', 'comp'],
   habilidade_enem: ['habilidade', 'habilidade_enem', 'habilidade_area', 'habilidade area', 'hab'],
+  
+  // Imagem do enunciado
+  image_url: ['imagem', 'image', 'image_url', 'imagem_url', 'img', 'foto', 'figura', 'picture', 'url_imagem', 'imagem_enunciado'],
 };
 
 const DIFFICULTY_MAPPING: Record<string, 'facil' | 'medio' | 'dificil'> = {
@@ -877,6 +881,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             nivel_cognitivo: undefined,
             tempo_medio_segundos: undefined,
             multidisciplinar: undefined,
+            image_url: undefined,
             imagens_enunciado: undefined,
             imagens_alternativas: undefined,
             tipo_imagem: undefined,
@@ -962,6 +967,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 break;
               case 'habilidade_enem':
                 question.habilidade_enem = String(value).trim() || undefined;
+                break;
+              case 'image_url':
+                // Limpar URL (remover colchetes se houver)
+                let url = String(value).trim();
+                url = url.replace(/^\[/, '').replace(/\]$/, '');
+                question.image_url = url || undefined;
                 break;
             }
           }
@@ -1306,6 +1317,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           tempo_medio_segundos: q.tempo_medio_segundos || 120,
           nivel_cognitivo: q.nivel_cognitivo || null,
           origem: q.origem || 'autoral_prof_moises',
+          // Imagem do enunciado
+          image_url: q.image_url || null,
           // Rastreabilidade
           campos_inferidos: q.campos_inferidos,
         };

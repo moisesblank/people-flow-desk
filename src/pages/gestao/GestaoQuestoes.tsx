@@ -129,6 +129,7 @@ interface Question {
   tema?: string | null;
   subtema?: string | null;
   tags?: string[] | null;
+  image_url?: string | null; // URL da imagem do enunciado
   points: number;
   position: number;
   is_active: boolean;
@@ -1772,6 +1773,21 @@ function GestaoQuestoes() {
                           <p className="text-sm font-medium leading-relaxed line-clamp-2 mb-3">
                             {question.question_text}
                           </p>
+                          
+                          {/* Imagem do Enunciado (se houver) */}
+                          {question.image_url && (
+                            <div className="mb-3">
+                              <img 
+                                src={question.image_url} 
+                                alt="Imagem da questão"
+                                className="max-h-32 rounded-lg border border-border/50 object-contain"
+                                loading="lazy"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none';
+                                }}
+                              />
+                            </div>
+                          )}
                           
                           {/* Taxonomia Completa */}
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">
