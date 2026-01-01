@@ -666,6 +666,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     tema: '',
     subtema: '',
   });
+
+  // QUESTION_DOMAIN: Agrupamento pós-importação (SIMULADOS ou MODO_TREINO)
+  type QuestionGroup = 'SIMULADOS' | 'MODO_TREINO';
+  const [selectedGroup, setSelectedGroup] = useState<QuestionGroup>('MODO_TREINO');
   
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
 
@@ -1318,7 +1322,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           micro: q.micro || null,
           tema: q.tema || null,
           subtema: q.subtema || null,
-          tags: q.tags || [],
+          tags: [...(q.tags || []), selectedGroup], // QUESTION_DOMAIN: Adiciona grupo
           points: 10,
           // IMPORTAÇÃO DIRETA - Questões já entram ATIVAS e PUBLICADAS
           is_active: true,
@@ -1390,6 +1394,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
       tema: '',
       subtema: '',
     });
+    setSelectedGroup('MODO_TREINO'); // Reset grupo
   }, []);
 
   const handleClose = useCallback(() => {
@@ -2108,6 +2113,50 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     </div>
                   </div>
 
+                  {/* QUESTION_DOMAIN: Seleção de Grupo pós-importação */}
+                  <div className="p-4 rounded-lg border border-purple-500/30 bg-purple-500/5">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Target className="h-4 w-4 text-purple-500" />
+                      <span className="font-semibold text-sm text-purple-500">Atribuir questões ao grupo:</span>
+                    </div>
+                    <div className="flex gap-3">
+                      <button
+                        onClick={() => setSelectedGroup('SIMULADOS')}
+                        className={cn(
+                          "flex-1 p-3 rounded-lg border-2 transition-all text-left",
+                          selectedGroup === 'SIMULADOS'
+                            ? "border-red-500 bg-red-500/10 ring-2 ring-red-500/30"
+                            : "border-muted hover:border-red-500/50 hover:bg-red-500/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-red-600 text-white">SIMULADOS</Badge>
+                          {selectedGroup === 'SIMULADOS' && <CheckCircle className="h-4 w-4 text-red-500 ml-auto" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Questões para provas simuladas
+                        </p>
+                      </button>
+                      <button
+                        onClick={() => setSelectedGroup('MODO_TREINO')}
+                        className={cn(
+                          "flex-1 p-3 rounded-lg border-2 transition-all text-left",
+                          selectedGroup === 'MODO_TREINO'
+                            ? "border-purple-500 bg-purple-500/10 ring-2 ring-purple-500/30"
+                            : "border-muted hover:border-purple-500/50 hover:bg-purple-500/5"
+                        )}
+                      >
+                        <div className="flex items-center gap-2">
+                          <Badge className="bg-purple-600 text-white">TREINO</Badge>
+                          {selectedGroup === 'MODO_TREINO' && <CheckCircle className="h-4 w-4 text-purple-500 ml-auto" />}
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Questões para modo treino/prática
+                        </p>
+                      </button>
+                    </div>
+                  </div>
+
                   {/* Checkbox de autorização explícita */}
                   <div className="flex items-center gap-3 p-3 rounded-lg border border-primary/30 bg-primary/5">
                     <Checkbox
@@ -2125,7 +2174,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     <Label htmlFor="human-auth" className="text-sm cursor-pointer flex-1">
                       <span className="font-semibold text-primary">Autorizo a importação</span>
                       <span className="text-muted-foreground ml-1">
-                        — I confirm that I reviewed the inferred data and accept that non-identified fields remain empty.
+                        — Grupo: <Badge variant="outline" className={cn(
+                          "ml-1",
+                          selectedGroup === 'SIMULADOS' ? "text-red-500 border-red-500/30" : "text-purple-500 border-purple-500/30"
+                        )}>{selectedGroup === 'SIMULADOS' ? 'Simulados' : 'Treino'}</Badge>
                       </span>
                     </Label>
                     <ShieldCheck
@@ -2249,7 +2301,13 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     </div>
                     <h2 className="text-2xl font-bold text-green-500">Importação Concluída!</h2>
                     <p className="text-muted-foreground mt-1">
-                      Questões salvas como <strong>ATIVAS</strong> (status: publicado)
+                      Questões salvas como <strong>ATIVAS</strong> no grupo{' '}
+                      <Badge className={cn(
+                        "ml-1",
+                        selectedGroup === 'SIMULADOS' ? "bg-red-600" : "bg-purple-600"
+                      )}>
+                        {selectedGroup === 'SIMULADOS' ? 'Simulados' : 'Treino'}
+                      </Badge>
                     </p>
                   </div>
 

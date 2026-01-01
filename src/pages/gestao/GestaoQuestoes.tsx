@@ -1918,14 +1918,21 @@ function GestaoQuestoes() {
                             className="mb-3"
                           />
                           
-                          {/* Badges de Associação: SIMULADO e TREINO */}
+                          {/* Badges de Associação: QUESTION_DOMAIN (SIMULADO ou TREINO) */}
                           <div className="flex items-center justify-between text-sm">
-                            <Badge className="px-4 py-1.5 bg-red-600 text-white border-0 font-bold">
-                              🎯 Simulados:
-                            </Badge>
-                            <Badge className="px-4 py-1.5 bg-purple-600 text-white border-0 font-bold">
-                              💪 TREINO
-                            </Badge>
+                            {question.tags?.includes('SIMULADOS') ? (
+                              <Badge className="px-4 py-1.5 bg-red-600 text-white border-0 font-bold">
+                                🎯 Simulados
+                              </Badge>
+                            ) : question.tags?.includes('MODO_TREINO') ? (
+                              <Badge className="px-4 py-1.5 bg-purple-600 text-white border-0 font-bold">
+                                💪 Treino
+                              </Badge>
+                            ) : (
+                              <Badge className="px-4 py-1.5 bg-muted text-muted-foreground border border-border/50 font-medium">
+                                📋 Sem grupo
+                              </Badge>
+                            )}
                           </div>
                         </div>
                         

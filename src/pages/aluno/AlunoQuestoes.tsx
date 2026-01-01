@@ -63,6 +63,8 @@ interface Question {
   micro?: string | null;
   tema?: string | null;
   subtema?: string | null;
+  // QUESTION_DOMAIN: Agrupamento
+  tags?: string[] | null;
 }
 
 interface QuestionAttempt {
