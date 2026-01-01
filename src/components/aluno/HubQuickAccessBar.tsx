@@ -1,6 +1,6 @@
 // ============================================
-// 🚀 HUB QUICK ACCESS BAR - ANO 2300 CINEMATIC
-// Visual futurístico com hologramas e efeitos
+// 🚀 HUB QUICK ACCESS BAR - IRON MAN HUD 2300
+// Visual cinematográfico impactante
 // ============================================
 
 import { memo } from "react";
@@ -20,7 +20,7 @@ import {
   BookOpen,
   Sparkles,
   X,
-  Zap
+  Hexagon
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -40,104 +40,24 @@ interface HubArea {
   key: HubAreaKey;
   label: string;
   icon: typeof Calendar;
-  gradient: string;
-  glowColor: string;
+  color: string;
   description: string;
   badge?: string;
-  badgeVariant?: "ai" | "xp" | "treino" | "new";
+  badgeType?: "ai" | "xp" | "treino";
 }
 
-// Configuração das 9 áreas - Year 2300 Style
+// Configuração das 9 áreas
 export const HUB_AREAS: HubArea[] = [
-  {
-    key: "cronograma",
-    label: "Cronograma",
-    icon: Calendar,
-    gradient: "from-blue-500 via-cyan-400 to-blue-600",
-    glowColor: "shadow-blue-500/50",
-    description: "Cronograma adaptativo por IA",
-    badge: "IA",
-    badgeVariant: "ai"
-  },
-  {
-    key: "forum",
-    label: "Fórum",
-    icon: MessageSquare,
-    gradient: "from-purple-500 via-fuchsia-400 to-purple-600",
-    glowColor: "shadow-purple-500/50",
-    description: "Comunidade de alunos"
-  },
-  {
-    key: "tutoria",
-    label: "Tutoria IA",
-    icon: Bot,
-    gradient: "from-emerald-500 via-teal-400 to-emerald-600",
-    glowColor: "shadow-emerald-500/50",
-    description: "Tutor inteligente 24h",
-    badge: "IA",
-    badgeVariant: "ai"
-  },
-  {
-    key: "videoaulas",
-    label: "Videoaulas",
-    icon: Video,
-    gradient: "from-red-500 via-orange-400 to-red-600",
-    glowColor: "shadow-red-500/50",
-    description: "Biblioteca de vídeos"
-  },
-  {
-    key: "questoes",
-    label: "Questões",
-    icon: Target,
-    gradient: "from-amber-500 via-yellow-400 to-amber-600",
-    glowColor: "shadow-amber-500/50",
-    description: "Modo Treino (0 XP)",
-    badge: "TREINO",
-    badgeVariant: "treino"
-  },
-  {
-    key: "flashcards",
-    label: "Flashcards",
-    icon: Brain,
-    gradient: "from-pink-500 via-rose-400 to-pink-600",
-    glowColor: "shadow-pink-500/50",
-    description: "Revisão espaçada"
-  },
-  {
-    key: "simulados",
-    label: "Simulados",
-    icon: FileText,
-    gradient: "from-indigo-500 via-violet-400 to-indigo-600",
-    glowColor: "shadow-indigo-500/50",
-    description: "Provas oficiais (+10 XP)",
-    badge: "+10 XP",
-    badgeVariant: "xp"
-  },
-  {
-    key: "mapas-mentais",
-    label: "Mapas",
-    icon: Network,
-    gradient: "from-cyan-500 via-sky-400 to-cyan-600",
-    glowColor: "shadow-cyan-500/50",
-    description: "Mapas mentais visuais"
-  },
-  {
-    key: "livros-web",
-    label: "Livros",
-    icon: BookOpen,
-    gradient: "from-orange-500 via-amber-400 to-orange-600",
-    glowColor: "shadow-orange-500/50",
-    description: "Biblioteca digital"
-  }
+  { key: "cronograma", label: "Cronograma", icon: Calendar, color: "#3B82F6", description: "Cronograma adaptativo por IA", badge: "IA", badgeType: "ai" },
+  { key: "forum", label: "Fórum", icon: MessageSquare, color: "#A855F7", description: "Comunidade de alunos" },
+  { key: "tutoria", label: "Tutoria IA", icon: Bot, color: "#10B981", description: "Tutor inteligente 24h", badge: "IA", badgeType: "ai" },
+  { key: "videoaulas", label: "Videoaulas", icon: Video, color: "#EF4444", description: "Biblioteca de vídeos" },
+  { key: "questoes", label: "Questões", icon: Target, color: "#F59E0B", description: "Modo Treino (0 XP)", badge: "TREINO", badgeType: "treino" },
+  { key: "flashcards", label: "Flashcards", icon: Brain, color: "#EC4899", description: "Revisão espaçada" },
+  { key: "simulados", label: "Simulados", icon: FileText, color: "#6366F1", description: "Provas oficiais (+10 XP)", badge: "+10 XP", badgeType: "xp" },
+  { key: "mapas-mentais", label: "Mapas", icon: Network, color: "#06B6D4", description: "Mapas mentais visuais" },
+  { key: "livros-web", label: "Livros", icon: BookOpen, color: "#F97316", description: "Biblioteca digital" }
 ];
-
-// Badge variants para cada tipo
-const badgeStyles = {
-  ai: "bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-0 shadow-lg shadow-emerald-500/30",
-  xp: "bg-gradient-to-r from-amber-500 to-yellow-500 text-black border-0 shadow-lg shadow-amber-500/30",
-  treino: "bg-gradient-to-r from-violet-500 to-purple-500 text-white border-0 shadow-lg shadow-violet-500/30",
-  new: "bg-gradient-to-r from-rose-500 to-pink-500 text-white border-0 shadow-lg shadow-rose-500/30"
-};
 
 interface HubQuickAccessBarProps {
   activeModal: HubAreaKey | null;
@@ -149,48 +69,123 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
   onOpenModal
 }: HubQuickAccessBarProps) {
   return (
-    <div className="relative group">
-      {/* Background glow layers */}
-      <div className="absolute -inset-1 bg-gradient-to-r from-primary/20 via-holo-purple/20 to-holo-cyan/20 rounded-3xl blur-2xl opacity-60 group-hover:opacity-80 transition-opacity duration-500" />
-      <div className="absolute -inset-0.5 bg-gradient-to-r from-primary/10 via-transparent to-holo-cyan/10 rounded-2xl" />
+    <div className="relative">
+      {/* ===== CAMADA 1: Glow externo pulsante ===== */}
+      <div 
+        className="absolute -inset-3 rounded-3xl opacity-40"
+        style={{
+          background: 'linear-gradient(135deg, rgba(59,130,246,0.3) 0%, rgba(168,85,247,0.3) 50%, rgba(6,182,212,0.3) 100%)',
+          filter: 'blur(20px)',
+          animation: 'pulse 3s ease-in-out infinite'
+        }}
+      />
       
-      {/* Main container */}
-      <div className="relative bg-gradient-to-br from-card/90 via-card/80 to-card/90 backdrop-blur-2xl border border-border/30 rounded-2xl overflow-hidden">
-        {/* Top holographic line */}
-        <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-primary to-transparent opacity-60" />
+      {/* ===== CAMADA 2: Border animada ===== */}
+      <div 
+        className="absolute -inset-px rounded-2xl"
+        style={{
+          background: 'linear-gradient(90deg, #3B82F6, #A855F7, #06B6D4, #3B82F6)',
+          backgroundSize: '300% 100%',
+          animation: 'gradientShift 4s linear infinite',
+          padding: '1px'
+        }}
+      >
+        <div className="w-full h-full rounded-2xl bg-background" />
+      </div>
+      
+      {/* ===== CONTAINER PRINCIPAL ===== */}
+      <div className="relative bg-gradient-to-br from-card via-card/95 to-card/90 backdrop-blur-xl rounded-2xl overflow-hidden border border-white/5">
         
-        {/* Animated corner accents */}
-        <div className="absolute top-0 left-0 w-16 h-16">
-          <div className="absolute top-0 left-0 w-full h-px bg-gradient-to-r from-primary to-transparent" />
-          <div className="absolute top-0 left-0 h-full w-px bg-gradient-to-b from-primary to-transparent" />
-        </div>
-        <div className="absolute top-0 right-0 w-16 h-16">
-          <div className="absolute top-0 right-0 w-full h-px bg-gradient-to-l from-holo-cyan to-transparent" />
-          <div className="absolute top-0 right-0 h-full w-px bg-gradient-to-b from-holo-cyan to-transparent" />
-        </div>
+        {/* ===== CAMADA 3: Grid pattern overlay ===== */}
+        <div 
+          className="absolute inset-0 opacity-[0.03]"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)
+            `,
+            backgroundSize: '20px 20px'
+          }}
+        />
         
-        {/* Header */}
-        <div className="flex items-center justify-between px-5 py-3 border-b border-border/20">
-          <div className="flex items-center gap-3">
-            {/* Pulse indicator */}
-            <div className="relative">
-              <div className="w-2.5 h-2.5 rounded-full bg-primary animate-pulse" />
-              <div className="absolute inset-0 w-2.5 h-2.5 rounded-full bg-primary/50 animate-ping" />
-            </div>
-            <span className="text-xs font-bold text-foreground/80 uppercase tracking-[0.2em]">
-              Hub Central
-            </span>
-          </div>
+        {/* ===== CAMADA 4: Scan line effect ===== */}
+        <div 
+          className="absolute inset-0 pointer-events-none overflow-hidden"
+          style={{
+            background: 'linear-gradient(180deg, transparent 0%, rgba(59,130,246,0.03) 50%, transparent 100%)',
+            backgroundSize: '100% 4px',
+            animation: 'scanLine 8s linear infinite'
+          }}
+        />
+        
+        {/* ===== HEADER ÉPICO ===== */}
+        <div className="relative px-6 py-4 border-b border-white/10">
+          {/* Linha holográfica superior */}
+          <div 
+            className="absolute top-0 left-1/4 right-1/4 h-px"
+            style={{
+              background: 'linear-gradient(90deg, transparent, #3B82F6, #A855F7, #06B6D4, transparent)'
+            }}
+          />
           
-          <Badge className="bg-gradient-to-r from-primary/20 to-holo-purple/20 border border-primary/30 text-primary text-[10px] font-bold uppercase tracking-wider px-2.5 py-0.5">
-            <Zap className="w-3 h-3 mr-1 animate-pulse" />
-            9 Módulos
-          </Badge>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              {/* Hexágono animado */}
+              <div className="relative">
+                <Hexagon 
+                  className="w-10 h-10 text-primary/20" 
+                  style={{ animation: 'spin 20s linear infinite' }}
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div 
+                    className="w-3 h-3 rounded-full bg-primary"
+                    style={{ 
+                      boxShadow: '0 0 20px 5px rgba(59,130,246,0.5)',
+                      animation: 'pulse 2s ease-in-out infinite'
+                    }}
+                  />
+                </div>
+              </div>
+              
+              <div>
+                <h3 
+                  className="text-sm font-black uppercase tracking-[0.3em] text-foreground"
+                  style={{ textShadow: '0 0 20px rgba(59,130,246,0.3)' }}
+                >
+                  Hub Central
+                </h3>
+                <p className="text-[10px] text-muted-foreground uppercase tracking-widest">
+                  Sistema Neural de Estudos
+                </p>
+              </div>
+            </div>
+            
+            {/* Status indicator */}
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/30">
+                <div 
+                  className="w-2 h-2 rounded-full bg-emerald-500"
+                  style={{ 
+                    boxShadow: '0 0 10px 2px rgba(16,185,129,0.5)',
+                    animation: 'pulse 1.5s ease-in-out infinite'
+                  }}
+                />
+                <span className="text-[10px] font-bold text-emerald-500 uppercase tracking-wider">Online</span>
+              </div>
+              
+              <Badge 
+                className="bg-gradient-to-r from-primary/20 via-purple-500/20 to-cyan-500/20 border border-primary/30 text-primary font-black text-xs px-3"
+                style={{ textShadow: '0 0 10px rgba(59,130,246,0.5)' }}
+              >
+                9 MÓDULOS
+              </Badge>
+            </div>
+          </div>
         </div>
         
-        {/* Grid de botões */}
-        <div className="p-4">
-          <div className="grid grid-cols-9 gap-3">
+        {/* ===== GRID DE MÓDULOS ===== */}
+        <div className="p-5">
+          <div className="grid grid-cols-9 gap-2">
             {HUB_AREAS.map((area, index) => {
               const Icon = area.icon;
               const isActive = activeModal === area.key;
@@ -199,68 +194,104 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
                 <button
                   key={area.key}
                   onClick={() => onOpenModal(area.key)}
-                  className={cn(
-                    "relative group/btn flex flex-col items-center gap-2 p-3 rounded-xl transition-all duration-300",
-                    "hover:scale-105 hover:-translate-y-1",
-                    "focus:outline-none focus:ring-2 focus:ring-primary/50",
-                    isActive && "scale-105 -translate-y-1"
-                  )}
+                  className="group relative flex flex-col items-center p-3 rounded-xl transition-all duration-300 hover:scale-110 hover:-translate-y-2 focus:outline-none"
                   style={{
-                    animationDelay: `${index * 50}ms`
+                    animationDelay: `${index * 80}ms`
                   }}
                 >
-                  {/* Background glow on hover/active */}
-                  <div className={cn(
-                    "absolute inset-0 rounded-xl opacity-0 transition-opacity duration-300",
-                    "bg-gradient-to-br",
-                    area.gradient,
-                    "group-hover/btn:opacity-10",
-                    isActive && "opacity-20"
-                  )} />
+                  {/* Glow ativo/hover */}
+                  <div 
+                    className={cn(
+                      "absolute inset-0 rounded-xl transition-opacity duration-300",
+                      isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                    )}
+                    style={{
+                      background: `radial-gradient(circle at center, ${area.color}30 0%, transparent 70%)`,
+                      filter: 'blur(8px)'
+                    }}
+                  />
                   
-                  {/* Icon container */}
-                  <div className={cn(
-                    "relative p-3 rounded-xl transition-all duration-300",
-                    "bg-gradient-to-br shadow-lg",
-                    area.gradient,
-                    area.glowColor,
-                    isActive && "shadow-xl scale-110",
-                    "group-hover/btn:shadow-xl group-hover/btn:scale-110"
-                  )}>
-                    {/* Inner glow */}
-                    <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover/btn:opacity-100 transition-opacity" />
+                  {/* Container do ícone */}
+                  <div 
+                    className={cn(
+                      "relative w-14 h-14 rounded-xl flex items-center justify-center transition-all duration-300",
+                      "group-hover:shadow-2xl",
+                      isActive && "scale-110"
+                    )}
+                    style={{
+                      background: `linear-gradient(135deg, ${area.color}20 0%, ${area.color}40 100%)`,
+                      border: `1px solid ${area.color}40`,
+                      boxShadow: isActive 
+                        ? `0 0 30px 5px ${area.color}50, inset 0 0 20px ${area.color}20`
+                        : `0 4px 20px ${area.color}20`
+                    }}
+                  >
+                    {/* Inner glow ring */}
+                    <div 
+                      className="absolute inset-1 rounded-lg opacity-50"
+                      style={{
+                        background: `linear-gradient(135deg, ${area.color}30 0%, transparent 50%, ${area.color}10 100%)`
+                      }}
+                    />
                     
-                    <Icon className="relative w-5 h-5 text-white drop-shadow-lg" />
+                    {/* Ícone */}
+                    <Icon 
+                      className="relative w-6 h-6 transition-transform duration-300 group-hover:scale-110"
+                      style={{ 
+                        color: area.color,
+                        filter: `drop-shadow(0 0 8px ${area.color}80)`
+                      }}
+                    />
                     
-                    {/* Shine effect */}
-                    <div className="absolute inset-0 rounded-xl overflow-hidden">
-                      <div className="absolute -inset-full top-0 h-full w-1/2 bg-gradient-to-r from-transparent via-white/30 to-transparent skew-x-12 group-hover/btn:animate-[shimmer_1.5s_ease-in-out]" />
-                    </div>
+                    {/* Shine sweep */}
+                    <div 
+                      className="absolute inset-0 rounded-xl overflow-hidden opacity-0 group-hover:opacity-100"
+                      style={{
+                        background: 'linear-gradient(105deg, transparent 40%, rgba(255,255,255,0.2) 50%, transparent 60%)',
+                        animation: 'shimmer 2s infinite'
+                      }}
+                    />
                   </div>
                   
                   {/* Label */}
-                  <span className={cn(
-                    "text-[11px] font-semibold transition-colors duration-300",
-                    isActive ? "text-foreground" : "text-muted-foreground group-hover/btn:text-foreground"
-                  )}>
+                  <span 
+                    className={cn(
+                      "mt-2 text-[11px] font-bold transition-all duration-300",
+                      isActive ? "text-foreground" : "text-muted-foreground group-hover:text-foreground"
+                    )}
+                    style={{
+                      textShadow: isActive ? `0 0 10px ${area.color}80` : 'none'
+                    }}
+                  >
                     {area.label}
                   </span>
                   
-                  {/* Badge */}
+                  {/* Badge flutuante */}
                   {area.badge && (
-                    <Badge 
-                      className={cn(
-                        "absolute -top-1 -right-1 text-[9px] px-1.5 py-0 h-4 font-bold",
-                        area.badgeVariant ? badgeStyles[area.badgeVariant] : "bg-primary/80"
-                      )}
+                    <div 
+                      className="absolute -top-1 -right-0 px-1.5 py-0.5 rounded-md text-[8px] font-black text-white"
+                      style={{
+                        background: area.badgeType === 'ai' 
+                          ? 'linear-gradient(135deg, #10B981, #06B6D4)'
+                          : area.badgeType === 'xp'
+                          ? 'linear-gradient(135deg, #F59E0B, #EAB308)'
+                          : 'linear-gradient(135deg, #8B5CF6, #A855F7)',
+                        boxShadow: `0 2px 10px ${area.badgeType === 'ai' ? '#10B98180' : area.badgeType === 'xp' ? '#F59E0B80' : '#8B5CF680'}`
+                      }}
                     >
                       {area.badge}
-                    </Badge>
+                    </div>
                   )}
                   
-                  {/* Active indicator */}
+                  {/* Active indicator bar */}
                   {isActive && (
-                    <div className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-6 h-1 rounded-full bg-gradient-to-r from-primary via-primary to-holo-cyan shadow-lg shadow-primary/50" />
+                    <div 
+                      className="absolute -bottom-1 left-1/2 -translate-x-1/2 w-8 h-1 rounded-full"
+                      style={{
+                        background: `linear-gradient(90deg, transparent, ${area.color}, transparent)`,
+                        boxShadow: `0 0 10px ${area.color}`
+                      }}
+                    />
                   )}
                 </button>
               );
@@ -268,9 +299,48 @@ export const HubQuickAccessBar = memo(function HubQuickAccessBar({
           </div>
         </div>
         
-        {/* Bottom holographic line */}
-        <div className="absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-holo-cyan/50 to-transparent" />
+        {/* ===== FOOTER STATUS BAR ===== */}
+        <div className="px-6 py-3 border-t border-white/5 bg-gradient-to-r from-transparent via-white/[0.02] to-transparent">
+          <div className="flex items-center justify-center gap-6 text-[10px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-blue-500" style={{ boxShadow: '0 0 6px #3B82F6' }} />
+              IA Ativa
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" style={{ boxShadow: '0 0 6px #10B981' }} />
+              Sincronizado
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-purple-500" style={{ boxShadow: '0 0 6px #A855F7' }} />
+              Progresso Salvo
+            </span>
+          </div>
+        </div>
+        
+        {/* ===== LINHA HOLOGRÁFICA INFERIOR ===== */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-px"
+          style={{
+            background: 'linear-gradient(90deg, transparent, #06B6D4, #A855F7, #3B82F6, transparent)'
+          }}
+        />
       </div>
+      
+      {/* CSS Keyframes inline */}
+      <style>{`
+        @keyframes gradientShift {
+          0% { background-position: 0% 50%; }
+          100% { background-position: 300% 50%; }
+        }
+        @keyframes scanLine {
+          0% { transform: translateY(-100%); }
+          100% { transform: translateY(100%); }
+        }
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+      `}</style>
     </div>
   );
 });
@@ -298,41 +368,50 @@ export const HubModal = memo(function HubModal({
   
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-w-6xl h-[90vh] p-0 gap-0 bg-gradient-to-br from-background via-background to-background/95 backdrop-blur-2xl border-border/30 overflow-hidden">
-        {/* Holographic border effects */}
-        <div className="absolute inset-0 pointer-events-none">
-          <div className={cn("absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent to-transparent", area.gradient.replace('from-', 'via-').split(' ')[0])} />
-          <div className={cn("absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-holo-cyan/50 to-transparent")} />
-        </div>
+      <DialogContent className="max-w-6xl h-[90vh] p-0 gap-0 bg-background/98 backdrop-blur-2xl border-white/10 overflow-hidden">
+        {/* Border glow */}
+        <div 
+          className="absolute inset-0 rounded-lg pointer-events-none"
+          style={{
+            boxShadow: `inset 0 0 100px ${area.color}10, 0 0 50px ${area.color}20`
+          }}
+        />
         
-        {/* Corner accents */}
-        <div className="absolute top-0 left-0 w-24 h-24 pointer-events-none">
-          <div className={cn("absolute top-0 left-0 w-full h-px bg-gradient-to-r to-transparent", area.gradient.split(' ')[0])} />
-          <div className={cn("absolute top-0 left-0 h-full w-px bg-gradient-to-b to-transparent", area.gradient.split(' ')[0])} />
-        </div>
+        {/* Top line */}
+        <div 
+          className="absolute top-0 left-0 right-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${area.color}, transparent)` }}
+        />
         
-        {/* Header futurístico */}
-        <DialogHeader className="relative border-b border-border/30 px-6 py-5 bg-gradient-to-r from-card/50 via-transparent to-card/50">
+        {/* Header */}
+        <DialogHeader className="relative border-b border-white/10 px-6 py-5 bg-gradient-to-r from-card/80 via-transparent to-card/80">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              {/* Icon with glow */}
-              <div className={cn(
-                "relative p-3 rounded-xl bg-gradient-to-br shadow-2xl",
-                area.gradient,
-                area.glowColor
-              )}>
-                <Icon className="w-6 h-6 text-white drop-shadow-lg" />
-                <div className="absolute inset-0 rounded-xl bg-white/10" />
+              <div 
+                className="p-3 rounded-xl"
+                style={{
+                  background: `linear-gradient(135deg, ${area.color}30, ${area.color}50)`,
+                  border: `1px solid ${area.color}50`,
+                  boxShadow: `0 0 30px ${area.color}30`
+                }}
+              >
+                <Icon className="w-6 h-6" style={{ color: area.color, filter: `drop-shadow(0 0 10px ${area.color})` }} />
               </div>
               
               <div>
-                <DialogTitle className="text-xl font-bold flex items-center gap-3">
+                <DialogTitle className="text-xl font-black flex items-center gap-3">
                   {area.label}
                   {area.badge && (
-                    <Badge className={cn(
-                      "text-xs font-bold",
-                      area.badgeVariant ? badgeStyles[area.badgeVariant] : "bg-primary"
-                    )}>
+                    <Badge 
+                      className="text-xs font-bold text-white border-0"
+                      style={{
+                        background: area.badgeType === 'ai' 
+                          ? 'linear-gradient(135deg, #10B981, #06B6D4)'
+                          : area.badgeType === 'xp'
+                          ? 'linear-gradient(135deg, #F59E0B, #EAB308)'
+                          : 'linear-gradient(135deg, #8B5CF6, #A855F7)'
+                      }}
+                    >
                       <Sparkles className="w-3 h-3 mr-1" />
                       {area.badge}
                     </Badge>
@@ -346,19 +425,22 @@ export const HubModal = memo(function HubModal({
               variant="ghost"
               size="icon"
               onClick={onClose}
-              className="rounded-full hover:bg-destructive/10 hover:text-destructive transition-colors"
+              className="rounded-full hover:bg-destructive/20 hover:text-destructive"
             >
               <X className="w-5 h-5" />
             </Button>
           </div>
         </DialogHeader>
         
-        {/* Content */}
         <ScrollArea className="flex-1 h-full">
-          <div className="p-6">
-            {children}
-          </div>
+          <div className="p-6">{children}</div>
         </ScrollArea>
+        
+        {/* Bottom line */}
+        <div 
+          className="absolute bottom-0 left-0 right-0 h-px"
+          style={{ background: `linear-gradient(90deg, transparent, ${area.color}50, transparent)` }}
+        />
       </DialogContent>
     </Dialog>
   );
