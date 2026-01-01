@@ -138,6 +138,7 @@ const gestaoMenuGroups: MenuGroup[] = [
       { title: "Tarefas", url: "/gestaofc/tarefas", icon: ClipboardCheck, area: "tarefas" },
       { title: "Integrações", url: "/gestaofc/integracoes", icon: Link2, area: "integracoes" },
       { title: "Calendário", url: "/gestaofc/calendario", icon: Calendar, area: "calendario" },
+      { title: "Logs", url: "/gestaofc/logs", icon: Activity, area: "logs", badge: "LIVE" },
       { title: "Área Professor", url: "/gestaofc/area-professor", icon: ClipboardCheck, area: "area-professor" },
     ],
   },
