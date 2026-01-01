@@ -1368,7 +1368,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     });
     setFlowState('importacao_concluida');
     setUiStep('resultado');
-  }, [canProcess, parsedQuestions]);
+  }, [canProcess, parsedQuestions, selectedGroup]); // CRITICAL: selectedGroup deve estar nas deps
 
   const reset = useCallback(() => {
     hasAutoAuthorizedRef.current = false;
