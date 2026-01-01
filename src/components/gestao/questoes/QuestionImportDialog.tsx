@@ -909,7 +909,17 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
             switch (field) {
               case 'question_text':
-                question.question_text = extractTextFromHtml(String(value));
+                let questionText = String(value);
+                
+                // Extrair imagens do formato [IMAGEM: URL] do enunciado
+                const imagemMatch = questionText.match(/\[IMAGEM:\s*(https?:\/\/[^\]\s]+)\]/i);
+                if (imagemMatch && imagemMatch[1]) {
+                  question.image_url = imagemMatch[1].trim();
+                  // Remover a tag [IMAGEM: ...] do texto
+                  questionText = questionText.replace(/\[IMAGEM:\s*https?:\/\/[^\]]+\]/gi, '').trim();
+                }
+                
+                question.question_text = extractTextFromHtml(questionText);
                 if (String(value).includes('<')) {
                   const { options, correctAnswer } = parseAlternativesFromHtml(String(value));
                   if (options.length >= 2) {
