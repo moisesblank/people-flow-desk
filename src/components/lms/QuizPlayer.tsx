@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 import QuestionEnunciado, { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
+import { predictSuccessRate, getSuccessRateColor } from '@/lib/questionSuccessPredictor';
 import type { Quiz, QuizQuestion, QuizAttempt } from '@/hooks/useQuiz';
 
 interface QuizPlayerProps {
@@ -438,11 +439,30 @@ export function QuizResult({ attempt, quiz, questions, onRetry, onBack }: QuizRe
                     </div>
                     <div className="flex-1">
                       <p className="font-medium">{idx + 1}. {cleanQuestionText(q.question_text)}</p>
-                      <p className="text-sm mt-1">
-                        Sua resposta: <span className={isCorrect ? "text-green-500" : "text-red-500"}>
-                          {userOption?.text || 'Não respondida'}
-                        </span>
-                      </p>
+                      <div className="flex items-center justify-between mt-1">
+                        <p className="text-sm">
+                          Sua resposta: <span className={isCorrect ? "text-green-500" : "text-red-500"}>
+                            {userOption?.text || 'Não respondida'}
+                          </span>
+                        </p>
+                        
+                        {/* Taxa de Acerto Prevista */}
+                        {(() => {
+                          const prediction = predictSuccessRate({
+                            difficulty: (q as any).difficulty || 'medio',
+                            questionText: q.question_text,
+                            options: q.options,
+                            explanation: q.explanation,
+                            tema: (q as any).tema,
+                            macro: (q as any).macro,
+                          });
+                          return (
+                            <span className={cn("text-xs font-medium", getSuccessRateColor(prediction.rate))}>
+                              Taxa esperada: {prediction.rate}%
+                            </span>
+                          );
+                        })()}
+                      </div>
                       {!isCorrect && (
                         <p className="text-sm text-green-500">
                           Correta: {correctOption?.text}

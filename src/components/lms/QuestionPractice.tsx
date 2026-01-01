@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
 import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
 import { 
   usePracticeQuestions, 
@@ -32,6 +33,7 @@ import {
   type PracticeQuestion 
 } from "@/hooks/useQuestionPractice";
 import { useGamification } from "@/hooks/useGamification";
+import { predictSuccessRate, getSuccessRateColor } from "@/lib/questionSuccessPredictor";
 
 interface QuestionPracticeProps {
   subject?: string;
@@ -330,29 +332,54 @@ function PracticeSession({
                 })}
               </RadioGroup>
 
-              {/* Explicação após resposta */}
-              {showResult && currentQuestion.explanation && (
+              {/* Resultado e Taxa Prevista após resposta */}
+              {showResult && (
                 <motion.div
                   initial={{ opacity: 0, height: 0 }}
                   animate={{ opacity: 1, height: "auto" }}
                   className={`p-4 rounded-xl ${isCorrect ? 'bg-green-500/10' : 'bg-orange-500/10'}`}
                 >
-                  <h4 className="font-medium mb-2 flex items-center gap-2">
-                    {isCorrect ? (
-                      <>
-                        <CheckCircle2 className="h-4 w-4 text-green-500" />
-                        Correto! +10 XP
-                      </>
-                    ) : (
-                      <>
-                        <XCircle className="h-4 w-4 text-red-500" />
-                        Resposta incorreta
-                      </>
-                    )}
-                  </h4>
-                  <p className="text-sm text-muted-foreground">
-                    {currentQuestion.explanation}
-                  </p>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-medium flex items-center gap-2">
+                      {isCorrect ? (
+                        <>
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                          Correto! +10 XP
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4 text-red-500" />
+                          Resposta incorreta
+                        </>
+                      )}
+                    </h4>
+                    
+                    {/* Taxa de Acerto Prevista - Exibida após resposta */}
+                    {(() => {
+                      const prediction = predictSuccessRate({
+                        difficulty: currentQuestion.difficulty || 'medio',
+                        questionText: currentQuestion.question_text,
+                        options: currentQuestion.options,
+                        explanation: currentQuestion.explanation,
+                        tema: (currentQuestion as any).tema,
+                        macro: (currentQuestion as any).macro,
+                      });
+                      return (
+                        <div className="text-right">
+                          <p className="text-xs text-muted-foreground">Taxa esperada</p>
+                          <p className={cn("text-lg font-bold", getSuccessRateColor(prediction.rate))}>
+                            {prediction.rate}%
+                          </p>
+                        </div>
+                      );
+                    })()}
+                  </div>
+                  
+                  {currentQuestion.explanation && (
+                    <p className="text-sm text-muted-foreground">
+                      {currentQuestion.explanation}
+                    </p>
+                  )}
                 </motion.div>
               )}
             </CardContent>

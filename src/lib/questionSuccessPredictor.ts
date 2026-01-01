@@ -216,9 +216,14 @@ export function predictSuccessRate(input: QuestionAnalysisInput): PredictionResu
     if (contextualization >= 2) factors.push('Contextualizada');
   }
 
-  // 3. Calcular range ajustado
-  const adjustedMax = Math.max(baseMax - penalty, baseMin + 5);
-  const adjustedMin = Math.max(baseMin - (penalty / 2), 5);
+  // 3. Calcular range ajustado (respeitando limites do difficulty)
+  // Fácil: 80-100% | Médio: 50-79% | Difícil: 1-49%
+  let adjustedMax = Math.max(baseMax - Math.floor(penalty / 2), baseMin + 5);
+  let adjustedMin = Math.max(baseMin - Math.floor(penalty / 4), 1);
+  
+  // Garantir que não ultrapasse os limites do range da dificuldade
+  adjustedMax = Math.min(adjustedMax, baseMax);
+  adjustedMin = Math.max(adjustedMin, difficulty?.toLowerCase() === 'dificil' ? 1 : baseMin);
 
   // 4. Gerar valor consistente dentro do range
   const randomFactor = getConsistentRandom(questionText, questionText.length);
@@ -230,8 +235,24 @@ export function predictSuccessRate(input: QuestionAnalysisInput): PredictionResu
   if (factors.length <= 2) confidence = 'high';
   if (factors.length >= 5) confidence = 'low';
 
+  // 6. Garantir valor final dentro do range absoluto da dificuldade
+  let finalRate = rate;
+  switch (difficulty?.toLowerCase()) {
+    case 'facil':
+      finalRate = Math.max(80, Math.min(100, rate));
+      break;
+    case 'medio':
+      finalRate = Math.max(50, Math.min(79, rate));
+      break;
+    case 'dificil':
+      finalRate = Math.max(1, Math.min(49, rate));
+      break;
+    default:
+      finalRate = Math.max(50, Math.min(79, rate));
+  }
+
   return {
-    rate: Math.max(5, Math.min(95, rate)),
+    rate: finalRate,
     confidence,
     factors,
   };
@@ -246,10 +267,11 @@ export function formatSuccessRate(rate: number): string {
 
 /**
  * Retorna cor semântica baseada na taxa
+ * Alinhado com ranges: Fácil (80-100%/verde), Médio (50-79%/amarelo), Difícil (1-49%/vermelho)
  */
 export function getSuccessRateColor(rate: number): string {
-  if (rate >= 70) return 'text-green-500';
-  if (rate >= 40) return 'text-yellow-500';
+  if (rate >= 80) return 'text-green-500';
+  if (rate >= 50) return 'text-yellow-500';
   return 'text-red-500';
 }
 
