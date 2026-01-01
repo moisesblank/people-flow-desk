@@ -18,6 +18,7 @@ import { DeviceGuard } from "@/components/security/DeviceGuard";
 import { DeviceMFAGuard } from "@/components/security/DeviceMFAGuard";
 import { GestaoNoIndex } from "@/components/seo/GestaoNoIndex";
 import { LegacyRedirectHandler } from "@/components/routing/LegacyRedirectHandler";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 // LegacyDomainBlocker REMOVIDO - domínio gestao.* descontinuado
 import { Suspense, lazy, useState, useEffect, memo, useCallback } from "react";
 import { useGlobalDevToolsBlock } from "@/hooks/useGlobalDevToolsBlock";
@@ -102,7 +103,7 @@ const AppContent = memo(() => {
         <DeviceGuard>
           <DeviceMFAGuard>
             {/* SessionTracker REMOVIDO - useAuth já gerencia heartbeat (DOGMA I) */}
-            
+
             <Suspense fallback={null}>
               <LazyGodModePanel />
               <LazyInlineEditor />
@@ -116,23 +117,26 @@ const AppContent = memo(() => {
               <LazyNavigationGuard />
               <LazyRealtimeEditOverlay />
             </Suspense>
-            
+
             <VisualEditMode />
             <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
-            
+
             <Suspense fallback={null}>
               <LazyAITramon />
             </Suspense>
-            
-            <Suspense fallback={<PageLoader />}>
-              <Routes>
-                {publicRoutes}
-                {comunidadeRoutes}
-                {gestaoRoutes}
-                {alunoRoutes}
-                {legacyRoutes}
-              </Routes>
-            </Suspense>
+
+            {/* 🛡️ P0: Nunca mais tela preta - ErrorBoundary global envolvendo as rotas */}
+            <ErrorBoundary>
+              <Suspense fallback={<PageLoader />}>
+                <Routes>
+                  {publicRoutes}
+                  {comunidadeRoutes}
+                  {gestaoRoutes}
+                  {alunoRoutes}
+                  {legacyRoutes}
+                </Routes>
+              </Suspense>
+            </ErrorBoundary>
           </DeviceMFAGuard>
         </DeviceGuard>
       </SessionGuard>

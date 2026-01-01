@@ -104,22 +104,28 @@ const Home = () => {
   // 🛡️ EMERGENCY TIMEOUT: Garante que NUNCA ficará em tela preta
   useEffect(() => {
     if (!showIntro) return;
-    
+
     const emergencyTimeout = setTimeout(() => {
       console.warn('[Home] ⚠️ EMERGENCY: Intro timeout exceeded, forcing completion');
       sessionStorage.setItem("intro_seen_v33", "true");
-      setShowIntro(false);
       setIsLoaded(true);
+      setShowIntro(false);
     }, 6000); // 6s = 1s além do safety do CinematicIntro
 
     return () => clearTimeout(emergencyTimeout);
   }, [showIntro]);
 
+  // 🛡️ P0: invariável — se não tem intro, o conteúdo SEMPRE deve estar liberado
+  useEffect(() => {
+    if (!showIntro) setIsLoaded(true);
+  }, [showIntro]);
+
   const handleIntroComplete = useCallback(() => {
     console.log('[Home] Intro complete callback fired');
     sessionStorage.setItem("intro_seen_v33", "true");
+    // 🛡️ P0: garantir que conteúdo nunca fique com opacity 0
+    setIsLoaded(true);
     setShowIntro(false);
-    requestAnimationFrame(() => setIsLoaded(true));
   }, []);
 
   if (showIntro) {
