@@ -1,15 +1,17 @@
 // ============================================
 // PÁGINA DE SIMULADOS E QUIZZES
 // Centro de avaliações do LMS
+// Integrado com QUESTION_DOMAIN: SIMULADOS
 // ============================================
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { useNavigate } from 'react-router-dom';
 import { Helmet } from 'react-helmet';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Brain, Trophy, Clock, Target, CheckCircle2, 
-  Play, BarChart3, Flame, FlaskConical, Atom
+  Play, BarChart3, Flame, FlaskConical, Atom, FileQuestion
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -21,6 +23,7 @@ import { QuizPlayer, QuizResult } from '@/components/lms/QuizPlayer';
 import { AnimatedAtom, ChemistryTip } from '@/components/chemistry/ChemistryVisuals';
 import { LoadingState } from '@/components/LoadingState';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
 
 export default function Simulados() {
   const navigate = useNavigate();
@@ -34,6 +37,23 @@ export default function Simulados() {
   const { data: attempts } = useQuizAttempts(selectedQuizId || undefined);
   const { mutate: startAttempt, isPending: isStarting } = useStartQuizAttempt();
   const { mutate: submitQuiz, isPending: isSubmitting } = useSubmitQuiz();
+
+  // QUESTION_DOMAIN: Buscar questões com tag SIMULADOS
+  const { data: simuladosQuestions, isLoading: isLoadingSimuladosQuestions } = useQuery({
+    queryKey: ['questions', 'SIMULADOS'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('quiz_questions')
+        .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active')
+        .contains('tags', ['SIMULADOS'])
+        .eq('is_active', true)
+        .order('created_at', { ascending: false })
+        .limit(100);
+      if (error) throw error;
+      return data || [];
+    },
+    staleTime: 0,
+  });
 
   const simulados = quizzes?.filter((q) => q.quiz_type === 'simulado') || [];
   const avaliacoes = quizzes?.filter((q) => q.quiz_type === 'avaliacao') || [];
@@ -179,10 +199,14 @@ export default function Simulados() {
 
         {/* Tabs */}
         <Tabs defaultValue="simulados" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3 max-w-md">
+          <TabsList className="grid w-full grid-cols-4 max-w-lg">
             <TabsTrigger value="simulados">Simulados</TabsTrigger>
             <TabsTrigger value="avaliacoes">Avaliações</TabsTrigger>
             <TabsTrigger value="quizzes">Quizzes</TabsTrigger>
+            <TabsTrigger value="questoes" className="flex items-center gap-1">
+              <FileQuestion className="h-3 w-3" />
+              Questões
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="simulados" className="space-y-4">
@@ -210,6 +234,72 @@ export default function Simulados() {
               isStarting={isStarting}
               attempts={attempts}
             />
+          </TabsContent>
+
+          {/* QUESTION_DOMAIN: Questões marcadas como SIMULADOS */}
+          <TabsContent value="questoes" className="space-y-4">
+            <Card className="border-red-500/30 bg-gradient-to-r from-red-500/5 to-transparent">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg">
+                  <Badge className="bg-red-600 text-white">SIMULADOS</Badge>
+                  Banco de Questões para Simulados
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {isLoadingSimuladosQuestions ? (
+                  <div className="flex items-center justify-center py-8">
+                    <LoadingState />
+                  </div>
+                ) : simuladosQuestions && simuladosQuestions.length > 0 ? (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between mb-4">
+                      <Badge variant="outline" className="text-sm">
+                        {simuladosQuestions.length} questões disponíveis
+                      </Badge>
+                      <Badge className="bg-amber-500 text-white">
+                        <Trophy className="h-3 w-3 mr-1" />
+                        10 pts cada
+                      </Badge>
+                    </div>
+                    <div className="grid gap-2 max-h-[400px] overflow-y-auto pr-2">
+                      {simuladosQuestions.map((q: any, i: number) => (
+                        <div 
+                          key={q.id}
+                          className="p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm line-clamp-2">{q.question_text?.substring(0, 150)}...</p>
+                              <div className="flex items-center gap-2 mt-2">
+                                <Badge className={cn(
+                                  "text-xs",
+                                  q.difficulty === 'facil' && 'bg-green-500',
+                                  q.difficulty === 'medio' && 'bg-yellow-500',
+                                  q.difficulty === 'dificil' && 'bg-red-500',
+                                )}>
+                                  {q.difficulty === 'facil' ? 'Fácil' : q.difficulty === 'medio' ? 'Médio' : 'Difícil'}
+                                </Badge>
+                                {q.banca && <Badge variant="outline" className="text-xs">{q.banca}</Badge>}
+                                {q.ano && <Badge variant="secondary" className="text-xs">{q.ano}</Badge>}
+                              </div>
+                            </div>
+                            <Badge className="bg-red-600 text-white shrink-0">
+                              🎯 Simulado
+                            </Badge>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <FileQuestion className="h-12 w-12 mx-auto mb-3 opacity-50" />
+                    <p>Nenhuma questão marcada como SIMULADOS ainda.</p>
+                    <p className="text-sm mt-1">Importe questões e selecione "Simulados" no passo final.</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
 
