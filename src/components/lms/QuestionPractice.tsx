@@ -27,6 +27,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
+import QuestionResolution from "@/components/shared/QuestionResolution";
 import { 
   usePracticeQuestions, 
   usePracticeSession, 
@@ -376,9 +377,11 @@ function PracticeSession({
                   </div>
                   
                   {currentQuestion.explanation && (
-                    <p className="text-sm text-muted-foreground">
-                      {currentQuestion.explanation}
-                    </p>
+                    <QuestionResolution
+                      resolutionText={currentQuestion.explanation}
+                      difficulty={currentQuestion.difficulty}
+                      tema={currentQuestion.topic}
+                    />
                   )}
                 </motion.div>
               )}
