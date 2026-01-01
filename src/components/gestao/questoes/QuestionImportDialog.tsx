@@ -92,7 +92,7 @@ import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
 
 type NivelCognitivo = 'memorizar' | 'compreender' | 'aplicar' | 'analisar' | 'avaliar';
 type OrigemQuestao = 'oficial' | 'adaptada' | 'autoral_prof_moises';
-type StatusRevisao = 'rascunho' | 'revisado' | 'publicada';
+type StatusRevisao = 'rascunho' | 'revisado' | 'publicado';
 
 // ============================================
 // STATE MACHINE - 5 ESTADOS CONTROLADOS
@@ -882,7 +882,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             tipo_imagem: undefined,
             // Controle Editorial - padrão de importação
             is_active: true,
-            status_revisao: 'publicada',
+            status_revisao: 'publicado',
             // Rastreabilidade
             campos_inferidos: [],
             campos_null: [],
@@ -1301,7 +1301,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           points: 10,
           // IMPORTAÇÃO DIRETA - Questões já entram ATIVAS e PUBLICADAS
           is_active: true,
-          status_revisao: 'publicada',
+          status_revisao: 'publicado',
           // Metadados pedagógicos
           tempo_medio_segundos: q.tempo_medio_segundos || 120,
           nivel_cognitivo: q.nivel_cognitivo || null,
@@ -2226,7 +2226,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                     </div>
                     <h2 className="text-2xl font-bold text-green-500">Importação Concluída!</h2>
                     <p className="text-muted-foreground mt-1">
-                      Questões salvas como <strong>ATIVAS</strong> (status: publicada)
+                      Questões salvas como <strong>ATIVAS</strong> (status: publicado)
                     </p>
                   </div>
 
