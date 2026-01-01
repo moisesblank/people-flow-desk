@@ -1008,21 +1008,34 @@ function GestaoQuestoes() {
     loadQuestions();
   }, [loadQuestions]);
 
-  // Helper: classificar macro em grande área - MOVIDO PARA CIMA
+  // Helper: classificar macro em grande área - TAXONOMIA OFICIAL
   const classifyMacroArea = useCallback((macro: string | null | undefined): 'organica' | 'fisico_quimica' | 'geral' => {
     if (!macro) return 'geral';
     const m = macro.toLowerCase();
-    // Química Orgânica: polímeros, isomeria, bioquímica, funções orgânicas
+    
+    // Química Orgânica: funções orgânicas, isomeria, reações orgânicas, polímeros, bioquímica
     if (m.includes('orgânica') || m.includes('organica') || m.includes('polímero') || m.includes('polimero') || 
-        m.includes('isomeria') || m.includes('bioquímica') || m.includes('bioquimica')) {
+        m.includes('isomeria') || m.includes('bioquímica') || m.includes('bioquimica') || m.includes('hidrocarboneto') ||
+        m.includes('álcool') || m.includes('alcool') || m.includes('éster') || m.includes('ester') ||
+        m.includes('amina') || m.includes('amida') || m.includes('aldeído') || m.includes('aldeido') ||
+        m.includes('cetona') || m.includes('ácido carboxílico') || m.includes('acido carboxilico') ||
+        m.includes('fenol') || m.includes('éter') || m.includes('eter')) {
       return 'organica';
     }
-    // Físico-Química: termoquímica, cinética, equilíbrio, propriedades, gases
+    
+    // Físico-Química: termoquímica, cinética, equilíbrio, eletroquímica, soluções, propriedades coligativas, gases
     if (m.includes('físico') || m.includes('fisico') || m.includes('termo') || m.includes('cinética') || 
-        m.includes('cinetica') || m.includes('equilíbrio') || m.includes('equilibrio') || m.includes('gase')) {
+        m.includes('cinetica') || m.includes('equilíbrio') || m.includes('equilibrio') || m.includes('gase') ||
+        m.includes('eletroquímica') || m.includes('eletroquimica') || m.includes('pilha') || m.includes('eletrólise') ||
+        m.includes('eletrolise') || m.includes('soluç') || m.includes('soluc') || m.includes('coligativa') ||
+        m.includes('ph') || m.includes('poh') || m.includes('hidrólise') || m.includes('hidrolise') ||
+        m.includes('tampão') || m.includes('tampao') || m.includes('oxidação') || m.includes('oxidacao') ||
+        m.includes('redução') || m.includes('reducao') || m.includes('nox') || m.includes('galvân') ||
+        m.includes('galvan') || m.includes('potencial') || m.includes('velocidade')) {
       return 'fisico_quimica';
     }
-    // Química Geral: eletroquímica, estequiometria, soluções, atomística, ligações, tabela, nuclear
+    
+    // Química Geral: atomística, tabela periódica, ligações, estequiometria, separação misturas
     return 'geral';
   }, []);
 
@@ -1514,7 +1527,7 @@ function GestaoQuestoes() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-purple-300">Química Orgânica</p>
-                  <p className="text-xs text-muted-foreground">Isomeria, Polímeros, Funções</p>
+                  <p className="text-xs text-muted-foreground">Funções, Isomeria, Reações, Polímeros</p>
                 </div>
               </div>
               <div className="text-right">
@@ -1546,7 +1559,7 @@ function GestaoQuestoes() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-cyan-300">Físico-Química</p>
-                  <p className="text-xs text-muted-foreground">Termoquímica, Cinética, Equilíbrio</p>
+                  <p className="text-xs text-muted-foreground">Termoquímica, Cinética, Equilíbrio, Eletroquímica</p>
                 </div>
               </div>
               <div className="text-right">
@@ -1578,7 +1591,7 @@ function GestaoQuestoes() {
                 </div>
                 <div>
                   <p className="text-lg font-bold text-amber-300">Química Geral</p>
-                  <p className="text-xs text-muted-foreground">Eletroquímica, Estequiometria, Soluções</p>
+                  <p className="text-xs text-muted-foreground">Atomística, Tabela Periódica, Ligações, Estequiometria</p>
                 </div>
               </div>
               <div className="text-right">
