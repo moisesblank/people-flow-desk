@@ -1734,7 +1734,28 @@ function GestaoQuestoes() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" onClick={loadQuestions}>
+          <Button 
+            variant="destructive" 
+            size="sm" 
+            onClick={() => {
+              // Limpar TODOS os filtros
+              setActiveTab('todas');
+              setMacroAreaFilter('all');
+              setMacroFilter('all');
+              setMicroFilter('all');
+              setTemaFilter('all');
+              setSubtemaFilter('all');
+              setDifficultyFilter('all');
+              setBancaFilter('all');
+              setAnoFilter('all');
+              setQuestionTypeFilter('all');
+              setSearchTerm('');
+              setSortOrder('newest');
+              // Recarregar dados
+              loadQuestions();
+            }}
+            className="bg-red-600 hover:bg-red-700 text-white border-red-600 animate-pulse"
+          >
             <RefreshCw className="h-4 w-4 mr-2" />
             Atualizar
           </Button>
