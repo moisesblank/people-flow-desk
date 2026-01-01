@@ -881,11 +881,26 @@ export function CriarAcessoOficialModal({
                         disabled={isSubmitting}
                       />
                     </FormControl>
-                    <FormDescription className="text-xs space-y-1">
-                      <span className="block">Se vazio, um email será enviado para o aluno definir a senha.</span>
-                      <span className="block text-muted-foreground/70">
-                        Critérios: mínimo 8 caracteres, com letras maiúsculas, minúsculas, números e símbolos.
+                    <FormDescription className="text-xs space-y-2">
+                      <span className="block text-muted-foreground">
+                        Se vazio, um email será enviado para o aluno definir a senha.
                       </span>
+                      <div className="bg-muted/50 rounded-md p-2 border border-border/50">
+                        <span className="block font-semibold text-foreground mb-1">📋 Requisitos obrigatórios:</span>
+                        <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                          <li>Mínimo <span className="text-amber-400 font-medium">8 caracteres</span></li>
+                          <li>Letra <span className="text-emerald-400 font-medium">maiúscula</span> (A-Z)</li>
+                          <li>Letra <span className="text-emerald-400 font-medium">minúscula</span> (a-z)</li>
+                          <li><span className="text-cyan-400 font-medium">Número</span> (0-9)</li>
+                          <li><span className="text-purple-400 font-medium">Símbolo</span> (!@#$%^&*)</li>
+                        </ul>
+                        <div className="mt-2 pt-2 border-t border-border/50">
+                          <span className="block text-muted-foreground">💡 Exemplo válido:</span>
+                          <code className="block mt-1 bg-background/80 px-2 py-1 rounded text-emerald-400 font-mono text-sm">
+                            Quimica@2025
+                          </code>
+                        </div>
+                      </div>
                     </FormDescription>
                     <FormMessage />
                   </FormItem>
