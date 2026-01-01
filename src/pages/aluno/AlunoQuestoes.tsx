@@ -268,9 +268,16 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                           <CheckCircle2 className="h-6 w-6 text-green-500" />
                           <div>
                             <p className="font-bold text-green-600">Parabéns! Você acertou!</p>
-                            <p className="text-sm text-muted-foreground">
-                              +{question.points} pontos de XP
-                            </p>
+                            {/* MODO_TREINO: Sem pontos */}
+                            {question.tags?.includes('MODO_TREINO') ? (
+                              <p className="text-sm text-muted-foreground">
+                                🎯 Modo Treino - sem pontos
+                              </p>
+                            ) : (
+                              <p className="text-sm text-muted-foreground">
+                                +{question.points} pontos de XP
+                              </p>
+                            )}
                           </div>
                         </>
                       ) : (
@@ -385,13 +392,14 @@ export default function AlunoQuestoes() {
   const [anoFilter, setAnoFilter] = useState("todas");
   const [sortOrder, setSortOrder] = useState("newest");
   
-  // Buscar questões do banco
+  // QUESTION_DOMAIN: Buscar apenas questões MODO_TREINO
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
-    queryKey: ['student-questions'],
+    queryKey: ['student-questions', 'MODO_TREINO'],
     queryFn: async () => {
       const { data, error } = await supabase
         .from('quiz_questions')
         .select('*')
+        .contains('tags', ['MODO_TREINO']) // QUESTION_DOMAIN: Apenas treino
         .eq('is_active', true)
         .order('created_at', { ascending: false });
       
@@ -422,7 +430,7 @@ export default function AlunoQuestoes() {
     enabled: !!user?.id,
   });
 
-  // Mutation para responder questão
+  // Mutation para responder questão - MODO_TREINO: 0 pontos, não afeta ranking
   const answerMutation = useMutation({
     mutationFn: async ({ questionId, selectedAnswer }: { questionId: string; selectedAnswer: string }) => {
       if (!user?.id) throw new Error("Usuário não autenticado");
@@ -431,6 +439,10 @@ export default function AlunoQuestoes() {
       if (!question) throw new Error("Questão não encontrada");
 
       const isCorrect = selectedAnswer === question.correct_answer;
+      
+      // QUESTION_DOMAIN: MODO_TREINO sempre 0 XP (não afeta ranking)
+      const isModoTreino = question.tags?.includes('MODO_TREINO');
+      const xpAwarded = isModoTreino ? 0 : (isCorrect ? question.points : 0);
 
       const { error } = await supabase
         .from('question_attempts')
@@ -439,17 +451,22 @@ export default function AlunoQuestoes() {
           question_id: questionId,
           selected_answer: selectedAnswer,
           is_correct: isCorrect,
-          xp_earned: isCorrect ? question.points : 0,
+          xp_earned: xpAwarded,
         });
 
       if (error) throw error;
-      return { isCorrect, points: isCorrect ? question.points : 0 };
+      return { isCorrect, points: xpAwarded, isModoTreino };
     },
     onSuccess: (result) => {
       queryClient.invalidateQueries({ queryKey: ['student-question-attempts'] });
       
       if (result.isCorrect) {
-        toast.success(`Você acertou! +${result.points} XP`);
+        // MODO_TREINO: Mensagem sem pontos
+        if (result.isModoTreino) {
+          toast.success("Você acertou! 🎯 (Modo Treino - sem pontos)");
+        } else {
+          toast.success(`Você acertou! +${result.points} XP`);
+        }
       } else {
         toast.error("Resposta incorreta. Continue estudando!");
       }
