@@ -2,10 +2,11 @@
 // 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL
 // PADRÃO OBRIGATÓRIO PARA TODAS AS RESOLUÇÕES
 // 
-// ESTRUTURA VISUAL ORGANIZADA:
-// - Parser inteligente detecta seções no texto
-// - Cada seção renderizada em bloco visual distinto
-// - Passos numerados destacados visualmente
+// ESTRUTURA VISUAL ORGANIZADA EM BLOCOS:
+// - Parser inteligente detecta seções e alternativas
+// - CADA alternativa em seu bloco visual individual
+// - Separação clara entre seções
+// - Design profissional de 2300
 // ============================================
 
 import { memo, useMemo } from 'react';
@@ -25,6 +26,9 @@ import {
   BarChart3,
   GraduationCap,
   Zap,
+  XCircle,
+  CircleDot,
+  MessageCircle,
 } from 'lucide-react';
 
 // Fallback padrão
@@ -47,7 +51,11 @@ type SectionType =
   | 'pegadinhas' 
   | 'dica'
   | 'afirmacao_correta'
-  | 'afirmacao_incorreta';
+  | 'afirmacao_incorreta'
+  | 'alternativa_analise'
+  | 'alternativa_correta'
+  | 'alternativa_errada'
+  | 'resumo';
 
 interface ParsedSection {
   type: SectionType;
@@ -55,6 +63,8 @@ interface ParsedSection {
   content: string;
   stepNumber?: number;
   afirmacaoNumber?: string;
+  alternativaLetter?: string;
+  isCorrect?: boolean;
 }
 
 interface QuestionResolutionProps {
@@ -79,7 +89,6 @@ function cleanResolutionText(text: string): string {
   let cleaned = text;
   
   // PASSO 1: Remover TODO o lixo de HTML/interface copiado antes do conteúdo real
-  // Encontrar onde começa o conteúdo real (QUESTÃO, 🔬, ✨, ou afirmação)
   const contentStartPatterns = [
     /QUESTÃO\s+SIMULADO/i,
     /🔬\s*RESOLUÇÃO/i,
@@ -88,31 +97,31 @@ function cleanResolutionText(text: string): string {
     /Observando/i,
     /Analis/i,
     /A\s+questão/i,
+    /Meus\s+queridos/i,
+    /Queridos/i,
+    /Vamos\s+analisar/i,
   ];
   
   for (const pattern of contentStartPatterns) {
     const match = cleaned.match(pattern);
     if (match && match.index !== undefined && match.index > 0) {
-      // Se o conteúdo real começa depois de posição 0, remover o lixo antes
       cleaned = cleaned.substring(match.index);
       break;
     }
   }
   
-  // PASSO 2: Limpar metadados específicos que podem ter sido copiados
+  // PASSO 2: Limpar metadados específicos
   cleaned = cleaned
-    // Remover atributos de HTML copiados
     .replace(/\*\]:[^"]*"[^>]*>/g, '')
     .replace(/\*\]:pointer-events[^"]*"[^>]*>/g, '')
     .replace(/\*\][^"]*scroll-mt[^"]*"[^>]*>/g, '')
     .replace(/dir="auto"[^>]*>/g, '')
     .replace(/tabindex="-?\d+"[^>]*>/g, '')
     .replace(/data-[a-z-]+="[^"]*"/gi, '')
-    // Remover padrões de metadados copiados
     .replace(/\*\]:[^\s]+/g, '')
     .trim();
   
-  // PASSO 3: Remover duplicatas de header que já renderizamos
+  // PASSO 3: Remover duplicatas de header
   cleaned = cleaned
     .replace(/QUESTÃO SIMULADO PROF\. MOISÉS MEDEIROS/gi, '')
     .replace(/✨\s*QUESTÃO:\s*NÍVEL\s*(FÁCIL|MÉDIO|DIFÍCIL)/gi, '')
@@ -126,69 +135,121 @@ function cleanResolutionText(text: string): string {
 }
 
 /**
- * Parser inteligente que detecta seções no texto da resolução
+ * Parser inteligente AVANÇADO que detecta seções E alternativas
  */
 function parseResolutionText(text: string): ParsedSection[] {
   if (!text) return [];
   
-  // Limpar texto primeiro
   const cleanedText = cleanResolutionText(text);
   if (!cleanedText) return [];
 
   const sections: ParsedSection[] = [];
   
-  // Padrões de detecção (ordem importa!)
-  const patterns: { regex: RegExp; type: SectionType; isAfirmacao?: boolean }[] = [
-    // Afirmações corretas/incorretas
-    { regex: /[✅✔️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, type: 'afirmacao_correta', isAfirmacao: true },
-    { regex: /[❌✖️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, type: 'afirmacao_incorreta', isAfirmacao: true },
-    // Conclusão
-    { regex: /[🧬📊✅]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' },
-    { regex: /A alternativa correta é/gi, type: 'conclusao' },
-    // Competência e Habilidade
-    { regex: /🎯\s*COMPETÊNCIA E HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' },
-    // Estratégia
-    { regex: /📌\s*DIRECIONAMENTO\s*[\/]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' },
-    // Pegadinhas
-    { regex: /⚠️\s*PEGADINHAS?(\s*COMUNS?)?[:\s]*/gi, type: 'pegadinhas' },
-    // Dica de Ouro
-    { regex: /💡\s*DICA DE OURO[:\s]*/gi, type: 'dica' },
-    // Passos
-    { regex: /[📊⚗️⚙️🔬]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' },
-    { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' },
+  // ========== DETECTAR ALTERNATIVAS INDIVIDUAIS ==========
+  // Padrões para alternativas: "❌ Alternativa A", "✅ Alternativa D", "🔵 Alternativa A"
+  const alternativaPatterns = [
+    // Alternativas erradas com X
+    { 
+      regex: /[❌✖️✗]\s*Alternativa\s*([A-E])\s*/gi, 
+      type: 'alternativa_errada' as SectionType,
+      isCorrect: false 
+    },
+    // Alternativas corretas com check
+    { 
+      regex: /[✅✔️✓]\s*Alternativa\s*([A-E])\s*/gi, 
+      type: 'alternativa_correta' as SectionType,
+      isCorrect: true 
+    },
+    // Alternativas neutras (para análise)
+    { 
+      regex: /[🔵🔹▪️•]\s*Alternativa\s*([A-E])\s*/gi, 
+      type: 'alternativa_analise' as SectionType,
+      isCorrect: false 
+    },
+    // Afirmações corretas
+    { 
+      regex: /[✅✔️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, 
+      type: 'afirmacao_correta' as SectionType,
+      isCorrect: true 
+    },
+    // Afirmações incorretas
+    { 
+      regex: /[❌✖️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, 
+      type: 'afirmacao_incorreta' as SectionType,
+      isCorrect: false 
+    },
   ];
 
-  // Primeiro, encontrar todas as posições de início de seção
-  const sectionStarts: { index: number; type: SectionType; match: string; stepNumber?: number; afirmacaoNumber?: string }[] = [];
+  // Padrões de seções especiais
+  const sectionPatterns = [
+    { regex: /[🧬📊✅]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
+    { regex: /A alternativa correta é/gi, type: 'conclusao' as SectionType },
+    { regex: /🎯\s*COMPETÊNCIA E HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
+    { regex: /📌\s*DIRECIONAMENTO\s*[\/]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    { regex: /⚠️\s*PEGADINHAS?(\s*COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
+    { regex: /💡\s*DICA DE OURO[:\s]*/gi, type: 'dica' as SectionType },
+    { regex: /[📊⚗️⚙️🔬]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    { regex: /Agora reunindo tudo/gi, type: 'resumo' as SectionType },
+    { regex: /Reunindo tudo/gi, type: 'resumo' as SectionType },
+    { regex: /Apenas\s+Alternativa/gi, type: 'conclusao' as SectionType },
+  ];
+
+  // Coletar todas as posições
+  interface SectionStart {
+    index: number;
+    type: SectionType;
+    match: string;
+    stepNumber?: number;
+    afirmacaoNumber?: string;
+    alternativaLetter?: string;
+    isCorrect?: boolean;
+  }
   
-  for (const pattern of patterns) {
+  const allStarts: SectionStart[] = [];
+
+  // Buscar alternativas
+  for (const pattern of alternativaPatterns) {
     let match;
     const regex = new RegExp(pattern.regex.source, 'gi');
     while ((match = regex.exec(cleanedText)) !== null) {
-      sectionStarts.push({
+      allStarts.push({
+        index: match.index,
+        type: pattern.type,
+        match: match[0],
+        alternativaLetter: match[1]?.toUpperCase(),
+        afirmacaoNumber: pattern.type.includes('afirmacao') ? match[1] : undefined,
+        isCorrect: pattern.isCorrect,
+      });
+    }
+  }
+
+  // Buscar seções especiais
+  for (const pattern of sectionPatterns) {
+    let match;
+    const regex = new RegExp(pattern.regex.source, 'gi');
+    while ((match = regex.exec(cleanedText)) !== null) {
+      allStarts.push({
         index: match.index,
         type: pattern.type,
         match: match[0],
         stepNumber: pattern.type === 'passo' ? parseInt(match[1] || '0') : undefined,
-        afirmacaoNumber: pattern.isAfirmacao ? match[1] : undefined,
       });
     }
   }
 
   // Ordenar por posição
-  sectionStarts.sort((a, b) => a.index - b.index);
+  allStarts.sort((a, b) => a.index - b.index);
 
-  // Extrair conteúdo de cada seção
-  if (sectionStarts.length === 0) {
-    // Sem seções detectadas, retorna como intro
+  // Sem seções = retorna como intro
+  if (allStarts.length === 0) {
     return [{ type: 'intro', content: cleanedText.trim() }];
   }
 
-  // Intro (texto antes da primeira seção detectada)
-  const firstSection = sectionStarts[0];
+  // Intro (texto antes da primeira seção)
+  const firstSection = allStarts[0];
   if (firstSection.index > 0) {
     const introText = cleanedText.substring(0, firstSection.index).trim();
-    // Limpar marcadores já processados do intro
     const cleanedIntro = introText
       .replace(/🔬\s*RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
       .replace(/RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
@@ -199,13 +260,16 @@ function parseResolutionText(text: string): ParsedSection[] {
   }
 
   // Processar cada seção
-  for (let i = 0; i < sectionStarts.length; i++) {
-    const current = sectionStarts[i];
-    const next = sectionStarts[i + 1];
+  for (let i = 0; i < allStarts.length; i++) {
+    const current = allStarts[i];
+    const next = allStarts[i + 1];
     
     const startIndex = current.index + current.match.length;
     const endIndex = next ? next.index : cleanedText.length;
-    const content = cleanedText.substring(startIndex, endIndex).trim();
+    let content = cleanedText.substring(startIndex, endIndex).trim();
+
+    // Limpar emojis redundantes do início do conteúdo
+    content = content.replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]\s*/g, '').trim();
 
     if (content) {
       sections.push({
@@ -213,6 +277,8 @@ function parseResolutionText(text: string): ParsedSection[] {
         content,
         stepNumber: current.stepNumber,
         afirmacaoNumber: current.afirmacaoNumber,
+        alternativaLetter: current.alternativaLetter,
+        isCorrect: current.isCorrect,
         title: current.match.trim(),
       });
     }
@@ -243,67 +309,155 @@ function getSectionIcon(type: SectionType, stepNumber?: number) {
     case 'dica':
       return Lightbulb;
     case 'afirmacao_correta':
+    case 'alternativa_correta':
       return CheckCircle;
     case 'afirmacao_incorreta':
-      return AlertTriangle;
+    case 'alternativa_errada':
+      return XCircle;
+    case 'alternativa_analise':
+      return CircleDot;
+    case 'resumo':
+      return MessageCircle;
     default:
       return Sparkles;
   }
 }
 
 /**
- * Cor para cada tipo de seção
+ * Configuração visual para cada tipo de seção
  */
-function getSectionColor(type: SectionType): string {
+function getSectionStyles(type: SectionType, isCorrect?: boolean): { 
+  border: string; 
+  bg: string; 
+  iconColor: string; 
+  titleColor: string;
+  accentColor: string;
+} {
   switch (type) {
-    case 'passo':
-      return 'border-blue-500/40 bg-blue-500/5';
-    case 'conclusao':
-      return 'border-emerald-500/40 bg-emerald-500/5';
-    case 'competencia':
-      return 'border-purple-500/40 bg-purple-500/5';
-    case 'estrategia':
-      return 'border-amber-500/40 bg-amber-500/5';
-    case 'pegadinhas':
-      return 'border-orange-500/40 bg-orange-500/5';
-    case 'dica':
-      return 'border-yellow-500/40 bg-yellow-500/5';
+    case 'alternativa_correta':
+      return {
+        border: 'border-l-4 border-l-green-500 border-t border-r border-b border-green-500/30',
+        bg: 'bg-green-500/10',
+        iconColor: 'text-green-500',
+        titleColor: 'text-green-500',
+        accentColor: 'bg-green-500/20',
+      };
+    case 'alternativa_errada':
+      return {
+        border: 'border-l-4 border-l-red-500 border-t border-r border-b border-red-500/30',
+        bg: 'bg-red-500/5',
+        iconColor: 'text-red-500',
+        titleColor: 'text-red-500',
+        accentColor: 'bg-red-500/20',
+      };
+    case 'alternativa_analise':
+      return {
+        border: 'border-l-4 border-l-blue-500 border-t border-r border-b border-blue-500/30',
+        bg: 'bg-blue-500/5',
+        iconColor: 'text-blue-500',
+        titleColor: 'text-blue-500',
+        accentColor: 'bg-blue-500/20',
+      };
     case 'afirmacao_correta':
-      return 'border-green-500/40 bg-green-500/5';
+      return {
+        border: 'border-l-4 border-l-green-500 border-t border-r border-b border-green-500/30',
+        bg: 'bg-green-500/10',
+        iconColor: 'text-green-500',
+        titleColor: 'text-green-500',
+        accentColor: 'bg-green-500/20',
+      };
     case 'afirmacao_incorreta':
-      return 'border-red-500/40 bg-red-500/5';
+      return {
+        border: 'border-l-4 border-l-red-500 border-t border-r border-b border-red-500/30',
+        bg: 'bg-red-500/5',
+        iconColor: 'text-red-500',
+        titleColor: 'text-red-500',
+        accentColor: 'bg-red-500/20',
+      };
+    case 'passo':
+      return {
+        border: 'border-l-4 border-l-blue-500 border-t border-r border-b border-blue-500/30',
+        bg: 'bg-blue-500/5',
+        iconColor: 'text-blue-500',
+        titleColor: 'text-blue-500',
+        accentColor: 'bg-blue-500/20',
+      };
+    case 'conclusao':
+      return {
+        border: 'border-l-4 border-l-emerald-500 border-t border-r border-b border-emerald-500/30',
+        bg: 'bg-emerald-500/10',
+        iconColor: 'text-emerald-500',
+        titleColor: 'text-emerald-500',
+        accentColor: 'bg-emerald-500/20',
+      };
+    case 'competencia':
+      return {
+        border: 'border-l-4 border-l-purple-500 border-t border-r border-b border-purple-500/30',
+        bg: 'bg-purple-500/5',
+        iconColor: 'text-purple-500',
+        titleColor: 'text-purple-500',
+        accentColor: 'bg-purple-500/20',
+      };
+    case 'estrategia':
+      return {
+        border: 'border-l-4 border-l-amber-500 border-t border-r border-b border-amber-500/30',
+        bg: 'bg-amber-500/5',
+        iconColor: 'text-amber-500',
+        titleColor: 'text-amber-500',
+        accentColor: 'bg-amber-500/20',
+      };
+    case 'pegadinhas':
+      return {
+        border: 'border-l-4 border-l-orange-500 border-t border-r border-b border-orange-500/30',
+        bg: 'bg-orange-500/5',
+        iconColor: 'text-orange-500',
+        titleColor: 'text-orange-500',
+        accentColor: 'bg-orange-500/20',
+      };
+    case 'dica':
+      return {
+        border: 'border-l-4 border-l-yellow-500 border-t border-r border-b border-yellow-500/30',
+        bg: 'bg-yellow-500/5',
+        iconColor: 'text-yellow-500',
+        titleColor: 'text-yellow-500',
+        accentColor: 'bg-yellow-500/20',
+      };
+    case 'resumo':
+      return {
+        border: 'border-l-4 border-l-cyan-500 border-t border-r border-b border-cyan-500/30',
+        bg: 'bg-cyan-500/5',
+        iconColor: 'text-cyan-500',
+        titleColor: 'text-cyan-500',
+        accentColor: 'bg-cyan-500/20',
+      };
     default:
-      return 'border-border/50 bg-muted/30';
+      return {
+        border: 'border border-border/50',
+        bg: 'bg-muted/20',
+        iconColor: 'text-primary',
+        titleColor: 'text-foreground',
+        accentColor: 'bg-primary/20',
+      };
   }
 }
 
-function getSectionIconColor(type: SectionType): string {
-  switch (type) {
-    case 'passo':
-      return 'text-blue-500';
-    case 'conclusao':
-      return 'text-emerald-500';
-    case 'competencia':
-      return 'text-purple-500';
-    case 'estrategia':
-      return 'text-amber-500';
-    case 'pegadinhas':
-      return 'text-orange-500';
-    case 'dica':
-      return 'text-yellow-500';
-    case 'afirmacao_correta':
-      return 'text-green-500';
-    case 'afirmacao_incorreta':
-      return 'text-red-500';
-    default:
-      return 'text-primary';
-  }
-}
-
+/**
+ * Título formatado para cada tipo de seção
+ */
 function getSectionTitle(section: ParsedSection): string {
   switch (section.type) {
+    case 'alternativa_correta':
+      return `✅ ALTERNATIVA ${section.alternativaLetter} — CORRETA`;
+    case 'alternativa_errada':
+      return `❌ ALTERNATIVA ${section.alternativaLetter} — ERRADA`;
+    case 'alternativa_analise':
+      return `🔵 ALTERNATIVA ${section.alternativaLetter}`;
+    case 'afirmacao_correta':
+      return `✅ AFIRMAÇÃO ${section.afirmacaoNumber} — CORRETA`;
+    case 'afirmacao_incorreta':
+      return `❌ AFIRMAÇÃO ${section.afirmacaoNumber} — ERRADA`;
     case 'passo':
-      return `PASSO ${section.stepNumber || ''}`;
+      return `📊 PASSO ${section.stepNumber}`;
     case 'conclusao':
       return '✅ CONCLUSÃO E GABARITO';
     case 'competencia':
@@ -314,71 +468,71 @@ function getSectionTitle(section: ParsedSection): string {
       return '⚠️ PEGADINHAS COMUNS';
     case 'dica':
       return '💡 DICA DE OURO';
-    case 'afirmacao_correta':
-      return `✅ AFIRMAÇÃO ${section.afirmacaoNumber || ''}`;
-    case 'afirmacao_incorreta':
-      return `❌ AFIRMAÇÃO ${section.afirmacaoNumber || ''}`;
+    case 'resumo':
+      return '📋 RESUMO FINAL';
     default:
       return '';
   }
 }
 
 /**
- * Bloco visual para cada seção
+ * Bloco visual para cada seção — Design profissional
  */
 const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSection }) {
   const Icon = getSectionIcon(section.type, section.stepNumber);
-  const colorClass = getSectionColor(section.type);
-  const iconColor = getSectionIconColor(section.type);
+  const styles = getSectionStyles(section.type, section.isCorrect);
   const title = getSectionTitle(section);
 
-  // Para afirmações, formatar o conteúdo com indicador de resultado
-  const isAfirmacao = section.type === 'afirmacao_correta' || section.type === 'afirmacao_incorreta';
+  // Formatar conteúdo
+  const formatContent = (content: string) => {
+    return formatChemicalFormulas(
+      content
+        .replace(/👉\s*/g, '\n• ')
+        .replace(/Reunindo:/gi, '\n📋 Reunindo:')
+        .trim()
+    );
+  };
 
+  // INTRO — Bloco especial
   if (section.type === 'intro') {
     return (
-      <div className="p-4 rounded-xl border border-border/50 bg-muted/20">
-        <div className="flex items-start gap-3">
-          <Sparkles className="h-5 w-5 text-emerald-500 mt-0.5 flex-shrink-0" />
-          <p className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
-            {formatChemicalFormulas(section.content)}
-          </p>
+      <div className="p-5 rounded-xl border border-border/50 bg-muted/20">
+        <div className="flex items-start gap-4">
+          <div className="flex-shrink-0 flex items-center justify-center h-10 w-10 rounded-xl bg-emerald-500/20">
+            <Sparkles className="h-5 w-5 text-emerald-500" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <h4 className="font-bold text-sm text-emerald-500 mb-3">
+              📝 ANÁLISE DA QUESTÃO
+            </h4>
+            <p className="text-justify leading-relaxed text-sm text-foreground/90">
+              {formatContent(section.content)}
+            </p>
+          </div>
         </div>
       </div>
     );
   }
 
-  // Formatar conteúdo: separar indicador final de resultado
-  const formatContent = (content: string) => {
-    // Separar "👉 Afirmação X está correta/incorreta" em linha própria
-    const formattedContent = content
-      .replace(/👉\s*/g, '\n\n👉 ')
-      .replace(/Reunindo:/gi, '\n\n📋 Reunindo:')
-      .trim();
-    return formatChemicalFormulas(formattedContent);
-  };
-
   return (
-    <div className={cn("p-4 rounded-xl border", colorClass)}>
-      <div className="flex items-start gap-3">
-        <div className={cn("flex items-center justify-center h-8 w-8 rounded-lg bg-background/50 flex-shrink-0", iconColor)}>
+    <div className={cn("rounded-xl overflow-hidden", styles.border, styles.bg)}>
+      {/* Header do bloco */}
+      <div className={cn("px-4 py-3 flex items-center gap-3", styles.accentColor)}>
+        <div className={cn(
+          "flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-background/60",
+          styles.iconColor
+        )}>
           <Icon className="h-4 w-4" />
         </div>
-        <div className="flex-1 min-w-0">
-          {title && (
-            <h4 className={cn("font-bold text-sm mb-2", iconColor)}>
-              {title}
-            </h4>
-          )}
-          <div className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
-            {isAfirmacao ? (
-              <div className="space-y-2">
-                {formatContent(section.content)}
-              </div>
-            ) : (
-              formatContent(section.content)
-            )}
-          </div>
+        <h4 className={cn("font-bold text-sm", styles.titleColor)}>
+          {title}
+        </h4>
+      </div>
+      
+      {/* Conteúdo do bloco */}
+      <div className="px-5 py-4">
+        <div className="text-justify leading-relaxed text-sm text-foreground/90 whitespace-pre-wrap">
+          {formatContent(section.content)}
         </div>
       </div>
     </div>
@@ -398,7 +552,7 @@ const formatBancaHeader = (banca?: string | null, ano?: number | null): string =
 
 /**
  * Componente universal para exibir resolução de questão
- * Com parsing inteligente e organização visual em blocos
+ * Com parsing inteligente e organização visual em blocos SEPARADOS
  */
 const QuestionResolution = memo(function QuestionResolution({
   resolutionText,
@@ -415,42 +569,55 @@ const QuestionResolution = memo(function QuestionResolution({
   const bancaHeader = formatBancaHeader(banca, ano);
   const difficultyData = difficulty ? DIFFICULTY_LABELS[difficulty] : null;
 
-  // Parser inteligente
+  // Parser inteligente AVANÇADO
   const parsedSections = useMemo(() => parseResolutionText(resolutionText), [resolutionText]);
 
-  // Verifica se tem classificação
+  // Verificações
   const hasClassification = macro || micro;
-  
-  // Verifica se o texto já tem seção de competência
   const hasEnemInText = parsedSections.some(s => s.type === 'competencia');
   const showEnemBlock = (competenciaEnem || habilidadeEnem) && !hasEnemInText;
 
+  // Agrupar seções por categoria para melhor visualização
+  const alternativasSections = parsedSections.filter(s => 
+    s.type === 'alternativa_correta' || 
+    s.type === 'alternativa_errada' || 
+    s.type === 'alternativa_analise' ||
+    s.type === 'afirmacao_correta' ||
+    s.type === 'afirmacao_incorreta'
+  );
+  const otherSections = parsedSections.filter(s => 
+    !alternativasSections.includes(s) && s.type !== 'intro'
+  );
+  const introSection = parsedSections.find(s => s.type === 'intro');
+
   return (
-    <div className={cn("space-y-4", className)}>
-      {/* HEADER — Centralizado */}
-      <div className="text-center pb-2 border-b border-border/30">
+    <div className={cn("space-y-6", className)}>
+      {/* ========== HEADER ========== */}
+      <div className="text-center pb-3 border-b-2 border-primary/20">
         <h3 className="text-2xl font-bold uppercase tracking-wide text-primary">
           {bancaHeader}
         </h3>
       </div>
 
-      {/* METADADOS — Nível + Tema + Classificação */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      {/* ========== METADADOS ========== */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Card Nível + Tema */}
         {(difficultyData || tema) && (
-          <div className="p-3 rounded-lg bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+          <div className="p-4 rounded-xl bg-gradient-to-r from-primary/10 to-primary/5 border border-primary/20">
+            <div className="flex flex-col gap-2 text-sm">
               {difficultyData && (
-                <span>
-                  <span className="font-semibold">✨ NÍVEL:</span>{' '}
-                  <span className={cn("font-bold", difficultyData.color)}>{difficultyData.label}</span>
-                </span>
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">✨ NÍVEL:</span>
+                  <span className={cn("font-bold px-2 py-0.5 rounded", difficultyData.color)}>
+                    {difficultyData.label}
+                  </span>
+                </div>
               )}
               {tema && (
-                <span>
-                  <span className="font-semibold">🧪 TEMA:</span>{' '}
+                <div className="flex items-center gap-2">
+                  <span className="font-semibold">🧪 TEMA:</span>
                   <span className="text-muted-foreground">{tema}</span>
-                </span>
+                </div>
               )}
             </div>
           </div>
@@ -458,70 +625,93 @@ const QuestionResolution = memo(function QuestionResolution({
 
         {/* Card Classificação */}
         {hasClassification && (
-          <div className="p-3 rounded-lg bg-gradient-to-r from-blue-500/10 to-blue-500/5 border border-blue-500/20">
-            <div className="flex items-center gap-2 mb-1">
+          <div className="p-4 rounded-xl bg-gradient-to-r from-blue-500/10 to-blue-500/5 border border-blue-500/20">
+            <div className="flex items-center gap-2 mb-2">
               <FolderTree className="h-4 w-4 text-blue-500" />
               <span className="font-semibold text-sm text-blue-500">CLASSIFICAÇÃO</span>
             </div>
-            <div className="flex flex-wrap gap-x-4 gap-y-1 text-sm">
+            <div className="flex flex-col gap-1 text-sm">
               {macro && (
-                <span>
+                <div>
                   <span className="font-medium text-blue-400">Macro:</span>{' '}
                   <span className="text-muted-foreground">{macro}</span>
-                </span>
+                </div>
               )}
               {micro && (
-                <span>
+                <div>
                   <span className="font-medium text-blue-400">Micro:</span>{' '}
                   <span className="text-muted-foreground">{micro}</span>
-                </span>
+                </div>
               )}
             </div>
           </div>
         )}
       </div>
 
-      {/* TÍTULO DA RESOLUÇÃO */}
-      <div className="text-center pt-4 pb-3">
-        <h4 className="text-2xl font-bold text-emerald-500 inline-flex items-center justify-center gap-3">
-          <Sparkles className="h-6 w-6" />
-          🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
-        </h4>
+      {/* ========== TÍTULO PRINCIPAL ========== */}
+      <div className="text-center py-4">
+        <div className="inline-flex items-center gap-3 px-6 py-3 rounded-2xl bg-gradient-to-r from-emerald-500/20 to-emerald-500/10 border border-emerald-500/30">
+          <Sparkles className="h-6 w-6 text-emerald-500" />
+          <h4 className="text-xl font-bold text-emerald-500">
+            🔬 RESOLUÇÃO COMENTADA PELO PROF. MOISÉS MEDEIROS
+          </h4>
+        </div>
       </div>
 
-      {/* SEÇÕES PARSEADAS — Cada uma em seu bloco visual */}
-      <div className="space-y-3">
-        {parsedSections.map((section, index) => (
-          <SectionBlock key={`${section.type}-${index}`} section={section} />
-        ))}
-      </div>
+      {/* ========== INTRO (ANÁLISE) ========== */}
+      {introSection && (
+        <SectionBlock section={introSection} />
+      )}
 
-      {/* COMPETÊNCIA ENEM — Se não estiver no texto */}
+      {/* ========== ALTERNATIVAS / AFIRMAÇÕES ========== */}
+      {alternativasSections.length > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+            <div className="h-px flex-1 bg-border/50" />
+            <span>ANÁLISE DAS ALTERNATIVAS</span>
+            <div className="h-px flex-1 bg-border/50" />
+          </div>
+          <div className="space-y-3">
+            {alternativasSections.map((section, index) => (
+              <SectionBlock key={`alt-${section.type}-${index}`} section={section} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ========== OUTRAS SEÇÕES ========== */}
+      {otherSections.length > 0 && (
+        <div className="space-y-3">
+          {otherSections.map((section, index) => (
+            <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
+          ))}
+        </div>
+      )}
+
+      {/* ========== COMPETÊNCIA ENEM (se não no texto) ========== */}
       {showEnemBlock && (
-        <div className="p-4 rounded-xl border border-purple-500/40 bg-purple-500/5">
-          <div className="flex items-start gap-3">
-            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-background/50 text-purple-500 flex-shrink-0">
+        <div className="rounded-xl overflow-hidden border-l-4 border-l-purple-500 border-t border-r border-b border-purple-500/30 bg-purple-500/5">
+          <div className="px-4 py-3 flex items-center gap-3 bg-purple-500/20">
+            <div className="flex-shrink-0 flex items-center justify-center h-8 w-8 rounded-lg bg-background/60 text-purple-500">
               <Target className="h-4 w-4" />
             </div>
-            <div className="flex-1">
-              <h4 className="font-bold text-sm mb-2 text-purple-500">
-                🎯 COMPETÊNCIA E HABILIDADE - ENEM
-              </h4>
-              <div className="space-y-1 text-sm">
-                {competenciaEnem && (
-                  <p>
-                    <span className="font-medium text-purple-400">📘 Competência:</span>{' '}
-                    <span className="text-muted-foreground">{competenciaEnem}</span>
-                  </p>
-                )}
-                {habilidadeEnem && (
-                  <p>
-                    <span className="font-medium text-purple-400">📘 Habilidade:</span>{' '}
-                    <span className="text-muted-foreground">{habilidadeEnem}</span>
-                  </p>
-                )}
-              </div>
-            </div>
+            <h4 className="font-bold text-sm text-purple-500">
+              🎯 COMPETÊNCIA E HABILIDADE - ENEM
+            </h4>
+          </div>
+          <div className="px-5 py-4 space-y-2 text-sm">
+            {competenciaEnem && (
+              <p>
+                <span className="font-medium text-purple-400">📘 Competência:</span>{' '}
+                <span className="text-muted-foreground">{competenciaEnem}</span>
+              </p>
+            )}
+            {habilidadeEnem && (
+              <p>
+                <span className="font-medium text-purple-400">📘 Habilidade:</span>{' '}
+                <span className="text-muted-foreground">{habilidadeEnem}</span>
+              </p>
+            )}
           </div>
         </div>
       )}
@@ -532,9 +722,10 @@ const QuestionResolution = memo(function QuestionResolution({
 export default QuestionResolution;
 
 // ============================================
-// REGRAS:
-// 1. Parser detecta automaticamente seções no texto
-// 2. Cada seção exibida em bloco visual distinto
-// 3. Cores e ícones específicos por tipo
-// 4. NÃO modifica conteúdo, apenas organiza visualmente
+// REGRAS OBRIGATÓRIAS v2.0:
+// 1. Parser detecta ALTERNATIVAS (A-E) e AFIRMAÇÕES (I-V)
+// 2. CADA alternativa em bloco visual SEPARADO
+// 3. Bordas laterais coloridas para indicar correto/errado
+// 4. Agrupamento inteligente por categoria
+// 5. NÃO modifica conteúdo, apenas organiza visualmente
 // ============================================
