@@ -930,6 +930,8 @@ function GestaoQuestoes() {
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
   const [isDeletingAll, setIsDeletingAll] = useState(false);
+  const [annihilationConfirmText, setAnnihilationConfirmText] = useState('');
+  const [annihilationCheckbox, setAnnihilationCheckbox] = useState(false);
   const [taxonomyManagerOpen, setTaxonomyManagerOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
@@ -1219,41 +1221,63 @@ function GestaoQuestoes() {
     }
   };
 
-  // ANIQUILAÇÃO TOTAL - Exclui TODAS as questões
+  // ANIQUILAÇÃO TOTAL - Exclui TODAS as questões via RPC com CASCADE
   const handleDeleteAllQuestions = async () => {
     if (!isOwner) {
       toast.error('Apenas o Owner pode executar esta ação');
       return;
     }
 
+    // Validar confirmação por texto
+    if (annihilationConfirmText !== 'CONFIRMAR EXCLUSÃO TOTAL') {
+      toast.error('Digite exatamente: CONFIRMAR EXCLUSÃO TOTAL');
+      return;
+    }
+
+    if (!annihilationCheckbox) {
+      toast.error('Marque a caixa de confirmação');
+      return;
+    }
+
     setIsDeletingAll(true);
     
     try {
-      // 1. Deletar todas as questões de quiz_questions
-      const { error: deleteError } = await supabase
-        .from('quiz_questions')
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Match all
+      // Chamar função RPC com CASCADE
+      const { data, error } = await supabase.rpc('annihilate_all_questions');
 
-      if (deleteError) throw deleteError;
+      if (error) throw error;
 
-      // 2. Limpar cache
+      // Limpar cache
       clearQueryCache();
       
-      // 3. Atualizar estado local
+      // Atualizar estado local
       setQuestions([]);
       
-      toast.success('🔥 ANIQUILAÇÃO CONCLUÍDA - Todas as questões foram removidas', {
-        description: `${questions.length} questões excluídas permanentemente.`,
-        duration: 5000,
+      const result = data as { annihilated?: { quiz_questions?: number; question_attempts?: number; quiz_answers?: number } };
+      
+      toast.success('🔥 ANIQUILAÇÃO TOTAL CONCLUÍDA', {
+        description: `Questões: ${result?.annihilated?.quiz_questions || 0} | Attempts: ${result?.annihilated?.question_attempts || 0} | Answers: ${result?.annihilated?.quiz_answers || 0}`,
+        duration: 8000,
       });
       
+      // Reset do modal
       setDeleteAllConfirm(false);
+      setAnnihilationConfirmText('');
+      setAnnihilationCheckbox(false);
     } catch (err) {
-      console.error('Erro ao excluir todas as questões:', err);
-      toast.error('Erro ao excluir questões: ' + (err instanceof Error ? err.message : String(err)));
+      console.error('Erro na aniquilação:', err);
+      toast.error('Erro na aniquilação: ' + (err instanceof Error ? err.message : String(err)));
     } finally {
       setIsDeletingAll(false);
+    }
+  };
+
+  // Resetar campos quando fechar modal
+  const handleCloseAnnihilationModal = (open: boolean) => {
+    setDeleteAllConfirm(open);
+    if (!open) {
+      setAnnihilationConfirmText('');
+      setAnnihilationCheckbox(false);
     }
   };
 
@@ -2019,42 +2043,95 @@ function GestaoQuestoes() {
       </Dialog>
 
       {/* Dialog de Confirmação de ANIQUILAÇÃO TOTAL */}
-      <Dialog open={deleteAllConfirm} onOpenChange={setDeleteAllConfirm}>
-        <DialogContent className="border-red-500/50">
+      <Dialog open={deleteAllConfirm} onOpenChange={handleCloseAnnihilationModal}>
+        <DialogContent className="border-red-500/50 max-w-lg">
           <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-red-500">
+            <DialogTitle className="flex items-center gap-2 text-red-500 text-xl">
               <AlertCircle className="h-6 w-6" />
               🔥 ANIQUILAÇÃO TOTAL
             </DialogTitle>
-            <DialogDescription className="space-y-3">
-              <p className="text-red-400 font-semibold">
-                ATENÇÃO: Esta ação é IRREVERSÍVEL!
-              </p>
-              <p>
-                Você está prestes a excluir permanentemente <strong className="text-foreground">{questions.length} questões</strong> do sistema.
-              </p>
-              <ul className="text-sm space-y-1 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
-                <li>• Todas as questões serão removidas</li>
-                <li>• Associações com simulados serão perdidas</li>
-                <li>• Estatísticas de resposta serão invalidadas</li>
-                <li>• Esta ação NÃO pode ser revertida</li>
+            <DialogDescription className="space-y-4 pt-4">
+              <div className="bg-red-500/20 border border-red-500/50 p-4 rounded-lg">
+                <p className="text-red-400 font-bold text-lg mb-2">
+                  ⚠️ ATENÇÃO: Esta ação é IRREVERSÍVEL!
+                </p>
+                <p className="text-foreground">
+                  Você está prestes a excluir permanentemente <strong className="text-red-400">{questions.length} questões</strong>.
+                </p>
+              </div>
+              
+              <ul className="text-sm space-y-2 bg-muted/50 p-4 rounded-lg border">
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Todas as questões serão removidas do sistema
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Todas as tentativas de resposta (question_attempts) serão excluídas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Todas as respostas de quiz (quiz_answers) serão excluídas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Estatísticas de desempenho serão invalidadas
+                </li>
+                <li className="flex items-center gap-2">
+                  <span className="text-red-500">✗</span>
+                  Esta ação NÃO pode ser revertida
+                </li>
               </ul>
+
+              {/* Confirmação por digitação */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-foreground">
+                  Digite <code className="bg-red-500/20 px-2 py-1 rounded text-red-400">CONFIRMAR EXCLUSÃO TOTAL</code> para continuar:
+                </label>
+                <Input 
+                  value={annihilationConfirmText}
+                  onChange={(e) => setAnnihilationConfirmText(e.target.value)}
+                  placeholder="CONFIRMAR EXCLUSÃO TOTAL"
+                  className="border-red-500/50 focus:border-red-500"
+                  disabled={isDeletingAll}
+                />
+              </div>
+
+              {/* Checkbox de confirmação */}
+              <div className="flex items-start gap-3 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
+                <input 
+                  type="checkbox" 
+                  id="annihilation-confirm"
+                  checked={annihilationCheckbox}
+                  onChange={(e) => setAnnihilationCheckbox(e.target.checked)}
+                  className="mt-1 h-4 w-4 rounded border-red-500"
+                  disabled={isDeletingAll}
+                />
+                <label htmlFor="annihilation-confirm" className="text-sm text-foreground">
+                  Eu entendo que esta ação excluirá <strong>PERMANENTEMENTE</strong> todas as questões e dados relacionados, 
+                  e que esta operação <strong>NÃO PODE SER DESFEITA</strong>.
+                </label>
+              </div>
             </DialogDescription>
           </DialogHeader>
-          <DialogFooter className="gap-2">
-            <Button variant="outline" onClick={() => setDeleteAllConfirm(false)} disabled={isDeletingAll}>
+          <DialogFooter className="gap-2 mt-4">
+            <Button 
+              variant="outline" 
+              onClick={() => handleCloseAnnihilationModal(false)} 
+              disabled={isDeletingAll}
+            >
               Cancelar
             </Button>
             <Button 
               variant="destructive" 
               onClick={handleDeleteAllQuestions}
-              disabled={isDeletingAll}
+              disabled={isDeletingAll || annihilationConfirmText !== 'CONFIRMAR EXCLUSÃO TOTAL' || !annihilationCheckbox}
               className="bg-red-600 hover:bg-red-700"
             >
               {isDeletingAll ? (
                 <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                  Excluindo...
+                  ANIQUILANDO...
                 </>
               ) : (
                 <>
