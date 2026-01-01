@@ -777,14 +777,12 @@ export function CriarAcessoOficialModal({
                         setCpfValidated(isValid);
                         setCpfValidating(false);
                         if (isValid && nome) {
-                          // Opcional: preencher nome automaticamente se vazio
-                          const currentNome = form.getValues("nome");
-                          if (!currentNome && nome) {
-                            form.setValue("nome", nome);
-                            toast.info("Nome preenchido automaticamente", {
-                              description: `CPF pertence a: ${nome}`
-                            });
-                          }
+                          // OBRIGATÓRIO: Nome da Receita Federal SEMPRE preenche o campo
+                          // CPF e nome são vinculados — são a mesma pessoa
+                          form.setValue("nome", nome, { shouldValidate: true });
+                          toast.success("✅ CPF validado na Receita Federal!", {
+                            description: `Nome vinculado: ${nome}`
+                          });
                         }
                       }}
                       className="border-muted-foreground/30"
