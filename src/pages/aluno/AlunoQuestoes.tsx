@@ -493,6 +493,8 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
               <QuestionEnunciado
                 questionText={question.question_text}
                 imageUrl={(question as any).image_url}
+                banca={(question as any).banca}
+                ano={(question as any).ano}
                 textSize="sm"
                 showImageLabel
               />

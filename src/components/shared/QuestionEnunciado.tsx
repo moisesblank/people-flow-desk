@@ -1,19 +1,30 @@
 // ============================================
 // 📝 QUESTION ENUNCIADO — COMPONENTE UNIVERSAL
-// Exibe texto + imagem de qualquer questão
-// Extrai imagem de image_url ou do texto [IMAGEM: URL]
-// PADRÃO ÚNICO PARA TODO O SISTEMA
+// PADRÃO OBRIGATÓRIO PARA TODAS AS QUESTÕES
+// 
+// ESTRUTURA:
+// 1. BANCA HEADER (centralizado, bold, uppercase)
+// 2. TEXTO DO ENUNCIADO (justificado)
+// 3. IMAGEM (se houver)
 // ============================================
 
 import { memo } from 'react';
 import { ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { getBancaLabel } from '@/constants/bancas';
+
+// Fallback padrão quando não há banca
+const DEFAULT_BANCA_HEADER = 'QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS';
 
 interface QuestionEnunciadoProps {
   /** Texto do enunciado (pode conter [IMAGEM: URL]) */
   questionText: string;
   /** URL da imagem do banco (prioridade sobre extração do texto) */
   imageUrl?: string | null;
+  /** Código da banca (ex: 'enem', 'unicamp') */
+  banca?: string | null;
+  /** Ano da questão */
+  ano?: number | null;
   /** Tamanho do texto */
   textSize?: 'sm' | 'base' | 'lg';
   /** Classe adicional para o container */
@@ -22,8 +33,10 @@ interface QuestionEnunciadoProps {
   showImageLabel?: boolean;
   /** Altura máxima da imagem */
   maxImageHeight?: string;
-  /** Modo compacto (para cards/listas) */
+  /** Modo compacto (para cards/listas) - não mostra header */
   compact?: boolean;
+  /** Esconder header da banca */
+  hideHeader?: boolean;
 }
 
 /**
@@ -54,16 +67,39 @@ export const getQuestionImageUrl = (questionText: string, imageUrl?: string | nu
 };
 
 /**
- * Componente universal para exibir enunciado de questão com imagem
+ * Formata o header da banca
+ * Regras:
+ * - Se tem banca + ano: "BANCA (ANO)"
+ * - Se tem só banca: "BANCA"
+ * - Se não tem nada: fallback padrão
+ */
+export const formatBancaHeader = (banca?: string | null, ano?: number | null): string => {
+  if (banca) {
+    const bancaLabel = getBancaLabel(banca);
+    return ano ? `${bancaLabel} (${ano})` : bancaLabel;
+  }
+  return DEFAULT_BANCA_HEADER;
+};
+
+/**
+ * Componente universal para exibir enunciado de questão
+ * 
+ * ESTRUTURA OBRIGATÓRIA:
+ * 1. Header da Banca (centralizado, bold, uppercase)
+ * 2. Texto do Enunciado (justificado)
+ * 3. Imagem (se houver)
  */
 const QuestionEnunciado = memo(function QuestionEnunciado({
   questionText,
   imageUrl,
+  banca,
+  ano,
   textSize = 'base',
   className,
   showImageLabel = true,
   maxImageHeight = 'max-h-96',
   compact = false,
+  hideHeader = false,
 }: QuestionEnunciadoProps) {
   // Limpa o texto (remove tag [IMAGEM:])
   const cleanText = cleanQuestionText(questionText);
@@ -71,7 +107,16 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
   // Obtém URL da imagem
   const imgUrl = getQuestionImageUrl(questionText, imageUrl);
 
+  // Header da banca
+  const bancaHeader = formatBancaHeader(banca, ano);
+
   const textSizeClass = {
+    sm: 'text-sm',
+    base: 'text-base',
+    lg: 'text-lg',
+  }[textSize];
+
+  const headerSizeClass = {
     sm: 'text-sm',
     base: 'text-base',
     lg: 'text-lg',
@@ -79,16 +124,28 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* Texto do Enunciado */}
+      {/* 1. BANCA HEADER — Centralizado, Bold, Uppercase */}
+      {!compact && !hideHeader && (
+        <div className="text-center mb-4">
+          <h3 className={cn(
+            "font-bold uppercase tracking-wide text-primary",
+            headerSizeClass
+          )}>
+            {bancaHeader}
+          </h3>
+        </div>
+      )}
+
+      {/* 2. TEXTO DO ENUNCIADO — Justificado */}
       <p className={cn(
         "leading-relaxed whitespace-pre-wrap",
         textSizeClass,
-        compact && "line-clamp-3"
+        compact ? "line-clamp-3" : "text-justify",
       )}>
         {cleanText}
       </p>
       
-      {/* Imagem do Enunciado */}
+      {/* 3. IMAGEM DO ENUNCIADO */}
       {imgUrl && (
         <div className={cn(
           "rounded-lg border border-border/50 overflow-hidden",
@@ -121,3 +178,13 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
 });
 
 export default QuestionEnunciado;
+
+// ============================================
+// REGRAS DE USO OBRIGATÓRIAS:
+// 
+// 1. TODA questão DEVE usar este componente
+// 2. SEMPRE passar banca e ano quando disponíveis
+// 3. Modo compact=true ESCONDE o header (para listas)
+// 4. Texto é SEMPRE justificado (exceto compact)
+// 5. Header é SEMPRE centralizado e bold
+// ============================================
