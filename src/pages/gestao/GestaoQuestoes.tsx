@@ -1830,15 +1830,15 @@ function GestaoQuestoes() {
                         {/* Grupo Esquerdo: Status + Publicado */}
                         <div className="flex items-center gap-2">
                           {question.is_active ? (
-                            <Badge className="text-xs px-3 py-1 bg-green-500/90 text-white border-0 font-semibold">
+                            <Badge className="text-sm px-4 py-1.5 bg-green-500/90 text-white border-0 font-semibold">
                               Ativa
                             </Badge>
                           ) : (
-                            <Badge className="text-xs px-3 py-1 bg-gray-600 text-white border-0 font-semibold">
+                            <Badge className="text-sm px-4 py-1.5 bg-gray-600 text-white border-0 font-semibold">
                               Inativa
                             </Badge>
                           )}
-                          <Badge className="text-xs px-3 py-1 bg-emerald-600 text-white border-0 font-semibold">
+                          <Badge className="text-sm px-4 py-1.5 bg-emerald-600 text-white border-0 font-semibold">
                             Publicado
                           </Badge>
                         </div>
@@ -1846,7 +1846,7 @@ function GestaoQuestoes() {
                         {/* Grupo Central: Dificuldade + Banca + Ano */}
                         <div className="flex items-center gap-2">
                           <Badge className={cn(
-                            "text-xs px-3 py-1 border-0 font-semibold text-white",
+                            "text-sm px-4 py-1.5 border-0 font-semibold text-white",
                             question.difficulty === 'facil' && 'bg-green-500',
                             question.difficulty === 'medio' && 'bg-yellow-500',
                             question.difficulty === 'dificil' && 'bg-red-500',
@@ -1857,13 +1857,13 @@ function GestaoQuestoes() {
                           </Badge>
                           
                           {question.banca && (
-                            <Badge className="text-xs px-3 py-1 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
+                            <Badge className="text-sm px-4 py-1.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
                               🏛 {getBancaLabel(question.banca)}
                             </Badge>
                           )}
                           
                           {question.ano && (
-                            <Badge className="text-xs px-3 py-1 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
+                            <Badge className="text-sm px-4 py-1.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
                               📅 {question.ano}
                             </Badge>
                           )}
@@ -1871,10 +1871,10 @@ function GestaoQuestoes() {
 
                         {/* Grupo Direito: Tipo + Área */}
                         <div className="flex items-center gap-2">
-                          <Badge className="text-xs px-3 py-1 bg-primary/80 text-primary-foreground border-0 font-semibold flex items-center gap-1">
+                          <Badge className="text-sm px-4 py-1.5 bg-primary/80 text-primary-foreground border-0 font-semibold flex items-center gap-1">
                             ⭐ {question.question_type === 'multiple_choice' ? 'Múltipla Escolha' : 'Discursiva'}
                           </Badge>
-                          <Badge className={cn("text-xs px-3 py-1 border-0 font-bold", config.badge)}>
+                          <Badge className={cn("text-sm px-4 py-1.5 border-0 font-bold", config.badge)}>
                             {config.icon} {config.label}
                           </Badge>
                         </div>
