@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
+import QuestionEnunciado from "@/components/shared/QuestionEnunciado";
 import { 
   usePracticeQuestions, 
   usePracticeSession, 
@@ -264,10 +265,13 @@ function PracticeSession({
         >
           <Card className="overflow-hidden">
             <CardContent className="p-6 space-y-6">
-              {/* Enunciado */}
-              <div className="text-lg leading-relaxed">
-                {currentQuestion.question_text}
-              </div>
+              {/* Enunciado com Imagem - Componente Universal */}
+              <QuestionEnunciado
+                questionText={currentQuestion.question_text}
+                imageUrl={(currentQuestion as any).image_url}
+                textSize="lg"
+                showImageLabel
+              />
 
               {/* Opções */}
               <RadioGroup

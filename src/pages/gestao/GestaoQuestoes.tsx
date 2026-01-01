@@ -7,6 +7,7 @@
 import { memo, useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import { 
   Brain, 
   Plus, 
@@ -1819,25 +1820,15 @@ function GestaoQuestoes() {
                             )}
                           </div>
                           
-                          {/* Enunciado */}
-                          <p className="text-sm font-medium leading-relaxed line-clamp-2 mb-3">
-                            {question.question_text}
-                          </p>
-                          
-                          {/* Imagem do Enunciado (se houver) */}
-                          {question.image_url && (
-                            <div className="mb-3">
-                              <img 
-                                src={question.image_url} 
-                                alt="Imagem da questão"
-                                className="max-h-32 rounded-lg border border-border/50 object-contain"
-                                loading="lazy"
-                                onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none';
-                                }}
-                              />
-                            </div>
-                          )}
+                          {/* Enunciado com Imagem - Componente Universal */}
+                          <QuestionEnunciado
+                            questionText={question.question_text}
+                            imageUrl={question.image_url}
+                            textSize="sm"
+                            compact
+                            showImageLabel={false}
+                            className="mb-3"
+                          />
                           
                           {/* Taxonomia Completa */}
                           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs">

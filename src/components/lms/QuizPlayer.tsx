@@ -16,6 +16,7 @@ import { Badge } from '@/components/ui/badge';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
+import QuestionEnunciado, { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
 import type { Quiz, QuizQuestion, QuizAttempt } from '@/hooks/useQuiz';
 
 interface QuizPlayerProps {
@@ -165,10 +166,13 @@ export function QuizPlayer({ quiz, questions, onSubmit, isSubmitting }: QuizPlay
             </CardHeader>
 
             <CardContent className="space-y-6">
-              {/* Texto da Questão */}
-              <div className="text-lg leading-relaxed">
-                {currentQuestion?.question_text}
-              </div>
+              {/* Texto da Questão com Imagem - Componente Universal */}
+              <QuestionEnunciado
+                questionText={currentQuestion?.question_text || ''}
+                imageUrl={(currentQuestion as any)?.image_url}
+                textSize="lg"
+                showImageLabel
+              />
 
               {/* Opções */}
               {currentQuestion?.question_type === 'multiple_choice' && (
@@ -431,7 +435,7 @@ export function QuizResult({ attempt, quiz, questions, onRetry, onBack }: QuizRe
                       )}
                     </div>
                     <div className="flex-1">
-                      <p className="font-medium">{idx + 1}. {q.question_text}</p>
+                      <p className="font-medium">{idx + 1}. {cleanQuestionText(q.question_text)}</p>
                       <p className="text-sm mt-1">
                         Sua resposta: <span className={isCorrect ? "text-green-500" : "text-red-500"}>
                           {userOption?.text || 'Não respondida'}

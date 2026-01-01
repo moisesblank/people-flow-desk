@@ -28,7 +28,6 @@ import {
   Share2,
   Check,
   AlertCircle,
-  ImageIcon,
   Video,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -49,6 +48,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip';
+import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -361,43 +361,15 @@ function GestaoQuestaoDetalhe() {
               Enunciado
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            {/* Texto do enunciado - remover tag [IMAGEM:] se existir */}
-            <p className="text-base leading-relaxed whitespace-pre-wrap">
-              {question.question_text?.replace(/\[IMAGEM:\s*https?:\/\/[^\]]+\]/gi, '').trim()}
-            </p>
-            
-            {/* Imagem do enunciado - prioriza image_url, senão extrai do texto */}
-            {(() => {
-              // Primeiro tenta usar image_url do banco
-              let imgUrl = question.image_url;
-              
-              // Se não existir, tenta extrair do texto
-              if (!imgUrl && question.question_text) {
-                const match = question.question_text.match(/\[IMAGEM:\s*(https?:\/\/[^\]\s]+)\]/i);
-                if (match && match[1]) {
-                  imgUrl = match[1].trim();
-                }
-              }
-              
-              return imgUrl ? (
-                <div className="mt-4 p-4 bg-muted/30 rounded-lg border border-border/50">
-                  <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-                    <ImageIcon className="h-3 w-3" />
-                    Imagem do Enunciado
-                  </p>
-                  <img 
-                    src={imgUrl} 
-                    alt="Imagem da questão"
-                    className="max-w-full max-h-96 rounded-lg border border-border/50 object-contain mx-auto"
-                    loading="lazy"
-                    onError={(e) => {
-                      (e.target as HTMLImageElement).parentElement!.style.display = 'none';
-                    }}
-                  />
-                </div>
-              ) : null;
-            })()}
+          <CardContent>
+            {/* Enunciado com Imagem - Componente Universal */}
+            <QuestionEnunciado
+              questionText={question.question_text}
+              imageUrl={question.image_url}
+              textSize="base"
+              showImageLabel
+              maxImageHeight="max-h-96"
+            />
           </CardContent>
         </Card>
       </motion.div>
