@@ -272,6 +272,7 @@ function PracticeSession({
               <QuestionEnunciado
                 questionText={currentQuestion.question_text}
                 imageUrl={(currentQuestion as any).image_url}
+                imageUrls={(currentQuestion as any).image_urls}
                 banca={(currentQuestion as any).banca}
                 ano={(currentQuestion as any).ano}
                 textSize="lg"

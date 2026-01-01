@@ -131,6 +131,7 @@ interface ParsedQuestion {
   multidisciplinar?: boolean;
   // Mídia
   image_url?: string;
+  image_urls?: string[]; // NOVO: Múltiplas imagens do enunciado
   imagens_enunciado?: string[];
   imagens_alternativas?: Record<string, string>;
   tipo_imagem?: 'ilustrativa' | 'essencial' | 'decorativa';
@@ -211,8 +212,20 @@ const COLUMN_MAPPINGS: Record<string, string[]> = {
   competencia_enem: ['competencia', 'competência', 'competencia_enem', 'competencia_area', 'competencia area', 'comp'],
   habilidade_enem: ['habilidade', 'habilidade_enem', 'habilidade_area', 'habilidade area', 'hab'],
   
-  // Imagem do enunciado
+  // Imagem ÚNICA do enunciado (legacy)
   image_url: ['imagem', 'image', 'image_url', 'imagem_url', 'img', 'foto', 'figura', 'picture', 'url_imagem', 'imagem_enunciado'],
+  
+  // MÚLTIPLAS imagens do enunciado (imagem_1, imagem_2, imagem_3... até 10)
+  image_1: ['imagem_1', 'image_1', 'img_1', 'figura_1', 'imagem_enunciado_1', 'image_enunciado_1'],
+  image_2: ['imagem_2', 'image_2', 'img_2', 'figura_2', 'imagem_enunciado_2', 'image_enunciado_2'],
+  image_3: ['imagem_3', 'image_3', 'img_3', 'figura_3', 'imagem_enunciado_3', 'image_enunciado_3'],
+  image_4: ['imagem_4', 'image_4', 'img_4', 'figura_4', 'imagem_enunciado_4', 'image_enunciado_4'],
+  image_5: ['imagem_5', 'image_5', 'img_5', 'figura_5', 'imagem_enunciado_5', 'image_enunciado_5'],
+  image_6: ['imagem_6', 'image_6', 'img_6', 'figura_6', 'imagem_enunciado_6', 'image_enunciado_6'],
+  image_7: ['imagem_7', 'image_7', 'img_7', 'figura_7', 'imagem_enunciado_7', 'image_enunciado_7'],
+  image_8: ['imagem_8', 'image_8', 'img_8', 'figura_8', 'imagem_enunciado_8', 'image_enunciado_8'],
+  image_9: ['imagem_9', 'image_9', 'img_9', 'figura_9', 'imagem_enunciado_9', 'image_enunciado_9'],
+  image_10: ['imagem_10', 'image_10', 'img_10', 'figura_10', 'imagem_enunciado_10', 'image_enunciado_10'],
 };
 
 const DIFFICULTY_MAPPING: Record<string, 'facil' | 'medio' | 'dificil'> = {
@@ -947,6 +960,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             tempo_medio_segundos: undefined,
             multidisciplinar: undefined,
             image_url: undefined,
+            image_urls: [], // NOVO: Array de múltiplas imagens do enunciado
             imagens_enunciado: undefined,
             imagens_alternativas: undefined,
             tipo_imagem: undefined,
@@ -1049,7 +1063,24 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 url = url.replace(/^\[/, '').replace(/\]$/, '');
                 question.image_url = url || undefined;
                 break;
-              // IMAGENS DAS ALTERNATIVAS (NOVO PADRÃO PERMANENTE)
+              // MÚLTIPLAS IMAGENS DO ENUNCIADO (imagem_1 até imagem_10)
+              case 'image_1':
+              case 'image_2':
+              case 'image_3':
+              case 'image_4':
+              case 'image_5':
+              case 'image_6':
+              case 'image_7':
+              case 'image_8':
+              case 'image_9':
+              case 'image_10':
+                let multiImgUrl = String(value).trim();
+                multiImgUrl = multiImgUrl.replace(/^\[/, '').replace(/\]$/, '');
+                if (multiImgUrl && !question.image_urls?.includes(multiImgUrl)) {
+                  question.image_urls = [...(question.image_urls || []), multiImgUrl];
+                }
+                break;
+              // IMAGENS DAS ALTERNATIVAS (PADRÃO PERMANENTE)
               case 'image_a':
               case 'image_b':
               case 'image_c':
@@ -1410,8 +1441,10 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           tempo_medio_segundos: q.tempo_medio_segundos || 120,
           nivel_cognitivo: q.nivel_cognitivo || null,
           origem: q.origem || 'autoral_prof_moises',
-          // Imagem do enunciado
+          // Imagem ÚNICA do enunciado (legacy)
           image_url: q.image_url || null,
+          // MÚLTIPLAS imagens do enunciado (NOVO)
+          image_urls: q.image_urls && q.image_urls.length > 0 ? q.image_urls : [],
           // Rastreabilidade
           campos_inferidos: q.campos_inferidos,
         };

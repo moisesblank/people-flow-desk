@@ -377,6 +377,7 @@ function GestaoQuestaoDetalhe() {
             <QuestionEnunciado
               questionText={question.question_text}
               imageUrl={question.image_url}
+              imageUrls={(question as any).image_urls}
               banca={question.banca}
               ano={question.ano}
               textSize="base"

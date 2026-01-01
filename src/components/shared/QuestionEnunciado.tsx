@@ -5,11 +5,11 @@
 // ESTRUTURA:
 // 1. BANCA HEADER (centralizado, bold, uppercase)
 // 2. TEXTO DO ENUNCIADO (justificado)
-// 3. IMAGEM (se houver)
+// 3. IMAGENS (múltiplas suportadas)
 // ============================================
 
-import { memo } from 'react';
-import { ImageIcon } from 'lucide-react';
+import { memo, useState } from 'react';
+import { ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBancaLabel } from '@/constants/bancas';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
@@ -20,8 +20,10 @@ const DEFAULT_BANCA_HEADER = 'QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS';
 interface QuestionEnunciadoProps {
   /** Texto do enunciado (pode conter [IMAGEM: URL]) */
   questionText: string;
-  /** URL da imagem do banco (prioridade sobre extração do texto) */
+  /** URL da imagem do banco (prioridade sobre extração do texto) - LEGACY */
   imageUrl?: string | null;
+  /** Array de URLs de imagens do enunciado (NOVO - suporta múltiplas) */
+  imageUrls?: string[] | null;
   /** Código da banca (ex: 'enem', 'unicamp') */
   banca?: string | null;
   /** Ano da questão */
@@ -50,6 +52,15 @@ export const extractImageFromText = (text: string): string | null => {
 };
 
 /**
+ * Extrai TODAS as URLs de imagem do texto no formato [IMAGEM: URL]
+ */
+export const extractAllImagesFromText = (text: string): string[] => {
+  if (!text) return [];
+  const matches = text.matchAll(/\[IMAGEM:\s*(https?:\/\/[^\]\s]+)\]/gi);
+  return Array.from(matches).map(m => m[1].trim()).filter(Boolean);
+};
+
+/**
  * Remove tags [IMAGEM: URL] do texto
  */
 export const cleanQuestionText = (text: string): string => {
@@ -58,13 +69,42 @@ export const cleanQuestionText = (text: string): string => {
 };
 
 /**
- * Obtém a URL da imagem (prioriza imageUrl, senão extrai do texto)
+ * Obtém a URL da imagem (prioriza imageUrl, senão extrai do texto) - LEGACY
  */
 export const getQuestionImageUrl = (questionText: string, imageUrl?: string | null): string | null => {
   // Prioriza image_url do banco
   if (imageUrl) return imageUrl;
   // Fallback: extrai do texto
   return extractImageFromText(questionText);
+};
+
+/**
+ * Obtém TODAS as URLs de imagens do enunciado (combina imageUrls, imageUrl e texto)
+ */
+export const getAllQuestionImages = (
+  questionText: string, 
+  imageUrl?: string | null, 
+  imageUrls?: string[] | null
+): string[] => {
+  const images: string[] = [];
+  
+  // 1. Prioridade: array imageUrls do banco
+  if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) {
+    images.push(...imageUrls.filter(url => url && typeof url === 'string'));
+  }
+  
+  // 2. Fallback: imageUrl único do banco (se não estiver já no array)
+  if (imageUrl && !images.includes(imageUrl)) {
+    images.push(imageUrl);
+  }
+  
+  // 3. Fallback final: extrair do texto (se ainda não tiver nenhuma)
+  if (images.length === 0) {
+    const textImages = extractAllImagesFromText(questionText);
+    images.push(...textImages);
+  }
+  
+  return images;
 };
 
 /**
@@ -88,11 +128,12 @@ export const formatBancaHeader = (banca?: string | null, ano?: number | null): s
  * ESTRUTURA OBRIGATÓRIA:
  * 1. Header da Banca (centralizado, bold, uppercase)
  * 2. Texto do Enunciado (justificado)
- * 3. Imagem (se houver)
+ * 3. Imagens (suporta múltiplas)
  */
 const QuestionEnunciado = memo(function QuestionEnunciado({
   questionText,
   imageUrl,
+  imageUrls,
   banca,
   ano,
   textSize = 'base',
@@ -102,11 +143,14 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
   compact = false,
   hideHeader = false,
 }: QuestionEnunciadoProps) {
-  // Limpa o texto (remove tag [IMAGEM:])
+  // Limpa o texto (remove tags [IMAGEM:])
   const cleanText = cleanQuestionText(questionText);
   
-  // Obtém URL da imagem
-  const imgUrl = getQuestionImageUrl(questionText, imageUrl);
+  // Obtém TODAS as URLs de imagens
+  const allImages = getAllQuestionImages(questionText, imageUrl, imageUrls);
+  
+  // Estado para navegação entre imagens
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
   // Header da banca
   const bancaHeader = formatBancaHeader(banca, ano);
@@ -122,6 +166,15 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
     base: 'text-2xl',
     lg: 'text-3xl',
   }[textSize];
+
+  // Navegação entre imagens
+  const handlePrevImage = () => {
+    setCurrentImageIndex(prev => (prev > 0 ? prev - 1 : allImages.length - 1));
+  };
+  
+  const handleNextImage = () => {
+    setCurrentImageIndex(prev => (prev < allImages.length - 1 ? prev + 1 : 0));
+  };
 
   return (
     <div className={cn("space-y-4", className)}>
@@ -146,32 +199,83 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
         {formatChemicalFormulas(cleanText)}
       </p>
       
-      {/* 3. IMAGEM DO ENUNCIADO */}
-      {imgUrl && (
+      {/* 3. IMAGENS DO ENUNCIADO (suporta múltiplas) */}
+      {allImages.length > 0 && (
         <div className={cn(
           "rounded-lg border border-border/50 overflow-hidden",
           !compact && "p-4 bg-muted/30"
         )}>
+          {/* Label e contador */}
           {showImageLabel && !compact && (
-            <p className="text-xs text-muted-foreground mb-2 flex items-center gap-1">
-              <ImageIcon className="h-3 w-3" />
-              Imagem do Enunciado
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-xs text-muted-foreground flex items-center gap-1">
+                <ImageIcon className="h-3 w-3" />
+                {allImages.length > 1 
+                  ? `Imagem ${currentImageIndex + 1} de ${allImages.length}` 
+                  : 'Imagem do Enunciado'}
+              </p>
+            </div>
           )}
-          <img 
-            src={imgUrl} 
-            alt="Imagem da questão"
-            className={cn(
-              "rounded-lg border border-border/50 object-contain",
-              compact ? "max-h-32 w-full" : maxImageHeight,
-              !compact && "mx-auto max-w-full"
+          
+          {/* Container da imagem com navegação */}
+          <div className="relative">
+            {/* Imagem atual */}
+            <img 
+              src={allImages[currentImageIndex]} 
+              alt={`Imagem ${currentImageIndex + 1} da questão`}
+              className={cn(
+                "rounded-lg border border-border/50 object-contain",
+                compact ? "max-h-32 w-full" : maxImageHeight,
+                !compact && "mx-auto max-w-full"
+              )}
+              loading="lazy"
+              onError={(e) => {
+                const container = (e.target as HTMLImageElement).parentElement?.parentElement;
+                if (container && allImages.length === 1) {
+                  container.style.display = 'none';
+                }
+              }}
+            />
+            
+            {/* Controles de navegação (só aparece se tiver mais de 1 imagem) */}
+            {allImages.length > 1 && !compact && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute left-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background border border-border shadow-lg transition-colors"
+                  aria-label="Imagem anterior"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-2 rounded-full bg-background/80 hover:bg-background border border-border shadow-lg transition-colors"
+                  aria-label="Próxima imagem"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </>
             )}
-            loading="lazy"
-            onError={(e) => {
-              const container = (e.target as HTMLImageElement).parentElement;
-              if (container) container.style.display = 'none';
-            }}
-          />
+          </div>
+          
+          {/* Indicadores de página (dots) */}
+          {allImages.length > 1 && !compact && (
+            <div className="flex items-center justify-center gap-2 mt-3">
+              {allImages.map((_, idx) => (
+                <button
+                  key={idx}
+                  onClick={() => setCurrentImageIndex(idx)}
+                  className={cn(
+                    "w-2 h-2 rounded-full transition-colors",
+                    idx === currentImageIndex 
+                      ? "bg-primary" 
+                      : "bg-muted-foreground/30 hover:bg-muted-foreground/50"
+                  )}
+                  aria-label={`Ir para imagem ${idx + 1}`}
+                />
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -180,6 +284,15 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
 
 export default QuestionEnunciado;
 
+// ============================================
+// REGRAS DE USO OBRIGATÓRIAS:
+// 
+// 1. TODA questão DEVE usar este componente
+// 2. SEMPRE passar banca e ano quando disponíveis
+// 3. Modo compact=true ESCONDE o header (para listas)
+// 4. Texto é SEMPRE justificado (exceto compact)
+// 5. Header é SEMPRE centralizado e bold
+// 6. SUPORTA múltiplas imagens via imageUrls[]
 // ============================================
 // REGRAS DE USO OBRIGATÓRIAS:
 // 

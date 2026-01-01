@@ -177,6 +177,7 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
               <QuestionEnunciado
                 questionText={question.question_text}
                 imageUrl={(question as any).image_url}
+                imageUrls={(question as any).image_urls}
                 banca={(question as any).banca}
                 ano={(question as any).ano}
                 textSize="sm"
