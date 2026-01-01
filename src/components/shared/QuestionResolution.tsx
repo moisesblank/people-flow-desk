@@ -618,8 +618,13 @@ const QuestionResolution = memo(function QuestionResolution({
     s.type === 'afirmacao_correta' ||
     s.type === 'afirmacao_incorreta'
   );
+  const conclusaoSections = parsedSections.filter(s => s.type === 'conclusao');
+  const resumoSections = parsedSections.filter(s => s.type === 'resumo');
   const otherSections = parsedSections.filter(s => 
-    !alternativasSections.includes(s) && s.type !== 'intro'
+    !alternativasSections.includes(s) && 
+    s.type !== 'intro' &&
+    s.type !== 'conclusao' &&
+    s.type !== 'resumo'
   );
   const introSection = parsedSections.find(s => s.type === 'intro');
 
@@ -648,7 +653,7 @@ const QuestionResolution = memo(function QuestionResolution({
               )}
               {tema && (
                 <div className="flex items-center gap-2">
-                  <span className="font-semibold">🧪 TEMA:</span>
+                  <span className="font-semibold">📧 TEMA:</span>
                   <span className="text-muted-foreground">{tema}</span>
                 </div>
               )}
@@ -722,6 +727,52 @@ const QuestionResolution = memo(function QuestionResolution({
           {otherSections.map((section, index) => (
             <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
           ))}
+        </div>
+      )}
+
+      {/* ========== RESUMO FINAL — BLOCO ÚNICO ========== */}
+      {resumoSections.length > 0 && (
+        <div className="rounded-xl border border-cyan-500/30 overflow-hidden bg-cyan-500/5 border-l-4 border-l-cyan-500">
+          {/* Header */}
+          <div className="px-4 py-3 bg-cyan-500/20 border-b border-cyan-500/20 flex items-center gap-2">
+            <MessageCircle className="h-4 w-4 text-cyan-500" />
+            <h4 className="font-bold text-sm text-cyan-500 uppercase tracking-wide">
+              📋 RESUMO FINAL
+            </h4>
+          </div>
+          {/* Conteúdos agrupados */}
+          <div className="divide-y divide-cyan-500/20">
+            {resumoSections.map((section, index) => (
+              <div key={`resumo-${index}`} className="px-4 py-3">
+                <p className="text-justify leading-relaxed text-sm text-foreground/90">
+                  {formatContent(section.content)}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* ========== CONCLUSÃO E GABARITO — BLOCO ÚNICO ========== */}
+      {conclusaoSections.length > 0 && (
+        <div className="rounded-xl border border-emerald-500/30 overflow-hidden bg-emerald-500/10 border-l-4 border-l-emerald-500">
+          {/* Header */}
+          <div className="px-4 py-3 bg-emerald-500/20 border-b border-emerald-500/20 flex items-center gap-2">
+            <CheckCircle className="h-4 w-4 text-emerald-500" />
+            <h4 className="font-bold text-sm text-emerald-500 uppercase tracking-wide">
+              ✅ CONCLUSÃO E GABARITO
+            </h4>
+          </div>
+          {/* Conteúdos agrupados */}
+          <div className="divide-y divide-emerald-500/20">
+            {conclusaoSections.map((section, index) => (
+              <div key={`conclusao-${index}`} className="px-4 py-3">
+                <p className="text-justify leading-relaxed text-sm text-foreground/90">
+                  {formatContent(section.content)}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
