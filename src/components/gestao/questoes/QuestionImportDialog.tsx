@@ -4,7 +4,7 @@
 // Visual Futurístico Ano 2300
 // ============================================
 
-import { memo, useState, useCallback, useMemo, useEffect } from 'react';
+import { memo, useState, useCallback, useMemo, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Upload,
@@ -665,6 +665,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   
   const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
 
+  // Garantia P0: zero trabalho manual no "Finalizar Import"
+  const hasAutoAuthorizedRef = useRef(false);
+
   // ============================================
   // ESTATÍSTICAS
   // ============================================
@@ -704,10 +707,12 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     );
   }, [flowState, humanAuthorization, parsedQuestions.length, stats.selected]);
 
-  // Reset autorização quando questões mudam
+  // Reset autorização apenas quando inicia um novo ciclo (não a cada mudança de seleção)
   useEffect(() => {
+    if (uiStep === 'preview') return;
     setHumanAuthorization(false);
-  }, [parsedQuestions]);
+    hasAutoAuthorizedRef.current = false;
+  }, [uiStep]);
 
   // Garantia P0: seleção automática (zero trabalho manual)
   useEffect(() => {
@@ -715,11 +720,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     if (parsedQuestions.length === 0) return;
 
     const anySelected = parsedQuestions.some((q) => q.status !== 'error' && q.selected);
-    if (anySelected) return;
+    if (!anySelected) {
+      setParsedQuestions((prev) => prev.map((q) => ({ ...q, selected: q.status !== 'error' })));
+    }
 
-    setParsedQuestions((prev) =>
-      prev.map((q) => ({ ...q, selected: q.status !== 'error' }))
-    );
+    // Garantia P0: autorização automática 1x por ciclo (evita travar no "nada acontece")
+    if (!hasAutoAuthorizedRef.current) {
+      setHumanAuthorization(true);
+      setFlowState('autorizacao_explicita');
+      hasAutoAuthorizedRef.current = true;
+    }
   }, [uiStep, parsedQuestions]);
 
   // ============================================
@@ -1111,8 +1121,9 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         console.log('[IMPORT] setUiStep(preview)');
         setUiStep('preview');
         
-        // Avançar para validação humana
+        // Avançar para validação humana (somente se ainda não foi auto-autorizado)
         setTimeout(() => {
+          if (hasAutoAuthorizedRef.current) return;
           console.log('[IMPORT] setFlowState(validacao_humana_obrigatoria)');
           setFlowState('validacao_humana_obrigatoria');
         }, 100);
@@ -1338,6 +1349,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   }, [canProcess, parsedQuestions]);
 
   const reset = useCallback(() => {
+    hasAutoAuthorizedRef.current = false;
     setUiStep('upload');
     setFlowState(null);
     setFile(null);
