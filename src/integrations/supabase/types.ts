@@ -11958,6 +11958,72 @@ export type Database = {
         }
         Relationships: []
       }
+      system_realtime_logs: {
+        Row: {
+          affected_url: string | null
+          category: string
+          created_at: string
+          device_info: string | null
+          error_message: string
+          id: string
+          ip_hash: string | null
+          metadata: Json | null
+          resolved_at: string | null
+          resolved_by: string | null
+          session_id: string | null
+          severity: string
+          source: string
+          stack_trace: string | null
+          timestamp: string
+          triggered_action: string | null
+          user_email: string | null
+          user_id: string | null
+          user_role: string | null
+        }
+        Insert: {
+          affected_url?: string | null
+          category?: string
+          created_at?: string
+          device_info?: string | null
+          error_message: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          severity: string
+          source?: string
+          stack_trace?: string | null
+          timestamp?: string
+          triggered_action?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Update: {
+          affected_url?: string | null
+          category?: string
+          created_at?: string
+          device_info?: string | null
+          error_message?: string
+          id?: string
+          ip_hash?: string | null
+          metadata?: Json | null
+          resolved_at?: string | null
+          resolved_by?: string | null
+          session_id?: string | null
+          severity?: string
+          source?: string
+          stack_trace?: string | null
+          timestamp?: string
+          triggered_action?: string | null
+          user_email?: string | null
+          user_id?: string | null
+          user_role?: string | null
+        }
+        Relationships: []
+      }
       system_settings: {
         Row: {
           created_at: string
@@ -17796,6 +17862,21 @@ export type Database = {
             Args: { p_campo: string; p_data: string; p_valor: number }
             Returns: undefined
           }
+      insert_system_log: {
+        Args: {
+          p_affected_url: string
+          p_category: string
+          p_device_info?: string
+          p_error_message: string
+          p_metadata?: Json
+          p_session_id?: string
+          p_severity: string
+          p_source: string
+          p_stack_trace?: string
+          p_triggered_action: string
+        }
+        Returns: string
+      }
       invalidate_session: {
         Args: { p_session_token?: string }
         Returns: boolean
