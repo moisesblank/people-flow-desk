@@ -128,6 +128,14 @@ function GestaoQuestaoDetalhe() {
 
       if (error) throw error;
 
+      // Debug forense: garantir que explanation existe e é string
+      console.log('[GestaoQuestaoDetalhe] loaded question', {
+        id: data?.id,
+        explanationType: typeof (data as any)?.explanation,
+        explanationLen: typeof (data as any)?.explanation === 'string' ? (data as any).explanation.length : null,
+        hasExplanation: (data as any)?.explanation !== null && (data as any)?.explanation !== undefined,
+      });
+
       setQuestion({
         ...data,
         options: (Array.isArray(data.options) ? data.options : []) as unknown as QuestionOption[],
@@ -371,7 +379,7 @@ function GestaoQuestaoDetalhe() {
               ano={question.ano}
               textSize="base"
               showImageLabel
-              maxImageHeight="max-h-96"
+              maxImageHeight="max-h-[900px]"
             />
           </CardContent>
         </Card>
@@ -425,7 +433,7 @@ function GestaoQuestaoDetalhe() {
       </motion.div>
 
       {/* Resolução */}
-      {question.explanation && (
+      {question.explanation !== null && question.explanation !== undefined && (
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -433,17 +441,23 @@ function GestaoQuestaoDetalhe() {
         >
           <Card className="border-emerald-500/30">
             <CardContent className="pt-6">
-              <QuestionResolution
-                resolutionText={question.explanation}
-                banca={question.banca}
-                ano={question.ano}
-                difficulty={question.difficulty}
-                tema={question.tema}
-                macro={question.macro}
-                micro={question.micro}
-                competenciaEnem={question.competencia_enem}
-                habilidadeEnem={question.habilidade_enem}
-              />
+              {String(question.explanation).trim().length > 0 ? (
+                <QuestionResolution
+                  resolutionText={String(question.explanation)}
+                  banca={question.banca}
+                  ano={question.ano}
+                  difficulty={question.difficulty}
+                  tema={question.tema}
+                  macro={question.macro}
+                  micro={question.micro}
+                  competenciaEnem={question.competencia_enem}
+                  habilidadeEnem={question.habilidade_enem}
+                />
+              ) : (
+                <div className="p-4 rounded-xl border border-border/50 bg-muted/20 text-sm text-muted-foreground">
+                  Sem resolução cadastrada para esta questão.
+                </div>
+              )}
             </CardContent>
           </Card>
         </motion.div>
