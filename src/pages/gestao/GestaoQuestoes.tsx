@@ -923,6 +923,7 @@ function GestaoQuestoes() {
   const [activeTab, setActiveTab] = useState('todas');
   const [macroAreaFilter, setMacroAreaFilter] = useState<'all' | 'organica' | 'fisico_quimica' | 'geral'>('all');
   const [microFilter, setMicroFilter] = useState<string>('all');
+  const [temaFilter, setTemaFilter] = useState<string>('all');
   
   // Dialog states
   const [questionDialog, setQuestionDialog] = useState(false);
@@ -980,6 +981,7 @@ function GestaoQuestoes() {
     setSortOrder('newest');
     setMacroAreaFilter('all');
     setMicroFilter('all');
+    setTemaFilter('all');
     
     // 2. Forçar reload do banco (ignora cache)
     loadQuestions();
@@ -1068,6 +1070,25 @@ function GestaoQuestoes() {
     return [...new Set(micros)].sort();
   }, [questions, macroAreaFilter, getMicrosForSelect, classifyMacroArea]);
 
+  // TEMAs filtrados pelo microFilter selecionado (MACRO → MICRO → TEMA)
+  const uniqueTemas = useMemo(() => {
+    // Se filtro micro ativo, filtrar temas das questões com esse micro
+    if (microFilter !== 'all') {
+      const filtered = questions.filter(q => q.micro?.includes(microFilter.replace('...', '')));
+      const temas = filtered.map(q => q.tema).filter(Boolean) as string[];
+      return [...new Set(temas)].sort();
+    }
+    // Se filtro macro ativo (mas micro = all), mostrar temas da área
+    if (macroAreaFilter !== 'all') {
+      const filtered = questions.filter(q => classifyMacroArea(q.macro) === macroAreaFilter);
+      const temas = filtered.map(q => q.tema).filter(Boolean) as string[];
+      return [...new Set(temas)].sort();
+    }
+    // Sem filtro: mostrar todos os temas únicos dos dados
+    const temas = questions.map(q => q.tema).filter(Boolean) as string[];
+    return [...new Set(temas)].sort();
+  }, [questions, microFilter, macroAreaFilter, classifyMacroArea]);
+
   // Estatísticas por Grande Área
   const macroAreaStats = useMemo(() => {
     return {
@@ -1077,7 +1098,7 @@ function GestaoQuestoes() {
     };
   }, [questions, classifyMacroArea]);
 
-  // Handler SINCRONIZADO para cards e dropdown (toggle + sync)
+  // Handler SINCRONIZADO para cards e dropdown (toggle + sync + reset filhos)
   const handleMacroAreaFilterChange = useCallback((area: 'all' | 'organica' | 'fisico_quimica' | 'geral') => {
     // Toggle: se já está selecionado, volta para 'all'
     const newArea = macroAreaFilter === area ? 'all' : area;
@@ -1091,7 +1112,18 @@ function GestaoQuestoes() {
       'all': 'all'
     };
     setMacroFilter(areaToMacro[newArea] || 'all');
+    
+    // CASCATA: resetar filtros filhos (MICRO → TEMA)
+    setMicroFilter('all');
+    setTemaFilter('all');
   }, [macroAreaFilter]);
+
+  // Handler para MICRO que reseta TEMA quando muda
+  const handleMicroFilterChange = useCallback((micro: string) => {
+    setMicroFilter(micro);
+    // CASCATA: resetar tema quando micro muda
+    setTemaFilter('all');
+  }, []);
 
   // Top Micro Assuntos (filtrados por macroAreaFilter se ativo)
   const topMicroAssuntos = useMemo(() => {
@@ -1182,6 +1214,11 @@ function GestaoQuestoes() {
     // Filtro por Micro Assunto
     if (microFilter !== 'all') {
       filtered = filtered.filter(q => q.micro?.includes(microFilter.replace('...', '')));
+    }
+
+    // Filtro por Tema (MACRO → MICRO → TEMA)
+    if (temaFilter !== 'all') {
+      filtered = filtered.filter(q => q.tema?.includes(temaFilter.replace('...', '')));
     }
 
     // Filtro por busca
@@ -1710,14 +1747,15 @@ function GestaoQuestoes() {
               </div>
             </div>
 
-            {/* Linha 2: Filtros em grid organizado */}
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {/* 1. Macroassuntos - SINCRONIZADO com os cards do topo */}
+            {/* Linha 2: Filtros hierárquicos MACRO → MICRO → TEMA + outros */}
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+              {/* 1. Macro - SINCRONIZADO com os cards do topo */}
               <Select 
                 value={macroAreaFilter} 
                 onValueChange={(value) => {
-                  // Set direto sem toggle (dropdown não é toggle)
-                  setMacroAreaFilter(value as 'all' | 'organica' | 'fisico_quimica' | 'geral');
+                  // Set direto com cascata (reseta micro e tema)
+                  const newArea = value as 'all' | 'organica' | 'fisico_quimica' | 'geral';
+                  setMacroAreaFilter(newArea);
                   const areaToMacro: Record<string, string> = {
                     'organica': 'quimica_organica',
                     'fisico_quimica': 'fisico_quimica',
@@ -1725,13 +1763,16 @@ function GestaoQuestoes() {
                     'all': 'all'
                   };
                   setMacroFilter(areaToMacro[value] || 'all');
+                  // CASCATA: reset filhos
+                  setMicroFilter('all');
+                  setTemaFilter('all');
                 }}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Macroassuntos" />
+                  <SelectValue placeholder="Macro" />
                 </SelectTrigger>
                 <SelectContent className="max-h-[300px]">
-                  <SelectItem value="all">Macroassuntos: Todos</SelectItem>
+                  <SelectItem value="all">Macro: Todos</SelectItem>
                   <SelectItem value="organica">Química Orgânica</SelectItem>
                   <SelectItem value="fisico_quimica">Físico-Química</SelectItem>
                   <SelectItem value="geral">Química Geral</SelectItem>
@@ -1741,7 +1782,7 @@ function GestaoQuestoes() {
               {/* 2. Micro Assunto */}
               <Select 
                 value={microFilter} 
-                onValueChange={setMicroFilter}
+                onValueChange={handleMicroFilterChange}
                 disabled={uniqueMicros.length === 0}
               >
                 <SelectTrigger>
@@ -1757,7 +1798,26 @@ function GestaoQuestoes() {
                 </SelectContent>
               </Select>
 
-              {/* 3. Ano */}
+              {/* 3. Tema (MACRO → MICRO → TEMA) */}
+              <Select 
+                value={temaFilter} 
+                onValueChange={setTemaFilter}
+                disabled={uniqueTemas.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Tema" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">Tema: Todos</SelectItem>
+                  {uniqueTemas.map(tema => (
+                    <SelectItem key={tema} value={tema}>
+                      {tema.length > 35 ? tema.substring(0, 35) + '...' : tema}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* 4. Ano */}
               <Select value={anoFilter} onValueChange={setAnoFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Ano" />
