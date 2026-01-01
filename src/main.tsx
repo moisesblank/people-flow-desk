@@ -22,6 +22,10 @@ interface PerformanceEventTiming extends PerformanceEntry {
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
+import { initGlobalErrorCapture } from "@/hooks/useSystemLogs";
+
+// 🚨 GLOBAL ERROR CAPTURE - Captura todos os erros do sistema
+initGlobalErrorCapture();
 
 // ============================================
 // 🔁 SPA DEEP LINK FIX (P0 - zero tela preta)
