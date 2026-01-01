@@ -933,7 +933,7 @@ function GestaoQuestoes() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      
+
       // Mapear para o tipo Question com fallbacks seguros
       const mapped = (data || []).map(q => ({
         ...q,
@@ -942,7 +942,7 @@ function GestaoQuestoes() {
         points: q.points || 10,
         is_active: q.is_active ?? true,
       })) as unknown as Question[];
-      
+
       setQuestions(mapped);
     } catch (err) {
       console.error('Erro ao carregar questões:', err);
@@ -951,6 +951,15 @@ function GestaoQuestoes() {
       setIsLoading(false);
     }
   }, []);
+
+  // Após importar: recarrega e zera filtros para garantir visibilidade imediata
+  const handleImportSuccess = useCallback(() => {
+    setActiveTab('todas');
+    setSearchTerm('');
+    setDifficultyFilter('all');
+    setBancaFilter('all');
+    loadQuestions();
+  }, [loadQuestions]);
 
   useEffect(() => {
     loadQuestions();
@@ -1134,7 +1143,7 @@ function GestaoQuestoes() {
         <QuestionImportDialog
           open={importDialogOpen}
           onClose={() => setImportDialogOpen(false)}
-          onSuccess={loadQuestions}
+          onSuccess={handleImportSuccess}
         />
       </motion.div>
 
