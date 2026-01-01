@@ -50,6 +50,7 @@ import {
 } from '@/components/ui/tooltip';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
+import QuestionTaxonomyEditor from '@/components/gestao/questoes/QuestionTaxonomyEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
@@ -492,37 +493,37 @@ function GestaoQuestaoDetalhe() {
         </motion.div>
       )}
 
-      {/* Metadados */}
+      {/* EDITOR DE TAXONOMIA — OWNER CONTROL */}
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
       >
+        <QuestionTaxonomyEditor
+          questionId={question.id}
+          currentMacro={question.macro}
+          currentMicro={question.micro}
+          currentTema={question.tema}
+          currentSubtema={question.subtema}
+          onUpdate={loadQuestion}
+        />
+      </motion.div>
+
+      {/* Metadados */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55 }}
+      >
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-primary" />
-              Metadados
+              Outros Metadados
             </CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <p className="text-muted-foreground">Macro</p>
-                <p className="font-medium">{question.macro || '—'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Micro</p>
-                <p className="font-medium">{question.micro || '—'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Tema</p>
-                <p className="font-medium">{question.tema || '—'}</p>
-              </div>
-              <div>
-                <p className="text-muted-foreground">Subtema</p>
-                <p className="font-medium">{question.subtema || '—'}</p>
-              </div>
               <div>
                 <p className="text-muted-foreground">Competência ENEM</p>
                 <p className="font-medium">{question.competencia_enem || '—'}</p>
