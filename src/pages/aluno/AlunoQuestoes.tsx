@@ -35,6 +35,7 @@ import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@
 import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
 import { predictSuccessRate, getSuccessRateColor } from "@/lib/questionSuccessPredictor";
+import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
 
 // ============================================
 // TIPOS
@@ -88,329 +89,7 @@ const DIFFICULTY_LABELS = {
 
 // BANCAS importado de @/constants/bancas (fonte única de verdade)
 
-// ============================================
-// ESTRUTURA HIERÁRQUICA: MACRO → MICRO → TEMA → SUBTEMA
-// ============================================
-
-const MACROS = [
-  { value: 'quimica_geral', label: '⚗️ Química Geral' },
-  { value: 'quimica_organica', label: '🧪 Química Orgânica' },
-  { value: 'fisico_quimica', label: '📊 Físico-Química' },
-];
-
-const MICROS: Record<string, { value: string; label: string }[]> = {
-  quimica_geral: [
-    { value: 'introducao_a_inorganica', label: 'Introdução à Inorgânica' },
-    { value: 'atomistica', label: 'Atomística' },
-    { value: 'tabela_periodica', label: 'Tabela Periódica' },
-    { value: 'ligacoes_quimicas', label: 'Ligações Químicas' },
-    { value: 'funcoes_inorganicas', label: 'Funções Inorgânicas' },
-    { value: 'reacoes_quimicas', label: 'Reações Químicas' },
-    { value: 'balanceamento', label: 'Balanceamento' },
-    { value: 'nox', label: 'NOX (Número de Oxidação)' },
-    { value: 'gases', label: 'Gases' },
-    { value: 'estequiometria', label: 'Estequiometria' },
-    { value: 'calculos_quimicos', label: 'Cálculos Químicos' },
-  ],
-  quimica_organica: [
-    { value: 'introducao_organica', label: 'Introdução à Orgânica' },
-    { value: 'hidrocarbonetos', label: 'Hidrocarbonetos' },
-    { value: 'funcoes_oxigenadas', label: 'Funções Oxigenadas' },
-    { value: 'funcoes_nitrogenadas', label: 'Funções Nitrogenadas' },
-    { value: 'isomeria', label: 'Isomeria' },
-    { value: 'polimeros', label: 'Polímeros' },
-    { value: 'bioquimica', label: 'Bioquímica' },
-  ],
-  fisico_quimica: [
-    { value: 'termoquimica', label: 'Termoquímica' },
-    { value: 'cinetica', label: 'Cinética Química' },
-    { value: 'equilibrio', label: 'Equilíbrio Químico' },
-    { value: 'eletroquimica', label: 'Eletroquímica' },
-    { value: 'radioatividade', label: 'Radioatividade' },
-    { value: 'propriedades_coligativas', label: 'Propriedades Coligativas' },
-  ],
-};
-
-const TEMAS: Record<string, { value: string; label: string }[]> = {
-  // === QUÍMICA GERAL ===
-  introducao_a_inorganica: [
-    { value: 'conceitos_basicos', label: 'Conceitos Básicos' },
-    { value: 'estados_fisicos_da_materia', label: 'Estados Físicos da Matéria' },
-    { value: 'sistemas_materiais', label: 'Sistemas Materiais' },
-    { value: 'separacao_de_misturas', label: 'Separação de Misturas' },
-    { value: 'comportamento_anomalo_da_agua', label: 'Comportamento Anômalo da Água' },
-  ],
-  atomistica: [
-    { value: 'evolucao_dos_modelos_atomicos', label: 'Evolução dos Modelos Atômicos' },
-    { value: 'estrutura_do_atomo', label: 'Estrutura do Átomo' },
-    { value: 'numeros_atomicos', label: 'Números Atômicos' },
-    { value: 'distribuicao_eletronica', label: 'Distribuição Eletrônica' },
-    { value: 'numeros_quanticos', label: 'Números Quânticos' },
-  ],
-  tabela_periodica: [
-    { value: 'historia_da_tabela_periodica', label: 'História da Tabela Periódica' },
-    { value: 'organizacao_periodica', label: 'Organização Periódica' },
-    { value: 'classificacao_dos_elementos', label: 'Classificação dos Elementos' },
-    { value: 'propriedades_periodicas', label: 'Propriedades Periódicas' },
-  ],
-  ligacoes_quimicas: [
-    { value: 'fundamentos_das_ligacoes', label: 'Fundamentos das Ligações' },
-    { value: 'ligacao_ionica', label: 'Ligação Iônica' },
-    { value: 'ligacao_covalente', label: 'Ligação Covalente' },
-    { value: 'ligacao_metalica', label: 'Ligação Metálica' },
-    { value: 'geometria_molecular', label: 'Geometria Molecular' },
-    { value: 'polaridade', label: 'Polaridade' },
-  ],
-  funcoes_inorganicas: [
-    { value: 'acidos', label: 'Ácidos' },
-    { value: 'bases', label: 'Bases' },
-    { value: 'sais', label: 'Sais' },
-    { value: 'oxidos', label: 'Óxidos' },
-  ],
-  reacoes_quimicas: [
-    { value: 'tipos_de_reacoes', label: 'Tipos de Reações' },
-    { value: 'energetica_das_reacoes', label: 'Energética das Reações' },
-  ],
-  balanceamento: [
-    { value: 'metodos_de_balanceamento', label: 'Métodos de Balanceamento' },
-  ],
-  nox: [
-    { value: 'conceito_de_nox', label: 'Conceito de NOX' },
-    { value: 'aplicacoes_do_nox', label: 'Aplicações do NOX' },
-  ],
-  gases: [
-    { value: 'propriedades_dos_gases', label: 'Propriedades dos Gases' },
-    { value: 'leis_dos_gases', label: 'Leis dos Gases' },
-    { value: 'clapeyron', label: 'Clapeyron' },
-  ],
-  estequiometria: [
-    { value: 'conceitos_fundamentais', label: 'Conceitos Fundamentais' },
-    { value: 'casos_estequiometricos', label: 'Casos Estequiométricos' },
-  ],
-  calculos_quimicos: [
-    { value: 'leis_ponderais', label: 'Leis Ponderais' },
-    { value: 'formulas_quimicas', label: 'Fórmulas Químicas' },
-    { value: 'grandezas_quimicas', label: 'Grandezas Químicas' },
-  ],
-  // === QUÍMICA ORGÂNICA ===
-  hidrocarbonetos: [
-    { value: 'alcanos', label: 'Alcanos' },
-    { value: 'alcenos', label: 'Alcenos' },
-    { value: 'alcinos', label: 'Alcinos' },
-    { value: 'aromaticos', label: 'Aromáticos' },
-  ],
-  // === FÍSICO-QUÍMICA ===
-  termoquimica: [
-    { value: 'entalpia', label: 'Entalpia' },
-    { value: 'lei_hess', label: 'Lei de Hess' },
-    { value: 'energia_ligacao', label: 'Energia de Ligação' },
-  ],
-  equilibrio: [
-    { value: 'constante_equilibrio', label: 'Constante de Equilíbrio' },
-    { value: 'deslocamento', label: 'Deslocamento de Equilíbrio' },
-    { value: 'equilibrio_ionico', label: 'Equilíbrio Iônico' },
-    { value: 'ph_poh', label: 'pH e pOH' },
-  ],
-};
-
-const SUBTEMAS: Record<string, { value: string; label: string }[]> = {
-  // === QUÍMICA GERAL - INTRODUÇÃO À INORGÂNICA ===
-  conceitos_basicos: [
-    { value: 'quimica_como_ciencia', label: 'Química como Ciência' },
-    { value: 'transformacoes_fisicas', label: 'Transformações Físicas' },
-    { value: 'transformacoes_quimicas', label: 'Transformações Químicas' },
-    { value: 'fenomenos_quimicos', label: 'Fenômenos Químicos' },
-    { value: 'propriedades_da_materia', label: 'Propriedades da Matéria' },
-  ],
-  estados_fisicos_da_materia: [
-    { value: 'solido', label: 'Sólido' },
-    { value: 'liquido', label: 'Líquido' },
-    { value: 'gasoso', label: 'Gasoso' },
-    { value: 'plasma', label: 'Plasma' },
-  ],
-  sistemas_materiais: [
-    { value: 'sistema_homogeneo', label: 'Sistema Homogêneo' },
-    { value: 'sistema_heterogeneo', label: 'Sistema Heterogêneo' },
-  ],
-  separacao_de_misturas: [
-    { value: 'misturas_homogeneas', label: 'Misturas Homogêneas' },
-    { value: 'misturas_heterogeneas', label: 'Misturas Heterogêneas' },
-  ],
-  comportamento_anomalo_da_agua: [
-    { value: 'densidade', label: 'Densidade' },
-    { value: 'ligacoes_de_hidrogenio', label: 'Ligações de Hidrogênio' },
-  ],
-  // === QUÍMICA GERAL - ATOMÍSTICA ===
-  evolucao_dos_modelos_atomicos: [
-    { value: 'dalton', label: 'Dalton' },
-    { value: 'thomson', label: 'Thomson' },
-    { value: 'rutherford', label: 'Rutherford' },
-    { value: 'bohr', label: 'Bohr' },
-  ],
-  estrutura_do_atomo: [
-    { value: 'proton', label: 'Próton' },
-    { value: 'neutron', label: 'Nêutron' },
-    { value: 'eletron', label: 'Elétron' },
-  ],
-  numeros_atomicos: [
-    { value: 'numero_atomico', label: 'Número Atômico' },
-    { value: 'numero_de_massa', label: 'Número de Massa' },
-  ],
-  distribuicao_eletronica: [
-    { value: 'ordem_de_energia', label: 'Ordem de Energia' },
-    { value: 'diagrama_de_pauling', label: 'Diagrama de Pauling' },
-    { value: 'principio_de_aufbau', label: 'Princípio de Aufbau' },
-    { value: 'principio_da_exclusao', label: 'Princípio da Exclusão' },
-    { value: 'regra_de_hund', label: 'Regra de Hund' },
-  ],
-  numeros_quanticos: [
-    { value: 'principal', label: 'Principal (n)' },
-    { value: 'secundario', label: 'Secundário (l)' },
-    { value: 'magnetico', label: 'Magnético (ml)' },
-    { value: 'spin', label: 'Spin (ms)' },
-  ],
-  // === QUÍMICA GERAL - TABELA PERIÓDICA ===
-  historia_da_tabela_periodica: [
-    { value: 'mendeleev', label: 'Mendeleev' },
-  ],
-  organizacao_periodica: [
-    { value: 'periodos', label: 'Períodos' },
-    { value: 'familias', label: 'Famílias' },
-  ],
-  classificacao_dos_elementos: [
-    { value: 'metais', label: 'Metais' },
-    { value: 'nao_metais', label: 'Não-Metais' },
-    { value: 'semi_metais', label: 'Semimetais' },
-    { value: 'gases_nobres', label: 'Gases Nobres' },
-  ],
-  propriedades_periodicas: [
-    { value: 'raio_atomico', label: 'Raio Atômico' },
-    { value: 'energia_de_ionizacao', label: 'Energia de Ionização' },
-    { value: 'afinidade_eletronica', label: 'Afinidade Eletrônica' },
-    { value: 'eletronegatividade', label: 'Eletronegatividade' },
-  ],
-  // === QUÍMICA GERAL - LIGAÇÕES QUÍMICAS ===
-  fundamentos_das_ligacoes: [
-    { value: 'estabilidade_quimica', label: 'Estabilidade Química' },
-    { value: 'regra_do_octeto', label: 'Regra do Octeto' },
-  ],
-  ligacao_ionica: [
-    { value: 'formacao_de_ions', label: 'Formação de Íons' },
-    { value: 'reticulo_cristalino', label: 'Retículo Cristalino' },
-  ],
-  ligacao_covalente: [
-    { value: 'simples', label: 'Simples' },
-    { value: 'dupla', label: 'Dupla' },
-    { value: 'tripla', label: 'Tripla' },
-  ],
-  ligacao_metalica: [
-    { value: 'mar_de_eletrons', label: 'Mar de Elétrons' },
-  ],
-  geometria_molecular: [
-    { value: 'linear', label: 'Linear' },
-    { value: 'angular', label: 'Angular' },
-    { value: 'trigonal_plana', label: 'Trigonal Plana' },
-    { value: 'tetraedrica', label: 'Tetraédrica' },
-  ],
-  polaridade: [
-    { value: 'ligacoes_polares', label: 'Ligações Polares' },
-    { value: 'moleculas_polares', label: 'Moléculas Polares' },
-  ],
-  // === QUÍMICA GERAL - FUNÇÕES INORGÂNICAS ===
-  acidos: [
-    { value: 'definicao', label: 'Definição' },
-    { value: 'forca_dos_acidos', label: 'Força dos Ácidos' },
-    { value: 'nomenclatura', label: 'Nomenclatura' },
-  ],
-  bases: [
-    { value: 'definicao', label: 'Definição' },
-    { value: 'forca_das_bases', label: 'Força das Bases' },
-    { value: 'nomenclatura', label: 'Nomenclatura' },
-  ],
-  sais: [
-    { value: 'classificacao', label: 'Classificação' },
-    { value: 'nomenclatura', label: 'Nomenclatura' },
-  ],
-  oxidos: [
-    { value: 'acidos', label: 'Óxidos Ácidos' },
-    { value: 'basicos', label: 'Óxidos Básicos' },
-    { value: 'anfoteros', label: 'Óxidos Anfóteros' },
-  ],
-  // === QUÍMICA GERAL - REAÇÕES QUÍMICAS ===
-  tipos_de_reacoes: [
-    { value: 'sintese', label: 'Síntese' },
-    { value: 'analise', label: 'Análise' },
-    { value: 'simples_troca', label: 'Simples Troca' },
-    { value: 'dupla_troca', label: 'Dupla Troca' },
-  ],
-  energetica_das_reacoes: [
-    { value: 'endotermicas', label: 'Endotérmicas' },
-    { value: 'exotermicas', label: 'Exotérmicas' },
-  ],
-  // === QUÍMICA GERAL - BALANCEAMENTO ===
-  metodos_de_balanceamento: [
-    { value: 'tentativa', label: 'Tentativa' },
-    { value: 'oxirreducao', label: 'Oxirredução' },
-  ],
-  // === QUÍMICA GERAL - NOX ===
-  conceito_de_nox: [
-    { value: 'regras_de_atribuicao', label: 'Regras de Atribuição' },
-  ],
-  aplicacoes_do_nox: [
-    { value: 'quimica_inorganica', label: 'Química Inorgânica' },
-    { value: 'quimica_organica', label: 'Química Orgânica' },
-  ],
-  // === QUÍMICA GERAL - GASES ===
-  propriedades_dos_gases: [
-    { value: 'pressao', label: 'Pressão' },
-    { value: 'volume', label: 'Volume' },
-    { value: 'temperatura', label: 'Temperatura' },
-  ],
-  leis_dos_gases: [
-    { value: 'boyle', label: 'Boyle' },
-    { value: 'charles', label: 'Charles' },
-    { value: 'gay_lussac', label: 'Gay-Lussac' },
-  ],
-  clapeyron: [
-    { value: 'equacao_geral_dos_gases', label: 'Equação Geral dos Gases' },
-  ],
-  // === QUÍMICA GERAL - ESTEQUIOMETRIA ===
-  conceitos_fundamentais: [
-    { value: 'mol', label: 'Mol' },
-    { value: 'massa_molar', label: 'Massa Molar' },
-  ],
-  casos_estequiometricos: [
-    { value: 'caso_simples', label: 'Caso Simples' },
-    { value: 'excesso_e_limitante', label: 'Excesso e Limitante' },
-    { value: 'pureza', label: 'Pureza' },
-    { value: 'rendimento', label: 'Rendimento' },
-    { value: 'reacoes_consecutivas', label: 'Reações Consecutivas' },
-  ],
-  // === QUÍMICA GERAL - CÁLCULOS QUÍMICOS ===
-  leis_ponderais: [
-    { value: 'lavoisier', label: 'Lavoisier' },
-    { value: 'proust', label: 'Proust' },
-  ],
-  formulas_quimicas: [
-    { value: 'minima', label: 'Mínima' },
-    { value: 'molecular', label: 'Molecular' },
-  ],
-  grandezas_quimicas: [
-    { value: 'mol', label: 'Mol' },
-    { value: 'massa', label: 'Massa' },
-    { value: 'volume', label: 'Volume' },
-  ],
-  // === QUÍMICA ORGÂNICA ===
-  alcanos: [
-    { value: 'nomenclatura_alcanos', label: 'Nomenclatura de Alcanos' },
-    { value: 'propriedades_alcanos', label: 'Propriedades de Alcanos' },
-  ],
-  // === FÍSICO-QUÍMICA ===
-  ph_poh: [
-    { value: 'calculo_ph', label: 'Cálculo de pH' },
-    { value: 'solucao_tampao', label: 'Solução Tampão' },
-  ],
-};
+// ESTRUTURA HIERÁRQUICA AGORA É DINÂMICA VIA useQuestionTaxonomy
 
 // ============================================
 // COMPONENTE: Modal de Resolução de Questão
@@ -682,6 +361,9 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
 export default function AlunoQuestoes() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  
+  // Hook dinâmico de taxonomia - sincronizado com TaxonomyManager
+  const { macros, getMicrosForSelect, getTemasForSelect, getSubtemasForSelect, isLoading: taxonomyLoading } = useTaxonomyForSelects();
   
   // State
   const [busca, setBusca] = useState("");
@@ -985,7 +667,7 @@ export default function AlunoQuestoes() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas</SelectItem>
-                  {MACROS.map(m => (
+                  {macros.map(m => (
                     <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -1008,7 +690,7 @@ export default function AlunoQuestoes() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas</SelectItem>
-                  {(filterMacro !== 'todas' && MICROS[filterMacro] || []).map(m => (
+                  {getMicrosForSelect(filterMacro === 'todas' ? '' : filterMacro).map(m => (
                     <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -1030,7 +712,7 @@ export default function AlunoQuestoes() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas</SelectItem>
-                  {(filterMicro !== 'todas' && TEMAS[filterMicro] || []).map(t => (
+                  {getTemasForSelect(filterMicro === 'todas' ? '' : filterMicro).map(t => (
                     <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
                   ))}
                 </SelectContent>
@@ -1049,7 +731,7 @@ export default function AlunoQuestoes() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="todas">Todas</SelectItem>
-                  {(filterTema !== 'todas' && SUBTEMAS[filterTema] || []).map(s => (
+                  {getSubtemasForSelect(filterTema === 'todas' ? '' : filterTema).map(s => (
                     <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
                   ))}
                 </SelectContent>
