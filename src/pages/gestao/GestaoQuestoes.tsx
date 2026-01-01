@@ -1001,6 +1001,16 @@ function GestaoQuestoes() {
     return [...new Set(anos)].sort((a, b) => b - a);
   }, [questions]);
 
+  // Micros filtrados pelo macro selecionado
+  const uniqueMicros = useMemo(() => {
+    let filtered = questions;
+    if (macroFilter !== 'all') {
+      filtered = questions.filter(q => q.macro === macroFilter);
+    }
+    const micros = filtered.map(q => q.micro).filter(Boolean) as string[];
+    return [...new Set(micros)].sort();
+  }, [questions, macroFilter]);
+
   useEffect(() => {
     loadQuestions();
   }, [loadQuestions]);
@@ -1681,6 +1691,25 @@ function GestaoQuestoes() {
                   {uniqueMacros.map(macro => (
                     <SelectItem key={macro} value={macro}>
                       {macro.length > 25 ? macro.substring(0, 25) + '...' : macro}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* Micro Assunto (depende do Macro selecionado) */}
+              <Select 
+                value={microFilter} 
+                onValueChange={setMicroFilter}
+                disabled={uniqueMicros.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Micro" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">Micro: Todos</SelectItem>
+                  {uniqueMicros.map(micro => (
+                    <SelectItem key={micro} value={micro}>
+                      {micro.length > 30 ? micro.substring(0, 30) + '...' : micro}
                     </SelectItem>
                   ))}
                 </SelectContent>
