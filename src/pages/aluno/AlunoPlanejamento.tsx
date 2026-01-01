@@ -1,10 +1,10 @@
 // ============================================
-// 📚 ESTUDAR (VIDEOAULA) - Portal do Aluno
+// 📚 HUB CENTRAL DO ALUNO - Portal do Aluno
 // /alunos/planejamento
-// Interface completa baseada no design original
+// Interface completa + Sistema de Modais (9 áreas)
 // ============================================
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, lazy, Suspense } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -12,6 +12,12 @@ import { motion, AnimatePresence } from "framer-motion";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+
+// Hub Quick Access System
+import { HubQuickAccessBar, HubModal, HUB_AREAS, type HubAreaKey } from "@/components/aluno/HubQuickAccessBar";
+
+// Lazy load modal contents
+const CronogramaModalContent = lazy(() => import("@/components/aluno/modals/CronogramaModalContent"));
 
 // Icons
 import {
@@ -897,6 +903,37 @@ export default function AlunoPlanejamento() {
   const queryClient = useQueryClient();
   const [selectedWeek, setSelectedWeek] = useState<PlanningWeek | null>(null);
   const [selectedLesson, setSelectedLesson] = useState<PlanningLesson | null>(null);
+  
+  // 🚀 HUB MODAL STATE
+  const [activeModal, setActiveModal] = useState<HubAreaKey | null>(null);
+  const activeModalArea = activeModal ? HUB_AREAS.find(a => a.key === activeModal) : null;
+  
+  // Modal content renderer
+  const renderModalContent = () => {
+    if (!activeModal) return null;
+    
+    switch (activeModal) {
+      case "cronograma":
+        return (
+          <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" /></div>}>
+            <CronogramaModalContent />
+          </Suspense>
+        );
+      // Próximos modais serão adicionados aqui
+      default:
+        return (
+          <div className="flex flex-col items-center justify-center py-12 text-center">
+            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
+              <Calendar className="w-8 h-8 text-muted-foreground" />
+            </div>
+            <h3 className="text-lg font-semibold mb-2">Em Desenvolvimento</h3>
+            <p className="text-muted-foreground max-w-md">
+              Esta funcionalidade será adicionada em breve. Continue acompanhando!
+            </p>
+          </div>
+        );
+    }
+  };
 
   // Fetch active weeks
   const { data: weeks = [], isLoading: weeksLoading } = useQuery({
@@ -1063,8 +1100,26 @@ export default function AlunoPlanejamento() {
   }
 
   return (
-    <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* 🌌 COSMIC BACKGROUND - GPU-only animations */}
+    <>
+      {/* 🚀 HUB MODAL SYSTEM */}
+      <HubModal
+        area={activeModalArea || null}
+        isOpen={!!activeModal}
+        onClose={() => setActiveModal(null)}
+      >
+        {renderModalContent()}
+      </HubModal>
+      
+      <div className="min-h-screen bg-background relative overflow-hidden">
+        {/* 🚀 HUB QUICK ACCESS BAR */}
+        <div className="container mx-auto px-4 pt-4 relative z-10">
+          <HubQuickAccessBar
+            activeModal={activeModal}
+            onOpenModal={setActiveModal}
+          />
+        </div>
+        
+        {/* 🌌 COSMIC BACKGROUND - GPU-only animations */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden">
         {/* Deep space gradient */}
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_150%_100%_at_50%_-20%,hsl(var(--primary)/0.15),transparent_60%)]" />
@@ -1223,5 +1278,6 @@ export default function AlunoPlanejamento() {
         </div>
       </div>
     </div>
+    </>
   );
 }
