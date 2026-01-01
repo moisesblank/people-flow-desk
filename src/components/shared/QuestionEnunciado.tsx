@@ -12,6 +12,7 @@ import { memo } from 'react';
 import { ImageIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getBancaLabel } from '@/constants/bancas';
+import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
 
 // Fallback padrão quando não há banca
 const DEFAULT_BANCA_HEADER = 'QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS';
@@ -136,13 +137,13 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
         </div>
       )}
 
-      {/* 2. TEXTO DO ENUNCIADO — Justificado */}
+      {/* 2. TEXTO DO ENUNCIADO — Justificado + Fórmulas Químicas Formatadas */}
       <p className={cn(
         "leading-relaxed whitespace-pre-wrap",
         textSizeClass,
         compact ? "line-clamp-3" : "text-justify",
       )}>
-        {cleanText}
+        {formatChemicalFormulas(cleanText)}
       </p>
       
       {/* 3. IMAGEM DO ENUNCIADO */}

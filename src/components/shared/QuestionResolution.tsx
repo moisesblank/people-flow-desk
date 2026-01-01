@@ -10,6 +10,7 @@
 
 import { memo, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
 import { getBancaLabel } from '@/constants/bancas';
 import { 
   Sparkles, 
@@ -248,7 +249,7 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
         <div className="flex items-start gap-3">
           <Sparkles className="h-5 w-5 text-emerald-500 mt-0.5 flex-shrink-0" />
           <p className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
-            {section.content}
+            {formatChemicalFormulas(section.content)}
           </p>
         </div>
       </div>
@@ -268,7 +269,7 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
             </h4>
           )}
           <p className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
-            {section.content}
+            {formatChemicalFormulas(section.content)}
           </p>
         </div>
       </div>
