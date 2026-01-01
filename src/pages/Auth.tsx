@@ -389,6 +389,16 @@ export default function Auth() {
       const { data: { session } } = await supabase.auth.getSession();
 
       if (session?.user) {
+        // 👑 OWNER DEV MODE: também respeitar no fallback
+        const isOwnerDevModeFallback = urlParams.get('dev') === '1' && 
+          session.user.email?.toLowerCase() === 'moisesblank@gmail.com';
+        
+        if (isOwnerDevModeFallback) {
+          console.log('[AUTH] 👑 OWNER DEV MODE (fallback) - permanecendo em /auth');
+          setIsCheckingSession(false);
+          return;
+        }
+        
         console.log('[AUTH] Sessão encontrada - buscando role para redirect...');
         await redirectWithRole(session.user.id, session.user.email);
         return;
