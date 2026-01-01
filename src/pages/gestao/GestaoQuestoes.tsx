@@ -1822,6 +1822,64 @@ function GestaoQuestoes() {
                         "border border-border/50 hover:border-border"
                       )}
                     >
+                    {/* ══════════════════════════════════════════════════════════════
+                        BARRA DE BADGES COMPACTA - Visibilidade Organizacional
+                        Exibe: Status | Publicado | Dificuldade | Banca | Ano | Tipo
+                    ══════════════════════════════════════════════════════════════ */}
+                      <div className="flex flex-wrap items-center gap-1.5 mb-3 pb-2 border-b border-border/30">
+                        {/* Status Ativa/Inativa */}
+                        {question.is_active ? (
+                          <Badge className="text-[10px] px-2 py-0.5 bg-green-500/90 text-white border-0 font-semibold">
+                            Ativa
+                          </Badge>
+                        ) : (
+                          <Badge className="text-[10px] px-2 py-0.5 bg-gray-600 text-white border-0 font-semibold">
+                            Inativa
+                          </Badge>
+                        )}
+                        
+                        {/* Publicado (baseado em is_active por enquanto) */}
+                        <Badge className="text-[10px] px-2 py-0.5 bg-emerald-600 text-white border-0 font-semibold">
+                          Publicado
+                        </Badge>
+                        
+                        {/* Dificuldade */}
+                        <Badge className={cn(
+                          "text-[10px] px-2 py-0.5 border-0 font-semibold text-white",
+                          question.difficulty === 'facil' && 'bg-green-500',
+                          question.difficulty === 'medio' && 'bg-yellow-500',
+                          question.difficulty === 'dificil' && 'bg-red-500',
+                        )}>
+                          {question.difficulty === 'facil' && 'Fácil'}
+                          {question.difficulty === 'medio' && 'Médio'}
+                          {question.difficulty === 'dificil' && 'Difícil'}
+                        </Badge>
+                        
+                        {/* Banca (se existir) */}
+                        {question.banca && (
+                          <Badge className="text-[10px] px-2 py-0.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
+                            <span className="text-muted-foreground">🏛</span> {getBancaLabel(question.banca)}
+                          </Badge>
+                        )}
+                        
+                        {/* Ano (se existir) */}
+                        {question.ano && (
+                          <Badge className="text-[10px] px-2 py-0.5 bg-muted text-foreground border border-border/50 font-medium flex items-center gap-1">
+                            <span className="text-muted-foreground">📅</span> {question.ano}
+                          </Badge>
+                        )}
+                        
+                        {/* Tipo da Questão */}
+                        <Badge className="text-[10px] px-2 py-0.5 bg-primary/80 text-primary-foreground border-0 font-semibold flex items-center gap-1">
+                          ⭐ {question.question_type === 'multiple_choice' ? 'Múltipla Escolha' : 'Discursiva'}
+                        </Badge>
+                        
+                        {/* Área Macro como badge */}
+                        <Badge className={cn("text-[10px] px-2 py-0.5 border-0 font-bold", config.badge)}>
+                          {config.icon} {config.label}
+                        </Badge>
+                      </div>
+
                       {/* Header Row */}
                       <div className="flex items-start justify-between gap-4">
                         {/* Left: ID + Enunciado */}
@@ -1830,18 +1888,6 @@ function GestaoQuestoes() {
                             <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
                               #{String(index + 1).padStart(3, '0')}
                             </span>
-                            <Badge className={cn("text-[10px] font-bold border", config.badge)}>
-                              {config.icon} {config.label}
-                            </Badge>
-                            {question.is_active ? (
-                              <Badge className="text-[10px] bg-green-500/20 text-green-400 border-green-500/40">
-                                ✓ Ativa
-                              </Badge>
-                            ) : (
-                              <Badge className="text-[10px] bg-gray-500/20 text-gray-400 border-gray-500/40">
-                                ○ Inativa
-                              </Badge>
-                            )}
                           </div>
                           
                           {/* Enunciado com Imagem - Componente Universal */}
