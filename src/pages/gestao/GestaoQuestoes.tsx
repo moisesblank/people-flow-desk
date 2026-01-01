@@ -924,6 +924,7 @@ function GestaoQuestoes() {
   const [macroAreaFilter, setMacroAreaFilter] = useState<'all' | 'organica' | 'fisico_quimica' | 'geral'>('all');
   const [microFilter, setMicroFilter] = useState<string>('all');
   const [temaFilter, setTemaFilter] = useState<string>('all');
+  const [subtemaFilter, setSubtemaFilter] = useState<string>('all');
   
   // Dialog states
   const [questionDialog, setQuestionDialog] = useState(false);
@@ -982,6 +983,7 @@ function GestaoQuestoes() {
     setMacroAreaFilter('all');
     setMicroFilter('all');
     setTemaFilter('all');
+    setSubtemaFilter('all');
     
     // 2. Forçar reload do banco (ignora cache)
     loadQuestions();
@@ -1089,6 +1091,31 @@ function GestaoQuestoes() {
     return [...new Set(temas)].sort();
   }, [questions, microFilter, macroAreaFilter, classifyMacroArea]);
 
+  // SUBTEMAs filtrados pelo temaFilter selecionado (MACRO → MICRO → TEMA → SUBTEMA)
+  const uniqueSubtemas = useMemo(() => {
+    // Se filtro tema ativo, filtrar subtemas das questões com esse tema
+    if (temaFilter !== 'all') {
+      const filtered = questions.filter(q => q.tema?.includes(temaFilter.replace('...', '')));
+      const subtemas = filtered.map(q => q.subtema).filter(Boolean) as string[];
+      return [...new Set(subtemas)].sort();
+    }
+    // Se filtro micro ativo (mas tema = all), mostrar subtemas do micro
+    if (microFilter !== 'all') {
+      const filtered = questions.filter(q => q.micro?.includes(microFilter.replace('...', '')));
+      const subtemas = filtered.map(q => q.subtema).filter(Boolean) as string[];
+      return [...new Set(subtemas)].sort();
+    }
+    // Se filtro macro ativo (mas micro e tema = all), mostrar subtemas da área
+    if (macroAreaFilter !== 'all') {
+      const filtered = questions.filter(q => classifyMacroArea(q.macro) === macroAreaFilter);
+      const subtemas = filtered.map(q => q.subtema).filter(Boolean) as string[];
+      return [...new Set(subtemas)].sort();
+    }
+    // Sem filtro: mostrar todos os subtemas únicos dos dados
+    const subtemas = questions.map(q => q.subtema).filter(Boolean) as string[];
+    return [...new Set(subtemas)].sort();
+  }, [questions, temaFilter, microFilter, macroAreaFilter, classifyMacroArea]);
+
   // Estatísticas por Grande Área
   const macroAreaStats = useMemo(() => {
     return {
@@ -1113,16 +1140,25 @@ function GestaoQuestoes() {
     };
     setMacroFilter(areaToMacro[newArea] || 'all');
     
-    // CASCATA: resetar filtros filhos (MICRO → TEMA)
+    // CASCATA: resetar filtros filhos (MICRO → TEMA → SUBTEMA)
     setMicroFilter('all');
     setTemaFilter('all');
+    setSubtemaFilter('all');
   }, [macroAreaFilter]);
 
-  // Handler para MICRO que reseta TEMA quando muda
+  // Handler para MICRO que reseta TEMA e SUBTEMA quando muda
   const handleMicroFilterChange = useCallback((micro: string) => {
     setMicroFilter(micro);
-    // CASCATA: resetar tema quando micro muda
+    // CASCATA: resetar tema e subtema quando micro muda
     setTemaFilter('all');
+    setSubtemaFilter('all');
+  }, []);
+
+  // Handler para TEMA que reseta SUBTEMA quando muda
+  const handleTemaFilterChange = useCallback((tema: string) => {
+    setTemaFilter(tema);
+    // CASCATA: resetar subtema quando tema muda
+    setSubtemaFilter('all');
   }, []);
 
   // Top Micro Assuntos (filtrados por macroAreaFilter se ativo)
@@ -1221,6 +1257,11 @@ function GestaoQuestoes() {
       filtered = filtered.filter(q => q.tema?.includes(temaFilter.replace('...', '')));
     }
 
+    // Filtro por Subtema (MACRO → MICRO → TEMA → SUBTEMA)
+    if (subtemaFilter !== 'all') {
+      filtered = filtered.filter(q => q.subtema?.includes(subtemaFilter.replace('...', '')));
+    }
+
     // Filtro por busca
     if (searchTerm.trim()) {
       const term = searchTerm.toLowerCase();
@@ -1229,7 +1270,8 @@ function GestaoQuestoes() {
         q.banca?.toLowerCase().includes(term) ||
         q.macro?.toLowerCase().includes(term) ||
         q.micro?.toLowerCase().includes(term) ||
-        q.tema?.toLowerCase().includes(term)
+        q.tema?.toLowerCase().includes(term) ||
+        q.subtema?.toLowerCase().includes(term)
       );
     }
 
@@ -1801,7 +1843,7 @@ function GestaoQuestoes() {
               {/* 3. Tema (MACRO → MICRO → TEMA) */}
               <Select 
                 value={temaFilter} 
-                onValueChange={setTemaFilter}
+                onValueChange={handleTemaFilterChange}
                 disabled={uniqueTemas.length === 0}
               >
                 <SelectTrigger>
@@ -1812,6 +1854,25 @@ function GestaoQuestoes() {
                   {uniqueTemas.map(tema => (
                     <SelectItem key={tema} value={tema}>
                       {tema.length > 35 ? tema.substring(0, 35) + '...' : tema}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* 4. Subtema (MACRO → MICRO → TEMA → SUBTEMA) */}
+              <Select 
+                value={subtemaFilter} 
+                onValueChange={setSubtemaFilter}
+                disabled={uniqueSubtemas.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Subtema" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">Subtema: Todos</SelectItem>
+                  {uniqueSubtemas.map(subtema => (
+                    <SelectItem key={subtema} value={subtema}>
+                      {subtema.length > 30 ? subtema.substring(0, 30) + '...' : subtema}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -1880,7 +1941,7 @@ function GestaoQuestoes() {
               </Select>
 
               {/* Botão Limpar Filtros */}
-              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || microFilter !== 'all' || searchTerm.trim()) && (
+              {(difficultyFilter !== 'all' || bancaFilter !== 'all' || macroFilter !== 'all' || anoFilter !== 'all' || macroAreaFilter !== 'all' || microFilter !== 'all' || temaFilter !== 'all' || subtemaFilter !== 'all' || searchTerm.trim()) && (
                 <Button
                   variant="outline"
                   size="sm"
@@ -1891,6 +1952,8 @@ function GestaoQuestoes() {
                     setAnoFilter('all');
                     setMacroAreaFilter('all');
                     setMicroFilter('all');
+                    setTemaFilter('all');
+                    setSubtemaFilter('all');
                     setSearchTerm('');
                     setSortOrder('newest');
                   }}
