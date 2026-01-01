@@ -36,7 +36,9 @@ import {
   TrendingUp,
   FolderTree,
   Video,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { 
   QuestionImageUploader, 
@@ -944,6 +946,10 @@ function GestaoQuestoes() {
   const [deleteTreinoConfirm, setDeleteTreinoConfirm] = useState(false);
   const [isDeletingTreino, setIsDeletingTreino] = useState(false);
   const [treinoConfirmText, setTreinoConfirmText] = useState('');
+  
+  // PAGINATION: 100 itens por página
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 100;
 
   const { clearQueryCache } = useCacheManager();
   const { isOwner } = useRolePermissions();
@@ -1319,7 +1325,21 @@ function GestaoQuestoes() {
     }
 
     return filtered;
-  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, classifyMacroArea]);
+  }, [questions, activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, sortOrder, macroAreaFilter, microFilter, temaFilter, subtemaFilter, classifyMacroArea]);
+
+  // PAGINATION: Calcular total de páginas e slice da página atual
+  const totalPages = useMemo(() => Math.ceil(filteredQuestions.length / ITEMS_PER_PAGE), [filteredQuestions.length, ITEMS_PER_PAGE]);
+  
+  const paginatedQuestions = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const endIndex = startIndex + ITEMS_PER_PAGE;
+    return filteredQuestions.slice(startIndex, endIndex);
+  }, [filteredQuestions, currentPage, ITEMS_PER_PAGE]);
+
+  // Reset página ao mudar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [activeTab, difficultyFilter, bancaFilter, macroFilter, anoFilter, searchTerm, macroAreaFilter, microFilter, temaFilter, subtemaFilter]);
 
   // Handlers
   const handleEdit = (question: Question) => {
@@ -2146,8 +2166,10 @@ function GestaoQuestoes() {
                 </Button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {filteredQuestions.map((question, index) => {
+              <>
+                <div className="space-y-3">
+                {paginatedQuestions.map((question, index) => {
+                  const globalIndex = (currentPage - 1) * ITEMS_PER_PAGE + index;
                   const area = classifyMacroArea(question.macro);
                   const areaConfig = {
                     organica: { 
@@ -2256,7 +2278,7 @@ function GestaoQuestoes() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-2">
                             <span className="font-mono text-xs text-muted-foreground bg-muted/50 px-2 py-0.5 rounded">
-                              #{String(index + 1).padStart(3, '0')}
+                              #{String(globalIndex + 1).padStart(3, '0')}
                             </span>
                           </div>
                           
@@ -2374,7 +2396,42 @@ function GestaoQuestoes() {
                     </motion.div>
                   );
                 })}
-              </div>
+                </div>
+              
+                {/* PAGINATION CONTROLS */}
+                {totalPages > 1 && (
+                  <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                    <p className="text-sm text-muted-foreground">
+                      Exibindo {((currentPage - 1) * ITEMS_PER_PAGE) + 1}-{Math.min(currentPage * ITEMS_PER_PAGE, filteredQuestions.length)} de {filteredQuestions.length} questões
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                        disabled={currentPage === 1}
+                        className="gap-1"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                        Anterior
+                      </Button>
+                      <span className="text-sm font-medium px-3 py-1 bg-muted rounded">
+                        Página {currentPage} de {totalPages}
+                      </span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                        disabled={currentPage === totalPages}
+                        className="gap-1"
+                      >
+                        Próxima
+                        <ChevronRight className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </CardContent>
         </Card>
