@@ -45,13 +45,16 @@ type SectionType =
   | 'competencia' 
   | 'estrategia' 
   | 'pegadinhas' 
-  | 'dica';
+  | 'dica'
+  | 'afirmacao_correta'
+  | 'afirmacao_incorreta';
 
 interface ParsedSection {
   type: SectionType;
   title?: string;
   content: string;
   stepNumber?: number;
+  afirmacaoNumber?: string;
 }
 
 interface QuestionResolutionProps {
@@ -68,37 +71,83 @@ interface QuestionResolutionProps {
 }
 
 /**
+ * Limpa metadados/HTML indesejados do início do texto
+ */
+function cleanResolutionText(text: string): string {
+  if (!text) return '';
+  
+  let cleaned = text;
+  
+  // Remover metadados de HTML/interface que podem ter sido copiados
+  cleaned = cleaned
+    // Remover atributos de HTML copiados
+    .replace(/\*\]:pointer-events-auto[^"]*"[^>]*>/g, '')
+    .replace(/\*\][^"]*scroll-mt[^"]*"[^>]*>/g, '')
+    .replace(/dir="auto"[^>]*>/g, '')
+    .replace(/tabindex="-?\d+"[^>]*>/g, '')
+    .replace(/data-[a-z-]+="[^"]*"/g, '')
+    // Remover padrões de metadados copiados
+    .replace(/\*\]:[^*]+\*\]/g, '')
+    // Limpar início com lixo
+    .replace(/^[\s\S]*?(?=QUESTÃO|🔬|✨)/i, '')
+    // Remover duplicatas de header que já renderizamos
+    .replace(/QUESTÃO SIMULADO PROF\. MOISÉS MEDEIROS/gi, '')
+    .replace(/✨\s*QUESTÃO:\s*NÍVEL\s*(FÁCIL|MÉDIO|DIFÍCIL)/gi, '')
+    .replace(/🧪\s*TEMA:[^\n]*/gi, '')
+    .replace(/📁\s*CLASSIFICAÇÃO/gi, '')
+    .replace(/🔹\s*Macroassunto:[^\n]*/gi, '')
+    .replace(/🔹\s*Microassunto:[^\n]*/gi, '')
+    .trim();
+  
+  return cleaned;
+}
+
+/**
  * Parser inteligente que detecta seções no texto da resolução
  */
 function parseResolutionText(text: string): ParsedSection[] {
   if (!text) return [];
+  
+  // Limpar texto primeiro
+  const cleanedText = cleanResolutionText(text);
+  if (!cleanedText) return [];
 
   const sections: ParsedSection[] = [];
   
   // Padrões de detecção (ordem importa!)
-  const patterns = [
-    { regex: /💡\s*DICA DE OURO[:\s]*/gi, type: 'dica' as SectionType },
-    { regex: /⚠️\s*PEGADINHAS? COMUNS?[:\s]*/gi, type: 'pegadinhas' as SectionType },
-    { regex: /📌\s*DIRECIONAMENTO\s*\/?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
-    { regex: /🎯\s*COMPETÊNCIA E HABILIDADE\s*-?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
-    { regex: /[📊⚗️⚙️🔬]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
-    { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
-    { regex: /[📊]\s*Conclusão e Gabarito[:\s]*/gi, type: 'conclusao' as SectionType },
-    { regex: /Gabarito:\s*Letra\s+([A-E])/gi, type: 'conclusao' as SectionType },
+  const patterns: { regex: RegExp; type: SectionType; isAfirmacao?: boolean }[] = [
+    // Afirmações corretas/incorretas
+    { regex: /[✅✔️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, type: 'afirmacao_correta', isAfirmacao: true },
+    { regex: /[❌✖️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, type: 'afirmacao_incorreta', isAfirmacao: true },
+    // Conclusão
+    { regex: /[🧬📊✅]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' },
+    { regex: /A alternativa correta é/gi, type: 'conclusao' },
+    // Competência e Habilidade
+    { regex: /🎯\s*COMPETÊNCIA E HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' },
+    // Estratégia
+    { regex: /📌\s*DIRECIONAMENTO\s*[\/]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' },
+    // Pegadinhas
+    { regex: /⚠️\s*PEGADINHAS?(\s*COMUNS?)?[:\s]*/gi, type: 'pegadinhas' },
+    // Dica de Ouro
+    { regex: /💡\s*DICA DE OURO[:\s]*/gi, type: 'dica' },
+    // Passos
+    { regex: /[📊⚗️⚙️🔬]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' },
+    { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' },
   ];
 
   // Primeiro, encontrar todas as posições de início de seção
-  const sectionStarts: { index: number; type: SectionType; match: string; stepNumber?: number }[] = [];
+  const sectionStarts: { index: number; type: SectionType; match: string; stepNumber?: number; afirmacaoNumber?: string }[] = [];
   
   for (const pattern of patterns) {
     let match;
     const regex = new RegExp(pattern.regex.source, 'gi');
-    while ((match = regex.exec(text)) !== null) {
+    while ((match = regex.exec(cleanedText)) !== null) {
       sectionStarts.push({
         index: match.index,
         type: pattern.type,
         match: match[0],
         stepNumber: pattern.type === 'passo' ? parseInt(match[1] || '0') : undefined,
+        afirmacaoNumber: pattern.isAfirmacao ? match[1] : undefined,
       });
     }
   }
@@ -109,13 +158,13 @@ function parseResolutionText(text: string): ParsedSection[] {
   // Extrair conteúdo de cada seção
   if (sectionStarts.length === 0) {
     // Sem seções detectadas, retorna como intro
-    return [{ type: 'intro', content: text.trim() }];
+    return [{ type: 'intro', content: cleanedText.trim() }];
   }
 
   // Intro (texto antes da primeira seção detectada)
   const firstSection = sectionStarts[0];
   if (firstSection.index > 0) {
-    const introText = text.substring(0, firstSection.index).trim();
+    const introText = cleanedText.substring(0, firstSection.index).trim();
     // Limpar marcadores já processados do intro
     const cleanedIntro = introText
       .replace(/🔬\s*RESOLUÇÃO COMENTADA PELO PROF\. MOISÉS MEDEIROS[:\s]*/gi, '')
@@ -132,14 +181,15 @@ function parseResolutionText(text: string): ParsedSection[] {
     const next = sectionStarts[i + 1];
     
     const startIndex = current.index + current.match.length;
-    const endIndex = next ? next.index : text.length;
-    const content = text.substring(startIndex, endIndex).trim();
+    const endIndex = next ? next.index : cleanedText.length;
+    const content = cleanedText.substring(startIndex, endIndex).trim();
 
     if (content) {
       sections.push({
         type: current.type,
         content,
         stepNumber: current.stepNumber,
+        afirmacaoNumber: current.afirmacaoNumber,
         title: current.match.trim(),
       });
     }
@@ -169,6 +219,10 @@ function getSectionIcon(type: SectionType, stepNumber?: number) {
       return AlertTriangle;
     case 'dica':
       return Lightbulb;
+    case 'afirmacao_correta':
+      return CheckCircle;
+    case 'afirmacao_incorreta':
+      return AlertTriangle;
     default:
       return Sparkles;
   }
@@ -191,6 +245,10 @@ function getSectionColor(type: SectionType): string {
       return 'border-orange-500/40 bg-orange-500/5';
     case 'dica':
       return 'border-yellow-500/40 bg-yellow-500/5';
+    case 'afirmacao_correta':
+      return 'border-green-500/40 bg-green-500/5';
+    case 'afirmacao_incorreta':
+      return 'border-red-500/40 bg-red-500/5';
     default:
       return 'border-border/50 bg-muted/30';
   }
@@ -210,6 +268,10 @@ function getSectionIconColor(type: SectionType): string {
       return 'text-orange-500';
     case 'dica':
       return 'text-yellow-500';
+    case 'afirmacao_correta':
+      return 'text-green-500';
+    case 'afirmacao_incorreta':
+      return 'text-red-500';
     default:
       return 'text-primary';
   }
@@ -229,6 +291,10 @@ function getSectionTitle(section: ParsedSection): string {
       return '⚠️ PEGADINHAS COMUNS';
     case 'dica':
       return '💡 DICA DE OURO';
+    case 'afirmacao_correta':
+      return `✅ AFIRMAÇÃO ${section.afirmacaoNumber || ''}`;
+    case 'afirmacao_incorreta':
+      return `❌ AFIRMAÇÃO ${section.afirmacaoNumber || ''}`;
     default:
       return '';
   }
@@ -243,6 +309,9 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
   const iconColor = getSectionIconColor(section.type);
   const title = getSectionTitle(section);
 
+  // Para afirmações, formatar o conteúdo com indicador de resultado
+  const isAfirmacao = section.type === 'afirmacao_correta' || section.type === 'afirmacao_incorreta';
+
   if (section.type === 'intro') {
     return (
       <div className="p-4 rounded-xl border border-border/50 bg-muted/20">
@@ -256,6 +325,16 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
     );
   }
 
+  // Formatar conteúdo: separar indicador final de resultado
+  const formatContent = (content: string) => {
+    // Separar "👉 Afirmação X está correta/incorreta" em linha própria
+    const formattedContent = content
+      .replace(/👉\s*/g, '\n\n👉 ')
+      .replace(/Reunindo:/gi, '\n\n📋 Reunindo:')
+      .trim();
+    return formatChemicalFormulas(formattedContent);
+  };
+
   return (
     <div className={cn("p-4 rounded-xl border", colorClass)}>
       <div className="flex items-start gap-3">
@@ -268,9 +347,15 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
               {title}
             </h4>
           )}
-          <p className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
-            {formatChemicalFormulas(section.content)}
-          </p>
+          <div className="text-justify leading-relaxed whitespace-pre-wrap text-sm">
+            {isAfirmacao ? (
+              <div className="space-y-2">
+                {formatContent(section.content)}
+              </div>
+            ) : (
+              formatContent(section.content)
+            )}
+          </div>
         </div>
       </div>
     </div>
