@@ -1,0 +1,491 @@
+// ╔══════════════════════════════════════════════════════════════════════════════╗
+// ║                                                                              ║
+// ║   🔒 CONSTITUIÇÃO DO QUESTION DOMAIN — IMUTÁVEL E PROTEGIDO                 ║
+// ║                                                                              ║
+// ║   Status: VIGENTE E IMUTÁVEL                                                ║
+// ║   Versão: 1.0.0                                                             ║
+// ║   Data: 2026-01-01                                                          ║
+// ║   Autoridade: OWNER (moisesblank@gmail.com)                                 ║
+// ║                                                                              ║
+// ║   ⚠️  REGRAS ABSOLUTAS:                                                     ║
+// ║   • NENHUMA estrutura aqui documentada pode ser APAGADA                     ║
+// ║   • Mudanças requerem INTERNAL_SECRET do OWNER                              ║
+// ║   • Apenas EXTENSÕES são permitidas sem autorização                         ║
+// ║   • Este arquivo é FONTE DA VERDADE para o Question Domain                  ║
+// ║                                                                              ║
+// ╚══════════════════════════════════════════════════════════════════════════════╝
+
+export const QUESTION_DOMAIN_CONSTITUTION = {
+  version: '1.0.0',
+  status: 'IMMUTABLE',
+  lastUpdated: '2026-01-01',
+  authority: 'OWNER_ONLY',
+  ownerEmail: 'moisesblank@gmail.com',
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REGRAS DE PROTEÇÃO
+  // ═══════════════════════════════════════════════════════════════════════════
+  protectionRules: {
+    deletion: {
+      allowed: false,
+      requiresInternalSecret: true,
+      message: 'NENHUM componente do Question Domain pode ser deletado sem INTERNAL_SECRET',
+    },
+    modification: {
+      allowed: 'EXTENSION_ONLY',
+      requiresInternalSecret: true,
+      message: 'Modificações estruturais requerem INTERNAL_SECRET. Apenas extensões são permitidas.',
+    },
+    extension: {
+      allowed: true,
+      requiresInternalSecret: false,
+      message: 'Novas features podem ser ADICIONADAS sem alterar estrutura existente.',
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // ESTRUTURA DE DADOS — TABELAS PROTEGIDAS
+  // ═══════════════════════════════════════════════════════════════════════════
+  database: {
+    primaryTable: {
+      name: 'quiz_questions',
+      status: 'PROTECTED',
+      columns: {
+        // Identificadores
+        id: { type: 'UUID', required: true, protected: true },
+        created_at: { type: 'TIMESTAMPTZ', required: true, protected: true },
+        updated_at: { type: 'TIMESTAMPTZ', required: true, protected: true },
+        
+        // Conteúdo da Questão
+        question_text: { type: 'TEXT', required: true, protected: true },
+        question_type: { type: 'TEXT', required: true, protected: true, values: ['multiple_choice', 'discursive'] },
+        options: { type: 'JSONB', required: true, protected: true },
+        correct_answer: { type: 'TEXT', required: true, protected: true },
+        explanation: { type: 'TEXT', required: false, protected: true },
+        
+        // Metadados Pedagógicos
+        difficulty: { type: 'TEXT', required: true, protected: true, values: ['facil', 'medio', 'dificil'] },
+        banca: { type: 'TEXT', required: false, protected: true },
+        ano: { type: 'INTEGER', required: false, protected: true },
+        points: { type: 'INTEGER', required: true, protected: true },
+        is_active: { type: 'BOOLEAN', required: true, protected: true },
+        
+        // ══════════════════════════════════════════════════════════════════════
+        // TAXONOMIA HIERÁRQUICA — ESTRUTURA CANÔNICA IMUTÁVEL
+        // ══════════════════════════════════════════════════════════════════════
+        macro: { 
+          type: 'TEXT', 
+          required: false, 
+          protected: true,
+          description: 'MACRO ÁREA: Nível 1 da hierarquia (ex: quimica_geral, quimica_organica, fisico_quimica)',
+          hierarchy: 'LEVEL_1',
+        },
+        micro: { 
+          type: 'TEXT', 
+          required: false, 
+          protected: true,
+          description: 'MICRO ASSUNTO: Nível 2 da hierarquia, filho de MACRO',
+          hierarchy: 'LEVEL_2',
+        },
+        tema: { 
+          type: 'TEXT', 
+          required: false, 
+          protected: true,
+          description: 'TEMA: Nível 3 da hierarquia, filho de MICRO',
+          hierarchy: 'LEVEL_3',
+        },
+        subtema: { 
+          type: 'TEXT', 
+          required: false, 
+          protected: true,
+          description: 'SUBTEMA: Nível 4 da hierarquia, filho de TEMA',
+          hierarchy: 'LEVEL_4',
+        },
+        
+        // Mídia
+        image_url: { type: 'TEXT', required: false, protected: true },
+        images: { type: 'JSONB', required: false, protected: true },
+        has_video_resolution: { type: 'BOOLEAN', required: false, protected: true },
+        video_provider: { type: 'TEXT', required: false, protected: true, values: ['youtube', 'panda'] },
+        video_url: { type: 'TEXT', required: false, protected: true },
+        
+        // Tags e Agrupamentos
+        tags: { type: 'TEXT[]', required: false, protected: true },
+      },
+    },
+    
+    taxonomyTable: {
+      name: 'question_taxonomy',
+      status: 'PROTECTED',
+      description: 'Tabela de taxonomia hierárquica para classificação de questões',
+      columns: {
+        id: { type: 'UUID', required: true, protected: true },
+        label: { type: 'TEXT', required: true, protected: true },
+        value: { type: 'TEXT', required: true, protected: true },
+        level: { type: 'TEXT', required: true, protected: true, values: ['macro', 'micro', 'tema', 'subtema'] },
+        parent_value: { type: 'TEXT', required: false, protected: true },
+        position: { type: 'INTEGER', required: true, protected: true },
+        is_active: { type: 'BOOLEAN', required: true, protected: true },
+        created_at: { type: 'TIMESTAMPTZ', required: true, protected: true },
+      },
+    },
+    
+    relatedTables: [
+      { name: 'question_attempts', status: 'PROTECTED', description: 'Tentativas de resposta dos alunos' },
+      { name: 'question_statistics', status: 'PROTECTED', description: 'Estatísticas de desempenho' },
+      { name: 'quiz_answers', status: 'PROTECTED', description: 'Respostas em simulados' },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HIERARQUIA TAXONÔMICA — ESTRUTURA CANÔNICA
+  // ═══════════════════════════════════════════════════════════════════════════
+  taxonomyHierarchy: {
+    status: 'IMMUTABLE',
+    description: 'Cadeia hierárquica obrigatória para classificação de questões',
+    chain: ['MACRO', 'MICRO', 'TEMA', 'SUBTEMA'],
+    levels: {
+      MACRO: {
+        level: 1,
+        parent: null,
+        description: 'Grande área de conhecimento',
+        examples: ['quimica_geral', 'quimica_organica', 'fisico_quimica'],
+        databaseColumn: 'macro',
+        filterState: 'macroAreaFilter',
+      },
+      MICRO: {
+        level: 2,
+        parent: 'MACRO',
+        description: 'Assunto específico dentro da macro área',
+        examples: ['Atomística', 'Funções Orgânicas', 'Termoquímica'],
+        databaseColumn: 'micro',
+        filterState: 'microFilter',
+      },
+      TEMA: {
+        level: 3,
+        parent: 'MICRO',
+        description: 'Tema específico dentro do micro assunto',
+        examples: ['Modelos Atômicos', 'Álcoois', 'Entalpia'],
+        databaseColumn: 'tema',
+        filterState: 'temaFilter',
+      },
+      SUBTEMA: {
+        level: 4,
+        parent: 'TEMA',
+        description: 'Subtema específico dentro do tema',
+        examples: ['Modelo de Bohr', 'Nomenclatura de Álcoois', 'Lei de Hess'],
+        databaseColumn: 'subtema',
+        filterState: 'subtemaFilter',
+      },
+    },
+    cascadingBehavior: {
+      description: 'Quando um nível superior muda, todos os níveis inferiores são resetados',
+      implementation: [
+        'handleMacroAreaFilterChange → reseta microFilter, temaFilter, subtemaFilter',
+        'handleMicroFilterChange → reseta temaFilter, subtemaFilter',
+        'handleTemaFilterChange → reseta subtemaFilter',
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // COMPONENTES PROTEGIDOS — FRONTEND
+  // ═══════════════════════════════════════════════════════════════════════════
+  components: {
+    pages: [
+      {
+        name: 'GestaoQuestoes',
+        path: 'src/pages/gestao/GestaoQuestoes.tsx',
+        route: '/gestaofc/questoes',
+        status: 'PROTECTED',
+        features: [
+          'Listagem de questões com cards',
+          'Filtros hierárquicos MACRO → MICRO → TEMA → SUBTEMA',
+          'Cards de estatísticas por grande área',
+          'Importação/Exportação de questões',
+          'Aniquilação Total (Owner only)',
+          'CRUD completo de questões',
+        ],
+      },
+      {
+        name: 'GestaoQuestaoDetalhe',
+        path: 'src/pages/gestao/GestaoQuestaoDetalhe.tsx',
+        route: '/gestaofc/questoes/:id',
+        status: 'PROTECTED',
+        features: ['Visualização detalhada', 'Edição inline', 'Preview de resolução'],
+      },
+      {
+        name: 'AlunoQuestoes',
+        path: 'src/pages/aluno/AlunoQuestoes.tsx',
+        route: '/alunos/questoes',
+        status: 'PROTECTED',
+        features: ['Prática de questões', 'Filtros por área', 'Estatísticas de desempenho'],
+      },
+    ],
+    
+    sharedComponents: [
+      {
+        name: 'QuestionEnunciado',
+        path: 'src/components/shared/QuestionEnunciado.tsx',
+        status: 'PROTECTED',
+        description: 'Componente universal para renderização de enunciados',
+        mandatoryStructure: {
+          bancaHeader: 'Centralizado, bold, uppercase (BANCA (ANO))',
+          questionText: 'Justificado, whitespace pre-wrap',
+          image: 'Abaixo do texto, centralizada',
+        },
+      },
+      {
+        name: 'QuestionResolution',
+        path: 'src/components/shared/QuestionResolution.tsx',
+        status: 'PROTECTED',
+        description: 'Componente para renderização de resoluções comentadas',
+      },
+      {
+        name: 'TaxonomyManager',
+        path: 'src/components/gestao/questoes/TaxonomyManager.tsx',
+        status: 'PROTECTED',
+        description: 'Gerenciador da taxonomia hierárquica',
+      },
+      {
+        name: 'QuestionImportDialog',
+        path: 'src/components/gestao/questoes/QuestionImportDialog.tsx',
+        status: 'PROTECTED',
+        description: 'Importador de questões via Excel/CSV',
+      },
+      {
+        name: 'QuestionImageUploader',
+        path: 'src/components/gestao/questoes/QuestionImageUploader.tsx',
+        status: 'PROTECTED',
+        description: 'Upload de imagens para questões',
+      },
+    ],
+    
+    lmsComponents: [
+      {
+        name: 'QuizPlayer',
+        path: 'src/components/lms/QuizPlayer.tsx',
+        status: 'PROTECTED',
+        description: 'Player de simulados e quizzes',
+      },
+      {
+        name: 'QuestionPractice',
+        path: 'src/components/lms/QuestionPractice.tsx',
+        status: 'PROTECTED',
+        description: 'Prática de questões em aulas',
+      },
+    ],
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // HOOKS PROTEGIDOS
+  // ═══════════════════════════════════════════════════════════════════════════
+  hooks: [
+    {
+      name: 'useQuestionTaxonomy',
+      path: 'src/hooks/useQuestionTaxonomy.ts',
+      status: 'PROTECTED',
+      exports: [
+        'useQuestionTaxonomy',
+        'useTaxonomyForSelects',
+        'useTaxonomyMacros',
+        'useTaxonomyMicros',
+        'useTaxonomyTemas',
+        'useTaxonomySubtemas',
+        'useCreateTaxonomy',
+        'useUpdateTaxonomy',
+        'useDeleteTaxonomy',
+        'useReorderTaxonomy',
+      ],
+    },
+  ],
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CONSTANTES PROTEGIDAS
+  // ═══════════════════════════════════════════════════════════════════════════
+  constants: [
+    {
+      name: 'BANCAS',
+      path: 'src/constants/bancas.ts',
+      status: 'PROTECTED',
+      exports: ['BANCAS', 'BANCAS_POR_CATEGORIA', 'CATEGORIA_LABELS', 'getBancaLabel'],
+    },
+  ],
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // AUDITORIAS RELACIONADAS
+  // ═══════════════════════════════════════════════════════════════════════════
+  audits: [
+    {
+      name: 'AUDIT_QUESTION_FILTER_ORDER',
+      path: 'src/lib/audits/AUDIT_QUESTION_FILTER_ORDER.ts',
+      status: 'PROTECTED',
+      description: 'Ordem canônica dos filtros de questões',
+    },
+    {
+      name: 'AUDIT_QUESTION_IMAGE_STANDARD',
+      path: 'src/lib/audits/AUDIT_QUESTION_IMAGE_STANDARD.ts',
+      status: 'PROTECTED',
+      description: 'Padrão de imagens de questões',
+    },
+  ],
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // MACROS CANÔNICOS — QUÍMICA
+  // ═══════════════════════════════════════════════════════════════════════════
+  canonicalMacros: {
+    quimica_geral: {
+      value: 'quimica_geral',
+      label: 'Química Geral',
+      icon: '⚗️',
+      color: 'amber',
+      filterKey: 'geral',
+      micros: [
+        'Propriedades da Matéria',
+        'Substâncias e Misturas',
+        'Alotropia',
+        'Separação de Misturas',
+        'Tratamento de Água',
+        'Combustíveis e Energia',
+        'Atomística',
+        'Distribuição Eletrônica',
+        'Tabela Periódica',
+        'Propriedades Periódicas',
+        'Ligações Químicas',
+        'Estequiometria',
+      ],
+    },
+    quimica_organica: {
+      value: 'quimica_organica',
+      label: 'Química Orgânica',
+      icon: '🧪',
+      color: 'purple',
+      filterKey: 'organica',
+      micros: [
+        'Funções Orgânicas',
+        'Isomeria',
+        'Reações Orgânicas',
+        'Polímeros',
+        'Bioquímica',
+      ],
+    },
+    fisico_quimica: {
+      value: 'fisico_quimica',
+      label: 'Físico-Química',
+      icon: '⚡',
+      color: 'cyan',
+      filterKey: 'fisico_quimica',
+      micros: [
+        'Termoquímica',
+        'Cinética Química',
+        'Equilíbrio Químico',
+        'Eletroquímica',
+        'Soluções',
+        'Propriedades Coligativas',
+        'Radioatividade',
+      ],
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // REGRAS DE EXIBIÇÃO — UI/UX IMUTÁVEL
+  // ═══════════════════════════════════════════════════════════════════════════
+  displayRules: {
+    questionCard: {
+      status: 'PROTECTED',
+      structure: {
+        line1: ['Dificuldade', 'Banca', 'Ano', 'Tipo', 'MACRO'],
+        line2: ['MICRO', 'TEMA', 'SUBTEMA'],
+        body: ['Número (#001)', 'Enunciado (QuestionEnunciado)', 'Imagem'],
+        footer: ['Tags (Simulados/Treino)', 'Ações'],
+      },
+      badgeColors: {
+        macro: {
+          organica: 'bg-purple-500/20 text-purple-300',
+          fisico_quimica: 'bg-cyan-500/20 text-cyan-300',
+          geral: 'bg-amber-500/20 text-amber-300',
+        },
+        micro: 'bg-indigo-500/20 text-indigo-300',
+        tema: 'bg-violet-500/20 text-violet-300',
+        subtema: 'bg-fuchsia-500/20 text-fuchsia-300',
+        difficulty: {
+          facil: 'bg-green-500 text-white',
+          medio: 'bg-yellow-500 text-white',
+          dificil: 'bg-red-500 text-white',
+        },
+      },
+    },
+    filters: {
+      status: 'PROTECTED',
+      order: ['MACRO', 'MICRO', 'TEMA', 'SUBTEMA', 'Ano', 'Banca', 'Dificuldade', 'Ordenação'],
+      cascading: true,
+    },
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════
+  // PROTOCOLO DE ANIQUILAÇÃO TOTAL
+  // ═══════════════════════════════════════════════════════════════════════════
+  annihilationProtocol: {
+    status: 'OWNER_ONLY',
+    description: 'Exclusão em massa de todas as questões',
+    requirements: [
+      'Checkbox de confirmação',
+      'Digitação exata de "CONFIRMAR EXCLUSÃO TOTAL"',
+      'Verificação de role Owner',
+    ],
+    behavior: 'HARD DELETE com CASCADE em todas as tabelas relacionadas',
+    auditLog: true,
+  },
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// FUNÇÃO DE VALIDAÇÃO — VERIFICA INTEGRIDADE DO DOMAIN
+// ═══════════════════════════════════════════════════════════════════════════
+export function validateQuestionDomainIntegrity(): {
+  isValid: boolean;
+  errors: string[];
+  warnings: string[];
+} {
+  const errors: string[] = [];
+  const warnings: string[] = [];
+
+  // Verificar estrutura de taxonomia
+  const { taxonomyHierarchy } = QUESTION_DOMAIN_CONSTITUTION;
+  if (taxonomyHierarchy.chain.length !== 4) {
+    errors.push('Hierarquia de taxonomia deve ter exatamente 4 níveis');
+  }
+
+  // Verificar macros canônicos
+  const { canonicalMacros } = QUESTION_DOMAIN_CONSTITUTION;
+  const macroKeys = Object.keys(canonicalMacros);
+  if (macroKeys.length < 3) {
+    errors.push('Deve haver pelo menos 3 macros canônicos');
+  }
+
+  return {
+    isValid: errors.length === 0,
+    errors,
+    warnings,
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// REGRA FINAL — IMUTABILIDADE
+// ═══════════════════════════════════════════════════════════════════════════
+export const QUESTION_DOMAIN_GOLDEN_RULE = `
+╔══════════════════════════════════════════════════════════════════════════════╗
+║                                                                              ║
+║   🔒 REGRA DE OURO DO QUESTION DOMAIN                                       ║
+║                                                                              ║
+║   1. NENHUM componente listado neste documento pode ser DELETADO            ║
+║   2. NENHUMA coluna da tabela quiz_questions pode ser REMOVIDA              ║
+║   3. A hierarquia MACRO → MICRO → TEMA → SUBTEMA é IMUTÁVEL                 ║
+║   4. Os 3 macros canônicos (geral, organica, fisico_quimica) são FIXOS      ║
+║   5. Qualquer MODIFICAÇÃO estrutural requer INTERNAL_SECRET do OWNER        ║
+║   6. Apenas EXTENSÕES (novas features) são permitidas sem autorização       ║
+║   7. Este arquivo é a FONTE DA VERDADE para todo o Question Domain          ║
+║                                                                              ║
+║   VIOLAÇÕES serão BLOQUEADAS automaticamente.                               ║
+║                                                                              ║
+╚══════════════════════════════════════════════════════════════════════════════╝
+`;
