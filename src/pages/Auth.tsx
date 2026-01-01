@@ -1,10 +1,12 @@
 // ============================================
 // MOISÉS MEDEIROS v10.0 - AUTH PAGE
-// Design: Futurista Spider-Man / Vermelho Vinho
-// Estética: Cyber-Tech Profissional
+// Design: YEAR 2300 ULTRA-FUTURISTIC
+// Estética: Holographic / Quantum / Cinematic
 // COM VERIFICAÇÃO 2FA POR EMAIL
 // UPGRADE: Feedback melhorado, mensagens claras
 // ============================================
+
+import "@/styles/auth-2300.css";
 
 import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -52,82 +54,288 @@ const TwoFactorVerification = lazy(() => import("@/components/auth/TwoFactorVeri
 const PasswordStrengthMeter = lazy(() => import("@/components/auth/PasswordStrengthMeter").then(m => ({ default: m.PasswordStrengthMeter })));
 const ForcePasswordChange = lazy(() => import("@/components/auth/ForcePasswordChange").then(m => ({ default: m.ForcePasswordChange })));
 
-// Performance Optimized Cyber Grid - CSS Only
-function CyberGrid() {
+// ============================================
+// 🌌 YEAR 2300 ULTRA-FUTURISTIC COMPONENTS
+// Performance: CSS-only GPU-accelerated animations
+// ============================================
+
+// Quantum Particle Field - Floating holographic particles
+function QuantumParticleField() {
   return (
     <div className="absolute inset-0 overflow-hidden pointer-events-none">
-      {/* Static Grid Pattern */}
+      {/* Holographic scanning lines */}
+      <div className="absolute inset-0">
+        <div 
+          className="absolute h-[2px] w-full auth-scan-line"
+          style={{
+            background: 'linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.6), hsl(var(--holo-purple) / 0.4), transparent)',
+            boxShadow: '0 0 20px hsl(var(--holo-cyan) / 0.5), 0 0 40px hsl(var(--holo-purple) / 0.3)',
+          }}
+        />
+      </div>
+      
+      {/* Floating quantum particles */}
+      {[...Array(20)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full auth-particle"
+          style={{
+            width: `${2 + Math.random() * 4}px`,
+            height: `${2 + Math.random() * 4}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            background: i % 3 === 0 
+              ? 'hsl(var(--holo-cyan))' 
+              : i % 3 === 1 
+                ? 'hsl(var(--holo-purple))' 
+                : 'hsl(var(--primary))',
+            boxShadow: i % 3 === 0 
+              ? '0 0 10px hsl(var(--holo-cyan)), 0 0 20px hsl(var(--holo-cyan) / 0.5)' 
+              : i % 3 === 1 
+                ? '0 0 10px hsl(var(--holo-purple)), 0 0 20px hsl(var(--holo-purple) / 0.5)'
+                : '0 0 10px hsl(var(--primary)), 0 0 20px hsl(var(--primary) / 0.5)',
+            animationDelay: `${i * 0.3}s`,
+            animationDuration: `${8 + Math.random() * 8}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// Holographic Grid 2300
+function HolographicGrid() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Primary hex grid */}
+      <svg className="absolute inset-0 w-full h-full opacity-[0.08]" preserveAspectRatio="none">
+        <defs>
+          <pattern id="hexGrid2300" x="0" y="0" width="50" height="43.4" patternUnits="userSpaceOnUse">
+            <path 
+              d="M25,0 L50,14.4 L50,28.9 L25,43.4 L0,28.9 L0,14.4 Z" 
+              fill="none" 
+              stroke="url(#holoGradient)"
+              strokeWidth="0.5"
+            />
+          </pattern>
+          <linearGradient id="holoGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="hsl(185 100% 50%)" />
+            <stop offset="50%" stopColor="hsl(280 100% 60%)" />
+            <stop offset="100%" stopColor="hsl(320 100% 60%)" />
+          </linearGradient>
+        </defs>
+        <rect width="100%" height="100%" fill="url(#hexGrid2300)" />
+      </svg>
+      
+      {/* Energy flow lines */}
+      <div className="absolute inset-0">
+        <div 
+          className="absolute h-px w-full auth-energy-flow"
+          style={{ 
+            top: '25%',
+            background: 'linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.4), transparent)',
+          }}
+        />
+        <div 
+          className="absolute h-px w-full auth-energy-flow-reverse"
+          style={{ 
+            top: '75%',
+            background: 'linear-gradient(90deg, transparent, hsl(var(--holo-purple) / 0.4), transparent)',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+// Orbital Ring System
+function OrbitalRings() {
+  return (
+    <div className="absolute inset-0 flex items-center justify-center pointer-events-none overflow-hidden">
+      {/* Ring 1 - Outer */}
       <div 
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute w-[800px] h-[800px] rounded-full border border-holo-cyan/20 auth-orbital-ring"
         style={{
-          backgroundImage: `
-            linear-gradient(rgba(139, 0, 0, 0.3) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(139, 0, 0, 0.3) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px'
+          boxShadow: 'inset 0 0 60px hsl(var(--holo-cyan) / 0.1), 0 0 60px hsl(var(--holo-cyan) / 0.05)',
+        }}
+      />
+      {/* Ring 2 - Middle */}
+      <div 
+        className="absolute w-[600px] h-[600px] rounded-full border border-holo-purple/20 auth-orbital-ring-reverse"
+        style={{
+          boxShadow: 'inset 0 0 40px hsl(var(--holo-purple) / 0.1), 0 0 40px hsl(var(--holo-purple) / 0.05)',
+        }}
+      />
+      {/* Ring 3 - Inner */}
+      <div 
+        className="absolute w-[400px] h-[400px] rounded-full border border-primary/30 auth-orbital-ring"
+        style={{
+          animationDuration: '15s',
+          boxShadow: 'inset 0 0 30px hsl(var(--primary) / 0.15), 0 0 30px hsl(var(--primary) / 0.1)',
         }}
       />
       
-      {/* CSS-only animated line */}
+      {/* Orbital nodes */}
+      {[0, 60, 120, 180, 240, 300].map((angle, i) => (
+        <div
+          key={i}
+          className="absolute w-3 h-3 rounded-full auth-orbital-node"
+          style={{
+            background: i % 2 === 0 ? 'hsl(var(--holo-cyan))' : 'hsl(var(--holo-purple))',
+            boxShadow: i % 2 === 0 
+              ? '0 0 15px hsl(var(--holo-cyan)), 0 0 30px hsl(var(--holo-cyan) / 0.5)' 
+              : '0 0 15px hsl(var(--holo-purple)), 0 0 30px hsl(var(--holo-purple) / 0.5)',
+            transform: `rotate(${angle}deg) translateX(300px)`,
+            animationDelay: `${i * 0.5}s`,
+          }}
+        />
+      ))}
+    </div>
+  );
+}
+
+// DNA Helix Animation
+function DNAHelix() {
+  return (
+    <div className="absolute left-8 top-0 bottom-0 w-16 overflow-hidden pointer-events-none opacity-40">
+      <div className="auth-dna-helix h-full">
+        {[...Array(12)].map((_, i) => (
+          <div
+            key={i}
+            className="absolute w-full flex justify-between items-center"
+            style={{ top: `${i * 8.33}%` }}
+          >
+            <div 
+              className="w-3 h-3 rounded-full auth-dna-node-left"
+              style={{
+                background: 'hsl(var(--holo-cyan))',
+                boxShadow: '0 0 10px hsl(var(--holo-cyan))',
+                animationDelay: `${i * 0.2}s`,
+              }}
+            />
+            <div 
+              className="flex-1 h-px mx-1"
+              style={{
+                background: 'linear-gradient(90deg, hsl(var(--holo-cyan) / 0.5), hsl(var(--holo-purple) / 0.5))',
+              }}
+            />
+            <div 
+              className="w-3 h-3 rounded-full auth-dna-node-right"
+              style={{
+                background: 'hsl(var(--holo-purple))',
+                boxShadow: '0 0 10px hsl(var(--holo-purple))',
+                animationDelay: `${i * 0.2 + 0.5}s`,
+              }}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Cosmic Background with Stars
+function CosmicBackground() {
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none">
+      {/* Deep space gradient */}
       <div 
-        className="absolute h-px w-full bg-gradient-to-r from-transparent via-primary/30 to-transparent animate-pulse"
-        style={{ top: '50%', animationDuration: '4s' }}
+        className="absolute inset-0"
+        style={{
+          background: 'radial-gradient(ellipse at 30% 20%, hsl(280 40% 8% / 0.8) 0%, transparent 50%), radial-gradient(ellipse at 70% 80%, hsl(185 40% 5% / 0.6) 0%, transparent 50%)',
+        }}
+      />
+      
+      {/* Twinkling stars */}
+      {[...Array(40)].map((_, i) => (
+        <div
+          key={i}
+          className="absolute rounded-full auth-star"
+          style={{
+            width: `${1 + Math.random() * 2}px`,
+            height: `${1 + Math.random() * 2}px`,
+            left: `${Math.random() * 100}%`,
+            top: `${Math.random() * 100}%`,
+            background: '#fff',
+            animationDelay: `${Math.random() * 4}s`,
+            animationDuration: `${2 + Math.random() * 3}s`,
+          }}
+        />
+      ))}
+      
+      {/* Nebula glow spots */}
+      <div 
+        className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full blur-3xl"
+        style={{
+          background: 'radial-gradient(circle, hsl(var(--primary) / 0.15) 0%, transparent 70%)',
+        }}
+      />
+      <div 
+        className="absolute bottom-1/4 right-1/4 w-80 h-80 rounded-full blur-3xl"
+        style={{
+          background: 'radial-gradient(circle, hsl(var(--holo-purple) / 0.1) 0%, transparent 70%)',
+        }}
+      />
+      <div 
+        className="absolute top-1/2 right-1/3 w-64 h-64 rounded-full blur-3xl"
+        style={{
+          background: 'radial-gradient(circle, hsl(var(--holo-cyan) / 0.08) 0%, transparent 70%)',
+        }}
       />
     </div>
   );
 }
 
-// Spider Web Pattern
-function SpiderWebPattern() {
+// Holographic Card Frame
+function HoloCardFrame() {
   return (
-    <svg className="absolute inset-0 w-full h-full opacity-[0.02]" viewBox="0 0 100 100" preserveAspectRatio="none">
-      <defs>
-        <pattern id="web" x="0" y="0" width="20" height="20" patternUnits="userSpaceOnUse">
-          <path 
-            d="M10 0 L10 20 M0 10 L20 10 M0 0 L20 20 M20 0 L0 20" 
-            stroke="currentColor" 
-            strokeWidth="0.3" 
-            fill="none" 
-            className="text-primary"
-          />
-        </pattern>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#web)" />
-    </svg>
+    <>
+      {/* Animated corner brackets */}
+      <div className="absolute -top-1 -left-1 w-8 h-8 border-l-2 border-t-2 border-holo-cyan/60 auth-corner-pulse" />
+      <div className="absolute -top-1 -right-1 w-8 h-8 border-r-2 border-t-2 border-holo-purple/60 auth-corner-pulse" style={{ animationDelay: '0.5s' }} />
+      <div className="absolute -bottom-1 -left-1 w-8 h-8 border-l-2 border-b-2 border-holo-purple/60 auth-corner-pulse" style={{ animationDelay: '1s' }} />
+      <div className="absolute -bottom-1 -right-1 w-8 h-8 border-r-2 border-b-2 border-holo-cyan/60 auth-corner-pulse" style={{ animationDelay: '1.5s' }} />
+      
+      {/* Scanning beam effect */}
+      <div className="absolute inset-0 overflow-hidden rounded-2xl pointer-events-none">
+        <div className="auth-card-scan absolute inset-x-0 h-px" 
+          style={{ 
+            background: 'linear-gradient(90deg, transparent, hsl(var(--holo-cyan) / 0.8), transparent)',
+            boxShadow: '0 0 20px hsl(var(--holo-cyan) / 0.5)',
+          }}
+        />
+      </div>
+    </>
   );
 }
 
-// Simplified Glowing Orbs - Single orb only
-function GlowingOrbs() {
-  return (
-    <div
-      className="absolute top-1/4 left-1/4 w-96 h-96 rounded-full opacity-30"
-      style={{
-        background: 'radial-gradient(circle, rgba(139, 0, 0, 0.15) 0%, transparent 70%)',
-      }}
-    />
-  );
-}
-
-// Removed CircuitLines - too heavy for performance
-function CircuitLines() {
-  return null;
-}
-
-// Stats Display - CSS animations only
+// Stats Display - Futuristic 2300 version
 function StatsDisplay({ stats }: { stats: { value: string; label: string }[] }) {
   return (
     <div className="flex flex-wrap justify-center gap-4 mt-8 w-full">
       {stats.map((stat, i) => (
         <div
           key={i}
-          className="text-center px-6 py-4 rounded-xl bg-white/5 border border-white/10 backdrop-blur-sm min-w-[120px] hover:border-primary/50 hover:bg-primary/10 transition-all duration-300 animate-fade-in"
-          style={{ animationDelay: `${0.3 + i * 0.1}s`, animationFillMode: 'backwards' }}
+          className="relative text-center px-6 py-4 rounded-xl backdrop-blur-xl min-w-[130px] group auth-stat-card"
+          style={{ 
+            animationDelay: `${0.3 + i * 0.1}s`, 
+            animationFillMode: 'backwards',
+            background: 'linear-gradient(135deg, hsl(var(--holo-cyan) / 0.05), hsl(var(--holo-purple) / 0.05))',
+            border: '1px solid hsl(var(--holo-cyan) / 0.2)',
+          }}
         >
-          <div className="text-2xl xl:text-3xl font-bold text-primary">
+          {/* Hover glow */}
+          <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+            style={{
+              background: 'linear-gradient(135deg, hsl(var(--holo-cyan) / 0.1), hsl(var(--holo-purple) / 0.1))',
+              boxShadow: '0 0 30px hsl(var(--holo-cyan) / 0.2)',
+            }}
+          />
+          
+          <div className="relative text-2xl xl:text-3xl font-bold bg-gradient-to-r from-holo-cyan via-holo-purple to-primary bg-clip-text text-transparent">
             {stat.value}
           </div>
-          <div className="text-xs text-gray-400 uppercase tracking-wider mt-1">
+          <div className="relative text-xs text-gray-400 uppercase tracking-wider mt-1 group-hover:text-holo-cyan transition-colors">
             {stat.label}
           </div>
         </div>
@@ -1438,9 +1646,9 @@ export default function Auth() {
   if (isCheckingSession) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-6 relative overflow-hidden">
-        <SpiderWebPattern />
-        <CyberGrid />
-        <GlowingOrbs />
+        <CosmicBackground />
+        <HolographicGrid />
+        <QuantumParticleField />
         <div className="flex flex-col items-center gap-3 text-center">
           <Loader2 className="h-7 w-7 text-primary animate-spin" />
           <p className="text-sm text-muted-foreground">Verificando sessão…</p>
@@ -1453,9 +1661,9 @@ export default function Auth() {
   if (show2FA && pending2FAUser) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4 relative overflow-hidden">
-        <SpiderWebPattern />
-        <CyberGrid />
-        <GlowingOrbs />
+        <CosmicBackground />
+        <HolographicGrid />
+        <QuantumParticleField />
         <Suspense fallback={<div className="h-8 w-8 border-2 border-primary border-t-transparent rounded-full animate-spin" />}>
           <TwoFactorVerification
             email={pending2FAUser.email}
@@ -1621,9 +1829,9 @@ export default function Auth() {
   if (showForcePasswordChange && pendingPasswordChangeUser) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-        <SpiderWebPattern />
-        <CyberGrid />
-        <GlowingOrbs />
+        <CosmicBackground />
+        <HolographicGrid />
+        <QuantumParticleField />
         <Suspense fallback={<div className="text-white">Carregando...</div>}>
           <ForcePasswordChange
             userEmail={pendingPasswordChangeUser.email}
@@ -1676,9 +1884,9 @@ export default function Auth() {
   if (showForceLogoutOption && pendingEmail) {
     return (
       <div className="min-h-screen bg-[#0a0a0a] flex items-center justify-center p-4">
-        <SpiderWebPattern />
-        <CyberGrid />
-        <GlowingOrbs />
+        <CosmicBackground />
+        <HolographicGrid />
+        <QuantumParticleField />
         <div className="relative z-10 w-full max-w-md">
           <div className="bg-gradient-to-br from-[#1a1a1a] to-[#0f0f0f] border border-primary/30 rounded-2xl p-8 shadow-2xl">
             {/* Header */}
@@ -1817,53 +2025,71 @@ export default function Auth() {
       )}
       
       {/* Background Effects */}
-      <SpiderWebPattern />
-      <CyberGrid />
-      <GlowingOrbs />
-      <CircuitLines />
+      <CosmicBackground />
+      <HolographicGrid />
+      <QuantumParticleField />
+      <OrbitalRings />
+      <DNAHelix />
       
-      {/* Left Panel - Visual Side */}
+      {/* Left Panel - Visual Side - YEAR 2300 */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative">
-        {/* Gradient Overlay */}
-        <div className="absolute inset-0 bg-gradient-to-br from-[#1a0505]/90 via-[#0a0a0a]/80 to-[#0a0a0a]" />
+        {/* Holographic Gradient Overlay */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at 30% 30%, hsl(var(--holo-cyan) / 0.08) 0%, transparent 50%), radial-gradient(ellipse at 70% 70%, hsl(var(--holo-purple) / 0.06) 0%, transparent 50%), linear-gradient(135deg, hsl(280 30% 5% / 0.95), hsl(220 30% 3% / 0.98))',
+          }}
+        />
         
         {/* Content */}
         <div className="relative z-10 flex flex-col justify-center items-center w-full p-12">
-          {/* Logo / Brand - CSS animations */}
+          {/* Logo / Brand - Holographic Frame */}
           <div className="mb-8 animate-scale-in">
             <div className="relative">
-              {/* Glow Effect - CSS only */}
+              {/* Holographic Glow Effect */}
               <div
-                className="absolute inset-0 rounded-full blur-3xl animate-pulse"
+                className="absolute inset-0 rounded-full blur-3xl"
                 style={{ 
-                  background: 'radial-gradient(circle, rgba(139, 0, 0, 0.4) 0%, transparent 70%)',
-                  animationDuration: '3s'
+                  background: 'radial-gradient(circle, hsl(var(--holo-cyan) / 0.2) 0%, hsl(var(--holo-purple) / 0.15) 50%, transparent 70%)',
                 }}
               />
               
-              {/* Hexagonal Frame */}
+              {/* Holographic Hexagonal Frame */}
               <div className="relative w-72 h-72 flex items-center justify-center">
-                <svg className="absolute inset-0 w-full h-full" viewBox="0 0 100 100">
+                {/* Outer rotating ring */}
+                <div className="absolute inset-0 auth-orbital-ring" style={{ animationDuration: '20s' }}>
+                  <svg className="w-full h-full" viewBox="0 0 100 100">
+                    <polygon
+                      points="50,2 95,25 95,75 50,98 5,75 5,25"
+                      fill="none"
+                      stroke="url(#hexGradient2300)"
+                      strokeWidth="0.8"
+                      opacity="0.6"
+                    />
+                  </svg>
+                </div>
+                
+                {/* Inner static frame */}
+                <svg className="absolute inset-2 w-[calc(100%-16px)] h-[calc(100%-16px)]" viewBox="0 0 100 100">
                   <polygon
                     points="50,2 95,25 95,75 50,98 5,75 5,25"
                     fill="none"
-                    stroke="url(#hexGradient)"
+                    stroke="url(#hexGradient2300)"
                     strokeWidth="1.5"
-                    className="animate-dash"
-                    style={{ strokeDasharray: 1000, strokeDashoffset: 1000 }}
                   />
                   <defs>
-                    <linearGradient id="hexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#8B0000" />
-                      <stop offset="50%" stopColor="#DC143C" />
-                      <stop offset="100%" stopColor="#8B0000" />
+                    <linearGradient id="hexGradient2300" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="hsl(185 100% 50%)" />
+                      <stop offset="33%" stopColor="hsl(280 100% 60%)" />
+                      <stop offset="66%" stopColor="hsl(0 84% 50%)" />
+                      <stop offset="100%" stopColor="hsl(185 100% 50%)" />
                     </linearGradient>
                   </defs>
                 </svg>
                 
-                {/* Professor Photo */}
+                {/* Professor Photo - Holographic Border */}
                 {canEdit && isEditMode ? (
-                  <Suspense fallback={<img src={professorPhoto} alt="Professor Moisés" className="w-60 h-60 rounded-full object-cover [object-position:50%_15%] border-4 border-primary/60 shadow-2xl shadow-primary/30" />}>
+                  <Suspense fallback={<img src={professorPhoto} alt="Professor Moisés" className="w-56 h-56 rounded-full object-cover [object-position:50%_15%]" />}>
                     <EditableImage
                       src={professorPhoto}
                       alt="Professor Moisés"
@@ -1871,32 +2097,49 @@ export default function Auth() {
                       isEditMode={isEditMode}
                       canEdit={canEdit}
                       className="w-full h-full object-cover [object-position:50%_15%]"
-                      containerClassName="w-60 h-60 rounded-full overflow-hidden border-4 border-primary/60 shadow-2xl shadow-primary/30"
+                      containerClassName="w-56 h-56 rounded-full overflow-hidden border-2 border-holo-cyan/60"
                     />
                   </Suspense>
                 ) : (
-                  <OptimizedImage
-                    src={professorPhoto}
-                    alt="Professor Moisés"
-                    width={240}
-                    height={240}
-                    aspectRatio="square"
-                    objectFit="cover"
-                    objectPosition="50% 15%"
-                    placeholderColor="#1a0a0a"
-                    priority={false}
-                    className="border-4 border-primary/60 shadow-2xl shadow-primary/30"
-                    containerClassName="w-60 h-60 rounded-full overflow-hidden"
-                  />
+                  <div 
+                    className="relative w-56 h-56 rounded-full overflow-hidden"
+                    style={{ 
+                      border: '3px solid transparent',
+                      backgroundImage: 'linear-gradient(hsl(220 30% 5%), hsl(220 30% 5%)), linear-gradient(135deg, hsl(185 100% 50%), hsl(280 100% 60%), hsl(0 84% 50%))',
+                      backgroundOrigin: 'border-box',
+                      backgroundClip: 'padding-box, border-box',
+                      boxShadow: '0 0 30px hsl(185 100% 50% / 0.3), 0 0 60px hsl(280 100% 60% / 0.2), inset 0 0 20px hsl(185 100% 50% / 0.1)',
+                    }}
+                  >
+                    <OptimizedImage
+                      src={professorPhoto}
+                      alt="Professor Moisés"
+                      width={224}
+                      height={224}
+                      aspectRatio="square"
+                      objectFit="cover"
+                      objectPosition="50% 15%"
+                      placeholderColor="#0a0a12"
+                      priority={false}
+                      className=""
+                      containerClassName="w-full h-full"
+                    />
+                  </div>
                 )}
               </div>
               
-              {/* Status Indicator - CSS animation */}
+              {/* Status Indicator - Holographic */}
               <div
-                className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-4 py-1.5 rounded-full bg-gradient-to-r from-primary/90 to-[#DC143C]/90 backdrop-blur-sm border border-primary/30 animate-pulse"
-                style={{ animationDuration: '2s' }}
+                className="absolute -bottom-2 left-1/2 -translate-x-1/2 px-5 py-2 rounded-full backdrop-blur-sm auth-corner-pulse"
+                style={{ 
+                  background: 'linear-gradient(135deg, hsl(185 100% 50% / 0.2), hsl(280 100% 60% / 0.2))',
+                  border: '1px solid hsl(185 100% 50% / 0.4)',
+                  boxShadow: '0 0 20px hsl(185 100% 50% / 0.3)',
+                }}
               >
-                <span className="flex items-center gap-1.5 text-xs font-semibold text-white">
+                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider"
+                  style={{ color: 'hsl(185 100% 70%)' }}
+                >
                   <Zap className="h-3 w-3" />
                   VERIFICADO
                 </span>
@@ -1904,11 +2147,14 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* Title - CSS animations */}
+          {/* Title - Holographic Gradient */}
           <div className="text-center mb-6 animate-fade-in" style={{ animationDelay: '0.2s', animationFillMode: 'backwards' }}>
             <h1 className="text-4xl xl:text-5xl font-bold text-white mb-3">
-              <span className="text-gray-400">Prof.</span>{" "}
-              <span className="bg-gradient-to-r from-primary via-[#DC143C] to-primary bg-clip-text text-transparent">
+              <span style={{ color: 'hsl(185 100% 70% / 0.7)' }}>Prof.</span>{" "}
+              <span 
+                className="bg-clip-text text-transparent"
+                style={{ backgroundImage: 'linear-gradient(135deg, hsl(185 100% 60%), hsl(280 100% 70%), hsl(0 84% 60%), hsl(185 100% 60%))' }}
+              >
                 {canEdit && isEditMode ? (
                   <Suspense fallback="Moisés Medeiros">
                     <EditableText
@@ -1923,7 +2169,7 @@ export default function Auth() {
                 )}
               </span>
             </h1>
-            <p className="text-lg text-gray-400 animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'backwards' }}>
+            <p className="text-lg animate-fade-in" style={{ animationDelay: '0.4s', animationFillMode: 'backwards', color: 'hsl(280 50% 70% / 0.8)' }}>
               {canEdit && isEditMode ? (
                 <Suspense fallback="O professor que mais aprova em Medicina">
                   <EditableText
@@ -2013,16 +2259,28 @@ export default function Auth() {
             </div>
           </div>
 
-          {/* Card */}
-          <div className="relative rounded-2xl p-8 bg-[#111111]/90 backdrop-blur-xl border border-white/10 shadow-2xl">
-            {/* Glow Effect */}
-            <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-primary/10 via-transparent to-transparent pointer-events-none" />
+          {/* Card - Holographic 2300 */}
+          <div className="relative rounded-2xl p-8 backdrop-blur-xl border shadow-2xl auth-glow-border"
+            style={{
+              background: 'linear-gradient(135deg, hsl(0 0% 6% / 0.95), hsl(280 20% 5% / 0.9))',
+              borderColor: 'hsl(var(--holo-cyan) / 0.2)',
+            }}
+          >
+            {/* Holographic Frame */}
+            <HoloCardFrame />
             
-            {/* Corner Accents */}
-            <div className="absolute top-0 left-0 w-16 h-px bg-gradient-to-r from-primary to-transparent" />
-            <div className="absolute top-0 left-0 w-px h-16 bg-gradient-to-b from-primary to-transparent" />
-            <div className="absolute bottom-0 right-0 w-16 h-px bg-gradient-to-l from-primary to-transparent" />
-            <div className="absolute bottom-0 right-0 w-px h-16 bg-gradient-to-t from-primary to-transparent" />
+            {/* Holographic overlay shimmer */}
+            <div className="absolute inset-0 rounded-2xl overflow-hidden pointer-events-none">
+              <div className="absolute inset-0 auth-holo-shimmer opacity-30" />
+            </div>
+            
+            {/* Glow Effect - Cyan/Purple gradient */}
+            <div 
+              className="absolute inset-0 rounded-2xl pointer-events-none"
+              style={{
+                background: 'radial-gradient(ellipse at top left, hsl(var(--holo-cyan) / 0.1), transparent 50%), radial-gradient(ellipse at bottom right, hsl(var(--holo-purple) / 0.08), transparent 50%)',
+              }}
+            />
             
             {/* Header */}
             <div className="text-center mb-8 relative">

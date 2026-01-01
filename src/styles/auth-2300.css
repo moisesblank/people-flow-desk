@@ -1,0 +1,363 @@
+/* ============================================
+   🌌 AUTH PAGE - YEAR 2300 ULTRA-FUTURISTIC STYLES
+   Performance: CSS-only GPU-accelerated animations
+   ============================================ */
+
+/* Holographic color utilities */
+.border-holo-cyan\/20 {
+  border-color: hsl(var(--holo-cyan) / 0.2);
+}
+.border-holo-purple\/20 {
+  border-color: hsl(var(--holo-purple) / 0.2);
+}
+.border-holo-cyan\/60 {
+  border-color: hsl(var(--holo-cyan) / 0.6);
+}
+.border-holo-purple\/60 {
+  border-color: hsl(var(--holo-purple) / 0.6);
+}
+.from-holo-cyan {
+  --tw-gradient-from: hsl(var(--holo-cyan));
+}
+.via-holo-purple {
+  --tw-gradient-stops: var(--tw-gradient-from), hsl(var(--holo-purple)), var(--tw-gradient-to);
+}
+.text-holo-cyan {
+  color: hsl(var(--holo-cyan));
+}
+.bg-holo-cyan {
+  background-color: hsl(var(--holo-cyan));
+}
+.bg-holo-purple {
+  background-color: hsl(var(--holo-purple));
+}
+
+/* ============================================
+   Scanning Line Animation
+   ============================================ */
+@keyframes auth-scan {
+  0% {
+    top: -5%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    top: 105%;
+    opacity: 0;
+  }
+}
+
+.auth-scan-line {
+  animation: auth-scan 4s ease-in-out infinite;
+}
+
+/* ============================================
+   Quantum Particle Floating
+   ============================================ */
+@keyframes auth-float {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.6;
+  }
+  25% {
+    transform: translateY(-30px) translateX(15px);
+    opacity: 1;
+  }
+  50% {
+    transform: translateY(-20px) translateX(-10px);
+    opacity: 0.8;
+  }
+  75% {
+    transform: translateY(-40px) translateX(20px);
+    opacity: 1;
+  }
+}
+
+.auth-particle {
+  animation: auth-float linear infinite;
+  will-change: transform, opacity;
+}
+
+/* ============================================
+   Energy Flow Lines
+   ============================================ */
+@keyframes auth-energy-flow {
+  0% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes auth-energy-flow-reverse {
+  0% {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+.auth-energy-flow {
+  animation: auth-energy-flow 6s ease-in-out infinite;
+}
+
+.auth-energy-flow-reverse {
+  animation: auth-energy-flow-reverse 8s ease-in-out infinite;
+}
+
+/* ============================================
+   Orbital Ring Rotations
+   ============================================ */
+@keyframes auth-orbit {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes auth-orbit-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+  to {
+    transform: rotate(0deg);
+  }
+}
+
+.auth-orbital-ring {
+  animation: auth-orbit 30s linear infinite;
+}
+
+.auth-orbital-ring-reverse {
+  animation: auth-orbit-reverse 25s linear infinite;
+}
+
+/* ============================================
+   Orbital Nodes Pulsing
+   ============================================ */
+@keyframes auth-node-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    transform: rotate(var(--start-angle, 0deg)) translateX(300px) scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: rotate(var(--start-angle, 0deg)) translateX(300px) scale(1.5);
+  }
+}
+
+.auth-orbital-node {
+  animation: auth-node-pulse 3s ease-in-out infinite;
+}
+
+/* ============================================
+   DNA Helix Animation
+   ============================================ */
+@keyframes auth-dna-scroll {
+  0% {
+    transform: translateY(0);
+  }
+  100% {
+    transform: translateY(-50%);
+  }
+}
+
+.auth-dna-helix {
+  animation: auth-dna-scroll 10s linear infinite;
+}
+
+@keyframes auth-dna-node-pulse {
+  0%, 100% {
+    opacity: 0.5;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.auth-dna-node-left,
+.auth-dna-node-right {
+  animation: auth-dna-node-pulse 2s ease-in-out infinite;
+}
+
+/* ============================================
+   Twinkling Stars
+   ============================================ */
+@keyframes auth-twinkle {
+  0%, 100% {
+    opacity: 0.2;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.5);
+  }
+}
+
+.auth-star {
+  animation: auth-twinkle ease-in-out infinite;
+}
+
+/* ============================================
+   Holographic Card Effects
+   ============================================ */
+@keyframes auth-corner-pulse {
+  0%, 100% {
+    opacity: 0.6;
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    opacity: 1;
+    box-shadow: 0 0 15px currentColor, 0 0 30px currentColor;
+  }
+}
+
+.auth-corner-pulse {
+  animation: auth-corner-pulse 2s ease-in-out infinite;
+}
+
+@keyframes auth-card-scan {
+  0% {
+    top: -10%;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.8;
+  }
+  90% {
+    opacity: 0.8;
+  }
+  100% {
+    top: 110%;
+    opacity: 0;
+  }
+}
+
+.auth-card-scan {
+  animation: auth-card-scan 5s ease-in-out infinite;
+}
+
+/* ============================================
+   Stats Card Entrance
+   ============================================ */
+@keyframes auth-stat-entrance {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.auth-stat-card {
+  animation: auth-stat-entrance 0.6s ease-out forwards;
+}
+
+/* ============================================
+   Holographic Shimmer Effect
+   ============================================ */
+@keyframes auth-holo-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.auth-holo-shimmer {
+  background: linear-gradient(
+    90deg,
+    transparent,
+    hsl(var(--holo-cyan) / 0.2),
+    hsl(var(--holo-purple) / 0.2),
+    transparent
+  );
+  background-size: 200% 100%;
+  animation: auth-holo-shimmer 3s linear infinite;
+}
+
+/* ============================================
+   Glowing Border Animation
+   ============================================ */
+@keyframes auth-glow-border {
+  0%, 100% {
+    box-shadow: 
+      0 0 5px hsl(var(--holo-cyan) / 0.3),
+      inset 0 0 5px hsl(var(--holo-cyan) / 0.1);
+  }
+  50% {
+    box-shadow: 
+      0 0 20px hsl(var(--holo-cyan) / 0.5),
+      0 0 40px hsl(var(--holo-purple) / 0.3),
+      inset 0 0 10px hsl(var(--holo-cyan) / 0.2);
+  }
+}
+
+.auth-glow-border {
+  animation: auth-glow-border 3s ease-in-out infinite;
+}
+
+/* ============================================
+   Performance Optimizations
+   ============================================ */
+.auth-particle,
+.auth-scan-line,
+.auth-energy-flow,
+.auth-energy-flow-reverse,
+.auth-orbital-ring,
+.auth-orbital-ring-reverse,
+.auth-orbital-node,
+.auth-dna-helix,
+.auth-dna-node-left,
+.auth-dna-node-right,
+.auth-star,
+.auth-corner-pulse,
+.auth-card-scan {
+  will-change: transform, opacity;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+/* Reduce animations for users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .auth-particle,
+  .auth-scan-line,
+  .auth-energy-flow,
+  .auth-energy-flow-reverse,
+  .auth-orbital-ring,
+  .auth-orbital-ring-reverse,
+  .auth-orbital-node,
+  .auth-dna-helix,
+  .auth-dna-node-left,
+  .auth-dna-node-right,
+  .auth-star,
+  .auth-corner-pulse,
+  .auth-card-scan,
+  .auth-stat-card {
+    animation: none !important;
+  }
+}
