@@ -139,9 +139,9 @@ const QuestionEnunciado = memo(function QuestionEnunciado({
 
       {/* 2. TEXTO DO ENUNCIADO — Justificado + Fórmulas Químicas Formatadas */}
       <p className={cn(
-        "leading-relaxed whitespace-pre-wrap",
+        "leading-relaxed whitespace-pre-wrap text-justify",
         textSizeClass,
-        compact ? "line-clamp-3" : "text-justify",
+        compact && "line-clamp-3",
       )}>
         {formatChemicalFormulas(cleanText)}
       </p>
