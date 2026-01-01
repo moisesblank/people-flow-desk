@@ -1519,29 +1519,37 @@ function GestaoQuestoes() {
     setIsDeletingTreino(true);
     
     try {
-      // Separar questões em dois grupos:
-      // 1. Apenas MODO_TREINO (sem outras tags) → EXCLUIR
-      // 2. MODO_TREINO + outras tags → REMOVER apenas a tag MODO_TREINO
+      // BUSCAR DIRETAMENTE DO BANCO - NÃO CONFIAR NO ESTADO LOCAL
+      // Busca todas as questões com tag MODO_TREINO direto do banco
+      const { data: treinoQuestions, error: fetchError } = await supabase
+        .from('quiz_questions')
+        .select('id, tags')
+        .contains('tags', ['MODO_TREINO']);
       
-      const treinoQuestions = questions.filter(q => q.tags?.includes('MODO_TREINO'));
+      if (fetchError) throw fetchError;
       
-      if (treinoQuestions.length === 0) {
+      if (!treinoQuestions || treinoQuestions.length === 0) {
         toast.info('Nenhuma questão do Modo Treino encontrada');
         setDeleteTreinoConfirm(false);
+        setIsDeletingTreino(false);
         return;
       }
 
+      console.log(`[EXCLUIR_TREINO] Encontradas ${treinoQuestions.length} questões com MODO_TREINO no banco`);
+
       // Questões que têm APENAS MODO_TREINO (ou MODO_TREINO + tags vazias)
       const toDelete = treinoQuestions.filter(q => {
-        const otherTags = (q.tags || []).filter(t => t !== 'MODO_TREINO');
+        const otherTags = ((q.tags as string[]) || []).filter(t => t !== 'MODO_TREINO');
         return otherTags.length === 0;
       });
 
       // Questões que têm MODO_TREINO + outras tags (ex: SIMULADOS)
       const toUpdate = treinoQuestions.filter(q => {
-        const otherTags = (q.tags || []).filter(t => t !== 'MODO_TREINO');
+        const otherTags = ((q.tags as string[]) || []).filter(t => t !== 'MODO_TREINO');
         return otherTags.length > 0;
       });
+
+      console.log(`[EXCLUIR_TREINO] Para deletar: ${toDelete.length}, Para atualizar: ${toUpdate.length}`);
 
       let deletedCount = 0;
       let updatedCount = 0;
@@ -1554,22 +1562,30 @@ function GestaoQuestoes() {
           .delete()
           .in('id', deleteIds);
 
-        if (error) throw error;
+        if (error) {
+          console.error('[EXCLUIR_TREINO] Erro ao deletar:', error);
+          throw error;
+        }
         deletedCount = deleteIds.length;
+        console.log(`[EXCLUIR_TREINO] ${deletedCount} questões deletadas com sucesso`);
       }
 
       // 2. Atualizar questões removendo apenas a tag MODO_TREINO
       if (toUpdate.length > 0) {
         for (const q of toUpdate) {
-          const newTags = (q.tags || []).filter(t => t !== 'MODO_TREINO');
+          const newTags = ((q.tags as string[]) || []).filter(t => t !== 'MODO_TREINO');
           const { error } = await supabase
             .from('quiz_questions')
             .update({ tags: newTags, updated_at: new Date().toISOString() })
             .eq('id', q.id);
 
-          if (error) throw error;
+          if (error) {
+            console.error(`[EXCLUIR_TREINO] Erro ao atualizar ${q.id}:`, error);
+            throw error;
+          }
           updatedCount++;
         }
+        console.log(`[EXCLUIR_TREINO] ${updatedCount} questões atualizadas com sucesso`);
       }
 
       // Limpar cache e recarregar
