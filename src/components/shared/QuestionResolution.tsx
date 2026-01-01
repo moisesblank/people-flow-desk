@@ -9,7 +9,7 @@
 // - Design profissional de 2300
 // ============================================
 
-import { memo, useMemo } from 'react';
+import { memo } from 'react';
 import { cn } from '@/lib/utils';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
 import { getBancaLabel } from '@/constants/bancas';
@@ -537,22 +537,15 @@ const QuestionResolution = memo(function QuestionResolution({
   const bancaHeader = formatBancaHeader(banca, ano);
   const difficultyData = difficulty ? DIFFICULTY_LABELS[difficulty] : null;
 
-  // Parser inteligente AVANÇADO
-  const parsedSections = useMemo(() => parseResolutionText(resolutionText), [resolutionText]);
+  // Texto limpo (sem lixo de interface)
+  const cleanedText = cleanResolutionText(resolutionText);
 
-  // Verificações
-  const hasClassification = macro || micro;
-  const hasEnemInText = parsedSections.some(s => s.type === 'competencia');
+  const hasClassification = Boolean(macro || micro);
+
+  // Para não duplicar conteúdo, mostramos a resolução como texto corrido.
+  // Só exibimos o bloco ENEM quando NÃO estiver presente no texto.
+  const hasEnemInText = /COMPETÊNCIA\s+E\s+HABILIDADE/i.test(cleanedText);
   const showEnemBlock = (competenciaEnem || habilidadeEnem) && !hasEnemInText;
-
-  // Seções especiais que merecem bloco próprio
-  const otherSections = parsedSections.filter(s => 
-    s.type === 'conclusao' || 
-    s.type === 'dica' || 
-    s.type === 'competencia' ||
-    s.type === 'estrategia' ||
-    s.type === 'pegadinhas'
-  );
 
   return (
     <div className={cn("space-y-6", className)}>
@@ -626,16 +619,6 @@ const QuestionResolution = memo(function QuestionResolution({
           {formatChemicalFormulas(cleanResolutionText(resolutionText))}
         </p>
       </div>
-
-      {/* ========== SEÇÕES ESPECIAIS (conclusão, dica, etc.) ========== */}
-      {otherSections.length > 0 && (
-        <div className="space-y-3">
-          {otherSections.map((section, index) => (
-            <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
-          ))}
-        </div>
-      )}
-
       {/* ========== COMPETÊNCIA ENEM (se não no texto) ========== */}
       {showEnemBlock && (
         <div className="rounded-xl overflow-hidden border-l-4 border-l-purple-500 border-t border-r border-b border-purple-500/30 bg-purple-500/5">
