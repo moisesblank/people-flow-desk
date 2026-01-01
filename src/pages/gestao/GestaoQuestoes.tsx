@@ -4,7 +4,7 @@
 // Visual Futurístico Ano 2300 - Enterprise Card Layout
 // ============================================
 
-import { memo, useState, useCallback, useEffect, useMemo } from 'react';
+import { memo, useState, useCallback, useEffect, useMemo, Component, ErrorInfo, ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
@@ -2849,4 +2849,58 @@ function GestaoQuestoes() {
   );
 }
 
-export default memo(GestaoQuestoes);
+// Error Boundary para capturar erros de renderização
+class GestaoQuestoesErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; error: Error | null }
+> {
+  constructor(props: { children: ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    console.error('[GestaoQuestoes] Error caught:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="container mx-auto p-6 space-y-6">
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6">
+            <h2 className="text-xl font-bold text-red-500 mb-2">Erro ao carregar a página</h2>
+            <p className="text-muted-foreground mb-4">
+              Ocorreu um erro ao renderizar o Banco de Questões.
+            </p>
+            <pre className="bg-background/50 p-3 rounded text-sm overflow-auto max-h-48 text-red-400">
+              {this.state.error?.message}
+            </pre>
+            <button 
+              onClick={() => window.location.reload()} 
+              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            >
+              Recarregar Página
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+// Wrapper com Error Boundary
+function GestaoQuestoesWithErrorBoundary() {
+  return (
+    <GestaoQuestoesErrorBoundary>
+      <GestaoQuestoes />
+    </GestaoQuestoesErrorBoundary>
+  );
+}
+
+export default memo(GestaoQuestoesWithErrorBoundary);
