@@ -173,7 +173,7 @@ const gestaoMenuGroups: MenuGroup[] = [
     image: calendarImg,
     color: "from-blue-600/80",
     items: [
-      { title: "Planejamento de Aula", url: "/gestaofc/planejamento-aula", icon: PenTool, area: "planejamento-aula" },
+      { title: "Planejamento", url: "/gestaofc/planejamento", icon: PenTool, area: "planejamento" },
       { title: "Turmas Online", url: "/gestaofc/turmas-online", icon: Monitor, area: "turmas-online" },
       { title: "Turmas Presenciais", url: "/gestaofc/turmas-presenciais", icon: MapPin, area: "turmas-presenciais" },
       { title: "Simulados", url: "/gestaofc/simulados", icon: Brain, area: "simulados" },

@@ -29,7 +29,7 @@ const LeadsWhatsApp = lazy(() => import("@/pages/LeadsWhatsApp"));
 
 // Aulas
 const AreaProfessor = lazy(() => import("@/pages/AreaProfessor"));
-const PlanejamentoAula = lazy(() => import("@/pages/PlanejamentoAula"));
+// PlanejamentoAula REMOVIDO - usar GestaoPlanejamento
 const Laboratorio = lazy(() => import("@/pages/Laboratorio"));
 const TurmasOnline = lazy(() => import("@/pages/TurmasOnline"));
 const TurmasPresenciais = lazy(() => import("@/pages/TurmasPresenciais"));
@@ -110,7 +110,7 @@ export const gestaofcRoutes = (
     
     {/* Aulas */}
     <Route path="/gestaofc/area-professor" element={<ProtectedPage><AreaProfessor /></ProtectedPage>} />
-    <Route path="/gestaofc/planejamento-aula" element={<ProtectedPage><PlanejamentoAula /></ProtectedPage>} />
+    {/* /gestaofc/planejamento-aula REMOVIDO - usar /gestaofc/planejamento */}
     <Route path="/gestaofc/laboratorio" element={<ProtectedPage><Laboratorio /></ProtectedPage>} />
     <Route path="/gestaofc/turmas-online" element={<ProtectedPage><TurmasOnline /></ProtectedPage>} />
     <Route path="/gestaofc/turmas-presenciais" element={<ProtectedPage><TurmasPresenciais /></ProtectedPage>} />
