@@ -1,7 +1,7 @@
 // ============================================
 // 📝 GESTÃO DE QUESTÕES - Área Administrativa
 // Gerenciamento completo do banco de questões
-// Visual Futurístico Ano 2300
+// Visual Futurístico Ano 2300 - Enterprise Card Layout
 // ============================================
 
 import { memo, useState, useCallback, useEffect, useMemo } from 'react';
