@@ -2122,12 +2122,14 @@ function GestaoQuestoes() {
                             </span>
                           </div>
                           
-                          {/* Enunciado com Imagem - Componente Universal */}
+                          {/* Enunciado com Imagem - Componente Universal (Gestão: imagem maior) */}
                           <QuestionEnunciado
                             questionText={question.question_text}
                             imageUrl={question.image_url}
                             textSize="sm"
-                            compact
+                            compact={false}
+                            hideHeader
+                            maxImageHeight="max-h-64"
                             showImageLabel={false}
                             className="mb-3"
                           />
