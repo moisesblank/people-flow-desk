@@ -1008,7 +1008,7 @@ function GestaoQuestoes() {
     loadQuestions();
   }, [loadQuestions]);
 
-  // Helper: classificar macro em grande área - TAXONOMIA OFICIAL
+  // Helper: classificar macro em grande área - TAXONOMIA OFICIAL (MACRO → MICRO → TEMA)
   const classifyMacroArea = useCallback((macro: string | null | undefined): 'organica' | 'fisico_quimica' | 'geral' => {
     if (!macro) return 'geral';
     const m = macro.toLowerCase();
@@ -1019,11 +1019,12 @@ function GestaoQuestoes() {
         m.includes('álcool') || m.includes('alcool') || m.includes('éster') || m.includes('ester') ||
         m.includes('amina') || m.includes('amida') || m.includes('aldeído') || m.includes('aldeido') ||
         m.includes('cetona') || m.includes('ácido carboxílico') || m.includes('acido carboxilico') ||
-        m.includes('fenol') || m.includes('éter') || m.includes('eter')) {
+        m.includes('fenol') || m.includes('éter') || m.includes('eter') || m.includes('aromático') ||
+        m.includes('aromatico') || m.includes('funcional') || m.includes('butano') || m.includes('hexano')) {
       return 'organica';
     }
     
-    // Físico-Química: termoquímica, cinética, equilíbrio, eletroquímica, soluções, propriedades coligativas, gases
+    // Físico-Química: termoquímica, cinética, equilíbrio, eletroquímica, soluções, gases, nuclear, radioatividade
     if (m.includes('físico') || m.includes('fisico') || m.includes('termo') || m.includes('cinética') || 
         m.includes('cinetica') || m.includes('equilíbrio') || m.includes('equilibrio') || m.includes('gase') ||
         m.includes('eletroquímica') || m.includes('eletroquimica') || m.includes('pilha') || m.includes('eletrólise') ||
@@ -1031,11 +1032,14 @@ function GestaoQuestoes() {
         m.includes('ph') || m.includes('poh') || m.includes('hidrólise') || m.includes('hidrolise') ||
         m.includes('tampão') || m.includes('tampao') || m.includes('oxidação') || m.includes('oxidacao') ||
         m.includes('redução') || m.includes('reducao') || m.includes('nox') || m.includes('galvân') ||
-        m.includes('galvan') || m.includes('potencial') || m.includes('velocidade')) {
+        m.includes('galvan') || m.includes('potencial') || m.includes('velocidade') || m.includes('oxi') ||
+        m.includes('nuclear') || m.includes('radioativ') || m.includes('entalpia') || m.includes('entropia') ||
+        m.includes('calor') || m.includes('reação') || m.includes('reacao') || m.includes('reações') ||
+        m.includes('reacoes') || m.includes('ambiental') || m.includes('estequiometria')) {
       return 'fisico_quimica';
     }
     
-    // Química Geral: atomística, tabela periódica, ligações, estequiometria, separação misturas
+    // Química Geral: atomística, tabela periódica, ligações, separação misturas, propriedades da matéria
     return 'geral';
   }, []);
 
