@@ -16,8 +16,16 @@ import { toast } from "sonner";
 // Hub Quick Access System
 import { HubQuickAccessBar, HubModal, HUB_AREAS, type HubAreaKey } from "@/components/aluno/HubQuickAccessBar";
 
-// Lazy load modal contents
+// Lazy load modal contents (9 módulos)
 const CronogramaModalContent = lazy(() => import("@/components/aluno/modals/CronogramaModalContent"));
+const ForumModalContent = lazy(() => import("@/components/aluno/modals/ForumModalContent"));
+const TutoriaModalContent = lazy(() => import("@/components/aluno/modals/TutoriaModalContent"));
+const VideoaulasModalContent = lazy(() => import("@/components/aluno/modals/VideoaulasModalContent"));
+const QuestoesModalContent = lazy(() => import("@/components/aluno/modals/QuestoesModalContent"));
+const FlashcardsModalContent = lazy(() => import("@/components/aluno/modals/FlashcardsModalContent"));
+const SimuladosModalContent = lazy(() => import("@/components/aluno/modals/SimuladosModalContent"));
+const MapasMentaisModalContent = lazy(() => import("@/components/aluno/modals/MapasMentaisModalContent"));
+const LivrosWebModalContent = lazy(() => import("@/components/aluno/modals/LivrosWebModalContent"));
 
 // Icons
 import {
@@ -909,29 +917,37 @@ export default function AlunoPlanejamento() {
   const activeModalArea = activeModal ? HUB_AREAS.find(a => a.key === activeModal) : null;
   
   // Modal content renderer
+  // Modal loading fallback
+  const ModalLoader = () => (
+    <div className="flex items-center justify-center p-8">
+      <div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" />
+    </div>
+  );
+
   const renderModalContent = () => {
     if (!activeModal) return null;
     
     switch (activeModal) {
       case "cronograma":
-        return (
-          <Suspense fallback={<div className="flex items-center justify-center p-8"><div className="animate-spin w-8 h-8 border-2 border-primary border-t-transparent rounded-full" /></div>}>
-            <CronogramaModalContent />
-          </Suspense>
-        );
-      // Próximos modais serão adicionados aqui
+        return <Suspense fallback={<ModalLoader />}><CronogramaModalContent /></Suspense>;
+      case "forum":
+        return <Suspense fallback={<ModalLoader />}><ForumModalContent /></Suspense>;
+      case "tutoria":
+        return <Suspense fallback={<ModalLoader />}><TutoriaModalContent /></Suspense>;
+      case "videoaulas":
+        return <Suspense fallback={<ModalLoader />}><VideoaulasModalContent /></Suspense>;
+      case "questoes":
+        return <Suspense fallback={<ModalLoader />}><QuestoesModalContent /></Suspense>;
+      case "flashcards":
+        return <Suspense fallback={<ModalLoader />}><FlashcardsModalContent /></Suspense>;
+      case "simulados":
+        return <Suspense fallback={<ModalLoader />}><SimuladosModalContent /></Suspense>;
+      case "mapas-mentais":
+        return <Suspense fallback={<ModalLoader />}><MapasMentaisModalContent /></Suspense>;
+      case "livros-web":
+        return <Suspense fallback={<ModalLoader />}><LivrosWebModalContent /></Suspense>;
       default:
-        return (
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-              <Calendar className="w-8 h-8 text-muted-foreground" />
-            </div>
-            <h3 className="text-lg font-semibold mb-2">Em Desenvolvimento</h3>
-            <p className="text-muted-foreground max-w-md">
-              Esta funcionalidade será adicionada em breve. Continue acompanhando!
-            </p>
-          </div>
-        );
+        return null;
     }
   };
 
