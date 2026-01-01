@@ -1923,8 +1923,8 @@ function GestaoQuestoes() {
                           </div>
                         </div>
                         
-                        {/* Right: Ações Rápidas (Dificuldade e Banca já estão na barra de badges acima) */}
-                        <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {/* Right: Ações Rápidas - Sempre visíveis */}
+                        <div className="flex items-center gap-1 shrink-0">
                           <Button
                             variant="ghost"
                             size="icon"
