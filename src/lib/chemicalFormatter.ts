@@ -75,7 +75,16 @@ export function formatChemicalFormulas(text: string): string {
     return element + toSubscript(number);
   });
 
-  // 2. Converter cargas iônicas para superscript
+  // 2. Converter hibridizações para superscript (sp², sp³, sp³d², etc.)
+  // Padrão: s, p, d, f seguidos de números
+  result = result.replace(/\b(sp|sp)(\d)(?=d|\b)/g, (_, base, num) => {
+    return base + toSuperscript(num);
+  });
+  result = result.replace(/(sp[²³]?d)(\d)/g, (_, base, num) => {
+    return base + toSuperscript(num);
+  });
+
+  // 3. Converter cargas iônicas para superscript
   // Padrão: ^2+ ou ^- após elemento/parêntese
   result = result.replace(/\^(\d*[+-])/g, (_, charge) => {
     return toSuperscript(charge);
