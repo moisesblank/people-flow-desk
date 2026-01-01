@@ -24,6 +24,32 @@ import App from "./App.tsx";
 import "./index.css";
 
 // ============================================
+// 🔁 SPA DEEP LINK FIX (P0 - zero tela preta)
+// Alguns hosts estáticos retornam 404 em rotas diretas (ex: /auth?dev=1).
+// Estratégia: páginas estáticas (public/*/index.html) redirecionam para
+// '/?redirect=...' e aqui reescrevemos a URL ANTES do React montar.
+// ============================================
+if (typeof window !== "undefined") {
+  try {
+    const url = new URL(window.location.href);
+    const redirect = url.searchParams.get("redirect");
+
+    if (redirect) {
+      const decoded = decodeURIComponent(redirect);
+      // Segurança básica: só aceita caminhos internos
+      if (decoded.startsWith("/")) {
+        url.searchParams.delete("redirect");
+        const cleanSearch = url.searchParams.toString();
+        const clean = `${decoded}${cleanSearch ? `?${cleanSearch}` : ""}${url.hash || ""}`;
+        window.history.replaceState(null, "", clean);
+      }
+    }
+  } catch {
+    // silencioso (não pode quebrar bootstrap)
+  }
+}
+
+// ============================================
 // 🚀 TTI OPTIMIZATION PROTOCOL
 // Render React PRIMEIRO, defer todo o resto
 // Objetivo: TTI -60%

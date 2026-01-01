@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="robots" content="noindex" />
+    <title>Login</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        // Deep link bridge para hosts estáticos (evita 404 em /auth direto)
+        // Mantém query/hash para suportar /auth?dev=1 etc.
+        var target = window.location.pathname + window.location.search + window.location.hash;
+        window.location.replace('/?redirect=' + encodeURIComponent(target));
+      })();
+    </script>
+  </body>
+</html>
