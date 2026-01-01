@@ -1,6 +1,7 @@
 // ============================================
-// 📝 DETALHE DA QUESTÃO - /gestaofc/questoes/:id
-// Visualização completa + URL única
+// 📋 PRONTUÁRIO DA QUESTÃO - /gestaofc/questoes/:id
+// Identidade completa: enunciado, alternativas, resolução,
+// competências, pegadinhas, dicas, gabarito
 // Visual Futurístico Ano 2300
 // ============================================
 
@@ -271,7 +272,7 @@ function GestaoQuestaoDetalhe() {
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold bg-gradient-to-r from-primary to-purple-500 bg-clip-text text-transparent">
-              Detalhe da Questão
+              Prontuário da Questão
             </h1>
             <p className="text-xs text-muted-foreground font-mono">
               ID: {question.id}
