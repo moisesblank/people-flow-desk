@@ -1648,20 +1648,54 @@ function GestaoQuestoes() {
 
             {/* Linha 2: Filtros em grid organizado */}
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-              {/* Dificuldade */}
-              <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
+              {/* 1. Macroassuntos */}
+              <Select value={macroFilter} onValueChange={setMacroFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Dificuldade" />
+                  <SelectValue placeholder="Macroassuntos" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Dificuldade: Todas</SelectItem>
-                  <SelectItem value="facil">🟢 Fácil</SelectItem>
-                  <SelectItem value="medio">🟡 Médio</SelectItem>
-                  <SelectItem value="dificil">🔴 Difícil</SelectItem>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">Macroassuntos: Todos</SelectItem>
+                  {uniqueMacros.map(macro => (
+                    <SelectItem key={macro} value={macro}>
+                      {macro.length > 25 ? macro.substring(0, 25) + '...' : macro}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
 
-              {/* Banca */}
+              {/* 2. Micro Assunto */}
+              <Select 
+                value={microFilter} 
+                onValueChange={setMicroFilter}
+                disabled={uniqueMicros.length === 0}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Micro" />
+                </SelectTrigger>
+                <SelectContent className="max-h-[300px]">
+                  <SelectItem value="all">Micro: Todos</SelectItem>
+                  {uniqueMicros.map(micro => (
+                    <SelectItem key={micro} value={micro}>
+                      {micro.length > 30 ? micro.substring(0, 30) + '...' : micro}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* 3. Ano */}
+              <Select value={anoFilter} onValueChange={setAnoFilter}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Ano" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Ano: Todos</SelectItem>
+                  {uniqueAnos.map(ano => (
+                    <SelectItem key={ano} value={String(ano)}>{ano}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+
+              {/* 4. Banca */}
               <Select value={bancaFilter} onValueChange={setBancaFilter}>
                 <SelectTrigger>
                   <SelectValue placeholder="Banca" />
@@ -1681,54 +1715,20 @@ function GestaoQuestoes() {
                 </SelectContent>
               </Select>
 
-              {/* Macroassuntos */}
-              <Select value={macroFilter} onValueChange={setMacroFilter}>
+              {/* 5. Dificuldade */}
+              <Select value={difficultyFilter} onValueChange={setDifficultyFilter}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Macroassuntos" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  <SelectItem value="all">Macroassuntos: Todos</SelectItem>
-                  {uniqueMacros.map(macro => (
-                    <SelectItem key={macro} value={macro}>
-                      {macro.length > 25 ? macro.substring(0, 25) + '...' : macro}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Micro Assunto (depende do Macro selecionado) */}
-              <Select 
-                value={microFilter} 
-                onValueChange={setMicroFilter}
-                disabled={uniqueMicros.length === 0}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Micro" />
-                </SelectTrigger>
-                <SelectContent className="max-h-[300px]">
-                  <SelectItem value="all">Micro: Todos</SelectItem>
-                  {uniqueMicros.map(micro => (
-                    <SelectItem key={micro} value={micro}>
-                      {micro.length > 30 ? micro.substring(0, 30) + '...' : micro}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-
-              {/* Ano */}
-              <Select value={anoFilter} onValueChange={setAnoFilter}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Ano" />
+                  <SelectValue placeholder="Dificuldade" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">Ano: Todos</SelectItem>
-                  {uniqueAnos.map(ano => (
-                    <SelectItem key={ano} value={String(ano)}>{ano}</SelectItem>
-                  ))}
+                  <SelectItem value="all">Dificuldade: Todas</SelectItem>
+                  <SelectItem value="facil">🟢 Fácil</SelectItem>
+                  <SelectItem value="medio">🟡 Médio</SelectItem>
+                  <SelectItem value="dificil">🔴 Difícil</SelectItem>
                 </SelectContent>
               </Select>
 
-              {/* Ordenação */}
+              {/* 6. Ordenação (Mais recentes) */}
               <Select value={sortOrder} onValueChange={setSortOrder}>
                 <SelectTrigger>
                   <SelectValue placeholder="Ordenar" />
