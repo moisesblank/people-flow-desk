@@ -1356,8 +1356,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="w-[min(98vw,90rem)] max-w-none max-h-[95vh] overflow-hidden flex flex-col min-h-0">
-        <DialogHeader>
+      <DialogContent className="w-[min(98vw,90rem)] max-w-none h-[95vh] max-h-[95vh] flex flex-col p-0">
+        <DialogHeader className="flex-shrink-0 p-6 pb-4 border-b">
           <DialogTitle className="flex items-center gap-2">
             <div className="p-2 rounded-lg bg-gradient-to-br from-primary/20 to-purple-500/20 border border-primary/30">
               <Upload className="h-5 w-5 text-primary" />
@@ -1381,7 +1381,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden min-h-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden min-h-0">
           <AnimatePresence mode="wait">
             {/* STEP 1: UPLOAD */}
             {uiStep === 'upload' && (
@@ -1484,7 +1484,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col overflow-hidden min-h-0"
+                className="flex flex-col min-h-0"
               >
                 <div className="flex items-center justify-between p-4 border-b gap-3">
                   <div>
@@ -1540,7 +1540,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </div>
                 </div>
 
-                <div className="flex-1 overflow-auto p-4 min-h-0 pb-44">
+                <div className="min-h-0 p-4 pb-8">
                   <div className="min-w-[1100px]">
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                       {headers.map(header => (
@@ -1721,7 +1721,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </div>
                 </div>
 
-                <DialogFooter className="sticky bottom-0 z-20 p-4 border-t bg-background/80 backdrop-blur">
+                <DialogFooter className="border-t p-4 bg-background mt-4">
                   <Button variant="outline" onClick={reset}>
                     <X className="h-4 w-4 mr-2" />
                     Cancelar
@@ -1762,7 +1762,7 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
                 exit={{ opacity: 0, x: -20 }}
-                className="h-full flex flex-col overflow-hidden min-h-0"
+                className="flex flex-col min-h-0"
               >
                 {/* Stats bar */}
                 <div className="flex items-center justify-between p-4 border-b gap-4 flex-wrap">
@@ -1838,8 +1838,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                 </div>
 
                 {/* Questions list */}
-                <div className="flex-1 overflow-auto min-h-0">
-                  <div className="p-4 pb-44 space-y-2 min-w-[980px]">
+                <div className="min-h-0">
+                  <div className="p-4 pb-8 space-y-2 min-w-[980px]">
                     {filteredQuestions.map((q, index) => (
                       <Card
                         key={q.id}
@@ -2035,8 +2035,8 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
                   </div>
                 </div>
 
-                {/* Footer com autorização (sempre visível) */}
-                <div className="sticky bottom-0 z-20 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80 p-4 space-y-4">
+                {/* Footer com autorização */}
+                <div className="border-t bg-background p-4 space-y-4 mt-4">
                   {/* Resumo final (obrigatório) */}
                   <div className="grid grid-cols-2 md:grid-cols-5 gap-2">
                     <div className="p-3 rounded-lg border bg-muted/20">
