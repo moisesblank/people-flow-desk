@@ -927,6 +927,8 @@ function GestaoQuestoes() {
   const [questionDialog, setQuestionDialog] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [deleteAllConfirm, setDeleteAllConfirm] = useState(false);
+  const [isDeletingAll, setIsDeletingAll] = useState(false);
   const [taxonomyManagerOpen, setTaxonomyManagerOpen] = useState(false);
   const [importDialogOpen, setImportDialogOpen] = useState(false);
 
@@ -1216,6 +1218,44 @@ function GestaoQuestoes() {
     }
   };
 
+  // ANIQUILAÇÃO TOTAL - Exclui TODAS as questões
+  const handleDeleteAllQuestions = async () => {
+    if (!isOwner) {
+      toast.error('Apenas o Owner pode executar esta ação');
+      return;
+    }
+
+    setIsDeletingAll(true);
+    
+    try {
+      // 1. Deletar todas as questões de quiz_questions
+      const { error: deleteError } = await supabase
+        .from('quiz_questions')
+        .delete()
+        .neq('id', '00000000-0000-0000-0000-000000000000'); // Match all
+
+      if (deleteError) throw deleteError;
+
+      // 2. Limpar cache
+      clearQueryCache();
+      
+      // 3. Atualizar estado local
+      setQuestions([]);
+      
+      toast.success('🔥 ANIQUILAÇÃO CONCLUÍDA - Todas as questões foram removidas', {
+        description: `${questions.length} questões excluídas permanentemente.`,
+        duration: 5000,
+      });
+      
+      setDeleteAllConfirm(false);
+    } catch (err) {
+      console.error('Erro ao excluir todas as questões:', err);
+      toast.error('Erro ao excluir questões: ' + (err instanceof Error ? err.message : String(err)));
+    } finally {
+      setIsDeletingAll(false);
+    }
+  };
+
   return (
     <div className="container mx-auto p-4 md:p-6 space-y-6">
       {/* Header */}
@@ -1256,11 +1296,21 @@ function GestaoQuestoes() {
           <Button 
             variant="outline"
             onClick={() => setImportDialogOpen(true)}
-            className="gap-2"
+            className="gap-2 border-green-500/50 text-green-600 hover:bg-green-500/10 hover:text-green-500"
           >
             <Upload className="h-4 w-4" />
             Importar
           </Button>
+          {isOwner && questions.length > 0 && (
+            <Button 
+              variant="outline"
+              onClick={() => setDeleteAllConfirm(true)}
+              className="gap-2 border-red-500/50 text-red-500 hover:bg-red-500/10 hover:text-red-400"
+            >
+              <Trash2 className="h-4 w-4" />
+              Excluir Todas ({questions.length})
+            </Button>
+          )}
           <Button 
             onClick={() => {
               setSelectedQuestion(null);
@@ -1950,7 +2000,7 @@ function GestaoQuestoes() {
         question={selectedQuestion}
       />
 
-      {/* Dialog de Confirmação de Exclusão */}
+      {/* Dialog de Confirmação de Exclusão Individual */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent>
           <DialogHeader>
@@ -1972,6 +2022,55 @@ function GestaoQuestoes() {
             >
               <Trash2 className="h-4 w-4 mr-2" />
               Excluir Questão
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Confirmação de ANIQUILAÇÃO TOTAL */}
+      <Dialog open={deleteAllConfirm} onOpenChange={setDeleteAllConfirm}>
+        <DialogContent className="border-red-500/50">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-red-500">
+              <AlertCircle className="h-6 w-6" />
+              🔥 ANIQUILAÇÃO TOTAL
+            </DialogTitle>
+            <DialogDescription className="space-y-3">
+              <p className="text-red-400 font-semibold">
+                ATENÇÃO: Esta ação é IRREVERSÍVEL!
+              </p>
+              <p>
+                Você está prestes a excluir permanentemente <strong className="text-foreground">{questions.length} questões</strong> do sistema.
+              </p>
+              <ul className="text-sm space-y-1 bg-red-500/10 p-3 rounded-lg border border-red-500/30">
+                <li>• Todas as questões serão removidas</li>
+                <li>• Associações com simulados serão perdidas</li>
+                <li>• Estatísticas de resposta serão invalidadas</li>
+                <li>• Esta ação NÃO pode ser revertida</li>
+              </ul>
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2">
+            <Button variant="outline" onClick={() => setDeleteAllConfirm(false)} disabled={isDeletingAll}>
+              Cancelar
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleDeleteAllQuestions}
+              disabled={isDeletingAll}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {isDeletingAll ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Excluindo...
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  CONFIRMAR EXCLUSÃO TOTAL
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>
