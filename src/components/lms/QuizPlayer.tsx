@@ -170,6 +170,8 @@ export function QuizPlayer({ quiz, questions, onSubmit, isSubmitting }: QuizPlay
               <QuestionEnunciado
                 questionText={currentQuestion?.question_text || ''}
                 imageUrl={(currentQuestion as any)?.image_url}
+                banca={(currentQuestion as any)?.banca}
+                ano={(currentQuestion as any)?.ano}
                 textSize="lg"
                 showImageLabel
               />

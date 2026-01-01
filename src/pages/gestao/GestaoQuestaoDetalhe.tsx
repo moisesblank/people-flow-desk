@@ -366,6 +366,8 @@ function GestaoQuestaoDetalhe() {
             <QuestionEnunciado
               questionText={question.question_text}
               imageUrl={question.image_url}
+              banca={question.banca}
+              ano={question.ano}
               textSize="base"
               showImageLabel
               maxImageHeight="max-h-96"

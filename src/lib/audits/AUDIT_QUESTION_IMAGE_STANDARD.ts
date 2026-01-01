@@ -1,25 +1,31 @@
 // ============================================
-// 🔥 AUDITORIA: PADRÃO UNIVERSAL DE IMAGEM EM QUESTÕES
+// 🔥 AUDITORIA: PADRÃO UNIVERSAL DE QUESTÕES
 // Componente: QuestionEnunciado
 // Status: IMPLEMENTADO ✅
 // Data: 2026-01-01
 // ============================================
 
 /**
- * PADRÃO UNIVERSAL — QUESTION IMAGE STANDARD v1.0
+ * PADRÃO UNIVERSAL — QUESTION ENTITY STANDARD v2.0
  * 
  * Todas as questões (question entity) do sistema DEVEM usar
  * o componente QuestionEnunciado para exibição.
  * 
- * Este padrão garante:
- * 1. Extração automática de imagens do texto [IMAGEM: URL]
- * 2. Priorização do campo image_url do banco
- * 3. Limpeza do texto (remove tag [IMAGEM:])
- * 4. Exibição consistente em todos os contextos
+ * ESTRUTURA OBRIGATÓRIA:
+ * ┌─────────────────────────────────────────┐
+ * │    BANCA HEADER (centralizado, bold)    │
+ * │         ex: ENEM (2023)                 │
+ * ├─────────────────────────────────────────┤
+ * │                                         │
+ * │    TEXTO DO ENUNCIADO (justificado)     │
+ * │                                         │
+ * ├─────────────────────────────────────────┤
+ * │    IMAGEM (se houver, centralizada)     │
+ * └─────────────────────────────────────────┘
  */
 
-export const QUESTION_IMAGE_STANDARD = {
-  version: '1.0.0',
+export const QUESTION_ENTITY_STANDARD = {
+  version: '2.0.0',
   status: 'IMPLEMENTED',
   lastUpdated: '2026-01-01',
   
@@ -30,8 +36,30 @@ export const QUESTION_IMAGE_STANDARD = {
       'QuestionEnunciado (default)',
       'extractImageFromText',
       'cleanQuestionText', 
-      'getQuestionImageUrl'
+      'getQuestionImageUrl',
+      'formatBancaHeader'
     ]
+  },
+
+  // Estrutura obrigatória
+  mandatoryStructure: {
+    bancaHeader: {
+      position: 'TOP_OF_ENUNCIADO',
+      alignment: 'CENTER',
+      fontWeight: 'BOLD',
+      textTransform: 'UPPERCASE',
+      fallback: 'QUESTÃO SIMULADO PROF. MOISÉS MEDEIROS',
+      format: 'BANCA (ANO)' // ex: ENEM (2023)
+    },
+    questionText: {
+      alignment: 'JUSTIFIED',
+      whiteSpace: 'pre-wrap'
+    },
+    image: {
+      position: 'BELOW_TEXT',
+      alignment: 'CENTER',
+      lazy: true
+    }
   },
 
   // Locais atualizados
@@ -39,32 +67,32 @@ export const QUESTION_IMAGE_STANDARD = {
     {
       file: 'src/pages/gestao/GestaoQuestoes.tsx',
       context: 'Lista de questões (cards)',
-      mode: 'compact',
-      line: '~1822'
+      mode: 'compact (sem header)',
+      props: 'banca, ano, imageUrl'
     },
     {
       file: 'src/pages/gestao/GestaoQuestaoDetalhe.tsx',
       context: 'Página de detalhe da questão',
-      mode: 'full',
-      line: '~364'
+      mode: 'full (com header)',
+      props: 'banca, ano, imageUrl'
     },
     {
       file: 'src/pages/aluno/AlunoQuestoes.tsx',
-      context: 'Modal de questão + lista compacta',
-      mode: 'full + cleanText',
-      line: '~492, ~1109'
+      context: 'Modal de questão do aluno',
+      mode: 'full (com header)',
+      props: 'banca, ano, imageUrl'
     },
     {
       file: 'src/components/lms/QuizPlayer.tsx',
       context: 'Player de simulados/quizzes',
-      mode: 'full + cleanText',
-      line: '~168, ~438'
+      mode: 'full (com header)',
+      props: 'banca, ano, imageUrl'
     },
     {
       file: 'src/components/lms/QuestionPractice.tsx',
       context: 'Prática de questões em aulas',
-      mode: 'full',
-      line: '~267'
+      mode: 'full (com header)',
+      props: 'banca, ano, imageUrl'
     }
   ],
 
@@ -74,6 +102,8 @@ export const QUESTION_IMAGE_STANDARD = {
 <QuestionEnunciado
   questionText={question.question_text}
   imageUrl={question.image_url}
+  banca={question.banca}
+  ano={question.ano}
   textSize="base"
   showImageLabel
 />`,
@@ -90,51 +120,44 @@ import { cleanQuestionText } from '@/components/shared/QuestionEnunciado';
 <p>{cleanQuestionText(question.question_text)}</p>`
   },
 
-  // Regras do banco de dados
+  // Regras proibidas
+  forbiddenPatterns: [
+    'Colocar banca dentro do corpo da questão',
+    'Misturar texto da banca com texto da questão',
+    'Renderizar banca como texto normal',
+    'Alinhar banca à esquerda',
+    'Justificar header da banca'
+  ],
+
+  // Regras de banco de dados
   databaseRules: {
     table: 'quiz_questions',
-    imageColumn: 'image_url',
-    textColumn: 'question_text',
-    migration: '20260101111126_dc41d247-b659-47f1-b2ea-89d8c5dc8cab.sql',
-    extractionQuery: `
-UPDATE quiz_questions 
-SET 
-  image_url = substring(question_text FROM '\\[IMAGEM:\\s*(https?://[^\\]\\s]+)\\]'),
-  question_text = regexp_replace(question_text, '\\[IMAGEM:\\s*https?://[^\\]]+\\]', '', 'gi')
-WHERE question_text ~* '\\[IMAGEM:\\s*https?://'
-  AND (image_url IS NULL OR image_url = '')`
+    requiredColumns: ['question_text', 'banca', 'ano', 'image_url'],
+    bancaColumn: 'banca (código como enem, unicamp, etc)',
+    labels: 'src/constants/bancas.ts → getBancaLabel()'
   },
 
   // Regras de importação
   importRules: {
     file: 'src/components/gestao/questoes/QuestionImportDialog.tsx',
-    extractionPattern: /\[IMAGEM:\s*(https?:\/\/[^\]\s]+)\]/i,
-    behavior: 'Extrai imagem do texto e popula image_url automaticamente'
+    behavior: 'Extrai banca/ano do Excel e popula colunas separadas'
   },
 
   // Métricas atuais
   metrics: {
     totalQuestions: 927,
-    questionsWithImage: 526,
-    coverage: '56.7%'
+    questionsWithBanca: 'verificar',
+    questionsWithImage: 526
   },
-
-  // Próximos passos
-  pendingItems: [
-    {
-      file: 'src/components/player/tabs/QuizTab.tsx',
-      issue: 'Usa dados estáticos SAMPLE_QUESTIONS (não afeta produção)',
-      priority: 'LOW'
-    }
-  ],
 
   // Regra de ouro
   goldenRule: `
-TODA exibição de question_text DEVE usar:
-1. <QuestionEnunciado /> para exibição completa
-2. cleanQuestionText() para texto inline
-NUNCA exibir question_text diretamente sem tratamento.
+TODA exibição de questão DEVE:
+1. Usar <QuestionEnunciado /> com props banca e ano
+2. Mostrar header centralizado e bold (modo full)
+3. Justificar texto do enunciado
+4. NUNCA misturar banca no corpo do texto
 `
 };
 
-export default QUESTION_IMAGE_STANDARD;
+export default QUESTION_ENTITY_STANDARD;
