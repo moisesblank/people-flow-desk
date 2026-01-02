@@ -752,7 +752,7 @@ function parseResolutionText(text: string): ParsedSection[] {
     if (allContents.length > 0) {
       const consolidatedContent = allContents.length === 1
         ? allContents[0]
-        : allContents.map(item => `• ${item}`).join('\n\n');
+        : allContents.map(item => `• ${item}`).join('\n');
       
       consolidatedMergeable.push({
         type,
