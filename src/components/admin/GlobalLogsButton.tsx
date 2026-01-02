@@ -40,27 +40,38 @@ function useBrowserConsoleLogs(enabled: boolean) {
   const [logs, setLogs] = useState<BrowserLog[]>([]);
   const logsRef = useRef<BrowserLog[]>([]);
   const interceptedRef = useRef(false);
-  
+  const scheduledRef = useRef<number | null>(null);
+
+  const flush = useCallback(() => {
+    if (scheduledRef.current) {
+      cancelAnimationFrame(scheduledRef.current);
+      scheduledRef.current = null;
+    }
+    // snapshot imutável
+    setLogs([...logsRef.current]);
+  }, []);
+
+  const scheduleFlush = useCallback(() => {
+    if (scheduledRef.current) return;
+    scheduledRef.current = requestAnimationFrame(flush);
+  }, [flush]);
+
   useEffect(() => {
     if (!enabled || interceptedRef.current) return;
-    
+
     interceptedRef.current = true;
-    
+
     const originalConsole = {
       log: console.log,
       info: console.info,
       warn: console.warn,
       error: console.error,
     };
-    
-    const createInterceptor = (type: 'log' | 'info' | 'warn' | 'error') => {
-      return (...args: unknown[]) => {
-        // Chamar o original
-        originalConsole[type](...args);
-        
-        // Adicionar ao nosso log (evitar logs do próprio sistema de captura)
-        const message = args.map(arg => {
-          if (typeof arg === 'object') {
+
+    const stringifyArgs = (args: unknown[]) =>
+      args
+        .map((arg) => {
+          if (typeof arg === "object") {
             try {
               return JSON.stringify(arg, null, 2);
             } catch {
@@ -68,75 +79,106 @@ function useBrowserConsoleLogs(enabled: boolean) {
             }
           }
           return String(arg);
-        }).join(' ');
-        
-        // Ignorar logs internos do sistema de captura
-        if (message.includes('[BrowserLogs]')) return;
-        
-        const newLog: BrowserLog = {
+        })
+        .join(" ");
+
+    const pushLog = (newLog: BrowserLog) => {
+      logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
+      scheduleFlush();
+    };
+
+    const createInterceptor = (type: "log" | "info" | "warn" | "error") => {
+      return (...args: unknown[]) => {
+        try {
+          // Chamar o original
+          originalConsole[type](...args);
+        } catch {
+          // nunca deixar o interceptor quebrar a app
+        }
+
+        try {
+          const message = stringifyArgs(args);
+
+          // Ignorar logs internos/ruído (evita loops e spam)
+          if (
+            message.includes("[BrowserLogs]") ||
+            message.includes("[MATRIZ] ⚠️ Long Task")
+          ) {
+            return;
+          }
+
+          pushLog({
+            id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+            timestamp: new Date(),
+            type,
+            message,
+            stack: type === "error" ? new Error().stack : undefined,
+          });
+        } catch {
+          // silencioso
+        }
+      };
+    };
+
+    // Interceptar todos os métodos
+    console.log = createInterceptor("log");
+    console.info = createInterceptor("info");
+    console.warn = createInterceptor("warn");
+    console.error = createInterceptor("error");
+
+    // Capturar erros não tratados (não usa console.* para evitar recursão)
+    const handleError = (event: ErrorEvent) => {
+      try {
+        pushLog({
           id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
           timestamp: new Date(),
-          type,
-          message,
-          stack: type === 'error' ? new Error().stack : undefined,
-        };
-        
-        // Manter apenas os últimos 100 logs
-        logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
-        setLogs([...logsRef.current]);
-      };
+          type: "error",
+          message: `[UNCAUGHT] ${event.message}`,
+          stack: (event.error as any)?.stack,
+        });
+      } catch {
+        // silencioso
+      }
     };
-    
-    // Interceptar todos os métodos
-    console.log = createInterceptor('log');
-    console.info = createInterceptor('info');
-    console.warn = createInterceptor('warn');
-    console.error = createInterceptor('error');
-    
-    // Capturar erros não tratados
-    const handleError = (event: ErrorEvent) => {
-      const newLog: BrowserLog = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date(),
-        type: 'error',
-        message: `[UNCAUGHT] ${event.message}`,
-        stack: event.error?.stack,
-      };
-      logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
-      setLogs([...logsRef.current]);
-    };
-    
+
     const handleRejection = (event: PromiseRejectionEvent) => {
-      const newLog: BrowserLog = {
-        id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-        timestamp: new Date(),
-        type: 'error',
-        message: `[PROMISE REJECTED] ${event.reason}`,
-        stack: event.reason?.stack,
-      };
-      logsRef.current = [newLog, ...logsRef.current].slice(0, 100);
-      setLogs([...logsRef.current]);
+      try {
+        const reason = (event as any).reason;
+        pushLog({
+          id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
+          timestamp: new Date(),
+          type: "error",
+          message: `[PROMISE REJECTED] ${String(reason)}`,
+          stack: reason?.stack,
+        });
+      } catch {
+        // silencioso
+      }
     };
-    
-    window.addEventListener('error', handleError);
-    window.addEventListener('unhandledrejection', handleRejection);
-    
+
+    window.addEventListener("error", handleError);
+    window.addEventListener("unhandledrejection", handleRejection);
+
     return () => {
       console.log = originalConsole.log;
       console.info = originalConsole.info;
       console.warn = originalConsole.warn;
       console.error = originalConsole.error;
-      window.removeEventListener('error', handleError);
-      window.removeEventListener('unhandledrejection', handleRejection);
+      window.removeEventListener("error", handleError);
+      window.removeEventListener("unhandledrejection", handleRejection);
       interceptedRef.current = false;
+      if (scheduledRef.current) {
+        cancelAnimationFrame(scheduledRef.current);
+        scheduledRef.current = null;
+      }
     };
-  }, [enabled]);
-  
+  }, [enabled, scheduleFlush, flush]);
+
   const clearLogs = useCallback(() => {
     logsRef.current = [];
     setLogs([]);
   }, []);
-  
+
   return { logs, clearLogs };
 }
 

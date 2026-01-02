@@ -123,10 +123,12 @@ const AppContent = memo(() => {
             <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
 
             {/* 🔴 BOTÕES FLUTUANTES GLOBAIS: LOGS + TRAMON */}
-            <Suspense fallback={null}>
-              <LazyGlobalLogsButton />
-              <LazyAITramon />
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={null}>
+                <LazyGlobalLogsButton />
+                <LazyAITramon />
+              </Suspense>
+            </ErrorBoundary>
 
             {/* 🛡️ P0: Nunca mais tela preta - ErrorBoundary global envolvendo as rotas */}
             <ErrorBoundary>
