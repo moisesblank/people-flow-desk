@@ -1,6 +1,6 @@
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
 // ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                   ║
-// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.3                                       ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v4.0 — PEDAGOGIA ESTRUTURADA              ║
 // ╠═══════════════════════════════════════════════════════════════════════════════╣
 // ║                                                                                ║
 // ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                           ║
@@ -9,17 +9,20 @@
 // ║ TODAS as questões (SIMULADOS, MODO TREINO, atuais e futuras) DEVEM usar       ║
 // ║ este componente para garantir formatação consistente.                         ║
 // ║                                                                                ║
-// ║ REGRAS IMUTÁVEIS:                                                              ║
-// ║ 1. Remoção de caracteres bugados: "", '', **, 里, ⚠️, etc.                      ║
-// ║ 2. Formatação química científica automática (H2O → H₂O)                        ║
-// ║ 3. Alternativas: Agrupadas em seção visual "ANÁLISE DAS ALTERNATIVAS"         ║
-// ║ 4. Deduplicação automática de seções repetidas                                 ║
-// ║ 5. Imagens inline via [IMAGEM: URL] com max-h-[600px]                          ║
-// ║ 6. Bullets unificados com espaçamento COMPACTO (1 quebra de linha)            ║
-// ║ 7. Pontuação limpa (sem ".." ou "..." excessivos)                              ║
-// ║ 8. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área#, NUNCA duplica          ║
-// ║ 9. Competência e Habilidade em LINHAS SEPARADAS (organizado)                  ║
-// ║ 10. Alternativas A-E consolidadas: cada uma em 1 linha limpa (letra+status)   ║
+// ║ REGRAS IMUTÁVEIS v4.0:                                                         ║
+// ║ 1. ORGANIZAÇÃO PEDAGÓGICA AUTOMÁTICA — mesmo texto bagunçado vira estruturado ║
+// ║ 2. Estrutura: AFIRMAÇÃO → EXPLICAÇÃO TEÓRICA → ALTERNATIVAS → CONCLUSÃO       ║
+// ║ 3. Cada afirmação em bloco separado com status (V/F) e explicação própria     ║
+// ║ 4. Explicação teórica NUNCA misturada com análise de alternativas             ║
+// ║ 5. Alternativas A-E em subtópicos visuais individuais, sem repetição          ║
+// ║ 6. Conclusão final curta e limpa (gabarito + justificativa resumida)          ║
+// ║ 7. Deduplicação automática rigorosa — mesma alternativa/afirmação nunca 2x    ║
+// ║ 8. Formatação química científica automática (H2O → H₂O)                        ║
+// ║ 9. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área#, linhas separadas       ║
+// ║ 10. Imagens inline via [IMAGEM: URL] com max-h-[600px]                         ║
+// ║ 11. Bullets compactos (1 quebra de linha)                                      ║
+// ║                                                                                ║
+// ║ LEMA: "Se eu fosse aluno, conseguiria estudar isso rápido e sem me perder?"   ║
 // ║                                                                                ║
 // ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                        ║
 // ║                                                                                ║
@@ -108,28 +111,88 @@ interface QuestionResolutionProps {
  */
 /**
  * =====================================================
- * PRÉ-PROCESSAMENTO DE AFIRMAÇÕES CORRIDAS
- * Separa afirmações que vêm todas na mesma linha em blocos individuais
- * PADRÃO ENEM/INTERNACIONAL: cada afirmação em seu próprio bloco
+ * PRÉ-PROCESSAMENTO PEDAGÓGICO v4.0 — ORGANIZAÇÃO ESTRUTURADA
+ * Transforma texto corrido bagunçado em estrutura pedagógica clara:
+ * 1. AFIRMAÇÃO: Identificação do erro/acerto
+ * 2. EXPLICAÇÃO TEÓRICA: Conceito explicado separadamente  
+ * 3. ALTERNATIVAS: Cada uma em seu próprio bloco
+ * 4. CONCLUSÃO: Gabarito final limpo
  * =====================================================
+ */
+
+/**
+ * Detecta e separa blocos de texto explicativo (teoria) de análise de alternativas
+ */
+function separateTheoryFromAlternatives(text: string): string {
+  if (!text) return '';
+  
+  let result = text;
+  
+  // Padrões que indicam início de análise de alternativas (devem ficar em bloco separado)
+  const alternativeStartPatterns = [
+    /Alternativa\s+A\s*[:–\-]/gi,
+    /[❌✅✔️✓✗✖️]\s*Alternativa\s+[A-E]/gi,
+    /[❌✅]\s*[A-E]\)/gi,
+  ];
+  
+  // Padrões que indicam texto teórico/explicativo (deve ficar ANTES das alternativas)
+  const theoryPatterns = [
+    /É\s+exatamente\s+o\s+CONTRÁRIO/gi,
+    /Pelo\s+Le\s+Chatelier/gi,
+    /O\s+equilíbrio\s+se\s+desloca/gi,
+    /desloca\s+o\s+equilíbrio\s+para/gi,
+    /Nos\s+tecidos[,\s]/gi,
+    /Nos\s+pulmões[,\s]/gi,
+    /as\s+células\s+consomem/gi,
+    /diminuindo\s+sua\s+concentração/gi,
+    /favorece\s+a\s+reação/gi,
+    /A\s+concentração\s+de\s+[A-Za-z₀-₉]+\s+é/gi,
+  ];
+  
+  // Procurar onde começa análise de alternativas
+  let alternativeStartIndex = result.length;
+  for (const pattern of alternativeStartPatterns) {
+    const match = result.match(pattern);
+    if (match && match.index !== undefined && match.index < alternativeStartIndex) {
+      alternativeStartIndex = match.index;
+    }
+  }
+  
+  // Se encontrou alternativas, garantir quebra antes delas
+  if (alternativeStartIndex < result.length && alternativeStartIndex > 50) {
+    const beforeAlternatives = result.substring(0, alternativeStartIndex).trim();
+    const fromAlternatives = result.substring(alternativeStartIndex).trim();
+    
+    // Adicionar marcador de seção se o texto antes é teoria
+    const hasTheory = theoryPatterns.some(p => p.test(beforeAlternatives));
+    if (hasTheory && beforeAlternatives.length > 100) {
+      result = beforeAlternatives + '\n\n[TEORIA_FIM]\n\n' + fromAlternatives;
+    } else {
+      result = beforeAlternatives + '\n\n' + fromAlternatives;
+    }
+  }
+  
+  return result;
+}
+
+/**
+ * Separa afirmações que vêm todas na mesma linha em blocos individuais
+ * PADRÃO ENEM/INTERNACIONAL: cada afirmação em seu próprio bloco visual
  */
 function reformatAffirmations(text: string): string {
   if (!text) return '';
   
   let result = text;
   
-  // ========== DETECTAR E SEPARAR AFIRMAÇÕES CORRIDAS ==========
-  // Padrão: "Afirmação 1: FALSA (F) - texto Afirmação 2: VERDADEIRA (V) - texto..."
-  // Também captura: "Afirmação 1 — FALSA", "Afirmação I:", etc.
+  // ========== PRÉ-PROCESSAMENTO: SEPARAR TEORIA DE ALTERNATIVAS ==========
+  result = separateTheoryFromAlternatives(result);
   
-  // Regex para detectar início de afirmação (com número arábico ou romano)
+  // ========== DETECTAR E SEPARAR AFIRMAÇÕES CORRIDAS ==========
   const afirmacaoPattern = /Afirmação\s*(\d+|[IVX]+)\s*[:\-–—]\s*(?:(FALSA|VERDADEIRA|F|V)\s*\([FV]\)\s*)?[:\-–—]?\s*/gi;
   
-  // Primeiro, verificar se existem múltiplas afirmações na mesma linha
   const matches = [...result.matchAll(new RegExp(afirmacaoPattern.source, 'gi'))];
   
   if (matches.length > 1) {
-    // Há múltiplas afirmações - precisamos separar cada uma em sua própria linha
     let reformatted = '';
     
     for (let i = 0; i < matches.length; i++) {
@@ -139,10 +202,8 @@ function reformatAffirmations(text: string): string {
       const startIndex = currentMatch.index!;
       const endIndex = nextMatch ? nextMatch.index! : result.length;
       
-      // Extrair o bloco desta afirmação
       let block = result.substring(startIndex, endIndex).trim();
       
-      // Adicionar quebra dupla antes de cada afirmação (exceto a primeira)
       if (i > 0) {
         reformatted += '\n\n';
       }
@@ -150,7 +211,6 @@ function reformatAffirmations(text: string): string {
       reformatted += block;
     }
     
-    // Adicionar qualquer texto antes da primeira afirmação
     const firstMatchIndex = matches[0].index!;
     if (firstMatchIndex > 0) {
       const preamble = result.substring(0, firstMatchIndex).trim();
@@ -165,20 +225,48 @@ function reformatAffirmations(text: string): string {
   }
   
   // ========== NORMALIZAR FORMATO DE AFIRMAÇÕES ==========
-  // Garantir que "FALSA (F)" ou "VERDADEIRA (V)" fique destacado
   result = result
-    // Padrão: "Afirmação 1: FALSA (F) - texto" → quebra após o status
     .replace(/Afirmação\s*(\d+|[IVX]+)\s*[:\-–—]\s*(FALSA|VERDADEIRA)\s*\(([FV])\)\s*[:\-–—]?\s*/gi, 
       (_, num, status, letter) => `\n\nAfirmação ${num} — ${status.toUpperCase()} (${letter.toUpperCase()}):\n`)
-    // Padrão simples: "Afirmação 1 - texto" sem status
     .replace(/Afirmação\s*(\d+|[IVX]+)\s*[:\-–—]\s*(?!FALSA|VERDADEIRA|[FV]\s*\()/gi, 
       (_, num) => `\n\nAfirmação ${num}:\n`)
-    // Limpar quebras excessivas
     .replace(/\n{3,}/g, '\n\n')
     .trim();
   
-  // ========== SEPARAR SÍNTESE DA SEQUÊNCIA FINAL ==========
-  // Detectar padrões de conclusão/síntese e garantir que fiquem em bloco separado
+  // ========== SEPARAR ALTERNATIVAS CORRIDAS ==========
+  // Quando alternativas vêm corridas: "❌ Alternativa A: texto. ✅ Alternativa B: texto..."
+  const altPattern = /([❌✅✔️✓✗✖️])\s*Alternativa\s+([A-E])\s*[:.\-–]?\s*/gi;
+  const altMatches = [...result.matchAll(new RegExp(altPattern.source, 'gi'))];
+  
+  if (altMatches.length > 1) {
+    let reformatted = '';
+    let lastEnd = 0;
+    
+    for (let i = 0; i < altMatches.length; i++) {
+      const currentMatch = altMatches[i];
+      const nextMatch = altMatches[i + 1];
+      
+      // Texto antes da primeira alternativa
+      if (i === 0 && currentMatch.index! > 0) {
+        const before = result.substring(0, currentMatch.index!).trim();
+        if (before) {
+          reformatted += before + '\n\n';
+        }
+      }
+      
+      const startIndex = currentMatch.index!;
+      const endIndex = nextMatch ? nextMatch.index! : result.length;
+      
+      let block = result.substring(startIndex, endIndex).trim();
+      
+      // Cada alternativa em nova linha
+      reformatted += '\n\n' + block;
+    }
+    
+    result = reformatted.trim();
+  }
+  
+  // ========== SEPARAR SÍNTESE/SEQUÊNCIA FINAL ==========
   const sequenciaPatterns = [
     /A\s+sequência\s+correta\s+é[:\s]*/gi,
     /Sequência\s+correta[:\s]*/gi,
@@ -190,9 +278,12 @@ function reformatAffirmations(text: string): string {
     result = result.replace(pattern, (match) => `\n\n${match}`);
   }
   
-  // Garantir que padrões "F – V – V – F" fiquem em linha própria se no final
+  // Padrões "F – V – V – F" ficam em linha própria
   result = result.replace(/([^\n])(\s+[FV]\s*[–\-]\s*[FV]\s*[–\-]\s*[FV]\s*[–\-]\s*[FV])(\s*,?\s*correspondente)?/gi, 
     '$1\n\n$2$3');
+  
+  // Remover marcador temporário de teoria
+  result = result.replace(/\[TEORIA_FIM\]/g, '');
   
   return result.replace(/\n{3,}/g, '\n\n').trim();
 }
@@ -331,8 +422,9 @@ function normalizeAlternativeContent(content: string): string {
 
 /**
  * =====================================================
- * PARSER INTELIGENTE v3.0 — PADRÃO INTERNACIONAL
+ * PARSER INTELIGENTE v4.0 — PEDAGOGIA ESTRUTURADA
  * Detecta, organiza, deduplica e formata seções
+ * Lema: "Se eu fosse aluno, conseguiria estudar isso rápido?"
  * =====================================================
  */
 function parseResolutionText(text: string): ParsedSection[] {
@@ -688,40 +780,63 @@ function parseResolutionText(text: string): ParsedSection[] {
     if (step) deduplicatedSections.push(step);
   }
 
-  // ========== AGRUPAMENTO DE ALTERNATIVAS EM SEÇÃO UNIFICADA ==========
+  // ========== AGRUPAMENTO DE ALTERNATIVAS EM SEÇÃO UNIFICADA v4.0 ==========
   // LEI PERMANENTE: Alternativas (A-E) ficam todas dentro de uma seção visual "ANÁLISE DAS ALTERNATIVAS"
-  // Cada alternativa formatada de forma LIMPA: Letra + Status + Explicação concisa
+  // Cada alternativa formatada de forma PEDAGÓGICA: Letra + Status + Explicação clara e concisa
+  // NUNCA misturar teoria com análise — cada alternativa tem sua explicação própria
   const orderedLetters = ['A', 'B', 'C', 'D', 'E'];
   const consolidatedAlternatives: string[] = [];
-  let hasCorrectAlternative = false;
   
   for (const letter of orderedLetters) {
     const alt = seenAlternatives.get(letter);
     if (alt) {
       const isCorrect = alt.type === 'alternativa_correta';
-      if (isCorrect) hasCorrectAlternative = true;
       
-      // Limpar o conteúdo da alternativa
+      // ========== LIMPEZA PEDAGÓGICA DO CONTEÚDO ==========
       let content = alt.content
+        // Remover marcadores redundantes
         .replace(/^\.+\s*/g, '')
         .replace(/^[:\-–→]\s*/g, '')
-        .replace(/\n{2,}/g, ' ')  // Manter em uma linha para ficar compacto
+        // Remover referências a outras alternativas dentro do texto desta
+        .replace(/[❌✅]\s*Alternativa\s*[A-E][^.]*\./gi, '')
+        .replace(/Alternativa\s*[A-E]\s*[:–\-]\s*[^.]*\./gi, '')
+        // Remover declarações redundantes de status
+        .replace(/Esta\s+(é\s+a\s+)?alternativa\s+(está\s+)?(CORRETA|INCORRETA|correta|incorreta)[!.]?\s*/gi, '')
+        .replace(/^(CORRETA|INCORRETA)[!.]?\s*/gi, '')
+        // Normalizar espaços
         .replace(/\s{2,}/g, ' ')
         .trim();
       
-      // Truncar explicações muito longas (manter conciso)
-      if (content.length > 300) {
-        const firstSentence = content.split(/(?<=[.!?])\s+/)[0] || content.substring(0, 250);
-        content = firstSentence.trim();
+      // ========== EXTRAÇÃO DA EXPLICAÇÃO PRINCIPAL ==========
+      // Se o texto é muito longo, extrair apenas a parte relevante para ESTA alternativa
+      if (content.length > 400) {
+        // Tentar encontrar a primeira sentença significativa (>50 chars) ou primeiro parágrafo
+        const sentences = content.split(/(?<=[.!?])\s+/).filter(s => s.trim().length > 0);
+        let extractedContent = '';
+        
+        for (const sentence of sentences) {
+          extractedContent += sentence + ' ';
+          // Parar quando tiver conteúdo suficiente (~200-300 chars) ou 2 sentenças
+          if (extractedContent.length >= 200 || sentences.indexOf(sentence) >= 1) {
+            break;
+          }
+        }
+        
+        content = extractedContent.trim();
         if (!content.endsWith('.') && !content.endsWith('!') && !content.endsWith('?')) {
           content += '.';
         }
       }
       
+      // Garantir que não está vazio
+      if (content.length < 10) {
+        content = isCorrect ? 'Esta é a alternativa correta.' : 'Esta alternativa está incorreta.';
+      }
+      
       const statusIcon = isCorrect ? '✅' : '❌';
       const statusLabel = isCorrect ? 'CORRETA' : 'INCORRETA';
       
-      // Formato limpo: ❌ A) INCORRETA — explicação breve
+      // Formato pedagógico limpo: ❌ A) INCORRETA — explicação clara
       consolidatedAlternatives.push(`${statusIcon} ${letter}) ${statusLabel} — ${content}`);
     }
   }
@@ -1287,8 +1402,9 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
 }));
 
 /**
- * Renderiza uma linha de alternativa consolidada com visual limpo
- * Formato: ✅ A) CORRETA — explicação
+ * Renderiza uma linha de alternativa consolidada com visual pedagógico v4.0
+ * Formato: ✅ A) CORRETA — explicação clara e organizada
+ * LEMA: "Se eu fosse aluno, conseguiria estudar isso rápido?"
  */
 const AlternativeLineItem = memo(function AlternativeLineItem({ line }: { line: string }) {
   const isCorrect = line.startsWith('✅');
@@ -1301,27 +1417,47 @@ const AlternativeLineItem = memo(function AlternativeLineItem({ line }: { line: 
   // Remover prefixo e extrair apenas a explicação
   const contentMatch = line.match(/[✅❌]\s*[A-E]\)\s*(CORRETA|INCORRETA)\s*[—–-]\s*(.+)/i);
   const status = contentMatch?.[1]?.toUpperCase() || (isCorrect ? 'CORRETA' : 'INCORRETA');
-  const explanation = contentMatch?.[2]?.trim() || line.replace(/^[✅❌]\s*[A-E]\)\s*(CORRETA|INCORRETA)\s*[—–-]?\s*/i, '').trim();
+  let explanation = contentMatch?.[2]?.trim() || line.replace(/^[✅❌]\s*[A-E]\)\s*(CORRETA|INCORRETA)\s*[—–-]?\s*/i, '').trim();
+  
+  // ========== LIMPEZA FINAL DA EXPLICAÇÃO ==========
+  // Remover referências a outras alternativas que vazaram para cá
+  explanation = explanation
+    .replace(/[❌✅]\s*Alternativa\s*[A-E][^.]*\./gi, '')
+    .replace(/Alternativa\s*[A-E]\s*[:–\-][^.]*\./gi, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
   
   return (
     <div className={cn(
-      'flex items-start gap-2 py-2 px-3 rounded-lg',
-      isCorrect ? 'bg-green-500/10' : 'bg-red-500/5'
+      'flex items-start gap-3 py-3 px-4 rounded-lg border-l-2',
+      isCorrect 
+        ? 'bg-green-500/10 border-l-green-500' 
+        : 'bg-red-500/5 border-l-red-500'
     )}>
       <IconComponent className={cn(
-        'h-4 w-4 flex-shrink-0 mt-0.5',
+        'h-5 w-5 flex-shrink-0 mt-0.5',
         isCorrect ? 'text-green-500' : 'text-red-500'
       )} />
       <div className="flex-1 min-w-0">
-        <span className={cn(
-          'font-bold text-sm',
-          isCorrect ? 'text-green-600' : 'text-red-600'
-        )}>
-          {letter}) {status}
-        </span>
-        <span className="text-foreground/80 text-sm ml-1">
-          — {formatTextContent(explanation)}
-        </span>
+        <div className="flex items-center gap-2 mb-1">
+          <span className={cn(
+            'font-bold text-sm uppercase',
+            isCorrect ? 'text-green-600' : 'text-red-600'
+          )}>
+            Alternativa {letter}
+          </span>
+          <span className={cn(
+            'text-xs font-semibold px-2 py-0.5 rounded-full',
+            isCorrect 
+              ? 'bg-green-500/20 text-green-600' 
+              : 'bg-red-500/20 text-red-600'
+          )}>
+            {status}
+          </span>
+        </div>
+        <p className="text-foreground/80 text-sm leading-relaxed text-justify">
+          {formatTextContent(explanation)}
+        </p>
       </div>
     </div>
   );
@@ -1356,22 +1492,25 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
     );
   }
 
-  // ANÁLISE DAS ALTERNATIVAS — Seção agrupada especial v3.3
-  if (section.type === 'analise_header' && section.content.includes('✅') || section.content.includes('❌')) {
+  // ANÁLISE DAS ALTERNATIVAS — Seção agrupada especial v4.0 PEDAGOGIA ESTRUTURADA
+  if (section.type === 'analise_header' && (section.content.includes('✅') || section.content.includes('❌'))) {
     const lines = section.content.split('\n\n').filter(l => l.trim());
     
     return (
-      <div className="rounded-xl overflow-hidden border-l-4 border-l-indigo-500 border-t border-r border-b border-indigo-500/30 bg-indigo-500/5">
-        {/* Header */}
-        <div className="px-4 py-2.5 flex items-center gap-2 bg-indigo-500/20">
-          <ListChecks className="h-4 w-4 text-indigo-500" />
-          <h4 className="font-bold text-sm text-indigo-500">
-            ANÁLISE DAS ALTERNATIVAS
+      <div className="rounded-xl overflow-hidden border border-indigo-500/30 bg-indigo-500/5">
+        {/* Header com destaque */}
+        <div className="px-4 py-3 flex items-center gap-2 bg-gradient-to-r from-indigo-500/20 to-indigo-500/10 border-b border-indigo-500/20">
+          <ListChecks className="h-5 w-5 text-indigo-500" />
+          <h4 className="font-bold text-sm text-indigo-500 uppercase tracking-wide">
+            Análise das Alternativas
           </h4>
+          <span className="text-xs text-indigo-400 ml-auto">
+            {lines.length} alternativa{lines.length !== 1 ? 's' : ''}
+          </span>
         </div>
         
-        {/* Lista de alternativas - organizada e limpa */}
-        <div className="px-3 py-2 space-y-1">
+        {/* Lista de alternativas - organizada pedagogicamente */}
+        <div className="p-3 space-y-2">
           {lines.map((line, idx) => (
             <AlternativeLineItem key={idx} line={line} />
           ))}
