@@ -312,26 +312,103 @@ function parseResolutionText(text: string): ParsedSection[] {
     }
   }
 
-  // ========== MERGE DE SEÇÕES CONSECUTIVAS DO MESMO TIPO ==========
-  // Agrupa seções como "pegadinhas" que aparecem múltiplas vezes seguidas
-  const mergedSections: ParsedSection[] = [];
+  // ========== MERGE GLOBAL DE SEÇÕES DO MESMO TIPO ==========
+  // REGRA UNIVERSAL: Agrupa TODAS as seções do mesmo tipo mergeable
+  // NÃO importa se são consecutivas ou não - SEMPRE agrupa em uma única seção
+  // Tipos afetados: pegadinhas, dica, estrategia
+  // Esta é uma REGRA ABSOLUTA e PERMANENTE conforme Constitution v10.0
+  
   const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia'];
   
-  for (let i = 0; i < sections.length; i++) {
-    const current = sections[i];
-    const lastMerged = mergedSections[mergedSections.length - 1];
-    
-    // Se o tipo atual é mergeable e o último também é do mesmo tipo, junta o conteúdo
-    if (
-      lastMerged && 
-      mergableTypes.includes(current.type) && 
-      lastMerged.type === current.type
-    ) {
-      // Adiciona o conteúdo ao bloco existente com separador
-      lastMerged.content = `${lastMerged.content}\n\n• ${current.content}`;
+  // Passo 1: Separar seções mergeáveis das não-mergeáveis
+  const nonMergeable: ParsedSection[] = [];
+  const mergeableByType: Map<SectionType, ParsedSection[]> = new Map();
+  
+  for (const section of sections) {
+    if (mergableTypes.includes(section.type)) {
+      const existing = mergeableByType.get(section.type) || [];
+      existing.push(section);
+      mergeableByType.set(section.type, existing);
     } else {
-      // Adiciona como nova seção
-      mergedSections.push({ ...current });
+      nonMergeable.push(section);
+    }
+  }
+  
+  // Passo 2: Criar seções consolidadas para cada tipo mergeable
+  const consolidatedMergeable: ParsedSection[] = [];
+  
+  for (const [type, sectionsOfType] of mergeableByType.entries()) {
+    if (sectionsOfType.length === 0) continue;
+    
+    // Extrair todos os conteúdos únicos (deduplicação)
+    const allContents: string[] = [];
+    
+    for (const section of sectionsOfType) {
+      // Limpar o conteúdo de marcadores repetidos
+      let content = section.content
+        .replace(/^[•\-\s]+/gm, '')  // Remove bullets do início
+        .replace(/PEGADINHAS?\s*(COMUNS?)?:?\s*/gi, '')  // Remove headers internos
+        .replace(/DICA\s*DE\s*OURO:?\s*/gi, '')
+        .replace(/DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA:?\s*/gi, '')
+        .replace(/ESTRATÉGIA:?\s*/gi, '')
+        .replace(/\*\*Gabarito:[^\*]+\*\*/gi, '')  // Remove gabarito duplicado
+        .replace(/---+/g, '')  // Remove separadores
+        .replace(/\n{3,}/g, '\n\n')  // Normaliza quebras de linha
+        .trim();
+      
+      if (content) {
+        // Dividir em itens individuais se tiver múltiplos bullets
+        const items = content.split(/\n+/).filter(item => item.trim());
+        
+        for (const item of items) {
+          const normalizedItem = item.replace(/^[•\-\s]+/, '').trim();
+          
+          // Verificar duplicação semântica (ignorando pontuação e espaços)
+          const normalized = normalizedItem.toLowerCase().replace(/[^\w\s]/g, '').trim();
+          
+          const isDuplicate = allContents.some(existing => {
+            const existingNormalized = existing.toLowerCase().replace(/[^\w\s]/g, '').trim();
+            return existingNormalized === normalized || 
+                   existingNormalized.includes(normalized) ||
+                   normalized.includes(existingNormalized);
+          });
+          
+          if (!isDuplicate && normalizedItem.length > 10) {
+            allContents.push(normalizedItem);
+          }
+        }
+      }
+    }
+    
+    if (allContents.length > 0) {
+      // Formatar como lista com bullets
+      const consolidatedContent = allContents.length === 1
+        ? allContents[0]
+        : allContents.map(item => `• ${item}`).join('\n\n');
+      
+      consolidatedMergeable.push({
+        type,
+        content: consolidatedContent,
+        title: sectionsOfType[0].title,
+      });
+    }
+  }
+  
+  // Passo 3: Reconstruir array final mantendo ordem lógica
+  // Ordem: intro > passos > alternativas > conclusão > competência > [estratégia, pegadinhas, dica]
+  const mergedSections: ParsedSection[] = [];
+  
+  // Adicionar não-mergeáveis na ordem original
+  for (const section of nonMergeable) {
+    mergedSections.push(section);
+  }
+  
+  // Adicionar mergeáveis consolidados no final (ordem: estrategia > pegadinhas > dica)
+  const mergeOrder: SectionType[] = ['estrategia', 'pegadinhas', 'dica'];
+  for (const type of mergeOrder) {
+    const consolidated = consolidatedMergeable.find(s => s.type === type);
+    if (consolidated) {
+      mergedSections.push(consolidated);
     }
   }
 
