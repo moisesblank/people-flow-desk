@@ -1009,7 +1009,7 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
     >
       <div
         className={cn(
-          'text-sm leading-relaxed',
+          'text-sm leading-relaxed text-justify',
           isCorrect ? 'text-green-600' : isAnalise ? 'text-blue-600' : 'text-red-600'
         )}
       >
@@ -1018,7 +1018,7 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
           {label} {letter}
         </span>
         {!isAnalise && <span className="font-bold"> — {status}</span>}
-        <span className="text-foreground/80 ml-2">→ {formatContent(section.content)}</span>
+        <span className="text-foreground/80 ml-2 text-justify">→ {formatContent(section.content)}</span>
       </div>
     </div>
   );
@@ -1247,11 +1247,11 @@ const QuestionResolution = memo(function QuestionResolution({
                 <div className="divide-y divide-blue-500/20">
                   {sortedPassos.map((section, index) => (
                     <div key={`passo-${index}`} className="px-4 py-3">
-                      <div className="text-sm">
+                      <div className="text-sm text-justify">
                         <span className="font-bold text-blue-500">
                           PASSO {section.stepNumber}
                         </span>
-                        <span className="text-foreground/90 ml-2">
+                        <span className="text-foreground/90 ml-2 text-justify">
                           {formatContent(section.content)}
                         </span>
                       </div>
