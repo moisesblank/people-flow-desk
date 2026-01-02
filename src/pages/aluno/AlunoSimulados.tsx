@@ -53,13 +53,13 @@ export default function AlunoSimulados() {
   const { data: simuladosQuestions, isLoading: isLoadingQuestions } = useQuery({
     queryKey: ['aluno-questions', 'SIMULADOS'],
     queryFn: async () => {
+      // ⚡ ESCALA 45K: Sem limite artificial para questões de simulado
       const { data, error } = await supabase
         .from('quiz_questions')
         .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active')
         .contains('tags', ['SIMULADOS'])
         .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(100);
+        .order('created_at', { ascending: false });
       if (error) throw error;
       return data || [];
     },

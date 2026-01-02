@@ -64,9 +64,10 @@ export function StorageAndBackupWidget({ collapsed = false }: BackupWidgetProps)
 
       for (const bucketName of buckets) {
         try {
+          // ESCALA 45K: Limite aumentado para listar todos os arquivos
           const { data: files, error } = await supabase.storage
             .from(bucketName)
-            .list('', { limit: 1000 });
+            .list('', { limit: 10000 });
 
           if (!error && files) {
             let bucketSize = 0;

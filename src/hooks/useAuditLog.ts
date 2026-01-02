@@ -119,7 +119,7 @@ export const useAuditLog = () => {
       const fromDate = new Date();
       fromDate.setDate(fromDate.getDate() - days);
       
-      const allLogs = await fetchAuditLogs({ fromDate, limit: 1000 });
+      const allLogs = await fetchAuditLogs({ fromDate, limit: 10000 }); // ESCALA 45K
       
       // Agrupar por ação
       const byAction: Record<string, number> = {};

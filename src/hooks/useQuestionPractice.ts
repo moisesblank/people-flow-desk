@@ -239,10 +239,13 @@ export function usePracticeHistory() {
     async () => {
       if (!user?.id) return { totalAttempts: 0, correctCount: 0, wrongCount: 0, accuracy: 0 };
 
+      // ⚡ ESCALA 45K: Contagem precisa com limite alto
+      // @ts-ignore - Supabase type recursion workaround
       const { data, error } = await supabase
         .from("quiz_answers")
         .select("is_correct")
-        .limit(1000);
+        .eq('user_id', user.id)
+        .limit(45000);
 
       if (error) throw error;
 
