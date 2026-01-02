@@ -1703,7 +1703,16 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
         // ═══════════════════════════════════════════════════════════════════
         if (insertedData?.id && camposInferidos.length > 0) {
           const aiLogs = camposInferidos
-            .filter(c => c.includes(':ai_') || c.includes(':fallback_'))
+            // Captura inferências reais (ai_inference) e fallbacks (fallback_*)
+            .filter((c) => {
+              const [, method] = c.split(':');
+              if (!method) return false;
+              return (
+                method.includes('ai_inference') ||
+                method.includes('ai_generated') ||
+                method.includes('fallback')
+              );
+            })
             .map(campo => {
               const [field, method] = campo.split(':');
               const interventionType = method.includes('ai_inference') 
