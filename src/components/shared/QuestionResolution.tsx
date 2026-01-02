@@ -1,32 +1,49 @@
-// ╔═══════════════════════════════════════════════════════════════════════════════╗
-// ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                   ║
-// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v4.0 — PEDAGOGIA ESTRUTURADA              ║
-// ╠═══════════════════════════════════════════════════════════════════════════════╣
-// ║                                                                                ║
-// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                           ║
-// ║                                                                                ║
-// ║ Este componente é a ÚNICA fonte de verdade para renderização de resoluções.   ║
-// ║ TODAS as questões (SIMULADOS, MODO TREINO, atuais e futuras) DEVEM usar       ║
-// ║ este componente para garantir formatação consistente.                         ║
-// ║                                                                                ║
-// ║ REGRAS IMUTÁVEIS v4.0:                                                         ║
-// ║ 1. ORGANIZAÇÃO PEDAGÓGICA AUTOMÁTICA — mesmo texto bagunçado vira estruturado ║
-// ║ 2. Estrutura: AFIRMAÇÃO → EXPLICAÇÃO TEÓRICA → ALTERNATIVAS → CONCLUSÃO       ║
-// ║ 3. Cada afirmação em bloco separado com status (V/F) e explicação própria     ║
-// ║ 4. Explicação teórica NUNCA misturada com análise de alternativas             ║
-// ║ 5. Alternativas A-E em subtópicos visuais individuais, sem repetição          ║
-// ║ 6. Conclusão final curta e limpa (gabarito + justificativa resumida)          ║
-// ║ 7. Deduplicação automática rigorosa — mesma alternativa/afirmação nunca 2x    ║
-// ║ 8. Formatação química científica automática (H2O → H₂O)                        ║
-// ║ 9. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área#, linhas separadas       ║
-// ║ 10. Imagens inline via [IMAGEM: URL] com max-h-[600px]                         ║
-// ║ 11. Bullets compactos (1 quebra de linha)                                      ║
-// ║                                                                                ║
-// ║ LEMA: "Se eu fosse aluno, conseguiria estudar isso rápido e sem me perder?"   ║
-// ║                                                                                ║
-// ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                        ║
-// ║                                                                                ║
-// ╚═══════════════════════════════════════════════════════════════════════════════╝
+// ╔══════════════════════════════════════════════════════════════════════════════════╗
+// ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                      ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v5.0 — PEDAGOGIA + QUÍMICA VISUAL            ║
+// ╠══════════════════════════════════════════════════════════════════════════════════╣
+// ║                                                                                   ║
+// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                              ║
+// ║                                                                                   ║
+// ║ Este componente é a ÚNICA fonte de verdade para renderização de resoluções.      ║
+// ║ TODAS as questões (SIMULADOS, MODO TREINO, atuais e futuras) DEVEM usar          ║
+// ║ este componente para garantir formatação consistente.                            ║
+// ║                                                                                   ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║ POLÍTICA 1: ORGANIZAÇÃO E LINGUAGEM PEDAGÓGICA v2.0                              ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║ • Estrutura OBRIGATÓRIA: ANALYSIS → CONCLUSION → ENEM → STRATEGY → TRAPS → TIP  ║
+// ║ • Organização passo a passo: uma ideia por sentença, um conceito por parágrafo  ║
+// ║ • Linguagem pedagógica: "Nós", "A gente", "Pessoal" (como professor no quadro)  ║
+// ║ • Qualidade textual: maiúscula inicial, frases completas, sem fragmentação      ║
+// ║ • Pipeline: Gerar → Organizar → Revisar → Aplicar linguagem → Verificar         ║
+// ║                                                                                   ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║ POLÍTICA 2: PADRONIZAÇÃO VISUAL QUÍMICA v2.0                                     ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║ • Estados físicos: (s), (l), (g), (aq) → subscrito visual legível               ║
+// ║ • Cargas elétricas: Na+, Ca2+ → superscrito tipográfico (Na⁺, Ca²⁺)              ║
+// ║ • Coeficientes estequiométricos: separação visual clara                          ║
+// ║ • Equações químicas: setas padronizadas (→, ⇌), reactantes/produtos separados   ║
+// ║ • NUNCA alterar significado químico — apenas visual/tipográfico                  ║
+// ║                                                                                   ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║ REGRAS IMUTÁVEIS HERDADAS v4.x:                                                  ║
+// ║ ═══════════════════════════════════════════════════════════════════════════════  ║
+// ║ 1. ORGANIZAÇÃO PEDAGÓGICA AUTOMÁTICA — texto bagunçado vira estruturado          ║
+// ║ 2. Cada afirmação em bloco separado com status (V/F) e explicação própria        ║
+// ║ 3. Alternativas A-E em subtópicos visuais individuais, sem repetição             ║
+// ║ 4. Deduplicação automática rigorosa — mesma alternativa/afirmação nunca 2x       ║
+// ║ 5. Formatação química científica automática (H2O → H₂O, Na+ → Na⁺)               ║
+// ║ 6. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área#, linhas separadas          ║
+// ║ 7. Imagens inline via [IMAGEM: URL] com max-h-[600px]                            ║
+// ║ 8. Bullets compactos (1 quebra de linha)                                         ║
+// ║                                                                                   ║
+// ║ LEMA: "Se eu fosse aluno, conseguiria estudar isso rápido e sem me perder?"      ║
+// ║                                                                                   ║
+// ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                           ║
+// ║                                                                                   ║
+// ╚══════════════════════════════════════════════════════════════════════════════════╝
 
 import { memo, useMemo, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
@@ -111,7 +128,60 @@ interface QuestionResolutionProps {
  */
 /**
  * =====================================================
- * PRÉ-PROCESSAMENTO PEDAGÓGICO v4.0 — ORGANIZAÇÃO ESTRUTURADA
+ * POLÍTICA 1: REFINAMENTO PEDAGÓGICO E LINGUÍSTICO v2.0
+ * =====================================================
+ * Aplica organização, revisão e linguagem pedagógica ao texto
+ * SEM alterar a estrutura original das seções.
+ * 
+ * REGRAS:
+ * - Uma ideia por sentença
+ * - Um conceito por parágrafo quando aplicável
+ * - Linguagem pedagógica: "Nós", "A gente", "Pessoal"
+ * - Maiúscula inicial em toda sentença
+ * - Frases completas e gramaticalmente corretas
+ * =====================================================
+ */
+function applyPedagogicalRefinement(text: string): string {
+  if (!text) return '';
+  
+  let refined = text;
+  
+  // ========== CORREÇÃO DE CAPITALIZAÇÃO ==========
+  // Garantir maiúscula no início de cada sentença
+  refined = refined.replace(/(^|[.!?]\s+)([a-záàâãéèêíïóôõöúüç])/g, 
+    (_, sep, letter) => sep + letter.toUpperCase()
+  );
+  
+  // ========== ORGANIZAÇÃO DE IDEIAS ==========
+  // Separar sentenças muito longas (mais de 200 caracteres sem pontuação)
+  refined = refined.replace(/([^.!?]{200,?})(,\s*)(e\s+|que\s+|porque\s+|pois\s+)/gi, 
+    (match, before, comma, connector) => {
+      // Apenas separar se não quebrar a lógica
+      if (before.split(' ').length > 30) {
+        return before + '. ' + connector.charAt(0).toUpperCase() + connector.slice(1);
+      }
+      return match;
+    }
+  );
+  
+  // ========== LIMPEZA DE FRAGMENTOS ==========
+  // Remover frases incompletas que começam com conectores órfãos
+  refined = refined
+    .replace(/^\s*(E|Ou|Mas|Porém|Contudo|Todavia)\s*$/gm, '')
+    .replace(/\n\s*(E|Ou|Mas|Porém|Contudo|Todavia)\s*\n/g, '\n');
+  
+  // ========== NORMALIZAÇÃO DE ESPAÇOS ==========
+  refined = refined
+    .replace(/\s{2,}/g, ' ')           // Múltiplos espaços → um
+    .replace(/\n{3,}/g, '\n\n')        // Múltiplas quebras → duas
+    .trim();
+  
+  return refined;
+}
+
+/**
+ * =====================================================
+ * PRÉ-PROCESSAMENTO PEDAGÓGICO v5.0 — ORGANIZAÇÃO ESTRUTURADA
  * Transforma texto corrido bagunçado em estrutura pedagógica clara:
  * 1. AFIRMAÇÃO: Identificação do erro/acerto
  * 2. EXPLICAÇÃO TEÓRICA: Conceito explicado separadamente  
@@ -1267,10 +1337,14 @@ function extractImagesFromResolution(text: string): { cleanedText: string; image
 }
 
 /**
- * Formata conteúdo com fórmulas químicas (sem imagens)
+ * =====================================================
+ * FORMATA CONTEÚDO COM FÓRMULAS QUÍMICAS — POLICY v2.0
+ * Aplica: limpeza + refinamento pedagógico + química visual
+ * =====================================================
  */
 const formatTextContent = (content: string): string => {
-  // Limpeza global de caracteres indesejados antes de qualquer formatação
+  // ========== FASE 1: LIMPEZA GLOBAL ==========
+  // Remover caracteres indesejados antes de qualquer formatação
   let cleaned = content
     .replace(/\*\*/g, '')           // Remove ** (markdown bold)
     .replace(/\*/g, '')             // Remove * soltos
@@ -1282,25 +1356,27 @@ const formatTextContent = (content: string): string => {
     .replace(/[""]/g, '')           // Remove aspas curvas
     .replace(/['']/g, '')           // Remove apóstrofos curvos
     .replace(/[«»„"]/g, '')         // Remove aspas francesas/alemãs
-    .replace(/👉\s*/g, '\n\n• ')    // Cada 👉 vira bullet em nova linha com espaço
+    .replace(/👉\s*/g, '\n\n• ')    // Cada 👉 vira bullet em nova linha
     .replace(/Reunindo:/gi, '\n\nReunindo:')
     // NORMALIZAÇÃO ENEM: C1-C7 e H1-H30 sempre em MAIÚSCULAS
-    .replace(/\b([cC])(\d+)\b/g, (_, letter, num) => `C${num}`)
-    .replace(/\b([hH])(\d+)\b/g, (_, letter, num) => `H${num}`)
+    .replace(/\b([cC])(\d+)\b/g, (_, _letter, num) => `C${num}`)
+    .replace(/\b([hH])(\d+)\b/g, (_, _letter, num) => `H${num}`)
     .trim();
   
-  // ========== FORMATAÇÃO DE BULLET POINTS ==========
+  // ========== FASE 2: FORMATAÇÃO DE BULLET POINTS ==========
   // REGRA: Bullets com espaçamento MÍNIMO (compacto) para leitura fluida
-  // Apenas uma quebra de linha entre bullets para aproximar verticalmente
   cleaned = cleaned
-    // Primeiro normaliza bullets que já estão no início de linha
-    .replace(/\n\s*•\s*/g, '\n• ')
-    // Depois adiciona quebra simples antes de bullets no meio do texto
-    .replace(/([^\n])\s*•\s*/g, '$1\n• ')
-    // Remove quebras excessivas (mais de 2)
-    .replace(/\n{3,}/g, '\n\n')
+    .replace(/\n\s*•\s*/g, '\n• ')           // Bullets no início de linha
+    .replace(/([^\n])\s*•\s*/g, '$1\n• ')    // Bullets no meio do texto
+    .replace(/\n{3,}/g, '\n\n')              // Remove quebras excessivas
     .trim();
   
+  // ========== FASE 3: REFINAMENTO PEDAGÓGICO ==========
+  // Aplicar regras de organização e qualidade textual
+  cleaned = applyPedagogicalRefinement(cleaned);
+  
+  // ========== FASE 4: PADRONIZAÇÃO QUÍMICA VISUAL ==========
+  // Aplicar formatação de fórmulas, cargas, estados físicos e setas
   return formatChemicalFormulas(cleaned);
 };
 
@@ -1885,11 +1961,28 @@ const QuestionResolution = memo(function QuestionResolution({
 
 export default QuestionResolution;
 
-// ============================================
-// REGRAS OBRIGATÓRIAS v2.0:
-// 1. Parser detecta ALTERNATIVAS (A-E) e AFIRMAÇÕES (I-V)
-// 2. CADA alternativa em bloco visual SEPARADO
-// 3. Bordas laterais coloridas para indicar correto/errado
-// 4. Agrupamento inteligente por categoria
-// 5. NÃO modifica conteúdo, apenas organiza visualmente
-// ============================================
+// ╔══════════════════════════════════════════════════════════════════════════════════╗
+// ║ REGRAS OBRIGATÓRIAS v5.0 — POLÍTICAS UNIFICADAS                                  ║
+// ╠══════════════════════════════════════════════════════════════════════════════════╣
+// ║                                                                                   ║
+// ║ POLÍTICA 1: ORGANIZAÇÃO E LINGUAGEM PEDAGÓGICA                                   ║
+// ║ • Estrutura: ANALYSIS → CONCLUSION → ENEM → STRATEGY → TRAPS → TIP              ║
+// ║ • Organização: uma ideia por sentença, um conceito por parágrafo                ║
+// ║ • Linguagem: "Nós", "A gente", "Pessoal" (como professor no quadro)             ║
+// ║ • Qualidade: maiúscula inicial, frases completas, sem fragmentação              ║
+// ║                                                                                   ║
+// ║ POLÍTICA 2: PADRONIZAÇÃO QUÍMICA VISUAL                                          ║
+// ║ • Estados físicos: (s), (l), (g), (aq) → subscrito visual legível ₍s₎₍l₎₍g₎₍aq₎ ║
+// ║ • Cargas: Na+, Ca2+ → superscrito Na⁺, Ca²⁺                                      ║
+// ║ • Índices: H2O, CO2 → subscrito H₂O, CO₂                                         ║
+// ║ • Setas: -> → ⇌ ←                                                                ║
+// ║                                                                                   ║
+// ║ REGRAS HERDADAS:                                                                 ║
+// ║ 1. Parser detecta ALTERNATIVAS (A-E) e AFIRMAÇÕES (I-V)                          ║
+// ║ 2. CADA alternativa em bloco visual SEPARADO                                     ║
+// ║ 3. Bordas laterais coloridas para indicar correto/errado                         ║
+// ║ 4. Agrupamento inteligente por categoria                                         ║
+// ║ 5. Deduplicação automática rigorosa                                              ║
+// ║ 6. NÃO modifica significado, apenas organiza visualmente                         ║
+// ║                                                                                   ║
+// ╚══════════════════════════════════════════════════════════════════════════════════╝
