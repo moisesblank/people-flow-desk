@@ -88,18 +88,18 @@ export const CONSTITUTION_FINAL_QUESTION_COMPLETENESS = {
         ai_can_change: false, // IA nunca altera MACRO
       },
       micro: { 
-        required: true, 
-        fallback: 'Conceitos Gerais',
+        required: false, // CORREÇÃO v10.0.1: Não obrigatório, IA infere
+        fallback: '',    // Vazio para permitir inferência pela IA
         ai_can_change: true,
       },
       tema: { 
-        required: true, 
-        fallback: 'Fundamentos',
+        required: false, // CORREÇÃO v10.0.1: Não obrigatório, IA infere
+        fallback: '',    // Vazio para permitir inferência pela IA
         ai_can_change: true,
       },
       subtema: { 
-        required: true, 
-        fallback: 'Básico',
+        required: false, // CORREÇÃO v10.0.1: Não obrigatório, IA infere
+        fallback: '',    // Vazio para permitir inferência pela IA
         ai_can_change: true,
       },
       difficulty: { 
@@ -268,19 +268,21 @@ export function applyCompletenessFallbacks(question: any): any {
     camposInferidos.push('macro:fallback_default');
   }
   
+  // CORREÇÃO v10.0.1: NÃO aplicar fallbacks genéricos para MICRO/TEMA/SUBTEMA
+  // Deixar vazio para que a IA possa inferir valores canônicos da taxonomia
   if (!updated.micro?.trim()) {
-    updated.micro = mapping.micro.fallback;
-    camposInferidos.push('micro:fallback_default');
+    updated.micro = ''; // Vazio para inferência pela IA
+    camposInferidos.push('micro:empty_for_ai_inference');
   }
   
   if (!updated.tema?.trim()) {
-    updated.tema = mapping.tema.fallback;
-    camposInferidos.push('tema:fallback_default');
+    updated.tema = ''; // Vazio para inferência pela IA
+    camposInferidos.push('tema:empty_for_ai_inference');
   }
   
   if (!updated.subtema?.trim()) {
-    updated.subtema = mapping.subtema.fallback;
-    camposInferidos.push('subtema:fallback_default');
+    updated.subtema = ''; // Vazio para inferência pela IA (opcional)
+    camposInferidos.push('subtema:empty_for_ai_inference');
   }
   
   if (!updated.difficulty?.trim()) {
