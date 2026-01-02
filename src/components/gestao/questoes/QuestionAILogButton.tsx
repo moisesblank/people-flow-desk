@@ -39,10 +39,7 @@ const QuestionAILogButton = memo(({
 }: QuestionAILogButtonProps) => {
   const [showLogs, setShowLogs] = useState(false);
 
-  // Se não há logs e não está carregando, não mostrar nada
-  if (!isLoading && (!summary || summary.log_count === 0)) {
-    return null;
-  }
+  const hasLogs = summary && summary.log_count > 0;
 
   // Renderização durante loading
   if (isLoading) {
@@ -89,10 +86,9 @@ const QuestionAILogButton = memo(({
                 size="icon"
                 className={cn(
                   "h-8 w-8 relative",
-                  "bg-gradient-to-br from-primary/10 to-purple-500/10",
-                  "hover:from-primary/20 hover:to-purple-500/20",
-                  "border border-primary/30",
-                  "text-primary",
+                  hasLogs 
+                    ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border border-primary/30 text-primary"
+                    : "bg-muted/50 hover:bg-muted border border-border/50 text-muted-foreground",
                   className
                 )}
                 onClick={(e) => {
@@ -102,14 +98,16 @@ const QuestionAILogButton = memo(({
                 title="Ver Log de IA"
               >
                 <Bot className="h-4 w-4" />
-                {/* Badge de contagem */}
-                <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
-                  {summary?.log_count || 0}
-                </span>
+                {/* Badge de contagem - só mostra se há logs */}
+                {hasLogs && (
+                  <span className="absolute -top-1 -right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-primary-foreground">
+                    {summary?.log_count || 0}
+                  </span>
+                )}
               </Button>
             </TooltipTrigger>
             <TooltipContent side="top" className="max-w-xs">
-              {tooltipContent}
+              {hasLogs ? tooltipContent : <p className="text-muted-foreground">Nenhuma intervenção de IA registrada</p>}
             </TooltipContent>
           </Tooltip>
         </TooltipProvider>
@@ -132,19 +130,20 @@ const QuestionAILogButton = memo(({
           size="sm"
           className={cn(
             "gap-2",
-            "bg-gradient-to-br from-primary/10 to-purple-500/10",
-            "hover:from-primary/20 hover:to-purple-500/20",
-            "border-primary/30",
-            "text-primary",
+            hasLogs 
+              ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border-primary/30 text-primary"
+              : "bg-muted/50 hover:bg-muted border-border/50 text-muted-foreground",
             className
           )}
           onClick={() => setShowLogs(true)}
         >
           <Bot className="h-4 w-4" />
           AI Log
-          <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
-            {summary?.log_count || 0}
-          </Badge>
+          {hasLogs && (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-xs">
+              {summary?.log_count || 0}
+            </Badge>
+          )}
         </Button>
 
         <QuestionAILogViewer
@@ -163,10 +162,9 @@ const QuestionAILogButton = memo(({
         variant="outline"
         className={cn(
           "cursor-pointer gap-1",
-          "bg-gradient-to-br from-primary/10 to-purple-500/10",
-          "hover:from-primary/20 hover:to-purple-500/20",
-          "border-primary/30",
-          "text-primary",
+          hasLogs 
+            ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border-primary/30 text-primary"
+            : "bg-muted/50 hover:bg-muted border-border/50 text-muted-foreground",
           className
         )}
         onClick={(e) => {
@@ -175,7 +173,7 @@ const QuestionAILogButton = memo(({
         }}
       >
         <Bot className="h-3 w-3" />
-        AI: {summary?.log_count}
+        AI: {hasLogs ? summary?.log_count : 0}
       </Badge>
 
       <QuestionAILogViewer

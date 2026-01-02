@@ -176,6 +176,55 @@ export function useQuestionsWithAILogs(questionIds: string[]) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// HOOK - RESUMO GLOBAL DE LOGS (para botão global na toolbar)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface GlobalAILogSummary {
+  total_logs: number;
+  questions_with_logs: number;
+  intervention_types: AIInterventionType[];
+  last_intervention_at: string | null;
+}
+
+export function useGlobalAILogsSummary() {
+  return useQuery({
+    queryKey: ['global-ai-logs-summary'],
+    queryFn: async (): Promise<GlobalAILogSummary> => {
+      const { data, error } = await supabase
+        .from('question_ai_intervention_logs')
+        .select('question_id, intervention_type, created_at')
+        .order('created_at', { ascending: false })
+        .limit(1000); // Limitar para performance
+
+      if (error) {
+        console.error('[useGlobalAILogsSummary] Erro:', error);
+        throw error;
+      }
+
+      const uniqueQuestions = new Set<string>();
+      const uniqueTypes = new Set<AIInterventionType>();
+      let lastIntervention: string | null = null;
+
+      for (const row of data || []) {
+        uniqueQuestions.add(row.question_id);
+        uniqueTypes.add(row.intervention_type as AIInterventionType);
+        if (!lastIntervention) {
+          lastIntervention = row.created_at;
+        }
+      }
+
+      return {
+        total_logs: data?.length || 0,
+        questions_with_logs: uniqueQuestions.size,
+        intervention_types: Array.from(uniqueTypes),
+        last_intervention_at: lastIntervention,
+      };
+    },
+    staleTime: 60_000, // 1 minuto
+  });
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // FUNÇÃO PARA FORMATAR LOG EM TEXTO DETALHADO
 // ═══════════════════════════════════════════════════════════════════════════════
 
