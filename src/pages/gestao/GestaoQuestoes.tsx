@@ -962,10 +962,14 @@ function GestaoQuestoes() {
   const loadQuestions = useCallback(async () => {
     setIsLoading(true);
     try {
+      // ESCALA 45K: Remover limite default do Supabase (1000)
+      // Sem .limit() = Supabase aplica 1000 automaticamente
+      // Usar .limit(45000) para garantir carregamento completo
       const { data, error } = await supabase
         .from('quiz_questions')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('created_at', { ascending: false })
+        .limit(45000);
 
       if (error) throw error;
 
