@@ -96,7 +96,7 @@ function cleanResolutionText(text: string): string {
   let cleaned = text;
   
   // ========== REMOÇÃO GLOBAL DE CARACTERES INDESEJADOS ==========
-  // REGRA PERMANENTE: remover **, 里, ⚠ de TODO o texto
+  // REGRA PERMANENTE: remover **, 里, ⚠, "", '' de TODO o texto
   cleaned = cleaned
     .replace(/\*\*/g, '')           // Remove ** (markdown bold)
     .replace(/里/g, '')             // Remove caractere chinês 里
@@ -105,6 +105,10 @@ function cleanResolutionText(text: string): string {
     .replace(/吝/g, '')             // Remove outro caractere chinês
     .replace(/離/g, '')             // Remove caractere chinês 離
     .replace(/️/g, '')              // Remove variation selectors órfãos
+    .replace(/[""]/g, '')           // Remove aspas curvas (curly quotes)
+    .replace(/['']/g, '')           // Remove apóstrofos curvos
+    .replace(/[«»]/g, '')           // Remove aspas francesas
+    .replace(/[„"]/g, '')           // Remove aspas alemãs
     .trim();
   
   // PASSO 1: Remover lixo de HTML/interface
@@ -182,6 +186,9 @@ function normalizeAlternativeContent(content: string): string {
     .replace(/離/g, '')
     .replace(/⚠️?/g, '')
     .replace(/️/g, '')
+    .replace(/[""]/g, '')           // Remove aspas curvas
+    .replace(/['']/g, '')           // Remove apóstrofos curvos
+    .replace(/[«»„"]/g, '')         // Remove aspas francesas/alemãs
     // Remove prefixos de marcador
     .replace(/^Esta\s+alternativa\s+está\s+(in)?correta\.?\s*/gi, '')
     .replace(/^Esta\s+é\s+a\s+alternativa\s+CORRETA!?\s*/gi, '')
@@ -917,6 +924,9 @@ const formatTextContent = (content: string): string => {
     .replace(/離/g, '')             // Remove caractere chinês 離
     .replace(/⚠️?/g, '')            // Remove ⚠ (com ou sem variation selector)
     .replace(/️/g, '')              // Remove variation selectors órfãos
+    .replace(/[""]/g, '')           // Remove aspas curvas
+    .replace(/['']/g, '')           // Remove apóstrofos curvos
+    .replace(/[«»„"]/g, '')         // Remove aspas francesas/alemãs
     .replace(/👉\s*/g, '\n• ')
     .replace(/Reunindo:/gi, '\nReunindo:')
     // NORMALIZAÇÃO ENEM: C1-C7 e H1-H30 sempre em MAIÚSCULAS
