@@ -315,10 +315,10 @@ function parseResolutionText(text: string): ParsedSection[] {
   // ========== MERGE GLOBAL DE SEÇÕES DO MESMO TIPO ==========
   // REGRA UNIVERSAL: Agrupa TODAS as seções do mesmo tipo mergeable
   // NÃO importa se são consecutivas ou não - SEMPRE agrupa em uma única seção
-  // Tipos afetados: pegadinhas, dica, estrategia
+  // Tipos afetados: pegadinhas, dica, estrategia, competencia
   // Esta é uma REGRA ABSOLUTA e PERMANENTE conforme Constitution v10.0
   
-  const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia'];
+  const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia'];
   
   // Passo 1: Separar seções mergeáveis das não-mergeáveis
   const nonMergeable: ParsedSection[] = [];
@@ -351,6 +351,7 @@ function parseResolutionText(text: string): ParsedSection[] {
         .replace(/DICA\s*DE\s*OURO:?\s*/gi, '')
         .replace(/DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA:?\s*/gi, '')
         .replace(/ESTRATÉGIA:?\s*/gi, '')
+        .replace(/COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM:?\s*/gi, '')  // Remove headers ENEM
         .replace(/\*\*Gabarito:[^\*]+\*\*/gi, '')  // Remove gabarito duplicado
         .replace(/---+/g, '')  // Remove separadores
         .replace(/\n{3,}/g, '\n\n')  // Normaliza quebras de linha
@@ -403,8 +404,8 @@ function parseResolutionText(text: string): ParsedSection[] {
     mergedSections.push(section);
   }
   
-  // Adicionar mergeáveis consolidados no final (ordem: estrategia > pegadinhas > dica)
-  const mergeOrder: SectionType[] = ['estrategia', 'pegadinhas', 'dica'];
+  // Adicionar mergeáveis consolidados no final (ordem: competencia > estrategia > pegadinhas > dica)
+  const mergeOrder: SectionType[] = ['competencia', 'estrategia', 'pegadinhas', 'dica'];
   for (const type of mergeOrder) {
     const consolidated = consolidatedMergeable.find(s => s.type === type);
     if (consolidated) {
