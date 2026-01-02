@@ -1,6 +1,6 @@
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
 // ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                   ║
-// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.2                                       ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.3                                       ║
 // ╠═══════════════════════════════════════════════════════════════════════════════╣
 // ║                                                                                ║
 // ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                           ║
@@ -12,13 +12,14 @@
 // ║ REGRAS IMUTÁVEIS:                                                              ║
 // ║ 1. Remoção de caracteres bugados: "", '', **, 里, ⚠️, etc.                      ║
 // ║ 2. Formatação química científica automática (H2O → H₂O)                        ║
-// ║ 3. Alternativas: "Alternativa X ERRADA:" ou "Alternativa X CORRETA:"          ║
+// ║ 3. Alternativas: Agrupadas em seção visual "ANÁLISE DAS ALTERNATIVAS"         ║
 // ║ 4. Deduplicação automática de seções repetidas                                 ║
 // ║ 5. Imagens inline via [IMAGEM: URL] com max-h-[600px]                          ║
 // ║ 6. Bullets unificados com espaçamento COMPACTO (1 quebra de linha)            ║
 // ║ 7. Pontuação limpa (sem ".." ou "..." excessivos)                              ║
 // ║ 8. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área#, NUNCA duplica          ║
 // ║ 9. Competência e Habilidade em LINHAS SEPARADAS (organizado)                  ║
+// ║ 10. Alternativas A-E consolidadas: cada uma em 1 linha limpa (letra+status)   ║
 // ║                                                                                ║
 // ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                        ║
 // ║                                                                                ║
@@ -586,8 +587,9 @@ function parseResolutionText(text: string): ParsedSection[] {
     });
   }
 
-  // ========== DEDUPLICAÇÃO RIGOROSA (PASSOS + CONCLUSÃO + AFIRMAÇÕES + ALTERNATIVAS) ==========
+// ========== DEDUPLICAÇÃO RIGOROSA (PASSOS + CONCLUSÃO + AFIRMAÇÕES + ALTERNATIVAS) ==========
   // REGRA INTERNACIONAL: nada duplicado, nada vazio, estrutura consistente.
+  // LEI v3.3: Alternativas agrupadas em seção visual unificada "ANÁLISE DAS ALTERNATIVAS"
 
   const deduplicatedSections: ParsedSection[] = [];
   const seenPassos = new Map<number, ParsedSection>(); // stepNumber -> best section
@@ -643,7 +645,7 @@ function parseResolutionText(text: string): ParsedSection[] {
       continue;
     }
 
-    // ALTERNATIVAS (A-E)
+    // ALTERNATIVAS (A-E) — Consolidar para agrupamento posterior
     if (section.type.includes('alternativa') && section.alternativaLetter) {
       const letter = section.alternativaLetter;
       const existing = seenAlternatives.get(letter);
@@ -679,19 +681,61 @@ function parseResolutionText(text: string): ParsedSection[] {
     deduplicatedSections.push(section);
   }
 
-  // Reinserção ordenada: PASSOS (1..n), ALTERNATIVAS (A-E), AFIRMAÇÕES (1..n), RESUMO, CONCLUSÃO
+  // Reinserção ordenada: PASSOS (1..n)
   const orderedStepNumbers = Array.from(seenPassos.keys()).sort((a, b) => a - b);
   for (const n of orderedStepNumbers) {
     const step = seenPassos.get(n);
     if (step) deduplicatedSections.push(step);
   }
 
+  // ========== AGRUPAMENTO DE ALTERNATIVAS EM SEÇÃO UNIFICADA ==========
+  // LEI PERMANENTE: Alternativas (A-E) ficam todas dentro de uma seção visual "ANÁLISE DAS ALTERNATIVAS"
+  // Cada alternativa formatada de forma LIMPA: Letra + Status + Explicação concisa
   const orderedLetters = ['A', 'B', 'C', 'D', 'E'];
+  const consolidatedAlternatives: string[] = [];
+  let hasCorrectAlternative = false;
+  
   for (const letter of orderedLetters) {
     const alt = seenAlternatives.get(letter);
-    if (alt) deduplicatedSections.push(alt);
+    if (alt) {
+      const isCorrect = alt.type === 'alternativa_correta';
+      if (isCorrect) hasCorrectAlternative = true;
+      
+      // Limpar o conteúdo da alternativa
+      let content = alt.content
+        .replace(/^\.+\s*/g, '')
+        .replace(/^[:\-–→]\s*/g, '')
+        .replace(/\n{2,}/g, ' ')  // Manter em uma linha para ficar compacto
+        .replace(/\s{2,}/g, ' ')
+        .trim();
+      
+      // Truncar explicações muito longas (manter conciso)
+      if (content.length > 300) {
+        const firstSentence = content.split(/(?<=[.!?])\s+/)[0] || content.substring(0, 250);
+        content = firstSentence.trim();
+        if (!content.endsWith('.') && !content.endsWith('!') && !content.endsWith('?')) {
+          content += '.';
+        }
+      }
+      
+      const statusIcon = isCorrect ? '✅' : '❌';
+      const statusLabel = isCorrect ? 'CORRETA' : 'INCORRETA';
+      
+      // Formato limpo: ❌ A) INCORRETA — explicação breve
+      consolidatedAlternatives.push(`${statusIcon} ${letter}) ${statusLabel} — ${content}`);
+    }
+  }
+  
+  // Se há alternativas, criar uma única seção agrupada
+  if (consolidatedAlternatives.length > 0) {
+    deduplicatedSections.push({
+      type: 'analise_header',
+      content: consolidatedAlternatives.join('\n\n'),
+      title: 'ANÁLISE DAS ALTERNATIVAS',
+    });
   }
 
+  // AFIRMAÇÕES (1..n) — Mantém como seções individuais para clareza
   const afirmacaoKeys = Array.from(seenAfirmacoes.keys()).sort((a, b) => {
     const numA = a.match(/\d+/) ? parseInt(a) : romanToNumber(a);
     const numB = b.match(/\d+/) ? parseInt(b) : romanToNumber(b);
@@ -1243,6 +1287,47 @@ const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection
 }));
 
 /**
+ * Renderiza uma linha de alternativa consolidada com visual limpo
+ * Formato: ✅ A) CORRETA — explicação
+ */
+const AlternativeLineItem = memo(function AlternativeLineItem({ line }: { line: string }) {
+  const isCorrect = line.startsWith('✅');
+  const IconComponent = isCorrect ? CheckCircle : XCircle;
+  
+  // Extrair letra e conteúdo
+  const letterMatch = line.match(/[✅❌]\s*([A-E])\)/);
+  const letter = letterMatch?.[1] || '';
+  
+  // Remover prefixo e extrair apenas a explicação
+  const contentMatch = line.match(/[✅❌]\s*[A-E]\)\s*(CORRETA|INCORRETA)\s*[—–-]\s*(.+)/i);
+  const status = contentMatch?.[1]?.toUpperCase() || (isCorrect ? 'CORRETA' : 'INCORRETA');
+  const explanation = contentMatch?.[2]?.trim() || line.replace(/^[✅❌]\s*[A-E]\)\s*(CORRETA|INCORRETA)\s*[—–-]?\s*/i, '').trim();
+  
+  return (
+    <div className={cn(
+      'flex items-start gap-2 py-2 px-3 rounded-lg',
+      isCorrect ? 'bg-green-500/10' : 'bg-red-500/5'
+    )}>
+      <IconComponent className={cn(
+        'h-4 w-4 flex-shrink-0 mt-0.5',
+        isCorrect ? 'text-green-500' : 'text-red-500'
+      )} />
+      <div className="flex-1 min-w-0">
+        <span className={cn(
+          'font-bold text-sm',
+          isCorrect ? 'text-green-600' : 'text-red-600'
+        )}>
+          {letter}) {status}
+        </span>
+        <span className="text-foreground/80 text-sm ml-1">
+          — {formatTextContent(explanation)}
+        </span>
+      </div>
+    </div>
+  );
+});
+
+/**
  * Bloco visual para seções NÃO-alternativas
  */
 const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSection }) {
@@ -1266,6 +1351,30 @@ const SectionBlock = memo(function SectionBlock({ section }: { section: ParsedSe
               {formatContent(section.content)}
             </p>
           </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ANÁLISE DAS ALTERNATIVAS — Seção agrupada especial v3.3
+  if (section.type === 'analise_header' && section.content.includes('✅') || section.content.includes('❌')) {
+    const lines = section.content.split('\n\n').filter(l => l.trim());
+    
+    return (
+      <div className="rounded-xl overflow-hidden border-l-4 border-l-indigo-500 border-t border-r border-b border-indigo-500/30 bg-indigo-500/5">
+        {/* Header */}
+        <div className="px-4 py-2.5 flex items-center gap-2 bg-indigo-500/20">
+          <ListChecks className="h-4 w-4 text-indigo-500" />
+          <h4 className="font-bold text-sm text-indigo-500">
+            ANÁLISE DAS ALTERNATIVAS
+          </h4>
+        </div>
+        
+        {/* Lista de alternativas - organizada e limpa */}
+        <div className="px-3 py-2 space-y-1">
+          {lines.map((line, idx) => (
+            <AlternativeLineItem key={idx} line={line} />
+          ))}
         </div>
       </div>
     );
