@@ -10,7 +10,8 @@ import { motion, AnimatePresence } from 'framer-motion';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import { QuestionMetadataBadges, QuestionModeBadge } from '@/components/shared/QuestionMetadataBadges';
 import QuestionAILogButton from '@/components/gestao/questoes/QuestionAILogButton';
-import { useQuestionsWithAILogs } from '@/hooks/useQuestionAILogs';
+import GlobalAILogButton from '@/components/gestao/questoes/GlobalAILogButton';
+import { useQuestionsWithAILogs, useGlobalAILogsSummary } from '@/hooks/useQuestionAILogs';
 import { 
   Brain, 
   Plus, 
@@ -1836,6 +1837,9 @@ function GestaoQuestoes() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* BOTÃO AI LOG GLOBAL - Visibilidade de todas as intervenções de IA */}
+          <GlobalAILogButton />
+          
           <Button 
             variant="destructive" 
             size="sm" 
