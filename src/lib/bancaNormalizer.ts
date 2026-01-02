@@ -147,14 +147,52 @@ function removeInvalidPrefixes(input: string): string {
   return result;
 }
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// 🛡️ PERMANENT YEAR SANITIZATION POLICY v1.0
+// Anos anteriores a 2016 devem ser REMOVIDOS da entidade Questão
+// ═══════════════════════════════════════════════════════════════════════════════
+const MINIMUM_VALID_YEAR = 2016;
+
+/**
+ * Sanitiza ano - remove se anterior a 2016
+ * PERMANENT YEAR SANITIZATION POLICY v1.0
+ */
+export function sanitizeYear(year: number | string | null | undefined): number | null {
+  if (year === null || year === undefined) return null;
+  
+  const numericYear = typeof year === 'string' ? parseInt(year, 10) : year;
+  
+  if (isNaN(numericYear)) return null;
+  
+  // Remove anos anteriores ao ano mínimo válido
+  if (numericYear < MINIMUM_VALID_YEAR) {
+    console.log(`[YEAR_SANITIZATION] Removed invalid year: ${numericYear} (< ${MINIMUM_VALID_YEAR})`);
+    return null;
+  }
+  
+  // Também rejeita anos futuros obviamente inválidos
+  const currentYear = new Date().getFullYear();
+  if (numericYear > currentYear + 2) {
+    console.log(`[YEAR_SANITIZATION] Removed invalid future year: ${numericYear}`);
+    return null;
+  }
+  
+  return numericYear;
+}
+
 /**
  * Extrai ano de um texto (ex: "2023", "(2021)", "Enem 2020")
+ * Retorna null se o ano for anterior a 2016 (YEAR SANITIZATION POLICY)
  */
 export function extractYearFromText(text: string): number | null {
   if (!text) return null;
   // Procura por anos entre 1990 e 2099
   const match = text.match(/\b(19[9][0-9]|20[0-9]{2})\b/);
-  return match ? parseInt(match[1], 10) : null;
+  if (!match) return null;
+  
+  const year = parseInt(match[1], 10);
+  // Aplica sanitização de ano
+  return sanitizeYear(year);
 }
 
 /**
@@ -230,9 +268,12 @@ export function normalizeBanca(
   input: string | null | undefined,
   year?: number | string | null
 ): string {
+  // Sanitiza o ano primeiro (YEAR SANITIZATION POLICY v1.0)
+  const sanitizedYear = sanitizeYear(year);
+  const currentYear = new Date().getFullYear();
+  
   if (!input || input.trim() === '') {
-    const currentYear = new Date().getFullYear();
-    const finalYear = year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear;
+    const finalYear = sanitizedYear || currentYear;
     return `AUTORAL (${finalYear})`;
   }
 
@@ -246,12 +287,12 @@ export function normalizeBanca(
     const bancaInfo = findBancaByValue(detectedBanca);
     const bancaLabel = bancaInfo ? bancaInfo.label.toUpperCase() : detectedBanca.toUpperCase();
     
-    // Extrai o ano do input original
+    // Extrai o ano do input original (já sanitizado via extractYearFromText)
     let extractedYear = extractYearFromText(originalInput);
     
-    // Se não encontrou no input, usa o parâmetro year
-    if (!extractedYear && year) {
-      extractedYear = typeof year === 'string' ? parseInt(year, 10) : year;
+    // Se não encontrou no input, usa o parâmetro year sanitizado
+    if (!extractedYear && sanitizedYear) {
+      extractedYear = sanitizedYear;
     }
     
     // Extrai edição especial
@@ -261,7 +302,7 @@ export function normalizeBanca(
       finalLabel = `${finalLabel} ${edition}`;
     }
     
-    // Retorna no formato BANCA (ANO)
+    // Retorna no formato BANCA (ANO) - sem ano se foi sanitizado (< 2016)
     if (extractedYear) {
       return `${finalLabel} (${extractedYear})`;
     }
@@ -273,9 +314,7 @@ export function normalizeBanca(
   for (const prefix of INVALID_PREFIXES) {
     if (upperInput.includes(prefix.toUpperCase())) {
       // É uma questão autoral do professor
-      const currentYear = new Date().getFullYear();
-      const extractedYear = extractYearFromText(originalInput) || 
-        (year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear);
+      const extractedYear = extractYearFromText(originalInput) || sanitizedYear || currentYear;
       return `AUTORAL (${extractedYear})`;
     }
   }
@@ -285,15 +324,14 @@ export function normalizeBanca(
   
   // Se ficou vazio após limpeza, é autoral
   if (!normalizedBoard || normalizedBoard.trim() === '') {
-    const currentYear = new Date().getFullYear();
-    const finalYear = year ? (typeof year === 'string' ? parseInt(year, 10) : year) : currentYear;
+    const finalYear = sanitizedYear || currentYear;
     return `AUTORAL (${finalYear})`;
   }
   
-  // Extrai ou adiciona ano
+  // Extrai ou adiciona ano (já sanitizado)
   let finalYear = extractYearFromText(originalInput);
-  if (!finalYear && year) {
-    finalYear = typeof year === 'string' ? parseInt(year, 10) : year;
+  if (!finalYear && sanitizedYear) {
+    finalYear = sanitizedYear;
   }
   
   // Adiciona ano se disponível e ainda não tem
@@ -301,10 +339,16 @@ export function normalizeBanca(
     return `${normalizedBoard.trim()} (${finalYear})`;
   }
   
-  // Reformata se já tem ano
+  // Reformata se já tem ano - valida se o ano é válido
   const yearMatch = normalizedBoard.match(/(.+?)\s*\(?\s*(\d{4})\s*\)?$/);
   if (yearMatch) {
-    return `${yearMatch[1].trim()} (${yearMatch[2]})`;
+    const matchedYear = parseInt(yearMatch[2], 10);
+    const sanitizedMatchedYear = sanitizeYear(matchedYear);
+    if (sanitizedMatchedYear) {
+      return `${yearMatch[1].trim()} (${sanitizedMatchedYear})`;
+    }
+    // Ano inválido, remover
+    return yearMatch[1].trim();
   }
   
   return normalizedBoard.trim();
