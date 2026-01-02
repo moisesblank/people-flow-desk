@@ -263,8 +263,8 @@ const QuestionDialog = memo(function QuestionDialog({
         habilidade: (question as any).habilidade || '',
         // Tipo Pedagógico
         tipo_pedagogico: (question as any).tipo_pedagogico || 'direta',
-        // Imagens do enunciado
-        images: ((question as any).images || []) as QuestionImage[],
+        // Imagens do enunciado - usando image_urls (nome correto da coluna no banco)
+        images: ((question as any).image_urls || []) as QuestionImage[],
       });
     } else {
       // Reset para nova questão
@@ -368,8 +368,8 @@ const QuestionDialog = memo(function QuestionDialog({
         has_video_resolution: form.has_video_resolution,
         video_provider: form.has_video_resolution && form.video_provider ? form.video_provider : null,
         video_url: form.has_video_resolution && form.video_url ? form.video_url.trim() : null,
-        // Imagens do enunciado
-        images: form.images.map(img => ({
+        // Imagens do enunciado - usando image_urls (nome correto da coluna no banco)
+        image_urls: form.images.map(img => ({
           id: img.id, url: img.url, path: img.path, name: img.name, size: img.size, position: img.position
         })) as unknown as Record<string, unknown>[],
       };
