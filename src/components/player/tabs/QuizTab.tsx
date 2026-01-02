@@ -1,7 +1,19 @@
-// ============================================
-// QUIZ TAB - Quiz interativo da aula
-// Gamificação com XP
-// ============================================
+// ╔═══════════════════════════════════════════════════════════════════════════════╗
+// ║ QUIZ TAB - Quiz interativo da aula                                             ║
+// ║ Gamificação com XP                                                             ║
+// ╠═══════════════════════════════════════════════════════════════════════════════╣
+// ║                                                                                ║
+// ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                           ║
+// ║                                                                                ║
+// ║ Este componente USA os componentes universais QuestionEnunciado e             ║
+// ║ QuestionResolution para garantir formatação consistente.                      ║
+// ║                                                                                ║
+// ║ REGRAS IMUTÁVEIS aplicadas automaticamente:                                    ║
+// ║ - Remoção de caracteres bugados ("", '', **, etc.)                            ║
+// ║ - Formatação química científica                                                ║
+// ║ - Alternativas padronizadas                                                   ║
+// ║                                                                                ║
+// ╚═══════════════════════════════════════════════════════════════════════════════╝
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -11,6 +23,8 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { cn } from '@/lib/utils';
+import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
+import QuestionResolution from '@/components/shared/QuestionResolution';
 
 interface QuizTabProps {
   lessonId: string;
@@ -213,9 +227,13 @@ function QuizTab({ lessonId }: QuizTabProps) {
           exit={{ opacity: 0, x: -20 }}
           className="space-y-4"
         >
-          <div className="p-4 rounded-xl bg-muted/50 border border-border">
-            <p className="font-medium text-lg">{question.question}</p>
-          </div>
+          {/* LEI PERMANENTE: Usa componente universal para enunciado */}
+          <QuestionEnunciado
+            questionText={question.question}
+            textSize="lg"
+            compact={true}
+            hideHeader={true}
+          />
 
           {/* Options */}
           <div className="space-y-3">
@@ -271,15 +289,15 @@ function QuizTab({ lessonId }: QuizTabProps) {
             })}
           </div>
 
-          {/* Explanation */}
-          {showResult && (
+          {/* LEI PERMANENTE: Usa componente universal para resolução */}
+          {showResult && question.explanation && (
             <motion.div
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
-              className="p-4 rounded-xl bg-primary/5 border border-primary/20"
             >
-              <p className="text-sm font-medium text-primary mb-1">Explicação:</p>
-              <p className="text-sm text-muted-foreground">{question.explanation}</p>
+              <QuestionResolution
+                resolutionText={question.explanation}
+              />
             </motion.div>
           )}
 
