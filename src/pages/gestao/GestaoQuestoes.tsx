@@ -2322,9 +2322,14 @@ function GestaoQuestoes() {
               <Button
                 variant={estiloEnemFilter ? "default" : "outline"}
                 size="sm"
-                onClick={() => setEstiloEnemFilter(!estiloEnemFilter)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  console.log('[ESTILO ENEM] Clicado! Estado atual:', estiloEnemFilter, '→ Novo:', !estiloEnemFilter);
+                  setEstiloEnemFilter(prev => !prev);
+                }}
                 className={cn(
-                  "h-10 gap-2 font-semibold transition-all",
+                  "h-10 gap-2 font-semibold transition-all cursor-pointer",
                   estiloEnemFilter 
                     ? "bg-gradient-to-r from-blue-600 to-indigo-600 text-white border-0 shadow-lg shadow-blue-500/30" 
                     : "border-blue-500/50 text-blue-500 hover:bg-blue-500/10 hover:text-blue-400 hover:border-blue-500"
