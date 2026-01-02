@@ -4,10 +4,23 @@
 // POLÍTICA: Global AI Question Intervention Visibility Policy v1.0
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { memo, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { memo, useState, forwardRef } from 'react';
+import { Button, type ButtonProps } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// POLICY: Persistent AI Log Accessibility Policy v1.0
+// - Button must always be accessible regardless of UI state
+// - z-index must be highest in question management scope
+// - Pointer events must always be enabled
+// ═══════════════════════════════════════════════════════════════════════════════
+
+// ForwardRef Button wrapper for TooltipTrigger compatibility
+const AILogTriggerButton = forwardRef<HTMLButtonElement, ButtonProps>(
+  (props, ref) => <Button ref={ref} {...props} />
+);
+AILogTriggerButton.displayName = 'AILogTriggerButton';
 import { 
   Dialog, 
   DialogContent, 
@@ -40,16 +53,17 @@ const GlobalAILogButton = memo(() => {
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <Button
+            <AILogTriggerButton
               variant="outline"
               size="sm"
               className={cn(
-                "gap-2",
+                "gap-2 relative z-[9999] pointer-events-auto",
                 hasLogs 
                   ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border-primary/30 text-primary"
                   : "bg-muted/50 hover:bg-muted border-border/50 text-muted-foreground"
               )}
               onClick={() => setShowDialog(true)}
+              data-fn="global-ai-log-button"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -62,7 +76,7 @@ const GlobalAILogButton = memo(() => {
                   {summary.questions_with_logs}
                 </Badge>
               )}
-            </Button>
+            </AILogTriggerButton>
           </TooltipTrigger>
           <TooltipContent side="bottom" className="max-w-xs">
             {hasLogs ? (
