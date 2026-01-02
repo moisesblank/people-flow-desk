@@ -77,45 +77,58 @@ export const ESCALA_45K_LIMITS = {
   auditedFiles: [
     {
       file: 'src/pages/gestao/GestaoQuestoes.tsx',
-      status: 'CORRIGIDO',
+      status: 'CORRIGIDO_V2',
+      method: 'BATCHING_RANGE',
       previousLimit: 'default (1000)',
-      newLimit: 45000,
-      notes: 'Adicionado .limit(45000) para superar default Supabase'
+      newLimit: 'range(0,999) x N até 45000',
+      notes: 'Carregamento em lotes via .range() + COUNT forense com toast de divergência'
+    },
+    {
+      file: 'src/pages/gestao/GestaoQuestoes.tsx:handleDeleteTreinoQuestions',
+      status: 'CORRIGIDO_V2',
+      method: 'BATCHING_RANGE',
+      previousLimit: 'default (1000)',
+      newLimit: 'range(0,999) x N até 45000',
+      notes: 'Exclusão MODO_TREINO agora busca em lotes'
     },
     {
       file: 'src/pages/aluno/AlunoQuestoes.tsx',
-      status: 'CORRIGIDO',
+      status: 'CORRIGIDO_V2',
+      method: 'BATCHING_RANGE',
       previousLimit: 'default (1000)',
-      newLimit: 45000,
-      notes: 'Adicionado .limit(45000) para MODO_TREINO'
+      newLimit: 'range(0,999) x N até 45000',
+      notes: 'Carregamento MODO_TREINO em lotes + COUNT forense'
     },
     {
       file: 'src/pages/aluno/AlunoSimulados.tsx',
-      status: 'CORRIGIDO',
-      previousLimit: 100,
-      newLimit: null,
-      notes: 'Removido .limit(100)'
+      status: 'CORRIGIDO_V2',
+      method: 'BATCHING_RANGE',
+      previousLimit: 'default (1000)',
+      newLimit: 'range(0,999) x N até 45000',
+      notes: 'Carregamento SIMULADOS em lotes'
     },
     {
       file: 'src/pages/Simulados.tsx',
-      status: 'CORRIGIDO',
-      previousLimit: 100,
-      newLimit: null,
-      notes: 'Removido .limit(100)'
+      status: 'CORRIGIDO_V2',
+      method: 'BATCHING_RANGE',
+      previousLimit: 'default (1000)',
+      newLimit: 'range(0,999) x N até 45000',
+      notes: 'Carregamento SIMULADOS em lotes'
     },
     {
       file: 'src/hooks/useQuestionPractice.ts',
-      status: 'CORRIGIDO',
-      previousLimit: 1000,
-      newLimit: 45000,
-      notes: 'Aumentado para escala 45K'
+      status: 'CORRIGIDO_V2',
+      method: 'BATCHING_RANGE',
+      previousLimit: 'default (1000)',
+      newLimit: 'range(0,999) x N até 45000',
+      notes: 'Prática de questões em lotes'
     },
     {
       file: 'src/hooks/useFlashcards.ts',
       status: 'CORRIGIDO',
       previousLimit: 1000,
       newLimit: 45000,
-      notes: 'Aumentado para escala 45K'
+      notes: 'Aumentado para escala 45K via .limit(45000)'
     },
     {
       file: 'src/hooks/useAuditLog.ts',

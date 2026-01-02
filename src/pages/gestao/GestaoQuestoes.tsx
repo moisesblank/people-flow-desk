@@ -1635,14 +1635,30 @@ function GestaoQuestoes() {
     setIsDeletingTreino(true);
     
     try {
-      // BUSCAR DIRETAMENTE DO BANCO - NÃO CONFIAR NO ESTADO LOCAL
-      // Busca todas as questões com tag MODO_TREINO direto do banco
-      const { data: treinoQuestions, error: fetchError } = await supabase
-        .from('quiz_questions')
-        .select('id, tags')
-        .contains('tags', ['MODO_TREINO']);
-      
-      if (fetchError) throw fetchError;
+      // ESCALA 45K: Batching via range() para superar default 1000
+      const BATCH_SIZE = 1000;
+      const MAX = 45000;
+      let from = 0;
+      let allTreino: any[] = [];
+
+      while (from < MAX) {
+        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
+
+        const { data: batch, error: fetchError } = await supabase
+          .from('quiz_questions')
+          .select('id, tags')
+          .contains('tags', ['MODO_TREINO'])
+          .range(from, to);
+
+        if (fetchError) throw fetchError;
+
+        allTreino = allTreino.concat(batch || []);
+
+        if ((batch || []).length < BATCH_SIZE) break;
+        from += BATCH_SIZE;
+      }
+
+      const treinoQuestions = allTreino;
       
       if (!treinoQuestions || treinoQuestions.length === 0) {
         toast.info('Nenhuma questão do Modo Treino encontrada');

@@ -56,21 +56,33 @@ export function usePracticeQuestions(options?: {
   return useSubspaceQuery<PracticeQuestion[]>(
     ["practice-questions", JSON.stringify(options || {})],
     async () => {
-      let query = supabase
-        .from("quiz_questions")
-        .select("*")
-        // REGRA CRÍTICA: Apenas questões ativas/publicadas aparecem para alunos
-        .eq("is_active", true)
-        .order("position", { ascending: true });
+      // ESCALA 45K: Batching via range() para superar default 1000
+      const BATCH_SIZE = 1000;
+      const MAX = options?.limit || 45000;
+      let from = 0;
+      let all: any[] = [];
 
-      if (options?.limit) {
-        query = query.limit(options.limit);
+      while (from < MAX) {
+        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
+
+        let query = supabase
+          .from("quiz_questions")
+          .select("*")
+          .eq("is_active", true)
+          .order("position", { ascending: true })
+          .range(from, to);
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        const batch = data || [];
+        all = all.concat(batch);
+
+        if (batch.length < BATCH_SIZE) break;
+        from += BATCH_SIZE;
       }
 
-      const { data, error } = await query;
-      if (error) throw error;
-
-      return (data || []).map((q: any) => ({
+      return all.map((q: any) => ({
         ...q,
         options: Array.isArray(q.options) ? q.options : [],
         difficulty: q.difficulty as "facil" | "medio" | "dificil",
