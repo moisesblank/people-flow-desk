@@ -1,7 +1,7 @@
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║ 🧪 CHEMICAL VISUAL STANDARDIZATION — Policy v2.0                             ║
+// ║ 🧪 CHEMICAL VISUAL STANDARDIZATION & CLEANUP — Policy v2.1                   ║
 // ╠══════════════════════════════════════════════════════════════════════════════╣
-// ║ Padronização visual de notação química sem alterar significado químico       ║
+// ║ Padronização visual + limpeza de notação química sem alterar significado     ║
 // ║                                                                               ║
 // ║ REGRAS VISUAIS IMUTÁVEIS:                                                    ║
 // ║ 1. Índices numéricos (H2O) → SUBSCRIPT (H₂O)                                  ║
@@ -9,9 +9,23 @@
 // ║ 3. Estados físicos (s), (l), (g), (aq) → SUBSCRIPT legível                   ║
 // ║ 4. Coeficientes estequiométricos → separação visual clara                    ║
 // ║ 5. Setas de reação: → (direta), ⇌ (equilíbrio)                               ║
+// ║ 6. LIMPEZA: Remover símbolos decorativos/emoji-like (里, ⚠️, etc.)            ║
 // ║                                                                               ║
-// ║ JAMAIS ALTERAR SIGNIFICADO QUÍMICO — APENAS VISUAL/TIPOGRÁFICO               ║
+// ║ JAMAIS ALTERAR SIGNIFICADO QUÍMICO — APENAS VISUAL/TIPOGRÁFICO/LIMPEZA       ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// SÍMBOLOS PROIBIDOS EM NOTAÇÃO QUÍMICA (Policy v2.1)
+// ═══════════════════════════════════════════════════════════════════════════════
+const FORBIDDEN_CHEMICAL_SYMBOLS = /[里⚠️⚠\u{1F300}-\u{1F9FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu;
+
+/**
+ * Remove símbolos decorativos e emoji-like da notação química
+ * Policy v2.1: Limpeza visual sem alterar significado químico
+ */
+function cleanChemicalSymbols(text: string): string {
+  return text.replace(FORBIDDEN_CHEMICAL_SYMBOLS, '').replace(/\s{2,}/g, ' ').trim();
+}
 
 // Mapa de dígitos para subscript Unicode
 const SUBSCRIPT_MAP: Record<string, string> = {
@@ -90,7 +104,10 @@ const CHEMICAL_FORMULA_REGEX = /([A-Z][a-z]?)(\d+)/g;
 export function formatChemicalFormulas(text: string): string {
   if (!text) return '';
 
-  let result = text;
+  // ═══════════════════════════════════════════════════════════════════
+  // 0. LIMPEZA DE SÍMBOLOS PROIBIDOS (Policy v2.1)
+  // ═══════════════════════════════════════════════════════════════════
+  let result = cleanChemicalSymbols(text);
 
   // ═══════════════════════════════════════════════════════════════════
   // 1. CONVERTER ÍNDICES (números após elementos) PARA SUBSCRIPT
@@ -160,12 +177,13 @@ export function formatChemicalFormulas(text: string): string {
 }
 
 // ╔══════════════════════════════════════════════════════════════════════════════╗
-// ║ REGRAS CIENTÍFICAS IMUTÁVEIS v2.0:                                           ║
+// ║ REGRAS CIENTÍFICAS IMUTÁVEIS v2.1:                                           ║
 // ║ 1. Índices numéricos SEMPRE subscript (H₂O, CO₂, Na₂SO₄)                     ║
 // ║ 2. Cargas iônicas SEMPRE superscript (Na⁺, Ca²⁺, Cl⁻, SO₄²⁻)                 ║
 // ║ 3. Estados físicos formatados: ₍s₎, ₍l₎, ₍g₎, ₍aq₎                           ║
 // ║ 4. Setas padronizadas: → (direta), ⇌ (equilíbrio), ← (reversa)               ║
 // ║ 5. Coeficientes claramente separados das fórmulas                            ║
 // ║ 6. Símbolos de elementos NUNCA alterados                                     ║
-// ║ 7. Aplicar apenas na camada de renderização                                  ║
+// ║ 7. LIMPEZA: Símbolos decorativos/emoji removidos automaticamente             ║
+// ║ 8. Aplicar apenas na camada de renderização                                  ║
 // ╚══════════════════════════════════════════════════════════════════════════════╝
