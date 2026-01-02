@@ -1327,18 +1327,24 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
           updated.errors.push('Alternativa correta não tem texto');
         }
 
-        // TAXONOMIA OBRIGATÓRIA
+        // ═══════════════════════════════════════════════════════════════════
+        // POLÍTICA TRANSVERSAL v2.0: APENAS MACRO É OBRIGATÓRIO
+        // MICRO, TEMA, SUBTEMA são camadas transversais opcionais
+        // ═══════════════════════════════════════════════════════════════════
         if (!updated.macro?.trim()) {
-          updated.errors.push('MACRO obrigatório - não identificado');
+          updated.errors.push('MACRO é obrigatório - cada questão deve ter exatamente 1 MACRO');
         }
+        
+        // MICRO, TEMA, SUBTEMA são OPCIONAIS (camadas transversais)
+        // Apenas warnings informativos, NÃO erros
         if (!updated.micro?.trim()) {
-          updated.errors.push('MICRO obrigatório - não identificado');
+          updated.warnings.push('MICRO não informado (opcional - camada transversal)');
         }
         if (!updated.tema?.trim()) {
-          updated.errors.push('TEMA obrigatório - não identificado');
+          updated.warnings.push('TEMA não informado (opcional - camada transversal)');
         }
         if (!updated.subtema?.trim()) {
-          updated.errors.push('SUBTEMA obrigatório - não identificado');
+          updated.warnings.push('SUBTEMA não informado (opcional - camada transversal)');
         }
 
         // Warnings informativos

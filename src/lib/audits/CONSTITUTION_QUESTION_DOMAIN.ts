@@ -71,35 +71,37 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
         is_active: { type: 'BOOLEAN', required: true, protected: true },
         
         // ══════════════════════════════════════════════════════════════════════
-        // TAXONOMIA HIERÁRQUICA — ESTRUTURA CANÔNICA IMUTÁVEL
+        // TAXONOMIA TRANSVERSAL v2.0 — MODELO OFICIAL
+        // MACRO = Identidade única e obrigatória
+        // MICRO, TEMA, SUBTEMA = Camadas transversais compartilháveis
         // ══════════════════════════════════════════════════════════════════════
         macro: { 
           type: 'TEXT', 
-          required: false, 
+          required: true, // OBRIGATÓRIO
           protected: true,
-          description: 'MACRO ÁREA: Nível 1 da hierarquia (ex: quimica_geral, quimica_organica, fisico_quimica)',
-          hierarchy: 'LEVEL_1',
+          description: 'MACRO ÁREA: Identidade única da questão. OBRIGATÓRIO. Define o conceito principal.',
+          hierarchy: 'IDENTITY', // Não é apenas nível, é IDENTIDADE
         },
         micro: { 
           type: 'TEXT', 
-          required: false, 
+          required: false, // OPCIONAL - Camada transversal
           protected: true,
-          description: 'MICRO ASSUNTO: Nível 2 da hierarquia, filho de MACRO',
-          hierarchy: 'LEVEL_2',
+          description: 'MICRO ASSUNTO: Camada transversal. Pode vir de qualquer MACRO.',
+          hierarchy: 'TRANSVERSAL_LAYER',
         },
         tema: { 
           type: 'TEXT', 
-          required: false, 
+          required: false, // OPCIONAL - Camada transversal
           protected: true,
-          description: 'TEMA: Nível 3 da hierarquia, filho de MICRO',
-          hierarchy: 'LEVEL_3',
+          description: 'TEMA: Camada transversal. Pode vir de qualquer MACRO.',
+          hierarchy: 'TRANSVERSAL_LAYER',
         },
         subtema: { 
           type: 'TEXT', 
-          required: false, 
+          required: false, // OPCIONAL - Camada transversal
           protected: true,
-          description: 'SUBTEMA: Nível 4 da hierarquia, filho de TEMA',
-          hierarchy: 'LEVEL_4',
+          description: 'SUBTEMA: Camada transversal. Pode vir de qualquer MACRO.',
+          hierarchy: 'TRANSVERSAL_LAYER',
         },
         
         // Mídia
@@ -138,54 +140,54 @@ export const QUESTION_DOMAIN_CONSTITUTION = {
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
-  // HIERARQUIA TAXONÔMICA — ESTRUTURA CANÔNICA
+  // MODELO TRANSVERSAL v2.0 — TAXONOMIA OFICIAL
   // ═══════════════════════════════════════════════════════════════════════════
-  taxonomyHierarchy: {
+  transversalModel: {
     status: 'IMMUTABLE',
-    description: 'Cadeia hierárquica obrigatória para classificação de questões',
-    chain: ['MACRO', 'MICRO', 'TEMA', 'SUBTEMA'],
-    levels: {
-      MACRO: {
-        level: 1,
-        parent: null,
-        description: 'Grande área de conhecimento',
-        examples: ['quimica_geral', 'quimica_organica', 'fisico_quimica'],
-        databaseColumn: 'macro',
-        filterState: 'macroAreaFilter',
-      },
-      MICRO: {
-        level: 2,
-        parent: 'MACRO',
-        description: 'Assunto específico dentro da macro área',
-        examples: ['Atomística', 'Funções Orgânicas', 'Termoquímica'],
-        databaseColumn: 'micro',
-        filterState: 'microFilter',
-      },
-      TEMA: {
-        level: 3,
-        parent: 'MICRO',
-        description: 'Tema específico dentro do micro assunto',
-        examples: ['Modelos Atômicos', 'Álcoois', 'Entalpia'],
-        databaseColumn: 'tema',
-        filterState: 'temaFilter',
-      },
-      SUBTEMA: {
-        level: 4,
-        parent: 'TEMA',
-        description: 'Subtema específico dentro do tema',
-        examples: ['Modelo de Bohr', 'Nomenclatura de Álcoois', 'Lei de Hess'],
-        databaseColumn: 'subtema',
-        filterState: 'subtemaFilter',
-      },
-    },
-    cascadingBehavior: {
-      description: 'Quando um nível superior muda, todos os níveis inferiores são resetados',
-      implementation: [
-        'handleMacroAreaFilterChange → reseta microFilter, temaFilter, subtemaFilter',
-        'handleMicroFilterChange → reseta temaFilter, subtemaFilter',
-        'handleTemaFilterChange → reseta subtemaFilter',
+    version: '2.0.0',
+    description: 'Modelo 100% transversal: MACRO é identidade, camadas são compartilháveis',
+    
+    // MACRO = Identidade
+    macroIdentity: {
+      description: 'O MACRO define a identidade única e obrigatória de cada questão',
+      required: true,
+      singleValue: true,
+      rules: [
+        'Cada questão DEVE possuir exatamente 1 MACRO',
+        'MACRO é campo obrigatório (NOT NULL)',
+        'MACRO NÃO pode ser múltiplo ou array',
+        'MACRO define o conceito principal da questão',
       ],
     },
+    
+    // Camadas transversais
+    transversalLayers: {
+      description: 'MICRO, TEMA, SUBTEMA podem vir de qualquer MACRO',
+      layers: ['MICRO', 'TEMA', 'SUBTEMA'],
+      shared: true,
+      rules: [
+        'MICRO pode ser reutilizado entre diferentes MACROs',
+        'TEMA pode ser reutilizado entre diferentes MACROs',
+        'SUBTEMA pode ser reutilizado entre diferentes MACROs',
+        'Permitem interdisciplinaridade sem alterar MACRO',
+      ],
+    },
+    
+    // Exemplos
+    examples: [
+      {
+        scenario: 'Questão sobre combustão de etanol',
+        macro: 'quimica_organica',
+        micro: 'Termoquímica',
+        reasoning: 'MACRO = Orgânica (etanol), MICRO = Físico-Química (combustão)',
+      },
+      {
+        scenario: 'Questão sobre pH da chuva ácida',
+        macro: 'quimica_ambiental',
+        micro: 'Equilíbrio Químico',
+        reasoning: 'MACRO = Ambiental, MICRO = Físico-Química (pH)',
+      },
+    ],
   },
 
   // ═══════════════════════════════════════════════════════════════════════════
@@ -449,10 +451,10 @@ export function validateQuestionDomainIntegrity(): {
   const errors: string[] = [];
   const warnings: string[] = [];
 
-  // Verificar estrutura de taxonomia
-  const { taxonomyHierarchy } = QUESTION_DOMAIN_CONSTITUTION;
-  if (taxonomyHierarchy.chain.length !== 4) {
-    errors.push('Hierarquia de taxonomia deve ter exatamente 4 níveis');
+  // Verificar modelo transversal
+  const { transversalModel } = QUESTION_DOMAIN_CONSTITUTION;
+  if (!transversalModel.macroIdentity.required) {
+    errors.push('MACRO deve ser obrigatório no modelo transversal');
   }
 
   // Verificar macros canônicos

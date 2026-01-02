@@ -5,35 +5,52 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// Taxonomia canônica de Química
+// ═══════════════════════════════════════════════════════════════════════════════
+// CONSTITUIÇÃO DO MODELO TRANSVERSAL DE TAXONOMIA — v2.0.0
+// POLÍTICA DEFINITIVA E PERMANENTE
+// ═══════════════════════════════════════════════════════════════════════════════
 const TAXONOMY_KNOWLEDGE = `
-MACROS CANÔNICOS DE QUÍMICA:
+🏛️ CONSTITUIÇÃO DO MODELO TRANSVERSAL — REGRA DE OURO
 
-1. QUÍMICA GERAL (quimica_geral)
+▸ MACRO = IDENTIDADE ÚNICA E OBRIGATÓRIA
+  → Cada questão possui EXATAMENTE 1 MACRO
+  → Define a grande área de conhecimento (conceito principal)
+  → NÃO pode ser múltiplo ou array
+  → MACRO é o eixo primário de classificação
+
+▸ MICRO, TEMA, SUBTEMA = CAMADAS TRANSVERSAIS (100% compartilháveis)
+  → Podem vir de QUALQUER MACRO
+  → São compartilháveis entre questões
+  → Permitem interdisciplinaridade
+  → São OPCIONAIS (não obrigatórios)
+
+MACROS CANÔNICOS DE QUÍMICA (5 grandes áreas):
+
+1. QUÍMICA GERAL (quimica_geral) ⚗️
    - Propriedades da Matéria, Substâncias e Misturas, Alotropia
    - Separação de Misturas, Tratamento de Água
    - Combustíveis e Energia, Atomística
    - Distribuição Eletrônica, Tabela Periódica
    - Propriedades Periódicas, Ligações Químicas, Estequiometria
-   - Gases, Soluções básicas, Reações inorgânicas
+   - Gases, Reações inorgânicas, Funções inorgânicas
 
-2. QUÍMICA ORGÂNICA (quimica_organica)
+2. QUÍMICA ORGÂNICA (quimica_organica) 🧪
    - Funções Orgânicas (álcoois, aldeídos, cetonas, ácidos, ésteres, éteres, aminas, amidas)
    - Hidrocarbonetos (alcanos, alcenos, alcinos, aromáticos)
    - Isomeria (plana, espacial, óptica, geométrica)
    - Reações Orgânicas (substituição, adição, eliminação, oxidação, redução)
    - Polímeros (adição, condensação, naturais, sintéticos)
-   - Bioquímica (carboidratos, lipídios, proteínas, ácidos nucleicos)
+   - Petróleo, combustíveis orgânicos
 
-3. FÍSICO-QUÍMICA (fisico_quimica)
+3. FÍSICO-QUÍMICA (fisico_quimica) 📊
    - Termoquímica (entalpia, lei de Hess, energia de ligação)
    - Cinética Química (velocidade, fatores, catálise)
    - Equilíbrio Químico (constante, Le Chatelier, pH, pOH, hidrólise)
    - Eletroquímica (pilhas, eletrólise, corrosão)
-   - Propriedades Coligativas (tonoscopia, ebulioscopia, crioscopia, osmose)
+   - Soluções (concentração, diluição, propriedades coligativas)
    - Radioatividade (decaimento, meia-vida, fissão, fusão)
 
-4. QUÍMICA AMBIENTAL (quimica_ambiental)
+4. QUÍMICA AMBIENTAL (quimica_ambiental) 🌍
    - Poluição (ar, água, solo)
    - Ciclos biogeoquímicos (carbono, nitrogênio, água)
    - Efeito Estufa, Camada de Ozônio
@@ -41,11 +58,43 @@ MACROS CANÔNICOS DE QUÍMICA:
    - Química Verde, Sustentabilidade
    - Biocombustíveis, Energia limpa
 
-REGRAS DE CLASSIFICAÇÃO:
-- Uma questão pertence ao MACRO que melhor representa seu CONCEITO PRINCIPAL
-- MICRO, TEMA e SUBTEMA podem ser TRANSVERSAIS (de qualquer MACRO)
-- Exemplo: Questão sobre "combustão de etanol" → MACRO: Orgânica (etanol), MICRO: Termoquímica (combustão)
-- Exemplo: Questão sobre "pH de chuva ácida" → MACRO: Ambiental, MICRO: Equilíbrio (pH)
+5. BIOQUÍMICA (bioquimica) 🧬
+   - Carboidratos (monossacarídeos, dissacarídeos, polissacarídeos)
+   - Lipídios (gorduras, óleos, fosfolipídios)
+   - Proteínas e aminoácidos
+   - Ácidos nucleicos (DNA, RNA)
+   - Enzimas e metabolismo
+
+═══════════════════════════════════════════════════════════════════════════════
+REGRAS DE CLASSIFICAÇÃO TRANSVERSAL (OBRIGATÓRIO SEGUIR):
+═══════════════════════════════════════════════════════════════════════════════
+
+1. IDENTIFICAR O CONCEITO PRINCIPAL → Define o MACRO
+   - Qual é o assunto CENTRAL da questão?
+   - Se fala de etanol (composto orgânico) → MACRO = Orgânica
+   - Se fala de efeito estufa → MACRO = Ambiental
+   - Se fala de pH → MACRO = Físico-Química
+   
+2. MICRO, TEMA, SUBTEMA → Podem ser de QUALQUER MACRO
+   - Questão sobre "combustão de etanol":
+     → MACRO: quimica_organica (etanol é composto orgânico)
+     → MICRO: Termoquímica (combustão envolve energia)
+     
+   - Questão sobre "pH da chuva ácida":
+     → MACRO: quimica_ambiental (chuva ácida é problema ambiental)
+     → MICRO: Equilíbrio Químico (pH é conceito de equilíbrio)
+     
+   - Questão sobre "biocombustíveis e efeito estufa":
+     → MACRO: quimica_ambiental (tema central ambiental)
+     → MICRO: Termoquímica (combustão)
+     → TEMA: Química Orgânica (estrutura do biodiesel)
+
+3. VALIDAR/CORRIGIR SUGESTÕES DO EXCEL
+   - Se a sugestão do Excel estiver ERRADA, CORRIJA baseado no conteúdo
+   - Sempre forneça confidence score e reasoning
+   - Liste as correções feitas
+
+═══════════════════════════════════════════════════════════════════════════════
 `;
 
 interface QuestionInput {
