@@ -10,7 +10,7 @@
 // - Limpeza de formatação inconsistente
 // ============================================
 
-import { memo, useMemo } from 'react';
+import { memo, useMemo, forwardRef } from 'react';
 import { cn } from '@/lib/utils';
 import { formatChemicalFormulas } from '@/lib/chemicalFormatter';
 import { getBancaLabel } from '@/constants/bancas';
@@ -305,6 +305,11 @@ function parseResolutionText(text: string): ParsedSection[] {
     afirmacaoNumber?: string;
     alternativaLetter?: string;
     isCorrect?: boolean;
+    /**
+     * Texto inline capturado no próprio marcador.
+     * Ex: "Afirmação 1 - 'texto...'" (para não criar blocos vazios)
+     */
+    inlineText?: string;
   }
   
   const allStarts: SectionStart[] = [];
@@ -314,12 +319,20 @@ function parseResolutionText(text: string): ParsedSection[] {
     let match;
     const regex = new RegExp(pattern.regex.source, 'gi');
     while ((match = regex.exec(cleanedText)) !== null) {
+      const afirmacaoNumber = pattern.type.includes('afirmacao') ? match[1] : undefined;
+
+      // Caso especial: "Afirmação X - TEXTO" captura texto inline (match[2])
+      const inlineText = pattern.type === 'afirmacao_analise'
+        ? String(match[2] || '').trim()
+        : undefined;
+
       allStarts.push({
         index: match.index,
         type: pattern.type,
         match: match[0],
         alternativaLetter: match[1]?.toUpperCase(),
-        afirmacaoNumber: pattern.type.includes('afirmacao') ? match[1] : undefined,
+        afirmacaoNumber,
+        inlineText: inlineText || undefined,
         isCorrect: pattern.isCorrect,
       });
     }
@@ -375,16 +388,32 @@ function parseResolutionText(text: string): ParsedSection[] {
     const endIndex = next ? next.index : cleanedText.length;
     let content = cleanedText.substring(startIndex, endIndex).trim();
 
-    // Normalizar conteúdo de alternativas
+    // Se o marcador trouxe texto inline (ex: Afirmação X - "..."), anexa no topo.
+    if (current.inlineText) {
+      const inline = current.inlineText.trim();
+      if (inline) {
+        // Evitar duplicação caso o trecho já esteja no conteúdo subsequente.
+        const normalizedInline = inline.toLowerCase().replace(/[^ -\w\s]/g, '').trim();
+        const normalizedContent = content.toLowerCase().replace(/[^ -\w\s]/g, '').trim();
+        if (!normalizedContent.includes(normalizedInline)) {
+          content = `${inline}\n\n${content}`.trim();
+        }
+      }
+    }
+
+    // Normalizar conteúdo de alternativas/afirmações
     if (current.type.includes('alternativa') || current.type.includes('afirmacao')) {
       content = normalizeAlternativeContent(content);
     }
 
     // Limpar emojis redundantes do início
-    content = content.replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]\s*/g, '').trim();
+    content = content.replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]+\s*/g, '').trim();
+
+    // Normalização final anti-blocos vazios (só ruído/pontuação)
+    const meaningful = content.replace(/[\s\n\r\t\-–—•.…:;]+/g, '').trim();
 
     // Ignorar seções vazias ou muito curtas
-    if (content.length < 5 && current.type !== 'analise_header') continue;
+    if (meaningful.length < 3 && current.type !== 'analise_header') continue;
 
     sections.push({
       type: current.type,
@@ -397,87 +426,112 @@ function parseResolutionText(text: string): ParsedSection[] {
     });
   }
 
-  // ========== DEDUPLICAÇÃO RIGOROSA DE ALTERNATIVAS ==========
-  // REGRA INTERNACIONAL: Cada alternativa (A-E) aparece EXATAMENTE UMA VEZ
-  
+  // ========== DEDUPLICAÇÃO RIGOROSA (PASSOS + CONCLUSÃO + AFIRMAÇÕES + ALTERNATIVAS) ==========
+  // REGRA INTERNACIONAL: nada duplicado, nada vazio, estrutura consistente.
+
   const deduplicatedSections: ParsedSection[] = [];
-  const seenAlternatives = new Map<string, ParsedSection>(); // letter -> best section
-  const seenAfirmacoes = new Map<string, ParsedSection>(); // number -> best section
-  
+  const seenPassos = new Map<number, ParsedSection>(); // stepNumber -> best section
+  const seenAlternatives = new Map<string, ParsedSection>(); // A-E -> best section
+  const seenAfirmacoes = new Map<string, ParsedSection>(); // I-V / 1-5 -> best section
+
+  // Conclusão / resumo devem existir no máximo 1 vez cada (serão colocados no final do fluxo)
+  let bestConclusao: ParsedSection | null = null;
+  let bestResumo: ParsedSection | null = null;
+
+  const priorityForAlt = (t: SectionType) => (t === 'alternativa_correta' ? 3 : t === 'alternativa_errada' ? 2 : 1);
+  const priorityForAfirm = (t: SectionType) => (t === 'afirmacao_correta' ? 3 : t === 'afirmacao_incorreta' ? 2 : 1);
+
   for (const section of sections) {
-    // Se é alternativa
+    // PASSOS (dedup por número)
+    if (section.type === 'passo' && section.stepNumber) {
+      const n = section.stepNumber;
+      const existing = seenPassos.get(n);
+      if (!existing) {
+        seenPassos.set(n, section);
+      } else {
+        const merged = mergeUniqueContent(existing.content, section.content);
+        // Preferir o mais "completo" (conteúdo maior depois do merge)
+        const best = merged.length >= existing.content.length ? { ...existing, content: merged } : existing;
+        seenPassos.set(n, best);
+      }
+      continue;
+    }
+
+    // CONCLUSÃO (apenas 1)
+    if (section.type === 'conclusao') {
+      if (!bestConclusao) {
+        bestConclusao = section;
+      } else {
+        bestConclusao = {
+          ...bestConclusao,
+          content: mergeUniqueContent(bestConclusao.content, section.content),
+        };
+      }
+      continue;
+    }
+
+    // RESUMO (apenas 1)
+    if (section.type === 'resumo') {
+      if (!bestResumo) {
+        bestResumo = section;
+      } else {
+        bestResumo = {
+          ...bestResumo,
+          content: mergeUniqueContent(bestResumo.content, section.content),
+        };
+      }
+      continue;
+    }
+
+    // ALTERNATIVAS (A-E)
     if (section.type.includes('alternativa') && section.alternativaLetter) {
       const letter = section.alternativaLetter;
       const existing = seenAlternatives.get(letter);
-      
       if (!existing) {
-        // Primeira ocorrência — guardar
         seenAlternatives.set(letter, section);
       } else {
-        // Já existe — fazer merge inteligente
-        // Prioridade: CORRETA > ERRADA > ANÁLISE
-        const existingPriority = existing.type === 'alternativa_correta' ? 3 : 
-                                  existing.type === 'alternativa_errada' ? 2 : 1;
-        const newPriority = section.type === 'alternativa_correta' ? 3 : 
-                            section.type === 'alternativa_errada' ? 2 : 1;
-        
-        // Se nova tem mais prioridade, substituir
-        if (newPriority > existingPriority) {
-          // Mesclar conteúdo único
-          const mergedContent = mergeUniqueContent(existing.content, section.content);
-          seenAlternatives.set(letter, {
-            ...section,
-            content: mergedContent,
-          });
-        } else {
-          // Manter existente mas adicionar conteúdo novo
-          const mergedContent = mergeUniqueContent(existing.content, section.content);
-          seenAlternatives.set(letter, {
-            ...existing,
-            content: mergedContent,
-          });
-        }
+        const existingPriority = priorityForAlt(existing.type);
+        const newPriority = priorityForAlt(section.type);
+        const mergedContent = mergeUniqueContent(existing.content, section.content);
+        const chosen = newPriority > existingPriority ? { ...section, content: mergedContent } : { ...existing, content: mergedContent };
+        seenAlternatives.set(letter, chosen);
       }
+      continue;
     }
-    // Se é afirmação
-    else if (section.type.includes('afirmacao') && section.afirmacaoNumber) {
+
+    // AFIRMAÇÕES (I-V ou 1-5)
+    if (section.type.includes('afirmacao') && section.afirmacaoNumber) {
       const num = section.afirmacaoNumber;
       const existing = seenAfirmacoes.get(num);
-      
       if (!existing) {
         seenAfirmacoes.set(num, section);
       } else {
-        // Merge similar
-        const existingPriority = existing.type === 'afirmacao_correta' ? 3 : 
-                                  existing.type === 'afirmacao_incorreta' ? 2 : 1;
-        const newPriority = section.type === 'afirmacao_correta' ? 3 : 
-                            section.type === 'afirmacao_incorreta' ? 2 : 1;
-        
-        if (newPriority > existingPriority) {
-          const mergedContent = mergeUniqueContent(existing.content, section.content);
-          seenAfirmacoes.set(num, { ...section, content: mergedContent });
-        } else {
-          const mergedContent = mergeUniqueContent(existing.content, section.content);
-          seenAfirmacoes.set(num, { ...existing, content: mergedContent });
-        }
+        const existingPriority = priorityForAfirm(existing.type);
+        const newPriority = priorityForAfirm(section.type);
+        const mergedContent = mergeUniqueContent(existing.content, section.content);
+        const chosen = newPriority > existingPriority ? { ...section, content: mergedContent } : { ...existing, content: mergedContent };
+        seenAfirmacoes.set(num, chosen);
       }
+      continue;
     }
-    // Outras seções — adicionar diretamente
-    else {
-      deduplicatedSections.push(section);
-    }
+
+    // OUTROS: mantém
+    deduplicatedSections.push(section);
   }
-  
-  // Adicionar alternativas deduplicadas (em ordem A-E)
+
+  // Reinserção ordenada: PASSOS (1..n), ALTERNATIVAS (A-E), AFIRMAÇÕES (1..n), RESUMO, CONCLUSÃO
+  const orderedStepNumbers = Array.from(seenPassos.keys()).sort((a, b) => a - b);
+  for (const n of orderedStepNumbers) {
+    const step = seenPassos.get(n);
+    if (step) deduplicatedSections.push(step);
+  }
+
   const orderedLetters = ['A', 'B', 'C', 'D', 'E'];
   for (const letter of orderedLetters) {
     const alt = seenAlternatives.get(letter);
-    if (alt) {
-      deduplicatedSections.push(alt);
-    }
+    if (alt) deduplicatedSections.push(alt);
   }
-  
-  // Adicionar afirmações deduplicadas (em ordem I, II, III, IV, V ou 1-5)
+
   const afirmacaoKeys = Array.from(seenAfirmacoes.keys()).sort((a, b) => {
     const numA = a.match(/\d+/) ? parseInt(a) : romanToNumber(a);
     const numB = b.match(/\d+/) ? parseInt(b) : romanToNumber(b);
@@ -485,10 +539,11 @@ function parseResolutionText(text: string): ParsedSection[] {
   });
   for (const key of afirmacaoKeys) {
     const afir = seenAfirmacoes.get(key);
-    if (afir) {
-      deduplicatedSections.push(afir);
-    }
+    if (afir) deduplicatedSections.push(afir);
   }
+
+  if (bestResumo) deduplicatedSections.push(bestResumo);
+  if (bestConclusao) deduplicatedSections.push(bestConclusao);
 
   // ========== MERGE GLOBAL DE SEÇÕES PEDAGÓGICAS ==========
   // REGRA UNIVERSAL: Agrupa seções do mesmo tipo mergeable
@@ -905,34 +960,50 @@ const formatContent = (content: string) => {
  * Item de alternativa/afirmação — ORGANIZAÇÃO INTERNACIONAL
  * Exibe letra + status + conteúdo de forma clara
  */
-const AlternativaItem = memo(function AlternativaItem({ section }: { section: ParsedSection }) {
+const AlternativaItem = memo(forwardRef<HTMLDivElement, { section: ParsedSection }>(function AlternativaItem(
+  { section },
+  ref
+) {
   const isCorrect = section.type === 'alternativa_correta' || section.type === 'afirmacao_correta';
   const isAnalise = section.type === 'alternativa_analise' || section.type === 'afirmacao_analise';
   const isAfirmacao = section.type.includes('afirmacao');
-  
+
   const letter = section.alternativaLetter || section.afirmacaoNumber || '';
   const icon = isCorrect ? '✅' : isAnalise ? '🔵' : '❌';
   const label = isAfirmacao ? 'Afirmação' : 'Alternativa';
-  const status = isCorrect ? (isAfirmacao ? 'VERDADEIRA' : 'CORRETA') : (isAfirmacao ? 'FALSA' : 'ERRADA');
-  
+  const status = isCorrect
+    ? isAfirmacao
+      ? 'VERDADEIRA'
+      : 'CORRETA'
+    : isAfirmacao
+      ? 'FALSA'
+      : 'ERRADA';
+
   return (
-    <div className={cn(
-      "px-4 py-3 border-l-4",
-      isCorrect ? "border-l-green-500 bg-green-500/5" : 
-      isAnalise ? "border-l-blue-500 bg-blue-500/5" : 
-      "border-l-red-500 bg-red-500/5"
-    )}>
-      <div className={cn(
-        "text-sm leading-relaxed",
-        isCorrect ? "text-green-600" : isAnalise ? "text-blue-600" : "text-red-600"
-      )}>
+    <div
+      ref={ref}
+      className={cn(
+        'px-4 py-3 border-l-4',
+        isCorrect
+          ? 'border-l-green-500 bg-green-500/5'
+          : isAnalise
+            ? 'border-l-blue-500 bg-blue-500/5'
+            : 'border-l-red-500 bg-red-500/5'
+      )}
+    >
+      <div
+        className={cn(
+          'text-sm leading-relaxed',
+          isCorrect ? 'text-green-600' : isAnalise ? 'text-blue-600' : 'text-red-600'
+        )}
+      >
         <span className="font-bold">{icon} {label} {letter}</span>
         {!isAnalise && <span className="font-bold"> — {status}</span>}
         <span className="text-foreground/80 ml-2">→ {formatContent(section.content)}</span>
       </div>
     </div>
   );
-});
+}));
 
 /**
  * Bloco visual para seções NÃO-alternativas
@@ -1132,6 +1203,15 @@ const QuestionResolution = memo(function QuestionResolution({
         <SectionBlock section={introSection} />
       )}
 
+      {/* ========== OUTRAS SEÇÕES (PASSOS, ETC.) ========== */}
+      {otherSections.length > 0 && (
+        <div className="space-y-3">
+          {otherSections.map((section, index) => (
+            <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
+          ))}
+        </div>
+      )}
+
       {/* ========== ALTERNATIVAS / AFIRMAÇÕES — BLOCO ÚNICO ========== */}
       {alternativasSections.length > 0 && (
         <div className="rounded-xl border border-border/50 overflow-hidden bg-muted/10">
@@ -1142,22 +1222,13 @@ const QuestionResolution = memo(function QuestionResolution({
               📋 Análise das Alternativas
             </h4>
           </div>
-          
+
           {/* Alternativas como tópicos dentro do bloco */}
           <div className="divide-y divide-border/30">
             {alternativasSections.map((section, index) => (
               <AlternativaItem key={`alt-${section.type}-${index}`} section={section} />
             ))}
           </div>
-        </div>
-      )}
-
-      {/* ========== OUTRAS SEÇÕES ========== */}
-      {otherSections.length > 0 && (
-        <div className="space-y-3">
-          {otherSections.map((section, index) => (
-            <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
-          ))}
         </div>
       )}
 
