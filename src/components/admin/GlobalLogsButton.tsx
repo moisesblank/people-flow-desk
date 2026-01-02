@@ -6,7 +6,7 @@
 // ============================================
 
 import { useState, memo, useCallback, useEffect, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { createPortal } from "react-dom";
 import { ScrollText, X, Monitor, Server, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -185,11 +185,28 @@ function useBrowserConsoleLogs(enabled: boolean) {
 export const GlobalLogsButton = memo(function GlobalLogsButton() {
   const { user, role } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // 🎯 OWNER-ONLY: Verificar se é o proprietário
   const isOwner = role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
-  
+
+  // 🛡️ P0 anti-tela-preta: nunca deixar overlay preso em troca de rota
+  useEffect(() => {
+    setIsModalOpen(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.pathname]);
+
+  // 🛡️ ESC fecha o overlay sempre
+  useEffect(() => {
+    if (!isModalOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsModalOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown, true);
+    return () => window.removeEventListener('keydown', onKeyDown, true);
+  }, [isModalOpen]);
+
   // Hook para capturar logs do console (sempre ativo para o owner)
   const { logs: browserLogs, clearLogs: clearBrowserLogs } = useBrowserConsoleLogs(isOwner);
   
