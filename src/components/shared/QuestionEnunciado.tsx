@@ -100,18 +100,32 @@ export const getQuestionImageUrl = (questionText: string, imageUrl?: string | nu
 };
 
 /**
+ * Tipo para imagem do banco (pode ser string ou objeto com url)
+ */
+type ImageUrlItem = string | { url: string; [key: string]: unknown };
+
+/**
  * Obtém TODAS as URLs de imagens do enunciado (combina imageUrls, imageUrl e texto)
+ * Suporta tanto array de strings quanto array de objetos com { url: string }
  */
 export const getAllQuestionImages = (
   questionText: string, 
   imageUrl?: string | null, 
-  imageUrls?: string[] | null
+  imageUrls?: (string | ImageUrlItem)[] | null
 ): string[] => {
   const images: string[] = [];
   
   // 1. Prioridade: array imageUrls do banco
   if (imageUrls && Array.isArray(imageUrls) && imageUrls.length > 0) {
-    images.push(...imageUrls.filter(url => url && typeof url === 'string'));
+    for (const item of imageUrls) {
+      if (typeof item === 'string' && item) {
+        // É uma string direta
+        images.push(item);
+      } else if (typeof item === 'object' && item !== null && 'url' in item && typeof item.url === 'string' && item.url) {
+        // É um objeto com propriedade url
+        images.push(item.url);
+      }
+    }
   }
   
   // 2. Fallback: imageUrl único do banco (se não estiver já no array)
