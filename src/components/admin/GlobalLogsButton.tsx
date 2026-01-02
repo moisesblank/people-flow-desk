@@ -222,8 +222,11 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
                 ) : (
                   <div className="space-y-1">
                     {recentLogs.map((log) => {
-                      const time = format(new Date(log.timestamp), "HH:mm:ss");
-                      const date = format(new Date(log.timestamp), "dd/MM");
+                      // Converter UTC para horário de Brasília (GMT-3)
+                      const utcDate = new Date(log.timestamp);
+                      const brasiliaDate = new Date(utcDate.getTime() - (3 * 60 * 60 * 1000));
+                      const time = format(brasiliaDate, "HH:mm:ss");
+                      const date = format(brasiliaDate, "dd/MM");
                       const sev = (log.severity || 'log').toUpperCase().padEnd(5);
                       const sevColor = log.severity === 'error' ? 'text-red-400' : log.severity === 'warn' ? 'text-yellow-400' : 'text-blue-400';
                       
