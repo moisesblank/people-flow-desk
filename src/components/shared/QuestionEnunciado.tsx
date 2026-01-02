@@ -65,7 +65,11 @@ export const extractAllImagesFromText = (text: string): string[] => {
  */
 export const cleanQuestionText = (text: string): string => {
   if (!text) return '';
-  return text.replace(/\[IMAGEM:\s*https?:\/\/[^\]]+\]/gi, '').trim();
+  return text
+    .replace(/\[IMAGEM:\s*https?:\/\/[^\]]+\]/gi, '')
+    .replace(/[""]/g, '')  // Remove aspas curvas (bugs)
+    .replace(/['']/g, '')  // Remove apóstrofos curvos
+    .trim();
 };
 
 /**

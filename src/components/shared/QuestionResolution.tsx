@@ -719,6 +719,7 @@ function parseResolutionText(text: string): ParsedSection[] {
     for (const section of sectionsOfType) {
       let content = section.content
         .replace(/^[•\-\s]+/gm, '')
+        .replace(/[""]/g, '')  // Remove aspas curvas/especiais (bugs)
         .replace(/PEGADINHAS?\s*(COMUNS?)?:?\s*/gi, '')
         .replace(/DICA\s*DE\s*OURO:?\s*/gi, '')
         .replace(/DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA:?\s*/gi, '')
