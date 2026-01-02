@@ -310,3 +310,13 @@ verify_jwt = false
 # 🟢 Requer JWT - Apenas gestão pode usar
 [functions.infer-question-taxonomy]
 verify_jwt = true
+
+# --- Extração de Dados Químicos de Imagens (IA) ---
+# 🟢 Requer JWT - Extrai informações químicas de imagens
+[functions.extract-chemical-from-image]
+verify_jwt = true
+
+# --- Log de Intervenções de IA em Questões ---
+# 🟢 Requer JWT - Registra intervenções de IA
+[functions.log-question-ai-intervention]
+verify_jwt = true
