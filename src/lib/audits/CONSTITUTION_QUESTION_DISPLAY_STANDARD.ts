@@ -1,7 +1,7 @@
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
 // ║ 🔒 CONSTITUIÇÃO DO PADRÃO DE EXIBIÇÃO DE QUESTÕES                             ║
 // ║ STATUS: VIGENTE E IMUTÁVEL                                                     ║
-// ║ VERSÃO: 2.0.0                                                                  ║
+// ║ VERSÃO: 2.1.0                                                                  ║
 // ║ DATA: 2026-01-02                                                               ║
 // ║ AUTORIDADE: OWNER (moisesblank@gmail.com)                                      ║
 // ╠═══════════════════════════════════════════════════════════════════════════════╣
@@ -25,9 +25,11 @@
 // ║ 2. Formatação química científica automática (H2O → H₂O)                        ║
 // ║ 3. Alternativas: "Alternativa X ERRADA:" ou "Alternativa X CORRETA:"          ║
 // ║ 4. Pontuação limpa (sem ".." ou "..." excessivos)                              ║
-// ║ 5. Bullets unificados com espaçamento reduzido                                 ║
+// ║ 5. Bullets unificados com espaçamento COMPACTO (1 quebra de linha)            ║
 // ║ 6. Imagens inline via [IMAGEM: URL] com max-h-[600px]                          ║
 // ║ 7. Deduplicação automática de seções repetidas                                 ║
+// ║ 8. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área# (NUNCA duplica)         ║
+// ║ 9. Competência e Habilidade em LINHAS SEPARADAS (organizadas)                 ║
 // ║                                                                                ║
 // ║ PRINCÍPIO CHAVE:                                                               ║
 // ║ Input pode ser inconsistente. Output SEMPRE padronizado.                       ║
