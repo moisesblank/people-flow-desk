@@ -2332,9 +2332,14 @@ function GestaoQuestoes() {
               >
                 <Sparkles className={cn("h-4 w-4", estiloEnemFilter && "animate-pulse")} />
                 ESTILO ENEM
-                {estiloEnemFilter && (
-                  <Badge className="ml-1 bg-white/20 text-white border-0 text-[10px] px-1.5">ON</Badge>
-                )}
+                <Badge className={cn(
+                  "ml-1 border-0 text-[10px] px-1.5 font-bold",
+                  estiloEnemFilter 
+                    ? "bg-white/20 text-white" 
+                    : "bg-blue-500/20 text-blue-400"
+                )}>
+                  {stats.estiloEnem}
+                </Badge>
               </Button>
 
               {/* Botão Limpar Filtros */}
