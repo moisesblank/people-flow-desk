@@ -919,6 +919,9 @@ const formatTextContent = (content: string): string => {
     .replace(/️/g, '')              // Remove variation selectors órfãos
     .replace(/👉\s*/g, '\n• ')
     .replace(/Reunindo:/gi, '\nReunindo:')
+    // NORMALIZAÇÃO ENEM: C1-C7 e H1-H30 sempre em MAIÚSCULAS
+    .replace(/\b([cC])(\d+)\b/g, (_, letter, num) => `C${num}`)
+    .replace(/\b([hH])(\d+)\b/g, (_, letter, num) => `H${num}`)
     .trim();
   
   return formatChemicalFormulas(cleaned);
@@ -1359,14 +1362,14 @@ const QuestionResolution = memo(function QuestionResolution({
           <div className="px-5 py-4 space-y-2 text-sm">
             {competenciaEnem && (
               <p>
-                <span className="font-medium text-purple-400">◆ Competência:</span>{' '}
-                <span className="text-muted-foreground">{competenciaEnem}</span>
+                <span className="font-medium text-purple-400">Competencia:</span>{' '}
+                <span className="text-muted-foreground uppercase">{competenciaEnem}</span>
               </p>
             )}
             {habilidadeEnem && (
               <p>
-                <span className="font-medium text-purple-400">◆ Habilidade:</span>{' '}
-                <span className="text-muted-foreground">{habilidadeEnem}</span>
+                <span className="font-medium text-purple-400">Habilidade:</span>{' '}
+                <span className="text-muted-foreground uppercase">{habilidadeEnem}</span>
               </p>
             )}
           </div>
