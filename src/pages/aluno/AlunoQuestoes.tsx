@@ -32,6 +32,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { BANCAS, BANCAS_POR_CATEGORIA, CATEGORIA_LABELS, getBancaLabel } from "@/constants/bancas";
+import { formatBancaHeader } from "@/lib/bancaNormalizer";
 import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/QuestionEnunciado";
 import QuestionResolution from "@/components/shared/QuestionResolution";
 import { predictSuccessRate, getSuccessRateColor } from "@/lib/questionSuccessPredictor";
@@ -152,14 +153,10 @@ function QuestionModal({ open, onClose, question, userAttempt, onAnswer, isSubmi
                   <Badge className={DIFFICULTY_COLORS[question.difficulty]}>
                     {DIFFICULTY_LABELS[question.difficulty]}
                   </Badge>
-                  {question.banca && (
-                    <Badge variant="outline">
-                      {getBancaLabel(question.banca)}
-                    </Badge>
-                  )}
-                  {question.ano && (
-                    <Badge variant="secondary">{question.ano}</Badge>
-                  )}
+                  {/* BANCA + ANO UNIFICADOS (NORMALIZAÇÃO PADRÃO) */}
+                  <Badge variant="outline">
+                    🏛️ {formatBancaHeader(question.banca, question.ano, question.question_text)}
+                  </Badge>
                   <Badge variant="outline" className="ml-2">
                     <Trophy className="h-3 w-3 mr-1" />
                     {question.points} pts
