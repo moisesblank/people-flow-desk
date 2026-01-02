@@ -167,6 +167,14 @@ function cleanResolutionText(text: string): string {
     .replace(/\n{4,}/g, '\n\n\n')
     .trim();
   
+  // PASSO 5: Formatar bullet points com espaçamento
+  // REGRA: Cada • deve ter quebra de linha antes para legibilidade
+  cleaned = cleaned
+    .replace(/\n\s*•\s*/g, '\n\n• ')           // Bullets já em linha própria
+    .replace(/([^\n])\s*•\s*/g, '$1\n\n• ')   // Bullets no meio do texto
+    .replace(/\n{3,}/g, '\n\n')               // Remove quebras excessivas
+    .trim();
+  
   return cleaned;
 }
 
@@ -177,7 +185,7 @@ function cleanResolutionText(text: string): string {
  * =====================================================
  */
 function normalizeAlternativeContent(content: string): string {
-  return content
+  let normalized = content
     // Limpeza global de caracteres indesejados
     .replace(/\*\*/g, '')
     .replace(/\*/g, '')
@@ -198,6 +206,15 @@ function normalizeAlternativeContent(content: string): string {
     // Limpa emojis redundantes do início
     .replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]\s*/g, '')
     .trim();
+  
+  // FORMATAÇÃO DE BULLET POINTS: Cada • em sua própria linha com espaço
+  normalized = normalized
+    .replace(/\n\s*•\s*/g, '\n\n• ')           // Bullets já em linha própria
+    .replace(/([^\n])\s*•\s*/g, '$1\n\n• ')   // Bullets no meio do texto
+    .replace(/\n{3,}/g, '\n\n')               // Remove quebras excessivas
+    .trim();
+  
+  return normalized;
 }
 
 /**
@@ -916,7 +933,7 @@ function extractImagesFromResolution(text: string): { cleanedText: string; image
  */
 const formatTextContent = (content: string): string => {
   // Limpeza global de caracteres indesejados antes de qualquer formatação
-  const cleaned = content
+  let cleaned = content
     .replace(/\*\*/g, '')           // Remove ** (markdown bold)
     .replace(/\*/g, '')             // Remove * soltos
     .replace(/里/g, '')             // Remove caractere chinês 里
@@ -927,11 +944,23 @@ const formatTextContent = (content: string): string => {
     .replace(/[""]/g, '')           // Remove aspas curvas
     .replace(/['']/g, '')           // Remove apóstrofos curvos
     .replace(/[«»„"]/g, '')         // Remove aspas francesas/alemãs
-    .replace(/👉\s*/g, '\n• ')
-    .replace(/Reunindo:/gi, '\nReunindo:')
+    .replace(/👉\s*/g, '\n\n• ')    // Cada 👉 vira bullet em nova linha com espaço
+    .replace(/Reunindo:/gi, '\n\nReunindo:')
     // NORMALIZAÇÃO ENEM: C1-C7 e H1-H30 sempre em MAIÚSCULAS
     .replace(/\b([cC])(\d+)\b/g, (_, letter, num) => `C${num}`)
     .replace(/\b([hH])(\d+)\b/g, (_, letter, num) => `H${num}`)
+    .trim();
+  
+  // ========== FORMATAÇÃO DE BULLET POINTS ==========
+  // REGRA: Cada bullet point (•) deve ter uma quebra de linha antes para legibilidade
+  // Substitui "• " no meio do texto por "\n\n• " para criar espaçamento visual
+  cleaned = cleaned
+    // Primeiro normaliza bullets que já estão no início de linha (evita duplicar quebras)
+    .replace(/\n\s*•\s*/g, '\n\n• ')
+    // Depois adiciona quebra antes de bullets no meio do texto
+    .replace(/([^\n])\s*•\s*/g, '$1\n\n• ')
+    // Remove quebras excessivas (mais de 2)
+    .replace(/\n{3,}/g, '\n\n')
     .trim();
   
   return formatChemicalFormulas(cleaned);
