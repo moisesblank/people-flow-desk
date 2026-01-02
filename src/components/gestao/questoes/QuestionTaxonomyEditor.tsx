@@ -1,20 +1,18 @@
 // ============================================
 // 🏷️ EDITOR DE TAXONOMIA DA QUESTÃO
-// Permite OWNER/ADMIN definir manualmente:
-// MACRO → MICRO → TEMA → SUBTEMA
+// HÍBRIDO: MACRO → MICRO (hierárquico) + TEMA/SUBTEMA (busca livre)
 // ============================================
 
-import { memo, useState, useEffect, useCallback } from 'react';
+import { memo, useState, useEffect, useCallback, useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { 
   FolderTree, 
   Save, 
   X, 
   Edit2, 
-  Check, 
   Loader2,
   ChevronRight,
-  Sparkles,
+  Search,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -25,6 +23,19 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useTaxonomyForSelects } from '@/hooks/useQuestionTaxonomy';
@@ -53,6 +64,10 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
   const [isEditing, setIsEditing] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   
+  // Popover states for combobox
+  const [temaOpen, setTemaOpen] = useState(false);
+  const [subtemaOpen, setSubtemaOpen] = useState(false);
+  
   // Local state for selections
   const [macro, setMacro] = useState(currentMacro || '');
   const [micro, setMicro] = useState(currentMicro || '');
@@ -63,15 +78,15 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
   const { 
     macros, 
     getMicrosForSelect, 
-    getTemasForSelect, 
-    getSubtemasForSelect,
+    getAllTemasForSelect,
+    getAllSubtemasForSelect,
     isLoading: taxonomyLoading 
   } = useTaxonomyForSelects();
   
-  // Derived options based on current selections
+  // Derived options
   const microOptions = macro ? getMicrosForSelect(macro) : [];
-  const temaOptions = micro ? getTemasForSelect(micro) : [];
-  const subtemaOptions = tema ? getSubtemasForSelect(tema) : [];
+  const allTemas = useMemo(() => getAllTemasForSelect(), [getAllTemasForSelect]);
+  const allSubtemas = useMemo(() => getAllSubtemasForSelect(), [getAllSubtemasForSelect]);
   
   // Reset to current values when editing is cancelled
   useEffect(() => {
@@ -83,23 +98,17 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
     }
   }, [isEditing, currentMacro, currentMicro, currentTema, currentSubtema]);
   
-  // Cascade reset when parent changes
+  // Cascade reset when MACRO changes (only resets MICRO)
   const handleMacroChange = useCallback((value: string) => {
     setMacro(value);
     setMicro('');
-    setTema('');
-    setSubtema('');
+    // TEMA e SUBTEMA NÃO resetam - são independentes
   }, []);
   
+  // MICRO change - não reseta TEMA/SUBTEMA (híbrido)
   const handleMicroChange = useCallback((value: string) => {
     setMicro(value);
-    setTema('');
-    setSubtema('');
-  }, []);
-  
-  const handleTemaChange = useCallback((value: string) => {
-    setTema(value);
-    setSubtema('');
+    // Não reseta tema/subtema - são independentes
   }, []);
   
   // Save to database
@@ -137,6 +146,10 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
     tema !== (currentTema || '') ||
     subtema !== (currentSubtema || '');
   
+  // Get label for display
+  const getTemaLabel = (value: string) => allTemas.find(t => t.value === value)?.label || value;
+  const getSubtemaLabel = (value: string) => allSubtemas.find(s => s.value === value)?.label || value;
+  
   return (
     <Card className={cn("border-amber-500/30 bg-gradient-to-br from-amber-500/5 to-orange-500/5", className)}>
       <CardHeader className="pb-3">
@@ -149,11 +162,11 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
               <CardTitle className="text-lg text-amber-500 flex items-center gap-2">
                 Classificação Taxonômica
                 <Badge variant="outline" className="text-xs border-amber-500/50 text-amber-500">
-                  OWNER
+                  HÍBRIDO
                 </Badge>
               </CardTitle>
               <CardDescription className="text-xs">
-                Defina manualmente a hierarquia: MACRO → MICRO → TEMA → SUBTEMA
+                MACRO/MICRO hierárquicos • TEMA/SUBTEMA: busca livre (qualquer área)
               </CardDescription>
             </div>
           </div>
@@ -210,11 +223,12 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
               </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {/* MACRO */}
+                {/* MACRO - Select normal */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-amber-500 flex items-center gap-1">
                     <span className="w-5 h-5 rounded-full bg-amber-500/20 flex items-center justify-center text-xs">1</span>
                     MACRO
+                    <Badge variant="secondary" className="text-[10px] ml-1">obrigatório</Badge>
                   </label>
                   <Select value={macro} onValueChange={handleMacroChange}>
                     <SelectTrigger className="border-amber-500/30 focus:ring-amber-500">
@@ -230,11 +244,12 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
                   </Select>
                 </div>
                 
-                {/* MICRO */}
+                {/* MICRO - Select filtrado por MACRO */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-orange-500 flex items-center gap-1">
                     <span className="w-5 h-5 rounded-full bg-orange-500/20 flex items-center justify-center text-xs">2</span>
                     MICRO
+                    <Badge variant="secondary" className="text-[10px] ml-1">obrigatório</Badge>
                   </label>
                   <Select 
                     value={micro} 
@@ -254,52 +269,112 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
                   </Select>
                 </div>
                 
-                {/* TEMA */}
+                {/* TEMA - Combobox com busca livre */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-rose-500 flex items-center gap-1">
                     <span className="w-5 h-5 rounded-full bg-rose-500/20 flex items-center justify-center text-xs">3</span>
                     TEMA
+                    <Badge variant="outline" className="text-[10px] ml-1 border-rose-500/30 text-rose-500">livre</Badge>
                   </label>
-                  <Select 
-                    value={tema} 
-                    onValueChange={handleTemaChange}
-                    disabled={!micro || temaOptions.length === 0}
-                  >
-                    <SelectTrigger className="border-rose-500/30 focus:ring-rose-500">
-                      <SelectValue placeholder={micro ? "Selecione..." : "Selecione MICRO primeiro"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {temaOptions.map((t) => (
-                        <SelectItem key={t.value} value={t.value}>
-                          {t.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={temaOpen} onOpenChange={setTemaOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={temaOpen}
+                        className="w-full justify-between border-rose-500/30 focus:ring-rose-500 hover:bg-rose-500/5"
+                      >
+                        {tema ? getTemaLabel(tema) : "Buscar tema..."}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0 z-50" align="start">
+                      <Command>
+                        <CommandInput placeholder="Digite para buscar..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum tema encontrado.</CommandEmpty>
+                          <CommandGroup className="max-h-[200px] overflow-auto">
+                            {allTemas.map((t) => (
+                              <CommandItem
+                                key={t.value}
+                                value={t.label}
+                                onSelect={() => {
+                                  setTema(t.value);
+                                  setTemaOpen(false);
+                                }}
+                              >
+                                {t.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {tema && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 text-xs text-muted-foreground"
+                      onClick={() => setTema('')}
+                    >
+                      Limpar
+                    </Button>
+                  )}
                 </div>
                 
-                {/* SUBTEMA */}
+                {/* SUBTEMA - Combobox com busca livre */}
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-purple-500 flex items-center gap-1">
                     <span className="w-5 h-5 rounded-full bg-purple-500/20 flex items-center justify-center text-xs">4</span>
                     SUBTEMA
+                    <Badge variant="outline" className="text-[10px] ml-1 border-purple-500/30 text-purple-500">livre</Badge>
                   </label>
-                  <Select 
-                    value={subtema} 
-                    onValueChange={setSubtema}
-                    disabled={!tema || subtemaOptions.length === 0}
-                  >
-                    <SelectTrigger className="border-purple-500/30 focus:ring-purple-500">
-                      <SelectValue placeholder={tema ? (subtemaOptions.length === 0 ? "Nenhum subtema" : "Selecione...") : "Selecione TEMA primeiro"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subtemaOptions.map((s) => (
-                        <SelectItem key={s.value} value={s.value}>
-                          {s.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover open={subtemaOpen} onOpenChange={setSubtemaOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={subtemaOpen}
+                        className="w-full justify-between border-purple-500/30 focus:ring-purple-500 hover:bg-purple-500/5"
+                      >
+                        {subtema ? getSubtemaLabel(subtema) : "Buscar subtema..."}
+                        <Search className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0 z-50" align="start">
+                      <Command>
+                        <CommandInput placeholder="Digite para buscar..." />
+                        <CommandList>
+                          <CommandEmpty>Nenhum subtema encontrado.</CommandEmpty>
+                          <CommandGroup className="max-h-[200px] overflow-auto">
+                            {allSubtemas.map((s) => (
+                              <CommandItem
+                                key={s.value}
+                                value={s.label}
+                                onSelect={() => {
+                                  setSubtema(s.value);
+                                  setSubtemaOpen(false);
+                                }}
+                              >
+                                {s.label}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  {subtema && (
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 text-xs text-muted-foreground"
+                      onClick={() => setSubtema('')}
+                    >
+                      Limpar
+                    </Button>
+                  )}
                 </div>
               </div>
             )}
@@ -326,7 +401,7 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
                     <>
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                       <Badge variant="outline" className="border-rose-500/50 text-rose-500">
-                        {temaOptions.find(t => t.value === tema)?.label || tema}
+                        {getTemaLabel(tema)}
                       </Badge>
                     </>
                   )}
@@ -334,7 +409,7 @@ const QuestionTaxonomyEditor = memo(function QuestionTaxonomyEditor({
                     <>
                       <ChevronRight className="h-3 w-3 text-muted-foreground" />
                       <Badge variant="outline" className="border-purple-500/50 text-purple-500">
-                        {subtemaOptions.find(s => s.value === subtema)?.label || subtema}
+                        {getSubtemaLabel(subtema)}
                       </Badge>
                     </>
                   )}
