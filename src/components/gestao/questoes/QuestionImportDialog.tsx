@@ -919,10 +919,65 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
   }, []);
 
   // ============================================
+  // INFERÊNCIA INTELIGENTE VIA IA (SYNAPSE Ω)
+  // ============================================
+  
+  const [aiInferenceEnabled, setAiInferenceEnabled] = useState(true);
+  const [aiInferenceProgress, setAiInferenceProgress] = useState(0);
+  
+  const callAITaxonomyInference = useCallback(async (questions: ParsedQuestion[]): Promise<Map<string, { macro: string; micro: string; tema: string; subtema: string; corrections: string[] }>> => {
+    const results = new Map<string, { macro: string; micro: string; tema: string; subtema: string; corrections: string[] }>();
+    
+    // Preparar payload para a IA
+    const questionsForAI = questions.map(q => ({
+      id: q.id,
+      question_text: q.question_text,
+      options: q.options,
+      correct_answer: q.correct_answer,
+      explanation: q.explanation,
+      suggested_macro: q.macro,
+      suggested_micro: q.micro,
+      suggested_tema: q.tema,
+      suggested_subtema: q.subtema,
+    }));
+    
+    try {
+      console.log(`🧠 [AI] Chamando inferência de taxonomia para ${questionsForAI.length} questões...`);
+      
+      const { data, error } = await supabase.functions.invoke('infer-question-taxonomy', {
+        body: { questions: questionsForAI }
+      });
+      
+      if (error) {
+        console.error('❌ [AI] Erro na inferência:', error);
+        throw error;
+      }
+      
+      if (data?.results) {
+        for (const result of data.results) {
+          results.set(result.id, {
+            macro: result.macro,
+            micro: result.micro,
+            tema: result.tema,
+            subtema: result.subtema,
+            corrections: result.corrections || [],
+          });
+        }
+        console.log(`✅ [AI] Taxonomia inferida para ${results.size} questões. Correções: ${data.corrections_made || 0}`);
+      }
+    } catch (err) {
+      console.error('❌ [AI] Falha na inferência inteligente:', err);
+      toast.error('Falha na inferência de IA - usando inferência local');
+    }
+    
+    return results;
+  }, []);
+
+  // ============================================
   // PROCESSAMENTO COM INFERÊNCIA RASTREÁVEL
   // ============================================
 
-  const processQuestions = useCallback(() => {
+  const processQuestions = useCallback(async () => {
     if (!Object.values(columnMapping).includes('question_text')) {
       toast.error('Mapeie a coluna "Enunciado" para continuar');
       return;
@@ -931,366 +986,410 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
     setIsProcessing(true);
     setFlowState('inferencia_em_execucao');
     
-    // Simular delay para mostrar estado
-    setTimeout(() => {
-      try {
-        const questions: ParsedQuestion[] = rawData.map((row, index) => {
-          const camposInferidos: string[] = [];
-          const camposNull: string[] = [];
-          
-          // Inicializar questão com TUDO undefined/null
-          const question: ParsedQuestion = {
-            id: generateQuestionId(),
-            question_text: '',
-            options: [],
-            correct_answer: 'a',
-            explanation: undefined,
-            difficulty: undefined,
-            banca: undefined,
-            ano: undefined,
-            origem: undefined,
-            macro: undefined,
-            micro: undefined,
-            tema: undefined,
-            subtema: undefined,
-            tags: undefined,
-            competencia_enem: undefined,
-            habilidade_enem: undefined,
-            nivel_cognitivo: undefined,
-            tempo_medio_segundos: undefined,
-            multidisciplinar: undefined,
-            image_url: undefined,
-            image_urls: [], // NOVO: Array de múltiplas imagens do enunciado
-            imagens_enunciado: undefined,
-            imagens_alternativas: undefined,
-            tipo_imagem: undefined,
-            // Controle Editorial - padrão de importação
-            is_active: true,
-            status_revisao: 'publicado',
-            // Rastreabilidade
-            campos_inferidos: [],
-            campos_null: [],
-            // Status
-            status: 'pending',
-            errors: [],
-            warnings: [],
-            selected: true,
-            rawData: row,
-          };
+    try {
+      // FASE 1: Parse inicial das colunas do Excel
+      const questions: ParsedQuestion[] = rawData.map((row, index) => {
+        const camposInferidos: string[] = [];
+        const camposNull: string[] = [];
+        
+        // Inicializar questão com TUDO undefined/null
+        const question: ParsedQuestion = {
+          id: generateQuestionId(),
+          question_text: '',
+          options: [],
+          correct_answer: 'a',
+          explanation: undefined,
+          difficulty: undefined,
+          banca: undefined,
+          ano: undefined,
+          origem: undefined,
+          macro: undefined,
+          micro: undefined,
+          tema: undefined,
+          subtema: undefined,
+          tags: undefined,
+          competencia_enem: undefined,
+          habilidade_enem: undefined,
+          nivel_cognitivo: undefined,
+          tempo_medio_segundos: undefined,
+          multidisciplinar: undefined,
+          image_url: undefined,
+          image_urls: [],
+          imagens_enunciado: undefined,
+          imagens_alternativas: undefined,
+          tipo_imagem: undefined,
+          is_active: true,
+          status_revisao: 'publicado',
+          campos_inferidos: [],
+          campos_null: [],
+          status: 'pending',
+          errors: [],
+          warnings: [],
+          selected: true,
+          rawData: row,
+        };
 
-          // ============================================
-          // MAPEAR CAMPOS EXPLÍCITOS DAS COLUNAS
-          // ============================================
-          
-          for (const [header, field] of Object.entries(columnMapping)) {
-            const value = row[header];
-            if (value === undefined || value === null || String(value).trim() === '') continue;
+        // MAPEAR CAMPOS EXPLÍCITOS DAS COLUNAS
+        for (const [header, field] of Object.entries(columnMapping)) {
+          const value = row[header];
+          if (value === undefined || value === null || String(value).trim() === '') continue;
 
-            switch (field) {
-              case 'question_text':
-                let questionText = String(value);
-                
-                // Extrair imagens do formato [IMAGEM: URL] do enunciado
-                const imagemMatch = questionText.match(/\[IMAGEM:\s*(https?:\/\/[^\]\s]+)\]/i);
-                if (imagemMatch && imagemMatch[1]) {
-                  question.image_url = imagemMatch[1].trim();
-                  // Remover a tag [IMAGEM: ...] do texto
-                  questionText = questionText.replace(/\[IMAGEM:\s*https?:\/\/[^\]]+\]/gi, '').trim();
+          switch (field) {
+            case 'question_text':
+              let questionText = String(value);
+              const imagemMatch = questionText.match(/\[IMAGEM:\s*(https?:\/\/[^\]\s]+)\]/i);
+              if (imagemMatch && imagemMatch[1]) {
+                question.image_url = imagemMatch[1].trim();
+                questionText = questionText.replace(/\[IMAGEM:\s*https?:\/\/[^\]]+\]/gi, '').trim();
+              }
+              question.question_text = extractTextFromHtml(questionText);
+              if (String(value).includes('<')) {
+                const { options, correctAnswer } = parseAlternativesFromHtml(String(value));
+                if (options.length >= 2) {
+                  question.options = options;
+                  question.correct_answer = correctAnswer;
                 }
-                
-                question.question_text = extractTextFromHtml(questionText);
-                if (String(value).includes('<')) {
-                  const { options, correctAnswer } = parseAlternativesFromHtml(String(value));
-                  if (options.length >= 2) {
-                    question.options = options;
-                    question.correct_answer = correctAnswer;
-                  }
-                }
-                break;
-              case 'option_a':
-              case 'option_b':
-              case 'option_c':
-              case 'option_d':
-              case 'option_e':
-                const optionId = field.replace('option_', '');
-                const existing = question.options.find(o => o.id === optionId);
-                if (existing) {
-                  existing.text = extractTextFromHtml(String(value));
+              }
+              break;
+            case 'option_a':
+            case 'option_b':
+            case 'option_c':
+            case 'option_d':
+            case 'option_e':
+              const optionId = field.replace('option_', '');
+              const existing = question.options.find(o => o.id === optionId);
+              if (existing) {
+                existing.text = extractTextFromHtml(String(value));
+              } else {
+                question.options.push({ id: optionId, text: extractTextFromHtml(String(value)) });
+              }
+              break;
+            case 'correct_answer':
+              question.correct_answer = parseCorrectAnswer(value);
+              break;
+            case 'explanation':
+              question.explanation = extractTextFromHtml(String(value));
+              break;
+            case 'difficulty':
+              question.difficulty = parseDifficulty(value);
+              break;
+            case 'banca':
+              question.banca = String(value).trim().toLowerCase() || undefined;
+              break;
+            case 'ano':
+              const anoVal = parseInt(String(value).trim(), 10);
+              question.ano = Number.isFinite(anoVal) ? anoVal : undefined;
+              break;
+            case 'macro':
+              question.macro = String(value).trim() || undefined;
+              break;
+            case 'micro':
+              question.micro = String(value).trim() || undefined;
+              break;
+            case 'tema':
+              question.tema = String(value).trim() || undefined;
+              break;
+            case 'subtema':
+              question.subtema = String(value).trim() || undefined;
+              break;
+            case 'tags':
+              question.tags = String(value).split(/[,;]/).map(t => t.trim()).filter(t => t);
+              break;
+            case 'competencia_enem':
+              question.competencia_enem = String(value).trim() || undefined;
+              break;
+            case 'habilidade_enem':
+              question.habilidade_enem = String(value).trim() || undefined;
+              break;
+            case 'image_url':
+              let url = String(value).trim();
+              url = url.replace(/^\[/, '').replace(/\]$/, '');
+              question.image_url = url || undefined;
+              break;
+            case 'image_1':
+            case 'image_2':
+            case 'image_3':
+            case 'image_4':
+            case 'image_5':
+            case 'image_6':
+            case 'image_7':
+            case 'image_8':
+            case 'image_9':
+            case 'image_10':
+              let multiImgUrl = String(value).trim();
+              multiImgUrl = multiImgUrl.replace(/^\[/, '').replace(/\]$/, '');
+              if (multiImgUrl && !question.image_urls?.includes(multiImgUrl)) {
+                question.image_urls = [...(question.image_urls || []), multiImgUrl];
+              }
+              break;
+            case 'image_a':
+            case 'image_b':
+            case 'image_c':
+            case 'image_d':
+            case 'image_e':
+              const imgOptionId = field.replace('image_', '');
+              let imgUrl = String(value).trim();
+              imgUrl = imgUrl.replace(/^\[/, '').replace(/\]$/, '');
+              if (imgUrl) {
+                const existingOpt = question.options.find(o => o.id === imgOptionId);
+                if (existingOpt) {
+                  existingOpt.image_url = imgUrl;
                 } else {
-                  question.options.push({ id: optionId, text: extractTextFromHtml(String(value)) });
+                  question.options.push({ id: imgOptionId, text: '', image_url: imgUrl });
                 }
-                break;
-              case 'correct_answer':
-                question.correct_answer = parseCorrectAnswer(value);
-                break;
-              case 'explanation':
-                question.explanation = extractTextFromHtml(String(value));
-                break;
-              case 'difficulty':
-                question.difficulty = parseDifficulty(value);
-                break;
-              case 'banca':
-                question.banca = String(value).trim().toLowerCase() || undefined;
-                break;
-              case 'ano':
-                const anoVal = parseInt(String(value).trim(), 10);
-                question.ano = Number.isFinite(anoVal) ? anoVal : undefined;
-                break;
-              case 'macro':
-                question.macro = String(value).trim() || undefined;
-                break;
-              case 'micro':
-                question.micro = String(value).trim() || undefined;
-                break;
-              case 'tema':
-                question.tema = String(value).trim() || undefined;
-                break;
-              case 'subtema':
-                question.subtema = String(value).trim() || undefined;
-                break;
-              case 'tags':
-                question.tags = String(value).split(/[,;]/).map(t => t.trim()).filter(t => t);
-                break;
-              case 'competencia_enem':
-                question.competencia_enem = String(value).trim() || undefined;
-                break;
-              case 'habilidade_enem':
-                question.habilidade_enem = String(value).trim() || undefined;
-                break;
-              case 'image_url':
-                // Limpar URL (remover colchetes se houver)
-                let url = String(value).trim();
-                url = url.replace(/^\[/, '').replace(/\]$/, '');
-                question.image_url = url || undefined;
-                break;
-              // MÚLTIPLAS IMAGENS DO ENUNCIADO (imagem_1 até imagem_10)
-              case 'image_1':
-              case 'image_2':
-              case 'image_3':
-              case 'image_4':
-              case 'image_5':
-              case 'image_6':
-              case 'image_7':
-              case 'image_8':
-              case 'image_9':
-              case 'image_10':
-                let multiImgUrl = String(value).trim();
-                multiImgUrl = multiImgUrl.replace(/^\[/, '').replace(/\]$/, '');
-                if (multiImgUrl && !question.image_urls?.includes(multiImgUrl)) {
-                  question.image_urls = [...(question.image_urls || []), multiImgUrl];
-                }
-                break;
-              // IMAGENS DAS ALTERNATIVAS (PADRÃO PERMANENTE)
-              case 'image_a':
-              case 'image_b':
-              case 'image_c':
-              case 'image_d':
-              case 'image_e':
-                const imgOptionId = field.replace('image_', '');
-                let imgUrl = String(value).trim();
-                imgUrl = imgUrl.replace(/^\[/, '').replace(/\]$/, '');
-                if (imgUrl) {
-                  const existingOpt = question.options.find(o => o.id === imgOptionId);
-                  if (existingOpt) {
-                    existingOpt.image_url = imgUrl;
-                  } else {
-                    question.options.push({ id: imgOptionId, text: '', image_url: imgUrl });
-                  }
-                }
-                break;
-            }
+              }
+              break;
           }
+        }
 
-          // ============================================
-          // INFERÊNCIA POR CAMPO (CONTRATO PARTE 3)
-          // ============================================
-          
-          const enunciado = question.question_text || '';
+        // INFERÊNCIA LOCAL (campos simples)
+        const enunciado = question.question_text || '';
 
-          // BANCA: analise_textual_por_questao, fallback = autoral_prof_moises
-          if (!question.banca) {
-            const bancaResult = inferBanca(enunciado);
-            if (bancaResult.value) {
-              question.banca = bancaResult.value;
-              if (bancaResult.inferido) camposInferidos.push(`banca:${bancaResult.metodo}`);
-            }
+        if (!question.banca) {
+          const bancaResult = inferBanca(enunciado);
+          if (bancaResult.value) {
+            question.banca = bancaResult.value;
+            if (bancaResult.inferido) camposInferidos.push(`banca:${bancaResult.metodo}`);
           }
+        }
 
-          // ANO: coluna_ano_ou_texto, fallback = null
-          if (!question.ano) {
-            const anoResult = inferAno(enunciado);
-            if (anoResult.value) {
-              question.ano = anoResult.value;
-              if (anoResult.inferido) camposInferidos.push(`ano:${anoResult.metodo}`);
-            } else {
-              camposNull.push('ano');
-            }
-          }
-
-          // NIVEL_COGNITIVO: analise_de_verbo_e_estrutura, fallback = null
-          if (!question.nivel_cognitivo) {
-            const nivelResult = inferNivelCognitivo(enunciado);
-            if (nivelResult.value) {
-              question.nivel_cognitivo = nivelResult.value;
-              camposInferidos.push(`nivel_cognitivo:${nivelResult.metodo}`);
-            } else {
-              camposNull.push('nivel_cognitivo');
-            }
-          }
-
-          // TEMPO_MEDIO: inferir_por_dificuldade, fallback = 120
-          if (!question.tempo_medio_segundos) {
-            const tempoResult = inferTempoMedio(question.difficulty);
-            question.tempo_medio_segundos = tempoResult.value;
-            camposInferidos.push(`tempo_medio_segundos:${tempoResult.metodo}`);
-          }
-
-          // ORIGEM: baseado na banca
-          if (!question.origem) {
-            const origemResult = inferOrigem(question.banca);
-            question.origem = origemResult.value;
-            if (origemResult.inferido) camposInferidos.push(`origem:${origemResult.metodo}`);
-          }
-
-          // TIPO_IMAGEM: fallback = ilustrativa (se houver imagens)
-          // Por enquanto, sem imagens detectadas
-          
-          // COMPETENCIA/HABILIDADE: só se existir coluna (já mapeado acima)
-          if (!question.competencia_enem) camposNull.push('competencia_enem');
-          if (!question.habilidade_enem) camposNull.push('habilidade_enem');
-          
-          // ============================================
-          // INFERÊNCIA DE MACRO POR PALAVRAS-CHAVE
-          // ============================================
-          if (!question.macro) {
-            const macroResult = inferMacro(enunciado);
-            if (macroResult.value) {
-              question.macro = macroResult.value;
-              camposInferidos.push(`macro:${macroResult.metodo}`);
-            } else {
-              camposNull.push('macro');
-            }
-          }
-          
-          // Micro/tema/subtema dependem de taxonomia dinâmica - só marcar como null
-          if (!question.micro) camposNull.push('micro');
-          if (!question.tema) camposNull.push('tema');
-          if (!question.subtema) camposNull.push('subtema');
-          
-          // ============================================
-          // INFERÊNCIA DE DIFICULDADE
-          // ============================================
-          if (!question.difficulty) {
-            const diffResult = inferDificuldade(enunciado);
-            if (diffResult.value) {
-              question.difficulty = diffResult.value;
-              camposInferidos.push(`difficulty:${diffResult.metodo}`);
-            } else {
-              camposNull.push('difficulty');
-            }
-          }
-
-          // Ordenar alternativas
-          const existingIds = question.options.map(o => o.id);
-          const allIds = ['a', 'b', 'c', 'd', 'e'];
-          for (const id of allIds) {
-            if (!existingIds.includes(id)) {
-              question.options.push({ id, text: '' });
-            }
-          }
-          question.options.sort((a, b) => a.id.localeCompare(b.id));
-
-          // Registrar rastreabilidade
-          question.campos_inferidos = camposInferidos;
-          question.campos_null = camposNull;
-
-          // ============================================
-          // VALIDAÇÃO
-          // ============================================
-          
-          if (!question.question_text.trim()) {
-            question.errors.push('Enunciado vazio');
-          }
-          
-          const filledOptions = question.options.filter(o => o.text.trim());
-          if (filledOptions.length < 2) {
-            question.errors.push('Menos de 2 alternativas preenchidas');
-          }
-
-          const correctOption = question.options.find(o => o.id === question.correct_answer);
-          if (!correctOption?.text.trim()) {
-            question.errors.push('Alternativa correta não tem texto');
-          }
-
-          // ============================================
-          // TAXONOMIA OBRIGATÓRIA (MACRO, MICRO, TEMA, SUBTEMA)
-          // ============================================
-          
-          if (!question.macro?.trim()) {
-            question.errors.push('MACRO obrigatório - não identificado');
-          }
-          if (!question.micro?.trim()) {
-            question.errors.push('MICRO obrigatório - não identificado');
-          }
-          if (!question.tema?.trim()) {
-            question.errors.push('TEMA obrigatório - não identificado');
-          }
-          if (!question.subtema?.trim()) {
-            question.errors.push('SUBTEMA obrigatório - não identificado');
-          }
-
-          // Warnings informativos (campos inferidos automaticamente)
-          if (question.campos_inferidos?.some(c => c.startsWith('macro:'))) {
-            question.warnings.push(`Macro inferido: ${question.macro}`);
-          }
-          if (question.campos_inferidos?.some(c => c.startsWith('micro:'))) {
-            question.warnings.push(`Micro inferido: ${question.micro}`);
-          }
-          if (question.campos_inferidos?.some(c => c.startsWith('difficulty:'))) {
-            question.warnings.push(`Dificuldade inferida: ${question.difficulty}`);
-          }
-
-          // Definir status
-          if (question.errors.length > 0) {
-            question.status = 'error';
-            question.selected = false;
-          } else if (question.warnings.length > 0) {
-            question.status = 'warning';
-            question.selected = true;
+        if (!question.ano) {
+          const anoResult = inferAno(enunciado);
+          if (anoResult.value) {
+            question.ano = anoResult.value;
+            if (anoResult.inferido) camposInferidos.push(`ano:${anoResult.metodo}`);
           } else {
-            question.status = 'valid';
-            question.selected = true;
+            camposNull.push('ano');
           }
+        }
 
-          return question;
+        if (!question.nivel_cognitivo) {
+          const nivelResult = inferNivelCognitivo(enunciado);
+          if (nivelResult.value) {
+            question.nivel_cognitivo = nivelResult.value;
+            camposInferidos.push(`nivel_cognitivo:${nivelResult.metodo}`);
+          } else {
+            camposNull.push('nivel_cognitivo');
+          }
+        }
+
+        if (!question.tempo_medio_segundos) {
+          const tempoResult = inferTempoMedio(question.difficulty);
+          question.tempo_medio_segundos = tempoResult.value;
+          camposInferidos.push(`tempo_medio_segundos:${tempoResult.metodo}`);
+        }
+
+        if (!question.origem) {
+          const origemResult = inferOrigem(question.banca);
+          question.origem = origemResult.value;
+          if (origemResult.inferido) camposInferidos.push(`origem:${origemResult.metodo}`);
+        }
+
+        if (!question.competencia_enem) camposNull.push('competencia_enem');
+        if (!question.habilidade_enem) camposNull.push('habilidade_enem');
+        
+        // INFERÊNCIA LOCAL DE MACRO (palavras-chave)
+        if (!question.macro) {
+          const macroResult = inferMacro(enunciado);
+          if (macroResult.value) {
+            question.macro = macroResult.value;
+            camposInferidos.push(`macro:${macroResult.metodo}`);
+          } else {
+            camposNull.push('macro');
+          }
+        }
+        
+        if (!question.micro) camposNull.push('micro');
+        if (!question.tema) camposNull.push('tema');
+        if (!question.subtema) camposNull.push('subtema');
+        
+        if (!question.difficulty) {
+          const diffResult = inferDificuldade(enunciado);
+          if (diffResult.value) {
+            question.difficulty = diffResult.value;
+            camposInferidos.push(`difficulty:${diffResult.metodo}`);
+          } else {
+            camposNull.push('difficulty');
+          }
+        }
+
+        // Ordenar alternativas
+        const existingIds = question.options.map(o => o.id);
+        const allIds = ['a', 'b', 'c', 'd', 'e'];
+        for (const id of allIds) {
+          if (!existingIds.includes(id)) {
+            question.options.push({ id, text: '' });
+          }
+        }
+        question.options.sort((a, b) => a.id.localeCompare(b.id));
+
+        question.campos_inferidos = camposInferidos;
+        question.campos_null = camposNull;
+
+        return question;
+      });
+
+      console.log('[IMPORT] Parse inicial:', questions.length, 'questões');
+
+      // FASE 2: INFERÊNCIA INTELIGENTE VIA IA (se habilitada)
+      let finalQuestions = questions;
+      
+      if (aiInferenceEnabled && questions.length > 0) {
+        toast.info('🧠 Iniciando inferência inteligente de taxonomia via IA...');
+        setAiInferenceProgress(10);
+        
+        const aiResults = await callAITaxonomyInference(questions);
+        setAiInferenceProgress(80);
+        
+        // Aplicar resultados da IA
+        finalQuestions = questions.map(q => {
+          const aiResult = aiResults.get(q.id);
+          if (!aiResult) return q;
+          
+          const updated = { ...q };
+          const newInferidos = [...q.campos_inferidos];
+          
+          // Aplicar MACRO se diferente ou vazio
+          if (aiResult.macro && (!q.macro || q.macro !== aiResult.macro)) {
+            if (q.macro && q.macro !== aiResult.macro) {
+              updated.warnings.push(`IA corrigiu MACRO: ${q.macro} → ${aiResult.macro}`);
+            }
+            updated.macro = aiResult.macro;
+            newInferidos.push('macro:ai_inference');
+          }
+          
+          // Aplicar MICRO
+          if (aiResult.micro && (!q.micro || q.micro !== aiResult.micro)) {
+            if (q.micro && q.micro !== aiResult.micro) {
+              updated.warnings.push(`IA corrigiu MICRO: ${q.micro} → ${aiResult.micro}`);
+            }
+            updated.micro = aiResult.micro;
+            newInferidos.push('micro:ai_inference');
+          }
+          
+          // Aplicar TEMA
+          if (aiResult.tema && (!q.tema || q.tema !== aiResult.tema)) {
+            if (q.tema && q.tema !== aiResult.tema) {
+              updated.warnings.push(`IA corrigiu TEMA: ${q.tema} → ${aiResult.tema}`);
+            }
+            updated.tema = aiResult.tema;
+            newInferidos.push('tema:ai_inference');
+          }
+          
+          // Aplicar SUBTEMA
+          if (aiResult.subtema && (!q.subtema || q.subtema !== aiResult.subtema)) {
+            if (q.subtema && q.subtema !== aiResult.subtema) {
+              updated.warnings.push(`IA corrigiu SUBTEMA: ${q.subtema} → ${aiResult.subtema}`);
+            }
+            updated.subtema = aiResult.subtema;
+            newInferidos.push('subtema:ai_inference');
+          }
+          
+          // Remover campos null que foram preenchidos
+          updated.campos_null = q.campos_null.filter(c => 
+            !(c === 'macro' && updated.macro) &&
+            !(c === 'micro' && updated.micro) &&
+            !(c === 'tema' && updated.tema) &&
+            !(c === 'subtema' && updated.subtema)
+          );
+          
+          updated.campos_inferidos = newInferidos;
+          
+          return updated;
         });
-
-        console.log('[IMPORT] Questões processadas:', questions.length);
-        setParsedQuestions(questions);
-        console.log('[IMPORT] setFlowState(inferencia_concluida)');
-        setFlowState('inferencia_concluida');
-        console.log('[IMPORT] setUiStep(preview)');
-        setUiStep('preview');
         
-        // Avançar para validação humana (somente se ainda não foi auto-autorizado)
-        setTimeout(() => {
-          if (hasAutoAuthorizedRef.current) return;
-          console.log('[IMPORT] setFlowState(validacao_humana_obrigatoria)');
-          setFlowState('validacao_humana_obrigatoria');
-        }, 100);
+        setAiInferenceProgress(100);
+        const correctionsCount = finalQuestions.filter(q => 
+          q.warnings.some(w => w.includes('IA corrigiu'))
+        ).length;
         
-        const validCount = questions.filter(q => q.status !== 'error').length;
-        toast.success(`Inferência concluída: ${validCount} questões prontas para revisão`);
-        toast.message('As questões ainda NÃO foram salvas. Para persistir, confirme e clique em “Finalizar Import”.');
-      } catch (err) {
-        console.error('Erro ao processar questões:', err);
-        toast.error('Erro ao processar questões');
-        setFlowState('arquivo_carregado');
-      } finally {
-        setIsProcessing(false);
+        if (correctionsCount > 0) {
+          toast.success(`🧠 IA corrigiu taxonomia em ${correctionsCount} questões`);
+        }
       }
-    }, 500);
-  }, [rawData, columnMapping]);
+
+      // FASE 3: VALIDAÇÃO FINAL
+      const validatedQuestions = finalQuestions.map(q => {
+        const updated = { ...q };
+        updated.errors = [];
+        
+        if (!updated.question_text.trim()) {
+          updated.errors.push('Enunciado vazio');
+        }
+        
+        const filledOptions = updated.options.filter(o => o.text.trim());
+        if (filledOptions.length < 2) {
+          updated.errors.push('Menos de 2 alternativas preenchidas');
+        }
+
+        const correctOption = updated.options.find(o => o.id === updated.correct_answer);
+        if (!correctOption?.text.trim()) {
+          updated.errors.push('Alternativa correta não tem texto');
+        }
+
+        // TAXONOMIA OBRIGATÓRIA
+        if (!updated.macro?.trim()) {
+          updated.errors.push('MACRO obrigatório - não identificado');
+        }
+        if (!updated.micro?.trim()) {
+          updated.errors.push('MICRO obrigatório - não identificado');
+        }
+        if (!updated.tema?.trim()) {
+          updated.errors.push('TEMA obrigatório - não identificado');
+        }
+        if (!updated.subtema?.trim()) {
+          updated.errors.push('SUBTEMA obrigatório - não identificado');
+        }
+
+        // Warnings informativos
+        if (updated.campos_inferidos?.some(c => c.includes('ai_inference'))) {
+          updated.warnings.push('🧠 Taxonomia validada/corrigida por IA');
+        }
+        if (updated.campos_inferidos?.some(c => c.startsWith('difficulty:'))) {
+          updated.warnings.push(`Dificuldade inferida: ${updated.difficulty}`);
+        }
+
+        // Status final
+        if (updated.errors.length > 0) {
+          updated.status = 'error';
+          updated.selected = false;
+        } else if (updated.warnings.length > 0) {
+          updated.status = 'warning';
+          updated.selected = true;
+        } else {
+          updated.status = 'valid';
+          updated.selected = true;
+        }
+
+        return updated;
+      });
+
+      console.log('[IMPORT] Questões processadas:', validatedQuestions.length);
+      setParsedQuestions(validatedQuestions);
+      setFlowState('inferencia_concluida');
+      setUiStep('preview');
+      
+      setTimeout(() => {
+        if (hasAutoAuthorizedRef.current) return;
+        setFlowState('validacao_humana_obrigatoria');
+      }, 100);
+      
+      const validCount = validatedQuestions.filter(q => q.status !== 'error').length;
+      const aiCorrected = validatedQuestions.filter(q => 
+        q.campos_inferidos.some(c => c.includes('ai_inference'))
+      ).length;
+      
+      toast.success(`✅ Inferência concluída: ${validCount} questões prontas${aiCorrected > 0 ? ` (${aiCorrected} com IA)` : ''}`);
+      
+    } catch (err) {
+      console.error('Erro ao processar questões:', err);
+      toast.error('Erro ao processar questões');
+      setFlowState('arquivo_carregado');
+    } finally {
+      setIsProcessing(false);
+      setAiInferenceProgress(0);
+    }
+  }, [rawData, columnMapping, aiInferenceEnabled, callAITaxonomyInference]);
 
   const toggleSelectAll = useCallback((selected: boolean) => {
     setParsedQuestions(prev => prev.map(q => ({

@@ -305,3 +305,8 @@ verify_jwt = true
 # 🟡 Chamado por cron, sem JWT (valida internamente via service key)
 [functions.refresh-global-performance]
 verify_jwt = false
+
+# --- Inferência de Taxonomia de Questões (IA) ---
+# 🟢 Requer JWT - Apenas gestão pode usar
+[functions.infer-question-taxonomy]
+verify_jwt = true
