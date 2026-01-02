@@ -208,9 +208,18 @@ const GlobalAILogButton = memo(() => {
         </Tooltip>
       </TooltipProvider>
 
-      {/* Dialog de Resumo Global Detalhado */}
+      {/* ═══════════════════════════════════════════════════════════════
+          🔴 MODAL CONSTITUCIONAL REDIMENSIONÁVEL (LEI v1.0.0)
+          Aplica: redimensionamento + maximização conforme LEI_MODAIS_REDIMENSIONAVEIS
+          ═══════════════════════════════════════════════════════════════ */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-2xl max-h-[90vh]" style={{ zIndex: SOVEREIGN_Z_INDEX }}>
+        <DialogContent 
+          showMaximize={true}
+          defaultSize={{ width: 700, height: 600 }}
+          minSize={{ width: 400, height: 300 }}
+          className="flex flex-col"
+          style={{ zIndex: SOVEREIGN_Z_INDEX }}
+        >
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
@@ -243,7 +252,7 @@ const GlobalAILogButton = memo(() => {
             )}
           </div>
 
-          <ScrollArea className="max-h-[60vh]">
+          <ScrollArea className="flex-1 min-h-0">
             <div className="space-y-6 p-1">
               {isLoading ? (
                 <div className="flex items-center justify-center p-8">
