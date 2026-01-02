@@ -54,6 +54,7 @@ type SectionType =
   | 'alternativa_analise'
   | 'alternativa_correta'
   | 'alternativa_errada'
+  | 'sintese'        // Parágrafo de síntese após afirmações
   | 'resumo'
   | 'conclusao' 
   | 'competencia' 
@@ -90,6 +91,97 @@ interface QuestionResolutionProps {
  * Remove metadados, HTML, duplicatas, ruído visual
  * =====================================================
  */
+/**
+ * =====================================================
+ * PRÉ-PROCESSAMENTO DE AFIRMAÇÕES CORRIDAS
+ * Separa afirmações que vêm todas na mesma linha em blocos individuais
+ * PADRÃO ENEM/INTERNACIONAL: cada afirmação em seu próprio bloco
+ * =====================================================
+ */
+function reformatAffirmations(text: string): string {
+  if (!text) return '';
+  
+  let result = text;
+  
+  // ========== DETECTAR E SEPARAR AFIRMAÇÕES CORRIDAS ==========
+  // Padrão: "Afirmação 1: FALSA (F) - texto Afirmação 2: VERDADEIRA (V) - texto..."
+  // Também captura: "Afirmação 1 — FALSA", "Afirmação I:", etc.
+  
+  // Regex para detectar início de afirmação (com número arábico ou romano)
+  const afirmacaoPattern = /Afirmação\s*(\d+|[IVX]+)\s*[:\-–—]\s*(?:(FALSA|VERDADEIRA|F|V)\s*\([FV]\)\s*)?[:\-–—]?\s*/gi;
+  
+  // Primeiro, verificar se existem múltiplas afirmações na mesma linha
+  const matches = [...result.matchAll(new RegExp(afirmacaoPattern.source, 'gi'))];
+  
+  if (matches.length > 1) {
+    // Há múltiplas afirmações - precisamos separar cada uma em sua própria linha
+    let reformatted = '';
+    
+    for (let i = 0; i < matches.length; i++) {
+      const currentMatch = matches[i];
+      const nextMatch = matches[i + 1];
+      
+      const startIndex = currentMatch.index!;
+      const endIndex = nextMatch ? nextMatch.index! : result.length;
+      
+      // Extrair o bloco desta afirmação
+      let block = result.substring(startIndex, endIndex).trim();
+      
+      // Adicionar quebra dupla antes de cada afirmação (exceto a primeira)
+      if (i > 0) {
+        reformatted += '\n\n';
+      }
+      
+      reformatted += block;
+    }
+    
+    // Adicionar qualquer texto antes da primeira afirmação
+    const firstMatchIndex = matches[0].index!;
+    if (firstMatchIndex > 0) {
+      const preamble = result.substring(0, firstMatchIndex).trim();
+      if (preamble) {
+        result = preamble + '\n\n' + reformatted;
+      } else {
+        result = reformatted;
+      }
+    } else {
+      result = reformatted;
+    }
+  }
+  
+  // ========== NORMALIZAR FORMATO DE AFIRMAÇÕES ==========
+  // Garantir que "FALSA (F)" ou "VERDADEIRA (V)" fique destacado
+  result = result
+    // Padrão: "Afirmação 1: FALSA (F) - texto" → quebra após o status
+    .replace(/Afirmação\s*(\d+|[IVX]+)\s*[:\-–—]\s*(FALSA|VERDADEIRA)\s*\(([FV])\)\s*[:\-–—]?\s*/gi, 
+      (_, num, status, letter) => `\n\nAfirmação ${num} — ${status.toUpperCase()} (${letter.toUpperCase()}):\n`)
+    // Padrão simples: "Afirmação 1 - texto" sem status
+    .replace(/Afirmação\s*(\d+|[IVX]+)\s*[:\-–—]\s*(?!FALSA|VERDADEIRA|[FV]\s*\()/gi, 
+      (_, num) => `\n\nAfirmação ${num}:\n`)
+    // Limpar quebras excessivas
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
+  
+  // ========== SEPARAR SÍNTESE DA SEQUÊNCIA FINAL ==========
+  // Detectar padrões de conclusão/síntese e garantir que fiquem em bloco separado
+  const sequenciaPatterns = [
+    /A\s+sequência\s+correta\s+é[:\s]*/gi,
+    /Sequência\s+correta[:\s]*/gi,
+    /A\s+alternativa\s+correta\s+é/gi,
+    /correspondente\s+à\s+alternativa/gi,
+  ];
+  
+  for (const pattern of sequenciaPatterns) {
+    result = result.replace(pattern, (match) => `\n\n${match}`);
+  }
+  
+  // Garantir que padrões "F – V – V – F" fiquem em linha própria se no final
+  result = result.replace(/([^\n])(\s+[FV]\s*[–\-]\s*[FV]\s*[–\-]\s*[FV]\s*[–\-]\s*[FV])(\s*,?\s*correspondente)?/gi, 
+    '$1\n\n$2$3');
+  
+  return result.replace(/\n{3,}/g, '\n\n').trim();
+}
+
 function cleanResolutionText(text: string): string {
   if (!text) return '';
   
@@ -110,6 +202,10 @@ function cleanResolutionText(text: string): string {
     .replace(/[«»]/g, '')           // Remove aspas francesas
     .replace(/[„"]/g, '')           // Remove aspas alemãs
     .trim();
+  
+  // ========== PRÉ-PROCESSAMENTO: SEPARAR AFIRMAÇÕES CORRIDAS ==========
+  // REGRA INTERNACIONAL: cada afirmação em seu próprio bloco, nunca corrido
+  cleaned = reformatAffirmations(cleaned);
   
   // PASSO 1: Remover lixo de HTML/interface
   const contentStartPatterns = [
@@ -258,19 +354,31 @@ function parseResolutionText(text: string): ParsedSection[] {
       type: 'alternativa_analise' as SectionType,
       isCorrect: false 
     },
-    // Afirmação romana com análise
+    // Afirmação com status VERDADEIRA (V)
+    { 
+      regex: /Afirmação\s*(\d+|[IVX]+)\s*[—–-]\s*VERDADEIRA\s*\([VT]\)[:\s]*/gi, 
+      type: 'afirmacao_correta' as SectionType,
+      isCorrect: true 
+    },
+    // Afirmação com status FALSA (F)
+    { 
+      regex: /Afirmação\s*(\d+|[IVX]+)\s*[—–-]\s*FALSA\s*\([F]\)[:\s]*/gi, 
+      type: 'afirmacao_incorreta' as SectionType,
+      isCorrect: false 
+    },
+    // Afirmação romana com análise (formato genérico)
     { 
       regex: /Afirmação\s*(\d+|[IVX]+)\s*[:–-]\s*["']?([^"'\n]+)["']?\s*/gi, 
       type: 'afirmacao_analise' as SectionType,
       isCorrect: false 
     },
-    // Afirmação correta
+    // Afirmação correta com emoji
     { 
       regex: /[✅✔️✓]\s*AFIRMAÇÃO\s*([IVX\d]+):?\s*/gi, 
       type: 'afirmacao_correta' as SectionType,
       isCorrect: true 
     },
-    // Afirmação incorreta
+    // Afirmação incorreta com emoji
     { 
       regex: /[❌✖️✗×]\s*AFIRMAÇÃO\s*([IVX\d]+):?\s*/gi, 
       type: 'afirmacao_incorreta' as SectionType,
@@ -287,6 +395,12 @@ function parseResolutionText(text: string): ParsedSection[] {
     { regex: /[📊⚗️⚙️🔬🧪]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
     { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
     
+    // SÍNTESE (parágrafo explicativo após afirmações)
+    { regex: /O\s+isoeugenol\s+apresenta/gi, type: 'sintese' as SectionType },
+    { regex: /A\s+molécula\s+apresenta/gi, type: 'sintese' as SectionType },
+    { regex: /O\s+composto\s+apresenta/gi, type: 'sintese' as SectionType },
+    { regex: /SÍNTESE[:\s]*/gi, type: 'sintese' as SectionType },
+    
     // RESUMO
     { regex: /Agora reunindo tudo/gi, type: 'resumo' as SectionType },
     { regex: /Reunindo tudo/gi, type: 'resumo' as SectionType },
@@ -300,6 +414,10 @@ function parseResolutionText(text: string): ParsedSection[] {
     { regex: /CONCLUSÃO E GABARITO/gi, type: 'conclusao' as SectionType },
     { regex: /[✓✔️]\s*Gabarito:?\s*/gi, type: 'conclusao' as SectionType },
     { regex: /Gabarito:?\s*letra\s*([A-E])/gi, type: 'conclusao' as SectionType },
+    // Padrões de sequência final (F-V-V-F)
+    { regex: /A\s+sequência\s+correta\s+é[:\s]*/gi, type: 'conclusao' as SectionType },
+    { regex: /Sequência\s+correta[:\s]*/gi, type: 'conclusao' as SectionType },
+    { regex: /correspondente\s+à\s+alternativa/gi, type: 'conclusao' as SectionType },
     
     // COMPETÊNCIA E HABILIDADE ENEM
     { regex: /[🎯⚫◆]\s*COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
@@ -738,6 +856,8 @@ function getSectionIcon(type: SectionType, stepNumber?: number) {
       return ListChecks;
     case 'resumo':
       return MessageCircle;
+    case 'sintese':
+      return Target;
     default:
       return Sparkles;
   }
@@ -859,6 +979,14 @@ function getSectionStyles(type: SectionType, isCorrect?: boolean): {
         titleColor: 'text-cyan-500',
         accentColor: 'bg-cyan-500/20',
       };
+    case 'sintese':
+      return {
+        border: 'border-l-4 border-l-teal-500 border-t border-r border-b border-teal-500/30',
+        bg: 'bg-teal-500/5',
+        iconColor: 'text-teal-500',
+        titleColor: 'text-teal-500',
+        accentColor: 'bg-teal-500/20',
+      };
     default:
       return {
         border: 'border border-border/50',
@@ -903,6 +1031,8 @@ function getSectionTitle(section: ParsedSection): string {
       return 'DICA DE OURO';
     case 'resumo':
       return 'RESUMO FINAL';
+    case 'sintese':
+      return 'SÍNTESE';
     default:
       return '';
   }
