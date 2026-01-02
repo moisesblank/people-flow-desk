@@ -42,15 +42,33 @@ export default function Simulados() {
   const { data: simuladosQuestions, isLoading: isLoadingSimuladosQuestions } = useQuery({
     queryKey: ['questions', 'SIMULADOS'],
     queryFn: async () => {
-      // ⚡ ESCALA 45K: Sem limite artificial para questões de simulado
-      const { data, error } = await supabase
-        .from('quiz_questions')
-        .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active')
-        .contains('tags', ['SIMULADOS'])
-        .eq('is_active', true)
-        .order('created_at', { ascending: false });
-      if (error) throw error;
-      return data || [];
+      // ⚡ ESCALA 45K: Batching via range() para superar default 1000
+      const BATCH_SIZE = 1000;
+      const MAX = 45000;
+      let from = 0;
+      let all: any[] = [];
+
+      while (from < MAX) {
+        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
+
+        const { data, error } = await supabase
+          .from('quiz_questions')
+          .select('id, question_text, difficulty, banca, ano, macro, micro, points, tags, is_active')
+          .contains('tags', ['SIMULADOS'])
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (error) throw error;
+
+        const batch = data || [];
+        all = all.concat(batch);
+
+        if (batch.length < BATCH_SIZE) break;
+        from += BATCH_SIZE;
+      }
+
+      return all;
     },
     staleTime: 0,
   });
