@@ -32,7 +32,6 @@ import {
   Video,
   ImageOff,
   Image as ImageIcon,
-  Bot,
 } from 'lucide-react';
 import { useQuestionImageAnnihilation, invalidateAllQuestionCaches } from '@/hooks/useQuestionImageAnnihilation';
 import { Button } from '@/components/ui/button';
@@ -55,7 +54,8 @@ import {
 } from '@/components/ui/tooltip';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
-import QuestionAILogViewer from '@/components/gestao/questoes/QuestionAILogViewer';
+import QuestionAILogButton from '@/components/gestao/questoes/QuestionAILogButton';
+import { useQuestionAILogs } from '@/hooks/useQuestionAILogs';
 import QuestionTaxonomyEditor from '@/components/gestao/questoes/QuestionTaxonomyEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -125,10 +125,18 @@ function GestaoQuestaoDetalhe() {
   const [copied, setCopied] = useState(false);
   const [isRemovingImage, setIsRemovingImage] = useState(false);
   const [removeImageConfirm, setRemoveImageConfirm] = useState(false);
-  const [showAILogs, setShowAILogs] = useState(false);
 
   // Hook de aniquilação de imagens
   const { annihilateAllImages } = useQuestionImageAnnihilation();
+
+  // AI Logs: Buscar logs para exibir no botão com summary
+  const { data: aiLogs, isLoading: isLoadingAILogs } = useQuestionAILogs(id);
+  const aiLogSummary = aiLogs && aiLogs.length > 0 ? {
+    question_id: id || '',
+    log_count: aiLogs.length,
+    last_intervention_at: aiLogs[0]?.created_at || '',
+    intervention_types: [...new Set(aiLogs.map(l => l.intervention_type))] as import('@/hooks/useQuestionAILogs').AIInterventionType[],
+  } : null;
 
   // Carregar questão
   const loadQuestion = useCallback(async () => {
@@ -341,15 +349,13 @@ function GestaoQuestaoDetalhe() {
             </Tooltip>
           </TooltipProvider>
 
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowAILogs(true)}
-            className="border-primary/30 text-primary hover:bg-primary/10"
-          >
-            <Bot className="h-4 w-4 mr-2" />
-            Log de IA
-          </Button>
+          {/* AI LOG BUTTON - Componente com visibilidade global */}
+          <QuestionAILogButton
+            questionId={id || ''}
+            summary={aiLogSummary}
+            isLoading={isLoadingAILogs}
+            variant="full"
+          />
 
           <Button variant="outline" size="sm" onClick={handleDuplicate}>
             <Copy className="h-4 w-4 mr-2" />
@@ -731,14 +737,6 @@ function GestaoQuestaoDetalhe() {
         </DialogContent>
       </Dialog>
 
-      {/* Modal de Logs de IA */}
-      {id && (
-        <QuestionAILogViewer
-          questionId={id}
-          isOpen={showAILogs}
-          onClose={() => setShowAILogs(false)}
-        />
-      )}
     </div>
   );
 }
