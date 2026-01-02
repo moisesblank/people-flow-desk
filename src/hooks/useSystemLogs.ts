@@ -27,6 +27,7 @@ export interface SystemLog {
   metadata: Record<string, unknown>;
   session_id: string | null;
   device_info: string | null;
+  ip_hash: string | null;
   resolved_at: string | null;
   resolved_by: string | null;
   created_at: string;

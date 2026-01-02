@@ -1,7 +1,8 @@
 // ============================================
-// GESTÃO LOGS v1.0
+// GESTÃO LOGS v2.0
 // Visualização em tempo real de todos os logs do sistema
 // REGRA PERMANENTE: Todo erro deve ser visível ao owner
+// CLEANUP: Logs são aniquilados após 48 horas
 // ============================================
 
 import { useState, useMemo } from 'react';
@@ -13,27 +14,29 @@ import {
   Info, 
   Zap,
   RefreshCw,
-  Filter,
   Clock,
   Globe,
   User,
-  Trash2,
-  ExternalLink,
-  ChevronDown,
-  ChevronUp,
-  Search
+  Search,
+  X,
+  Calendar,
+  Terminal,
+  Server,
+  FileCode,
+  Hash
 } from 'lucide-react';
-import { formatDistanceToNow } from 'date-fns';
+import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Collapsible, CollapsibleContent, CollapsibleTrigger } from '@/components/ui/collapsible';
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import { Separator } from '@/components/ui/separator';
 import { useSystemLogs, SystemLog, LogSeverity } from '@/hooks/useSystemLogs';
 
 // Configurações visuais por severidade
@@ -74,9 +77,197 @@ const SEVERITY_CONFIG: Record<LogSeverity, {
   },
 };
 
-// Componente de Log Individual
-function LogEntry({ log }: { log: SystemLog }) {
-  const [isExpanded, setIsExpanded] = useState(false);
+// Formatar timestamp completo
+function formatFullTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  return format(date, "dd/MM/yyyy 'às' HH:mm:ss", { locale: ptBR });
+}
+
+// Formatar timestamp curto para lista
+function formatShortTimestamp(timestamp: string): string {
+  const date = new Date(timestamp);
+  return format(date, "HH:mm:ss - dd/MM/yyyy", { locale: ptBR });
+}
+
+// Modal de Detalhes do Log
+function LogDetailModal({ 
+  log, 
+  isOpen, 
+  onClose 
+}: { 
+  log: SystemLog | null; 
+  isOpen: boolean; 
+  onClose: () => void; 
+}) {
+  if (!log) return null;
+  
+  const config = SEVERITY_CONFIG[log.severity];
+  const Icon = config.icon;
+
+  return (
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+        <DialogHeader className="pb-4">
+          <DialogTitle className="flex items-center gap-3">
+            <div className={`p-2 rounded-lg ${config.bgColor}`}>
+              <Icon className={`h-5 w-5 ${config.color}`} />
+            </div>
+            <span>Detalhes do Log</span>
+            <Badge variant="outline" className={config.color}>
+              {config.label}
+            </Badge>
+          </DialogTitle>
+        </DialogHeader>
+        
+        <ScrollArea className="flex-1 pr-4">
+          <div className="space-y-6">
+            {/* Timestamp Principal */}
+            <div className={`p-4 rounded-lg ${config.bgColor} ${config.borderColor} border`}>
+              <div className="flex items-center gap-2 mb-2">
+                <Calendar className={`h-4 w-4 ${config.color}`} />
+                <span className="text-sm font-medium">Data e Hora do Evento</span>
+              </div>
+              <p className="text-lg font-mono font-bold">{formatFullTimestamp(log.timestamp)}</p>
+            </div>
+
+            {/* Mensagem de Erro */}
+            <div>
+              <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                <Terminal className="h-4 w-4" />
+                Mensagem
+              </h4>
+              <div className="bg-muted/50 p-4 rounded-lg">
+                <p className="text-sm font-medium break-words whitespace-pre-wrap">
+                  {log.error_message}
+                </p>
+              </div>
+            </div>
+
+            <Separator />
+
+            {/* Informações Gerais */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <h4 className="text-xs font-semibold text-muted-foreground mb-1">Categoria</h4>
+                <Badge variant="secondary">{log.category}</Badge>
+              </div>
+              <div>
+                <h4 className="text-xs font-semibold text-muted-foreground mb-1">Fonte</h4>
+                <Badge variant="outline">{log.source}</Badge>
+              </div>
+              {log.affected_url && (
+                <div className="col-span-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                    <Globe className="h-3 w-3" />
+                    URL Afetada
+                  </h4>
+                  <p className="text-sm font-mono bg-muted/30 p-2 rounded break-all">
+                    {log.affected_url}
+                  </p>
+                </div>
+              )}
+              {log.triggered_action && (
+                <div className="col-span-2">
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1">Ação Disparada</h4>
+                  <p className="text-sm">{log.triggered_action}</p>
+                </div>
+              )}
+            </div>
+
+            {/* Stack Trace */}
+            {log.stack_trace && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <FileCode className="h-4 w-4" />
+                    Stack Trace
+                  </h4>
+                  <ScrollArea className="h-[200px]">
+                    <pre className="text-xs bg-background border p-4 rounded-lg overflow-x-auto font-mono">
+                      {log.stack_trace}
+                    </pre>
+                  </ScrollArea>
+                </div>
+              </>
+            )}
+
+            {/* Metadata */}
+            {log.metadata && Object.keys(log.metadata).length > 0 && (
+              <>
+                <Separator />
+                <div>
+                  <h4 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                    <Server className="h-4 w-4" />
+                    Metadata
+                  </h4>
+                  <pre className="text-xs bg-background border p-4 rounded-lg overflow-x-auto font-mono">
+                    {JSON.stringify(log.metadata, null, 2)}
+                  </pre>
+                </div>
+              </>
+            )}
+
+            <Separator />
+
+            {/* Informações do Usuário e Sistema */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {log.user_email && (
+                <div>
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1 flex items-center gap-1">
+                    <User className="h-3 w-3" />
+                    Usuário
+                  </h4>
+                  <p className="text-sm font-mono">{log.user_email}</p>
+                </div>
+              )}
+              {log.user_role && (
+                <div>
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1">Role</h4>
+                  <Badge variant="secondary">{log.user_role}</Badge>
+                </div>
+              )}
+              {log.session_id && (
+                <div>
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1">Session ID</h4>
+                  <p className="text-xs font-mono">{log.session_id}</p>
+                </div>
+              )}
+              {log.device_info && (
+                <div className="col-span-2 md:col-span-3">
+                  <h4 className="text-xs font-semibold text-muted-foreground mb-1">Dispositivo</h4>
+                  <p className="text-xs font-mono">{log.device_info}</p>
+                </div>
+              )}
+            </div>
+
+            <Separator />
+
+            {/* IDs */}
+            <div className="flex items-center gap-4 text-xs text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <Hash className="h-3 w-3" />
+                ID: <span className="font-mono">{log.id}</span>
+              </span>
+              {log.ip_hash && (
+                <span>IP Hash: <span className="font-mono">{log.ip_hash}</span></span>
+              )}
+            </div>
+          </div>
+        </ScrollArea>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// Componente de Log Individual (clicável)
+function LogEntry({ 
+  log, 
+  onClick 
+}: { 
+  log: SystemLog; 
+  onClick: () => void;
+}) {
   const config = SEVERITY_CONFIG[log.severity];
   const Icon = config.icon;
 
@@ -85,100 +276,51 @@ function LogEntry({ log }: { log: SystemLog }) {
       initial={{ opacity: 0, y: -10 }}
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, y: 10 }}
-      className={`border rounded-lg ${config.borderColor} ${config.bgColor} p-3 mb-2`}
+      onClick={onClick}
+      className={`border rounded-lg ${config.borderColor} ${config.bgColor} p-3 mb-2 cursor-pointer hover:opacity-80 transition-opacity`}
     >
-      <Collapsible open={isExpanded} onOpenChange={setIsExpanded}>
-        <div className="flex items-start gap-3">
-          <div className={`p-2 rounded-lg ${config.bgColor}`}>
-            <Icon className={`h-4 w-4 ${config.color}`} />
+      <div className="flex items-start gap-3">
+        <div className={`p-2 rounded-lg ${config.bgColor}`}>
+          <Icon className={`h-4 w-4 ${config.color}`} />
+        </div>
+        
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Badge variant="outline" className={config.color}>
+              {config.label}
+            </Badge>
+            <Badge variant="secondary" className="text-xs">
+              {log.category}
+            </Badge>
+            <span className="text-xs text-muted-foreground flex items-center gap-1 font-mono">
+              <Clock className="h-3 w-3" />
+              {formatShortTimestamp(log.timestamp)}
+            </span>
           </div>
           
-          <div className="flex-1 min-w-0">
-            <div className="flex items-center gap-2 flex-wrap">
-              <Badge variant="outline" className={config.color}>
-                {config.label}
-              </Badge>
-              <Badge variant="secondary" className="text-xs">
-                {log.category}
-              </Badge>
-              <span className="text-xs text-muted-foreground flex items-center gap-1">
-                <Clock className="h-3 w-3" />
-                {formatDistanceToNow(new Date(log.timestamp), { 
-                  addSuffix: true, 
-                  locale: ptBR 
-                })}
+          <p className="text-sm font-medium mt-1 break-words line-clamp-2">
+            {log.error_message}
+          </p>
+          
+          <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
+            {log.affected_url && (
+              <span className="flex items-center gap-1">
+                <Globe className="h-3 w-3" />
+                {log.affected_url}
               </span>
-            </div>
-            
-            <p className="text-sm font-medium mt-1 break-words">
-              {log.error_message}
-            </p>
-            
-            <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground flex-wrap">
-              {log.affected_url && (
-                <span className="flex items-center gap-1">
-                  <Globe className="h-3 w-3" />
-                  {log.affected_url}
-                </span>
-              )}
-              {log.user_email && (
-                <span className="flex items-center gap-1">
-                  <User className="h-3 w-3" />
-                  {log.user_email}
-                </span>
-              )}
-              <span className="text-[10px] opacity-50">
-                {log.source}
+            )}
+            {log.user_email && (
+              <span className="flex items-center gap-1">
+                <User className="h-3 w-3" />
+                {log.user_email}
               </span>
-            </div>
+            )}
+            <span className="text-[10px] opacity-50">
+              {log.source}
+            </span>
           </div>
-
-          <CollapsibleTrigger asChild>
-            <Button variant="ghost" size="sm">
-              {isExpanded ? (
-                <ChevronUp className="h-4 w-4" />
-              ) : (
-                <ChevronDown className="h-4 w-4" />
-              )}
-            </Button>
-          </CollapsibleTrigger>
         </div>
-
-        <CollapsibleContent>
-          <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
-            {log.stack_trace && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Stack Trace:</p>
-                <pre className="text-xs bg-background/50 p-2 rounded overflow-x-auto">
-                  {log.stack_trace}
-                </pre>
-              </div>
-            )}
-            
-            {log.triggered_action && (
-              <div className="flex items-center gap-2 text-xs">
-                <span className="text-muted-foreground">Ação:</span>
-                <span>{log.triggered_action}</span>
-              </div>
-            )}
-            
-            {log.metadata && Object.keys(log.metadata).length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-muted-foreground mb-1">Metadata:</p>
-                <pre className="text-xs bg-background/50 p-2 rounded overflow-x-auto">
-                  {JSON.stringify(log.metadata, null, 2)}
-                </pre>
-              </div>
-            )}
-            
-            <div className="flex items-center gap-4 text-xs text-muted-foreground pt-2">
-              <span>ID: {log.id.slice(0, 8)}</span>
-              <span>Session: {log.session_id?.slice(0, 8) || 'N/A'}</span>
-              {log.user_role && <span>Role: {log.user_role}</span>}
-            </div>
-          </div>
-        </CollapsibleContent>
-      </Collapsible>
+      </div>
     </motion.div>
   );
 }
@@ -227,9 +369,11 @@ function StatsCards({ stats }: { stats: ReturnType<typeof useSystemLogs>['stats'
 
 // Página Principal
 export default function GestaoLogs() {
-  const { logs, isLoading, error, stats, refetch, clearLogs } = useSystemLogs(200);
+  const { logs, isLoading, error, stats, refetch } = useSystemLogs(200);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSeverity, setSelectedSeverity] = useState<LogSeverity | 'all'>('all');
+  const [selectedLog, setSelectedLog] = useState<SystemLog | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Filtrar logs
   const filteredLogs = useMemo(() => {
@@ -244,6 +388,12 @@ export default function GestaoLogs() {
       return matchesSearch && matchesSeverity;
     });
   }, [logs, searchTerm, selectedSeverity]);
+
+  // Abrir modal com detalhes do log
+  const handleLogClick = (log: SystemLog) => {
+    setSelectedLog(log);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="container mx-auto p-4 max-w-6xl">
@@ -324,11 +474,8 @@ export default function GestaoLogs() {
           <CardTitle className="text-lg flex items-center justify-between">
             <span>Eventos ({filteredLogs.length})</span>
             {filteredLogs.length > 0 && (
-              <span className="text-xs font-normal text-muted-foreground">
-                Último: {formatDistanceToNow(new Date(filteredLogs[0]?.timestamp || Date.now()), { 
-                  addSuffix: true, 
-                  locale: ptBR 
-                })}
+              <span className="text-xs font-normal text-muted-foreground font-mono">
+                Último: {formatShortTimestamp(filteredLogs[0]?.timestamp || new Date().toISOString())}
               </span>
             )}
           </CardTitle>
@@ -354,7 +501,11 @@ export default function GestaoLogs() {
             ) : (
               <AnimatePresence mode="popLayout">
                 {filteredLogs.map((log) => (
-                  <LogEntry key={log.id} log={log} />
+                  <LogEntry 
+                    key={log.id} 
+                    log={log} 
+                    onClick={() => handleLogClick(log)}
+                  />
                 ))}
               </AnimatePresence>
             )}
@@ -365,12 +516,22 @@ export default function GestaoLogs() {
       {/* Footer Info */}
       <div className="mt-4 text-center text-xs text-muted-foreground">
         <p>
-          🔴 Todos os erros do sistema são registrados automaticamente e exibidos em tempo real.
+          🔴 Todos os erros são registrados em tempo real e <strong>aniquilados automaticamente após 48 horas</strong>.
         </p>
         <p className="mt-1">
-          Esta funcionalidade é uma <strong>REGRA PERMANENTE</strong> do sistema.
+          Clique em qualquer log para ver detalhes completos.
         </p>
       </div>
+
+      {/* Modal de Detalhes */}
+      <LogDetailModal 
+        log={selectedLog} 
+        isOpen={isModalOpen} 
+        onClose={() => {
+          setIsModalOpen(false);
+          setSelectedLog(null);
+        }}
+      />
     </div>
   );
 }

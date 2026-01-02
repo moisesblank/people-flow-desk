@@ -17267,7 +17267,7 @@ export type Database = {
       cleanup_old_audit_logs: { Args: never; Returns: number }
       cleanup_old_chat_messages: { Args: never; Returns: number }
       cleanup_old_location_data: { Args: never; Returns: undefined }
-      cleanup_old_logs: { Args: never; Returns: undefined }
+      cleanup_old_logs: { Args: never; Returns: number }
       cleanup_old_rate_limits: { Args: never; Returns: undefined }
       cleanup_old_rate_limits_v2: { Args: never; Returns: undefined }
       cleanup_old_security_events:
