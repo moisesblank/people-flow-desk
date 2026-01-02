@@ -187,6 +187,7 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
   const navigate = useNavigate();
   const location = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const modalContentRef = useRef<HTMLDivElement | null>(null);
   
   // 🎯 OWNER-ONLY: Verificar se é o proprietário
   const isOwner = role === 'owner' || user?.email?.toLowerCase() === OWNER_EMAIL.toLowerCase();
@@ -207,6 +208,23 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
     return () => window.removeEventListener('keydown', onKeyDown, true);
   }, [isModalOpen]);
 
+  // 🛡️ P0 anti-tela-preta (hard): clique FORA do conteúdo fecha (capture)
+  useEffect(() => {
+    if (!isModalOpen) return;
+
+    const onPointerDownCapture = (e: PointerEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (!target) return;
+
+      const contentEl = modalContentRef.current;
+      if (contentEl && contentEl.contains(target)) return;
+
+      setIsModalOpen(false);
+    };
+
+    window.addEventListener('pointerdown', onPointerDownCapture, true);
+    return () => window.removeEventListener('pointerdown', onPointerDownCapture, true);
+  }, [isModalOpen]);
   // Hook para capturar logs do console (sempre ativo para o owner)
   const { logs: browserLogs, clearLogs: clearBrowserLogs } = useBrowserConsoleLogs(isOwner);
   
@@ -349,7 +367,11 @@ export const GlobalLogsButton = memo(function GlobalLogsButton() {
           />
 
           {/* Modal Content */}
-          <div className="relative flex flex-col w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden animate-in zoom-in-95 duration-200">
+          <div
+            ref={modalContentRef}
+            data-logs-modal-content="true"
+            className="relative flex flex-col w-full h-full bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 text-white overflow-hidden animate-in zoom-in-95 duration-200"
+          >
             {/* Header */}
             <div className="flex-shrink-0 border-b border-red-500/20 px-3 py-2 bg-slate-950/80 backdrop-blur-sm">
               <div className="flex items-center justify-between gap-2">
