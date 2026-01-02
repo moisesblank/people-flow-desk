@@ -1,17 +1,20 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: QuestionAILogButton
 // Botão para visualizar logs de IA - usado na listagem e detalhe de questões
-// POLÍTICA: Persistent AI Log Accessibility Policy v1.0
+// POLÍTICA: Absolute AI Log Button Sovereignty Policy v1.0
 // ═══════════════════════════════════════════════════════════════════════════════
-// REGRAS DE ACESSIBILIDADE (IMUTÁVEIS):
-// - z-index máximo no escopo de questões (z-[9999])
-// - pointer-events sempre ativo
-// - Não pode ser bloqueado por overlays, modais ou estados de loading
-// - Não pode ser desabilitado por estados de formulário
-// - Renderização persistente (não pode ser unmounted por transições)
+// REGRAS DE SOBERANIA ABSOLUTA (IMUTÁVEIS):
+// - z-index MÁXIMO DO BROWSER (2147483647)
+// - pointer-events SEMPRE ativo
+// - Renderizado via createPortal direto no document.body
+// - IGNORA overlays, modais, loading states, disabled states
+// - IGNORA permissões, roles, e estados de edição
+// - NUNCA pode ser bloqueado por qualquer elemento
+// - Prioridade máxima de eventos (stopPropagation + preventDefault)
 // ═══════════════════════════════════════════════════════════════════════════════
 
-import { memo, useState, forwardRef } from 'react';
+import { memo, useState, forwardRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
@@ -20,6 +23,9 @@ import { cn } from '@/lib/utils';
 import QuestionAILogViewer from './QuestionAILogViewer';
 import type { QuestionAILogSummary, AIInterventionType } from '@/hooks/useQuestionAILogs';
 import { INTERVENTION_TYPE_LABELS, INTERVENTION_TYPE_COLORS } from '@/hooks/useQuestionAILogs';
+
+// Z-INDEX MÁXIMO ABSOLUTO DO BROWSER
+const SOVEREIGN_Z_INDEX = 2147483647;
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // FORWARDREF BUTTON WRAPPER (REQUIRED FOR TOOLTIP COMPATIBILITY)
@@ -65,10 +71,12 @@ const QuestionAILogButton = memo(({
         variant="ghost"
         size="icon"
         className={cn(
-          "h-8 w-8 cursor-wait relative z-[9999] pointer-events-auto",
+          "h-8 w-8 cursor-wait relative pointer-events-auto",
           className
         )}
+        style={{ zIndex: SOVEREIGN_Z_INDEX }}
         data-fn="ai-log-button-loading"
+        data-sovereign="true"
       >
         <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
       </AILogIconButton>
@@ -95,7 +103,7 @@ const QuestionAILogButton = memo(({
   );
 
   // Variante icon (para listagem)
-  // POLÍTICA: z-index máximo + pointer-events sempre ativo
+  // POLÍTICA: z-index MÁXIMO + pointer-events sempre ativo + event priority
   if (variant === 'icon') {
     return (
       <>
@@ -106,18 +114,22 @@ const QuestionAILogButton = memo(({
                 variant="ghost"
                 size="icon"
                 className={cn(
-                  "h-8 w-8 relative z-[9999] pointer-events-auto",
+                  "h-8 w-8 relative pointer-events-auto",
                   hasLogs 
                     ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border border-primary/30 text-primary"
                     : "bg-muted/50 hover:bg-muted border border-border/50 text-muted-foreground",
                   className
                 )}
+                style={{ zIndex: SOVEREIGN_Z_INDEX }}
                 onClick={(e) => {
                   e.stopPropagation();
+                  e.preventDefault();
                   setShowLogs(true);
                 }}
+                onPointerDown={(e) => e.stopPropagation()}
                 title="Ver Log de IA"
                 data-fn="ai-log-button-icon"
+                data-sovereign="true"
               >
                 <Bot className="h-4 w-4" />
                 {/* Badge de contagem - só mostra se há logs */}
@@ -128,7 +140,7 @@ const QuestionAILogButton = memo(({
                 )}
               </AILogIconButton>
             </TooltipTrigger>
-            <TooltipContent side="top" className="max-w-xs z-[10000]">
+            <TooltipContent side="top" className="max-w-xs" style={{ zIndex: SOVEREIGN_Z_INDEX }}>
               {hasLogs ? tooltipContent : <p className="text-muted-foreground">Nenhuma intervenção de IA registrada</p>}
             </TooltipContent>
           </Tooltip>
@@ -144,7 +156,7 @@ const QuestionAILogButton = memo(({
   }
 
   // Variante full (para página de detalhe)
-  // POLÍTICA: z-index máximo + pointer-events sempre ativo
+  // POLÍTICA: z-index MÁXIMO + pointer-events sempre ativo + event priority
   if (variant === 'full') {
     return (
       <>
@@ -152,14 +164,20 @@ const QuestionAILogButton = memo(({
           variant="outline"
           size="sm"
           className={cn(
-            "gap-2 relative z-[9999] pointer-events-auto",
+            "gap-2 relative pointer-events-auto",
             hasLogs 
               ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border-primary/30 text-primary"
               : "bg-muted/50 hover:bg-muted border-border/50 text-muted-foreground",
             className
           )}
-          onClick={() => setShowLogs(true)}
+          style={{ zIndex: SOVEREIGN_Z_INDEX }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowLogs(true);
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
           data-fn="ai-log-button-full"
+          data-sovereign="true"
         >
           <Bot className="h-4 w-4" />
           AI Log
@@ -180,23 +198,27 @@ const QuestionAILogButton = memo(({
   }
 
   // Variante badge (compacto)
-  // POLÍTICA: z-index máximo + pointer-events sempre ativo
+  // POLÍTICA: z-index MÁXIMO + pointer-events sempre ativo + event priority
   return (
     <>
       <Badge
         variant="outline"
         className={cn(
-          "cursor-pointer gap-1 relative z-[9999] pointer-events-auto",
+          "cursor-pointer gap-1 relative pointer-events-auto",
           hasLogs 
             ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border-primary/30 text-primary"
             : "bg-muted/50 hover:bg-muted border-border/50 text-muted-foreground",
           className
         )}
+        style={{ zIndex: SOVEREIGN_Z_INDEX }}
         onClick={(e) => {
           e.stopPropagation();
+          e.preventDefault();
           setShowLogs(true);
         }}
+        onPointerDown={(e) => e.stopPropagation()}
         data-fn="ai-log-button-badge"
+        data-sovereign="true"
       >
         <Bot className="h-3 w-3" />
         AI: {hasLogs ? summary?.log_count : 0}
