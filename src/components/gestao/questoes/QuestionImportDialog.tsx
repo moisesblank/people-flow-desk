@@ -1222,13 +1222,29 @@ export const QuestionImportDialog = memo(function QuestionImportDialog({
             question.errors.push('Alternativa correta não tem texto');
           }
 
-          // Warnings (somente o que realmente exige ação manual)
-          // Banca e Ano: quando ausentes, aplicamos defaults silenciosos (zero trabalho extra)
+          // ============================================
+          // TAXONOMIA OBRIGATÓRIA (MACRO, MICRO, TEMA, SUBTEMA)
+          // ============================================
+          
+          if (!question.macro?.trim()) {
+            question.errors.push('MACRO obrigatório - não identificado');
+          }
+          if (!question.micro?.trim()) {
+            question.errors.push('MICRO obrigatório - não identificado');
+          }
+          if (!question.tema?.trim()) {
+            question.errors.push('TEMA obrigatório - não identificado');
+          }
+          if (!question.subtema?.trim()) {
+            question.errors.push('SUBTEMA obrigatório - não identificado');
+          }
 
-          if (!question.macro) {
-            question.warnings.push('Macro não identificado - classificação manual necessária');
-          } else if (question.campos_inferidos?.some(c => c.startsWith('macro:'))) {
-            question.warnings.push(`Macro inferido automaticamente: ${question.macro}`);
+          // Warnings informativos (campos inferidos automaticamente)
+          if (question.campos_inferidos?.some(c => c.startsWith('macro:'))) {
+            question.warnings.push(`Macro inferido: ${question.macro}`);
+          }
+          if (question.campos_inferidos?.some(c => c.startsWith('micro:'))) {
+            question.warnings.push(`Micro inferido: ${question.micro}`);
           }
           if (question.campos_inferidos?.some(c => c.startsWith('difficulty:'))) {
             question.warnings.push(`Dificuldade inferida: ${question.difficulty}`);
