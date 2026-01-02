@@ -263,11 +263,11 @@ function cleanResolutionText(text: string): string {
     .replace(/\n{4,}/g, '\n\n\n')
     .trim();
   
-  // PASSO 5: Formatar bullet points com espaçamento
-  // REGRA: Cada • deve ter quebra de linha antes para legibilidade
+  // PASSO 5: Formatar bullet points com espaçamento REDUZIDO
+  // REGRA: Cada • deve ter apenas UMA quebra de linha para legibilidade
   cleaned = cleaned
-    .replace(/\n\s*•\s*/g, '\n\n• ')           // Bullets já em linha própria
-    .replace(/([^\n])\s*•\s*/g, '$1\n\n• ')   // Bullets no meio do texto
+    .replace(/\n\s*•\s*/g, '\n• ')             // Bullets já em linha própria - UMA quebra
+    .replace(/([^\n])\s*•\s*/g, '$1\n• ')     // Bullets no meio do texto - UMA quebra
     .replace(/\n{3,}/g, '\n\n')               // Remove quebras excessivas
     .trim();
   
@@ -303,10 +303,10 @@ function normalizeAlternativeContent(content: string): string {
     .replace(/^[🔵🔹▪️•❌✅✓✗✔️✖️]\s*/g, '')
     .trim();
   
-  // FORMATAÇÃO DE BULLET POINTS: Cada • em sua própria linha com espaço
+  // FORMATAÇÃO DE BULLET POINTS: Cada • em sua própria linha (espaçamento reduzido)
   normalized = normalized
-    .replace(/\n\s*•\s*/g, '\n\n• ')           // Bullets já em linha própria
-    .replace(/([^\n])\s*•\s*/g, '$1\n\n• ')   // Bullets no meio do texto
+    .replace(/\n\s*•\s*/g, '\n• ')             // Bullets já em linha própria - UMA quebra
+    .replace(/([^\n])\s*•\s*/g, '$1\n• ')     // Bullets no meio do texto - UMA quebra
     .replace(/\n{3,}/g, '\n\n')               // Remove quebras excessivas
     .trim();
   
