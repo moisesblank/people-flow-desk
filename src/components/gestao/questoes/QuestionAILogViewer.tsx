@@ -46,7 +46,6 @@ import {
   downloadLogsAsTxt,
 } from '@/hooks/useQuestionAILogs';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -116,7 +115,7 @@ const LogEntry = memo(({ log, index }: { log: QuestionAILog; index: number }) =>
       <div className="ml-6 p-4 rounded-lg bg-muted/30 border border-border/50 hover:border-primary/30 transition-colors">
         {/* Timestamp Header - Formato solicitado */}
         <div className="font-mono text-xs text-muted-foreground mb-3 bg-background/50 px-2 py-1 rounded">
-          [{format(date, "yyyy-MM-dd", { locale: ptBR })} | {format(date, "HH:mm:ss")} - {timezone}]
+          [{format(date, "yyyy-MM-dd")} | {format(date, "HH:mm:ss")} - {timezone}]
         </div>
 
         {/* Question ID */}
