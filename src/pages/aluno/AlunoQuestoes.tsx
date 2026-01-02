@@ -37,6 +37,7 @@ import QuestionEnunciado, { cleanQuestionText } from "@/components/shared/Questi
 import QuestionResolution from "@/components/shared/QuestionResolution";
 import { predictSuccessRate, getSuccessRateColor } from "@/lib/questionSuccessPredictor";
 import { useTaxonomyForSelects } from "@/hooks/useQuestionTaxonomy";
+import { QuestionMetadataBadges, QuestionBadgesCompact } from "@/components/shared/QuestionMetadataBadges";
 
 // ============================================
 // TIPOS
@@ -915,40 +916,54 @@ export default function AlunoQuestoes() {
                 onClick={() => handleOpenQuestion(questao)}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-4">
-                      <div className="flex-1">
-                        <div className="flex flex-wrap items-center gap-2 mb-2">
-                          {questao.banca && (
-                            <Badge variant="outline">
-                              {BANCAS.find(b => b.value === questao.banca)?.label || questao.banca}
+                    <div className="flex flex-col gap-3">
+                      {/* ══════════════════════════════════════════════════════════════
+                          BARRA DE METADADOS COMPLETA — CONSTITUIÇÃO TRANSVERSAL v2.0
+                          Exibe: Dificuldade | Banca+Ano | Tipo | MACRO | MICRO | TEMA
+                      ══════════════════════════════════════════════════════════════ */}
+                      <QuestionBadgesCompact 
+                        question={questao}
+                        className="pb-2 border-b border-border/30"
+                      />
+                      
+                      {/* Conteúdo: Enunciado + Status + Ação */}
+                      <div className="flex items-start gap-4">
+                        <div className="flex-1">
+                          <div className="flex flex-wrap items-center gap-2 mb-2">
+                            {/* Pontuação */}
+                            <Badge variant="outline" className="gap-1">
+                              <Trophy className="h-3 w-3" />
+                              {questao.points} pts
                             </Badge>
-                          )}
-                          <Badge className={DIFFICULTY_COLORS[questao.difficulty]}>
-                            {DIFFICULTY_LABELS[questao.difficulty]}
-                          </Badge>
-                          {questao.ano && (
-                            <Badge variant="secondary">{questao.ano}</Badge>
-                          )}
-                          <Badge variant="outline" className="gap-1">
-                            <Trophy className="h-3 w-3" />
-                            {questao.points} pts
-                          </Badge>
-                          {hasAttempt && (
-                            <Badge variant={isCorrect ? "default" : "destructive"}>
-                              {isCorrect ? (
-                                <><CheckCircle2 className="w-3 h-3 mr-1" /> Acertou</>
-                              ) : (
-                                <><XCircle className="w-3 h-3 mr-1" /> Errou</>
-                              )}
-                            </Badge>
-                          )}
+                            {/* Status de tentativa */}
+                            {hasAttempt && (
+                              <Badge variant={isCorrect ? "default" : "destructive"}>
+                                {isCorrect ? (
+                                  <><CheckCircle2 className="w-3 h-3 mr-1" /> Acertou</>
+                                ) : (
+                                  <><XCircle className="w-3 h-3 mr-1" /> Errou</>
+                                )}
+                              </Badge>
+                            )}
+                            {/* Badge de Modo (Treino/Simulado) */}
+                            {questao.tags?.includes('MODO_TREINO') && (
+                              <Badge className="px-2 py-0.5 bg-purple-600 text-white border-0 text-xs font-medium">
+                                💪 Treino
+                              </Badge>
+                            )}
+                            {questao.tags?.includes('SIMULADOS') && (
+                              <Badge className="px-2 py-0.5 bg-red-600 text-white border-0 text-xs font-medium">
+                                🎯 Simulado
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-sm line-clamp-2">{cleanQuestionText(questao.question_text)}</p>
                         </div>
-                        <p className="text-sm line-clamp-2">{cleanQuestionText(questao.question_text)}</p>
+                        <Button variant={hasAttempt ? "outline" : "default"} size="sm">
+                          {hasAttempt ? "Revisar" : "Resolver"}
+                          <ChevronRight className="w-4 h-4 ml-2" />
+                        </Button>
                       </div>
-                      <Button variant={hasAttempt ? "outline" : "default"} size="sm">
-                        {hasAttempt ? "Revisar" : "Resolver"}
-                        <ChevronRight className="w-4 h-4 ml-2" />
-                      </Button>
                     </div>
                   </CardContent>
                 </Card>
