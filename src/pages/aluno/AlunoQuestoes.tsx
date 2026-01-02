@@ -429,7 +429,21 @@ export default function AlunoQuestoes() {
         from += BATCH_SIZE;
       }
 
+      // EVIDÊNCIA: COUNT real do banco para MODO_TREINO (não traz linhas)
+      const { count: dbCount, error: countError } = await supabase
+        .from('quiz_questions')
+        .select('id', { count: 'exact', head: true })
+        .contains('tags', ['MODO_TREINO'])
+        .eq('is_active', true);
+
+      if (countError) throw countError;
+
       const data = all;
+
+      if (typeof dbCount === 'number' && dbCount !== data.length) {
+        console.warn(`[ESCALA_45K][ALUNO] Divergência: carregado=${data.length} vs banco=${dbCount}`);
+      }
+
       return (data || []).map(q => ({
         ...q,
         options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],

@@ -988,6 +988,13 @@ function GestaoQuestoes() {
         from += BATCH_SIZE;
       }
 
+      // EVIDÊNCIA: COUNT real do banco (não traz linhas)
+      const { count: dbCount, error: countError } = await supabase
+        .from('quiz_questions')
+        .select('id', { count: 'exact', head: true });
+
+      if (countError) throw countError;
+
       // Mapear para o tipo Question com fallbacks seguros
       const mapped = all.map(q => ({
         ...q,
@@ -998,6 +1005,12 @@ function GestaoQuestoes() {
       })) as unknown as Question[];
 
       setQuestions(mapped);
+
+      // Guard constitucional: não permitir estado “OK” com divergência
+      if (typeof dbCount === 'number' && dbCount !== mapped.length) {
+        console.warn(`[ESCALA_45K] Divergência detectada: carregado=${mapped.length} vs banco=${dbCount}`);
+        toast.error(`Divergência: UI carregou ${mapped.length}, banco tem ${dbCount}. Há um cap ativo.`);
+      }
     } catch (err) {
       console.error('Erro ao carregar questões:', err);
       toast.error('Erro ao carregar questões');
