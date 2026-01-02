@@ -1,26 +1,21 @@
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE: GlobalAILogButton
 // Botão global para visualizar todos os logs de IA - usado na toolbar principal
-// POLÍTICA: Global AI Question Intervention Visibility Policy v1.0
+// POLÍTICA: Absolute AI Log Button Sovereignty Policy v1.0
+// ═══════════════════════════════════════════════════════════════════════════════
+// REGRAS DE SOBERANIA ABSOLUTA (IMUTÁVEIS):
+// - z-index MÁXIMO DO BROWSER (2147483647)
+// - pointer-events SEMPRE ativo
+// - IGNORA overlays, modais, loading states, disabled states
+// - IGNORA permissões, roles, e estados de edição
+// - NUNCA pode ser bloqueado por qualquer elemento
+// - Prioridade máxima de eventos (stopPropagation + preventDefault)
 // ═══════════════════════════════════════════════════════════════════════════════
 
 import { memo, useState, forwardRef } from 'react';
 import { Button, type ButtonProps } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
-
-// ═══════════════════════════════════════════════════════════════════════════════
-// POLICY: Persistent AI Log Accessibility Policy v1.0
-// - Button must always be accessible regardless of UI state
-// - z-index must be highest in question management scope
-// - Pointer events must always be enabled
-// ═══════════════════════════════════════════════════════════════════════════════
-
-// ForwardRef Button wrapper for TooltipTrigger compatibility
-const AILogTriggerButton = forwardRef<HTMLButtonElement, ButtonProps>(
-  (props, ref) => <Button ref={ref} {...props} />
-);
-AILogTriggerButton.displayName = 'AILogTriggerButton';
 import { 
   Dialog, 
   DialogContent, 
@@ -37,6 +32,15 @@ import {
   INTERVENTION_TYPE_COLORS,
   type AIInterventionType 
 } from '@/hooks/useQuestionAILogs';
+
+// Z-INDEX MÁXIMO ABSOLUTO DO BROWSER
+const SOVEREIGN_Z_INDEX = 2147483647;
+
+// ForwardRef Button wrapper for TooltipTrigger compatibility
+const AILogTriggerButton = forwardRef<HTMLButtonElement, ButtonProps>(
+  (props, ref) => <Button ref={ref} {...props} />
+);
+AILogTriggerButton.displayName = 'AILogTriggerButton';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // COMPONENTE
@@ -57,13 +61,20 @@ const GlobalAILogButton = memo(() => {
               variant="outline"
               size="sm"
               className={cn(
-                "gap-2 relative z-[9999] pointer-events-auto",
+                "gap-2 relative pointer-events-auto",
                 hasLogs 
                   ? "bg-gradient-to-br from-primary/10 to-purple-500/10 hover:from-primary/20 hover:to-purple-500/20 border-primary/30 text-primary"
                   : "bg-muted/50 hover:bg-muted border-border/50 text-muted-foreground"
               )}
-              onClick={() => setShowDialog(true)}
+              style={{ zIndex: SOVEREIGN_Z_INDEX }}
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                setShowDialog(true);
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
               data-fn="global-ai-log-button"
+              data-sovereign="true"
             >
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -78,7 +89,7 @@ const GlobalAILogButton = memo(() => {
               )}
             </AILogTriggerButton>
           </TooltipTrigger>
-          <TooltipContent side="bottom" className="max-w-xs">
+          <TooltipContent side="bottom" className="max-w-xs" style={{ zIndex: SOVEREIGN_Z_INDEX }}>
             {hasLogs ? (
               <div className="space-y-1">
                 <p className="font-semibold">{summary.questions_with_logs} questões com intervenções de IA</p>
@@ -93,7 +104,7 @@ const GlobalAILogButton = memo(() => {
 
       {/* Dialog de Resumo Global */}
       <Dialog open={showDialog} onOpenChange={setShowDialog}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="max-w-lg" style={{ zIndex: SOVEREIGN_Z_INDEX }}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Bot className="h-5 w-5 text-primary" />
