@@ -136,14 +136,21 @@ const DialogContent = React.forwardRef<
       >
         {children}
         
-        {/* Window controls */}
-        <div className="absolute right-2 top-2 flex items-center gap-1 z-10">
+        {/* Window controls - z-50 para garantir soberania sobre outros elementos */}
+        <div className="absolute right-2 top-2 flex items-center gap-1 z-50 pointer-events-auto">
           {showMaximize && (
             <button
-              onClick={handleMaximize}
-              className="p-1.5 rounded-md bg-muted/50 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                handleMaximize();
+              }}
+              onPointerDown={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+              className="p-1.5 rounded-md bg-muted/80 hover:bg-primary/20 text-muted-foreground hover:text-primary transition-colors border border-border/50 hover:border-primary/30"
               title={isMaximized ? "Restaurar" : "Maximizar"}
               type="button"
+              aria-label={isMaximized ? "Restaurar tamanho" : "Maximizar janela"}
             >
               {isMaximized ? (
                 <Minimize2 className="h-3.5 w-3.5" />
@@ -152,7 +159,10 @@ const DialogContent = React.forwardRef<
               )}
             </button>
           )}
-          <DialogPrimitive.Close className="p-1.5 rounded-md bg-muted/50 hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors">
+          <DialogPrimitive.Close 
+            className="p-1.5 rounded-md bg-muted/80 hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors border border-border/50 hover:border-destructive/30"
+            onPointerDown={(e) => e.stopPropagation()}
+          >
             <X className="h-3.5 w-3.5" />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>
