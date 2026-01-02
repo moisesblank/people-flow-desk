@@ -32,6 +32,7 @@ import {
   Video,
   ImageOff,
   Image as ImageIcon,
+  Bot,
 } from 'lucide-react';
 import { useQuestionImageAnnihilation, invalidateAllQuestionCaches } from '@/hooks/useQuestionImageAnnihilation';
 import { Button } from '@/components/ui/button';
@@ -54,6 +55,7 @@ import {
 } from '@/components/ui/tooltip';
 import QuestionEnunciado from '@/components/shared/QuestionEnunciado';
 import QuestionResolution from '@/components/shared/QuestionResolution';
+import QuestionAILogViewer from '@/components/gestao/questoes/QuestionAILogViewer';
 import QuestionTaxonomyEditor from '@/components/gestao/questoes/QuestionTaxonomyEditor';
 import { supabase } from '@/integrations/supabase/client';
 import { useQueryClient } from '@tanstack/react-query';
@@ -123,6 +125,7 @@ function GestaoQuestaoDetalhe() {
   const [copied, setCopied] = useState(false);
   const [isRemovingImage, setIsRemovingImage] = useState(false);
   const [removeImageConfirm, setRemoveImageConfirm] = useState(false);
+  const [showAILogs, setShowAILogs] = useState(false);
 
   // Hook de aniquilação de imagens
   const { annihilateAllImages } = useQuestionImageAnnihilation();
@@ -337,6 +340,16 @@ function GestaoQuestaoDetalhe() {
               <TooltipContent>Copiar URL da questão</TooltipContent>
             </Tooltip>
           </TooltipProvider>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowAILogs(true)}
+            className="border-primary/30 text-primary hover:bg-primary/10"
+          >
+            <Bot className="h-4 w-4 mr-2" />
+            Log de IA
+          </Button>
 
           <Button variant="outline" size="sm" onClick={handleDuplicate}>
             <Copy className="h-4 w-4 mr-2" />
@@ -717,6 +730,15 @@ function GestaoQuestaoDetalhe() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Logs de IA */}
+      {id && (
+        <QuestionAILogViewer
+          questionId={id}
+          isOpen={showAILogs}
+          onClose={() => setShowAILogs(false)}
+        />
+      )}
     </div>
   );
 }
