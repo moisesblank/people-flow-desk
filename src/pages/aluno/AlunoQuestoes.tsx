@@ -402,17 +402,34 @@ export default function AlunoQuestoes() {
   const { data: questions = [], isLoading: questionsLoading } = useQuery({
     queryKey: ['student-questions', 'MODO_TREINO'],
     queryFn: async () => {
-      // ESCALA 45K: Limite explícito para superar default Supabase (1000)
-      const { data, error } = await supabase
-        .from('quiz_questions')
-        .select('*')
-        .contains('tags', ['MODO_TREINO']) // QUESTION_DOMAIN: Apenas treino
-        .eq('is_active', true)
-        .order('created_at', { ascending: false })
-        .limit(45000);
-      
-      if (error) throw error;
-      
+      // ESCALA 45K (EVIDÊNCIA): o endpoint pode limitar cada request em 1000.
+      // Solução: paginar em lotes via range() e acumular até 45k.
+      const BATCH_SIZE = 1000;
+      const MAX = 45000;
+      let from = 0;
+      let all: any[] = [];
+
+      while (from < MAX) {
+        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
+
+        const { data, error } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .contains('tags', ['MODO_TREINO']) // QUESTION_DOMAIN: Apenas treino
+          .eq('is_active', true)
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (error) throw error;
+
+        const batch = data || [];
+        all = all.concat(batch);
+
+        if (batch.length < BATCH_SIZE) break;
+        from += BATCH_SIZE;
+      }
+
+      const data = all;
       return (data || []).map(q => ({
         ...q,
         options: Array.isArray(q.options) ? (q.options as unknown as QuestionOption[]) : [],

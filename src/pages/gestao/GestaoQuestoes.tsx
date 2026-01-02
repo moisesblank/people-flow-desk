@@ -962,19 +962,34 @@ function GestaoQuestoes() {
   const loadQuestions = useCallback(async () => {
     setIsLoading(true);
     try {
-      // ESCALA 45K: Remover limite default do Supabase (1000)
-      // Sem .limit() = Supabase aplica 1000 automaticamente
-      // Usar .limit(45000) para garantir carregamento completo
-      const { data, error } = await supabase
-        .from('quiz_questions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(45000);
+      // ESCALA 45K (EVIDÊNCIA): o endpoint pode limitar cada request em 1000.
+      // Solução constitucional: paginar em lotes via range() e acumular até 45k.
+      const BATCH_SIZE = 1000;
+      const MAX = 45000;
+      let from = 0;
+      let all: any[] = [];
 
-      if (error) throw error;
+      while (from < MAX) {
+        const to = Math.min(from + BATCH_SIZE - 1, MAX - 1);
+
+        const { data, error } = await supabase
+          .from('quiz_questions')
+          .select('*')
+          .order('created_at', { ascending: false })
+          .range(from, to);
+
+        if (error) throw error;
+
+        const batch = data || [];
+        all = all.concat(batch);
+
+        // Se veio menos que o lote, acabou.
+        if (batch.length < BATCH_SIZE) break;
+        from += BATCH_SIZE;
+      }
 
       // Mapear para o tipo Question com fallbacks seguros
-      const mapped = (data || []).map(q => ({
+      const mapped = all.map(q => ({
         ...q,
         options: (Array.isArray(q.options) ? q.options : []) as unknown as QuestionOption[],
         difficulty: q.difficulty || 'medio',
@@ -990,6 +1005,7 @@ function GestaoQuestoes() {
       setIsLoading(false);
     }
   }, []);
+
 
   // Após importar: recarrega e zera filtros para garantir visibilidade imediata
   // BLINDADO: Este callback SEMPRE é chamado pelo QuestionImportDialog.onSuccess
