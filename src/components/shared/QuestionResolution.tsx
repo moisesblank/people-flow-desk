@@ -146,75 +146,120 @@ function parseResolutionText(text: string): ParsedSection[] {
   const sections: ParsedSection[] = [];
   
   // ========== DETECTAR ALTERNATIVAS INDIVIDUAIS ==========
-  // Padrões para alternativas: "❌ Alternativa A", "✅ Alternativa D", "🔵 Alternativa A"
+  // PADRÃO INTERNACIONAL DE ORGANIZAÇÃO - Detecta TODOS os formatos possíveis
   const alternativaPatterns = [
-    // Alternativas erradas com X
+    // Alternativas erradas com X ou marcador de incorreto
     { 
-      regex: /[❌✖️✗]\s*Alternativa\s*([A-E])\s*/gi, 
+      regex: /[❌✖️✗×]\s*\**Alternativa\s*([A-E])\**:?\s*/gi, 
       type: 'alternativa_errada' as SectionType,
       isCorrect: false 
     },
     // Alternativas corretas com check
     { 
-      regex: /[✅✔️✓]\s*Alternativa\s*([A-E])\s*/gi, 
+      regex: /[✅✔️✓☑️]\s*\**Alternativa\s*([A-E])\**:?\s*/gi, 
       type: 'alternativa_correta' as SectionType,
       isCorrect: true 
     },
     // Alternativas neutras (para análise)
     { 
-      regex: /[🔵🔹▪️•]\s*Alternativa\s*([A-E])\s*/gi, 
+      regex: /[🔵🔹▪️•◆►]\s*\**Alternativa\s*([A-E])\**:?\s*/gi, 
       type: 'alternativa_analise' as SectionType,
       isCorrect: false 
     },
-    // Afirmações corretas
+    // Padrão **Alternativa X:** ou **Alternativa X** (markdown bold)
     { 
-      regex: /[✅✔️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, 
+      regex: /\*\*Alternativa\s*([A-E]):\*\*\s*/gi, 
+      type: 'alternativa_analise' as SectionType,
+      isCorrect: false 
+    },
+    { 
+      regex: /\*\*Alternativa\s*([A-E])\*\*:?\s*/gi, 
+      type: 'alternativa_analise' as SectionType,
+      isCorrect: false 
+    },
+    // Padrão com "incorreta" ou "correta" no texto
+    { 
+      regex: /\*\*Alternativa\s*([A-E]):\*\*[^*]*\*\*incorreta\*\*/gi, 
+      type: 'alternativa_errada' as SectionType,
+      isCorrect: false 
+    },
+    { 
+      regex: /\*\*Alternativa\s*([A-E]):\*\*[^*]*\*\*CORRETA\*\*/gi, 
+      type: 'alternativa_correta' as SectionType,
+      isCorrect: true 
+    },
+    // Afirmações romanas corretas
+    { 
+      regex: /[✅✔️✓]\s*\**AFIRMAÇÃO\s*([IVX]+)\**:?\s*/gi, 
       type: 'afirmacao_correta' as SectionType,
       isCorrect: true 
     },
-    // Afirmações incorretas
+    // Afirmações romanas incorretas
     { 
-      regex: /[❌✖️]\s*AFIRMAÇÃO\s*([IVX]+)/gi, 
+      regex: /[❌✖️✗×]\s*\**AFIRMAÇÃO\s*([IVX]+)\**:?\s*/gi, 
       type: 'afirmacao_incorreta' as SectionType,
       isCorrect: false 
+    },
+    // Afirmativas corretas (formato agrupado)
+    { 
+      regex: /[✓✔️✅]\s*Afirmativas?\s*corretas?:?\s*/gi, 
+      type: 'conclusao' as SectionType,
+      isCorrect: true 
     },
   ];
 
   // Padrões de seções especiais (ORDEM IMPORTA - mais específico primeiro)
   const sectionPatterns = [
+    // ANÁLISE DAS ALTERNATIVAS (header de seção)
+    { regex: /\*\*ANÁLISE\s*DAS\s*ALTERNATIVAS\*\*:?\s*/gi, type: 'resumo' as SectionType },
+    { regex: /ANÁLISE\s*DAS\s*ALTERNATIVAS:?\s*/gi, type: 'resumo' as SectionType },
+    
+    // Gabarito
+    { regex: /[✓✔️✅]\s*Gabarito:?\s*/gi, type: 'conclusao' as SectionType },
+    { regex: /\*\*Gabarito:?\s*letra\s*([A-E])\*\*/gi, type: 'conclusao' as SectionType },
+    { regex: /Gabarito:?\s*letra\s*([A-E])/gi, type: 'conclusao' as SectionType },
+    
     // Conclusão e Gabarito
     { regex: /[🧬📊✅☑️]\s*CONCLUSÃO[:\s]*/gi, type: 'conclusao' as SectionType },
     { regex: /A alternativa correta é/gi, type: 'conclusao' as SectionType },
     { regex: /Apenas\s+Alternativa/gi, type: 'conclusao' as SectionType },
     { regex: /CONCLUSÃO E GABARITO/gi, type: 'conclusao' as SectionType },
+    { regex: /\*\*CONCLUSÃO\*\*/gi, type: 'conclusao' as SectionType },
     
     // Competência e Habilidade ENEM (múltiplos formatos)
-    { regex: /[🎯⚫]\s*COMPETÊNCIA\s*E\s*HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
-    { regex: /COMPETÊNCIA\s*E\s*HABILIDADE\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
+    { regex: /[🎯⚫◆]\s*COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
+    { regex: /COMPETÊNCIAS?\s*E\s*HABILIDADES?\s*[-–]?\s*ENEM[:\s]*/gi, type: 'competencia' as SectionType },
     { regex: /[◆⚫🎯]\s*COMPETÊNCIA:/gi, type: 'competencia' as SectionType },
+    { regex: /\*\*COMPETÊNCIA/gi, type: 'competencia' as SectionType },
     
     // Direcionamento / Estratégia (múltiplos formatos)
-    { regex: /[📌⊙◎]\s*DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    { regex: /[📌⊙◎🚀✦🧭]\s*DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
     { regex: /DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
-    { regex: /[🚀✦]\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    { regex: /[🚀✦🧭]\s*ESTRATÉGIA[:\s]*/gi, type: 'estrategia' as SectionType },
+    { regex: /\*\*DIRECIONAMENTO/gi, type: 'estrategia' as SectionType },
+    { regex: /\*\*ESTRATÉGIA/gi, type: 'estrategia' as SectionType },
     
     // Pegadinhas Comuns (múltiplos formatos)
-    { regex: /[⚠️⚠△]\s*PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
+    { regex: /[⚠️⚠△🚨]\s*PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
     { regex: /PEGADINHAS?\s*(COMUNS?)?[:\s]*/gi, type: 'pegadinhas' as SectionType },
     { regex: /[⚠️⚠△]\s*Confundir/gi, type: 'pegadinhas' as SectionType },
+    { regex: /\*\*PEGADINHAS/gi, type: 'pegadinhas' as SectionType },
     
     // Dica de Ouro (múltiplos formatos)
-    { regex: /[💡🔆✨]\s*DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
+    { regex: /[💡🔆✨💎]\s*DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
     { regex: /DICA\s*DE\s*OURO[:\s]*/gi, type: 'dica' as SectionType },
     { regex: /[💡]\s*Dica:/gi, type: 'dica' as SectionType },
+    { regex: /\*\*DICA\s*DE\s*OURO/gi, type: 'dica' as SectionType },
     
-    // Passos
-    { regex: /[📊⚗️⚙️🔬]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    // Passos de resolução
+    { regex: /[📊⚗️⚙️🔬🧪]\s*PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
     { regex: /PASSO\s*(\d+)[:\s]*/gi, type: 'passo' as SectionType },
+    { regex: /\*\*PASSO\s*(\d+)/gi, type: 'passo' as SectionType },
     
-    // Resumo
+    // Resumo / Reunindo
     { regex: /Agora reunindo tudo/gi, type: 'resumo' as SectionType },
     { regex: /Reunindo tudo/gi, type: 'resumo' as SectionType },
+    { regex: /\*\*RESUMO/gi, type: 'resumo' as SectionType },
   ];
 
   // Coletar todas as posições
