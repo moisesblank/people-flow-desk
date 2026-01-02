@@ -33,6 +33,164 @@ CAMPOS QUE DEVEM SER PREENCHIDOS SE VAZIOS:
 - EXPLICAÇÃO (gerar resolução comentada completa se ausente)
 `;
 
+// ═══════════════════════════════════════════════════════════════════════════════
+// NORMALIZAÇÃO SEMÂNTICA v1.0.0 — MAPEAMENTO POR CONCEITO, NÃO POR TEXTO
+// ═══════════════════════════════════════════════════════════════════════════════
+const SEMANTIC_EQUIVALENCE_GROUPS = {
+  // QUÍMICA GERAL - CÁLCULOS QUÍMICOS
+  "QUANTIDADE_DE_MATERIA": [
+    "constante de avogadro", "número de avogadro", "avogadro",
+    "número de partículas", "número de átomos", "número de moléculas",
+    "número de íons", "número de prótons", "número de nêutrons",
+    "número de elétrons", "mol", "moles", "quantidade de mol",
+    "conversão massa-partículas", "contagem de partículas",
+    "quantidade de substância", "amount of substance"
+  ],
+  "MASSA": [
+    "massa molar", "massa molecular", "massa atômica",
+    "massa de um mol", "cálculo de massa", "gramas por mol"
+  ],
+  "VOLUME": [
+    "volume molar", "condições normais de temperatura e pressão",
+    "cntp", "22,4 litros", "volume de gases"
+  ],
+  "FORMULAS_QUIMICAS": [
+    "fórmula mínima", "fórmula molecular", "fórmula percentual",
+    "composição centesimal", "análise elementar"
+  ],
+  
+  // ATOMÍSTICA
+  "MODELOS_ATOMICOS": [
+    "dalton", "thomson", "rutherford", "bohr", "modelo atômico",
+    "evolução atômica", "pudim de passas", "sistema planetário"
+  ],
+  "DISTRIBUICAO_ELETRONICA": [
+    "diagrama de pauling", "camadas eletrônicas", "níveis de energia",
+    "orbitais", "subcamadas", "configuração eletrônica",
+    "regra do octeto", "elétrons de valência"
+  ],
+  
+  // LIGAÇÕES QUÍMICAS
+  "LIGACAO_IONICA": [
+    "composto iônico", "sal", "transferência de elétrons",
+    "metal + não-metal", "retículo cristalino"
+  ],
+  "LIGACAO_COVALENTE": [
+    "compartilhamento de elétrons", "molécula", "ligação molecular",
+    "ligação sigma", "ligação pi", "ligação dativa"
+  ],
+  "GEOMETRIA_MOLECULAR": [
+    "vsepr", "repulsão eletrônica", "tetraédrica", "trigonal",
+    "linear", "angular", "piramidal", "octaédrica"
+  ],
+  "POLARIDADE": [
+    "molécula polar", "molécula apolar", "momento dipolar",
+    "eletronegatividade", "diferença de eletronegatividade"
+  ],
+  
+  // ESTEQUIOMETRIA
+  "LEIS_PONDERAIS": [
+    "lavoisier", "proust", "dalton", "conservação de massa",
+    "proporções definidas", "proporções múltiplas"
+  ],
+  "REAGENTE_LIMITANTE": [
+    "reagente em excesso", "limitante", "excesso",
+    "rendimento", "pureza", "eficiência de reação"
+  ],
+  
+  // GASES
+  "LEIS_DOS_GASES": [
+    "boyle", "charles", "gay-lussac", "clapeyron", "pv=nrt",
+    "equação geral dos gases", "gases ideais", "gases perfeitos"
+  ],
+  "MISTURAS_GASOSAS": [
+    "pressão parcial", "dalton gases", "fração molar gases",
+    "volume parcial"
+  ],
+  
+  // TABELA PERIÓDICA
+  "PROPRIEDADES_PERIODICAS": [
+    "raio atômico", "energia de ionização", "afinidade eletrônica",
+    "eletronegatividade", "eletropositividade", "volume atômico"
+  ],
+  
+  // FUNÇÕES INORGÂNICAS
+  "ACIDOS": [
+    "ácido forte", "ácido fraco", "hidrácido", "oxiácido",
+    "ionização", "liberação de h+"
+  ],
+  "BASES": [
+    "base forte", "base fraca", "hidróxido", "dissociação",
+    "liberação de oh-"
+  ],
+  "SAIS": [
+    "neutralização", "reação ácido-base", "precipitação",
+    "sal solúvel", "sal insolúvel"
+  ],
+  "OXIDOS": [
+    "óxido ácido", "óxido básico", "óxido anfótero",
+    "óxido neutro", "peróxido", "superóxido"
+  ]
+};
+
+const SEMANTIC_NORMALIZATION_POLICY = `
+═══════════════════════════════════════════════════════════════════════════════
+🧠 POLÍTICA DE NORMALIZAÇÃO SEMÂNTICA v1.0.0 — CLASSIFICAÇÃO POR CONCEITO
+═══════════════════════════════════════════════════════════════════════════════
+
+PRINCÍPIO FUNDAMENTAL:
+Classifique questões pelo CONCEITO QUÍMICO subjacente, não pelo texto literal.
+Sinônimos, contextos aplicados e expressões equivalentes DEVEM resolver para
+o subtema canônico correspondente.
+
+REGRA DE OURO: SEMÂNTICA > LITERAL
+- "Cálculo do número de prótons usando constante de Avogadro" → Quantidade de Matéria
+- "Mol" → Quantidade de Matéria
+- "Número de partículas" → Quantidade de Matéria
+- "Constante de Avogadro" → Quantidade de Matéria
+
+GRUPOS DE EQUIVALÊNCIA SEMÂNTICA:
+
+QUANTIDADE_DE_MATERIA (Química Geral > Cálculos Químicos > Cálculos > Quantidade de Matéria):
+→ constante de avogadro, número de avogadro, número de partículas
+→ número de átomos, número de moléculas, número de íons
+→ número de prótons, número de nêutrons, número de elétrons
+→ mol, moles, quantidade de mol, conversão massa-partículas
+
+LEIS_PONDERAIS (Química Geral > Cálculos Químicos > Leis Ponderais):
+→ Lavoisier, Proust, Dalton
+→ conservação de massa, proporções definidas, proporções múltiplas
+
+MODELOS_ATOMICOS (Química Geral > Atomística > Modelos Atômicos):
+→ Dalton, Thomson, Rutherford, Bohr
+→ evolução atômica, pudim de passas, sistema planetário
+
+DISTRIBUICAO_ELETRONICA (Química Geral > Atomística > Distribuição Eletrônica):
+→ Pauling, camadas, níveis, orbitais, configuração eletrônica
+
+LIGACAO_IONICA / COVALENTE / METALICA (Química Geral > Ligações Químicas):
+→ Classificar pelo tipo de ligação presente
+
+GEOMETRIA_MOLECULAR (Química Geral > Ligações Químicas > Ligação Covalente):
+→ VSEPR, formas moleculares, repulsão eletrônica
+
+LEIS_DOS_GASES (Química Geral > Gases > Leis dos Gases):
+→ Boyle, Charles, Gay-Lussac, Clapeyron, PV=nRT
+
+APLICAÇÃO OBRIGATÓRIA:
+1. Analise o CONCEITO QUÍMICO central da questão
+2. Identifique se pertence a um grupo de equivalência
+3. Mapeie para o MICRO/TEMA/SUBTEMA canônico
+4. IGNORE diferenças superficiais de redação
+
+PROIBIDO:
+- Criar novos subtemas para sinônimos
+- Duplicar tópicos existentes
+- Classificar por texto literal ignorando o conceito
+
+═══════════════════════════════════════════════════════════════════════════════
+`;
+
 const TAXONOMY_KNOWLEDGE = `
 🏛️ CONSTITUIÇÃO DO MODELO TRANSVERSAL — REGRA DE OURO
 
@@ -47,80 +205,43 @@ const TAXONOMY_KNOWLEDGE = `
   → São compartilháveis entre questões
   → Permitem interdisciplinaridade
 
+${SEMANTIC_NORMALIZATION_POLICY}
+
 MACROS CANÔNICOS DE QUÍMICA (5 grandes áreas):
 
 1. QUÍMICA GERAL (Química Geral) ⚗️
-   - Propriedades da Matéria, Substâncias e Misturas, Alotropia
-   - Separação de Misturas, Tratamento de Água
-   - Combustíveis e Energia, Atomística
-   - Distribuição Eletrônica, Tabela Periódica
-   - Propriedades Periódicas, Ligações Químicas, Estequiometria
-   - Gases, Reações inorgânicas, Funções inorgânicas
+   MICROs CANÔNICOS:
+   - Introdução à Química Inorgânica (Propriedades da Matéria, Substâncias/Misturas, Alotropia, Separação, Tratamento de Água, Combustíveis)
+   - Atomística (Modelos Atômicos, Distribuição Eletrônica, Propriedades Magnéticas, Números Quânticos)
+   - Tabela Periódica (Características, Propriedades Periódicas/Aperiódicas)
+   - Número de Oxidação NOX
+   - Ligações Químicas (Iônica, Covalente, Metálica, Forças Intermoleculares)
+   - Funções Inorgânicas (Ácidos, Bases, Sais, Óxidos)
+   - Teorias Ácido-Base
+   - Reações Inorgânicas (Adição, Decomposição, Substituição, Dupla Troca)
+   - Cálculos Químicos (Leis Ponderais, Cálculos: Quantidade de Matéria, Massa, Volume, Fórmulas)
+   - Estequiometria (Regra de Três, Pureza, Rendimento, Reagente Limitante, Reações Consecutivas)
+   - Gases (Características, Leis dos Gases, Difusão/Efusão)
 
 2. QUÍMICA ORGÂNICA (Química Orgânica) 🧪
-   - Funções Orgânicas (álcoois, aldeídos, cetonas, ácidos, ésteres, éteres, aminas, amidas)
-   - Hidrocarbonetos (alcanos, alcenos, alcinos, aromáticos)
-   - Isomeria (plana, espacial, óptica, geométrica)
-   - Reações Orgânicas (substituição, adição, eliminação, oxidação, redução)
-   - Polímeros (adição, condensação, naturais, sintéticos)
-   - Petróleo, combustíveis orgânicos
+   - Funções Orgânicas, Hidrocarbonetos, Nomenclatura
+   - Isomeria Plana, Espacial, Óptica, Geométrica
+   - Reações Orgânicas
+   - Polímeros
 
 3. FÍSICO-QUÍMICA (Físico-Química) 📊
-   - Termoquímica (entalpia, lei de Hess, energia de ligação)
-   - Cinética Química (velocidade, fatores, catálise)
-   - Equilíbrio Químico (constante, Le Chatelier, pH, pOH, hidrólise)
-   - Eletroquímica (pilhas, eletrólise, corrosão)
-   - Soluções (concentração, diluição, propriedades coligativas)
-   - Radioatividade (decaimento, meia-vida, fissão, fusão)
+   - Termoquímica, Cinética, Equilíbrio
+   - Eletroquímica, Soluções
+   - Radioatividade
 
 4. QUÍMICA AMBIENTAL (Química Ambiental) 🌍
-   - Poluição (ar, água, solo)
-   - Ciclos biogeoquímicos (carbono, nitrogênio, água)
+   - Poluição, Ciclos Biogeoquímicos
    - Efeito Estufa, Camada de Ozônio
-   - Chuva Ácida, Tratamento de resíduos
-   - Química Verde, Sustentabilidade
-   - Biocombustíveis, Energia limpa
+   - Química Verde
 
 5. BIOQUÍMICA (Bioquímica) 🧬
-   - Carboidratos (monossacarídeos, dissacarídeos, polissacarídeos)
-   - Lipídios (gorduras, óleos, fosfolipídios)
-   - Proteínas e aminoácidos
-   - Ácidos nucleicos (DNA, RNA)
-   - Enzimas e metabolismo
-
-═══════════════════════════════════════════════════════════════════════════════
-MICROS COMUNS POR MACRO (usar como referência):
-═══════════════════════════════════════════════════════════════════════════════
-
-QUÍMICA GERAL:
-- Propriedades da Matéria, Substâncias e Misturas, Separação de Misturas
-- Atomística, Distribuição Eletrônica, Tabela Periódica
-- Ligações Químicas, Geometria Molecular, Polaridade
-- Estequiometria, Reações Químicas, Funções Inorgânicas
-
-QUÍMICA ORGÂNICA:
-- Funções Orgânicas, Nomenclatura, Hidrocarbonetos
-- Isomeria Plana, Isomeria Espacial, Isomeria Óptica
-- Reações de Substituição, Reações de Adição, Reações de Eliminação
-- Polímeros, Petroquímica, Biocombustíveis
-
-FÍSICO-QUÍMICA:
-- Termoquímica, Entalpia, Lei de Hess
-- Cinética Química, Velocidade de Reação, Catálise
-- Equilíbrio Químico, pH e pOH, Produto de Solubilidade
-- Eletroquímica, Pilhas e Baterias, Eletrólise
-- Soluções, Concentração, Propriedades Coligativas
-
-QUÍMICA AMBIENTAL:
-- Poluição Atmosférica, Efeito Estufa, Camada de Ozônio
-- Chuva Ácida, Poluição da Água, Tratamento de Efluentes
-- Ciclo do Carbono, Ciclo do Nitrogênio
-- Química Verde, Sustentabilidade
-
-BIOQUÍMICA:
-- Carboidratos, Lipídios, Proteínas
-- Ácidos Nucleicos, Enzimas, Metabolismo
-- Vitaminas, Hormônios
+   - Carboidratos, Lipídios, Proteínas
+   - Ácidos Nucleicos, Enzimas
 
 ═══════════════════════════════════════════════════════════════════════════════
 CRITÉRIOS PARA INFERIR DIFICULDADE:
