@@ -39,6 +39,7 @@ import {
 
 // 🚀 LAZY LOAD: Componentes pesados
 const LazyAITramon = lazy(() => import("@/components/ai/AITramonGlobal").then(m => ({ default: m.AITramonGlobal })));
+const LazyGlobalLogsButton = lazy(() => import("@/components/admin/GlobalLogsButton").then(m => ({ default: m.GlobalLogsButton })));
 const LazyGodModePanel = lazy(() => import("@/components/editor/GodModePanel").then(m => ({ default: m.GodModePanel })));
 const LazyInlineEditor = lazy(() => import("@/components/editor/InlineEditor").then(m => ({ default: m.InlineEditor })));
 const LazyMasterQuickAddMenu = lazy(() => import("@/components/admin/MasterQuickAddMenu").then(m => ({ default: m.MasterQuickAddMenu })));
@@ -121,7 +122,9 @@ const AppContent = memo(() => {
             <VisualEditMode />
             <KeyboardShortcutsOverlay isOpen={isOpen} onClose={handleClose} />
 
+            {/* 🔴 BOTÕES FLUTUANTES GLOBAIS: LOGS + TRAMON */}
             <Suspense fallback={null}>
+              <LazyGlobalLogsButton />
               <LazyAITramon />
             </Suspense>
 
