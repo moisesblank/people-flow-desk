@@ -1219,14 +1219,56 @@ const QuestionResolution = memo(function QuestionResolution({
         <SectionBlock section={introSection} />
       )}
 
-      {/* ========== OUTRAS SEÇÕES (PASSOS, ETC.) ========== */}
-      {otherSections.length > 0 && (
-        <div className="space-y-3">
-          {otherSections.map((section, index) => (
-            <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
-          ))}
-        </div>
-      )}
+      {/* ========== PASSOS — BLOCO UNIFICADO AZUL ========== */}
+      {(() => {
+        // Separar passos de outras seções
+        const passosSections = otherSections.filter(s => s.type === 'passo');
+        const nonPassosSections = otherSections.filter(s => s.type !== 'passo');
+        
+        // Ordenar passos por número
+        const sortedPassos = [...passosSections].sort((a, b) => (a.stepNumber || 0) - (b.stepNumber || 0));
+        
+        return (
+          <>
+            {/* PASSOS em área azul unificada */}
+            {sortedPassos.length > 0 && (
+              <div className="rounded-xl border border-blue-500/30 overflow-hidden bg-blue-500/5 border-l-4 border-l-blue-500">
+                {/* Header único */}
+                <div className="px-4 py-3 bg-blue-500/20 border-b border-blue-500/20 flex items-center gap-2">
+                  <Cog className="h-4 w-4 text-blue-500" />
+                  <h4 className="font-bold text-sm text-blue-500 uppercase tracking-wide">
+                    PASSOS DA RESOLUÇÃO
+                  </h4>
+                </div>
+                {/* Passos como tópicos dentro do bloco */}
+                <div className="divide-y divide-blue-500/20">
+                  {sortedPassos.map((section, index) => (
+                    <div key={`passo-${index}`} className="px-4 py-3">
+                      <div className="text-sm">
+                        <span className="font-bold text-blue-500">
+                          PASSO {section.stepNumber}
+                        </span>
+                        <span className="text-foreground/90 ml-2">
+                          {formatContent(section.content)}
+                        </span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+            
+            {/* Outras seções (não-passos) */}
+            {nonPassosSections.length > 0 && (
+              <div className="space-y-3">
+                {nonPassosSections.map((section, index) => (
+                  <SectionBlock key={`sec-${section.type}-${index}`} section={section} />
+                ))}
+              </div>
+            )}
+          </>
+        );
+      })()}
 
       {/* ========== ALTERNATIVAS / AFIRMAÇÕES — BLOCO ÚNICO ========== */}
       {alternativasSections.length > 0 && (
