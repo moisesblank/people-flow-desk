@@ -1,6 +1,6 @@
 // ╔═══════════════════════════════════════════════════════════════════════════════╗
 // ║ 📚 QUESTION RESOLUTION — COMPONENTE UNIVERSAL E OBRIGATÓRIO                   ║
-// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.1                                       ║
+// ║ PADRÃO INTERNACIONAL DE ORGANIZAÇÃO v3.2                                       ║
 // ╠═══════════════════════════════════════════════════════════════════════════════╣
 // ║                                                                                ║
 // ║ 🔒 LEI PERMANENTE — CONSTITUIÇÃO DO QUESTION DOMAIN                           ║
@@ -15,8 +15,10 @@
 // ║ 3. Alternativas: "Alternativa X ERRADA:" ou "Alternativa X CORRETA:"          ║
 // ║ 4. Deduplicação automática de seções repetidas                                 ║
 // ║ 5. Imagens inline via [IMAGEM: URL] com max-h-[600px]                          ║
-// ║ 6. Bullets unificados com espaçamento reduzido                                 ║
+// ║ 6. Bullets unificados com espaçamento COMPACTO (1 quebra de linha)            ║
 // ║ 7. Pontuação limpa (sem ".." ou "..." excessivos)                              ║
+// ║ 8. COMPETÊNCIA/HABILIDADE ENEM: dedup por C#/H#/Área#, NUNCA duplica          ║
+// ║ 9. Competência e Habilidade em LINHAS SEPARADAS (organizado)                  ║
 // ║                                                                                ║
 // ║ JAMAIS MODIFICAR ESTAS REGRAS SEM AUTORIZAÇÃO DO OWNER.                        ║
 // ║                                                                                ║
@@ -705,6 +707,7 @@ function parseResolutionText(text: string): ParsedSection[] {
 
   // ========== MERGE GLOBAL DE SEÇÕES PEDAGÓGICAS ==========
   // REGRA UNIVERSAL: Agrupa seções do mesmo tipo mergeable (inclui SÍNTESE)
+  // LEI PERMANENTE: Competência/Habilidade ENEM NUNCA duplica e SEMPRE organizado
   const mergableTypes: SectionType[] = ['pegadinhas', 'dica', 'estrategia', 'competencia', 'sintese'];
   
   const nonMergeable: ParsedSection[] = [];
@@ -722,16 +725,46 @@ function parseResolutionText(text: string): ParsedSection[] {
   
   // Criar seções consolidadas
   const consolidatedMergeable: ParsedSection[] = [];
+
+  // ========== HELPERS PARA DEDUP ENEM ==========
+  const normalizeLoose = (s: string) =>
+    s.toLowerCase().replace(/[^\w\sáéíóúãõâêîôûç]/gi, '').replace(/\s+/g, ' ').trim();
+
+  // Extrai chave única por C#/H#/Área# para ENEM
+  const enemKeyForLine = (line: string): string => {
+    const cMatch = line.match(/\b[CÁá]rea\s*C?\s*(\d{1,2})\b/i) || line.match(/\bC\s*(\d{1,2})\b/i);
+    const hMatch = line.match(/\bH\s*(\d{1,2})\b/i) || line.match(/\bHabilidade\s*(\d{1,2})\b/i);
+    const areaMatch = line.match(/\bÁrea\s*(\d{1,2})\b/i);
+    const c = cMatch?.[1] || '';
+    const h = hMatch?.[1] || '';
+    const a = areaMatch?.[1] || '';
+    if (c || h || a) return `C${c}|A${a}|H${h}`;
+    return normalizeLoose(line);
+  };
+
+  // Formata linha ENEM: separa Competência e Habilidade em linhas distintas
+  const formatEnemLine = (line: string): string => {
+    let s = line.replace(/\s*\|\s*/g, ' | ').replace(/\s+/g, ' ').trim();
+    // Detecta partes de Competência/Área e Habilidade
+    const parts = s.split(/\s*\|\s*/g).map(p => p.trim()).filter(Boolean);
+    const compPart = parts.find(p => /\b(compet[eê]ncia|área)\b/i.test(p)) || parts[0];
+    const habPart = parts.find(p => /\bhabilidade\b/i.test(p));
+    if (habPart && compPart !== habPart) {
+      return `${compPart}\n  ${habPart}`;
+    }
+    return s;
+  };
   
   for (const [type, sectionsOfType] of mergeableByType.entries()) {
     if (sectionsOfType.length === 0) continue;
     
     const allContents: string[] = [];
+    const seenKeys = new Set<string>();
     
     for (const section of sectionsOfType) {
       let content = section.content
         .replace(/^[•\-\s]+/gm, '')
-        .replace(/[""]/g, '')  // Remove aspas curvas/especiais (bugs)
+        .replace(/["""'']/g, '')  // Remove aspas especiais (bugs)
         .replace(/PEGADINHAS?\s*(COMUNS?)?:?\s*/gi, '')
         .replace(/DICA\s*DE\s*OURO:?\s*/gi, '')
         .replace(/DIRECIONAMENTO\s*[\/|]?\s*ESTRATÉGIA:?\s*/gi, '')
@@ -746,24 +779,22 @@ function parseResolutionText(text: string): ParsedSection[] {
         .replace(/\n{3,}/g, '\n\n')
         .trim();
       
-      if (content) {
-        const items = content.split(/\n+/).filter(item => item.trim());
+      if (!content) continue;
+      
+      const items = content.split(/\n+/).map(item => item.trim()).filter(Boolean);
+      
+      for (const item of items) {
+        const normalizedItem = item.replace(/^[•\-\s]+/, '').trim();
+        if (normalizedItem.length <= 10) continue;
         
-        for (const item of items) {
-          const normalizedItem = item.replace(/^[•\-\s]+/, '').trim();
-          const normalized = normalizedItem.toLowerCase().replace(/[^\w\s]/g, '').trim();
-          
-          const isDuplicate = allContents.some(existing => {
-            const existingNormalized = existing.toLowerCase().replace(/[^\w\s]/g, '').trim();
-            return existingNormalized === normalized || 
-                   existingNormalized.includes(normalized) ||
-                   normalized.includes(existingNormalized);
-          });
-          
-          if (!isDuplicate && normalizedItem.length > 10) {
-            allContents.push(normalizedItem);
-          }
-        }
+        // Dedup: para ENEM usa chave por C/Área/H; para outros usa texto normalizado
+        const key = type === 'competencia' ? enemKeyForLine(normalizedItem) : normalizeLoose(normalizedItem);
+        
+        if (seenKeys.has(key)) continue;
+        seenKeys.add(key);
+        
+        // Para ENEM, formata corretamente; para outros, mantém original
+        allContents.push(type === 'competencia' ? formatEnemLine(normalizedItem) : normalizedItem);
       }
     }
     
