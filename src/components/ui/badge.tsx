@@ -41,18 +41,22 @@ export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement>, Varian
   glow?: boolean;
 }
 
-function Badge({ className, variant, pulse = false, glow = false, ...props }: BadgeProps) {
-  return (
-    <div 
-      className={cn(
-        badgeVariants({ variant }), 
-        pulse && "badge-pulse",
-        glow && "shadow-[0_0_20px_currentColor/0.4]",
-        className
-      )} 
-      {...props} 
-    />
-  );
-}
+const Badge = React.forwardRef<HTMLDivElement, BadgeProps>(
+  ({ className, variant, pulse = false, glow = false, ...props }, ref) => {
+    return (
+      <div 
+        ref={ref}
+        className={cn(
+          badgeVariants({ variant }), 
+          pulse && "badge-pulse",
+          glow && "shadow-[0_0_20px_currentColor/0.4]",
+          className
+        )} 
+        {...props} 
+      />
+    );
+  }
+);
+Badge.displayName = "Badge";
 
 export { Badge, badgeVariants };
